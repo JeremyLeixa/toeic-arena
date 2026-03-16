@@ -939,7 +939,82 @@ var FALSE_FRIENDS = [
     opts:["A corner, an angle","To wedge something in place","To invent a new word or phrase","A small metal piece of money"],correct:2,
     trap:"The French 'coin' means 'corner'. English 'coin' as a verb means 'to invent a new word/phrase'. As a noun it's a piece of money.",realFr:"inventer (un terme)"},
 ];
+// ─── PART 2: QUESTION-RESPONSE ───
+var LISTENING_P2 = [
+  {id:"l2a",q:"When is the budget meeting scheduled?",
+    opts:["It's on Thursday at 2 PM.","Yes, I like the schedule.","The budget was approved."],
+    c:0,x:"'When' asks for a time. Only A gives a time (Thursday at 2 PM)."},
+  {id:"l2b",q:"Who's responsible for the marketing campaign?",
+    opts:["It was very successful.","Ms. Rivera is leading it.","We launched it last month."],
+    c:1,x:"'Who' asks for a person. Only B names someone (Ms. Rivera)."},
+  {id:"l2c",q:"Where did you put the quarterly report?",
+    opts:["It's due next Friday.","About 30 pages long.","On your desk, next to the laptop."],
+    c:2,x:"'Where' asks for a place. Only C gives a location (on your desk)."},
+  {id:"l2d",q:"Why was the delivery delayed?",
+    opts:["It arrived this morning.","Because of a supplier issue.","Three boxes were missing."],
+    c:1,x:"'Why' asks for a reason. Only B gives a cause (because of a supplier issue)."},
+  {id:"l2e",q:"How many copies do we need for the presentation?",
+    opts:["The presentation went well.","About twenty-five should be enough.","It starts at 10 AM."],
+    c:1,x:"'How many' asks for a quantity. Only B gives a number (twenty-five)."},
+  {id:"l2f",q:"Would you like to join us for lunch?",
+    opts:["The restaurant is nearby.","I already ate, but thanks.","Lunch is at noon."],
+    c:1,x:"This is an invitation. B is an indirect but natural decline. A and C are factual but don't answer the invitation."},
+  {id:"l2g",q:"Hasn't the new software been installed yet?",
+    opts:["Yes, it's a new version.","The IT team is working on it now.","I prefer the old software."],
+    c:1,x:"Negative question about status. B addresses the current situation. A repeats 'new' (trap). C is an opinion, not an answer."},
+  {id:"l2h",q:"Do you want the report in PDF or printed?",
+    opts:["Yes, the report is ready.","PDF would be easier to share.","I wrote it yesterday."],
+    c:1,x:"'Or' question = choose one. B makes a choice (PDF). A says 'Yes' (trap for or-questions). C is unrelated."},
+  {id:"l2i",q:"The conference room is on the third floor, isn't it?",
+    opts:["Actually, it was moved to the second floor.","The conference starts at 3.","Yes, I have the room key."],
+    c:0,x:"Tag question asking for confirmation. A corrects the information. B uses 'third/3' (number trap). C doesn't address the location."},
+  {id:"l2j",q:"How should I send the contract to the client?",
+    opts:["The client signed it already.","Email would be the fastest option.","It's a three-year contract."],
+    c:1,x:"'How' asks for a method. B suggests a method (email). A and C give facts about the contract but not how to send it."},
+  {id:"l2k",q:"Could you review this proposal before Friday?",
+    opts:["The proposal was rejected.","Sure, I'll look at it tomorrow.","Friday is a holiday."],
+    c:1,x:"This is a request. B accepts and gives a timeline. A talks about a past proposal. C mentions Friday but doesn't answer the request."},
+  {id:"l2l",q:"What time does the train to Manchester leave?",
+    opts:["The platform number is 7.","Manchester is about two hours away.","The next one departs at 4:15."],
+    c:2,x:"'What time' asks for a specific time. Only C gives a departure time (4:15)."},
+  {id:"l2m",q:"Who should I contact about the office renovation?",
+    opts:["The renovation will take three weeks.","Try the facilities manager, Mr. Chen.","The office looks much better now."],
+    c:1,x:"'Who' asks for a person. B names someone (Mr. Chen). A and C discuss the renovation but don't name a contact."},
+  {id:"l2n",q:"Why don't we postpone the meeting until next week?",
+    opts:["That works better for everyone.","The meeting room is available.","We postponed it already."],
+    c:0,x:"'Why don't we' is a suggestion. A accepts the suggestion. B and C don't respond to the proposal."},
+  {id:"l2o",q:"Have you finished reviewing the applications?",
+    opts:["There were over 50 applicants.","I still have a few more to go through.","The application deadline was Monday."],
+    c:1,x:"Yes/No question about task completion. B gives a status update. A and C mention applications but don't answer about progress."},
+];
 
+// ─── PART 1: PHOTOGRAPHS ───
+var LISTENING_P1 = [
+  {id:"l1a",scene:"A woman in business attire is standing at a podium, speaking into a microphone. Several rows of seated people face her. A large screen behind her shows a bar chart.",
+    opts:["The woman is giving a presentation.","The woman is sitting in the audience.","The screen is being turned off.","The people are leaving the room."],
+    c:0,x:"The woman is at the podium speaking — she's giving a presentation. B contradicts (she's standing, not sitting). C and D are not supported."},
+  {id:"l1b",scene:"Two men in hard hats are looking at a large blueprint spread across a table at a construction site. Building materials are stacked behind them.",
+    opts:["The men are eating lunch at a table.","Construction materials are being delivered.","Two workers are reviewing building plans.","The men are wearing business suits."],
+    c:2,x:"They're looking at a blueprint (building plans) at a construction site. A is wrong (not eating). B is wrong (materials are stacked, not being delivered). D is wrong (hard hats, not suits)."},
+  {id:"l1c",scene:"A hotel receptionist is handing a key card to a guest across the front desk. The guest has a suitcase beside him. A sign on the wall reads 'Check-in'.",
+    opts:["The guest is checking out of the hotel.","A key card is being given to a guest.","The receptionist is carrying luggage.","The sign says 'Exit'."],
+    c:1,x:"The receptionist is handing a key card to the guest. A is wrong (sign says Check-in, not check-out). C is wrong (guest has the suitcase). D contradicts the sign."},
+  {id:"l1d",scene:"Several people are seated around a large conference table. Laptops are open in front of most of them. One person at the head of the table is pointing at a whiteboard.",
+    opts:["A meeting is taking place in a conference room.","The office is empty.","Everyone is standing near the whiteboard.","The laptops are closed and put away."],
+    c:0,x:"People around a table with laptops, one pointing at whiteboard = a meeting. B, C, and D all contradict what's described."},
+  {id:"l1e",scene:"A woman is reaching for a book on a high shelf in a library. She is using a small step ladder. Rows of bookshelves extend behind her.",
+    opts:["The woman is putting books on the shelf.","Books are scattered on the floor.","A woman is reaching for a book on a shelf.","The library is closed."],
+    c:2,x:"She's reaching FOR a book (getting it), not putting one back. C correctly describes the action. A reverses the action. B and D are not supported."},
+  {id:"l1f",scene:"A waiter is placing plates of food on a table where three diners are seated. The restaurant appears busy with other occupied tables in the background.",
+    opts:["The restaurant is completely empty.","Food is being served to customers.","The diners are cooking their own meals.","The waiter is cleaning the tables."],
+    c:1,x:"The waiter is placing food = food is being served. A contradicts (busy restaurant). C is illogical. D is wrong (placing food, not cleaning)."},
+  {id:"l1g",scene:"A man in a suit is shaking hands with another man across a desk. There are documents and pens on the desk between them. A framed certificate hangs on the wall.",
+    opts:["The men are arguing about a contract.","Two men are shaking hands in an office.","The desk is completely clear.","One of the men is writing on the documents."],
+    c:1,x:"Two men shaking hands across a desk = B. A (arguing) is not supported. C contradicts (documents on desk). D is wrong (shaking hands, not writing)."},
+  {id:"l1h",scene:"Cars are lined up in heavy traffic on a city street. A traffic light shows red. Pedestrians are waiting on the sidewalk to cross.",
+    opts:["Traffic is flowing smoothly on the highway.","The traffic light is green.","Vehicles are stopped at a red light.","Pedestrians are crossing the street."],
+    c:2,x:"Red light + cars lined up = vehicles are stopped. A contradicts (heavy traffic, not smooth). B contradicts (red, not green). D is wrong (waiting, not crossing)."},
+];
 // ─── HELPERS ───
 function today(){return new Date().toISOString().split("T")[0];}
 
@@ -968,7 +1043,8 @@ async function speak(text,rate){
     return;
   }
   // Try ElevenLabs API
-  try{
+  var isLocal=window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1';
+  if(!isLocal)try{
     var res=await fetch('/api/tts',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -990,6 +1066,49 @@ async function speak(text,rate){
   var u=new SpeechSynthesisUtterance(text);
   u.rate=rate||0.9;u.pitch=1;u.volume=1;
   var v=getEnVoice();if(v)u.voice=v;u.lang="en-US";
+  window.speechSynthesis.speak(u);
+}
+function speakAndWait(text,rate){
+  return new Promise(function(resolve){
+    var isLocal=window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1';
+    if(!isLocal&&_audioCache[text.toLowerCase().trim()]){
+      var a=_audioCache[text.toLowerCase().trim()].cloneNode();
+      a.playbackRate=rate||0.9;
+      a.onended=resolve;
+      a.onerror=resolve;
+      a.play().catch(resolve);
+      return;
+    }
+    if(!isLocal){
+      fetch('/api/tts',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text:text,voice:'us_female'})
+      }).then(function(res){
+        if(res.ok)return res.blob();
+        throw new Error('tts failed');
+      }).then(function(blob){
+        var url=URL.createObjectURL(blob);
+        var audio=new Audio(url);
+        audio.playbackRate=rate||0.9;
+        _audioCache[text.toLowerCase().trim()]=audio;
+        audio.onended=resolve;
+        audio.onerror=resolve;
+        audio.play().catch(resolve);
+      }).catch(function(){
+        speakBrowserTTS(text,rate,resolve);
+      });
+      return;
+    }
+    speakBrowserTTS(text,rate,resolve);
+  });
+}
+function speakBrowserTTS(text,rate,cb){
+  if(!window.speechSynthesis){cb();return;}
+  window.speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(text);
+  u.rate=rate||0.9;u.pitch=1;u.volume=1;
+  var v=getEnVoice();if(v)u.voice=v;u.lang="en-US";
+  u.onend=cb;u.onerror=cb;
   window.speechSynthesis.speak(u);
 }
 // Preload voices (some browsers need this)
@@ -1485,11 +1604,11 @@ function Train(p){
   var sections=[
     {title:"Exercises",sub:"TOEIC Parts training",items:[
       {id:"daily",n:"Daily Challenge",d:"5 daily questions, timed",i:"⚡",bg:"linear-gradient(135deg,#00d4ff,#a855f7)"},
+	  {id:"lis",n:"Parts 1-2 — Listening",d:"Ear training with audio",i:"🎧",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
       {id:"drill",n:"Part 5 — Sentence Completion",d:"10 random questions from 100",i:"📝",bg:"linear-gradient(135deg,#00e676,#00bfa5)"},
       {id:"timesim",n:"Part 5 — Exam Simulation",d:"30 Qs in 10 min, real pace",i:"🏁",bg:"linear-gradient(135deg,#8b5cf6,#6366f1)"},
       {id:"p6",n:"Part 6 — Text Completion",d:"Business texts with blanks",i:"📄",bg:"linear-gradient(135deg,#ec4899,#a855f7)"},
       {id:"p7",n:"Part 7 — Reading",d:"Passages + comprehension Qs",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#06b6d4)"},
-      {id:"lis",n:"Parts 1-4 — Listening",d:"Coming in V2.1",i:"🎧",bg:"linear-gradient(135deg,#64748b,#475569)",lock:true},
     ]},
     {title:"Grammar & Vocabulary",sub:"Build your foundations",items:[
       {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
@@ -2543,7 +2662,220 @@ function TeacherDash(p){
     </div>}
   </div>);
 }
+// ─── LISTENING HUB ───
+function ListenHub(p){
+  return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>🎧</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Listening Practice</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train your ear for the TOEIC Listening section</p>
+    <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
+      <div className="crd" onClick={function(){p.nav("lisP1");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#22c55e,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📷</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 1 — Photographs</div><div style={{fontSize:11,color:"var(--t3)"}}>{LISTENING_P1.length} questions</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+      <div className="crd" onClick={function(){p.nav("lisP2");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>💬</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 2 — Question-Response</div><div style={{fontSize:11,color:"var(--t3)"}}>{LISTENING_P2.length} questions</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+    </div>
+    <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
+  </div>);
+}
 
+// ─── PART 2 LISTENING ───
+function ListenP2(p){
+  var items=useMemo(function(){return shuffle(LISTENING_P2).slice(0,10);},[]);
+  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
+  var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);
+
+  async function playQuestion(){
+    if(playing)return;
+    setPlaying(true);
+    var it=items[ci];
+    await speakAndWait(it.q,0.9);
+    await new Promise(function(r){setTimeout(r,500);});
+    await speakAndWait("A. "+it.opts[0],0.85);
+    await new Promise(function(r){setTimeout(r,400);});
+    await speakAndWait("B. "+it.opts[1],0.85);
+    await new Promise(function(r){setTimeout(r,400);});
+    await speakAndWait("C. "+it.opts[2],0.85);
+    await new Promise(function(r){setTimeout(r,300);});
+    setPlaying(false);setPlayed(true);
+  }
+
+  function doAns(i){sPk(i);if(i===items[ci].c)sSc(sc+1);sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);sP("listen");}else{sP("done");p.done(sc,items.length,25+sc*6);}}
+
+  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>💬</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 2 — Question-Response</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>You will hear a question followed by 3 responses.<br/>Choose the best response.</p>
+    <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Listen carefully — audio plays once!</p>
+    <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
+
+  if(ph==="done"){var xp=25+sc*6;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Listening Complete</h1>
+    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
+    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
+    <button className="btn1" onClick={p.back}>Back</button></div>);}
+
+  var it=items[ci];
+
+  if(ph==="listen")return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
+    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
+    <div style={{textAlign:"center",marginTop:40}}>
+      <div className="out" style={{fontSize:11,color:"var(--orange)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:24}}>Part 2 — Question-Response</div>
+      {!played?<div>
+        <button onClick={playQuestion} disabled={playing}
+          style={{width:80,height:80,borderRadius:"50%",border:"none",background:playing?"rgba(255,140,66,.2)":"linear-gradient(135deg,#f59e0b,#ef4444)",
+            cursor:playing?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",
+            animation:playing?"pulse 1.5s infinite":"none"}}>
+          <span style={{fontSize:32}}>{playing?"🔊":"▶️"}</span>
+        </button>
+        <p className="out" style={{color:playing?"var(--orange)":"var(--t2)",fontSize:14,fontWeight:600}}>
+          {playing?"Listening...":"Tap to play audio"}</p>
+      </div>
+      :<div style={{animation:"fadeIn .3s"}}>
+        <p className="out" style={{color:"var(--green)",fontSize:14,fontWeight:600,marginBottom:24}}>Audio complete — choose your answer</p>
+        <div style={{display:"flex",flexDirection:"column",gap:10,textAlign:"left"}}>
+          {it.opts.map(function(opt,i){
+            return(<button key={i} onClick={function(){doAns(i);}}
+              style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+              <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid var(--t3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,color:"var(--t3)"}}>
+                {String.fromCharCode(65+i)}</div>
+              <span>{opt}</span></button>);
+          })}
+        </div>
+        <button onClick={function(){setPlayed(false);}} className="btn2" style={{marginTop:12,width:"100%",fontSize:12}}>🔄 Replay audio</button>
+      </div>}
+    </div>
+  </div>);
+
+  return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
+    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
+    <div className="crd" style={{marginTop:16,padding:14,background:"rgba(168,85,247,.05)",borderColor:"rgba(168,85,247,.12)"}}>
+      <p className="out" style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:6}}>Question</p>
+      <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.5}}>{it.q}</p></div>
+    <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:16}}>
+      {it.opts.map(function(opt,i){
+        var isCor=i===it.c;var isPick=pick===i;
+        var bg="var(--bg2)";var bd="var(--bdr)";
+        if(isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
+        else if(isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
+        return(<div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:bg,border:"1px solid "+bd,borderRadius:12,fontSize:14,color:"var(--t1)"}}>
+          <div style={{width:24,height:24,borderRadius:"50%",border:"2px solid "+(isCor?"var(--green)":isPick?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isCor?"var(--green)":isPick&&!isCor?"var(--red)":"transparent",color:(isCor||isPick)?"#fff":"var(--t3)"}}>
+            {isCor?"✓":isPick?"✗":String.fromCharCode(65+i)}</div>
+          <span>{opt}</span></div>);
+      })}
+    </div>
+    <div className="crd" style={{marginTop:16,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:14,animation:"fadeIn .3s"}}>
+      <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.x}</p></div>
+    <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button>
+  </div>);
+}
+
+// ─── PART 1 LISTENING ───
+function ListenP1(p){
+  var items=useMemo(function(){return shuffle(LISTENING_P1);},[]);
+  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
+  var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curOpt,setCurOpt]=useState(-1);
+
+  async function playStatements(){
+    if(playing)return;
+    setPlaying(true);
+    var it=items[ci];
+    for(var i=0;i<it.opts.length;i++){
+      setCurOpt(i);
+      await speakAndWait(String.fromCharCode(65+i)+". "+it.opts[i],0.85);
+      await new Promise(function(r){setTimeout(r,500);});
+    }
+    setCurOpt(-1);setPlaying(false);setPlayed(true);
+  }
+
+  function doAns(i){sPk(i);if(i===items[ci].c)sSc(sc+1);sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);setCurOpt(-1);sP("listen");}else{sP("done");p.done(sc,items.length,20+sc*5);}}
+
+  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>📷</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 1 — Photographs</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Read the scene description, then listen to 4 statements.<br/>Choose the one that best describes the scene.</p>
+    <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Listen carefully to each statement!</p>
+    <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
+
+  if(ph==="done"){var xp=20+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=7?"🏆":sc>=4?"⚔️":"🛡️"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 1 Complete</h1>
+    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=7?"var(--green)":sc>=4?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
+    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
+    <button className="btn1" onClick={p.back}>Back</button></div>);}
+
+  var it=items[ci];
+
+  if(ph==="listen")return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
+    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
+    <div className="out" style={{fontSize:11,color:"var(--green)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginTop:16,marginBottom:12}}>Scene Description</div>
+    <div className="crd" style={{padding:16,marginBottom:20,background:"rgba(34,197,94,.04)",borderColor:"rgba(34,197,94,.12)"}}>
+      <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.7}}>{it.scene}</p></div>
+    {!played?<div style={{textAlign:"center"}}>
+      <button onClick={playStatements} disabled={playing}
+        style={{width:72,height:72,borderRadius:"50%",border:"none",background:playing?"rgba(34,197,94,.2)":"linear-gradient(135deg,#22c55e,#06b6d4)",
+          cursor:playing?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",
+          animation:playing?"pulse 1.5s infinite":"none"}}>
+        <span style={{fontSize:28}}>{playing?"🔊":"▶️"}</span>
+      </button>
+      {playing&&curOpt>=0&&<p className="out" style={{color:"var(--cyan)",fontSize:14,fontWeight:600}}>Playing statement {String.fromCharCode(65+curOpt)}...</p>}
+      {!playing&&<p className="out" style={{color:"var(--t2)",fontSize:13}}>Tap to hear the 4 statements</p>}
+    </div>
+    :<div style={{animation:"fadeIn .3s"}}>
+      <p className="out" style={{color:"var(--green)",fontSize:13,fontWeight:600,textAlign:"center",marginBottom:16}}>Statements complete — which one matches the scene?</p>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        {["A","B","C","D"].map(function(letter,i){
+          return(<button key={i} onClick={function(){doAns(i);}}
+            style={{padding:"16px 12px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,cursor:"pointer",textAlign:"center"}}>
+            <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--cyan)"}}>{letter}</div>
+          </button>);
+        })}
+      </div>
+      <button onClick={function(){setPlayed(false);setCurOpt(-1);}} className="btn2" style={{marginTop:12,width:"100%",fontSize:12}}>🔄 Replay statements</button>
+    </div>}
+  </div>);
+
+  return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
+    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
+    <div className="crd" style={{marginTop:12,padding:12,background:"rgba(34,197,94,.04)",borderColor:"rgba(34,197,94,.1)"}}>
+      <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>{it.scene}</p></div>
+    <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:12}}>
+      {it.opts.map(function(opt,i){
+        var isCor=i===it.c;var isPick=pick===i;
+        var bg="var(--bg2)";var bd="var(--bdr)";
+        if(isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
+        else if(isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
+        return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:bg,border:"1px solid "+bd,borderRadius:10,fontSize:13,color:"var(--t1)"}}>
+          <div style={{width:22,height:22,borderRadius:"50%",border:"2px solid "+(isCor?"var(--green)":isPick?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,flexShrink:0,background:isCor?"var(--green)":isPick&&!isCor?"var(--red)":"transparent",color:(isCor||isPick)?"#fff":"var(--t3)"}}>
+            {isCor?"✓":isPick?"✗":String.fromCharCode(65+i)}</div>
+          <span>{opt}</span></div>);
+      })}
+    </div>
+    <div className="crd" style={{marginTop:12,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:12,animation:"fadeIn .3s"}}>
+      <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.x}</p></div>
+    <button className="btn1" onClick={nxt} style={{marginTop:14}}>{ci<items.length-1?"Next":"See Results"}</button>
+  </div>);
+}
 // ─── LEAGUE ───
 function League(p){var u=p.u,lg=getLeague(u.weeklyXp);
 var[rivals,setRivals]=useState([]);
@@ -2708,6 +3040,9 @@ useEffect(function(){
   if(sp==="timesim")return(<div className="app"><style>{CSS}</style><TimeSim u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="p6")return(<div className="app"><style>{CSS}</style><Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="p7")return(<div className="app"><style>{CSS}</style><Part7Read u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lis")return(<div className="app"><style>{CSS}</style><ListenHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP2")return(<div className="app"><style>{CSS}</style><ListenP2 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP1")return(<div className="app"><style>{CSS}</style><ListenP1 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
 
   return(<div className="app"><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}
     {tab==="home"&&<Home u={u} nav={nav}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset}/>}
