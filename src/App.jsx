@@ -1030,7 +1030,7 @@ async function load() {
     .from('students')
     .select('*')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
   if (!data) return null;
   // Reconstitue l'objet userData à partir des colonnes
   return {
