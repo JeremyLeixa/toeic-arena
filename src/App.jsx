@@ -2591,12 +2591,30 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);
 
-  useEffect(function(){load().then(function(d){if(d){var td=today(),yd=new Date();yd.setDate(yd.getDate()-1);var ys=yd.toISOString().split("T")[0];
-    if(d.lastActive!==td&&d.lastActive!==ys)d.streak=0;var cw=weekId();if(d.weekId!==cw){d.weeklyXp=0;d.weekId=cw;}
-    // Migrate old data
-    if(!d.moduleScores)d.moduleScores={};
-    if(!d.mission)d.mission={date:null,actId:null,done:false};
-    sU(d);}sL(false);});},[]);
+useEffect(function(){
+    var sub=supabase.auth.onAuthStateChange(function(event,session){
+      if(session){
+        load().then(function(d){
+          if(d){
+            var td=today(),yd=new Date();yd.setDate(yd.getDate()-1);var ys=yd.toISOString().split("T")[0];
+            if(d.lastActive!==td&&d.lastActive!==ys)d.streak=0;
+            var cw=weekId();if(d.weekId!==cw){d.weeklyXp=0;d.weekId=cw;}
+            if(!d.moduleScores)d.moduleScores={};
+            if(!d.mission)d.mission={date:null,actId:null,done:false};
+            sU(d);
+          }
+          sL(false);
+        });
+      }else{
+        sL(false);
+      }
+    });
+    // Also check immediately in case session is already restored
+    supabase.auth.getSession().then(function(res){
+      if(!res.data.session)sL(false);
+    });
+    return function(){sub.data.subscription.unsubscribe();};
+  },[]);
 
   function sv(d){sU(d);save(d);}
   function addXp(baseAmt){
