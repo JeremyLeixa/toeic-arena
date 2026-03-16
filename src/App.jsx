@@ -998,8 +998,51 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-async function load(){try{var r=await window.storage.get(SK);if(r&&r.value)return JSON.parse(r.value);}catch(e){}return null;}
-async function save(d){try{await window.storage.set(SK,JSON.stringify(d));}catch(e){}}
+import { supabase } from './supabase.js'
+
+async function load() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from('students')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+  if (!data) return null;
+  // Reconstitue l'objet userData à partir des colonnes
+  return {
+    name: data.name,
+    xp: data.xp,
+    weeklyXp: data.weekly_xp,
+    weekId: data.week_id,
+    streak: data.streak,
+    lastActive: data.last_active,
+    cardStates: data.card_states,
+    daily: data.daily_challenge,
+    stats: data.stats,
+    moduleScores: data.module_scores,
+    mission: data.mission,
+  };
+}
+
+async function save(d) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from('students').upsert({
+    id: user.id,
+    name: d.name,
+    xp: d.xp,
+    weekly_xp: d.weeklyXp,
+    week_id: d.weekId,
+    streak: d.streak,
+    last_active: d.lastActive,
+    card_states: d.cardStates,
+    daily_challenge: d.daily,
+    stats: d.stats,
+    module_scores: d.moduleScores,
+    mission: d.mission,
+  });
+}
 function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mission:{date:null,actId:null,done:false}};}
 
 // ─── MODULE SCORE TRACKING ───
@@ -2356,43 +2399,16 @@ function FalseFriends(p){
   </div>);
 }
 
-// ─── TEACHER DASHBOARD ───
-var TEACHER_SK="toeic-arena-teacher";
 function TeacherDash(p){
   var[students,setStudents]=useState([]);var[loading,setLoad]=useState(true);
-  var[importCode,setImportCode]=useState("");var[importMsg,setImportMsg]=useState(null);
-  var[detail,setDetail]=useState(null);
+  var[detail,setDetail]=useState(null);var[classCode,setClassCode]=useState("idrac2026");
 
-  // Load stored students
-  useEffect(function(){
-    window.storage.get(TEACHER_SK).then(function(r){
-      if(r&&r.value)setStudents(JSON.parse(r.value));
-      setLoad(false);
-    }).catch(function(){setLoad(false);});
-  },[]);
-
-  function saveStudents(list){setStudents(list);window.storage.set(TEACHER_SK,JSON.stringify(list)).catch(function(){});}
-
-  function doImport(){
-    try{
-      var json=decodeURIComponent(escape(atob(importCode.trim())));
-      var data=JSON.parse(json);
-      if(!data.name){setImportMsg({ok:false,t:"Invalid code: no student name found."});return;}
-      // Check duplicate
-      var existing=students.findIndex(function(s){return s.name===data.name;});
-      var newList=students.slice();
-      if(existing>=0){newList[existing]=data;setImportMsg({ok:true,t:"Updated: "+data.name});}
-      else{newList.push(data);setImportMsg({ok:true,t:"Added: "+data.name});}
-      saveStudents(newList);
-      setImportCode("");
-      setTimeout(function(){setImportMsg(null);},3000);
-    }catch(e){setImportMsg({ok:false,t:"Invalid code. Ask the student to re-export."});}
+  function loadStudents(){
+    supabase.from('students').select('*').eq('class_code',classCode).order('xp',{ascending:false})
+      .then(function(res){setStudents(res.data||[]);setLoad(false);})
+      .catch(function(){setLoad(false);});
   }
-
-  function removeStudent(idx){
-    var newList=students.slice();newList.splice(idx,1);saveStudents(newList);
-    if(detail===idx)setDetail(null);
-  }
+  useEffect(function(){loadStudents();},[classCode]);
 
   if(loading)return(<div className="app" style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><p className="out" style={{color:"var(--t2)"}}>Loading dashboard...</p></div>);
 
@@ -2465,15 +2481,9 @@ function TeacherDash(p){
       <div className="crd" style={{padding:14,textAlign:"center"}}><div className="out" style={{fontSize:22,fontWeight:800,color:"var(--purple)"}}>{totalSess}</div><div style={{fontSize:10,color:"var(--t3)"}}>Total sessions</div></div>
     </div>
 
-    {/* Import student */}
-    <div className="crd" style={{padding:14,marginBottom:20}}>
-      <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--t2)",marginBottom:8}}>Import student code</p>
-      <div style={{display:"flex",gap:8}}>
-        <input type="text" value={importCode} onChange={function(e){setImportCode(e.target.value);}} placeholder="Paste student sync code..."
-          style={{flex:1,padding:"10px 14px",background:"var(--bg)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-        <button className="btn1" onClick={doImport} style={{width:"auto",padding:"10px 16px",fontSize:13,opacity:importCode.trim()?1:.4,pointerEvents:importCode.trim()?"auto":"none"}}>Import</button>
-      </div>
-      {importMsg&&<p style={{fontSize:12,color:importMsg.ok?"var(--green)":"var(--red)",marginTop:6}}>{importMsg.t}</p>}
+{/* Refresh + class code */}
+    <div style={{display:"flex",gap:8,marginBottom:20}}>
+      <button className="btn1" onClick={function(){setLoad(true);loadStudents();}} style={{flex:1,fontSize:14}}>🔄 Refresh data</button>
     </div>
 
     {/* Student list */}
@@ -2506,14 +2516,21 @@ function TeacherDash(p){
     </div>
 
     {students.length>0&&<div style={{textAlign:"center",marginTop:20}}>
-      <button className="btn2" onClick={function(){if(students.length>0){saveStudents([]);}}} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>Clear all students</button>
+      <p style={{fontSize:11,color:"var(--t3)"}}>Data syncs automatically from student devices</p>
     </div>}
   </div>);
 }
 
 // ─── LEAGUE ───
-function League(p){var u=p.u,lg=getLeague(u.weeklyXp),wk=weekId(),cs=useMemo(function(){return compScores(wk);},[wk]);
-var all=cs.concat([{name:u.name+" (You)",avatar:"⚔️",xp:u.weeklyXp,me:true}]);all.sort(function(a,b){return b.xp-a.xp;});
+function League(p){var u=p.u,lg=getLeague(u.weeklyXp);
+var[rivals,setRivals]=useState([]);
+useEffect(function(){
+  supabase.from('students').select('name,weekly_xp').eq('class_code','idrac2026').order('weekly_xp',{ascending:false}).limit(20)
+    .then(function(res){if(res.data)setRivals(res.data);});
+},[u.weeklyXp]);
+var all=rivals.map(function(r){return{name:r.name===u.name?r.name+" (You)":r.name,avatar:"⚔️",xp:r.weekly_xp||0,me:r.name===u.name};});
+if(!all.find(function(a){return a.me;}))all.push({name:u.name+" (You)",avatar:"⚔️",xp:u.weeklyXp,me:true});
+all.sort(function(a,b){return b.xp-a.xp;});
 var nx=LEAGUES.find(function(l){return l.min>u.weeklyXp;});
 return(<div className="enter" style={{padding:"20px 16px 100px"}}><h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>League</h1><p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Weekly ranking</p>
 <div className="crd glo" style={{textAlign:"center",marginBottom:20,padding:24}}>
@@ -2610,32 +2627,41 @@ export default function App(){
     return c;
   }
   function nav(pg,arg){sSP(pg);sSPA(arg||null);}
-  function onboard(name,placementScore,lvl){
-    var u=fresh(name);
-    if(lvl){u.xp=lvl.startXp;u.weeklyXp=lvl.startXp;}
-    if(placementScore!==undefined){
-      u.stats.totalQ=15;u.stats.correct=placementScore;u.stats.sessions=1;
-      // Pre-populate moduleScores from placement categories
-      PLACEMENT_TEST.forEach(function(q,i){
-        var answered=i<15; // all answered
-        if(answered){
-          var cat=q.cat;var modMap={"Tenses":"drill","Passive Voice":"drill","Prepositions":"prepdrill","Word Families":"wordfam","Connectors":"connsort","Subject-Verb Agreement":"drill","Gerunds vs Infinitives":"gerinf","Conditionals":"drill","Relative Pronouns":"drill"};
-          var modId=modMap[cat]||"drill";
-          if(!u.moduleScores[modId])u.moduleScores[modId]={correct:0,total:0,sessions:1,lastDate:today()};
-          u.moduleScores[modId].total+=1;
-          // We don't know per-question results, but we know total score
-        }
-      });
-    }
-    sv(u);
-  }
+  async function onboard(name, placementScore, lvl) {
+  // Créer un compte anonyme
+  const { data: authData } = await supabase.auth.signInAnonymously();
+  
+  // Créer le profil étudiant
+  const u = fresh(name);
+  if (lvl) { u.xp = lvl.startXp; u.weeklyXp = lvl.startXp; }
+  
+  // Sauvegarder dans Supabase
+  await supabase.from('students').insert({
+    id: authData.user.id,
+    name: name,
+    class_code: 'idrac2026',
+    xp: u.xp,
+    placement_score: placementScore,
+    placement_level: lvl ? lvl.label : null,
+    // ... autres champs
+  });
+  
+  sv(u);
+}
   function goTeacher(){setTeacher(true);}
   function dailyDone(sc,xp){var c=addXp(xp);c.daily={date:today(),done:true,score:sc,xpE:xp};c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;recordModule(c,"daily",sc,5);checkMission(c,"daily");sv(c);}
   function drillDone(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
   function cardsDone(xp){var modId=sp==="cdom"?"csess":sp;var c=addXp(xp);c.stats.sessions+=1;recordModule(c,"csess",1,1);checkMission(c,"csess");sv(c);sSP(null);}
-  function reset(){sU(null);sSP(null);sT("home");window.storage.delete(SK).catch(function(){});}
+  async function reset(){
+    var sess=await supabase.auth.getSession();
+    if(sess.data.session){
+      await supabase.from('students').delete().eq('id',sess.data.session.user.id);
+      await supabase.auth.signOut();
+    }
+    sU(null);sSP(null);sT("home");
+  }
 
   if(ld)return(<div className="app"><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
   if(teacherMode)return(<div><style>{CSS}</style><TeacherDash back={function(){setTeacher(false);}}/></div>);
