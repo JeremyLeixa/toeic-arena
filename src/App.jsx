@@ -957,16 +957,39 @@ function getEnVoice(){
   }
   return all[0]||null;
 }
-function speak(text,rate){
+var _audioCache={};
+async function speak(text,rate){
+  var key=text.toLowerCase().trim();
+  // Check cache first
+  if(_audioCache[key]){
+    var a=_audioCache[key].cloneNode();
+    a.playbackRate=rate||0.9;
+    a.play().catch(function(){});
+    return;
+  }
+  // Try ElevenLabs API
+  try{
+    var res=await fetch('/api/tts',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:text,voice:'us_female'})
+    });
+    if(res.ok){
+      var blob=await res.blob();
+      var url=URL.createObjectURL(blob);
+      var audio=new Audio(url);
+      audio.playbackRate=rate||0.9;
+      _audioCache[key]=audio;
+      audio.play().catch(function(){});
+      return;
+    }
+  }catch(e){}
+  // Fallback to browser TTS if ElevenLabs fails
   if(!window.speechSynthesis)return;
   window.speechSynthesis.cancel();
   var u=new SpeechSynthesisUtterance(text);
-  u.rate=rate||0.9;
-  u.pitch=1;
-  u.volume=1;
-  var v=getEnVoice();
-  if(v)u.voice=v;
-  u.lang="en-US";
+  u.rate=rate||0.9;u.pitch=1;u.volume=1;
+  var v=getEnVoice();if(v)u.voice=v;u.lang="en-US";
   window.speechSynthesis.speak(u);
 }
 // Preload voices (some browsers need this)
@@ -2548,7 +2571,6 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}><h1 className=
 
 // ─── PROFILE ───
 function Profile(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),acc=u.stats.totalQ>0?Math.round(u.stats.correct/u.stats.totalQ*100):0;
-  var[exportCode,setExport]=useState(null);
 var uC=Object.assign({},u);var ea=ACHIEVEMENTS.filter(function(a){return a.check(uC);});var la=ACHIEVEMENTS.filter(function(a){return!a.check(uC);});
 return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{textAlign:"center",marginBottom:24}}>
@@ -2568,22 +2590,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {la.map(function(a){return(<div key={a.id} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:14,opacity:.4}}>
 <div style={{fontSize:24}}>🔒</div><div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{a.name}</div><div style={{fontSize:12,color:"var(--t2)"}}>{a.desc}</div></div></div>);})}</div>
 <div style={{textAlign:"center",marginTop:32}}>
-  {!exportCode?<button className="btn2" onClick={function(){
-    var exportData={name:u.name,xp:u.xp,streak:u.streak,level:getLevel(u.xp).level,league:getLeague(u.weeklyXp).name,
-      stats:u.stats,moduleScores:u.moduleScores||{},exported:today()};
-    var code=btoa(unescape(encodeURIComponent(JSON.stringify(exportData))));
-    if(navigator.clipboard){navigator.clipboard.writeText(code);}
-    setExport(code);
-  }} style={{fontSize:13,width:"100%",marginBottom:10}}>📤 Share progress with teacher</button>
-  :<div style={{marginBottom:16,animation:"fadeIn .3s"}}>
-    <div className="crd" style={{padding:14,background:"rgba(0,230,118,.06)",borderColor:"rgba(0,230,118,.15)"}}>
-      <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--green)",marginBottom:6}}>✅ Code copied to clipboard!</p>
-      <p style={{fontSize:11,color:"var(--t2)",marginBottom:8,lineHeight:1.5}}>Send this code to your teacher (paste in a message or email):</p>
-      <div style={{padding:"8px 12px",background:"var(--bg)",borderRadius:8,fontSize:10,color:"var(--t3)",wordBreak:"break-all",maxHeight:60,overflow:"auto",fontFamily:"monospace"}}>{exportCode}</div>
-    </div>
-    <button className="btn2" onClick={function(){setExport(null);}} style={{fontSize:12,marginTop:8,width:"100%"}}>Done</button>
-  </div>}
-  <button className="btn2" onClick={p.reset} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>Reset all data</button></div></div>);}
+  <button className="btn2" onClick={p.reset} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>Reset all data</button>
 
 // ═══════════════════════════════════════════
 // MAIN APP
