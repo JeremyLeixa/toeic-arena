@@ -2591,6 +2591,9 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{fontSize:24}}>🔒</div><div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{a.name}</div><div style={{fontSize:12,color:"var(--t2)"}}>{a.desc}</div></div></div>);})}</div>
 <div style={{textAlign:"center",marginTop:32}}>
   <button className="btn2" onClick={p.reset} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>Reset all data</button>
+</div></div>);}
+
+// ═══════════════════════════════════════════
 
 // ═══════════════════════════════════════════
 // MAIN APP
