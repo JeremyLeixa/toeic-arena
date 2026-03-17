@@ -18,12 +18,12 @@ var COMPETITORS = [
   {n:"Jade K.",a:"🦄"},{n:"Enzo S.",a:"🐬"},{n:"Camille T.",a:"🌸"},{n:"Raphaël G.",a:"⚡"},
 ];
 var ACHIEVEMENTS = [
-  {id:"first_blood",name:"First Blood",desc:"Complete your first exercise",icon:"⚔️",check:function(s){return s.stats.totalSessions>=1;}},
+  {id:"first_blood",name:"First Blood",desc:"Complete your first exercise",icon:"⚔️",check:function(s){return s.stats.sessions>=1;}},
   {id:"streak_3",name:"On Fire",desc:"3-day streak",icon:"🔥",check:function(s){return s.streak>=3;}},
   {id:"streak_7",name:"Unstoppable",desc:"7-day streak",icon:"💥",check:function(s){return s.streak>=7;}},
   {id:"streak_30",name:"Legendary",desc:"30-day streak",icon:"🏆",check:function(s){return s.streak>=30;}},
-  {id:"vocab_50",name:"Word Collector",desc:"Review 50 flashcards",icon:"📚",check:function(s){return (s.stats.flashcardsReviewed||0)>=50;}},
-  {id:"perfect_daily",name:"Flawless Victory",desc:"Perfect daily challenge",icon:"✨",check:function(s){return (s.stats.perfectDailies||0)>=1;}},
+  {id:"vocab_50",name:"Word Collector",desc:"Review 50 flashcards",icon:"📚",check:function(s){return (s.stats.cardsRev||0)>=50;}},
+  {id:"perfect_daily",name:"Flawless Victory",desc:"Perfect daily challenge",icon:"✨",check:function(s){return (s.stats.perfects||0)>=1;}},
   {id:"level_5",name:"Rising Star",desc:"Reach level 5",icon:"⭐",check:function(s){return getLevel(s.xp).level>=5;}},
   {id:"level_10",name:"Arena Champion",desc:"Reach level 10",icon:"👑",check:function(s){return getLevel(s.xp).level>=10;}},
 ];
@@ -1104,30 +1104,95 @@ var LISTENING_P2 = [
 
 // ─── PART 1: PHOTOGRAPHS ───
 var LISTENING_P1 = [
-  {id:"l1a",scene:"A woman in business attire is standing at a podium, speaking into a microphone. Several rows of seated people face her. A large screen behind her shows a bar chart.",
-    opts:["The woman is giving a presentation.","The woman is sitting in the audience.","The screen is being turned off.","The people are leaving the room."],
-    c:0,x:"The woman is at the podium speaking — she's giving a presentation. B contradicts (she's standing, not sitting). C and D are not supported."},
-  {id:"l1b",scene:"Two men in hard hats are looking at a large blueprint spread across a table at a construction site. Building materials are stacked behind them.",
-    opts:["The men are eating lunch at a table.","Construction materials are being delivered.","Two workers are reviewing building plans.","The men are wearing business suits."],
-    c:2,x:"They're looking at a blueprint (building plans) at a construction site. A is wrong (not eating). B is wrong (materials are stacked, not being delivered). D is wrong (hard hats, not suits)."},
-  {id:"l1c",scene:"A hotel receptionist is handing a key card to a guest across the front desk. The guest has a suitcase beside him. A sign on the wall reads 'Check-in'.",
-    opts:["The guest is checking out of the hotel.","A key card is being given to a guest.","The receptionist is carrying luggage.","The sign says 'Exit'."],
-    c:1,x:"The receptionist is handing a key card to the guest. A is wrong (sign says Check-in, not check-out). C is wrong (guest has the suitcase). D contradicts the sign."},
-  {id:"l1d",scene:"Several people are seated around a large conference table. Laptops are open in front of most of them. One person at the head of the table is pointing at a whiteboard.",
-    opts:["A meeting is taking place in a conference room.","The office is empty.","Everyone is standing near the whiteboard.","The laptops are closed and put away."],
-    c:0,x:"People around a table with laptops, one pointing at whiteboard = a meeting. B, C, and D all contradict what's described."},
-  {id:"l1e",scene:"A woman is reaching for a book on a high shelf in a library. She is using a small step ladder. Rows of bookshelves extend behind her.",
-    opts:["The woman is putting books on the shelf.","Books are scattered on the floor.","A woman is reaching for a book on a shelf.","The library is closed."],
-    c:2,x:"She's reaching FOR a book (getting it), not putting one back. C correctly describes the action. A reverses the action. B and D are not supported."},
-  {id:"l1f",scene:"A waiter is placing plates of food on a table where three diners are seated. The restaurant appears busy with other occupied tables in the background.",
-    opts:["The restaurant is completely empty.","Food is being served to customers.","The diners are cooking their own meals.","The waiter is cleaning the tables."],
-    c:1,x:"The waiter is placing food = food is being served. A contradicts (busy restaurant). C is illogical. D is wrong (placing food, not cleaning)."},
-  {id:"l1g",scene:"A man in a suit is shaking hands with another man across a desk. There are documents and pens on the desk between them. A framed certificate hangs on the wall.",
-    opts:["The men are arguing about a contract.","Two men are shaking hands in an office.","The desk is completely clear.","One of the men is writing on the documents."],
-    c:1,x:"Two men shaking hands across a desk = B. A (arguing) is not supported. C contradicts (documents on desk). D is wrong (shaking hands, not writing)."},
-  {id:"l1h",scene:"Cars are lined up in heavy traffic on a city street. A traffic light shows red. Pedestrians are waiting on the sidewalk to cross.",
-    opts:["Traffic is flowing smoothly on the highway.","The traffic light is green.","Vehicles are stopped at a red light.","Pedestrians are crossing the street."],
-    c:2,x:"Red light + cars lined up = vehicles are stopped. A contradicts (heavy traffic, not smooth). B contradicts (red, not green). D is wrong (waiting, not crossing)."},
+  {id:"l1_01",img:"/img/p1_01.png",
+    opts:["The woman is typing an email on her laptop.","The woman is talking on the phone at her desk.","The woman is reading a document next to her computer.","The woman is turning off her laptop."],
+    c:1,x:"The woman is holding a phone receiver to her ear and smiling — she's talking on the phone. A laptop is open in front of her but she's not typing on it. A is wrong (not typing). C is wrong (no document visible). D is wrong (laptop is open, not being turned off)."},
+  {id:"l1_02",img:"/img/p1_02.jpg",
+    opts:["The passenger is handing a ticket to the agent.","The agent is handing a document to the passenger.","The passenger is picking up his luggage.","The departures board is being updated."],
+    c:1,x:"The airline agent behind the counter is extending a document toward the passenger. B correctly describes the action. A reverses the direction (agent gives, not passenger). C is wrong (no luggage visible). D cannot be determined from the scene."},
+  {id:"l1_03",img:"/img/p1_03.jpg",
+    opts:["The workers are eating lunch at a table.","A safety helmet has been placed on the table.","The men are constructing a building.","The blueprints are being rolled up."],
+    c:1,x:"A yellow hard hat is sitting on the table next to blueprints. B correctly describes what's visible. A is wrong (they're reviewing plans, not eating). C is wrong (they're at a table, not on a construction site). D is wrong (blueprints are spread open, not rolled up)."},
+  {id:"l1_04",img:"/img/p1_04.jpg",
+    opts:["The students are leaving the classroom.","The teacher is writing on the chalkboard.","Several students are raising their hands.","The desks are being arranged in a circle."],
+    c:2,x:"Multiple children have their hands raised while a teacher stands at the front. C is correct. A is wrong (students are seated). B is wrong (teacher is facing students, not writing). D is wrong (desks are in rows)."},
+  {id:"l1_05",img:"/img/p1_05.jpg",
+    opts:["A small boat is passing near a cargo ship.","The containers are being unloaded onto trucks.","The ship is sailing in open water.","Workers are standing on top of the containers."],
+    c:0,x:"A small boat is visible in the foreground near the large container ship with cranes above it. A is correct. B is wrong (no trucks visible). C is wrong (the ship is docked at a port). D cannot be confirmed from the image."},
+  {id:"l1_06",img:"/img/p1_06.jpg",
+    opts:["The patient is standing up from the wheelchair.","The doctor is writing a prescription.","A healthcare worker is speaking with a patient in a wheelchair.","The patient is being examined on a bed."],
+    c:2,x:"A woman in a white coat with a stethoscope is leaning toward and talking to an elderly person seated in a wheelchair. C is correct. A is wrong (patient is seated). B is wrong (no writing visible). D is wrong (patient is in a wheelchair, not on a bed)."},
+  {id:"l1_07",img:"/img/p1_07.jpg",
+    opts:["The man is repairing the vehicle's engine.","The man is seated in the cab of a large vehicle.","The man is loading cargo onto a truck.","The vehicle is parked inside a garage."],
+    c:1,x:"A man in a green shirt is sitting in the driver's seat of what appears to be heavy machinery or a tractor. B is correct. A is wrong (not repairing). C is wrong (not loading cargo). D is wrong (the vehicle appears to be outdoors)."},
+  {id:"l1_08",img:"/img/p1_08.jpg",
+    opts:["Workers are packing ice cream cones into boxes.","Machines are dispensing ice cream into cones on a production line.","The cones are being arranged by hand on a tray.","The factory equipment is being cleaned."],
+    c:1,x:"Blue mechanical dispensers are placing scoops of ice cream into waffle cones moving along a conveyor belt. B is correct. A is wrong (no boxes or packing). C is wrong (it's automated, not by hand). D is wrong (the equipment is operating, not being cleaned)."},
+  {id:"l1_09",img:"/img/p1_09.jpg",
+    opts:["The woman is cleaning laboratory equipment.","A researcher is using a pipette in a laboratory.","The scientists are having a discussion.","The woman is looking through a microscope."],
+    c:1,x:"A woman in a lab coat is holding and using a pipette, with test tubes and lab equipment around her. B is correct. A is wrong (not cleaning). C is wrong (the man in the background is working separately). D is wrong (no microscope — she's using a pipette)."},
+  {id:"l1_10",img:"/img/p1_10.jpg",
+    opts:["The woman is reading a book on a bench.","The woman is having a video call on her laptop.","The woman is typing on a laptop while sitting on a bench.","The laptop screen is turned off."],
+    c:2,x:"A woman is seated on a wooden bench against a brick wall, with her hands on the laptop keyboard. C is correct. A is wrong (it's a laptop, not a book). B cannot be confirmed (no visible video call). D is wrong (the screen is clearly on)."},
+	// ═══════════════════════════════════════════
+// PART 1 — PHOTOGRAPHS (Batch 2: p1_11 to p1_20)
+// ═══════════════════════════════════════════
+//
+// À coller dans le tableau LISTENING_P1,
+// juste AVANT le ];
+// N'oublie pas la virgule après la dernière entrée du batch 1 (l1_10).
+//
+
+  {id:"l1_11",img:"/img/p1_11.jpg",
+    opts:["The mechanic is washing the car.","A man is using a laptop next to a vehicle with its hood open.","The car is being loaded onto a truck.","The man is closing the hood of the car."],
+    c:1,x:"A mechanic in blue overalls is holding a laptop while standing in front of a car with its hood raised. B is correct. A is wrong (not washing). C is wrong (no truck). D is wrong (the hood is open, not being closed)."},
+  {id:"l1_12",img:"/img/p1_12.jpg",
+    opts:["The workers are climbing down a ladder.","Two workers are assembling a steel structure.","The men are painting a metal beam.","Construction equipment is being unloaded."],
+    c:1,x:"Two men wearing hard hats and safety harnesses are working on steel beams high up. B is correct. A is wrong (they're on the beams, not a ladder). C is wrong (no painting). D is wrong (no equipment being unloaded)."},
+  {id:"l1_13",img:"/img/p1_13.jpg",
+    opts:["A man is playing a guitar on stage.","Several guitars are displayed in a shop window.","A craftsman is building a guitar in his workshop.","The instruments are being packed into cases."],
+    c:2,x:"A man is working on the body of a guitar surrounded by other guitars in various stages of construction. C is correct. A is wrong (he's building, not playing). B is wrong (it's a workshop, not a shop). D is wrong (no cases visible)."},
+  {id:"l1_14",img:"/img/p1_14.jpg",
+    opts:["The colleagues appear exhausted at their desks.","The team is celebrating a successful project.","The workers are arriving at the office.","Documents are being filed into cabinets."],
+    c:0,x:"Three people at a conference table look very tired — one is pulling his tie, another has her head down. A is correct. B is the opposite (they look exhausted, not celebrating). C is wrong (they're seated, not arriving). D is wrong (papers are on the table, not being filed)."},
+  {id:"l1_15",img:"/img/p1_15.jpg",
+    opts:["The woman is boarding an airplane.","A traveler is checking her phone at the gate.","A woman is reading a book in an airport terminal.","The passenger is collecting her luggage."],
+    c:2,x:"A woman is seated in an airport terminal with a backpack, reading a small book. C is correct. A is wrong (she's seated, not boarding). B is wrong (it's a book, not a phone). D is wrong (no luggage collection area visible)."},
+  {id:"l1_16",img:"/img/p1_16.jpg",
+    opts:["The officer is checking the man's passport.","A security officer is screening a passenger.","The man is putting on his jacket.","The officer is handing a boarding pass to the traveler."],
+    c:1,x:"A TSA security officer in blue uniform is conducting a screening while the man holds his arms out. B is correct. A is wrong (no passport visible). C is wrong (he has his arms extended for screening). D is wrong (no boarding pass exchange)."},
+  {id:"l1_17",img:"/img/p1_17.jpg",
+    opts:["A person is signing a document with a pen.","The papers are being placed into an envelope.","A woman is reading a newspaper.","The document is being printed."],
+    c:0,x:"A hand is holding a pen and writing on a form on a desk. A is correct (signing/filling in a document). B is wrong (no envelope). C is wrong (it's a form, not a newspaper). D is wrong (the document is already printed and being filled in)."},
+  {id:"l1_18",img:"/img/p1_18.jpg",
+    opts:["The workers are removing solar panels from a roof.","Two technicians are installing solar panels.","A man is repairing the roof tiles.","The ladder is being carried to the building."],
+    c:1,x:"Two men wearing hard hats are positioning solar panels on a roof, with a ladder visible behind them. B is correct. A reverses the action (installing, not removing). C is wrong (they're working with panels, not tiles). D is wrong (the ladder is already in place)."},
+  {id:"l1_19",img:"/img/p1_19.jpg",
+    opts:["The shelves in the warehouse are empty.","A worker is stacking boxes on a high shelf.","A man is holding a package in a storage area.","The boxes are being loaded onto a delivery truck."],
+    c:2,x:"A man in a work shirt is standing in a warehouse holding a cardboard box, with shelves of packages behind him. C is correct. A is wrong (shelves are full). B is wrong (he's holding a box at waist level, not stacking high). D is wrong (no truck visible)."},
+  {id:"l1_20",img:"/img/p1_20.jpg",
+    opts:["The employee is stocking shelves with fruit.","A customer is selecting produce at a market.","A store worker is carrying a box in the grocery section.","The man is cleaning the floor of the shop."],
+    c:2,x:"A man wearing a store apron is holding a large cardboard box in the produce section of a grocery store. C is correct. A is wrong (he's carrying a box, not placing items on shelves). B is wrong (he's an employee with an apron, not a customer). D is wrong (not cleaning)."},
+	// ═══════════════════════════════════════════
+// PART 1 — PHOTOGRAPHS (Batch 3: p1_21 to p1_24)
+// ═══════════════════════════════════════════
+//
+// À coller dans le tableau LISTENING_P1,
+// juste AVANT le ];
+//
+
+  {id:"l1_21",img:"/img/p1_21.jpg",
+    opts:["The group is posing for a photograph.","Several people are gathered around a laptop screen.","The team is having lunch together.","A woman is giving a presentation to her colleagues."],
+    c:1,x:"A group of people are leaning in and looking attentively at a laptop screen together. B is correct. A is wrong (they're focused on the screen, not posing). C is wrong (no food visible). D is wrong (no one is standing or presenting — they're all looking at the same screen)."},
+  {id:"l1_22",img:"/img/p1_22.jpg",
+    opts:["People are swimming in a canal.","Boats are moored along a waterway between buildings.","A bridge is being constructed over the water.","Cars are parked along the street next to the canal."],
+    c:1,x:"Several boats are tied up along a canal lined with historic buildings. B is correct. A is wrong (no swimmers). C is wrong (no construction). D is wrong (no cars — it's a canal city with water instead of streets)."},
+  {id:"l1_23",img:"/img/p1_23.jpg",
+    opts:["People are sitting on the benches in the park.","The snow is being cleared from the pathway.","Benches are covered with snow in a park.","Children are playing in the snow."],
+    c:2,x:"Wooden benches along a park path are heavily covered in snow, with no people around. C is correct. A is wrong (the benches are empty). B is wrong (no one is clearing snow). D is wrong (no children or people visible)."},
+  {id:"l1_24",img:"/img/p1_24.jpg",
+    opts:["A person is writing in a planner next to a mobile phone.","The woman is sending a text message on her phone.","A notebook is being closed and put away.","The person is drawing a picture in a sketchbook."],
+    c:0,x:"A hand is holding a pen and writing in a weekly planner/calendar, with a smartphone resting on the page. A is correct. B is wrong (the phone is lying flat, not being used). C is wrong (the planner is open). D is wrong (it's a planner with grid lines, not a sketchbook)."},
 ];
 // ─── HELPERS ───
 function today(){return new Date().toISOString().split("T")[0];}
@@ -1278,6 +1343,9 @@ async function load() {
     stats: data.stats,
     moduleScores: data.module_scores,
     mission: data.mission,
+    unlockedAch: data.unlocked_ach || [],
+    avatar: data.avatar || "⚔️",
+    theme: data.theme || "dark",
   };
 }
 
@@ -1297,9 +1365,12 @@ async function save(d) {
     stats: d.stats,
     module_scores: d.moduleScores,
     mission: d.mission,
+    avatar: d.avatar || "⚔️",
+    theme: d.theme || "dark",
+    unlocked_ach: d.unlockedAch || [],
   });
 }
-function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mission:{date:null,actId:null,done:false}};}
+function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark"};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -1404,12 +1475,14 @@ var TEACHER_CODE="idrac2026";
 var CSS=`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#080b16;--bg2:#131833;--bg3:#1a2045;--bdr:rgba(100,130,255,0.08);--cyan:#00d4ff;--orange:#ff8c42;--gold:#ffd700;--green:#00e676;--red:#ff4757;--purple:#a855f7;--t1:#eef2ff;--t2:#7b86a8;--t3:#4a5478}
+.light{--bg:#f5f5f7;--bg2:#ffffff;--bg3:#e8e8ed;--bdr:rgba(0,0,0,0.08);--cyan:#0088cc;--orange:#e67e22;--gold:#d4a017;--green:#16a34a;--red:#dc2626;--purple:#7c3aed;--t1:#1a1a2e;--t2:#555770;--t3:#8888a0}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 @keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 @keyframes flame{0%,100%{transform:scale(1) rotate(-2deg)}25%{transform:scale(1.1) rotate(2deg)}50%{transform:scale(1.05) rotate(-1deg)}75%{transform:scale(1.12) rotate(1deg)}}
+@keyframes achPop{0%{transform:translateY(30px) scale(.7);opacity:0}10%{transform:translateY(-5px) scale(1.05);opacity:1}15%{transform:translateY(0) scale(1);opacity:1}85%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-20px) scale(.95);opacity:0}}
 @keyframes xpPop{0%{transform:translateY(0) scale(.5);opacity:0}30%{transform:translateY(-10px) scale(1.2);opacity:1}100%{transform:translateY(-40px) scale(1);opacity:0}}
 @keyframes flip{0%{transform:rotateY(90deg);opacity:0}100%{transform:rotateY(0);opacity:1}}
 @keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
@@ -1426,6 +1499,16 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 
 // ─── SMALL COMPONENTS ───
 function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"rgba(255,255,255,.06)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,#00d4ff,#0088ff)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
+
+function AchToast(p){if(!p.v)return null;
+  return(<div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",zIndex:250,animation:"achPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
+    <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"1px solid rgba(255,215,0,.3)",padding:"16px 28px",borderRadius:20,boxShadow:"0 8px 40px rgba(255,215,0,.25)",minWidth:220}}>
+      <div style={{fontSize:40,marginBottom:6,animation:"pulse 1s infinite"}}>{p.v.icon}</div>
+      <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--gold)",textTransform:"uppercase",letterSpacing:2,marginBottom:4}}>Achievement Unlocked!</div>
+      <div className="out" style={{fontWeight:800,fontSize:18,color:"var(--t1)",marginBottom:2}}>{p.v.name}</div>
+      <div style={{fontSize:12,color:"var(--t2)"}}>{p.v.desc}</div>
+    </div>
+  </div>);}
 
 function XpToast(p){if(!p.v)return null;
   var info=typeof p.v==="object"?p.v:{total:p.v,base:p.v,bonuses:[]};
@@ -1557,7 +1640,7 @@ function Onboard(p){
 function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily.date===today()&&u.daily.done;return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24}}>{u.name} ⚔️</h1></div>
+<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24}}>{u.name} {u.avatar||"⚔️"}</h1></div>
 <div style={{textAlign:"center"}}><span className="fl" style={{fontSize:28}}>{u.streak>0?"🔥":"❄️"}</span><div className="out" style={{fontSize:13,fontWeight:700,color:u.streak>0?"var(--orange)":"var(--t3)"}}>{u.streak}</div></div></div>
 
 {/* Active bonus indicators */}
@@ -2920,28 +3003,30 @@ function ListenP1(p){
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:56,marginBottom:16}}>📷</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 1 — Photographs</h1>
-    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Read the scene description, then listen to 4 statements.<br/>Choose the one that best describes the scene.</p>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Look at the photograph, then listen to 4 statements.<br/>Choose the one that best describes the image.</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Listen carefully to each statement!</p>
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   if(ph==="done"){var xp=20+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=7?"🏆":sc>=4?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 1 Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=7?"var(--green)":sc>=4?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
+    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
     <button className="btn1" onClick={p.back}>Back</button></div>);}
 
   var it=items[ci];
 
   if(ph==="listen")return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
-    <div className="out" style={{fontSize:11,color:"var(--green)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginTop:16,marginBottom:12}}>Scene Description</div>
-    <div className="crd" style={{padding:16,marginBottom:20,background:"rgba(34,197,94,.04)",borderColor:"rgba(34,197,94,.12)"}}>
-      <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.7}}>{it.scene}</p></div>
+
+    <div style={{marginTop:12,marginBottom:16,borderRadius:14,overflow:"hidden",border:"1px solid var(--bdr)"}}>
+      <img src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",maxHeight:260,objectFit:"cover"}}/>
+    </div>
+
     {!played?<div style={{textAlign:"center"}}>
       <button onClick={playStatements} disabled={playing}
         style={{width:72,height:72,borderRadius:"50%",border:"none",background:playing?"rgba(34,197,94,.2)":"linear-gradient(135deg,#22c55e,#06b6d4)",
@@ -2953,7 +3038,7 @@ function ListenP1(p){
       {!playing&&<p className="out" style={{color:"var(--t2)",fontSize:13}}>Tap to hear the 4 statements</p>}
     </div>
     :<div style={{animation:"fadeIn .3s"}}>
-      <p className="out" style={{color:"var(--green)",fontSize:13,fontWeight:600,textAlign:"center",marginBottom:16}}>Statements complete — which one matches the scene?</p>
+      <p className="out" style={{color:"var(--green)",fontSize:13,fontWeight:600,textAlign:"center",marginBottom:16}}>Which statement best describes the photograph?</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
         {["A","B","C","D"].map(function(letter,i){
           return(<button key={i} onClick={function(){doAns(i);}}
@@ -2966,14 +3051,18 @@ function ListenP1(p){
     </div>}
   </div>);
 
+  // Feedback — show image + all statements + explanation
   return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
-    <div className="crd" style={{marginTop:12,padding:12,background:"rgba(34,197,94,.04)",borderColor:"rgba(34,197,94,.1)"}}>
-      <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>{it.scene}</p></div>
-    <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:12}}>
+
+    <div style={{marginTop:8,marginBottom:12,borderRadius:12,overflow:"hidden",border:"1px solid var(--bdr)"}}>
+      <img src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",maxHeight:200,objectFit:"cover"}}/>
+    </div>
+
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
       {it.opts.map(function(opt,i){
         var isCor=i===it.c;var isPick=pick===i;
         var bg="var(--bg2)";var bd="var(--bdr)";
@@ -2985,6 +3074,7 @@ function ListenP1(p){
           <span>{opt}</span></div>);
       })}
     </div>
+
     <div className="crd" style={{marginTop:12,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:12,animation:"fadeIn .3s"}}>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.x}</p></div>
     <button className="btn1" onClick={nxt} style={{marginTop:14}}>{ci<items.length-1?"Next":"See Results"}</button>
@@ -3020,7 +3110,7 @@ function Profile(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),acc=u.s
 var uC=Object.assign({},u);var ea=ACHIEVEMENTS.filter(function(a){return a.check(uC);});var la=ACHIEVEMENTS.filter(function(a){return!a.check(uC);});
 return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{textAlign:"center",marginBottom:24}}>
-<div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:32,fontWeight:900}} className="out">{u.name.charAt(0).toUpperCase()}</div>
+<div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:38}}>{u.avatar||"⚔️"}</div>
 <h1 className="out" style={{fontWeight:800,fontSize:22}}>{u.name}</h1>
 <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8,flexWrap:"wrap"}}>
 <span style={{fontSize:13,color:"var(--t2)"}}>Level {lv.level}</span><span style={{fontSize:13,color:lg.color}}>{lg.icon} {lg.name}</span><span style={{fontSize:13,color:"var(--orange)"}}>🔥 {u.streak}</span></div></div>
@@ -3029,6 +3119,27 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {[{l:"Total XP",v:u.xp,i:"⭐"},{l:"Accuracy",v:acc+"%",i:"🎯"},{l:"Sessions",v:u.stats.sessions,i:"📊"},{l:"Cards Reviewed",v:u.stats.cardsRev||0,i:"🃏"},{l:"Drills Done",v:u.stats.drills||0,i:"📝"},{l:"Perfect Dailies",v:u.stats.perfects||0,i:"✨"}].map(function(s){return(
 <div key={s.l} className="crd" style={{padding:14,textAlign:"center"}}><div style={{fontSize:18,marginBottom:4}}>{s.i}</div><div className="out" style={{fontSize:20,fontWeight:800}}>{s.v}</div><div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>{s.l}</div></div>);})}</div>
 
+<div className="crd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:16,marginBottom:20}}>
+  <div><div className="out" style={{fontWeight:700,fontSize:14}}>Appearance</div>
+    <div style={{fontSize:12,color:"var(--t2)"}}>{u.theme==="light"?"Light mode":"Dark mode"}</div></div>
+  <button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.theme=c.theme==="light"?"dark":"light";p.setAvatar(c);}}
+    style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",position:"relative",
+      background:u.theme==="light"?"var(--cyan)":"var(--t3)",transition:"background .3s"}}>
+    <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:3,
+      left:u.theme==="light"?27:3,transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
+  </button>
+</div>
+<h2 className="out" style={{fontWeight:700,fontSize:16,marginBottom:12}}>Avatar</h2>
+<div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:24}}>
+  {["⚔️","🧙","🦊","🐉","🎯","🏆","🦅","💎","🔥","🌟","🎭","🐺","🦁","🎪","👤"].map(function(av){
+    var sel=av===(u.avatar||"⚔️");
+    return(<button key={av} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar=av;p.setAvatar(c);}}
+      style={{width:44,height:44,borderRadius:12,border:sel?"2px solid var(--cyan)":"2px solid var(--bdr)",
+        background:sel?"rgba(0,212,255,.1)":"var(--bg2)",cursor:"pointer",fontSize:22,
+        display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
+      {av}</button>);
+  })}
+</div>
 <h2 className="out" style={{fontWeight:700,fontSize:16,marginBottom:12}}>Achievements</h2>
 <div style={{display:"flex",flexDirection:"column",gap:8}}>
 {ea.map(function(a){return(<div key={a.id} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:14,background:"rgba(255,215,0,.05)",borderColor:"rgba(255,215,0,.15)"}}>
@@ -3045,7 +3156,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 // MAIN APP
 // ═══════════════════════════════════════════
 export default function App(){
-  var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);
+  var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
 
 useEffect(function(){
     var sub=supabase.auth.onAuthStateChange(function(event,session){
@@ -3057,6 +3168,9 @@ useEffect(function(){
             var cw=weekId();if(d.weekId!==cw){d.weeklyXp=0;d.weekId=cw;}
             if(!d.moduleScores)d.moduleScores={};
             if(!d.mission)d.mission={date:null,actId:null,done:false};
+			if(!d.unlockedAch)d.unlockedAch=[];
+			if(!d.avatar)d.avatar="⚔️";
+			if(!d.theme)d.theme="dark";
             sU(d);
           }
           sL(false);
@@ -3072,7 +3186,19 @@ useEffect(function(){
     return function(){sub.data.subscription.unsubscribe();};
   },[]);
 
-  function sv(d){sU(d);save(d);}
+  function sv(d){
+    // Check for new achievements
+    if(d&&d.unlockedAch){
+      ACHIEVEMENTS.forEach(function(a){
+        if(a.check(d)&&d.unlockedAch.indexOf(a.id)===-1){
+          d.unlockedAch.push(a.id);
+          setAchToast({name:a.name,icon:a.icon,desc:a.desc});
+          setTimeout(function(){setAchToast(null);},3500);
+        }
+      });
+    }
+    sU(d);save(d);
+  }
   function addXp(baseAmt){
     var c=JSON.parse(JSON.stringify(u));var td=today();var bonuses=[];var isFirstToday=c.lastActive!==td;
 
@@ -3158,7 +3284,7 @@ useEffect(function(){
   if(sp==="lisP2")return(<div className="app"><style>{CSS}</style><ListenP2 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="lisP1")return(<div className="app"><style>{CSS}</style><ListenP1 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
 
-  return(<div className="app"><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}
-    {tab==="home"&&<Home u={u} nav={nav}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset}/>}
+  return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
+    {tab==="home"&&<Home u={u} nav={nav}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}}/>}
     <Tabs cur={tab} go={function(t){sT(t);sSP(null);}}/></div>);
 }
