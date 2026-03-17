@@ -1194,6 +1194,329 @@ var LISTENING_P1 = [
     opts:["A person is writing in a planner next to a mobile phone.","The woman is sending a text message on her phone.","A notebook is being closed and put away.","The person is drawing a picture in a sketchbook."],
     c:0,x:"A hand is holding a pen and writing in a weekly planner/calendar, with a smartphone resting on the page. A is correct. B is wrong (the phone is lying flat, not being used). C is wrong (the planner is open). D is wrong (it's a planner with grid lines, not a sketchbook)."},
 ];
+// ═══════════════════════════════════════════
+// PART 3 — CONVERSATIONS (20 conversations, 60 questions)
+// ═══════════════════════════════════════════
+// À coller dans App.jsx AVANT "// ─── HELPERS ───"
+//
+// Structure: each conversation has lines[] with speaker tags (M=man, W=woman)
+// Audio files: /audio/p3/{id}_line{N}.mp3 for each line
+//
+
+var LISTENING_P3 = [
+  {id:"l3_01",lines:[
+    {s:"W",t:"Have you seen the updated schedule for the trade show next month?"},
+    {s:"M",t:"Yes, our booth has been moved to Hall B. It's actually a better location than last year."},
+    {s:"W",t:"That's great. Should I order new banners for the booth?"},
+    {s:"M",t:"Let's check the budget with finance first. The old ones might still work."}],
+    qs:[
+      {q:"What are the speakers discussing?",opts:["A budget meeting","A trade show","A product launch","An office move"],c:1},
+      {q:"What has changed about their booth?",opts:["It was cancelled","The price went up","It was relocated","It became smaller"],c:2},
+      {q:"What does the man suggest?",opts:["Ordering new banners immediately","Checking the budget first","Cancelling the booth","Moving to a different hall"],c:1}]},
+  {id:"l3_02",lines:[
+    {s:"M",t:"Excuse me, I have a reservation for two under the name Patterson."},
+    {s:"W",t:"Yes, Mr. Patterson. Your table is ready. Would you prefer the terrace or inside?"},
+    {s:"M",t:"The terrace sounds nice, but it looks like it might rain."},
+    {s:"W",t:"In that case, I can seat you by the window. You'll still have a lovely view."}],
+    qs:[
+      {q:"Where does this conversation take place?",opts:["At a hotel","At a restaurant","At an airport","At a theater"],c:1},
+      {q:"Why doesn't the man choose the terrace?",opts:["It's too expensive","It's fully booked","The weather looks bad","It's too noisy"],c:2},
+      {q:"Where will the man be seated?",opts:["On the terrace","In a private room","By the window","At the bar"],c:2}]},
+  {id:"l3_03",lines:[
+    {s:"W",t:"The quarterly sales figures just came in, and they're above our target by 12 percent."},
+    {s:"M",t:"That's excellent news. Which region performed the best?"},
+    {s:"W",t:"The Asian market, especially Japan and South Korea. Europe was slightly below target."},
+    {s:"M",t:"We should present these results at Friday's board meeting."}],
+    qs:[
+      {q:"What is the main topic of the conversation?",opts:["Hiring plans","Sales performance","Product development","Office relocation"],c:1},
+      {q:"Which region exceeded expectations?",opts:["Europe","North America","Asia","South America"],c:2},
+      {q:"What does the man want to do?",opts:["Hire more staff in Asia","Present the results to the board","Close the European office","Increase the sales target"],c:1}]},
+  {id:"l3_04",lines:[
+    {s:"M",t:"I'm calling about the laptop I ordered two weeks ago. It still hasn't arrived."},
+    {s:"W",t:"I'm sorry to hear that. Can I have your order number, please?"},
+    {s:"M",t:"It's TK-4578. I was told it would arrive within five business days."},
+    {s:"W",t:"Let me check that for you. I see there was a delay at our warehouse. I can offer you express shipping at no extra cost."}],
+    qs:[
+      {q:"Why is the man calling?",opts:["To cancel an order","To return a product","To complain about a late delivery","To ask about pricing"],c:2},
+      {q:"When was the order expected to arrive?",opts:["Within two days","Within five business days","Within two weeks","By the end of the month"],c:1},
+      {q:"What does the woman offer?",opts:["A full refund","A replacement product","Free express shipping","A discount on the next order"],c:2}]},
+  {id:"l3_05",lines:[
+    {s:"W",t:"I just got an email from the building manager. The elevators will be out of service this weekend."},
+    {s:"M",t:"Both of them? That's going to be a problem for anyone working on the upper floors."},
+    {s:"W",t:"I know. They're doing maintenance that was postponed from last month."},
+    {s:"M",t:"I'll send a notice to all departments so people can plan ahead."}],
+    qs:[
+      {q:"What is the problem?",opts:["The offices are closing","The heating is broken","The elevators will be shut down","The parking lot is full"],c:2},
+      {q:"When will this happen?",opts:["Today","Tomorrow","This weekend","Next month"],c:2},
+      {q:"What will the man do?",opts:["Contact the building manager","Notify the departments","Cancel the maintenance","Work from home"],c:1}]},
+  {id:"l3_06",lines:[
+    {s:"M",t:"Have you had a chance to interview any candidates for the marketing position?"},
+    {s:"W",t:"I've seen three so far. Two had strong experience, but one really stood out."},
+    {s:"M",t:"What made them special?"},
+    {s:"W",t:"She has ten years in digital marketing and previously managed a team of fifteen."}],
+    qs:[
+      {q:"What are the speakers discussing?",opts:["A training program","A marketing campaign","A job vacancy","A promotion"],c:2},
+      {q:"How many candidates has the woman interviewed?",opts:["One","Two","Three","Fifteen"],c:2},
+      {q:"What impressed the woman about one candidate?",opts:["Her salary expectations","Her language skills","Her experience and management background","Her educational qualifications"],c:2}]},
+  {id:"l3_07",lines:[
+    {s:"W",t:"The client wants the website redesign completed by March first."},
+    {s:"M",t:"That's only six weeks away. We haven't even finalized the design concept."},
+    {s:"W",t:"I know it's tight. Can we bring in a freelance designer to help?"},
+    {s:"M",t:"Good idea. I'll reach out to the agency we used last time."}],
+    qs:[
+      {q:"What is the deadline for the project?",opts:["Next week","End of January","March first","June first"],c:2},
+      {q:"What is the problem?",opts:["The client cancelled the project","The budget is too low","The timeline is very tight","The designer quit"],c:2},
+      {q:"What solution does the woman suggest?",opts:["Asking for more time","Hiring a freelancer","Reducing the project scope","Using a template"],c:1}]},
+  {id:"l3_08",lines:[
+    {s:"M",t:"I'm heading to the airport now. My flight to Chicago leaves at 3:30."},
+    {s:"W",t:"Don't forget you have a dinner with the client at seven. The restaurant is near your hotel."},
+    {s:"M",t:"Right. And the meeting with their team is tomorrow morning at nine?"},
+    {s:"W",t:"Yes, in their downtown office. I've emailed you the address and parking details."}],
+    qs:[
+      {q:"Where is the man going?",opts:["To a restaurant","To Chicago","To a meeting","To his hotel"],c:1},
+      {q:"What time is the client dinner?",opts:["At 3:30","At 5:00","At 7:00","At 9:00"],c:2},
+      {q:"What has the woman sent the man?",opts:["Flight tickets","The meeting agenda","The office address and parking info","The restaurant menu"],c:2}]},
+  {id:"l3_09",lines:[
+    {s:"W",t:"The new employee orientation is scheduled for Monday. Are the training materials ready?"},
+    {s:"M",t:"Almost. I still need to update the section on company policies. There were some changes last quarter."},
+    {s:"W",t:"Make sure you include the updated remote work guidelines. That's what new hires always ask about."},
+    {s:"M",t:"Good point. I'll have everything printed by Friday afternoon."}],
+    qs:[
+      {q:"What is happening on Monday?",opts:["A board meeting","An employee orientation","A product launch","A company holiday"],c:1},
+      {q:"What still needs to be updated?",opts:["The welcome video","The company policies section","The lunch menu","The office map"],c:1},
+      {q:"What does the woman recommend including?",opts:["Salary information","Remote work guidelines","Health insurance details","Parking instructions"],c:1}]},
+  {id:"l3_10",lines:[
+    {s:"M",t:"I noticed the supply room is almost empty. We're low on paper, toner, and pens."},
+    {s:"W",t:"I placed an order last Tuesday, but the supplier said there's a two-week backlog."},
+    {s:"M",t:"Two weeks? That's too long. Can we find another supplier?"},
+    {s:"W",t:"I'll look into it this afternoon and get quotes from at least two other companies."}],
+    qs:[
+      {q:"What is the problem?",opts:["Equipment is broken","Office supplies are running low","The supplier went bankrupt","The budget was cut"],c:1},
+      {q:"Why hasn't the order arrived?",opts:["It was cancelled","The supplier has a backlog","The payment was declined","The address was wrong"],c:1},
+      {q:"What will the woman do?",opts:["Wait for the current order","Cancel the order","Contact alternative suppliers","Buy supplies at a local store"],c:2}]},
+  {id:"l3_11",lines:[
+    {s:"W",t:"I see you applied for the project manager position in the Singapore office."},
+    {s:"M",t:"Yes, I've always wanted to work abroad. And I have experience with the Asian market."},
+    {s:"W",t:"The position requires fluency in Mandarin. Do you speak it?"},
+    {s:"M",t:"I've been taking classes for the past year. I'd say I'm at an intermediate level now."}],
+    qs:[
+      {q:"What position has the man applied for?",opts:["Sales director","Financial analyst","Project manager","Marketing coordinator"],c:2},
+      {q:"Where is the job located?",opts:["Tokyo","Hong Kong","Shanghai","Singapore"],c:3},
+      {q:"What is the man's level of Mandarin?",opts:["Beginner","Intermediate","Fluent","He doesn't speak it"],c:1}]},
+  {id:"l3_12",lines:[
+    {s:"M",t:"The parking garage will be closed for repairs starting next Monday."},
+    {s:"W",t:"For how long? I drive to work every day."},
+    {s:"M",t:"About three weeks. But the company has arranged a temporary lot two blocks away."},
+    {s:"W",t:"That's not ideal, but at least there's an alternative. Is there a shuttle?"},
+    {s:"M",t:"Yes, it runs every ten minutes from the temporary lot to the main entrance."}],
+    qs:[
+      {q:"What will happen on Monday?",opts:["A new garage will open","The parking garage will close for repairs","Parking fees will increase","The shuttle service will end"],c:1},
+      {q:"How long will the repairs take?",opts:["One week","Two weeks","Three weeks","A month"],c:2},
+      {q:"How can employees get from the temporary lot to the office?",opts:["They can walk","A shuttle runs every ten minutes","Taxis are provided","A bus stops nearby"],c:1}]},
+  {id:"l3_13",lines:[
+    {s:"W",t:"Our customer satisfaction scores dropped five percent this quarter."},
+    {s:"M",t:"That's concerning. Do we know which area was affected the most?"},
+    {s:"W",t:"Response time. Customers are waiting too long for support."},
+    {s:"M",t:"We should consider hiring additional support staff or implementing a chatbot."}],
+    qs:[
+      {q:"What happened to customer satisfaction?",opts:["It improved","It stayed the same","It decreased","It was not measured"],c:2},
+      {q:"What is the main complaint?",opts:["Product quality","High prices","Slow response times","Complicated website"],c:2},
+      {q:"What does the man suggest?",opts:["Raising prices","Adding support staff or a chatbot","Closing the support department","Sending a survey"],c:1}]},
+  {id:"l3_14",lines:[
+    {s:"M",t:"Excuse me, I'd like to return this printer. It stopped working after two days."},
+    {s:"W",t:"I'm sorry about that. Do you have your receipt?"},
+    {s:"M",t:"Yes, here it is. I bought it last Thursday."},
+    {s:"W",t:"Since it's within our 30-day return policy, I can offer you a full refund or an exchange."}],
+    qs:[
+      {q:"Why is the man returning the printer?",opts:["It's the wrong model","It's too expensive","It stopped working","He doesn't need it anymore"],c:2},
+      {q:"When did the man buy the printer?",opts:["Two days ago","Last Thursday","Last month","30 days ago"],c:1},
+      {q:"What options does the woman offer?",opts:["A repair or a discount","A refund or an exchange","Store credit only","Free technical support"],c:1}]},
+  {id:"l3_15",lines:[
+    {s:"W",t:"The conference call with the London team is in 15 minutes. Is the equipment set up?"},
+    {s:"M",t:"The video is working, but I'm having trouble with the audio. There's an echo."},
+    {s:"W",t:"Try using the external microphone instead. It usually works better."},
+    {s:"M",t:"Good idea. I'll switch it now."}],
+    qs:[
+      {q:"What is about to happen?",opts:["A staff lunch","A video conference","An office tour","A training session"],c:1},
+      {q:"What is the technical problem?",opts:["The video is not working","The internet is down","There is an audio echo","The screen is too small"],c:2},
+      {q:"What does the woman recommend?",opts:["Cancelling the call","Using a different microphone","Calling IT support","Moving to another room"],c:1}]},
+  {id:"l3_16",lines:[
+    {s:"M",t:"The architect sent over the revised floor plans for the new office."},
+    {s:"W",t:"Did they include the extra meeting rooms we requested?"},
+    {s:"M",t:"Yes, two small ones and one large conference room. But they removed the break room on the second floor."},
+    {s:"W",t:"That's a dealbreaker. Everyone uses that break room. Ask them to revise it again."}],
+    qs:[
+      {q:"What did the architect send?",opts:["An invoice","Updated floor plans","A construction timeline","Photos of the building"],c:1},
+      {q:"How many extra meeting rooms were added?",opts:["One","Two","Three","Four"],c:2},
+      {q:"Why is the woman unhappy?",opts:["The cost is too high","The project is delayed","The break room was removed","The rooms are too small"],c:2}]},
+  {id:"l3_17",lines:[
+    {s:"W",t:"Our flight has been delayed by two hours. We won't land until 9 PM."},
+    {s:"M",t:"That means we'll miss the welcome reception at the conference."},
+    {s:"W",t:"I know. But at least we'll make it in time for tomorrow's keynote at 8 AM."},
+    {s:"M",t:"I'll text the organizer and let them know we're arriving late."}],
+    qs:[
+      {q:"What is the problem?",opts:["The conference was cancelled","Their hotel lost the reservation","Their flight is delayed","They missed the keynote"],c:2},
+      {q:"What will they miss?",opts:["The keynote speech","The welcome reception","The morning workshop","The closing ceremony"],c:1},
+      {q:"What will the man do?",opts:["Book a different flight","Cancel the trip","Contact the organizer","Call the airline"],c:2}]},
+  {id:"l3_18",lines:[
+    {s:"M",t:"I think we should switch to a new accounting software. The current one is too slow."},
+    {s:"W",t:"I agree, but migration is risky. What about the data from the last five years?"},
+    {s:"M",t:"The new system can import our existing data automatically. I've already tested it."},
+    {s:"W",t:"That's reassuring. Let's schedule a demo for the whole finance team next week."}],
+    qs:[
+      {q:"What does the man propose?",opts:["Hiring an accountant","Changing the accounting software","Reducing the IT budget","Outsourcing the finance department"],c:1},
+      {q:"What is the woman concerned about?",opts:["The cost","The timeline","Data migration","Staff training"],c:2},
+      {q:"What is the next step?",opts:["A team demo next week","An immediate switch","A meeting with IT","A cost analysis"],c:0}]},
+  {id:"l3_19",lines:[
+    {s:"W",t:"The health inspector is coming next Tuesday for our annual review."},
+    {s:"M",t:"Already? I need to make sure the kitchen passes the cleanliness check."},
+    {s:"W",t:"Last year we got a warning about the storage area. Let's not repeat that."},
+    {s:"M",t:"I'll have the team do a deep clean this weekend."}],
+    qs:[
+      {q:"Where do the speakers most likely work?",opts:["In a hospital","In a restaurant","In a school","In a factory"],c:1},
+      {q:"When is the inspection?",opts:["This weekend","Next Monday","Next Tuesday","Next month"],c:2},
+      {q:"What happened last year?",opts:["They failed the inspection","They received a warning about storage","The kitchen was renovated","The inspector didn't show up"],c:1}]},
+  {id:"l3_20",lines:[
+    {s:"M",t:"I'd like to open a business checking account, please."},
+    {s:"W",t:"Of course. Do you have your company registration documents with you?"},
+    {s:"M",t:"Yes, I have everything here. I also need to set up online banking."},
+    {s:"W",t:"We can do both today. The online access will be active within 24 hours."}],
+    qs:[
+      {q:"Where does this conversation take place?",opts:["At a law firm","At a bank","At a government office","At an accounting firm"],c:1},
+      {q:"What does the man want to open?",opts:["A savings account","A personal account","A business checking account","A credit card"],c:2},
+      {q:"When will online banking be available?",opts:["Immediately","Within 24 hours","In one week","After approval"],c:1}]},
+];
+// ═══════════════════════════════════════════
+// PART 4 — TALKS (20 talks, 60 questions)
+// ═══════════════════════════════════════════
+// À coller dans App.jsx AVANT "// ─── HELPERS ───"
+//
+// Structure: each talk has a full text (single speaker) and a type label
+// Audio file: /audio/p4/{id}.mp3 (one file per talk)
+//
+
+var LISTENING_P4 = [
+  {id:"l4_01",type:"Voicemail",voice:"W",
+    text:"Hi, this is Karen from Summit Consulting. I'm calling to confirm our meeting on Wednesday at 10 AM. I've reserved conference room B at your office. Could you let me know if you need us to bring any presentation materials? Also, I'd like to add one more item to the agenda — we need to discuss the revised timeline. Please call me back at 555-0172. Thank you.",
+    qs:[
+      {q:"Who is the speaker?",opts:["A job applicant","A consultant","A delivery driver","A hotel receptionist"],c:1},
+      {q:"When is the meeting?",opts:["Monday at 10","Tuesday at 2","Wednesday at 10","Friday at 3"],c:2},
+      {q:"What does the speaker want to add to the agenda?",opts:["A budget review","The revised timeline","Staff introductions","A product demo"],c:1}]},
+  {id:"l4_02",type:"Announcement",voice:"M",
+    text:"Attention all passengers. Flight BA-247 to London Heathrow, originally scheduled for departure at 3:15 PM, has been delayed due to severe weather conditions. The new estimated departure time is 5:45 PM. We apologize for the inconvenience. Passengers are invited to visit the airline lounge on the second floor, where complimentary refreshments will be available. Please listen for further announcements.",
+    qs:[
+      {q:"What is the purpose of this announcement?",opts:["To announce a gate change","To inform about a flight delay","To welcome passengers on board","To advertise the airline lounge"],c:1},
+      {q:"What caused the delay?",opts:["Mechanical issues","A security check","Severe weather","Staff shortage"],c:2},
+      {q:"What is offered to passengers?",opts:["Seat upgrades","Free refreshments in the lounge","Full refunds","Hotel accommodation"],c:1}]},
+  {id:"l4_03",type:"Meeting introduction",voice:"W",
+    text:"Good morning, everyone. Thank you for coming to this month's all-hands meeting. Before we begin, I'd like to welcome two new team members who joined us last week: David Chen in engineering and Priya Sharma in product design. Please make them feel welcome. Now, the main topic today is our Q2 goals. As you know, we exceeded our Q1 targets, and I'd like to keep that momentum going.",
+    qs:[
+      {q:"What type of event is this?",opts:["A job interview","A training session","A company-wide meeting","A press conference"],c:2},
+      {q:"How many new employees are introduced?",opts:["One","Two","Three","Four"],c:1},
+      {q:"What happened in Q1?",opts:["Targets were missed","Targets were exceeded","The company downsized","New products launched"],c:1}]},
+  {id:"l4_04",type:"Tour guide",voice:"M",
+    text:"Welcome to the National Museum of Modern Art. Today's guided tour will last approximately 90 minutes and will cover the three main galleries on this floor. Photography is permitted, but please do not use flash, as it can damage the artwork. The gift shop and café are located on the ground floor and will remain open until 6 PM. Please stay with the group, and feel free to ask questions at any time.",
+    qs:[
+      {q:"Where is this announcement being made?",opts:["At a library","At a museum","At a university","At a theater"],c:1},
+      {q:"How long will the tour last?",opts:["45 minutes","60 minutes","90 minutes","120 minutes"],c:2},
+      {q:"What rule about photography is mentioned?",opts:["No photography allowed","Flash is not permitted","Only the gift shop may be photographed","Photos require a fee"],c:1}]},
+  {id:"l4_05",type:"Training session",voice:"W",
+    text:"Alright, let's get started with today's safety training. As warehouse employees, it's critical that you follow proper lifting techniques to avoid injury. Always bend at the knees, not at the waist. For items over 25 kilograms, use the mechanical lift or ask a colleague for help. I'll demonstrate the correct technique now, and then each of you will practice. Hard hats must be worn at all times in zones C and D.",
+    qs:[
+      {q:"What is the topic of this training?",opts:["Fire evacuation","Computer skills","Warehouse safety","Customer service"],c:2},
+      {q:"What should workers do for items over 25 kg?",opts:["Carry them alone carefully","Use a mechanical lift or get help","Leave them for the next shift","Report them to the manager"],c:1},
+      {q:"Where must hard hats be worn?",opts:["In all areas","Only outside","In zones C and D","In the break room"],c:2}]},
+  {id:"l4_06",type:"Voicemail",voice:"M",
+    text:"Hello, this is James Walker from Greenfield Property Management. I'm calling about the office space you inquired about on Park Avenue. The unit is 200 square meters with an open floor plan, and it's available from the first of next month. The monthly rent is $4,500, which includes utilities and one parking space. I'd love to schedule a viewing at your convenience. My number is 555-0398.",
+    qs:[
+      {q:"Why is the man calling?",opts:["To report a maintenance issue","To discuss an office rental","To confirm a meeting","To apply for a job"],c:1},
+      {q:"What is included in the rent?",opts:["Furniture and internet","Cleaning and security","Utilities and one parking space","Reception and phone service"],c:2},
+      {q:"When is the office available?",opts:["Immediately","Next week","First of next month","In three months"],c:2}]},
+  {id:"l4_07",type:"News report",voice:"W",
+    text:"In business news, TechVision Inc. announced today that it will open a new research center in Austin, Texas. The facility, which will employ over 300 engineers and scientists, is expected to be operational by next spring. The company's CEO stated that the Austin location was chosen for its strong talent pool and proximity to major universities. The investment is estimated at 150 million dollars.",
+    qs:[
+      {q:"What is TechVision Inc. planning to do?",opts:["Merge with another company","Close its headquarters","Open a research center","Launch a new product"],c:2},
+      {q:"Why was Austin chosen?",opts:["Low taxes","Available talent and nearby universities","A new airport","Government incentives"],c:1},
+      {q:"How much will the investment be?",opts:["15 million","50 million","150 million","300 million"],c:2}]},
+  {id:"l4_08",type:"Advertisement",voice:"M",
+    text:"Are you looking for a reliable delivery service for your business? FastTrack Logistics offers same-day delivery in the metropolitan area and next-day delivery nationwide. With real-time tracking and a 99.5 percent on-time rate, you can trust us with your most important shipments. New customers get 20 percent off their first month. Visit fasttracklogistics.com or call 1-800-555-FAST to get started today.",
+    qs:[
+      {q:"What service is being advertised?",opts:["Office cleaning","IT support","Delivery and logistics","Accounting services"],c:2},
+      {q:"What is the company's on-time rate?",opts:["95%","97.5%","99%","99.5%"],c:3},
+      {q:"What offer is available for new customers?",opts:["Free first delivery","20% off the first month","A free tracking device","No minimum order"],c:1}]},
+  {id:"l4_09",type:"Announcement",voice:"W",
+    text:"Attention shoppers. Riverside Mall will be closing in 30 minutes, at 9 PM. Please make your final purchases and proceed to the exits. The parking garage will remain accessible for one hour after closing. We'd like to remind you that our annual summer sale starts this Saturday, with discounts of up to 50 percent at participating stores. Thank you for visiting Riverside Mall.",
+    qs:[
+      {q:"What time does the mall close?",opts:["8:00 PM","8:30 PM","9:00 PM","9:30 PM"],c:2},
+      {q:"How long will the parking garage stay open?",opts:["30 minutes after closing","One hour after closing","Until midnight","All night"],c:1},
+      {q:"What is happening this Saturday?",opts:["A food festival","Extended hours","A summer sale","A grand reopening"],c:2}]},
+  {id:"l4_10",type:"Recorded message",voice:"M",
+    text:"Thank you for calling Greenwood Medical Center. Our office hours are Monday through Friday, 8 AM to 6 PM, and Saturday from 9 AM to 1 PM. If this is a medical emergency, please hang up and dial 911. To schedule an appointment, press 1. For billing inquiries, press 2. For prescription refills, press 3. To speak with a receptionist, please hold and your call will be answered in the order it was received.",
+    qs:[
+      {q:"What type of business is this?",opts:["A pharmacy","A medical center","An insurance company","A fitness center"],c:1},
+      {q:"When is the office open on Saturday?",opts:["8 AM to 6 PM","9 AM to 1 PM","9 AM to 5 PM","It's closed"],c:1},
+      {q:"What should callers press for an appointment?",opts:["1","2","3","0"],c:0}]},
+  {id:"l4_11",type:"Company update",voice:"W",
+    text:"I'm pleased to announce that starting next month, all full-time employees will be eligible for our new professional development program. The company will cover up to $2,000 per year for approved courses, certifications, or conferences. To apply, submit a request through the HR portal at least two weeks before the start date. Managers must approve all requests. This is a great opportunity to invest in your career growth.",
+    qs:[
+      {q:"What is being announced?",opts:["New health insurance","A professional development program","A salary increase","An office relocation"],c:1},
+      {q:"How much funding is available per employee?",opts:["$500","$1,000","$1,500","$2,000"],c:3},
+      {q:"How far in advance must requests be submitted?",opts:["One week","Two weeks","One month","Two months"],c:1}]},
+  {id:"l4_12",type:"Tour guide",voice:"M",
+    text:"We're now approaching the financial district, which is the heart of the city's business community. The tall glass building on your left is the headquarters of National Bank, one of the oldest financial institutions in the country, founded in 1852. Directly ahead is City Hall, built in the neoclassical style. We'll stop here for 15 minutes so you can take photos. Please be back on the bus by 2:30.",
+    qs:[
+      {q:"What kind of tour is this?",opts:["A museum tour","A factory tour","A city bus tour","A walking nature tour"],c:2},
+      {q:"What is the tall glass building?",opts:["City Hall","A museum","A hotel","A bank headquarters"],c:3},
+      {q:"How long is the photo stop?",opts:["5 minutes","10 minutes","15 minutes","30 minutes"],c:2}]},
+  {id:"l4_13",type:"Voicemail",voice:"W",
+    text:"Hi Mark, it's Lisa from the marketing team. I wanted to let you know that the print shop called about our brochures. They found a color mismatch on page three, so they've paused the job until we approve the correction. Could you take a look at the proof they emailed and give them the go-ahead? We need 5,000 copies by Thursday for the expo. Thanks.",
+    qs:[
+      {q:"Why is Lisa calling?",opts:["To request time off","To approve a budget","To ask about a printing issue","To invite Mark to a meeting"],c:2},
+      {q:"What problem did the print shop find?",opts:["Wrong paper size","A spelling error","A color mismatch","Missing pages"],c:2},
+      {q:"How many copies are needed?",opts:["500","1,000","2,500","5,000"],c:3}]},
+  {id:"l4_14",type:"Instructions",voice:"M",
+    text:"Before we begin today's workshop, let me go over a few logistics. Restrooms are down the hall to the left. We'll take a 15-minute break at 10:30 and a one-hour lunch break at noon. The cafeteria on the second floor serves hot meals until 1:30. All workshop materials are in the folders on your desks. Please make sure you have a name tag — if not, see me after this introduction.",
+    qs:[
+      {q:"What is the speaker doing?",opts:["Giving a keynote speech","Explaining workshop logistics","Conducting a job interview","Leading a fire drill"],c:1},
+      {q:"When is the lunch break?",opts:["At 10:30","At 11:00","At noon","At 1:30"],c:2},
+      {q:"What should attendees do if they don't have a name tag?",opts:["Go to the front desk","See the speaker after the introduction","Check their folder","Visit the cafeteria"],c:1}]},
+  {id:"l4_15",type:"Advertisement",voice:"W",
+    text:"Introducing CloudDesk Pro, the all-in-one workspace solution for modern teams. With CloudDesk, your team can collaborate on documents, manage projects, and hold video meetings — all from a single platform. No more switching between five different apps. Start your free 30-day trial today at clouddesk.com. Plans start at just $8 per user per month. CloudDesk Pro — work smarter, together.",
+    qs:[
+      {q:"What is being advertised?",opts:["A laptop","Office furniture","A workspace software platform","A coworking space"],c:2},
+      {q:"How long is the free trial?",opts:["7 days","14 days","30 days","60 days"],c:2},
+      {q:"What is the starting price?",opts:["$5 per user","$8 per user","$12 per user","$15 per user"],c:1}]},
+  {id:"l4_16",type:"Announcement",voice:"M",
+    text:"Good afternoon, everyone. I'd like to update you on the office renovation project. Phase one, which includes the reception area and the ground floor meeting rooms, has been completed ahead of schedule. Phase two — the open-plan workspace on the third floor — will begin next Monday and should take approximately four weeks. During this time, third-floor employees will be temporarily relocated to the fifth floor.",
+    qs:[
+      {q:"What has been completed?",opts:["The entire renovation","Phase one","Phase two","The parking garage"],c:1},
+      {q:"Where is phase two taking place?",opts:["Ground floor","Second floor","Third floor","Fifth floor"],c:2},
+      {q:"Where will affected employees work temporarily?",opts:["At home","On the ground floor","On the third floor","On the fifth floor"],c:3}]},
+  {id:"l4_17",type:"Weather report",voice:"W",
+    text:"Good morning. Here's your Tuesday weather forecast. We're looking at cloudy skies this morning with temperatures around 12 degrees Celsius. Rain is expected to move in by early afternoon, with heavier showers between 3 and 6 PM. Winds will pick up to 40 kilometers per hour by evening. Wednesday should be drier, with partly sunny skies returning. Don't forget your umbrella today!",
+    qs:[
+      {q:"What day is the forecast for?",opts:["Monday","Tuesday","Wednesday","Thursday"],c:1},
+      {q:"When will the heaviest rain occur?",opts:["Early morning","Late morning","Between 3 and 6 PM","After midnight"],c:2},
+      {q:"What is expected on Wednesday?",opts:["More rain","Snow","Partly sunny skies","Strong winds"],c:2}]},
+  {id:"l4_18",type:"Recorded message",voice:"M",
+    text:"Welcome to the Springfield Public Library automated system. The library is currently open. Today's hours are 9 AM to 8 PM. The book return drop box is available 24 hours a day at the main entrance. Please note that all overdue items must be returned by the end of this week to avoid additional fines. To renew a book, press 1 and enter your library card number. For event information, press 2.",
+    qs:[
+      {q:"What time does the library close today?",opts:["6 PM","7 PM","8 PM","9 PM"],c:2},
+      {q:"When is the book drop box accessible?",opts:["During library hours only","Until 10 PM","24 hours a day","On weekdays only"],c:2},
+      {q:"What must be done by the end of this week?",opts:["Library cards must be renewed","Overdue items must be returned","New members must register","Event tickets must be purchased"],c:1}]},
+  {id:"l4_19",type:"Company update",voice:"W",
+    text:"As many of you are aware, we've been reviewing our environmental policy over the past few months. I'm happy to announce three new initiatives starting in January. First, we're eliminating single-use plastics from all office kitchens. Second, we'll be installing electric vehicle charging stations in the parking garage. And third, employees who cycle to work will receive a monthly wellness bonus of $50. More details will follow by email.",
+    qs:[
+      {q:"What is the main topic?",opts:["New hiring plans","Environmental initiatives","Budget reductions","Office safety"],c:1},
+      {q:"What is being removed from kitchens?",opts:["Microwaves","Coffee machines","Single-use plastics","Vending machines"],c:2},
+      {q:"What benefit will cyclists receive?",opts:["Free bike repairs","A $50 monthly bonus","Priority parking","Extra vacation days"],c:1}]},
+  {id:"l4_20",type:"Event introduction",voice:"M",
+    text:"Ladies and gentlemen, thank you for joining us for the tenth annual Innovation Awards ceremony. Tonight we celebrate the most creative ideas and solutions from teams across the company. We received over 120 nominations this year, which is a new record. Before we announce the winners, I'd like to thank our sponsors, Meridian Technologies and GlobalBank, for making this event possible. Now, let's begin with the award for Best New Product.",
+    qs:[
+      {q:"What event is taking place?",opts:["A product launch","A shareholders' meeting","An awards ceremony","A retirement party"],c:2},
+      {q:"How many nominations were received?",opts:["Over 50","Over 80","Over 100","Over 120"],c:3},
+      {q:"What award is presented first?",opts:["Best Team","Employee of the Year","Best New Product","Innovation Leader"],c:2}]},
+];
 // ─── HELPERS ───
 function today(){return new Date().toISOString().split("T")[0];}
 
@@ -1289,6 +1612,15 @@ function speakBrowserTTS(text,rate,cb){
   var v=getEnVoice();if(v)u.voice=v;u.lang="en-US";
   u.onend=cb;u.onerror=cb;
   window.speechSynthesis.speak(u);
+}
+
+function playAudioFile(url){
+  return new Promise(function(resolve){
+    var audio=new Audio(url);
+    audio.onended=resolve;
+    audio.onerror=function(){console.warn("Audio not found: "+url);resolve();};
+    audio.play().catch(resolve);
+  });
 }
 // Preload voices (some browsers need this)
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){_voices=null;getEnVoice();};}
@@ -1801,11 +2133,8 @@ function Train(p){
   var sections=[
     {title:"Exercises",sub:"TOEIC Parts training",items:[
       {id:"daily",n:"Daily Challenge",d:"5 daily questions, timed",i:"⚡",bg:"linear-gradient(135deg,#00d4ff,#a855f7)"},
-	  {id:"lis",n:"Parts 1-2 — Listening",d:"Ear training with audio",i:"🎧",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
-      {id:"drill",n:"Part 5 — Sentence Completion",d:"10 random questions from 100",i:"📝",bg:"linear-gradient(135deg,#00e676,#00bfa5)"},
-      {id:"timesim",n:"Part 5 — Exam Simulation",d:"30 Qs in 10 min, real pace",i:"🏁",bg:"linear-gradient(135deg,#8b5cf6,#6366f1)"},
-      {id:"p6",n:"Part 6 — Text Completion",d:"Business texts with blanks",i:"📄",bg:"linear-gradient(135deg,#ec4899,#a855f7)"},
-      {id:"p7",n:"Part 7 — Reading",d:"Passages + comprehension Qs",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#06b6d4)"},
+      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"🎧",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
+      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#8b5cf6)"},
     ]},
     {title:"Grammar & Vocabulary",sub:"Build your foundations",items:[
       {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
@@ -2780,6 +3109,12 @@ function TeacherDash(p){
 
       <h3 className="out" style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--t2)"}}>Module Breakdown</h3>
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
+	  <button className="btn2" onClick={function(){
+        if(prompt("Type DELETE to confirm removing "+s.name)!=="DELETE")return;
+        supabase.from('students').delete().eq('id',s.id).then(function(){
+          setDetail(null);loadStudents();
+        });
+      }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%",marginBottom:20}}>🗑️ Delete this student</button>
         {MISSION_MODULES.map(function(m){
           var ms=modules[m.id];
           if(!ms)return(<div key={m.id} className="crd" style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:10,opacity:.4}}>
@@ -2809,7 +3144,7 @@ function TeacherDash(p){
 
   return(<div className="app enter" style={{padding:"20px 16px 40px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Logout</button>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back to profile</button>
       <span className="out" style={{fontWeight:700,fontSize:15}}>Teacher Dashboard</span>
       <div style={{width:40}}/></div>
 
@@ -2874,6 +3209,14 @@ function ListenHub(p){
         <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>💬</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 2 — Question-Response</div><div style={{fontSize:11,color:"var(--t3)"}}>{LISTENING_P2.length} questions</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+		<div className="crd" onClick={function(){p.nav("lisP3");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#8b5cf6,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🗣️</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 3 — Conversations</div><div style={{fontSize:11,color:"var(--t3)"}}>{LISTENING_P3.length} conversations</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+      <div className="crd" onClick={function(){p.nav("lisP4");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#06b6d4,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🎙️</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 4 — Talks</div><div style={{fontSize:11,color:"var(--t3)"}}>{LISTENING_P4.length} talks</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
     </div>
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
   </div>);
@@ -2889,14 +3232,14 @@ function ListenP2(p){
     if(playing)return;
     setPlaying(true);
     var it=items[ci];
-    await speakAndWait(it.q,0.9);
-    await new Promise(function(r){setTimeout(r,500);});
-    await speakAndWait("A. "+it.opts[0],0.85);
+    await playAudioFile("/audio/p2/"+it.id+"_q.mp3");
     await new Promise(function(r){setTimeout(r,400);});
-    await speakAndWait("B. "+it.opts[1],0.85);
-    await new Promise(function(r){setTimeout(r,400);});
-    await speakAndWait("C. "+it.opts[2],0.85);
+    await playAudioFile("/audio/p2/"+it.id+"_0.mp3");
     await new Promise(function(r){setTimeout(r,300);});
+    await playAudioFile("/audio/p2/"+it.id+"_1.mp3");
+    await new Promise(function(r){setTimeout(r,300);});
+    await playAudioFile("/audio/p2/"+it.id+"_2.mp3");
+    await new Promise(function(r){setTimeout(r,200);});
     setPlaying(false);setPlayed(true);
   }
 
@@ -2991,8 +3334,8 @@ function ListenP1(p){
     var it=items[ci];
     for(var i=0;i<it.opts.length;i++){
       setCurOpt(i);
-      await speakAndWait(String.fromCharCode(65+i)+". "+it.opts[i],0.85);
-      await new Promise(function(r){setTimeout(r,500);});
+      await playAudioFile("/audio/p1/"+it.id+"_"+i+".mp3");
+      await new Promise(function(r){setTimeout(r,400);});
     }
     setCurOpt(-1);setPlaying(false);setPlayed(true);
   }
@@ -3080,6 +3423,247 @@ function ListenP1(p){
     <button className="btn1" onClick={nxt} style={{marginTop:14}}>{ci<items.length-1?"Next":"See Results"}</button>
   </div>);
 }
+
+// ═══════════════════════════════════════════
+// COMPOSANTS Part 3 & Part 4
+// ═══════════════════════════════════════════
+// À coller AVANT "// ─── LEAGUE ───"
+
+
+// ─── PART 3 CONVERSATIONS ───
+function ListenP3(p){
+  var items=useMemo(function(){return shuffle(LISTENING_P3).slice(0,10);},[]);
+  var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
+  var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
+  var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curLine,setCurLine]=useState(-1);
+
+  var totalQs=useMemo(function(){var c=0;items.forEach(function(it){c+=it.qs.length;});return c;},[]);
+
+  async function playConversation(){
+    if(playing)return;
+    setPlaying(true);
+    var it=items[ci];
+    for(var i=0;i<it.lines.length;i++){
+      setCurLine(i);
+      await playAudioFile("/audio/p3/"+it.id+"_line"+i+".mp3");
+      await new Promise(function(r){setTimeout(r,300);});
+    }
+    setCurLine(-1);setPlaying(false);setPlayed(true);
+  }
+
+  function doAns(i){
+    sPk(i);if(i===items[ci].qs[qi].c)sSc(sc+1);sTQ(totalQ+1);sP("fb");
+  }
+  function nxt(){
+    sPk(-1);
+    if(qi<items[ci].qs.length-1){sQi(qi+1);sP("q");}
+    else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);setCurLine(-1);sP("listen");}
+    else{sP("done");p.done(sc,totalQ+1,30+sc*5);}
+  }
+
+  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>🗣️</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 3 — Conversations</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Listen to short conversations between 2 people.<br/>Answer 3 questions about each conversation.</p>
+    <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Read the questions BEFORE listening!</p>
+    <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
+
+  if(ph==="done"){var xp=30+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 3 Complete</h1>
+    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
+    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
+    <button className="btn1" onClick={p.back}>Back</button></div>);}
+
+  var it=items[ci];
+
+  // Listen phase — show questions preview + play button
+  if(ph==="listen")return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Conversation {ci+1}/{items.length}</span></div>
+    <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#8b5cf6,#ec4899)"/>
+
+    <div className="out" style={{fontSize:11,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginTop:16,marginBottom:12}}>Preview the questions first</div>
+    <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>
+      {it.qs.map(function(q,i){return(<div key={i} className="crd" style={{padding:"10px 14px",background:"rgba(139,92,246,.04)",borderColor:"rgba(139,92,246,.1)"}}>
+        <span style={{fontSize:12,color:"var(--t2)"}}>{(i+1)+". "+q.q}</span></div>);})}
+    </div>
+
+    {!played?<div style={{textAlign:"center"}}>
+      <button onClick={playConversation} disabled={playing}
+        style={{width:80,height:80,borderRadius:"50%",border:"none",background:playing?"rgba(139,92,246,.2)":"linear-gradient(135deg,#8b5cf6,#ec4899)",
+          cursor:playing?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",
+          animation:playing?"pulse 1.5s infinite":"none"}}>
+        <span style={{fontSize:32}}>{playing?"🔊":"▶️"}</span>
+      </button>
+      {playing&&curLine>=0&&<p className="out" style={{color:"var(--purple)",fontSize:13,fontWeight:600}}>
+        {it.lines[curLine].s==="M"?"👨 Man speaking...":"👩 Woman speaking..."}</p>}
+      {!playing&&!played&&<p className="out" style={{color:"var(--t2)",fontSize:13}}>Tap to hear the conversation</p>}
+    </div>
+    :<div style={{textAlign:"center",animation:"fadeIn .3s"}}>
+      <p className="out" style={{color:"var(--green)",fontSize:14,fontWeight:600,marginBottom:12}}>Conversation complete</p>
+      <button className="btn1" onClick={function(){sP("q");}}>Answer Questions</button>
+      <button onClick={function(){setPlayed(false);setCurLine(-1);}} className="btn2" style={{marginTop:8,width:"100%",fontSize:12}}>🔄 Replay conversation</button>
+    </div>}
+  </div>);
+
+  // Question phase
+  var curQ=it.qs[qi];
+  return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Q {totalQ+1}/{totalQs}</span></div>
+    <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#8b5cf6,#ec4899)"/>
+    <div style={{fontSize:10,color:"var(--purple)",marginTop:8,marginBottom:4}} className="out">Conversation {ci+1} — Question {qi+1}/3</div>
+    <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:8}}>{curQ.q}</h2>
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      {curQ.opts.map(function(opt,i){
+        var isCor=i===curQ.c;var isPick=pick===i;var show=ph==="fb";
+        var bg="var(--bg2)";var bd="var(--bdr)";
+        if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
+        else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
+        return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={show}
+          style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
+          <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(show&&isCor?"var(--green)":show&&isPick?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:show&&isCor?"var(--green)":show&&isPick&&!isCor?"var(--red)":"transparent",color:show&&(isCor||isPick)?"#fff":"var(--t3)"}}>
+            {show&&isCor?"✓":show&&isPick?"✗":String.fromCharCode(65+i)}</div>
+          <span>{opt}</span></button>);})}
+    </div>
+    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
+      <button className="btn1" onClick={nxt} style={{marginTop:8}}>{qi<it.qs.length-1?"Next Question":(ci<items.length-1?"Next Conversation":"See Results")}</button>
+    </div>}
+  </div>);
+}
+
+// ─── PART 4 TALKS ───
+function ListenP4(p){
+  var items=useMemo(function(){return shuffle(LISTENING_P4).slice(0,10);},[]);
+  var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
+  var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
+  var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);
+
+  var totalQs=useMemo(function(){var c=0;items.forEach(function(it){c+=it.qs.length;});return c;},[]);
+
+  async function playTalk(){
+    if(playing)return;
+    setPlaying(true);
+    await playAudioFile("/audio/p4/"+items[ci].id+".mp3");
+    setPlaying(false);setPlayed(true);
+  }
+
+  function doAns(i){
+    sPk(i);if(i===items[ci].qs[qi].c)sSc(sc+1);sTQ(totalQ+1);sP("fb");
+  }
+  function nxt(){
+    sPk(-1);
+    if(qi<items[ci].qs.length-1){sQi(qi+1);sP("q");}
+    else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);sP("listen");}
+    else{sP("done");p.done(sc,totalQ+1,30+sc*5);}
+  }
+
+  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>🎙️</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 4 — Talks</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Listen to short talks: announcements, voicemails, reports.<br/>Answer 3 questions about each talk.</p>
+    <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Read the questions BEFORE listening!</p>
+    <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
+
+  if(ph==="done"){var xp=30+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 4 Complete</h1>
+    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
+    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
+    <button className="btn1" onClick={p.back}>Back</button></div>);}
+
+  var it=items[ci];
+
+  if(ph==="listen")return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Talk {ci+1}/{items.length}</span></div>
+    <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#06b6d4,#3b82f6)"/>
+
+    <div style={{display:"flex",gap:6,marginTop:12,marginBottom:12}}>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(6,182,212,.1)",color:"#06b6d4",borderRadius:6,fontWeight:600}} className="out">{it.type}</span></div>
+
+    <div className="out" style={{fontSize:11,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12}}>Preview the questions first</div>
+    <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>
+      {it.qs.map(function(q,i){return(<div key={i} className="crd" style={{padding:"10px 14px",background:"rgba(6,182,212,.04)",borderColor:"rgba(6,182,212,.1)"}}>
+        <span style={{fontSize:12,color:"var(--t2)"}}>{(i+1)+". "+q.q}</span></div>);})}
+    </div>
+
+    {!played?<div style={{textAlign:"center"}}>
+      <button onClick={playTalk} disabled={playing}
+        style={{width:80,height:80,borderRadius:"50%",border:"none",background:playing?"rgba(6,182,212,.2)":"linear-gradient(135deg,#06b6d4,#3b82f6)",
+          cursor:playing?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",
+          animation:playing?"pulse 1.5s infinite":"none"}}>
+        <span style={{fontSize:32}}>{playing?"🔊":"▶️"}</span>
+      </button>
+      {playing&&<p className="out" style={{color:"var(--cyan)",fontSize:13,fontWeight:600}}>Listening...</p>}
+      {!playing&&<p className="out" style={{color:"var(--t2)",fontSize:13}}>Tap to hear the talk</p>}
+    </div>
+    :<div style={{textAlign:"center",animation:"fadeIn .3s"}}>
+      <p className="out" style={{color:"var(--green)",fontSize:14,fontWeight:600,marginBottom:12}}>Talk complete</p>
+      <button className="btn1" onClick={function(){sP("q");}}>Answer Questions</button>
+      <button onClick={function(){setPlayed(false);}} className="btn2" style={{marginTop:8,width:"100%",fontSize:12}}>🔄 Replay talk</button>
+    </div>}
+  </div>);
+
+  var curQ=it.qs[qi];
+  return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Q {totalQ+1}/{totalQs}</span></div>
+    <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#06b6d4,#3b82f6)"/>
+    <div style={{fontSize:10,color:"var(--cyan)",marginTop:8,marginBottom:4}} className="out">{it.type} — Question {qi+1}/3</div>
+    <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:8}}>{curQ.q}</h2>
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      {curQ.opts.map(function(opt,i){
+        var isCor=i===curQ.c;var isPick=pick===i;var show=ph==="fb";
+        var bg="var(--bg2)";var bd="var(--bdr)";
+        if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
+        else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
+        return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={show}
+          style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
+          <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(show&&isCor?"var(--green)":show&&isPick?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:show&&isCor?"var(--green)":show&&isPick&&!isCor?"var(--red)":"transparent",color:show&&(isCor||isPick)?"#fff":"var(--t3)"}}>
+            {show&&isCor?"✓":show&&isPick?"✗":String.fromCharCode(65+i)}</div>
+          <span>{opt}</span></button>);})}
+    </div>
+    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
+      <button className="btn1" onClick={nxt} style={{marginTop:8}}>{qi<it.qs.length-1?"Next Question":(ci<items.length-1?"Next Talk":"See Results")}</button>
+    </div>}
+  </div>);
+}
+
+// ─── READING HUB ───
+function ReadingHub(p){
+  return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>📖</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Reading Practice</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train for the TOEIC Reading section</p>
+    <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
+      <div className="crd" onClick={function(){p.nav("drill");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#00e676,#00bfa5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📝</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 5 — Sentence Completion</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random questions from 100</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+      <div className="crd" onClick={function(){p.nav("timesim");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#8b5cf6,#6366f1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🏁</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 5 — Exam Simulation</div><div style={{fontSize:11,color:"var(--t3)"}}>30 Qs in 10 min, real pace</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+      <div className="crd" onClick={function(){p.nav("p6");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#ec4899,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📄</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 6 — Text Completion</div><div style={{fontSize:11,color:"var(--t3)"}}>Business texts with blanks</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+      <div className="crd" onClick={function(){p.nav("p7");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#3b82f6,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📖</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 7 — Reading Comprehension</div><div style={{fontSize:11,color:"var(--t3)"}}>Passages + questions</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+    </div>
+    <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
+  </div>);
+}
 // ─── LEAGUE ───
 function League(p){var u=p.u,lg=getLeague(u.weeklyXp);
 var[rivals,setRivals]=useState([]);
@@ -3147,7 +3731,14 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {la.map(function(a){return(<div key={a.id} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:14,opacity:.4}}>
 <div style={{fontSize:24}}>🔒</div><div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{a.name}</div><div style={{fontSize:12,color:"var(--t2)"}}>{a.desc}</div></div></div>);})}</div>
 <div style={{textAlign:"center",marginTop:32}}>
-  <button className="btn2" onClick={p.reset} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>Reset all data</button>
+  <button className="btn2" onClick={function(){
+    var code=prompt("Teacher code:");
+    if(code===TEACHER_CODE)p.goTeacher();
+  }} style={{fontSize:12,width:"100%",marginBottom:10}}>👨‍🏫 Teacher Dashboard</button>
+  <button className="btn2" onClick={function(){
+    var code=prompt("Enter teacher code to reset:");
+    if(code===TEACHER_CODE)p.reset();
+  }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>Reset all data</button>
 </div></div>);}
 
 // ═══════════════════════════════════════════
@@ -3227,27 +3818,35 @@ useEffect(function(){
     return c;
   }
   function nav(pg,arg){sSP(pg);sSPA(arg||null);}
-  async function onboard(name, placementScore, lvl) {
-  // Créer un compte anonyme
-  const { data: authData } = await supabase.auth.signInAnonymously();
-  
-  // Créer le profil étudiant
-  const u = fresh(name);
-  if (lvl) { u.xp = lvl.startXp; u.weeklyXp = lvl.startXp; }
-  
-  // Sauvegarder dans Supabase
-  await supabase.from('students').insert({
-    id: authData.user.id,
-    name: name,
-    class_code: 'idrac2026',
-    xp: u.xp,
-    placement_score: placementScore,
-    placement_level: lvl ? lvl.label : null,
-    // ... autres champs
-  });
-  
-  sv(u);
-}
+  async function onboard(name,placementScore,lvl){
+    var authRes=await supabase.auth.signInAnonymously();
+    if(!authRes.data.user)return;
+    var u=fresh(name);
+    if(lvl){u.xp=lvl.startXp;u.weeklyXp=lvl.startXp;}
+    if(placementScore!==undefined){
+      u.stats.totalQ=15;u.stats.correct=placementScore;u.stats.sessions=1;
+      PLACEMENT_TEST.forEach(function(q,i){
+        var answered=i<15;
+        if(answered){
+          var cat=q.cat;var modMap={"Tenses":"drill","Passive Voice":"drill","Prepositions":"prepdrill","Word Families":"wordfam","Connectors":"connsort","Subject-Verb Agreement":"drill","Gerunds vs Infinitives":"gerinf","Conditionals":"drill","Relative Pronouns":"drill","Collocations":"drill","Comparatives":"drill","Articles":"drill"};
+          var modId=modMap[cat]||"drill";
+          if(!u.moduleScores[modId])u.moduleScores[modId]={correct:0,total:0,sessions:1,lastDate:today()};
+          u.moduleScores[modId].total+=1;
+        }
+      });
+    }
+    // Save to state first, then Supabase gets correct values via sv->save
+    sU(u);
+    await supabase.from('students').upsert({
+      id:authRes.data.user.id,name:name,class_code:'idrac2026',
+      xp:u.xp,weekly_xp:u.weeklyXp,week_id:u.weekId,
+      placement_score:placementScore,placement_level:lvl?lvl.label:null,
+      stats:u.stats,module_scores:u.moduleScores,
+      mission:u.mission,avatar:u.avatar||"⚔️",theme:u.theme||"dark",unlocked_ach:u.unlockedAch||[]
+    });
+    save(u);
+  }
+ 
   function goTeacher(){setTeacher(true);}
   function dailyDone(sc,xp){var c=addXp(xp);c.daily={date:today(),done:true,score:sc,xpE:xp};c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;recordModule(c,"daily",sc,5);checkMission(c,"daily");sv(c);}
   function drillDone(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
@@ -3281,10 +3880,13 @@ useEffect(function(){
   if(sp==="p6")return(<div className="app"><style>{CSS}</style><Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="p7")return(<div className="app"><style>{CSS}</style><Part7Read u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="lis")return(<div className="app"><style>{CSS}</style><ListenHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lisP2")return(<div className="app"><style>{CSS}</style><ListenP2 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="lisP1")return(<div className="app"><style>{CSS}</style><ListenP1 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="read")return(<div className="app"><style>{CSS}</style><ReadingHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP2")return(<div className="app"><style>{CSS}</style><ListenP2 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP3")return(<div className="app"><style>{CSS}</style><ListenP3 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP4")return(<div className="app"><style>{CSS}</style><ListenP4 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
 
   return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
-    {tab==="home"&&<Home u={u} nav={nav}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}}/>}
+    {tab==="home"&&<Home u={u} nav={nav}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     <Tabs cur={tab} go={function(t){sT(t);sSP(null);}}/></div>);
 }
