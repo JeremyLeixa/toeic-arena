@@ -6,1912 +6,20 @@ import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, Responsi
    Mobile-first TOEIC training platform
    ═══════════════════════════════════════════ */
 
-var LEAGUES = [
-  { id: "bronze", name: "Bronze", icon: "🥉", color: "#cd7f32", min: 0 },
-  { id: "silver", name: "Silver", icon: "🥈", color: "#c0c0c0", min: 200 },
-  { id: "gold", name: "Gold", icon: "🥇", color: "#ffd700", min: 500 },
-  { id: "platinum", name: "Platinum", icon: "💎", color: "#00d4ff", min: 1000 },
-  { id: "diamond", name: "Diamond", icon: "👑", color: "#ff6bff", min: 2000 },
-];
-var COMPETITORS = [
-  {n:"Léa M.",a:"🦊"},{n:"Hugo D.",a:"🐺"},{n:"Chloé R.",a:"🦁"},{n:"Théo B.",a:"🐯"},
-  {n:"Emma L.",a:"🦅"},{n:"Lucas P.",a:"🐻"},{n:"Manon F.",a:"🦋"},{n:"Nathan V.",a:"🐲"},
-  {n:"Jade K.",a:"🦄"},{n:"Enzo S.",a:"🐬"},{n:"Camille T.",a:"🌸"},{n:"Raphaël G.",a:"⚡"},
-];
-var ACHIEVEMENTS = [
-  {id:"first_blood",name:"First Blood",desc:"Complete your first exercise",icon:"⚔️",check:function(s){return s.stats.sessions>=1;}},
-  {id:"streak_3",name:"On Fire",desc:"3-day streak",icon:"🔥",check:function(s){return s.streak>=3;}},
-  {id:"streak_7",name:"Unstoppable",desc:"7-day streak",icon:"💥",check:function(s){return s.streak>=7;}},
-  {id:"streak_30",name:"Legendary",desc:"30-day streak",icon:"🏆",check:function(s){return s.streak>=30;}},
-  {id:"vocab_50",name:"Word Collector",desc:"Review 50 flashcards",icon:"📚",check:function(s){return (s.stats.cardsRev||0)>=50;}},
-  {id:"perfect_daily",name:"Flawless Victory",desc:"Perfect daily challenge",icon:"✨",check:function(s){return (s.stats.perfects||0)>=1;}},
-  {id:"level_5",name:"Rising Star",desc:"Reach level 5",icon:"⭐",check:function(s){return getLevel(s.xp).level>=5;}},
-  {id:"level_10",name:"Arena Champion",desc:"Reach level 10",icon:"👑",check:function(s){return getLevel(s.xp).level>=10;}},
-  // ─── VOLUME / ENDURANCE ───
-  {id:"q_100",name:"Centurion",desc:"Answer 100 questions",icon:"🗡️",check:function(s){return(s.stats.totalQ||0)>=100;}},
-  {id:"q_500",name:"Gladiator",desc:"Answer 500 questions",icon:"⚔️",check:function(s){return(s.stats.totalQ||0)>=500;}},
-  {id:"q_1000",name:"War Machine",desc:"Answer 1000 questions",icon:"🤖",check:function(s){return(s.stats.totalQ||0)>=1000;}},
-  {id:"sessions_25",name:"Regular",desc:"Complete 25 training sessions",icon:"🎖️",check:function(s){return(s.stats.sessions||0)>=25;}},
-  {id:"sessions_100",name:"Iron Will",desc:"Complete 100 training sessions",icon:"🛡️",check:function(s){return(s.stats.sessions||0)>=100;}},
-  // ─── QUALITY / ACCURACY ───
-  {id:"acc_70",name:"Sharpshooter",desc:"70%+ accuracy (min 50 questions)",icon:"🎯",check:function(s){return(s.stats.totalQ||0)>=50&&s.stats.correct/s.stats.totalQ>=0.7;}},
-  {id:"acc_85",name:"Sniper",desc:"85%+ accuracy (min 100 questions)",icon:"🔫",check:function(s){return(s.stats.totalQ||0)>=100&&s.stats.correct/s.stats.totalQ>=0.85;}},
-  {id:"perfects_5",name:"Perfectionist",desc:"5 perfect daily challenges",icon:"💎",check:function(s){return(s.stats.perfects||0)>=5;}},
-  {id:"perfects_10",name:"Untouchable",desc:"10 perfect daily challenges",icon:"🌟",check:function(s){return(s.stats.perfects||0)>=10;}},
-  // ─── DIVERSITY / EXPLORATION ───
-  {id:"explore_5",name:"Explorer",desc:"Try 5 different modules",icon:"🧭",check:function(s){return s.moduleScores?Object.keys(s.moduleScores).length>=5:false;}},
-  {id:"explore_10",name:"Cartographer",desc:"Try 10 different modules",icon:"🗺️",check:function(s){return s.moduleScores?Object.keys(s.moduleScores).length>=10:false;}},
-  {id:"mod_master",name:"Specialist",desc:"80%+ on any module (min 20 Q)",icon:"🏅",check:function(s){if(!s.moduleScores)return false;var keys=Object.keys(s.moduleScores);for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(m.total>=20&&m.correct/m.total>=0.8)return true;}return false;}},
-  // ─── FLASHCARDS / VOCABULARY ───
-  {id:"vocab_200",name:"Lexicon",desc:"Review 200 flashcards",icon:"📖",check:function(s){return(s.stats.cardsRev||0)>=200;}},
-  {id:"mastered_25",name:"Memory Palace",desc:"Master 25 vocabulary cards",icon:"🏛️",check:function(s){if(!s.cardStates)return false;var mc=0;Object.keys(s.cardStates).forEach(function(k){if(s.cardStates[k].interval>=7)mc++;});return mc>=25;}},
-  {id:"mastered_75",name:"Walking Dictionary",desc:"Master 75 vocabulary cards",icon:"📕",check:function(s){if(!s.cardStates)return false;var mc=0;Object.keys(s.cardStates).forEach(function(k){if(s.cardStates[k].interval>=7)mc++;});return mc>=75;}},
-  // ─── LEVELS / XP ───
-  {id:"level_20",name:"Warlord",desc:"Reach level 20",icon:"🔱",check:function(s){return getLevel(s.xp).level>=20;}},
-  {id:"weekly_500",name:"Weekly Warrior",desc:"Earn 500 XP in one week",icon:"⚡",check:function(s){return(s.weeklyXp||0)>=500;}},
-  // ─── MOCK TEST ───
-  {id:"mock_complete",name:"Trial by Fire",desc:"Complete a Mock Test",icon:"📝",check:function(s){return s.mockResults&&(s.mockResults.mock1||s.mockResults.mock2);}},
-  {id:"toeic_master",name:"TOEIC Master",desc:"Score 400+ on a Mock Test",icon:"🏆",check:function(s){if(!s.mockResults)return false;var m1=s.mockResults.mock1;var m2=s.mockResults.mock2;return(m1&&m1.toeicEstimate>=400)||(m2&&m2.toeicEstimate>=400);}},
-];
-var VOCAB = [
-  { id:"finance",name:"Finance & Banking",icon:"💰",col:"#22c55e",cards:[
-    {id:"f1",w:"revenue",d:"Income generated from business operations",e:"The company's annual revenue exceeded $2 million."},
-    {id:"f2",w:"expenditure",d:"Money spent on something; an expense",e:"Capital expenditures were higher than expected."},
-    {id:"f3",w:"quarterly",d:"Happening every three months",e:"The quarterly report shows a 15% increase in profits."},
-    {id:"f4",w:"dividend",d:"A payment made to shareholders from profits",e:"Shareholders will receive a dividend of $0.50 per share."},
-    {id:"f5",w:"invoice",d:"A document requesting payment for goods/services",e:"Please send the invoice to our accounting department."},
-    {id:"f6",w:"audit",d:"An official examination of financial records",e:"The annual audit revealed no irregularities."},
-    {id:"f7",w:"liability",d:"A financial obligation or debt",e:"The company reduced its liabilities by 20% this year."},
-    {id:"f8",w:"asset",d:"Something of value owned by a company",e:"Real estate is the firm's most valuable asset."},
-    {id:"f9",w:"forecast",d:"A prediction of future financial performance",e:"The sales forecast for next quarter looks promising."},
-    {id:"f10",w:"transaction",d:"An instance of buying or selling something",e:"All transactions over $10,000 must be reported."},
-    {id:"f11",w:"fiscal year",d:"A 12-month period used for accounting purposes",e:"Our fiscal year ends on March 31st."},
-    {id:"f12",w:"reimbursement",d:"The act of paying someone back for expenses",e:"Travel reimbursements are processed within 10 business days."},
-    {id:"f13",w:"mortgage",d:"A loan used to purchase property",e:"Interest rates on mortgages have risen sharply this year."},
-  ]},
-  { id:"marketing",name:"Marketing & Sales",icon:"📢",col:"#f59e0b",cards:[
-    {id:"m1",w:"campaign",d:"A planned series of marketing activities",e:"The advertising campaign boosted sales by 30%."},
-    {id:"m2",w:"target audience",d:"The intended group of consumers",e:"Our target audience is millennials aged 25-35."},
-    {id:"m3",w:"brand awareness",d:"How well consumers recognize a brand",e:"Social media increased our brand awareness significantly."},
-    {id:"m4",w:"endorsement",d:"Public approval or support, often by a celebrity",e:"The athlete's endorsement helped launch the product."},
-    {id:"m5",w:"demographic",d:"A particular sector of the population",e:"We need to analyze the demographics of our customer base."},
-    {id:"m6",w:"survey",d:"A study of opinions or experiences of a group",e:"The customer survey revealed areas for improvement."},
-    {id:"m7",w:"launch",d:"To introduce a new product or service",e:"We plan to launch the new product line in March."},
-    {id:"m8",w:"promotion",d:"Activities to increase awareness or sales",e:"The store is running a special promotion this week."},
-	{id:"m9",w:"testimonial",d:"A statement from a customer praising a product or service",e:"We use client testimonials on our website to build trust."},
-    {id:"m10",w:"market share",d:"The portion of a market controlled by a company",e:"Our market share grew by 5% after the rebranding."},
-    {id:"m11",w:"retail",d:"The sale of goods to the general public",e:"The retail sector has been affected by the rise of online shopping."},
-    {id:"m12",w:"competitor",d:"A company that sells similar products or services",e:"We need to monitor what our competitors are offering."},
-    {id:"m13",w:"revenue stream",d:"A source of income for a business",e:"Subscription services have become our main revenue stream."},
-  ]},
-  { id:"hr",name:"Human Resources",icon:"👥",col:"#8b5cf6",cards:[
-    {id:"h1",w:"recruitment",d:"The process of finding and hiring employees",e:"The recruitment drive attracted over 500 applicants."},
-    {id:"h2",w:"applicant",d:"A person who applies for a job",e:"Each applicant must submit a cover letter and resume."},
-    {id:"h3",w:"benefits",d:"Non-salary compensation (health insurance, etc.)",e:"The company offers excellent health and retirement benefits."},
-    {id:"h4",w:"compensation",d:"Total payment and benefits for work",e:"The compensation package includes a competitive salary."},
-    {id:"h5",w:"performance review",d:"A formal evaluation of an employee's work",e:"Performance reviews are conducted twice a year."},
-    {id:"h6",w:"resignation",d:"The act of voluntarily leaving a job",e:"She submitted her resignation effective next month."},
-    {id:"h7",w:"onboarding",d:"The process of integrating a new employee",e:"The onboarding program lasts two weeks."},
-    {id:"h8",w:"tenure",d:"The length of time holding a position",e:"During his tenure as CEO, profits tripled."},
-	{id:"h9",w:"probation",d:"A trial period for a new employee",e:"All new hires are on a six-month probation period."},
-    {id:"h10",w:"severance",d:"Payment made to an employee upon termination",e:"The severance package includes three months of salary."},
-    {id:"h11",w:"turnover",d:"The rate at which employees leave a company",e:"High staff turnover is costing the company thousands in recruitment."},
-    {id:"h12",w:"grievance",d:"A formal complaint by an employee",e:"She filed a grievance about the working conditions."},
-    {id:"h13",w:"shortlist",d:"A list of selected candidates for a position",e:"Five applicants have been shortlisted for the final interview."},
-  ]},
-  { id:"manufacturing",name:"Manufacturing",icon:"🏭",col:"#ef4444",cards:[
-    {id:"mf1",w:"assembly line",d:"A series of workstations for building products",e:"The assembly line produces 500 units per day."},
-    {id:"mf2",w:"inventory",d:"Stock of goods held by a business",e:"We need to check our inventory before placing a new order."},
-    {id:"mf3",w:"quality control",d:"Processes to ensure product standards",e:"Quality control detected a defect in the batch."},
-    {id:"mf4",w:"warehouse",d:"A large building for storing goods",e:"The goods are stored in our main warehouse."},
-    {id:"mf5",w:"shipment",d:"A quantity of goods sent together",e:"The shipment will arrive by Friday."},
-    {id:"mf6",w:"supplier",d:"A company that provides goods to another",e:"We switched to a more reliable supplier."},
-    {id:"mf7",w:"output",d:"The amount of goods produced",e:"Factory output increased by 12% this quarter."},
-	{id:"mf8",w:"defect",d:"A fault or imperfection in a product",e:"The batch was recalled due to a manufacturing defect."},
-    {id:"mf9",w:"raw materials",d:"Basic substances used to make products",e:"The price of raw materials has increased significantly."},
-    {id:"mf10",w:"throughput",d:"The amount of material processed in a given time",e:"The new machinery doubled our daily throughput."},
-    {id:"mf11",w:"compliance",d:"Meeting required standards or regulations",e:"All products must be in compliance with safety regulations."},
-    {id:"mf12",w:"specification",d:"A detailed description of design and materials",e:"The product was built according to the client's specifications."},
-  ]},
-  { id:"travel",name:"Travel & Transport",icon:"✈️",col:"#06b6d4",cards:[
-    {id:"t1",w:"itinerary",d:"A planned route or schedule for a trip",e:"Please review the travel itinerary before departure."},
-    {id:"t2",w:"accommodation",d:"A place to stay (hotel, etc.)",e:"The organizers arranged accommodation for all speakers."},
-    {id:"t3",w:"boarding pass",d:"A document allowing entry onto a plane",e:"Please have your boarding pass ready at the gate."},
-    {id:"t4",w:"reservation",d:"An arrangement to have something held for you",e:"I'd like to make a reservation for two."},
-    {id:"t5",w:"layover",d:"A stop between connecting flights",e:"We have a three-hour layover in Dubai."},
-    {id:"t6",w:"customs",d:"The government department controlling imports",e:"You must declare all goods at customs."},
-    {id:"t7",w:"terminal",d:"A building at an airport for passengers",e:"International flights depart from Terminal 2."},
-	{id:"t8",w:"round trip",d:"A journey to a place and back again",e:"A round trip ticket to London costs less than two one-way fares."},
-    {id:"t9",w:"carry-on",d:"A small bag taken into the aircraft cabin",e:"Each passenger is allowed one carry-on and one personal item."},
-    {id:"t10",w:"connecting flight",d:"A flight that requires changing planes",e:"We have a connecting flight in Frankfurt with a two-hour layover."},
-    {id:"t11",w:"fare",d:"The price charged for a journey",e:"Bus fares will increase by 10% starting next month."},
-    {id:"t12",w:"commute",d:"A regular journey between home and work",e:"Her daily commute takes about 45 minutes by train."},
-  ]},
-  { id:"office",name:"Office & Admin",icon:"🏢",col:"#64748b",cards:[
-    {id:"o1",w:"memorandum",d:"A written message in business (memo)",e:"The manager sent a memorandum about the policy change."},
-    {id:"o2",w:"agenda",d:"A list of items to discuss at a meeting",e:"The first item on the agenda is the budget review."},
-    {id:"o3",w:"deadline",d:"The latest time something must be completed",e:"The deadline for submissions is next Friday."},
-    {id:"o4",w:"conference",d:"A large meeting or event for discussion",e:"Over 300 people attended the annual conference."},
-    {id:"o5",w:"attachment",d:"A file sent with an email",e:"Please find the report as an attachment."},
-    {id:"o6",w:"correspondence",d:"Letters or emails exchanged",e:"All correspondence should be directed to the main office."},
-    {id:"o7",w:"stationery",d:"Office supplies like paper, pens, envelopes",e:"We need to order more stationery for the department."},
-    {id:"o8",w:"minutes",d:"The official record of a meeting",e:"Who is taking the minutes today?"},
-	{id:"o9",w:"filing cabinet",d:"A piece of furniture for storing documents",e:"The contracts are in the filing cabinet next to reception."},
-    {id:"o10",w:"cubicle",d:"A small partitioned workspace in an office",e:"Each employee has their own cubicle on the second floor."},
-    {id:"o11",w:"bulletin board",d:"A board for posting notices and announcements",e:"Please check the bulletin board for the updated schedule."},
-    {id:"o12",w:"shredder",d:"A machine that destroys documents into small pieces",e:"All confidential papers must go through the shredder."},
-    {id:"o13",w:"extension",d:"An internal telephone number within a company",e:"You can reach Mr. Hayes at extension 4502."},
-  ]},
-  { id:"phrasal",name:"Phrasal Verbs",icon:"🔗",col:"#e11d48",cards:[
-    {id:"pv1",w:"carry out",d:"To perform or complete a task (exécuter)",e:"We will carry out the inspection next week."},
-    {id:"pv2",w:"set up",d:"To establish or create something (mettre en place)",e:"They set up a new branch in Tokyo."},
-    {id:"pv3",w:"turn down",d:"To refuse or reject (refuser)",e:"She turned down the job offer."},
-    {id:"pv4",w:"take over",d:"To gain control of something (reprendre, racheter)",e:"The firm took over its competitor."},
-    {id:"pv5",w:"bring up",d:"To raise a topic in discussion (soulever un sujet)",e:"He brought up the budget issue at the meeting."},
-    {id:"pv6",w:"put off",d:"To postpone or delay (reporter)",e:"The launch was put off until March."},
-    {id:"pv7",w:"call off",d:"To cancel something (annuler)",e:"They called off the merger."},
-    {id:"pv8",w:"come up with",d:"To think of an idea or plan (trouver, inventer)",e:"She came up with a great marketing idea."},
-    {id:"pv9",w:"deal with",d:"To handle or manage a situation (gérer)",e:"HR will deal with the complaint."},
-    {id:"pv10",w:"look into",d:"To investigate or examine (examiner, enquêter)",e:"We are looking into the issue."},
-    {id:"pv11",w:"run out of",d:"To have no more of something (être à court de)",e:"We've run out of printer paper."},
-    {id:"pv12",w:"go over",d:"To review or examine (passer en revue)",e:"Let's go over the contract one more time."},
-    {id:"pv13",w:"fill in",d:"To complete a form or document (remplir)",e:"Please fill in the application form."},
-    {id:"pv14",w:"hand in",d:"To submit something (remettre, soumettre)",e:"All reports must be handed in by Friday."},
-    {id:"pv15",w:"point out",d:"To draw attention to something (signaler)",e:"She pointed out a flaw in the proposal."},
-    {id:"pv16",w:"figure out",d:"To understand or solve (comprendre, résoudre)",e:"We need to figure out why sales dropped."},
-    {id:"pv17",w:"cut back on",d:"To reduce spending or usage (réduire)",e:"The company cut back on travel expenses."},
-    {id:"pv18",w:"lay off",d:"To dismiss employees (licencier)",e:"The factory laid off 200 workers."},
-    {id:"pv19",w:"take on",d:"To hire or accept responsibility (embaucher)",e:"We're taking on new staff this quarter."},
-    {id:"pv20",w:"draw up",d:"To prepare a document (rédiger)",e:"The lawyer drew up the contract."},
-    {id:"pv21",w:"follow up on",d:"To take further action about (donner suite à)",e:"I'll follow up on your request tomorrow."},
-    {id:"pv22",w:"pick up",d:"To collect or improve (récupérer / reprendre)",e:"Sales picked up in Q4."},
-    {id:"pv23",w:"drop off",d:"To deliver or decrease (déposer / diminuer)",e:"Attendance dropped off after lunch."},
-    {id:"pv24",w:"sign up for",d:"To register for something (s'inscrire)",e:"Please sign up for the workshop online."},
-    {id:"pv25",w:"work out",d:"To solve, calculate or succeed (résoudre / fonctionner)",e:"The deal didn't work out as planned."},
-  ]},
-  { id:"tech",name:"Technology & IT",icon:"💻",col:"#3b82f6",cards:[
-    {id:"te1",w:"software update",d:"A new version of a program that fixes bugs or adds features",e:"Please install the latest software update before Monday."},
-    {id:"te2",w:"troubleshoot",d:"To identify and solve problems in a system",e:"The IT team is troubleshooting the network issue."},
-    {id:"te3",w:"bandwidth",d:"The capacity of a network to transfer data",e:"Video calls require more bandwidth than emails."},
-    {id:"te4",w:"server",d:"A computer that provides data to other computers on a network",e:"The company's server crashed during peak hours."},
-    {id:"te5",w:"database",d:"An organized collection of digital information",e:"Customer records are stored in a secure database."},
-    {id:"te6",w:"upgrade",d:"To improve to a newer or better version",e:"We plan to upgrade all workstations next quarter."},
-    {id:"te7",w:"compatible",d:"Able to work together without conflict",e:"Make sure the software is compatible with your operating system."},
-    {id:"te8",w:"malfunction",d:"A failure to work correctly",e:"A malfunction in the system caused the delay."},
-	{id:"te9",w:"firewall",d:"A security system that controls network traffic",e:"The firewall blocked several unauthorized access attempts last week."},
-    {id:"te10",w:"backup",d:"A copy of data stored separately for safety",e:"Please make sure to run a backup before installing the update."},
-    {id:"te11",w:"outage",d:"A period when a service is unavailable",e:"The network outage lasted three hours and affected all departments."},
-    {id:"te12",w:"interface",d:"The point of interaction between user and software",e:"The new interface is much more intuitive than the previous version."},
-    {id:"te13",w:"encrypt",d:"To convert data into a secure coded format",e:"All sensitive files must be encrypted before being sent by email."},
-  ]},
-  { id:"realestate",name:"Real Estate & Facilities",icon:"🏠",col:"#d97706",cards:[
-    {id:"re1",w:"lease",d:"A contract to rent property for a period of time",e:"The lease expires at the end of the year."},
-    {id:"re2",w:"tenant",d:"A person who rents and occupies property",e:"The tenant reported a problem with the heating."},
-    {id:"re3",w:"landlord",d:"The owner of a property that is rented out",e:"The landlord agreed to lower the monthly rent."},
-    {id:"re4",w:"renovation",d:"The process of improving or updating a building",e:"The office renovation will take approximately six weeks."},
-    {id:"re5",w:"blueprint",d:"A detailed technical drawing or plan",e:"The architect presented the blueprint for the new wing."},
-    {id:"re6",w:"utilities",d:"Basic services such as electricity, water, and gas",e:"Utilities are included in the monthly rent."},
-    {id:"re7",w:"vacancy",d:"An unoccupied position or space",e:"There is a vacancy on the third floor of the building."},
-    {id:"re8",w:"square footage",d:"The area of a space measured in square feet",e:"The new office offers 3,000 square feet of space."},
-	{id:"re9",w:"zoning",d:"Government rules about how land can be used",e:"Zoning regulations prevent commercial buildings in this area."},
-    {id:"re10",w:"occupancy",d:"The state of being used or lived in",e:"The building reached full occupancy within six months of opening."},
-    {id:"re11",w:"maintenance",d:"The process of keeping a building in good condition",e:"The maintenance team will fix the elevator this afternoon."},
-    {id:"re12",w:"premises",d:"A building and its surrounding land",e:"Smoking is not allowed anywhere on the premises."},
-    {id:"re13",w:"contractor",d:"A person or company hired to do specific work",e:"We hired a contractor to renovate the reception area."},
-  ]},
-  { id:"dining",name:"Dining & Hospitality",icon:"🍽️",col:"#ec4899",cards:[
-    {id:"di1",w:"reservation",d:"An arrangement to have a table or room held for you",e:"I'd like to make a reservation for six at 7 PM."},
-    {id:"di2",w:"catering",d:"Providing food and drink for an event",e:"The catering company will handle the corporate lunch."},
-    {id:"di3",w:"banquet",d:"A large formal meal for many people",e:"The annual awards banquet is scheduled for December."},
-    {id:"di4",w:"appetiser",d:"A small dish served before the main course",e:"The appetisers were served while guests mingled."},
-    {id:"di5",w:"complimentary",d:"Given free of charge",e:"The hotel offers complimentary breakfast for all guests."},
-    {id:"di6",w:"gratuity",d:"A tip given to service staff",e:"A 15% gratuity is included in the bill."},
-    {id:"di7",w:"check out",d:"To leave a hotel and pay the bill",e:"Guests must check out before noon."},
-    {id:"di8",w:"venue",d:"The place where an event is held",e:"We are still looking for a suitable venue for the conference."},
-	{id:"di9",w:"cuisine",d:"A style or method of cooking",e:"The restaurant is known for its authentic Japanese cuisine."},
-    {id:"di10",w:"dietary restriction",d:"A limitation on what a person can eat",e:"Please inform us of any dietary restrictions before the event."},
-    {id:"di11",w:"beverage",d:"Any type of drink",e:"Complimentary beverages are available in the lobby."},
-    {id:"di12",w:"buffet",d:"A meal where guests serve themselves from a table",e:"A buffet lunch will be provided during the conference break."},
-    {id:"di13",w:"hospitality",d:"The business of providing food, drink and accommodation",e:"She has over ten years of experience in the hospitality industry."},
-  ]},
-  { id:"health",name:"Health & Safety",icon:"🏥",col:"#14b8a6",cards:[
-    {id:"hl1",w:"prescription",d:"A doctor's written order for medicine",e:"You need a prescription to buy this medication."},
-    {id:"hl2",w:"symptoms",d:"Physical signs of an illness",e:"Common symptoms include fever and headache."},
-    {id:"hl3",w:"appointment",d:"A scheduled meeting with a professional",e:"She has a doctor's appointment at 3 PM."},
-    {id:"hl4",w:"clinic",d:"A place where people receive medical treatment",e:"The company clinic offers free check-ups for employees."},
-    {id:"hl5",w:"hazard",d:"A danger or risk to safety",e:"All potential hazards must be clearly marked."},
-    {id:"hl6",w:"regulations",d:"Official rules or laws",e:"Safety regulations require all workers to wear helmets."},
-    {id:"hl7",w:"protective equipment",d:"Gear worn to prevent injury (PPE)",e:"Employees must wear protective equipment in the factory."},
-    {id:"hl8",w:"emergency",d:"A serious and unexpected situation requiring action",e:"In case of emergency, use the nearest exit."},
-	{id:"hl9",w:"first aid",d:"Basic medical treatment given in an emergency",e:"All supervisors must complete a first aid training course."},
-    {id:"hl10",w:"evacuation",d:"The process of moving people out of a dangerous area",e:"An evacuation drill will be conducted next Tuesday at 10 AM."},
-    {id:"hl11",w:"sanitation",d:"Conditions and practices to maintain cleanliness and health",e:"Sanitation standards in the kitchen are inspected monthly."},
-    {id:"hl12",w:"liability insurance",d:"Coverage that protects against claims of injury or damage",e:"All contractors must carry liability insurance before entering the site."},
-    {id:"hl13",w:"ventilation",d:"The supply of fresh air to a room or building",e:"Proper ventilation is essential in the chemical storage area."},
-  ]},
-  { id:"preps",name:"Preposition Collocations",icon:"🔑",col:"#0ea5e9",cards:[
-    {id:"pp1",w:"responsible FOR",d:"Having the duty to deal with something",e:"She is responsible for the marketing budget."},
-    {id:"pp2",w:"eligible FOR",d:"Meeting the requirements to receive something",e:"All full-time employees are eligible for the bonus."},
-    {id:"pp3",w:"apply FOR",d:"To formally request a position or opportunity",e:"She applied for the management position."},
-    {id:"pp4",w:"account FOR",d:"To represent a proportion of something",e:"Online sales account for 40% of total revenue."},
-    {id:"pp5",w:"interested IN",d:"Wanting to know more about something",e:"We are interested in your proposal."},
-    {id:"pp6",w:"result IN",d:"To cause a particular outcome",e:"The merger resulted in significant cost savings."},
-    {id:"pp7",w:"participate IN",d:"To take part in an activity",e:"Employees are encouraged to participate in the workshop."},
-    {id:"pp8",w:"invested IN",d:"Having put money or effort into something",e:"The company invested in new technology."},
-    {id:"pp9",w:"comply WITH",d:"To act in accordance with rules or requests",e:"All employees must comply with safety regulations."},
-    {id:"pp10",w:"familiar WITH",d:"Having knowledge or experience of something",e:"Are you familiar with this software?"},
-    {id:"pp11",w:"associated WITH",d:"Connected or linked to something",e:"The risks associated with the project are minimal."},
-    {id:"pp12",w:"depend ON",d:"To be determined or influenced by something",e:"The outcome depends on several factors."},
-    {id:"pp13",w:"consist OF",d:"To be made up of particular parts",e:"The team consists of five members."},
-    {id:"pp14",w:"in charge OF",d:"Having responsibility or control over",e:"Mr. Park is in charge of the Tokyo office."},
-    {id:"pp15",w:"capable OF",d:"Having the ability to do something",e:"The machine is capable of producing 1,000 units per hour."},
-    {id:"pp16",w:"due TO",d:"Caused by or because of",e:"The delay was due to bad weather."},
-    {id:"pp17",w:"in addition TO",d:"As well as; besides",e:"In addition to English, she speaks French."},
-    {id:"pp18",w:"prior TO",d:"Before a particular time or event",e:"Prior to the meeting, please review the agenda."},
-    {id:"pp19",w:"subject TO",d:"Dependent on or conditional upon",e:"All orders are subject to availability."},
-    {id:"pp20",w:"according TO",d:"As stated or reported by",e:"According to the report, profits increased by 20%."},
-  ]},
-];
 
-var QUESTIONS = [
-  {id:"g1",s:"The company's annual report _____ last week.",o:["published","was published","publishing","has publishing"],c:1,x:"Passive voice: The report was published (by someone).",cat:"Passive Voice"},
-  {id:"g2",s:"Ms. Tanaka is _____ for managing the Tokyo office.",o:["responsible","responsibility","responsibly","respond"],c:0,x:"'Responsible' (adj) collocates with 'for'.",cat:"Word Families"},
-  {id:"g3",s:"All employees must submit their timesheets _____ Friday.",o:["by","until","since","from"],c:0,x:"'By Friday' = no later than Friday (deadline).",cat:"Prepositions"},
-  {id:"g4",s:"The new software is _____ more efficient than the previous version.",o:["considering","considerable","considerably","consideration"],c:2,x:"'Considerably' (adverb) modifies 'more efficient'.",cat:"Word Families"},
-  {id:"g5",s:"_____ the heavy rain, the outdoor event proceeded as planned.",o:["Despite","Although","Because","However"],c:0,x:"'Despite' + noun phrase. 'Although' needs a clause.",cat:"Connectors"},
-  {id:"g6",s:"The marketing team _____ on a new campaign since January.",o:["works","worked","has been working","is working"],c:2,x:"'Since January' = present perfect continuous.",cat:"Tenses"},
-  {id:"g7",s:"Please ensure that all documents are filed _____.",o:["proper","properly","properness","more proper"],c:1,x:"'Properly' (adverb) modifies the verb 'are filed'.",cat:"Word Families"},
-  {id:"g8",s:"Mr. Chen will attend the conference _____ he can finalize the partnership.",o:["so that","despite","unless","even though"],c:0,x:"'So that' expresses purpose.",cat:"Connectors"},
-  {id:"g9",s:"The warranty _____ if the product is misused.",o:["voids","voided","will be voided","voiding"],c:2,x:"First conditional: will + be + past participle (passive).",cat:"Conditionals"},
-  {id:"g10",s:"Each department head must submit a _____ budget proposal.",o:["detail","detailed","detailing","details"],c:1,x:"'Detailed' (adjective) modifies the noun 'budget proposal'.",cat:"Word Families"},
-  {id:"g11",s:"The CEO, _____ with the board members, announced the merger.",o:["along","as well","together","both"],c:0,x:"'Along with' is the correct collocation.",cat:"Prepositions"},
-  {id:"g12",s:"Applicants _____ meet all requirements will be contacted.",o:["who","which","whose","whom"],c:0,x:"'Who' = relative pronoun for people as subject.",cat:"Relative Pronouns"},
-  {id:"g13",s:"The project was completed ahead of _____.",o:["schedule","scheduling","scheduled","schedules"],c:0,x:"'Ahead of schedule' = fixed expression.",cat:"Collocations"},
-  {id:"g14",s:"_____ reviewing the contract, the lawyer found errors.",o:["While","During","For","Since"],c:0,x:"'While' + verb-ing for simultaneous actions.",cat:"Connectors"},
-  {id:"g15",s:"The sales figures were _____ higher than projected.",o:["significance","significant","significantly","signify"],c:2,x:"'Significantly' (adverb) modifies 'higher'.",cat:"Word Families"},
-  {id:"g16",s:"We need to hire someone _____ experience in data analysis.",o:["with","of","for","by"],c:0,x:"'Someone with experience' = possession of a quality.",cat:"Prepositions"},
-  {id:"g17",s:"The factory _____ 10,000 units by the end of this month.",o:["produces","will have produced","produced","producing"],c:1,x:"'By the end of...' = future perfect.",cat:"Tenses"},
-  {id:"g18",s:"_____ you have any questions, please contact us.",o:["Should","Would","Could","Might"],c:0,x:"'Should you have' = formal inversion of 'If you should have'.",cat:"Conditionals"},
-  {id:"g19",s:"The report highlights the _____ of investing in renewable energy.",o:["important","importantly","importance","import"],c:2,x:"'Importance' (noun) follows 'the'.",cat:"Word Families"},
-  {id:"g20",s:"Employees are encouraged to participate _____ the program.",o:["in","at","on","to"],c:0,x:"'Participate in' = correct collocation.",cat:"Prepositions"},
-  {id:"g21",s:"The merger will _____ result in significant cost savings.",o:["like","likely","likeliness","alike"],c:1,x:"'Likely' (adverb) modifies the verb 'result'.",cat:"Word Families"},
-  {id:"g22",s:"_____ the deadline has passed, no applications will be accepted.",o:["Although","Since","Despite","However"],c:1,x:"'Since' = because (causal connector) + clause.",cat:"Connectors"},
-  {id:"g23",s:"The training session is _____ for all new employees.",o:["mandate","mandated","mandatory","mandating"],c:2,x:"'Mandatory' (adjective) after 'is'.",cat:"Word Families"},
-  {id:"g24",s:"She has worked here _____ she graduated from university.",o:["for","since","during","while"],c:1,x:"'Since' + point in time. 'For' + duration.",cat:"Prepositions"},
-  {id:"g25",s:"The list of candidates _____ been updated.",o:["have","has","are","is"],c:1,x:"Subject = 'list' (singular), not 'candidates'. The list HAS been updated.",cat:"Subject-Verb Agreement"},
-  {id:"g26",s:"Each of the employees _____ required to attend the training.",o:["are","is","were","have"],c:1,x:"'Each' is always singular. Each of the employees IS required.",cat:"Subject-Verb Agreement"},
-  {id:"g27",s:"Neither the manager nor the staff _____ available for comment.",o:["was","is","were","has"],c:2,x:"With 'neither...nor', the verb agrees with the CLOSEST subject ('staff' = plural).",cat:"Subject-Verb Agreement"},
-  {id:"g28",s:"The number of complaints _____ decreased significantly.",o:["have","has","are","were"],c:1,x:"'The number of' = singular subject. HAS decreased. (vs 'A number of' = plural.)",cat:"Subject-Verb Agreement"},
-  {id:"g29",s:"This model is _____ than the previous one.",o:["more efficient","most efficient","as efficient","efficiently"],c:0,x:"Comparative: more + adjective + THAN. 'Most' = superlative.",cat:"Comparatives"},
-  {id:"g30",s:"This is the _____ product in our entire range.",o:["best-selling","better-selling","more selling","good-selling"],c:0,x:"Superlative: 'the' + best (irregular superlative of 'good').",cat:"Comparatives"},
-  {id:"g31",s:"The sooner we start, the _____ we will finish.",o:["sooner","soonest","more soon","soon"],c:0,x:"Double comparative: 'The + comparative, the + comparative'. The sooner, the sooner.",cat:"Comparatives"},
-  {id:"g32",s:"Our new office is _____ spacious as the old one.",o:["so","as","more","most"],c:1,x:"Equality comparison: as + adjective + AS. 'As spacious as'.",cat:"Comparatives"},
-  {id:"g33",s:"The manager suggested _____ the meeting to next week.",o:["to postpone","postponing","postpone","postponed"],c:1,x:"'Suggest' takes a gerund (-ing). Suggest + postponing.",cat:"Gerunds vs Infinitives"},
-  {id:"g34",s:"The team agreed _____ the deadline by two days.",o:["extending","to extend","extend","extended"],c:1,x:"'Agree' takes an infinitive (to). Agreed to extend.",cat:"Gerunds vs Infinitives"},
-  {id:"g35",s:"We should consider _____ a consultant for this project.",o:["to hire","hiring","hire","hired"],c:1,x:"'Consider' always takes a gerund (-ing). Consider hiring.",cat:"Gerunds vs Infinitives"},
-  {id:"g36",s:"He stopped _____ when the meeting began.",o:["to talk","talking","talk","talked"],c:1,x:"'Stop + -ing' = cease the action. He stopped talking (= he was talking, then stopped).",cat:"Gerunds vs Infinitives"},
-  // ─── WORD FAMILIES (+10) ───
-  {id:"g37",s:"The _____ of the new policy will take effect on January 1st.",o:["implement","implementation","implemented","implementing"],c:1,x:"'The' + _____ + 'of' = noun needed. 'Implementation' is the noun form.",cat:"Word Families"},
-  {id:"g38",s:"All staff members are expected to dress _____.",o:["profession","professional","professionally","professionalism"],c:2,x:"Adverb modifies the verb 'dress'. 'Professionally' = how they dress.",cat:"Word Families"},
-  {id:"g39",s:"Customer satisfaction has improved _____ since the new policy.",o:["drama","dramatic","dramatically","dramatize"],c:2,x:"Adverb 'dramatically' modifies the verb 'has improved'.",cat:"Word Families"},
-  {id:"g40",s:"The board made a _____ to expand into Asian markets.",o:["decide","decision","decisive","decisively"],c:1,x:"'A' + _____ = noun needed. 'A decision'.",cat:"Word Families"},
-  {id:"g41",s:"The product was _____ designed to meet safety standards.",o:["specific","specifically","specification","specify"],c:1,x:"Adverb 'specifically' modifies the past participle 'designed'.",cat:"Word Families"},
-  {id:"g42",s:"We need a more _____ approach to project management.",o:["effect","effective","effectively","effectiveness"],c:1,x:"'A more _____' + noun = adjective. 'A more effective approach'.",cat:"Word Families"},
-  {id:"g43",s:"Her _____ to the team has been outstanding.",o:["contribute","contribution","contributive","contributed"],c:1,x:"'Her' + _____ = possessive + noun. 'Her contribution'.",cat:"Word Families"},
-  {id:"g44",s:"The CEO spoke _____ about the company's future plans.",o:["enthusiasm","enthusiastic","enthusiastically","enthuse"],c:2,x:"Adverb modifies the verb 'spoke'. 'Spoke enthusiastically'.",cat:"Word Families"},
-  {id:"g45",s:"It is _____ that all employees complete the training by March.",o:["essentials","essential","essentially","essence"],c:1,x:"'It is _____' = adjective after 'is'. 'It is essential'.",cat:"Word Families"},
-  {id:"g46",s:"The _____ rate for new hires has decreased this year.",o:["retain","retention","retentive","retaining"],c:1,x:"'The _____ rate' = noun modifying another noun. 'The retention rate'.",cat:"Word Families"},
-  // ─── TENSES (+10) ───
-  {id:"g47",s:"The company _____ its new headquarters last September.",o:["opens","opened","has opened","is opening"],c:1,x:"'Last September' = specific past time marker = past simple.",cat:"Tenses"},
-  {id:"g48",s:"By the time the CEO arrived, the meeting _____.",o:["already started","has already started","had already started","already starts"],c:2,x:"Past perfect for action completed BEFORE another past action.",cat:"Tenses"},
-  {id:"g49",s:"The IT department _____ the servers every weekend.",o:["updates","is updating","has updated","updated"],c:0,x:"'Every weekend' = habitual action = present simple.",cat:"Tenses"},
-  {id:"g50",s:"We _____ for a new supplier since our current contract expired.",o:["look","looked","have been looking","are looking"],c:2,x:"'Since' = present perfect continuous for ongoing action from past.",cat:"Tenses"},
-  {id:"g51",s:"Ms. Rodriguez _____ the Singapore office next Tuesday.",o:["visits","will visit","has visited","visited"],c:1,x:"'Next Tuesday' = future time marker. 'Will visit'.",cat:"Tenses"},
-  {id:"g52",s:"The marketing team _____ the campaign materials right now.",o:["prepares","prepared","is preparing","has prepared"],c:2,x:"'Right now' = action in progress = present continuous.",cat:"Tenses"},
-  {id:"g53",s:"Sales _____ by 15% compared to last year.",o:["increase","increased","have increased","are increasing"],c:2,x:"'Compared to last year' = result visible now = present perfect.",cat:"Tenses"},
-  {id:"g54",s:"Before joining this firm, Mr. Tanaka _____ at Sony for ten years.",o:["works","worked","has worked","had worked"],c:3,x:"Past perfect: action BEFORE another past event (joining this firm).",cat:"Tenses"},
-  {id:"g55",s:"The new regulation _____ into effect on April 1st.",o:["goes","went","has gone","is going"],c:0,x:"Scheduled future event = present simple. Timetables use present simple.",cat:"Tenses"},
-  {id:"g56",s:"Our research team _____ on this project for over two years now.",o:["works","worked","has been working","had been working"],c:2,x:"'For over two years now' = present perfect continuous (ongoing).",cat:"Tenses"},
-  // ─── PREPOSITIONS (+6) ───
-  {id:"g57",s:"The conference will be held _____ March 15th.",o:["in","on","at","by"],c:1,x:"'On' + specific date. 'In' + month/year. 'At' + time.",cat:"Prepositions"},
-  {id:"g58",s:"The new policy applies _____ all departments without exception.",o:["for","at","to","with"],c:2,x:"'Apply to' = affect or be relevant to.",cat:"Prepositions"},
-  {id:"g59",s:"The manager insisted _____ reviewing the contract personally.",o:["in","on","for","to"],c:1,x:"'Insist on' + -ing = correct collocation.",cat:"Prepositions"},
-  {id:"g60",s:"The delay was caused _____ a shortage of raw materials.",o:["for","from","by","with"],c:2,x:"'Caused by' = passive construction. Agent introduced by 'by'.",cat:"Prepositions"},
-  {id:"g61",s:"The report was submitted well _____ advance of the deadline.",o:["on","at","in","by"],c:2,x:"'In advance of' = before. Fixed expression.",cat:"Prepositions"},
-  {id:"g62",s:"Please refrain _____ using mobile phones during the presentation.",o:["of","to","from","for"],c:2,x:"'Refrain from' + -ing = correct collocation.",cat:"Prepositions"},
-  // ─── CONNECTORS (+5) ───
-  {id:"g63",s:"The product is affordable; _____, it is also eco-friendly.",o:["furthermore","despite","although","because"],c:0,x:"'Furthermore' adds information. Used after semicolon or full stop.",cat:"Connectors"},
-  {id:"g64",s:"_____ of the high demand, the company increased production.",o:["Because","Despite","Although","However"],c:0,x:"'Because of' + noun phrase. 'Because' + clause.",cat:"Connectors"},
-  {id:"g65",s:"The budget was reduced; _____, the project was completed on time.",o:["therefore","nevertheless","because","although"],c:1,x:"'Nevertheless' = despite that (contrast). The budget was cut BUT they still finished.",cat:"Connectors"},
-  {id:"g66",s:"_____ sales in Europe declined, revenue in Asia grew by 20%.",o:["Whereas","Despite","However","Furthermore"],c:0,x:"'Whereas' + clause introduces a contrast between two facts.",cat:"Connectors"},
-  {id:"g67",s:"Costs have risen sharply. _____, we need to adjust the budget.",o:["Although","Despite","Consequently","Furthermore"],c:2,x:"'Consequently' = as a result (cause and effect). Used in new sentence.",cat:"Connectors"},
-  // ─── PASSIVE VOICE (+7) ───
-  {id:"g68",s:"All visitors must _____ at the front desk before entering.",o:["register","be registered","registering","registered"],c:1,x:"'Must be registered' = passive with modal. Visitors are registered BY someone.",cat:"Passive Voice"},
-  {id:"g69",s:"The award ceremony _____ at the Grand Hotel last Friday.",o:["held","was held","has held","is holding"],c:1,x:"Passive: 'The ceremony was held' (by organizers). Past time = 'last Friday'.",cat:"Passive Voice"},
-  {id:"g70",s:"New employees _____ a company laptop on their first day.",o:["give","are given","giving","gave"],c:1,x:"Passive: employees RECEIVE the laptop. 'Are given' = present passive.",cat:"Passive Voice"},
-  {id:"g71",s:"The contract _____ by both parties before the deadline.",o:["signed","was signing","had been signed","has signing"],c:2,x:"Past perfect passive: 'had been signed' = completed before the deadline.",cat:"Passive Voice"},
-  {id:"g72",s:"Applications _____ until the position is filled.",o:["accept","are being accepted","accepting","have accepting"],c:1,x:"Present continuous passive: 'are being accepted' = ongoing process.",cat:"Passive Voice"},
-  {id:"g73",s:"The damaged goods should _____ to the manufacturer.",o:["return","be returned","returning","returned"],c:1,x:"'Should be returned' = passive with modal 'should'.",cat:"Passive Voice"},
-  {id:"g74",s:"It _____ that the merger will be completed by June.",o:["expects","is expected","expecting","has expecting"],c:1,x:"'It is expected that...' = impersonal passive construction.",cat:"Passive Voice"},
-  // ─── SUBJECT-VERB AGREEMENT (+4) ───
-  {id:"g75",s:"A number of employees _____ requested additional training.",o:["has","have","is","was"],c:1,x:"'A number of' = plural meaning ('many'). HAVE requested. (vs 'The number of' = singular.)",cat:"Subject-Verb Agreement"},
-  {id:"g76",s:"Every manager and supervisor _____ expected to attend.",o:["are","is","were","have"],c:1,x:"'Every' + singular = singular verb. 'Every manager IS expected'.",cat:"Subject-Verb Agreement"},
-  {id:"g77",s:"The equipment in all three laboratories _____ been upgraded.",o:["have","has","are","were"],c:1,x:"Subject = 'equipment' (singular uncountable). Ignore 'in all three laboratories'.",cat:"Subject-Verb Agreement"},
-  {id:"g78",s:"Either the manager or the employees _____ going to lead the project.",o:["is","was","are","has"],c:2,x:"'Either...or' = verb agrees with NEAREST subject. 'Employees' = plural = ARE.",cat:"Subject-Verb Agreement"},
-  // ─── COLLOCATIONS (+7) ───
-  {id:"g79",s:"The company plans to _____ a survey among its customers.",o:["conduct","make","do","perform"],c:0,x:"'Conduct a survey' = standard business collocation.",cat:"Collocations"},
-  {id:"g80",s:"We need to _____ a decision before the end of the week.",o:["do","take","make","give"],c:2,x:"'Make a decision' = fixed collocation. Not 'do' or 'take' a decision.",cat:"Collocations"},
-  {id:"g81",s:"The company _____ great importance to customer satisfaction.",o:["places","puts","attaches","All are correct"],c:3,x:"'Attach/place/put importance to' are all valid collocations.",cat:"Collocations"},
-  {id:"g82",s:"We look forward to _____ from you soon.",o:["hear","hearing","heard","hears"],c:1,x:"'Look forward to' + -ing. 'To' here is a preposition, not infinitive marker.",cat:"Collocations"},
-  {id:"g83",s:"The company has _____ measures to reduce costs.",o:["taken","made","done","given"],c:0,x:"'Take measures' = fixed collocation meaning to act on something.",cat:"Collocations"},
-  {id:"g84",s:"Our team will _____ every effort to meet the deadline.",o:["do","make","take","give"],c:1,x:"'Make an effort' / 'make every effort' = fixed collocation.",cat:"Collocations"},
-  {id:"g85",s:"The presentation _____ a strong impression on the investors.",o:["did","gave","made","took"],c:2,x:"'Make an impression' = standard collocation.",cat:"Collocations"},
-  // ─── RELATIVE PRONOUNS (+5) ───
-  {id:"g86",s:"The report, _____ was submitted last week, contains several errors.",o:["that","which","who","whom"],c:1,x:"'Which' for things in non-defining clauses (with commas). NOT 'that'.",cat:"Relative Pronouns"},
-  {id:"g87",s:"The candidate _____ resume impressed us most will be interviewed.",o:["who","whose","which","whom"],c:1,x:"'Whose' = possession. The candidate's resume = whose resume.",cat:"Relative Pronouns"},
-  {id:"g88",s:"The hotel _____ we stayed was near the conference center.",o:["which","where","that","whose"],c:1,x:"'Where' = relative adverb for places. 'The hotel where we stayed'.",cat:"Relative Pronouns"},
-  {id:"g89",s:"The client _____ the proposal was sent has not yet responded.",o:["who","to whom","which","whose"],c:1,x:"'To whom' = formal. The proposal was sent TO the client.",cat:"Relative Pronouns"},
-  {id:"g90",s:"That is the reason _____ the meeting was postponed.",o:["which","why","where","when"],c:1,x:"'Why' = relative adverb for reasons. 'The reason why'.",cat:"Relative Pronouns"},
-  // ─── CONDITIONALS (+4) ───
-  {id:"g91",s:"If the shipment _____ on time, we will meet the deadline.",o:["arrives","arrived","will arrive","would arrive"],c:0,x:"First conditional: If + present simple, will + verb. Real possibility.",cat:"Conditionals"},
-  {id:"g92",s:"If we had invested earlier, we _____ higher profits now.",o:["will have","would have","would have had","had had"],c:1,x:"Mixed conditional: past condition + present result. 'Would have' (now).",cat:"Conditionals"},
-  {id:"g93",s:"_____ the client cancel, we will need to find a replacement.",o:["Should","Would","Could","Had"],c:0,x:"'Should the client cancel' = formal inversion of 'If the client should cancel'.",cat:"Conditionals"},
-  {id:"g94",s:"If the report _____ ready, we could have presented it yesterday.",o:["was","had been","were","has been"],c:1,x:"Third conditional: If + past perfect, would/could + have + past participle.",cat:"Conditionals"},
-  // ─── COMPARATIVES (+2) ───
-  {id:"g95",s:"The new system is _____ less expensive than the previous one.",o:["consider","considerable","considerably","consideration"],c:2,x:"'Considerably' (adverb) modifies 'less expensive' (comparative).",cat:"Comparatives"},
-  {id:"g96",s:"This quarter's results are the _____ in the company's history.",o:["good","better","best","most good"],c:2,x:"Superlative: 'the' + best (irregular: good → better → best).",cat:"Comparatives"},
-  // ─── GERUNDS VS INFINITIVES (+2) ───
-  {id:"g97",s:"The company cannot afford _____ any more employees.",o:["losing","to lose","lose","lost"],c:1,x:"'Afford' takes infinitive (to). Cannot afford to lose.",cat:"Gerunds vs Infinitives"},
-  {id:"g98",s:"Do you mind _____ the door? It's quite noisy outside.",o:["to close","closing","close","closed"],c:1,x:"'Mind' always takes gerund (-ing). Do you mind closing...?",cat:"Gerunds vs Infinitives"},
-  // ─── ARTICLES / QUANTIFIERS (+2) ───
-  {id:"g99",s:"_____ information in this report is confidential.",o:["A","An","The","Some"],c:2,x:"'The' = specific information (in THIS report). Definite article for specific reference.",cat:"Articles"},
-  {id:"g100",s:"_____ employees who wish to participate should register by Friday.",o:["All","Every","Each","The whole"],c:0,x:"'All employees' (plural). 'Every/Each' + singular noun. 'All' fits with plural 'employees'.",cat:"Articles"},
-  {id:"g100",s:"_____ employees who wish to participate should register by Friday.",o:["All","Every","Each","The whole"],c:0,x:"'All employees' (plural). 'Every/Each' + singular noun. 'All' fits with plural 'employees'.",cat:"Articles"},
-  // ─── BATCH 2 (g101–g130) ───
-  // ─── ARTICLES / QUANTIFIERS (+4) ───
-  {id:"g101",s:"We need to hire _____ accountant before the end of the quarter.",o:["a","an","the","some"],c:1,x:"'An' before vowel sound. 'Accountant' starts with a vowel sound.",cat:"Articles"},
-  {id:"g102",s:"Could you pass me _____ file on your desk? The one with the blue cover.",o:["a","an","the","some"],c:2,x:"'The' = specific file already identified ('the one with the blue cover').",cat:"Articles"},
-  {id:"g103",s:"_____ furniture in the new office was ordered from a local supplier.",o:["A","An","The","Some"],c:2,x:"'The furniture' = specific (in the new office). 'Furniture' is uncountable — no 'a/an'.",cat:"Articles"},
-  {id:"g104",s:"Mr. Park has _____ experience in international logistics.",o:["a","an","extensive","the"],c:2,x:"'Experience' is uncountable — no 'a/an'. 'Extensive' (adj) fits: 'extensive experience'.",cat:"Articles"},
-  // ─── COMPARATIVES (+3) ───
-  {id:"g105",s:"This quarter's sales figures are _____ higher than last year's.",o:["significant","significance","significantly","signify"],c:2,x:"Adverb 'significantly' modifies the comparative 'higher'.",cat:"Comparatives"},
-  {id:"g106",s:"Of all the proposals submitted, Ms. Chen's was the _____.",o:["more convincing","most convincing","convincing","as convincing"],c:1,x:"Superlative with 'of all': 'the most convincing'. Three or more = superlative.",cat:"Comparatives"},
-  {id:"g107",s:"The new printer is not _____ fast as the one it replaced.",o:["so","as","more","much"],c:1,x:"Negative comparison: 'not as ... as'. Both 'so' and 'as' are grammatically possible, but 'as...as' is standard in TOEIC.",cat:"Comparatives"},
-  // ─── CONDITIONALS (+3) ───
-  {id:"g108",s:"If the contract _____ signed by Friday, we will lose the deal.",o:["isn't","weren't","won't be","wouldn't be"],c:0,x:"First conditional: If + present simple, will + base verb. Real possibility.",cat:"Conditionals"},
-  {id:"g109",s:"Had the shipment arrived on time, the client _____ so frustrated.",o:["wouldn't be","wouldn't have been","won't be","isn't"],c:1,x:"Third conditional: Had + past participle, would have + past participle. Unreal past.",cat:"Conditionals"},
-  {id:"g110",s:"If I _____ you, I would accept the offer immediately.",o:["am","was","were","be"],c:2,x:"Second conditional: 'If I were you' — subjunctive mood. 'Were' for all persons in formal English.",cat:"Conditionals"},
-  // ─── GERUNDS vs INFINITIVES (+3) ───
-  {id:"g111",s:"The director agreed _____ the budget for the marketing campaign.",o:["increasing","to increase","increase","increased"],c:1,x:"'Agree' takes infinitive (to). 'Agreed to increase'.",cat:"Gerunds vs Infinitives"},
-  {id:"g112",s:"Would you consider _____ the deadline to next month?",o:["to extend","extending","extend","extended"],c:1,x:"'Consider' always takes gerund (-ing). 'Consider extending'.",cat:"Gerunds vs Infinitives"},
-  {id:"g113",s:"The staff avoided _____ any comments during the investigation.",o:["to make","making","make","made"],c:1,x:"'Avoid' always takes gerund (-ing). 'Avoided making'.",cat:"Gerunds vs Infinitives"},
-  // ─── RELATIVE PRONOUNS (+3) ───
-  {id:"g114",s:"The building _____ the conference will be held is on Park Avenue.",o:["which","where","that","whose"],c:1,x:"'Where' = relative adverb for places. 'The building where the conference will be held'.",cat:"Relative Pronouns"},
-  {id:"g115",s:"Employees _____ performance exceeds expectations will receive a bonus.",o:["who","whom","whose","which"],c:2,x:"'Whose' = possession. The employees' performance = whose performance.",cat:"Relative Pronouns"},
-  {id:"g116",s:"The consultant _____ we hired last month has already improved efficiency.",o:["who","whom","whose","which"],c:0,x:"'Who' = subject of 'has improved'. The consultant has improved (not 'whom').",cat:"Relative Pronouns"},
-  // ─── COLLOCATIONS (+4) ───
-  {id:"g117",s:"The board will _____ a meeting to discuss the acquisition.",o:["hold","make","do","have"],c:0,x:"'Hold a meeting' = standard business collocation. 'Have a meeting' is also valid but 'hold' is more formal.",cat:"Collocations"},
-  {id:"g118",s:"Please _____ sure that all documents are signed before submission.",o:["do","make","take","give"],c:1,x:"'Make sure' = fixed collocation. Not 'do sure' or 'take sure'.",cat:"Collocations"},
-  {id:"g119",s:"The company _____ an apology for the delay in processing orders.",o:["made","issued","gave","did"],c:1,x:"'Issue an apology' = formal business collocation. 'Make an apology' is possible but less formal.",cat:"Collocations"},
-  {id:"g120",s:"We need to _____ advantage of the current market conditions.",o:["make","do","take","give"],c:2,x:"'Take advantage of' = fixed collocation. Not 'make' or 'do' advantage.",cat:"Collocations"},
-  // ─── SUBJECT-VERB AGREEMENT (+3) ───
-  {id:"g121",s:"The number of complaints _____ decreased significantly this quarter.",o:["have","has","are","were"],c:1,x:"'The number of' = singular (the number itself). HAS decreased. (vs 'A number of' = plural.)",cat:"Subject-Verb Agreement"},
-  {id:"g122",s:"Neither the supervisor nor the team members _____ aware of the change.",o:["was","is","were","has been"],c:2,x:"'Neither...nor' = verb agrees with NEAREST subject. 'Team members' = plural = WERE.",cat:"Subject-Verb Agreement"},
-  {id:"g123",s:"Each of the candidates _____ required to submit a portfolio.",o:["are","is","were","have"],c:1,x:"'Each of' = always singular. 'Each of the candidates IS required'.",cat:"Subject-Verb Agreement"},
-  // ─── CONNECTORS (+3) ───
-  {id:"g124",s:"The product launch was delayed; _____, customer interest remained high.",o:["however","because","although","despite"],c:0,x:"'However' after semicolon shows contrast. 'Although/Despite' need different structure.",cat:"Connectors"},
-  {id:"g125",s:"_____ the team worked overtime, they were unable to meet the deadline.",o:["Even though","Despite","However","Furthermore"],c:0,x:"'Even though' + clause (subject + verb). 'Despite' needs a noun phrase, not a clause.",cat:"Connectors"},
-  {id:"g126",s:"Profits rose in Q1; _____, they declined sharply in Q2.",o:["moreover","in addition","conversely","therefore"],c:2,x:"'Conversely' = introduces opposite situation. Q1 up, Q2 down = contrast/reversal.",cat:"Connectors"},
-  // ─── TENSES (+2) ───
-  {id:"g127",s:"By the time the auditors arrive, we _____ all the documents.",o:["prepare","will have prepared","have prepared","are preparing"],c:1,x:"'By the time' + present = future perfect in main clause. Action completed before arrival.",cat:"Tenses"},
-  {id:"g128",s:"The company _____ its headquarters to Berlin three years ago.",o:["relocates","has relocated","relocated","had relocated"],c:2,x:"'Three years ago' = past simple. Specific past time marker.",cat:"Tenses"},
-  // ─── PREPOSITIONS (+2) ───
-  {id:"g129",s:"The new policy will go into _____ on January 1st.",o:["action","effect","place","practice"],c:1,x:"'Go into effect' = become active/operational. Fixed expression for laws and policies.",cat:"Prepositions"},
-  {id:"g130",s:"Ms. Rivera is in _____ of the company's European operations.",o:["charge","control","lead","head"],c:0,x:"'In charge of' = responsible for managing. Fixed prepositional phrase.",cat:"Prepositions"},
-{id:"g130",s:"Ms. Rivera is in _____ of the company's European operations.",o:["charge","control","lead","head"],c:0,x:"'In charge of' = responsible for managing. Fixed prepositional phrase.",cat:"Prepositions"},
-  // ─── BATCH 3 (g131–g160) ───
-  // ─── PASSIVE VOICE (+4) ───
-  {id:"g131",s:"The factory floor _____ thoroughly before the safety inspection.",o:["cleaned","was cleaned","has cleaning","is cleaning"],c:1,x:"Passive: the floor was cleaned (by someone). Past simple passive for completed past action.",cat:"Passive Voice"},
-  {id:"g132",s:"Over 300 complaints _____ since the product recall was announced.",o:["received","have been received","are receiving","had receiving"],c:1,x:"'Since' = present perfect passive. 'Have been received' — action started in past, continues to now.",cat:"Passive Voice"},
-  {id:"g133",s:"The faulty items are currently _____ by the quality team.",o:["inspecting","inspected","being inspected","been inspected"],c:2,x:"Present continuous passive: 'are being inspected' = in progress right now.",cat:"Passive Voice"},
-  {id:"g134",s:"The project deadline cannot _____ without the client's approval.",o:["extend","be extended","extending","to extend"],c:1,x:"Modal passive: 'cannot be extended'. Cannot + be + past participle.",cat:"Passive Voice"},
-  // ─── ARTICLES (+3) ───
-  {id:"g135",s:"_____ CEO announced the restructuring plan at the annual meeting.",o:["A","An","The","—"],c:2,x:"'The CEO' = specific person known to both speaker and listener. Definite article.",cat:"Articles"},
-  {id:"g136",s:"We are looking for _____ experienced project manager to join our team.",o:["a","an","the","—"],c:1,x:"'An' before vowel sound. 'Experienced' starts with a vowel sound. Non-specific person = indefinite.",cat:"Articles"},
-  {id:"g137",s:"_____ advice she gave during the meeting proved extremely useful.",o:["A","An","The","Some"],c:2,x:"'The advice' = specific advice (she gave during the meeting). 'Advice' is uncountable — no 'a/an'.",cat:"Articles"},
-  // ─── COMPARATIVES (+3) ───
-  {id:"g138",s:"The more carefully you proofread, the _____ errors you will find.",o:["few","fewer","fewest","less"],c:1,x:"'The more... the fewer' = double comparative. 'Fewer' for countable nouns (errors).",cat:"Comparatives"},
-  {id:"g139",s:"Our delivery times are _____ to those of our main competitors.",o:["similar","similarly","similarity","more similar"],c:0,x:"'Similar to' = adjective + preposition. Fixed collocation. Not 'similarly to'.",cat:"Comparatives"},
-  {id:"g140",s:"The premium package is almost three times as _____ as the basic one.",o:["expensive","expensively","expense","more expensive"],c:0,x:"'Three times as [adjective] as' = multiplier comparison. Base adjective, no comparative form.",cat:"Comparatives"},
-  // ─── CONDITIONALS (+3) ───
-  {id:"g141",s:"Unless the payment _____ by the 15th, a late fee will be applied.",o:["receives","is received","will receive","receiving"],c:1,x:"'Unless' = 'if not'. Passive needed: payment is received (by us). Present simple in conditional clause.",cat:"Conditionals"},
-  {id:"g142",s:"We would have launched on schedule if the supplier _____ the materials sooner.",o:["delivers","delivered","had delivered","would deliver"],c:2,x:"Third conditional: if + past perfect. 'Had delivered' = unreal past condition.",cat:"Conditionals"},
-  {id:"g143",s:"If you _____ any questions, please do not hesitate to contact us.",o:["had","have","would have","will have"],c:1,x:"First conditional / zero conditional: 'If you have' = present simple. Polite business formula.",cat:"Conditionals"},
-  // ─── GERUNDS vs INFINITIVES (+3) ───
-  {id:"g144",s:"The manager suggested _____ the team meeting to Thursday.",o:["to move","moving","move","to moving"],c:1,x:"'Suggest' takes gerund (-ing). 'Suggested moving'. Never 'suggest to do'.",cat:"Gerunds vs Infinitives"},
-  {id:"g145",s:"We can't risk _____ the contract over a minor disagreement.",o:["to lose","losing","lose","to losing"],c:1,x:"'Risk' always takes gerund (-ing). 'Risk losing'.",cat:"Gerunds vs Infinitives"},
-  {id:"g146",s:"The company expects all staff _____ the new guidelines by Monday.",o:["following","to follow","follow","to following"],c:1,x:"'Expect + object + to-infinitive'. 'Expects staff to follow'.",cat:"Gerunds vs Infinitives"},
-  // ─── RELATIVE PRONOUNS (+3) ───
-  {id:"g147",s:"The year _____ the company was founded was marked by a major recession.",o:["which","when","where","that"],c:1,x:"'When' = relative adverb for time. 'The year when the company was founded'.",cat:"Relative Pronouns"},
-  {id:"g148",s:"Ms. Nakamura, _____ I worked with in Seoul, is now heading the Paris office.",o:["who","whom","that","whose"],c:1,x:"'Whom' = object pronoun. 'I worked with HER' → 'whom I worked with'. Formal register for TOEIC.",cat:"Relative Pronouns"},
-  {id:"g149",s:"The department _____ budget was cut will need to prioritize differently.",o:["who","which","whose","that"],c:2,x:"'Whose' = possession. The department's budget = whose budget. Works for things too, not just people.",cat:"Relative Pronouns"},
-  // ─── COLLOCATIONS (+3) ───
-  {id:"g150",s:"The company has _____ significant progress in reducing waste.",o:["done","made","taken","given"],c:1,x:"'Make progress' = fixed collocation. Not 'do progress' or 'take progress'.",cat:"Collocations"},
-  {id:"g151",s:"We _____ priority to customer satisfaction above all else.",o:["make","do","give","take"],c:2,x:"'Give priority to' = fixed collocation. Also valid: 'give something priority'.",cat:"Collocations"},
-  {id:"g152",s:"The team has _____ into account all of the client's requirements.",o:["put","made","taken","given"],c:2,x:"'Take into account' = fixed collocation meaning to consider. Also: 'take account of'.",cat:"Collocations"},
-  // ─── TENSES (+3) ───
-  {id:"g153",s:"The marketing team _____ on the campaign since early January.",o:["works","is working","has been working","worked"],c:2,x:"'Since early January' = present perfect continuous. Action started in past, still ongoing.",cat:"Tenses"},
-  {id:"g154",s:"Once the renovations _____, the office will reopen to the public.",o:["complete","are completed","will complete","completing"],c:1,x:"'Once' + present simple (or passive) for future time clause. Not 'will'. Passive because renovations are completed by workers.",cat:"Tenses"},
-  {id:"g155",s:"Last quarter, the firm _____ a record number of new clients.",o:["attracts","attracted","has attracted","was attracting"],c:1,x:"'Last quarter' = specific past time. Past simple: 'attracted'.",cat:"Tenses"},
-  // ─── SUBJECT-VERB AGREEMENT (+2) ───
-  {id:"g156",s:"The committee _____ divided on how to allocate the remaining funds.",o:["are","is","have","were"],c:1,x:"'Committee' = collective noun, usually singular in American English. 'The committee IS divided.'",cat:"Subject-Verb Agreement"},
-  {id:"g157",s:"Three hours _____ enough time to complete the assessment.",o:["are","is","were","have"],c:1,x:"Time/money/distance as a unit = singular. 'Three hours IS enough' (treated as one block of time).",cat:"Subject-Verb Agreement"},
-  // ─── PREPOSITIONS (+2) ───
-  {id:"g158",s:"The training session will take place _____ March 5th and 7th.",o:["from","between","during","within"],c:1,x:"'Between' + two specific points. 'Between March 5th and 7th'. 'From' needs 'to'.",cat:"Prepositions"},
-  {id:"g159",s:"All expenses must be approved _____ advance by the department head.",o:["on","at","in","by"],c:2,x:"'In advance' = beforehand. Fixed prepositional phrase.",cat:"Prepositions"},
-  // ─── CONNECTORS (+1) ───
-  {id:"g160",s:"The prototype passed all safety tests; _____, it is now ready for production.",o:["therefore","however","although","despite"],c:0,x:"'Therefore' = as a result (cause → effect). Tests passed → ready for production. Logical consequence.",cat:"Connectors"},
-
-];
-
-// ─── MOCK TEST 1 — PART 5 (15 questions) ───
-var MOCK1_P5 = [
-  // Easy (1-5)
-  {id:"m1p5_1",s:"All employees are expected to _____ the dress code policy.",o:["follow","following","followed","follows"],c:0,x:"'Expected to' + base verb (infinitive). 'To follow'.",cat:"Gerunds vs Infinitives"},
-  {id:"m1p5_2",s:"The package _____ delivered to the wrong address yesterday.",o:["is","was","has","were"],c:1,x:"Past simple passive: 'was delivered'. 'Yesterday' = past time marker.",cat:"Passive Voice"},
-  {id:"m1p5_3",s:"Ms. Tanaka has worked in finance _____ over ten years.",o:["since","for","during","while"],c:1,x:"'For' + duration (ten years). 'Since' + point in time.",cat:"Prepositions"},
-  {id:"m1p5_4",s:"The seminar was very _____; everyone learned a lot.",o:["inform","informative","information","informatively"],c:1,x:"Adjective needed after 'was very'. 'Informative' = adjective form.",cat:"Word Families"},
-  {id:"m1p5_5",s:"_____ the price increase, sales remained strong.",o:["Despite","Although","However","Because"],c:0,x:"'Despite' + noun phrase ('the price increase'). 'Although' needs a clause.",cat:"Connectors"},
-  // Medium (6-10)
-  {id:"m1p5_6",s:"The report, _____ findings were unexpected, has been shared with the board.",o:["which","whose","that","whom"],c:1,x:"'Whose findings' = possessive relative pronoun. The report's findings.",cat:"Relative Pronouns"},
-  {id:"m1p5_7",s:"Each department _____ responsible for submitting its own budget proposal.",o:["are","is","were","have"],c:1,x:"'Each' = always singular. 'Each department IS responsible.'",cat:"Subject-Verb Agreement"},
-  {id:"m1p5_8",s:"The marketing director recommended _____ the campaign launch until September.",o:["to delay","delaying","delay","to delaying"],c:1,x:"'Recommend' takes gerund (-ing). 'Recommended delaying'. Never 'recommend to do'.",cat:"Gerunds vs Infinitives"},
-  {id:"m1p5_9",s:"Revenue in Q3 was _____ higher than the same period last year.",o:["substance","substantial","substantially","substantiate"],c:2,x:"Adverb 'substantially' modifies comparative 'higher'.",cat:"Word Families"},
-  {id:"m1p5_10",s:"If the merger _____ approved, over 200 new positions will be created.",o:["is","was","will be","would be"],c:0,x:"First conditional: If + present simple, will + verb. Real future possibility.",cat:"Conditionals"},
-  // Hard (11-15)
-  {id:"m1p5_11",s:"Not only did the company meet its targets, _____ it exceeded them by 15%.",o:["and","but","so","yet"],c:1,x:"'Not only... but (also)' = fixed correlative conjunction pair.",cat:"Connectors"},
-  {id:"m1p5_12",s:"The training must be completed _____ to the employee's first day.",o:["prior","advance","previous","before"],c:0,x:"'Prior to' = formal for 'before'. Fixed prepositional phrase. 'In advance of' also works but 'advance' alone doesn't.",cat:"Prepositions"},
-  {id:"m1p5_13",s:"Had the client _____ us earlier, we could have resolved the issue.",o:["contact","contacted","contacting","been contacted"],c:1,x:"Third conditional inversion: 'Had + subject + past participle'. Had the client contacted us.",cat:"Conditionals"},
-  {id:"m1p5_14",s:"The number of attendees at this year's conference _____ a new record.",o:["reach","reaches","reaching","have reached"],c:1,x:"'The number of' = singular subject → singular verb. 'The number reaches'. Present simple for stating facts.",cat:"Subject-Verb Agreement"},
-  {id:"m1p5_15",s:"The new policy has been designed to ensure that all staff are treated _____.",o:["equal","equalize","equally","equality"],c:2,x:"Adverb 'equally' modifies passive verb 'are treated'. How are they treated? Equally.",cat:"Word Families"},
-];
-
-// ─── MOCK TEST 2 — PART 5 (15 questions) ───
-var MOCK2_P5 = [
-  // Easy (1-5)
-  {id:"m2p5_1",s:"Please make sure the conference room _____ before the meeting starts.",o:["prepares","is prepared","preparing","was preparing"],c:1,x:"Passive needed: the room is prepared (by someone). Present simple passive for instructions.",cat:"Passive Voice"},
-  {id:"m2p5_2",s:"The company plans to _____ its product line next year.",o:["expansion","expand","expansive","expanding"],c:1,x:"'Plans to' + base verb (infinitive). 'To expand'.",cat:"Word Families"},
-  {id:"m2p5_3",s:"The workshop will be held _____ the third floor of the main building.",o:["in","at","on","by"],c:2,x:"'On' + floor number. 'On the third floor'. Fixed expression.",cat:"Prepositions"},
-  {id:"m2p5_4",s:"Mr. Benson has been with the company _____ it was founded in 2005.",o:["for","during","since","while"],c:2,x:"'Since' + point in time (2005 / it was founded). 'For' + duration.",cat:"Tenses"},
-  {id:"m2p5_5",s:"The budget was reduced; _____, the team managed to deliver on time.",o:["therefore","furthermore","nevertheless","consequently"],c:2,x:"'Nevertheless' = despite that (contrast). Budget cut BUT still delivered.",cat:"Connectors"},
-  // Medium (6-10)
-  {id:"m2p5_6",s:"The firm is looking for a candidate _____ experience includes international sales.",o:["who","whom","whose","which"],c:2,x:"'Whose experience' = possessive. The candidate's experience.",cat:"Relative Pronouns"},
-  {id:"m2p5_7",s:"Neither the manager nor the supervisors _____ informed about the change.",o:["was","is","were","has"],c:2,x:"'Neither...nor' → verb agrees with nearest subject. 'Supervisors' = plural = WERE.",cat:"Subject-Verb Agreement"},
-  {id:"m2p5_8",s:"If we had started the project earlier, we _____ it by now.",o:["finish","will finish","would finish","would have finished"],c:3,x:"Third conditional: If + past perfect, would have + past participle. Unreal past result.",cat:"Conditionals"},
-  {id:"m2p5_9",s:"The CEO expects all managers _____ the quarterly targets.",o:["meeting","to meet","meet","met"],c:1,x:"'Expect + object + to-infinitive'. Expects managers to meet.",cat:"Gerunds vs Infinitives"},
-  {id:"m2p5_10",s:"Annual inspections are carried out to ensure _____ with safety regulations.",o:["comply","compliant","compliance","compliantly"],c:2,x:"'Ensure compliance' — noun needed after 'ensure' + with phrase.",cat:"Word Families"},
-  // Hard (11-15)
-  {id:"m2p5_11",s:"_____ carefully the proposal was written, it failed to convince the board.",o:["However","Despite","Although","Regardless"],c:0,x:"'However + adjective/adverb + clause' = concessive. 'However carefully' = no matter how carefully.",cat:"Connectors"},
-  {id:"m2p5_12",s:"The deadline by _____ all applications must be received is March 31st.",o:["that","when","whom","which"],c:3,x:"'By which' — preposition + relative pronoun for things. 'The deadline by which' = formal register.",cat:"Relative Pronouns"},
-  {id:"m2p5_13",s:"Employees are reminded that personal devices _____ during meetings.",o:["must not use","must not be using","must not be used","must not have used"],c:2,x:"Passive with modal: devices must not be used (by employees). Object becomes subject.",cat:"Passive Voice"},
-  {id:"m2p5_14",s:"The more experience a candidate has, the _____ their chances of being hired.",o:["good","better","best","well"],c:1,x:"Double comparative: 'The more... the better'. Comparative form, not superlative.",cat:"Comparatives"},
-  {id:"m2p5_15",s:"Ms. Laurent, along with her colleagues, _____ attending the summit next week.",o:["are","is","were","have"],c:1,x:"'Along with' doesn't change the subject. 'Ms. Laurent IS attending.' Subject = Ms. Laurent (singular).",cat:"Subject-Verb Agreement"},
-];
-
-// ─── MOCK TEST 1 — PART 6 (2 texts, 8 questions) ───
-var MOCK1_P6 = [
-  { id:"m1p6t1", type:"Email", from:"Sustainability Committee", to:"All Staff", subject:"Green Office Initiative",
-    parts:[
-      {text:"Dear colleagues,\n\nWe are excited to announce the launch of our Green Office Initiative, a company-wide program aimed at reducing our environmental footprint. Starting next month, several changes will be "},
-      {blank:true,options:["introduced","introducing","introduction","introductory"],correct:0,x:"Future passive: 'will be introduced'. Past participle after 'be'."},
-      {text:" across all departments.\n\nFirst, single-use plastic cups will be replaced with reusable alternatives in all break rooms. Employees are encouraged to bring their own mugs. "},
-      {blank:true,options:["Additionally","Nevertheless","Although","Whereas"],correct:0,x:"'Additionally' adds another measure. The text is listing multiple green initiatives."},
-      {text:", we will be installing motion-sensor lighting on every floor to reduce energy "},
-      {blank:true,options:["consume","consumer","consumption","consuming"],correct:2,x:"Noun needed after 'energy'. 'Energy consumption' = standard business collocation."},
-      {text:" by an estimated 30%.\n\nWe believe that small changes can lead to significant results when everyone participates.\n\n"},
-      {blank:true,options:[
-        "A detailed guide with tips for reducing waste at your workstation will be emailed next week.",
-        "The company's annual revenue exceeded expectations last quarter.",
-        "Interviews for the open marketing position will begin on Monday.",
-        "The parking lot will be resurfaced over the weekend."
-      ],correct:0,x:"Sentence insertion: must promise follow-up information relevant to the green initiative."},
-    ]},
-  { id:"m1p6t2", type:"Notice", from:"Conference Organizing Committee", to:"Registered Attendees", subject:"Asia-Pacific Business Forum — Practical Information",
-    parts:[
-      {text:"Dear attendees,\n\nThank you for registering for the 12th Annual Asia-Pacific Business Forum, which will take place on October 14-16 at the Grand Meridian Hotel in Singapore.\n\nPlease note that on-site registration will open at 8:00 AM on October 14th. All participants must present a valid photo ID to "},
-      {blank:true,options:["collect","collecting","collection","collector"],correct:0,x:"'To collect' — infinitive of purpose after 'must present ID'. Base verb after 'to'."},
-      {text:" their conference badges. The opening keynote by Dr. Aisha Patel will begin "},
-      {blank:true,options:["promptly","prompt","promptness","prompted"],correct:0,x:"Adverb 'promptly' modifies the verb 'will begin'. 'Begin promptly at 9:00 AM'."},
-      {text:" at 9:00 AM in the Grand Ballroom.\n\nLunch will be provided in the atrium on all three days. "},
-      {blank:true,options:["However","Therefore","Furthermore","Despite"],correct:0,x:"'However' introduces a contrasting point — lunch is provided BUT dietary needs require advance notice."},
-      {text:", attendees with specific dietary requirements are kindly asked to notify us at least 48 hours in advance.\n\n"},
-      {blank:true,options:[
-        "For the full schedule and speaker list, please visit the event website.",
-        "The hotel was recently renovated and features a rooftop swimming pool.",
-        "Our company is currently hiring software engineers in three locations.",
-        "Last year's forum attracted over 2,000 participants."
-      ],correct:0,x:"Sentence insertion: practical closing that directs attendees to find more details."},
-    ]},
-];
-
-// ─── MOCK TEST 2 — PART 6 (2 texts, 8 questions) ───
-var MOCK2_P6 = [
-  { id:"m2p6t1", type:"Letter", from:"Greenfield Supplies Ltd.", to:"Ms. Johansson, Procurement Director", subject:"Contract Renewal Proposal",
-    parts:[
-      {text:"Dear Ms. Johansson,\n\nThank you for your continued partnership over the past three years. As our current supply agreement is "},
-      {blank:true,options:["approaching","approached","approach","approachable"],correct:0,x:"Present continuous: 'is approaching' its expiration date. Action in progress."},
-      {text:" its expiration date on December 31st, we would like to propose a renewal under updated terms.\n\nBased on "},
-      {blank:true,options:["mutually","mutual","mutuality","mutualize"],correct:1,x:"Adjective before noun: 'mutual benefit'. 'Based on mutual benefit'."},
-      {text:" benefit, we are prepared to offer a 7% volume discount on all orders exceeding 500 units per quarter. "},
-      {blank:true,options:["In return","In contrast","In spite of this","In conclusion"],correct:0,x:"'In return' = as a reciprocal condition. We offer a discount; in return, we ask for commitment."},
-      {text:", we would ask for a minimum two-year commitment to ensure supply chain stability.\n\n"},
-      {blank:true,options:[
-        "We would welcome the opportunity to discuss these terms at your earliest convenience.",
-        "Our warehouse is located just 15 minutes from the city center.",
-        "The company recently celebrated its 25th anniversary.",
-        "Please note that the cafeteria menu has been updated."
-      ],correct:0,x:"Sentence insertion: polite business closing inviting further discussion about the proposal."},
-    ]},
-  { id:"m2p6t2", type:"Memo", from:"Human Resources", to:"All Managers", subject:"Employee Wellness Program",
-    parts:[
-      {text:"To all department managers,\n\nAs part of our ongoing commitment to employee well-being, we are pleased to announce the launch of a comprehensive Wellness Program, effective February 1st.\n\nThe program includes access to an on-site fitness center, weekly stress management workshops, and "},
-      {blank:true,options:["confidential","confidentially","confidence","confide"],correct:0,x:"Adjective before noun: 'confidential counseling sessions'. Describes the type of sessions."},
-      {text:" counseling sessions. Participation is entirely voluntary, and all activities will take place "},
-      {blank:true,options:["while","during","throughout","within"],correct:1,x:"'During lunch breaks' — 'during' + noun phrase. 'While' would need a clause."},
-      {text:" lunch breaks or after working hours to minimize disruption.\n\nManagers are asked to inform their teams about the program and to "},
-      {blank:true,options:["encourage","encouraging","encouragement","encouraged"],correct:0,x:"'To encourage' — infinitive after 'asked to inform... and to encourage'. Parallel structure."},
-      {text:" participation. Research consistently shows that wellness initiatives lead to higher productivity and lower absenteeism.\n\n"},
-      {blank:true,options:[
-        "A detailed brochure outlining all available services will be distributed by January 25th.",
-        "The quarterly sales report is due by the end of this week.",
-        "Our new branch in Melbourne will open in March.",
-        "Please remember to submit your expense reports on time."
-      ],correct:0,x:"Sentence insertion: promises follow-up information about the wellness program before launch date."},
-    ]},
-];
-
-// ─── MOCK TEST 1 — PART 7 (7 passages, 26 questions) ───
-var MOCK1_P7 = [
-  { id:"m1p7_1", type:"Email",
-    text:"From: Alan Pearce, Facilities Manager\nTo: All Employees — Oakville Campus\nSubject: Cafeteria Renovation\nDate: September 4\n\nDear colleagues,\n\nI am writing to inform you that the ground-floor cafeteria will be closed for renovations from September 18 to October 13. The renovation will include an expanded seating area, new kitchen equipment, and improved ventilation systems.\n\nDuring the closure, a temporary food service station will operate in Conference Hall B from 11:30 AM to 2:00 PM on weekdays. The menu will be limited to sandwiches, salads, and beverages. Employees with dietary restrictions are encouraged to contact catering@oakville.com in advance so that appropriate options can be arranged.\n\nVending machines on floors 2, 4, and 6 will remain operational throughout the renovation period. Additionally, a list of nearby restaurants offering corporate discounts has been posted on the company intranet.\n\nWe apologize for the inconvenience and look forward to unveiling the improved cafeteria in mid-October.",
-    questions:[
-      {q:"What is the purpose of this email?",options:["To announce new menu items","To inform staff about a cafeteria closure","To introduce a new catering company","To invite employees to a lunch event"],correct:1,x:"The email informs employees that the cafeteria will close for renovations."},
-      {q:"Where will temporary food service be available?",options:["On the sixth floor","In the parking lot","In Conference Hall B","At nearby restaurants only"],correct:2,x:"'A temporary food service station will operate in Conference Hall B.'"},
-      {q:"What should employees with dietary restrictions do?",options:["Bring their own food","Email the catering service in advance","Speak to the facilities manager","Wait until the cafeteria reopens"],correct:1,x:"'Employees with dietary restrictions are encouraged to contact catering@oakville.com in advance.'"},
-      {q:"When is the renovated cafeteria expected to reopen?",options:["September 18","October 1","Mid-October","November 1"],correct:2,x:"'We look forward to unveiling the improved cafeteria in mid-October.' The closure runs through October 13."},
-    ]},
-  { id:"m1p7_2", type:"Advertisement",
-    text:"SKYLINE EXECUTIVE TRAVEL — YOUR BUSINESS TRIP, SIMPLIFIED\n\nSkyline Executive Travel provides premium corporate travel management for companies of all sizes. Let us handle the logistics so you can focus on business.\n\nOur services include:\n- Flight and hotel booking with negotiated corporate rates\n- 24/7 multilingual support for travelers abroad\n- Customized travel policies and expense tracking\n- VIP airport lounge access for frequent travelers\n\nNew clients receive a complimentary travel audit — we analyze your current spending and identify savings of up to 25%.\n\nJoin over 800 companies that trust Skyline with their corporate travel.\n\nContact us: sales@skylinetravel.com | (555) 321-7890\nVisit: www.skylinetravel.com",
-    questions:[
-      {q:"What type of service does Skyline offer?",options:["Personal vacation planning","Corporate travel management","Airline pilot training","Airport shuttle services"],correct:1,x:"'Skyline Executive Travel provides premium corporate travel management.'"},
-      {q:"What do new clients receive?",options:["A free flight","A 25% discount on all bookings","A complimentary travel audit","VIP lounge membership"],correct:2,x:"'New clients receive a complimentary travel audit.'"},
-      {q:"What is suggested about the potential savings?",options:["Savings are guaranteed at 25%","Savings of up to 25% may be identified","All clients save exactly 25%","Savings apply only to hotel bookings"],correct:1,x:"'We analyze your current spending and identify savings of up to 25%.' 'Up to' = maximum, not guaranteed."},
-    ]},
-  { id:"m1p7_3", type:"Article",
-    text:"BUSINESS QUARTERLY — LEADERSHIP TRENDS\n\nA new study published by the Harmon Institute of Management suggests that companies with diverse leadership teams outperform their less diverse counterparts by an average of 19% in terms of revenue growth.\n\nThe research, which tracked 1,200 mid-to-large companies over a five-year period, found that organizations with at least 30% women in senior management roles reported higher employee engagement, stronger innovation metrics, and lower executive turnover.\n\n'Diversity is not just an ethical imperative — it's a business advantage,' said Professor Rachel Okonkwo, the study's lead author. 'The data is unambiguous.'\n\nHowever, the study also revealed that progress has been slow. Only 22% of the companies surveyed met the 30% threshold in 2025, up from 18% in 2020. The report recommends that companies implement structured mentoring programs and transparent promotion criteria to accelerate change.\n\nIndustry analysts note that investor pressure is also playing a role, with several major funds now requiring portfolio companies to report diversity metrics annually.",
-    questions:[
-      {q:"What is the main finding of the Harmon Institute study?",options:["Diverse leadership teams generate higher revenue growth","Women make better executives than men","Diversity has no effect on business performance","Small companies are more diverse than large ones"],correct:0,x:"'Companies with diverse leadership teams outperform their counterparts by an average of 19% in revenue growth.'"},
-      {q:"How many companies were studied?",options:["30","200","1,200","5,000"],correct:2,x:"'The research tracked 1,200 mid-to-large companies over a five-year period.'"},
-      {q:"What percentage of companies met the 30% diversity threshold in 2025?",options:["18%","19%","22%","30%"],correct:2,x:"'Only 22% of the companies surveyed met the 30% threshold in 2025, up from 18% in 2020.'"},
-      {q:"What does the report recommend?",options:["Hiring only women for senior roles","Reducing the number of executives","Implementing mentoring programs and transparent promotion criteria","Eliminating annual performance reviews"],correct:2,x:"'The report recommends structured mentoring programs and transparent promotion criteria.'"},
-    ]},
-  { id:"m1p7_4", type:"Notice",
-    text:"MERIDIAN BUSINESS PARK — PARKING UPDATE\n\nEffective November 1, the following changes will apply to parking at Meridian Business Park:\n\n1. All vehicles must display a valid parking permit. Permits can be obtained from the management office (Building A, Suite 102) between 9:00 AM and 5:00 PM.\n\n2. Visitor parking (Lot C) is now limited to a maximum of 4 hours. Visitors requiring longer access should register at the front desk upon arrival.\n\n3. Electric vehicle charging stations have been installed in Lot B (spaces 45-52). These spaces are reserved exclusively for vehicles actively charging.\n\n4. Unauthorized vehicles will be subject to a $75 fine and may be towed at the owner's expense.\n\nFor questions, contact facilities@meridianbp.com or extension 4400.",
-    questions:[
-      {q:"Where can employees obtain a parking permit?",options:["Online only","From the front desk of their building","From the management office in Building A","From any security guard"],correct:2,x:"'Permits can be obtained from the management office (Building A, Suite 102).'"},
-      {q:"How long can visitors park in Lot C?",options:["1 hour","2 hours","4 hours","Unlimited"],correct:2,x:"'Visitor parking (Lot C) is now limited to a maximum of 4 hours.'"},
-      {q:"What happens to unauthorized vehicles?",options:["They receive a warning","They are fined $75 and may be towed","They are relocated to Lot C","Their owners are emailed a notice"],correct:1,x:"'Unauthorized vehicles will be subject to a $75 fine and may be towed.'"},
-    ]},
-  { id:"m1p7_5", type:"Letter",
-    text:"Dear Ms. Alvarez,\n\nThank you for attending the interview for the position of Regional Sales Manager on August 22. We appreciated the opportunity to learn more about your experience and qualifications.\n\nAfter careful consideration, we are pleased to offer you the position, subject to the following terms:\n\n- Start date: October 1\n- Annual salary: $92,000\n- Benefits: Full medical and dental coverage, effective after a 90-day probationary period\n- Reporting to: James Whitfield, VP of Sales\n\nPlease review the attached employment contract and return a signed copy by September 10. If you have any questions about the terms, do not hesitate to contact me.\n\nWe are confident that your expertise in the Latin American market will be a tremendous asset to our team, and we look forward to welcoming you aboard.\n\nSincerely,\nCatherine Moreau\nDirector of Human Resources\nAtlas Global Inc.",
-    questions:[
-      {q:"What is the purpose of this letter?",options:["To reject a job application","To schedule a second interview","To offer a job to a candidate","To request a reference check"],correct:2,x:"'We are pleased to offer you the position' — this is a formal job offer letter."},
-      {q:"When will benefits become effective?",options:["On October 1","After 30 days","After 90 days","Immediately upon hiring"],correct:2,x:"'Full medical and dental coverage, effective after a 90-day probationary period.'"},
-      {q:"What must Ms. Alvarez do by September 10?",options:["Complete a background check","Start the onboarding process","Return a signed copy of the contract","Contact James Whitfield"],correct:2,x:"'Please return a signed copy by September 10.'"},
-      {q:"What is suggested about Ms. Alvarez's background?",options:["She has experience in the Latin American market","She previously worked at Atlas Global","She is relocating from another country","She has a background in human resources"],correct:0,x:"'Your expertise in the Latin American market will be a tremendous asset.'"},
-    ]},
-  { id:"m1p7_6", type:"Memo",
-    text:"To: All Department Heads\nFrom: Priya Sharma, Chief Financial Officer\nDate: January 15\nRe: Q1 Budget Submissions\n\nThis is a reminder that all Q1 departmental budget proposals are due by January 31. Late submissions will not be accepted, and departments that fail to submit on time will have their budgets frozen at the previous quarter's levels.\n\nPlease use the updated template available on the finance portal. Key changes from last quarter include:\n\n- A new line item for sustainability-related expenditures\n- Revised travel expense categories (domestic vs. international must now be reported separately)\n- A mandatory section for projected ROI on any capital expenditure over $10,000\n\nAll proposals must be approved by your division VP before submission to the finance department. If your VP is unavailable due to travel, you may obtain approval from the Deputy COO.\n\nBudget review meetings will be scheduled during the week of February 10-14. You will receive your time slot by February 3.\n\nPlease contact the finance team at x2200 with any questions.",
-    questions:[
-      {q:"What happens if a department misses the January 31 deadline?",options:["The department head will be fined","The budget will be frozen at previous levels","The proposal will be reviewed late","Nothing — the deadline is flexible"],correct:1,x:"'Departments that fail to submit on time will have their budgets frozen at the previous quarter's levels.'"},
-      {q:"What is new in the updated template?",options:["A section for employee bonuses","A sustainability expenditure line item","A customer feedback section","A simplified approval process"],correct:1,x:"'Key changes include a new line item for sustainability-related expenditures.'"},
-      {q:"Who can approve a proposal if the VP is traveling?",options:["The CFO","Any department head","The Deputy COO","The finance team"],correct:2,x:"'If your VP is unavailable due to travel, you may obtain approval from the Deputy COO.'"},
-    ]},
-  { id:"m1p7_7", type:"Double Passage",
-    text:"--- PASSAGE 1: Email ---\nFrom: David Koh, Event Coordinator\nTo: All Staff — Singapore Office\nSubject: Annual Team-Building Retreat\nDate: May 3\n\nDear colleagues,\n\nI am pleased to confirm that this year's team-building retreat will take place on Saturday, June 7, at Forest Adventure Park in Sentosa. The day will include outdoor team challenges, a workshop on cross-departmental collaboration, and a barbecue dinner.\n\nTransportation: A chartered bus will depart from the office lobby at 8:30 AM sharp and return by approximately 8:00 PM. Employees who prefer to drive may use the free parking at the venue.\n\nPlease RSVP by May 20 using the link on the intranet. Indicate whether you will take the bus or drive yourself, and note any food allergies.\n\nAttendance is strongly encouraged but not mandatory. However, please note that participants will receive a half-day off on the following Monday as a thank-you.\n\n--- PASSAGE 2: Online Comment Thread ---\nPosted by: Rachel Tan (Marketing), May 5\nSounds fun! Last year's retreat at Pulau Ubin was great. I'm signing up for the bus — parking in Sentosa is always a nightmare. Does anyone know if the barbecue will have vegetarian options? I sent David an email but haven't heard back yet.\n\nReply by: Kevin Ng (Operations), May 5\nRachel — I asked David yesterday and he confirmed there will be vegetarian and halal options. Also, the workshop is being led by an external facilitator from MindBridge Consulting. Heard great things about them.\n\nReply by: Siti Aminah (Finance), May 6\nI can't make the bus at 8:30 — I have a dentist appointment that morning. I'll drive and meet everyone there. Kevin, do you know roughly what time the activities start?\n\nReply by: Kevin Ng (Operations), May 6\nSiti — David said the first activity kicks off at 10:00 AM, so you should be fine if you arrive by 9:45.",
-    questions:[
-      {q:"What benefit do retreat participants receive?",options:["A cash bonus","A free lunch on Monday","A half-day off on Monday","An extra vacation day"],correct:2,x:"'Participants will receive a half-day off on the following Monday as a thank-you.'"},
-      {q:"Why does Rachel prefer to take the bus?",options:["She doesn't own a car","Parking in Sentosa is difficult","The bus is more comfortable","She wants to socialize with colleagues"],correct:1,x:"Rachel says: 'Parking in Sentosa is always a nightmare.'"},
-      {q:"What did Kevin learn about the food options?",options:["Only barbecue will be served","There will be vegetarian and halal options","Employees must bring their own food","The menu has not been decided yet"],correct:1,x:"Kevin confirms: 'There will be vegetarian and halal options.'"},
-      {q:"Why will Siti drive instead of taking the bus?",options:["She lives near the venue","She has a morning appointment","She wants to leave early","She doesn't like buses"],correct:1,x:"Siti says: 'I have a dentist appointment that morning. I'll drive and meet everyone there.'"},
-      {q:"What time should Siti arrive at the venue?",options:["8:30 AM","9:00 AM","9:45 AM","10:00 AM"],correct:2,x:"Kevin tells Siti: 'The first activity kicks off at 10:00 AM, so you should be fine if you arrive by 9:45.'"},
-    ]},
-];
-
-// ─── MOCK TEST 2 — PART 7 (7 passages, 26 questions) ───
-var MOCK2_P7 = [
-  { id:"m2p7_1", type:"Email",
-    text:"From: Nadia Berger, Project Director\nTo: Project Orion Team\nSubject: Phase 2 Timeline Update\nDate: March 17\n\nTeam,\n\nFollowing last week's client meeting, I want to share an important update regarding the Phase 2 timeline.\n\nThe client has requested that the prototype delivery date be moved from May 15 to April 28 — approximately two and a half weeks earlier than planned. After reviewing our resources with the engineering leads, I believe this is achievable, but it will require some adjustments.\n\nEffective immediately:\n- All non-essential feature requests are deferred to Phase 3\n- The testing window is compressed from 10 days to 6 days\n- Weekend work on April 5-6 and April 12-13 will be necessary (overtime will be compensated)\n\nI know this puts pressure on everyone, and I don't take that lightly. I've secured budget approval for additional contract support in the QA and front-end teams — those reinforcements should be onboard by March 24.\n\nLet's discuss the revised task assignments at tomorrow's standup (10:00 AM, Room 3B).\n\nThanks for your flexibility.",
-    questions:[
-      {q:"What is the main purpose of this email?",options:["To cancel Phase 2 of the project","To announce a team restructuring","To communicate an accelerated deadline","To request additional budget"],correct:2,x:"The email informs the team that the prototype delivery date has been moved earlier — from May 15 to April 28."},
-      {q:"By how much has the deadline been moved?",options:["One week","About two and a half weeks","One month","Two months"],correct:1,x:"'Moved from May 15 to April 28 — approximately two and a half weeks earlier.'"},
-      {q:"What will happen to non-essential feature requests?",options:["They will be cancelled entirely","They will be completed during overtime","They are deferred to Phase 3","They will be outsourced"],correct:2,x:"'All non-essential feature requests are deferred to Phase 3.'"},
-      {q:"When will additional team members start?",options:["Immediately","March 24","April 5","April 28"],correct:1,x:"'Those reinforcements should be onboard by March 24.'"},
-    ]},
-  { id:"m2p7_2", type:"Instructions",
-    text:"QUICKSCAN PRO 3000 — SETUP GUIDE\n\nThank you for purchasing the QuickScan Pro 3000 wireless document scanner. Please follow these steps to set up your device.\n\nStep 1: Charge the scanner using the included USB-C cable. A full charge takes approximately 2 hours. The indicator light will turn solid green when charging is complete.\n\nStep 2: Download the QuickScan app from the App Store or Google Play. Create an account or sign in with your existing credentials.\n\nStep 3: Enable Bluetooth on your phone or tablet. Open the QuickScan app, tap 'Add Device,' and select 'Pro 3000' from the list. The scanner will beep twice when paired successfully.\n\nStep 4: Place your document face-down on the scanning surface. Press the blue button once for a standard scan (300 dpi) or hold it for 2 seconds for a high-resolution scan (600 dpi).\n\nStep 5: Scanned documents appear automatically in the app. From there, you can save as PDF, email directly, or upload to cloud storage.\n\nTroubleshooting: If the scanner does not appear in the device list, ensure Bluetooth is enabled and that the scanner is charged. Press and hold the power button for 5 seconds to reset the device.",
-    questions:[
-      {q:"How long does a full charge take?",options:["30 minutes","1 hour","2 hours","4 hours"],correct:2,x:"'A full charge takes approximately 2 hours.'"},
-      {q:"How does the user initiate a high-resolution scan?",options:["Double-tap the blue button","Hold the blue button for 2 seconds","Select an option in the app","Press the blue button once"],correct:1,x:"'Hold it for 2 seconds for a high-resolution scan (600 dpi).'"},
-      {q:"What should a user do if the scanner does not appear in the app?",options:["Download a different app","Return the product","Hold the power button for 5 seconds to reset","Charge the device for 24 hours"],correct:2,x:"'Press and hold the power button for 5 seconds to reset the device.'"},
-    ]},
-  { id:"m2p7_3", type:"Article",
-    text:"FINANCIAL TIMES — INDUSTRY REPORT\n\nPacific Rim Logistics (PRL), one of Southeast Asia's largest freight forwarding companies, announced on Tuesday that it will invest $340 million in a new automated distribution hub near Jakarta, Indonesia. Construction is scheduled to begin in the third quarter of this year, with the facility expected to be fully operational by late 2027.\n\nThe 45,000-square-meter facility will use robotic sorting systems and AI-driven route optimization to process up to 120,000 packages per day — roughly triple the capacity of PRL's current Jakarta warehouse.\n\n'This investment positions us to meet the explosive growth in e-commerce across the region,' said CEO Michael Tan at a press conference. 'Indonesia alone saw a 38% increase in online retail orders last year.'\n\nThe expansion is partly funded by a recent $200 million bond issuance. Analysts at Eastfield Capital have given the project a positive outlook, noting that PRL's existing contracts with major e-commerce platforms provide a strong revenue base.\n\nHowever, some industry observers have raised concerns about overcapacity in the region, pointing to similar investments by competitors DHL and FedEx in neighboring countries.",
-    questions:[
-      {q:"How much is PRL investing in the new facility?",options:["$120 million","$200 million","$340 million","$450 million"],correct:2,x:"'PRL will invest $340 million in a new automated distribution hub.'"},
-      {q:"What is the expected daily capacity of the new hub?",options:["38,000 packages","45,000 packages","80,000 packages","120,000 packages"],correct:3,x:"'Process up to 120,000 packages per day — roughly triple the current capacity.'"},
-      {q:"How is the expansion partly funded?",options:["Through government grants","By selling shares on the stock market","Through a $200 million bond issuance","With profits from last quarter"],correct:2,x:"'The expansion is partly funded by a recent $200 million bond issuance.'"},
-      {q:"What concern do some industry observers have?",options:["PRL's technology is outdated","The Jakarta location is too remote","There may be overcapacity in the region","E-commerce growth is slowing down"],correct:2,x:"'Some observers have raised concerns about overcapacity in the region.'"},
-    ]},
-  { id:"m2p7_4", type:"Advertisement",
-    text:"SUMMIT LANGUAGE SOLUTIONS — CORPORATE LANGUAGE TRAINING\n\nGive your team the global advantage. Summit Language Solutions offers customized language training programs tailored to the needs of international businesses.\n\nAvailable languages: English, Mandarin, Spanish, French, German, Japanese, and Arabic.\n\nProgram options:\n- Intensive group courses (8-12 participants, 3 sessions per week)\n- One-on-one executive coaching (flexible scheduling)\n- Industry-specific modules: legal, medical, finance, and hospitality\n- Online, on-site, or hybrid delivery\n\nAll instructors hold advanced degrees and have a minimum of 5 years of corporate training experience.\n\nNew for 2026: Our AI-powered progress tracker gives managers real-time visibility into team performance and attendance.\n\nRequest a free consultation: partnerships@summitlanguage.com\nwww.summitlanguage.com | (555) 456-7890",
-    questions:[
-      {q:"What is Summit Language Solutions primarily offering?",options:["Translation services","Corporate language training","Study abroad programs","Textbook publishing"],correct:1,x:"'Summit Language Solutions offers customized language training programs tailored to international businesses.'"},
-      {q:"What is the minimum qualification for instructors?",options:["A bachelor's degree","A teaching certificate","An advanced degree and 5 years of experience","10 years of experience"],correct:2,x:"'All instructors hold advanced degrees and have a minimum of 5 years of corporate training experience.'"},
-      {q:"What new feature is available in 2026?",options:["A mobile app for students","AI-powered progress tracking for managers","Virtual reality classrooms","Free introductory courses"],correct:1,x:"'Our AI-powered progress tracker gives managers real-time visibility into team performance.'"},
-    ]},
-  { id:"m2p7_5", type:"Notice",
-    text:"IMPORTANT NOTICE — BAXTER PHARMACEUTICALS\n\nProduct Recall: VitaBoost Daily Multivitamin (60-count bottle)\nLot Numbers Affected: VB-2025-0881 through VB-2025-0920\nDate Issued: November 8, 2025\n\nBaxter Pharmaceuticals is voluntarily recalling specific lots of VitaBoost Daily Multivitamin due to a labeling error. The affected bottles contain tablets with a higher concentration of Vitamin D than indicated on the label. While the higher dosage is unlikely to cause harm in most adults, it may pose a risk for individuals with certain medical conditions.\n\nConsumers who have purchased the affected product should:\n1. Stop taking the tablets immediately\n2. Check the lot number printed on the bottom of the bottle\n3. Return the product to the place of purchase for a full refund\n\nConsumers may also contact our recall hotline at 1-800-555-0199 (Monday-Friday, 8 AM - 8 PM EST) or visit www.baxterpharma.com/recall for additional information.\n\nWe sincerely apologize for any concern this may cause and remain committed to the highest standards of product safety.",
-    questions:[
-      {q:"Why is the product being recalled?",options:["The bottles were contaminated","There is a labeling error regarding Vitamin D dosage","The tablets have expired","The packaging was damaged"],correct:1,x:"'Recalling due to a labeling error. The bottles contain a higher concentration of Vitamin D than indicated.'"},
-      {q:"What should consumers do first?",options:["Call their doctor","Return the product immediately","Stop taking the tablets","Check the company website"],correct:2,x:"Step 1 says: 'Stop taking the tablets immediately.' This is listed as the first action."},
-      {q:"How can consumers get a refund?",options:["By calling the hotline only","By returning the product to where they bought it","By mailing the product to Baxter","By filling out an online form"],correct:1,x:"'Return the product to the place of purchase for a full refund.'"},
-      {q:"What is indicated about the health risk?",options:["The higher dosage is dangerous for everyone","There is no health risk at all","Most adults are unlikely to be harmed but some may be at risk","Only children are affected"],correct:2,x:"'Unlikely to cause harm in most adults' but 'may pose a risk for individuals with certain medical conditions.'"},
-    ]},
-  { id:"m2p7_6", type:"Letter",
-    text:"Dear Mr. Okonkwo,\n\nOn behalf of the Granville Chamber of Commerce, I would like to invite you to serve as the keynote speaker at our Annual Business Excellence Awards Gala, scheduled for Saturday, March 22, at the Granville Grand Hotel.\n\nAs the founder of NovaTech Solutions and a recognized leader in the technology sector, your insights on innovation and entrepreneurship would be invaluable to our audience of over 400 local business owners and civic leaders.\n\nThe keynote address is typically 20-25 minutes, followed by a brief Q&A. Dinner will be served at 7:00 PM, with the keynote beginning at approximately 8:15 PM. We would also be honored to present you with our Distinguished Business Leader Award during the ceremony.\n\nWe are prepared to cover your travel and accommodation expenses, as well as offer an honorarium of $3,000.\n\nPlease let us know by February 15 whether you are able to accept. We would be happy to discuss any questions or special requirements you may have.\n\nWarm regards,\nEleanor Voss\nPresident, Granville Chamber of Commerce",
-    questions:[
-      {q:"What is Mr. Okonkwo being invited to do?",options:["Join the Chamber of Commerce board","Sponsor the awards gala","Deliver a keynote speech","Judge a business competition"],correct:2,x:"'I would like to invite you to serve as the keynote speaker.'"},
-      {q:"How long is the keynote expected to last?",options:["10-15 minutes","20-25 minutes","30-45 minutes","One hour"],correct:1,x:"'The keynote address is typically 20-25 minutes, followed by a brief Q&A.'"},
-      {q:"What will Mr. Okonkwo receive in addition to the honorarium?",options:["A business award","Free membership to the Chamber","A year of advertising","Stock options"],correct:0,x:"'We would also be honored to present you with our Distinguished Business Leader Award.'"},
-    ]},
-  { id:"m2p7_7", type:"Double Passage",
-    text:"--- PASSAGE 1: Job Posting ---\nPOSITION: Senior Data Analyst\nCOMPANY: Crestview Financial Group\nLOCATION: Toronto, ON (Hybrid — 3 days in office, 2 days remote)\nSALARY: $85,000 - $105,000 depending on experience\n\nCrestview Financial Group is seeking a Senior Data Analyst to join our Risk Assessment division. The ideal candidate will have:\n- A bachelor's degree in Statistics, Mathematics, or a related field (Master's preferred)\n- 4+ years of experience in data analysis, preferably in financial services\n- Advanced proficiency in SQL, Python, and data visualization tools (Tableau or Power BI)\n- Strong written and verbal communication skills\n- Experience with regulatory compliance reporting is a plus\n\nResponsibilities include developing risk models, preparing quarterly reports for senior management, and collaborating with the IT team to maintain data pipelines.\n\nBenefits: competitive health plan, 4 weeks paid vacation, annual performance bonus, and professional development allowance ($2,500/year).\n\nTo apply, submit your resume and cover letter to careers@crestviewfg.com by April 5.\n\n--- PASSAGE 2: Email ---\nFrom: James Liu\nTo: careers@crestviewfg.com\nSubject: Application — Senior Data Analyst Position\nDate: March 25\n\nDear Hiring Team,\n\nI am writing to express my interest in the Senior Data Analyst position at Crestview Financial Group.\n\nI hold a Master's degree in Applied Statistics from the University of British Columbia and have spent the past six years working as a data analyst at Meridian Insurance, where I specialize in predictive risk modeling. I am highly proficient in SQL, Python, and Tableau, and I have extensive experience preparing regulatory compliance reports for provincial and federal authorities.\n\nI am particularly drawn to this opportunity because of Crestview's reputation for innovation in financial risk management. I believe my background in insurance analytics is directly transferable to your Risk Assessment division.\n\nI have attached my resume and a portfolio of recent projects for your review. I am available for an interview at your convenience and can start with two weeks' notice.\n\nThank you for your consideration.\n\nBest regards,\nJames Liu",
-    questions:[
-      {q:"What is a preferred qualification for the position?",options:["A PhD in Finance","A Master's degree","10 years of experience","Fluency in French"],correct:1,x:"'A bachelor's degree... (Master's preferred).' A Master's is preferred but not required."},
-      {q:"What is NOT listed as a required skill?",options:["SQL proficiency","Python experience","Data visualization tools","Machine learning"],correct:3,x:"Machine learning is not mentioned. The listing requires SQL, Python, and Tableau/Power BI."},
-      {q:"How long has James Liu worked in data analysis?",options:["Two years","Four years","Six years","Ten years"],correct:2,x:"James writes: 'I have spent the past six years working as a data analyst at Meridian Insurance.'"},
-      {q:"What does James say about his regulatory experience?",options:["He has no experience with it","He has prepared compliance reports for authorities","He learned about it in university","He plans to gain this experience at Crestview"],correct:1,x:"'I have extensive experience preparing regulatory compliance reports for provincial and federal authorities.'"},
-      {q:"Based on both passages, does James meet the job requirements?",options:["No — he lacks the required degree","No — he has insufficient experience","Yes — he exceeds the minimum requirements","Yes — but only if he completes additional training"],correct:2,x:"James has a Master's (preferred), 6 years of experience (above the 4+ minimum), all required tools, and regulatory compliance experience."},
-    ]},
-];
+// ─── DATA IMPORTS ───
+import { LEAGUES, COMPETITORS } from "./data/leagues.js";
+import { ACHIEVEMENTS } from "./data/achievements.js";
+import { VOCAB } from "./data/vocab.js";
+import { QUESTIONS, WORD_FAMILIES } from "./data/grammar.js";
+import { CONNECTORS, PREP_COLLOCATIONS, GERUND_INF, TOEIC_TRAPS, FALSE_FRIENDS, STRATEGIES, STRAT_QUIZ } from "./data/miniGames.js";
+import { PART6_TEXTS } from "./data/part6.js";
+import { PART7_PASSAGES } from "./data/part7.js";
+import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "./data/listening.js";
+import { PLACEMENT_TEST, PLACEMENT_LEVELS, MISSION_MODULES } from "./data/placement.js";
+import { MOCK1_P5, MOCK2_P5, MOCK1_P6, MOCK2_P6, MOCK1_P7, MOCK2_P7 } from "./data/mockTests.js";
 
 
-// ─── WORD FAMILIES DATA ───
-var WORD_FAMILIES = [
-  {v:"succeed",n:"success",adj:"successful",adv:"successfully"},
-  {v:"employ",n:"employment",adj:"employable",adv:null},
-  {v:"decide",n:"decision",adj:"decisive",adv:"decisively"},
-  {v:"compete",n:"competition",adj:"competitive",adv:"competitively"},
-  {v:"create",n:"creation",adj:"creative",adv:"creatively"},
-  {v:"respond",n:"response",adj:"responsible",adv:"responsibly"},
-  {v:"produce",n:"production",adj:"productive",adv:"productively"},
-  {v:"manage",n:"management",adj:"managerial",adv:null},
-  {v:"differ",n:"difference",adj:"different",adv:"differently"},
-  {v:"analyse",n:"analysis",adj:"analytical",adv:"analytically"},
-  {v:"apply",n:"application",adj:"applicable",adv:null},
-  {v:"depend",n:"dependence",adj:"dependent",adv:"dependently"},
-  {v:"consider",n:"consideration",adj:"considerable",adv:"considerably"},
-  {v:"inform",n:"information",adj:"informative",adv:"informatively"},
-  {v:"require",n:"requirement",adj:"required",adv:null},
-  {v:"attend",n:"attendance",adj:"attentive",adv:"attentively"},
-  {v:"profit",n:"profit",adj:"profitable",adv:"profitably"},
-  {v:"develop",n:"development",adj:"developmental",adv:null},
-  {v:"distribute",n:"distribution",adj:"distributable",adv:null},
-  {v:"finance",n:"finance",adj:"financial",adv:"financially"},
-];
-
-// ─── CONNECTORS DATA ───
-var CONNECTORS = [
-  {word:"Although",rule:"clause",ex:"Although sales dropped, profits increased.",tip:"Although + subject + verb (clause)."},
-  {word:"Even though",rule:"clause",ex:"Even though it rained, the event was a success.",tip:"Even though + subject + verb (clause)."},
-  {word:"Despite",rule:"noun",ex:"Despite the delay, we met the deadline.",tip:"Despite + noun or -ing (no subject + verb)."},
-  {word:"In spite of",rule:"noun",ex:"In spite of the bad weather, they went ahead.",tip:"In spite of + noun or -ing (same as despite)."},
-  {word:"However",rule:"sentence",ex:"The budget was tight. However, we managed.",tip:"However = new sentence or after semicolon."},
-  {word:"Nevertheless",rule:"sentence",ex:"Results were poor. Nevertheless, the team stayed motivated.",tip:"Nevertheless = new sentence. Formal register."},
-  {word:"Therefore",rule:"sentence",ex:"Demand rose; therefore, prices increased.",tip:"Therefore = new sentence or after semicolon (consequence)."},
-  {word:"Consequently",rule:"sentence",ex:"The factory closed. Consequently, 200 jobs were lost.",tip:"Consequently = new sentence (result/consequence)."},
-  {word:"Because",rule:"clause",ex:"Because the shipment was late, we lost the client.",tip:"Because + subject + verb (clause, gives the reason)."},
-  {word:"Since",rule:"clause",ex:"Since costs have risen, we must adjust our budget.",tip:"Since + clause (causal, like 'because')."},
-  {word:"Due to",rule:"noun",ex:"Due to heavy traffic, the delivery was delayed.",tip:"Due to + noun phrase (not a full clause)."},
-  {word:"In addition to",rule:"noun",ex:"In addition to his salary, he receives a bonus.",tip:"In addition to + noun or -ing."},
-  {word:"Furthermore",rule:"sentence",ex:"The product is affordable. Furthermore, it is eco-friendly.",tip:"Furthermore = new sentence (adds information)."},
-  {word:"As a result",rule:"sentence",ex:"Sales dropped. As a result, layoffs were announced.",tip:"As a result = new sentence (consequence)."},
-  {word:"Whereas",rule:"clause",ex:"Whereas sales rose in Q1, they fell in Q2.",tip:"Whereas + clause (contrast between two facts)."},
-  {word:"While",rule:"clause",ex:"While the report is accurate, it lacks detail.",tip:"While + clause (contrast or simultaneous action)."},
-];
-
-// ─── PREPOSITION COLLOCATIONS DATA ───
-var PREP_COLLOCATIONS = [
-  {base:"responsible",prep:"for",type:"adj",ex:"She is responsible for the marketing budget."},
-  {base:"interested",prep:"in",type:"adj",ex:"We are interested in your proposal."},
-  {base:"comply",prep:"with",type:"verb",ex:"All employees must comply with safety regulations."},
-  {base:"depend",prep:"on",type:"verb",ex:"The outcome depends on several factors."},
-  {base:"result",prep:"in",type:"verb",ex:"The merger resulted in significant cost savings."},
-  {base:"consist",prep:"of",type:"verb",ex:"The team consists of five members."},
-  {base:"in charge",prep:"of",type:"expr",ex:"Mr. Park is in charge of the Tokyo office."},
-  {base:"in addition",prep:"to",type:"expr",ex:"In addition to English, she speaks French."},
-  {base:"due",prep:"to",type:"adj",ex:"The delay was due to bad weather."},
-  {base:"eligible",prep:"for",type:"adj",ex:"All full-time employees are eligible for the bonus."},
-  {base:"familiar",prep:"with",type:"adj",ex:"Are you familiar with this software?"},
-  {base:"capable",prep:"of",type:"adj",ex:"The machine is capable of producing 1,000 units per hour."},
-  {base:"participate",prep:"in",type:"verb",ex:"Employees are encouraged to participate in the workshop."},
-  {base:"apply",prep:"for",type:"verb",ex:"She applied for the management position."},
-  {base:"account",prep:"for",type:"verb",ex:"Online sales account for 40% of total revenue."},
-  {base:"invested",prep:"in",type:"adj",ex:"The company invested in new technology."},
-  {base:"prior",prep:"to",type:"adj",ex:"Prior to the meeting, please review the agenda."},
-  {base:"subject",prep:"to",type:"adj",ex:"All orders are subject to availability."},
-  {base:"associated",prep:"with",type:"adj",ex:"The risks associated with the project are minimal."},
-  {base:"according",prep:"to",type:"expr",ex:"According to the report, profits increased by 20%."},
-];
-
-// ─── GERUND / INFINITIVE DATA ───
-var GERUND_INF = [
-  {verb:"enjoy",takes:"ing",ex:"I enjoy working with international clients."},
-  {verb:"consider",takes:"ing",ex:"We are considering hiring a new consultant."},
-  {verb:"avoid",takes:"ing",ex:"You should avoid making assumptions."},
-  {verb:"suggest",takes:"ing",ex:"She suggested postponing the meeting."},
-  {verb:"recommend",takes:"ing",ex:"The manager recommended reviewing the contract."},
-  {verb:"finish",takes:"ing",ex:"Have you finished writing the report?"},
-  {verb:"mind",takes:"ing",ex:"Do you mind closing the door?"},
-  {verb:"postpone",takes:"ing",ex:"They postponed launching the product."},
-  {verb:"risk",takes:"ing",ex:"We risk losing the client if we delay."},
-  {verb:"deny",takes:"ing",ex:"He denied receiving the email."},
-  {verb:"agree",takes:"to",ex:"The board agreed to increase the budget."},
-  {verb:"decide",takes:"to",ex:"She decided to accept the offer."},
-  {verb:"plan",takes:"to",ex:"We plan to expand into Asia next year."},
-  {verb:"hope",takes:"to",ex:"I hope to hear from you soon."},
-  {verb:"expect",takes:"to",ex:"We expect to complete the project by June."},
-  {verb:"want",takes:"to",ex:"The client wants to renegotiate the terms."},
-  {verb:"need",takes:"to",ex:"You need to submit the form by Friday."},
-  {verb:"offer",takes:"to",ex:"He offered to help with the presentation."},
-  {verb:"refuse",takes:"to",ex:"The supplier refused to lower the price."},
-  {verb:"promise",takes:"to",ex:"They promised to deliver on time."},
-];
-
-// ─── TOEIC TRAPS DATA ───
-var TOEIC_TRAPS = [
-  {id:1,name:"Similar-sounding words",part:"Listening",trap:"The audio says 'copy' but answer B says 'coffee'. Your brain hears what it expects.",
-    scenario:"You hear: 'Could you make a copy of this report?'\nWhich did the speaker request?",
-    options:["A cup of coffee","A copy of the report","A cover for the report","A receipt for the copy"],correct:1,
-    tip:"Focus on the exact sounds. Don't let your brain auto-complete with familiar words."},
-  {id:2,name:"Repeated words = wrong answer",part:"Listening",trap:"In Part 2, if a word from the question appears in an answer, it's usually a distractor.",
-    scenario:"Question: 'When is the MEETING scheduled?'\nWhich response is the trap?",
-    options:["It's at 3 PM tomorrow.","The MEETING room is on floor 2.","I'll check the calendar.","Let me ask Sarah."],correct:1,
-    tip:"In Part 2, the answer that repeats a keyword from the question is almost always WRONG."},
-  {id:3,name:"Word form confusion",part:"Reading",trap:"The answer choices look alike (employ / employment / employer / employable). You must identify the part of speech needed.",
-    scenario:"'The company announced the _____ of 50 new staff members.'\nWhat part of speech is needed?",
-    options:["A verb (employ)","A noun (employment)","An adjective (employable)","An adverb (employably)"],correct:1,
-    tip:"Look at what comes BEFORE and AFTER the blank. Article + _____ + of = NOUN needed."},
-  {id:4,name:"Ignoring time markers",part:"Reading",trap:"Tense questions depend entirely on time words. Missing 'since 2020' or 'yesterday' = wrong tense selected.",
-    scenario:"'The company _____ its headquarters since 2018.'\nWhat tense is needed?",
-    options:["Past simple (relocated)","Present simple (relocates)","Present perfect (has relocated)","Future (will relocate)"],correct:2,
-    tip:"Circle every time marker you see: since, for, ago, last, next, already, yet, by. They determine the tense."},
-  {id:5,name:"Reading too much in Part 7",part:"Reading",trap:"You don't need to understand every word. Trying to read everything = running out of time.",
-    scenario:"What is the best approach for Part 7?",
-    options:["Read the entire text carefully first","Read questions first, then scan for keywords","Translate difficult words in your head","Read the text twice to make sure"],correct:1,
-    tip:"Questions FIRST, then scan. You're looking for specific information, not full comprehension."},
-  {id:6,name:"Panic on double/triple passages",part:"Reading",trap:"They look intimidating but follow the same logic. Questions are in order — answers are in the text in order too.",
-    scenario:"How should you handle a triple-passage question set?",
-    options:["Skip it entirely","Read all 3 texts completely first","Skim headers and first sentences, then use questions to guide reading","Only read the longest text"],correct:2,
-    tip:"Skim structure first (who wrote what, what type of text). Then let the questions guide where you look."},
-  {id:7,name:"Not pre-reading Part 3/4 questions",part:"Listening",trap:"The #1 mistake. You have 8 seconds between audio clips — use them to read the next set of questions.",
-    scenario:"The directions for Part 3 are playing. What should you do?",
-    options:["Listen carefully to the directions","Start reading Part 3 questions immediately","Review your Part 2 answers","Relax and wait"],correct:1,
-    tip:"You already know the directions. Use EVERY second of silence to read upcoming questions."},
-  {id:8,name:"Spending too long on one question",part:"Both",trap:"30 sec in Part 5, 1 min in Part 7. If you're stuck, your best guess now beats a perfect answer later.",
-    scenario:"You've spent 45 seconds on a Part 5 question and still aren't sure. What do you do?",
-    options:["Keep thinking — you'll figure it out","Eliminate what you can, guess, and move on","Skip it entirely and come back later","Ask yourself what sounds right in French"],correct:1,
-    tip:"30 seconds MAX per Part 5 question. Eliminate impossible answers, pick your best guess, MOVE ON."},
-  {id:9,name:"Leaving blanks empty",part:"Both",trap:"There is NO penalty for guessing on the TOEIC. An empty answer = 0% chance. A random guess = 25% chance.",
-    scenario:"You have 2 minutes left and 8 questions unanswered in Part 7. What do you do?",
-    options:["Leave them blank — at least your other answers are honest","Fill in B or C for all remaining questions","Quickly try to read and answer each one","Panic"],correct:1,
-    tip:"ALWAYS fill in something. With 4 options, random guessing gives you 25%. Blank = 0%."},
-  {id:10,name:"Neglecting connector vocabulary",part:"Reading",trap:"However, therefore, despite, although, in addition to... These are the glue of Parts 5 and 6.",
-    scenario:"'_____ the project was delayed, the team delivered excellent results.'\nWhich connector fits?",
-    options:["Therefore","Although","Furthermore","Because of"],correct:1,
-    tip:"Learn the syntax rule for each connector. Although + clause. Despite + noun. However = new sentence."},
-];
-
-// ─── STRATEGY CARDS DATA (54 strategies) ───
-var STRATEGIES = [
-  {part:"Part 1",title:"Photographs",qs:6,icon:"📷",section:"Listening",
-    points:"Easy 6 points — don't lose them!",
-    tips:[
-      {t:"Scan before you listen",d:"During instructions, identify WHO is in the photo, WHERE they are, and WHAT they're doing. Formulate a simple sentence mentally."},
-      {t:"Focus on verbs first",d:"The correct answer almost always describes an ACTION or STATE. 'The woman is presenting' beats 'There is a woman'."},
-      {t:"Watch prepositions of position",d:"'Next to', 'in front of', 'behind', 'across from' — distractors often use the wrong spatial relationship."},
-      {t:"Similar sounds = trap",d:"'Typing' vs 'tying', 'writing' vs 'riding', 'copy' vs 'coffee', 'walking' vs 'working'. If two options sound alike, one is the trap."},
-      {t:"Passive voice matters",d:"'The table is being set' (in progress) vs 'The table has been set' (done). Check the photo: is the action ongoing or finished?"},
-      {t:"Wrong objects = eliminate",d:"If an answer mentions something NOT visible in the photo, it's wrong. Simple but effective."},
-      {t:"Count the people",d:"Photo shows ONE person? Any answer with 'they' or 'people' is automatically wrong."},
-  ]},
-  {part:"Part 2",title:"Question-Response",qs:25,icon:"💬",section:"Listening",
-    points:"High-value: 25 quick points. Train your ear!",
-    tips:[
-      {t:"First word is everything",d:"WHO → person. WHEN → time. WHERE → place. WHY → reason. HOW → manner/quantity. If the answer doesn't match the question type, eliminate."},
-      {t:"Repeated words = TRAP",d:"If the question contains 'meeting' and an answer also has 'meeting', it's almost always a distractor. The TOEIC loves this trick."},
-      {t:"Indirect answers win",d:"'Would you like coffee?' → 'I just had some, thanks.' Not Yes/No, but it's correct. Direct Yes/No answers are often traps."},
-      {t:"Tag questions: focus on the statement",d:"'The report is ready, isn't it?' → answer is about whether the report is ready or not. Ignore the tag."},
-      {t:"Don't overthink negative questions",d:"'Didn't you send the email?' → 'Yes, I sent it yesterday.' Treat it like a normal question."},
-      {t:"Suggestions have specific patterns",d:"'Why don't we...' / 'How about...' / 'Shall I...' → answer is acceptance or polite refusal, not a factual response."},
-      {t:"'Or' questions: no Yes/No",d:"'Tea or coffee?' → 'Tea, please.' NOT 'Yes.' Choice questions need a choice, not confirmation."},
-      {t:"Tense must match",d:"Past question → past answer. Future question → future answer. A tense mismatch = probable trap."},
-  ]},
-  {part:"Part 3",title:"Conversations",qs:39,icon:"🗣️",section:"Listening",
-    points:"39 points — conversations between 2-3 speakers.",
-    tips:[
-      {t:"PRE-READ questions before audio",d:"The #1 strategy. You have ~8 seconds between sets — read the NEXT 3 questions, don't review previous answers."},
-      {t:"Predict the info type",d:"'What does the man suggest?' → listen for a suggestion. 'Where are the speakers?' → listen for location clues."},
-      {t:"Answers come in order",d:"Q1 answer = beginning of conversation. Q2 = middle. Q3 = end. Don't search backwards."},
-      {t:"Transition words = answer signals",d:"'Actually...', 'However...', 'Unfortunately...', 'By the way...' — these often introduce the answer to a question."},
-      {t:"'Imply' = read between the lines",d:"'I'm not sure that's in the budget' = probably no. The answer isn't stated directly."},
-      {t:"Graphic questions: scan first",d:"'Look at the graphic' → identify what it shows (schedule, prices, floor plan) BEFORE the audio plays."},
-      {t:"'What will X do next?' = last line",d:"Always in the final sentence. 'I'll check with the manager' → He will talk to the manager."},
-      {t:"3-speaker convos: track who says what",d:"The TOEIC tests if you can attribute info to the right speaker. Mentally note: Man 1 = ..., Woman = ..., Man 2 = ..."},
-  ]},
-  {part:"Part 4",title:"Talks",qs:30,icon:"🎙️",section:"Listening",
-    points:"30 points — monologues: voicemails, announcements, speeches.",
-    tips:[
-      {t:"Identify the talk type in 5 seconds",d:"Voicemail? Meeting? Announcement? Advertisement? Tour guide? This frames all your expectations."},
-      {t:"Same pre-reading as Part 3",d:"Read all 3 questions BEFORE the audio. Even more critical here — only one voice, info passes fast."},
-      {t:"Speaker/Purpose = first 2 sentences",d:"'Hello everyone, welcome to the annual shareholders' meeting' = speaker is executive, purpose is meeting."},
-      {t:"'What are listeners asked to do?' = END",d:"Instructions to the audience come last. 'Please submit your forms by Friday.'"},
-      {t:"Note numbers, dates, times mentally",d:"'The event starts at 3, not 2 as originally planned.' Correct = 3, trap = 2. The TOEIC loves changed details."},
-      {t:"Paraphrases, not exact words",d:"'What is mentioned about...?' The correct answer REPHRASES the info. The exact words from the audio are usually in the wrong answer."},
-  ]},
-  {part:"Part 5",title:"Incomplete Sentences",qs:30,icon:"📝",section:"Reading",
-    points:"30 points — 10 min max. Fast pattern recognition.",
-    tips:[
-      {t:"Look at OPTIONS first, not the sentence",d:"4 words from same family → Word Form. 4 different words → Vocabulary. 4 grammar words → Grammar. This determines your approach."},
-      {t:"Word Form: check before AND after blank",d:"Article + ___ + noun → adjective. Article + ___ + of → noun. Verb + ___ → adverb. ___ + noun → adjective."},
-      {t:"30 seconds MAX per question",d:"If you don't know after 30 seconds, eliminate what you can and guess. Time saved here = points earned in Part 7."},
-      {t:"'Sounds right' for collocations",d:"'Make a decision' sounds correct, 'do a decision' doesn't. Trust your ear for fixed expressions."},
-      {t:"Circle time markers mentally",d:"Since, for, ago, last, next, already, yet, by, every, currently, right now — they dictate the tense."},
-      {t:"Connector grammar check",d:"Blank + noun → preposition (despite, due to). Blank + clause → conjunction (although, because). New sentence → adverb (however, therefore)."},
-  ]},
-  {part:"Part 6",title:"Text Completion",qs:16,icon:"📄",section:"Reading",
-    points:"16 points — bridge between grammar and reading.",
-    tips:[
-      {t:"Read the ENTIRE text first",d:"Unlike Part 5, context is crucial. Spend 60 seconds reading the full text, THEN answer the 4 questions."},
-      {t:"Identify text type and tone",d:"Formal email → 'We would like to inform you'. Casual memo → 'Just a heads-up'. Tone eliminates options."},
-      {t:"Sentence insertion: read around the blank",d:"One Q per text asks for a full sentence. The inserted sentence must create a natural transition with what's before AND after."},
-      {t:"Connectors: same rules as Part 5",d:"However/Therefore/In addition/Meanwhile — but now the full text context helps you choose."},
-      {t:"Verb tense: stay consistent",d:"If the text is in past tense (report), blanks will be past. Announcement about future → blanks in future."},
-      {t:"Check pronoun referents",d:"For sentence insertion: does 'this' or 'it' in the inserted sentence have a clear antecedent in the previous sentence?"},
-  ]},
-  {part:"Part 7",title:"Reading Comprehension",qs:54,icon:"📖",section:"Reading",
-    points:"54 points — the biggest section. Time > perfect understanding.",
-    tips:[
-      {t:"Questions FIRST, then scan",d:"Read questions before the text. You're searching for specific info, not reading a novel."},
-      {t:"Scan for keywords or synonyms",d:"'When will the event take place?' → scan for a date. The text won't always use the same words as the question."},
-      {t:"'Purpose of this message?' = line 1-2",d:"Always answered in the opening sentences. Don't read further for this question type."},
-      {t:"Vocab-in-context: substitute each option",d:"'The company saw a dramatic increase' — try each answer choice in place of the word. Pick the one that keeps the same meaning."},
-      {t:"NOT/TRUE: eliminate one by one",d:"'Which is NOT mentioned?' → check each option against the text. The last one standing is correct. Slow but reliable."},
-      {t:"Double/Triple: cross-reference",d:"'From both documents...' → the answer combines info from text 1 AND text 2. They test your ability to connect."},
-      {t:"'Best fit' sentence: test all positions",d:"Read the paragraph with the sentence at each position. Only one creates a logical flow."},
-      {t:"Time management is ruthless",d:"Stuck on a hard text? Answer the easy Qs (purpose, detail), guess the inference Qs. 3/5 beats 0/5."},
-      {t:"Singles first, triples last",d:"Single passages = fastest points/minute ratio. Triples take longer for the same number of points."},
-  ]},
-  {part:"General",title:"Cross-Part Tips",qs:0,icon:"⚔️",section:"Both",
-    points:"These apply to EVERY section of the TOEIC.",
-    tips:[
-      {t:"Never leave a blank",d:"No penalty for wrong answers. Random guess = 25% chance. Blank = 0%. Always fill something in."},
-      {t:"When guessing, pick B or C",d:"Statistically, TOEIC answers are slightly more often B or C. Small edge, but better than nothing."},
-      {t:"Trust your first instinct",d:"Don't change answers unless you're 100% sure. Studies show first instinct is right more often than changes."},
-      {t:"Mark and come back (Reading only)",d:"In Listening, the audio moves on. In Reading, you can flag a hard question and return to it later."},
-  ]},
-];
-
-// ─── STRATEGY QUIZ DATA ───
-var STRAT_QUIZ = [
-  {id:"sq1",scenario:"The directions for Part 3 are playing. What should you do?",
-    options:["Listen carefully to the directions","Read the first 3 questions of Part 3 now","Review your Part 2 answers","Relax and wait"],
-    correct:1,part:"Part 3",explain:"You already know the instructions. Use every second of silence to pre-read upcoming questions. This is the #1 Listening strategy."},
-  {id:"sq2",scenario:"In Part 2, you hear: 'When is the DEADLINE for the report?' Answer B contains the word 'DEADLINE'. What should you think?",
-    options:["B is probably correct — it matches the question","B is probably a TRAP — repeated words are distractors","B could go either way","Skip this question"],
-    correct:1,part:"Part 2",explain:"In Part 2, when a word from the question is repeated in an answer, it's almost always a distractor. The correct answer usually uses different words."},
-  {id:"sq3",scenario:"Part 5: The 4 answer options are: successfully / success / successful / succeed. What type of question is this?",
-    options:["Vocabulary question","Grammar question","Word Form question","Collocation question"],
-    correct:2,part:"Part 5",explain:"When all 4 options come from the same word family, it's a Word Form question. Your job: figure out what part of speech the blank needs."},
-  {id:"sq4",scenario:"You've spent 50 seconds on a Part 5 question and still aren't sure. What do you do?",
-    options:["Keep thinking — you'll figure it out","Eliminate what you can, guess B or C, move on","Leave it blank and come back later","Read the sentence one more time carefully"],
-    correct:1,part:"Part 5",explain:"30 seconds MAX per Part 5 question. After that, eliminate impossible answers, pick your best guess, and MOVE ON. Time saved here = points earned in Part 7."},
-  {id:"sq5",scenario:"Part 7: You have 2 minutes left and 6 questions unanswered. What do you do?",
-    options:["Leave them blank — better than random guessing","Fill in B or C for all remaining questions","Quickly try to read and answer each one","Focus on getting one more right and leave the rest"],
-    correct:1,part:"Part 7",explain:"ALWAYS fill in something. No penalty for guessing. Random B/C = 25% chance per question. That's potentially 1-2 free points. Blank = guaranteed 0."},
-  {id:"sq6",scenario:"Part 1: The photo shows ONE woman at a desk. You hear an answer that says 'They are working on a project.' What do you do?",
-    options:["Consider it — maybe others are off-screen","Eliminate it — 'they' doesn't match one person","Keep it as a possibility","Choose it — 'working' matches the photo"],
-    correct:1,part:"Part 1",explain:"If the photo shows ONE person, any answer using 'they' or 'people' is automatically wrong. Count the people in the photo during prep time."},
-  {id:"sq7",scenario:"Part 6: You see 4 blanks in an email text. What's your first move?",
-    options:["Fill in blank #1 immediately","Read only the sentence with blank #1","Read the ENTIRE email first, then answer","Look at the answer options for blank #1 first"],
-    correct:2,part:"Part 6",explain:"Part 6 is NOT Part 5. Context from the whole text is essential. Spend 60 seconds reading everything, then fill in the blanks."},
-  {id:"sq8",scenario:"Part 2: 'Would you like to join us for lunch?' Which answer style is most likely correct?",
-    options:["'Yes, I would.'","'No, thank you.'","'I already ate, but thanks for asking.'","'The lunch menu looks good.'"],
-    correct:2,part:"Part 2",explain:"Indirect answers are often correct on TOEIC Part 2. 'I already ate' is a polite, indirect decline — more natural than a flat Yes/No."},
-  {id:"sq9",scenario:"Part 3: The third question asks 'What will the woman probably do next?' Where in the conversation should you focus?",
-    options:["The very beginning","The middle section","The last line of the conversation","It could be anywhere"],
-    correct:2,part:"Part 3",explain:"'What will X do next?' is ALWAYS answered in the final sentence or two of the conversation. 'I'll call the supplier' = She will contact the supplier."},
-  {id:"sq10",scenario:"Part 5: You see '_____ the heavy rain, the event continued.' Options: Despite / Although / However / Because. How do you decide?",
-    options:["Pick the one that 'sounds right'","Check what follows the blank: noun or clause?","They all mean the same thing","Choose the longest word"],
-    correct:1,part:"Part 5",explain:"'The heavy rain' is a noun phrase (no subject+verb). DESPITE + noun. ALTHOUGH + clause. HOWEVER = new sentence. The grammar structure decides."},
-  {id:"sq11",scenario:"Part 4: A voicemail begins: 'Hi, this is Karen from Accounting.' What should you already be thinking?",
-    options:["Who is Karen?","This is an internal business call about finances","I need to remember the name Karen","The answer to Q1 is probably 'Karen'"],
-    correct:1,part:"Part 4",explain:"The first 5 seconds tell you the talk type and context. 'Karen from Accounting' = internal call, business context, probably about budgets or expenses."},
-  {id:"sq12",scenario:"Part 7: Question asks 'What is the purpose of this email?' You've read the whole text. Where is the answer?",
-    options:["In the subject line or first 2 sentences","In the middle paragraph","In the closing line","Spread across the entire email"],
-    correct:0,part:"Part 7",explain:"Purpose questions are ALWAYS answered in the opening. 'I am writing to inform you...' / 'This is to confirm...' — don't waste time reading further for this Q type."},
-  {id:"sq13",scenario:"Part 7: A 'NOT' question: 'Which is NOT mentioned in the article?' with 4 options. Best approach?",
-    options:["Read the article and pick what you don't remember seeing","Check each option against the text, one by one","Pick the option that seems least likely","Guess and move on — NOT questions are too slow"],
-    correct:1,part:"Part 7",explain:"Check each option against the text systematically. Cross off options as you find them mentioned. The last one standing is your answer. Slow but reliable."},
-  {id:"sq14",scenario:"Part 5: The blank comes after 'the' and before 'of'. What part of speech do you need?",
-    options:["A verb","An adjective","A noun","An adverb"],
-    correct:2,part:"Part 5",explain:"Article (the) + _____ + preposition (of) = NOUN. 'The importance of...' / 'The implementation of...' This pattern is tested constantly."},
-  {id:"sq15",scenario:"You're in the Listening section. You missed question 45 completely — the audio moved on. What do you do?",
-    options:["Try to remember what you heard and think about it","Guess an answer for 45 and immediately focus on Q46","Leave 45 blank and focus on 46","Ask for the audio to be replayed"],
-    correct:1,part:"General",explain:"In Listening, the audio doesn't wait. Mark a quick guess for the missed question and IMMEDIATELY focus on the next one. Dwelling on a missed Q costs you the next one too."},
-  {id:"sq16",scenario:"Part 3: You hear 'Look at the graphic' in the question. What should you do?",
-    options:["Ignore the graphic and focus on the audio","Match what you hear in the audio to the information in the graphic","Read the graphic after the audio ends","Only look at the graphic for the last question"],
-    correct:1,part:"Part 3",explain:"Scan the graphic BEFORE the audio plays (during pre-reading). Then listen for the specific detail that connects the audio to one item in the graphic."},
-];
-
-// ─── PART 6 DATA ───
-var PART6_TEXTS = [
-  { id:"p6t1", type:"Email", from:"HR Department", to:"All Staff", subject:"Annual Performance Reviews",
-    parts:[
-      {text:"Dear colleagues,\n\nWe are writing to inform you that the annual performance review process will begin on March 1st. All employees "},
-      {blank:true,options:["who","which","whose","whom"],correct:0,x:"'Who' = relative pronoun for people as subject of the clause."},
-      {text:" have completed at least six months of service are required to participate.\n\nYour direct supervisor will schedule a one-on-one meeting with you during the month of March. Please "},
-      {blank:true,options:["prepare","preparation","prepared","preparatory"],correct:0,x:"'Please' + base verb (imperative). 'Please prepare'."},
-      {text:" a brief summary of your key accomplishments from the past year. "},
-      {blank:true,options:["In addition","However","Despite","Although"],correct:0,x:"'In addition' adds information. The next sentence adds another requirement."},
-      {text:", you should identify two or three professional development goals for the coming year.\n\nIf you have any questions about the process, please contact the HR department. "},
-      {blank:true,options:[
-        "We look forward to a productive review season.",
-        "The cafeteria will be closed for renovation.",
-        "New parking regulations will take effect in April.",
-        "The company was founded in 1987."
-      ],correct:0,x:"Sentence insertion: must logically conclude an email about performance reviews."},
-    ]},
-  { id:"p6t2", type:"Memo", from:"Operations Manager", to:"Warehouse Staff", subject:"Updated Safety Procedures",
-    parts:[
-      {text:"To all warehouse personnel,\n\nEffective immediately, several changes to our safety procedures will be "},
-      {blank:true,options:["implemented","implementing","implementation","implement"],correct:0,x:"Future passive: 'will be implemented'. Past participle needed after 'be'."},
-      {text:". These updates are the result of the recent safety audit conducted last month.\n\nFirst, all employees must wear protective eyewear in Zones B and C at all times. Second, forklift operators are "},
-      {blank:true,options:["required","requiring","requirement","require"],correct:0,x:"Passive: 'operators are required' (adjective/past participle after 'are')."},
-      {text:" to complete a refresher course by March 15th. "},
-      {blank:true,options:["Furthermore","Nevertheless","Although","Because"],correct:0,x:"'Furthermore' adds another requirement. The text lists additional safety measures."},
-      {text:", emergency exit routes have been updated, and new signs will be installed this week.\n\n"},
-      {blank:true,options:[
-        "Compliance with these procedures is mandatory for all staff.",
-        "The annual holiday party will be held on December 20th.",
-        "We recommend trying the new restaurant across the street.",
-        "Applications for the internship program are now open."
-      ],correct:0,x:"Sentence insertion: must conclude a memo about mandatory safety procedures."},
-    ]},
-  { id:"p6t3", type:"Notice", from:"Building Management", to:"Tenants", subject:"Elevator Maintenance",
-    parts:[
-      {text:"Dear building tenants,\n\nPlease be advised that the elevators in Tower A will undergo scheduled maintenance from April 5th to April 8th. _____ this period, only the service elevator will be operational.\n\nWe "},
-      {blank:true,options:["During","While","Since","For"],correct:0,x:"'During' + noun phrase (this period). 'While' would need a clause."},
-      {text:""},
-      {blank:true,options:["sincerely","sincere","sincerity","sincerer"],correct:0,x:"'We sincerely apologize' — adverb modifies the verb 'apologize'."},
-      {text:" apologize for any inconvenience this may cause. Tenants on floors 15 and above are "},
-      {blank:true,options:["encouraged","encouraging","encouragement","encourage"],correct:0,x:"Passive: 'are encouraged' to use the stairs or plan accordingly."},
-      {text:" to allow extra time for their commute during the maintenance window.\n\n"},
-      {blank:true,options:[
-        "We appreciate your patience and understanding.",
-        "The building was constructed in 2015.",
-        "Several new restaurants have opened in the area.",
-        "The company's stock price rose by 3% yesterday."
-      ],correct:0,x:"Sentence insertion: polite closing for a building notice about inconvenience."},
-    ]},
-  { id:"p6t4", type:"Email", from:"Marketing Director", to:"Sales Team", subject:"Q3 Campaign Launch",
-    parts:[
-      {text:"Hello team,\n\nI am pleased to announce that our Q3 marketing campaign will officially launch on July 1st. After months of "},
-      {blank:true,options:["carefully","careful","care","caring"],correct:1,x:"'Months of ___ planning' — adjective needed before noun 'planning'. 'Careful planning'."},
-      {text:" planning, we are confident that this campaign will significantly boost brand awareness in the European market.\n\nEach regional manager is responsible "},
-      {blank:true,options:["for","of","to","with"],correct:0,x:"'Responsible for' = fixed collocation with 'for'."},
-      {text:" coordinating local promotional events. "},
-      {blank:true,options:["Therefore","Despite","However","In spite of"],correct:0,x:"'Therefore' = consequence. Because managers are responsible, they need to submit plans."},
-      {text:", please submit your event proposals to me by June 15th.\n\n"},
-      {blank:true,options:[
-        "Let's make Q3 our best quarter yet!",
-        "The office will be closed on national holidays.",
-        "Please remember to update your email signatures.",
-        "Parking spaces are assigned on a first-come basis."
-      ],correct:0,x:"Sentence insertion: motivational closing for a campaign launch email."},
-    ]},
-  { id:"p6t5", type:"Letter", from:"Customer Service", to:"Mr. Harrison", subject:"Regarding Your Recent Order",
-    parts:[
-      {text:"Dear Mr. Harrison,\n\nThank you for contacting us regarding your recent order (#45892). We have "},
-      {blank:true,options:["looked into","looked up","looked over","looked after"],correct:0,x:"'Looked into' = investigated. They investigated the issue he raised."},
-      {text:" the matter and would like to offer our sincere apologies for the inconvenience.\n\nUnfortunately, the item you ordered is currently out of stock. "},
-      {blank:true,options:["However","Although","Despite","Because"],correct:0,x:"'However' introduces a contrast/solution. The item is unavailable BUT we offer alternatives."},
-      {text:", we would be happy to offer you a full refund or a replacement with a "},
-      {blank:true,options:["comparable","comparably","comparison","compare"],correct:0,x:"Adjective before noun: 'a comparable product'. 'Comparable' = adjective."},
-      {text:" product at no additional cost.\n\n"},
-      {blank:true,options:[
-        "Please let us know which option you prefer, and we will process it immediately.",
-        "Our company was established in 1995 by two college friends.",
-        "We are currently hiring for several positions in our London office.",
-        "The weather forecast predicts rain for the rest of the week."
-      ],correct:0,x:"Sentence insertion: must ask the customer to choose and promise action."},
-    ]},
-  { id:"p6t6", type:"Memo", from:"IT Department", to:"All Departments", subject:"System Migration",
-    parts:[
-      {text:"Attention all staff,\n\nThe IT department will be migrating our email servers to a new platform this weekend. The migration is scheduled to "},
-      {blank:true,options:["take","bring","make","hold"],correct:0,x:"'Take place' = happen/occur. Fixed collocation."},
-      {text:" place between Saturday 8:00 AM and Sunday 6:00 PM. During this time, email services will be "},
-      {blank:true,options:["temporarily","temporary","temporal","temp"],correct:0,x:"Adverb modifies adjective/state: 'temporarily unavailable'. Adverb needed."},
-      {text:" unavailable.\n\nWe strongly recommend that all employees save any important emails "},
-      {blank:true,options:["prior to","despite","although","while"],correct:0,x:"'Prior to' + noun = before. 'Prior to the migration' = before the migration happens."},
-      {text:" the migration. "},
-      {blank:true,options:[
-        "We will send a confirmation email once the migration is complete.",
-        "The company picnic has been moved to September.",
-        "New business cards can be ordered through the online portal.",
-        "The CEO will be traveling to Asia next month."
-      ],correct:0,x:"Sentence insertion: logical follow-up promising communication after IT maintenance."},
-    ]},
-  { id:"p6t7", type:"Email", from:"Training Coordinator", to:"New Hires", subject:"Welcome to Pinnacle Corp",
-    parts:[
-      {text:"Dear new team members,\n\nWelcome to Pinnacle Corporation! We are delighted to have you join us. Your first week will "},
-      {blank:true,options:["consist","consist of","consisting","consisted"],correct:1,x:"'Consist of' = be made up of. Fixed verb + preposition."},
-      {text:" orientation sessions, department introductions, and IT setup.\n\nPlease arrive at the main reception by 8:30 AM on Monday. A member of HR will be there to "},
-      {blank:true,options:["greet","greeting","greeted","greets"],correct:0,x:"'To greet' — infinitive after 'to'. Purpose construction."},
-      {text:" you and escort you to the training room. "},
-      {blank:true,options:["Meanwhile","Nevertheless","For example","In addition"],correct:3,x:"'In addition' adds more information. The next sentence adds another requirement."},
-      {text:", please bring a valid photo ID and your signed employment contract.\n\n"},
-      {blank:true,options:[
-        "We look forward to working with you!",
-        "The parking garage is being repainted this week.",
-        "Last quarter's revenue exceeded expectations.",
-        "The cafeteria menu changes daily."
-      ],correct:0,x:"Sentence insertion: warm closing for a welcome email."},
-    ]},
-  { id:"p6t8", type:"Notice", from:"Facilities Management", to:"All Staff", subject:"Office Relocation",
-    parts:[
-      {text:"Please be informed that the Marketing and Sales departments will be _____ to the fourth floor of Building B, effective March 1.\n\nThe move is "},
-      {blank:true,options:["relocating","relocated","relocation","relocate"],correct:1,x:"Passive: departments will be 'relocated'. Past participle after 'will be'."},
-      {text:""},
-      {blank:true,options:["necessary","necessarily","necessity","necessitate"],correct:0,x:"'The move is necessary' — adjective after 'is'."},
-      {text:" to accommodate the expansion of the R&D team on the second floor. "},
-      {blank:true,options:["As a result","Although","Despite","While"],correct:0,x:"'As a result' = consequence. Because of the expansion, the move happens."},
-      {text:", some temporary disruption is expected during the transition.\n\n"},
-      {blank:true,options:[
-        "Packing supplies will be distributed to affected departments next week.",
-        "The company picnic is planned for June.",
-        "New printers have been ordered for the copy room.",
-        "Employee birthdays are celebrated on the last Friday of each month."
-      ],correct:0,x:"Sentence insertion: practical next step related to the office move."},
-    ]},
-  { id:"p6t9", type:"Email", from:"James Morton, CFO", to:"Department Heads", subject:"Budget Freeze",
-    parts:[
-      {text:"Dear colleagues,\n\nDue to _____ market conditions, the executive committee has decided to implement a temporary budget freeze across all departments.\n\n"},
-      {blank:true,options:["uncertainty","uncertain","uncertainly","uncertainties"],correct:1,x:"'Due to uncertain market conditions' — adjective modifying 'market conditions'."},
-      {text:"This means that all non-essential expenditures must be "},
-      {blank:true,options:["approved","approving","approval","approve"],correct:0,x:"Passive: expenditures must be 'approved'. Past participle after modal passive."},
-      {text:" by the CFO's office before processing. Essential operating costs, including salaries and contractual obligations, will not be "},
-      {blank:true,options:["affected","affecting","effect","affection"],correct:0,x:"Passive: 'will not be affected'. Past participle."},
-      {text:". "},
-      {blank:true,options:[
-        "I understand this may cause some inconvenience, and I appreciate your cooperation.",
-        "Our new logo was designed by an external agency.",
-        "The holiday schedule has been posted in the break room.",
-        "Please welcome our new intern, Sarah."
-      ],correct:0,x:"Sentence insertion: empathetic closing acknowledging the difficulty of budget cuts."},
-    ]},
-  { id:"p6t10", type:"Letter", from:"Event Planning Co.", to:"Ms. Nakamura", subject:"Corporate Event Confirmation",
-    parts:[
-      {text:"Dear Ms. Nakamura,\n\nThank you for choosing GrandView Events for your upcoming corporate retreat. This letter "},
-      {blank:true,options:["confirms","confirming","confirmation","confirmed"],correct:0,x:"Present simple: 'This letter confirms' = formal statement of fact."},
-      {text:" your reservation for September 12-14 at the Lakeside Conference Center.\n\nAs discussed, the package includes accommodation for 45 guests, three meeting rooms, and full catering. "},
-      {blank:true,options:["However","Therefore","In addition","Despite"],correct:0,x:"'However' introduces a contrast or caveat. Next sentence has a condition."},
-      {text:", please note that the outdoor terrace is subject to "},
-      {blank:true,options:["available","availability","avail","availably"],correct:1,x:"'Subject to availability' — noun after 'to'. Fixed expression."},
-      {text:" and weather conditions.\n\n"},
-      {blank:true,options:[
-        "Please find the detailed invoice attached for your review.",
-        "We recently renovated our swimming pool.",
-        "Our restaurant received a five-star rating last year.",
-        "The nearest airport is approximately 20 km away."
-      ],correct:0,x:"Sentence insertion: business-like next step for a booking confirmation."},
-    ]},
-  { id:"p6t11", type:"Memo", from:"Quality Assurance", to:"Production Team", subject:"Product Recall",
-    parts:[
-      {text:"A quality issue has been identified in Batch #4872 of the ProMax 500 series. _____ an internal investigation, it was determined that a faulty component from a third-party supplier caused the defect.\n\n"},
-      {blank:true,options:["Following","Followed","Follow","Follows"],correct:0,x:"'Following' = after/as a result of. Preposition + noun phrase."},
-      {text:"All units from this batch must be "},
-      {blank:true,options:["withdrawal","withdrawing","withdrawn","withdrew"],correct:2,x:"Passive: 'must be withdrawn'. Past participle of 'withdraw'."},
-      {text:" from sale immediately. The supplier has been notified and has agreed to cover all "},
-      {blank:true,options:["associated","associating","association","associate"],correct:0,x:"'Associated costs' — adjective modifying 'costs'. Past participle as adjective."},
-      {text:" costs.\n\n"},
-      {blank:true,options:[
-        "Please begin the recall process today and report progress by Friday.",
-        "The company holiday party was a great success.",
-        "New vending machines have been installed in the break room.",
-        "Our CEO will be featured in next month's business magazine."
-      ],correct:0,x:"Sentence insertion: action-oriented closing for an urgent recall memo."},
-    ]},
-  { id:"p6t12", type:"Email", from:"Customer Relations", to:"Valued Customers", subject:"Service Update",
-    parts:[
-      {text:"Dear valued customers,\n\nWe are writing to inform you of an important update to our service terms, "},
-      {blank:true,options:["effective","effectively","effectiveness","effect"],correct:0,x:"'Effective June 1' — adjective meaning 'coming into force'."},
-      {text:" June 1, 2026.\n\nTo enhance your experience, we will be introducing a new tiered pricing model. Customers who "},
-      {blank:true,options:["currently","current","currency","occurring"],correct:0,x:"'Customers who currently subscribe' — adverb modifying the verb 'subscribe'."},
-      {text:" subscribe to our Premium plan will be automatically upgraded to Premium Plus at no additional charge. "},
-      {blank:true,options:["Nevertheless","Furthermore","Because","Although"],correct:0,x:"'Nevertheless' = despite that. Next sentence introduces a less positive point after the good news."},
-      {text:", Basic plan subscribers will see a modest rate adjustment of $2.99 per month.\n\n"},
-      {blank:true,options:[
-        "For a full comparison of the new plans, please visit our website.",
-        "Our office is located at 123 Commerce Street.",
-        "We are proud to sponsor the local football team.",
-        "The company was named 'Best Employer' in 2024."
-      ],correct:0,x:"Sentence insertion: directs customers to find more details about the change."},
-    ]},
-];
-
-// ─── PART 7 DATA ───
-var PART7_PASSAGES = [
-  { id:"p7p1", type:"Email",
-    text:"From: Sarah Chen, HR Director\nTo: All Department Heads\nSubject: New Hiring Procedures\nDate: March 3\n\nAs part of our ongoing effort to streamline operations, the Human Resources department is introducing a new digital hiring platform, effective April 1. All job postings, candidate evaluations, and interview scheduling will now be managed through this system.\n\nDepartment heads are required to attend a 90-minute training session during the week of March 20-24. Please sign up for your preferred time slot using the link below. If you are unable to attend any of the scheduled sessions, please contact me directly to arrange an alternative.\n\nThe new platform will replace the current paper-based process entirely. As a result, any pending hiring requests submitted before April 1 should be completed using the existing forms. Requests submitted after that date must use the new system.\n\nPlease note that the IT department will provide technical support during the transition period. A user guide will be distributed to all department heads by March 15.",
-    questions:[
-      {q:"What is the main purpose of this email?",options:["To announce a retirement","To introduce a new hiring system","To request budget approval","To advertise job openings"],correct:1,x:"The email announces a new digital hiring platform replacing the paper-based process."},
-      {q:"When will the new system become mandatory?",options:["March 3","March 15","March 20","April 1"],correct:3,x:"'Effective April 1' and 'Requests submitted after that date must use the new system.'"},
-      {q:"What are department heads required to do?",options:["Hire new staff immediately","Attend a training session","Write a user guide","Contact the IT department"],correct:1,x:"'Department heads are required to attend a 90-minute training session.'"},
-      {q:"What will happen to hiring requests submitted before April 1?",options:["They will be rejected","They must use the new system","They should be completed using existing forms","They will be handled by HR directly"],correct:2,x:"'Pending hiring requests submitted before April 1 should be completed using the existing forms.'"},
-    ]},
-  { id:"p7p2", type:"Advertisement",
-    text:"GRAND OPENING — RIVERSIDE BUSINESS CENTER\n\nRiverside Business Center is proud to announce the opening of its newest location at 450 Harbor Drive. Our state-of-the-art facility offers flexible office spaces ranging from private offices to open-plan work areas, with lease terms from 6 months to 5 years.\n\nAmenities include:\n- High-speed fiber internet (included in all plans)\n- 24/7 building access with security\n- On-site parking (50 spaces available)\n- Conference rooms (bookable by the hour)\n- Ground-floor café and restaurant\n\nTo celebrate our grand opening, we are offering 20% off the first three months' rent for any lease signed before May 31. Contact our leasing office at (555) 890-1234 or visit www.riversidebusiness.com to schedule a tour.\n\nRiverside Business Center — Where business meets convenience.",
-    questions:[
-      {q:"What is being advertised?",options:["A restaurant opening","Office space for lease","A new parking facility","A conference planning service"],correct:1,x:"The ad promotes flexible office spaces at a new business center location."},
-      {q:"What is included in all plans?",options:["Parking","Conference rooms","High-speed internet","Restaurant meals"],correct:2,x:"'High-speed fiber internet (included in all plans).'"},
-      {q:"What special offer is mentioned?",options:["Free parking for a year","20% off the first three months","A free conference room","Complimentary meals for staff"],correct:1,x:"'20% off the first three months' rent for any lease signed before May 31.'"},
-    ]},
-  { id:"p7p3", type:"Article",
-    text:"TECH INDUSTRY REPORT: REMOTE WORK TRENDS IN 2025\n\nA recent survey conducted by the Global Workforce Institute found that 68% of technology companies now offer some form of remote or hybrid work arrangement, up from 42% in 2020. The study, which surveyed over 3,000 companies across 25 countries, highlights a significant shift in workplace culture.\n\nThe report identifies several key factors driving this trend. First, companies that offer remote options report 23% lower employee turnover. Second, office space costs have been reduced by an average of 30% for companies that have adopted hybrid models. Third, employee satisfaction scores are notably higher in organizations with flexible arrangements.\n\nHowever, the report also notes challenges. Communication difficulties were cited by 45% of managers as a major concern, and 31% reported that maintaining company culture remotely was more difficult than expected.\n\n'The data clearly shows that flexibility is no longer a perk — it's an expectation,' said Dr. Maria Santos, the study's lead researcher. 'Companies that fail to adapt risk losing top talent to competitors who offer these options.'",
-    questions:[
-      {q:"What did the survey find about remote work?",options:["It has decreased since 2020","68% of tech companies now offer it","All companies have adopted it","It is only popular in one country"],correct:1,x:"'68% of technology companies now offer some form of remote or hybrid work arrangement.'"},
-      {q:"What is one benefit of remote work mentioned in the report?",options:["Higher office costs","Increased employee turnover","23% lower employee turnover","More communication problems"],correct:2,x:"'Companies that offer remote options report 23% lower employee turnover.'"},
-      {q:"What challenge is mentioned?",options:["Higher costs","Lack of technology","Communication difficulties","Government regulations"],correct:2,x:"'Communication difficulties were cited by 45% of managers as a major concern.'"},
-      {q:"What does Dr. Santos suggest?",options:["Companies should end remote work","Flexibility is now an expectation, not a perk","All employees should work from the office","Remote work is only temporary"],correct:1,x:"Dr. Santos says 'flexibility is no longer a perk — it's an expectation.'"},
-    ]},
-  { id:"p7p4", type:"Notice",
-    text:"NOTICE TO ALL EMPLOYEES — PARKVIEW INDUSTRIES\n\nAnnual Company Picnic\n\nThe annual company picnic will be held on Saturday, June 14, from 11:00 AM to 4:00 PM at Greenfield Park (Shelter Area B). All employees and their families are welcome to attend.\n\nThis year's event will feature a barbecue lunch, team-building activities, and a raffle with prizes including gift cards and electronics. Vegetarian and gluten-free meal options will be available upon request.\n\nTo help us plan for food and seating, please RSVP by June 7 using the form posted in the break room or by emailing events@parkview.com. Indicate the number of guests you plan to bring.\n\nFree parking is available at the park. For those who prefer not to drive, a shuttle bus will depart from the main office at 10:30 AM and return at 4:30 PM.\n\nWe hope to see everyone there!",
-    questions:[
-      {q:"What is the purpose of this notice?",options:["To announce a policy change","To invite employees to a company event","To advertise a new product","To inform about office construction"],correct:1,x:"The notice invites employees to the annual company picnic."},
-      {q:"What should employees do by June 7?",options:["Submit a project report","Buy raffle tickets","RSVP for the picnic","Reserve a parking space"],correct:2,x:"'Please RSVP by June 7 using the form posted in the break room.'"},
-      {q:"What transportation option is offered?",options:["Taxi vouchers","A shuttle bus from the office","Rental cars","Train tickets"],correct:1,x:"'A shuttle bus will depart from the main office at 10:30 AM.'"},
-    ]},
-  { id:"p7p5", type:"Letter",
-    text:"Anderson & Blake Consulting\n15 Queen Street, London EC4R 1BE\n\nMarch 8, 2025\n\nMr. James Ward\nDirector of Operations\nNorthgate Manufacturing Ltd.\n42 Industrial Avenue\nManchester M1 4BT\n\nDear Mr. Ward,\n\nThank you for meeting with us last week to discuss your company's supply chain challenges. Following our conversation, I have prepared a preliminary proposal outlining how Anderson & Blake can help Northgate Manufacturing improve efficiency and reduce costs.\n\nOur analysis suggests that by restructuring your supplier network and implementing our inventory management system, Northgate could achieve cost savings of approximately 15-20% within the first year. The full implementation would take approximately four months.\n\nI have attached the detailed proposal for your review. If you would like to proceed, I suggest we schedule a follow-up meeting with your operations team to discuss the implementation timeline.\n\nPlease feel free to contact me at j.anderson@ablake.com or (020) 7946-0123 if you have any questions.\n\nSincerely,\nJulia Anderson\nSenior Partner",
-    questions:[
-      {q:"Why is Ms. Anderson writing to Mr. Ward?",options:["To apply for a job","To complain about a product","To follow up on a meeting with a proposal","To invite him to a conference"],correct:2,x:"'Following our conversation, I have prepared a preliminary proposal.'"},
-      {q:"What potential benefit is mentioned?",options:["A 50% increase in staff","15-20% cost savings in the first year","Free consulting services","A new office location"],correct:1,x:"'Northgate could achieve cost savings of approximately 15-20% within the first year.'"},
-      {q:"How long would full implementation take?",options:["One month","Four months","One year","Two years"],correct:1,x:"'The full implementation would take approximately four months.'"},
-      {q:"What does Ms. Anderson suggest as a next step?",options:["Signing a contract immediately","Reducing the workforce","Scheduling a meeting with the operations team","Visiting the London office"],correct:2,x:"'I suggest we schedule a follow-up meeting with your operations team.'"},
-    ]},
-  { id:"p7p6", type:"Memo",
-    text:"MEMO\n\nTo: Marketing Department\nFrom: David Park, VP of Marketing\nDate: February 12\nRe: Budget Allocation for Q2\n\nFollowing last week's budget review meeting, I want to clarify the Q2 budget allocations for our department. The total marketing budget for Q2 is $450,000, distributed as follows:\n\nDigital advertising: $180,000 (40%)\nContent creation: $90,000 (20%)\nEvents and sponsorships: $85,000 (19%)\nMarket research: $55,000 (12%)\nMiscellaneous: $40,000 (9%)\n\nPlease note that the digital advertising budget represents a 25% increase from Q1, reflecting our strategic decision to expand our online presence. Conversely, the events budget has been reduced by 10% due to the cancellation of the Tokyo trade show.\n\nAll spending requests over $5,000 must be approved by me in advance. Please submit your Q2 project plans by February 28 so we can ensure alignment with these allocations.",
-    questions:[
-      {q:"What is the total marketing budget for Q2?",options:["$180,000","$90,000","$450,000","$5,000"],correct:2,x:"'The total marketing budget for Q2 is $450,000.'"},
-      {q:"Which area received the largest budget increase from Q1?",options:["Content creation","Events and sponsorships","Digital advertising","Market research"],correct:2,x:"'The digital advertising budget represents a 25% increase from Q1.'"},
-      {q:"Why was the events budget reduced?",options:["Low attendance at previous events","The Tokyo trade show was cancelled","Budget cuts across all departments","A new competitor entered the market"],correct:1,x:"'The events budget has been reduced by 10% due to the cancellation of the Tokyo trade show.'"},
-    ]},
-  { id:"p7p7", type:"Instructions",
-    text:"SETTING UP YOUR NEW VOICEPRINT SECURITY SYSTEM\n\nThank you for purchasing the VoiceLock Pro security system. Please follow these steps to complete the setup:\n\nStep 1: Download the VoiceLock app from your device's app store and create an account using your email address.\n\nStep 2: Connect the VoiceLock device to your home Wi-Fi network. The device will flash blue when successfully connected.\n\nStep 3: Open the app and tap 'Register Voice.' You will be asked to repeat three phrases. Speak clearly and at your normal volume. The registration process takes approximately two minutes.\n\nStep 4: Once your voiceprint is registered, test the system by saying 'VoiceLock, open' near the device. The light should turn green, indicating successful recognition.\n\nIMPORTANT: If the device flashes red during setup, it means the Wi-Fi connection has been lost. Restart the device and repeat Step 2. For additional help, visit support.voicelock.com or call our helpline at 1-800-555-0199 (available Monday-Friday, 9 AM-6 PM EST).",
-    questions:[
-      {q:"What must be done before registering a voiceprint?",options:["Call the helpline","Connect to Wi-Fi","Visit the website","Purchase a second device"],correct:1,x:"Step 2 (Wi-Fi connection) must be done before Step 3 (voice registration)."},
-      {q:"What does a blue flashing light indicate?",options:["An error has occurred","The battery is low","The Wi-Fi connection was successful","Voice recognition is complete"],correct:2,x:"'The device will flash blue when successfully connected.'"},
-      {q:"What should a user do if the device flashes red?",options:["Register their voice again","Return the product","Restart the device and reconnect to Wi-Fi","Download a different app"],correct:2,x:"'If the device flashes red... Restart the device and repeat Step 2.'"},
-    ]},
-  { id:"p7p8", type:"Email",
-    text:"From: Lisa Chang, Conference Coordinator\nTo: All Speakers\nSubject: Global Innovation Summit — Final Details\nDate: April 2\n\nDear speakers,\n\nThank you for agreeing to present at the Global Innovation Summit on April 18-19 at the Metropolitan Convention Center. Below are some important details for your reference.\n\nSchedule: All presentation slots are 30 minutes, followed by a 10-minute Q&A session. Please arrive at your assigned room at least 15 minutes before your scheduled time. A full program is attached.\n\nEquipment: Each room is equipped with a projector, screen, microphone, and laptop. If you prefer to use your own laptop, please bring the appropriate adapter. Our AV team will be available for technical support.\n\nAccommodation: Rooms have been reserved at the Grand Metropolitan Hotel (5-minute walk from the venue). Your confirmation details were sent in a separate email on March 28.\n\nDinner: A speakers' dinner will be held on April 18 at 7:30 PM at Chez Laurent (ground floor of the hotel). Please let me know by April 10 if you have any dietary requirements.\n\nI look forward to seeing you at the Summit!\n\nBest regards,\nLisa Chang",
-    questions:[
-      {q:"How long is each presentation slot including Q&A?",options:["15 minutes","30 minutes","40 minutes","60 minutes"],correct:2,x:"30-minute presentation + 10-minute Q&A = 40 minutes total."},
-      {q:"What should speakers do if they want to use their own laptop?",options:["Contact the AV team in advance","Bring an appropriate adapter","Email Lisa Chang","Arrive one hour early"],correct:1,x:"'If you prefer to use your own laptop, please bring the appropriate adapter.'"},
-      {q:"Where is the speakers' dinner?",options:["At the convention center","At a nearby park","At the Grand Metropolitan Hotel","At a restaurant called Chez Laurent"],correct:3,x:"'A speakers' dinner will be held at Chez Laurent (ground floor of the hotel).'"},
-      {q:"What is the deadline for dietary requirements?",options:["April 2","April 10","April 18","March 28"],correct:1,x:"'Please let me know by April 10 if you have any dietary requirements.'"},
-    ]},
-  { id:"p7p9", type:"Advertisement",
-    text:"ACCELERATE YOUR CAREER WITH BRIGHTPATH PROFESSIONAL DEVELOPMENT\n\nAre you looking to stand out in today's competitive job market? BrightPath offers industry-recognized certification programs in project management, data analytics, digital marketing, and business leadership.\n\nOur courses are designed for working professionals:\n- 100% online with flexible scheduling\n- Programs range from 8 to 16 weeks\n- Live instructor-led sessions every Saturday\n- Career coaching and resume support included\n\nSpring enrollment is now open. Classes begin on April 7. Early bird pricing: Save 15% when you register before March 20.\n\nVisit www.brightpath.edu or call (555) 234-5678 to speak with an enrollment advisor.\n\nBrightPath — Your path to professional growth.",
-    questions:[
-      {q:"Who is the target audience for BrightPath?",options:["University students","Retired professionals","Working professionals","High school students"],correct:2,x:"'Our courses are designed for working professionals.'"},
-      {q:"How are the courses delivered?",options:["In person only","100% online","A mix of online and in-person","Through recorded videos only"],correct:1,x:"'100% online with flexible scheduling' and 'Live instructor-led sessions every Saturday.'"},
-      {q:"What must someone do to get the 15% discount?",options:["Complete a course first","Register before March 20","Refer a friend","Enroll in two programs"],correct:1,x:"'Save 15% when you register before March 20.'"},
-    ]},
-  { id:"p7p10", type:"Article",
-    text:"LOCAL BUSINESS NEWS\n\nGreenfield Electronics, a manufacturer of consumer electronics based in Portland, announced yesterday that it will close its downtown factory and move all production to its facility in Austin, Texas. The move, which will affect approximately 340 employees, is expected to be completed by the end of the year.\n\nCompany spokesperson Diana Wells stated that the decision was driven by lower operating costs in Texas and better access to the company's main distribution partners. 'This was not an easy decision,' Ms. Wells said, 'but it is necessary for the long-term health of the company.'\n\nEmployees at the Portland facility will be offered either relocation packages or severance pay. The company has also partnered with a local employment agency to help affected workers find new positions.\n\nThe Portland factory, which has been in operation since 1998, will be converted into a mixed-use commercial and residential development, according to city planning documents.",
-    questions:[
-      {q:"Why is Greenfield Electronics moving its production?",options:["To expand its product line","Because of lower costs and better distribution access","Due to environmental regulations","To be closer to customers"],correct:1,x:"'Lower operating costs in Texas and better access to distribution partners.'"},
-      {q:"How many employees will be affected?",options:["About 100","About 200","About 340","About 500"],correct:2,x:"'The move will affect approximately 340 employees.'"},
-      {q:"What options are being offered to Portland employees?",options:["Only severance pay","Only relocation","Relocation packages or severance pay","Early retirement"],correct:2,x:"'Employees will be offered either relocation packages or severance pay.'"},
-      {q:"What will happen to the Portland factory building?",options:["It will be demolished","It will become offices and housing","It will be sold to a competitor","It will remain empty"],correct:1,x:"'Converted into a mixed-use commercial and residential development.'"},
-    ]},
-  { id:"p7p11", type:"Notice",
-    text:"WESTFIELD COMMUNITY CENTER — SCHEDULE CHANGE\n\nEffective February 1, the following changes will apply to facility operating hours:\n\nMonday-Friday: 6:00 AM - 10:00 PM (previously 7:00 AM - 9:00 PM)\nSaturday: 7:00 AM - 8:00 PM (no change)\nSunday: 8:00 AM - 6:00 PM (previously 9:00 AM - 5:00 PM)\n\nThese extended hours are in response to member feedback requesting earlier morning and later evening access. The swimming pool and fitness center will follow the new building hours. However, the indoor tennis courts will maintain their current schedule (8:00 AM - 8:00 PM daily) due to maintenance requirements.\n\nMembers with questions about the new schedule should contact the front desk at (555) 678-9012 or email info@westfieldcc.com.\n\nWe thank you for your continued membership and look forward to serving you better!",
-    questions:[
-      {q:"What prompted the schedule change?",options:["Budget concerns","Staff availability","Member feedback","A government regulation"],correct:2,x:"'These extended hours are in response to member feedback.'"},
-      {q:"What is the new Sunday closing time?",options:["5:00 PM","6:00 PM","8:00 PM","10:00 PM"],correct:1,x:"'Sunday: 8:00 AM - 6:00 PM (previously 9:00 AM - 5:00 PM).'"},
-      {q:"Which facility will NOT follow the new extended hours?",options:["The swimming pool","The fitness center","The indoor tennis courts","The front desk"],correct:2,x:"'The indoor tennis courts will maintain their current schedule.'"},
-    ]},
-  { id:"p7p12", type:"Double Passage",
-    text:"--- DOCUMENT 1: Email ---\nFrom: Robert Kline, Purchasing Manager\nTo: All Department Heads\nDate: May 5\nSubject: New Office Supply Vendor\n\nDear colleagues,\n\nAfter a thorough evaluation process, we have selected OfficePro Direct as our new office supply vendor, replacing SupplyMax effective June 1. OfficePro offers a 22% cost reduction on most items compared to our current contract, along with next-day delivery for orders placed before 2:00 PM.\n\nTo place orders, use the new online portal at orders.officepro.com. Your login credentials will be emailed to you by May 20. Please note that the minimum order value is $25.\n\nAll existing SupplyMax orders placed before June 1 will still be fulfilled. After that date, the SupplyMax account will be deactivated.\n\nQuestions? Contact me at r.kline@company.com.\n\n--- DOCUMENT 2: Product Catalog Excerpt ---\nOfficePro Direct — Most Popular Items\n\nCopy paper (case of 10 reams): $42.99\nBallpoint pens (box of 12): $8.50\nSticky notes (pack of 6): $5.99\nPrinter ink cartridges (black): $24.99\nPrinter ink cartridges (color): $32.99\nFile folders (box of 50): $12.99\nWhiteboard markers (set of 4): $6.49\n\nFree shipping on orders over $75. Orders under $75 incur a $5.95 delivery fee.\nNext-day delivery for orders placed before 2:00 PM (Mon-Fri).",
-    questions:[
-      {q:"Why was OfficePro Direct selected?",options:["They are a local company","They offer lower costs and fast delivery","They were recommended by employees","They are the only supplier available"],correct:1,x:"'22% cost reduction' and 'next-day delivery' are the two reasons cited."},
-      {q:"What is the minimum order amount?",options:["$5.95","$22","$25","$75"],correct:2,x:"'The minimum order value is $25.'"},
-      {q:"An employee orders 1 case of copy paper and 1 box of pens. What will they pay for delivery?",options:["Free shipping","$5.95","$25","Next-day is not available"],correct:1,x:"$42.99 + $8.50 = $51.49 — under $75, so $5.95 delivery fee applies."},
-      {q:"What will happen to orders placed with SupplyMax before June 1?",options:["They will be cancelled","They will be transferred to OfficePro","They will still be fulfilled","They will be refunded"],correct:2,x:"'All existing SupplyMax orders placed before June 1 will still be fulfilled.'"},
-    ]},
-  { id:"p7p13", type:"Double Passage",
-    text:"--- DOCUMENT 1: Job Posting ---\nPOSITION: Regional Sales Manager — Northeast\nCompany: Atlas Medical Supplies\nLocation: Boston, MA\nSalary: $85,000 - $105,000 + performance bonus\n\nAtlas Medical Supplies is seeking an experienced Regional Sales Manager to lead our Northeast team. The ideal candidate will have:\n- Minimum 5 years of B2B sales experience, preferably in healthcare\n- Proven track record of exceeding sales targets\n- Bachelor's degree in business, marketing, or related field\n- Willingness to travel up to 40% of the time\n\nWe offer comprehensive benefits including health insurance, 401(k) matching, and 20 days paid vacation. Apply by May 15 at careers.atlasmed.com.\n\n--- DOCUMENT 2: Email ---\nFrom: Patricia Gomez\nTo: careers@atlasmed.com\nDate: May 2\nSubject: Application — Regional Sales Manager\n\nDear Hiring Team,\n\nI am writing to express my interest in the Regional Sales Manager position. I have seven years of experience in B2B sales within the pharmaceutical industry, including three years managing a team of 12 sales representatives in the Mid-Atlantic region.\n\nIn my current role at MedLine Corp, I consistently exceeded quarterly targets by an average of 18%. I hold a Bachelor's degree in Marketing from Boston University and an MBA from Northeastern University.\n\nI am available to start within four weeks of receiving an offer and am comfortable with the travel requirements. I have attached my resume and references for your review.\n\nBest regards,\nPatricia Gomez",
-    questions:[
-      {q:"What is the minimum experience required for the position?",options:["3 years","5 years","7 years","10 years"],correct:1,x:"The posting requires 'minimum 5 years of B2B sales experience.'"},
-      {q:"Does Patricia Gomez meet the educational requirements?",options:["No, she lacks a degree","Yes, she has a Bachelor's","Yes, and she exceeds them with an MBA","The posting doesn't mention education"],correct:2,x:"The posting requires a Bachelor's. Patricia has a Bachelor's AND an MBA — she exceeds the requirement."},
-      {q:"By how much did Patricia typically exceed her sales targets?",options:["12%","15%","18%","22%"],correct:2,x:"'I consistently exceeded quarterly targets by an average of 18%.'"},
-      {q:"Based on both documents, which requirement might be a concern for Patricia?",options:["Her education level","Her years of experience","Her industry is pharmaceutical, not healthcare broadly","Her willingness to travel"],correct:2,x:"The posting prefers 'healthcare' experience. Patricia's experience is specifically in 'pharmaceutical' — related but not identical."},
-    ]},
-  { id:"p7p14", type:"Instructions",
-    text:"GLOBETROTTER REWARDS — MEMBERSHIP GUIDE\n\nThank you for joining the GlobeTrotter Rewards program! Here is everything you need to know:\n\nEARNING POINTS\n- Flights: 1 point per $1 spent on ticket price (excluding taxes and fees)\n- Hotels: 2 points per $1 spent on room rate at partner hotels\n- Car rentals: 1 point per $1 spent at partner agencies\n- Dining: 3 points per $1 spent at airport partner restaurants\n\nMEMBERSHIP TIERS\n- Silver (0-24,999 points): Basic benefits, no priority boarding\n- Gold (25,000-74,999 points): Priority check-in, 1 free checked bag\n- Platinum (75,000+ points): Lounge access, free upgrades when available, 2 free checked bags\n\nREDEEMING POINTS\n- Domestic flights: from 10,000 points\n- International flights: from 25,000 points\n- Hotel nights: from 8,000 points\n- Points expire after 24 months of account inactivity\n\nFor questions, visit help.globetrotter.com or call 1-800-555-0147.",
-    questions:[
-      {q:"Which spending category earns the most points per dollar?",options:["Flights","Hotels","Car rentals","Airport dining"],correct:3,x:"Dining earns 3 points per $1 — the highest rate listed."},
-      {q:"What benefit does Gold membership provide that Silver does not?",options:["Lounge access","Free upgrades","Priority check-in and 1 free checked bag","3 points per dollar on dining"],correct:2,x:"Gold: 'Priority check-in, 1 free checked bag.' Silver has 'no priority boarding.'"},
-      {q:"A member has not used their account for 2 years. What happens?",options:["Their tier is downgraded","Their points expire","Their account is deleted","Nothing — points never expire"],correct:1,x:"'Points expire after 24 months of account inactivity.'"},
-    ]},
-];
-
-// ─── FALSE FRIENDS DATA ───
-var FALSE_FRIENDS = [
-  {en:"actually",ex:"The project is actually ahead of schedule.",
-    opts:["Currently, at this moment","In fact, really","Occasionally, sometimes","Actively, with energy"],correct:1,
-    trap:"The French 'actuellement' means 'currently'. 'Actually' means 'in fact' or 'really'.",realFr:"en fait, vraiment"},
-  {en:"eventually",ex:"The issue was eventually resolved by the IT team.",
-    opts:["Possibly, maybe","Obviously, clearly","In the end, finally","Frequently, often"],correct:2,
-    trap:"The French 'éventuellement' means 'possibly'. 'Eventually' means 'in the end, finally'.",realFr:"finalement"},
-  {en:"resume",ex:"The meeting will resume after the lunch break.",
-    opts:["To summarize briefly","To start again after a pause","To send a CV","To assume once more"],correct:1,
-    trap:"The French 'résumer' means 'to summarize'. 'Resume' means 'to start again after a pause'.",realFr:"reprendre"},
-  {en:"attend",ex:"All managers must attend the training session.",
-    opts:["To wait for","To be present at","To pay attention to","To expect"],correct:1,
-    trap:"The French 'attendre' means 'to wait for'. 'Attend' means 'to be present at'.",realFr:"assister à"},
-  {en:"delay",ex:"The flight was delayed by two hours.",
-    opts:["A deadline, time limit","A relay, handover","A postponement, lateness","A detour, diversion"],correct:2,
-    trap:"The French 'délai' means 'deadline/time limit'. 'Delay' means 'a postponement or lateness'.",realFr:"retard"},
-  {en:"sensible",ex:"It would be sensible to review the contract first.",
-    opts:["Sensitive, emotional","Reasonable, practical","Noticeable, perceptible","Sympathetic, caring"],correct:1,
-    trap:"The French 'sensible' means 'sensitive'. English 'sensible' means 'reasonable, practical'.",realFr:"raisonnable, sensé"},
-  {en:"library",ex:"The company library has a wide selection of business books.",
-    opts:["A bookshop where you buy books","A place to borrow books","A collection of free samples","A printing facility"],correct:1,
-    trap:"The French 'librairie' means 'bookshop'. 'Library' is where you borrow books.",realFr:"bibliothèque"},
-  {en:"comprehensive",ex:"The report provides a comprehensive overview of the market.",
-    opts:["Understanding, sympathetic","Easy to understand","Thorough, covering everything","Compressed, summarized"],correct:2,
-    trap:"The French 'compréhensif' means 'understanding/sympathetic'. 'Comprehensive' means 'thorough, complete'.",realFr:"complet, exhaustif"},
-  {en:"demand",ex:"The union demanded a 5% pay increase.",
-    opts:["To ask politely","To wonder about","To request information","To insist strongly, to require"],correct:3,
-    trap:"The French 'demander' means 'to ask'. 'Demand' is much stronger: 'to insist, to require'.",realFr:"exiger"},
-  {en:"achieve",ex:"We achieved record sales this quarter.",
-    opts:["To finish, to complete","To succeed in reaching a goal","To purchase, to acquire","To deliver, to ship"],correct:1,
-    trap:"The French 'achever' means 'to finish/complete'. 'Achieve' means 'to succeed in reaching a goal'.",realFr:"accomplir, atteindre"},
-  {en:"supply",ex:"The supplier cannot supply enough raw materials.",
-    opts:["To add extra, to supplement","To replace, to substitute","To provide, to furnish","To request, to order"],correct:2,
-    trap:"The French 'suppléer/supplémentaire' relates to 'extra/additional'. 'Supply' means 'to provide'.",realFr:"fournir, approvisionner"},
-  {en:"figure",ex:"Sales figures for Q3 are very encouraging.",
-    opts:["A face, a person's appearance","A figurine, a small statue","A number, statistic, or diagram","A shape, a silhouette"],correct:2,
-    trap:"In French, 'figure' primarily means 'face'. In English business context, 'figure' = number/statistic.",realFr:"chiffre, schéma"},
-  {en:"engaged",ex:"The line was engaged when I tried to call.",
-    opts:["Politically committed","Busy, in use (phone)","Hired, recruited","Interested, enthusiastic"],correct:1,
-    trap:"The French 'engagé' means 'committed (politically)'. English 'engaged' often means 'busy' (phone) or 'betrothed'.",realFr:"occupé (téléphone)"},
-  {en:"introduce",ex:"Let me introduce our new marketing director.",
-    opts:["To insert something into","To bring a product to market","To present someone new","To begin a process"],correct:2,
-    trap:"The French 'introduire' means 'to insert'. English 'introduce' means 'to present someone/something new'.",realFr:"présenter"},
-  {en:"location",ex:"The new office location is near the train station.",
-    opts:["A rental, a lease","A place, position, or site","A reservation, a booking","An allocation, a distribution"],correct:1,
-    trap:"The French 'location' means 'rental'. English 'location' means 'a place or position'.",realFr:"emplacement, lieu"},
-  {en:"notice",ex:"Did you notice the error in the report?",
-    opts:["To read instructions carefully","To take note of officially","To become aware of, to observe","To announce, to declare"],correct:2,
-    trap:"The French 'notice' means 'instruction manual'. English 'notice' means 'to become aware of' or 'a written announcement'.",realFr:"remarquer"},
-  {en:"issue",ex:"We need to address this issue before the launch.",
-    opts:["An exit, a way out","A result, an outcome","A release, a publication only","A problem, topic, or edition"],correct:3,
-    trap:"The French 'issue' means 'exit/outcome'. English 'issue' primarily means 'a problem or topic'.",realFr:"problème, sujet"},
-  {en:"conference",ex:"Over 500 people attended the annual conference.",
-    opts:["A university lecture","A large formal meeting or event","A phone call between colleagues","A presentation by one speaker"],correct:1,
-    trap:"The French 'conférence' often means 'lecture'. English 'conference' = large formal meeting/event.",realFr:"congrès, conférence (réunion)"},
-  {en:"agenda",ex:"The first item on the agenda is the budget review.",
-    opts:["A personal diary or planner","A schedule for the whole day","A list of topics for a meeting","A calendar of upcoming events"],correct:2,
-    trap:"The French 'agenda' means 'diary/planner'. English 'agenda' = list of items to discuss at a meeting.",realFr:"ordre du jour"},
-  {en:"coin",ex:"The company tried to coin a new marketing term.",
-    opts:["A corner, an angle","To wedge something in place","To invent a new word or phrase","A small metal piece of money"],correct:2,
-    trap:"The French 'coin' means 'corner'. English 'coin' as a verb means 'to invent a new word/phrase'. As a noun it's a piece of money.",realFr:"inventer (un terme)"},
-];
-// ─── PART 2: QUESTION-RESPONSE ───
-var LISTENING_P2 = [
-  {id:"l2a",q:"When is the budget meeting scheduled?",
-    opts:["It's on Thursday at 2 PM.","Yes, I like the schedule.","The budget was approved."],
-    c:0,x:"'When' asks for a time. Only A gives a time (Thursday at 2 PM)."},
-  {id:"l2b",q:"Who's responsible for the marketing campaign?",
-    opts:["It was very successful.","Ms. Rivera is leading it.","We launched it last month."],
-    c:1,x:"'Who' asks for a person. Only B names someone (Ms. Rivera)."},
-  {id:"l2c",q:"Where did you put the quarterly report?",
-    opts:["It's due next Friday.","About 30 pages long.","On your desk, next to the laptop."],
-    c:2,x:"'Where' asks for a place. Only C gives a location (on your desk)."},
-  {id:"l2d",q:"Why was the delivery delayed?",
-    opts:["It arrived this morning.","Because of a supplier issue.","Three boxes were missing."],
-    c:1,x:"'Why' asks for a reason. Only B gives a cause (because of a supplier issue)."},
-  {id:"l2e",q:"How many copies do we need for the presentation?",
-    opts:["The presentation went well.","About twenty-five should be enough.","It starts at 10 AM."],
-    c:1,x:"'How many' asks for a quantity. Only B gives a number (twenty-five)."},
-  {id:"l2f",q:"Would you like to join us for lunch?",
-    opts:["The restaurant is nearby.","I already ate, but thanks.","Lunch is at noon."],
-    c:1,x:"This is an invitation. B is an indirect but natural decline. A and C are factual but don't answer the invitation."},
-  {id:"l2g",q:"Hasn't the new software been installed yet?",
-    opts:["Yes, it's a new version.","The IT team is working on it now.","I prefer the old software."],
-    c:1,x:"Negative question about status. B addresses the current situation. A repeats 'new' (trap). C is an opinion, not an answer."},
-  {id:"l2h",q:"Do you want the report in PDF or printed?",
-    opts:["Yes, the report is ready.","PDF would be easier to share.","I wrote it yesterday."],
-    c:1,x:"'Or' question = choose one. B makes a choice (PDF). A says 'Yes' (trap for or-questions). C is unrelated."},
-  {id:"l2i",q:"The conference room is on the third floor, isn't it?",
-    opts:["Actually, it was moved to the second floor.","The conference starts at 3.","Yes, I have the room key."],
-    c:0,x:"Tag question asking for confirmation. A corrects the information. B uses 'third/3' (number trap). C doesn't address the location."},
-  {id:"l2j",q:"How should I send the contract to the client?",
-    opts:["The client signed it already.","Email would be the fastest option.","It's a three-year contract."],
-    c:1,x:"'How' asks for a method. B suggests a method (email). A and C give facts about the contract but not how to send it."},
-  {id:"l2k",q:"Could you review this proposal before Friday?",
-    opts:["The proposal was rejected.","Sure, I'll look at it tomorrow.","Friday is a holiday."],
-    c:1,x:"This is a request. B accepts and gives a timeline. A talks about a past proposal. C mentions Friday but doesn't answer the request."},
-  {id:"l2l",q:"What time does the train to Manchester leave?",
-    opts:["The platform number is 7.","Manchester is about two hours away.","The next one departs at 4:15."],
-    c:2,x:"'What time' asks for a specific time. Only C gives a departure time (4:15)."},
-  {id:"l2m",q:"Who should I contact about the office renovation?",
-    opts:["The renovation will take three weeks.","Try the facilities manager, Mr. Chen.","The office looks much better now."],
-    c:1,x:"'Who' asks for a person. B names someone (Mr. Chen). A and C discuss the renovation but don't name a contact."},
-  {id:"l2n",q:"Why don't we postpone the meeting until next week?",
-    opts:["That works better for everyone.","The meeting room is available.","We postponed it already."],
-    c:0,x:"'Why don't we' is a suggestion. A accepts the suggestion. B and C don't respond to the proposal."},
-  {id:"l2o",q:"Have you finished reviewing the applications?",
-    opts:["There were over 50 applicants.","I still have a few more to go through.","The application deadline was Monday."],
-    c:1,x:"Yes/No question about task completion. B gives a status update. A and C mention applications but don't answer about progress."},
-	// ═══════════════════════════════════════════
-// 35 QUESTIONS SUPPLÉMENTAIRES PART 2
-// ═══════════════════════════════════════════
-// 
-// À coller dans le tableau LISTENING_P2,
-// juste AVANT le ]; de fermeture.
-// N'oublie pas la virgule après la dernière entrée existante (l2o).
-//
-
-  {id:"l2p",q:"Where can I find the employee handbook?",
-    opts:["It was updated last year.","Check the HR section of the intranet.","About 200 pages long."],
-    c:1,x:"'Where' asks for a location/source. B gives a specific place (HR intranet). A and C are facts but don't answer where."},
-  {id:"l2q",q:"When did the shipment arrive?",
-    opts:["By express delivery.","It came in early this morning.","About 500 units."],
-    c:1,x:"'When' asks for a time. B gives a time (early this morning). A answers 'how' and C answers 'how many'."},
-  {id:"l2r",q:"How often do you meet with your supervisor?",
-    opts:["In the meeting room upstairs.","She's been very helpful.","Every other Wednesday."],
-    c:2,x:"'How often' asks for frequency. C gives frequency (every other Wednesday). A answers 'where' and B is an opinion."},
-  {id:"l2s",q:"Don't you think we should hire more staff?",
-    opts:["The staff meeting is at 3.","I've been thinking the same thing.","We hired someone last week."],
-    c:1,x:"Negative question seeking agreement. B agrees with the suggestion. A uses 'staff' as a trap word. C talks about past hiring."},
-  {id:"l2t",q:"Shall I book the restaurant for the team dinner?",
-    opts:["The food was excellent.","That would be great, thanks.","We had dinner last Friday."],
-    c:1,x:"'Shall I' is an offer. B accepts the offer. A and C discuss past dinners."},
-  {id:"l2u",q:"How about moving the deadline to next month?",
-    opts:["The project is almost done.","I think that's a reasonable idea.","The deadline was yesterday."],
-    c:1,x:"'How about' is a suggestion. B responds to the suggestion. A and C don't address whether to move the deadline."},
-  {id:"l2v",q:"Who approved the travel budget?",
-    opts:["It was a business trip to Tokyo.","The finance director signed off on it.","The budget is quite generous."],
-    c:1,x:"'Who' asks for a person. B names someone (finance director). A gives destination and C gives an opinion."},
-  {id:"l2w",q:"Would you mind closing the window?",
-    opts:["The window faces the parking lot.","Not at all, it is quite cold.","The office has six windows."],
-    c:1,x:"'Would you mind' is a polite request. B agrees to help. A and C give facts about windows but don't respond to the request."},
-  {id:"l2x",q:"The new printer is much faster, isn't it?",
-    opts:["It prints in color too.","Yes, it saves us a lot of time.","The printer is on the second floor."],
-    c:1,x:"Tag question about the printer speed. B confirms and adds information. A mentions a different feature. C gives location."},
-  {id:"l2y",q:"Why hasn't the invoice been sent yet?",
-    opts:["The invoice is for $3,500.","We're still waiting for final approval.","I'll send you a copy."],
-    c:1,x:"'Why hasn't' asks for a reason something hasn't happened. B explains the delay. A gives the amount and C offers future action."},
-  {id:"l2z",q:"Should we take the elevator or the stairs?",
-    opts:["Yes, the elevator is fast.","The stairs are good exercise.","It's on the fifth floor."],
-    c:1,x:"'Or' question = pick one. B makes a choice (stairs). A says 'Yes' which is the classic or-question trap. C is a fact."},
-  {id:"l2aa",q:"What's the best way to get to the airport from here?",
-    opts:["My flight leaves at 6 PM.","The express train takes about 30 minutes.","The airport was renovated recently."],
-    c:1,x:"'What's the best way' asks for a method/route. B suggests transportation. A and C are about airports/flights but not how to get there."},
-  {id:"l2ab",q:"Could you forward me the meeting notes?",
-    opts:["The meeting lasted two hours.","I'll email them to you right away.","There were 12 people at the meeting."],
-    c:1,x:"This is a request. B agrees and tells how. A and C are facts about the meeting but don't address the request."},
-  {id:"l2ac",q:"Has the client confirmed the order yet?",
-    opts:["It's a large order.","I'm still waiting to hear back.","The order shipped yesterday."],
-    c:1,x:"Yes/No about confirmation status. B gives a status update. A describes the order and C talks about shipping."},
-  {id:"l2ad",q:"Why don't we schedule the training for next Tuesday?",
-    opts:["The training was very informative.","That works, I'll book the room.","It takes about three hours."],
-    c:1,x:"'Why don't we' is a suggestion. B accepts and takes action. A comments on past training. C gives duration."},
-  {id:"l2ae",q:"Which department handles customer complaints?",
-    opts:["We received five complaints this week.","Customer service on the fourth floor.","The complaint was resolved quickly."],
-    c:1,x:"'Which department' asks for a specific team. B gives department + location. A gives complaint count and C discusses resolution."},
-  {id:"l2af",q:"You've already submitted the report, haven't you?",
-    opts:["The report is 15 pages.","Actually, I still need to add the charts.","It's due by end of day."],
-    c:1,x:"Tag question checking if done. B corrects the assumption (not finished). A gives length and C gives deadline."},
-  {id:"l2ag",q:"Where should I park when I visit the main office?",
-    opts:["The office opens at 8 AM.","There's a visitor lot behind the building.","It's a 20-minute drive from here."],
-    c:1,x:"'Where should I park' asks for a parking location. B gives a specific place. A gives opening hours and C gives travel time."},
-  {id:"l2ah",q:"Do you prefer the morning or afternoon session?",
-    opts:["Yes, I've already registered.","The morning one fits my schedule better.","Each session is 90 minutes."],
-    c:1,x:"'Or' question = choose one. B picks morning. A says 'Yes' (or-question trap). C gives duration."},
-  {id:"l2ai",q:"I thought the deadline was extended.",
-    opts:["No, it's still due this Friday.","The project is going well.","I'll meet the deadline."],
-    c:0,x:"Statement seeking confirmation. A corrects the assumption. B and C don't address whether the deadline changed."},
-  {id:"l2aj",q:"What did the director say about the proposal?",
-    opts:["She wants us to revise the budget section.","The proposal was submitted online.","The director is traveling this week."],
-    c:0,x:"'What did X say' asks for content of communication. A reports what she said. B is about submission and C is about her schedule."},
-  {id:"l2ak",q:"Isn't the workshop supposed to start at 9?",
-    opts:["It's been pushed back to 10.","The workshop covers project management.","I attended it last year."],
-    c:0,x:"Negative question about start time. A corrects with new time. B gives the topic and C talks about past attendance."},
-  {id:"l2al",q:"How long will the renovation take?",
-    opts:["The contractor said about six weeks.","The lobby looks much better now.","They're renovating the third floor."],
-    c:0,x:"'How long' asks for duration. A gives a timeframe (six weeks). B comments on results and C says what's being renovated."},
-  {id:"l2am",q:"Who's giving the keynote speech at the conference?",
-    opts:["The conference is in Berlin this year.","A professor from Oxford University.","The speech was very inspiring."],
-    c:1,x:"'Who' asks for a person. B identifies the speaker. A gives location and C comments on a past speech."},
-  {id:"l2an",q:"Can I borrow your laptop charger?",
-    opts:["Sure, it's in my bag.","The laptop is brand new.","I charged it this morning."],
-    c:0,x:"Request to borrow something. A agrees and says where it is. B describes the laptop and C talks about charging."},
-  {id:"l2ao",q:"We're running low on printer paper, aren't we?",
-    opts:["I'll order more this afternoon.","The printer is working fine.","We switched to a new brand."],
-    c:0,x:"Tag question about supply level. A takes action to fix it. B is about the printer machine and C about paper brand."},
-  {id:"l2ap",q:"What's the Wi-Fi password for the guest network?",
-    opts:["The network is very fast.","It's 'welcome2025', all lowercase.","We upgraded the system last month."],
-    c:1,x:"Asks for specific information (password). B gives the password. A comments on speed and C on upgrades."},
-  {id:"l2aq",q:"Should I contact the supplier directly?",
-    opts:["The supplier is based in Germany.","It might be faster to go through our procurement team.","We've used them for three years."],
-    c:1,x:"Asking for advice. B suggests an alternative approach. A gives supplier location and C gives history."},
-  {id:"l2ar",q:"How was your business trip to Singapore?",
-    opts:["I'm flying out on Monday.","Very productive — we signed two new contracts.","Singapore is about 12 hours by plane."],
-    c:1,x:"'How was' asks for an evaluation. B gives a positive assessment. A is about a future trip and C is a travel fact."},
-  {id:"l2as",q:"The quarterly figures look promising, don't they?",
-    opts:["Revenue is up 15% from last quarter.","The report will be published next week.","I haven't had a chance to review them yet."],
-    c:2,x:"Tag question seeking agreement. C is an honest indirect answer (hasn't seen them). A gives a detail and B is about publication. C is the most natural conversational response."},
-  {id:"l2at",q:"Where are the samples we ordered for the trade show?",
-    opts:["The trade show starts next Thursday.","They should be in the storage room.","We ordered 200 samples."],
-    c:1,x:"'Where' asks for a location. B gives a location (storage room). A gives a date and C gives quantity."},
-  {id:"l2au",q:"Would you rather present first or second?",
-    opts:["The presentation is ready.","I'd prefer to go second if that's OK.","It will take about 15 minutes."],
-    c:1,x:"'Would you rather X or Y' = choose one. B makes a choice (second). A confirms readiness and C gives duration."},
-  {id:"l2av",q:"Didn't the maintenance team fix the air conditioning?",
-    opts:["They came yesterday but need a replacement part.","The air conditioning is on the roof.","It's much cooler today."],
-    c:0,x:"Negative question about repair status. A explains the situation (partial fix). B gives location and C comments on temperature."},
-  {id:"l2aw",q:"What's on the agenda for this afternoon's meeting?",
-    opts:["The budget review and the hiring plan.","The meeting room has been changed.","It should last about an hour."],
-    c:0,x:"'What's on the agenda' asks for topics. A lists the topics. B is about room change and C about duration."},
-  {id:"l2ax",q:"I don't think we have enough chairs for the workshop.",
-    opts:["The workshop is about leadership skills.","I can bring a few more from the next room.","It starts at 2 PM."],
-    c:1,x:"Statement expressing a problem. B offers a solution. A gives the workshop topic and C gives the time. B is the most helpful response."},
-];
-
-// ─── PART 1: PHOTOGRAPHS ───
-var LISTENING_P1 = [
-  {id:"l1_01",img:"/img/p1_01.png",
-    opts:["The woman is typing an email on her laptop.","The woman is talking on the phone at her desk.","The woman is reading a document next to her computer.","The woman is turning off her laptop."],
-    c:1,x:"The woman is holding a phone receiver to her ear and smiling — she's talking on the phone. A laptop is open in front of her but she's not typing on it. A is wrong (not typing). C is wrong (no document visible). D is wrong (laptop is open, not being turned off)."},
-  {id:"l1_02",img:"/img/p1_02.jpg",
-    opts:["The passenger is handing a ticket to the agent.","The agent is handing a document to the passenger.","The passenger is picking up his luggage.","The departures board is being updated."],
-    c:1,x:"The airline agent behind the counter is extending a document toward the passenger. B correctly describes the action. A reverses the direction (agent gives, not passenger). C is wrong (no luggage visible). D cannot be determined from the scene."},
-  {id:"l1_03",img:"/img/p1_03.jpg",
-    opts:["The workers are eating lunch at a table.","A safety helmet has been placed on the table.","The men are constructing a building.","The blueprints are being rolled up."],
-    c:1,x:"A yellow hard hat is sitting on the table next to blueprints. B correctly describes what's visible. A is wrong (they're reviewing plans, not eating). C is wrong (they're at a table, not on a construction site). D is wrong (blueprints are spread open, not rolled up)."},
-  {id:"l1_04",img:"/img/p1_04.jpg",
-    opts:["The students are leaving the classroom.","The teacher is writing on the chalkboard.","Several students are raising their hands.","The desks are being arranged in a circle."],
-    c:2,x:"Multiple children have their hands raised while a teacher stands at the front. C is correct. A is wrong (students are seated). B is wrong (teacher is facing students, not writing). D is wrong (desks are in rows)."},
-  {id:"l1_05",img:"/img/p1_05.jpg",
-    opts:["A small boat is passing near a cargo ship.","The containers are being unloaded onto trucks.","The ship is sailing in open water.","Workers are standing on top of the containers."],
-    c:0,x:"A small boat is visible in the foreground near the large container ship with cranes above it. A is correct. B is wrong (no trucks visible). C is wrong (the ship is docked at a port). D cannot be confirmed from the image."},
-  {id:"l1_06",img:"/img/p1_06.jpg",
-    opts:["The patient is standing up from the wheelchair.","The doctor is writing a prescription.","A healthcare worker is speaking with a patient in a wheelchair.","The patient is being examined on a bed."],
-    c:2,x:"A woman in a white coat with a stethoscope is leaning toward and talking to an elderly person seated in a wheelchair. C is correct. A is wrong (patient is seated). B is wrong (no writing visible). D is wrong (patient is in a wheelchair, not on a bed)."},
-  {id:"l1_07",img:"/img/p1_07.jpg",
-    opts:["The man is repairing the vehicle's engine.","The man is seated in the cab of a large vehicle.","The man is loading cargo onto a truck.","The vehicle is parked inside a garage."],
-    c:1,x:"A man in a green shirt is sitting in the driver's seat of what appears to be heavy machinery or a tractor. B is correct. A is wrong (not repairing). C is wrong (not loading cargo). D is wrong (the vehicle appears to be outdoors)."},
-  {id:"l1_08",img:"/img/p1_08.jpg",
-    opts:["Workers are packing ice cream cones into boxes.","Machines are dispensing ice cream into cones on a production line.","The cones are being arranged by hand on a tray.","The factory equipment is being cleaned."],
-    c:1,x:"Blue mechanical dispensers are placing scoops of ice cream into waffle cones moving along a conveyor belt. B is correct. A is wrong (no boxes or packing). C is wrong (it's automated, not by hand). D is wrong (the equipment is operating, not being cleaned)."},
-  {id:"l1_09",img:"/img/p1_09.jpg",
-    opts:["The woman is cleaning laboratory equipment.","A researcher is using a pipette in a laboratory.","The scientists are having a discussion.","The woman is looking through a microscope."],
-    c:1,x:"A woman in a lab coat is holding and using a pipette, with test tubes and lab equipment around her. B is correct. A is wrong (not cleaning). C is wrong (the man in the background is working separately). D is wrong (no microscope — she's using a pipette)."},
-  {id:"l1_10",img:"/img/p1_10.jpg",
-    opts:["The woman is reading a book on a bench.","The woman is having a video call on her laptop.","The woman is typing on a laptop while sitting on a bench.","The laptop screen is turned off."],
-    c:2,x:"A woman is seated on a wooden bench against a brick wall, with her hands on the laptop keyboard. C is correct. A is wrong (it's a laptop, not a book). B cannot be confirmed (no visible video call). D is wrong (the screen is clearly on)."},
-	// ═══════════════════════════════════════════
-// PART 1 — PHOTOGRAPHS (Batch 2: p1_11 to p1_20)
-// ═══════════════════════════════════════════
-//
-// À coller dans le tableau LISTENING_P1,
-// juste AVANT le ];
-// N'oublie pas la virgule après la dernière entrée du batch 1 (l1_10).
-//
-
-  {id:"l1_11",img:"/img/p1_11.jpg",
-    opts:["The mechanic is washing the car.","A man is using a laptop next to a vehicle with its hood open.","The car is being loaded onto a truck.","The man is closing the hood of the car."],
-    c:1,x:"A mechanic in blue overalls is holding a laptop while standing in front of a car with its hood raised. B is correct. A is wrong (not washing). C is wrong (no truck). D is wrong (the hood is open, not being closed)."},
-  {id:"l1_12",img:"/img/p1_12.jpg",
-    opts:["The workers are climbing down a ladder.","Two workers are assembling a steel structure.","The men are painting a metal beam.","Construction equipment is being unloaded."],
-    c:1,x:"Two men wearing hard hats and safety harnesses are working on steel beams high up. B is correct. A is wrong (they're on the beams, not a ladder). C is wrong (no painting). D is wrong (no equipment being unloaded)."},
-  {id:"l1_13",img:"/img/p1_13.jpg",
-    opts:["A man is playing a guitar on stage.","Several guitars are displayed in a shop window.","A craftsman is building a guitar in his workshop.","The instruments are being packed into cases."],
-    c:2,x:"A man is working on the body of a guitar surrounded by other guitars in various stages of construction. C is correct. A is wrong (he's building, not playing). B is wrong (it's a workshop, not a shop). D is wrong (no cases visible)."},
-  {id:"l1_14",img:"/img/p1_14.jpg",
-    opts:["The colleagues appear exhausted at their desks.","The team is celebrating a successful project.","The workers are arriving at the office.","Documents are being filed into cabinets."],
-    c:0,x:"Three people at a conference table look very tired — one is pulling his tie, another has her head down. A is correct. B is the opposite (they look exhausted, not celebrating). C is wrong (they're seated, not arriving). D is wrong (papers are on the table, not being filed)."},
-  {id:"l1_15",img:"/img/p1_15.jpg",
-    opts:["The woman is boarding an airplane.","A traveler is checking her phone at the gate.","A woman is reading a book in an airport terminal.","The passenger is collecting her luggage."],
-    c:2,x:"A woman is seated in an airport terminal with a backpack, reading a small book. C is correct. A is wrong (she's seated, not boarding). B is wrong (it's a book, not a phone). D is wrong (no luggage collection area visible)."},
-  {id:"l1_16",img:"/img/p1_16.jpg",
-    opts:["The officer is checking the man's passport.","A security officer is screening a passenger.","The man is putting on his jacket.","The officer is handing a boarding pass to the traveler."],
-    c:1,x:"A TSA security officer in blue uniform is conducting a screening while the man holds his arms out. B is correct. A is wrong (no passport visible). C is wrong (he has his arms extended for screening). D is wrong (no boarding pass exchange)."},
-  {id:"l1_17",img:"/img/p1_17.jpg",
-    opts:["A person is signing a document with a pen.","The papers are being placed into an envelope.","A woman is reading a newspaper.","The document is being printed."],
-    c:0,x:"A hand is holding a pen and writing on a form on a desk. A is correct (signing/filling in a document). B is wrong (no envelope). C is wrong (it's a form, not a newspaper). D is wrong (the document is already printed and being filled in)."},
-  {id:"l1_18",img:"/img/p1_18.jpg",
-    opts:["The workers are removing solar panels from a roof.","Two technicians are installing solar panels.","A man is repairing the roof tiles.","The ladder is being carried to the building."],
-    c:1,x:"Two men wearing hard hats are positioning solar panels on a roof, with a ladder visible behind them. B is correct. A reverses the action (installing, not removing). C is wrong (they're working with panels, not tiles). D is wrong (the ladder is already in place)."},
-  {id:"l1_19",img:"/img/p1_19.jpg",
-    opts:["The shelves in the warehouse are empty.","A worker is stacking boxes on a high shelf.","A man is holding a package in a storage area.","The boxes are being loaded onto a delivery truck."],
-    c:2,x:"A man in a work shirt is standing in a warehouse holding a cardboard box, with shelves of packages behind him. C is correct. A is wrong (shelves are full). B is wrong (he's holding a box at waist level, not stacking high). D is wrong (no truck visible)."},
-  {id:"l1_20",img:"/img/p1_20.jpg",
-    opts:["The employee is stocking shelves with fruit.","A customer is selecting produce at a market.","A store worker is carrying a box in the grocery section.","The man is cleaning the floor of the shop."],
-    c:2,x:"A man wearing a store apron is holding a large cardboard box in the produce section of a grocery store. C is correct. A is wrong (he's carrying a box, not placing items on shelves). B is wrong (he's an employee with an apron, not a customer). D is wrong (not cleaning)."},
-	// ═══════════════════════════════════════════
-// PART 1 — PHOTOGRAPHS (Batch 3: p1_21 to p1_24)
-// ═══════════════════════════════════════════
-//
-// À coller dans le tableau LISTENING_P1,
-// juste AVANT le ];
-//
-
-  {id:"l1_21",img:"/img/p1_21.jpg",
-    opts:["The group is posing for a photograph.","Several people are gathered around a laptop screen.","The team is having lunch together.","A woman is giving a presentation to her colleagues."],
-    c:1,x:"A group of people are leaning in and looking attentively at a laptop screen together. B is correct. A is wrong (they're focused on the screen, not posing). C is wrong (no food visible). D is wrong (no one is standing or presenting — they're all looking at the same screen)."},
-  {id:"l1_22",img:"/img/p1_22.jpg",
-    opts:["People are swimming in a canal.","Boats are moored along a waterway between buildings.","A bridge is being constructed over the water.","Cars are parked along the street next to the canal."],
-    c:1,x:"Several boats are tied up along a canal lined with historic buildings. B is correct. A is wrong (no swimmers). C is wrong (no construction). D is wrong (no cars — it's a canal city with water instead of streets)."},
-  {id:"l1_23",img:"/img/p1_23.jpg",
-    opts:["People are sitting on the benches in the park.","The snow is being cleared from the pathway.","Benches are covered with snow in a park.","Children are playing in the snow."],
-    c:2,x:"Wooden benches along a park path are heavily covered in snow, with no people around. C is correct. A is wrong (the benches are empty). B is wrong (no one is clearing snow). D is wrong (no children or people visible)."},
-  {id:"l1_24",img:"/img/p1_24.jpg",
-    opts:["A person is writing in a planner next to a mobile phone.","The woman is sending a text message on her phone.","A notebook is being closed and put away.","The person is drawing a picture in a sketchbook."],
-    c:0,x:"A hand is holding a pen and writing in a weekly planner/calendar, with a smartphone resting on the page. A is correct. B is wrong (the phone is lying flat, not being used). C is wrong (the planner is open). D is wrong (it's a planner with grid lines, not a sketchbook)."},
-];
-// ═══════════════════════════════════════════
-// PART 3 — CONVERSATIONS (20 conversations, 60 questions)
-// ═══════════════════════════════════════════
-// À coller dans App.jsx AVANT "// ─── HELPERS ───"
-//
-// Structure: each conversation has lines[] with speaker tags (M=man, W=woman)
-// Audio files: /audio/p3/{id}_line{N}.mp3 for each line
-//
-
-var LISTENING_P3 = [
-  {id:"l3_01",lines:[
-    {s:"W",t:"Have you seen the updated schedule for the trade show next month?"},
-    {s:"M",t:"Yes, our booth has been moved to Hall B. It's actually a better location than last year."},
-    {s:"W",t:"That's great. Should I order new banners for the booth?"},
-    {s:"M",t:"Let's check the budget with finance first. The old ones might still work."}],
-    qs:[
-      {q:"What are the speakers discussing?",opts:["A budget meeting","A trade show","A product launch","An office move"],c:1},
-      {q:"What has changed about their booth?",opts:["It was cancelled","The price went up","It was relocated","It became smaller"],c:2},
-      {q:"What does the man suggest?",opts:["Ordering new banners immediately","Checking the budget first","Cancelling the booth","Moving to a different hall"],c:1}]},
-  {id:"l3_02",lines:[
-    {s:"M",t:"Excuse me, I have a reservation for two under the name Patterson."},
-    {s:"W",t:"Yes, Mr. Patterson. Your table is ready. Would you prefer the terrace or inside?"},
-    {s:"M",t:"The terrace sounds nice, but it looks like it might rain."},
-    {s:"W",t:"In that case, I can seat you by the window. You'll still have a lovely view."}],
-    qs:[
-      {q:"Where does this conversation take place?",opts:["At a hotel","At a restaurant","At an airport","At a theater"],c:1},
-      {q:"Why doesn't the man choose the terrace?",opts:["It's too expensive","It's fully booked","The weather looks bad","It's too noisy"],c:2},
-      {q:"Where will the man be seated?",opts:["On the terrace","In a private room","By the window","At the bar"],c:2}]},
-  {id:"l3_03",lines:[
-    {s:"W",t:"The quarterly sales figures just came in, and they're above our target by 12 percent."},
-    {s:"M",t:"That's excellent news. Which region performed the best?"},
-    {s:"W",t:"The Asian market, especially Japan and South Korea. Europe was slightly below target."},
-    {s:"M",t:"We should present these results at Friday's board meeting."}],
-    qs:[
-      {q:"What is the main topic of the conversation?",opts:["Hiring plans","Sales performance","Product development","Office relocation"],c:1},
-      {q:"Which region exceeded expectations?",opts:["Europe","North America","Asia","South America"],c:2},
-      {q:"What does the man want to do?",opts:["Hire more staff in Asia","Present the results to the board","Close the European office","Increase the sales target"],c:1}]},
-  {id:"l3_04",lines:[
-    {s:"M",t:"I'm calling about the laptop I ordered two weeks ago. It still hasn't arrived."},
-    {s:"W",t:"I'm sorry to hear that. Can I have your order number, please?"},
-    {s:"M",t:"It's TK-4578. I was told it would arrive within five business days."},
-    {s:"W",t:"Let me check that for you. I see there was a delay at our warehouse. I can offer you express shipping at no extra cost."}],
-    qs:[
-      {q:"Why is the man calling?",opts:["To cancel an order","To return a product","To complain about a late delivery","To ask about pricing"],c:2},
-      {q:"When was the order expected to arrive?",opts:["Within two days","Within five business days","Within two weeks","By the end of the month"],c:1},
-      {q:"What does the woman offer?",opts:["A full refund","A replacement product","Free express shipping","A discount on the next order"],c:2}]},
-  {id:"l3_05",lines:[
-    {s:"W",t:"I just got an email from the building manager. The elevators will be out of service this weekend."},
-    {s:"M",t:"Both of them? That's going to be a problem for anyone working on the upper floors."},
-    {s:"W",t:"I know. They're doing maintenance that was postponed from last month."},
-    {s:"M",t:"I'll send a notice to all departments so people can plan ahead."}],
-    qs:[
-      {q:"What is the problem?",opts:["The offices are closing","The heating is broken","The elevators will be shut down","The parking lot is full"],c:2},
-      {q:"When will this happen?",opts:["Today","Tomorrow","This weekend","Next month"],c:2},
-      {q:"What will the man do?",opts:["Contact the building manager","Notify the departments","Cancel the maintenance","Work from home"],c:1}]},
-  {id:"l3_06",lines:[
-    {s:"M",t:"Have you had a chance to interview any candidates for the marketing position?"},
-    {s:"W",t:"I've seen three so far. Two had strong experience, but one really stood out."},
-    {s:"M",t:"What made them special?"},
-    {s:"W",t:"She has ten years in digital marketing and previously managed a team of fifteen."}],
-    qs:[
-      {q:"What are the speakers discussing?",opts:["A training program","A marketing campaign","A job vacancy","A promotion"],c:2},
-      {q:"How many candidates has the woman interviewed?",opts:["One","Two","Three","Fifteen"],c:2},
-      {q:"What impressed the woman about one candidate?",opts:["Her salary expectations","Her language skills","Her experience and management background","Her educational qualifications"],c:2}]},
-  {id:"l3_07",lines:[
-    {s:"W",t:"The client wants the website redesign completed by March first."},
-    {s:"M",t:"That's only six weeks away. We haven't even finalized the design concept."},
-    {s:"W",t:"I know it's tight. Can we bring in a freelance designer to help?"},
-    {s:"M",t:"Good idea. I'll reach out to the agency we used last time."}],
-    qs:[
-      {q:"What is the deadline for the project?",opts:["Next week","End of January","March first","June first"],c:2},
-      {q:"What is the problem?",opts:["The client cancelled the project","The budget is too low","The timeline is very tight","The designer quit"],c:2},
-      {q:"What solution does the woman suggest?",opts:["Asking for more time","Hiring a freelancer","Reducing the project scope","Using a template"],c:1}]},
-  {id:"l3_08",lines:[
-    {s:"M",t:"I'm heading to the airport now. My flight to Chicago leaves at 3:30."},
-    {s:"W",t:"Don't forget you have a dinner with the client at seven. The restaurant is near your hotel."},
-    {s:"M",t:"Right. And the meeting with their team is tomorrow morning at nine?"},
-    {s:"W",t:"Yes, in their downtown office. I've emailed you the address and parking details."}],
-    qs:[
-      {q:"Where is the man going?",opts:["To a restaurant","To Chicago","To a meeting","To his hotel"],c:1},
-      {q:"What time is the client dinner?",opts:["At 3:30","At 5:00","At 7:00","At 9:00"],c:2},
-      {q:"What has the woman sent the man?",opts:["Flight tickets","The meeting agenda","The office address and parking info","The restaurant menu"],c:2}]},
-  {id:"l3_09",lines:[
-    {s:"W",t:"The new employee orientation is scheduled for Monday. Are the training materials ready?"},
-    {s:"M",t:"Almost. I still need to update the section on company policies. There were some changes last quarter."},
-    {s:"W",t:"Make sure you include the updated remote work guidelines. That's what new hires always ask about."},
-    {s:"M",t:"Good point. I'll have everything printed by Friday afternoon."}],
-    qs:[
-      {q:"What is happening on Monday?",opts:["A board meeting","An employee orientation","A product launch","A company holiday"],c:1},
-      {q:"What still needs to be updated?",opts:["The welcome video","The company policies section","The lunch menu","The office map"],c:1},
-      {q:"What does the woman recommend including?",opts:["Salary information","Remote work guidelines","Health insurance details","Parking instructions"],c:1}]},
-  {id:"l3_10",lines:[
-    {s:"M",t:"I noticed the supply room is almost empty. We're low on paper, toner, and pens."},
-    {s:"W",t:"I placed an order last Tuesday, but the supplier said there's a two-week backlog."},
-    {s:"M",t:"Two weeks? That's too long. Can we find another supplier?"},
-    {s:"W",t:"I'll look into it this afternoon and get quotes from at least two other companies."}],
-    qs:[
-      {q:"What is the problem?",opts:["Equipment is broken","Office supplies are running low","The supplier went bankrupt","The budget was cut"],c:1},
-      {q:"Why hasn't the order arrived?",opts:["It was cancelled","The supplier has a backlog","The payment was declined","The address was wrong"],c:1},
-      {q:"What will the woman do?",opts:["Wait for the current order","Cancel the order","Contact alternative suppliers","Buy supplies at a local store"],c:2}]},
-  {id:"l3_11",lines:[
-    {s:"W",t:"I see you applied for the project manager position in the Singapore office."},
-    {s:"M",t:"Yes, I've always wanted to work abroad. And I have experience with the Asian market."},
-    {s:"W",t:"The position requires fluency in Mandarin. Do you speak it?"},
-    {s:"M",t:"I've been taking classes for the past year. I'd say I'm at an intermediate level now."}],
-    qs:[
-      {q:"What position has the man applied for?",opts:["Sales director","Financial analyst","Project manager","Marketing coordinator"],c:2},
-      {q:"Where is the job located?",opts:["Tokyo","Hong Kong","Shanghai","Singapore"],c:3},
-      {q:"What is the man's level of Mandarin?",opts:["Beginner","Intermediate","Fluent","He doesn't speak it"],c:1}]},
-  {id:"l3_12",lines:[
-    {s:"M",t:"The parking garage will be closed for repairs starting next Monday."},
-    {s:"W",t:"For how long? I drive to work every day."},
-    {s:"M",t:"About three weeks. But the company has arranged a temporary lot two blocks away."},
-    {s:"W",t:"That's not ideal, but at least there's an alternative. Is there a shuttle?"},
-    {s:"M",t:"Yes, it runs every ten minutes from the temporary lot to the main entrance."}],
-    qs:[
-      {q:"What will happen on Monday?",opts:["A new garage will open","The parking garage will close for repairs","Parking fees will increase","The shuttle service will end"],c:1},
-      {q:"How long will the repairs take?",opts:["One week","Two weeks","Three weeks","A month"],c:2},
-      {q:"How can employees get from the temporary lot to the office?",opts:["They can walk","A shuttle runs every ten minutes","Taxis are provided","A bus stops nearby"],c:1}]},
-  {id:"l3_13",lines:[
-    {s:"W",t:"Our customer satisfaction scores dropped five percent this quarter."},
-    {s:"M",t:"That's concerning. Do we know which area was affected the most?"},
-    {s:"W",t:"Response time. Customers are waiting too long for support."},
-    {s:"M",t:"We should consider hiring additional support staff or implementing a chatbot."}],
-    qs:[
-      {q:"What happened to customer satisfaction?",opts:["It improved","It stayed the same","It decreased","It was not measured"],c:2},
-      {q:"What is the main complaint?",opts:["Product quality","High prices","Slow response times","Complicated website"],c:2},
-      {q:"What does the man suggest?",opts:["Raising prices","Adding support staff or a chatbot","Closing the support department","Sending a survey"],c:1}]},
-  {id:"l3_14",lines:[
-    {s:"M",t:"Excuse me, I'd like to return this printer. It stopped working after two days."},
-    {s:"W",t:"I'm sorry about that. Do you have your receipt?"},
-    {s:"M",t:"Yes, here it is. I bought it last Thursday."},
-    {s:"W",t:"Since it's within our 30-day return policy, I can offer you a full refund or an exchange."}],
-    qs:[
-      {q:"Why is the man returning the printer?",opts:["It's the wrong model","It's too expensive","It stopped working","He doesn't need it anymore"],c:2},
-      {q:"When did the man buy the printer?",opts:["Two days ago","Last Thursday","Last month","30 days ago"],c:1},
-      {q:"What options does the woman offer?",opts:["A repair or a discount","A refund or an exchange","Store credit only","Free technical support"],c:1}]},
-  {id:"l3_15",lines:[
-    {s:"W",t:"The conference call with the London team is in 15 minutes. Is the equipment set up?"},
-    {s:"M",t:"The video is working, but I'm having trouble with the audio. There's an echo."},
-    {s:"W",t:"Try using the external microphone instead. It usually works better."},
-    {s:"M",t:"Good idea. I'll switch it now."}],
-    qs:[
-      {q:"What is about to happen?",opts:["A staff lunch","A video conference","An office tour","A training session"],c:1},
-      {q:"What is the technical problem?",opts:["The video is not working","The internet is down","There is an audio echo","The screen is too small"],c:2},
-      {q:"What does the woman recommend?",opts:["Cancelling the call","Using a different microphone","Calling IT support","Moving to another room"],c:1}]},
-  {id:"l3_16",lines:[
-    {s:"M",t:"The architect sent over the revised floor plans for the new office."},
-    {s:"W",t:"Did they include the extra meeting rooms we requested?"},
-    {s:"M",t:"Yes, two small ones and one large conference room. But they removed the break room on the second floor."},
-    {s:"W",t:"That's a dealbreaker. Everyone uses that break room. Ask them to revise it again."}],
-    qs:[
-      {q:"What did the architect send?",opts:["An invoice","Updated floor plans","A construction timeline","Photos of the building"],c:1},
-      {q:"How many extra meeting rooms were added?",opts:["One","Two","Three","Four"],c:2},
-      {q:"Why is the woman unhappy?",opts:["The cost is too high","The project is delayed","The break room was removed","The rooms are too small"],c:2}]},
-  {id:"l3_17",lines:[
-    {s:"W",t:"Our flight has been delayed by two hours. We won't land until 9 PM."},
-    {s:"M",t:"That means we'll miss the welcome reception at the conference."},
-    {s:"W",t:"I know. But at least we'll make it in time for tomorrow's keynote at 8 AM."},
-    {s:"M",t:"I'll text the organizer and let them know we're arriving late."}],
-    qs:[
-      {q:"What is the problem?",opts:["The conference was cancelled","Their hotel lost the reservation","Their flight is delayed","They missed the keynote"],c:2},
-      {q:"What will they miss?",opts:["The keynote speech","The welcome reception","The morning workshop","The closing ceremony"],c:1},
-      {q:"What will the man do?",opts:["Book a different flight","Cancel the trip","Contact the organizer","Call the airline"],c:2}]},
-  {id:"l3_18",lines:[
-    {s:"M",t:"I think we should switch to a new accounting software. The current one is too slow."},
-    {s:"W",t:"I agree, but migration is risky. What about the data from the last five years?"},
-    {s:"M",t:"The new system can import our existing data automatically. I've already tested it."},
-    {s:"W",t:"That's reassuring. Let's schedule a demo for the whole finance team next week."}],
-    qs:[
-      {q:"What does the man propose?",opts:["Hiring an accountant","Changing the accounting software","Reducing the IT budget","Outsourcing the finance department"],c:1},
-      {q:"What is the woman concerned about?",opts:["The cost","The timeline","Data migration","Staff training"],c:2},
-      {q:"What is the next step?",opts:["A team demo next week","An immediate switch","A meeting with IT","A cost analysis"],c:0}]},
-  {id:"l3_19",lines:[
-    {s:"W",t:"The health inspector is coming next Tuesday for our annual review."},
-    {s:"M",t:"Already? I need to make sure the kitchen passes the cleanliness check."},
-    {s:"W",t:"Last year we got a warning about the storage area. Let's not repeat that."},
-    {s:"M",t:"I'll have the team do a deep clean this weekend."}],
-    qs:[
-      {q:"Where do the speakers most likely work?",opts:["In a hospital","In a restaurant","In a school","In a factory"],c:1},
-      {q:"When is the inspection?",opts:["This weekend","Next Monday","Next Tuesday","Next month"],c:2},
-      {q:"What happened last year?",opts:["They failed the inspection","They received a warning about storage","The kitchen was renovated","The inspector didn't show up"],c:1}]},
-  {id:"l3_20",lines:[
-    {s:"M",t:"I'd like to open a business checking account, please."},
-    {s:"W",t:"Of course. Do you have your company registration documents with you?"},
-    {s:"M",t:"Yes, I have everything here. I also need to set up online banking."},
-    {s:"W",t:"We can do both today. The online access will be active within 24 hours."}],
-    qs:[
-      {q:"Where does this conversation take place?",opts:["At a law firm","At a bank","At a government office","At an accounting firm"],c:1},
-      {q:"What does the man want to open?",opts:["A savings account","A personal account","A business checking account","A credit card"],c:2},
-      {q:"When will online banking be available?",opts:["Immediately","Within 24 hours","In one week","After approval"],c:1}]},
-];
-// ═══════════════════════════════════════════
-// PART 4 — TALKS (20 talks, 60 questions)
-// ═══════════════════════════════════════════
-// À coller dans App.jsx AVANT "// ─── HELPERS ───"
-//
-// Structure: each talk has a full text (single speaker) and a type label
-// Audio file: /audio/p4/{id}.mp3 (one file per talk)
-//
-
-var LISTENING_P4 = [
-  {id:"l4_01",type:"Voicemail",voice:"W",
-    text:"Hi, this is Karen from Summit Consulting. I'm calling to confirm our meeting on Wednesday at 10 AM. I've reserved conference room B at your office. Could you let me know if you need us to bring any presentation materials? Also, I'd like to add one more item to the agenda — we need to discuss the revised timeline. Please call me back at 555-0172. Thank you.",
-    qs:[
-      {q:"Who is the speaker?",opts:["A job applicant","A consultant","A delivery driver","A hotel receptionist"],c:1},
-      {q:"When is the meeting?",opts:["Monday at 10","Tuesday at 2","Wednesday at 10","Friday at 3"],c:2},
-      {q:"What does the speaker want to add to the agenda?",opts:["A budget review","The revised timeline","Staff introductions","A product demo"],c:1}]},
-  {id:"l4_02",type:"Announcement",voice:"M",
-    text:"Attention all passengers. Flight BA-247 to London Heathrow, originally scheduled for departure at 3:15 PM, has been delayed due to severe weather conditions. The new estimated departure time is 5:45 PM. We apologize for the inconvenience. Passengers are invited to visit the airline lounge on the second floor, where complimentary refreshments will be available. Please listen for further announcements.",
-    qs:[
-      {q:"What is the purpose of this announcement?",opts:["To announce a gate change","To inform about a flight delay","To welcome passengers on board","To advertise the airline lounge"],c:1},
-      {q:"What caused the delay?",opts:["Mechanical issues","A security check","Severe weather","Staff shortage"],c:2},
-      {q:"What is offered to passengers?",opts:["Seat upgrades","Free refreshments in the lounge","Full refunds","Hotel accommodation"],c:1}]},
-  {id:"l4_03",type:"Meeting introduction",voice:"W",
-    text:"Good morning, everyone. Thank you for coming to this month's all-hands meeting. Before we begin, I'd like to welcome two new team members who joined us last week: David Chen in engineering and Priya Sharma in product design. Please make them feel welcome. Now, the main topic today is our Q2 goals. As you know, we exceeded our Q1 targets, and I'd like to keep that momentum going.",
-    qs:[
-      {q:"What type of event is this?",opts:["A job interview","A training session","A company-wide meeting","A press conference"],c:2},
-      {q:"How many new employees are introduced?",opts:["One","Two","Three","Four"],c:1},
-      {q:"What happened in Q1?",opts:["Targets were missed","Targets were exceeded","The company downsized","New products launched"],c:1}]},
-  {id:"l4_04",type:"Tour guide",voice:"M",
-    text:"Welcome to the National Museum of Modern Art. Today's guided tour will last approximately 90 minutes and will cover the three main galleries on this floor. Photography is permitted, but please do not use flash, as it can damage the artwork. The gift shop and café are located on the ground floor and will remain open until 6 PM. Please stay with the group, and feel free to ask questions at any time.",
-    qs:[
-      {q:"Where is this announcement being made?",opts:["At a library","At a museum","At a university","At a theater"],c:1},
-      {q:"How long will the tour last?",opts:["45 minutes","60 minutes","90 minutes","120 minutes"],c:2},
-      {q:"What rule about photography is mentioned?",opts:["No photography allowed","Flash is not permitted","Only the gift shop may be photographed","Photos require a fee"],c:1}]},
-  {id:"l4_05",type:"Training session",voice:"W",
-    text:"Alright, let's get started with today's safety training. As warehouse employees, it's critical that you follow proper lifting techniques to avoid injury. Always bend at the knees, not at the waist. For items over 25 kilograms, use the mechanical lift or ask a colleague for help. I'll demonstrate the correct technique now, and then each of you will practice. Hard hats must be worn at all times in zones C and D.",
-    qs:[
-      {q:"What is the topic of this training?",opts:["Fire evacuation","Computer skills","Warehouse safety","Customer service"],c:2},
-      {q:"What should workers do for items over 25 kg?",opts:["Carry them alone carefully","Use a mechanical lift or get help","Leave them for the next shift","Report them to the manager"],c:1},
-      {q:"Where must hard hats be worn?",opts:["In all areas","Only outside","In zones C and D","In the break room"],c:2}]},
-  {id:"l4_06",type:"Voicemail",voice:"M",
-    text:"Hello, this is James Walker from Greenfield Property Management. I'm calling about the office space you inquired about on Park Avenue. The unit is 200 square meters with an open floor plan, and it's available from the first of next month. The monthly rent is $4,500, which includes utilities and one parking space. I'd love to schedule a viewing at your convenience. My number is 555-0398.",
-    qs:[
-      {q:"Why is the man calling?",opts:["To report a maintenance issue","To discuss an office rental","To confirm a meeting","To apply for a job"],c:1},
-      {q:"What is included in the rent?",opts:["Furniture and internet","Cleaning and security","Utilities and one parking space","Reception and phone service"],c:2},
-      {q:"When is the office available?",opts:["Immediately","Next week","First of next month","In three months"],c:2}]},
-  {id:"l4_07",type:"News report",voice:"W",
-    text:"In business news, TechVision Inc. announced today that it will open a new research center in Austin, Texas. The facility, which will employ over 300 engineers and scientists, is expected to be operational by next spring. The company's CEO stated that the Austin location was chosen for its strong talent pool and proximity to major universities. The investment is estimated at 150 million dollars.",
-    qs:[
-      {q:"What is TechVision Inc. planning to do?",opts:["Merge with another company","Close its headquarters","Open a research center","Launch a new product"],c:2},
-      {q:"Why was Austin chosen?",opts:["Low taxes","Available talent and nearby universities","A new airport","Government incentives"],c:1},
-      {q:"How much will the investment be?",opts:["15 million","50 million","150 million","300 million"],c:2}]},
-  {id:"l4_08",type:"Advertisement",voice:"M",
-    text:"Are you looking for a reliable delivery service for your business? FastTrack Logistics offers same-day delivery in the metropolitan area and next-day delivery nationwide. With real-time tracking and a 99.5 percent on-time rate, you can trust us with your most important shipments. New customers get 20 percent off their first month. Visit fasttracklogistics.com or call 1-800-555-FAST to get started today.",
-    qs:[
-      {q:"What service is being advertised?",opts:["Office cleaning","IT support","Delivery and logistics","Accounting services"],c:2},
-      {q:"What is the company's on-time rate?",opts:["95%","97.5%","99%","99.5%"],c:3},
-      {q:"What offer is available for new customers?",opts:["Free first delivery","20% off the first month","A free tracking device","No minimum order"],c:1}]},
-  {id:"l4_09",type:"Announcement",voice:"W",
-    text:"Attention shoppers. Riverside Mall will be closing in 30 minutes, at 9 PM. Please make your final purchases and proceed to the exits. The parking garage will remain accessible for one hour after closing. We'd like to remind you that our annual summer sale starts this Saturday, with discounts of up to 50 percent at participating stores. Thank you for visiting Riverside Mall.",
-    qs:[
-      {q:"What time does the mall close?",opts:["8:00 PM","8:30 PM","9:00 PM","9:30 PM"],c:2},
-      {q:"How long will the parking garage stay open?",opts:["30 minutes after closing","One hour after closing","Until midnight","All night"],c:1},
-      {q:"What is happening this Saturday?",opts:["A food festival","Extended hours","A summer sale","A grand reopening"],c:2}]},
-  {id:"l4_10",type:"Recorded message",voice:"M",
-    text:"Thank you for calling Greenwood Medical Center. Our office hours are Monday through Friday, 8 AM to 6 PM, and Saturday from 9 AM to 1 PM. If this is a medical emergency, please hang up and dial 911. To schedule an appointment, press 1. For billing inquiries, press 2. For prescription refills, press 3. To speak with a receptionist, please hold and your call will be answered in the order it was received.",
-    qs:[
-      {q:"What type of business is this?",opts:["A pharmacy","A medical center","An insurance company","A fitness center"],c:1},
-      {q:"When is the office open on Saturday?",opts:["8 AM to 6 PM","9 AM to 1 PM","9 AM to 5 PM","It's closed"],c:1},
-      {q:"What should callers press for an appointment?",opts:["1","2","3","0"],c:0}]},
-  {id:"l4_11",type:"Company update",voice:"W",
-    text:"I'm pleased to announce that starting next month, all full-time employees will be eligible for our new professional development program. The company will cover up to $2,000 per year for approved courses, certifications, or conferences. To apply, submit a request through the HR portal at least two weeks before the start date. Managers must approve all requests. This is a great opportunity to invest in your career growth.",
-    qs:[
-      {q:"What is being announced?",opts:["New health insurance","A professional development program","A salary increase","An office relocation"],c:1},
-      {q:"How much funding is available per employee?",opts:["$500","$1,000","$1,500","$2,000"],c:3},
-      {q:"How far in advance must requests be submitted?",opts:["One week","Two weeks","One month","Two months"],c:1}]},
-  {id:"l4_12",type:"Tour guide",voice:"M",
-    text:"We're now approaching the financial district, which is the heart of the city's business community. The tall glass building on your left is the headquarters of National Bank, one of the oldest financial institutions in the country, founded in 1852. Directly ahead is City Hall, built in the neoclassical style. We'll stop here for 15 minutes so you can take photos. Please be back on the bus by 2:30.",
-    qs:[
-      {q:"What kind of tour is this?",opts:["A museum tour","A factory tour","A city bus tour","A walking nature tour"],c:2},
-      {q:"What is the tall glass building?",opts:["City Hall","A museum","A hotel","A bank headquarters"],c:3},
-      {q:"How long is the photo stop?",opts:["5 minutes","10 minutes","15 minutes","30 minutes"],c:2}]},
-  {id:"l4_13",type:"Voicemail",voice:"W",
-    text:"Hi Mark, it's Lisa from the marketing team. I wanted to let you know that the print shop called about our brochures. They found a color mismatch on page three, so they've paused the job until we approve the correction. Could you take a look at the proof they emailed and give them the go-ahead? We need 5,000 copies by Thursday for the expo. Thanks.",
-    qs:[
-      {q:"Why is Lisa calling?",opts:["To request time off","To approve a budget","To ask about a printing issue","To invite Mark to a meeting"],c:2},
-      {q:"What problem did the print shop find?",opts:["Wrong paper size","A spelling error","A color mismatch","Missing pages"],c:2},
-      {q:"How many copies are needed?",opts:["500","1,000","2,500","5,000"],c:3}]},
-  {id:"l4_14",type:"Instructions",voice:"M",
-    text:"Before we begin today's workshop, let me go over a few logistics. Restrooms are down the hall to the left. We'll take a 15-minute break at 10:30 and a one-hour lunch break at noon. The cafeteria on the second floor serves hot meals until 1:30. All workshop materials are in the folders on your desks. Please make sure you have a name tag — if not, see me after this introduction.",
-    qs:[
-      {q:"What is the speaker doing?",opts:["Giving a keynote speech","Explaining workshop logistics","Conducting a job interview","Leading a fire drill"],c:1},
-      {q:"When is the lunch break?",opts:["At 10:30","At 11:00","At noon","At 1:30"],c:2},
-      {q:"What should attendees do if they don't have a name tag?",opts:["Go to the front desk","See the speaker after the introduction","Check their folder","Visit the cafeteria"],c:1}]},
-  {id:"l4_15",type:"Advertisement",voice:"W",
-    text:"Introducing CloudDesk Pro, the all-in-one workspace solution for modern teams. With CloudDesk, your team can collaborate on documents, manage projects, and hold video meetings — all from a single platform. No more switching between five different apps. Start your free 30-day trial today at clouddesk.com. Plans start at just $8 per user per month. CloudDesk Pro — work smarter, together.",
-    qs:[
-      {q:"What is being advertised?",opts:["A laptop","Office furniture","A workspace software platform","A coworking space"],c:2},
-      {q:"How long is the free trial?",opts:["7 days","14 days","30 days","60 days"],c:2},
-      {q:"What is the starting price?",opts:["$5 per user","$8 per user","$12 per user","$15 per user"],c:1}]},
-  {id:"l4_16",type:"Announcement",voice:"M",
-    text:"Good afternoon, everyone. I'd like to update you on the office renovation project. Phase one, which includes the reception area and the ground floor meeting rooms, has been completed ahead of schedule. Phase two — the open-plan workspace on the third floor — will begin next Monday and should take approximately four weeks. During this time, third-floor employees will be temporarily relocated to the fifth floor.",
-    qs:[
-      {q:"What has been completed?",opts:["The entire renovation","Phase one","Phase two","The parking garage"],c:1},
-      {q:"Where is phase two taking place?",opts:["Ground floor","Second floor","Third floor","Fifth floor"],c:2},
-      {q:"Where will affected employees work temporarily?",opts:["At home","On the ground floor","On the third floor","On the fifth floor"],c:3}]},
-  {id:"l4_17",type:"Weather report",voice:"W",
-    text:"Good morning. Here's your Tuesday weather forecast. We're looking at cloudy skies this morning with temperatures around 12 degrees Celsius. Rain is expected to move in by early afternoon, with heavier showers between 3 and 6 PM. Winds will pick up to 40 kilometers per hour by evening. Wednesday should be drier, with partly sunny skies returning. Don't forget your umbrella today!",
-    qs:[
-      {q:"What day is the forecast for?",opts:["Monday","Tuesday","Wednesday","Thursday"],c:1},
-      {q:"When will the heaviest rain occur?",opts:["Early morning","Late morning","Between 3 and 6 PM","After midnight"],c:2},
-      {q:"What is expected on Wednesday?",opts:["More rain","Snow","Partly sunny skies","Strong winds"],c:2}]},
-  {id:"l4_18",type:"Recorded message",voice:"M",
-    text:"Welcome to the Springfield Public Library automated system. The library is currently open. Today's hours are 9 AM to 8 PM. The book return drop box is available 24 hours a day at the main entrance. Please note that all overdue items must be returned by the end of this week to avoid additional fines. To renew a book, press 1 and enter your library card number. For event information, press 2.",
-    qs:[
-      {q:"What time does the library close today?",opts:["6 PM","7 PM","8 PM","9 PM"],c:2},
-      {q:"When is the book drop box accessible?",opts:["During library hours only","Until 10 PM","24 hours a day","On weekdays only"],c:2},
-      {q:"What must be done by the end of this week?",opts:["Library cards must be renewed","Overdue items must be returned","New members must register","Event tickets must be purchased"],c:1}]},
-  {id:"l4_19",type:"Company update",voice:"W",
-    text:"As many of you are aware, we've been reviewing our environmental policy over the past few months. I'm happy to announce three new initiatives starting in January. First, we're eliminating single-use plastics from all office kitchens. Second, we'll be installing electric vehicle charging stations in the parking garage. And third, employees who cycle to work will receive a monthly wellness bonus of $50. More details will follow by email.",
-    qs:[
-      {q:"What is the main topic?",opts:["New hiring plans","Environmental initiatives","Budget reductions","Office safety"],c:1},
-      {q:"What is being removed from kitchens?",opts:["Microwaves","Coffee machines","Single-use plastics","Vending machines"],c:2},
-      {q:"What benefit will cyclists receive?",opts:["Free bike repairs","A $50 monthly bonus","Priority parking","Extra vacation days"],c:1}]},
-  {id:"l4_20",type:"Event introduction",voice:"M",
-    text:"Ladies and gentlemen, thank you for joining us for the tenth annual Innovation Awards ceremony. Tonight we celebrate the most creative ideas and solutions from teams across the company. We received over 120 nominations this year, which is a new record. Before we announce the winners, I'd like to thank our sponsors, Meridian Technologies and GlobalBank, for making this event possible. Now, let's begin with the award for Best New Product.",
-    qs:[
-      {q:"What event is taking place?",opts:["A product launch","A shareholders' meeting","An awards ceremony","A retirement party"],c:2},
-      {q:"How many nominations were received?",opts:["Over 50","Over 80","Over 100","Over 120"],c:3},
-      {q:"What award is presented first?",opts:["Best Team","Employee of the Year","Best New Product","Innovation Leader"],c:2}]},
-];
-// ─── HELPERS ───
 function today(){return new Date().toISOString().split("T")[0];}
 
 // ─── TTS ENGINE (swap to ElevenLabs when migrated) ───
@@ -2037,7 +145,7 @@ function SpeakBtn(p){
 function weekId(){var n=new Date(),s=new Date(n.getFullYear(),0,1);return n.getFullYear()+"-W"+Math.floor((n-s)/(7*864e5));}
 function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
 function srand(s){var x=Math.sin(s)*10000;return x-Math.floor(x);}
-function getLevel(xp){var lv=1,need=150,rem=xp;while(rem>=need){rem-=need;lv++;need=150+(lv-1)*30;}return{level:lv,cur:rem,next:need};}
+import { getLevel } from "./data/helpers.js";
 function getLeague(wxp){var l=LEAGUES[0];for(var i=0;i<LEAGUES.length;i++)if(wxp>=LEAGUES[i].min)l=LEAGUES[i];return l;}
 function dailyQs(date){var seed=0;for(var i=0;i<date.length;i++)seed+=date.charCodeAt(i);var a=QUESTIONS.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(srand(seed+i)*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a.slice(0,5);}
 function compScores(wk){var seed=0;for(var i=0;i<wk.length;i++)seed+=wk.charCodeAt(i);return COMPETITORS.map(function(c,idx){return{name:c.n,avatar:c.a,xp:Math.floor(srand(seed+idx*137)*600+50+srand(seed+idx*53+Math.floor(Date.now()/864e5))*100)};});}
@@ -2068,6 +176,8 @@ async function load() {
     daily: data.daily_challenge,
     stats: data.stats,
     moduleScores: data.module_scores,
+    mockResults: data.mock_results || {},
+    gameScores: data.game_scores || {},
     mission: data.mission,
     unlockedAch: data.unlocked_ach || [],
     avatar: data.avatar || "⚔️",
@@ -2078,7 +188,7 @@ async function load() {
 async function save(d) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase.from('students').upsert({
+  var { error } = await supabase.from('students').upsert({
     id: user.id,
     name: d.name,
     xp: d.xp,
@@ -2091,13 +201,15 @@ async function save(d) {
     stats: d.stats,
     module_scores: d.moduleScores,
     mock_results: d.mockResults,
+    game_scores: d.gameScores,
     mission: d.mission,
     avatar: d.avatar || "⚔️",
     theme: d.theme || "dark",
     unlocked_ach: d.unlockedAch || [],
   });
+  if(error) console.error("SAVE ERROR:", error.message, error.details, error.code);
 }
-function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark"};}
+function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark"};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -2126,21 +238,6 @@ function getModuleAccuracy(u,modId){
 
 // ─── RECOMMENDATION ENGINE ───
 var MISSION_THRESHOLD=10; // min sessions before recommending
-var MISSION_MODULES=[
-  {id:"drill",name:"Part 5 Drill",icon:"📝",reason:"Grammar practice"},
-  {id:"wordfam",name:"Word Families",icon:"🧩",reason:"Word form mastery"},
-  {id:"connsort",name:"Connectors",icon:"🔀",reason:"Connector rules"},
-  {id:"prepdrill",name:"Prepositions",icon:"🎯",reason:"Collocation practice"},
-  {id:"gerinf",name:"Gerund/Infinitive",icon:"⏱️",reason:"Verb patterns"},
-  {id:"falsefr",name:"False Friends",icon:"🎭",reason:"FR/EN traps"},
-  {id:"csess",name:"Flashcard Review",icon:"🃏",reason:"Vocabulary SRS"},
-  {id:"p6",name:"Part 6",icon:"📄",reason:"Text completion"},
-  {id:"p7",name:"Part 7 Reading",icon:"📖",reason:"Reading comprehension"},
-  {id:"traps",name:"TOEIC Traps",icon:"🪤",reason:"Exam awareness"},
-  {id:"stratquiz",name:"Strategy Quiz",icon:"🧠",reason:"Exam strategy"},
-  {id:"timesim",name:"Exam Simulation",icon:"🏁",reason:"Time management"},
-];
-
 function getDailyMission(u){
   if(!u.moduleScores)return null;
   if((u.stats.sessions||0)<MISSION_THRESHOLD)return{status:"calibrating",remaining:MISSION_THRESHOLD-(u.stats.sessions||0)};
@@ -2196,31 +293,6 @@ function canUnlockMock(u,mockId){
   return{ok:reasons.length===0,reasons:reasons};
 }
 
-// ─── PLACEMENT TEST ───
-var PLACEMENT_TEST = [
-  {id:"pt1",s:"She _____ at this company since 2019.",o:["works","worked","has worked","is working"],c:2,x:"'Since 2019' = present perfect.",diff:1,cat:"Tenses"},
-  {id:"pt2",s:"The report must be _____ by Friday.",o:["submit","submitted","submitting","submits"],c:1,x:"Passive with modal: must be + past participle.",diff:1,cat:"Passive Voice"},
-  {id:"pt3",s:"All employees are responsible _____ their own equipment.",o:["of","for","to","with"],c:1,x:"'Responsible for' = fixed collocation.",diff:1,cat:"Prepositions"},
-  {id:"pt4",s:"The _____ of the new policy surprised everyone.",o:["announce","announcement","announced","announcing"],c:1,x:"'The _____ of' = noun needed. 'Announcement'.",diff:2,cat:"Word Families"},
-  {id:"pt5",s:"_____ the budget cuts, the project was completed on time.",o:["Despite","Although","However","Because"],c:0,x:"'Despite' + noun phrase (no clause).",diff:2,cat:"Connectors"},
-  {id:"pt6",s:"The company plans to _____ a survey among its customers.",o:["conduct","make","do","perform"],c:0,x:"'Conduct a survey' = standard business collocation.",diff:2,cat:"Collocations"},
-  {id:"pt7",s:"Neither the CEO nor the directors _____ available for comment.",o:["was","is","were","has"],c:2,x:"'Neither...nor' = verb agrees with nearest subject (directors = plural).",diff:3,cat:"Subject-Verb Agreement"},
-  {id:"pt8",s:"The team suggested _____ the launch to next quarter.",o:["to postpone","postponing","postpone","postponed"],c:1,x:"'Suggest' takes gerund (-ing).",diff:3,cat:"Gerunds vs Infinitives"},
-  {id:"pt9",s:"This model is _____ than the previous one.",o:["more efficient","most efficient","as efficient","efficiently"],c:0,x:"Comparative: more + adjective + THAN.",diff:3,cat:"Comparatives"},
-  {id:"pt10",s:"Had we known about the issue earlier, we _____ it sooner.",o:["fixed","would fix","would have fixed","will fix"],c:2,x:"Third conditional: Had + past participle, would have + past participle.",diff:3,cat:"Conditionals"},
-  {id:"pt11",s:"The client _____ the proposal was sent has not responded.",o:["who","to whom","which","whose"],c:1,x:"'To whom' = formal. The proposal was sent TO the client.",diff:4,cat:"Relative Pronouns"},
-  {id:"pt12",s:"The factory _____ 10,000 units by the end of this month.",o:["produces","will have produced","produced","producing"],c:1,x:"'By the end of' = future perfect: will have produced.",diff:4,cat:"Tenses"},
-  {id:"pt13",s:"_____ information in this report is confidential.",o:["A","An","The","Some"],c:2,x:"'The' = specific information (in THIS report). Definite article.",diff:4,cat:"Articles"},
-  {id:"pt14",s:"The new regulation _____ into effect on April 1st.",o:["goes","went","has gone","is going"],c:0,x:"Scheduled future event = present simple.",diff:5,cat:"Tenses"},
-  {id:"pt15",s:"It _____ that the merger will be completed by June.",o:["expects","is expected","expecting","has expecting"],c:1,x:"'It is expected that...' = impersonal passive construction.",diff:5,cat:"Passive Voice"},
-];
-var PLACEMENT_LEVELS=[
-  {min:0,max:4,label:"Beginner",startXp:0,league:"bronze",msg:"The Arena awaits — let's build your skills from the ground up!"},
-  {min:5,max:8,label:"Intermediate",startXp:100,league:"bronze",msg:"Solid base! Time to sharpen your weak spots and climb the ranks."},
-  {min:9,max:12,label:"Upper Intermediate",startXp:250,league:"silver",msg:"Strong foundation! Focus on advanced grammar and test strategies."},
-  {min:13,max:15,label:"Advanced",startXp:500,league:"gold",msg:"Impressive! You're ready for exam simulation and fine-tuning."},
-];
-
 // ─── TEACHER DASHBOARD CONFIG ───
 var TEACHER_CODE="idrac2026";
 
@@ -2272,7 +344,7 @@ function XpToast(p){if(!p.v)return null;
     </div>}
   </div>);}
 
-function Tabs(p){var tabs=[{id:"home",l:"Home",i:"⚡"},{id:"train",l:"Train",i:"🎯"},{id:"cards",l:"Cards",i:"🃏"},{id:"league",l:"League",i:"🏆"},{id:"profile",l:"Profile",i:"👤"}];
+function Tabs(p){var tabs=[{id:"home",l:"Home",i:"⚡"},{id:"train",l:"Train",i:"🎯"},{id:"cards",l:"Cards",i:"🃏"},{id:"games",l:"Games",i:"🎮"},{id:"league",l:"League",i:"🏆"},{id:"profile",l:"Profile",i:"👤"}];
 return(<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(8,11,22,0) 0%,rgba(8,11,22,.95) 20%,#080b16 100%)",padding:"8px 12px 12px",zIndex:100,display:"flex",justifyContent:"space-around"}}>
 {tabs.map(function(t){var a=p.cur===t.id;return(<button key={t.id} onClick={function(){p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"6px 12px",borderRadius:12,color:a?"var(--cyan)":"var(--t3)",transform:a?"scale(1.05)":"scale(1)",transition:"all .2s"}}>
 <span style={{fontSize:22,lineHeight:1}}>{t.i}</span><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:1}}/>}</button>);})}</div>);}
@@ -2435,7 +507,7 @@ async function recover(name,classCode){
     var u={name:d.name,xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
       lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
       stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
-      moduleScores:d.module_scores||{},mockResults:d.mock_results||{},mission:d.mission||{date:null,actId:null,done:false},
+      moduleScores:d.module_scores||{},mockResults:d.mock_results||{},gameScores:d.game_scores||{},mission:d.mission||{date:null,actId:null,done:false},
       unlockedAch:d.unlocked_ach||[],avatar:d.avatar||"⚔️",theme:d.theme||"dark"};
     if(!u.moduleScores)u.moduleScores={};
     if(!u.mission)u.mission={date:null,actId:null,done:false};
@@ -3408,6 +1480,7 @@ function Part7Read(p){
   var passages=useMemo(function(){return shuffle(PART7_PASSAGES).slice(0,7);},[]);
   var[pi,sPi]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
+  var[showQPreview,setShowQPreview]=useState(false);var[showText,setShowText]=useState(false);
 
   var totalQs=useMemo(function(){var c=0;passages.forEach(function(p){c+=p.questions.length;});return c;},[]);
   var curPass=passages[pi];
@@ -3441,7 +1514,7 @@ function Part7Read(p){
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
     <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
 
-  // Reading view — show passage
+// Reading view — show passage with question preview toggle
   if(ph==="read")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
@@ -3449,19 +1522,25 @@ function Part7Read(p){
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:12}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type}</span>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(255,255,255,.04)",color:"var(--t3)",borderRadius:6}} className="out">{curPass.questions.length} questions</span></div>
+      <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(168,85,247,.15)":"rgba(255,255,255,.04)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions ▲":"Preview questions ▼"} ({curPass.questions.length})</button></div>
+    {showQPreview&&<div className="crd" style={{padding:12,marginBottom:12,borderColor:"rgba(168,85,247,.2)",background:"rgba(168,85,247,.04)"}}>
+      <div style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Read these first!</div>
+      {curPass.questions.map(function(q,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,padding:"4px 0",borderBottom:i<curPass.questions.length-1?"1px solid var(--bdr)":"none"}}><span style={{color:"var(--purple)",fontWeight:700}}>Q{i+1}.</span> {q.q}</div>);})}</div>}
     <div className="crd" style={{padding:16,marginBottom:16}}>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.8,whiteSpace:"pre-line"}}>{curPass.text}</p></div>
-    <button className="btn1" onClick={function(){sP("q");}}>Answer Questions</button></div>);
+    <button className="btn1" onClick={function(){sP("q");setShowQPreview(false);setShowText(false);}}>Answer Questions</button></div>);
 
-  // Question mode
+// Question mode
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Q {totalQ+1}/{totalQs}</span></div>
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
-    <div style={{marginTop:12,marginBottom:6}}>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type} — Passage {pi+1}</span></div>
+    <div style={{display:"flex",gap:6,marginTop:12,marginBottom:6}}>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type} — Passage {pi+1}</span>
+      <button onClick={function(){setShowText(!showText);}} style={{fontSize:10,padding:"3px 8px",background:showText?"rgba(6,182,212,.15)":"rgba(255,255,255,.04)",color:showText?"var(--cyan)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showText?"Hide text ▲":"Show text ▼"}</button></div>
+    {showText&&<div className="crd" style={{padding:14,marginBottom:12,maxHeight:200,overflowY:"auto",borderColor:"rgba(6,182,212,.2)"}}>
+      <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,whiteSpace:"pre-line"}}>{curPass.text}</p></div>}
 
     <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:12}}>{curQ.q}</h2>
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -3918,6 +1997,432 @@ function MockTest(p){
 
   return null;
 }
+
+// ─── GAMES HUB ───
+function GamesHub(p){
+  var bestM=p.u.gameScores&&p.u.gameScores.matchEasy?p.u.gameScores.matchEasy:null;
+  var bestMH=p.u.gameScores&&p.u.gameScores.matchHard?p.u.gameScores.matchHard:null;
+  var bestF=p.u.gameScores&&p.u.gameScores.wordFall?p.u.gameScores.wordFall:null;
+  return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Arena Games</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Train your reflexes, earn XP</p>
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div className="crd" onClick={function(){p.nav("matchE");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Speed Match</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Easy — 6 pairs</div>
+          {bestM&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestM.time}s · {bestM.moves} moves</div>}</div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+      <div className="crd" onClick={function(){p.nav("matchH");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#a855f7,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Speed Match</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Hard — 8 pairs</div>
+          {bestMH&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestMH.time}s · {bestMH.moves} moves</div>}</div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+      <div className="crd" onClick={function(){p.nav("wfall");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ef4444,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⬇️</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Word Fall</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Catch the falling sentences!</div>
+          {bestF&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestF.score} pts · x{bestF.maxCombo} combo</div>}</div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+    </div>
+  </div>);
+}
+
+// ─── SPEED MATCH ───
+function SpeedMatch(p){
+  var pairCount=p.mode==="hard"?8:6;
+  var cols=p.mode==="hard"?4:3;
+  var rows=p.mode==="hard"?4:4;
+
+  // Build pairs from vocab
+  var pairs=useMemo(function(){
+    var all=[];
+    VOCAB.forEach(function(dom){dom.cards.forEach(function(c){
+      // Shorten definition to fit tiles
+      all.push({word:c.w,def:c.d});
+    });});
+    var picked=shuffle(all).slice(0,pairCount);
+    var tiles=[];
+    picked.forEach(function(pair,i){
+      tiles.push({id:i*2,pairId:i,content:pair.word,type:"word"});
+      tiles.push({id:i*2+1,pairId:i,content:pair.def,type:"def"});
+    });
+    return shuffle(tiles);
+  },[]);
+
+  var[revealed,setRevealed]=useState([]);
+  var[matched,setMatched]=useState([]);
+  var[moves,setMoves]=useState(0);
+  var[startTime,setStartTime]=useState(null);
+  var[elapsed,setElapsed]=useState(0);
+  var[phase,setPhase]=useState("intro");
+  var[lastWrong,setLastWrong]=useState(false);
+  var timerRef=useRef(null);
+
+  // Timer
+  useEffect(function(){
+    if(phase!=="play")return;
+    timerRef.current=setInterval(function(){
+      setElapsed(function(prev){return Math.round((Date.now()-startTime)/100)/10;});
+    },100);
+    return function(){clearInterval(timerRef.current);};
+  },[phase,startTime]);
+
+  // Check for match when 2 tiles revealed
+  useEffect(function(){
+    if(revealed.length!==2)return;
+    var a=pairs.find(function(t){return t.id===revealed[0];});
+    var b=pairs.find(function(t){return t.id===revealed[1];});
+    setMoves(moves+1);
+    if(a.pairId===b.pairId){
+      // Match!
+      setTimeout(function(){
+        setMatched(function(prev){return prev.concat([a.pairId]);});
+        setRevealed([]);
+      },300);
+    } else {
+      // No match
+      setLastWrong(true);
+      setTimeout(function(){setRevealed([]);setLastWrong(false);},800);
+    }
+  },[revealed.length]);
+
+  // Check win
+  var won=matched.length===pairCount;
+  useEffect(function(){
+    if(won&&phase==="play"){
+      clearInterval(timerRef.current);
+      setPhase("done");
+    }
+  },[won]);
+
+  function tapTile(id){
+    if(phase!=="play")return;
+    if(revealed.length>=2)return;
+    if(revealed.indexOf(id)!==-1)return;
+    var tile=pairs.find(function(t){return t.id===id;});
+    if(matched.indexOf(tile.pairId)!==-1)return;
+    setRevealed(function(prev){return prev.concat([id]);});
+  }
+
+  function startGame(){
+    setStartTime(Date.now());
+    setPhase("play");
+  }
+
+  // ── INTRO ──
+  if(phase==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>🎯</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Speed Match</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8}}>{p.mode==="hard"?"Hard":"Easy"} — {pairCount} pairs to match</p>
+    <p style={{color:"var(--t3)",fontSize:12,marginBottom:32,lineHeight:1.6}}>Tap two tiles to reveal them. Match each word with its definition. Fastest time wins!</p>
+    <button className="btn1" onClick={startGame}>Start!</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
+
+  // ── DONE ──
+  if(phase==="done"){
+    var finalTime=elapsed;
+    var stars=finalTime<(pairCount*4)?3:finalTime<(pairCount*7)?2:1;
+    var xp=Math.round((pairCount*10)+(stars*15)+(pairCount*30/Math.max(1,finalTime))*10);
+    var modeKey=p.mode==="hard"?"matchHard":"matchEasy";
+    var prev=p.u.gameScores&&p.u.gameScores[modeKey];
+    var isRecord=!prev||finalTime<prev.time;
+
+    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:56,marginBottom:16,animation:"countUp .6s"}}>{stars===3?"⚡":stars===2?"🎯":"✅"}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>{stars===3?"Lightning Fast!":stars===2?"Well Done!":"Completed!"}</h1>
+      {isRecord&&<div style={{fontSize:14,color:"var(--gold)",fontWeight:700,marginBottom:8,animation:"pulse 1s infinite"}}>🏅 NEW RECORD!</div>}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20,maxWidth:280,margin:"0 auto 20px"}}>
+        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--cyan)"}}>{finalTime}s</div><div style={{fontSize:10,color:"var(--t3)"}}>Time</div></div>
+        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--purple)"}}>{moves}</div><div style={{fontSize:10,color:"var(--t3)"}}>Moves</div></div>
+      </div>
+      <div style={{fontSize:28,marginBottom:4}}>{["","⭐","⭐⭐","⭐⭐⭐"][stars]}</div>
+      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:24}}>+{xp} XP</div>
+      <button className="btn1" onClick={function(){p.done(modeKey,{time:finalTime,moves:moves},xp);}}>Collect XP</button>
+      <button className="btn2" onClick={p.back} style={{marginTop:10,width:"100%"}}>Back to Games</button>
+    </div>);
+  }
+
+// ── PLAY ──
+  return(<div style={{padding:"12px",height:"100vh",display:"flex",flexDirection:"column"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <div style={{display:"flex",gap:16,alignItems:"center"}}>
+        <span className="out" style={{fontSize:16,fontWeight:800,color:"var(--cyan)",fontVariantNumeric:"tabular-nums"}}>{elapsed}s</span>
+        <span style={{fontSize:12,color:"var(--t3)"}}>{moves} moves</span>
+      </div>
+      <span style={{fontSize:12,color:"var(--t2)"}}>{matched.length}/{pairCount}</span>
+    </div>
+    <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:2,marginBottom:20,overflow:"hidden"}}>
+      <div style={{height:"100%",width:Math.round(matched.length/pairCount*100)+"%",background:"linear-gradient(90deg,#00d4ff,#a855f7)",borderRadius:2,transition:"width .3s"}}/></div>
+
+    <div style={{display:"grid",gridTemplateColumns:"repeat("+cols+",1fr)",gridTemplateRows:"repeat("+rows+",1fr)",gap:6,flex:1}}>
+      {pairs.map(function(tile){
+        var isRevealed=revealed.indexOf(tile.id)!==-1;
+        var isMatched=matched.indexOf(tile.pairId)!==-1;
+        var bgColor=isMatched?"rgba(0,230,118,.12)":isRevealed?(tile.type==="word"?"rgba(0,212,255,.15)":"rgba(168,85,247,.15)"):"var(--bg2)";
+        var borderColor=isMatched?"var(--green)":isRevealed?(tile.type==="word"?"var(--cyan)":"var(--purple)"):"var(--bdr)";
+        if(lastWrong&&isRevealed)borderColor="var(--red)";
+
+        return(<div key={tile.id} onClick={function(){tapTile(tile.id);}}
+          style={{
+            minHeight:p.mode==="hard"?68:78,display:"flex",alignItems:"center",justifyContent:"center",
+            background:isMatched?"rgba(0,230,118,.06)":bgColor,
+            border:"1.5px solid "+borderColor,borderRadius:14,cursor:isMatched?"default":"pointer",
+            opacity:isMatched?.25:1,transition:"all .25s",padding:"8px 6px",
+            transform:isRevealed&&!isMatched?"scale(1.04)":"scale(1)"
+          }}>
+          {(isRevealed||isMatched)?(<span className="out" style={{
+            fontSize:tile.type==="word"?14:11,fontWeight:tile.type==="word"?800:500,
+            color:isMatched?"var(--green)":tile.type==="word"?"var(--cyan)":"var(--t1)",
+            textAlign:"center",lineHeight:1.35,wordBreak:"break-word"
+          }}>{tile.content}</span>):(<span style={{fontSize:22,opacity:.25}}>?</span>)}
+        </div>);
+      })}
+    </div>
+  </div>);
+}
+
+// ─── WORD FALL ───
+function WordFall(p){
+  var allQs=useMemo(function(){return shuffle(QUESTIONS);},[]);
+  var MAX_LIVES=3;
+  var SPEED_TIERS=[
+    {from:0,dur:8000},
+    {from:5,dur:6000},
+    {from:10,dur:4500},
+    {from:15,dur:3500},
+  ];
+
+  var[qi,setQi]=useState(0);
+  var[lives,setLives]=useState(MAX_LIVES);
+  var[score,setScore]=useState(0);
+  var[combo,setCombo]=useState(0);
+  var[maxCombo,setMaxCombo]=useState(0);
+  var[phase,setPhase]=useState("intro");
+  //var[fallPct,setFallPct]=useState(0);
+  var[feedback,setFeedback]=useState(null); // {type:"ok"|"miss",text:""}
+  var[shake,setShake]=useState(false);
+  var[dangerZone,setDangerZone]=useState(false);
+  var fallRef=useRef(null);
+  var startRef=useRef(null);
+  var durRef=useRef(8000);
+  var answeredRef=useRef(false);
+  var falDivRef = useRef(null);
+var progressBarRef = useRef(null);
+
+  function getDuration(idx){
+    var d=SPEED_TIERS[0].dur;
+    for(var i=SPEED_TIERS.length-1;i>=0;i--){
+      if(idx>=SPEED_TIERS[i].from){d=SPEED_TIERS[i].dur;break;}
+    }
+    return d;
+  }
+
+  function startFall(){
+  answeredRef.current = false;
+  durRef.current = getDuration(qi);
+  startRef.current = Date.now();
+  if(falDivRef.current) falDivRef.current.style.top = "0%";
+  if(progressBarRef.current) progressBarRef.current.style.height = "0%";
+  setFeedback(null);
+  fallRef.current = requestAnimationFrame(animateFall);
+}
+
+function animateFall(){
+  if(answeredRef.current)return;
+  var elapsed = Date.now() - startRef.current;
+  var pct = Math.min(elapsed / durRef.current, 1);
+  // ← Direct DOM, pas de setState
+  if(falDivRef.current) falDivRef.current.style.top = Math.round(pct * 80) + "%";
+  if(pct >= 0.7 && !dangerZone) setDangerZone(true);
+  if(progressBarRef.current) progressBarRef.current.style.height = Math.round(pct * 100) + "%";
+  if(pct >= 1){
+    answeredRef.current = true;
+    handleMiss();
+  } else {
+    fallRef.current = requestAnimationFrame(animateFall);
+  }
+}
+
+  function handleAnswer(i){
+    if(answeredRef.current||phase!=="play")return;
+    answeredRef.current=true;
+    cancelAnimationFrame(fallRef.current);
+    var q=allQs[qi];
+    if(i===q.c){
+      var newCombo=combo+1;
+      setCombo(newCombo);
+      if(newCombo>maxCombo)setMaxCombo(newCombo);
+      var mult=newCombo>=6?3:newCombo>=3?2:1;
+      setScore(score+mult);
+      setFeedback({type:"ok",text:mult>1?"x"+mult+" COMBO!":"Correct!"});
+      setTimeout(nextQuestion,600);
+    } else {
+      handleMiss();
+    }
+  }
+
+  function handleMiss(){
+    var newLives=lives-1;
+    setLives(newLives);
+    setCombo(0);
+    setShake(true);
+    setTimeout(function(){setShake(false);},400);
+    var q=allQs[qi];
+    setFeedback({type:"miss",text:q.x||"The answer was: "+q.o[q.c]});
+    if(newLives<=0){
+      setTimeout(function(){setPhase("done");},1500);
+    } else {
+      setTimeout(nextQuestion,1500);
+    }
+  }
+
+  function nextQuestion(){
+  setQi(function(prev){
+    var next = prev + 1;
+    if(next >= allQs.length){ setPhase("done"); return prev; }
+    setFeedback(null);
+    answeredRef.current = false;
+    durRef.current = getDuration(next);
+    startRef.current = Date.now();
+    if(falDivRef.current) falDivRef.current.style.top = "0%";
+  setDangerZone(false);
+    if(progressBarRef.current) progressBarRef.current.style.height = "0%";
+    fallRef.current = requestAnimationFrame(animateFall);
+    return next;
+  });
+}
+
+  // Cleanup
+  useEffect(function(){return function(){cancelAnimationFrame(fallRef.current);};}, []);
+
+  // ── INTRO ──
+  if(phase==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>⬇️</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Word Fall</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Sentences fall from the sky.<br/>Tap the correct answer before they hit the ground!</p>
+    <div style={{display:"flex",justifyContent:"center",gap:16,marginBottom:8}}>
+      <span style={{fontSize:13,color:"var(--red)"}}>♥♥♥ 3 lives</span>
+      <span style={{fontSize:13,color:"var(--orange)"}}>Gets faster!</span>
+    </div>
+    <div className="crd" style={{padding:12,marginBottom:24,textAlign:"left"}}>
+      <div style={{fontSize:11,color:"var(--t3)",lineHeight:1.7}}>
+        <div>• Q1-5: 8 seconds per question</div>
+        <div>• Q6-10: 6 seconds</div>
+        <div>• Q11-15: 4.5 seconds</div>
+        <div>• Q16+: 3.5 seconds — survival mode!</div>
+        <div style={{marginTop:6,color:"var(--gold)"}}>• Build combos for bonus XP!</div>
+      </div>
+    </div>
+    <button className="btn1" onClick={function(){setPhase("play");setTimeout(startFall,300);}}>Start!</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
+
+  // ── DONE ──
+  if(phase==="done"){
+    var xp=score*8+(maxCombo>=6?30:maxCombo>=3?15:0);
+    var grade=score>=20?"Legendary!":score>=12?"Great run!":score>=6?"Not bad!":"Keep practicing!";
+    var gradeIcon=score>=20?"👑":score>=12?"⚔️":score>=6?"🛡️":"📖";
+    var prev=p.u.gameScores&&p.u.gameScores.wordFall;
+    var isRecord=!prev||score>prev.score;
+
+    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:56,marginBottom:12,animation:"countUp .6s"}}>{gradeIcon}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>{grade}</h1>
+      {isRecord&&<div style={{fontSize:14,color:"var(--gold)",fontWeight:700,marginBottom:8,animation:"pulse 1s infinite"}}>🏅 NEW RECORD!</div>}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:20,maxWidth:320,margin:"0 auto 20px"}}>
+        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--cyan)"}}>{score}</div><div style={{fontSize:10,color:"var(--t3)"}}>Score</div></div>
+        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--orange)"}}>{qi+1}</div><div style={{fontSize:10,color:"var(--t3)"}}>Questions</div></div>
+        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--purple)"}}>{maxCombo>1?"x"+maxCombo:"—"}</div><div style={{fontSize:10,color:"var(--t3)"}}>Max combo</div></div>
+      </div>
+      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:24}}>+{xp} XP</div>
+      <button className="btn1" onClick={function(){p.done("wordFall",{score:score,maxCombo:maxCombo,questions:qi+1},xp);}}>Collect XP</button>
+      <button className="btn2" onClick={p.back} style={{marginTop:10,width:"100%"}}>Back to Games</button>
+    </div>);
+  }
+
+  // ── PLAY ──
+  var q=allQs[qi];
+  var tierLabel=qi>=15?"SURVIVAL":qi>=10?"FAST":qi>=5?"MEDIUM":"WARM-UP";
+  var tierCol=qi>=15?"var(--red)":qi>=10?"var(--orange)":qi>=5?"var(--cyan)":"var(--green)";
+  var comboMult=combo>=6?3:combo>=3?2:1;
+
+  return(<div className={shake?"sk":""} style={{height:"100vh",display:"flex",flexDirection:"column",background:"var(--bg)",overflow:"hidden"}}>
+    {/* Header */}
+    <div style={{padding:"12px 16px 0",flexShrink:0}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <div style={{display:"flex",gap:4}}>
+          {[0,1,2].map(function(i){return(<span key={i} style={{fontSize:20,transition:"all .3s",opacity:i<lives?1:.15,transform:i>=lives?"scale(0.7)":"scale(1)"}}>{i<lives?"❤️":"🖤"}</span>);})}
+        </div>
+        <div style={{textAlign:"center"}}>
+          {comboMult>1&&<div className="out" style={{fontSize:11,fontWeight:800,color:"var(--gold)",animation:"pulse .6s infinite"}}>COMBO x{comboMult} 🔥</div>}
+          <span style={{fontSize:10,color:tierCol,fontWeight:700,textTransform:"uppercase",letterSpacing:1}} className="out">{tierLabel}</span>
+        </div>
+        <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--cyan)"}}>{score}</div>
+      </div>
+    </div>
+
+    {/* Fall zone */}
+    <div style={{flex:1,position:"relative",padding:"0 16px",display:"flex",flexDirection:"column",justifyContent:"flex-start",overflow:"hidden"}}>
+      {/* The falling sentence */}
+      <div ref={falDivRef} style={{
+  position:"absolute",left:16,right:16,
+  top:"0%",
+  opacity:feedback?0:1,
+}}>
+        <div className="crd" style={{
+          padding:"16px 20px",textAlign:"center",
+          borderColor:dangerZone?"rgba(255,71,87,.4)":"var(--bdr)",
+          background:dangerZone?"rgba(255,71,87,.06)":"var(--bg2)",
+          transition:"border-color .3s, background .3s",
+        }}>
+          <span style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}} className="out">{q.cat}</span>
+          <span className="out" style={{fontSize:16,fontWeight:700,lineHeight:1.5,color:"var(--t1)"}}>{q.s}</span>
+        </div>
+      </div>
+
+      {/* Feedback overlay */}
+      {feedback&&<div style={{position:"absolute",left:16,right:16,top:"30%",textAlign:"center",animation:"fadeIn .2s",zIndex:5}}>
+        {feedback.type==="ok"?(<div>
+          <div style={{fontSize:48,marginBottom:8}}>✅</div>
+          <div className="out" style={{fontSize:18,fontWeight:800,color:comboMult>1?"var(--gold)":"var(--green)"}}>{feedback.text}</div>
+        </div>):(<div>
+          <div style={{fontSize:48,marginBottom:8}}>💥</div>
+          <div className="crd" style={{padding:12,background:"rgba(255,71,87,.08)",borderColor:"rgba(255,71,87,.2)"}}>
+            <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>{feedback.text}</p>
+          </div>
+        </div>)}
+      </div>}
+
+      {/* Fall progress bar (right side) */}
+      <div style={{position:"absolute",right:4,top:16,bottom:16,width:3,background:"var(--bg3)",borderRadius:2}}>
+        <div ref={progressBarRef} style={{position:"absolute",top:0,width:"100%",height:"0%",background:dangerZone?"var(--red)":"var(--cyan)",borderRadius:2}}/>
+      </div>
+    </div>
+
+    {/* Answer buttons — fixed 2x2 grid at bottom */}
+    <div style={{padding:"12px 16px 24px",flexShrink:0}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        {q.o.map(function(opt,i){
+          var isDisabled=!!feedback;
+          return(<button key={qi+"-"+i} onClick={function(){handleAnswer(i);}} disabled={isDisabled}
+            style={{
+              padding:"16px 12px",background:"var(--bg2)",border:"1.5px solid var(--bdr)",
+              borderRadius:14,cursor:isDisabled?"default":"pointer",fontSize:15,fontWeight:600,
+              color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",
+              transition:"all .15s",textAlign:"center",minHeight:54,
+              opacity:isDisabled?.5:1,
+            }}>
+            <span style={{fontSize:11,color:"var(--t3)",display:"block",marginBottom:2}}>{String.fromCharCode(65+i)}</span>
+            {opt}
+          </button>);
+        })}
+      </div>
+    </div>
+  </div>);
+}
+
 
 // ═══════════════════════════════════════════════════════════════
 // TeacherDash v2.0 — Stats avancées + Export CSV
@@ -4887,8 +3392,10 @@ export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
 
 useEffect(function(){
+    var loaded=false;
     var sub=supabase.auth.onAuthStateChange(function(event,session){
-      if(session){
+      if(event==="TOKEN_REFRESHED"){return;} // Skip token refresh — state is already in memory
+      if(session&&!loaded){
         load().then(function(d){
           if(d){
             var td=today(),yd=new Date();yd.setDate(yd.getDate()-1);var ys=yd.toISOString().split("T")[0];
@@ -4900,10 +3407,11 @@ useEffect(function(){
 			if(!d.avatar)d.avatar="⚔️";
 			if(!d.theme)d.theme="dark";
             sU(d);
+            loaded=true;
           }
           sL(false);
         });
-      }else{
+      }else if(!session){
         sL(false);
       }
     });
@@ -4986,6 +3494,7 @@ useEffect(function(){
  
   function goTeacher(){setTeacher(true);}
   function mockDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};c.mockResults["mock"+result.mockId]=result;recordModule(c,"mock"+result.mockId,result.score,result.total);sv(c);}
+  function gameDone(modeKey,result,xp){var c=addXp(xp);if(!c.gameScores)c.gameScores={};var prev=c.gameScores[modeKey];var dominated=!prev||(result.time!==undefined?result.time<prev.time:(result.score>prev.score||(result.score===prev.score&&result.maxCombo>(prev.maxCombo||0))));if(dominated){c.gameScores[modeKey]=result;}else if(prev&&result.maxCombo!==undefined&&result.maxCombo>(prev.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev,{maxCombo:result.maxCombo});}c.stats.sessions+=1;sv(c);sSP(null);sT("games");}
   function dailyDone(sc,xp){var c=addXp(xp);c.daily={date:today(),done:true,score:sc,xpE:xp};c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;recordModule(c,"daily",sc,5);checkMission(c,"daily");sv(c);}
   function drillDone(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
@@ -5014,6 +3523,9 @@ useEffect(function(){
   if(sp==="falsefr")return(<div className="app"><style>{CSS}</style><FalseFriends u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="mock1")return(<div className="app"><style>{CSS}</style><MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="mock2")return(<div className="app"><style>{CSS}</style><MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="matchE")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="matchH")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="wfall")return(<div className="app"><style>{CSS}</style><WordFall u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="strats")return(<div className="app"><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
   if(sp==="stratquiz")return(<div className="app"><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="timesim")return(<div className="app"><style>{CSS}</style><TimeSim u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
@@ -5027,6 +3539,6 @@ useEffect(function(){
   if(sp==="lisP4")return(<div className="app"><style>{CSS}</style><ListenP4 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
 
   return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
-    {tab==="home"&&<Home u={u} nav={nav}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
+    {tab==="home"&&<Home u={u} nav={nav}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="games"&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     <Tabs cur={tab} go={function(t){sT(t);sSP(null);}}/></div>);
 }

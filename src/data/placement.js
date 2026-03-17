@@ -1,0 +1,40 @@
+// ─── PLACEMENT TEST ───
+export var PLACEMENT_TEST = [
+  {id:"pt1",s:"She _____ at this company since 2019.",o:["works","worked","has worked","is working"],c:2,x:"'Since 2019' = present perfect.",diff:1,cat:"Tenses"},
+  {id:"pt2",s:"The report must be _____ by Friday.",o:["submit","submitted","submitting","submits"],c:1,x:"Passive with modal: must be + past participle.",diff:1,cat:"Passive Voice"},
+  {id:"pt3",s:"All employees are responsible _____ their own equipment.",o:["of","for","to","with"],c:1,x:"'Responsible for' = fixed collocation.",diff:1,cat:"Prepositions"},
+  {id:"pt4",s:"The _____ of the new policy surprised everyone.",o:["announce","announcement","announced","announcing"],c:1,x:"'The _____ of' = noun needed. 'Announcement'.",diff:2,cat:"Word Families"},
+  {id:"pt5",s:"_____ the budget cuts, the project was completed on time.",o:["Despite","Although","However","Because"],c:0,x:"'Despite' + noun phrase (no clause).",diff:2,cat:"Connectors"},
+  {id:"pt6",s:"The company plans to _____ a survey among its customers.",o:["conduct","make","do","perform"],c:0,x:"'Conduct a survey' = standard business collocation.",diff:2,cat:"Collocations"},
+  {id:"pt7",s:"Neither the CEO nor the directors _____ available for comment.",o:["was","is","were","has"],c:2,x:"'Neither...nor' = verb agrees with nearest subject (directors = plural).",diff:3,cat:"Subject-Verb Agreement"},
+  {id:"pt8",s:"The team suggested _____ the launch to next quarter.",o:["to postpone","postponing","postpone","postponed"],c:1,x:"'Suggest' takes gerund (-ing).",diff:3,cat:"Gerunds vs Infinitives"},
+  {id:"pt9",s:"This model is _____ than the previous one.",o:["more efficient","most efficient","as efficient","efficiently"],c:0,x:"Comparative: more + adjective + THAN.",diff:3,cat:"Comparatives"},
+  {id:"pt10",s:"Had we known about the issue earlier, we _____ it sooner.",o:["fixed","would fix","would have fixed","will fix"],c:2,x:"Third conditional: Had + past participle, would have + past participle.",diff:3,cat:"Conditionals"},
+  {id:"pt11",s:"The client _____ the proposal was sent has not responded.",o:["who","to whom","which","whose"],c:1,x:"'To whom' = formal. The proposal was sent TO the client.",diff:4,cat:"Relative Pronouns"},
+  {id:"pt12",s:"The factory _____ 10,000 units by the end of this month.",o:["produces","will have produced","produced","producing"],c:1,x:"'By the end of' = future perfect: will have produced.",diff:4,cat:"Tenses"},
+  {id:"pt13",s:"_____ information in this report is confidential.",o:["A","An","The","Some"],c:2,x:"'The' = specific information (in THIS report). Definite article.",diff:4,cat:"Articles"},
+  {id:"pt14",s:"The new regulation _____ into effect on April 1st.",o:["goes","went","has gone","is going"],c:0,x:"Scheduled future event = present simple.",diff:5,cat:"Tenses"},
+  {id:"pt15",s:"It _____ that the merger will be completed by June.",o:["expects","is expected","expecting","has expecting"],c:1,x:"'It is expected that...' = impersonal passive construction.",diff:5,cat:"Passive Voice"},
+];
+
+export var PLACEMENT_LEVELS=[
+  {min:0,max:4,label:"Beginner",startXp:0,league:"bronze",msg:"The Arena awaits — let's build your skills from the ground up!"},
+  {min:5,max:8,label:"Intermediate",startXp:100,league:"bronze",msg:"Solid base! Time to sharpen your weak spots and climb the ranks."},
+  {min:9,max:12,label:"Upper Intermediate",startXp:250,league:"silver",msg:"Strong foundation! Focus on advanced grammar and test strategies."},
+  {min:13,max:15,label:"Advanced",startXp:500,league:"gold",msg:"Impressive! You're ready for exam simulation and fine-tuning."},
+];
+
+export var MISSION_MODULES=[
+  {id:"drill",name:"Part 5 Drill",icon:"📝",reason:"Grammar practice"},
+  {id:"wordfam",name:"Word Families",icon:"🧩",reason:"Word form mastery"},
+  {id:"connsort",name:"Connectors",icon:"🔀",reason:"Connector rules"},
+  {id:"prepdrill",name:"Prepositions",icon:"🎯",reason:"Collocation practice"},
+  {id:"gerinf",name:"Gerund/Infinitive",icon:"⏱️",reason:"Verb patterns"},
+  {id:"falsefr",name:"False Friends",icon:"🎭",reason:"FR/EN traps"},
+  {id:"csess",name:"Flashcard Review",icon:"🃏",reason:"Vocabulary SRS"},
+  {id:"p6",name:"Part 6",icon:"📄",reason:"Text completion"},
+  {id:"p7",name:"Part 7 Reading",icon:"📖",reason:"Reading comprehension"},
+  {id:"traps",name:"TOEIC Traps",icon:"🪤",reason:"Exam awareness"},
+  {id:"stratquiz",name:"Strategy Quiz",icon:"🧠",reason:"Exam strategy"},
+  {id:"timesim",name:"Exam Simulation",icon:"🏁",reason:"Time management"},
+];

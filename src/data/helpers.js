@@ -1,0 +1,1 @@
+export function getLevel(xp){var lv=1,need=150,rem=xp;while(rem>=need){rem-=need;lv++;need=150+(lv-1)*30;}return{level:lv,cur:rem,next:need};}
