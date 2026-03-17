@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
 /* ═══════════════════════════════════════════
    TOEIC ARENA — MVP v2.0
@@ -1707,8 +1708,11 @@ function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,w
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
   if(!u.moduleScores)u.moduleScores={};
-  var prev=u.moduleScores[modId]||{correct:0,total:0,sessions:0,lastDate:null};
-  u.moduleScores[modId]={correct:prev.correct+sc,total:prev.total+tot,sessions:prev.sessions+1,lastDate:today()};
+  var prev=u.moduleScores[modId]||{correct:0,total:0,sessions:0,lastDate:null,history:[]};
+  var hist=prev.history||[];
+  hist.push({date:today(),correct:sc,total:tot});
+  if(hist.length>100)hist=hist.slice(-100);
+  u.moduleScores[modId]={correct:prev.correct+sc,total:prev.total+tot,sessions:prev.sessions+1,lastDate:today(),history:hist};
   return u;
 }
 function checkMission(u,modId){
@@ -2146,7 +2150,15 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily
 </div>);}
 
 // ─── DAILY CHALLENGE ───
-function Daily(p){var qs=useMemo(function(){return dailyQs(today());},[]);var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[tl,sT]=useState(30);var[sk,sSk]=useState(false);var tr=useRef(null);var answered=useRef(false);
+function Daily(p){
+var qs=useMemo(function(){return dailyQs(today());},[]);var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[tl,sT]=useState(30);var[sk,sSk]=useState(false);var tr=useRef(null);var answered=useRef(false);
+// Guard: only block if daily was ALREADY done when component mounted (not if completed during this session)
+var wasAlreadyDone=useRef(p.u.daily&&p.u.daily.date===today()&&p.u.daily.done);
+if(wasAlreadyDone.current)return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+<div style={{fontSize:64,marginBottom:20}}>✅</div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Already completed!</h1>
+<p style={{color:"var(--t2)",marginBottom:8}}>Your daily challenge is done. Come back tomorrow!</p>
+<p style={{color:"var(--gold)",fontWeight:600,marginBottom:40,fontSize:14}}>Score: {p.u.daily.score}/5 · +{p.u.daily.xpE} XP</p>
+<button className="btn1" onClick={p.back}>Back</button></div>);
 useEffect(function(){
   if(ph==="q"&&tl>0){tr.current=setTimeout(function(){sT(tl-1);},1000);return function(){clearTimeout(tr.current);};}
   if(ph==="q"&&tl===0&&!answered.current){answered.current=true;clearTimeout(tr.current);sS(-1);sSk(true);setTimeout(function(){sSk(false);},500);sP("fb");}
@@ -2183,10 +2195,11 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next Question":"See Results"}</button></div>}</div>);}
 
 // ─── TRAIN PAGE ───
-function Train(p){
+  function Train(p){
+  var dd=p.u.daily&&p.u.daily.date===today()&&p.u.daily.done;
   var sections=[
     {title:"Exercises",sub:"TOEIC Parts training",items:[
-      {id:"daily",n:"Daily Challenge",d:"5 daily questions, timed",i:"⚡",bg:"linear-gradient(135deg,#00d4ff,#a855f7)"},
+      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#00d4ff,#a855f7)",lock:dd},
       {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"🎧",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
       {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#8b5cf6)"},
     ]},
@@ -3121,9 +3134,16 @@ function FalseFriends(p){
   </div>);
 }
 
+// ═══════════════════════════════════════════════════════════════
+// TeacherDash v2.0 — Stats avancées + Export CSV
+// REPLACES the existing TeacherDash function (lines 3124-3250)
+// ═══════════════════════════════════════════════════════════════
+
 function TeacherDash(p){
   var[students,setStudents]=useState([]);var[loading,setLoad]=useState(true);
   var[detail,setDetail]=useState(null);var[classCode,setClassCode]=useState("idrac2026");
+  var[dashTab,setDashTab]=useState("overview"); // "overview" | "analytics"
+  var[chartMod,setChartMod]=useState("all"); // for student detail time chart
 
   function loadStudents(){
     supabase.from('students').select('*').eq('class_code',classCode).order('xp',{ascending:false})
@@ -3132,43 +3152,206 @@ function TeacherDash(p){
   }
   useEffect(function(){loadStudents();},[classCode]);
 
+  // ── Chart colors matching app theme ──
+  var CHART_COLORS=["#00d4ff","#a855f7","#ff8c42","#ffd700","#00e676","#ff4757","#ec4899","#3b82f6","#06b6d4","#f59e0b","#8b5cf6","#14b8a6"];
+
+  // ── Compute class-wide module accuracy data ──
+  function getClassModuleData(){
+    var modData={};
+    MISSION_MODULES.forEach(function(m){modData[m.id]={name:m.name,icon:m.icon,totalCorrect:0,totalQ:0,studentCount:0};});
+    students.forEach(function(s){
+      var ms=s.module_scores||s.moduleScores||{};
+      MISSION_MODULES.forEach(function(m){
+        var d=ms[m.id];
+        if(d&&d.total>0){
+          modData[m.id].totalCorrect+=d.correct;
+          modData[m.id].totalQ+=d.total;
+          modData[m.id].studentCount+=1;
+        }
+      });
+    });
+    return MISSION_MODULES.map(function(m){
+      var d=modData[m.id];
+      var acc=d.totalQ>0?Math.round(d.totalCorrect/d.totalQ*100):0;
+      return{name:m.name.length>12?m.name.substring(0,11)+"…":m.name,fullName:m.name,icon:m.icon,accuracy:acc,students:d.studentCount,questions:d.totalQ,id:m.id};
+    }).filter(function(d){return d.questions>0;});
+  }
+
+  // ── Build time-series data for a student ──
+  function getStudentTimeline(s,modFilter){
+    var ms=s.module_scores||s.moduleScores||{};
+    var allEntries=[];
+    
+    if(modFilter==="all"){
+      // Aggregate all modules
+      Object.keys(ms).forEach(function(modId){
+        var hist=(ms[modId]&&ms[modId].history)||[];
+        hist.forEach(function(h){allEntries.push({date:h.date,correct:h.correct,total:h.total});});
+      });
+    } else {
+      var hist=(ms[modFilter]&&ms[modFilter].history)||[];
+      hist.forEach(function(h){allEntries.push({date:h.date,correct:h.correct,total:h.total});});
+    }
+    
+    if(allEntries.length===0)return[];
+    
+    // Group by date, compute daily accuracy
+    var byDate={};
+    allEntries.forEach(function(e){
+      if(!byDate[e.date])byDate[e.date]={correct:0,total:0};
+      byDate[e.date].correct+=e.correct;
+      byDate[e.date].total+=e.total;
+    });
+    
+    var timeline=Object.keys(byDate).sort().map(function(date){
+      var d=byDate[date];
+      return{date:date.substring(5),fullDate:date,accuracy:d.total>0?Math.round(d.correct/d.total*100):0,questions:d.total};
+    });
+    
+    return timeline;
+  }
+
+  // ── CSV Export ──
+  function exportCSV(){
+    var headers=["Name","XP","Level","League","Streak","Sessions","Total Questions","Correct","Accuracy %"];
+    MISSION_MODULES.forEach(function(m){headers.push(m.name+" (%)");});
+    
+    var rows=students.map(function(s){
+      var stats=s.stats||{totalQ:0,correct:0,sessions:0};
+      var acc=stats.totalQ>0?Math.round(stats.correct/stats.totalQ*100):0;
+      var lvl=getLevel(s.xp||0);
+      var lg=LEAGUES.slice().reverse().find(function(l){return(s.xp||0)>=l.min;});
+      
+      var row=[
+        '"'+s.name+'"',s.xp||0,lvl.level,lg?lg.name:"Bronze",s.streak||0,
+        stats.sessions,stats.totalQ,stats.correct,acc
+      ];
+      
+      var ms=s.module_scores||s.moduleScores||{};
+      MISSION_MODULES.forEach(function(m){
+        var d=ms[m.id];
+        var modAcc=d&&d.total>0?Math.round(d.correct/d.total*100):"—";
+        row.push(modAcc);
+      });
+      
+      return row.join(",");
+    });
+    
+    var csv=headers.join(",")+"\n"+rows.join("\n");
+    var blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url;a.download="toeic_arena_class_"+classCode+"_"+today()+".csv";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Custom Recharts Tooltip ──
+  function ChartTip(props){
+    if(!props.active||!props.payload||!props.payload[0])return null;
+    var data=props.payload[0].payload;
+    return(<div style={{background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,padding:"8px 12px",fontSize:12}}>
+      <div className="out" style={{fontWeight:700,color:"var(--t1)",marginBottom:2}}>{data.fullName||data.fullDate||props.label}</div>
+      {props.payload.map(function(entry,i){
+        return(<div key={i} style={{color:entry.color||"var(--cyan)",fontSize:11}}>{entry.name}: {entry.value}{entry.name==="accuracy"||entry.dataKey==="accuracy"?"%":""}</div>);
+      })}
+      {data.questions!==undefined&&<div style={{color:"var(--t3)",fontSize:10,marginTop:2}}>{data.questions} questions{data.students!==undefined?" · "+data.students+" students":""}</div>}
+    </div>);
+  }
+
   if(loading)return(<div className="app" style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><p className="out" style={{color:"var(--t2)"}}>Loading dashboard...</p></div>);
 
-  // Student detail view
+  // ═══════════════════════════════════
+  // STUDENT DETAIL VIEW
+  // ═══════════════════════════════════
   if(detail!==null&&students[detail]){
     var s=students[detail];var acc=s.stats&&s.stats.totalQ>0?Math.round(s.stats.correct/s.stats.totalQ*100):0;
-    var modules=s.moduleScores||{};
+    var modules=s.module_scores||s.moduleScores||{};
+    
+    // Module accuracy data for bar chart
+    var studentModData=MISSION_MODULES.map(function(m,i){
+      var ms=modules[m.id];
+      var modAcc=ms&&ms.total>0?Math.round(ms.correct/ms.total*100):0;
+      return{name:m.name.length>10?m.name.substring(0,9)+"…":m.name,fullName:m.name,accuracy:modAcc,sessions:ms?ms.sessions:0,questions:ms?ms.total:0,color:CHART_COLORS[i%CHART_COLORS.length],id:m.id,hasData:!!(ms&&ms.total>0)};
+    }).filter(function(d){return d.hasData;});
+    
+    // Timeline data
+    var timeline=getStudentTimeline(s,chartMod);
+    
+    // Modules that have history (for filter dropdown)
+    var modsWithHistory=MISSION_MODULES.filter(function(m){
+      var ms=modules[m.id];
+      return ms&&ms.history&&ms.history.length>0;
+    });
+
     return(<div className="app enter" style={{padding:"20px 16px 40px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-        <button onClick={function(){setDetail(null);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+        <button onClick={function(){setDetail(null);setChartMod("all");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>← Back</button>
         <span className="out" style={{fontWeight:700,fontSize:15}}>Student Detail</span>
-        <div style={{width:40}}/></div>
+        <div style={{width:40}}/>
+      </div>
 
+      {/* Student header */}
       <div style={{textAlign:"center",marginBottom:24}}>
         <div style={{width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 10px",fontSize:24,fontWeight:900}} className="out">{s.name.charAt(0).toUpperCase()}</div>
         <h2 className="out" style={{fontWeight:800,fontSize:20}}>{s.name}</h2>
         <div style={{display:"flex",justifyContent:"center",gap:12,marginTop:6}}>
-          <span style={{fontSize:12,color:"var(--t2)"}}>Level {s.level||"?"}</span>
-          <span style={{fontSize:12,color:"var(--gold)"}}>{s.league||"?"}</span>
+          <span style={{fontSize:12,color:"var(--t2)"}}>Level {getLevel(s.xp||0).level}</span>
+          <span style={{fontSize:12,color:"var(--gold)"}}>{(LEAGUES.slice().reverse().find(function(l){return(s.xp||0)>=l.min;})||{name:"Bronze"}).name}</span>
           <span style={{fontSize:12,color:"var(--orange)"}}>{s.streak||0} streak</span>
         </div>
-        <p style={{fontSize:11,color:"var(--t3)",marginTop:4}}>Exported: {s.exported||"unknown"}</p>
       </div>
 
+      {/* KPI cards */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:20}}>
         <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--gold)"}}>{s.xp||0}</div><div style={{fontSize:10,color:"var(--t3)"}}>XP</div></div>
-        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--cyan)"}}>{acc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Accuracy</div></div>
+        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:acc>=60?"var(--cyan)":"var(--orange)"}}>{acc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Accuracy</div></div>
         <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--purple)"}}>{s.stats?s.stats.sessions:0}</div><div style={{fontSize:10,color:"var(--t3)"}}>Sessions</div></div>
       </div>
 
+      {/* ── BAR CHART: Accuracy per module ── */}
+      {studentModData.length>0&&(<div className="crd" style={{padding:"16px 8px 8px",marginBottom:16}}>
+        <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:12,color:"var(--t2)",paddingLeft:8}}>📊 Accuracy by Module</h3>
+        <ResponsiveContainer width="100%" height={Math.max(180,studentModData.length*32)}>
+          <BarChart data={studentModData} layout="vertical" margin={{top:0,right:16,left:4,bottom:0}}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--bdr)" horizontal={false}/>
+            <XAxis type="number" domain={[0,100]} tick={{fill:"var(--t3)",fontSize:10}} axisLine={{stroke:"var(--bdr)"}} tickLine={false}/>
+            <YAxis type="category" dataKey="name" width={85} tick={{fill:"var(--t2)",fontSize:10}} axisLine={false} tickLine={false}/>
+            <Tooltip content={ChartTip}/>
+            <RBar dataKey="accuracy" radius={[0,6,6,0]} barSize={18}>
+              {studentModData.map(function(entry,i){
+                var col=entry.accuracy>=70?"#00e676":entry.accuracy>=50?"#ff8c42":"#ff4757";
+                return(<Cell key={i} fill={col}/>);
+              })}
+            </RBar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>)}
+
+      {/* ── LINE CHART: Accuracy evolution over time ── */}
+      {(timeline.length>1||modsWithHistory.length>0)&&(<div className="crd" style={{padding:"16px 8px 8px",marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingLeft:8,paddingRight:8,marginBottom:12}}>
+          <h3 className="out" style={{fontWeight:700,fontSize:13,color:"var(--t2)",margin:0}}>📈 Evolution</h3>
+          <select value={chartMod} onChange={function(e){setChartMod(e.target.value);}} 
+            style={{background:"var(--bg3)",border:"1px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontSize:11,padding:"4px 8px",fontFamily:"'DM Sans',sans-serif"}}>
+            <option value="all">All modules</option>
+            {modsWithHistory.map(function(m){return(<option key={m.id} value={m.id}>{m.icon} {m.name}</option>);})}
+          </select>
+        </div>
+        {timeline.length>1?(<ResponsiveContainer width="100%" height={200}>
+          <LineChart data={timeline} margin={{top:5,right:16,left:4,bottom:5}}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--bdr)"/>
+            <XAxis dataKey="date" tick={{fill:"var(--t3)",fontSize:9}} axisLine={{stroke:"var(--bdr)"}} tickLine={false}/>
+            <YAxis domain={[0,100]} tick={{fill:"var(--t3)",fontSize:10}} axisLine={{stroke:"var(--bdr)"}} tickLine={false} width={30}/>
+            <Tooltip content={ChartTip}/>
+            <Line type="monotone" dataKey="accuracy" stroke="#00d4ff" strokeWidth={2} dot={{fill:"#00d4ff",r:4}} activeDot={{r:6,fill:"#a855f7"}}/>
+          </LineChart>
+        </ResponsiveContainer>):(<div style={{textAlign:"center",padding:"20px 8px"}}><p style={{fontSize:12,color:"var(--t3)"}}>📉 Not enough data points yet. History builds from new sessions.</p></div>)}
+      </div>)}
+
+      {/* ── MODULE BREAKDOWN TABLE ── */}
       <h3 className="out" style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--t2)"}}>Module Breakdown</h3>
-      <div style={{display:"flex",flexDirection:"column",gap:6}}>
-	  <button className="btn2" onClick={function(){
-        if(prompt("Type DELETE to confirm removing "+s.name)!=="DELETE")return;
-        supabase.from('students').delete().eq('id',s.id).then(function(){
-          setDetail(null);loadStudents();
-        });
-      }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%",marginBottom:20}}>🗑️ Delete this student</button>
+      <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
         {MISSION_MODULES.map(function(m){
           var ms=modules[m.id];
           if(!ms)return(<div key={m.id} className="crd" style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:10,opacity:.4}}>
@@ -3176,19 +3359,30 @@ function TeacherDash(p){
             <span style={{marginLeft:"auto",fontSize:11,color:"var(--t3)"}}>Not started</span></div>);
           var modAcc=ms.total>0?Math.round(ms.correct/ms.total*100):0;
           var col=modAcc>=70?"var(--green)":modAcc>=50?"var(--orange)":"var(--red)";
+          var histLen=(ms.history||[]).length;
           return(<div key={m.id} className="crd" style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:16}}>{m.icon}</span>
             <div style={{flex:1,minWidth:0}}><div style={{fontSize:13,color:"var(--t1)"}} className="out">{m.name}</div>
-              <div style={{fontSize:10,color:"var(--t3)"}}>{ms.sessions} sessions · Last: {ms.lastDate||"?"}</div></div>
+              <div style={{fontSize:10,color:"var(--t3)"}}>{ms.sessions} sessions · Last: {ms.lastDate||"?"}{histLen>0?" · "+histLen+" data pts":""}</div></div>
             <div style={{textAlign:"right"}}><div className="out" style={{fontWeight:800,fontSize:15,color:col}}>{modAcc}%</div>
               <div style={{fontSize:10,color:"var(--t3)"}}>{ms.correct}/{ms.total}</div></div>
           </div>);
         })}
       </div>
+      
+      {/* Delete student */}
+      <button className="btn2" onClick={function(){
+        if(prompt("Type DELETE to confirm removing "+s.name)!=="DELETE")return;
+        supabase.from('students').delete().eq('id',s.id).then(function(){
+          setDetail(null);loadStudents();
+        });
+      }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%",marginBottom:20}}>🗑️ Delete this student</button>
     </div>);
   }
 
-  // Main dashboard
+  // ═══════════════════════════════════
+  // MAIN DASHBOARD VIEW
+  // ═══════════════════════════════════
   var classAcc=0;var totalSess=0;var activeCnt=0;
   students.forEach(function(s){
     if(s.stats&&s.stats.totalQ>0){classAcc+=s.stats.correct/s.stats.totalQ;activeCnt++;}
@@ -3196,56 +3390,160 @@ function TeacherDash(p){
   });
   classAcc=activeCnt>0?Math.round(classAcc/activeCnt*100):0;
 
+  // Class module data for analytics chart
+  var classModData=getClassModuleData();
+
   return(<div className="app enter" style={{padding:"20px 16px 40px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back to profile</button>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>← Back</button>
       <span className="out" style={{fontWeight:700,fontSize:15}}>Teacher Dashboard</span>
-      <div style={{width:40}}/></div>
+      <div style={{width:40}}/>
+    </div>
 
-    {/* Class overview */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:20}}>
+    {/* ── Tab switcher ── */}
+    <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:12,padding:3}}>
+      {[{id:"overview",label:"👥 Students"},{id:"analytics",label:"📊 Analytics"}].map(function(t){
+        var active=dashTab===t.id;
+        return(<button key={t.id} onClick={function(){setDashTab(t.id);}} style={{
+          flex:1,padding:"10px 8px",borderRadius:10,border:"none",cursor:"pointer",
+          background:active?"var(--bg3)":"transparent",color:active?"var(--t1)":"var(--t3)",
+          fontWeight:active?700:500,fontSize:13,fontFamily:"'DM Sans',sans-serif",
+          transition:"all .2s"
+        }} className="out">{t.label}</button>);
+      })}
+    </div>
+
+    {/* Class KPI cards */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
       <div className="crd" style={{padding:14,textAlign:"center"}}><div className="out" style={{fontSize:22,fontWeight:800,color:"var(--cyan)"}}>{students.length}</div><div style={{fontSize:10,color:"var(--t3)"}}>Students</div></div>
       <div className="crd" style={{padding:14,textAlign:"center"}}><div className="out" style={{fontSize:22,fontWeight:800,color:classAcc>=60?"var(--green)":"var(--orange)"}}>{classAcc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Class accuracy</div></div>
       <div className="crd" style={{padding:14,textAlign:"center"}}><div className="out" style={{fontSize:22,fontWeight:800,color:"var(--purple)"}}>{totalSess}</div><div style={{fontSize:10,color:"var(--t3)"}}>Total sessions</div></div>
     </div>
 
-{/* Refresh + class code */}
-    <div style={{display:"flex",gap:8,marginBottom:20}}>
-      <button className="btn1" onClick={function(){setLoad(true);loadStudents();}} style={{flex:1,fontSize:14}}>🔄 Refresh data</button>
-    </div>
+    {/* ═══ OVERVIEW TAB ═══ */}
+    {dashTab==="overview"&&(<div>
+      {/* Action buttons */}
+      <div style={{display:"flex",gap:8,marginBottom:16}}>
+        <button className="btn1" onClick={function(){setLoad(true);loadStudents();}} style={{flex:1,fontSize:13}}>🔄 Refresh</button>
+        <button className="btn2" onClick={exportCSV} style={{flex:1,fontSize:13,borderColor:"rgba(0,212,255,.3)",color:"var(--cyan)"}}>📥 Export CSV</button>
+      </div>
 
-    {/* Student list */}
-    <h3 className="out" style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--t2)"}}>Students ({students.length})</h3>
-    {students.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}>
-      <p style={{color:"var(--t3)",fontSize:13}}>No students imported yet. Ask your students to go to Profile and tap "Share progress with teacher", then paste their code above.</p>
-    </div>}
-    <div style={{display:"flex",flexDirection:"column",gap:6}}>
-      {students.sort(function(a,b){return(b.xp||0)-(a.xp||0);}).map(function(s,i){
-        var sAcc=s.stats&&s.stats.totalQ>0?Math.round(s.stats.correct/s.stats.totalQ*100):0;
-        var accCol=sAcc>=70?"var(--green)":sAcc>=50?"var(--orange)":"var(--red)";
-        return(<div key={i} className="crd" style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",cursor:"pointer"}}
-          onClick={function(){setDetail(i);}}>
-          <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,flexShrink:0}} className="out">{s.name.charAt(0).toUpperCase()}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div className="out" style={{fontWeight:700,fontSize:14}}>{s.name}</div>
-            <div style={{display:"flex",gap:8,marginTop:2}}>
-              <span style={{fontSize:10,color:"var(--gold)"}}>Lv {s.level||"?"}</span>
-              <span style={{fontSize:10,color:"var(--t3)"}}>{s.stats?s.stats.sessions:0} sess</span>
-              <span style={{fontSize:10,color:"var(--orange)"}}>{s.streak||0} streak</span>
+      {/* Student list */}
+      <h3 className="out" style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--t2)"}}>Students ({students.length})</h3>
+      {students.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}>
+        <p style={{color:"var(--t3)",fontSize:13}}>No students yet. Students appear automatically after onboarding.</p>
+      </div>}
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {students.sort(function(a,b){return(b.xp||0)-(a.xp||0);}).map(function(s,i){
+          var sAcc=s.stats&&s.stats.totalQ>0?Math.round(s.stats.correct/s.stats.totalQ*100):0;
+          var accCol=sAcc>=70?"var(--green)":sAcc>=50?"var(--orange)":"var(--red)";
+          return(<div key={i} className="crd" style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",cursor:"pointer"}}
+            onClick={function(){setDetail(i);}}>
+            <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,flexShrink:0}} className="out">{s.name.charAt(0).toUpperCase()}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div className="out" style={{fontWeight:700,fontSize:14}}>{s.name}</div>
+              <div style={{display:"flex",gap:8,marginTop:2}}>
+                <span style={{fontSize:10,color:"var(--gold)"}}>Lv {getLevel(s.xp||0).level}</span>
+                <span style={{fontSize:10,color:"var(--t3)"}}>{s.stats?s.stats.sessions:0} sess</span>
+                <span style={{fontSize:10,color:"var(--orange)"}}>{s.streak||0} streak</span>
+              </div>
             </div>
-          </div>
-          <div style={{textAlign:"right"}}>
-            <div className="out" style={{fontWeight:800,fontSize:16,color:accCol}}>{sAcc}%</div>
-            <div style={{fontSize:10,color:"var(--t3)"}}>{s.xp||0} XP</div>
-          </div>
-          <span style={{fontSize:14,color:"var(--cyan)",marginLeft:4}}>{"→"}</span>
-        </div>);
-      })}
-    </div>
+            <div style={{textAlign:"right"}}>
+              <div className="out" style={{fontWeight:800,fontSize:16,color:accCol}}>{sAcc}%</div>
+              <div style={{fontSize:10,color:"var(--t3)"}}>{s.xp||0} XP</div>
+            </div>
+            <span style={{fontSize:14,color:"var(--cyan)",marginLeft:4}}>{"→"}</span>
+          </div>);
+        })}
+      </div>
 
-    {students.length>0&&<div style={{textAlign:"center",marginTop:20}}>
-      <p style={{fontSize:11,color:"var(--t3)"}}>Data syncs automatically from student devices</p>
-    </div>}
+      {students.length>0&&<div style={{textAlign:"center",marginTop:20}}>
+        <p style={{fontSize:11,color:"var(--t3)"}}>Data syncs automatically from student devices</p>
+      </div>}
+    </div>)}
+
+    {/* ═══ ANALYTICS TAB ═══ */}
+    {dashTab==="analytics"&&(<div>
+      {/* Class-wide module accuracy bar chart */}
+      {classModData.length>0?(<div className="crd" style={{padding:"16px 8px 8px",marginBottom:16}}>
+        <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:4,color:"var(--t2)",paddingLeft:8}}>📊 Class Accuracy by Module</h3>
+        <p style={{fontSize:10,color:"var(--t3)",paddingLeft:8,marginBottom:12}}>Average accuracy across all students per module</p>
+        <ResponsiveContainer width="100%" height={Math.max(200,classModData.length*34)}>
+          <BarChart data={classModData} layout="vertical" margin={{top:0,right:20,left:4,bottom:0}}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--bdr)" horizontal={false}/>
+            <XAxis type="number" domain={[0,100]} tick={{fill:"var(--t3)",fontSize:10}} axisLine={{stroke:"var(--bdr)"}} tickLine={false} unit="%"/>
+            <YAxis type="category" dataKey="name" width={90} tick={{fill:"var(--t2)",fontSize:10}} axisLine={false} tickLine={false}/>
+            <Tooltip content={ChartTip}/>
+            <RBar dataKey="accuracy" radius={[0,8,8,0]} barSize={20}>
+              {classModData.map(function(entry,i){
+                var col=entry.accuracy>=70?"#00e676":entry.accuracy>=50?"#ff8c42":"#ff4757";
+                return(<Cell key={i} fill={col}/>);
+              })}
+            </RBar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>):(<div className="crd" style={{padding:24,textAlign:"center",marginBottom:16}}>
+        <p style={{fontSize:13,color:"var(--t3)"}}>📊 Not enough data yet. Charts appear once students start training.</p>
+      </div>)}
+
+      {/* ── Weakest modules callout ── */}
+      {classModData.length>2&&(<div className="crd" style={{padding:16,marginBottom:16,borderColor:"rgba(255,71,87,.15)"}}>
+        <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:10,color:"var(--red)"}}>⚠️ Needs Attention</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {classModData.slice().sort(function(a,b){return a.accuracy-b.accuracy;}).slice(0,3).map(function(m,i){
+            return(<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0"}}>
+              <span style={{fontSize:12,color:"var(--t2)"}}>{MISSION_MODULES.find(function(mm){return mm.id===m.id;})?MISSION_MODULES.find(function(mm){return mm.id===m.id;}).icon:""} {m.fullName}</span>
+              <span className="out" style={{fontWeight:700,fontSize:13,color:m.accuracy>=50?"var(--orange)":"var(--red)"}}>{m.accuracy}%</span>
+            </div>);
+          })}
+        </div>
+        <p style={{fontSize:10,color:"var(--t3)",marginTop:8}}>These 3 modules have the lowest class accuracy — consider focused review sessions.</p>
+      </div>)}
+
+      {/* ── Top performers ── */}
+      {students.length>2&&(<div className="crd" style={{padding:16,marginBottom:16}}>
+        <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:10,color:"var(--gold)"}}>🏆 Top Performers</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {students.slice().sort(function(a,b){
+            var aAcc=a.stats&&a.stats.totalQ>0?a.stats.correct/a.stats.totalQ:0;
+            var bAcc=b.stats&&b.stats.totalQ>0?b.stats.correct/b.stats.totalQ:0;
+            return bAcc-aAcc;
+          }).slice(0,5).map(function(s,i){
+            var sAcc=s.stats&&s.stats.totalQ>0?Math.round(s.stats.correct/s.stats.totalQ*100):0;
+            var medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":"";
+            return(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0"}}>
+              <span style={{fontSize:14,width:22,textAlign:"center"}}>{medal||"#"+(i+1)}</span>
+              <span style={{flex:1,fontSize:13,color:"var(--t1)"}} className="out">{s.name}</span>
+              <span className="out" style={{fontWeight:700,fontSize:13,color:sAcc>=70?"var(--green)":"var(--orange)"}}>{sAcc}%</span>
+              <span style={{fontSize:10,color:"var(--t3)"}}>{s.stats?s.stats.sessions:0} sess</span>
+            </div>);
+          })}
+        </div>
+      </div>)}
+
+      {/* ── Activity distribution ── */}
+      {students.length>0&&(<div className="crd" style={{padding:16,marginBottom:16}}>
+        <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:10,color:"var(--cyan)"}}>📅 Student Activity</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+          {students.sort(function(a,b){return(b.stats?b.stats.sessions:0)-(a.stats?a.stats.sessions:0);}).map(function(s,i){
+            var sess=s.stats?s.stats.sessions:0;
+            var maxSess=Math.max.apply(null,students.map(function(st){return st.stats?st.stats.sessions:0;}))||1;
+            var pct=Math.round(sess/maxSess*100);
+            return(<div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{width:70,fontSize:11,color:"var(--t2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} className="out">{s.name.split(" ")[0]}</span>
+              <div style={{flex:1,height:14,background:"var(--bg3)",borderRadius:7,overflow:"hidden"}}>
+                <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,#00d4ff,#a855f7)",borderRadius:7,transition:"width .4s ease"}}/>
+              </div>
+              <span style={{fontSize:10,color:"var(--t3)",width:40,textAlign:"right"}}>{sess} sess</span>
+            </div>);
+          })}
+        </div>
+      </div>)}
+
+      {/* CSV export in analytics too */}
+      <button className="btn2" onClick={exportCSV} style={{width:"100%",fontSize:13,borderColor:"rgba(0,212,255,.3)",color:"var(--cyan)",marginBottom:16}}>📥 Export class data (CSV)</button>
+    </div>)}
+
   </div>);
 }
 // ─── LISTENING HUB ───
