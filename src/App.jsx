@@ -1858,10 +1858,11 @@ return(<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-
 
 // ─── ONBOARDING ───
 function Onboard(p){
-  var[step,sSt]=useState("name"); // name, test, results, teacher
+var[step,sSt]=useState("name");
   var[name,sN]=useState("");
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");
   var[teacherCode,sTC]=useState("");
+  var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("idrac2026");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
 
   function startTest(){sSt("test");}
   function doAns(i){sS(i);if(i===PLACEMENT_TEST[ci].c)sSc(sc+1);sP("fb");}
@@ -1883,10 +1884,43 @@ function Onboard(p){
         </div>
         <button className="btn1" onClick={function(){if(name.trim())startTest();}}
           style={{opacity:name.trim()?1:.4,pointerEvents:name.trim()?"auto":"none",fontSize:18,padding:"16px 32px"}}>Next — Take Placement Test</button>
-        <button onClick={function(){sSt("teacher");}} style={{marginTop:20,background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Teacher access</button>
+        <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:20}}>
+          <button onClick={function(){sSt("recover");}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>I already have an account</button>
+          <button onClick={function(){sSt("teacher");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Teacher access</button>
+        </div>
       </div>
     </div>);
-
+	
+// ─ Account recovery ─
+  if(step==="recover")return(
+    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+      <div style={{animation:"fadeIn .5s"}}>
+        <div style={{fontSize:48,marginBottom:16}}>🔑</div>
+        <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Recover My Account</h2>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>Enter your exact name and class code to recover your progress.</p>
+        <div style={{marginBottom:16,textAlign:"left"}}>
+          <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Your name (exact)</label>
+          <input type="text" value={recName} onChange={function(e){setRecName(e.target.value);setRecMsg(null);}} placeholder="Enter your name..."
+            style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+        </div>
+        <div style={{marginBottom:20,textAlign:"left"}}>
+          <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Class code</label>
+          <input type="text" value={recCode} onChange={function(e){setRecCode(e.target.value);setRecMsg(null);}} placeholder="idrac2026"
+            style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+        </div>
+        <button className="btn1" onClick={async function(){
+          if(!recName.trim())return;
+          setRecLoading(true);setRecMsg(null);
+          var ok=await p.recover(recName.trim(),recCode.trim());
+          setRecLoading(false);
+          if(!ok)setRecMsg("No account found with that name and class code. Check spelling and try again.");
+        }} disabled={recLoading}
+          style={{opacity:recName.trim()&&!recLoading?1:.4,pointerEvents:recName.trim()&&!recLoading?"auto":"none"}}>
+          {recLoading?"Searching...":"Recover Account"}</button>
+        {recMsg&&<p style={{color:"var(--red)",fontSize:12,marginTop:12,lineHeight:1.5}}>{recMsg}</p>}
+        <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>Back to sign up</button>
+      </div>
+    </div>);
   // ─ Teacher login ─
   if(step==="teacher")return(
     <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
@@ -1967,7 +2001,27 @@ function Onboard(p){
       </div>}
     </div>);
 }
-
+async function recover(name,classCode){
+    var res=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).maybeSingle();
+    if(!res.data)return false;
+    // Create new anonymous session
+    var authRes=await supabase.auth.signInAnonymously();
+    if(!authRes.data.user)return false;
+    // Update the existing student row with new auth ID
+    await supabase.from('students').update({id:authRes.data.user.id}).eq('name',name).eq('class_code',classCode);
+    // Load the data
+    var d=res.data;
+    var u={name:d.name,xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
+      lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
+      stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
+      moduleScores:d.module_scores||{},mission:d.mission||{date:null,actId:null,done:false},
+      unlockedAch:d.unlocked_ach||[],avatar:d.avatar||"⚔️",theme:d.theme||"dark"};
+    if(!u.moduleScores)u.moduleScores={};
+    if(!u.mission)u.mission={date:null,actId:null,done:false};
+    if(!u.unlockedAch)u.unlockedAch=[];
+    sU(u);
+    return true;
+  }
 // ─── HOME ───
 function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily.date===today()&&u.daily.done;return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -3864,7 +3918,7 @@ useEffect(function(){
 
   if(ld)return(<div className="app"><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
   if(teacherMode)return(<div><style>{CSS}</style><TeacherDash back={function(){setTeacher(false);}}/></div>);
-  if(!u)return(<div><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher}/></div>);
+  if(!u)return(<div><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover}/></div>);
   if(sp==="daily")return(<div className="app"><style>{CSS}</style><Daily u={u} done={dailyDone} back={function(){sSP(null);}}/></div>);
   if(sp==="csess"||sp==="cdom")return(<div className="app"><style>{CSS}</style><CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/></div>);
   if(sp==="drill")return(<div className="app"><style>{CSS}</style><Drill u={u} done={drillDone} back={function(){sSP(null);sT("train");}}/></div>);
