@@ -27,8 +27,32 @@ var ACHIEVEMENTS = [
   {id:"perfect_daily",name:"Flawless Victory",desc:"Perfect daily challenge",icon:"✨",check:function(s){return (s.stats.perfects||0)>=1;}},
   {id:"level_5",name:"Rising Star",desc:"Reach level 5",icon:"⭐",check:function(s){return getLevel(s.xp).level>=5;}},
   {id:"level_10",name:"Arena Champion",desc:"Reach level 10",icon:"👑",check:function(s){return getLevel(s.xp).level>=10;}},
+  // ─── VOLUME / ENDURANCE ───
+  {id:"q_100",name:"Centurion",desc:"Answer 100 questions",icon:"🗡️",check:function(s){return(s.stats.totalQ||0)>=100;}},
+  {id:"q_500",name:"Gladiator",desc:"Answer 500 questions",icon:"⚔️",check:function(s){return(s.stats.totalQ||0)>=500;}},
+  {id:"q_1000",name:"War Machine",desc:"Answer 1000 questions",icon:"🤖",check:function(s){return(s.stats.totalQ||0)>=1000;}},
+  {id:"sessions_25",name:"Regular",desc:"Complete 25 training sessions",icon:"🎖️",check:function(s){return(s.stats.sessions||0)>=25;}},
+  {id:"sessions_100",name:"Iron Will",desc:"Complete 100 training sessions",icon:"🛡️",check:function(s){return(s.stats.sessions||0)>=100;}},
+  // ─── QUALITY / ACCURACY ───
+  {id:"acc_70",name:"Sharpshooter",desc:"70%+ accuracy (min 50 questions)",icon:"🎯",check:function(s){return(s.stats.totalQ||0)>=50&&s.stats.correct/s.stats.totalQ>=0.7;}},
+  {id:"acc_85",name:"Sniper",desc:"85%+ accuracy (min 100 questions)",icon:"🔫",check:function(s){return(s.stats.totalQ||0)>=100&&s.stats.correct/s.stats.totalQ>=0.85;}},
+  {id:"perfects_5",name:"Perfectionist",desc:"5 perfect daily challenges",icon:"💎",check:function(s){return(s.stats.perfects||0)>=5;}},
+  {id:"perfects_10",name:"Untouchable",desc:"10 perfect daily challenges",icon:"🌟",check:function(s){return(s.stats.perfects||0)>=10;}},
+  // ─── DIVERSITY / EXPLORATION ───
+  {id:"explore_5",name:"Explorer",desc:"Try 5 different modules",icon:"🧭",check:function(s){return s.moduleScores?Object.keys(s.moduleScores).length>=5:false;}},
+  {id:"explore_10",name:"Cartographer",desc:"Try 10 different modules",icon:"🗺️",check:function(s){return s.moduleScores?Object.keys(s.moduleScores).length>=10:false;}},
+  {id:"mod_master",name:"Specialist",desc:"80%+ on any module (min 20 Q)",icon:"🏅",check:function(s){if(!s.moduleScores)return false;var keys=Object.keys(s.moduleScores);for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(m.total>=20&&m.correct/m.total>=0.8)return true;}return false;}},
+  // ─── FLASHCARDS / VOCABULARY ───
+  {id:"vocab_200",name:"Lexicon",desc:"Review 200 flashcards",icon:"📖",check:function(s){return(s.stats.cardsRev||0)>=200;}},
+  {id:"mastered_25",name:"Memory Palace",desc:"Master 25 vocabulary cards",icon:"🏛️",check:function(s){if(!s.cardStates)return false;var mc=0;Object.keys(s.cardStates).forEach(function(k){if(s.cardStates[k].interval>=7)mc++;});return mc>=25;}},
+  {id:"mastered_75",name:"Walking Dictionary",desc:"Master 75 vocabulary cards",icon:"📕",check:function(s){if(!s.cardStates)return false;var mc=0;Object.keys(s.cardStates).forEach(function(k){if(s.cardStates[k].interval>=7)mc++;});return mc>=75;}},
+  // ─── LEVELS / XP ───
+  {id:"level_20",name:"Warlord",desc:"Reach level 20",icon:"🔱",check:function(s){return getLevel(s.xp).level>=20;}},
+  {id:"weekly_500",name:"Weekly Warrior",desc:"Earn 500 XP in one week",icon:"⚡",check:function(s){return(s.weeklyXp||0)>=500;}},
+  // ─── MOCK TEST ───
+  {id:"mock_complete",name:"Trial by Fire",desc:"Complete a Mock Test",icon:"📝",check:function(s){return s.mockResults&&(s.mockResults.mock1||s.mockResults.mock2);}},
+  {id:"toeic_master",name:"TOEIC Master",desc:"Score 400+ on a Mock Test",icon:"🏆",check:function(s){if(!s.mockResults)return false;var m1=s.mockResults.mock1;var m2=s.mockResults.mock2;return(m1&&m1.toeicEstimate>=400)||(m2&&m2.toeicEstimate>=400);}},
 ];
-
 var VOCAB = [
   { id:"finance",name:"Finance & Banking",icon:"💰",col:"#22c55e",cards:[
     {id:"f1",w:"revenue",d:"Income generated from business operations",e:"The company's annual revenue exceeded $2 million."},
@@ -39,6 +63,11 @@ var VOCAB = [
     {id:"f6",w:"audit",d:"An official examination of financial records",e:"The annual audit revealed no irregularities."},
     {id:"f7",w:"liability",d:"A financial obligation or debt",e:"The company reduced its liabilities by 20% this year."},
     {id:"f8",w:"asset",d:"Something of value owned by a company",e:"Real estate is the firm's most valuable asset."},
+    {id:"f9",w:"forecast",d:"A prediction of future financial performance",e:"The sales forecast for next quarter looks promising."},
+    {id:"f10",w:"transaction",d:"An instance of buying or selling something",e:"All transactions over $10,000 must be reported."},
+    {id:"f11",w:"fiscal year",d:"A 12-month period used for accounting purposes",e:"Our fiscal year ends on March 31st."},
+    {id:"f12",w:"reimbursement",d:"The act of paying someone back for expenses",e:"Travel reimbursements are processed within 10 business days."},
+    {id:"f13",w:"mortgage",d:"A loan used to purchase property",e:"Interest rates on mortgages have risen sharply this year."},
   ]},
   { id:"marketing",name:"Marketing & Sales",icon:"📢",col:"#f59e0b",cards:[
     {id:"m1",w:"campaign",d:"A planned series of marketing activities",e:"The advertising campaign boosted sales by 30%."},
@@ -49,6 +78,11 @@ var VOCAB = [
     {id:"m6",w:"survey",d:"A study of opinions or experiences of a group",e:"The customer survey revealed areas for improvement."},
     {id:"m7",w:"launch",d:"To introduce a new product or service",e:"We plan to launch the new product line in March."},
     {id:"m8",w:"promotion",d:"Activities to increase awareness or sales",e:"The store is running a special promotion this week."},
+	{id:"m9",w:"testimonial",d:"A statement from a customer praising a product or service",e:"We use client testimonials on our website to build trust."},
+    {id:"m10",w:"market share",d:"The portion of a market controlled by a company",e:"Our market share grew by 5% after the rebranding."},
+    {id:"m11",w:"retail",d:"The sale of goods to the general public",e:"The retail sector has been affected by the rise of online shopping."},
+    {id:"m12",w:"competitor",d:"A company that sells similar products or services",e:"We need to monitor what our competitors are offering."},
+    {id:"m13",w:"revenue stream",d:"A source of income for a business",e:"Subscription services have become our main revenue stream."},
   ]},
   { id:"hr",name:"Human Resources",icon:"👥",col:"#8b5cf6",cards:[
     {id:"h1",w:"recruitment",d:"The process of finding and hiring employees",e:"The recruitment drive attracted over 500 applicants."},
@@ -59,6 +93,11 @@ var VOCAB = [
     {id:"h6",w:"resignation",d:"The act of voluntarily leaving a job",e:"She submitted her resignation effective next month."},
     {id:"h7",w:"onboarding",d:"The process of integrating a new employee",e:"The onboarding program lasts two weeks."},
     {id:"h8",w:"tenure",d:"The length of time holding a position",e:"During his tenure as CEO, profits tripled."},
+	{id:"h9",w:"probation",d:"A trial period for a new employee",e:"All new hires are on a six-month probation period."},
+    {id:"h10",w:"severance",d:"Payment made to an employee upon termination",e:"The severance package includes three months of salary."},
+    {id:"h11",w:"turnover",d:"The rate at which employees leave a company",e:"High staff turnover is costing the company thousands in recruitment."},
+    {id:"h12",w:"grievance",d:"A formal complaint by an employee",e:"She filed a grievance about the working conditions."},
+    {id:"h13",w:"shortlist",d:"A list of selected candidates for a position",e:"Five applicants have been shortlisted for the final interview."},
   ]},
   { id:"manufacturing",name:"Manufacturing",icon:"🏭",col:"#ef4444",cards:[
     {id:"mf1",w:"assembly line",d:"A series of workstations for building products",e:"The assembly line produces 500 units per day."},
@@ -68,6 +107,11 @@ var VOCAB = [
     {id:"mf5",w:"shipment",d:"A quantity of goods sent together",e:"The shipment will arrive by Friday."},
     {id:"mf6",w:"supplier",d:"A company that provides goods to another",e:"We switched to a more reliable supplier."},
     {id:"mf7",w:"output",d:"The amount of goods produced",e:"Factory output increased by 12% this quarter."},
+	{id:"mf8",w:"defect",d:"A fault or imperfection in a product",e:"The batch was recalled due to a manufacturing defect."},
+    {id:"mf9",w:"raw materials",d:"Basic substances used to make products",e:"The price of raw materials has increased significantly."},
+    {id:"mf10",w:"throughput",d:"The amount of material processed in a given time",e:"The new machinery doubled our daily throughput."},
+    {id:"mf11",w:"compliance",d:"Meeting required standards or regulations",e:"All products must be in compliance with safety regulations."},
+    {id:"mf12",w:"specification",d:"A detailed description of design and materials",e:"The product was built according to the client's specifications."},
   ]},
   { id:"travel",name:"Travel & Transport",icon:"✈️",col:"#06b6d4",cards:[
     {id:"t1",w:"itinerary",d:"A planned route or schedule for a trip",e:"Please review the travel itinerary before departure."},
@@ -77,6 +121,11 @@ var VOCAB = [
     {id:"t5",w:"layover",d:"A stop between connecting flights",e:"We have a three-hour layover in Dubai."},
     {id:"t6",w:"customs",d:"The government department controlling imports",e:"You must declare all goods at customs."},
     {id:"t7",w:"terminal",d:"A building at an airport for passengers",e:"International flights depart from Terminal 2."},
+	{id:"t8",w:"round trip",d:"A journey to a place and back again",e:"A round trip ticket to London costs less than two one-way fares."},
+    {id:"t9",w:"carry-on",d:"A small bag taken into the aircraft cabin",e:"Each passenger is allowed one carry-on and one personal item."},
+    {id:"t10",w:"connecting flight",d:"A flight that requires changing planes",e:"We have a connecting flight in Frankfurt with a two-hour layover."},
+    {id:"t11",w:"fare",d:"The price charged for a journey",e:"Bus fares will increase by 10% starting next month."},
+    {id:"t12",w:"commute",d:"A regular journey between home and work",e:"Her daily commute takes about 45 minutes by train."},
   ]},
   { id:"office",name:"Office & Admin",icon:"🏢",col:"#64748b",cards:[
     {id:"o1",w:"memorandum",d:"A written message in business (memo)",e:"The manager sent a memorandum about the policy change."},
@@ -87,6 +136,11 @@ var VOCAB = [
     {id:"o6",w:"correspondence",d:"Letters or emails exchanged",e:"All correspondence should be directed to the main office."},
     {id:"o7",w:"stationery",d:"Office supplies like paper, pens, envelopes",e:"We need to order more stationery for the department."},
     {id:"o8",w:"minutes",d:"The official record of a meeting",e:"Who is taking the minutes today?"},
+	{id:"o9",w:"filing cabinet",d:"A piece of furniture for storing documents",e:"The contracts are in the filing cabinet next to reception."},
+    {id:"o10",w:"cubicle",d:"A small partitioned workspace in an office",e:"Each employee has their own cubicle on the second floor."},
+    {id:"o11",w:"bulletin board",d:"A board for posting notices and announcements",e:"Please check the bulletin board for the updated schedule."},
+    {id:"o12",w:"shredder",d:"A machine that destroys documents into small pieces",e:"All confidential papers must go through the shredder."},
+    {id:"o13",w:"extension",d:"An internal telephone number within a company",e:"You can reach Mr. Hayes at extension 4502."},
   ]},
   { id:"phrasal",name:"Phrasal Verbs",icon:"🔗",col:"#e11d48",cards:[
     {id:"pv1",w:"carry out",d:"To perform or complete a task (exécuter)",e:"We will carry out the inspection next week."},
@@ -124,6 +178,11 @@ var VOCAB = [
     {id:"te6",w:"upgrade",d:"To improve to a newer or better version",e:"We plan to upgrade all workstations next quarter."},
     {id:"te7",w:"compatible",d:"Able to work together without conflict",e:"Make sure the software is compatible with your operating system."},
     {id:"te8",w:"malfunction",d:"A failure to work correctly",e:"A malfunction in the system caused the delay."},
+	{id:"te9",w:"firewall",d:"A security system that controls network traffic",e:"The firewall blocked several unauthorized access attempts last week."},
+    {id:"te10",w:"backup",d:"A copy of data stored separately for safety",e:"Please make sure to run a backup before installing the update."},
+    {id:"te11",w:"outage",d:"A period when a service is unavailable",e:"The network outage lasted three hours and affected all departments."},
+    {id:"te12",w:"interface",d:"The point of interaction between user and software",e:"The new interface is much more intuitive than the previous version."},
+    {id:"te13",w:"encrypt",d:"To convert data into a secure coded format",e:"All sensitive files must be encrypted before being sent by email."},
   ]},
   { id:"realestate",name:"Real Estate & Facilities",icon:"🏠",col:"#d97706",cards:[
     {id:"re1",w:"lease",d:"A contract to rent property for a period of time",e:"The lease expires at the end of the year."},
@@ -134,6 +193,11 @@ var VOCAB = [
     {id:"re6",w:"utilities",d:"Basic services such as electricity, water, and gas",e:"Utilities are included in the monthly rent."},
     {id:"re7",w:"vacancy",d:"An unoccupied position or space",e:"There is a vacancy on the third floor of the building."},
     {id:"re8",w:"square footage",d:"The area of a space measured in square feet",e:"The new office offers 3,000 square feet of space."},
+	{id:"re9",w:"zoning",d:"Government rules about how land can be used",e:"Zoning regulations prevent commercial buildings in this area."},
+    {id:"re10",w:"occupancy",d:"The state of being used or lived in",e:"The building reached full occupancy within six months of opening."},
+    {id:"re11",w:"maintenance",d:"The process of keeping a building in good condition",e:"The maintenance team will fix the elevator this afternoon."},
+    {id:"re12",w:"premises",d:"A building and its surrounding land",e:"Smoking is not allowed anywhere on the premises."},
+    {id:"re13",w:"contractor",d:"A person or company hired to do specific work",e:"We hired a contractor to renovate the reception area."},
   ]},
   { id:"dining",name:"Dining & Hospitality",icon:"🍽️",col:"#ec4899",cards:[
     {id:"di1",w:"reservation",d:"An arrangement to have a table or room held for you",e:"I'd like to make a reservation for six at 7 PM."},
@@ -144,6 +208,11 @@ var VOCAB = [
     {id:"di6",w:"gratuity",d:"A tip given to service staff",e:"A 15% gratuity is included in the bill."},
     {id:"di7",w:"check out",d:"To leave a hotel and pay the bill",e:"Guests must check out before noon."},
     {id:"di8",w:"venue",d:"The place where an event is held",e:"We are still looking for a suitable venue for the conference."},
+	{id:"di9",w:"cuisine",d:"A style or method of cooking",e:"The restaurant is known for its authentic Japanese cuisine."},
+    {id:"di10",w:"dietary restriction",d:"A limitation on what a person can eat",e:"Please inform us of any dietary restrictions before the event."},
+    {id:"di11",w:"beverage",d:"Any type of drink",e:"Complimentary beverages are available in the lobby."},
+    {id:"di12",w:"buffet",d:"A meal where guests serve themselves from a table",e:"A buffet lunch will be provided during the conference break."},
+    {id:"di13",w:"hospitality",d:"The business of providing food, drink and accommodation",e:"She has over ten years of experience in the hospitality industry."},
   ]},
   { id:"health",name:"Health & Safety",icon:"🏥",col:"#14b8a6",cards:[
     {id:"hl1",w:"prescription",d:"A doctor's written order for medicine",e:"You need a prescription to buy this medication."},
@@ -154,6 +223,11 @@ var VOCAB = [
     {id:"hl6",w:"regulations",d:"Official rules or laws",e:"Safety regulations require all workers to wear helmets."},
     {id:"hl7",w:"protective equipment",d:"Gear worn to prevent injury (PPE)",e:"Employees must wear protective equipment in the factory."},
     {id:"hl8",w:"emergency",d:"A serious and unexpected situation requiring action",e:"In case of emergency, use the nearest exit."},
+	{id:"hl9",w:"first aid",d:"Basic medical treatment given in an emergency",e:"All supervisors must complete a first aid training course."},
+    {id:"hl10",w:"evacuation",d:"The process of moving people out of a dangerous area",e:"An evacuation drill will be conducted next Tuesday at 10 AM."},
+    {id:"hl11",w:"sanitation",d:"Conditions and practices to maintain cleanliness and health",e:"Sanitation standards in the kitchen are inspected monthly."},
+    {id:"hl12",w:"liability insurance",d:"Coverage that protects against claims of injury or damage",e:"All contractors must carry liability insurance before entering the site."},
+    {id:"hl13",w:"ventilation",d:"The supply of fresh air to a room or building",e:"Proper ventilation is essential in the chemical storage area."},
   ]},
   { id:"preps",name:"Preposition Collocations",icon:"🔑",col:"#0ea5e9",cards:[
     {id:"pp1",w:"responsible FOR",d:"Having the duty to deal with something",e:"She is responsible for the marketing budget."},
@@ -292,7 +366,326 @@ var QUESTIONS = [
   // ─── ARTICLES / QUANTIFIERS (+2) ───
   {id:"g99",s:"_____ information in this report is confidential.",o:["A","An","The","Some"],c:2,x:"'The' = specific information (in THIS report). Definite article for specific reference.",cat:"Articles"},
   {id:"g100",s:"_____ employees who wish to participate should register by Friday.",o:["All","Every","Each","The whole"],c:0,x:"'All employees' (plural). 'Every/Each' + singular noun. 'All' fits with plural 'employees'.",cat:"Articles"},
+  {id:"g100",s:"_____ employees who wish to participate should register by Friday.",o:["All","Every","Each","The whole"],c:0,x:"'All employees' (plural). 'Every/Each' + singular noun. 'All' fits with plural 'employees'.",cat:"Articles"},
+  // ─── BATCH 2 (g101–g130) ───
+  // ─── ARTICLES / QUANTIFIERS (+4) ───
+  {id:"g101",s:"We need to hire _____ accountant before the end of the quarter.",o:["a","an","the","some"],c:1,x:"'An' before vowel sound. 'Accountant' starts with a vowel sound.",cat:"Articles"},
+  {id:"g102",s:"Could you pass me _____ file on your desk? The one with the blue cover.",o:["a","an","the","some"],c:2,x:"'The' = specific file already identified ('the one with the blue cover').",cat:"Articles"},
+  {id:"g103",s:"_____ furniture in the new office was ordered from a local supplier.",o:["A","An","The","Some"],c:2,x:"'The furniture' = specific (in the new office). 'Furniture' is uncountable — no 'a/an'.",cat:"Articles"},
+  {id:"g104",s:"Mr. Park has _____ experience in international logistics.",o:["a","an","extensive","the"],c:2,x:"'Experience' is uncountable — no 'a/an'. 'Extensive' (adj) fits: 'extensive experience'.",cat:"Articles"},
+  // ─── COMPARATIVES (+3) ───
+  {id:"g105",s:"This quarter's sales figures are _____ higher than last year's.",o:["significant","significance","significantly","signify"],c:2,x:"Adverb 'significantly' modifies the comparative 'higher'.",cat:"Comparatives"},
+  {id:"g106",s:"Of all the proposals submitted, Ms. Chen's was the _____.",o:["more convincing","most convincing","convincing","as convincing"],c:1,x:"Superlative with 'of all': 'the most convincing'. Three or more = superlative.",cat:"Comparatives"},
+  {id:"g107",s:"The new printer is not _____ fast as the one it replaced.",o:["so","as","more","much"],c:1,x:"Negative comparison: 'not as ... as'. Both 'so' and 'as' are grammatically possible, but 'as...as' is standard in TOEIC.",cat:"Comparatives"},
+  // ─── CONDITIONALS (+3) ───
+  {id:"g108",s:"If the contract _____ signed by Friday, we will lose the deal.",o:["isn't","weren't","won't be","wouldn't be"],c:0,x:"First conditional: If + present simple, will + base verb. Real possibility.",cat:"Conditionals"},
+  {id:"g109",s:"Had the shipment arrived on time, the client _____ so frustrated.",o:["wouldn't be","wouldn't have been","won't be","isn't"],c:1,x:"Third conditional: Had + past participle, would have + past participle. Unreal past.",cat:"Conditionals"},
+  {id:"g110",s:"If I _____ you, I would accept the offer immediately.",o:["am","was","were","be"],c:2,x:"Second conditional: 'If I were you' — subjunctive mood. 'Were' for all persons in formal English.",cat:"Conditionals"},
+  // ─── GERUNDS vs INFINITIVES (+3) ───
+  {id:"g111",s:"The director agreed _____ the budget for the marketing campaign.",o:["increasing","to increase","increase","increased"],c:1,x:"'Agree' takes infinitive (to). 'Agreed to increase'.",cat:"Gerunds vs Infinitives"},
+  {id:"g112",s:"Would you consider _____ the deadline to next month?",o:["to extend","extending","extend","extended"],c:1,x:"'Consider' always takes gerund (-ing). 'Consider extending'.",cat:"Gerunds vs Infinitives"},
+  {id:"g113",s:"The staff avoided _____ any comments during the investigation.",o:["to make","making","make","made"],c:1,x:"'Avoid' always takes gerund (-ing). 'Avoided making'.",cat:"Gerunds vs Infinitives"},
+  // ─── RELATIVE PRONOUNS (+3) ───
+  {id:"g114",s:"The building _____ the conference will be held is on Park Avenue.",o:["which","where","that","whose"],c:1,x:"'Where' = relative adverb for places. 'The building where the conference will be held'.",cat:"Relative Pronouns"},
+  {id:"g115",s:"Employees _____ performance exceeds expectations will receive a bonus.",o:["who","whom","whose","which"],c:2,x:"'Whose' = possession. The employees' performance = whose performance.",cat:"Relative Pronouns"},
+  {id:"g116",s:"The consultant _____ we hired last month has already improved efficiency.",o:["who","whom","whose","which"],c:0,x:"'Who' = subject of 'has improved'. The consultant has improved (not 'whom').",cat:"Relative Pronouns"},
+  // ─── COLLOCATIONS (+4) ───
+  {id:"g117",s:"The board will _____ a meeting to discuss the acquisition.",o:["hold","make","do","have"],c:0,x:"'Hold a meeting' = standard business collocation. 'Have a meeting' is also valid but 'hold' is more formal.",cat:"Collocations"},
+  {id:"g118",s:"Please _____ sure that all documents are signed before submission.",o:["do","make","take","give"],c:1,x:"'Make sure' = fixed collocation. Not 'do sure' or 'take sure'.",cat:"Collocations"},
+  {id:"g119",s:"The company _____ an apology for the delay in processing orders.",o:["made","issued","gave","did"],c:1,x:"'Issue an apology' = formal business collocation. 'Make an apology' is possible but less formal.",cat:"Collocations"},
+  {id:"g120",s:"We need to _____ advantage of the current market conditions.",o:["make","do","take","give"],c:2,x:"'Take advantage of' = fixed collocation. Not 'make' or 'do' advantage.",cat:"Collocations"},
+  // ─── SUBJECT-VERB AGREEMENT (+3) ───
+  {id:"g121",s:"The number of complaints _____ decreased significantly this quarter.",o:["have","has","are","were"],c:1,x:"'The number of' = singular (the number itself). HAS decreased. (vs 'A number of' = plural.)",cat:"Subject-Verb Agreement"},
+  {id:"g122",s:"Neither the supervisor nor the team members _____ aware of the change.",o:["was","is","were","has been"],c:2,x:"'Neither...nor' = verb agrees with NEAREST subject. 'Team members' = plural = WERE.",cat:"Subject-Verb Agreement"},
+  {id:"g123",s:"Each of the candidates _____ required to submit a portfolio.",o:["are","is","were","have"],c:1,x:"'Each of' = always singular. 'Each of the candidates IS required'.",cat:"Subject-Verb Agreement"},
+  // ─── CONNECTORS (+3) ───
+  {id:"g124",s:"The product launch was delayed; _____, customer interest remained high.",o:["however","because","although","despite"],c:0,x:"'However' after semicolon shows contrast. 'Although/Despite' need different structure.",cat:"Connectors"},
+  {id:"g125",s:"_____ the team worked overtime, they were unable to meet the deadline.",o:["Even though","Despite","However","Furthermore"],c:0,x:"'Even though' + clause (subject + verb). 'Despite' needs a noun phrase, not a clause.",cat:"Connectors"},
+  {id:"g126",s:"Profits rose in Q1; _____, they declined sharply in Q2.",o:["moreover","in addition","conversely","therefore"],c:2,x:"'Conversely' = introduces opposite situation. Q1 up, Q2 down = contrast/reversal.",cat:"Connectors"},
+  // ─── TENSES (+2) ───
+  {id:"g127",s:"By the time the auditors arrive, we _____ all the documents.",o:["prepare","will have prepared","have prepared","are preparing"],c:1,x:"'By the time' + present = future perfect in main clause. Action completed before arrival.",cat:"Tenses"},
+  {id:"g128",s:"The company _____ its headquarters to Berlin three years ago.",o:["relocates","has relocated","relocated","had relocated"],c:2,x:"'Three years ago' = past simple. Specific past time marker.",cat:"Tenses"},
+  // ─── PREPOSITIONS (+2) ───
+  {id:"g129",s:"The new policy will go into _____ on January 1st.",o:["action","effect","place","practice"],c:1,x:"'Go into effect' = become active/operational. Fixed expression for laws and policies.",cat:"Prepositions"},
+  {id:"g130",s:"Ms. Rivera is in _____ of the company's European operations.",o:["charge","control","lead","head"],c:0,x:"'In charge of' = responsible for managing. Fixed prepositional phrase.",cat:"Prepositions"},
+{id:"g130",s:"Ms. Rivera is in _____ of the company's European operations.",o:["charge","control","lead","head"],c:0,x:"'In charge of' = responsible for managing. Fixed prepositional phrase.",cat:"Prepositions"},
+  // ─── BATCH 3 (g131–g160) ───
+  // ─── PASSIVE VOICE (+4) ───
+  {id:"g131",s:"The factory floor _____ thoroughly before the safety inspection.",o:["cleaned","was cleaned","has cleaning","is cleaning"],c:1,x:"Passive: the floor was cleaned (by someone). Past simple passive for completed past action.",cat:"Passive Voice"},
+  {id:"g132",s:"Over 300 complaints _____ since the product recall was announced.",o:["received","have been received","are receiving","had receiving"],c:1,x:"'Since' = present perfect passive. 'Have been received' — action started in past, continues to now.",cat:"Passive Voice"},
+  {id:"g133",s:"The faulty items are currently _____ by the quality team.",o:["inspecting","inspected","being inspected","been inspected"],c:2,x:"Present continuous passive: 'are being inspected' = in progress right now.",cat:"Passive Voice"},
+  {id:"g134",s:"The project deadline cannot _____ without the client's approval.",o:["extend","be extended","extending","to extend"],c:1,x:"Modal passive: 'cannot be extended'. Cannot + be + past participle.",cat:"Passive Voice"},
+  // ─── ARTICLES (+3) ───
+  {id:"g135",s:"_____ CEO announced the restructuring plan at the annual meeting.",o:["A","An","The","—"],c:2,x:"'The CEO' = specific person known to both speaker and listener. Definite article.",cat:"Articles"},
+  {id:"g136",s:"We are looking for _____ experienced project manager to join our team.",o:["a","an","the","—"],c:1,x:"'An' before vowel sound. 'Experienced' starts with a vowel sound. Non-specific person = indefinite.",cat:"Articles"},
+  {id:"g137",s:"_____ advice she gave during the meeting proved extremely useful.",o:["A","An","The","Some"],c:2,x:"'The advice' = specific advice (she gave during the meeting). 'Advice' is uncountable — no 'a/an'.",cat:"Articles"},
+  // ─── COMPARATIVES (+3) ───
+  {id:"g138",s:"The more carefully you proofread, the _____ errors you will find.",o:["few","fewer","fewest","less"],c:1,x:"'The more... the fewer' = double comparative. 'Fewer' for countable nouns (errors).",cat:"Comparatives"},
+  {id:"g139",s:"Our delivery times are _____ to those of our main competitors.",o:["similar","similarly","similarity","more similar"],c:0,x:"'Similar to' = adjective + preposition. Fixed collocation. Not 'similarly to'.",cat:"Comparatives"},
+  {id:"g140",s:"The premium package is almost three times as _____ as the basic one.",o:["expensive","expensively","expense","more expensive"],c:0,x:"'Three times as [adjective] as' = multiplier comparison. Base adjective, no comparative form.",cat:"Comparatives"},
+  // ─── CONDITIONALS (+3) ───
+  {id:"g141",s:"Unless the payment _____ by the 15th, a late fee will be applied.",o:["receives","is received","will receive","receiving"],c:1,x:"'Unless' = 'if not'. Passive needed: payment is received (by us). Present simple in conditional clause.",cat:"Conditionals"},
+  {id:"g142",s:"We would have launched on schedule if the supplier _____ the materials sooner.",o:["delivers","delivered","had delivered","would deliver"],c:2,x:"Third conditional: if + past perfect. 'Had delivered' = unreal past condition.",cat:"Conditionals"},
+  {id:"g143",s:"If you _____ any questions, please do not hesitate to contact us.",o:["had","have","would have","will have"],c:1,x:"First conditional / zero conditional: 'If you have' = present simple. Polite business formula.",cat:"Conditionals"},
+  // ─── GERUNDS vs INFINITIVES (+3) ───
+  {id:"g144",s:"The manager suggested _____ the team meeting to Thursday.",o:["to move","moving","move","to moving"],c:1,x:"'Suggest' takes gerund (-ing). 'Suggested moving'. Never 'suggest to do'.",cat:"Gerunds vs Infinitives"},
+  {id:"g145",s:"We can't risk _____ the contract over a minor disagreement.",o:["to lose","losing","lose","to losing"],c:1,x:"'Risk' always takes gerund (-ing). 'Risk losing'.",cat:"Gerunds vs Infinitives"},
+  {id:"g146",s:"The company expects all staff _____ the new guidelines by Monday.",o:["following","to follow","follow","to following"],c:1,x:"'Expect + object + to-infinitive'. 'Expects staff to follow'.",cat:"Gerunds vs Infinitives"},
+  // ─── RELATIVE PRONOUNS (+3) ───
+  {id:"g147",s:"The year _____ the company was founded was marked by a major recession.",o:["which","when","where","that"],c:1,x:"'When' = relative adverb for time. 'The year when the company was founded'.",cat:"Relative Pronouns"},
+  {id:"g148",s:"Ms. Nakamura, _____ I worked with in Seoul, is now heading the Paris office.",o:["who","whom","that","whose"],c:1,x:"'Whom' = object pronoun. 'I worked with HER' → 'whom I worked with'. Formal register for TOEIC.",cat:"Relative Pronouns"},
+  {id:"g149",s:"The department _____ budget was cut will need to prioritize differently.",o:["who","which","whose","that"],c:2,x:"'Whose' = possession. The department's budget = whose budget. Works for things too, not just people.",cat:"Relative Pronouns"},
+  // ─── COLLOCATIONS (+3) ───
+  {id:"g150",s:"The company has _____ significant progress in reducing waste.",o:["done","made","taken","given"],c:1,x:"'Make progress' = fixed collocation. Not 'do progress' or 'take progress'.",cat:"Collocations"},
+  {id:"g151",s:"We _____ priority to customer satisfaction above all else.",o:["make","do","give","take"],c:2,x:"'Give priority to' = fixed collocation. Also valid: 'give something priority'.",cat:"Collocations"},
+  {id:"g152",s:"The team has _____ into account all of the client's requirements.",o:["put","made","taken","given"],c:2,x:"'Take into account' = fixed collocation meaning to consider. Also: 'take account of'.",cat:"Collocations"},
+  // ─── TENSES (+3) ───
+  {id:"g153",s:"The marketing team _____ on the campaign since early January.",o:["works","is working","has been working","worked"],c:2,x:"'Since early January' = present perfect continuous. Action started in past, still ongoing.",cat:"Tenses"},
+  {id:"g154",s:"Once the renovations _____, the office will reopen to the public.",o:["complete","are completed","will complete","completing"],c:1,x:"'Once' + present simple (or passive) for future time clause. Not 'will'. Passive because renovations are completed by workers.",cat:"Tenses"},
+  {id:"g155",s:"Last quarter, the firm _____ a record number of new clients.",o:["attracts","attracted","has attracted","was attracting"],c:1,x:"'Last quarter' = specific past time. Past simple: 'attracted'.",cat:"Tenses"},
+  // ─── SUBJECT-VERB AGREEMENT (+2) ───
+  {id:"g156",s:"The committee _____ divided on how to allocate the remaining funds.",o:["are","is","have","were"],c:1,x:"'Committee' = collective noun, usually singular in American English. 'The committee IS divided.'",cat:"Subject-Verb Agreement"},
+  {id:"g157",s:"Three hours _____ enough time to complete the assessment.",o:["are","is","were","have"],c:1,x:"Time/money/distance as a unit = singular. 'Three hours IS enough' (treated as one block of time).",cat:"Subject-Verb Agreement"},
+  // ─── PREPOSITIONS (+2) ───
+  {id:"g158",s:"The training session will take place _____ March 5th and 7th.",o:["from","between","during","within"],c:1,x:"'Between' + two specific points. 'Between March 5th and 7th'. 'From' needs 'to'.",cat:"Prepositions"},
+  {id:"g159",s:"All expenses must be approved _____ advance by the department head.",o:["on","at","in","by"],c:2,x:"'In advance' = beforehand. Fixed prepositional phrase.",cat:"Prepositions"},
+  // ─── CONNECTORS (+1) ───
+  {id:"g160",s:"The prototype passed all safety tests; _____, it is now ready for production.",o:["therefore","however","although","despite"],c:0,x:"'Therefore' = as a result (cause → effect). Tests passed → ready for production. Logical consequence.",cat:"Connectors"},
+
 ];
+
+// ─── MOCK TEST 1 — PART 5 (15 questions) ───
+var MOCK1_P5 = [
+  // Easy (1-5)
+  {id:"m1p5_1",s:"All employees are expected to _____ the dress code policy.",o:["follow","following","followed","follows"],c:0,x:"'Expected to' + base verb (infinitive). 'To follow'.",cat:"Gerunds vs Infinitives"},
+  {id:"m1p5_2",s:"The package _____ delivered to the wrong address yesterday.",o:["is","was","has","were"],c:1,x:"Past simple passive: 'was delivered'. 'Yesterday' = past time marker.",cat:"Passive Voice"},
+  {id:"m1p5_3",s:"Ms. Tanaka has worked in finance _____ over ten years.",o:["since","for","during","while"],c:1,x:"'For' + duration (ten years). 'Since' + point in time.",cat:"Prepositions"},
+  {id:"m1p5_4",s:"The seminar was very _____; everyone learned a lot.",o:["inform","informative","information","informatively"],c:1,x:"Adjective needed after 'was very'. 'Informative' = adjective form.",cat:"Word Families"},
+  {id:"m1p5_5",s:"_____ the price increase, sales remained strong.",o:["Despite","Although","However","Because"],c:0,x:"'Despite' + noun phrase ('the price increase'). 'Although' needs a clause.",cat:"Connectors"},
+  // Medium (6-10)
+  {id:"m1p5_6",s:"The report, _____ findings were unexpected, has been shared with the board.",o:["which","whose","that","whom"],c:1,x:"'Whose findings' = possessive relative pronoun. The report's findings.",cat:"Relative Pronouns"},
+  {id:"m1p5_7",s:"Each department _____ responsible for submitting its own budget proposal.",o:["are","is","were","have"],c:1,x:"'Each' = always singular. 'Each department IS responsible.'",cat:"Subject-Verb Agreement"},
+  {id:"m1p5_8",s:"The marketing director recommended _____ the campaign launch until September.",o:["to delay","delaying","delay","to delaying"],c:1,x:"'Recommend' takes gerund (-ing). 'Recommended delaying'. Never 'recommend to do'.",cat:"Gerunds vs Infinitives"},
+  {id:"m1p5_9",s:"Revenue in Q3 was _____ higher than the same period last year.",o:["substance","substantial","substantially","substantiate"],c:2,x:"Adverb 'substantially' modifies comparative 'higher'.",cat:"Word Families"},
+  {id:"m1p5_10",s:"If the merger _____ approved, over 200 new positions will be created.",o:["is","was","will be","would be"],c:0,x:"First conditional: If + present simple, will + verb. Real future possibility.",cat:"Conditionals"},
+  // Hard (11-15)
+  {id:"m1p5_11",s:"Not only did the company meet its targets, _____ it exceeded them by 15%.",o:["and","but","so","yet"],c:1,x:"'Not only... but (also)' = fixed correlative conjunction pair.",cat:"Connectors"},
+  {id:"m1p5_12",s:"The training must be completed _____ to the employee's first day.",o:["prior","advance","previous","before"],c:0,x:"'Prior to' = formal for 'before'. Fixed prepositional phrase. 'In advance of' also works but 'advance' alone doesn't.",cat:"Prepositions"},
+  {id:"m1p5_13",s:"Had the client _____ us earlier, we could have resolved the issue.",o:["contact","contacted","contacting","been contacted"],c:1,x:"Third conditional inversion: 'Had + subject + past participle'. Had the client contacted us.",cat:"Conditionals"},
+  {id:"m1p5_14",s:"The number of attendees at this year's conference _____ a new record.",o:["reach","reaches","reaching","have reached"],c:1,x:"'The number of' = singular subject → singular verb. 'The number reaches'. Present simple for stating facts.",cat:"Subject-Verb Agreement"},
+  {id:"m1p5_15",s:"The new policy has been designed to ensure that all staff are treated _____.",o:["equal","equalize","equally","equality"],c:2,x:"Adverb 'equally' modifies passive verb 'are treated'. How are they treated? Equally.",cat:"Word Families"},
+];
+
+// ─── MOCK TEST 2 — PART 5 (15 questions) ───
+var MOCK2_P5 = [
+  // Easy (1-5)
+  {id:"m2p5_1",s:"Please make sure the conference room _____ before the meeting starts.",o:["prepares","is prepared","preparing","was preparing"],c:1,x:"Passive needed: the room is prepared (by someone). Present simple passive for instructions.",cat:"Passive Voice"},
+  {id:"m2p5_2",s:"The company plans to _____ its product line next year.",o:["expansion","expand","expansive","expanding"],c:1,x:"'Plans to' + base verb (infinitive). 'To expand'.",cat:"Word Families"},
+  {id:"m2p5_3",s:"The workshop will be held _____ the third floor of the main building.",o:["in","at","on","by"],c:2,x:"'On' + floor number. 'On the third floor'. Fixed expression.",cat:"Prepositions"},
+  {id:"m2p5_4",s:"Mr. Benson has been with the company _____ it was founded in 2005.",o:["for","during","since","while"],c:2,x:"'Since' + point in time (2005 / it was founded). 'For' + duration.",cat:"Tenses"},
+  {id:"m2p5_5",s:"The budget was reduced; _____, the team managed to deliver on time.",o:["therefore","furthermore","nevertheless","consequently"],c:2,x:"'Nevertheless' = despite that (contrast). Budget cut BUT still delivered.",cat:"Connectors"},
+  // Medium (6-10)
+  {id:"m2p5_6",s:"The firm is looking for a candidate _____ experience includes international sales.",o:["who","whom","whose","which"],c:2,x:"'Whose experience' = possessive. The candidate's experience.",cat:"Relative Pronouns"},
+  {id:"m2p5_7",s:"Neither the manager nor the supervisors _____ informed about the change.",o:["was","is","were","has"],c:2,x:"'Neither...nor' → verb agrees with nearest subject. 'Supervisors' = plural = WERE.",cat:"Subject-Verb Agreement"},
+  {id:"m2p5_8",s:"If we had started the project earlier, we _____ it by now.",o:["finish","will finish","would finish","would have finished"],c:3,x:"Third conditional: If + past perfect, would have + past participle. Unreal past result.",cat:"Conditionals"},
+  {id:"m2p5_9",s:"The CEO expects all managers _____ the quarterly targets.",o:["meeting","to meet","meet","met"],c:1,x:"'Expect + object + to-infinitive'. Expects managers to meet.",cat:"Gerunds vs Infinitives"},
+  {id:"m2p5_10",s:"Annual inspections are carried out to ensure _____ with safety regulations.",o:["comply","compliant","compliance","compliantly"],c:2,x:"'Ensure compliance' — noun needed after 'ensure' + with phrase.",cat:"Word Families"},
+  // Hard (11-15)
+  {id:"m2p5_11",s:"_____ carefully the proposal was written, it failed to convince the board.",o:["However","Despite","Although","Regardless"],c:0,x:"'However + adjective/adverb + clause' = concessive. 'However carefully' = no matter how carefully.",cat:"Connectors"},
+  {id:"m2p5_12",s:"The deadline by _____ all applications must be received is March 31st.",o:["that","when","whom","which"],c:3,x:"'By which' — preposition + relative pronoun for things. 'The deadline by which' = formal register.",cat:"Relative Pronouns"},
+  {id:"m2p5_13",s:"Employees are reminded that personal devices _____ during meetings.",o:["must not use","must not be using","must not be used","must not have used"],c:2,x:"Passive with modal: devices must not be used (by employees). Object becomes subject.",cat:"Passive Voice"},
+  {id:"m2p5_14",s:"The more experience a candidate has, the _____ their chances of being hired.",o:["good","better","best","well"],c:1,x:"Double comparative: 'The more... the better'. Comparative form, not superlative.",cat:"Comparatives"},
+  {id:"m2p5_15",s:"Ms. Laurent, along with her colleagues, _____ attending the summit next week.",o:["are","is","were","have"],c:1,x:"'Along with' doesn't change the subject. 'Ms. Laurent IS attending.' Subject = Ms. Laurent (singular).",cat:"Subject-Verb Agreement"},
+];
+
+// ─── MOCK TEST 1 — PART 6 (2 texts, 8 questions) ───
+var MOCK1_P6 = [
+  { id:"m1p6t1", type:"Email", from:"Sustainability Committee", to:"All Staff", subject:"Green Office Initiative",
+    parts:[
+      {text:"Dear colleagues,\n\nWe are excited to announce the launch of our Green Office Initiative, a company-wide program aimed at reducing our environmental footprint. Starting next month, several changes will be "},
+      {blank:true,options:["introduced","introducing","introduction","introductory"],correct:0,x:"Future passive: 'will be introduced'. Past participle after 'be'."},
+      {text:" across all departments.\n\nFirst, single-use plastic cups will be replaced with reusable alternatives in all break rooms. Employees are encouraged to bring their own mugs. "},
+      {blank:true,options:["Additionally","Nevertheless","Although","Whereas"],correct:0,x:"'Additionally' adds another measure. The text is listing multiple green initiatives."},
+      {text:", we will be installing motion-sensor lighting on every floor to reduce energy "},
+      {blank:true,options:["consume","consumer","consumption","consuming"],correct:2,x:"Noun needed after 'energy'. 'Energy consumption' = standard business collocation."},
+      {text:" by an estimated 30%.\n\nWe believe that small changes can lead to significant results when everyone participates.\n\n"},
+      {blank:true,options:[
+        "A detailed guide with tips for reducing waste at your workstation will be emailed next week.",
+        "The company's annual revenue exceeded expectations last quarter.",
+        "Interviews for the open marketing position will begin on Monday.",
+        "The parking lot will be resurfaced over the weekend."
+      ],correct:0,x:"Sentence insertion: must promise follow-up information relevant to the green initiative."},
+    ]},
+  { id:"m1p6t2", type:"Notice", from:"Conference Organizing Committee", to:"Registered Attendees", subject:"Asia-Pacific Business Forum — Practical Information",
+    parts:[
+      {text:"Dear attendees,\n\nThank you for registering for the 12th Annual Asia-Pacific Business Forum, which will take place on October 14-16 at the Grand Meridian Hotel in Singapore.\n\nPlease note that on-site registration will open at 8:00 AM on October 14th. All participants must present a valid photo ID to "},
+      {blank:true,options:["collect","collecting","collection","collector"],correct:0,x:"'To collect' — infinitive of purpose after 'must present ID'. Base verb after 'to'."},
+      {text:" their conference badges. The opening keynote by Dr. Aisha Patel will begin "},
+      {blank:true,options:["promptly","prompt","promptness","prompted"],correct:0,x:"Adverb 'promptly' modifies the verb 'will begin'. 'Begin promptly at 9:00 AM'."},
+      {text:" at 9:00 AM in the Grand Ballroom.\n\nLunch will be provided in the atrium on all three days. "},
+      {blank:true,options:["However","Therefore","Furthermore","Despite"],correct:0,x:"'However' introduces a contrasting point — lunch is provided BUT dietary needs require advance notice."},
+      {text:", attendees with specific dietary requirements are kindly asked to notify us at least 48 hours in advance.\n\n"},
+      {blank:true,options:[
+        "For the full schedule and speaker list, please visit the event website.",
+        "The hotel was recently renovated and features a rooftop swimming pool.",
+        "Our company is currently hiring software engineers in three locations.",
+        "Last year's forum attracted over 2,000 participants."
+      ],correct:0,x:"Sentence insertion: practical closing that directs attendees to find more details."},
+    ]},
+];
+
+// ─── MOCK TEST 2 — PART 6 (2 texts, 8 questions) ───
+var MOCK2_P6 = [
+  { id:"m2p6t1", type:"Letter", from:"Greenfield Supplies Ltd.", to:"Ms. Johansson, Procurement Director", subject:"Contract Renewal Proposal",
+    parts:[
+      {text:"Dear Ms. Johansson,\n\nThank you for your continued partnership over the past three years. As our current supply agreement is "},
+      {blank:true,options:["approaching","approached","approach","approachable"],correct:0,x:"Present continuous: 'is approaching' its expiration date. Action in progress."},
+      {text:" its expiration date on December 31st, we would like to propose a renewal under updated terms.\n\nBased on "},
+      {blank:true,options:["mutually","mutual","mutuality","mutualize"],correct:1,x:"Adjective before noun: 'mutual benefit'. 'Based on mutual benefit'."},
+      {text:" benefit, we are prepared to offer a 7% volume discount on all orders exceeding 500 units per quarter. "},
+      {blank:true,options:["In return","In contrast","In spite of this","In conclusion"],correct:0,x:"'In return' = as a reciprocal condition. We offer a discount; in return, we ask for commitment."},
+      {text:", we would ask for a minimum two-year commitment to ensure supply chain stability.\n\n"},
+      {blank:true,options:[
+        "We would welcome the opportunity to discuss these terms at your earliest convenience.",
+        "Our warehouse is located just 15 minutes from the city center.",
+        "The company recently celebrated its 25th anniversary.",
+        "Please note that the cafeteria menu has been updated."
+      ],correct:0,x:"Sentence insertion: polite business closing inviting further discussion about the proposal."},
+    ]},
+  { id:"m2p6t2", type:"Memo", from:"Human Resources", to:"All Managers", subject:"Employee Wellness Program",
+    parts:[
+      {text:"To all department managers,\n\nAs part of our ongoing commitment to employee well-being, we are pleased to announce the launch of a comprehensive Wellness Program, effective February 1st.\n\nThe program includes access to an on-site fitness center, weekly stress management workshops, and "},
+      {blank:true,options:["confidential","confidentially","confidence","confide"],correct:0,x:"Adjective before noun: 'confidential counseling sessions'. Describes the type of sessions."},
+      {text:" counseling sessions. Participation is entirely voluntary, and all activities will take place "},
+      {blank:true,options:["while","during","throughout","within"],correct:1,x:"'During lunch breaks' — 'during' + noun phrase. 'While' would need a clause."},
+      {text:" lunch breaks or after working hours to minimize disruption.\n\nManagers are asked to inform their teams about the program and to "},
+      {blank:true,options:["encourage","encouraging","encouragement","encouraged"],correct:0,x:"'To encourage' — infinitive after 'asked to inform... and to encourage'. Parallel structure."},
+      {text:" participation. Research consistently shows that wellness initiatives lead to higher productivity and lower absenteeism.\n\n"},
+      {blank:true,options:[
+        "A detailed brochure outlining all available services will be distributed by January 25th.",
+        "The quarterly sales report is due by the end of this week.",
+        "Our new branch in Melbourne will open in March.",
+        "Please remember to submit your expense reports on time."
+      ],correct:0,x:"Sentence insertion: promises follow-up information about the wellness program before launch date."},
+    ]},
+];
+
+// ─── MOCK TEST 1 — PART 7 (7 passages, 26 questions) ───
+var MOCK1_P7 = [
+  { id:"m1p7_1", type:"Email",
+    text:"From: Alan Pearce, Facilities Manager\nTo: All Employees — Oakville Campus\nSubject: Cafeteria Renovation\nDate: September 4\n\nDear colleagues,\n\nI am writing to inform you that the ground-floor cafeteria will be closed for renovations from September 18 to October 13. The renovation will include an expanded seating area, new kitchen equipment, and improved ventilation systems.\n\nDuring the closure, a temporary food service station will operate in Conference Hall B from 11:30 AM to 2:00 PM on weekdays. The menu will be limited to sandwiches, salads, and beverages. Employees with dietary restrictions are encouraged to contact catering@oakville.com in advance so that appropriate options can be arranged.\n\nVending machines on floors 2, 4, and 6 will remain operational throughout the renovation period. Additionally, a list of nearby restaurants offering corporate discounts has been posted on the company intranet.\n\nWe apologize for the inconvenience and look forward to unveiling the improved cafeteria in mid-October.",
+    questions:[
+      {q:"What is the purpose of this email?",options:["To announce new menu items","To inform staff about a cafeteria closure","To introduce a new catering company","To invite employees to a lunch event"],correct:1,x:"The email informs employees that the cafeteria will close for renovations."},
+      {q:"Where will temporary food service be available?",options:["On the sixth floor","In the parking lot","In Conference Hall B","At nearby restaurants only"],correct:2,x:"'A temporary food service station will operate in Conference Hall B.'"},
+      {q:"What should employees with dietary restrictions do?",options:["Bring their own food","Email the catering service in advance","Speak to the facilities manager","Wait until the cafeteria reopens"],correct:1,x:"'Employees with dietary restrictions are encouraged to contact catering@oakville.com in advance.'"},
+      {q:"When is the renovated cafeteria expected to reopen?",options:["September 18","October 1","Mid-October","November 1"],correct:2,x:"'We look forward to unveiling the improved cafeteria in mid-October.' The closure runs through October 13."},
+    ]},
+  { id:"m1p7_2", type:"Advertisement",
+    text:"SKYLINE EXECUTIVE TRAVEL — YOUR BUSINESS TRIP, SIMPLIFIED\n\nSkyline Executive Travel provides premium corporate travel management for companies of all sizes. Let us handle the logistics so you can focus on business.\n\nOur services include:\n- Flight and hotel booking with negotiated corporate rates\n- 24/7 multilingual support for travelers abroad\n- Customized travel policies and expense tracking\n- VIP airport lounge access for frequent travelers\n\nNew clients receive a complimentary travel audit — we analyze your current spending and identify savings of up to 25%.\n\nJoin over 800 companies that trust Skyline with their corporate travel.\n\nContact us: sales@skylinetravel.com | (555) 321-7890\nVisit: www.skylinetravel.com",
+    questions:[
+      {q:"What type of service does Skyline offer?",options:["Personal vacation planning","Corporate travel management","Airline pilot training","Airport shuttle services"],correct:1,x:"'Skyline Executive Travel provides premium corporate travel management.'"},
+      {q:"What do new clients receive?",options:["A free flight","A 25% discount on all bookings","A complimentary travel audit","VIP lounge membership"],correct:2,x:"'New clients receive a complimentary travel audit.'"},
+      {q:"What is suggested about the potential savings?",options:["Savings are guaranteed at 25%","Savings of up to 25% may be identified","All clients save exactly 25%","Savings apply only to hotel bookings"],correct:1,x:"'We analyze your current spending and identify savings of up to 25%.' 'Up to' = maximum, not guaranteed."},
+    ]},
+  { id:"m1p7_3", type:"Article",
+    text:"BUSINESS QUARTERLY — LEADERSHIP TRENDS\n\nA new study published by the Harmon Institute of Management suggests that companies with diverse leadership teams outperform their less diverse counterparts by an average of 19% in terms of revenue growth.\n\nThe research, which tracked 1,200 mid-to-large companies over a five-year period, found that organizations with at least 30% women in senior management roles reported higher employee engagement, stronger innovation metrics, and lower executive turnover.\n\n'Diversity is not just an ethical imperative — it's a business advantage,' said Professor Rachel Okonkwo, the study's lead author. 'The data is unambiguous.'\n\nHowever, the study also revealed that progress has been slow. Only 22% of the companies surveyed met the 30% threshold in 2025, up from 18% in 2020. The report recommends that companies implement structured mentoring programs and transparent promotion criteria to accelerate change.\n\nIndustry analysts note that investor pressure is also playing a role, with several major funds now requiring portfolio companies to report diversity metrics annually.",
+    questions:[
+      {q:"What is the main finding of the Harmon Institute study?",options:["Diverse leadership teams generate higher revenue growth","Women make better executives than men","Diversity has no effect on business performance","Small companies are more diverse than large ones"],correct:0,x:"'Companies with diverse leadership teams outperform their counterparts by an average of 19% in revenue growth.'"},
+      {q:"How many companies were studied?",options:["30","200","1,200","5,000"],correct:2,x:"'The research tracked 1,200 mid-to-large companies over a five-year period.'"},
+      {q:"What percentage of companies met the 30% diversity threshold in 2025?",options:["18%","19%","22%","30%"],correct:2,x:"'Only 22% of the companies surveyed met the 30% threshold in 2025, up from 18% in 2020.'"},
+      {q:"What does the report recommend?",options:["Hiring only women for senior roles","Reducing the number of executives","Implementing mentoring programs and transparent promotion criteria","Eliminating annual performance reviews"],correct:2,x:"'The report recommends structured mentoring programs and transparent promotion criteria.'"},
+    ]},
+  { id:"m1p7_4", type:"Notice",
+    text:"MERIDIAN BUSINESS PARK — PARKING UPDATE\n\nEffective November 1, the following changes will apply to parking at Meridian Business Park:\n\n1. All vehicles must display a valid parking permit. Permits can be obtained from the management office (Building A, Suite 102) between 9:00 AM and 5:00 PM.\n\n2. Visitor parking (Lot C) is now limited to a maximum of 4 hours. Visitors requiring longer access should register at the front desk upon arrival.\n\n3. Electric vehicle charging stations have been installed in Lot B (spaces 45-52). These spaces are reserved exclusively for vehicles actively charging.\n\n4. Unauthorized vehicles will be subject to a $75 fine and may be towed at the owner's expense.\n\nFor questions, contact facilities@meridianbp.com or extension 4400.",
+    questions:[
+      {q:"Where can employees obtain a parking permit?",options:["Online only","From the front desk of their building","From the management office in Building A","From any security guard"],correct:2,x:"'Permits can be obtained from the management office (Building A, Suite 102).'"},
+      {q:"How long can visitors park in Lot C?",options:["1 hour","2 hours","4 hours","Unlimited"],correct:2,x:"'Visitor parking (Lot C) is now limited to a maximum of 4 hours.'"},
+      {q:"What happens to unauthorized vehicles?",options:["They receive a warning","They are fined $75 and may be towed","They are relocated to Lot C","Their owners are emailed a notice"],correct:1,x:"'Unauthorized vehicles will be subject to a $75 fine and may be towed.'"},
+    ]},
+  { id:"m1p7_5", type:"Letter",
+    text:"Dear Ms. Alvarez,\n\nThank you for attending the interview for the position of Regional Sales Manager on August 22. We appreciated the opportunity to learn more about your experience and qualifications.\n\nAfter careful consideration, we are pleased to offer you the position, subject to the following terms:\n\n- Start date: October 1\n- Annual salary: $92,000\n- Benefits: Full medical and dental coverage, effective after a 90-day probationary period\n- Reporting to: James Whitfield, VP of Sales\n\nPlease review the attached employment contract and return a signed copy by September 10. If you have any questions about the terms, do not hesitate to contact me.\n\nWe are confident that your expertise in the Latin American market will be a tremendous asset to our team, and we look forward to welcoming you aboard.\n\nSincerely,\nCatherine Moreau\nDirector of Human Resources\nAtlas Global Inc.",
+    questions:[
+      {q:"What is the purpose of this letter?",options:["To reject a job application","To schedule a second interview","To offer a job to a candidate","To request a reference check"],correct:2,x:"'We are pleased to offer you the position' — this is a formal job offer letter."},
+      {q:"When will benefits become effective?",options:["On October 1","After 30 days","After 90 days","Immediately upon hiring"],correct:2,x:"'Full medical and dental coverage, effective after a 90-day probationary period.'"},
+      {q:"What must Ms. Alvarez do by September 10?",options:["Complete a background check","Start the onboarding process","Return a signed copy of the contract","Contact James Whitfield"],correct:2,x:"'Please return a signed copy by September 10.'"},
+      {q:"What is suggested about Ms. Alvarez's background?",options:["She has experience in the Latin American market","She previously worked at Atlas Global","She is relocating from another country","She has a background in human resources"],correct:0,x:"'Your expertise in the Latin American market will be a tremendous asset.'"},
+    ]},
+  { id:"m1p7_6", type:"Memo",
+    text:"To: All Department Heads\nFrom: Priya Sharma, Chief Financial Officer\nDate: January 15\nRe: Q1 Budget Submissions\n\nThis is a reminder that all Q1 departmental budget proposals are due by January 31. Late submissions will not be accepted, and departments that fail to submit on time will have their budgets frozen at the previous quarter's levels.\n\nPlease use the updated template available on the finance portal. Key changes from last quarter include:\n\n- A new line item for sustainability-related expenditures\n- Revised travel expense categories (domestic vs. international must now be reported separately)\n- A mandatory section for projected ROI on any capital expenditure over $10,000\n\nAll proposals must be approved by your division VP before submission to the finance department. If your VP is unavailable due to travel, you may obtain approval from the Deputy COO.\n\nBudget review meetings will be scheduled during the week of February 10-14. You will receive your time slot by February 3.\n\nPlease contact the finance team at x2200 with any questions.",
+    questions:[
+      {q:"What happens if a department misses the January 31 deadline?",options:["The department head will be fined","The budget will be frozen at previous levels","The proposal will be reviewed late","Nothing — the deadline is flexible"],correct:1,x:"'Departments that fail to submit on time will have their budgets frozen at the previous quarter's levels.'"},
+      {q:"What is new in the updated template?",options:["A section for employee bonuses","A sustainability expenditure line item","A customer feedback section","A simplified approval process"],correct:1,x:"'Key changes include a new line item for sustainability-related expenditures.'"},
+      {q:"Who can approve a proposal if the VP is traveling?",options:["The CFO","Any department head","The Deputy COO","The finance team"],correct:2,x:"'If your VP is unavailable due to travel, you may obtain approval from the Deputy COO.'"},
+    ]},
+  { id:"m1p7_7", type:"Double Passage",
+    text:"--- PASSAGE 1: Email ---\nFrom: David Koh, Event Coordinator\nTo: All Staff — Singapore Office\nSubject: Annual Team-Building Retreat\nDate: May 3\n\nDear colleagues,\n\nI am pleased to confirm that this year's team-building retreat will take place on Saturday, June 7, at Forest Adventure Park in Sentosa. The day will include outdoor team challenges, a workshop on cross-departmental collaboration, and a barbecue dinner.\n\nTransportation: A chartered bus will depart from the office lobby at 8:30 AM sharp and return by approximately 8:00 PM. Employees who prefer to drive may use the free parking at the venue.\n\nPlease RSVP by May 20 using the link on the intranet. Indicate whether you will take the bus or drive yourself, and note any food allergies.\n\nAttendance is strongly encouraged but not mandatory. However, please note that participants will receive a half-day off on the following Monday as a thank-you.\n\n--- PASSAGE 2: Online Comment Thread ---\nPosted by: Rachel Tan (Marketing), May 5\nSounds fun! Last year's retreat at Pulau Ubin was great. I'm signing up for the bus — parking in Sentosa is always a nightmare. Does anyone know if the barbecue will have vegetarian options? I sent David an email but haven't heard back yet.\n\nReply by: Kevin Ng (Operations), May 5\nRachel — I asked David yesterday and he confirmed there will be vegetarian and halal options. Also, the workshop is being led by an external facilitator from MindBridge Consulting. Heard great things about them.\n\nReply by: Siti Aminah (Finance), May 6\nI can't make the bus at 8:30 — I have a dentist appointment that morning. I'll drive and meet everyone there. Kevin, do you know roughly what time the activities start?\n\nReply by: Kevin Ng (Operations), May 6\nSiti — David said the first activity kicks off at 10:00 AM, so you should be fine if you arrive by 9:45.",
+    questions:[
+      {q:"What benefit do retreat participants receive?",options:["A cash bonus","A free lunch on Monday","A half-day off on Monday","An extra vacation day"],correct:2,x:"'Participants will receive a half-day off on the following Monday as a thank-you.'"},
+      {q:"Why does Rachel prefer to take the bus?",options:["She doesn't own a car","Parking in Sentosa is difficult","The bus is more comfortable","She wants to socialize with colleagues"],correct:1,x:"Rachel says: 'Parking in Sentosa is always a nightmare.'"},
+      {q:"What did Kevin learn about the food options?",options:["Only barbecue will be served","There will be vegetarian and halal options","Employees must bring their own food","The menu has not been decided yet"],correct:1,x:"Kevin confirms: 'There will be vegetarian and halal options.'"},
+      {q:"Why will Siti drive instead of taking the bus?",options:["She lives near the venue","She has a morning appointment","She wants to leave early","She doesn't like buses"],correct:1,x:"Siti says: 'I have a dentist appointment that morning. I'll drive and meet everyone there.'"},
+      {q:"What time should Siti arrive at the venue?",options:["8:30 AM","9:00 AM","9:45 AM","10:00 AM"],correct:2,x:"Kevin tells Siti: 'The first activity kicks off at 10:00 AM, so you should be fine if you arrive by 9:45.'"},
+    ]},
+];
+
+// ─── MOCK TEST 2 — PART 7 (7 passages, 26 questions) ───
+var MOCK2_P7 = [
+  { id:"m2p7_1", type:"Email",
+    text:"From: Nadia Berger, Project Director\nTo: Project Orion Team\nSubject: Phase 2 Timeline Update\nDate: March 17\n\nTeam,\n\nFollowing last week's client meeting, I want to share an important update regarding the Phase 2 timeline.\n\nThe client has requested that the prototype delivery date be moved from May 15 to April 28 — approximately two and a half weeks earlier than planned. After reviewing our resources with the engineering leads, I believe this is achievable, but it will require some adjustments.\n\nEffective immediately:\n- All non-essential feature requests are deferred to Phase 3\n- The testing window is compressed from 10 days to 6 days\n- Weekend work on April 5-6 and April 12-13 will be necessary (overtime will be compensated)\n\nI know this puts pressure on everyone, and I don't take that lightly. I've secured budget approval for additional contract support in the QA and front-end teams — those reinforcements should be onboard by March 24.\n\nLet's discuss the revised task assignments at tomorrow's standup (10:00 AM, Room 3B).\n\nThanks for your flexibility.",
+    questions:[
+      {q:"What is the main purpose of this email?",options:["To cancel Phase 2 of the project","To announce a team restructuring","To communicate an accelerated deadline","To request additional budget"],correct:2,x:"The email informs the team that the prototype delivery date has been moved earlier — from May 15 to April 28."},
+      {q:"By how much has the deadline been moved?",options:["One week","About two and a half weeks","One month","Two months"],correct:1,x:"'Moved from May 15 to April 28 — approximately two and a half weeks earlier.'"},
+      {q:"What will happen to non-essential feature requests?",options:["They will be cancelled entirely","They will be completed during overtime","They are deferred to Phase 3","They will be outsourced"],correct:2,x:"'All non-essential feature requests are deferred to Phase 3.'"},
+      {q:"When will additional team members start?",options:["Immediately","March 24","April 5","April 28"],correct:1,x:"'Those reinforcements should be onboard by March 24.'"},
+    ]},
+  { id:"m2p7_2", type:"Instructions",
+    text:"QUICKSCAN PRO 3000 — SETUP GUIDE\n\nThank you for purchasing the QuickScan Pro 3000 wireless document scanner. Please follow these steps to set up your device.\n\nStep 1: Charge the scanner using the included USB-C cable. A full charge takes approximately 2 hours. The indicator light will turn solid green when charging is complete.\n\nStep 2: Download the QuickScan app from the App Store or Google Play. Create an account or sign in with your existing credentials.\n\nStep 3: Enable Bluetooth on your phone or tablet. Open the QuickScan app, tap 'Add Device,' and select 'Pro 3000' from the list. The scanner will beep twice when paired successfully.\n\nStep 4: Place your document face-down on the scanning surface. Press the blue button once for a standard scan (300 dpi) or hold it for 2 seconds for a high-resolution scan (600 dpi).\n\nStep 5: Scanned documents appear automatically in the app. From there, you can save as PDF, email directly, or upload to cloud storage.\n\nTroubleshooting: If the scanner does not appear in the device list, ensure Bluetooth is enabled and that the scanner is charged. Press and hold the power button for 5 seconds to reset the device.",
+    questions:[
+      {q:"How long does a full charge take?",options:["30 minutes","1 hour","2 hours","4 hours"],correct:2,x:"'A full charge takes approximately 2 hours.'"},
+      {q:"How does the user initiate a high-resolution scan?",options:["Double-tap the blue button","Hold the blue button for 2 seconds","Select an option in the app","Press the blue button once"],correct:1,x:"'Hold it for 2 seconds for a high-resolution scan (600 dpi).'"},
+      {q:"What should a user do if the scanner does not appear in the app?",options:["Download a different app","Return the product","Hold the power button for 5 seconds to reset","Charge the device for 24 hours"],correct:2,x:"'Press and hold the power button for 5 seconds to reset the device.'"},
+    ]},
+  { id:"m2p7_3", type:"Article",
+    text:"FINANCIAL TIMES — INDUSTRY REPORT\n\nPacific Rim Logistics (PRL), one of Southeast Asia's largest freight forwarding companies, announced on Tuesday that it will invest $340 million in a new automated distribution hub near Jakarta, Indonesia. Construction is scheduled to begin in the third quarter of this year, with the facility expected to be fully operational by late 2027.\n\nThe 45,000-square-meter facility will use robotic sorting systems and AI-driven route optimization to process up to 120,000 packages per day — roughly triple the capacity of PRL's current Jakarta warehouse.\n\n'This investment positions us to meet the explosive growth in e-commerce across the region,' said CEO Michael Tan at a press conference. 'Indonesia alone saw a 38% increase in online retail orders last year.'\n\nThe expansion is partly funded by a recent $200 million bond issuance. Analysts at Eastfield Capital have given the project a positive outlook, noting that PRL's existing contracts with major e-commerce platforms provide a strong revenue base.\n\nHowever, some industry observers have raised concerns about overcapacity in the region, pointing to similar investments by competitors DHL and FedEx in neighboring countries.",
+    questions:[
+      {q:"How much is PRL investing in the new facility?",options:["$120 million","$200 million","$340 million","$450 million"],correct:2,x:"'PRL will invest $340 million in a new automated distribution hub.'"},
+      {q:"What is the expected daily capacity of the new hub?",options:["38,000 packages","45,000 packages","80,000 packages","120,000 packages"],correct:3,x:"'Process up to 120,000 packages per day — roughly triple the current capacity.'"},
+      {q:"How is the expansion partly funded?",options:["Through government grants","By selling shares on the stock market","Through a $200 million bond issuance","With profits from last quarter"],correct:2,x:"'The expansion is partly funded by a recent $200 million bond issuance.'"},
+      {q:"What concern do some industry observers have?",options:["PRL's technology is outdated","The Jakarta location is too remote","There may be overcapacity in the region","E-commerce growth is slowing down"],correct:2,x:"'Some observers have raised concerns about overcapacity in the region.'"},
+    ]},
+  { id:"m2p7_4", type:"Advertisement",
+    text:"SUMMIT LANGUAGE SOLUTIONS — CORPORATE LANGUAGE TRAINING\n\nGive your team the global advantage. Summit Language Solutions offers customized language training programs tailored to the needs of international businesses.\n\nAvailable languages: English, Mandarin, Spanish, French, German, Japanese, and Arabic.\n\nProgram options:\n- Intensive group courses (8-12 participants, 3 sessions per week)\n- One-on-one executive coaching (flexible scheduling)\n- Industry-specific modules: legal, medical, finance, and hospitality\n- Online, on-site, or hybrid delivery\n\nAll instructors hold advanced degrees and have a minimum of 5 years of corporate training experience.\n\nNew for 2026: Our AI-powered progress tracker gives managers real-time visibility into team performance and attendance.\n\nRequest a free consultation: partnerships@summitlanguage.com\nwww.summitlanguage.com | (555) 456-7890",
+    questions:[
+      {q:"What is Summit Language Solutions primarily offering?",options:["Translation services","Corporate language training","Study abroad programs","Textbook publishing"],correct:1,x:"'Summit Language Solutions offers customized language training programs tailored to international businesses.'"},
+      {q:"What is the minimum qualification for instructors?",options:["A bachelor's degree","A teaching certificate","An advanced degree and 5 years of experience","10 years of experience"],correct:2,x:"'All instructors hold advanced degrees and have a minimum of 5 years of corporate training experience.'"},
+      {q:"What new feature is available in 2026?",options:["A mobile app for students","AI-powered progress tracking for managers","Virtual reality classrooms","Free introductory courses"],correct:1,x:"'Our AI-powered progress tracker gives managers real-time visibility into team performance.'"},
+    ]},
+  { id:"m2p7_5", type:"Notice",
+    text:"IMPORTANT NOTICE — BAXTER PHARMACEUTICALS\n\nProduct Recall: VitaBoost Daily Multivitamin (60-count bottle)\nLot Numbers Affected: VB-2025-0881 through VB-2025-0920\nDate Issued: November 8, 2025\n\nBaxter Pharmaceuticals is voluntarily recalling specific lots of VitaBoost Daily Multivitamin due to a labeling error. The affected bottles contain tablets with a higher concentration of Vitamin D than indicated on the label. While the higher dosage is unlikely to cause harm in most adults, it may pose a risk for individuals with certain medical conditions.\n\nConsumers who have purchased the affected product should:\n1. Stop taking the tablets immediately\n2. Check the lot number printed on the bottom of the bottle\n3. Return the product to the place of purchase for a full refund\n\nConsumers may also contact our recall hotline at 1-800-555-0199 (Monday-Friday, 8 AM - 8 PM EST) or visit www.baxterpharma.com/recall for additional information.\n\nWe sincerely apologize for any concern this may cause and remain committed to the highest standards of product safety.",
+    questions:[
+      {q:"Why is the product being recalled?",options:["The bottles were contaminated","There is a labeling error regarding Vitamin D dosage","The tablets have expired","The packaging was damaged"],correct:1,x:"'Recalling due to a labeling error. The bottles contain a higher concentration of Vitamin D than indicated.'"},
+      {q:"What should consumers do first?",options:["Call their doctor","Return the product immediately","Stop taking the tablets","Check the company website"],correct:2,x:"Step 1 says: 'Stop taking the tablets immediately.' This is listed as the first action."},
+      {q:"How can consumers get a refund?",options:["By calling the hotline only","By returning the product to where they bought it","By mailing the product to Baxter","By filling out an online form"],correct:1,x:"'Return the product to the place of purchase for a full refund.'"},
+      {q:"What is indicated about the health risk?",options:["The higher dosage is dangerous for everyone","There is no health risk at all","Most adults are unlikely to be harmed but some may be at risk","Only children are affected"],correct:2,x:"'Unlikely to cause harm in most adults' but 'may pose a risk for individuals with certain medical conditions.'"},
+    ]},
+  { id:"m2p7_6", type:"Letter",
+    text:"Dear Mr. Okonkwo,\n\nOn behalf of the Granville Chamber of Commerce, I would like to invite you to serve as the keynote speaker at our Annual Business Excellence Awards Gala, scheduled for Saturday, March 22, at the Granville Grand Hotel.\n\nAs the founder of NovaTech Solutions and a recognized leader in the technology sector, your insights on innovation and entrepreneurship would be invaluable to our audience of over 400 local business owners and civic leaders.\n\nThe keynote address is typically 20-25 minutes, followed by a brief Q&A. Dinner will be served at 7:00 PM, with the keynote beginning at approximately 8:15 PM. We would also be honored to present you with our Distinguished Business Leader Award during the ceremony.\n\nWe are prepared to cover your travel and accommodation expenses, as well as offer an honorarium of $3,000.\n\nPlease let us know by February 15 whether you are able to accept. We would be happy to discuss any questions or special requirements you may have.\n\nWarm regards,\nEleanor Voss\nPresident, Granville Chamber of Commerce",
+    questions:[
+      {q:"What is Mr. Okonkwo being invited to do?",options:["Join the Chamber of Commerce board","Sponsor the awards gala","Deliver a keynote speech","Judge a business competition"],correct:2,x:"'I would like to invite you to serve as the keynote speaker.'"},
+      {q:"How long is the keynote expected to last?",options:["10-15 minutes","20-25 minutes","30-45 minutes","One hour"],correct:1,x:"'The keynote address is typically 20-25 minutes, followed by a brief Q&A.'"},
+      {q:"What will Mr. Okonkwo receive in addition to the honorarium?",options:["A business award","Free membership to the Chamber","A year of advertising","Stock options"],correct:0,x:"'We would also be honored to present you with our Distinguished Business Leader Award.'"},
+    ]},
+  { id:"m2p7_7", type:"Double Passage",
+    text:"--- PASSAGE 1: Job Posting ---\nPOSITION: Senior Data Analyst\nCOMPANY: Crestview Financial Group\nLOCATION: Toronto, ON (Hybrid — 3 days in office, 2 days remote)\nSALARY: $85,000 - $105,000 depending on experience\n\nCrestview Financial Group is seeking a Senior Data Analyst to join our Risk Assessment division. The ideal candidate will have:\n- A bachelor's degree in Statistics, Mathematics, or a related field (Master's preferred)\n- 4+ years of experience in data analysis, preferably in financial services\n- Advanced proficiency in SQL, Python, and data visualization tools (Tableau or Power BI)\n- Strong written and verbal communication skills\n- Experience with regulatory compliance reporting is a plus\n\nResponsibilities include developing risk models, preparing quarterly reports for senior management, and collaborating with the IT team to maintain data pipelines.\n\nBenefits: competitive health plan, 4 weeks paid vacation, annual performance bonus, and professional development allowance ($2,500/year).\n\nTo apply, submit your resume and cover letter to careers@crestviewfg.com by April 5.\n\n--- PASSAGE 2: Email ---\nFrom: James Liu\nTo: careers@crestviewfg.com\nSubject: Application — Senior Data Analyst Position\nDate: March 25\n\nDear Hiring Team,\n\nI am writing to express my interest in the Senior Data Analyst position at Crestview Financial Group.\n\nI hold a Master's degree in Applied Statistics from the University of British Columbia and have spent the past six years working as a data analyst at Meridian Insurance, where I specialize in predictive risk modeling. I am highly proficient in SQL, Python, and Tableau, and I have extensive experience preparing regulatory compliance reports for provincial and federal authorities.\n\nI am particularly drawn to this opportunity because of Crestview's reputation for innovation in financial risk management. I believe my background in insurance analytics is directly transferable to your Risk Assessment division.\n\nI have attached my resume and a portfolio of recent projects for your review. I am available for an interview at your convenience and can start with two weeks' notice.\n\nThank you for your consideration.\n\nBest regards,\nJames Liu",
+    questions:[
+      {q:"What is a preferred qualification for the position?",options:["A PhD in Finance","A Master's degree","10 years of experience","Fluency in French"],correct:1,x:"'A bachelor's degree... (Master's preferred).' A Master's is preferred but not required."},
+      {q:"What is NOT listed as a required skill?",options:["SQL proficiency","Python experience","Data visualization tools","Machine learning"],correct:3,x:"Machine learning is not mentioned. The listing requires SQL, Python, and Tableau/Power BI."},
+      {q:"How long has James Liu worked in data analysis?",options:["Two years","Four years","Six years","Ten years"],correct:2,x:"James writes: 'I have spent the past six years working as a data analyst at Meridian Insurance.'"},
+      {q:"What does James say about his regulatory experience?",options:["He has no experience with it","He has prepared compliance reports for authorities","He learned about it in university","He plans to gain this experience at Crestview"],correct:1,x:"'I have extensive experience preparing regulatory compliance reports for provincial and federal authorities.'"},
+      {q:"Based on both passages, does James meet the job requirements?",options:["No — he lacks the required degree","No — he has insufficient experience","Yes — he exceeds the minimum requirements","Yes — but only if he completes additional training"],correct:2,x:"James has a Master's (preferred), 6 years of experience (above the 4+ minimum), all required tools, and regulatory compliance experience."},
+    ]},
+];
+
 
 // ─── WORD FAMILIES DATA ───
 var WORD_FAMILIES = [
@@ -1697,13 +2090,14 @@ async function save(d) {
     daily_challenge: d.daily,
     stats: d.stats,
     module_scores: d.moduleScores,
+    mock_results: d.mockResults,
     mission: d.mission,
     avatar: d.avatar || "⚔️",
     theme: d.theme || "dark",
     unlocked_ach: d.unlockedAch || [],
   });
 }
-function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark"};}
+function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark"};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -1777,6 +2171,29 @@ function getDailyMission(u){
   var seed=0;var d=today();for(var j=0;j<d.length;j++)seed+=d.charCodeAt(j);
   var pick=candidates[seed%Math.min(3,candidates.length)];
   return{status:"new",actId:pick.mod.id,mod:pick.mod,reason:pick.reason};
+}
+
+// ─── MOCK TEST HELPERS ───
+function estimateToeic(raw,total){
+  var pct=raw/total;
+  // Piecewise curve: harder to gain points at the top, like real TOEIC
+  var est;
+  if(pct<0.4)est=5+pct*2.5*155;      // 5-160
+  else if(pct<0.7)est=160+(pct-0.4)/0.3*180; // 160-340
+  else if(pct<0.9)est=340+(pct-0.7)/0.2*110; // 340-450
+  else est=450+(pct-0.9)/0.1*45;              // 450-495
+  est=Math.round(est/5)*5;
+  return Math.max(5,Math.min(495,est));
+}
+function canUnlockMock(u,mockId){
+  if(!u||!u.stats)return{ok:false,reasons:[]};
+  var reasons=[];
+  if((u.stats.totalQ||0)<50)reasons.push("Answer 50+ questions ("+(u.stats.totalQ||0)+"/50)");
+  var modCount=u.moduleScores?Object.keys(u.moduleScores).length:0;
+  if(modCount<5)reasons.push("Try 5+ different modules ("+modCount+"/5)");
+  if(!u.moduleScores||!u.moduleScores.drill)reasons.push("Complete at least 1 Part 5 Drill");
+  if(mockId===2&&(!u.mockResults||!u.mockResults.mock1))reasons.push("Complete Mock Test 1 first");
+  return{ok:reasons.length===0,reasons:reasons};
 }
 
 // ─── PLACEMENT TEST ───
@@ -2018,7 +2435,7 @@ async function recover(name,classCode){
     var u={name:d.name,xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
       lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
       stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
-      moduleScores:d.module_scores||{},mission:d.mission||{date:null,actId:null,done:false},
+      moduleScores:d.module_scores||{},mockResults:d.mock_results||{},mission:d.mission||{date:null,actId:null,done:false},
       unlockedAch:d.unlocked_ach||[],avatar:d.avatar||"⚔️",theme:d.theme||"dark"};
     if(!u.moduleScores)u.moduleScores={};
     if(!u.mission)u.mission={date:null,actId:null,done:false};
@@ -2211,6 +2628,17 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       {id:"gerinf",n:"Gerund vs Infinitive",d:"Speed round: -ING or TO?",i:"⏱️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
       {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
     ]},
+    {title:"Mock Exam",sub:"Test yourself under real conditions",items:(function(){
+      var items=[];
+      var u1=canUnlockMock(p.u,1);
+      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"📝",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
+      var u2=canUnlockMock(p.u,2);
+      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📝",bg:u2.ok?"linear-gradient(135deg,#a855f7,#ec4899)":"var(--bg3)",lock:!u2.ok,mockId:2});
+      // Show completed badge
+      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495";items[0].lock=true;items[0].bg="var(--bg3)";}
+      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495";items[1].lock=true;items[1].bg="var(--bg3)";}
+      return items;
+    })()},
     {title:"Tips & Strategies",sub:"Master the exam itself",items:[
       {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"📋",bg:"linear-gradient(135deg,#0ea5e9,#06b6d4)"},
       {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#a855f7,#6366f1)"},
@@ -3134,6 +3562,363 @@ function FalseFriends(p){
   </div>);
 }
 
+// ─── MOCK TEST ───
+function MockTest(p){
+  var mockId=p.mockId;
+  var data=mockId===1?{p5:MOCK1_P5,p6:MOCK1_P6,p7:MOCK1_P7}:{p5:MOCK2_P5,p6:MOCK2_P6,p7:MOCK2_P7};
+  var TOTAL_TIME=37*60; // 37 minutes
+
+  // Build flat question map for scoring
+  var p5Qs=data.p5;
+  var p6Texts=data.p6;
+  var p7Passages=data.p7;
+  var p6BlankCount=0;p6Texts.forEach(function(t){t.parts.forEach(function(pt){if(pt.blank)p6BlankCount++;});});
+  var p7QCount=0;p7Passages.forEach(function(ps){p7QCount+=ps.questions.length;});
+  var totalQ=p5Qs.length+p6BlankCount+p7QCount;
+
+  var[phase,setPhase]=useState("intro");
+  var[section,setSection]=useState("p5");
+  var[qi,setQi]=useState(0); // question index (p5) / text index (p6) / passage index (p7)
+  var[bi,setBi]=useState(0); // blank index within p6 text
+  var[pqi,setPqi]=useState(0); // question index within p7 passage
+  var[ans,setAns]=useState({p5:p5Qs.map(function(){return -1;}),p6:p6Texts.map(function(t){var n=0;t.parts.forEach(function(pt){if(pt.blank)n++;});return Array(n).fill(-1);}),p7:p7Passages.map(function(ps){return ps.questions.map(function(){return -1;});})});
+  var[timeLeft,setTimeLeft]=useState(TOTAL_TIME);
+  var[result,setResult]=useState(null);
+  var[reviewMode,setReviewMode]=useState(false);
+  var[reviewSection,setReviewSection]=useState("p5");
+  var[reviewIdx,setReviewIdx]=useState(0);
+  var timerRef=useRef(null);
+
+  // Timer
+  useEffect(function(){
+    if(phase!=="test"||result)return;
+    if(timeLeft<=0){submitTest();return;}
+    timerRef.current=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
+    return function(){clearTimeout(timerRef.current);};
+  });
+
+  function formatTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
+
+  // ── Submit & Scoring ──
+  function submitTest(){
+    clearTimeout(timerRef.current);
+    var p5Score=0;p5Qs.forEach(function(q,i){if(ans.p5[i]===q.c)p5Score++;});
+    var p6Score=0;var bIdx=0;
+    p6Texts.forEach(function(t,ti){
+      var localB=0;
+      t.parts.forEach(function(pt){
+        if(pt.blank){if(ans.p6[ti][localB]===pt.correct)p6Score++;localB++;}
+      });
+    });
+    var p7Score=0;p7Passages.forEach(function(ps,pi){ps.questions.forEach(function(q,qii){if(ans.p7[pi][qii]===q.correct)p7Score++;});});
+    var totalScore=p5Score+p6Score+p7Score;
+    var toeic=estimateToeic(totalScore,totalQ);
+    var timeUsed=TOTAL_TIME-timeLeft;
+    var res={date:today(),score:totalScore,total:totalQ,p5:{score:p5Score,total:p5Qs.length},p6:{score:p6Score,total:p6BlankCount},p7:{score:p7Score,total:p7QCount},toeicEstimate:toeic,timeUsed:timeUsed};
+    setResult(res);setPhase("done");
+  }
+
+  // ── Navigation ──
+  function pickAnswer(val){
+    var a=JSON.parse(JSON.stringify(ans));
+    if(section==="p5"){a.p5[qi]=val;setAns(a);setTimeout(nextItem,300);}
+    else if(section==="p6"){a.p6[qi][bi]=val;setAns(a);setTimeout(nextItem,300);}
+    else if(section==="p7"){a.p7[qi][pqi]=val;setAns(a);setTimeout(nextItem,300);}
+  }
+  function nextItem(){
+    if(section==="p5"){
+      if(qi<p5Qs.length-1){setQi(qi+1);}
+      else{setSection("p6");setQi(0);setBi(0);}
+    }else if(section==="p6"){
+      var blanksInText=ans.p6[qi].length;
+      if(bi<blanksInText-1){setBi(bi+1);}
+      else if(qi<p6Texts.length-1){setQi(qi+1);setBi(0);}
+      else{setSection("p7");setQi(0);setPqi(0);}
+    }else if(section==="p7"){
+      if(pqi<p7Passages[qi].questions.length-1){setPqi(pqi+1);}
+      else if(qi<p7Passages.length-1){setQi(qi+1);setPqi(0);}
+      else{submitTest();}
+    }
+  }
+
+  // ── Progress calc ──
+  var answered=0;
+  ans.p5.forEach(function(a){if(a>=0)answered++;});
+  ans.p6.forEach(function(t){t.forEach(function(a){if(a>=0)answered++;});});
+  ans.p7.forEach(function(ps){ps.forEach(function(a){if(a>=0)answered++;});});
+  var progressPct=Math.round(answered/totalQ*100);
+
+  // ════════════════ INTRO ════════════════
+  if(phase==="intro"){
+    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:56,marginBottom:16}}>📝</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Mock Test {mockId}</h1>
+      <p style={{color:"var(--t2)",fontSize:14,marginBottom:24,lineHeight:1.6}}>Reading Section — Half Test</p>
+      <div className="crd" style={{textAlign:"left",padding:16,marginBottom:20}}>
+        <div style={{fontSize:13,color:"var(--t1)",lineHeight:1.8}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span>Part 5 — Incomplete Sentences</span><span className="out" style={{color:"var(--cyan)"}}>{p5Qs.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span>Part 6 — Text Completion</span><span className="out" style={{color:"var(--cyan)"}}>{p6BlankCount} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span>Part 7 — Reading Comprehension</span><span className="out" style={{color:"var(--cyan)"}}>{p7QCount} Q</span></div>
+          <div style={{borderTop:"1px solid var(--bdr)",marginTop:8,paddingTop:8,display:"flex",justifyContent:"space-between",fontWeight:700}}><span>Total</span><span className="out" style={{color:"var(--gold)"}}>{totalQ} questions · 37 min</span></div>
+        </div>
+      </div>
+      <div className="crd" style={{padding:14,marginBottom:24,borderColor:"rgba(255,140,66,.2)"}}>
+        <p style={{fontSize:12,color:"var(--orange)",lineHeight:1.6}}>⚠️ Exam conditions: no feedback during the test, no going back. Timer stops for no one. Your score will be saved permanently.</p>
+      </div>
+      <button className="btn1" onClick={function(){setPhase("test");}}>Start Exam</button>
+      <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Not ready yet</button>
+    </div>);
+  }
+
+  // ════════════════ TEST ════════════════
+  if(phase==="test"){
+    var timerCol=timeLeft>300?"var(--cyan)":timeLeft>60?"var(--orange)":"var(--red)";
+    var sectionLabel=section==="p5"?"Part 5":section==="p6"?"Part 6":"Part 7";
+
+    // Header bar (always visible)
+    var header=(<div style={{position:"sticky",top:0,background:"var(--bg)",zIndex:10,padding:"12px 0 8px",borderBottom:"1px solid var(--bdr)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{sectionLabel}</span>
+        <span className="out" style={{fontSize:18,fontWeight:800,color:timerCol,fontVariantNumeric:"tabular-nums"}}>{formatTime(timeLeft)}</span>
+      </div>
+      <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:2,overflow:"hidden"}}>
+        <div style={{height:"100%",width:progressPct+"%",background:"linear-gradient(90deg,#00d4ff,#a855f7)",borderRadius:2,transition:"width .3s"}}/>
+      </div>
+      <div style={{fontSize:10,color:"var(--t3)",marginTop:4,textAlign:"right"}}>{answered}/{totalQ}</div>
+    </div>);
+
+    // ── PART 5 RENDER ──
+    if(section==="p5"){
+      var q=p5Qs[qi];var selected=ans.p5[qi];
+      return(<div style={{padding:"0 16px 40px"}}>{header}
+        <div style={{marginTop:16}}>
+          <span style={{fontSize:11,color:"var(--t3)"}}>{qi+1} / {p5Qs.length}</span>
+          <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginTop:8,marginBottom:24}}>{q.s}</h2>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {q.o.map(function(opt,i){
+              var bg=selected===i?"rgba(0,212,255,.15)":"var(--bg2)";
+              var bd=selected===i?"var(--cyan)":"var(--bdr)";
+              return(<button key={i} onClick={function(){pickAnswer(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:"pointer",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
+                <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(selected===i?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:selected===i?"var(--cyan)":"transparent",color:selected===i?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+                <span>{opt}</span></button>);
+            })}
+          </div>
+        </div>
+      </div>);
+    }
+
+    // ── PART 6 RENDER ──
+    if(section==="p6"){
+      var txt=p6Texts[qi];
+      var blanks=[];var displayParts=[];
+      txt.parts.forEach(function(pt){
+        if(pt.text!==undefined)displayParts.push({type:"text",content:pt.text});
+        else if(pt.blank){var bx=blanks.length;blanks.push(pt);displayParts.push({type:"blank",index:bx});}
+      });
+      var currentBlank=blanks[bi];var selected6=ans.p6[qi][bi];
+
+      return(<div style={{padding:"0 16px 40px"}}>{header}
+        <div style={{marginTop:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+            <span style={{fontSize:11,color:"var(--t3)"}}>Text {qi+1}/{p6Texts.length}</span>
+            <span style={{fontSize:11,color:"var(--cyan)"}}>Blank {bi+1}/{blanks.length}</span>
+          </div>
+          <div style={{fontSize:11,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}}>{txt.type}: {txt.subject}</div>
+          <div className="crd" style={{padding:14,marginBottom:16,maxHeight:220,overflowY:"auto",lineHeight:1.7,fontSize:13}}>
+            {displayParts.map(function(dp,i){
+              if(dp.type==="text")return(<span key={i}>{dp.content}</span>);
+              var isCurrent=dp.index===bi;
+              var hasAnswer=ans.p6[qi][dp.index]>=0;
+              return(<span key={i} className="out" style={{display:"inline",padding:"2px 8px",borderRadius:6,fontWeight:700,background:isCurrent?"rgba(0,212,255,.2)":hasAnswer?"rgba(0,230,118,.12)":"rgba(255,255,255,.06)",color:isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--t3)",border:"1px solid "+(isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--bdr)"),fontSize:12}}>{"["+String.fromCharCode(65+dp.index)+"]"}{hasAnswer&&!isCurrent?" ✓":""}</span>);
+            })}
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {currentBlank.options.map(function(opt,i){
+              var bg=selected6===i?"rgba(0,212,255,.15)":"var(--bg2)";
+              var bd=selected6===i?"var(--cyan)":"var(--bdr)";
+              return(<button key={i} onClick={function(){pickAnswer(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
+                <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(selected6===i?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:selected6===i?"var(--cyan)":"transparent",color:selected6===i?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+                <span>{opt}</span></button>);
+            })}
+          </div>
+        </div>
+      </div>);
+    }
+
+    // ── PART 7 RENDER ──
+    if(section==="p7"){
+      var passage=p7Passages[qi];var pq=passage.questions[pqi];var selected7=ans.p7[qi][pqi];
+
+      return(<div style={{padding:"0 16px 40px"}}>{header}
+        <div style={{marginTop:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+            <span style={{fontSize:11,color:"var(--t3)"}}>Passage {qi+1}/{p7Passages.length}</span>
+            <span style={{fontSize:11,color:"var(--cyan)"}}>Q {pqi+1}/{passage.questions.length}</span>
+          </div>
+          <div style={{fontSize:11,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}}>{passage.type}</div>
+          <div className="crd" style={{padding:14,marginBottom:16,maxHeight:200,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{passage.text}</div>
+          <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pq.q}</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {pq.options.map(function(opt,i){
+              var bg=selected7===i?"rgba(0,212,255,.15)":"var(--bg2)";
+              var bd=selected7===i?"var(--cyan)":"var(--bdr)";
+              return(<button key={i} onClick={function(){pickAnswer(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
+                <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(selected7===i?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:selected7===i?"var(--cyan)":"transparent",color:selected7===i?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+                <span>{opt}</span></button>);
+            })}
+          </div>
+        </div>
+      </div>);
+    }
+  }
+
+  // ════════════════ RESULTS ════════════════
+  if(phase==="done"&&result&&!reviewMode){
+    var pct=Math.round(result.score/result.total*100);
+    var grade=pct>=80?"Excellent!":pct>=65?"Good job!":pct>=50?"Keep going!":"More training needed";
+    var gradeIcon=pct>=80?"👑":pct>=65?"⚔️":pct>=50?"🛡️":"📖";
+    var gradeCol=pct>=80?"var(--gold)":pct>=65?"var(--green)":pct>=50?"var(--orange)":"var(--red)";
+    var xp=50+result.score*5+(pct>=80?50:0);
+
+    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",textAlign:"center"}}>
+      <div style={{fontSize:56,marginBottom:12,animation:"countUp .6s"}}>{gradeIcon}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:4}}>Mock Test {mockId} Complete</h1>
+      <p style={{color:gradeCol,fontWeight:700,fontSize:16,marginBottom:20}}>{grade}</p>
+
+      <div className="crd glo" style={{padding:20,marginBottom:16,textAlign:"center"}}>
+        <div style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Estimated TOEIC Reading Score</div>
+        <div className="out" style={{fontSize:48,fontWeight:900,color:"var(--cyan)",lineHeight:1}}>{result.toeicEstimate}</div>
+        <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>/ 495</div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:22,fontWeight:800,color:pct>=60?"var(--green)":"var(--orange)"}}>{result.score}/{result.total}</div><div style={{fontSize:10,color:"var(--t3)"}}>Correct ({pct}%)</div></div>
+        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:22,fontWeight:800,color:"var(--purple)"}}>{formatTime(result.timeUsed)}</div><div style={{fontSize:10,color:"var(--t3)"}}>Time used</div></div>
+      </div>
+
+      <div className="crd" style={{padding:14,marginBottom:16,textAlign:"left"}}>
+        <div style={{fontSize:12,fontWeight:700,color:"var(--t2)",marginBottom:8}}>Breakdown by Part</div>
+        {[{label:"Part 5",data:result.p5},{label:"Part 6",data:result.p6},{label:"Part 7",data:result.p7}].map(function(s){
+          var sPct=s.data.total>0?Math.round(s.data.score/s.data.total*100):0;
+          var sCol=sPct>=70?"var(--green)":sPct>=50?"var(--orange)":"var(--red)";
+          return(<div key={s.label} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid var(--bdr)"}}>
+            <span style={{fontSize:13,color:"var(--t1)"}}>{s.label}</span>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:12,color:"var(--t3)"}}>{s.data.score}/{s.data.total}</span>
+              <span className="out" style={{fontWeight:800,fontSize:14,color:sCol}}>{sPct}%</span>
+            </div>
+          </div>);
+        })}
+      </div>
+
+      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:20}}>+{xp} XP</div>
+
+      <button className="btn1" onClick={function(){setReviewMode(true);setReviewSection("p5");setReviewIdx(0);}}>📖 Review Answers</button>
+      <button className="btn2" onClick={function(){result.mockId=mockId;p.done(result,xp);}} style={{marginTop:10,width:"100%"}}>Save & Exit</button>
+    </div>);
+  }
+
+  // ════════════════ REVIEW MODE ════════════════
+  if(reviewMode&&result){
+    var rItem=null;var rAnswer=-1;var rCorrect=-1;var rExpl="";var rTotal=0;var rLabel="";
+
+    if(reviewSection==="p5"){
+      rTotal=p5Qs.length;var q=p5Qs[reviewIdx];
+      rLabel="Part 5 — Q"+(reviewIdx+1);rAnswer=ans.p5[reviewIdx];rCorrect=q.c;rExpl=q.x;
+      rItem=(<div>
+        <h3 className="out" style={{fontWeight:700,fontSize:16,lineHeight:1.5,marginBottom:16}}>{q.s}</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {q.o.map(function(opt,i){
+            var isCorrect=i===q.c;var isPicked=i===rAnswer;
+            var bg=isCorrect?"rgba(0,230,118,.12)":isPicked?"rgba(255,71,87,.12)":"var(--bg2)";
+            var bd=isCorrect?"var(--green)":isPicked?"var(--red)":"var(--bdr)";
+            return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:bg,border:"1px solid "+bd,borderRadius:10,fontSize:14}}>
+              <span style={{fontWeight:700,color:isCorrect?"var(--green)":isPicked?"var(--red)":"var(--t3)",fontSize:12}}>{isCorrect?"✓":isPicked?"✗":String.fromCharCode(65+i)}</span>
+              <span style={{color:"var(--t1)"}}>{opt}</span></div>);
+          })}
+        </div>
+      </div>);
+    } else if(reviewSection==="p6"){
+      var tIdx=Math.floor(reviewIdx/4);var bIdx2=reviewIdx%4;
+      rTotal=p6BlankCount;
+      var t=p6Texts[tIdx];var blanksR=[];t.parts.forEach(function(pt){if(pt.blank)blanksR.push(pt);});
+      var bl=blanksR[bIdx2];if(!bl){setReviewSection("p7");setReviewIdx(0);return null;}
+      rLabel="Part 6 — Text "+(tIdx+1)+", Blank "+(bIdx2+1);rAnswer=ans.p6[tIdx][bIdx2];rCorrect=bl.correct;rExpl=bl.x;
+      rItem=(<div>
+        <div style={{fontSize:12,color:"var(--t2)",marginBottom:12}}>{t.type}: {t.subject}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {bl.options.map(function(opt,i){
+            var isCorrect=i===bl.correct;var isPicked=i===rAnswer;
+            var bg=isCorrect?"rgba(0,230,118,.12)":isPicked?"rgba(255,71,87,.12)":"var(--bg2)";
+            var bd=isCorrect?"var(--green)":isPicked?"var(--red)":"var(--bdr)";
+            return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:bg,border:"1px solid "+bd,borderRadius:10,fontSize:14}}>
+              <span style={{fontWeight:700,color:isCorrect?"var(--green)":isPicked?"var(--red)":"var(--t3)",fontSize:12}}>{isCorrect?"✓":isPicked?"✗":String.fromCharCode(65+i)}</span>
+              <span style={{color:"var(--t1)"}}>{typeof opt==="string"&&opt.length>60?opt.substring(0,57)+"…":opt}</span></div>);
+          })}
+        </div>
+      </div>);
+    } else if(reviewSection==="p7"){
+      // Map flat index to passage + question
+      var flatIdx=reviewIdx;var pi=0;var pqIdx=0;
+      for(var pp=0;pp<p7Passages.length;pp++){
+        if(flatIdx<p7Passages[pp].questions.length){pi=pp;pqIdx=flatIdx;break;}
+        flatIdx-=p7Passages[pp].questions.length;
+      }
+      rTotal=p7QCount;
+      var ps=p7Passages[pi];var pqr=ps.questions[pqIdx];
+      rLabel="Part 7 — Passage "+(pi+1)+", Q"+(pqIdx+1);rAnswer=ans.p7[pi][pqIdx];rCorrect=pqr.correct;rExpl=pqr.x;
+      rItem=(<div>
+        <div style={{fontSize:11,color:"var(--t2)",marginBottom:8}}>{ps.type}</div>
+        <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pqr.q}</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {pqr.options.map(function(opt,i){
+            var isCorrect=i===pqr.correct;var isPicked=i===rAnswer;
+            var bg=isCorrect?"rgba(0,230,118,.12)":isPicked?"rgba(255,71,87,.12)":"var(--bg2)";
+            var bd=isCorrect?"var(--green)":isPicked?"var(--red)":"var(--bdr)";
+            return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:bg,border:"1px solid "+bd,borderRadius:10,fontSize:14}}>
+              <span style={{fontWeight:700,color:isCorrect?"var(--green)":isPicked?"var(--red)":"var(--t3)",fontSize:12}}>{isCorrect?"✓":isPicked?"✗":String.fromCharCode(65+i)}</span>
+              <span style={{color:"var(--t1)"}}>{opt}</span></div>);
+          })}
+        </div>
+      </div>);
+    }
+
+    var allTotals={p5:p5Qs.length,p6:p6BlankCount,p7:p7QCount};
+    function reviewNext(){
+      var curTotal=reviewSection==="p5"?allTotals.p5:reviewSection==="p6"?allTotals.p6:allTotals.p7;
+      if(reviewIdx<curTotal-1){setReviewIdx(reviewIdx+1);}
+      else if(reviewSection==="p5"){setReviewSection("p6");setReviewIdx(0);}
+      else if(reviewSection==="p6"){setReviewSection("p7");setReviewIdx(0);}
+      else{setReviewMode(false);}
+    }
+    function reviewPrev(){
+      if(reviewIdx>0){setReviewIdx(reviewIdx-1);}
+      else if(reviewSection==="p7"&&p6BlankCount>0){setReviewSection("p6");setReviewIdx(p6BlankCount-1);}
+      else if(reviewSection==="p6"){setReviewSection("p5");setReviewIdx(p5Qs.length-1);}
+    }
+    var isFirst=reviewSection==="p5"&&reviewIdx===0;
+    var isLast=reviewSection==="p7"&&reviewIdx>=p7QCount-1;
+
+    return(<div style={{padding:"20px 16px 40px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <button onClick={function(){setReviewMode(false);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>← Results</button>
+        <span className="out" style={{fontWeight:700,fontSize:13,color:"var(--purple)"}}>{rLabel}</span>
+        <div style={{width:40}}/>
+      </div>
+      {rItem}
+      {rExpl&&<div className="crd" style={{marginTop:16,padding:14,background:rAnswer===rCorrect?"rgba(0,230,118,.06)":"rgba(255,71,87,.06)",borderColor:rAnswer===rCorrect?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)"}}>
+        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{rExpl}</p>
+      </div>}
+      <div style={{display:"flex",gap:10,marginTop:20}}>
+        {!isFirst&&<button className="btn2" onClick={reviewPrev} style={{flex:1}}>← Prev</button>}
+        <button className="btn1" onClick={reviewNext} style={{flex:1}}>{isLast?"Back to Results":"Next →"}</button>
+      </div>
+    </div>);
+  }
+
+  return null;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // TeacherDash v2.0 — Stats avancées + Export CSV
 // REPLACES the existing TeacherDash function (lines 3124-3250)
@@ -3146,7 +3931,7 @@ function TeacherDash(p){
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
 
   function loadStudents(){
-    supabase.from('students').select('*').eq('class_code',classCode).order('xp',{ascending:false})
+    supabase.from('students').select('*').eq('class_code',classCode).order('xp',{ascending:false}).limit(200)
       .then(function(res){setStudents(res.data||[]);setLoad(false);})
       .catch(function(){setLoad(false);});
   }
@@ -4200,6 +4985,7 @@ useEffect(function(){
   }
  
   function goTeacher(){setTeacher(true);}
+  function mockDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};c.mockResults["mock"+result.mockId]=result;recordModule(c,"mock"+result.mockId,result.score,result.total);sv(c);}
   function dailyDone(sc,xp){var c=addXp(xp);c.daily={date:today(),done:true,score:sc,xpE:xp};c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;recordModule(c,"daily",sc,5);checkMission(c,"daily");sv(c);}
   function drillDone(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
@@ -4226,6 +5012,8 @@ useEffect(function(){
   if(sp==="gerinf")return(<div className="app"><style>{CSS}</style><GerInf u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="traps")return(<div className="app"><style>{CSS}</style><TrapsQuiz u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="falsefr")return(<div className="app"><style>{CSS}</style><FalseFriends u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="mock1")return(<div className="app"><style>{CSS}</style><MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="mock2")return(<div className="app"><style>{CSS}</style><MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="strats")return(<div className="app"><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
   if(sp==="stratquiz")return(<div className="app"><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="timesim")return(<div className="app"><style>{CSS}</style><TimeSim u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
