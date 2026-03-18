@@ -697,7 +697,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
     {title:"Tips & Strategies",sub:"Master the exam itself",items:[
       {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"📋",bg:"linear-gradient(135deg,#0ea5e9,#06b6d4)"},
       {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#a855f7,#6366f1)"},
-      {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 10 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
+      {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
       {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#8b5cf6)"},
     ]},
   ];
