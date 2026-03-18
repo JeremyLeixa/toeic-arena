@@ -182,6 +182,7 @@ async function load() {
     unlockedAch: data.unlocked_ach || [],
     avatar: data.avatar || "⚔️",
     theme: data.theme || "dark",
+    totalTime: data.total_time || 0,
   };
 }
 
@@ -206,10 +207,11 @@ async function save(d) {
     avatar: d.avatar || "⚔️",
     theme: d.theme || "dark",
     unlocked_ach: d.unlockedAch || [],
+    total_time: d.totalTime || 0,
   });
   if(error) console.error("SAVE ERROR:", error.message, error.details, error.code);
 }
-function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark"};}
+function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -494,27 +496,6 @@ var[step,sSt]=useState("name");
       </div>}
     </div>);
 }
-async function recover(name,classCode){
-    var res=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).maybeSingle();
-    if(!res.data)return false;
-    // Create new anonymous session
-    var authRes=await supabase.auth.signInAnonymously();
-    if(!authRes.data.user)return false;
-    // Update the existing student row with new auth ID
-    await supabase.from('students').update({id:authRes.data.user.id}).eq('name',name).eq('class_code',classCode);
-    // Load the data
-    var d=res.data;
-    var u={name:d.name,xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
-      lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
-      stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
-      moduleScores:d.module_scores||{},mockResults:d.mock_results||{},gameScores:d.game_scores||{},mission:d.mission||{date:null,actId:null,done:false},
-      unlockedAch:d.unlocked_ach||[],avatar:d.avatar||"⚔️",theme:d.theme||"dark"};
-    if(!u.moduleScores)u.moduleScores={};
-    if(!u.mission)u.mission={date:null,actId:null,done:false};
-    if(!u.unlockedAch)u.unlockedAch=[];
-    sU(u);
-    return true;
-  }
 // ─── HOME ───
 function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily.date===today()&&u.daily.done;return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -2430,6 +2411,11 @@ function animateFall(){
 // ═══════════════════════════════════════════════════════════════
 
 function TeacherDash(p){
+  function fmtTime(sec){
+    if(!sec||sec<60)return"<1m";
+    var h=Math.floor(sec/3600);var m=Math.floor((sec%3600)/60);
+    return h>0?h+"h"+String(m).padStart(2,"0"):m+"m";
+  }
   var[students,setStudents]=useState([]);var[loading,setLoad]=useState(true);
   var[detail,setDetail]=useState(null);var[classCode,setClassCode]=useState("idrac2026");
   var[dashTab,setDashTab]=useState("overview"); // "overview" | "analytics"
@@ -2503,7 +2489,7 @@ function TeacherDash(p){
 
   // ── CSV Export ──
   function exportCSV(){
-    var headers=["Name","XP","Level","League","Streak","Sessions","Total Questions","Correct","Accuracy %"];
+    var headers=["Name","XP","Level","League","Streak","Sessions","Time (min)","Total Questions","Correct","Accuracy %"];
     MISSION_MODULES.forEach(function(m){headers.push(m.name+" (%)");});
     
     var rows=students.map(function(s){
@@ -2514,7 +2500,7 @@ function TeacherDash(p){
       
       var row=[
         '"'+s.name+'"',s.xp||0,lvl.level,lg?lg.name:"Bronze",s.streak||0,
-        stats.sessions,stats.totalQ,stats.correct,acc
+        stats.sessions,Math.round((s.total_time||0)/60),stats.totalQ,stats.correct,acc
       ];
       
       var ms=s.module_scores||s.moduleScores||{};
@@ -2593,10 +2579,11 @@ function TeacherDash(p){
       </div>
 
       {/* KPI cards */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:20}}>
-        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--gold)"}}>{s.xp||0}</div><div style={{fontSize:10,color:"var(--t3)"}}>XP</div></div>
-        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:acc>=60?"var(--cyan)":"var(--orange)"}}>{acc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Accuracy</div></div>
-        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--purple)"}}>{s.stats?s.stats.sessions:0}</div><div style={{fontSize:10,color:"var(--t3)"}}>Sessions</div></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:20}}>
+        <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:16,fontWeight:800,color:"var(--gold)"}}>{s.xp||0}</div><div style={{fontSize:10,color:"var(--t3)"}}>XP</div></div>
+        <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:16,fontWeight:800,color:acc>=60?"var(--cyan)":"var(--orange)"}}>{acc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Accuracy</div></div>
+        <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:16,fontWeight:800,color:"var(--purple)"}}>{s.stats?s.stats.sessions:0}</div><div style={{fontSize:10,color:"var(--t3)"}}>Sessions</div></div>
+        <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:16,fontWeight:800,color:"var(--orange)"}}>{fmtTime(s.total_time||0)}</div><div style={{fontSize:10,color:"var(--t3)"}}>Time</div></div>
       </div>
 
       {/* ── BAR CHART: Accuracy per module ── */}
@@ -2673,10 +2660,11 @@ function TeacherDash(p){
   // ═══════════════════════════════════
   // MAIN DASHBOARD VIEW
   // ═══════════════════════════════════
-  var classAcc=0;var totalSess=0;var activeCnt=0;
+  var classAcc=0;var totalSess=0;var activeCnt=0;var totalClassTime=0;
   students.forEach(function(s){
     if(s.stats&&s.stats.totalQ>0){classAcc+=s.stats.correct/s.stats.totalQ;activeCnt++;}
     totalSess+=(s.stats?s.stats.sessions:0);
+    totalClassTime+=(s.total_time||0);
   });
   classAcc=activeCnt>0?Math.round(classAcc/activeCnt*100):0;
 
@@ -2704,10 +2692,11 @@ function TeacherDash(p){
     </div>
 
     {/* Class KPI cards */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
-      <div className="crd" style={{padding:14,textAlign:"center"}}><div className="out" style={{fontSize:22,fontWeight:800,color:"var(--cyan)"}}>{students.length}</div><div style={{fontSize:10,color:"var(--t3)"}}>Students</div></div>
-      <div className="crd" style={{padding:14,textAlign:"center"}}><div className="out" style={{fontSize:22,fontWeight:800,color:classAcc>=60?"var(--green)":"var(--orange)"}}>{classAcc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Class accuracy</div></div>
-      <div className="crd" style={{padding:14,textAlign:"center"}}><div className="out" style={{fontSize:22,fontWeight:800,color:"var(--purple)"}}>{totalSess}</div><div style={{fontSize:10,color:"var(--t3)"}}>Total sessions</div></div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:16}}>
+      <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--cyan)"}}>{students.length}</div><div style={{fontSize:10,color:"var(--t3)"}}>Students</div></div>
+      <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:classAcc>=60?"var(--green)":"var(--orange)"}}>{classAcc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Accuracy</div></div>
+      <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--purple)"}}>{totalSess}</div><div style={{fontSize:10,color:"var(--t3)"}}>Sessions</div></div>
+      <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--orange)"}}>{fmtTime(totalClassTime)}</div><div style={{fontSize:10,color:"var(--t3)"}}>Total time</div></div>
     </div>
 
     {/* ═══ OVERVIEW TAB ═══ */}
@@ -2736,6 +2725,7 @@ function TeacherDash(p){
                 <span style={{fontSize:10,color:"var(--gold)"}}>Lv {getLevel(s.xp||0).level}</span>
                 <span style={{fontSize:10,color:"var(--t3)"}}>{s.stats?s.stats.sessions:0} sess</span>
                 <span style={{fontSize:10,color:"var(--orange)"}}>{s.streak||0} streak</span>
+                <span style={{fontSize:10,color:"var(--t2)"}}>⏱ {fmtTime(s.total_time||0)}</span>
               </div>
             </div>
             <div style={{textAlign:"right"}}>
@@ -3310,25 +3300,48 @@ function ReadingHub(p){
 function League(p){var u=p.u,lg=getLeague(u.weeklyXp);
 var[rivals,setRivals]=useState([]);
 useEffect(function(){
-  supabase.from('students').select('name,weekly_xp').eq('class_code','idrac2026').order('weekly_xp',{ascending:false}).limit(20)
+  supabase.from('students').select('name,weekly_xp,avatar').eq('class_code','idrac2026').order('weekly_xp',{ascending:false}).limit(50)
     .then(function(res){if(res.data)setRivals(res.data);});
 },[u.weeklyXp]);
-var all=rivals.map(function(r){return{name:r.name===u.name?r.name+" (You)":r.name,avatar:"⚔️",xp:r.weekly_xp||0,me:r.name===u.name};});
-if(!all.find(function(a){return a.me;}))all.push({name:u.name+" (You)",avatar:"⚔️",xp:u.weeklyXp,me:true});
+var all=rivals.map(function(r){return{name:r.name===u.name?r.name+" (You)":r.name,avatar:r.avatar||"⚔️",xp:r.weekly_xp||0,me:r.name===u.name};});
+if(!all.find(function(a){return a.me;}))all.push({name:u.name+" (You)",avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
 all.sort(function(a,b){return b.xp-a.xp;});
+
+// Group by league (reverse order: highest tier first)
+var tiers=LEAGUES.slice().reverse();
+var groups=tiers.map(function(tier){
+  var members=all.filter(function(pl){return getLeague(pl.xp).id===tier.id;});
+  return{tier:tier,members:members};
+}).filter(function(g){return g.members.length>0;});
+
 var nx=LEAGUES.find(function(l){return l.min>u.weeklyXp;});
+var globalRank=all.findIndex(function(pl){return pl.me;})+1;
+
 return(<div className="enter" style={{padding:"20px 16px 100px"}}><h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>League</h1><p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Weekly ranking</p>
 <div className="crd glo" style={{textAlign:"center",marginBottom:20,padding:24}}>
 <div style={{fontSize:48,marginBottom:8,animation:"glow 3s infinite"}}>{lg.icon}</div>
 <div className="out" style={{fontWeight:800,fontSize:24,color:lg.color}}>{lg.name} League</div>
-<div style={{fontSize:13,color:"var(--t2)",marginTop:4}}>{u.weeklyXp} XP this week</div>
+<div style={{fontSize:13,color:"var(--t2)",marginTop:4}}>{u.weeklyXp} XP this week · Rank #{globalRank}</div>
 {nx&&<div style={{marginTop:12}}><div style={{fontSize:11,color:"var(--t3)",marginBottom:6}}>{nx.min-u.weeklyXp} XP to {nx.name}</div><Bar value={u.weeklyXp-lg.min} max={nx.min-lg.min} h={4} color={nx.color}/></div>}</div>
-<div style={{display:"flex",flexDirection:"column",gap:6}}>{all.map(function(pl,i){var me=pl.me,rk=i+1;return(
-<div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:me?"rgba(0,212,255,.08)":"var(--bg2)",border:me?"1px solid rgba(0,212,255,.2)":"1px solid var(--bdr)",borderRadius:12}}>
-<div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rk<=3?"var(--gold)":"var(--t3)"}}>{rk<=3?(rk===1?"🥇":rk===2?"🥈":"🥉"):rk}</div>
-<div style={{fontSize:20,width:28,textAlign:"center"}}>{pl.avatar}</div>
-<div style={{flex:1}}><div className="out" style={{fontWeight:me?700:500,fontSize:14,color:me?"var(--cyan)":"var(--t1)"}}>{pl.name}</div></div>
-<div className="out" style={{fontWeight:700,fontSize:14,color:me?"var(--cyan)":"var(--t2)"}}>{pl.xp} XP</div></div>);})}</div>
+
+{groups.map(function(g){var tier=g.tier;return(<div key={tier.id} style={{marginBottom:16}}>
+  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,padding:"0 4px"}}>
+    <span style={{fontSize:18}}>{tier.icon}</span>
+    <span className="out" style={{fontWeight:700,fontSize:14,color:tier.color}}>{tier.name}</span>
+    <span style={{fontSize:11,color:"var(--t3)"}}>({g.members.length})</span>
+    <div style={{flex:1,height:1,background:tier.color+"30",marginLeft:4}}/>
+  </div>
+  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    {g.members.map(function(pl,i){var me=pl.me;var gRk=all.indexOf(pl)+1;return(
+    <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:me?"rgba(0,212,255,.08)":"var(--bg2)",border:me?"1.5px solid rgba(0,212,255,.25)":"1px solid var(--bdr)",borderRadius:12}}>
+      <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:gRk<=3?"var(--gold)":"var(--t3)"}}>{gRk<=3?(gRk===1?"🥇":gRk===2?"🥈":"🥉"):gRk}</div>
+      <div style={{fontSize:20,width:28,textAlign:"center"}}>{pl.avatar}</div>
+      <div style={{flex:1}}><div className="out" style={{fontWeight:me?700:500,fontSize:14,color:me?"var(--cyan)":"var(--t1)"}}>{pl.name}</div></div>
+      <div className="out" style={{fontWeight:700,fontSize:14,color:me?"var(--cyan)":"var(--t2)"}}>{pl.xp} XP</div>
+    </div>);})}
+  </div>
+</div>);})}
+
 <p style={{textAlign:"center",fontSize:12,color:"var(--t3)",marginTop:20}}>Leaderboard resets weekly</p></div>);}
 
 // ─── PROFILE ───
@@ -3422,6 +3435,33 @@ useEffect(function(){
     return function(){sub.data.subscription.unsubscribe();};
   },[]);
 
+  // ── Time tracking: increment every 60s, save every 5 min ──
+  var timeRef=useRef({ticks:0});
+  useEffect(function(){
+    if(!u)return;
+    var iv=setInterval(function(){
+      sU(function(prev){
+        if(!prev)return prev;
+        var c=JSON.parse(JSON.stringify(prev));
+        c.totalTime=(c.totalTime||0)+60;
+        timeRef.current.ticks+=1;
+        if(timeRef.current.ticks%5===0) save(c); // save every 5 min
+        return c;
+      });
+    },60000);
+    function onVis(){
+      if(document.visibilityState==="hidden"){
+        sU(function(prev){
+          if(!prev)return prev;
+          save(prev);
+          return prev;
+        });
+      }
+    }
+    document.addEventListener("visibilitychange",onVis);
+    return function(){clearInterval(iv);document.removeEventListener("visibilitychange",onVis);};
+  },[!!u]);
+
   function sv(d){
     // Check for new achievements
     if(d&&d.unlockedAch){
@@ -3487,9 +3527,27 @@ useEffect(function(){
       xp:u.xp,weekly_xp:u.weeklyXp,week_id:u.weekId,
       placement_score:placementScore,placement_level:lvl?lvl.label:null,
       stats:u.stats,module_scores:u.moduleScores,
-      mission:u.mission,avatar:u.avatar||"⚔️",theme:u.theme||"dark",unlocked_ach:u.unlockedAch||[]
+      mission:u.mission,avatar:u.avatar||"⚔️",theme:u.theme||"dark",unlocked_ach:u.unlockedAch||[],total_time:0
     });
     save(u);
+  }
+  async function recover(name,classCode){
+    var res=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).maybeSingle();
+    if(!res.data)return false;
+    var authRes=await supabase.auth.signInAnonymously();
+    if(!authRes.data.user)return false;
+    await supabase.from('students').update({id:authRes.data.user.id}).eq('name',name).eq('class_code',classCode);
+    var d=res.data;
+    var u={name:d.name,xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
+      lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
+      stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
+      moduleScores:d.module_scores||{},mockResults:d.mock_results||{},gameScores:d.game_scores||{},mission:d.mission||{date:null,actId:null,done:false},
+      unlockedAch:d.unlocked_ach||[],avatar:d.avatar||"⚔️",theme:d.theme||"dark",totalTime:d.total_time||0};
+    if(!u.moduleScores)u.moduleScores={};
+    if(!u.mission)u.mission={date:null,actId:null,done:false};
+    if(!u.unlockedAch)u.unlockedAch=[];
+    sU(u);
+    return true;
   }
  
   function goTeacher(){setTeacher(true);}
