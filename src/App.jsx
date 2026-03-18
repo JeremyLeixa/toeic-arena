@@ -1276,6 +1276,7 @@ function TimeSim(p){
   var qs=useMemo(function(){return shuffle(QUESTIONS).slice(0,30);},[]);
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");
   var[elapsed,sEl]=useState(0);var[answers,sAn]=useState([]);var timerRef=useRef(null);
+  var[showReview,setShowReview]=useState(false);var[revIdx,setRevIdx]=useState(null);
   var TARGET=600; // 10 minutes = 600 seconds
   var perQ=TARGET/30; // 20s per question target
 
@@ -1283,7 +1284,7 @@ function TimeSim(p){
     if(ph==="q"){timerRef.current=setInterval(function(){sEl(function(e){return e+1;});},1000);return function(){clearInterval(timerRef.current);};}
   },[ph]);
 
-  function doAns(i){sS(i);var correct=i===qs[ci].c;if(correct)sSc(sc+1);sAn(answers.concat([{q:ci,correct:correct,time:elapsed}]));sP("next");}
+  function doAns(i){sS(i);var correct=i===qs[ci].c;if(correct)sSc(sc+1);sAn(answers.concat([{q:ci,pick:i,correct:correct,time:elapsed}]));sP("next");}
   function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{clearInterval(timerRef.current);sP("done");p.done(sc,qs.length,30+sc*5);}}
 
   function fmtTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
@@ -1300,7 +1301,9 @@ function TimeSim(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start Exam</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;var totalTime=elapsed;return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+  if(ph==="done"){var xp=30+sc*5;var totalTime=elapsed;
+
+    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{textAlign:"center",marginBottom:24}}>
       <div style={{fontSize:48,marginBottom:12,animation:"countUp .6s"}}>{sc>=25?"🏆":sc>=18?"⚔️":"🛡️"}</div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Exam Complete</h1>
@@ -1320,6 +1323,86 @@ function TimeSim(p){
         <span className="out" style={{fontWeight:700,color:totalTime<=TARGET?"var(--green)":"var(--red)"}}>{totalTime<=TARGET?"On target":"Over time"}</span></div>
       <Bar value={Math.min(TARGET,TARGET-(totalTime-TARGET))} max={TARGET} h={6} color={totalTime<=TARGET?"var(--green)":"var(--red)"}/>
     </div>
+
+    {/* Answer grid toggle */}
+    <button className={showReview?"btn1":"btn2"} onClick={function(){setShowReview(!showReview);setRevIdx(null);}}
+      style={{width:"100%",marginBottom:16,fontSize:13}}>{showReview?"Hide Answer Grid":"📋 Review Answers"}</button>
+
+    {showReview&&<div style={{marginBottom:20}}>
+      {/* Grid overview */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(10,1fr)",gap:4,marginBottom:16}}>
+        {answers.map(function(a,i){
+          return(<div key={i} onClick={function(){setRevIdx(revIdx===i?null:i);}}
+            style={{padding:"8px 0",textAlign:"center",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700,
+              background:a.correct?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)",
+              border:revIdx===i?"2px solid var(--cyan)":"1.5px solid "+(a.correct?"rgba(0,230,118,.3)":"rgba(255,71,87,.3)"),
+              color:a.correct?"var(--green)":"var(--red)",transition:"all .15s"}}>
+            {i+1}
+          </div>);
+        })}
+      </div>
+
+      {/* Summary by category */}
+      {function(){
+        var cats={};
+        answers.forEach(function(a,i){
+          var cat=qs[a.q].cat;
+          if(!cats[cat])cats[cat]={ok:0,total:0};
+          cats[cat].total++;
+          if(a.correct)cats[cat].ok++;
+        });
+        var catArr=Object.keys(cats).map(function(k){return{cat:k,ok:cats[k].ok,total:cats[k].total,pct:Math.round(cats[k].ok/cats[k].total*100)};});
+        catArr.sort(function(a,b){return a.pct-b.pct;});
+        return(<div className="crd" style={{padding:14,marginBottom:16}}>
+          <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--t2)",marginBottom:10}}>Score by Category</p>
+          {catArr.map(function(c){
+            var col=c.pct>=80?"var(--green)":c.pct>=50?"var(--orange)":"var(--red)";
+            return(<div key={c.cat} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <span style={{fontSize:11,color:"var(--t2)",flex:1,minWidth:0}}>{c.cat}</span>
+              <span className="out" style={{fontSize:12,fontWeight:700,color:col,width:50,textAlign:"right"}}>{c.ok}/{c.total}</span>
+              <div style={{width:60,height:5,background:"var(--bg3)",borderRadius:3,overflow:"hidden"}}>
+                <div style={{height:"100%",width:c.pct+"%",background:col,borderRadius:3}}/></div>
+            </div>);
+          })}
+        </div>);
+      }()}
+
+      {/* Detailed review for selected question */}
+      {revIdx!==null&&function(){
+        var a=answers[revIdx];var q=qs[a.q];
+        return(<div className="crd" style={{padding:16,animation:"fadeIn .2s",borderColor:a.correct?"rgba(0,230,118,.2)":"rgba(255,71,87,.2)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{q.cat}</span>
+            <span style={{fontSize:11,color:a.correct?"var(--green)":"var(--red)",fontWeight:700}}>{a.correct?"Correct":"Wrong"} — Q{revIdx+1}</span>
+          </div>
+          <p className="out" style={{fontSize:15,fontWeight:700,lineHeight:1.5,marginBottom:14,color:"var(--t1)"}}>{q.s}</p>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {q.o.map(function(opt,i){
+              var isCor=i===q.c;var isPick=i===a.pick;
+              var bg="var(--bg2)";var bd="var(--bdr)";var txt="var(--t1)";
+              if(isCor){bg="rgba(0,230,118,.1)";bd="var(--green)";txt="var(--green)";}
+              else if(isPick&&!isCor){bg="rgba(255,71,87,.1)";bd="var(--red)";txt="var(--red)";}
+              return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:bg,border:"1px solid "+bd,borderRadius:10,fontSize:13,color:txt}}>
+                <div style={{width:22,height:22,borderRadius:"50%",border:"2px solid "+(isCor?"var(--green)":isPick?"var(--red)":"var(--t3)"),
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,flexShrink:0,
+                  background:isCor?"var(--green)":isPick&&!isCor?"var(--red)":"transparent",
+                  color:isCor||isPick?"#fff":"var(--t3)"}}>
+                  {isCor?"✓":isPick?"✗":String.fromCharCode(65+i)}</div>
+                <span style={{fontWeight:isCor||isPick?600:400}}>{opt}</span>
+              </div>);
+            })}
+          </div>
+          {q.x&&<div style={{marginTop:10,padding:10,background:"rgba(0,212,255,.06)",borderRadius:8,border:"1px solid rgba(0,212,255,.12)"}}>
+            <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p>
+          </div>}
+          <div style={{display:"flex",gap:8,marginTop:12}}>
+            {revIdx>0&&<button className="btn2" onClick={function(){setRevIdx(revIdx-1);}} style={{flex:1,fontSize:12}}>← Prev</button>}
+            {revIdx<answers.length-1&&<button className="btn2" onClick={function(){setRevIdx(revIdx+1);}} style={{flex:1,fontSize:12}}>Next →</button>}
+          </div>
+        </div>);
+      }()}
+    </div>}
+
     <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
 
   // Active quiz (no feedback, exam mode)
