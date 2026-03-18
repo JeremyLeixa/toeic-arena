@@ -17,6 +17,7 @@ import { PART6_TEXTS } from "./data/part6.js";
 import { PART7_PASSAGES } from "./data/part7.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "./data/listening.js";
 import { PLACEMENT_TEST, PLACEMENT_LEVELS, MISSION_MODULES } from "./data/placement.js";
+import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { MOCK1_P5, MOCK2_P5, MOCK1_P6, MOCK2_P6, MOCK1_P7, MOCK2_P7 } from "./data/mockTests.js";
 
 
@@ -680,6 +681,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
       {id:"gerinf",n:"Gerund vs Infinitive",d:"Speed round: -ING or TO?",i:"⏱️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
       {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
+      {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
     ]},
     {title:"Mock Exam",sub:"Test yourself under real conditions",items:(function(){
       var items=[];
@@ -1318,6 +1320,250 @@ function GrammarRef(p){
       })}
     </div>
   </div>);
+}
+
+
+// ─── PHRASAL VERB DOJO (3 modes) ───
+function PhrasalDojo(p){
+  var[mode,setMode]=useState("hub");
+  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[pick,sPk]=useState(-1);var[ph,sP]=useState("q");
+  var[timer,setTimer]=useState(0);var[streak,setStreak]=useState(0);var[bestStreak,setBest]=useState(0);
+  var[studyOpen,setStudyOpen]=useState(null);
+  var timerRef=useRef(null);
+
+  var grouped=useMemo(function(){
+    var g={};
+    PHRASAL_VERBS.forEach(function(pv){if(!g[pv.v])g[pv.v]=[];g[pv.v].push(pv);});
+    return Object.keys(g).sort().map(function(k){return{verb:k,items:g[k]};});
+  },[]);
+
+  var matchQs=useMemo(function(){return shuffle(PHRASAL_VERBS.slice()).slice(0,15);},[]);
+  var pickerQs=useMemo(function(){return shuffle(PHRASAL_VERBS.slice()).slice(0,15);},[]);
+
+  var allParticles=useMemo(function(){
+    var s={};PHRASAL_VERBS.forEach(function(pv){s[pv.p]=true;});return Object.keys(s);
+  },[]);
+
+  // Precompute all options for both quiz modes
+  var matchAllOpts=useMemo(function(){
+    return matchQs.map(function(mq){
+      var pool=PHRASAL_VERBS.filter(function(pv){return pv.pv!==mq.pv;});
+      var dists=shuffle(pool).slice(0,3).map(function(d){return d.m;});
+      var opts=shuffle(dists.concat([mq.m]));
+      return{opts:opts,c:opts.indexOf(mq.m)};
+    });
+  },[]);
+
+  var pickerAllOpts=useMemo(function(){
+    return pickerQs.map(function(pq){
+      var pool=allParticles.filter(function(pt){return pt!==pq.p;});
+      var dists=shuffle(pool).slice(0,3);
+      var opts=shuffle(dists.concat([pq.p]));
+      return{opts:opts,c:opts.indexOf(pq.p)};
+    });
+  },[]);
+
+  // Particle Picker timer (runs in picker mode only)
+  useEffect(function(){
+    if(mode!=="picker"||ph!=="q")return;
+    setTimer(8);
+    timerRef.current=setInterval(function(){
+      setTimer(function(t){
+        if(t<=1){
+          clearInterval(timerRef.current);
+          setStreak(0);sPk(-1);sP("fb");
+          return 0;
+        }
+        return t-1;
+      });
+    },1000);
+    return function(){clearInterval(timerRef.current);};
+  },[ci,mode,ph]);
+
+  function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");setTimer(0);setStreak(0);setBest(0);clearInterval(timerRef.current);}
+
+  // ═══ HUB ═══
+  if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <span className="out" style={{fontWeight:700,fontSize:15}}>Phrasal Verb Dojo</span>
+      <div style={{width:40}}/>
+    </div>
+    <div style={{textAlign:"center",marginBottom:24}}>
+      <div style={{fontSize:48,marginBottom:8}}>{"⚔️"}</div>
+      <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{PHRASAL_VERBS.length} essential business phrasal verbs<br/>3 training modes</p>
+    </div>
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <div className="crd" onClick={function(){setMode("study");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📚"}</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Study Mode</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Browse by verb family</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
+      <div className="crd" onClick={function(){resetQuiz();setMode("match");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#22c55e,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"🧠"}</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Meaning Match</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Phrasal verb → pick the definition</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
+      <div className="crd" onClick={function(){resetQuiz();setMode("picker");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"⚡"}</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Particle Picker</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Speed round — 8s per question!</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
+    </div>
+  </div>);
+
+  // ═══ STUDY MODE ═══
+  if(mode==="study")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={function(){setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <span className="out" style={{fontWeight:700,fontSize:15}}>Study — {PHRASAL_VERBS.length} verbs</span>
+      <div style={{width:40}}/>
+    </div>
+    <p style={{color:"var(--t2)",fontSize:12,marginBottom:16}}>Tap a verb to see all its phrasal forms.</p>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {grouped.map(function(grp){
+        var isOpen=studyOpen===grp.verb;
+        return(<div key={grp.verb}>
+          <div className="crd" onClick={function(){setStudyOpen(isOpen?null:grp.verb);}}
+            style={{cursor:"pointer",padding:"12px 16px",borderColor:isOpen?"rgba(0,212,255,.3)":"var(--bdr)",background:isOpen?"rgba(0,212,255,.04)":"var(--bg2)",transition:"all .2s"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span className="out" style={{fontWeight:800,fontSize:16,color:"var(--cyan)",textTransform:"uppercase",minWidth:70}}>{grp.verb}</span>
+                <span style={{fontSize:11,color:"var(--t3)"}}>{grp.items.length} form{grp.items.length>1?"s":""}</span>
+              </div>
+              <span style={{fontSize:14,color:"var(--t3)",transition:"transform .2s",transform:isOpen?"rotate(90deg)":"rotate(0)"}}>{"›"}</span>
+            </div>
+          </div>
+          {isOpen&&<div style={{padding:"8px 0",animation:"fadeIn .2s"}}>
+            {grp.items.map(function(pv,j){
+              return(<div key={j} style={{padding:"10px 16px 10px 28px",borderLeft:"3px solid var(--cyan)",marginBottom:6,marginLeft:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+                  <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>{pv.pv}</span>
+                  <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(168,85,247,.1)",borderRadius:99}}>{pv.fr}</span>
+                </div>
+                <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.5,marginBottom:4}}>{pv.m}</p>
+                <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{pv.ex}"</p>
+              </div>);
+            })}
+          </div>}
+        </div>);
+      })}
+    </div>
+  </div>);
+
+  // ═══ MEANING MATCH ═══
+  if(mode==="match"){
+    var mq=matchQs[ci];var mOpts=matchAllOpts[ci];
+
+    if(ph==="done"){var mxp=20+sc*4;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"🏆":sc>=8?"⚔️":"🛡️"}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Meaning Match</h1>
+      <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{matchQs.length}</div>
+      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{mxp} XP</div>
+      <button className="btn1" onClick={function(){resetQuiz();sP("q");}}>Play Again</button>
+      <button className="btn2" onClick={function(){setMode("hub");}} style={{marginTop:10,width:"100%"}}>Back to Dojo</button>
+    </div>);}
+
+    return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <button onClick={function(){setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+        {streak>=2&&<span className="out" style={{fontSize:12,fontWeight:700,color:"var(--gold)",animation:"pulse .6s infinite"}}>{"🔥"} x{streak}</span>}
+        <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{matchQs.length}</span></div>
+      <Bar value={ci} max={matchQs.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
+      <div style={{textAlign:"center",marginTop:24,marginBottom:24}}>
+        <span className="out" style={{fontSize:11,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>What does this mean?</span>
+        <span className="out" style={{fontSize:28,fontWeight:900,color:"var(--cyan)"}}>{mq.pv}</span>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {mOpts.opts.map(function(opt,i){
+          var show=ph==="fb";var isCor=i===mOpts.c;var isPick=i===pick;
+          var bg="var(--bg2)";var bd="var(--bdr)";
+          if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
+          else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;sPk(i);if(i===mOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);}else{setStreak(0);}sP("fb");}} disabled={show}
+            style={{padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",
+              fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s",lineHeight:1.5}}>
+            {opt}</button>);
+        })}
+      </div>
+      {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
+        <div className="crd" style={{padding:14,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+            <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{mq.pv}</span>
+            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(168,85,247,.1)",borderRadius:99}}>{mq.fr}</span>
+          </div>
+          <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",lineHeight:1.5}}>"{mq.ex}"</p>
+        </div>
+        <button className="btn1" onClick={function(){sPk(-1);if(ci<matchQs.length-1){sC(ci+1);sP("q");}else{sP("done");p.done(sc,matchQs.length,20+sc*4);}}} style={{marginTop:12}}>{ci<matchQs.length-1?"Next":"See Results"}</button>
+      </div>}
+    </div>);
+  }
+
+  // ═══ PARTICLE PICKER ═══
+  if(mode==="picker"){
+    var pq=pickerQs[ci];var pOpts=pickerAllOpts[ci];
+
+    if(ph==="done"){var pxp=25+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"⚡":sc>=8?"🔥":"💪"}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Particle Picker</h1>
+      <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{pickerQs.length}</div>
+      {bestStreak>=3&&<div style={{fontSize:14,color:"var(--gold)",fontWeight:700,marginBottom:8}}>Best streak: {bestStreak} {"🔥"}</div>}
+      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{pxp} XP</div>
+      <button className="btn1" onClick={function(){resetQuiz();sP("q");}}>Play Again</button>
+      <button className="btn2" onClick={function(){setMode("hub");}} style={{marginTop:10,width:"100%"}}>Back to Dojo</button>
+    </div>);}
+
+    var timerPct=timer/8*100;
+    var timerCol=timer<=2?"var(--red)":timer<=4?"var(--orange)":"var(--cyan)";
+
+    return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <button onClick={function(){clearInterval(timerRef.current);setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          {streak>=2&&<span className="out" style={{fontSize:12,fontWeight:700,color:"var(--gold)",animation:"pulse .6s infinite"}}>{"🔥"} x{streak}</span>}
+          <span className="out" style={{fontSize:16,fontWeight:800,color:timerCol}}>{timer}s</span>
+        </div>
+        <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{pickerQs.length}</span></div>
+      <div style={{height:4,background:"var(--bg3)",borderRadius:2,marginBottom:20,overflow:"hidden"}}>
+        <div style={{height:"100%",width:timerPct+"%",background:timerCol,borderRadius:2,transition:"width 1s linear"}}/></div>
+      <div style={{textAlign:"center",marginBottom:8}}>
+        <span className="out" style={{fontSize:11,color:"var(--red)",fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>Pick the particle!</span>
+      </div>
+      <div style={{textAlign:"center",marginBottom:12}}>
+        <span className="out" style={{fontSize:32,fontWeight:900,color:"var(--t1)"}}>{pq.v} </span>
+        <span className="out" style={{fontSize:32,fontWeight:900,color:"var(--cyan)"}}>_____</span>
+      </div>
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <span style={{fontSize:13,color:"var(--t2)",fontStyle:"italic"}}>= {pq.m}</span>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {pOpts.opts.map(function(opt,i){
+          var show=ph==="fb";var isCor=i===pOpts.c;var isPick=i===pick;
+          var bg="var(--bg2)";var bd="var(--bdr)";var col="var(--t1)";
+          if(show&&isCor){bg="rgba(0,230,118,.15)";bd="var(--green)";col="var(--green)";}
+          else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;clearInterval(timerRef.current);sPk(i);if(i===pOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);}else{setStreak(0);}sP("fb");}} disabled={show}
+            style={{padding:"18px 12px",background:bg,border:"2px solid "+bd,borderRadius:14,cursor:ph==="q"?"pointer":"default",
+              fontSize:20,fontWeight:800,color:col,fontFamily:"'DM Sans',sans-serif",transition:"all .15s",textAlign:"center"}}>
+            {opt}</button>);
+        })}
+      </div>
+      {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .2s"}}>
+        {pick===-1&&<div style={{textAlign:"center",marginBottom:12}}>
+          <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
+        <div className="crd" style={{padding:14,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+            <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{pq.pv}</span>
+            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(168,85,247,.1)",borderRadius:99}}>{pq.fr}</span>
+          </div>
+          <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{pq.ex}"</p>
+        </div>
+        <button className="btn1" onClick={function(){sPk(-1);if(ci<pickerQs.length-1){sC(ci+1);sP("q");}else{sP("done");p.done(sc,pickerQs.length,25+sc*5);}}} style={{marginTop:12}}>{ci<pickerQs.length-1?"Next":"See Results"}</button>
+      </div>}
+    </div>);
+  }
+
+  return null;
 }
 
 // ─── STRATEGY CARDS (enriched) ───
@@ -3842,6 +4088,7 @@ useEffect(function(){
   if(sp==="gerinf")return(<div className="app"><style>{CSS}</style><GerInf u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="traps")return(<div className="app"><style>{CSS}</style><TrapsQuiz u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="falsefr")return(<div className="app"><style>{CSS}</style><FalseFriends u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="pvdojo")return(<div className="app"><style>{CSS}</style><PhrasalDojo u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="mock1")return(<div className="app"><style>{CSS}</style><MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="mock2")return(<div className="app"><style>{CSS}</style><MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="matchE")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
