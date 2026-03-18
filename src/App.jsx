@@ -1268,7 +1268,7 @@ var GRAMMAR_SHEETS = [
 ];
 
 function GrammarRef(p){
-  var[open,sO]=useState(null);
+  var[open,sO]=useState(p.initial||null);
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
@@ -1543,6 +1543,8 @@ function TimeSim(p){
       {/* Detailed review for selected question */}
       {revIdx!==null&&function(){
         var a=answers[revIdx];var q=qs[a.q];
+        var catToSheet={"Tenses":"tenses","Passive Voice":"passive","Subject-Verb Agreement":"subjverb","Word Families":"wordform","Connectors":"connectors","Prepositions":"prepositions","Gerunds vs Infinitives":"gerinf","Conditionals":"conditionals","Relative Pronouns":"relatives","Collocations":"collocations","Comparatives":"comparatives","Articles":"articles"};
+        var sheetId=catToSheet[q.cat]||null;
         return(<div className="crd" style={{padding:16,animation:"fadeIn .2s",borderColor:a.correct?"rgba(0,230,118,.2)":"rgba(255,71,87,.2)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{q.cat}</span>
@@ -1568,6 +1570,11 @@ function TimeSim(p){
           {q.x&&<div style={{marginTop:10,padding:10,background:"rgba(0,212,255,.06)",borderRadius:8,border:"1px solid rgba(0,212,255,.12)"}}>
             <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p>
           </div>}
+          {sheetId&&<button onClick={function(){p.nav("gramref",sheetId);}}
+            style={{marginTop:10,width:"100%",padding:"10px 14px",background:"rgba(59,130,246,.08)",border:"1px solid rgba(59,130,246,.2)",borderRadius:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontFamily:"'DM Sans',sans-serif"}}>
+            <span style={{fontSize:14}}>📖</span>
+            <span className="out" style={{fontSize:12,fontWeight:600,color:"#3b82f6"}}>Review: {q.cat}</span>
+          </button>}
           <div style={{display:"flex",gap:8,marginTop:12}}>
             {revIdx>0&&<button className="btn2" onClick={function(){setRevIdx(revIdx-1);}} style={{flex:1,fontSize:12}}>← Prev</button>}
             {revIdx<answers.length-1&&<button className="btn2" onClick={function(){setRevIdx(revIdx+1);}} style={{flex:1,fontSize:12}}>Next →</button>}
@@ -3841,9 +3848,9 @@ useEffect(function(){
   if(sp==="matchH")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="wfall")return(<div className="app"><style>{CSS}</style><WordFall u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="strats")return(<div className="app"><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
-  if(sp==="gramref")return(<div className="app"><style>{CSS}</style><GrammarRef back={function(){sSP(null);}}/></div>);
+  if(sp==="gramref")return(<div className="app"><style>{CSS}</style><GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/></div>);
   if(sp==="stratquiz")return(<div className="app"><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="timesim")return(<div className="app"><style>{CSS}</style><TimeSim u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="timesim")return(<div className="app"><style>{CSS}</style><TimeSim u={u} done={miniDone} nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="p6")return(<div className="app"><style>{CSS}</style><Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="p7")return(<div className="app"><style>{CSS}</style><Part7Read u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="lis")return(<div className="app"><style>{CSS}</style><ListenHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
