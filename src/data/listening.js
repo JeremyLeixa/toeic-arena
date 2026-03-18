@@ -1,545 +1,735 @@
+// ═══════════════════════════════════════════════════════════
+// LISTENING DATA — TOEIC Training Hub
+// Part 1: 43 items | Part 2: 50 items
+// Part 3: 20 items | Part 4: 20 items
+// ═══════════════════════════════════════════════════════════
+
+// ─── PART 1 — Photographs (43 questions) ───
+// Images: public/images/p1/   Audio: public/audio/p1/{id}_{0-3}.mp3
+
+export var LISTENING_P1 = [
+  {id:"p1_01",img:"/images/p1/p1_01.png",c:1,
+    opts:["The woman is typing an email on her laptop.","The woman is talking on the phone at her desk.","The woman is reading a document next to her computer.","The woman is turning off her laptop."],
+    x:"The woman is holding a phone receiver to her ear and smiling — she's talking on the phone. A laptop is open in front of her but she's not typing on it. A is wrong (not typing). C is wrong (no document visible). D is wrong (laptop is open, not being turned off)."},
+
+  {id:"p1_02",img:"/images/p1/p1_02.jpg",c:1,
+    opts:["The passenger is handing a ticket to the agent.","The agent is handing a document to the passenger.","The passenger is picking up his luggage.","The departures board is being updated."],
+    x:"The airline agent behind the counter is extending a document toward the passenger. B correctly describes the action. A reverses the direction (agent gives, not passenger). C is wrong (no luggage visible). D cannot be determined from the scene."},
+
+  {id:"p1_03",img:"/images/p1/p1_03.jpg",c:1,
+    opts:["The workers are eating lunch at a table.","A safety helmet has been placed on the table.","The men are constructing a building.","The blueprints are being rolled up."],
+    x:"A yellow hard hat is sitting on the table next to blueprints. B correctly describes what's visible. A is wrong (they're reviewing plans, not eating). C is wrong (they're at a table, not on a construction site). D is wrong (blueprints are spread open, not rolled up)."},
+
+  {id:"p1_04",img:"/images/p1/p1_04.jpg",c:2,
+    opts:["The students are leaving the classroom.","The teacher is writing on the chalkboard.","Several students are raising their hands.","The desks are being arranged in a circle."],
+    x:"Multiple children have their hands raised while a teacher stands at the front. C is correct. A is wrong (students are seated). B is wrong (teacher is facing students, not writing). D is wrong (desks are in rows)."},
+
+  {id:"p1_05",img:"/images/p1/p1_05.jpg",c:0,
+    opts:["A small boat is passing near a cargo ship.","The containers are being unloaded onto trucks.","The ship is sailing in open water.","Workers are standing on top of the containers."],
+    x:"A small boat is visible in the foreground near the large container ship with cranes above it. A is correct. B is wrong (no trucks visible). C is wrong (the ship is docked at a port). D cannot be confirmed from the image."},
+
+  {id:"p1_06",img:"/images/p1/p1_06.jpg",c:2,
+    opts:["The patient is standing up from the wheelchair.","The doctor is writing a prescription.","A healthcare worker is speaking with a patient in a wheelchair.","The patient is being examined on a bed."],
+    x:"A woman in a white coat with a stethoscope is leaning toward and talking to an elderly person seated in a wheelchair. C is correct. A is wrong (patient is seated). B is wrong (no writing visible). D is wrong (patient is in a wheelchair, not on a bed)."},
+
+  {id:"p1_07",img:"/images/p1/p1_07.jpg",c:1,
+    opts:["The man is repairing the vehicle's engine.","The man is seated in the cab of a large vehicle.","The man is loading cargo onto a truck.","The vehicle is parked inside a garage."],
+    x:"A man in a green shirt is sitting in the driver's seat of what appears to be heavy machinery or a tractor. B is correct. A is wrong (not repairing). C is wrong (not loading cargo). D is wrong (the vehicle appears to be outdoors)."},
+
+  {id:"p1_08",img:"/images/p1/p1_08.jpg",c:1,
+    opts:["Workers are packing ice cream cones into boxes.","Machines are dispensing ice cream into cones on a production line.","The cones are being arranged by hand on a tray.","The factory equipment is being cleaned."],
+    x:"Blue mechanical dispensers are placing scoops of ice cream into waffle cones moving along a conveyor belt. B is correct. A is wrong (no boxes or packing). C is wrong (it's automated, not by hand). D is wrong (the equipment is operating, not being cleaned)."},
+
+  {id:"p1_09",img:"/images/p1/p1_09.jpg",c:1,
+    opts:["The woman is cleaning laboratory equipment.","A researcher is using a pipette in a laboratory.","The scientists are having a discussion.","The woman is looking through a microscope."],
+    x:"A woman in a lab coat is holding and using a pipette, with test tubes and lab equipment around her. B is correct. A is wrong (not cleaning). C is wrong (the man in the background is working separately). D is wrong (no microscope — she's using a pipette)."},
+
+  {id:"p1_10",img:"/images/p1/p1_10.jpg",c:2,
+    opts:["The woman is reading a book on a bench.","The woman is having a video call on her laptop.","The woman is typing on a laptop while sitting on a bench.","The laptop screen is turned off."],
+    x:"A woman is seated on a wooden bench against a brick wall, with her hands on the laptop keyboard. C is correct. A is wrong (it's a laptop, not a book). B cannot be confirmed (no visible video call). D is wrong (the screen is clearly on)."},
+
+  {id:"p1_11",img:"/images/p1/p1_11.jpg",c:1,
+    opts:["The mechanic is washing the car.","A man is using a laptop next to a vehicle with its hood open.","The car is being loaded onto a truck.","The man is closing the hood of the car."],
+    x:"A mechanic in blue overalls is holding a laptop while standing in front of a car with its hood raised. B is correct. A is wrong (not washing). C is wrong (no truck). D is wrong (the hood is open, not being closed)."},
+
+  {id:"p1_12",img:"/images/p1/p1_12.jpg",c:1,
+    opts:["The workers are climbing down a ladder.","Two workers are assembling a steel structure.","The men are painting a metal beam.","Construction equipment is being unloaded."],
+    x:"Two men wearing hard hats and safety harnesses are working on steel beams high up. B is correct. A is wrong (they're on the beams, not a ladder). C is wrong (no painting). D is wrong (no equipment being unloaded)."},
+
+  {id:"p1_13",img:"/images/p1/p1_13.jpg",c:2,
+    opts:["A man is playing a guitar on stage.","Several guitars are displayed in a shop window.","A craftsman is building a guitar in his workshop.","The instruments are being packed into cases."],
+    x:"A man is working on the body of a guitar surrounded by other guitars in various stages of construction. C is correct. A is wrong (he's building, not playing). B is wrong (it's a workshop, not a shop). D is wrong (no cases visible)."},
+
+  {id:"p1_14",img:"/images/p1/p1_14.jpg",c:0,
+    opts:["The colleagues appear exhausted at their desks.","The team is celebrating a successful project.","The workers are arriving at the office.","Documents are being filed into cabinets."],
+    x:"Three people at a conference table look very tired — one is pulling his tie, another has her head down. A is correct. B is the opposite (they look exhausted, not celebrating). C is wrong (they're seated, not arriving). D is wrong (papers are on the table, not being filed)."},
+
+  {id:"p1_15",img:"/images/p1/p1_15.jpg",c:2,
+    opts:["The woman is boarding an airplane.","A traveler is checking her phone at the gate.","A woman is reading a book in an airport terminal.","The passenger is collecting her luggage."],
+    x:"A woman is seated in an airport terminal with a backpack, reading a small book. C is correct. A is wrong (she's seated, not boarding). B is wrong (it's a book, not a phone). D is wrong (no luggage collection area visible)."},
+
+  {id:"p1_16",img:"/images/p1/p1_16.jpg",c:1,
+    opts:["The officer is checking the man's passport.","A security officer is screening a passenger.","The man is putting on his jacket.","The officer is handing a boarding pass to the traveler."],
+    x:"A TSA security officer in blue uniform is conducting a screening while the man holds his arms out. B is correct. A is wrong (no passport visible). C is wrong (he has his arms extended for screening). D is wrong (no boarding pass exchange)."},
+
+  {id:"p1_17",img:"/images/p1/p1_17.jpg",c:0,
+    opts:["A person is signing a document with a pen.","The papers are being placed into an envelope.","A woman is reading a newspaper.","The document is being printed."],
+    x:"A hand is holding a pen and writing on a form on a desk. A is correct (signing/filling in a document). B is wrong (no envelope). C is wrong (it's a form, not a newspaper). D is wrong (the document is already printed and being filled in)."},
+
+  {id:"p1_18",img:"/images/p1/p1_18.jpg",c:1,
+    opts:["The workers are removing solar panels from a roof.","Two technicians are installing solar panels.","A man is repairing the roof tiles.","The ladder is being carried to the building."],
+    x:"Two men wearing hard hats are positioning solar panels on a roof, with a ladder visible behind them. B is correct. A reverses the action (installing, not removing). C is wrong (they're working with panels, not tiles). D is wrong (the ladder is already in place)."},
+
+  {id:"p1_19",img:"/images/p1/p1_19.jpg",c:2,
+    opts:["The shelves in the warehouse are empty.","A worker is stacking boxes on a high shelf.","A man is holding a package in a storage area.","The boxes are being loaded onto a delivery truck."],
+    x:"A man in a work shirt is standing in a warehouse holding a cardboard box, with shelves of packages behind him. C is correct. A is wrong (shelves are full). B is wrong (he's holding a box at waist level, not stacking high). D is wrong (no truck visible)."},
+
+  {id:"p1_20",img:"/images/p1/p1_20.jpg",c:2,
+    opts:["The employee is stocking shelves with fruit.","A customer is selecting produce at a market.","A store worker is carrying a box in the grocery section.","The man is cleaning the floor of the shop."],
+    x:"A man wearing a store apron is holding a large cardboard box in the produce section of a grocery store. C is correct. A is wrong (he's carrying a box, not placing items on shelves). B is wrong (he's an employee with an apron, not a customer). D is wrong (not cleaning)."},
+
+  {id:"p1_21",img:"/images/p1/p1_21.jpg",c:1,
+    opts:["The group is posing for a photograph.","Several people are gathered around a laptop screen.","The team is having lunch together.","A woman is giving a presentation to her colleagues."],
+    x:"A group of people are leaning in and looking attentively at a laptop screen together. B is correct. A is wrong (they're focused on the screen, not posing). C is wrong (no food visible). D is wrong (no one is standing or presenting — they're all looking at the same screen)."},
+
+  {id:"p1_22",img:"/images/p1/p1_22.jpg",c:1,
+    opts:["People are swimming in a canal.","Boats are moored along a waterway between buildings.","A bridge is being constructed over the water.","Cars are parked along the street next to the canal."],
+    x:"Several boats are tied up along a canal lined with historic buildings. B is correct. A is wrong (no swimmers). C is wrong (no construction). D is wrong (no cars — it's a canal city with water instead of streets)."},
+
+  {id:"p1_23",img:"/images/p1/p1_23.jpg",c:2,
+    opts:["People are sitting on the benches in the park.","The snow is being cleared from the pathway.","Benches are covered with snow in a park.","Children are playing in the snow."],
+    x:"Wooden benches along a park path are heavily covered in snow, with no people around. C is correct. A is wrong (the benches are empty). B is wrong (no one is clearing snow). D is wrong (no children or people visible)."},
+
+  {id:"p1_24",img:"/images/p1/p1_24.jpg",c:0,
+    opts:["A person is writing in a planner next to a mobile phone.","The woman is sending a text message on her phone.","A notebook is being closed and put away.","The person is drawing a picture in a sketchbook."],
+    x:"A hand is holding a pen and writing in a weekly planner/calendar, with a smartphone resting on the page. A is correct. B is wrong (the phone is lying flat, not being used). C is wrong (the planner is open). D is wrong (it's a planner with grid lines, not a sketchbook)."},
+
+  {id:"p1_25",img:"/images/p1/p1_25.jpg",c:2,
+    opts:["A woman is folding clothes on a table.","A customer is watching the machines operate.","A person is reaching into a washing machine.","Someone is pushing a cart through the laundry."],
+    x:"The person's upper body is inside the machine and their legs are visible — they are reaching into a washing machine. (A) is wrong: clothes are in a cart, not being folded. (B) is a similar-sound trap: 'watching' vs 'washing'. (D) is wrong: the cart is next to the machines, not being pushed."},
+
+  {id:"p1_26",img:"/images/p1/p1_26.jpg",c:1,
+    opts:["A construction worker is putting on a hard hat.","A worker is welding a piece of metal.","A man is inspecting equipment in a warehouse.","A mechanic is repairing a vehicle."],
+    x:"The worker is wearing a welding helmet and sparks are visible — he is welding a piece of metal. (A) is wrong: he's wearing a helmet, not a hard hat. (C) is a trap with 'inspecting'. (D) is wrong: he's working on metal, not repairing a vehicle."},
+
+  {id:"p1_27",img:"/images/p1/p1_27.jpg",c:0,
+    opts:["Sandwiches and fries have been arranged on a tray.","A customer is eating a meal at a restaurant.","Beverages are being poured into glasses.","A chef is preparing food in the kitchen."],
+    x:"The sandwiches are arranged on a wooden tray with a basket of fries and glasses of water. (B) is wrong: no one is eating. (C) is wrong: the drinks are water glasses, not being poured. (D) is wrong: the food is already served, not being prepared."},
+
+  {id:"p1_28",img:"/images/p1/p1_28.jpg",c:3,
+    opts:["A woman is being photographed on a rooftop.","A tourist is sitting at an outdoor café.","A woman is putting on a hat.","A woman is taking a photograph from a balcony."],
+    x:"The woman is holding a camera up to her face, actively taking a photograph. (A) is a passive voice trap — she is taking, not being photographed. (B) is wrong: she's standing at a railing. (C) is wrong: the hat is already on."},
+
+  {id:"p1_29",img:"/images/p1/p1_29.jpg",c:1,
+    opts:["Some penguins are swimming in the ocean.","A woman is sitting on rocks near some penguins.","A woman is walking along a sandy beach.","A visitor is feeding birds at a wildlife park."],
+    x:"The woman is seated on rocks, watching penguins nearby. (A) is wrong: the penguins are on rocks, not swimming. (C) is wrong: she is sitting, not walking. (D) is wrong: she is not feeding them."},
+
+  {id:"p1_30",img:"/images/p1/p1_30.jpg",c:2,
+    opts:["A cook is preparing breakfast in a kitchen.","Vegetables are being chopped on a cutting board.","A meal has been laid out on wooden boards.","Eggs are being fried in a pan."],
+    x:"Two cutting boards with open-face sandwiches topped with eggs, plus cutlery and vegetables. (A) is wrong: no one is cooking. (B) is a detail trap: vegetables are present but not being chopped. (D) is wrong: eggs are on the sandwiches, not in a pan."},
+
+  {id:"p1_31",img:"/images/p1/p1_31.jpg",c:0,
+    opts:["A worker is cleaning the interior of a car.","A mechanic is repairing an engine.","A man is driving a car out of a garage.","Someone is closing a car door."],
+    x:"The worker is wearing a mask and spraying the car interior with a cleaning device. (B) is wrong: cleaning, not repairing. (C) is a similar-context trap: no one is driving. (D) is wrong: the door is open, not being closed."},
+
+  {id:"p1_32",img:"/images/p1/p1_32.jpg",c:2,
+    opts:["A boy is looking through a car window.","A child is playing with water in a garden.","A boy is washing a car with a sponge.","A man is getting out of a parked car."],
+    x:"The child is holding a sponge and washing the car window with soapy water. (A) is wrong: he's washing, not looking. (B) is a subject trap: washing the car, not playing. (D) is wrong: no man getting out."},
+
+  {id:"p1_33",img:"/images/p1/p1_33.jpg",c:3,
+    opts:["A small group of people is having a discussion.","An empty auditorium is being prepared for an event.","Students are lining up outside a building.","A lecture is being given in a large auditorium."],
+    x:"A large lecture hall full of students with a speaker presenting. (A) is wrong number: many rows, not a small group. (B) is wrong: the room is full. (C) is wrong: students are seated."},
+
+  {id:"p1_34",img:"/images/p1/p1_34.webp",c:0,
+    opts:["Workers are climbing on scaffolding at a construction site.","People are standing on a rooftop.","Metal scaffolding is being assembled by workers.","A group of workers is digging at ground level."],
+    x:"Several workers in safety vests are climbing and working on metal scaffolding. (B) is wrong: scaffolding, not a rooftop. (C) is a passive voice trap: the scaffolding is already assembled. (D) is wrong: working above ground, not digging."},
+
+  {id:"p1_35",img:"/images/p1/p1_35.webp",c:1,
+    opts:["A woman is using a roller to paint a ceiling.","A woman is painting a wall next to a ladder.","A person is climbing a ladder to reach a shelf.","Someone is hanging a picture on a wall."],
+    x:"The woman is applying paint to the wall with a brush, standing beside a ladder. (A) is wrong: she's using a brush, not a roller. (C) is a trap: she's next to the ladder, not climbing it. (D) is wrong: painting, not hanging a picture."},
+
+  {id:"p1_36",img:"/images/p1/p1_36.webp",c:2,
+    opts:["A woman is working alone at her desk.","Two colleagues are standing near a window.","Two women are having a meeting with their laptops.","A group is writing on a whiteboard."],
+    x:"Two women seated in modern chairs, each with a laptop — having a meeting. (A) is wrong number: two people, not one. (B) is wrong: seated, not standing. (D) is wrong: working on laptops, not writing on a whiteboard."},
+
+  {id:"p1_37",img:"/images/p1/p1_37.webp",c:3,
+    opts:["Several boats are sailing across the water.","People are fishing from a wooden pier.","A dock is being constructed near the shore.","Boats are tied up along a pier in a marina."],
+    x:"Sailboats and motorboats moored along a wooden dock in a marina. (A) is wrong: boats are docked, not sailing. (B) is wrong: no fishing visible. (C) is a tense/state trap: the dock is already built."},
+
+  {id:"p1_38",img:"/images/p1/p1_38.webp",c:0,
+    opts:["A cashier is bagging items for a customer.","A shopper is browsing products on a shelf.","A store employee is stocking shelves.","A customer is paying with cash at the register."],
+    x:"A cashier in uniform is putting items into a bag at the checkout counter. (B) is wrong: the customer is at the counter, not browsing. (C) is wrong: bagging items, not stocking shelves. (D) is a trap: the visible action is bagging."},
+
+  {id:"p1_39",img:"/images/p1/p1_39.webp",c:1,
+    opts:["A woman is waiting for the traffic light to change.","A pedestrian is crossing the street while looking at her phone.","A woman is talking on the phone next to her car.","People are waiting at a bus stop."],
+    x:"The woman is walking across a crosswalk while looking at her mobile phone. (A) is wrong: she is not waiting, she is mid-crossing. (C) is a trap: she's looking at her phone, not talking on it. (D) is wrong: she's on a crosswalk, not at a bus stop."},
+
+  {id:"p1_40",img:"/images/p1/p1_40.webp",c:2,
+    opts:["Passengers are boarding an aircraft.","People are walking through a jet bridge.","Passengers are getting off a plane using stairs.","Travelers are waiting inside a terminal."],
+    x:"Passengers walking down stairs from the aircraft. (A) is the opposite direction trap: getting off, not boarding. (B) is wrong: using stairs, not a jet bridge. (D) is wrong: on the aircraft stairs, not in a terminal."},
+
+  {id:"p1_41",img:"/images/p1/p1_41.webp",c:0,
+    opts:["An airplane is parked at the gate.","A plane is taking off from the runway.","An aircraft is taxiing on the runway.","A jet bridge is being connected to the aircraft."],
+    x:"A large commercial aircraft parked at the gate with a jet bridge attached. (B) is wrong: stationary, not taking off. (C) is wrong: at the gate, not on a runway. (D) is a tense trap: the jet bridge is already connected."},
+
+  {id:"p1_42",img:"/images/p1/p1_42.webp",c:3,
+    opts:["A woman is standing in a queue at the airport.","A traveler is checking in at the counter.","A passenger is reading a book in a waiting area.","A woman is sitting in an airport terminal holding her passport."],
+    x:"The woman is seated in an airport terminal, holding a passport and boarding pass. (A) is wrong: sitting, not standing in a queue. (B) is wrong: in the terminal, not at a counter. (C) is wrong: holding documents, not reading a book."},
+
+  {id:"p1_43",img:"/images/p1/p1_43.webp",c:1,
+    opts:["A traveler is picking up luggage from the carousel.","A suitcase is moving along a baggage carousel.","Luggage is being loaded onto an airplane.","Rows of suitcases are lined up in a storage area."],
+    x:"A single suitcase traveling on the baggage carousel conveyor belt. (A) is wrong: no one is picking it up. (C) is wrong: on the carousel, not being loaded onto a plane. (D) is wrong number: one suitcase, not rows."},
+];
+
+// ─── PART 2 — Question-Response (50 questions) ───
+// Audio: public/audio/p2/{id}_q.mp3 + {id}_{0-2}.mp3
+
 export var LISTENING_P2 = [
-  {id:"l2a",q:"When is the budget meeting scheduled?",
+  {id:"p2_01",q:"When is the budget meeting scheduled?",
     opts:["It's on Thursday at 2 PM.","Yes, I like the schedule.","The budget was approved."],
     c:0,x:"'When' asks for a time. Only A gives a time (Thursday at 2 PM)."},
-  {id:"l2b",q:"Who's responsible for the marketing campaign?",
+
+  {id:"p2_02",q:"Who's responsible for the marketing campaign?",
     opts:["It was very successful.","Ms. Rivera is leading it.","We launched it last month."],
     c:1,x:"'Who' asks for a person. Only B names someone (Ms. Rivera)."},
-  {id:"l2c",q:"Where did you put the quarterly report?",
+
+  {id:"p2_03",q:"Where did you put the quarterly report?",
     opts:["It's due next Friday.","About 30 pages long.","On your desk, next to the laptop."],
     c:2,x:"'Where' asks for a place. Only C gives a location (on your desk)."},
-  {id:"l2d",q:"Why was the delivery delayed?",
+
+  {id:"p2_04",q:"Why was the delivery delayed?",
     opts:["It arrived this morning.","Because of a supplier issue.","Three boxes were missing."],
     c:1,x:"'Why' asks for a reason. Only B gives a cause (because of a supplier issue)."},
-  {id:"l2e",q:"How many copies do we need for the presentation?",
+
+  {id:"p2_05",q:"How many copies do we need for the presentation?",
     opts:["The presentation went well.","About twenty-five should be enough.","It starts at 10 AM."],
     c:1,x:"'How many' asks for a quantity. Only B gives a number (twenty-five)."},
-  {id:"l2f",q:"Would you like to join us for lunch?",
+
+  {id:"p2_06",q:"Would you like to join us for lunch?",
     opts:["The restaurant is nearby.","I already ate, but thanks.","Lunch is at noon."],
     c:1,x:"This is an invitation. B is an indirect but natural decline. A and C are factual but don't answer the invitation."},
-  {id:"l2g",q:"Hasn't the new software been installed yet?",
+
+  {id:"p2_07",q:"Hasn't the new software been installed yet?",
     opts:["Yes, it's a new version.","The IT team is working on it now.","I prefer the old software."],
     c:1,x:"Negative question about status. B addresses the current situation. A repeats 'new' (trap). C is an opinion, not an answer."},
-  {id:"l2h",q:"Do you want the report in PDF or printed?",
+
+  {id:"p2_08",q:"Do you want the report in PDF or printed?",
     opts:["Yes, the report is ready.","PDF would be easier to share.","I wrote it yesterday."],
     c:1,x:"'Or' question = choose one. B makes a choice (PDF). A says 'Yes' (trap for or-questions). C is unrelated."},
-  {id:"l2i",q:"The conference room is on the third floor, isn't it?",
+
+  {id:"p2_09",q:"The conference room is on the third floor, isn't it?",
     opts:["Actually, it was moved to the second floor.","The conference starts at 3.","Yes, I have the room key."],
     c:0,x:"Tag question asking for confirmation. A corrects the information. B uses 'third/3' (number trap). C doesn't address the location."},
-  {id:"l2j",q:"How should I send the contract to the client?",
+
+  {id:"p2_10",q:"How should I send the contract to the client?",
     opts:["The client signed it already.","Email would be the fastest option.","It's a three-year contract."],
     c:1,x:"'How' asks for a method. B suggests a method (email). A and C give facts about the contract but not how to send it."},
-  {id:"l2k",q:"Could you review this proposal before Friday?",
+
+  {id:"p2_11",q:"Could you review this proposal before Friday?",
     opts:["The proposal was rejected.","Sure, I'll look at it tomorrow.","Friday is a holiday."],
     c:1,x:"This is a request. B accepts and gives a timeline. A talks about a past proposal. C mentions Friday but doesn't answer the request."},
-  {id:"l2l",q:"What time does the train to Manchester leave?",
+
+  {id:"p2_12",q:"What time does the train to Manchester leave?",
     opts:["The platform number is 7.","Manchester is about two hours away.","The next one departs at 4:15."],
     c:2,x:"'What time' asks for a specific time. Only C gives a departure time (4:15)."},
-  {id:"l2m",q:"Who should I contact about the office renovation?",
+
+  {id:"p2_13",q:"Who should I contact about the office renovation?",
     opts:["The renovation will take three weeks.","Try the facilities manager, Mr. Chen.","The office looks much better now."],
     c:1,x:"'Who' asks for a person. B names someone (Mr. Chen). A and C discuss the renovation but don't name a contact."},
-  {id:"l2n",q:"Why don't we postpone the meeting until next week?",
+
+  {id:"p2_14",q:"Why don't we postpone the meeting until next week?",
     opts:["That works better for everyone.","The meeting room is available.","We postponed it already."],
     c:0,x:"'Why don't we' is a suggestion. A accepts the suggestion. B and C don't respond to the proposal."},
-  {id:"l2o",q:"Have you finished reviewing the applications?",
+
+  {id:"p2_15",q:"Have you finished reviewing the applications?",
     opts:["There were over 50 applicants.","I still have a few more to go through.","The application deadline was Monday."],
     c:1,x:"Yes/No question about task completion. B gives a status update. A and C mention applications but don't answer about progress."},
-	// ═══════════════════════════════════════════
-// 35 QUESTIONS SUPPLÉMENTAIRES PART 2
-// ═══════════════════════════════════════════
-// 
-// À coller dans le tableau LISTENING_P2,
-// juste AVANT le,
-  // ─── BATCH 2 (l2p–l2ax) ───
-  {id:"l2p",q:"Where can I find the employee handbook?",
+
+  {id:"p2_16",q:"Where can I find the employee handbook?",
     opts:["It was updated last year.","Check the HR section of the intranet.","About 200 pages long."],
     c:1,x:"'Where' asks for a location/source. B gives a specific place (HR intranet). A and C are facts but don't answer where."},
-  {id:"l2q",q:"When did the shipment arrive?",
+
+  {id:"p2_17",q:"When did the shipment arrive?",
     opts:["By express delivery.","It came in early this morning.","About 500 units."],
     c:1,x:"'When' asks for a time. B gives a time (early this morning). A answers 'how' and C answers 'how many'."},
-  {id:"l2r",q:"How often do you meet with your supervisor?",
+
+  {id:"p2_18",q:"How often do you meet with your supervisor?",
     opts:["In the meeting room upstairs.","She's been very helpful.","Every other Wednesday."],
     c:2,x:"'How often' asks for frequency. C gives frequency (every other Wednesday). A answers 'where' and B is an opinion."},
-  {id:"l2s",q:"Don't you think we should hire more staff?",
+
+  {id:"p2_19",q:"Don't you think we should hire more staff?",
     opts:["The staff meeting is at 3.","I've been thinking the same thing.","We hired someone last week."],
     c:1,x:"Negative question seeking agreement. B agrees with the suggestion. A uses 'staff' as a trap word. C talks about past hiring."},
-  {id:"l2t",q:"Shall I book the restaurant for the team dinner?",
+
+  {id:"p2_20",q:"Shall I book the restaurant for the team dinner?",
     opts:["The food was excellent.","That would be great, thanks.","We had dinner last Friday."],
     c:1,x:"'Shall I' is an offer. B accepts the offer. A and C discuss past dinners."},
-  {id:"l2u",q:"How about moving the deadline to next month?",
+
+  {id:"p2_21",q:"How about moving the deadline to next month?",
     opts:["The project is almost done.","I think that's a reasonable idea.","The deadline was yesterday."],
     c:1,x:"'How about' is a suggestion. B responds to the suggestion. A and C don't address whether to move the deadline."},
-  {id:"l2v",q:"Who approved the travel budget?",
+
+  {id:"p2_22",q:"Who approved the travel budget?",
     opts:["It was a business trip to Tokyo.","The finance director signed off on it.","The budget is quite generous."],
     c:1,x:"'Who' asks for a person. B names someone (finance director). A gives destination and C gives an opinion."},
-  {id:"l2w",q:"Would you mind closing the window?",
+
+  {id:"p2_23",q:"Would you mind closing the window?",
     opts:["The window faces the parking lot.","Not at all, it is quite cold.","The office has six windows."],
     c:1,x:"'Would you mind' is a polite request. B agrees to help. A and C give facts about windows but don't respond to the request."},
-  {id:"l2x",q:"The new printer is much faster, isn't it?",
+
+  {id:"p2_24",q:"The new printer is much faster, isn't it?",
     opts:["It prints in color too.","Yes, it saves us a lot of time.","The printer is on the second floor."],
     c:1,x:"Tag question about the printer speed. B confirms and adds information. A mentions a different feature. C gives location."},
-  {id:"l2y",q:"Why hasn't the invoice been sent yet?",
+
+  {id:"p2_25",q:"Why hasn't the invoice been sent yet?",
     opts:["The invoice is for $3,500.","We're still waiting for final approval.","I'll send you a copy."],
     c:1,x:"'Why hasn't' asks for a reason something hasn't happened. B explains the delay. A gives the amount and C offers future action."},
-  {id:"l2z",q:"Should we take the elevator or the stairs?",
+
+  {id:"p2_26",q:"Should we take the elevator or the stairs?",
     opts:["Yes, the elevator is fast.","The stairs are good exercise.","It's on the fifth floor."],
     c:1,x:"'Or' question = pick one. B makes a choice (stairs). A says 'Yes' which is the classic or-question trap. C is a fact."},
-  {id:"l2aa",q:"What's the best way to get to the airport from here?",
+
+  {id:"p2_27",q:"What's the best way to get to the airport from here?",
     opts:["My flight leaves at 6 PM.","The express train takes about 30 minutes.","The airport was renovated recently."],
     c:1,x:"'What's the best way' asks for a method/route. B suggests transportation. A and C are about airports/flights but not how to get there."},
-  {id:"l2ab",q:"Could you forward me the meeting notes?",
+
+  {id:"p2_28",q:"Could you forward me the meeting notes?",
     opts:["The meeting lasted two hours.","I'll email them to you right away.","There were 12 people at the meeting."],
     c:1,x:"This is a request. B agrees and tells how. A and C are facts about the meeting but don't address the request."},
-  {id:"l2ac",q:"Has the client confirmed the order yet?",
+
+  {id:"p2_29",q:"Has the client confirmed the order yet?",
     opts:["It's a large order.","I'm still waiting to hear back.","The order shipped yesterday."],
     c:1,x:"Yes/No about confirmation status. B gives a status update. A describes the order and C talks about shipping."},
-  {id:"l2ad",q:"Why don't we schedule the training for next Tuesday?",
+
+  {id:"p2_30",q:"Why don't we schedule the training for next Tuesday?",
     opts:["The training was very informative.","That works, I'll book the room.","It takes about three hours."],
     c:1,x:"'Why don't we' is a suggestion. B accepts and takes action. A comments on past training. C gives duration."},
-  {id:"l2ae",q:"Which department handles customer complaints?",
+
+  {id:"p2_31",q:"Which department handles customer complaints?",
     opts:["We received five complaints this week.","Customer service on the fourth floor.","The complaint was resolved quickly."],
     c:1,x:"'Which department' asks for a specific team. B gives department + location. A gives complaint count and C discusses resolution."},
-  {id:"l2af",q:"You've already submitted the report, haven't you?",
+
+  {id:"p2_32",q:"You've already submitted the report, haven't you?",
     opts:["The report is 15 pages.","Actually, I still need to add the charts.","It's due by end of day."],
     c:1,x:"Tag question checking if done. B corrects the assumption (not finished). A gives length and C gives deadline."},
-  {id:"l2ag",q:"Where should I park when I visit the main office?",
+
+  {id:"p2_33",q:"Where should I park when I visit the main office?",
     opts:["The office opens at 8 AM.","There's a visitor lot behind the building.","It's a 20-minute drive from here."],
     c:1,x:"'Where should I park' asks for a parking location. B gives a specific place. A gives opening hours and C gives travel time."},
-  {id:"l2ah",q:"Do you prefer the morning or afternoon session?",
+
+  {id:"p2_34",q:"Do you prefer the morning or afternoon session?",
     opts:["Yes, I've already registered.","The morning one fits my schedule better.","Each session is 90 minutes."],
     c:1,x:"'Or' question = choose one. B picks morning. A says 'Yes' (or-question trap). C gives duration."},
-  {id:"l2ai",q:"I thought the deadline was extended.",
+
+  {id:"p2_35",q:"I thought the deadline was extended.",
     opts:["No, it's still due this Friday.","The project is going well.","I'll meet the deadline."],
     c:0,x:"Statement seeking confirmation. A corrects the assumption. B and C don't address whether the deadline changed."},
-  {id:"l2aj",q:"What did the director say about the proposal?",
+
+  {id:"p2_36",q:"What did the director say about the proposal?",
     opts:["She wants us to revise the budget section.","The proposal was submitted online.","The director is traveling this week."],
     c:0,x:"'What did X say' asks for content of communication. A reports what she said. B is about submission and C is about her schedule."},
-  {id:"l2ak",q:"Isn't the workshop supposed to start at 9?",
+
+  {id:"p2_37",q:"Isn't the workshop supposed to start at 9?",
     opts:["It's been pushed back to 10.","The workshop covers project management.","I attended it last year."],
     c:0,x:"Negative question about start time. A corrects with new time. B gives the topic and C talks about past attendance."},
-  {id:"l2al",q:"How long will the renovation take?",
+
+  {id:"p2_38",q:"How long will the renovation take?",
     opts:["The contractor said about six weeks.","The lobby looks much better now.","They're renovating the third floor."],
     c:0,x:"'How long' asks for duration. A gives a timeframe (six weeks). B comments on results and C says what's being renovated."},
-  {id:"l2am",q:"Who's giving the keynote speech at the conference?",
+
+  {id:"p2_39",q:"Who's giving the keynote speech at the conference?",
     opts:["The conference is in Berlin this year.","A professor from Oxford University.","The speech was very inspiring."],
     c:1,x:"'Who' asks for a person. B identifies the speaker. A gives location and C comments on a past speech."},
-  {id:"l2an",q:"Can I borrow your laptop charger?",
+
+  {id:"p2_40",q:"Can I borrow your laptop charger?",
     opts:["Sure, it's in my bag.","The laptop is brand new.","I charged it this morning."],
     c:0,x:"Request to borrow something. A agrees and says where it is. B describes the laptop and C talks about charging."},
-  {id:"l2ao",q:"We're running low on printer paper, aren't we?",
+
+  {id:"p2_41",q:"We're running low on printer paper, aren't we?",
     opts:["I'll order more this afternoon.","The printer is working fine.","We switched to a new brand."],
     c:0,x:"Tag question about supply level. A takes action to fix it. B is about the printer machine and C about paper brand."},
-  {id:"l2ap",q:"What's the Wi-Fi password for the guest network?",
+
+  {id:"p2_42",q:"What's the Wi-Fi password for the guest network?",
     opts:["The network is very fast.","It's 'welcome2025', all lowercase.","We upgraded the system last month."],
     c:1,x:"Asks for specific information (password). B gives the password. A comments on speed and C on upgrades."},
-  {id:"l2aq",q:"Should I contact the supplier directly?",
+
+  {id:"p2_43",q:"Should I contact the supplier directly?",
     opts:["The supplier is based in Germany.","It might be faster to go through our procurement team.","We've used them for three years."],
     c:1,x:"Asking for advice. B suggests an alternative approach. A gives supplier location and C gives history."},
-  {id:"l2ar",q:"How was your business trip to Singapore?",
+
+  {id:"p2_44",q:"How was your business trip to Singapore?",
     opts:["I'm flying out on Monday.","Very productive — we signed two new contracts.","Singapore is about 12 hours by plane."],
     c:1,x:"'How was' asks for an evaluation. B gives a positive assessment. A is about a future trip and C is a travel fact."},
-  {id:"l2as",q:"The quarterly figures look promising, don't they?",
+
+  {id:"p2_45",q:"The quarterly figures look promising, don't they?",
     opts:["Revenue is up 15% from last quarter.","The report will be published next week.","I haven't had a chance to review them yet."],
     c:2,x:"Tag question seeking agreement. C is an honest indirect answer (hasn't seen them). A gives a detail and B is about publication. C is the most natural conversational response."},
-  {id:"l2at",q:"Where are the samples we ordered for the trade show?",
+
+  {id:"p2_46",q:"Where are the samples we ordered for the trade show?",
     opts:["The trade show starts next Thursday.","They should be in the storage room.","We ordered 200 samples."],
     c:1,x:"'Where' asks for a location. B gives a location (storage room). A gives a date and C gives quantity."},
-  {id:"l2au",q:"Would you rather present first or second?",
+
+  {id:"p2_47",q:"Would you rather present first or second?",
     opts:["The presentation is ready.","I'd prefer to go second if that's OK.","It will take about 15 minutes."],
     c:1,x:"'Would you rather X or Y' = choose one. B makes a choice (second). A confirms readiness and C gives duration."},
-  {id:"l2av",q:"Didn't the maintenance team fix the air conditioning?",
+
+  {id:"p2_48",q:"Didn't the maintenance team fix the air conditioning?",
     opts:["They came yesterday but need a replacement part.","The air conditioning is on the roof.","It's much cooler today."],
     c:0,x:"Negative question about repair status. A explains the situation (partial fix). B gives location and C comments on temperature."},
-  {id:"l2aw",q:"What's on the agenda for this afternoon's meeting?",
+
+  {id:"p2_49",q:"What's on the agenda for this afternoon's meeting?",
     opts:["The budget review and the hiring plan.","The meeting room has been changed.","It should last about an hour."],
     c:0,x:"'What's on the agenda' asks for topics. A lists the topics. B is about room change and C about duration."},
-  {id:"l2ax",q:"I don't think we have enough chairs for the workshop.",
+
+  {id:"p2_50",q:"I don't think we have enough chairs for the workshop.",
     opts:["The workshop is about leadership skills.","I can bring a few more from the next room.","It starts at 2 PM."],
     c:1,x:"Statement expressing a problem. B offers a solution. A gives the workshop topic and C gives the time. B is the most helpful response."},
 ];
 
-export var LISTENING_P1 = [
-  {id:"l1_01",img:"/img/p1_01.png",
-    opts:["The woman is typing an email on her laptop.","The woman is talking on the phone at her desk.","The woman is reading a document next to her computer.","The woman is turning off her laptop."],
-    c:1,x:"The woman is holding a phone receiver to her ear and smiling — she's talking on the phone. A laptop is open in front of her but she's not typing on it. A is wrong (not typing). C is wrong (no document visible). D is wrong (laptop is open, not being turned off)."},
-  {id:"l1_02",img:"/img/p1_02.jpg",
-    opts:["The passenger is handing a ticket to the agent.","The agent is handing a document to the passenger.","The passenger is picking up his luggage.","The departures board is being updated."],
-    c:1,x:"The airline agent behind the counter is extending a document toward the passenger. B correctly describes the action. A reverses the direction (agent gives, not passenger). C is wrong (no luggage visible). D cannot be determined from the scene."},
-  {id:"l1_03",img:"/img/p1_03.jpg",
-    opts:["The workers are eating lunch at a table.","A safety helmet has been placed on the table.","The men are constructing a building.","The blueprints are being rolled up."],
-    c:1,x:"A yellow hard hat is sitting on the table next to blueprints. B correctly describes what's visible. A is wrong (they're reviewing plans, not eating). C is wrong (they're at a table, not on a construction site). D is wrong (blueprints are spread open, not rolled up)."},
-  {id:"l1_04",img:"/img/p1_04.jpg",
-    opts:["The students are leaving the classroom.","The teacher is writing on the chalkboard.","Several students are raising their hands.","The desks are being arranged in a circle."],
-    c:2,x:"Multiple children have their hands raised while a teacher stands at the front. C is correct. A is wrong (students are seated). B is wrong (teacher is facing students, not writing). D is wrong (desks are in rows)."},
-  {id:"l1_05",img:"/img/p1_05.jpg",
-    opts:["A small boat is passing near a cargo ship.","The containers are being unloaded onto trucks.","The ship is sailing in open water.","Workers are standing on top of the containers."],
-    c:0,x:"A small boat is visible in the foreground near the large container ship with cranes above it. A is correct. B is wrong (no trucks visible). C is wrong (the ship is docked at a port). D cannot be confirmed from the image."},
-  {id:"l1_06",img:"/img/p1_06.jpg",
-    opts:["The patient is standing up from the wheelchair.","The doctor is writing a prescription.","A healthcare worker is speaking with a patient in a wheelchair.","The patient is being examined on a bed."],
-    c:2,x:"A woman in a white coat with a stethoscope is leaning toward and talking to an elderly person seated in a wheelchair. C is correct. A is wrong (patient is seated). B is wrong (no writing visible). D is wrong (patient is in a wheelchair, not on a bed)."},
-  {id:"l1_07",img:"/img/p1_07.jpg",
-    opts:["The man is repairing the vehicle's engine.","The man is seated in the cab of a large vehicle.","The man is loading cargo onto a truck.","The vehicle is parked inside a garage."],
-    c:1,x:"A man in a green shirt is sitting in the driver's seat of what appears to be heavy machinery or a tractor. B is correct. A is wrong (not repairing). C is wrong (not loading cargo). D is wrong (the vehicle appears to be outdoors)."},
-  {id:"l1_08",img:"/img/p1_08.jpg",
-    opts:["Workers are packing ice cream cones into boxes.","Machines are dispensing ice cream into cones on a production line.","The cones are being arranged by hand on a tray.","The factory equipment is being cleaned."],
-    c:1,x:"Blue mechanical dispensers are placing scoops of ice cream into waffle cones moving along a conveyor belt. B is correct. A is wrong (no boxes or packing). C is wrong (it's automated, not by hand). D is wrong (the equipment is operating, not being cleaned)."},
-  {id:"l1_09",img:"/img/p1_09.jpg",
-    opts:["The woman is cleaning laboratory equipment.","A researcher is using a pipette in a laboratory.","The scientists are having a discussion.","The woman is looking through a microscope."],
-    c:1,x:"A woman in a lab coat is holding and using a pipette, with test tubes and lab equipment around her. B is correct. A is wrong (not cleaning). C is wrong (the man in the background is working separately). D is wrong (no microscope — she's using a pipette)."},
-  {id:"l1_10",img:"/img/p1_10.jpg",
-    opts:["The woman is reading a book on a bench.","The woman is having a video call on her laptop.","The woman is typing on a laptop while sitting on a bench.","The laptop screen is turned off."],
-    c:2,x:"A woman is seated on a wooden bench against a brick wall, with her hands on the laptop keyboard. C is correct. A is wrong (it's a laptop, not a book). B cannot be confirmed (no visible video call). D is wrong (the screen is clearly on)."},
-	// ═══════════════════════════════════════════
-// PART 1 — PHOTOGRAPHS (Batch 2: p1_11 to p1_20)
-// ═══════════════════════════════════════════
-//
-// À coller dans le tableau LISTENING_P1,
-// juste AVANT le,
-  // ─── BATCH 2 & 3 (l1_11–l1_24) ───
-  {id:"l1_11",img:"/img/p1_11.jpg",
-    opts:["The mechanic is washing the car.","A man is using a laptop next to a vehicle with its hood open.","The car is being loaded onto a truck.","The man is closing the hood of the car."],
-    c:1,x:"A mechanic in blue overalls is holding a laptop while standing in front of a car with its hood raised. B is correct. A is wrong (not washing). C is wrong (no truck). D is wrong (the hood is open, not being closed)."},
-  {id:"l1_12",img:"/img/p1_12.jpg",
-    opts:["The workers are climbing down a ladder.","Two workers are assembling a steel structure.","The men are painting a metal beam.","Construction equipment is being unloaded."],
-    c:1,x:"Two men wearing hard hats and safety harnesses are working on steel beams high up. B is correct. A is wrong (they're on the beams, not a ladder). C is wrong (no painting). D is wrong (no equipment being unloaded)."},
-  {id:"l1_13",img:"/img/p1_13.jpg",
-    opts:["A man is playing a guitar on stage.","Several guitars are displayed in a shop window.","A craftsman is building a guitar in his workshop.","The instruments are being packed into cases."],
-    c:2,x:"A man is working on the body of a guitar surrounded by other guitars in various stages of construction. C is correct. A is wrong (he's building, not playing). B is wrong (it's a workshop, not a shop). D is wrong (no cases visible)."},
-  {id:"l1_14",img:"/img/p1_14.jpg",
-    opts:["The colleagues appear exhausted at their desks.","The team is celebrating a successful project.","The workers are arriving at the office.","Documents are being filed into cabinets."],
-    c:0,x:"Three people at a conference table look very tired — one is pulling his tie, another has her head down. A is correct. B is the opposite (they look exhausted, not celebrating). C is wrong (they're seated, not arriving). D is wrong (papers are on the table, not being filed)."},
-  {id:"l1_15",img:"/img/p1_15.jpg",
-    opts:["The woman is boarding an airplane.","A traveler is checking her phone at the gate.","A woman is reading a book in an airport terminal.","The passenger is collecting her luggage."],
-    c:2,x:"A woman is seated in an airport terminal with a backpack, reading a small book. C is correct. A is wrong (she's seated, not boarding). B is wrong (it's a book, not a phone). D is wrong (no luggage collection area visible)."},
-  {id:"l1_16",img:"/img/p1_16.jpg",
-    opts:["The officer is checking the man's passport.","A security officer is screening a passenger.","The man is putting on his jacket.","The officer is handing a boarding pass to the traveler."],
-    c:1,x:"A TSA security officer in blue uniform is conducting a screening while the man holds his arms out. B is correct. A is wrong (no passport visible). C is wrong (he has his arms extended for screening). D is wrong (no boarding pass exchange)."},
-  {id:"l1_17",img:"/img/p1_17.jpg",
-    opts:["A person is signing a document with a pen.","The papers are being placed into an envelope.","A woman is reading a newspaper.","The document is being printed."],
-    c:0,x:"A hand is holding a pen and writing on a form on a desk. A is correct (signing/filling in a document). B is wrong (no envelope). C is wrong (it's a form, not a newspaper). D is wrong (the document is already printed and being filled in)."},
-  {id:"l1_18",img:"/img/p1_18.jpg",
-    opts:["The workers are removing solar panels from a roof.","Two technicians are installing solar panels.","A man is repairing the roof tiles.","The ladder is being carried to the building."],
-    c:1,x:"Two men wearing hard hats are positioning solar panels on a roof, with a ladder visible behind them. B is correct. A reverses the action (installing, not removing). C is wrong (they're working with panels, not tiles). D is wrong (the ladder is already in place)."},
-  {id:"l1_19",img:"/img/p1_19.jpg",
-    opts:["The shelves in the warehouse are empty.","A worker is stacking boxes on a high shelf.","A man is holding a package in a storage area.","The boxes are being loaded onto a delivery truck."],
-    c:2,x:"A man in a work shirt is standing in a warehouse holding a cardboard box, with shelves of packages behind him. C is correct. A is wrong (shelves are full). B is wrong (he's holding a box at waist level, not stacking high). D is wrong (no truck visible)."},
-  {id:"l1_20",img:"/img/p1_20.jpg",
-    opts:["The employee is stocking shelves with fruit.","A customer is selecting produce at a market.","A store worker is carrying a box in the grocery section.","The man is cleaning the floor of the shop."],
-    c:2,x:"A man wearing a store apron is holding a large cardboard box in the produce section of a grocery store. C is correct. A is wrong (he's carrying a box, not placing items on shelves). B is wrong (he's an employee with an apron, not a customer). D is wrong (not cleaning)."},
-  {id:"l1_21",img:"/img/p1_21.jpg",
-    opts:["The group is posing for a photograph.","Several people are gathered around a laptop screen.","The team is having lunch together.","A woman is giving a presentation to her colleagues."],
-    c:1,x:"A group of people are leaning in and looking attentively at a laptop screen together. B is correct. A is wrong (they're focused on the screen, not posing). C is wrong (no food visible). D is wrong (no one is standing or presenting — they're all looking at the same screen)."},
-  {id:"l1_22",img:"/img/p1_22.jpg",
-    opts:["People are swimming in a canal.","Boats are moored along a waterway between buildings.","A bridge is being constructed over the water.","Cars are parked along the street next to the canal."],
-    c:1,x:"Several boats are tied up along a canal lined with historic buildings. B is correct. A is wrong (no swimmers). C is wrong (no construction). D is wrong (no cars — it's a canal city with water instead of streets)."},
-  {id:"l1_23",img:"/img/p1_23.jpg",
-    opts:["People are sitting on the benches in the park.","The snow is being cleared from the pathway.","Benches are covered with snow in a park.","Children are playing in the snow."],
-    c:2,x:"Wooden benches along a park path are heavily covered in snow, with no people around. C is correct. A is wrong (the benches are empty). B is wrong (no one is clearing snow). D is wrong (no children or people visible)."},
-  {id:"l1_24",img:"/img/p1_24.jpg",
-    opts:["A person is writing in a planner next to a mobile phone.","The woman is sending a text message on her phone.","A notebook is being closed and put away.","The person is drawing a picture in a sketchbook."],
-    c:0,x:"A hand is holding a pen and writing in a weekly planner/calendar, with a smartphone resting on the page. A is correct. B is wrong (the phone is lying flat, not being used). C is wrong (the planner is open). D is wrong (it's a planner with grid lines, not a sketchbook)."},
-];
+// ─── PART 3 — Conversations (20 conversations, 60 questions) ───
+// Audio: public/audio/p3/{id}.mp3
 
 export var LISTENING_P3 = [
-  {id:"l3_01",lines:[
-    {s:"W",t:"Have you seen the updated schedule for the trade show next month?"},
-    {s:"M",t:"Yes, our booth has been moved to Hall B. It's actually a better location than last year."},
-    {s:"W",t:"That's great. Should I order new banners for the booth?"},
-    {s:"M",t:"Let's check the budget with finance first. The old ones might still work."}],
+  {id:"p3_01",lines:[
+      {s:"W",t:"Have you seen the updated schedule for the trade show next month?"},
+      {s:"M",t:"Yes, our booth has been moved to Hall B. It's actually a better location than last year."},
+      {s:"W",t:"That's great. Should I order new banners for the booth?"},
+      {s:"M",t:"Let's check the budget with finance first. The old ones might still work."}],
     qs:[
       {q:"What are the speakers discussing?",opts:["A budget meeting","A trade show","A product launch","An office move"],c:1},
       {q:"What has changed about their booth?",opts:["It was cancelled","The price went up","It was relocated","It became smaller"],c:2},
       {q:"What does the man suggest?",opts:["Ordering new banners immediately","Checking the budget first","Cancelling the booth","Moving to a different hall"],c:1}]},
-  {id:"l3_02",lines:[
-    {s:"M",t:"Excuse me, I have a reservation for two under the name Patterson."},
-    {s:"W",t:"Yes, Mr. Patterson. Your table is ready. Would you prefer the terrace or inside?"},
-    {s:"M",t:"The terrace sounds nice, but it looks like it might rain."},
-    {s:"W",t:"In that case, I can seat you by the window. You'll still have a lovely view."}],
+
+  {id:"p3_02",lines:[
+      {s:"M",t:"Excuse me, I have a reservation for two under the name Patterson."},
+      {s:"W",t:"Yes, Mr. Patterson. Your table is ready. Would you prefer the terrace or inside?"},
+      {s:"M",t:"The terrace sounds nice, but it looks like it might rain."},
+      {s:"W",t:"In that case, I can seat you by the window. You'll still have a lovely view."}],
     qs:[
       {q:"Where does this conversation take place?",opts:["At a hotel","At a restaurant","At an airport","At a theater"],c:1},
       {q:"Why doesn't the man choose the terrace?",opts:["It's too expensive","It's fully booked","The weather looks bad","It's too noisy"],c:2},
       {q:"Where will the man be seated?",opts:["On the terrace","In a private room","By the window","At the bar"],c:2}]},
-  {id:"l3_03",lines:[
-    {s:"W",t:"The quarterly sales figures just came in, and they're above our target by 12 percent."},
-    {s:"M",t:"That's excellent news. Which region performed the best?"},
-    {s:"W",t:"The Asian market, especially Japan and South Korea. Europe was slightly below target."},
-    {s:"M",t:"We should present these results at Friday's board meeting."}],
+
+  {id:"p3_03",lines:[
+      {s:"W",t:"The quarterly sales figures just came in, and they're above our target by 12 percent."},
+      {s:"M",t:"That's excellent news. Which region performed the best?"},
+      {s:"W",t:"The Asian market, especially Japan and South Korea. Europe was slightly below target."},
+      {s:"M",t:"We should present these results at Friday's board meeting."}],
     qs:[
       {q:"What is the main topic of the conversation?",opts:["Hiring plans","Sales performance","Product development","Office relocation"],c:1},
       {q:"Which region exceeded expectations?",opts:["Europe","North America","Asia","South America"],c:2},
       {q:"What does the man want to do?",opts:["Hire more staff in Asia","Present the results to the board","Close the European office","Increase the sales target"],c:1}]},
-  {id:"l3_04",lines:[
-    {s:"M",t:"I'm calling about the laptop I ordered two weeks ago. It still hasn't arrived."},
-    {s:"W",t:"I'm sorry to hear that. Can I have your order number, please?"},
-    {s:"M",t:"It's TK-4578. I was told it would arrive within five business days."},
-    {s:"W",t:"Let me check that for you. I see there was a delay at our warehouse. I can offer you express shipping at no extra cost."}],
+
+  {id:"p3_04",lines:[
+      {s:"M",t:"I'm calling about the laptop I ordered two weeks ago. It still hasn't arrived."},
+      {s:"W",t:"I'm sorry to hear that. Can I have your order number, please?"},
+      {s:"M",t:"It's TK-4578. I was told it would arrive within five business days."},
+      {s:"W",t:"Let me check that for you. I see there was a delay at our warehouse. I can offer you express shipping at no extra cost."}],
     qs:[
       {q:"Why is the man calling?",opts:["To cancel an order","To return a product","To complain about a late delivery","To ask about pricing"],c:2},
       {q:"When was the order expected to arrive?",opts:["Within two days","Within five business days","Within two weeks","By the end of the month"],c:1},
       {q:"What does the woman offer?",opts:["A full refund","A replacement product","Free express shipping","A discount on the next order"],c:2}]},
-  {id:"l3_05",lines:[
-    {s:"W",t:"I just got an email from the building manager. The elevators will be out of service this weekend."},
-    {s:"M",t:"Both of them? That's going to be a problem for anyone working on the upper floors."},
-    {s:"W",t:"I know. They're doing maintenance that was postponed from last month."},
-    {s:"M",t:"I'll send a notice to all departments so people can plan ahead."}],
+
+  {id:"p3_05",lines:[
+      {s:"W",t:"I just got an email from the building manager. The elevators will be out of service this weekend."},
+      {s:"M",t:"Both of them? That's going to be a problem for anyone working on the upper floors."},
+      {s:"W",t:"I know. They're doing maintenance that was postponed from last month."},
+      {s:"M",t:"I'll send a notice to all departments so people can plan ahead."}],
     qs:[
       {q:"What is the problem?",opts:["The offices are closing","The heating is broken","The elevators will be shut down","The parking lot is full"],c:2},
       {q:"When will this happen?",opts:["Today","Tomorrow","This weekend","Next month"],c:2},
       {q:"What will the man do?",opts:["Contact the building manager","Notify the departments","Cancel the maintenance","Work from home"],c:1}]},
-  {id:"l3_06",lines:[
-    {s:"M",t:"Have you had a chance to interview any candidates for the marketing position?"},
-    {s:"W",t:"I've seen three so far. Two had strong experience, but one really stood out."},
-    {s:"M",t:"What made them special?"},
-    {s:"W",t:"She has ten years in digital marketing and previously managed a team of fifteen."}],
+
+  {id:"p3_06",lines:[
+      {s:"M",t:"Have you had a chance to interview any candidates for the marketing position?"},
+      {s:"W",t:"I've seen three so far. Two had strong experience, but one really stood out."},
+      {s:"M",t:"What made them special?"},
+      {s:"W",t:"She has ten years in digital marketing and previously managed a team of fifteen."}],
     qs:[
       {q:"What are the speakers discussing?",opts:["A training program","A marketing campaign","A job vacancy","A promotion"],c:2},
       {q:"How many candidates has the woman interviewed?",opts:["One","Two","Three","Fifteen"],c:2},
       {q:"What impressed the woman about one candidate?",opts:["Her salary expectations","Her language skills","Her experience and management background","Her educational qualifications"],c:2}]},
-  {id:"l3_07",lines:[
-    {s:"W",t:"The client wants the website redesign completed by March first."},
-    {s:"M",t:"That's only six weeks away. We haven't even finalized the design concept."},
-    {s:"W",t:"I know it's tight. Can we bring in a freelance designer to help?"},
-    {s:"M",t:"Good idea. I'll reach out to the agency we used last time."}],
+
+  {id:"p3_07",lines:[
+      {s:"W",t:"The client wants the website redesign completed by March first."},
+      {s:"M",t:"That's only six weeks away. We haven't even finalized the design concept."},
+      {s:"W",t:"I know it's tight. Can we bring in a freelance designer to help?"},
+      {s:"M",t:"Good idea. I'll reach out to the agency we used last time."}],
     qs:[
       {q:"What is the deadline for the project?",opts:["Next week","End of January","March first","June first"],c:2},
       {q:"What is the problem?",opts:["The client cancelled the project","The budget is too low","The timeline is very tight","The designer quit"],c:2},
       {q:"What solution does the woman suggest?",opts:["Asking for more time","Hiring a freelancer","Reducing the project scope","Using a template"],c:1}]},
-  {id:"l3_08",lines:[
-    {s:"M",t:"I'm heading to the airport now. My flight to Chicago leaves at 3:30."},
-    {s:"W",t:"Don't forget you have a dinner with the client at seven. The restaurant is near your hotel."},
-    {s:"M",t:"Right. And the meeting with their team is tomorrow morning at nine?"},
-    {s:"W",t:"Yes, in their downtown office. I've emailed you the address and parking details."}],
+
+  {id:"p3_08",lines:[
+      {s:"M",t:"I'm heading to the airport now. My flight to Chicago leaves at 3:30."},
+      {s:"W",t:"Don't forget you have a dinner with the client at seven. The restaurant is near your hotel."},
+      {s:"M",t:"Right. And the meeting with their team is tomorrow morning at nine?"},
+      {s:"W",t:"Yes, in their downtown office. I've emailed you the address and parking details."}],
     qs:[
       {q:"Where is the man going?",opts:["To a restaurant","To Chicago","To a meeting","To his hotel"],c:1},
       {q:"What time is the client dinner?",opts:["At 3:30","At 5:00","At 7:00","At 9:00"],c:2},
       {q:"What has the woman sent the man?",opts:["Flight tickets","The meeting agenda","The office address and parking info","The restaurant menu"],c:2}]},
-  {id:"l3_09",lines:[
-    {s:"W",t:"The new employee orientation is scheduled for Monday. Are the training materials ready?"},
-    {s:"M",t:"Almost. I still need to update the section on company policies. There were some changes last quarter."},
-    {s:"W",t:"Make sure you include the updated remote work guidelines. That's what new hires always ask about."},
-    {s:"M",t:"Good point. I'll have everything printed by Friday afternoon."}],
+
+  {id:"p3_09",lines:[
+      {s:"W",t:"The new employee orientation is scheduled for Monday. Are the training materials ready?"},
+      {s:"M",t:"Almost. I still need to update the section on company policies. There were some changes last quarter."},
+      {s:"W",t:"Make sure you include the updated remote work guidelines. That's what new hires always ask about."},
+      {s:"M",t:"Good point. I'll have everything printed by Friday afternoon."}],
     qs:[
       {q:"What is happening on Monday?",opts:["A board meeting","An employee orientation","A product launch","A company holiday"],c:1},
       {q:"What still needs to be updated?",opts:["The welcome video","The company policies section","The lunch menu","The office map"],c:1},
       {q:"What does the woman recommend including?",opts:["Salary information","Remote work guidelines","Health insurance details","Parking instructions"],c:1}]},
-  {id:"l3_10",lines:[
-    {s:"M",t:"I noticed the supply room is almost empty. We're low on paper, toner, and pens."},
-    {s:"W",t:"I placed an order last Tuesday, but the supplier said there's a two-week backlog."},
-    {s:"M",t:"Two weeks? That's too long. Can we find another supplier?"},
-    {s:"W",t:"I'll look into it this afternoon and get quotes from at least two other companies."}],
+
+  {id:"p3_10",lines:[
+      {s:"M",t:"I noticed the supply room is almost empty. We're low on paper, toner, and pens."},
+      {s:"W",t:"I placed an order last Tuesday, but the supplier said there's a two-week backlog."},
+      {s:"M",t:"Two weeks? That's too long. Can we find another supplier?"},
+      {s:"W",t:"I'll look into it this afternoon and get quotes from at least two other companies."}],
     qs:[
       {q:"What is the problem?",opts:["Equipment is broken","Office supplies are running low","The supplier went bankrupt","The budget was cut"],c:1},
       {q:"Why hasn't the order arrived?",opts:["It was cancelled","The supplier has a backlog","The payment was declined","The address was wrong"],c:1},
       {q:"What will the woman do?",opts:["Wait for the current order","Cancel the order","Contact alternative suppliers","Buy supplies at a local store"],c:2}]},
-  {id:"l3_11",lines:[
-    {s:"W",t:"I see you applied for the project manager position in the Singapore office."},
-    {s:"M",t:"Yes, I've always wanted to work abroad. And I have experience with the Asian market."},
-    {s:"W",t:"The position requires fluency in Mandarin. Do you speak it?"},
-    {s:"M",t:"I've been taking classes for the past year. I'd say I'm at an intermediate level now."}],
+
+  {id:"p3_11",lines:[
+      {s:"W",t:"I see you applied for the project manager position in the Singapore office."},
+      {s:"M",t:"Yes, I've always wanted to work abroad. And I have experience with the Asian market."},
+      {s:"W",t:"The position requires fluency in Mandarin. Do you speak it?"},
+      {s:"M",t:"I've been taking classes for the past year. I'd say I'm at an intermediate level now."}],
     qs:[
       {q:"What position has the man applied for?",opts:["Sales director","Financial analyst","Project manager","Marketing coordinator"],c:2},
       {q:"Where is the job located?",opts:["Tokyo","Hong Kong","Shanghai","Singapore"],c:3},
       {q:"What is the man's level of Mandarin?",opts:["Beginner","Intermediate","Fluent","He doesn't speak it"],c:1}]},
-  {id:"l3_12",lines:[
-    {s:"M",t:"The parking garage will be closed for repairs starting next Monday."},
-    {s:"W",t:"For how long? I drive to work every day."},
-    {s:"M",t:"About three weeks. But the company has arranged a temporary lot two blocks away."},
-    {s:"W",t:"That's not ideal, but at least there's an alternative. Is there a shuttle?"},
-    {s:"M",t:"Yes, it runs every ten minutes from the temporary lot to the main entrance."}],
+
+  {id:"p3_12",lines:[
+      {s:"M",t:"The parking garage will be closed for repairs starting next Monday."},
+      {s:"W",t:"For how long? I drive to work every day."},
+      {s:"M",t:"About three weeks. But the company has arranged a temporary lot two blocks away."},
+      {s:"W",t:"That's not ideal, but at least there's an alternative. Is there a shuttle?"},
+      {s:"M",t:"Yes, it runs every ten minutes from the temporary lot to the main entrance."}],
     qs:[
       {q:"What will happen on Monday?",opts:["A new garage will open","The parking garage will close for repairs","Parking fees will increase","The shuttle service will end"],c:1},
       {q:"How long will the repairs take?",opts:["One week","Two weeks","Three weeks","A month"],c:2},
       {q:"How can employees get from the temporary lot to the office?",opts:["They can walk","A shuttle runs every ten minutes","Taxis are provided","A bus stops nearby"],c:1}]},
-  {id:"l3_13",lines:[
-    {s:"W",t:"Our customer satisfaction scores dropped five percent this quarter."},
-    {s:"M",t:"That's concerning. Do we know which area was affected the most?"},
-    {s:"W",t:"Response time. Customers are waiting too long for support."},
-    {s:"M",t:"We should consider hiring additional support staff or implementing a chatbot."}],
+
+  {id:"p3_13",lines:[
+      {s:"W",t:"Our customer satisfaction scores dropped five percent this quarter."},
+      {s:"M",t:"That's concerning. Do we know which area was affected the most?"},
+      {s:"W",t:"Response time. Customers are waiting too long for support."},
+      {s:"M",t:"We should consider hiring additional support staff or implementing a chatbot."}],
     qs:[
       {q:"What happened to customer satisfaction?",opts:["It improved","It stayed the same","It decreased","It was not measured"],c:2},
       {q:"What is the main complaint?",opts:["Product quality","High prices","Slow response times","Complicated website"],c:2},
       {q:"What does the man suggest?",opts:["Raising prices","Adding support staff or a chatbot","Closing the support department","Sending a survey"],c:1}]},
-  {id:"l3_14",lines:[
-    {s:"M",t:"Excuse me, I'd like to return this printer. It stopped working after two days."},
-    {s:"W",t:"I'm sorry about that. Do you have your receipt?"},
-    {s:"M",t:"Yes, here it is. I bought it last Thursday."},
-    {s:"W",t:"Since it's within our 30-day return policy, I can offer you a full refund or an exchange."}],
+
+  {id:"p3_14",lines:[
+      {s:"M",t:"Excuse me, I'd like to return this printer. It stopped working after two days."},
+      {s:"W",t:"I'm sorry about that. Do you have your receipt?"},
+      {s:"M",t:"Yes, here it is. I bought it last Thursday."},
+      {s:"W",t:"Since it's within our 30-day return policy, I can offer you a full refund or an exchange."}],
     qs:[
       {q:"Why is the man returning the printer?",opts:["It's the wrong model","It's too expensive","It stopped working","He doesn't need it anymore"],c:2},
       {q:"When did the man buy the printer?",opts:["Two days ago","Last Thursday","Last month","30 days ago"],c:1},
       {q:"What options does the woman offer?",opts:["A repair or a discount","A refund or an exchange","Store credit only","Free technical support"],c:1}]},
-  {id:"l3_15",lines:[
-    {s:"W",t:"The conference call with the London team is in 15 minutes. Is the equipment set up?"},
-    {s:"M",t:"The video is working, but I'm having trouble with the audio. There's an echo."},
-    {s:"W",t:"Try using the external microphone instead. It usually works better."},
-    {s:"M",t:"Good idea. I'll switch it now."}],
+
+  {id:"p3_15",lines:[
+      {s:"W",t:"The conference call with the London team is in 15 minutes. Is the equipment set up?"},
+      {s:"M",t:"The video is working, but I'm having trouble with the audio. There's an echo."},
+      {s:"W",t:"Try using the external microphone instead. It usually works better."},
+      {s:"M",t:"Good idea. I'll switch it now."}],
     qs:[
       {q:"What is about to happen?",opts:["A staff lunch","A video conference","An office tour","A training session"],c:1},
       {q:"What is the technical problem?",opts:["The video is not working","The internet is down","There is an audio echo","The screen is too small"],c:2},
       {q:"What does the woman recommend?",opts:["Cancelling the call","Using a different microphone","Calling IT support","Moving to another room"],c:1}]},
-  {id:"l3_16",lines:[
-    {s:"M",t:"The architect sent over the revised floor plans for the new office."},
-    {s:"W",t:"Did they include the extra meeting rooms we requested?"},
-    {s:"M",t:"Yes, two small ones and one large conference room. But they removed the break room on the second floor."},
-    {s:"W",t:"That's a dealbreaker. Everyone uses that break room. Ask them to revise it again."}],
+
+  {id:"p3_16",lines:[
+      {s:"M",t:"The architect sent over the revised floor plans for the new office."},
+      {s:"W",t:"Did they include the extra meeting rooms we requested?"},
+      {s:"M",t:"Yes, two small ones and one large conference room. But they removed the break room on the second floor."},
+      {s:"W",t:"That's a dealbreaker. Everyone uses that break room. Ask them to revise it again."}],
     qs:[
       {q:"What did the architect send?",opts:["An invoice","Updated floor plans","A construction timeline","Photos of the building"],c:1},
       {q:"How many extra meeting rooms were added?",opts:["One","Two","Three","Four"],c:2},
       {q:"Why is the woman unhappy?",opts:["The cost is too high","The project is delayed","The break room was removed","The rooms are too small"],c:2}]},
-  {id:"l3_17",lines:[
-    {s:"W",t:"Our flight has been delayed by two hours. We won't land until 9 PM."},
-    {s:"M",t:"That means we'll miss the welcome reception at the conference."},
-    {s:"W",t:"I know. But at least we'll make it in time for tomorrow's keynote at 8 AM."},
-    {s:"M",t:"I'll text the organizer and let them know we're arriving late."}],
+
+  {id:"p3_17",lines:[
+      {s:"W",t:"Our flight has been delayed by two hours. We won't land until 9 PM."},
+      {s:"M",t:"That means we'll miss the welcome reception at the conference."},
+      {s:"W",t:"I know. But at least we'll make it in time for tomorrow's keynote at 8 AM."},
+      {s:"M",t:"I'll text the organizer and let them know we're arriving late."}],
     qs:[
       {q:"What is the problem?",opts:["The conference was cancelled","Their hotel lost the reservation","Their flight is delayed","They missed the keynote"],c:2},
       {q:"What will they miss?",opts:["The keynote speech","The welcome reception","The morning workshop","The closing ceremony"],c:1},
       {q:"What will the man do?",opts:["Book a different flight","Cancel the trip","Contact the organizer","Call the airline"],c:2}]},
-  {id:"l3_18",lines:[
-    {s:"M",t:"I think we should switch to a new accounting software. The current one is too slow."},
-    {s:"W",t:"I agree, but migration is risky. What about the data from the last five years?"},
-    {s:"M",t:"The new system can import our existing data automatically. I've already tested it."},
-    {s:"W",t:"That's reassuring. Let's schedule a demo for the whole finance team next week."}],
+
+  {id:"p3_18",lines:[
+      {s:"M",t:"I think we should switch to a new accounting software. The current one is too slow."},
+      {s:"W",t:"I agree, but migration is risky. What about the data from the last five years?"},
+      {s:"M",t:"The new system can import our existing data automatically. I've already tested it."},
+      {s:"W",t:"That's reassuring. Let's schedule a demo for the whole finance team next week."}],
     qs:[
       {q:"What does the man propose?",opts:["Hiring an accountant","Changing the accounting software","Reducing the IT budget","Outsourcing the finance department"],c:1},
       {q:"What is the woman concerned about?",opts:["The cost","The timeline","Data migration","Staff training"],c:2},
       {q:"What is the next step?",opts:["A team demo next week","An immediate switch","A meeting with IT","A cost analysis"],c:0}]},
-  {id:"l3_19",lines:[
-    {s:"W",t:"The health inspector is coming next Tuesday for our annual review."},
-    {s:"M",t:"Already? I need to make sure the kitchen passes the cleanliness check."},
-    {s:"W",t:"Last year we got a warning about the storage area. Let's not repeat that."},
-    {s:"M",t:"I'll have the team do a deep clean this weekend."}],
+
+  {id:"p3_19",lines:[
+      {s:"W",t:"The health inspector is coming next Tuesday for our annual review."},
+      {s:"M",t:"Already? I need to make sure the kitchen passes the cleanliness check."},
+      {s:"W",t:"Last year we got a warning about the storage area. Let's not repeat that."},
+      {s:"M",t:"I'll have the team do a deep clean this weekend."}],
     qs:[
       {q:"Where do the speakers most likely work?",opts:["In a hospital","In a restaurant","In a school","In a factory"],c:1},
       {q:"When is the inspection?",opts:["This weekend","Next Monday","Next Tuesday","Next month"],c:2},
       {q:"What happened last year?",opts:["They failed the inspection","They received a warning about storage","The kitchen was renovated","The inspector didn't show up"],c:1}]},
-  {id:"l3_20",lines:[
-    {s:"M",t:"I'd like to open a business checking account, please."},
-    {s:"W",t:"Of course. Do you have your company registration documents with you?"},
-    {s:"M",t:"Yes, I have everything here. I also need to set up online banking."},
-    {s:"W",t:"We can do both today. The online access will be active within 24 hours."}],
+
+  {id:"p3_20",lines:[
+      {s:"M",t:"I'd like to open a business checking account, please."},
+      {s:"W",t:"Of course. Do you have your company registration documents with you?"},
+      {s:"M",t:"Yes, I have everything here. I also need to set up online banking."},
+      {s:"W",t:"We can do both today. The online access will be active within 24 hours."}],
     qs:[
       {q:"Where does this conversation take place?",opts:["At a law firm","At a bank","At a government office","At an accounting firm"],c:1},
       {q:"What does the man want to open?",opts:["A savings account","A personal account","A business checking account","A credit card"],c:2},
       {q:"When will online banking be available?",opts:["Immediately","Within 24 hours","In one week","After approval"],c:1}]},
 ];
 
+// ─── PART 4 — Talks (20 talks, 60 questions) ───
+// Audio: public/audio/p4/{id}.mp3
+
 export var LISTENING_P4 = [
-  {id:"l4_01",type:"Voicemail",voice:"W",
+  {id:"p4_01",type:"Voicemail",voice:"W",
     text:"Hi, this is Karen from Summit Consulting. I'm calling to confirm our meeting on Wednesday at 10 AM. I've reserved conference room B at your office. Could you let me know if you need us to bring any presentation materials? Also, I'd like to add one more item to the agenda — we need to discuss the revised timeline. Please call me back at 555-0172. Thank you.",
     qs:[
       {q:"Who is the speaker?",opts:["A job applicant","A consultant","A delivery driver","A hotel receptionist"],c:1},
       {q:"When is the meeting?",opts:["Monday at 10","Tuesday at 2","Wednesday at 10","Friday at 3"],c:2},
       {q:"What does the speaker want to add to the agenda?",opts:["A budget review","The revised timeline","Staff introductions","A product demo"],c:1}]},
-  {id:"l4_02",type:"Announcement",voice:"M",
+
+  {id:"p4_02",type:"Announcement",voice:"M",
     text:"Attention all passengers. Flight BA-247 to London Heathrow, originally scheduled for departure at 3:15 PM, has been delayed due to severe weather conditions. The new estimated departure time is 5:45 PM. We apologize for the inconvenience. Passengers are invited to visit the airline lounge on the second floor, where complimentary refreshments will be available. Please listen for further announcements.",
     qs:[
       {q:"What is the purpose of this announcement?",opts:["To announce a gate change","To inform about a flight delay","To welcome passengers on board","To advertise the airline lounge"],c:1},
       {q:"What caused the delay?",opts:["Mechanical issues","A security check","Severe weather","Staff shortage"],c:2},
       {q:"What is offered to passengers?",opts:["Seat upgrades","Free refreshments in the lounge","Full refunds","Hotel accommodation"],c:1}]},
-  {id:"l4_03",type:"Meeting introduction",voice:"W",
+
+  {id:"p4_03",type:"Meeting introduction",voice:"W",
     text:"Good morning, everyone. Thank you for coming to this month's all-hands meeting. Before we begin, I'd like to welcome two new team members who joined us last week: David Chen in engineering and Priya Sharma in product design. Please make them feel welcome. Now, the main topic today is our Q2 goals. As you know, we exceeded our Q1 targets, and I'd like to keep that momentum going.",
     qs:[
       {q:"What type of event is this?",opts:["A job interview","A training session","A company-wide meeting","A press conference"],c:2},
       {q:"How many new employees are introduced?",opts:["One","Two","Three","Four"],c:1},
       {q:"What happened in Q1?",opts:["Targets were missed","Targets were exceeded","The company downsized","New products launched"],c:1}]},
-  {id:"l4_04",type:"Tour guide",voice:"M",
+
+  {id:"p4_04",type:"Tour guide",voice:"M",
     text:"Welcome to the National Museum of Modern Art. Today's guided tour will last approximately 90 minutes and will cover the three main galleries on this floor. Photography is permitted, but please do not use flash, as it can damage the artwork. The gift shop and café are located on the ground floor and will remain open until 6 PM. Please stay with the group, and feel free to ask questions at any time.",
     qs:[
       {q:"Where is this announcement being made?",opts:["At a library","At a museum","At a university","At a theater"],c:1},
       {q:"How long will the tour last?",opts:["45 minutes","60 minutes","90 minutes","120 minutes"],c:2},
       {q:"What rule about photography is mentioned?",opts:["No photography allowed","Flash is not permitted","Only the gift shop may be photographed","Photos require a fee"],c:1}]},
-  {id:"l4_05",type:"Training session",voice:"W",
+
+  {id:"p4_05",type:"Training session",voice:"W",
     text:"Alright, let's get started with today's safety training. As warehouse employees, it's critical that you follow proper lifting techniques to avoid injury. Always bend at the knees, not at the waist. For items over 25 kilograms, use the mechanical lift or ask a colleague for help. I'll demonstrate the correct technique now, and then each of you will practice. Hard hats must be worn at all times in zones C and D.",
     qs:[
       {q:"What is the topic of this training?",opts:["Fire evacuation","Computer skills","Warehouse safety","Customer service"],c:2},
       {q:"What should workers do for items over 25 kg?",opts:["Carry them alone carefully","Use a mechanical lift or get help","Leave them for the next shift","Report them to the manager"],c:1},
       {q:"Where must hard hats be worn?",opts:["In all areas","Only outside","In zones C and D","In the break room"],c:2}]},
-  {id:"l4_06",type:"Voicemail",voice:"M",
+
+  {id:"p4_06",type:"Voicemail",voice:"M",
     text:"Hello, this is James Walker from Greenfield Property Management. I'm calling about the office space you inquired about on Park Avenue. The unit is 200 square meters with an open floor plan, and it's available from the first of next month. The monthly rent is $4,500, which includes utilities and one parking space. I'd love to schedule a viewing at your convenience. My number is 555-0398.",
     qs:[
       {q:"Why is the man calling?",opts:["To report a maintenance issue","To discuss an office rental","To confirm a meeting","To apply for a job"],c:1},
       {q:"What is included in the rent?",opts:["Furniture and internet","Cleaning and security","Utilities and one parking space","Reception and phone service"],c:2},
       {q:"When is the office available?",opts:["Immediately","Next week","First of next month","In three months"],c:2}]},
-  {id:"l4_07",type:"News report",voice:"W",
+
+  {id:"p4_07",type:"News report",voice:"W",
     text:"In business news, TechVision Inc. announced today that it will open a new research center in Austin, Texas. The facility, which will employ over 300 engineers and scientists, is expected to be operational by next spring. The company's CEO stated that the Austin location was chosen for its strong talent pool and proximity to major universities. The investment is estimated at 150 million dollars.",
     qs:[
       {q:"What is TechVision Inc. planning to do?",opts:["Merge with another company","Close its headquarters","Open a research center","Launch a new product"],c:2},
       {q:"Why was Austin chosen?",opts:["Low taxes","Available talent and nearby universities","A new airport","Government incentives"],c:1},
       {q:"How much will the investment be?",opts:["15 million","50 million","150 million","300 million"],c:2}]},
-  {id:"l4_08",type:"Advertisement",voice:"M",
+
+  {id:"p4_08",type:"Advertisement",voice:"M",
     text:"Are you looking for a reliable delivery service for your business? FastTrack Logistics offers same-day delivery in the metropolitan area and next-day delivery nationwide. With real-time tracking and a 99.5 percent on-time rate, you can trust us with your most important shipments. New customers get 20 percent off their first month. Visit fasttracklogistics.com or call 1-800-555-FAST to get started today.",
     qs:[
       {q:"What service is being advertised?",opts:["Office cleaning","IT support","Delivery and logistics","Accounting services"],c:2},
       {q:"What is the company's on-time rate?",opts:["95%","97.5%","99%","99.5%"],c:3},
       {q:"What offer is available for new customers?",opts:["Free first delivery","20% off the first month","A free tracking device","No minimum order"],c:1}]},
-  {id:"l4_09",type:"Announcement",voice:"W",
+
+  {id:"p4_09",type:"Announcement",voice:"W",
     text:"Attention shoppers. Riverside Mall will be closing in 30 minutes, at 9 PM. Please make your final purchases and proceed to the exits. The parking garage will remain accessible for one hour after closing. We'd like to remind you that our annual summer sale starts this Saturday, with discounts of up to 50 percent at participating stores. Thank you for visiting Riverside Mall.",
     qs:[
       {q:"What time does the mall close?",opts:["8:00 PM","8:30 PM","9:00 PM","9:30 PM"],c:2},
       {q:"How long will the parking garage stay open?",opts:["30 minutes after closing","One hour after closing","Until midnight","All night"],c:1},
       {q:"What is happening this Saturday?",opts:["A food festival","Extended hours","A summer sale","A grand reopening"],c:2}]},
-  {id:"l4_10",type:"Recorded message",voice:"M",
+
+  {id:"p4_10",type:"Recorded message",voice:"M",
     text:"Thank you for calling Greenwood Medical Center. Our office hours are Monday through Friday, 8 AM to 6 PM, and Saturday from 9 AM to 1 PM. If this is a medical emergency, please hang up and dial 911. To schedule an appointment, press 1. For billing inquiries, press 2. For prescription refills, press 3. To speak with a receptionist, please hold and your call will be answered in the order it was received.",
     qs:[
       {q:"What type of business is this?",opts:["A pharmacy","A medical center","An insurance company","A fitness center"],c:1},
       {q:"When is the office open on Saturday?",opts:["8 AM to 6 PM","9 AM to 1 PM","9 AM to 5 PM","It's closed"],c:1},
       {q:"What should callers press for an appointment?",opts:["1","2","3","0"],c:0}]},
-  {id:"l4_11",type:"Company update",voice:"W",
+
+  {id:"p4_11",type:"Company update",voice:"W",
     text:"I'm pleased to announce that starting next month, all full-time employees will be eligible for our new professional development program. The company will cover up to $2,000 per year for approved courses, certifications, or conferences. To apply, submit a request through the HR portal at least two weeks before the start date. Managers must approve all requests. This is a great opportunity to invest in your career growth.",
     qs:[
       {q:"What is being announced?",opts:["New health insurance","A professional development program","A salary increase","An office relocation"],c:1},
       {q:"How much funding is available per employee?",opts:["$500","$1,000","$1,500","$2,000"],c:3},
       {q:"How far in advance must requests be submitted?",opts:["One week","Two weeks","One month","Two months"],c:1}]},
-  {id:"l4_12",type:"Tour guide",voice:"M",
+
+  {id:"p4_12",type:"Tour guide",voice:"M",
     text:"We're now approaching the financial district, which is the heart of the city's business community. The tall glass building on your left is the headquarters of National Bank, one of the oldest financial institutions in the country, founded in 1852. Directly ahead is City Hall, built in the neoclassical style. We'll stop here for 15 minutes so you can take photos. Please be back on the bus by 2:30.",
     qs:[
       {q:"What kind of tour is this?",opts:["A museum tour","A factory tour","A city bus tour","A walking nature tour"],c:2},
       {q:"What is the tall glass building?",opts:["City Hall","A museum","A hotel","A bank headquarters"],c:3},
       {q:"How long is the photo stop?",opts:["5 minutes","10 minutes","15 minutes","30 minutes"],c:2}]},
-  {id:"l4_13",type:"Voicemail",voice:"W",
+
+  {id:"p4_13",type:"Voicemail",voice:"W",
     text:"Hi Mark, it's Lisa from the marketing team. I wanted to let you know that the print shop called about our brochures. They found a color mismatch on page three, so they've paused the job until we approve the correction. Could you take a look at the proof they emailed and give them the go-ahead? We need 5,000 copies by Thursday for the expo. Thanks.",
     qs:[
       {q:"Why is Lisa calling?",opts:["To request time off","To approve a budget","To ask about a printing issue","To invite Mark to a meeting"],c:2},
       {q:"What problem did the print shop find?",opts:["Wrong paper size","A spelling error","A color mismatch","Missing pages"],c:2},
       {q:"How many copies are needed?",opts:["500","1,000","2,500","5,000"],c:3}]},
-  {id:"l4_14",type:"Instructions",voice:"M",
+
+  {id:"p4_14",type:"Instructions",voice:"M",
     text:"Before we begin today's workshop, let me go over a few logistics. Restrooms are down the hall to the left. We'll take a 15-minute break at 10:30 and a one-hour lunch break at noon. The cafeteria on the second floor serves hot meals until 1:30. All workshop materials are in the folders on your desks. Please make sure you have a name tag — if not, see me after this introduction.",
     qs:[
       {q:"What is the speaker doing?",opts:["Giving a keynote speech","Explaining workshop logistics","Conducting a job interview","Leading a fire drill"],c:1},
       {q:"When is the lunch break?",opts:["At 10:30","At 11:00","At noon","At 1:30"],c:2},
       {q:"What should attendees do if they don't have a name tag?",opts:["Go to the front desk","See the speaker after the introduction","Check their folder","Visit the cafeteria"],c:1}]},
-  {id:"l4_15",type:"Advertisement",voice:"W",
+
+  {id:"p4_15",type:"Advertisement",voice:"W",
     text:"Introducing CloudDesk Pro, the all-in-one workspace solution for modern teams. With CloudDesk, your team can collaborate on documents, manage projects, and hold video meetings — all from a single platform. No more switching between five different apps. Start your free 30-day trial today at clouddesk.com. Plans start at just $8 per user per month. CloudDesk Pro — work smarter, together.",
     qs:[
       {q:"What is being advertised?",opts:["A laptop","Office furniture","A workspace software platform","A coworking space"],c:2},
       {q:"How long is the free trial?",opts:["7 days","14 days","30 days","60 days"],c:2},
       {q:"What is the starting price?",opts:["$5 per user","$8 per user","$12 per user","$15 per user"],c:1}]},
-  {id:"l4_16",type:"Announcement",voice:"M",
+
+  {id:"p4_16",type:"Announcement",voice:"M",
     text:"Good afternoon, everyone. I'd like to update you on the office renovation project. Phase one, which includes the reception area and the ground floor meeting rooms, has been completed ahead of schedule. Phase two — the open-plan workspace on the third floor — will begin next Monday and should take approximately four weeks. During this time, third-floor employees will be temporarily relocated to the fifth floor.",
     qs:[
       {q:"What has been completed?",opts:["The entire renovation","Phase one","Phase two","The parking garage"],c:1},
       {q:"Where is phase two taking place?",opts:["Ground floor","Second floor","Third floor","Fifth floor"],c:2},
       {q:"Where will affected employees work temporarily?",opts:["At home","On the ground floor","On the third floor","On the fifth floor"],c:3}]},
-  {id:"l4_17",type:"Weather report",voice:"W",
+
+  {id:"p4_17",type:"Weather report",voice:"W",
     text:"Good morning. Here's your Tuesday weather forecast. We're looking at cloudy skies this morning with temperatures around 12 degrees Celsius. Rain is expected to move in by early afternoon, with heavier showers between 3 and 6 PM. Winds will pick up to 40 kilometers per hour by evening. Wednesday should be drier, with partly sunny skies returning. Don't forget your umbrella today!",
     qs:[
       {q:"What day is the forecast for?",opts:["Monday","Tuesday","Wednesday","Thursday"],c:1},
       {q:"When will the heaviest rain occur?",opts:["Early morning","Late morning","Between 3 and 6 PM","After midnight"],c:2},
       {q:"What is expected on Wednesday?",opts:["More rain","Snow","Partly sunny skies","Strong winds"],c:2}]},
-  {id:"l4_18",type:"Recorded message",voice:"M",
+
+  {id:"p4_18",type:"Recorded message",voice:"M",
     text:"Welcome to the Springfield Public Library automated system. The library is currently open. Today's hours are 9 AM to 8 PM. The book return drop box is available 24 hours a day at the main entrance. Please note that all overdue items must be returned by the end of this week to avoid additional fines. To renew a book, press 1 and enter your library card number. For event information, press 2.",
     qs:[
       {q:"What time does the library close today?",opts:["6 PM","7 PM","8 PM","9 PM"],c:2},
       {q:"When is the book drop box accessible?",opts:["During library hours only","Until 10 PM","24 hours a day","On weekdays only"],c:2},
       {q:"What must be done by the end of this week?",opts:["Library cards must be renewed","Overdue items must be returned","New members must register","Event tickets must be purchased"],c:1}]},
-  {id:"l4_19",type:"Company update",voice:"W",
+
+  {id:"p4_19",type:"Company update",voice:"W",
     text:"As many of you are aware, we've been reviewing our environmental policy over the past few months. I'm happy to announce three new initiatives starting in January. First, we're eliminating single-use plastics from all office kitchens. Second, we'll be installing electric vehicle charging stations in the parking garage. And third, employees who cycle to work will receive a monthly wellness bonus of $50. More details will follow by email.",
     qs:[
       {q:"What is the main topic?",opts:["New hiring plans","Environmental initiatives","Budget reductions","Office safety"],c:1},
       {q:"What is being removed from kitchens?",opts:["Microwaves","Coffee machines","Single-use plastics","Vending machines"],c:2},
       {q:"What benefit will cyclists receive?",opts:["Free bike repairs","A $50 monthly bonus","Priority parking","Extra vacation days"],c:1}]},
-  {id:"l4_20",type:"Event introduction",voice:"M",
+
+  {id:"p4_20",type:"Event introduction",voice:"M",
     text:"Ladies and gentlemen, thank you for joining us for the tenth annual Innovation Awards ceremony. Tonight we celebrate the most creative ideas and solutions from teams across the company. We received over 120 nominations this year, which is a new record. Before we announce the winners, I'd like to thank our sponsors, Meridian Technologies and GlobalBank, for making this event possible. Now, let's begin with the award for Best New Product.",
     qs:[
       {q:"What event is taking place?",opts:["A product launch","A shareholders' meeting","An awards ceremony","A retirement party"],c:2},
