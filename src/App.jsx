@@ -696,6 +696,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"📋",bg:"linear-gradient(135deg,#0ea5e9,#06b6d4)"},
       {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#a855f7,#6366f1)"},
       {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 10 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
+      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#8b5cf6)"},
     ]},
   ];
   var animIdx=0;
@@ -1144,6 +1145,178 @@ function TrapsQuiz(p){
         <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",marginBottom:6}}>Pro Tip</p>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{t.tip}</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<traps.length-1?"Next Trap":"See Results"}</button></div>}
+  </div>);
+}
+
+// ─── GRAMMAR REFERENCE SHEETS ───
+var GRAMMAR_SHEETS = [
+  {id:"tenses",title:"Tenses",icon:"⏰",color:"#3b82f6",
+    rule:"The TOEIC tests your ability to choose the correct tense based on time markers and context.",
+    patterns:[
+      {p:"Simple Present",d:"Facts, habits, schedules. Markers: always, usually, every + time",ex:"The factory produces 500 units daily."},
+      {p:"Present Continuous",d:"Action in progress NOW or temporary situation. Markers: right now, currently, at the moment",ex:"We are currently reviewing the proposal."},
+      {p:"Simple Past",d:"Completed action. Markers: yesterday, last week, in 2019, ago",ex:"The CEO announced the merger last Friday."},
+      {p:"Present Perfect",d:"Past action connected to present. Markers: since, for, already, yet, recently, just",ex:"Sales have increased significantly since January."},
+      {p:"Future (will / be going to)",d:"Decisions, predictions, scheduled plans",ex:"The board will vote on the budget next Monday."},
+    ],
+    traps:"Watch for 'since' (= present perfect, NOT past) and 'for + duration' (= present perfect if still true). 'Last year' = simple past. 'Over the past year' = present perfect."},
+  {id:"passive",title:"Passive Voice",icon:"🔄",color:"#8b5cf6",
+    rule:"Passive shifts focus from WHO does it to WHAT is done. Structure: be + past participle.",
+    patterns:[
+      {p:"Present passive",d:"is/are + V3",ex:"Invoices are sent at the end of each month."},
+      {p:"Past passive",d:"was/were + V3",ex:"The contract was signed yesterday."},
+      {p:"Present perfect passive",d:"has/have been + V3",ex:"All employees have been notified of the change."},
+      {p:"Modal passive",d:"modal + be + V3",ex:"This issue must be resolved before Friday."},
+      {p:"Being + V3 (in progress)",d:"is/are being + V3",ex:"The office is being renovated this week."},
+    ],
+    traps:"'Being renovated' = in progress NOW. 'Been renovated' = completed. The TOEIC loves testing this distinction with photos (Part 1) and sentences (Part 5)."},
+  {id:"subjverb",title:"Subject-Verb Agreement",icon:"🤝",color:"#06b6d4",
+    rule:"The verb must agree in number with its subject — not with the nearest noun.",
+    patterns:[
+      {p:"Trap: prepositional phrase",d:"Ignore the words between subject and verb",ex:"The list of candidates HAS been reviewed. (list = singular)"},
+      {p:"Each / Every / Anyone",d:"Always singular",ex:"Each department IS responsible for its own budget."},
+      {p:"Both / Several / Many",d:"Always plural",ex:"Several employees HAVE requested training."},
+      {p:"Uncountable nouns",d:"Always singular: information, equipment, furniture, advice, news",ex:"The equipment IS ready for installation."},
+      {p:"Neither...nor / Either...or",d:"Verb agrees with the CLOSEST subject",ex:"Neither the manager nor the assistants WERE available."},
+    ],
+    traps:"The TOEIC inserts long phrases between subject and verb to confuse you: 'The results of the survey conducted last month SHOW...' Focus on the true subject."},
+  {id:"wordform",title:"Word Families",icon:"🧩",color:"#f59e0b",
+    rule:"Choose the correct form: noun, verb, adjective, or adverb based on position in the sentence.",
+    patterns:[
+      {p:"After article/possessive → NOUN",d:"the _____ / a _____ / his _____",ex:"The development of the product took six months."},
+      {p:"Before a noun → ADJECTIVE",d:"the _____ report / a _____ meeting",ex:"We need a comprehensive review of the process."},
+      {p:"After a verb → ADVERB",d:"increased _____ / works _____",ex:"Revenue increased significantly in Q3."},
+      {p:"Common suffixes",d:"-tion/-ment/-ness = noun | -ive/-able/-ful = adj | -ly = adverb | -ize/-fy = verb",ex:"The implementation (N) was effective (adj) and completed efficiently (adv)."},
+    ],
+    traps:"Look at what comes BEFORE and AFTER the blank. 'The _____ of' = noun. '_____ increase' before a noun = adjective. '_____ly' after a verb = adverb. The suffix is your best friend."},
+  {id:"connectors",title:"Connectors & Linking Words",icon:"🔗",color:"#a855f7",
+    rule:"Connectors join ideas. The TOEIC tests whether you know if a connector introduces a clause, a noun phrase, or a new sentence.",
+    patterns:[
+      {p:"Clause connectors (+ subject + verb)",d:"although, because, while, if, unless, since, when, before, after",ex:"Although sales declined, profits remained stable."},
+      {p:"Noun phrase connectors (+ noun/gerund)",d:"despite, in spite of, due to, because of, instead of",ex:"Despite the delay, the project was completed on time."},
+      {p:"Transition adverbs (new sentence)",d:"however, therefore, moreover, nevertheless, consequently",ex:"The budget was cut. However, the team adapted quickly."},
+      {p:"Contrast pairs",d:"although/though/even though (clause) vs despite/in spite of (noun)",ex:"Even though it rained ≠ Despite the rain"},
+    ],
+    traps:"'Although' + clause. 'Despite' + noun. NEVER 'Despite that it rained' or 'Although the rain'. Also: 'However' needs a period or semicolon before it, not a comma splice."},
+  {id:"prepositions",title:"Prepositions",icon:"📍",color:"#22c55e",
+    rule:"Preposition choice in English is largely fixed — you must memorize common collocations.",
+    patterns:[
+      {p:"Time prepositions",d:"at + time, on + day/date, in + month/year/period, by + deadline, during + event",ex:"The meeting is at 3 PM on Monday in July."},
+      {p:"Place prepositions",d:"at + address/place, in + city/country/room, on + street/floor",ex:"She works at HQ in London on the 5th floor."},
+      {p:"Common verb + prep",d:"comply WITH, depend ON, result IN, respond TO, apply FOR, consist OF",ex:"The outcome depends on several factors."},
+      {p:"Common adj + prep",d:"responsible FOR, interested IN, capable OF, familiar WITH, eligible FOR",ex:"All employees are eligible for the program."},
+    ],
+    traps:"'By Friday' = deadline. 'Until Friday' = duration. 'During the meeting' (event) NOT 'during 3 hours'. 'For 3 hours' = duration."},
+  {id:"gerinf",title:"Gerund vs Infinitive",icon:"⚖️",color:"#e11d48",
+    rule:"Some verbs take -ING (gerund), some take TO (infinitive), some take both with a change in meaning.",
+    patterns:[
+      {p:"Gerund verbs (-ING)",d:"enjoy, avoid, consider, suggest, recommend, postpone, risk, mind, finish, keep, deny, admit",ex:"We considered postponing the launch."},
+      {p:"Infinitive verbs (TO)",d:"decide, plan, agree, offer, refuse, promise, expect, hope, manage, afford, want, need",ex:"The team agreed to extend the deadline."},
+      {p:"Both (no change)",d:"begin, start, continue, prefer, like, love, hate",ex:"She began working / began to work at 8."},
+      {p:"Both (meaning changes!)",d:"remember, forget, stop, try, regret",ex:"I stopped smoking (quit) vs I stopped to smoke (paused to have one)"},
+      {p:"Preposition + gerund",d:"After ALL prepositions, use -ING",ex:"She's interested in attending the conference."},
+    ],
+    traps:"After a preposition, ALWAYS gerund: 'look forward TO meeting' (not 'to meet'). 'Used to + infinitive' (past habit) vs 'be used to + gerund' (accustomed to)."},
+  {id:"conditionals",title:"Conditionals",icon:"🔀",color:"#14b8a6",
+    rule:"Conditionals express hypothetical or real situations. The tense in the IF clause determines the type.",
+    patterns:[
+      {p:"Zero conditional (facts)",d:"If + present, present",ex:"If you heat water to 100°C, it boils."},
+      {p:"First conditional (likely future)",d:"If + present, will + base verb",ex:"If sales increase, we will hire more staff."},
+      {p:"Second conditional (unlikely/hypothetical)",d:"If + past, would + base verb",ex:"If we had more budget, we would expand."},
+      {p:"Third conditional (impossible past)",d:"If + had + V3, would have + V3",ex:"If we had started earlier, we would have finished on time."},
+    ],
+    traps:"TOEIC favorite: mixing tenses. 'If the report is completed...' (first) vs 'If the report were completed...' (second). Also: 'Unless' = 'if not'. 'Provided that' = 'if'."},
+  {id:"relatives",title:"Relative Pronouns",icon:"🔗",color:"#ec4899",
+    rule:"Relative pronouns (who, which, that, whose, where, when) connect clauses to nouns.",
+    patterns:[
+      {p:"Who/That",d:"For people (subject)",ex:"The employee who submitted the report was promoted."},
+      {p:"Which/That",d:"For things (subject or object)",ex:"The proposal which was submitted last week has been approved."},
+      {p:"Whose",d:"Possession (= of whom / of which)",ex:"The client whose order was delayed received a discount."},
+      {p:"Where",d:"For places",ex:"The office where we held the meeting is on the 3rd floor."},
+      {p:"When / In which",d:"For times",ex:"Monday is the day when the report is due."},
+    ],
+    traps:"'That' can replace 'who' or 'which' in defining clauses. But after a comma (non-defining clause), only 'who' or 'which' — NEVER 'that'. 'The CEO, who leads the company...' NOT 'that'."},
+  {id:"comparatives",title:"Comparatives & Superlatives",icon:"📊",color:"#f59e0b",
+    rule:"Comparing two things: comparative (-er / more). Comparing three or more: superlative (-est / most).",
+    patterns:[
+      {p:"Short adj (1 syllable)",d:"-er / -est",ex:"Sales were higher this quarter. This is the fastest route."},
+      {p:"Long adj (2+ syllables)",d:"more / most",ex:"This approach is more efficient. It's the most comprehensive report."},
+      {p:"Irregular forms",d:"good→better→best, bad→worse→worst, far→further→furthest",ex:"This quarter's results are better than expected."},
+      {p:"As...as (equality)",d:"as + adjective + as",ex:"The new model is as reliable as the previous one."},
+      {p:"Comparative + and + comparative",d:"Shows increasing trend",ex:"Demand is getting higher and higher."},
+    ],
+    traps:"NEVER 'more faster' or 'most easiest' (double comparative). 'Than' follows comparatives, not superlatives. 'Farther' = distance, 'further' = additional."},
+  {id:"articles",title:"Articles (a/an/the/∅)",icon:"📝",color:"#64748b",
+    rule:"Articles determine whether a noun is specific (the), non-specific (a/an), or generic (no article).",
+    patterns:[
+      {p:"The (definite)",d:"Both speaker and listener know which one",ex:"The report you requested is ready."},
+      {p:"A/An (indefinite)",d:"One of many, first mention, not specific",ex:"We need to hire a new accountant."},
+      {p:"No article",d:"Plural/uncountable in general statements",ex:"Employees must attend training sessions."},
+      {p:"The + superlative",d:"Always use 'the' before superlatives",ex:"This is the most important decision of the year."},
+      {p:"A = one of many, The = we both know which",d:"Compare these two",ex:"I had a meeting (some meeting). I had the meeting (the one we discussed)."},
+    ],
+    traps:"No article with uncountable nouns in general: 'Information is available' NOT 'The information is available' (unless specific info). Job titles after 'as': 'She works as a manager' (with article)."},
+  {id:"collocations",title:"Collocations & Fixed Expressions",icon:"🧲",color:"#0ea5e9",
+    rule:"Some word combinations are fixed in English. The TOEIC tests common business collocations.",
+    patterns:[
+      {p:"Make vs Do",d:"make: a decision, a profit, an offer, progress | do: business, research, damage, a favor",ex:"The company made significant progress last quarter."},
+      {p:"Take vs Get",d:"take: action, measures, effect, a break, responsibility | get: approval, permission, a refund",ex:"Management decided to take immediate action."},
+      {p:"High frequency TOEIC collocations",d:"place an order, meet a deadline, attend a meeting, reach an agreement, conduct a survey",ex:"We need to place an order before the deadline."},
+      {p:"Adjective collocations",d:"heavy traffic/rain, strong demand/growth, sharp increase/decline, steady improvement",ex:"There has been a sharp increase in demand."},
+    ],
+    traps:"'Make a decision' NOT 'do a decision'. 'Do research' NOT 'make research'. 'Heavy rain' NOT 'strong rain'. These are pure memorization — no rule to apply."},
+];
+
+function GrammarRef(p){
+  var[open,sO]=useState(null);
+  return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <span className="out" style={{fontWeight:700,fontSize:15}}>Grammar Reference</span>
+      <div style={{width:40}}/>
+    </div>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.5}}>Tap a topic to review the key rules, patterns, and TOEIC traps.</p>
+
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      {GRAMMAR_SHEETS.map(function(g,i){
+        var isOpen=open===g.id;
+        return(<div key={g.id} style={{animation:"fadeIn .3s ease-out",animationDelay:(i*.03)+"s",animationFillMode:"both"}}>
+          <div className="crd" onClick={function(){sO(isOpen?null:g.id);}}
+            style={{cursor:"pointer",padding:"14px 16px",borderColor:isOpen?g.color+"40":"var(--bdr)",background:isOpen?g.color+"08":"var(--bg2)",transition:"all .2s"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:38,height:38,borderRadius:10,background:g.color+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{g.icon}</div>
+              <div style={{flex:1}}>
+                <div className="out" style={{fontWeight:700,fontSize:14}}>{g.title}</div>
+                <div style={{fontSize:11,color:"var(--t3)"}}>{g.patterns.length} patterns</div>
+              </div>
+              <span style={{fontSize:14,color:"var(--t3)",transition:"transform .2s",transform:isOpen?"rotate(90deg)":"rotate(0)"}}>{"›"}</span>
+            </div>
+          </div>
+
+          {isOpen&&<div style={{padding:"12px 16px 16px",animation:"fadeIn .2s"}}>
+            {/* Rule summary */}
+            <div style={{padding:"10px 14px",background:"rgba(0,212,255,.06)",border:"1px solid rgba(0,212,255,.12)",borderRadius:10,marginBottom:12}}>
+              <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,fontWeight:500}}>{g.rule}</p>
+            </div>
+
+            {/* Patterns */}
+            {g.patterns.map(function(pt,j){
+              return(<div key={j} style={{marginBottom:10,paddingLeft:12,borderLeft:"3px solid "+g.color+"40"}}>
+                <div className="out" style={{fontSize:13,fontWeight:700,color:g.color,marginBottom:2}}>{pt.p}</div>
+                <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,marginBottom:4}}>{pt.d}</div>
+                <div style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",lineHeight:1.5}}>"{pt.ex}"</div>
+              </div>);
+            })}
+
+            {/* TOEIC Traps */}
+            <div style={{marginTop:8,padding:"10px 14px",background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.12)",borderRadius:10}}>
+              <p style={{fontSize:11,fontWeight:700,color:"var(--red)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>TOEIC Traps</p>
+              <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{g.traps}</p>
+            </div>
+          </div>}
+        </div>);
+      })}
+    </div>
   </div>);
 }
 
@@ -3668,6 +3841,7 @@ useEffect(function(){
   if(sp==="matchH")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="wfall")return(<div className="app"><style>{CSS}</style><WordFall u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="strats")return(<div className="app"><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
+  if(sp==="gramref")return(<div className="app"><style>{CSS}</style><GrammarRef back={function(){sSP(null);}}/></div>);
   if(sp==="stratquiz")return(<div className="app"><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="timesim")return(<div className="app"><style>{CSS}</style><TimeSim u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="p6")return(<div className="app"><style>{CSS}</style><Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
