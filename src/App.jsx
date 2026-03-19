@@ -2777,8 +2777,471 @@ function GamesHub(p){
           <div style={{fontSize:11,color:"var(--t3)"}}>Catch the falling sentences!</div>
           {bestF&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestF.score} pts · x{bestF.maxCombo} combo</div>}</div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",background:"linear-gradient(135deg,rgba(255,71,87,.06),rgba(168,85,247,.06))",border:"1px solid rgba(255,71,87,.15)"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Real-time 1v1 — challenge a classmate!</div>
+          <div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>NEW</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
     </div>
   </div>);
+}
+
+
+// ─── DUEL ARENA — Real-time vocabulary duel ───
+function DuelArena(p){
+  var ROUNDS=10;var TIMER_SEC=12;
+
+  var[phase,setPhase]=useState("hub"); // hub|create|join|lobby|countdown|play|feedback|done
+  var[roomCode,setRoomCode]=useState("");
+  var[inputCode,setInputCode]=useState("");
+  var[isHost,setIsHost]=useState(false);
+  var[myName,setMyName]=useState(p.u.name);
+  var[oppName,setOppName]=useState(null);
+  var[questions,setQuestions]=useState([]);
+  var[qi,setQi]=useState(0);
+  var[myPick,setMyPick]=useState(-1);
+  var[oppPick,setOppPick]=useState(-1);
+  var[myTime,setMyTime]=useState(null);
+  var[oppTime,setOppTime]=useState(null);
+  var[myScore,setMyScore]=useState(0);
+  var[oppScore,setOppScore]=useState(0);
+  var[timer,setTimer]=useState(TIMER_SEC);
+  var[countdown,setCountdown]=useState(3);
+  var[error,setError]=useState(null);
+  var[roundResults,setRoundResults]=useState([]);
+
+  var channelRef=useRef(null);
+  var timerRef=useRef(null);
+  var countdownRef=useRef(null);
+  var answeredRef=useRef(false);
+
+  // Build question pool from VOCAB
+  var allCards=useMemo(function(){
+    var cards=[];
+    VOCAB.forEach(function(dom){dom.cards.forEach(function(c){cards.push(c);});});
+    return cards;
+  },[]);
+
+  // Generate duel questions (host only, then broadcast)
+  function generateQuestions(){
+    var picked=shuffle(allCards.slice()).slice(0,ROUNDS);
+    return picked.map(function(card){
+      var pool=allCards.filter(function(c){return c.id!==card.id;});
+      var dists=shuffle(pool).slice(0,3).map(function(c){return c.d;});
+      var opts=shuffle(dists.concat([card.d]));
+      return{word:card.w,opts:opts,c:opts.indexOf(card.d),ex:card.e};
+    });
+  }
+
+  // Generate room code
+  function genCode(){return String(Math.floor(1000+Math.random()*9000));}
+
+  // ── Channel cleanup ──
+  useEffect(function(){
+    return function(){
+      if(channelRef.current){
+        supabase.removeChannel(channelRef.current);
+        channelRef.current=null;
+      }
+      clearInterval(timerRef.current);
+      clearInterval(countdownRef.current);
+    };
+  },[]);
+
+  // ── Play timer ──
+  useEffect(function(){
+    if(phase!=="play")return;
+    setTimer(TIMER_SEC);
+    timerRef.current=setInterval(function(){
+      setTimer(function(t){
+        if(t<=1){
+          clearInterval(timerRef.current);
+          // Time's up — if not answered, auto-submit wrong
+          if(!answeredRef.current){
+            answeredRef.current=true;
+            setMyPick(-1);setMyTime(0);
+            if(channelRef.current)channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:-1,time:0,name:myName}});
+          }
+          return 0;
+        }
+        return t-1;
+      });
+    },1000);
+    return function(){clearInterval(timerRef.current);};
+  },[phase,qi]);
+
+  // ── Countdown timer ──
+  useEffect(function(){
+    if(phase!=="countdown")return;
+    setCountdown(3);
+    countdownRef.current=setInterval(function(){
+      setCountdown(function(c){
+        if(c<=1){
+          clearInterval(countdownRef.current);
+          setPhase("play");
+          return 0;
+        }
+        return c-1;
+      });
+    },1000);
+    return function(){clearInterval(countdownRef.current);};
+  },[phase]);
+
+  // ── Subscribe to channel ──
+  function joinChannel(code,hosting){
+    var ch=supabase.channel("duel-"+code,{config:{presence:{key:myName}}});
+
+    ch.on("broadcast",{event:"player_join"},function(msg){
+      setOppName(msg.payload.name);
+    });
+
+    ch.on("broadcast",{event:"game_start"},function(msg){
+      setQuestions(msg.payload.questions);
+      setQi(0);setMyScore(0);setOppScore(0);setRoundResults([]);
+      setPhase("countdown");
+    });
+
+    ch.on("broadcast",{event:"answer"},function(msg){
+      if(msg.payload.name!==myName){
+        setOppPick(msg.payload.pick);
+        setOppTime(msg.payload.time);
+      }
+    });
+
+    ch.on("broadcast",{event:"next_round"},function(msg){
+      answeredRef.current=false;
+      setMyPick(-1);setOppPick(-1);setMyTime(null);setOppTime(null);
+      setQi(msg.payload.qi);
+      setPhase("play");
+    });
+
+    ch.on("broadcast",{event:"game_done"},function(){
+      setPhase("done");
+    });
+
+    ch.subscribe(function(status){
+      if(status==="SUBSCRIBED"){
+        // Announce ourselves
+        ch.send({type:"broadcast",event:"player_join",payload:{name:myName,host:hosting}});
+      }
+    });
+
+    channelRef.current=ch;
+  }
+
+  // ── Answer handler ──
+  function doAnswer(i){
+    if(answeredRef.current)return;
+    answeredRef.current=true;
+    clearInterval(timerRef.current);
+    var timeLeft=timer;
+    setMyPick(i);setMyTime(timeLeft);
+    if(channelRef.current)channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:i,time:timeLeft,name:myName}});
+  }
+
+  // ── Check if both answered → show feedback ──
+  useEffect(function(){
+    if(phase!=="play")return;
+    if(myPick===-1&&myTime===null)return; // haven't answered yet (not timeout)
+    if(myTime===null)return;
+    if(oppTime===null&&oppPick===-1)return; // opponent hasn't answered
+    if(oppTime===null)return;
+
+    // Both answered — compute round scores
+    var q=questions[qi];
+    var myCorrect=myPick===q.c;
+    var oppCorrect=oppPick===q.c;
+    var myPts=0;var oppPts=0;
+
+    if(myCorrect&&oppCorrect){
+      // Both right — faster gets 100, slower gets 50
+      if(myTime>oppTime){myPts=100;oppPts=50;}
+      else if(oppTime>myTime){oppPts=100;myPts=50;}
+      else{myPts=75;oppPts=75;} // tie
+    } else if(myCorrect){myPts=100;}
+    else if(oppCorrect){oppPts=100;}
+
+    setMyScore(function(s){return s+myPts;});
+    setOppScore(function(s){return s+oppPts;});
+    setRoundResults(function(prev){return prev.concat([{qi:qi,myPick:myPick,oppPick:oppPick,myPts:myPts,oppPts:oppPts,correct:q.c}]);});
+    setPhase("feedback");
+  },[myTime,oppTime,myPick,oppPick]);
+
+  // ── Next round (host drives) ──
+  function nextRound(){
+    if(qi+1>=ROUNDS){
+      if(channelRef.current)channelRef.current.send({type:"broadcast",event:"game_done",payload:{}});
+      setPhase("done");
+    } else {
+      answeredRef.current=false;
+      var next=qi+1;
+      if(channelRef.current)channelRef.current.send({type:"broadcast",event:"next_round",payload:{qi:next}});
+      setMyPick(-1);setOppPick(-1);setMyTime(null);setOppTime(null);
+      setQi(next);
+      setPhase("play");
+    }
+  }
+
+  // Also handle next_round for non-host (already in channel listener above)
+  // Non-host auto-advances via broadcast event
+
+  // ═══ HUB ═══
+  if(phase==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <span className="out" style={{fontWeight:700,fontSize:15}}>Duel Arena</span>
+      <div style={{width:40}}/>
+    </div>
+    <div style={{textAlign:"center",marginBottom:24}}>
+      <div style={{fontSize:56,marginBottom:8}}>{"⚔️"}</div>
+      <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Vocabulary Duel</h1>
+      <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>Challenge a classmate! {ROUNDS} rounds, {TIMER_SEC}s per question.<br/>Fastest correct answer wins more points.</p>
+    </div>
+    {error&&<div style={{padding:12,background:"rgba(255,71,87,.1)",border:"1px solid rgba(255,71,87,.2)",borderRadius:10,marginBottom:16,textAlign:"center"}}>
+      <p style={{fontSize:12,color:"var(--red)"}}>{error}</p></div>}
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <button className="btn1" onClick={function(){
+        var code=genCode();setRoomCode(code);setIsHost(true);setError(null);
+        joinChannel(code,true);setPhase("create");
+      }} style={{fontSize:16,padding:"18px 16px"}}>{"🏠"} Create a Room</button>
+      <button className="btn2" onClick={function(){setError(null);setPhase("join");}} style={{fontSize:16,padding:"18px 16px"}}>{"🚪"} Join a Room</button>
+    </div>
+    <div className="crd" style={{marginTop:24,padding:16}}>
+      <p className="out" style={{fontWeight:700,fontSize:13,marginBottom:8}}>How it works</p>
+      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
+        <div>1. One player creates a room and shares the code</div>
+        <div>2. The other player joins with the code</div>
+        <div>3. Both see the same word — pick the right definition</div>
+        <div>4. Fastest correct answer = 100 pts, slower = 50 pts</div>
+        <div>5. Wrong answer = 0 pts. {ROUNDS} rounds total!</div>
+      </div>
+    </div>
+  </div>);
+
+  // ═══ CREATE ROOM (waiting for opponent) ═══
+  if(phase==="create")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16}}>{"🏠"}</div>
+    <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Room Created!</h2>
+    <div style={{marginBottom:24}}>
+      <div style={{fontSize:14,color:"var(--t2)",marginBottom:12}}>Share this code with your opponent:</div>
+      <div className="out" style={{fontSize:56,fontWeight:900,letterSpacing:12,color:"var(--cyan)",animation:"pulse 2s infinite"}}>{roomCode}</div>
+    </div>
+    {oppName?(<div style={{animation:"fadeIn .3s"}}>
+      <div style={{fontSize:18,marginBottom:8}}>{"🎮"}</div>
+      <p className="out" style={{fontWeight:700,fontSize:16,color:"var(--green)",marginBottom:16}}>{oppName} joined!</p>
+      <button className="btn1" onClick={function(){
+        var qs=generateQuestions();setQuestions(qs);
+        channelRef.current.send({type:"broadcast",event:"game_start",payload:{questions:qs}});
+        setQi(0);setMyScore(0);setOppScore(0);setRoundResults([]);
+        setPhase("countdown");
+      }}>Start Duel!</button>
+    </div>):(<div>
+      <div style={{animation:"pulse 2s infinite",fontSize:14,color:"var(--t3)"}}>Waiting for opponent...</div>
+    </div>)}
+    <button className="btn2" onClick={function(){if(channelRef.current)supabase.removeChannel(channelRef.current);channelRef.current=null;setPhase("hub");}} style={{marginTop:24,width:"100%"}}>Cancel</button>
+  </div>);
+
+  // ═══ JOIN ROOM ═══
+  if(phase==="join")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16}}>{"🚪"}</div>
+    <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:20}}>Enter Room Code</h2>
+    <input type="text" inputMode="numeric" maxLength={4} value={inputCode}
+      onChange={function(e){setInputCode(e.target.value.replace(/\D/g,""));}}
+      placeholder="0000"
+      style={{textAlign:"center",fontSize:48,fontWeight:900,letterSpacing:12,width:"100%",padding:"16px",
+        background:"var(--bg2)",border:"2px solid var(--bdr)",borderRadius:16,color:"var(--cyan)",
+        fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+    <button className="btn1" onClick={function(){
+      if(inputCode.length!==4){setError("Enter a 4-digit code");return;}
+      setRoomCode(inputCode);setIsHost(false);setError(null);
+      joinChannel(inputCode,false);setPhase("lobby");
+    }} style={{marginTop:20}} disabled={inputCode.length!==4}>Join Room</button>
+    <button className="btn2" onClick={function(){setPhase("hub");setInputCode("");}} style={{marginTop:12,width:"100%"}}>Back</button>
+  </div>);
+
+  // ═══ LOBBY (non-host waiting for start) ═══
+  if(phase==="lobby")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16}}>{"⏳"}</div>
+    <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Room {roomCode}</h2>
+    <p style={{color:"var(--t2)",fontSize:14,marginBottom:8}}>You joined as <strong style={{color:"var(--cyan)"}}>{myName}</strong></p>
+    <div style={{animation:"pulse 2s infinite",fontSize:14,color:"var(--t3)"}}>Waiting for host to start...</div>
+    <button className="btn2" onClick={function(){if(channelRef.current)supabase.removeChannel(channelRef.current);channelRef.current=null;setPhase("hub");}} style={{marginTop:32,width:"100%"}}>Leave</button>
+  </div>);
+
+  // ═══ COUNTDOWN ═══
+  if(phase==="countdown")return(<div style={{minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",textAlign:"center"}}>
+    <div className="out" style={{fontSize:80,fontWeight:900,color:"var(--cyan)",animation:"countUp .5s"}}>{countdown}</div>
+    <p style={{color:"var(--t2)",fontSize:16,marginTop:16}}>Get ready!</p>
+  </div>);
+
+  // ═══ PLAY ═══
+  if(phase==="play"&&questions[qi]){
+    var q=questions[qi];
+    var timerPct=timer/TIMER_SEC*100;
+    var timerCol=timer<=3?"var(--red)":timer<=6?"var(--orange)":"var(--cyan)";
+    var oppAnswered=oppPick!==-1||oppTime!==null;
+
+    return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+      {/* Header: scores + round */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <div style={{textAlign:"center",flex:1}}>
+          <div style={{fontSize:11,color:"var(--cyan)",fontWeight:600}}>{myName}</div>
+          <div className="out" style={{fontSize:20,fontWeight:900,color:"var(--cyan)"}}>{myScore}</div>
+        </div>
+        <div style={{textAlign:"center",padding:"0 12px"}}>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Round</div>
+          <div className="out" style={{fontSize:18,fontWeight:800,color:"var(--t1)"}}>{qi+1}/{ROUNDS}</div>
+        </div>
+        <div style={{textAlign:"center",flex:1}}>
+          <div style={{fontSize:11,color:"var(--orange)",fontWeight:600}}>{oppName||"Opponent"}</div>
+          <div className="out" style={{fontSize:20,fontWeight:900,color:"var(--orange)"}}>{oppScore}</div>
+        </div>
+      </div>
+
+      {/* Timer bar */}
+      <div style={{height:5,background:"var(--bg3)",borderRadius:3,marginBottom:16,overflow:"hidden"}}>
+        <div style={{height:"100%",width:timerPct+"%",background:timerCol,borderRadius:3,transition:"width 1s linear"}}/></div>
+
+      {/* Timer + opponent status */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <span className="out" style={{fontSize:24,fontWeight:900,color:timerCol}}>{timer}s</span>
+        {oppAnswered&&<span style={{fontSize:12,color:"var(--orange)",fontWeight:600,animation:"fadeIn .3s"}}>{"⚡"} {oppName} answered!</span>}
+      </div>
+
+      {/* Question */}
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <span className="out" style={{fontSize:11,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>What does this word mean?</span>
+        <span className="out" style={{fontSize:32,fontWeight:900,color:"var(--t1)"}}>{q.word}</span>
+      </div>
+
+      {/* Options */}
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {q.opts.map(function(opt,i){
+          var picked=myPick===i;
+          return(<button key={i} onClick={function(){doAnswer(i);}} disabled={myPick!==-1}
+            style={{padding:"14px 16px",background:picked?"rgba(0,212,255,.1)":"var(--bg2)",
+              border:picked?"2px solid var(--cyan)":"1px solid var(--bdr)",borderRadius:12,
+              cursor:myPick!==-1?"default":"pointer",fontSize:14,color:picked?"var(--cyan)":"var(--t1)",
+              textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s",lineHeight:1.5,
+              fontWeight:picked?600:400}}>
+            <span style={{fontSize:12,color:"var(--t3)",marginRight:8,fontWeight:700}}>{String.fromCharCode(65+i)}</span>
+            {opt}
+          </button>);
+        })}
+      </div>
+    </div>);
+  }
+
+  // ═══ FEEDBACK (after both answer) ═══
+  if(phase==="feedback"&&questions[qi]){
+    var q2=questions[qi];
+    var lastResult=roundResults[roundResults.length-1];
+    var myCorrect=lastResult&&lastResult.myPick===q2.c;
+    var oppCorrect=lastResult&&lastResult.oppPick===q2.c;
+
+    return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+      {/* Scores */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div style={{textAlign:"center",flex:1}}>
+          <div style={{fontSize:11,color:"var(--cyan)",fontWeight:600}}>{myName}</div>
+          <div className="out" style={{fontSize:22,fontWeight:900,color:"var(--cyan)"}}>{myScore}</div>
+          {lastResult&&<div style={{fontSize:12,fontWeight:700,color:lastResult.myPts>0?"var(--green)":"var(--red)",animation:"fadeIn .3s"}}>+{lastResult.myPts}</div>}
+        </div>
+        <div style={{fontSize:28,animation:"countUp .3s"}}>{myCorrect&&oppCorrect?"⚔️":myCorrect?"✅":oppCorrect?"💥":"😬"}</div>
+        <div style={{textAlign:"center",flex:1}}>
+          <div style={{fontSize:11,color:"var(--orange)",fontWeight:600}}>{oppName||"Opponent"}</div>
+          <div className="out" style={{fontSize:22,fontWeight:900,color:"var(--orange)"}}>{oppScore}</div>
+          {lastResult&&<div style={{fontSize:12,fontWeight:700,color:lastResult.oppPts>0?"var(--green)":"var(--red)",animation:"fadeIn .3s"}}>+{lastResult.oppPts}</div>}
+        </div>
+      </div>
+
+      {/* Correct answer */}
+      <div className="crd" style={{padding:16,marginBottom:16,borderColor:"rgba(0,230,118,.2)",background:"rgba(0,230,118,.06)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <span className="out" style={{fontWeight:800,fontSize:18,color:"var(--cyan)"}}>{q2.word}</span>
+          <span style={{fontSize:13,color:"var(--green)",fontWeight:600}}>= {q2.opts[q2.c]}</span>
+        </div>
+        <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{q2.ex}"</p>
+      </div>
+
+      {/* Who answered what */}
+      <div style={{display:"flex",gap:8,marginBottom:20}}>
+        <div className="crd" style={{flex:1,padding:12,borderColor:myCorrect?"rgba(0,230,118,.2)":"rgba(255,71,87,.2)",textAlign:"center"}}>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:4}}>You picked</div>
+          <div className="out" style={{fontWeight:700,fontSize:13,color:myCorrect?"var(--green)":"var(--red)"}}>{myPick>=0?String.fromCharCode(65+myPick):"⏰ Timeout"}</div>
+        </div>
+        <div className="crd" style={{flex:1,padding:12,borderColor:oppCorrect?"rgba(0,230,118,.2)":"rgba(255,71,87,.2)",textAlign:"center"}}>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:4}}>{oppName} picked</div>
+          <div className="out" style={{fontWeight:700,fontSize:13,color:oppCorrect?"var(--green)":"var(--red)"}}>{oppPick>=0?String.fromCharCode(65+oppPick):"⏰ Timeout"}</div>
+        </div>
+      </div>
+
+      {/* Next button (host controls, or auto after timeout for both) */}
+      {isHost?<button className="btn1" onClick={nextRound}>{qi+1<ROUNDS?"Next Round ("+(qi+2)+"/"+ROUNDS+")":"See Final Results"}</button>
+      :<div style={{textAlign:"center",color:"var(--t3)",fontSize:13,animation:"pulse 2s infinite"}}>Waiting for next round...</div>}
+    </div>);
+  }
+
+  // ═══ DONE ═══
+  if(phase==="done"){
+    var iWon=myScore>oppScore;var tied=myScore===oppScore;
+    var xp=Math.round((myScore/100)*5)+(iWon?30:tied?15:5);
+
+    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <div style={{fontSize:56,marginBottom:12,animation:"countUp .6s"}}>{iWon?"🏆":tied?"🤝":"😤"}</div>
+        <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:4}}>{iWon?"Victory!":tied?"It's a Tie!":"Defeat"}</h1>
+        <p style={{color:"var(--t2)",fontSize:14}}>Room {roomCode}</p>
+      </div>
+
+      {/* Final scores */}
+      <div style={{display:"flex",gap:12,marginBottom:24}}>
+        <div className="crd" style={{flex:1,padding:20,textAlign:"center",borderColor:iWon?"rgba(0,230,118,.3)":"var(--bdr)",background:iWon?"rgba(0,230,118,.06)":"var(--bg2)"}}>
+          <div style={{fontSize:11,color:"var(--cyan)",fontWeight:600,marginBottom:4}}>{myName}</div>
+          <div className="out" style={{fontSize:36,fontWeight:900,color:"var(--cyan)"}}>{myScore}</div>
+        </div>
+        <div className="crd" style={{flex:1,padding:20,textAlign:"center",borderColor:!iWon&&!tied?"rgba(255,71,87,.3)":"var(--bdr)",background:!iWon&&!tied?"rgba(255,71,87,.06)":"var(--bg2)"}}>
+          <div style={{fontSize:11,color:"var(--orange)",fontWeight:600,marginBottom:4}}>{oppName||"Opponent"}</div>
+          <div className="out" style={{fontSize:36,fontWeight:900,color:"var(--orange)"}}>{oppScore}</div>
+        </div>
+      </div>
+
+      {/* Round breakdown */}
+      <div className="crd" style={{padding:14,marginBottom:20}}>
+        <p className="out" style={{fontWeight:700,fontSize:13,color:"var(--t2)",marginBottom:10}}>Round Breakdown</p>
+        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+          {roundResults.map(function(r,i){
+            var q3=questions[r.qi];
+            return(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:i<roundResults.length-1?"1px solid var(--bg3)":"none"}}>
+              <span style={{width:20,fontSize:11,color:"var(--t3)",fontWeight:700}}>{i+1}</span>
+              <span style={{flex:1,fontSize:12,color:"var(--t1)"}}>{q3.word}</span>
+              <span style={{fontSize:11,fontWeight:700,color:r.myPts>=100?"var(--green)":r.myPts>0?"var(--cyan)":"var(--red)",width:35,textAlign:"right"}}>+{r.myPts}</span>
+              <span style={{fontSize:11,color:"var(--t3)",width:8,textAlign:"center"}}>|</span>
+              <span style={{fontSize:11,fontWeight:700,color:r.oppPts>=100?"var(--green)":r.oppPts>0?"var(--orange)":"var(--red)",width:35,textAlign:"right"}}>+{r.oppPts}</span>
+            </div>);
+          })}
+        </div>
+      </div>
+
+      <div className="out" style={{textAlign:"center",fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:20}}>+{xp} XP</div>
+
+      <button className="btn1" onClick={function(){
+        if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
+        p.done(Math.round(myScore/100),ROUNDS,xp);
+      }}>Collect XP</button>
+      <button className="btn2" onClick={function(){
+        if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
+        setPhase("hub");setOppName(null);setRoomCode("");setInputCode("");setQuestions([]);setQi(0);setMyScore(0);setOppScore(0);setRoundResults([]);
+      }} style={{marginTop:10,width:"100%"}}>Play Again</button>
+      <button className="btn2" onClick={function(){
+        if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
+        p.back();
+      }} style={{marginTop:10,width:"100%"}}>Back to Games</button>
+    </div>);
+  }
+
+  return null;
 }
 
 // ─── SPEED MATCH ───
@@ -4433,6 +4896,7 @@ useEffect(function(){
   if(sp==="matchE")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="matchH")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="wfall")return(<div className="app"><style>{CSS}</style><WordFall u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="duel")return(<div className="app"><style>{CSS}</style><DuelArena u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="strats")return(<div className="app"><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
   if(sp==="gramref")return(<div className="app"><style>{CSS}</style><GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/></div>);
   if(sp==="stratquiz")return(<div className="app"><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
