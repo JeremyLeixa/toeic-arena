@@ -910,12 +910,61 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 // ─── WORD FAMILIES CLASSIFIER ───
 function WordFam(p){
   var items=useMemo(function(){
+    // Known English homographs that can serve as multiple POS
+    // (beyond what the family structure captures)
+    var HOMOGRAPHS={
+      "permit":["Verb","Noun"],    // a permit / to permit
+      "produce":["Verb","Noun"],   // fresh produce / to produce
+      "record":["Verb","Noun"],    // a record / to record
+      "project":["Verb","Noun"],   // a project / to project
+      "conduct":["Verb","Noun"],   // conduct (behavior) / to conduct
+      "estimate":["Verb","Noun"],  // an estimate / to estimate
+      "increase":["Verb","Noun"],  // an increase / to increase
+      "decrease":["Verb","Noun"],  // a decrease / to decrease
+      "research":["Verb","Noun"],  // research (n) / to research
+      "export":["Verb","Noun"],    // an export / to export
+      "import":["Verb","Noun"],    // an import / to import
+      "transfer":["Verb","Noun"],  // a transfer / to transfer
+      "report":["Verb","Noun"],    // a report / to report
+      "update":["Verb","Noun"],    // an update / to update
+      "supply":["Verb","Noun"],    // a supply / to supply
+      "demand":["Verb","Noun"],    // a demand / to demand
+      "offer":["Verb","Noun"],     // an offer / to offer
+      "plan":["Verb","Noun"],      // a plan / to plan
+      "risk":["Verb","Noun"],      // a risk / to risk
+      "process":["Verb","Noun"],   // a process / to process
+      "review":["Verb","Noun"],    // a review / to review
+      "result":["Verb","Noun"],    // a result / to result
+      "profit":["Verb","Noun"],    // a profit / to profit
+      "finance":["Verb","Noun"],   // finance (n) / to finance
+      "work":["Verb","Noun"],      // work (n) / to work
+      "display":["Verb","Noun"],   // a display / to display
+    };
+
     var pool=[];
+    var seen={};
     WORD_FAMILIES.forEach(function(f){
-      if(f.v)pool.push({word:f.v,answer:"Verb",family:f});
-      if(f.n)pool.push({word:f.n,answer:"Noun",family:f});
-      if(f.adj)pool.push({word:f.adj,answer:"Adjective",family:f});
-      if(f.adv)pool.push({word:f.adv,answer:"Adverb",family:f});
+      var forms=[
+        {word:f.v,pos:"Verb"},{word:f.n,pos:"Noun"},
+        {word:f.adj,pos:"Adjective"},{word:f.adv,pos:"Adverb"}
+      ];
+      forms.forEach(function(fr){
+        if(!fr.word)return;
+        var key=fr.word.toLowerCase();
+        if(seen[key])return;
+        seen[key]=true;
+
+        // Collect valid POS: from family structure + homograph map
+        var valid=[fr.pos];
+        forms.forEach(function(other){
+          if(other.word&&other.word.toLowerCase()===key&&valid.indexOf(other.pos)===-1)valid.push(other.pos);
+        });
+        // Check homograph map
+        var extra=HOMOGRAPHS[key];
+        if(extra){extra.forEach(function(pos){if(valid.indexOf(pos)===-1)valid.push(pos);});}
+
+        pool.push({word:fr.word,answer:fr.pos,validAnswers:valid,family:f});
+      });
     });
     return shuffle(pool).slice(0,15);
   },[]);
@@ -925,7 +974,8 @@ function WordFam(p){
 
   function doAns(cat){
     sPk(cat);
-    if(cat===items[ci].answer)sSc(sc+1);
+    // Accept any valid POS for this word (handles homographs)
+    if(items[ci].validAnswers.indexOf(cat)!==-1)sSc(sc+1);
     else{sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
   }
@@ -938,7 +988,7 @@ function WordFam(p){
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
     <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
 
-  var it=items[ci];var fam=it.family;
+  var it=items[ci];var fam=it.family;var isMulti=it.validAnswers.length>1;
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
@@ -952,16 +1002,19 @@ function WordFam(p){
       <div style={{fontSize:13,color:"var(--t3)"}}>Is it a Noun, Verb, Adjective or Adverb?</div></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
       {cats.map(function(cat){
-        var isCor=cat===it.answer;var isPick=pick===cat;var show=ph==="fb";
+        var isValid=it.validAnswers.indexOf(cat)!==-1;var isPick=pick===cat;var show=ph==="fb";
         var bg="var(--bg2)";var bd="var(--bdr)";
-        if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
-        else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
+        if(show&&isValid){bg="rgba(0,230,118,.12)";bd="var(--green)";}
+        else if(show&&isPick&&!isValid){bg="rgba(255,71,87,.12)";bd="var(--red)";}
         return(<button key={cat} onClick={function(){if(ph==="q")doAns(cat);}} disabled={show}
           style={{padding:"18px 12px",background:bg,border:"1px solid "+bd,borderRadius:14,cursor:ph==="q"?"pointer":"default",transition:"all .2s"}}>
-          <div className="out" style={{fontWeight:700,fontSize:16,color:show&&isCor?"var(--green)":show&&isPick?"var(--red)":catColors[cat]}}>{cat}</div>
+          <div className="out" style={{fontWeight:700,fontSize:16,color:show&&isValid?"var(--green)":show&&isPick?"var(--red)":catColors[cat]}}>{cat}</div>
         </button>);})}
     </div>
     {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
+      {isMulti&&<div style={{padding:"8px 14px",background:"rgba(255,215,0,.08)",border:"1px solid rgba(255,215,0,.2)",borderRadius:10,marginBottom:10}}>
+        <p style={{fontSize:12,color:"var(--gold)",fontWeight:600}}>This word can be both: {it.validAnswers.join(" & ")}</p>
+      </div>}
       <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.8}}>
           <strong style={{color:"var(--t1)"}}>Word family:</strong><br/>
