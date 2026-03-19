@@ -2955,8 +2955,7 @@ function DuelArena(p){
     });
 
     ch.on("broadcast",{event:"answer"},function(msg){
-      console.log("[DUEL] answer received:",msg.payload);
-      if(msg.payload.name===myName){console.log("[DUEL] ignoring own answer");return;}
+      console.log("[DUEL] answer received from opponent:",msg.payload);
       oppAnswerRef.current={pick:msg.payload.pick,time:msg.payload.time};
       setOppPick(msg.payload.pick);setOppTime(msg.payload.time);
       setDbg("Opp answered: pick="+msg.payload.pick+" time="+msg.payload.time);
