@@ -2834,8 +2834,48 @@ function DuelArena(p){
     });
   }
 
+  // Refs for answer tracking (immune to closure/stale state issues)
+  var myAnswerRef=useRef(null);   // {pick, time}
+  var oppAnswerRef=useRef(null);  // {pick, time}
+  var questionsRef=useRef([]);
+  var qiRef=useRef(0);
+  var phaseRef=useRef("hub");
+
+  // Keep refs in sync
+  questionsRef.current=questions;
+  qiRef.current=qi;
+  phaseRef.current=phase;
+
   // Generate room code
   function genCode(){return String(Math.floor(1000+Math.random()*9000));}
+
+  // ── Check if both answered → transition to feedback ──
+  function checkBothDone(){
+    if(phaseRef.current!=="play")return;
+    if(!myAnswerRef.current||!oppAnswerRef.current)return;
+    var ma=myAnswerRef.current;var oa=oppAnswerRef.current;
+    var qs2=questionsRef.current;var qi2=qiRef.current;
+    if(!qs2[qi2])return;
+
+    var q=qs2[qi2];
+    var myCorrect=ma.pick===q.c;
+    var oppCorrect=oa.pick===q.c;
+    var myPts=0;var oppPts=0;
+
+    if(myCorrect&&oppCorrect){
+      if(ma.time>oa.time){myPts=100;oppPts=50;}
+      else if(oa.time>ma.time){oppPts=100;myPts=50;}
+      else{myPts=75;oppPts=75;}
+    } else if(myCorrect){myPts=100;}
+    else if(oppCorrect){oppPts=100;}
+
+    setMyPick(ma.pick);setOppPick(oa.pick);
+    setMyTime(ma.time);setOppTime(oa.time);
+    setMyScore(function(s){return s+myPts;});
+    setOppScore(function(s){return s+oppPts;});
+    setRoundResults(function(prev){return prev.concat([{qi:qi2,myPick:ma.pick,oppPick:oa.pick,myPts:myPts,oppPts:oppPts,correct:q.c}]);});
+    setPhase("feedback");
+  }
 
   // ── Channel cleanup ──
   useEffect(function(){
@@ -2857,11 +2897,12 @@ function DuelArena(p){
       setTimer(function(t){
         if(t<=1){
           clearInterval(timerRef.current);
-          // Time's up — if not answered, auto-submit wrong
           if(!answeredRef.current){
             answeredRef.current=true;
+            myAnswerRef.current={pick:-1,time:0};
             setMyPick(-1);setMyTime(0);
             if(channelRef.current)channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:-1,time:0,name:myName}});
+            checkBothDone();
           }
           return 0;
         }
@@ -2871,7 +2912,7 @@ function DuelArena(p){
     return function(){clearInterval(timerRef.current);};
   },[phase,qi]);
 
-  // ── Countdown timer ──
+  // ── Countdown ──
   useEffect(function(){
     if(phase!=="countdown")return;
     setCountdown(3);
@@ -2890,29 +2931,34 @@ function DuelArena(p){
 
   // ── Subscribe to channel ──
   function joinChannel(code,hosting){
-    var ch=supabase.channel("duel-"+code,{config:{presence:{key:myName}}});
+    var ch=supabase.channel("duel-"+code,{config:{broadcast:{self:false}}});
 
     ch.on("broadcast",{event:"player_join"},function(msg){
       setOppName(msg.payload.name);
     });
 
     ch.on("broadcast",{event:"game_start"},function(msg){
+      questionsRef.current=msg.payload.questions;
+      myAnswerRef.current=null;oppAnswerRef.current=null;
       setQuestions(msg.payload.questions);
       setQi(0);setMyScore(0);setOppScore(0);setRoundResults([]);
       setPhase("countdown");
     });
 
     ch.on("broadcast",{event:"answer"},function(msg){
-      if(msg.payload.name!==myName){
-        setOppPick(msg.payload.pick);
-        setOppTime(msg.payload.time);
-      }
+      // Safety: ignore own messages (self:false should prevent this, but just in case)
+      if(msg.payload.name===myName)return;
+      oppAnswerRef.current={pick:msg.payload.pick,time:msg.payload.time};
+      setOppPick(msg.payload.pick);setOppTime(msg.payload.time);
+      checkBothDone();
     });
 
     ch.on("broadcast",{event:"next_round"},function(msg){
       answeredRef.current=false;
+      myAnswerRef.current=null;oppAnswerRef.current=null;
       setMyPick(-1);setOppPick(-1);setMyTime(null);setOppTime(null);
       setQi(msg.payload.qi);
+      qiRef.current=msg.payload.qi;
       setPhase("play");
     });
 
@@ -2922,7 +2968,6 @@ function DuelArena(p){
 
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
-        // Announce ourselves
         ch.send({type:"broadcast",event:"player_join",payload:{name:myName,host:hosting}});
       }
     });
@@ -2936,37 +2981,12 @@ function DuelArena(p){
     answeredRef.current=true;
     clearInterval(timerRef.current);
     var timeLeft=timer;
+    myAnswerRef.current={pick:i,time:timeLeft};
     setMyPick(i);setMyTime(timeLeft);
     if(channelRef.current)channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:i,time:timeLeft,name:myName}});
+    // Check immediately in case opponent already answered
+    checkBothDone();
   }
-
-  // ── Check if both answered → show feedback ──
-  useEffect(function(){
-    if(phase!=="play")return;
-    if(myPick===-1&&myTime===null)return; // haven't answered yet (not timeout)
-    if(myTime===null)return;
-    if(oppTime===null&&oppPick===-1)return; // opponent hasn't answered
-    if(oppTime===null)return;
-
-    // Both answered — compute round scores
-    var q=questions[qi];
-    var myCorrect=myPick===q.c;
-    var oppCorrect=oppPick===q.c;
-    var myPts=0;var oppPts=0;
-
-    if(myCorrect&&oppCorrect){
-      // Both right — faster gets 100, slower gets 50
-      if(myTime>oppTime){myPts=100;oppPts=50;}
-      else if(oppTime>myTime){oppPts=100;myPts=50;}
-      else{myPts=75;oppPts=75;} // tie
-    } else if(myCorrect){myPts=100;}
-    else if(oppCorrect){oppPts=100;}
-
-    setMyScore(function(s){return s+myPts;});
-    setOppScore(function(s){return s+oppPts;});
-    setRoundResults(function(prev){return prev.concat([{qi:qi,myPick:myPick,oppPick:oppPick,myPts:myPts,oppPts:oppPts,correct:q.c}]);});
-    setPhase("feedback");
-  },[myTime,oppTime,myPick,oppPick]);
 
   // ── Next round (host drives) ──
   function nextRound(){
@@ -2975,10 +2995,11 @@ function DuelArena(p){
       setPhase("done");
     } else {
       answeredRef.current=false;
+      myAnswerRef.current=null;oppAnswerRef.current=null;
       var next=qi+1;
       if(channelRef.current)channelRef.current.send({type:"broadcast",event:"next_round",payload:{qi:next}});
       setMyPick(-1);setOppPick(-1);setMyTime(null);setOppTime(null);
-      setQi(next);
+      setQi(next);qiRef.current=next;
       setPhase("play");
     }
   }
