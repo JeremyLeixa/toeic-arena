@@ -2816,6 +2816,7 @@ function DuelArena(p){
   var timerRef=useRef(null);
   var countdownRef=useRef(null);
   var answeredRef=useRef(false);
+  var myIdRef=useRef("p_"+Math.random().toString(36).substring(2,8)); // unique per session
 
   // Build question pool from VOCAB
   var allCards=useMemo(function(){
@@ -2907,8 +2908,7 @@ function DuelArena(p){
             myAnswerRef.current={pick:-1,time:0};
             setMyPick(-1);setMyTime(0);
             setDbg("Timeout! auto-submitted");
-            if(channelRef.current)channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:-1,time:0,name:myName}})
-              .then(function(r){console.log("[DUEL] timeout answer send:",r);checkBothDone();});
+            if(channelRef.current)channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:-1,time:0,pid:myIdRef.current}});
             checkBothDone();
           }
           return 0;
@@ -2938,15 +2938,18 @@ function DuelArena(p){
 
   // ── Subscribe to channel ──
   function joinChannel(code,hosting){
-    var ch=supabase.channel("duel-"+code,{config:{broadcast:{self:false,ack:true}}});
+    var myId=myIdRef.current;
+    var ch=supabase.channel("duel-"+code);
 
     ch.on("broadcast",{event:"player_join"},function(msg){
-      console.log("[DUEL] player_join received:",msg.payload);
+      if(msg.payload.pid===myId)return;
+      console.log("[DUEL] opponent joined:",msg.payload.name);
       setOppName(msg.payload.name);
     });
 
     ch.on("broadcast",{event:"game_start"},function(msg){
-      console.log("[DUEL] game_start received, questions:",msg.payload.questions.length);
+      if(msg.payload.pid===myId)return;
+      console.log("[DUEL] game_start received, Qs:",msg.payload.questions.length);
       questionsRef.current=msg.payload.questions;
       myAnswerRef.current=null;oppAnswerRef.current=null;
       setQuestions(msg.payload.questions);
@@ -2955,34 +2958,35 @@ function DuelArena(p){
     });
 
     ch.on("broadcast",{event:"answer"},function(msg){
-      console.log("[DUEL] answer received from opponent:",msg.payload);
+      if(msg.payload.pid===myId)return;
+      console.log("[DUEL] opp answer:",msg.payload);
       oppAnswerRef.current={pick:msg.payload.pick,time:msg.payload.time};
       setOppPick(msg.payload.pick);setOppTime(msg.payload.time);
-      setDbg("Opp answered: pick="+msg.payload.pick+" time="+msg.payload.time);
+      setDbg("Opp: pick="+msg.payload.pick+" t="+msg.payload.time);
       checkBothDone();
     });
 
     ch.on("broadcast",{event:"next_round"},function(msg){
-      console.log("[DUEL] next_round received:",msg.payload.qi);
+      if(msg.payload.pid===myId)return;
+      console.log("[DUEL] next_round:",msg.payload.qi);
       answeredRef.current=false;
       myAnswerRef.current=null;oppAnswerRef.current=null;
       setMyPick(-1);setOppPick(-1);setMyTime(null);setOppTime(null);
-      setQi(msg.payload.qi);
-      qiRef.current=msg.payload.qi;
+      setQi(msg.payload.qi);qiRef.current=msg.payload.qi;
       setDbg("");
       setPhase("play");
     });
 
-    ch.on("broadcast",{event:"game_done"},function(){
-      console.log("[DUEL] game_done received");
+    ch.on("broadcast",{event:"game_done"},function(msg){
+      if(msg.payload.pid===myId)return;
+      console.log("[DUEL] game_done");
       setPhase("done");
     });
 
     ch.subscribe(function(status){
-      console.log("[DUEL] channel status:",status);
+      console.log("[DUEL] channel:",status);
       if(status==="SUBSCRIBED"){
-        ch.send({type:"broadcast",event:"player_join",payload:{name:myName,host:hosting}})
-          .then(function(r){console.log("[DUEL] player_join send result:",r);});
+        ch.send({type:"broadcast",event:"player_join",payload:{name:myName,host:hosting,pid:myId}});
       }
     });
 
@@ -2997,36 +3001,25 @@ function DuelArena(p){
     var timeLeft=timer;
     myAnswerRef.current={pick:i,time:timeLeft};
     setMyPick(i);setMyTime(timeLeft);
-    setDbg("Me: pick="+i+" time="+timeLeft+" | sending...");
+    setDbg("Me: pick="+i+" t="+timeLeft);
     console.log("[DUEL] doAnswer: pick="+i+" time="+timeLeft);
-
     if(channelRef.current){
-      channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:i,time:timeLeft,name:myName}})
-        .then(function(r){
-          console.log("[DUEL] answer send result:",r);
-          setDbg(function(prev){return prev+" sent:"+r;});
-          // Check after send confirms
-          checkBothDone();
-        });
+      channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:i,time:timeLeft,pid:myIdRef.current}});
     }
-    // Also check immediately (opponent may have already answered)
     checkBothDone();
   }
 
   // ── Next round (host drives) ──
   function nextRound(){
     if(qi+1>=ROUNDS){
-      console.log("[DUEL] sending game_done");
-      if(channelRef.current)channelRef.current.send({type:"broadcast",event:"game_done",payload:{}})
-        .then(function(r){console.log("[DUEL] game_done send:",r);});
+      if(channelRef.current)channelRef.current.send({type:"broadcast",event:"game_done",payload:{pid:myIdRef.current}});
       setPhase("done");
     } else {
       answeredRef.current=false;
       myAnswerRef.current=null;oppAnswerRef.current=null;
       var next=qi+1;
-      console.log("[DUEL] sending next_round:",next);
-      if(channelRef.current)channelRef.current.send({type:"broadcast",event:"next_round",payload:{qi:next}})
-        .then(function(r){console.log("[DUEL] next_round send:",r);});
+      console.log("[DUEL] next_round:",next);
+      if(channelRef.current)channelRef.current.send({type:"broadcast",event:"next_round",payload:{qi:next,pid:myIdRef.current}});
       setMyPick(-1);setOppPick(-1);setMyTime(null);setOppTime(null);
       setQi(next);qiRef.current=next;
       setDbg("");
@@ -3083,8 +3076,7 @@ function DuelArena(p){
       <p className="out" style={{fontWeight:700,fontSize:16,color:"var(--green)",marginBottom:16}}>{oppName} joined!</p>
       <button className="btn1" onClick={function(){
         var qs=generateQuestions();setQuestions(qs);questionsRef.current=qs;
-        channelRef.current.send({type:"broadcast",event:"game_start",payload:{questions:qs}})
-          .then(function(r){console.log("[DUEL] game_start send result:",r);});
+        channelRef.current.send({type:"broadcast",event:"game_start",payload:{questions:qs,pid:myIdRef.current}});
         setQi(0);setMyScore(0);setOppScore(0);setRoundResults([]);
         myAnswerRef.current=null;oppAnswerRef.current=null;
         setPhase("countdown");
