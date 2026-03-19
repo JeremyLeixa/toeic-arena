@@ -2941,10 +2941,10 @@ function WordFall(p){
   var allQs=useMemo(function(){return shuffle(QUESTIONS);},[]);
   var MAX_LIVES=3;
   var SPEED_TIERS=[
-    {from:0,dur:12000},
-    {from:5,dur:8000},
-    {from:10,dur:6000},
-    {from:15,dur:4500},
+    {from:0,dur:8000},
+    {from:5,dur:6000},
+    {from:10,dur:4500},
+    {from:15,dur:3500},
   ];
 
   var[qi,setQi]=useState(0);
@@ -4346,6 +4346,13 @@ useEffect(function(){
   }
   function nav(pg,arg){sSP(pg);sSPA(arg||null);}
   async function onboard(name,placementScore,lvl){
+    // Check if student already exists (prevents duplicates after session loss)
+    var existing=await supabase.from('students').select('id,name').eq('name',name).eq('class_code','idrac2026').maybeSingle();
+    if(existing.data){
+      // Student exists — do recover flow instead of creating duplicate
+      var recovered=await recover(name,'idrac2026');
+      if(recovered)return;
+    }
     var authRes=await supabase.auth.signInAnonymously();
     if(!authRes.data.user)return;
     var u=fresh(name);
@@ -4362,7 +4369,6 @@ useEffect(function(){
         }
       });
     }
-    // Save to state first, then Supabase gets correct values via sv->save
     sU(u);
     await supabase.from('students').upsert({
       id:authRes.data.user.id,name:name,class_code:'idrac2026',
