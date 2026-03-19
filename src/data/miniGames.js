@@ -68,28 +68,55 @@ export var PREP_COLLOCATIONS = [
   {base:"according",prep:"to",type:"expr",ex:"According to the report, profits increased by 20%."},
 ];
 
-// ─── GERUND / INFINITIVE DATA ───
+// ─── GERUND / INFINITIVE DATA (30 verbs, grouped by pattern) ───
 export var GERUND_INF = [
-  {verb:"enjoy",takes:"ing",ex:"I enjoy working with international clients."},
-  {verb:"consider",takes:"ing",ex:"We are considering hiring a new consultant."},
-  {verb:"avoid",takes:"ing",ex:"You should avoid making assumptions."},
-  {verb:"suggest",takes:"ing",ex:"She suggested postponing the meeting."},
-  {verb:"recommend",takes:"ing",ex:"The manager recommended reviewing the contract."},
-  {verb:"finish",takes:"ing",ex:"Have you finished writing the report?"},
-  {verb:"mind",takes:"ing",ex:"Do you mind closing the door?"},
-  {verb:"postpone",takes:"ing",ex:"They postponed launching the product."},
-  {verb:"risk",takes:"ing",ex:"We risk losing the client if we delay."},
-  {verb:"deny",takes:"ing",ex:"He denied receiving the email."},
-  {verb:"agree",takes:"to",ex:"The board agreed to increase the budget."},
-  {verb:"decide",takes:"to",ex:"She decided to accept the offer."},
-  {verb:"plan",takes:"to",ex:"We plan to expand into Asia next year."},
-  {verb:"hope",takes:"to",ex:"I hope to hear from you soon."},
-  {verb:"expect",takes:"to",ex:"We expect to complete the project by June."},
-  {verb:"want",takes:"to",ex:"The client wants to renegotiate the terms."},
-  {verb:"need",takes:"to",ex:"You need to submit the form by Friday."},
-  {verb:"offer",takes:"to",ex:"He offered to help with the presentation."},
-  {verb:"refuse",takes:"to",ex:"The supplier refused to lower the price."},
-  {verb:"promise",takes:"to",ex:"They promised to deliver on time."},
+  // ── PATTERN 1: Always -ING (10 verbs) ──
+  {verb:"enjoy",takes:"ing",pattern:"ing",ex:"I enjoy working with international clients.",ctx:"She really enjoys _____ new markets.",opts:["to explore","exploring"],c:1,tip:"enjoy + -ING always. Never 'enjoy to'."},
+  {verb:"consider",takes:"ing",pattern:"ing",ex:"We are considering hiring a new consultant.",ctx:"Have you considered _____ the deadline?",opts:["extending","to extend"],c:0,tip:"consider + -ING. Think of it as 'thinking about doing'."},
+  {verb:"avoid",takes:"ing",pattern:"ing",ex:"You should avoid making assumptions.",ctx:"The company wants to avoid _____ more staff during the downturn.",opts:["to lose","losing"],c:1,tip:"avoid + -ING. You avoid DOING something, not 'avoid to do'."},
+  {verb:"suggest",takes:"ing",pattern:"ing",ex:"She suggested postponing the meeting.",ctx:"The consultant suggested _____ the process.",opts:["to simplify","simplifying"],c:1,tip:"suggest + -ING (or 'suggest that we simplify'). Never 'suggest to simplify'."},
+  {verb:"recommend",takes:"ing",pattern:"ing",ex:"The manager recommended reviewing the contract.",ctx:"I would recommend _____ the terms before signing.",opts:["checking","to check"],c:0,tip:"recommend + -ING. Same pattern as suggest."},
+  {verb:"finish",takes:"ing",pattern:"ing",ex:"Have you finished writing the report?",ctx:"We need to finish _____ the data before the meeting.",opts:["to analyze","analyzing"],c:1,tip:"finish + -ING. You finish DOING something."},
+  {verb:"mind",takes:"ing",pattern:"ing",ex:"Do you mind closing the door?",ctx:"Would you mind _____ me the updated figures?",opts:["sending","to send"],c:0,tip:"mind + -ING. 'Do you mind doing...?' is a polite request."},
+  {verb:"postpone",takes:"ing",pattern:"ing",ex:"They postponed launching the product.",ctx:"Management decided to postpone _____ new staff.",opts:["to hire","hiring"],c:1,tip:"postpone + -ING. You postpone DOING something."},
+  {verb:"risk",takes:"ing",pattern:"ing",ex:"We risk losing the client if we delay.",ctx:"By raising prices, we risk _____ customers.",opts:["to lose","losing"],c:1,tip:"risk + -ING. You risk DOING something bad."},
+  {verb:"deny",takes:"ing",pattern:"ing",ex:"He denied receiving the email.",ctx:"The supplier denied _____ the faulty parts.",opts:["shipping","to ship"],c:0,tip:"deny + -ING. You deny HAVING DONE something."},
+
+  // ── PATTERN 2: Always TO (10 verbs) ──
+  {verb:"agree",takes:"to",pattern:"to",ex:"The board agreed to increase the budget.",ctx:"Both parties agreed _____ the contract by Friday.",opts:["signing","to sign"],c:1,tip:"agree + TO. You agree TO DO something."},
+  {verb:"decide",takes:"to",pattern:"to",ex:"She decided to accept the offer.",ctx:"The committee decided _____ the project.",opts:["to approve","approving"],c:0,tip:"decide + TO. Decision → action (infinitive)."},
+  {verb:"plan",takes:"to",pattern:"to",ex:"We plan to expand into Asia next year.",ctx:"The company plans _____ a new branch in Singapore.",opts:["opening","to open"],c:1,tip:"plan + TO. Plans are about future actions (infinitive)."},
+  {verb:"expect",takes:"to",pattern:"to",ex:"We expect to complete the project by June.",ctx:"Analysts expect sales _____ by 15% this quarter.",opts:["to increase","increasing"],c:0,tip:"expect + TO. Expectations point to the future."},
+  {verb:"offer",takes:"to",pattern:"to",ex:"He offered to help with the presentation.",ctx:"The contractor offered _____ the repairs free of charge.",opts:["doing","to do"],c:1,tip:"offer + TO. You offer TO DO something for someone."},
+  {verb:"refuse",takes:"to",pattern:"to",ex:"The supplier refused to lower the price.",ctx:"The client refused _____ the revised terms.",opts:["to accept","accepting"],c:0,tip:"refuse + TO. Refusal blocks a future action."},
+  {verb:"promise",takes:"to",pattern:"to",ex:"They promised to deliver on time.",ctx:"The manager promised _____ the issue by Monday.",opts:["resolving","to resolve"],c:1,tip:"promise + TO. A promise points forward."},
+  {verb:"manage",takes:"to",pattern:"to",ex:"We managed to meet the deadline despite the setbacks.",ctx:"The team managed _____ the project under budget.",opts:["to complete","completing"],c:0,tip:"manage + TO. You manage TO DO something (= succeed in doing)."},
+  {verb:"afford",takes:"to",pattern:"to",ex:"We can't afford to lose this client.",ctx:"The startup cannot afford _____ on marketing right now.",opts:["to spend","spending"],c:0,tip:"afford + TO. Usually with 'can/can't afford to...'."},
+  {verb:"want",takes:"to",pattern:"to",ex:"The client wants to renegotiate the terms.",ctx:"Most employees want _____ from home at least one day a week.",opts:["working","to work"],c:1,tip:"want + TO. One of the most common TOEIC verbs."},
+
+  // ── PATTERN 3: Both (meaning changes!) (5 verbs) ──
+  {verb:"stop",takes:"both",pattern:"both",ex:"She stopped smoking. / She stopped to smoke.",ctx:"The CEO stopped _____ when the fire alarm went off. (= interrupted the action)",opts:["to speak","speaking"],c:1,
+    tip:"stop + -ING = quit the activity. stop + TO = pause in order to do something else. 'Stopped speaking' = she was speaking and stopped. 'Stopped to speak' = she paused another activity to speak."},
+  {verb:"remember",takes:"both",pattern:"both",ex:"I remember locking the door. / Remember to lock the door.",ctx:"Please remember _____ the report before you leave. (= don't forget)",opts:["to submit","submitting"],c:0,
+    tip:"remember + TO = don't forget to do (future). remember + -ING = recall having done (past). 'Remember to submit' = do it later. 'Remember submitting' = recall you did it."},
+  {verb:"forget",takes:"both",pattern:"both",ex:"I forgot to call him. / I'll never forget meeting the CEO.",ctx:"Don't forget _____ the client about the delay. (= make sure you do it)",opts:["informing","to inform"],c:1,
+    tip:"forget + TO = fail to do (future). forget + -ING = lose the memory of (past). 'Forgot to inform' = didn't do it. 'Forgot informing' = can't remember having done it."},
+  {verb:"try",takes:"both",pattern:"both",ex:"Try pressing Ctrl+Z. / I tried to open the file but it was corrupted.",ctx:"The IT team tried _____ the software but the bug persisted. (= attempted)",opts:["to update","updating"],c:0,
+    tip:"try + TO = attempt (difficult). try + -ING = experiment with a method. 'Tried to update' = attempted but maybe failed. 'Tried updating' = tested that method."},
+  {verb:"regret",takes:"both",pattern:"both",ex:"I regret telling him. / We regret to inform you.",ctx:"We regret _____ you that your application was unsuccessful. (= formal announcement)",opts:["to inform","informing"],c:0,
+    tip:"regret + TO = formal announcement (bad news). regret + -ING = feel sorry about a past action. 'Regret to inform' = formal letter/email. 'Regret informing' = wish I hadn't told."},
+
+  // ── PATTERN 4: After preposition = ALWAYS -ING (5 expressions) ──
+  {verb:"look forward to",takes:"ing",pattern:"prep",ex:"I look forward to hearing from you.",ctx:"We look forward to _____ you at the conference.",opts:["meeting","to meet"],c:0,
+    tip:"TRAP! 'to' here is a PREPOSITION, not part of infinitive. After any preposition → always -ING. 'Look forward to meeting', NOT 'to meet'."},
+  {verb:"interested in",takes:"ing",pattern:"prep",ex:"She is interested in joining the team.",ctx:"Our company is interested in _____ your services.",opts:["to use","using"],c:1,
+    tip:"After 'in' (preposition) → always -ING. 'Interested in doing', NOT 'interested in to do'."},
+  {verb:"instead of",takes:"ing",pattern:"prep",ex:"Instead of complaining, suggest a solution.",ctx:"Instead of _____ the deadline, they hired more staff.",opts:["to extend","extending"],c:1,
+    tip:"After 'instead of' (preposition) → always -ING."},
+  {verb:"in charge of",takes:"ing",pattern:"prep",ex:"She is in charge of organizing the event.",ctx:"Mr. Park is in charge of _____ the Tokyo office.",opts:["managing","to manage"],c:0,
+    tip:"After 'of' (preposition) → always -ING. This is one of the most tested patterns."},
+  {verb:"used to",takes:"ing",pattern:"prep",ex:"I am used to working long hours.",ctx:"After six months, she is used to _____ with international clients.",opts:["dealing","to deal"],c:0,
+    tip:"BE used to + -ING = accustomed to. But 'used to + infinitive' (without BE) = past habit. 'I am used to working' ≠ 'I used to work'."},
 ];
 
 // ─── TOEIC TRAPS DATA ───

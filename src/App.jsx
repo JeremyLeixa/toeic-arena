@@ -143,12 +143,96 @@ function SpeakBtn(p){
     <span style={{fontSize:p.size?p.size*0.5:18,lineHeight:1}}>{playing?"🔊":"🔈"}</span>
   </button>);
 }
-function weekId(){var n=new Date(),s=new Date(n.getFullYear(),0,1);return n.getFullYear()+"-W"+Math.floor((n-s)/(7*864e5));}
+function weekId(){var d=new Date();var day=d.getDay();var diff=d.getDate()-day+(day===0?-6:1);var mon=new Date(d);mon.setDate(diff);mon.setHours(0,0,0,0);var jan1=new Date(mon.getFullYear(),0,1);var wk=Math.floor((mon-jan1)/(7*864e5))+1;return mon.getFullYear()+"-W"+wk;}
 function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
 function srand(s){var x=Math.sin(s)*10000;return x-Math.floor(x);}
 import { getLevel } from "./data/helpers.js";
 function getLeague(wxp){var l=LEAGUES[0];for(var i=0;i<LEAGUES.length;i++)if(wxp>=LEAGUES[i].min)l=LEAGUES[i];return l;}
-function dailyQs(date){var seed=0;for(var i=0;i<date.length;i++)seed+=date.charCodeAt(i);var a=QUESTIONS.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(srand(seed+i)*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a.slice(0,5);}
+function dailyQs(date,u){
+  var seed=0;for(var i=0;i<date.length;i++)seed+=date.charCodeAt(i);
+
+  // Seeded shuffle helper (deterministic per day)
+  function seededPick(arr,s){
+    var b=arr.slice();
+    for(var i=b.length-1;i>0;i--){var j=Math.floor(srand(s+i)*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}
+    return b;
+  }
+
+  // Group QUESTIONS by category
+  var catMap={};
+  QUESTIONS.forEach(function(q){if(!catMap[q.cat])catMap[q.cat]=[];catMap[q.cat].push(q);});
+  var allCats=Object.keys(catMap);
+
+  // Map specific modules to grammar categories for weakness detection
+  var modToCat={
+    "wordfam":"Word Families","connsort":"Connectors","prepdrill":"Prepositions",
+    "gerinf":"Gerunds vs Infinitives","falsefr":"False Friends"
+  };
+
+  // Score each category by weakness (lower = weaker = higher priority)
+  var catScores={};
+  allCats.forEach(function(cat){catScores[cat]={acc:0.5,total:0};});
+
+  if(u&&u.moduleScores&&(u.stats.sessions||0)>=5){
+    // 1) Use specific module scores where they map to a category
+    Object.keys(modToCat).forEach(function(modId){
+      var ms=u.moduleScores[modId];
+      var cat=modToCat[modId];
+      if(ms&&ms.total>0&&catScores[cat]){
+        catScores[cat]={acc:ms.correct/ms.total,total:ms.total};
+      }
+    });
+
+    // 2) Use overall drill/daily accuracy as proxy for categories without specific modules
+    var drillAcc=null;
+    ["drill","daily","timesim"].forEach(function(modId){
+      var ms=u.moduleScores[modId];
+      if(ms&&ms.total>=10){
+        drillAcc=drillAcc!==null?((drillAcc+ms.correct/ms.total)/2):(ms.correct/ms.total);
+      }
+    });
+
+    // Categories without a specific module get the drill average (or 0.5 default)
+    allCats.forEach(function(cat){
+      if(catScores[cat].total===0){
+        catScores[cat].acc=drillAcc!==null?drillAcc:0.5;
+      }
+    });
+  }
+
+  // Sort categories: lowest accuracy first, then least practiced
+  var ranked=allCats.map(function(cat){return{cat:cat,acc:catScores[cat].acc,total:catScores[cat].total};});
+  ranked.sort(function(a,b){return a.acc===b.acc?a.total-b.total:a.acc-b.acc;});
+
+  var picked=[];
+  var usedCats={};
+
+  // Pick 3 from the weakest categories (1 question per cat)
+  for(var w=0;w<ranked.length&&picked.length<3;w++){
+    var cat=ranked[w].cat;
+    if(usedCats[cat])continue;
+    var pool=seededPick(catMap[cat],seed+w*7);
+    if(pool.length>0){picked.push(pool[0]);usedCats[cat]=true;}
+  }
+
+  // Pick 2 random from remaining categories (variety)
+  var remainCats=seededPick(allCats.filter(function(c){return!usedCats[c];}),seed+99);
+  for(var r=0;r<remainCats.length&&picked.length<5;r++){
+    var cat2=remainCats[r];
+    if(usedCats[cat2])continue;
+    var pool2=seededPick(catMap[cat2],seed+50+r*13);
+    if(pool2.length>0){picked.push(pool2[0]);usedCats[cat2]=true;}
+  }
+
+  // Fallback: if still < 5, fill with unused questions
+  if(picked.length<5){
+    var usedIds={};picked.forEach(function(q){usedIds[q.id]=true;});
+    var filler=seededPick(QUESTIONS.filter(function(q){return!usedIds[q.id];}),seed+200);
+    while(picked.length<5&&filler.length>0)picked.push(filler.shift());
+  }
+
+  return seededPick(picked,seed+300);
+}
 function compScores(wk){var seed=0;for(var i=0;i<wk.length;i++)seed+=wk.charCodeAt(i);return COMPETITORS.map(function(c,idx){return{name:c.n,avatar:c.a,xp:Math.floor(srand(seed+idx*137)*600+50+srand(seed+idx*53+Math.floor(Date.now()/864e5))*100)};});}
 function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.max(1.3,e-0.2);}else if(r===2){iv=Math.max(1,Math.ceil(iv*1.2));e=Math.max(1.3,e-0.15);}else if(r===3){iv=iv===0?1:Math.ceil(iv*e);}else{iv=iv===0?3:Math.ceil(iv*e*1.3);e+=0.15;}var nx=new Date();nx.setDate(nx.getDate()+iv);return{ease:e,interval:iv,nextReview:nx.toISOString().split("T")[0],correct:(st.correct||0)+(r>=3?1:0),total:(st.total||0)+1};}
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
@@ -173,8 +257,8 @@ async function load() {
     weekId: data.week_id,
     streak: data.streak,
     lastActive: data.last_active,
-    cardStates: data.card_states,
-    daily: data.daily_challenge,
+    cardStates: data.card_states || {},
+    daily: data.daily_challenge || {date:null,done:false,score:0,xpE:0},
     stats: data.stats,
     moduleScores: data.module_scores,
     mockResults: data.mock_results || {},
@@ -184,6 +268,7 @@ async function load() {
     avatar: data.avatar || "⚔️",
     theme: data.theme || "dark",
     totalTime: data.total_time || 0,
+    weeklyHistory: data.weekly_history || [],
   };
 }
 
@@ -209,10 +294,11 @@ async function save(d) {
     theme: d.theme || "dark",
     unlocked_ach: d.unlockedAch || [],
     total_time: d.totalTime || 0,
+    weekly_history: d.weeklyHistory || [],
   });
   if(error) console.error("SAVE ERROR:", error.message, error.details, error.code);
 }
-function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0};}
+function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -622,7 +708,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily
 
 // ─── DAILY CHALLENGE ───
 function Daily(p){
-var qs=useMemo(function(){return dailyQs(today());},[]);var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[tl,sT]=useState(30);var[sk,sSk]=useState(false);var tr=useRef(null);var answered=useRef(false);
+var qs=useMemo(function(){return dailyQs(today(),p.u);},[]);var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[tl,sT]=useState(30);var[sk,sSk]=useState(false);var tr=useRef(null);var answered=useRef(false);
 // Guard: only block if daily was ALREADY done when component mounted (not if completed during this session)
 var wasAlreadyDone=useRef(p.u.daily&&p.u.daily.date===today()&&p.u.daily.done);
 if(wasAlreadyDone.current)return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -679,7 +765,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
       {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"🔀",bg:"linear-gradient(135deg,#a855f7,#ec4899)"},
       {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
-      {id:"gerinf",n:"Gerund vs Infinitive",d:"Speed round: -ING or TO?",i:"⏱️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
+      {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
       {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
       {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
     ]},
@@ -1036,58 +1122,181 @@ function StudyGroup(p){
 
 // ─── GERUND VS INFINITIVE BATTLE ───
 function GerInf(p){
-  var items=useMemo(function(){return shuffle(GERUND_INF);},[]);
-  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[pick,sPk]=useState(null);var[sk,sSk]=useState(false);
-  var[timer,sTm]=useState(10);var tr=useRef(null);var answered=useRef(false);
+  var[mode,setMode]=useState("hub"); // hub | study | quiz
+  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
+  var[studyTab,setStudyTab]=useState("ing");
 
-  useEffect(function(){
-    if(ph==="q"&&timer>0){tr.current=setTimeout(function(){sTm(timer-1);},1000);return function(){clearTimeout(tr.current);};}
-    if(ph==="q"&&timer===0&&!answered.current){answered.current=true;clearTimeout(tr.current);sPk("timeout");sSk(true);setTimeout(function(){sSk(false);},400);sP("fb");}
-  });
+  // Group by pattern for Study Mode
+  var groups=useMemo(function(){
+    var g={ing:[],to:[],both:[],prep:[]};
+    GERUND_INF.forEach(function(v){if(g[v.pattern])g[v.pattern].push(v);});
+    return g;
+  },[]);
 
-  function doAns(choice){
-    answered.current=true;clearTimeout(tr.current);sPk(choice);
-    if(choice===items[ci].takes)sSc(sc+1);
-    else{sSk(true);setTimeout(function(){sSk(false);},400);}
-    sP("fb");
-  }
-  function nxt(){answered.current=false;if(ci<items.length-1){sC(ci+1);sPk(null);sTm(10);sP("q");}else{sP("done");p.done(sc,items.length,20+sc*4);}}
+  // Quiz items — context sentences, shuffled
+  var quizItems=useMemo(function(){return shuffle(GERUND_INF.slice());},[]);
 
-  if(ph==="done"){var xp=20+sc*4;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=16?"🏆":sc>=10?"⚔️":"🛡️"}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Battle Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=16?"var(--green)":sc>=10?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+  function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");}
 
-  var it=items[ci];var tc=timer>5?"var(--cyan)":timer>2?"var(--orange)":"var(--red)";
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
-      <div className="out" style={{fontSize:20,fontWeight:800,color:tc}}>{timer}</div>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
-    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#e11d48,#f59e0b)"/>
-    <div style={{width:"100%",height:3,background:"rgba(255,255,255,.06)",borderRadius:2,marginTop:8,marginBottom:32,overflow:"hidden"}}><div style={{width:(timer/10*100)+"%",height:"100%",background:tc,borderRadius:2,transition:"width 1s linear"}}/></div>
-    <div style={{textAlign:"center",marginBottom:32}}>
-      <div className="out" style={{fontSize:11,color:"var(--red)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>SPEED ROUND — -ING OR TO?</div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
-        <div className="out" style={{fontWeight:800,fontSize:36}}>{it.verb}</div>
-        <SpeakBtn text={it.verb} size={34}/></div></div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-      {[{id:"ing",label:"verb + -ING",col:"var(--orange)",bg:"rgba(255,140,66,.1)"},{id:"to",label:"verb + TO",col:"var(--cyan)",bg:"rgba(0,212,255,.1)"}].map(function(opt){
-        var isCor=opt.id===it.takes;var isPick=pick===opt.id;var show=ph==="fb";
-        var bg=show&&isCor?"rgba(0,230,118,.15)":show&&isPick&&!isCor?"rgba(255,71,87,.15)":opt.bg;
-        var bd=show&&isCor?"var(--green)":show&&isPick&&!isCor?"var(--red)":opt.col+"44";
-        return(<button key={opt.id} onClick={function(){if(ph==="q")doAns(opt.id);}} disabled={show}
-          style={{padding:"24px 16px",background:bg,border:"2px solid "+bd,borderRadius:16,cursor:ph==="q"?"pointer":"default",transition:"all .2s"}}>
-          <div className="out" style={{fontWeight:800,fontSize:18,color:show&&isCor?"var(--green)":show&&isPick&&!isCor?"var(--red)":opt.col}}>{opt.label}</div></button>);})}
+  // Pattern labels
+  var patternInfo={
+    ing:{label:"Always -ING",icon:"🔶",color:"var(--orange)",desc:"These verbs ALWAYS take the gerund (-ing form)."},
+    to:{label:"Always TO",icon:"🔷",color:"var(--cyan)",desc:"These verbs ALWAYS take the infinitive (to + verb)."},
+    both:{label:"Both (meaning changes!)",icon:"⚠️",color:"var(--red)",desc:"These verbs take EITHER form — but the meaning changes!"},
+    prep:{label:"After preposition = -ING",icon:"🎯",color:"var(--purple)",desc:"After ANY preposition (to, in, of, for...), ALWAYS use -ING. This is the #1 TOEIC trap."}
+  };
+
+  // ═══ HUB ═══
+  if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <span className="out" style={{fontWeight:700,fontSize:15}}>Gerund vs Infinitive</span>
+      <div style={{width:40}}/>
     </div>
-    {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}>
-        <p style={{fontSize:14,color:"var(--t1)",marginBottom:4}}><strong>{it.verb} + {it.takes==="ing"?"-ing":"to + verb"}</strong></p>
-        <p style={{fontSize:13,color:"var(--t2)",fontStyle:"italic"}}>"{it.ex}"</p></div>
-      <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button></div>}
+    <div style={{textAlign:"center",marginBottom:24}}>
+      <div style={{fontSize:48,marginBottom:8}}>{"⚖️"}</div>
+      <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{GERUND_INF.length} verbs · 4 patterns to master</p>
+    </div>
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <div className="crd" onClick={function(){setMode("study");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📚"}</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Study the Patterns</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Learn WHY before you guess</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
+      <div className="crd" onClick={function(){resetQuiz();setMode("quiz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#e11d48,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📝"}</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Context Quiz</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>TOEIC-style sentences — no more guessing</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
+    </div>
   </div>);
+
+  // ═══ STUDY MODE ═══
+  if(mode==="study"){
+    var tabs=[
+      {id:"ing",label:"-ING",col:"var(--orange)"},
+      {id:"to",label:"TO",col:"var(--cyan)"},
+      {id:"both",label:"Both",col:"var(--red)"},
+      {id:"prep",label:"Prep",col:"var(--purple)"}
+    ];
+    var curGroup=groups[studyTab]||[];
+    var info=patternInfo[studyTab];
+
+    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <button onClick={function(){setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+        <span className="out" style={{fontWeight:700,fontSize:15}}>Study Patterns</span>
+        <div style={{width:40}}/>
+      </div>
+
+      {/* Pattern tabs */}
+      <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:12,padding:3}}>
+        {tabs.map(function(t){
+          var active=studyTab===t.id;
+          return(<button key={t.id} onClick={function(){setStudyTab(t.id);}}
+            style={{flex:1,padding:"10px 6px",borderRadius:10,border:"none",cursor:"pointer",
+              background:active?"var(--bg3)":"transparent",color:active?t.col:"var(--t3)",
+              fontWeight:active?700:500,fontSize:12,fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}
+            className="out">{t.label}</button>);
+        })}
+      </div>
+
+      {/* Pattern description */}
+      <div style={{padding:"12px 16px",background:info.color+"10",border:"1px solid "+info.color+"25",borderRadius:12,marginBottom:16}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+          <span style={{fontSize:18}}>{info.icon}</span>
+          <span className="out" style={{fontWeight:700,fontSize:14,color:info.color}}>{info.label}</span>
+          <span style={{fontSize:11,color:"var(--t3)"}}>{curGroup.length} verbs</span>
+        </div>
+        <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>{info.desc}</p>
+      </div>
+
+      {/* Verb list */}
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {curGroup.map(function(v,i){
+          return(<div key={i} className="crd" style={{padding:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <span className="out" style={{fontWeight:800,fontSize:16,color:info.color}}>{v.verb}</span>
+              <span style={{fontSize:12,color:"var(--t3)",fontWeight:600}}>+ {v.takes==="ing"?"-ING":v.takes==="to"?"TO":"-ING / TO"}</span>
+            </div>
+            <p style={{fontSize:13,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5,marginBottom:6}}>"{v.ex}"</p>
+            <div style={{padding:"8px 12px",background:"rgba(0,212,255,.06)",borderRadius:8,border:"1px solid rgba(0,212,255,.1)"}}>
+              <p style={{fontSize:11,color:"var(--cyan)",lineHeight:1.5}}>{v.tip}</p>
+            </div>
+          </div>);
+        })}
+      </div>
+
+      <button className="btn1" onClick={function(){resetQuiz();setMode("quiz");}} style={{marginTop:20,width:"100%"}}>Ready? Take the Quiz</button>
+    </div>);
+  }
+
+  // ═══ CONTEXT QUIZ ═══
+  if(mode==="quiz"){
+    var q=quizItems[ci];
+
+    if(ph==="done"){var xp=20+sc*4;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=25?"🏆":sc>=18?"⚔️":"🛡️"}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Quiz Complete</h1>
+      <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=25?"var(--green)":sc>=18?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{quizItems.length}</div>
+      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
+      <button className="btn1" onClick={function(){resetQuiz();sP("q");}}>Play Again</button>
+      <button className="btn2" onClick={function(){setMode("study");}} style={{marginTop:10,width:"100%"}}>Review Patterns</button>
+      <button className="btn2" onClick={function(){setMode("hub");}} style={{marginTop:10,width:"100%"}}>Back</button>
+    </div>);}
+
+    var info2=patternInfo[q.pattern];
+
+    return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <button onClick={function(){setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+        <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{quizItems.length}</span></div>
+      <Bar value={ci} max={quizItems.length} h={4} color="linear-gradient(90deg,#e11d48,#f59e0b)"/>
+
+      <div style={{marginTop:20,marginBottom:24}}>
+        <span className="out" style={{fontSize:11,color:info2.color,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:12}}>{info2.icon} {info2.label}</span>
+        <p className="out" style={{fontSize:17,fontWeight:700,lineHeight:1.6,color:"var(--t1)"}}>{q.ctx.split("_____")[0]}<span style={{color:"var(--cyan)",fontWeight:900}}>_____</span>{q.ctx.split("_____")[1]}</p>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {q.opts.map(function(opt,i){
+          var show=ph==="fb";var isCor=i===q.c;var isPick=i===pick;
+          var bg="var(--bg2)";var bd="var(--bdr)";var col="var(--t1)";
+          if(show&&isCor){bg="rgba(0,230,118,.15)";bd="var(--green)";col="var(--green)";}
+          else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
+          return(<button key={i} onClick={function(){
+            if(ph!=="q")return;sPk(i);
+            if(i===q.c)sSc(sc+1);else{sSk(true);setTimeout(function(){sSk(false);},400);}
+            sP("fb");
+          }} disabled={show}
+            style={{padding:"18px 14px",background:bg,border:"2px solid "+bd,borderRadius:14,cursor:ph==="q"?"pointer":"default",
+              fontSize:16,fontWeight:700,color:col,fontFamily:"'DM Sans',sans-serif",transition:"all .15s",textAlign:"center"}}>
+            {opt}
+          </button>);
+        })}
+      </div>
+
+      {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
+        <div className="crd" style={{padding:14,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+            <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{q.verb}</span>
+            <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:99,
+              background:q.pattern==="ing"?"rgba(255,140,66,.1)":q.pattern==="to"?"rgba(0,212,255,.1)":q.pattern==="both"?"rgba(255,71,87,.1)":"rgba(168,85,247,.1)",
+              color:info2.color}}>{q.pattern==="ing"?"always -ING":q.pattern==="to"?"always TO":q.pattern==="both"?"depends on meaning":"preposition → -ING"}</span>
+          </div>
+          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,marginBottom:4}}>{q.tip}</p>
+          <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{q.ex}"</p>
+        </div>
+        <button className="btn1" onClick={function(){
+          sPk(-1);
+          if(ci<quizItems.length-1){sC(ci+1);sP("q");}
+          else{sP("done");p.done(sc,quizItems.length,20+sc*4);}
+        }} style={{marginTop:12}}>{ci<quizItems.length-1?"Next":"See Results"}</button>
+      </div>}
+    </div>);
+  }
+
+  return null;
 }
 
 // ─── TOEIC TRAPS QUIZ ───
@@ -1101,7 +1310,7 @@ function TrapsQuiz(p){
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:56,marginBottom:16}}>🪤</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>TOEIC Traps Quiz</h1>
-    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>The 10 most common mistakes students make on the TOEIC.</p>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>The 20 most common mistakes students make on the TOEIC.</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Can you spot the traps before they catch you?</p>
     <button className="btn1" onClick={function(){sP("q");}}>Start Quiz</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
@@ -3329,6 +3538,73 @@ function TeacherDash(p){
         </div>
       </div>)}
 
+      {/* ── League History ── */}
+      {function(){
+        // Aggregate weekly history from all students
+        var weekMap={};
+        students.forEach(function(s){
+          var hist=s.weekly_history||[];
+          hist.forEach(function(h){
+            if(!weekMap[h.week])weekMap[h.week]=[];
+            weekMap[h.week].push({name:s.name,xp:h.xp});
+          });
+          // Also include current week if they have XP
+          if((s.weekly_xp||0)>0){
+            var cw=s.week_id;
+            if(cw){
+              if(!weekMap[cw])weekMap[cw]=[];
+              // Avoid duplicates
+              var exists=weekMap[cw].find(function(e){return e.name===s.name;});
+              if(!exists)weekMap[cw].push({name:s.name,xp:s.weekly_xp});
+            }
+          }
+        });
+
+        var weeks=Object.keys(weekMap).sort().reverse();
+        if(weeks.length===0)return(<div className="crd" style={{padding:20,textAlign:"center",marginBottom:16}}>
+          <p style={{fontSize:13,color:"var(--t3)"}}>🏆 League history will appear after the first weekly reset.</p>
+        </div>);
+
+        return(<div style={{marginBottom:16}}>
+          <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:12,color:"var(--t2)"}}>🏆 League History — Top 10</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {weeks.slice(0,8).map(function(wk){
+              var ranking=weekMap[wk].slice().sort(function(a,b){return b.xp-a.xp;}).slice(0,10);
+              var weekLabel=wk;
+              // Parse week label: "2026-W11" → "Week 11 — Mar 2026"
+              var wMatch=wk.match(/(\d{4})-W(\d+)/);
+              if(wMatch){
+                var yr=parseInt(wMatch[1]);var wn=parseInt(wMatch[2]);
+                var jan1=new Date(yr,0,1);var mondayMs=jan1.getTime()+((wn-1)*7-((jan1.getDay()+6)%7))*864e5;
+                var mon=new Date(mondayMs);
+                var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                weekLabel="Week "+wn+" — "+months[mon.getMonth()]+" "+mon.getDate();
+              }
+              var isCurrentWeek=wk===(students[0]&&students[0].week_id);
+
+              return(<div key={wk} className="crd" style={{padding:14,borderColor:isCurrentWeek?"rgba(0,212,255,.2)":"var(--bdr)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                  <span className="out" style={{fontWeight:700,fontSize:13,color:isCurrentWeek?"var(--cyan)":"var(--t1)"}}>{weekLabel}{isCurrentWeek?" (current)":""}</span>
+                  <span style={{fontSize:11,color:"var(--t3)"}}>{weekMap[wk].length} students</span>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                  {ranking.map(function(r,i){
+                    var medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":null;
+                    var lg=LEAGUES.slice().reverse().find(function(l){return r.xp>=l.min;})||LEAGUES[0];
+                    return(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0"}}>
+                      <span style={{width:20,textAlign:"center",fontSize:medal?14:11,fontWeight:700,color:medal?"var(--gold)":"var(--t3)"}}>{medal||i+1}</span>
+                      <span style={{flex:1,fontSize:12,color:"var(--t1)"}}>{r.name}</span>
+                      <span style={{fontSize:10,color:lg.color,fontWeight:600}}>{lg.icon}</span>
+                      <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--t2)",width:55,textAlign:"right"}}>{r.xp} XP</span>
+                    </div>);
+                  })}
+                </div>
+              </div>);
+            })}
+          </div>
+        </div>);
+      }()}
+
       {/* CSV export in analytics too */}
       <button className="btn2" onClick={exportCSV} style={{width:"100%",fontSize:13,borderColor:"rgba(0,212,255,.3)",color:"var(--cyan)",marginBottom:16}}>📥 Export class data (CSV)</button>
     </div>)}
@@ -3922,7 +4198,11 @@ useEffect(function(){
           if(d){
             var td=today(),yd=new Date();yd.setDate(yd.getDate()-1);var ys=yd.toISOString().split("T")[0];
             if(d.lastActive!==td&&d.lastActive!==ys)d.streak=0;
-            var cw=weekId();if(d.weekId!==cw){d.weeklyXp=0;d.weekId=cw;}
+            var cw=weekId();if(d.weekId!==cw){
+              if(!d.weeklyHistory)d.weeklyHistory=[];
+              if(d.weeklyXp>0&&d.weekId){d.weeklyHistory.push({week:d.weekId,xp:d.weeklyXp});if(d.weeklyHistory.length>20)d.weeklyHistory=d.weeklyHistory.slice(-20);}
+              d.weeklyXp=0;d.weekId=cw;
+            }
             if(!d.moduleScores)d.moduleScores={};
             if(!d.mission)d.mission={date:null,actId:null,done:false};
 			if(!d.unlockedAch)d.unlockedAch=[];
@@ -4036,7 +4316,7 @@ useEffect(function(){
       xp:u.xp,weekly_xp:u.weeklyXp,week_id:u.weekId,
       placement_score:placementScore,placement_level:lvl?lvl.label:null,
       stats:u.stats,module_scores:u.moduleScores,
-      mission:u.mission,avatar:u.avatar||"⚔️",theme:u.theme||"dark",unlocked_ach:u.unlockedAch||[],total_time:0
+      mission:u.mission,avatar:u.avatar||"⚔️",theme:u.theme||"dark",unlocked_ach:u.unlockedAch||[],total_time:0,weekly_history:[]
     });
     save(u);
   }
@@ -4051,7 +4331,7 @@ useEffect(function(){
       lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
       stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
       moduleScores:d.module_scores||{},mockResults:d.mock_results||{},gameScores:d.game_scores||{},mission:d.mission||{date:null,actId:null,done:false},
-      unlockedAch:d.unlocked_ach||[],avatar:d.avatar||"⚔️",theme:d.theme||"dark",totalTime:d.total_time||0};
+      unlockedAch:d.unlocked_ach||[],avatar:d.avatar||"⚔️",theme:d.theme||"dark",totalTime:d.total_time||0,weeklyHistory:d.weekly_history||[]};
     if(!u.moduleScores)u.moduleScores={};
     if(!u.mission)u.mission={date:null,actId:null,done:false};
     if(!u.unlockedAch)u.unlockedAch=[];
