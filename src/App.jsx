@@ -3154,7 +3154,7 @@ function DuelArena(p){
         {oppAnswered&&<span style={{fontSize:12,color:"var(--orange)",fontWeight:600,animation:"fadeIn .3s"}}>{"⚡"} {oppName} answered!</span>}
       </div>
       {/* Debug info — remove after fixing */}
-      {dbg&&<div style={{padding:6,background:"rgba(255,255,0,.1)",borderRadius:6,marginBottom:8}}>
+      //{dbg&&<div style={{padding:6,background:"rgba(255,255,0,.1)",borderRadius:6,marginBottom:8}}>
         <p style={{fontSize:10,color:"var(--gold)",fontFamily:"monospace"}}>{dbg}</p>
       </div>}
 
