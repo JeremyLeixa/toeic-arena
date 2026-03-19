@@ -2941,10 +2941,10 @@ function WordFall(p){
   var allQs=useMemo(function(){return shuffle(QUESTIONS);},[]);
   var MAX_LIVES=3;
   var SPEED_TIERS=[
-    {from:0,dur:8000},
-    {from:5,dur:6000},
-    {from:10,dur:4500},
-    {from:15,dur:3500},
+    {from:0,dur:12000},
+    {from:5,dur:8000},
+    {from:10,dur:6000},
+    {from:15,dur:4500},
   ];
 
   var[qi,setQi]=useState(0);
