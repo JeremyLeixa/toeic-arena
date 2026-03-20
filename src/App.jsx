@@ -18,6 +18,8 @@ import { PART7_PASSAGES } from "./data/part7.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "./data/listening.js";
 import { PLACEMENT_TEST, PLACEMENT_LEVELS, MISSION_MODULES } from "./data/placement.js";
 import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
+import { SENTENCES } from "./data/sentences.js";
+import { AUDIO_BLITZ } from "./data/audioBlitz.js";
 import { MOCK1_P5, MOCK2_P5, MOCK1_P6, MOCK2_P6, MOCK1_P7, MOCK2_P7 } from "./data/mockTests.js";
 
 
@@ -2777,7 +2779,17 @@ function GamesHub(p){
           <div style={{fontSize:11,color:"var(--t3)"}}>Catch the falling sentences!</div>
           {bestF&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestF.score} pts · x{bestF.maxCombo} combo</div>}</div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+      <div className="crd" onClick={function(){p.nav("sbuild");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🔀</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Sentence Builder</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Tap blocks in the right order!</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+      <div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎧</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",background:"linear-gradient(135deg,rgba(255,71,87,.06),rgba(168,85,247,.06))",border:"1px solid rgba(255,71,87,.15)"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Real-time 1v1 — challenge a classmate!</div>
@@ -2787,6 +2799,318 @@ function GamesHub(p){
   </div>);
 }
 
+
+
+// ─── SENTENCE BUILDER — Tap to reorder ───
+function SentenceBuilder(p){
+  var TOTAL=15;var TIMER_SEC=20;
+
+  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");
+  var[placed,setPlaced]=useState([]);var[remaining,setRemaining]=useState([]);
+  var[timer,setTimer]=useState(TIMER_SEC);var[sk,sSk]=useState(false);
+  var timerRef=useRef(null);
+
+  var items=useMemo(function(){return shuffle(SENTENCES.slice()).slice(0,TOTAL);},[]);
+
+  // Init round
+  useEffect(function(){
+    if(ph==="q"){
+      var it=items[ci];
+      setPlaced([]);
+      setRemaining(shuffle(it.chunks.map(function(c,i){return{text:c,idx:i};})));
+      setTimer(TIMER_SEC);
+      timerRef.current=setInterval(function(){
+        setTimer(function(t){
+          if(t<=1){clearInterval(timerRef.current);sP("fb");return 0;}
+          return t-1;
+        });
+      },1000);
+    }
+    return function(){clearInterval(timerRef.current);};
+  },[ci,ph==="q"]);
+
+  function tapChunk(chunk){
+    if(ph!=="q")return;
+    setPlaced(function(prev){return prev.concat([chunk]);});
+    setRemaining(function(prev){return prev.filter(function(c){return c.idx!==chunk.idx;});});
+  }
+
+  function undoLast(){
+    if(placed.length===0)return;
+    var last=placed[placed.length-1];
+    setPlaced(function(prev){return prev.slice(0,-1);});
+    setRemaining(function(prev){return prev.concat([last]);});
+  }
+
+  // Auto-check when all chunks placed
+  useEffect(function(){
+    if(ph!=="q")return;
+    if(placed.length===items[ci].chunks.length){
+      clearInterval(timerRef.current);
+      var correct=true;
+      for(var i=0;i<placed.length;i++){
+        if(placed[i].idx!==i){correct=false;break;}
+      }
+      if(correct)sSc(sc+1);
+      else{sSk(true);setTimeout(function(){sSk(false);},400);}
+      sP("fb");
+    }
+  },[placed.length]);
+
+  function next(){
+    if(ci<items.length-1){sC(ci+1);sP("q");}
+    else{sP("done");p.done(sc,TOTAL,20+sc*5);}
+  }
+
+  // ═══ INTRO ═══
+  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>{"🔀"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Sentence Builder</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>The sentence is scrambled — tap the blocks in the right order!</p>
+    <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>{TOTAL} sentences · {TIMER_SEC}s each</p>
+    <button className="btn1" onClick={function(){sP("q");}}>Start</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button>
+  </div>);
+
+  // ═══ DONE ═══
+  if(ph==="done"){var xp=20+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"🏆":sc>=8?"⚔️":"🛡️"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Builder Complete</h1>
+    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
+    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
+    <button className="btn1" onClick={p.back}>Back to Games</button>
+  </div>);}
+
+  // ═══ PLAY + FEEDBACK ═══
+  var it=items[ci];
+  var isCorrect=ph==="fb"&&placed.length===it.chunks.length&&placed.every(function(c,i){return c.idx===i;});
+  var timerCol=timer<=5?"var(--red)":timer<=10?"var(--orange)":"var(--cyan)";
+  var timerPct=timer/TIMER_SEC*100;
+
+  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+      <button onClick={function(){clearInterval(timerRef.current);p.back();}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      {ph==="q"&&<span className="out" style={{fontSize:20,fontWeight:800,color:timerCol}}>{timer}s</span>}
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{TOTAL}</span>
+    </div>
+    <Bar value={ci} max={TOTAL} h={4} color="linear-gradient(90deg,#3b82f6,#8b5cf6)"/>
+
+    {ph==="q"&&<div style={{height:4,background:"var(--bg3)",borderRadius:2,marginTop:8,marginBottom:20,overflow:"hidden"}}>
+      <div style={{height:"100%",width:timerPct+"%",background:timerCol,borderRadius:2,transition:"width 1s linear"}}/></div>}
+
+    <div style={{marginTop:ph==="fb"?16:0}}>
+      <span className="out" style={{fontSize:11,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:12}}>{"🔀"} Build the sentence</span>
+      <span style={{fontSize:11,color:"var(--t3)",display:"block",marginBottom:16}}>{it.cat}</span>
+    </div>
+
+    {/* Placed chunks (answer zone) */}
+    <div style={{minHeight:80,padding:12,background:"var(--bg2)",borderRadius:14,border:"2px dashed "+(ph==="fb"?(isCorrect?"var(--green)":"var(--red)"):"var(--bdr)"),marginBottom:16,display:"flex",flexWrap:"wrap",gap:6,alignContent:"flex-start"}}>
+      {placed.length===0&&<span style={{color:"var(--t3)",fontSize:13,fontStyle:"italic"}}>Tap the blocks below in order...</span>}
+      {placed.map(function(chunk,i){
+        var showResult=ph==="fb";
+        var posCorrect=chunk.idx===i;
+        return(<span key={i} style={{padding:"8px 14px",borderRadius:10,fontSize:14,fontWeight:600,
+          background:showResult?(posCorrect?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)"):"rgba(0,212,255,.1)",
+          color:showResult?(posCorrect?"var(--green)":"var(--red)"):"var(--cyan)",
+          border:"1px solid "+(showResult?(posCorrect?"var(--green)":"var(--red)"):"rgba(0,212,255,.2)"),
+          transition:"all .2s"}}>{chunk.text}</span>);
+      })}
+    </div>
+
+    {/* Undo button */}
+    {ph==="q"&&placed.length>0&&<div style={{textAlign:"right",marginBottom:12}}>
+      <button onClick={undoLast} style={{background:"none",border:"1px solid var(--bdr)",borderRadius:8,padding:"6px 14px",
+        color:"var(--t2)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{"↩"} Undo</button>
+    </div>}
+
+    {/* Remaining chunks (pick zone) */}
+    {ph==="q"&&<div style={{display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center"}}>
+      {remaining.map(function(chunk){
+        return(<button key={chunk.idx} onClick={function(){tapChunk(chunk);}}
+          style={{padding:"10px 16px",background:"var(--bg3)",border:"1px solid var(--bdr)",borderRadius:10,
+            cursor:"pointer",fontSize:14,fontWeight:600,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",
+            transition:"all .15s"}}>
+          {chunk.text}
+        </button>);
+      })}
+    </div>}
+
+    {/* Feedback */}
+    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
+      {timer===0&&placed.length<it.chunks.length&&<div style={{textAlign:"center",marginBottom:12}}>
+        <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
+      <div className="crd" style={{padding:14,background:isCorrect?"rgba(0,230,118,.06)":"rgba(255,71,87,.06)",borderColor:isCorrect?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <span style={{fontSize:16}}>{isCorrect?"✅":"❌"}</span>
+          <span className="out" style={{fontWeight:700,fontSize:14,color:isCorrect?"var(--green)":"var(--red)"}}>{isCorrect?"Perfect!":"Correct order:"}</span>
+        </div>
+        <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.6,fontWeight:500}}>{it.s}</p>
+      </div>
+      <button className="btn1" onClick={next} style={{marginTop:12}}>{ci<items.length-1?"Next":"See Results"}</button>
+    </div>}
+  </div>);
+}
+
+// ─── AUDIO BLITZ — Listen & answer ───
+function AudioBlitz(p){
+  var TOTAL=12;var TIMER_SEC=12;
+
+  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");
+  var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
+  var[timer,setTimer]=useState(TIMER_SEC);var[played,setPlayed]=useState(0); // 0=not yet, 1=playing, 2=done
+  var[replays,setReplays]=useState(0);
+  var timerRef=useRef(null);var answeredRef=useRef(false);
+
+  var items=useMemo(function(){return shuffle(AUDIO_BLITZ.slice()).slice(0,TOTAL);},[]);
+
+  // Auto-play audio when entering question phase
+  useEffect(function(){
+    if(ph!=="q")return;
+    answeredRef.current=false;
+    setPlayed(1);setReplays(0);sPk(-1);
+
+    // Play audio via TTS (or prerecorded if available)
+    var it=items[ci];
+    // Try prerecorded audio first
+    var audio=new Audio(it.audio);
+    audio.onerror=function(){
+      // Fallback to TTS
+      speak(it.text,0.85);
+      setTimeout(function(){setPlayed(2);startTimer();},2500);
+    };
+    audio.onended=function(){setPlayed(2);startTimer();};
+    audio.playbackRate=0.9;
+    audio.play().catch(function(){
+      speak(it.text,0.85);
+      setTimeout(function(){setPlayed(2);startTimer();},2500);
+    });
+
+    function startTimer(){
+      setTimer(TIMER_SEC);
+      timerRef.current=setInterval(function(){
+        setTimer(function(t){
+          if(t<=1){
+            clearInterval(timerRef.current);
+            if(!answeredRef.current){answeredRef.current=true;sPk(-1);sP("fb");}
+            return 0;
+          }
+          return t-1;
+        });
+      },1000);
+    }
+
+    return function(){clearInterval(timerRef.current);};
+  },[ci,ph==="q"]);
+
+  function replay(){
+    if(replays>=1||played<2)return; // only 1 replay allowed
+    setReplays(1);
+    var it=items[ci];
+    var audio=new Audio(it.audio);
+    audio.onerror=function(){speak(it.text,0.85);};
+    audio.playbackRate=0.9;
+    audio.play().catch(function(){speak(it.text,0.85);});
+  }
+
+  function doAnswer(i){
+    if(answeredRef.current||played<2)return;
+    answeredRef.current=true;
+    clearInterval(timerRef.current);
+    sPk(i);
+    if(i===items[ci].c)sSc(sc+1);
+    else{sSk(true);setTimeout(function(){sSk(false);},400);}
+    sP("fb");
+  }
+
+  function next(){
+    if(ci<items.length-1){sC(ci+1);sP("q");}
+    else{sP("done");p.done(sc,TOTAL,25+sc*6);}
+  }
+
+  // ═══ INTRO ═══
+  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>{"🎧"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Audio Blitz</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Listen to a short audio clip, then answer the question.<br/>The audio plays automatically — focus!</p>
+    <div style={{display:"flex",justifyContent:"center",gap:16,marginBottom:32}}>
+      <div style={{textAlign:"center"}}><div style={{fontSize:24}}>{"🔊"}</div><div style={{fontSize:11,color:"var(--t3)"}}>Auto-play</div></div>
+      <div style={{textAlign:"center"}}><div style={{fontSize:24}}>{"🔁"}</div><div style={{fontSize:11,color:"var(--t3)"}}>1 replay</div></div>
+      <div style={{textAlign:"center"}}><div style={{fontSize:24}}>{"⚡"}</div><div style={{fontSize:11,color:"var(--t3)"}}>{TIMER_SEC}s to answer</div></div>
+    </div>
+    <button className="btn1" onClick={function(){sP("q");}}>Start</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button>
+  </div>);
+
+  // ═══ DONE ═══
+  if(ph==="done"){var xp=25+sc*6;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Blitz Complete</h1>
+    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
+    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
+    <button className="btn1" onClick={p.back}>Back to Games</button>
+  </div>);}
+
+  // ═══ PLAY ═══
+  var it=items[ci];
+  var timerPct=played>=2?timer/TIMER_SEC*100:100;
+  var timerCol=timer<=3?"var(--red)":timer<=6?"var(--orange)":"var(--cyan)";
+
+  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+      <button onClick={function(){clearInterval(timerRef.current);p.back();}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      {played>=2&&ph==="q"&&<span className="out" style={{fontSize:20,fontWeight:800,color:timerCol}}>{timer}s</span>}
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{TOTAL}</span>
+    </div>
+    <Bar value={ci} max={TOTAL} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
+
+    {played>=2&&ph==="q"&&<div style={{height:4,background:"var(--bg3)",borderRadius:2,marginTop:8,marginBottom:16,overflow:"hidden"}}>
+      <div style={{height:"100%",width:timerPct+"%",background:timerCol,borderRadius:2,transition:"width 1s linear"}}/></div>}
+
+    {/* Audio status */}
+    <div style={{textAlign:"center",marginTop:16,marginBottom:20}}>
+      {played<=1&&<div style={{animation:"pulse 1.5s infinite"}}>
+        <div style={{fontSize:48,marginBottom:8}}>{"🔊"}</div>
+        <p className="out" style={{fontWeight:700,fontSize:16,color:"var(--cyan)"}}>Listening...</p>
+      </div>}
+      {played>=2&&ph==="q"&&<div>
+        <p className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:12}}>{it.q}</p>
+        {replays===0&&<button onClick={replay} style={{background:"rgba(168,85,247,.1)",border:"1px solid rgba(168,85,247,.2)",
+          borderRadius:10,padding:"8px 20px",cursor:"pointer",fontSize:12,color:"var(--purple)",fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>
+          {"🔁"} Replay once</button>}
+        {replays>=1&&<span style={{fontSize:11,color:"var(--t3)"}}>No more replays</span>}
+      </div>}
+    </div>
+
+    {/* Options (only show after audio) */}
+    {played>=2&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
+      {it.opts.map(function(opt,i){
+        var show=ph==="fb";var isCor=i===it.c;var isPick=i===pick;
+        var bg="var(--bg2)";var bd="var(--bdr)";
+        if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
+        else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
+        else if(ph==="q"&&isPick){bg="rgba(0,212,255,.1)";bd="var(--cyan)";}
+        return(<button key={i} onClick={function(){doAnswer(i);}} disabled={show}
+          style={{padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,
+            cursor:ph==="q"?"pointer":"default",fontSize:14,color:"var(--t1)",textAlign:"left",
+            fontFamily:"'DM Sans',sans-serif",transition:"all .2s",lineHeight:1.5}}>
+          <span style={{fontSize:12,color:"var(--t3)",marginRight:8,fontWeight:700}}>{String.fromCharCode(65+i)}</span>
+          {opt}
+        </button>);
+      })}
+    </div>}
+
+    {/* Feedback */}
+    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
+      {pick===-1&&<div style={{textAlign:"center",marginBottom:12}}>
+        <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
+      <div className="crd" style={{padding:14,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)"}}>
+        <p className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",marginBottom:6}}>Transcript:</p>
+        <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,fontStyle:"italic"}}>"{it.text}"</p>
+      </div>
+      <button className="btn1" onClick={next} style={{marginTop:12}}>{ci<items.length-1?"Next":"See Results"}</button>
+    </div>}
+  </div>);
+}
 
 // ─── DUEL ARENA — Real-time vocabulary duel ───
 function DuelArena(p){
@@ -5040,6 +5364,8 @@ useEffect(function(){
   if(sp==="matchH")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="wfall")return(<div className="app"><style>{CSS}</style><WordFall u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="duel")return(<div className="app"><style>{CSS}</style><DuelArena u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="sbuild")return(<div className="app"><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;sv(c);}} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="ablitz")return(<div className="app"><style>{CSS}</style><AudioBlitz u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;sv(c);}} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="strats")return(<div className="app"><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
   if(sp==="gramref")return(<div className="app"><style>{CSS}</style><GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/></div>);
   if(sp==="stratquiz")return(<div className="app"><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
