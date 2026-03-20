@@ -410,7 +410,7 @@ var TEACHER_CODE="idrac2026";
 var CSS=`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#080b16;--bg2:#131833;--bg3:#1a2045;--bdr:rgba(100,130,255,0.08);--cyan:#00d4ff;--orange:#ff8c42;--gold:#ffd700;--green:#00e676;--red:#ff4757;--purple:#a855f7;--t1:#eef2ff;--t2:#7b86a8;--t3:#4a5478}
-.light{--bg:#f5f5f7;--bg2:#ffffff;--bg3:#e8e8ed;--bdr:rgba(0,0,0,0.08);--cyan:#0088cc;--orange:#e67e22;--gold:#d4a017;--green:#16a34a;--red:#dc2626;--purple:#7c3aed;--t1:#1a1a2e;--t2:#555770;--t3:#8888a0}
+.light{--bg:#f5f5f7;--bg2:#ffffff;--bg3:#e8e8ed;--bdr:rgba(0,0,0,0.1);--cyan:#006faa;--orange:#c96a12;--gold:#a67c00;--green:#15803d;--red:#c42020;--purple:#6d28d9;--t1:#111827;--t2:#3f4456;--t3:#6b6f82}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
@@ -3834,7 +3834,9 @@ function DuelArena(p){
 
       <button className="btn1" onClick={function(){
         if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
-        p.done(Math.round(myScore/100),ROUNDS,totalXp);
+        // Store duel stats properly
+        var result={score:myScore,won:iWon,tied:tied,wager:wager,wagerWon:iWon?wager:0};
+        p.done("duel",result,totalXp);
       }}>Collect XP</button>
       <button className="btn2" onClick={function(){
         if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
@@ -5299,7 +5301,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 <h2 className="out" style={{fontWeight:700,fontSize:16,marginBottom:12}}>Avatar</h2>
 <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:24}}>
-  {["⚔️","🧙","🦊","🐉","🎯","🏆","🦅","💎","🔥","🌟","🎭","🐺","🦁","🎪","👤"].map(function(av){
+  {["⚔️","🧙","🦊","🐉","🎯","🏆","🦅","💎","🔥","🌟","🎭","🐺","🦁","🎪","👤","🧠","🎲","🦉","🐲","🗡️","🏴‍☠️","⚡","🦈","🌀","🎸"].map(function(av){
     var sel=av===(u.avatar||"⚔️");
     return(<button key={av} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar=av;p.setAvatar(c);}}
       style={{width:44,height:44,borderRadius:12,border:sel?"2px solid var(--cyan)":"2px solid var(--bdr)",
@@ -5307,7 +5309,18 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
         display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
       {av}</button>);
   })}
+  {/* Exclusive Game Master avatar — teacher only */}
+  {u.name==="Teacher"&&function(){
+    var sel=u.avatar==="🗝️";
+    return(<button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar="🗝️";p.setAvatar(c);}}
+      style={{width:44,height:44,borderRadius:12,border:sel?"2px solid var(--gold)":"2px solid rgba(255,215,0,.3)",
+        background:sel?"rgba(255,215,0,.15)":"rgba(255,215,0,.05)",cursor:"pointer",fontSize:22,
+        display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",
+        boxShadow:sel?"0 0 12px rgba(255,215,0,.3)":"none"}}>
+      {"🗝️"}</button>);
+  }()}
 </div>
+{u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginTop:-20,marginBottom:20,fontStyle:"italic"}}>{"🗝️"} Game Master — exclusive avatar</div>}
 <h2 className="out" style={{fontWeight:700,fontSize:16,marginBottom:12}}>Achievements</h2>
 <div style={{display:"flex",flexDirection:"column",gap:8}}>
 {ea.map(function(a){return(<div key={a.id} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:14,background:"rgba(255,215,0,.05)",borderColor:"rgba(255,215,0,.15)"}}>
@@ -5516,7 +5529,15 @@ useEffect(function(){
  
   function goTeacher(){setTeacher(true);}
   function mockDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};c.mockResults["mock"+result.mockId]=result;recordModule(c,"mock"+result.mockId,result.score,result.total);sv(c);}
-  function gameDone(modeKey,result,xp){var c=addXp(xp);if(!c.gameScores)c.gameScores={};var prev=c.gameScores[modeKey];var dominated=!prev||(result.time!==undefined?result.time<prev.time:(result.score>prev.score||(result.score===prev.score&&result.maxCombo>(prev.maxCombo||0))));if(dominated){c.gameScores[modeKey]=result;}else if(prev&&result.maxCombo!==undefined&&result.maxCombo>(prev.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev,{maxCombo:result.maxCombo});}c.stats.sessions+=1;sv(c);sSP(null);sT("games");}
+  function gameDone(modeKey,result,xp){var c=addXp(xp);if(!c.gameScores)c.gameScores={};
+    if(modeKey==="duel"){
+      // Accumulate duel stats instead of overwriting
+      var prev=c.gameScores.duel||{wins:0,played:0,wagerWon:0};
+      c.gameScores.duel={wins:prev.wins+(result.won?1:0),played:prev.played+1,wagerWon:(prev.wagerWon||0)+(result.wagerWon||0)};
+    } else {
+      var prev2=c.gameScores[modeKey];var dominated=!prev2||(result.time!==undefined?result.time<prev2.time:(result.score>prev2.score||(result.score===prev2.score&&result.maxCombo>(prev2.maxCombo||0))));if(dominated){c.gameScores[modeKey]=result;}else if(prev2&&result.maxCombo!==undefined&&result.maxCombo>(prev2.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev2,{maxCombo:result.maxCombo});}
+    }
+    c.stats.sessions+=1;sv(c);sSP(null);sT("games");}
   function dailyDone(sc,xp){var c=addXp(xp);c.daily={date:today(),done:true,score:sc,xpE:xp};c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;recordModule(c,"daily",sc,5);checkMission(c,"daily");sv(c);}
   function drillDone(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}

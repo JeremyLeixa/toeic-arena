@@ -37,4 +37,12 @@ export var ACHIEVEMENTS = [
   // ─── ARENA GAMES ───
   {id:"arena_explorer",name:"Arena Explorer",desc:"Play all 3 arena games",icon:"🗺️",check:function(s){return s.gameScores&&s.gameScores.matchEasy&&s.gameScores.matchHard&&s.gameScores.wordFall;}},
   {id:"combo_king",name:"Combo King",desc:"Reach a x6 combo in Word Fall",icon:"👑",check:function(s){return s.gameScores&&s.gameScores.wordFall&&s.gameScores.wordFall.maxCombo>=6;}},
+  // ─── DUEL ARENA ───
+  {id:"duel_first",name:"First Duel",desc:"Complete your first vocabulary duel",icon:"⚔️",check:function(s){return s.gameScores&&s.gameScores.duel&&s.gameScores.duel.played>=1;}},
+  {id:"duel_5",name:"Duelist",desc:"Win 5 duels",icon:"🏟️",check:function(s){return s.gameScores&&s.gameScores.duel&&s.gameScores.duel.wins>=5;}},
+  {id:"duel_15",name:"Undefeated",desc:"Win 15 duels",icon:"👊",check:function(s){return s.gameScores&&s.gameScores.duel&&s.gameScores.duel.wins>=15;}},
+  {id:"xp_thief",name:"XP Thief",desc:"Win a ranked duel (steal your opponent's XP!)",icon:"🦹",check:function(s){return s.gameScores&&s.gameScores.duel&&s.gameScores.duel.wagerWon>0;}},
+  {id:"high_roller",name:"High Roller",desc:"Win 200+ XP in ranked duels",icon:"🎰",check:function(s){return s.gameScores&&s.gameScores.duel&&s.gameScores.duel.wagerWon>=200;}},
+  // ─── GAME DIVERSITY ───
+  {id:"all_games",name:"Game Master",desc:"Play all 5 arena games",icon:"🎮",check:function(s){return s.gameScores&&s.gameScores.matchEasy&&s.gameScores.wordFall&&s.gameScores.duel&&s.gameScores.duel.played>=1;}},
 ];
