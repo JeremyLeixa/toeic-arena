@@ -2815,11 +2815,11 @@ function GamesHub(p){
           <div style={{fontSize:11,color:"var(--t3)"}}>Tap blocks in the right order!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎧</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",background:"linear-gradient(135deg,rgba(255,71,87,.06),rgba(168,85,247,.06))",border:"1px solid rgba(255,71,87,.15)"}}>
+      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Real-time 1v1 — challenge a classmate!</div>
@@ -5288,7 +5288,9 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 </div>
 
 {/* Daily Tips toggle */}
-<div className="crd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:16,marginBottom:20}}>
+{function(){
+  var tipOff=false;try{tipOff=localStorage.getItem("toeic-tip-disabled")==="1";}catch(e){}
+  return(<div className="crd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:16,marginBottom:20}}>
   <div><div className="out" style={{fontWeight:700,fontSize:14}}>Daily Tips</div>
     <div style={{fontSize:12,color:"var(--t2)"}}>Show a TOEIC tip at startup</div></div>
   <button onClick={function(){
@@ -5296,16 +5298,15 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       var cur=localStorage.getItem("toeic-tip-disabled")==="1";
       if(cur){localStorage.removeItem("toeic-tip-disabled");localStorage.removeItem("toeic-tip-date");}
       else{localStorage.setItem("toeic-tip-disabled","1");}
-      // Force re-render via a dummy state change
       var c=JSON.parse(JSON.stringify(u));p.setAvatar(c);
     }catch(e){}
   }}
     style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",position:"relative",
-      background:(function(){try{return localStorage.getItem("toeic-tip-disabled")==="1"?"var(--t3)":"var(--cyan)";}catch(e){return"var(--cyan)";}}()),transition:"background .3s"}}>
+      background:tipOff?"var(--t3)":"var(--cyan)",transition:"background .3s"}}>
     <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:3,
-      left:(function(){try{return localStorage.getItem("toeic-tip-disabled")==="1"?3:27;}catch(e){return 27;}}()),transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
+      left:tipOff?3:27,transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
   </button>
-</div>
+</div>);}()}
 
 <h2 className="out" style={{fontWeight:700,fontSize:16,marginBottom:12}}>Avatar</h2>
 <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:24}}>
