@@ -228,4 +228,125 @@ export var MOCK2_P7 = [
       {q:"What does James say about his regulatory experience?",options:["He has no experience with it","He has prepared compliance reports for authorities","He learned about it in university","He plans to gain this experience at Crestview"],correct:1,x:"'I have extensive experience preparing regulatory compliance reports for provincial and federal authorities.'"},
       {q:"Based on both passages, does James meet the job requirements?",options:["No — he lacks the required degree","No — he has insufficient experience","Yes — he exceeds the minimum requirements","Yes — but only if he completes additional training"],correct:2,x:"James has a Master's (preferred), 6 years of experience (above the 4+ minimum), all required tools, and regulatory compliance experience."},
     ]},
+	
+	
+];
+
+// ══════════════════════════════════════════════════════
+// MOCK TEST 3 — Copy-paste at the END of mockTests.js
+// ══════════════════════════════════════════════════════
+
+// ─── MOCK TEST 3 — PART 5 (15 questions) ───
+export var MOCK3_P5 = [
+  // Easy (1-5)
+  {id:"m3p5_1",s:"The annual shareholder meeting _____ held in March every year.",o:["is","are","were","been"],c:0,x:"Present simple passive: 'is held'. Annual event = habitual present. 'Meeting' = singular subject.",cat:"Passive Voice"},
+  {id:"m3p5_2",s:"Candidates must submit their applications _____ the end of the month.",o:["on","at","by","in"],c:2,x:"'By the end of the month' = no later than (deadline). 'By' expresses a deadline.",cat:"Prepositions"},
+  {id:"m3p5_3",s:"The _____ of the new software will take approximately six weeks.",o:["install","installation","installed","installing"],c:1,x:"Article 'the' + _____ + 'of' = NOUN needed. 'Installation' is the noun form.",cat:"Word Families"},
+  {id:"m3p5_4",s:"Ms. Rivera _____ as the regional director since last April.",o:["serves","served","has served","is serving"],c:2,x:"'Since last April' = present perfect required. 'Has served' links past to present.",cat:"Tenses"},
+  {id:"m3p5_5",s:"Employees should report any safety concerns _____ to their supervisor.",o:["direct","direction","directly","directed"],c:2,x:"Adverb 'directly' modifies the verb 'report'. Report how? Directly to their supervisor.",cat:"Word Families"},
+  // Medium (6-10)
+  {id:"m3p5_6",s:"_____ the heavy snow, the construction crew continued working on schedule.",o:["Although","Despite","However","Even"],c:1,x:"'Despite' + noun phrase ('the heavy snow'). 'Although' would need a clause ('although it snowed').",cat:"Connectors"},
+  {id:"m3p5_7",s:"The hotel _____ we stayed during the conference was within walking distance of the venue.",o:["which","where","whose","whom"],c:1,x:"'Where' = relative pronoun for places. 'The hotel where we stayed.'",cat:"Relative Pronouns"},
+  {id:"m3p5_8",s:"Neither the manager _____ the assistant was available when the client called.",o:["or","and","but","nor"],c:3,x:"'Neither... nor' = correlative conjunction pair. Fixed grammar pattern.",cat:"Connectors"},
+  {id:"m3p5_9",s:"The firm's profits this quarter are significantly _____ than those of the previous year.",o:["high","higher","highest","most high"],c:1,x:"Comparative form with 'than': 'higher than'. Never 'most high'.",cat:"Comparatives"},
+  {id:"m3p5_10",s:"The committee postponed _____ a decision until all members could be present.",o:["make","making","to make","made"],c:1,x:"'Postpone' takes gerund (-ing). 'Postponed making'. Never 'postpone to make'.",cat:"Gerunds vs Infinitives"},
+  // Hard (11-15)
+  {id:"m3p5_11",s:"_____ the budget had been approved, the project could have started on time.",o:["If","Unless","Had","Should"],c:2,x:"Third conditional inversion: 'Had the budget been approved' = 'If the budget had been approved'. Formal register.",cat:"Conditionals"},
+  {id:"m3p5_12",s:"The factory, along with its two warehouses, _____ scheduled for inspection next month.",o:["are","is","were","have been"],c:1,x:"'Along with' does NOT change the subject. 'The factory IS scheduled.' Subject = factory (singular).",cat:"Subject-Verb Agreement"},
+  {id:"m3p5_13",s:"It is essential that every employee _____ the updated security protocol.",o:["follows","follow","following","to follow"],c:1,x:"Subjunctive after 'it is essential that': base form verb, no -s. 'That every employee follow.'",cat:"Tenses"},
+  {id:"m3p5_14",s:"The consultant prepared a _____ analysis of the market before recommending a strategy.",o:["comprehension","comprehensive","comprehensively","comprehend"],c:1,x:"Adjective before noun: 'a comprehensive analysis'. 'Comprehensive' = thorough, complete.",cat:"Word Families"},
+  {id:"m3p5_15",s:"The auditor reviewed _____ document in the filing cabinet to ensure compliance.",o:["all","every","most","much"],c:1,x:"'Every' + singular noun: 'every document'. 'All documents' (plural) also works but isn't an option.",cat:"Articles"},
+];
+
+// ─── MOCK TEST 3 — PART 6 (2 texts, 8 questions) ───
+export var MOCK3_P6 = [
+  { id:"m3p6t1", type:"Email", from:"Lisa Chen, Product Manager", to:"All Engineering Staff", subject:"Product Launch Timeline Update",
+    parts:[
+      {text:"Dear team,\n\nI wanted to provide a quick update on the launch timeline for our new inventory management platform, StockFlow Pro.\n\nAfter reviewing feedback from the beta testers, we have decided to "},
+      {blank:true,options:["postpone","postponing","postponement","postponed"],correct:0,x:"'Decided to' + base verb (infinitive). 'Decided to postpone.'"},
+      {text:" the release by two weeks to address several usability issues. The revised launch date is now April 28.\n\nThe development team has been working "},
+      {blank:true,options:["tirelessly","tireless","tirelessness","tiring"],correct:0,x:"Adverb 'tirelessly' modifies the verb 'has been working'. How have they been working? Tirelessly."},
+      {text:" to resolve the bugs identified during testing. "},
+      {blank:true,options:["Nevertheless","In addition","For example","On the contrary"],correct:1,x:"'In addition' adds more information. The team is fixing bugs AND documentation needs updating."},
+      {text:", we need volunteers to help update the user documentation before launch.\n\n"},
+      {blank:true,options:[
+        "Please reply to this email by Friday if you are available to assist with documentation.",
+        "The company cafeteria will be serving a special menu next Thursday.",
+        "Our main competitor released a similar product last year.",
+        "The weather forecast for next week looks promising for the outdoor event."
+      ],correct:0,x:"Sentence insertion: actionable closing that ties to the documentation request mentioned above."},
+    ]},
+  { id:"m3p6t2", type:"Notice", from:"Building Management", to:"All Tenants — Hartwell Tower", subject:"Annual Fire Safety Drill",
+    parts:[
+      {text:"HARTWELL TOWER — FIRE SAFETY DRILL NOTICE\n\nA mandatory fire safety drill will be conducted on Wednesday, May 14, between 10:00 AM and 11:30 AM.\n\nAll occupants must evacuate the building when the alarm sounds. Please proceed to your "},
+      {blank:true,options:["designated","designating","designation","designate"],correct:0,x:"Past participle as adjective: 'designated assembly point'. Already assigned."},
+      {text:" assembly point as indicated on the floor plan posted near each elevator.\n\nDuring the drill, elevators will be "},
+      {blank:true,options:["out of order","out of place","out of reach","out of stock"],correct:0,x:"'Out of order' = not functioning. Fixed expression. Elevators are disabled during fire drills."},
+      {text:". All personnel must use the stairwells. Employees with mobility "},
+      {blank:true,options:["limitations","limited","limiting","limits"],correct:0,x:"Noun after 'mobility': 'mobility limitations'. Noun + noun compound."},
+      {text:" should contact building security at extension 100 in advance to arrange assistance.\n\n"},
+      {blank:true,options:[
+        "Your cooperation is essential to ensuring the safety of all building occupants.",
+        "The building was originally constructed in 1987 and renovated in 2015.",
+        "New parking rates will take effect starting June 1.",
+        "Several tenants have reported issues with the air conditioning system."
+      ],correct:0,x:"Sentence insertion: appropriate formal closing emphasizing safety cooperation."},
+    ]},
+];
+
+// ─── MOCK TEST 3 — PART 7 (7 passages, ~25 questions) ───
+export var MOCK3_P7 = [
+  { id:"m3p7_1", type:"Email",
+    text:"From: Diane Foster, Training Coordinator\nTo: All New Hires — Q2 Cohort\nSubject: Onboarding Schedule — Week 1\nDate: April 1\n\nDear new colleagues,\n\nWelcome to Brightpath Consulting! We are thrilled to have you join us.\n\nYour first week has been designed to help you get acquainted with our company culture, tools, and processes. Here is the schedule:\n\nMonday, April 7: Welcome session and office tour (9:00 AM, Main Lobby). Lunch with your team.\nTuesday, April 8: IT setup and systems training (all day, Room 204).\nWednesday, April 9: HR orientation — benefits enrollment, company policies, and compliance training.\nThursday, April 10: Shadow day — spend the day with your assigned mentor.\nFriday, April 11: Meet the leadership team (10:00 AM, Auditorium). Casual Friday lunch at Marco's Bistro (on us!).\n\nPlease bring a valid photo ID on your first day for your access badge. Business casual attire is appropriate for the entire week.\n\nIf you have any questions before your start date, feel free to reach out to me at d.foster@brightpath.com.\n\nBest regards,\nDiane Foster",
+    questions:[
+      {q:"What is the purpose of this email?",options:["To announce a company restructuring","To describe the first-week onboarding schedule","To invite employees to a training workshop","To introduce a new HR policy"],correct:1,x:"The email provides the full onboarding schedule for new hires' first week."},
+      {q:"What will happen on Thursday?",options:["IT systems training","A meeting with the leadership team","A shadow day with a mentor","Benefits enrollment"],correct:2,x:"'Thursday, April 10: Shadow day — spend the day with your assigned mentor.'"},
+      {q:"What should new hires bring on Monday?",options:["A laptop","Business formal attire","A photo ID","A signed contract"],correct:2,x:"'Please bring a valid photo ID on your first day for your access badge.'"},
+    ]},
+  { id:"m3p7_2", type:"Advertisement",
+    text:"PINNACLE LANGUAGE SERVICES — BRIDGING THE COMMUNICATION GAP\n\nDo you need accurate, fast, and culturally sensitive translations for your business?\n\nPinnacle Language Services has provided professional translation and interpretation since 2008. We serve clients in 42 countries and cover over 60 language pairs.\n\nOur core services:\n- Document translation (legal, medical, technical, marketing)\n- Simultaneous and consecutive interpretation for conferences\n- Website and app localization\n- Certified translations for immigration and legal proceedings\n\nWhy choose Pinnacle?\n✓ ISO 17100 certified — guaranteed quality\n✓ Average turnaround: 48 hours for standard documents\n✓ 98.7% client satisfaction rate (2024 survey)\n✓ Dedicated project manager for every assignment\n\nFirst-time clients: Get 15% off your first project with code WELCOME15.\n\nRequest a free quote: quotes@pinnaclelang.com | +1 (800) 555-0192\nwww.pinnaclelang.com",
+    questions:[
+      {q:"How long has Pinnacle been in business?",options:["Since 2000","Since 2008","Since 2015","Since 2024"],correct:1,x:"'Pinnacle Language Services has provided professional translation and interpretation since 2008.'"},
+      {q:"What is the average turnaround time for standard documents?",options:["24 hours","48 hours","72 hours","One week"],correct:1,x:"'Average turnaround: 48 hours for standard documents.'"},
+      {q:"What special offer is available to new clients?",options:["A free translation sample","A dedicated project manager","15% off the first project","Free website localization"],correct:2,x:"'First-time clients: Get 15% off your first project with code WELCOME15.'"},
+    ]},
+  { id:"m3p7_3", type:"Article",
+    text:"GLOBAL BUSINESS REVIEW — THE RISE OF REMOTE WORK POLICIES\n\nA comprehensive survey by the Chambers Institute of Workplace Research has found that 68% of large multinational companies now offer some form of hybrid or fully remote work arrangement, up from just 29% in 2019.\n\nThe report, based on data from 3,500 companies across 45 countries, highlights that employee retention rates are 23% higher in organizations that offer flexible work options. Additionally, companies with remote-friendly policies reported a 17% reduction in office space costs.\n\nHowever, the study also notes significant challenges. Managers cited difficulties in maintaining team cohesion, with 41% reporting that cross-team collaboration has decreased since the shift to hybrid models. Communication breakdowns were the most frequently mentioned concern.\n\n'The key is intentional design,' said Dr. Emeka Obi, the study's principal researcher. 'Companies that invest in structured virtual collaboration tools and regular in-person gatherings see the best outcomes.'\n\nThe report recommends that companies establish clear remote work guidelines, invest in digital collaboration platforms, and schedule quarterly in-person team events to maintain organizational culture.",
+    questions:[
+      {q:"What percentage of large companies offer remote or hybrid work?",options:["29%","41%","68%","82%"],correct:2,x:"'68% of large multinational companies now offer some form of hybrid or fully remote work arrangement.'"},
+      {q:"How many companies were included in the study?",options:["450","2,900","3,500","4,500"],correct:2,x:"'The report, based on data from 3,500 companies across 45 countries.'"},
+      {q:"What is the main challenge of hybrid work according to managers?",options:["Higher costs","Decreased cross-team collaboration","Employee burnout","Technology failures"],correct:1,x:"'41% reporting that cross-team collaboration has decreased since the shift to hybrid models.'"},
+      {q:"What does Dr. Obi recommend?",options:["Returning to full-time office work","Reducing the number of meetings","Investing in collaboration tools and in-person gatherings","Hiring more remote workers"],correct:2,x:"'Companies that invest in structured virtual collaboration tools and regular in-person gatherings see the best outcomes.'"},
+    ]},
+  { id:"m3p7_4", type:"Notice",
+    text:"RIVERSIDE CONVENTION CENTER — EVENT GUIDELINES\n\nThank you for choosing Riverside Convention Center for your event. To ensure a smooth experience for all guests, please observe the following guidelines:\n\n1. Setup and teardown: Event organizers may access the venue up to 3 hours before the scheduled start time. All materials and equipment must be removed within 2 hours after the event ends.\n\n2. Catering: Only approved catering vendors may operate on the premises. A list of approved vendors is available at www.riversidecc.com/vendors. Outside food and beverages are not permitted.\n\n3. Audio-visual equipment: Basic AV equipment (projector, screen, microphone) is included in the rental fee. Additional equipment, including live-streaming capabilities, may be rented for an extra charge.\n\n4. Capacity limits: All rooms have strict occupancy limits in accordance with fire safety regulations. Exceeding these limits may result in the immediate termination of the event.\n\n5. Parking: Complimentary parking is available in Lot D for up to 200 vehicles. Overflow parking is available at the adjacent garage for $8 per vehicle.\n\nFor questions or special requests, contact events@riversidecc.com or call (555) 876-2100.",
+    questions:[
+      {q:"How early can organizers access the venue?",options:["1 hour before","2 hours before","3 hours before","The day before"],correct:2,x:"'Event organizers may access the venue up to 3 hours before the scheduled start time.'"},
+      {q:"What is the policy on outside food?",options:["It is allowed with advance notice","It is not permitted","It is allowed for events over 100 people","It requires a special permit"],correct:1,x:"'Outside food and beverages are not permitted.'"},
+      {q:"What is included in the rental fee?",options:["Catering services","Live-streaming equipment","Basic AV equipment","Parking for all guests"],correct:2,x:"'Basic AV equipment (projector, screen, microphone) is included in the rental fee.'"},
+      {q:"What happens if capacity limits are exceeded?",options:["A fine is issued","The event may be immediately terminated","Additional rooms are provided","Guests are redirected to overflow areas"],correct:1,x:"'Exceeding these limits may result in the immediate termination of the event.'"},
+    ]},
+  { id:"m3p7_5", type:"Letter",
+    text:"Dear Mr. Nakamura,\n\nI am writing to follow up on our conversation at the Asia Trade Expo last week regarding a potential distribution partnership between Sakura Electronics and our company, Eurolink Trading.\n\nAs discussed, we believe there is a strong opportunity to introduce your home appliance range to the European market, particularly in Germany, France, and the Benelux countries. Our distribution network covers over 4,500 retail locations across these regions.\n\nTo move forward, I would like to propose the following next steps:\n\n1. Sakura provides product specifications, pricing, and minimum order quantities.\n2. Eurolink conducts a preliminary market analysis (estimated timeline: 3 weeks).\n3. We schedule a video call to discuss terms and exclusivity arrangements.\n\nI have attached our company profile and a list of current brand partners for your reference. We distribute products for several well-known Japanese and Korean manufacturers, and I am confident that Sakura Electronics would be an excellent addition to our portfolio.\n\nPlease let me know if you would be available for a call during the week of June 16.\n\nWith kind regards,\nHenri Dupont\nDirector of Business Development\nEurolink Trading GmbH",
+    questions:[
+      {q:"Where did Mr. Dupont and Mr. Nakamura meet?",options:["At Eurolink's headquarters","At the Asia Trade Expo","At a factory in Japan","During a video call"],correct:1,x:"'Follow up on our conversation at the Asia Trade Expo last week.'"},
+      {q:"What markets does Eurolink cover?",options:["Japan and Korea","The United States","Germany, France, and the Benelux countries","All of Asia"],correct:2,x:"'Particularly in Germany, France, and the Benelux countries.'"},
+      {q:"How long will the market analysis take?",options:["1 week","2 weeks","3 weeks","1 month"],correct:2,x:"'Eurolink conducts a preliminary market analysis (estimated timeline: 3 weeks).'"},
+      {q:"What is included as an attachment?",options:["Product pricing","A signed contract","Eurolink's company profile and brand partner list","Market analysis results"],correct:2,x:"'I have attached our company profile and a list of current brand partners.'"},
+    ]},
+  { id:"m3p7_6", type:"Memo",
+    text:"To: All Staff — Portland Office\nFrom: Marcus Webb, Office Manager\nDate: November 3\nRe: Year-End Office Closure Schedule\n\nPlease note the following office closure dates for the holiday season:\n\nThursday, December 25 — Friday, December 26: Christmas\nWednesday, December 31 — Thursday, January 1: New Year's\n\nThe office will operate on reduced hours (10:00 AM to 3:00 PM) on December 24 and December 30.\n\nAll project deliverables due in January must be discussed with your team lead before December 19 to ensure adequate coverage during the closure period. Client-facing teams should set up out-of-office replies and designate an emergency contact person.\n\nThe IT department will perform server maintenance during the closure. If you need remote access between December 25 and January 1, please submit a request to IT by December 15.\n\nOur annual New Year's reception will be held on Friday, January 9, from 5:00 PM to 8:00 PM in the rooftop lounge. All staff and their guests are welcome.\n\nHappy holidays!",
+    questions:[
+      {q:"What are the reduced-hours days?",options:["December 25 and January 1","December 24 and December 30","December 26 and December 31","December 19 and December 20"],correct:1,x:"'The office will operate on reduced hours on December 24 and December 30.'"},
+      {q:"What should client-facing teams do before the closure?",options:["Cancel all meetings","Complete all January deliverables","Set up out-of-office replies and designate an emergency contact","Submit remote access requests"],correct:2,x:"'Client-facing teams should set up out-of-office replies and designate an emergency contact person.'"},
+      {q:"When is the deadline for remote access requests?",options:["December 15","December 19","December 24","December 30"],correct:0,x:"'Please submit a request to IT by December 15.'"},
+    ]},
+  { id:"m3p7_7", type:"Double Passage",
+    text:"--- PASSAGE 1: Email ---\nFrom: Sophie Bergström, Procurement Manager\nTo: All Department Heads\nSubject: New Office Supply Ordering System\nDate: March 10\n\nDear colleagues,\n\nStarting April 1, we will transition to a new online ordering platform for all office supplies. The new system, SupplyDirect, replaces the current paper-based request forms.\n\nKey changes:\n- All orders must be placed through the SupplyDirect portal (link will be emailed on March 25).\n- Orders placed before 2:00 PM will be delivered the next business day.\n- Each department has a monthly supply budget of $500. Orders exceeding this limit require approval from Finance.\n- The catalog includes over 3,000 items from our approved vendor, Nordic Office Solutions.\n\nTraining sessions will be held on March 27 (10:00 AM) and March 28 (2:00 PM) in Meeting Room 3. Attendance at one session is required for all department heads or their designees.\n\nPlease direct any questions to procurement@company.com.\n\n--- PASSAGE 2: Internal Chat ---\nTomas (IT): Just tested the SupplyDirect portal. Works great on desktop but the mobile version is a bit clunky. Told Sophie's team about it.\n\nLena (Marketing): Thanks for the heads up. My team mostly orders from their phones when they're at client sites. Hope they fix that before launch.\n\nTomas (IT): Sophie said they're pushing an update by March 28. Also, did you see the monthly budget is $500? That's less than what we spent last month on printer cartridges alone.\n\nLena (Marketing): Same here. I'll raise it at the next department heads meeting. Maybe we can get an exception for departments with higher print volumes.\n\nTomas (IT): Good idea. By the way, if you place orders before 2 PM, it's next-day delivery. Not bad actually.\n\nLena (Marketing): That's way better than the current system. Remember when it took two weeks to get sticky notes?",
+    questions:[
+      {q:"What is replacing the current ordering system?",options:["A phone-based system","An online platform called SupplyDirect","A new vendor contract","Department credit cards"],correct:1,x:"'We will transition to a new online ordering platform... SupplyDirect, replaces the current paper-based request forms.'"},
+      {q:"What is the delivery time for orders placed before 2 PM?",options:["Same day","Next business day","Two business days","One week"],correct:1,x:"'Orders placed before 2:00 PM will be delivered the next business day.'"},
+      {q:"What concern does Tomas raise about the platform?",options:["The catalog is too small","The mobile version doesn't work well","The prices are too high","The training dates are inconvenient"],correct:1,x:"Tomas says: 'Works great on desktop but the mobile version is a bit clunky.'"},
+      {q:"Why is Lena concerned about the $500 monthly budget?",options:["Her department doesn't need that much","It's less than what they currently spend","The budget includes equipment purchases","Finance won't approve exceptions"],correct:1,x:"Tomas notes: '$500? That's less than what we spent last month on printer cartridges alone.' Lena agrees: 'Same here.'"},
+    ]},
 ];

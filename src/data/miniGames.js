@@ -66,6 +66,36 @@ export var PREP_COLLOCATIONS = [
   {base:"subject",prep:"to",type:"adj",ex:"All orders are subject to availability."},
   {base:"associated",prep:"with",type:"adj",ex:"The risks associated with the project are minimal."},
   {base:"according",prep:"to",type:"expr",ex:"According to the report, profits increased by 20%."},
+  
+  // ══════════════════════════════════════════════════════
+// PREP COLLOCATIONS — 20 NEW ITEMS
+// Copy-paste these BEFORE the closing ]; of PREP_COLLOCATIONS in miniGames.js
+// (after the "according to" entry, line 68)
+// ══════════════════════════════════════════════════════
+ 
+  // ── Batch 2: Adjective + Preposition ──
+  {base:"aware",prep:"of",type:"adj",ex:"Are you aware of the new deadline?"},
+  {base:"committed",prep:"to",type:"adj",ex:"The company is committed to reducing its carbon footprint."},
+  {base:"concerned",prep:"about",type:"adj",ex:"We are concerned about the rising costs."},
+  {base:"satisfied",prep:"with",type:"adj",ex:"The client was satisfied with the final product."},
+  {base:"relevant",prep:"to",type:"adj",ex:"This data is relevant to our current project."},
+  {base:"suitable",prep:"for",type:"adj",ex:"The candidate is suitable for the management role."},
+  {base:"consistent",prep:"with",type:"adj",ex:"These results are consistent with our expectations."},
+  {base:"equivalent",prep:"to",type:"adj",ex:"One euro is roughly equivalent to one dollar."},
+  // ── Batch 2: Verb + Preposition ──
+  {base:"respond",prep:"to",type:"verb",ex:"Please respond to the client's inquiry by noon."},
+  {base:"refer",prep:"to",type:"verb",ex:"Please refer to the attached document for details."},
+  {base:"contribute",prep:"to",type:"verb",ex:"All departments contribute to the annual report."},
+  {base:"specialize",prep:"in",type:"verb",ex:"Our firm specializes in international trade law."},
+  {base:"subscribe",prep:"to",type:"verb",ex:"Over 10,000 users subscribe to our newsletter."},
+  {base:"benefit",prep:"from",type:"verb",ex:"Employees benefit from flexible working hours."},
+  {base:"succeed",prep:"in",type:"verb",ex:"She succeeded in negotiating a better rate."},
+  {base:"insist",prep:"on",type:"verb",ex:"The manager insisted on reviewing every contract."},
+  // ── Batch 2: Expressions ──
+  {base:"on behalf",prep:"of",type:"expr",ex:"I am writing on behalf of the HR department."},
+  {base:"in accordance",prep:"with",type:"expr",ex:"All work must be done in accordance with safety standards."},
+  {base:"with regard",prep:"to",type:"expr",ex:"With regard to your inquiry, we have updated the policy."},
+  {base:"in response",prep:"to",type:"expr",ex:"In response to customer feedback, we redesigned the interface."},
 ];
 
 // ─── GERUND / INFINITIVE DATA (30 verbs, grouped by pattern) ───
