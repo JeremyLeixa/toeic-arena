@@ -292,7 +292,13 @@ async function save(d) {
   if (!user) return;
   try { localStorage.setItem('toeic-arena-name', d.name); } catch(e) {}
 
-  var payload = {
+  // Single upsert that conflicts on (name, class_code) — NOT on id
+  // This means: if a row with this name+class exists, UPDATE it. Otherwise INSERT.
+  // Works regardless of which device/auth ID is saving.
+  var { error } = await supabase.from('students').upsert({
+    id: user.id,
+    name: d.name,
+    class_code: 'idrac2026',
     xp: d.xp,
     weekly_xp: d.weeklyXp,
     week_id: d.weekId,
@@ -310,33 +316,8 @@ async function save(d) {
     unlocked_ach: d.unlockedAch || [],
     total_time: d.totalTime || 0,
     weekly_history: d.weeklyHistory || [],
-  };
-
-  // Step 1: Update by name (works regardless of which device/auth ID)
-  var res = await supabase.from('students')
-    .update(payload)
-    .eq('name', d.name)
-    .eq('class_code', 'idrac2026')
-    .select('id');
-
-  if (res.data && res.data.length > 0) {
-    // Cleanup duplicates: keep only the first row, delete the rest
-    if (res.data.length > 1) {
-      var keepId = res.data[0].id;
-      for (var i = 1; i < res.data.length; i++) {
-        await supabase.from('students').delete().eq('id', res.data[i].id);
-      }
-    }
-  } else {
-    // No existing row — first save ever, insert with current auth ID
-    var { error } = await supabase.from('students').insert({
-      id: user.id,
-      name: d.name,
-      class_code: 'idrac2026',
-      ...payload
-    });
-    if(error) console.error("SAVE INSERT ERROR:", error.message);
-  }
+  }, { onConflict: 'name,class_code' });
+  if(error) console.error("SAVE ERROR:", error.message, error.details);
 }
 function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0};}
 
@@ -1347,7 +1328,7 @@ function GerInf(p){
       <Bar value={ci} max={quizItems.length} h={4} color="linear-gradient(90deg,#e11d48,#f59e0b)"/>
 
       <div style={{marginTop:20,marginBottom:24}}>
-        <span className="out" style={{fontSize:11,color:info2.color,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:12}}>{info2.icon} {info2.label}</span>
+        <span className="out" style={{fontSize:11,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:12}}>Choose the correct form</span>
         <p className="out" style={{fontSize:17,fontWeight:700,lineHeight:1.6,color:"var(--t1)"}}>{q.ctx.split("_____")[0]}<span style={{color:"var(--cyan)",fontWeight:900}}>_____</span>{q.ctx.split("_____")[1]}</p>
       </div>
 
