@@ -245,13 +245,32 @@ import { supabase } from './supabase.js'
 async function load() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data } = await supabase
-    .from('students')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (!data) return null;
-  // Reconstitue l'objet userData à partir des colonnes
+
+  // 1) Try loading by auth ID (normal case)
+  var res = await supabase.from('students').select('*').eq('id', user.id).maybeSingle();
+
+  // 2) If not found, try by cached name (multi-device case)
+  if (!res.data) {
+    var cachedName = null;
+    try { cachedName = localStorage.getItem('toeic-arena-name'); } catch(e) {}
+    if (cachedName) {
+      var res2 = await supabase.from('students').select('*').eq('name', cachedName).eq('class_code', 'idrac2026').order('xp', {ascending:false}).limit(1);
+      if (res2.data && res2.data.length > 0) {
+        // Found by name — reattach this auth ID to the existing row
+        var found = res2.data[0];
+        await supabase.from('students').update({id: user.id}).eq('id', found.id);
+        // Delete any other duplicates with the same name
+        await supabase.from('students').delete().eq('name', cachedName).eq('class_code', 'idrac2026').neq('id', user.id);
+        res = await supabase.from('students').select('*').eq('id', user.id).maybeSingle();
+      }
+    }
+  }
+
+  if (!res.data) return null;
+  var data = res.data;
+  // Cache name for cross-device recovery
+  try { localStorage.setItem('toeic-arena-name', data.name); } catch(e) {}
+
   return {
     name: data.name,
     xp: data.xp,
@@ -277,6 +296,8 @@ async function load() {
 async function save(d) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
+  // Cache name for cross-device recovery
+  try { localStorage.setItem('toeic-arena-name', d.name); } catch(e) {}
   var { error } = await supabase.from('students').upsert({
     id: user.id,
     name: d.name,
@@ -2953,57 +2974,63 @@ function SentenceBuilder(p){
 
 // ─── AUDIO BLITZ — Listen & answer ───
 function AudioBlitz(p){
-  var TOTAL=12;var TIMER_SEC=12;
+  var TOTAL=12;var TIMER_SEC=15;
 
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");
   var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
-  var[timer,setTimer]=useState(TIMER_SEC);var[played,setPlayed]=useState(0); // 0=not yet, 1=playing, 2=done
+  var[timer,setTimer]=useState(TIMER_SEC);var[played,setPlayed]=useState(0); // 0=not yet, 1=playing, 2=ready
   var[replays,setReplays]=useState(0);
-  var timerRef=useRef(null);var answeredRef=useRef(false);
+  var timerRef=useRef(null);var answeredRef=useRef(false);var bufferRef=useRef(null);
 
   var items=useMemo(function(){return shuffle(AUDIO_BLITZ.slice()).slice(0,TOTAL);},[]);
 
   // Auto-play audio when entering question phase
   useEffect(function(){
     if(ph!=="q")return;
+    // Reset state for new question
+    clearInterval(timerRef.current);clearTimeout(bufferRef.current);
     answeredRef.current=false;
-    setPlayed(1);setReplays(0);sPk(-1);
+    setPlayed(0);setReplays(0);sPk(-1);setTimer(TIMER_SEC);
 
-    // Play audio via TTS (or prerecorded if available)
-    var it=items[ci];
-    // Try prerecorded audio first
-    var audio=new Audio(it.audio);
-    audio.onerror=function(){
-      // Fallback to TTS
-      speak(it.text,0.85);
-      setTimeout(function(){setPlayed(2);startTimer();},2500);
-    };
-    audio.onended=function(){setPlayed(2);startTimer();};
-    audio.playbackRate=0.9;
-    audio.play().catch(function(){
-      speak(it.text,0.85);
-      setTimeout(function(){setPlayed(2);startTimer();},2500);
-    });
+    // Small delay before playing to let the screen render
+    var playTimeout=setTimeout(function(){
+      setPlayed(1);
+      var it=items[ci];
+      var audio=new Audio(it.audio);
+      var usedTTS=false;
 
-    function startTimer(){
-      setTimer(TIMER_SEC);
-      timerRef.current=setInterval(function(){
-        setTimer(function(t){
-          if(t<=1){
-            clearInterval(timerRef.current);
-            if(!answeredRef.current){answeredRef.current=true;sPk(-1);sP("fb");}
-            return 0;
-          }
-          return t-1;
-        });
-      },1000);
-    }
+      function afterAudio(){
+        // 2-second buffer after audio ends before showing options + starting timer
+        bufferRef.current=setTimeout(function(){
+          setPlayed(2);
+          timerRef.current=setInterval(function(){
+            setTimer(function(t){
+              if(t<=1){
+                clearInterval(timerRef.current);
+                if(!answeredRef.current){answeredRef.current=true;sPk(-1);sP("fb");}
+                return 0;
+              }
+              return t-1;
+            });
+          },1000);
+        },1500);
+      }
 
-    return function(){clearInterval(timerRef.current);};
-  },[ci,ph==="q"]);
+      audio.onerror=function(){
+        if(!usedTTS){usedTTS=true;speak(it.text,0.85);setTimeout(afterAudio,3000);}
+      };
+      audio.onended=function(){afterAudio();};
+      audio.playbackRate=0.9;
+      audio.play().catch(function(){
+        if(!usedTTS){usedTTS=true;speak(it.text,0.85);setTimeout(afterAudio,3000);}
+      });
+    },500);
+
+    return function(){clearInterval(timerRef.current);clearTimeout(bufferRef.current);clearTimeout(playTimeout);};
+  },[ci,ph]);
 
   function replay(){
-    if(replays>=1||played<2)return; // only 1 replay allowed
+    if(replays>=1||played<2)return;
     setReplays(1);
     var it=items[ci];
     var audio=new Audio(it.audio);
@@ -5276,15 +5303,23 @@ useEffect(function(){
   }
   function nav(pg,arg){sSP(pg);sSPA(arg||null);}
   async function onboard(name,placementScore,lvl){
-    // Check if student already exists (prevents duplicates after session loss)
-    var existing=await supabase.from('students').select('id,name').eq('name',name).eq('class_code','idrac2026').maybeSingle();
-    if(existing.data){
-      // Student exists — do recover flow instead of creating duplicate
+    // Check if student already exists (use limit(1) — safe even with duplicates)
+    var existing=await supabase.from('students').select('*').eq('name',name).eq('class_code','idrac2026').order('xp',{ascending:false}).limit(1);
+    if(existing.data&&existing.data.length>0){
+      // Student exists — recover instead of creating duplicate
       var recovered=await recover(name,'idrac2026');
       if(recovered)return;
     }
-    var authRes=await supabase.auth.signInAnonymously();
-    if(!authRes.data.user)return;
+
+    // Get or create auth session
+    var sess=await supabase.auth.getSession();
+    var userId=sess.data.session?sess.data.session.user.id:null;
+    if(!userId){
+      var authRes=await supabase.auth.signInAnonymously();
+      if(!authRes.data.user)return;
+      userId=authRes.data.user.id;
+    }
+
     var u=fresh(name);
     if(lvl){u.xp=lvl.startXp;u.weeklyXp=lvl.startXp;}
     if(placementScore!==undefined){
@@ -5300,8 +5335,9 @@ useEffect(function(){
       });
     }
     sU(u);
+    try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     await supabase.from('students').upsert({
-      id:authRes.data.user.id,name:name,class_code:'idrac2026',
+      id:userId,name:name,class_code:'idrac2026',
       xp:u.xp,weekly_xp:u.weeklyXp,week_id:u.weekId,
       placement_score:placementScore,placement_level:lvl?lvl.label:null,
       stats:u.stats,module_scores:u.moduleScores,
@@ -5310,12 +5346,29 @@ useEffect(function(){
     save(u);
   }
   async function recover(name,classCode){
-    var res=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).maybeSingle();
-    if(!res.data)return false;
-    var authRes=await supabase.auth.signInAnonymously();
-    if(!authRes.data.user)return false;
-    await supabase.from('students').update({id:authRes.data.user.id}).eq('name',name).eq('class_code',classCode);
-    var d=res.data;
+    // Use limit(1) + order by XP desc to always pick the best row (handles duplicates)
+    var res=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
+    if(!res.data||res.data.length===0)return false;
+    var d=res.data[0];
+    var oldId=d.id;
+
+    // Get or create auth session (reuse if already signed in)
+    var sess=await supabase.auth.getSession();
+    var userId=sess.data.session?sess.data.session.user.id:null;
+    if(!userId){
+      var authRes=await supabase.auth.signInAnonymously();
+      if(!authRes.data.user)return false;
+      userId=authRes.data.user.id;
+    }
+
+    // Reattach row to current auth user
+    if(oldId!==userId){
+      await supabase.from('students').update({id:userId}).eq('id',oldId);
+    }
+    // Clean up any duplicates
+    await supabase.from('students').delete().eq('name',name).eq('class_code',classCode).neq('id',userId);
+
+    try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     var u={name:d.name,xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
       lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
       stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
