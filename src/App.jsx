@@ -256,11 +256,20 @@ async function load() {
     if (cachedName) {
       var res2 = await supabase.from('students').select('*').eq('name', cachedName).eq('class_code', 'idrac2026').order('xp', {ascending:false}).limit(1);
       if (res2.data && res2.data.length > 0) {
-        // Found by name — reattach this auth ID to the existing row
         var found = res2.data[0];
-        await supabase.from('students').update({id: user.id}).eq('id', found.id);
-        // Delete any other duplicates with the same name
-        await supabase.from('students').delete().eq('name', cachedName).eq('class_code', 'idrac2026').neq('id', user.id);
+        // Delete ALL rows for this student, then re-insert with current auth ID
+        await supabase.from('students').delete().eq('name', cachedName).eq('class_code', 'idrac2026');
+        await supabase.from('students').upsert({
+          id: user.id, name: found.name, class_code: 'idrac2026',
+          xp: found.xp, weekly_xp: found.weekly_xp, week_id: found.week_id,
+          streak: found.streak, last_active: found.last_active,
+          card_states: found.card_states, daily_challenge: found.daily_challenge,
+          stats: found.stats, module_scores: found.module_scores,
+          mock_results: found.mock_results, game_scores: found.game_scores,
+          mission: found.mission, avatar: found.avatar, theme: found.theme,
+          unlocked_ach: found.unlocked_ach, total_time: found.total_time,
+          weekly_history: found.weekly_history
+        });
         res = await supabase.from('students').select('*').eq('id', user.id).maybeSingle();
       }
     }
@@ -2806,11 +2815,11 @@ function GamesHub(p){
           <div style={{fontSize:11,color:"var(--t3)"}}>Tap blocks in the right order!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎧</div>
+        <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",background:"linear-gradient(135deg,rgba(255,71,87,.06),rgba(168,85,247,.06))",border:"1px solid rgba(255,71,87,.15)"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Real-time 1v1 — challenge a classmate!</div>
@@ -5493,13 +5502,12 @@ useEffect(function(){
     save(u);
   }
   async function recover(name,classCode){
-    // Use limit(1) + order by XP desc to always pick the best row (handles duplicates)
+    // Find the best row (highest XP) for this student
     var res=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
     if(!res.data||res.data.length===0)return false;
     var d=res.data[0];
-    var oldId=d.id;
 
-    // Get or create auth session (reuse if already signed in)
+    // Get or create auth session
     var sess=await supabase.auth.getSession();
     var userId=sess.data.session?sess.data.session.user.id:null;
     if(!userId){
@@ -5508,14 +5516,7 @@ useEffect(function(){
       userId=authRes.data.user.id;
     }
 
-    // Reattach row to current auth user
-    if(oldId!==userId){
-      await supabase.from('students').update({id:userId}).eq('id',oldId);
-    }
-    // Clean up any duplicates
-    await supabase.from('students').delete().eq('name',name).eq('class_code',classCode).neq('id',userId);
-
-    try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
+    // Build user object from best row's data
     var u={name:d.name,xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
       lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
       stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
@@ -5524,6 +5525,22 @@ useEffect(function(){
     if(!u.moduleScores)u.moduleScores={};
     if(!u.mission)u.mission={date:null,actId:null,done:false};
     if(!u.unlockedAch)u.unlockedAch=[];
+
+    // Step 1: Delete ALL rows for this student (old IDs, duplicates, everything)
+    await supabase.from('students').delete().eq('name',name).eq('class_code',classCode);
+
+    // Step 2: Insert a clean row with the current auth ID
+    await supabase.from('students').upsert({
+      id:userId,name:u.name,class_code:classCode,
+      xp:u.xp,weekly_xp:u.weeklyXp,week_id:u.weekId,streak:u.streak,
+      last_active:u.lastActive,card_states:u.cardStates,daily_challenge:u.daily,
+      stats:u.stats,module_scores:u.moduleScores,mock_results:u.mockResults,
+      game_scores:u.gameScores,mission:u.mission,
+      avatar:u.avatar,theme:u.theme,unlocked_ach:u.unlockedAch,
+      total_time:u.totalTime,weekly_history:u.weeklyHistory
+    });
+
+    try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     sU(u);
     return true;
   }
