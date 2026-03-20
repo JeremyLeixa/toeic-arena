@@ -246,38 +246,23 @@ async function load() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // 1) Try loading by auth ID (normal case)
+  // 1) Try by auth ID (fast path — same device)
   var res = await supabase.from('students').select('*').eq('id', user.id).maybeSingle();
 
-  // 2) If not found, try by cached name (multi-device case)
+  // 2) Fallback: try by cached name (different device, different auth ID)
   if (!res.data) {
     var cachedName = null;
     try { cachedName = localStorage.getItem('toeic-arena-name'); } catch(e) {}
     if (cachedName) {
       var res2 = await supabase.from('students').select('*').eq('name', cachedName).eq('class_code', 'idrac2026').order('xp', {ascending:false}).limit(1);
       if (res2.data && res2.data.length > 0) {
-        var found = res2.data[0];
-        // Delete ALL rows for this student, then re-insert with current auth ID
-        await supabase.from('students').delete().eq('name', cachedName).eq('class_code', 'idrac2026');
-        await supabase.from('students').upsert({
-          id: user.id, name: found.name, class_code: 'idrac2026',
-          xp: found.xp, weekly_xp: found.weekly_xp, week_id: found.week_id,
-          streak: found.streak, last_active: found.last_active,
-          card_states: found.card_states, daily_challenge: found.daily_challenge,
-          stats: found.stats, module_scores: found.module_scores,
-          mock_results: found.mock_results, game_scores: found.game_scores,
-          mission: found.mission, avatar: found.avatar, theme: found.theme,
-          unlocked_ach: found.unlocked_ach, total_time: found.total_time,
-          weekly_history: found.weekly_history
-        });
-        res = await supabase.from('students').select('*').eq('id', user.id).maybeSingle();
+        res = { data: res2.data[0] };
       }
     }
   }
 
   if (!res.data) return null;
   var data = res.data;
-  // Cache name for cross-device recovery
   try { localStorage.setItem('toeic-arena-name', data.name); } catch(e) {}
 
   return {
@@ -305,11 +290,9 @@ async function load() {
 async function save(d) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  // Cache name for cross-device recovery
   try { localStorage.setItem('toeic-arena-name', d.name); } catch(e) {}
-  var { error } = await supabase.from('students').upsert({
-    id: user.id,
-    name: d.name,
+
+  var payload = {
     xp: d.xp,
     weekly_xp: d.weeklyXp,
     week_id: d.weekId,
@@ -327,8 +310,33 @@ async function save(d) {
     unlocked_ach: d.unlockedAch || [],
     total_time: d.totalTime || 0,
     weekly_history: d.weeklyHistory || [],
-  });
-  if(error) console.error("SAVE ERROR:", error.message, error.details, error.code);
+  };
+
+  // Step 1: Update by name (works regardless of which device/auth ID)
+  var res = await supabase.from('students')
+    .update(payload)
+    .eq('name', d.name)
+    .eq('class_code', 'idrac2026')
+    .select('id');
+
+  if (res.data && res.data.length > 0) {
+    // Cleanup duplicates: keep only the first row, delete the rest
+    if (res.data.length > 1) {
+      var keepId = res.data[0].id;
+      for (var i = 1; i < res.data.length; i++) {
+        await supabase.from('students').delete().eq('id', res.data[i].id);
+      }
+    }
+  } else {
+    // No existing row — first save ever, insert with current auth ID
+    var { error } = await supabase.from('students').insert({
+      id: user.id,
+      name: d.name,
+      class_code: 'idrac2026',
+      ...payload
+    });
+    if(error) console.error("SAVE INSERT ERROR:", error.message);
+  }
 }
 function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0};}
 
@@ -5493,13 +5501,7 @@ useEffect(function(){
     }
     sU(u);
     try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
-    await supabase.from('students').upsert({
-      id:userId,name:name,class_code:'idrac2026',
-      xp:u.xp,weekly_xp:u.weeklyXp,week_id:u.weekId,
-      placement_score:placementScore,placement_level:lvl?lvl.label:null,
-      stats:u.stats,module_scores:u.moduleScores,
-      mission:u.mission,avatar:u.avatar||"⚔️",theme:u.theme||"dark",unlocked_ach:u.unlockedAch||[],total_time:0,weekly_history:[]
-    });
+    // save() handles insert-by-name or update-by-name — no duplicate possible
     save(u);
   }
   async function recover(name,classCode){
@@ -5514,10 +5516,9 @@ useEffect(function(){
     if(!userId){
       var authRes=await supabase.auth.signInAnonymously();
       if(!authRes.data.user)return false;
-      userId=authRes.data.user.id;
     }
 
-    // Build user object from best row's data
+    try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     var u={name:d.name,xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
       lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
       stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
@@ -5526,23 +5527,9 @@ useEffect(function(){
     if(!u.moduleScores)u.moduleScores={};
     if(!u.mission)u.mission={date:null,actId:null,done:false};
     if(!u.unlockedAch)u.unlockedAch=[];
-
-    // Step 1: Delete ALL rows for this student (old IDs, duplicates, everything)
-    await supabase.from('students').delete().eq('name',name).eq('class_code',classCode);
-
-    // Step 2: Insert a clean row with the current auth ID
-    await supabase.from('students').upsert({
-      id:userId,name:u.name,class_code:classCode,
-      xp:u.xp,weekly_xp:u.weeklyXp,week_id:u.weekId,streak:u.streak,
-      last_active:u.lastActive,card_states:u.cardStates,daily_challenge:u.daily,
-      stats:u.stats,module_scores:u.moduleScores,mock_results:u.mockResults,
-      game_scores:u.gameScores,mission:u.mission,
-      avatar:u.avatar,theme:u.theme,unlocked_ach:u.unlockedAch,
-      total_time:u.totalTime,weekly_history:u.weeklyHistory
-    });
-
-    try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     sU(u);
+    // save() will update by name — handles duplicates automatically
+    save(u);
     return true;
   }
  
