@@ -421,7 +421,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes xpPop{0%{transform:translateY(0) scale(.5);opacity:0}30%{transform:translateY(-10px) scale(1.2);opacity:1}100%{transform:translateY(-40px) scale(1);opacity:0}}
 @keyframes flip{0%{transform:rotateY(90deg);opacity:0}100%{transform:rotateY(0);opacity:1}}
 @keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
-.app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;overflow-x:hidden}
+.app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
 .enter{animation:fadeIn .3s ease-out}
 .crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:20px}
 .glo{box-shadow:0 0 30px rgba(0,212,255,.06)}
