@@ -2811,6 +2811,7 @@ function DuelArena(p){
   var[error,setError]=useState(null);
   var[roundResults,setRoundResults]=useState([]);
   var[dbg,setDbg]=useState("");
+  var[wager,setWager]=useState(0); // 0=friendly, 10/20/50/100=ranked
 
   var channelRef=useRef(null);
   var timerRef=useRef(null);
@@ -2945,11 +2946,14 @@ function DuelArena(p){
       if(msg.payload.pid===myId)return;
       console.log("[DUEL] opponent joined:",msg.payload.name);
       setOppName(msg.payload.name);
+      // If we're the joiner, adopt the host's wager
+      if(msg.payload.host&&msg.payload.wager!==undefined)setWager(msg.payload.wager);
     });
 
     ch.on("broadcast",{event:"game_start"},function(msg){
       if(msg.payload.pid===myId)return;
-      console.log("[DUEL] game_start received, Qs:",msg.payload.questions.length);
+      console.log("[DUEL] game_start received, Qs:",msg.payload.questions.length,"wager:",msg.payload.wager);
+      if(msg.payload.wager!==undefined)setWager(msg.payload.wager);
       questionsRef.current=msg.payload.questions;
       myAnswerRef.current=null;oppAnswerRef.current=null;
       setQuestions(msg.payload.questions);
@@ -2986,7 +2990,7 @@ function DuelArena(p){
     ch.subscribe(function(status){
       console.log("[DUEL] channel:",status);
       if(status==="SUBSCRIBED"){
-        ch.send({type:"broadcast",event:"player_join",payload:{name:myName,host:hosting,pid:myId}});
+        ch.send({type:"broadcast",event:"player_join",payload:{name:myName,host:hosting,pid:myId,wager:wager}});
       }
     });
 
@@ -3030,6 +3034,9 @@ function DuelArena(p){
   // Also handle next_round for non-host (already in channel listener above)
   // Non-host auto-advances via broadcast event
 
+  // Available wager tiers (filtered by user's XP)
+  var WAGER_TIERS=[10,20,50,100];
+
   // ═══ HUB ═══
   if(phase==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
@@ -3037,13 +3044,75 @@ function DuelArena(p){
       <span className="out" style={{fontWeight:700,fontSize:15}}>Duel Arena</span>
       <div style={{width:40}}/>
     </div>
-    <div style={{textAlign:"center",marginBottom:24}}>
+    <div style={{textAlign:"center",marginBottom:20}}>
       <div style={{fontSize:56,marginBottom:8}}>{"⚔️"}</div>
-      <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Vocabulary Duel</h1>
-      <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>Challenge a classmate! {ROUNDS} rounds, {TIMER_SEC}s per question.<br/>Fastest correct answer wins more points.</p>
+      <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Vocabulary Duel</h1>
+      <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{ROUNDS} rounds, {TIMER_SEC}s per question. Fastest wins!</p>
+      <div style={{marginTop:8,padding:"6px 16px",display:"inline-block",background:"rgba(0,212,255,.08)",borderRadius:20}}>
+        <span style={{fontSize:13,color:"var(--cyan)",fontWeight:700}}>Your XP: {p.u.xp}</span>
+      </div>
     </div>
     {error&&<div style={{padding:12,background:"rgba(255,71,87,.1)",border:"1px solid rgba(255,71,87,.2)",borderRadius:10,marginBottom:16,textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)"}}>{error}</p></div>}
+
+    {/* Friendly mode */}
+    <div className="crd" style={{padding:16,marginBottom:10,cursor:"pointer",borderColor:"rgba(0,212,255,.15)"}} onClick={function(){
+      setWager(0);setError(null);setPhase("pickAction");
+    }}>
+      <div style={{display:"flex",alignItems:"center",gap:14}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#22c55e,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"🤝"}</div>
+        <div style={{flex:1}}>
+          <div className="out" style={{fontWeight:700,fontSize:15}}>Friendly Duel</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Play for fun — earn XP based on performance</div>
+        </div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>
+      </div>
+    </div>
+
+    {/* Ranked mode */}
+    <div className="crd" style={{padding:16,marginBottom:10,background:"linear-gradient(135deg,rgba(255,71,87,.05),rgba(168,85,247,.05))",borderColor:"rgba(255,71,87,.15)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:12}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"🔥"}</div>
+        <div style={{flex:1}}>
+          <div className="out" style={{fontWeight:700,fontSize:15}}>Ranked Duel</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Wager XP — winner takes all!</div>
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        {WAGER_TIERS.map(function(w){
+          var canAfford=p.u.xp>=w;
+          return(<button key={w} onClick={function(){
+            if(!canAfford){setError("You need at least "+w+" XP to wager this amount!");return;}
+            setWager(w);setError(null);setPhase("pickAction");
+          }} disabled={!canAfford}
+            style={{padding:"12px 8px",background:canAfford?"rgba(255,71,87,.08)":"var(--bg3)",border:"1px solid "+(canAfford?"rgba(255,71,87,.2)":"var(--bg3)"),
+              borderRadius:12,cursor:canAfford?"pointer":"not-allowed",opacity:canAfford?1:0.4,transition:"all .2s"}}>
+            <div className="out" style={{fontWeight:800,fontSize:18,color:canAfford?"var(--red)":"var(--t3)"}}>{w} XP</div>
+          </button>);
+        })}
+      </div>
+    </div>
+
+    <div className="crd" style={{marginTop:16,padding:16}}>
+      <p className="out" style={{fontWeight:700,fontSize:13,marginBottom:8}}>How it works</p>
+      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
+        <div>{"🤝"} Friendly: earn XP from performance alone</div>
+        <div>{"🔥"} Ranked: both wager the same XP. Winner takes all!</div>
+        <div>{"🤝"} Tie = both get their wager back</div>
+        <div>{"⚡"} Fastest correct answer = 100 pts, slower = 50 pts</div>
+      </div>
+    </div>
+  </div>);
+
+  // ═══ PICK ACTION (create or join) ═══
+  if(phase==="pickAction")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:12}}>{wager>0?"🔥":"🤝"}</div>
+    <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:4}}>{wager>0?"Ranked Duel":"Friendly Duel"}</h2>
+    {wager>0&&<div style={{marginBottom:16}}>
+      <span style={{fontSize:28,fontWeight:900,color:"var(--red)"}}>{wager} XP</span>
+      <span style={{fontSize:13,color:"var(--t3)",display:"block",marginTop:4}}>at stake per player</span>
+    </div>}
+    {!wager&&<p style={{color:"var(--t3)",fontSize:13,marginBottom:16}}>No XP at risk — play for fun!</p>}
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <button className="btn1" onClick={function(){
         var code=genCode();setRoomCode(code);setIsHost(true);setError(null);
@@ -3051,22 +3120,15 @@ function DuelArena(p){
       }} style={{fontSize:16,padding:"18px 16px"}}>{"🏠"} Create a Room</button>
       <button className="btn2" onClick={function(){setError(null);setPhase("join");}} style={{fontSize:16,padding:"18px 16px"}}>{"🚪"} Join a Room</button>
     </div>
-    <div className="crd" style={{marginTop:24,padding:16}}>
-      <p className="out" style={{fontWeight:700,fontSize:13,marginBottom:8}}>How it works</p>
-      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
-        <div>1. One player creates a room and shares the code</div>
-        <div>2. The other player joins with the code</div>
-        <div>3. Both see the same word — pick the right definition</div>
-        <div>4. Fastest correct answer = 100 pts, slower = 50 pts</div>
-        <div>5. Wrong answer = 0 pts. {ROUNDS} rounds total!</div>
-      </div>
-    </div>
+    <button className="btn2" onClick={function(){setPhase("hub");}} style={{marginTop:16,width:"100%"}}>Back</button>
   </div>);
 
   // ═══ CREATE ROOM (waiting for opponent) ═══
   if(phase==="create")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16}}>{"🏠"}</div>
-    <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Room Created!</h2>
+    <div style={{fontSize:48,marginBottom:16}}>{wager>0?"🔥":"🏠"}</div>
+    <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{wager>0?"Ranked Room":"Friendly Room"}</h2>
+    {wager>0&&<div style={{padding:"8px 20px",background:"rgba(255,71,87,.1)",borderRadius:20,display:"inline-block",marginBottom:12}}>
+      <span style={{fontSize:16,fontWeight:800,color:"var(--red)"}}>Wager: {wager} XP</span></div>}
     <div style={{marginBottom:24}}>
       <div style={{fontSize:14,color:"var(--t2)",marginBottom:12}}>Share this code with your opponent:</div>
       <div className="out" style={{fontSize:56,fontWeight:900,letterSpacing:12,color:"var(--cyan)",animation:"pulse 2s infinite"}}>{roomCode}</div>
@@ -3076,7 +3138,7 @@ function DuelArena(p){
       <p className="out" style={{fontWeight:700,fontSize:16,color:"var(--green)",marginBottom:16}}>{oppName} joined!</p>
       <button className="btn1" onClick={function(){
         var qs=generateQuestions();setQuestions(qs);questionsRef.current=qs;
-        channelRef.current.send({type:"broadcast",event:"game_start",payload:{questions:qs,pid:myIdRef.current}});
+        channelRef.current.send({type:"broadcast",event:"game_start",payload:{questions:qs,wager:wager,pid:myIdRef.current}});
         setQi(0);setMyScore(0);setOppScore(0);setRoundResults([]);
         myAnswerRef.current=null;oppAnswerRef.current=null;
         setPhase("countdown");
@@ -3107,8 +3169,10 @@ function DuelArena(p){
 
   // ═══ LOBBY (non-host waiting for start) ═══
   if(phase==="lobby")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16}}>{"⏳"}</div>
+    <div style={{fontSize:48,marginBottom:16}}>{wager>0?"🔥":"⏳"}</div>
     <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Room {roomCode}</h2>
+    {wager>0&&<div style={{padding:"8px 20px",background:"rgba(255,71,87,.1)",borderRadius:20,display:"inline-block",marginBottom:12}}>
+      <span style={{fontSize:16,fontWeight:800,color:"var(--red)"}}>Wager: {wager} XP</span></div>}
     <p style={{color:"var(--t2)",fontSize:14,marginBottom:8}}>You joined as <strong style={{color:"var(--cyan)"}}>{myName}</strong></p>
     <div style={{animation:"pulse 2s infinite",fontSize:14,color:"var(--t3)"}}>Waiting for host to start...</div>
     <button className="btn2" onClick={function(){if(channelRef.current)supabase.removeChannel(channelRef.current);channelRef.current=null;setPhase("hub");}} style={{marginTop:32,width:"100%"}}>Leave</button>
@@ -3137,6 +3201,7 @@ function DuelArena(p){
         <div style={{textAlign:"center",padding:"0 12px"}}>
           <div style={{fontSize:11,color:"var(--t3)"}}>Round</div>
           <div className="out" style={{fontSize:18,fontWeight:800,color:"var(--t1)"}}>{qi+1}/{ROUNDS}</div>
+          {wager>0&&<div style={{fontSize:9,color:"var(--red)",fontWeight:700,marginTop:2}}>{wager} XP</div>}
         </div>
         <div style={{textAlign:"center",flex:1}}>
           <div style={{fontSize:11,color:"var(--orange)",fontWeight:600}}>{oppName||"Opponent"}</div>
@@ -3153,10 +3218,6 @@ function DuelArena(p){
         <span className="out" style={{fontSize:24,fontWeight:900,color:timerCol}}>{timer}s</span>
         {oppAnswered&&<span style={{fontSize:12,color:"var(--orange)",fontWeight:600,animation:"fadeIn .3s"}}>{"⚡"} {oppName} answered!</span>}
       </div>
-      {/* Debug info — remove after fixing */}
-      //{dbg&&<div style={{padding:6,background:"rgba(255,255,0,.1)",borderRadius:6,marginBottom:8}}>
-        //<p style={{fontSize:10,color:"var(--gold)",fontFamily:"monospace"}}>{dbg}</p>
-      //</div>}
 
       {/* Question */}
       <div style={{textAlign:"center",marginBottom:24}}>
@@ -3235,17 +3296,31 @@ function DuelArena(p){
   // ═══ DONE ═══
   if(phase==="done"){
     var iWon=myScore>oppScore;var tied=myScore===oppScore;
-    var xp=Math.round((myScore/100)*5)+(iWon?30:tied?15:5);
+
+    // Base XP from performance (always earned)
+    var baseXp=Math.round((myScore/100)*5)+(iWon?15:tied?10:5);
+
+    // Wager outcome
+    var wagerNet=0;
+    if(wager>0){
+      if(iWon)wagerNet=wager;       // win opponent's wager
+      else if(tied)wagerNet=0;       // get your wager back
+      else wagerNet=-wager;          // lose your wager
+    }
+
+    var totalXp=baseXp+wagerNet;
+    // Floor: never go below 0 total XP
+    if(p.u.xp+totalXp<0)totalXp=-p.u.xp;
 
     return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       <div style={{textAlign:"center",marginBottom:24}}>
         <div style={{fontSize:56,marginBottom:12,animation:"countUp .6s"}}>{iWon?"🏆":tied?"🤝":"😤"}</div>
         <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:4}}>{iWon?"Victory!":tied?"It's a Tie!":"Defeat"}</h1>
-        <p style={{color:"var(--t2)",fontSize:14}}>Room {roomCode}</p>
+        <p style={{color:"var(--t2)",fontSize:14}}>Room {roomCode}{wager>0?" · Ranked":"  · Friendly"}</p>
       </div>
 
       {/* Final scores */}
-      <div style={{display:"flex",gap:12,marginBottom:24}}>
+      <div style={{display:"flex",gap:12,marginBottom:20}}>
         <div className="crd" style={{flex:1,padding:20,textAlign:"center",borderColor:iWon?"rgba(0,230,118,.3)":"var(--bdr)",background:iWon?"rgba(0,230,118,.06)":"var(--bg2)"}}>
           <div style={{fontSize:11,color:"var(--cyan)",fontWeight:600,marginBottom:4}}>{myName}</div>
           <div className="out" style={{fontSize:36,fontWeight:900,color:"var(--cyan)"}}>{myScore}</div>
@@ -3255,6 +3330,16 @@ function DuelArena(p){
           <div className="out" style={{fontSize:36,fontWeight:900,color:"var(--orange)"}}>{oppScore}</div>
         </div>
       </div>
+
+      {/* Wager result */}
+      {wager>0&&<div className="crd" style={{padding:14,marginBottom:16,textAlign:"center",
+        background:iWon?"rgba(0,230,118,.06)":tied?"rgba(0,212,255,.06)":"rgba(255,71,87,.06)",
+        borderColor:iWon?"rgba(0,230,118,.2)":tied?"rgba(0,212,255,.2)":"rgba(255,71,87,.2)"}}>
+        <div style={{fontSize:13,color:"var(--t2)",marginBottom:4}}>Wager: {wager} XP per player</div>
+        <div className="out" style={{fontSize:24,fontWeight:900,color:iWon?"var(--green)":tied?"var(--cyan)":"var(--red)"}}>
+          {iWon?"+"+wager+" XP won!":tied?"XP returned":"-"+wager+" XP lost"}
+        </div>
+      </div>}
 
       {/* Round breakdown */}
       <div className="crd" style={{padding:14,marginBottom:20}}>
@@ -3273,15 +3358,19 @@ function DuelArena(p){
         </div>
       </div>
 
-      <div className="out" style={{textAlign:"center",fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:20}}>+{xp} XP</div>
+      {/* XP summary */}
+      <div style={{textAlign:"center",marginBottom:20}}>
+        <div style={{fontSize:12,color:"var(--t3)",marginBottom:4}}>Performance: +{baseXp} XP{wager>0?(wagerNet>=0?" · Wager: +"+wagerNet:" · Wager: "+wagerNet):""}</div>
+        <div className="out" style={{fontSize:24,fontWeight:900,color:totalXp>=0?"var(--gold)":"var(--red)"}}>{totalXp>=0?"+":""}{totalXp} XP</div>
+      </div>
 
       <button className="btn1" onClick={function(){
         if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
-        p.done(Math.round(myScore/100),ROUNDS,xp);
+        p.done(Math.round(myScore/100),ROUNDS,totalXp);
       }}>Collect XP</button>
       <button className="btn2" onClick={function(){
         if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
-        setPhase("hub");setOppName(null);setRoomCode("");setInputCode("");setQuestions([]);setQi(0);setMyScore(0);setOppScore(0);setRoundResults([]);
+        setPhase("hub");setOppName(null);setRoomCode("");setInputCode("");setQuestions([]);setQi(0);setMyScore(0);setOppScore(0);setRoundResults([]);setWager(0);
       }} style={{marginTop:10,width:"100%"}}>Play Again</button>
       <button className="btn2" onClick={function(){
         if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
@@ -4835,23 +4924,28 @@ useEffect(function(){
     // Update streak
     if(isFirstToday){var yd=new Date();yd.setDate(yd.getDate()-1);c.streak=c.lastActive===yd.toISOString().split("T")[0]?c.streak+1:1;c.lastActive=td;}
 
-    // Calculate multipliers
+    // Calculate multipliers (only on positive XP — losses are never multiplied)
     var mult=1;var amt=baseAmt;
 
-    // Weekend bonus (Saturday=6, Sunday=0)
-    var dow=new Date().getDay();
-    if(dow===0||dow===6){mult*=2;bonuses.push({label:"Weekend x2",color:"#ff6bff"});}
+    if(baseAmt>0){
+      // Weekend bonus (Saturday=6, Sunday=0)
+      var dow=new Date().getDay();
+      if(dow===0||dow===6){mult*=2;bonuses.push({label:"Weekend x2",color:"#ff6bff"});}
 
-    // Streak multiplier
-    if(c.streak>=7){mult*=1.5;bonuses.push({label:"Streak x1.5 ("+c.streak+"d)",color:"#ff8c42"});}
-    else if(c.streak>=3){mult*=1.2;bonuses.push({label:"Streak x1.2 ("+c.streak+"d)",color:"#ff8c42"});}
+      // Streak multiplier
+      if(c.streak>=7){mult*=1.5;bonuses.push({label:"Streak x1.5 ("+c.streak+"d)",color:"#ff8c42"});}
+      else if(c.streak>=3){mult*=1.2;bonuses.push({label:"Streak x1.2 ("+c.streak+"d)",color:"#ff8c42"});}
 
-    amt=Math.round(baseAmt*mult);
+      amt=Math.round(baseAmt*mult);
 
-    // Daily login bonus (first activity of the day)
-    if(isFirstToday){amt+=10;bonuses.push({label:"+10 daily login",color:"#00e676"});}
+      // Daily login bonus (first activity of the day)
+      if(isFirstToday){amt+=10;bonuses.push({label:"+10 daily login",color:"#00e676"});}
+    }
 
     c.xp+=amt;c.weeklyXp+=amt;
+    // Floor: never go below 0 XP
+    if(c.xp<0)c.xp=0;
+    if(c.weeklyXp<0)c.weeklyXp=0;
     var toastInfo={total:amt,base:baseAmt,bonuses:bonuses};
     sXpt(toastInfo);setTimeout(function(){sXpt(null);},2200);
     return c;
