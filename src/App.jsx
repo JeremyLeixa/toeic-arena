@@ -2777,7 +2777,7 @@ function GamesHub(p){
           <div style={{fontSize:11,color:"var(--t3)"}}>Catch the falling sentences!</div>
           {bestF&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestF.score} pts · x{bestF.maxCombo} combo</div>}</div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",background:"linear-gradient(135deg,rgba(255,71,87,.06),rgba(168,85,247,.06))",border:"1px solid rgba(255,71,87,.15)"}}>
+      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Real-time 1v1 — challenge a classmate!</div>
