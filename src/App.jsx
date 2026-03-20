@@ -2810,7 +2810,7 @@ function GamesHub(p){
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",background:"linear-gradient(135deg,rgba(255,71,87,.06),rgba(168,85,247,.06))",border:"1px solid rgba(255,71,87,.15)"}}>
+      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Real-time 1v1 — challenge a classmate!</div>
@@ -2821,6 +2821,125 @@ function GamesHub(p){
 }
 
 
+
+
+// ─── DAILY TIP POPUP ───
+function DailyTip(p){
+  var[tipIdx,setTipIdx]=useState(0);
+  var u=p.u;
+
+  // Flatten all tips with their part/section metadata
+  var allTips=useMemo(function(){
+    var flat=[];
+    STRATEGIES.forEach(function(s){
+      s.tips.forEach(function(tip){
+        flat.push({t:tip.t,d:tip.d,part:s.part,section:s.section,icon:s.icon});
+      });
+    });
+    return flat;
+  },[]);
+
+  // Map parts to moduleScore keys for weakness detection
+  var partToModules={
+    "Part 1":["lisP1"],"Part 2":["lisP2"],"Part 3":["lisP3"],"Part 4":["lisP4"],
+    "Part 5":["drill","daily","timesim"],"Part 6":["part6"],"Part 7":["part7"],
+    "General":[]
+  };
+
+  // Compute tips sorted by relevance (weakest area first)
+  var sortedTips=useMemo(function(){
+    // Score each part by accuracy (lower = weaker = show first)
+    var partScores={};
+    Object.keys(partToModules).forEach(function(part){
+      var mods=partToModules[part];
+      var total=0;var correct=0;
+      mods.forEach(function(modId){
+        var ms=u.moduleScores?u.moduleScores[modId]:null;
+        if(ms&&ms.total>0){total+=ms.total;correct+=ms.correct;}
+      });
+      partScores[part]=total>0?correct/total:0.5; // default 50% if no data
+    });
+
+    // Sort tips: weakest part first, then never-practiced, then strong
+    var scored=allTips.map(function(tip,i){
+      var acc=partScores[tip.part];
+      if(acc===undefined)acc=0.5;
+      return{tip:tip,origIdx:i,acc:acc};
+    });
+    scored.sort(function(a,b){return a.acc-b.acc;});
+    return scored.map(function(s){return s.tip;});
+  },[]);
+
+  // Which tip to show today (sequential through sorted list, stored in localStorage)
+  var startIdx=useMemo(function(){
+    try{
+      var stored=localStorage.getItem("toeic-tip-idx");
+      return stored?parseInt(stored)||0:0;
+    }catch(e){return 0;}
+  },[]);
+
+  var currentTip=sortedTips[(startIdx+tipIdx)%sortedTips.length];
+
+  function dismiss(){
+    // Save next index for tomorrow
+    try{
+      localStorage.setItem("toeic-tip-idx",String((startIdx+tipIdx+1)%sortedTips.length));
+      localStorage.setItem("toeic-tip-date",today());
+    }catch(e){}
+    p.close();
+  }
+
+  function nextTip(){
+    setTipIdx(tipIdx+1);
+  }
+
+  function disableStartup(){
+    try{localStorage.setItem("toeic-tip-disabled","1");}catch(e){}
+    dismiss();
+  }
+
+  var sectionCol=currentTip.section==="Listening"?"var(--cyan)":currentTip.section==="Reading"?"var(--purple)":"var(--gold)";
+
+  return(<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",
+    display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20,animation:"fadeIn .3s"}}>
+    <div style={{width:"100%",maxWidth:420,background:"var(--bg1)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
+
+      {/* Header */}
+      <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(0,212,255,.08),rgba(168,85,247,.08))"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:22}}>{"💡"}</span>
+            <span className="out" style={{fontWeight:800,fontSize:16}}>Daily TOEIC Tip</span>
+          </div>
+          <span style={{fontSize:11,color:sectionCol,fontWeight:700,padding:"4px 10px",background:sectionCol+"15",borderRadius:20}}>{currentTip.icon} {currentTip.part}</span>
+        </div>
+        <div style={{height:1,background:"var(--bdr)"}}/>
+      </div>
+
+      {/* Tip content */}
+      <div style={{padding:"16px 20px 20px"}}>
+        <h3 className="out" style={{fontWeight:800,fontSize:18,color:"var(--t1)",marginBottom:10,lineHeight:1.4}}>{currentTip.t}</h3>
+        <p style={{fontSize:14,color:"var(--t2)",lineHeight:1.7}}>{currentTip.d}</p>
+
+        {/* Section badge */}
+        <div style={{marginTop:16,display:"flex",alignItems:"center",gap:6}}>
+          <div style={{width:8,height:8,borderRadius:4,background:sectionCol}}/>
+          <span style={{fontSize:11,color:"var(--t3)"}}>{currentTip.section} Section</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div style={{padding:"0 20px 20px",display:"flex",flexDirection:"column",gap:8}}>
+        <button className="btn1" onClick={dismiss} style={{width:"100%",fontSize:15}}>Got it!</button>
+        <div style={{display:"flex",gap:8}}>
+          <button className="btn2" onClick={nextTip} style={{flex:1,fontSize:12}}>{"→"} Next tip</button>
+          <button onClick={disableStartup} style={{flex:1,padding:"10px 12px",background:"none",border:"1px solid var(--bdr)",borderRadius:12,
+            cursor:"pointer",fontSize:11,color:"var(--t3)",fontFamily:"'DM Sans',sans-serif"}}>Don't show at startup</button>
+        </div>
+      </div>
+    </div>
+  </div>);
+}
 
 // ─── SENTENCE BUILDER — Tap to reorder ───
 function SentenceBuilder(p){
@@ -5158,6 +5277,27 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       left:u.theme==="light"?27:3,transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
   </button>
 </div>
+
+{/* Daily Tips toggle */}
+<div className="crd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:16,marginBottom:20}}>
+  <div><div className="out" style={{fontWeight:700,fontSize:14}}>Daily Tips</div>
+    <div style={{fontSize:12,color:"var(--t2)"}}>Show a TOEIC tip at startup</div></div>
+  <button onClick={function(){
+    try{
+      var cur=localStorage.getItem("toeic-tip-disabled")==="1";
+      if(cur){localStorage.removeItem("toeic-tip-disabled");localStorage.removeItem("toeic-tip-date");}
+      else{localStorage.setItem("toeic-tip-disabled","1");}
+      // Force re-render via a dummy state change
+      var c=JSON.parse(JSON.stringify(u));p.setAvatar(c);
+    }catch(e){}
+  }}
+    style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",position:"relative",
+      background:(function(){try{return localStorage.getItem("toeic-tip-disabled")==="1"?"var(--t3)":"var(--cyan)";}catch(e){return"var(--cyan)";}}()),transition:"background .3s"}}>
+    <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:3,
+      left:(function(){try{return localStorage.getItem("toeic-tip-disabled")==="1"?3:27;}catch(e){return 27;}}()),transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
+  </button>
+</div>
+
 <h2 className="out" style={{fontWeight:700,fontSize:16,marginBottom:12}}>Avatar</h2>
 <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:24}}>
   {["⚔️","🧙","🦊","🐉","🎯","🏆","🦅","💎","🔥","🌟","🎭","🐺","🦁","🎪","👤"].map(function(av){
@@ -5193,6 +5333,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 // ═══════════════════════════════════════════
 export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
+  var[showTip,setShowTip]=useState(false);
 
 useEffect(function(){
     var loaded=false;
@@ -5214,6 +5355,12 @@ useEffect(function(){
 			if(!d.avatar)d.avatar="⚔️";
 			if(!d.theme)d.theme="dark";
             sU(d);
+            // Show daily tip if not disabled and not already shown today
+            try{
+              var tipDisabled=localStorage.getItem("toeic-tip-disabled")==="1";
+              var tipDate=localStorage.getItem("toeic-tip-date");
+              if(!tipDisabled&&tipDate!==today())setShowTip(true);
+            }catch(e){}
             loaded=true;
           }
           sL(false);
@@ -5433,6 +5580,7 @@ useEffect(function(){
   if(sp==="lisP4")return(<div className="app"><style>{CSS}</style><ListenP4 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
 
   return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
+    {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
     {tab==="home"&&<Home u={u} nav={nav}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="games"&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     <Tabs cur={tab} go={function(t){sT(t);sSP(null);}}/></div>);
 }
