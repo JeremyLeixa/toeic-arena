@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { CLUE_HUNTER } from "./data/clueHunter.js";
 import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
 /* ═══════════════════════════════════════════
@@ -2808,6 +2809,14 @@ function GamesHub(p){
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎧</div>
+		 <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#10b981)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🔍"}</div>
+        <div style={{flex:1}}>
+          <div className="out" style={{fontWeight:700,fontSize:15}}>Clue Hunter</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Find the clue, fill the blank!</div>
+        </div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>
+      </div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
@@ -2903,7 +2912,7 @@ function DailyTip(p){
 
   return(<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",
     display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20,animation:"fadeIn .3s"}}>
-    <div style={{width:"100%",maxWidth:420,background:"var(--bg1)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
+    <div style={{width:"100%",maxWidth:420,background:"var(--bg2)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
 
       {/* Header */}
       <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(0,212,255,.08),rgba(168,85,247,.08))"}}>
@@ -3852,6 +3861,249 @@ function DuelArena(p){
     </div>);
   }
 
+  return null;
+}
+
+
+// ─── CLUE HUNTER ───
+function ClueHunter(p){
+  var TOTAL=10;
+  var[phase,sP]=useState("intro");
+  var[ci,sC]=useState(0);
+  var[items]=useState(function(){return shuffle(CLUE_HUNTER.slice()).slice(0,TOTAL);});
+  var[selected,setSel]=useState([]);
+  var[pick,sPk]=useState(-1);
+  var[scores,setSc]=useState([]);
+ 
+  function toggleChip(idx){
+    if(phase!=="q")return;
+    setSel(function(prev){return prev.includes(idx)?prev.filter(function(i){return i!==idx;}):prev.concat([idx]);});
+  }
+ 
+  function confirmClues(){if(selected.length===0)return;sP("clue_fb");}
+  function goAnswer(){sP("ans");}
+ 
+  function pickAnswer(i){
+    if(phase!=="ans")return;
+    var item=items[ci];
+    var clueOK=selected.length>0&&selected.every(function(s){return item.chips[s].c;})&&selected.some(function(s){return item.chips[s].c;});
+    var ansOK=i===item.ans;
+    var pts=clueOK&&ansOK?10:clueOK&&!ansOK?4:!clueOK&&ansOK?3:0;
+    setSc(function(prev){return prev.concat([{clue:clueOK,ans:ansOK,pts:pts}]);});
+    sPk(i);sP("ans_fb");
+  }
+ 
+  function next(){
+    if(ci<items.length-1){sC(ci+1);setSel([]);sPk(-1);sP("q");}
+    else sP("done");
+  }
+ 
+  // ── shared sentence renderer ──
+  function SentenceCard({item,answerWord,isCorrect}){
+    var parts=item.sentence.split("___");
+    return(
+      <div className="crd" style={{padding:"28px 24px",marginBottom:24,background:"rgba(0,212,255,.04)",borderColor:"rgba(0,212,255,.12)"}}>
+        <p style={{fontSize:20,lineHeight:1.8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif"}}>
+          {parts.map(function(part,i){return(<span key={i}>{part}
+            {i<parts.length-1&&(answerWord
+              ?<span style={{color:isCorrect?"var(--green)":"var(--red)",fontWeight:700,borderBottom:"3px solid "+(isCorrect?"var(--green)":"var(--red)"),padding:"0 4px"}}>{answerWord}</span>
+              :<span style={{display:"inline-block",minWidth:88,borderBottom:"3px solid var(--cyan)",margin:"0 6px",verticalAlign:"bottom",opacity:.6}}>{"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0"}</span>)}
+          </span>);})}
+        </p>
+      </div>
+    );
+  }
+ 
+  function Header(){
+    return(<>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+        <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1} / {TOTAL}</span>
+      </div>
+      <Bar value={phase==="ans_fb"?ci+1:ci} max={TOTAL} h={4} color="linear-gradient(90deg,#00d4ff,#a855f7)"/>
+      <div style={{marginTop:20,marginBottom:12}}>
+        <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{"🔍"} {items[ci].cat}</span>
+      </div>
+    </>);
+  }
+ 
+  // ── INTRO ──
+  if(phase==="intro")return(
+    <div className="enter" style={{padding:"32px 24px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center"}}>
+      <div style={{textAlign:"center",marginBottom:36}}>
+        <div style={{fontSize:72,marginBottom:16}}>{"🔍"}</div>
+        <h1 className="out" style={{fontWeight:900,fontSize:32,marginBottom:10}}>Clue Hunter</h1>
+        <p style={{color:"var(--t2)",fontSize:15,lineHeight:1.7}}>Spot the grammatical clue in the sentence.<br/>Then fill in the blank.</p>
+      </div>
+      <div className="crd" style={{marginBottom:24,padding:22}}>
+        <p className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,marginBottom:16}}>How it works</p>
+        <div style={{display:"flex",flexDirection:"column",gap:16}}>
+          {[
+            {n:"1",t:"Read the sentence",d:"A key word (or words) will tell you which form is correct."},
+            {n:"2",t:"Tap your clue(s)",d:"Select what's guiding your answer — before you see the options."},
+            {n:"3",t:"Fill the blank",d:"Right clue + right answer = max XP."},
+          ].map(function(s){return(
+            <div key={s.n} style={{display:"flex",gap:14,alignItems:"flex-start"}}>
+              <div style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <span className="out" style={{fontSize:13,fontWeight:800,color:"#fff"}}>{s.n}</span>
+              </div>
+              <div><div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>{s.t}</div>
+                <div style={{fontSize:13,color:"var(--t2)",marginTop:3,lineHeight:1.5}}>{s.d}</div></div>
+            </div>);})}
+        </div>
+      </div>
+      <div className="crd" style={{marginBottom:28,background:"rgba(255,215,0,.06)",borderColor:"rgba(255,215,0,.15)",padding:"14px 18px"}}>
+        <p className="out" style={{fontSize:11,fontWeight:700,color:"var(--gold)",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Scoring</p>
+        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.5}}>Right clue + right answer <span style={{color:"var(--gold)",fontWeight:700}}>10 pts</span> &nbsp;·&nbsp; Right clue only <span style={{color:"var(--cyan)",fontWeight:700}}>4 pts</span> &nbsp;·&nbsp; Right answer only <span style={{color:"var(--orange)",fontWeight:700}}>3 pts</span></p>
+      </div>
+      <button className="btn1" onClick={function(){sP("q");}}>Start — {TOTAL} Questions</button>
+      <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button>
+    </div>);
+ 
+  // ── DONE ──
+  if(phase==="done"){
+    var total=scores.reduce(function(s,x){return s+x.pts;},0);
+    var xp=20+Math.round(total*2.5);
+    var perfect=scores.filter(function(s){return s.clue&&s.ans;}).length;
+    var clueOnly=scores.filter(function(s){return s.clue&&!s.ans;}).length;
+    var ansOnly=scores.filter(function(s){return !s.clue&&s.ans;}).length;
+    var pct=Math.round(total/(TOTAL*10)*100);
+    var emoji=pct>=80?"🏆":pct>=60?"⚔️":pct>=40?"🔍":"📚";
+    return(
+      <div className="enter" style={{padding:"32px 24px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+        <div style={{fontSize:64,marginBottom:16}}>{emoji}</div>
+        <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:6}}>Case Closed!</h1>
+        <div className="out" style={{fontSize:52,fontWeight:900,color:pct>=70?"var(--green)":pct>=40?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{pct}%</div>
+        <div className="out" style={{fontSize:22,fontWeight:800,color:"var(--gold)",marginBottom:36}}>+{xp} XP</div>
+        <div className="crd" style={{marginBottom:28,padding:24}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            <div><div className="out" style={{fontSize:32,fontWeight:900,color:"var(--green)"}}>{perfect}</div><div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Perfect{"\n"}(clue + answer)</div></div>
+            <div><div className="out" style={{fontSize:32,fontWeight:900,color:"var(--cyan)"}}>{clueOnly}</div><div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Clue only{"\n"}(right clue)</div></div>
+            <div><div className="out" style={{fontSize:32,fontWeight:900,color:"var(--orange)"}}>{ansOnly}</div><div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Answer only{"\n"}(lucky!)</div></div>
+          </div>
+        </div>
+        <button className="btn1" onClick={function(){p.done(perfect,TOTAL,xp);}}>Collect XP</button>
+        <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back to Games</button>
+      </div>);
+  }
+ 
+  var item=items[ci];
+  var lastScore=scores[scores.length-1];
+ 
+  // ── Q : CLUE HUNT ──
+  if(phase==="q")return(
+    <div style={{padding:"20px 20px 100px",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+      <Header/>
+      <SentenceCard item={item}/>
+      <p className="out" style={{fontSize:13,fontWeight:600,color:"var(--t2)",marginBottom:18,textAlign:"center"}}>
+        Which word(s) tell you the correct form?
+      </p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:32,justifyContent:"center"}}>
+        {item.chips.map(function(chip,idx){
+          var isSel=selected.includes(idx);
+          return(
+            <button key={idx} onClick={function(){toggleChip(idx);}}
+              style={{padding:"11px 20px",borderRadius:28,border:"2px solid "+(isSel?"var(--cyan)":"var(--bdr)"),background:isSel?"rgba(0,212,255,.12)":"var(--bg2)",color:isSel?"var(--cyan)":"var(--t1)",fontSize:15,fontFamily:"'DM Sans',sans-serif",fontWeight:isSel?700:500,cursor:"pointer",transition:"all .15s",transform:isSel?"scale(1.05)":"scale(1)"}}>
+              {chip.w}
+            </button>);
+        })}
+      </div>
+      <div style={{marginTop:"auto"}}>
+        <button className="btn1" onClick={confirmClues}
+          style={{opacity:selected.length>0?1:.3,pointerEvents:selected.length>0?"auto":"none",fontSize:16}}>
+          Confirm my clue{selected.length>1?"s":""} →
+        </button>
+      </div>
+    </div>);
+ 
+  // ── CLUE FEEDBACK ──
+  if(phase==="clue_fb")return(
+    <div className="enter" style={{padding:"20px 20px 100px",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+      <Header/>
+      <SentenceCard item={item}/>
+      <p className="out" style={{fontSize:11,fontWeight:700,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:14,textAlign:"center"}}>Your clues</p>
+      <div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:28,justifyContent:"center"}}>
+        {item.chips.map(function(chip,idx){
+          var isSel=selected.includes(idx);
+          var isReal=chip.c;
+          var col=!isSel?"var(--t3)":isReal?"var(--green)":"var(--red)";
+          var bg=!isSel?"transparent":isReal?"rgba(0,230,118,.12)":"rgba(255,71,87,.12)";
+          var bd=!isSel?"var(--bdr)":isReal?"var(--green)":"var(--red)";
+          return(
+            <div key={idx} style={{padding:"11px 20px",borderRadius:28,border:"2px solid "+bd,background:bg,color:col,fontSize:15,fontWeight:isSel?700:400,display:"flex",alignItems:"center",gap:6}}>
+              {chip.w}{isSel&&<span style={{fontSize:14}}>{isReal?"✓":"✗"}</span>}
+            </div>);
+        })}
+      </div>
+      <div className="crd" style={{padding:20,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",marginBottom:28}}>
+        <p className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>{"💡"} Clue analysis</p>
+        <p style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{item.clue}</p>
+      </div>
+      <div style={{marginTop:"auto"}}>
+        <button className="btn1" onClick={goAnswer} style={{fontSize:16}}>Now answer →</button>
+      </div>
+    </div>);
+ 
+  // ── ANSWER ──
+  if(phase==="ans")return(
+    <div className="enter" style={{padding:"20px 20px 100px",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+      <Header/>
+      <SentenceCard item={item}/>
+      <p className="out" style={{fontSize:13,fontWeight:600,color:"var(--t2)",marginBottom:18,textAlign:"center"}}>Choose the correct form:</p>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {item.opts.map(function(opt,i){
+          return(
+            <button key={i} onClick={function(){pickAnswer(i);}}
+              style={{padding:"16px 20px",borderRadius:14,border:"1px solid var(--bdr)",background:"var(--bg2)",color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",fontWeight:500,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:14,transition:"all .15s"}}>
+              <span className="out" style={{width:30,height:30,borderRadius:"50%",border:"2px solid var(--t3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0,color:"var(--t3)"}}>
+                {String.fromCharCode(65+i)}
+              </span>
+              {opt}
+            </button>);
+        })}
+      </div>
+    </div>);
+ 
+  // ── ANSWER FEEDBACK ──
+  if(phase==="ans_fb"){
+    var isCorrect=pick===item.ans;
+    return(
+      <div className={"enter"+(isCorrect?"":" sk")} style={{padding:"20px 20px 100px",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+        <Header/>
+        <SentenceCard item={item} answerWord={item.opts[item.ans]} isCorrect={isCorrect}/>
+        {lastScore&&<div style={{textAlign:"center",marginBottom:20}}>
+          <div className="out" style={{fontSize:24,fontWeight:900,color:lastScore.pts>=10?"var(--gold)":lastScore.pts>=4?"var(--cyan)":lastScore.pts>0?"var(--orange)":"var(--t3)"}}>
+            {lastScore.pts>0?"+"+lastScore.pts+" pts":"No points"}{lastScore.pts>=10&&" 🔥"}
+          </div>
+          <div style={{fontSize:12,color:"var(--t3)",marginTop:4}}>
+            {lastScore.clue&&lastScore.ans?"Perfect — clue + answer ✓":lastScore.clue?"Right clue, wrong answer":lastScore.ans?"Right answer, but what was the clue?":"Keep practising!"}
+          </div>
+        </div>}
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
+          {item.opts.map(function(opt,i){
+            var isCor=i===item.ans;var isPk=i===pick;
+            var bg=isCor?"rgba(0,230,118,.12)":isPk&&!isCor?"rgba(255,71,87,.12)":"var(--bg2)";
+            var bd=isCor?"var(--green)":isPk&&!isCor?"var(--red)":"var(--bdr)";
+            return(
+              <div key={i} style={{padding:"14px 20px",borderRadius:14,border:"1px solid "+bd,background:bg,display:"flex",alignItems:"center",gap:14}}>
+                <span className="out" style={{width:30,height:30,borderRadius:"50%",border:"2px solid "+(isCor?"var(--green)":isPk?"var(--red)":"var(--bdr)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0,background:isCor?"var(--green)":isPk&&!isCor?"var(--red)":"transparent",color:(isCor||isPk)?"#fff":"var(--t3)"}}>
+                  {isCor?"✓":isPk?"✗":String.fromCharCode(65+i)}
+                </span>
+                <span style={{fontSize:15,color:"var(--t1)"}}>{opt}</span>
+              </div>);
+          })}
+        </div>
+        <div className="crd" style={{padding:18,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",marginBottom:24}}>
+          <p style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{item.exp}</p>
+        </div>
+        <div style={{marginTop:"auto"}}>
+          <button className="btn1" onClick={next} style={{fontSize:16}}>
+            {ci<items.length-1?"Next Question →":"See Results"}
+          </button>
+        </div>
+      </div>);
+  }
+ 
   return null;
 }
 
@@ -5576,6 +5828,7 @@ useEffect(function(){
   if(sp==="wfall")return(<div className="app"><style>{CSS}</style><WordFall u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="duel")return(<div className="app"><style>{CSS}</style><DuelArena u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="sbuild")return(<div className="app"><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;sv(c);}} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="clue")return(<div className="app"><style>{CSS}</style><ClueHunter u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"clue",sc,tot);sv(c);}} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="ablitz")return(<div className="app"><style>{CSS}</style><AudioBlitz u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;sv(c);}} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="strats")return(<div className="app"><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
   if(sp==="gramref")return(<div className="app"><style>{CSS}</style><GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/></div>);
