@@ -2811,7 +2811,7 @@ function GamesHub(p){
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎧</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#10b981)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🔍"}</div>
         <div style={{flex:1}}>
@@ -2820,17 +2820,15 @@ function GamesHub(p){
         </div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>
       </div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Real-time 1v1 — challenge a classmate!</div>
           <div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>NEW</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
     </div>
   </div>);
+}
 }
 
 
