@@ -2807,15 +2807,19 @@ function GamesHub(p){
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Sentence Builder</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Tap blocks in the right order!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+<div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎧</div>
-		 <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+      <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#10b981)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🔍"}</div>
         <div style={{flex:1}}>
           <div className="out" style={{fontWeight:700,fontSize:15}}>Clue Hunter</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Find the clue, fill the blank!</div>
         </div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>
+      </div>
       </div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
