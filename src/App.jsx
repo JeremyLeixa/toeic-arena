@@ -2809,7 +2809,10 @@ function GamesHub(p){
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎧</div>
-		 <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+      <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#10b981)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🔍"}</div>
         <div style={{flex:1}}>
           <div className="out" style={{fontWeight:700,fontSize:15}}>Clue Hunter</div>
@@ -2817,9 +2820,6 @@ function GamesHub(p){
         </div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>
       </div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
@@ -2912,7 +2912,7 @@ function DailyTip(p){
 
   return(<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",
     display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20,animation:"fadeIn .3s"}}>
-    <div style={{width:"100%",maxWidth:420,background:"var(--bg2)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
+    <div style={{width:"100%",maxWidth:420,background:"var(--bg1)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
 
       {/* Header */}
       <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(0,212,255,.08),rgba(168,85,247,.08))"}}>
