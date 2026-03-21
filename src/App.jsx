@@ -3921,7 +3921,7 @@ function ClueHunter(p){
       </div>
       <Bar value={phase==="ans_fb"?ci+1:ci} max={TOTAL} h={4} color="linear-gradient(90deg,#00d4ff,#a855f7)"/>
       <div style={{marginTop:20,marginBottom:12}}>
-        <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{"🔍"} {items[ci].cat}</span>
+        <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{phase==="ans_fb"?"🔍 "+items[ci].cat:"🔍 Clue Hunter"}</span>
       </div>
     </>);
   }
