@@ -2820,7 +2820,6 @@ function GamesHub(p){
         </div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>
       </div>
-      </div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
