@@ -141,7 +141,7 @@ function SpeakBtn(p){
   }
   return(<button onClick={function(e){e.stopPropagation();go();}}
     style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:p.size||36,height:p.size||36,borderRadius:"50%",
-      background:playing?"rgba(0,212,255,.2)":"rgba(255,255,255,.06)",border:"1px solid "+(playing?"var(--cyan)":"var(--bdr)"),
+      background:playing?"rgba(0,212,255,.2)":"var(--bg3)",border:"1px solid "+(playing?"var(--cyan)":"var(--bdr)"),
       cursor:"pointer",transition:"all .2s",flexShrink:0}}>
     <span style={{fontSize:p.size?p.size*0.5:18,lineHeight:1}}>{playing?"🔊":"🔈"}</span>
   </button>);
@@ -284,7 +284,7 @@ async function load() {
     avatar: data.avatar || "⚔️",
     theme: data.theme || "dark",
     totalTime: data.total_time || 0,
-weeklyHistory: data.weekly_history || [],
+    weeklyHistory: data.weekly_history || [],
     dailyModSessions: data.daily_mod_sessions || {},
   };
 }
@@ -316,7 +316,9 @@ async function save(d) {
     avatar: d.avatar || "⚔️",
     theme: d.theme || "dark",
     unlocked_ach: d.unlockedAch || [],
-weekly_history: d.weeklyHistory || [],
+    total_time: d.totalTime || 0,
+    weekly_history: d.weeklyHistory || [],
+    daily_mod_sessions: d.dailyModSessions || {},
   }, { onConflict: 'name,class_code' });
   if(error) console.error("SAVE ERROR:", error.message, error.details);
 }
@@ -435,7 +437,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .out{font-family:'Outfit',sans-serif}`;
 
 // ─── SMALL COMPONENTS ───
-function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"rgba(255,255,255,.06)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,#00d4ff,#0088ff)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
+function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,#00d4ff,#0088ff)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
 
 function AchToast(p){if(!p.v)return null;
   return(<div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",zIndex:250,animation:"achPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
@@ -631,7 +633,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily
 <div style={{display:"flex",alignItems:"center",gap:10}}>
 <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#0088cc)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:16}} className="out">{lv.level}</div>
 <div><div className="out" style={{fontSize:13,fontWeight:700}}>Level {lv.level}</div><div style={{fontSize:11,color:"var(--t2)"}}>{lv.cur} / {lv.next} XP</div></div></div>
-<div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"rgba(255,255,255,.04)",borderRadius:99}}>
+<div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"var(--bg3)",borderRadius:99}}>
 <span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
@@ -647,7 +649,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily
   if(!mission)return null;
 
   if(mission.status==="calibrating"){
-    return(<div className="crd" style={{marginBottom:16,padding:14,background:"rgba(255,255,255,.02)"}}>
+    return(<div className="crd" style={{marginBottom:16,padding:14,background:"var(--bg3)"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:20}}>🎯</span>
         <div><div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t3)"}}>Daily Mission</div>
@@ -763,7 +765,7 @@ return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"
 <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",fontSize:14,cursor:"pointer"}}>Quit</button>
 <div style={{display:"flex",gap:6}}>{[0,1,2,3,4].map(function(i){return (<div key={i} style={{width:i===ci?24:8,height:8,borderRadius:4,background:i<ci?"var(--green)":i===ci?"var(--cyan)":"var(--t3)",transition:"all .3s"}}/>);})}</div>
 <div className="out" style={{fontSize:20,fontWeight:800,color:tc,minWidth:32,textAlign:"right"}}>{tl}</div></div>
-<div style={{width:"100%",height:3,background:"rgba(255,255,255,.06)",borderRadius:2,marginBottom:32,overflow:"hidden"}}><div style={{width:(tl/30*100)+"%",height:"100%",background:tc,borderRadius:2,transition:"width 1s linear"}}/></div>
+<div style={{width:"100%",height:3,background:"var(--bg3)",borderRadius:2,marginBottom:32,overflow:"hidden"}}><div style={{width:(tl/30*100)+"%",height:"100%",background:tc,borderRadius:2,transition:"width 1s linear"}}/></div>
 <span className="out" style={{fontSize:11,fontWeight:600,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{q.cat}</span>
 <h2 className="out" style={{fontWeight:700,fontSize:20,lineHeight:1.5,marginBottom:28,marginTop:8}}>{q.s}</h2>
 <div style={{display:"flex",flexDirection:"column",gap:10}}>{q.o.map(function(opt,i){var iS=sel===i,iC=i===q.c,sr=ph==="fb",bg="var(--bg2)",bd="var(--bdr)";
@@ -897,7 +899,7 @@ return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
   <div className="out" style={{fontWeight:700,fontSize:20,color:"var(--cyan)"}}>{card.w}</div>
   <SpeakBtn text={card.w} size={30}/></div>
 <div style={{fontSize:16,lineHeight:1.6,marginBottom:16}}>{card.d}</div>
-<div style={{fontSize:13,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5,padding:"12px 16px",background:"rgba(255,255,255,.03)",borderRadius:10,position:"relative"}}>
+<div style={{fontSize:13,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5,padding:"12px 16px",background:"var(--bg3)",borderRadius:10,position:"relative"}}>
   <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
     <span style={{flex:1}}>"{card.e}"</span>
     <SpeakBtn text={card.e} size={28} rate={0.85}/>
@@ -1888,7 +1890,7 @@ function StratCards(p){
             <div style={{flex:1}}>
               <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)"}}>{s.part} {"—"} {s.title}</div>
               <div style={{display:"flex",gap:8,marginTop:3}}>
-                {s.qs>0&&<span style={{fontSize:10,color:"var(--t3)",background:"rgba(255,255,255,.04)",padding:"2px 6px",borderRadius:4}}>{s.qs} Qs</span>}
+                {s.qs>0&&<span style={{fontSize:10,color:"var(--t3)",background:"var(--bg3)",padding:"2px 6px",borderRadius:4}}>{s.qs} Qs</span>}
                 <span style={{fontSize:10,color:"var(--cyan)",background:"rgba(0,212,255,.06)",padding:"2px 6px",borderRadius:4}}>{tipCount} tips</span>
               </div></div>
             <span style={{fontSize:12,color:"var(--t3)",transform:isOpen?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>{"▼"}</span>
@@ -2203,7 +2205,7 @@ function Part6Drill(p){
         var answered=thisIdx<bi;
         var label=answered?blanks[thisIdx].options[blanks[thisIdx].correct]:"____("+(thisIdx+1)+")____";
         return <span key={i} style={{padding:"2px 6px",borderRadius:4,fontWeight:700,
-          background:isCurrent?"rgba(0,212,255,.2)":answered?"rgba(0,230,118,.1)":"rgba(255,255,255,.06)",
+          background:isCurrent?"rgba(0,212,255,.2)":answered?"rgba(0,230,118,.1)":"var(--bg3)",
           color:isCurrent?"var(--cyan)":answered?"var(--green)":"var(--t3)",
           border:isCurrent?"1px solid var(--cyan)":"1px solid transparent"}}>{label}</span>;
       }
@@ -2217,7 +2219,7 @@ function Part6Drill(p){
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Text {ti+1}/{texts.length}</span></div>
     <div style={{display:"flex",gap:6,marginBottom:12}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(168,85,247,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}</span>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(255,255,255,.04)",color:"var(--t3)",borderRadius:6}} className="out">From: {curText.from}</span></div>
+      <span style={{fontSize:10,padding:"3px 8px",background:"var(--bg3)",color:"var(--t3)",borderRadius:6}} className="out">From: {curText.from}</span></div>
     <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--t1)"}}>Subject: {curText.subject}</div>
     <div className="crd" style={{padding:16,marginBottom:20}}>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:2,whiteSpace:"pre-line"}}>{renderText()}</p></div>
@@ -2232,7 +2234,7 @@ function Part6Drill(p){
     <Bar value={totalB} max={totalBlanks} h={4} color="linear-gradient(90deg,#ec4899,#a855f7)"/>
     <div style={{marginTop:12,marginBottom:6}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(168,85,247,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}: {curText.subject}</span></div>
-    <div className="crd" style={{padding:14,marginBottom:20,background:"rgba(255,255,255,.02)"}}>
+    <div className="crd" style={{padding:14,marginBottom:20,background:"var(--bg3)"}}>
       <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.9,whiteSpace:"pre-line"}}>{renderText()}</p></div>
     <p className="out" style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--cyan)"}}>Fill blank ({bi+1}):</p>
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -2299,7 +2301,7 @@ function Part7Read(p){
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:12}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type}</span>
-      <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(168,85,247,.15)":"rgba(255,255,255,.04)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions ▲":"Preview questions ▼"} ({curPass.questions.length})</button></div>
+      <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(168,85,247,.15)":"var(--bg3)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions ▲":"Preview questions ▼"} ({curPass.questions.length})</button></div>
     {showQPreview&&<div className="crd" style={{padding:12,marginBottom:12,borderColor:"rgba(168,85,247,.2)",background:"rgba(168,85,247,.04)"}}>
       <div style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Read these first!</div>
       {curPass.questions.map(function(q,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,padding:"4px 0",borderBottom:i<curPass.questions.length-1?"1px solid var(--bdr)":"none"}}><span style={{color:"var(--purple)",fontWeight:700}}>Q{i+1}.</span> {q.q}</div>);})}</div>}
@@ -2315,7 +2317,7 @@ function Part7Read(p){
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:6}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type} — Passage {pi+1}</span>
-      <button onClick={function(){setShowText(!showText);}} style={{fontSize:10,padding:"3px 8px",background:showText?"rgba(6,182,212,.15)":"rgba(255,255,255,.04)",color:showText?"var(--cyan)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showText?"Hide text ▲":"Show text ▼"}</button></div>
+      <button onClick={function(){setShowText(!showText);}} style={{fontSize:10,padding:"3px 8px",background:showText?"rgba(6,182,212,.15)":"var(--bg3)",color:showText?"var(--cyan)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showText?"Hide text ▲":"Show text ▼"}</button></div>
     {showText&&<div className="crd" style={{padding:14,marginBottom:12,maxHeight:200,overflowY:"auto",borderColor:"rgba(6,182,212,.2)"}}>
       <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,whiteSpace:"pre-line"}}>{curPass.text}</p></div>}
 
@@ -2585,7 +2587,7 @@ function MockTest(p){
               if(dp.type==="text")return(<span key={i}>{dp.content}</span>);
               var isCurrent=dp.index===bi;
               var hasAnswer=ans.p6[qi][dp.index]>=0;
-              return(<span key={i} className="out" style={{display:"inline",padding:"2px 8px",borderRadius:6,fontWeight:700,background:isCurrent?"rgba(0,212,255,.2)":hasAnswer?"rgba(0,230,118,.12)":"rgba(255,255,255,.06)",color:isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--t3)",border:"1px solid "+(isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--bdr)"),fontSize:12}}>{"["+String.fromCharCode(65+dp.index)+"]"}{hasAnswer&&!isCurrent?" ✓":""}</span>);
+              return(<span key={i} className="out" style={{display:"inline",padding:"2px 8px",borderRadius:6,fontWeight:700,background:isCurrent?"rgba(0,212,255,.2)":hasAnswer?"rgba(0,230,118,.12)":"var(--bg3)",color:isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--t3)",border:"1px solid "+(isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--bdr)"),fontSize:12}}>{("["+String.fromCharCode(65+dp.index)+"]")}{hasAnswer&&!isCurrent?" ✓":""}</span>);
             })}
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -2912,7 +2914,7 @@ function DailyTip(p){
 
   return(<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",
     display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20,animation:"fadeIn .3s"}}>
-    <div style={{width:"100%",maxWidth:420,background:"var(--bg1)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
+    <div style={{width:"100%",maxWidth:420,background:"var(--bg2)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
 
       {/* Header */}
       <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(0,212,255,.08),rgba(168,85,247,.08))"}}>
@@ -5691,26 +5693,6 @@ useEffect(function(){
       var acc=sc/tot;
       if(acc<0.30)gatedXp=Math.max(5,Math.round(baseXp*0.10));
       else if(acc<0.50)gatedXp=Math.round(baseXp*0.50);
-      // ≥50% : formule normale
-    }
-    // ── PILIER 2 : diminishing returns anti-farming ──
-    if(modId){
-      var c2=u;
-      var dms=c2.dailyModSessions||{};
-      var key=modId+"_"+today();
-      var sessionCount=dms[key]||0;
-      var farmMult=sessionCount===0?1:sessionCount===1?0.5:sessionCount===2?0.15:0;
-      gatedXp=Math.round(gatedXp*farmMult);
-    }
-    return gatedXp;
-  }
-  function applyXpGates(baseXp,sc,tot,modId){
-    // ── PILIER 1 : seuil d'accuracy ──
-    var gatedXp=baseXp;
-    if(tot>0){
-      var acc=sc/tot;
-      if(acc<0.30)gatedXp=Math.max(5,Math.round(baseXp*0.10));
-      else if(acc<0.50)gatedXp=Math.round(baseXp*0.50);
       // ≥50% : formule normale, pas de pénalité
     }
     // ── PILIER 2 : diminishing returns anti-farming ──
@@ -5834,7 +5816,7 @@ useEffect(function(){
       var prev2=c.gameScores[modeKey];var dominated=!prev2||(result.time!==undefined?result.time<prev2.time:(result.score>prev2.score||(result.score===prev2.score&&result.maxCombo>(prev2.maxCombo||0))));if(dominated){c.gameScores[modeKey]=result;}else if(prev2&&result.maxCombo!==undefined&&result.maxCombo>(prev2.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev2,{maxCombo:result.maxCombo});}
     }
     c.stats.sessions+=1;sv(c);sSP(null);sT("games");}
-function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
+  function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
   function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");sv(c);}
   function drillDone(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"drill");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
