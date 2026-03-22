@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
+import { playCorrect, playWrong, playXP, playLevelUp } from "./sounds.js";
 import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
 /* ═══════════════════════════════════════════
@@ -472,7 +473,7 @@ var[step,sSt]=useState("name");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("idrac2026");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
 
   function startTest(){sSt("test");}
-  function doAns(i){sS(i);if(i===PLACEMENT_TEST[ci].c)sSc(sc+1);sP("fb");}
+  function doAns(i){sS(i);if(i===PLACEMENT_TEST[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
   function nxt(){if(ci<PLACEMENT_TEST.length-1){sC(ci+1);sS(-1);sP("q");}else sSt("results");}
 
   var lvl=PLACEMENT_LEVELS.find(function(l){return sc>=l.min&&sc<=l.max;})||PLACEMENT_LEVELS[0];
@@ -745,7 +746,7 @@ useEffect(function(){
   if(ph==="q"&&tl>0){tr.current=setTimeout(function(){sT(tl-1);},1000);return function(){clearTimeout(tr.current);};}
   if(ph==="q"&&tl===0&&!answered.current){answered.current=true;clearTimeout(tr.current);sS(-1);sSk(true);setTimeout(function(){sSk(false);},500);sP("fb");}
 });
-function doAns(i){answered.current=true;clearTimeout(tr.current);sS(i);if(i===qs[ci].c)sSc(sc+1);else{sSk(true);setTimeout(function(){sSk(false);},500);}sP("fb");}
+function doAns(i){answered.current=true;clearTimeout(tr.current);sS(i);if(i===qs[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},500);}sP("fb");}
 function nxt(){answered.current=false;if(ci<qs.length-1){sC(ci+1);sS(-1);sT(30);sP("q");}else{sP("done");var xp=30+sc*14+(sc===5?20:0);p.done(sc,xp);}}
 
 if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -911,7 +912,7 @@ return(<button key={b.r} onClick={function(e){e.stopPropagation();rate(b.r);}} s
 
 // ─── DRILL SESSION ───
 function Drill(p){var qs=useMemo(function(){return shuffle(QUESTIONS).slice(0,10);},[]);var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[sk,sSk]=useState(false);
-function doAns(i){sS(i);if(i===qs[ci].c)sSc(sc+1);else{sSk(true);setTimeout(function(){sSk(false);},500);}sP("fb");}
+function doAns(i){sS(i);if(i===qs[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},500);}sP("fb");}
 function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sP("done");p.done(sc,qs.length,20+sc*7);}}
 
 if(ph==="done"){var fx=20+sc*7;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -1002,8 +1003,8 @@ function WordFam(p){
   function doAns(cat){
     sPk(cat);
     // Accept any valid POS for this word (handles homographs)
-    if(items[ci].validAnswers.indexOf(cat)!==-1)sSc(sc+1);
-    else{sSk(true);setTimeout(function(){sSk(false);},400);}
+    if(items[ci].validAnswers.indexOf(cat)!==-1){sSc(sc+1);try{playCorrect();}catch(e){}}
+    else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
   }
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
@@ -1060,7 +1061,7 @@ function ConnSort(p){
   var rules=[{id:"clause",label:"+ Clause",desc:"subject + verb",col:"var(--cyan)"},{id:"noun",label:"+ Noun / -ing",desc:"no subject + verb",col:"var(--orange)"},{id:"sentence",label:"New sentence",desc:"after . or ;",col:"var(--purple)"}];
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[pick,sPk]=useState(null);var[sk,sSk]=useState(false);
 
-  function doAns(rule){sPk(rule);if(rule===items[ci].rule)sSc(sc+1);else{sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function doAns(rule){sPk(rule);if(rule===items[ci].rule){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
 
   if(ph==="done"){var xp=15+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -1112,7 +1113,7 @@ function PrepDrill(p){
   },[]);
   var prepLabels={for:"Responsibility, eligibility, purpose",in:"Involvement, interest, results",with:"Compliance, familiarity, association",on:"Dependence, reliance",of:"Composition, charge, capability",to:"Relation, addition, attribution"};
 
-  function doAns(pr){sPk(pr);if(pr===items[ci].prep)sSc(sc+1);else{sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function doAns(pr){sPk(pr);if(pr===items[ci].prep){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
 
   if(ph==="menu")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -1346,7 +1347,7 @@ function GerInf(p){
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
           return(<button key={i} onClick={function(){
             if(ph!=="q")return;sPk(i);
-            if(i===q.c)sSc(sc+1);else{sSk(true);setTimeout(function(){sSk(false);},400);}
+            if(i===q.c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
             sP("fb");
           }} disabled={show}
             style={{padding:"18px 14px",background:bg,border:"2px solid "+bd,borderRadius:14,cursor:ph==="q"?"pointer":"default",
@@ -1384,7 +1385,7 @@ function TrapsQuiz(p){
   var traps=useMemo(function(){return shuffle(TOEIC_TRAPS);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
-  function doAns(i){sPk(i);if(i===traps[ci].correct)sSc(sc+1);else{sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function doAns(i){sPk(i);if(i===traps[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<traps.length-1){sC(ci+1);sPk(-1);sP("q");}else{sP("done");p.done(sc,traps.length,25+sc*6);}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -1769,7 +1770,7 @@ function PhrasalDojo(p){
           var bg="var(--bg2)";var bd="var(--bdr)";
           if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-          return(<button key={i} onClick={function(){if(ph!=="q")return;sPk(i);if(i===mOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);}else{setStreak(0);}sP("fb");}} disabled={show}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;sPk(i);if(i===mOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
             style={{padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",
               fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s",lineHeight:1.5}}>
             {opt}</button>);
@@ -1831,7 +1832,7 @@ function PhrasalDojo(p){
           var bg="var(--bg2)";var bd="var(--bdr)";var col="var(--t1)";
           if(show&&isCor){bg="rgba(0,230,118,.15)";bd="var(--green)";col="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
-          return(<button key={i} onClick={function(){if(ph!=="q")return;clearInterval(timerRef.current);sPk(i);if(i===pOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);}else{setStreak(0);}sP("fb");}} disabled={show}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;clearInterval(timerRef.current);sPk(i);if(i===pOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
             style={{padding:"18px 12px",background:bg,border:"2px solid "+bd,borderRadius:14,cursor:ph==="q"?"pointer":"default",
               fontSize:20,fontWeight:800,color:col,fontFamily:"'DM Sans',sans-serif",transition:"all .15s",textAlign:"center"}}>
             {opt}</button>);
@@ -1922,7 +1923,7 @@ function StratQuizPage(p){
   var qs=useMemo(function(){return shuffle(STRAT_QUIZ);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
-  function doAns(i){sPk(i);if(i===qs[ci].correct)sSc(sc+1);else{sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function doAns(i){sPk(i);if(i===qs[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<qs.length-1){sC(ci+1);sPk(-1);sP("q");}else{sP("done");p.done(sc,qs.length,20+sc*5);}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -1992,7 +1993,7 @@ function TimeSim(p){
     if(ph==="q"){timerRef.current=setInterval(function(){sEl(function(e){return e+1;});},1000);return function(){clearInterval(timerRef.current);};}
   },[ph]);
 
-  function doAns(i){sS(i);var correct=i===qs[ci].c;if(correct)sSc(sc+1);sAn(answers.concat([{q:ci,pick:i,correct:correct,time:elapsed}]));sP("next");}
+  function doAns(i){sS(i);var correct=i===qs[ci].c;if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sAn(answers.concat([{q:ci,pick:i,correct:correct,time:elapsed}]));sP("next");}
   function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{clearInterval(timerRef.current);sP("done");p.done(sc,qs.length,30+sc*5);}}
 
   function fmtTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
@@ -2169,8 +2170,8 @@ function Part6Drill(p){
 
   function doAns(i){
     sPk(i);
-    if(i===curBlank.correct)sSc(sc+1);
-    else{sSk(true);setTimeout(function(){sSk(false);},400);}
+    if(i===curBlank.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
+    else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sTB(totalB+1);sP("fb");
   }
   function nxt(){
@@ -2267,8 +2268,8 @@ function Part7Read(p){
 
   function doAns(i){
     sPk(i);
-    if(i===curQ.correct)sSc(sc+1);
-    else{sSk(true);setTimeout(function(){sSk(false);},400);}
+    if(i===curQ.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
+    else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sTQ(totalQ+1);sP("fb");
   }
   function nxt(){
@@ -2348,8 +2349,8 @@ function FalseFriends(p){
 
   function doAns(i){
     sPk(i);
-    if(i===items[ci].correct)sSc(sc+1);
-    else{sSk(true);setTimeout(function(){sSk(false);},400);}
+    if(i===items[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}
+    else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
   }
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);sP("q");}else{sP("done");p.done(sc,items.length,20+sc*5);}}
@@ -2811,17 +2812,16 @@ function GamesHub(p){
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎧</div>
-		 <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
+      <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#10b981)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🔍"}</div>
         <div style={{flex:1}}>
           <div className="out" style={{fontWeight:700,fontSize:15}}>Clue Hunter</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Find the clue, fill the blank!</div>
         </div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>
-      </div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
@@ -3003,8 +3003,8 @@ function SentenceBuilder(p){
       for(var i=0;i<placed.length;i++){
         if(placed[i].idx!==i){correct=false;break;}
       }
-      if(correct)sSc(sc+1);
-      else{sSk(true);setTimeout(function(){sSk(false);},400);}
+      if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}
+      else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
       sP("fb");
     }
   },[placed.length]);
@@ -3175,8 +3175,8 @@ function AudioBlitz(p){
     answeredRef.current=true;
     clearInterval(timerRef.current);
     sPk(i);
-    if(i===items[ci].c)sSc(sc+1);
-    else{sSk(true);setTimeout(function(){sSk(false);},400);}
+    if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}
+    else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
   }
 
@@ -3361,6 +3361,7 @@ function DuelArena(p){
     setMyTime(ma.time);setOppTime(oa.time);
     setMyScore(function(s){return s+myPts;});
     setOppScore(function(s){return s+oppPts;});
+    try{if(myCorrect)playCorrect();else playWrong();}catch(e){}
     setRoundResults(function(prev){return prev.concat([{qi:qi2,myPick:ma.pick,oppPick:oa.pick,myPts:myPts,oppPts:oppPts,correct:q.c}]);});
     setPhase("feedback");
   }
@@ -3891,7 +3892,7 @@ function ClueHunter(p){
     var clueOK=selected.length>0&&selected.every(function(s){return item.chips[s].c;})&&selected.some(function(s){return item.chips[s].c;});
     var ansOK=i===item.ans;
     var pts=clueOK&&ansOK?10:clueOK&&!ansOK?4:!clueOK&&ansOK?3:0;
-    setSc(function(prev){return prev.concat([{clue:clueOK,ans:ansOK,pts:pts}]);});
+    setSc(function(prev){return prev.concat([{clue:clueOK,ans:ansOK,pts:pts}]);});try{if(ansOK)playCorrect();else playWrong();}catch(e){}
     sPk(i);sP("ans_fb");
   }
  
@@ -4157,12 +4158,14 @@ function SpeedMatch(p){
     setMoves(moves+1);
     if(a.pairId===b.pairId){
       // Match!
+      try{playCorrect();}catch(e){}
       setTimeout(function(){
         setMatched(function(prev){return prev.concat([a.pairId]);});
         setRevealed([]);
       },300);
     } else {
       // No match
+      try{playWrong();}catch(e){}
       setLastWrong(true);
       setTimeout(function(){setRevealed([]);setLastWrong(false);},800);
     }
@@ -4337,6 +4340,7 @@ function animateFall(){
       if(newCombo>maxCombo)setMaxCombo(newCombo);
       var mult=newCombo>=6?3:newCombo>=3?2:1;
       setScore(score+mult);
+      try{playCorrect();}catch(e){}
       setFeedback({type:"ok",text:mult>1?"x"+mult+" COMBO!":"Correct!"});
       setTimeout(nextQuestion,600);
     } else {
@@ -4348,6 +4352,7 @@ function animateFall(){
     var newLives=lives-1;
     setLives(newLives);
     setCombo(0);
+    try{playWrong();}catch(e){}
     setShake(true);
     setTimeout(function(){setShake(false);},400);
     var q=allQs[qi];
@@ -5041,7 +5046,7 @@ function ListenP2(p){
     setPlaying(false);setPlayed(true);
   }
 
-  function doAns(i){sPk(i);if(i===items[ci].c)sSc(sc+1);sP("fb");}
+  function doAns(i){sPk(i);if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);sP("listen");}else{sP("done");p.done(sc,items.length,25+sc*6);}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -5138,7 +5143,7 @@ function ListenP1(p){
     setCurOpt(-1);setPlaying(false);setPlayed(true);
   }
 
-  function doAns(i){sPk(i);if(i===items[ci].c)sSc(sc+1);sP("fb");}
+  function doAns(i){sPk(i);if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);setCurOpt(-1);sP("listen");}else{sP("done");p.done(sc,items.length,20+sc*5);}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -5250,7 +5255,7 @@ function ListenP3(p){
   }
 
   function doAns(i){
-    sPk(i);if(i===items[ci].qs[qi].c)sSc(sc+1);sTQ(totalQ+1);sP("fb");
+    sPk(i);if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
   }
   function nxt(){
     sPk(-1);
@@ -5351,7 +5356,7 @@ function ListenP4(p){
   }
 
   function doAns(i){
-    sPk(i);if(i===items[ci].qs[qi].c)sSc(sc+1);sTQ(totalQ+1);sP("fb");
+    sPk(i);if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
   }
   function nxt(){
     sPk(-1);
@@ -5679,6 +5684,7 @@ useEffect(function(){
       ACHIEVEMENTS.forEach(function(a){
         if(a.check(d)&&d.unlockedAch.indexOf(a.id)===-1){
           d.unlockedAch.push(a.id);
+          try{playLevelUp();}catch(e){}
           setAchToast({name:a.name,icon:a.icon,desc:a.desc});
           setTimeout(function(){setAchToast(null);},3500);
         }
@@ -5706,7 +5712,7 @@ useEffect(function(){
     }
     return Math.max(0,gatedXp);
   }
-  function addXp(baseAmt){
+  function addXp(baseAmt){if(baseAmt>0)try{playXP();}catch(e){}
     var c=JSON.parse(JSON.stringify(u));var td=today();var bonuses=[];var isFirstToday=c.lastActive!==td;
 
     // Update streak
