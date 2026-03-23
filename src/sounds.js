@@ -5,6 +5,18 @@
 
 var audioCtx = null;
 
+function isMuted() {
+  try { return localStorage.getItem("toeic-sound") === "off"; } catch (e) { return false; }
+}
+
+export function setSoundEnabled(on) {
+  try { localStorage.setItem("toeic-sound", on ? "on" : "off"); } catch (e) {}
+}
+
+export function isSoundEnabled() {
+  try { return localStorage.getItem("toeic-sound") !== "off"; } catch (e) { return true; }
+}
+
 function ctx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === "suspended") audioCtx.resume();
@@ -13,6 +25,7 @@ function ctx() {
 
 // ── playCorrect — bright rising 2-tone chime ──
 export function playCorrect() {
+  if(isMuted())return;
   try {
     var c = ctx();
     var t = c.currentTime;
@@ -46,6 +59,7 @@ export function playCorrect() {
 
 // ── playWrong — low descending buzz ──
 export function playWrong() {
+  if(isMuted())return;
   try {
     var c = ctx();
     var t = c.currentTime;
@@ -66,6 +80,7 @@ export function playWrong() {
 
 // ── playXP — satisfying "coin collect" sparkle ──
 export function playXP() {
+  if(isMuted())return;
   try {
     var c = ctx();
     var t = c.currentTime;
@@ -90,6 +105,7 @@ export function playXP() {
 
 // ── playLevelUp — triumphant fanfare (achievement / league / level) ──
 export function playLevelUp() {
+  if(isMuted())return;
   try {
     var c = ctx();
     var t = c.currentTime;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
-import { playCorrect, playWrong, playXP, playLevelUp } from "./sounds.js";
+import { playCorrect, playWrong, playXP, playLevelUp, setSoundEnabled, isSoundEnabled } from "./sounds.js";
 import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
 /* ═══════════════════════════════════════════
@@ -5470,21 +5470,17 @@ function ReadingHub(p){
 }
 // ─── LEAGUE ───
 var SEASONS=[
-  {id:1,name:"Awakening",icon:"🌱",color:"var(--green)",weeks:["2026-W13","2026-W14","2026-W15"],start:"Mar 24",end:"Apr 13"},
-  {id:2,name:"Rising",icon:"🔥",color:"var(--orange)",weeks:["2026-W16","2026-W17","2026-W18"],start:"Apr 14",end:"May 4"},
-  {id:3,name:"Clash",icon:"⚔️",color:"var(--red)",weeks:["2026-W19","2026-W20","2026-W21"],start:"May 5",end:"May 25"},
-  {id:4,name:"Final Push",icon:"🏆",color:"var(--gold)",weeks:["2026-W22","2026-W23","2026-W24","2026-W25"],start:"May 26",end:"Jun 22"},
+  {id:1,name:"Awakening",icon:"🌱",color:"var(--green)",weeks:["2026-W12","2026-W13","2026-W14"],start:"Mar 23",end:"Apr 12",endDate:"2026-04-12"},
+  {id:2,name:"Rising",icon:"🔥",color:"var(--orange)",weeks:["2026-W15","2026-W16","2026-W17"],start:"Apr 13",end:"May 3",endDate:"2026-05-03"},
+  {id:3,name:"Clash",icon:"⚔️",color:"var(--red)",weeks:["2026-W18","2026-W19","2026-W20"],start:"May 4",end:"May 24",endDate:"2026-05-24"},
+  {id:4,name:"Final Push",icon:"🏆",color:"var(--gold)",weeks:["2026-W21","2026-W22","2026-W23","2026-W24","2026-W25"],start:"May 25",end:"Jun 28",endDate:"2026-06-28"},
 ];
 function getCurrentSeason(){var cw=weekId();for(var i=0;i<SEASONS.length;i++){if(SEASONS[i].weeks.indexOf(cw)!==-1)return SEASONS[i];}return SEASONS[SEASONS.length-1];}
 function getSeasonEndCountdown(season){
-  // Parse end date of season from its last week
-  var lastWk=season.weeks[season.weeks.length-1];
-  var m=lastWk.match(/(\d{4})-W(\d+)/);if(!m)return"";
-  var yr=parseInt(m[1]),wn=parseInt(m[2]);
-  var jan1=new Date(yr,0,1);var dayOfWeek=jan1.getDay()||7;
-  var mondayMs=jan1.getTime()+((wn-1)*7-(dayOfWeek-1))*864e5;
-  var sunday=new Date(mondayMs+6*864e5);
-  var now=new Date();var diff=Math.ceil((sunday-now)/(864e5));
+  var parts=season.endDate.split("-");
+  var endSunday=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]),23,59,59);
+  var now=new Date();
+  var diff=Math.ceil((endSunday-now)/(864e5));
   return diff>0?diff+" days left":"Ended";
 }
 
@@ -5688,6 +5684,25 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       left:u.theme==="light"?27:3,transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
   </button>
 </div>
+
+{/* Sound toggle */}
+{function(){
+  var soundOn=isSoundEnabled();
+  return(<div className="crd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:16,marginBottom:20}}>
+  <div><div className="out" style={{fontWeight:700,fontSize:14}}>Sound Effects</div>
+    <div style={{fontSize:12,color:"var(--t2)"}}>{soundOn?"Sounds on":"Sounds off"}</div></div>
+  <button onClick={function(){
+    var cur=isSoundEnabled();
+    setSoundEnabled(!cur);
+    if(!cur)try{playCorrect();}catch(e){}
+    var c=JSON.parse(JSON.stringify(u));p.setAvatar(c);
+  }}
+    style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",position:"relative",
+      background:soundOn?"var(--cyan)":"var(--t3)",transition:"background .3s"}}>
+    <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:3,
+      left:soundOn?27:3,transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
+  </button>
+</div>);}()}
 
 {/* Daily Tips toggle */}
 {function(){
