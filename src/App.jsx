@@ -4934,8 +4934,9 @@ function TeacherDash(p){
             if(!weekMap[h.week])weekMap[h.week]=[];
             weekMap[h.week].push({name:s.name,xp:h.xp});
           });
-          // Also include current week if they have XP
-          if((s.weekly_xp||0)>0){
+          // Also include current week if they have XP and week_id is current
+          var currentWk=weekId();
+          if((s.weekly_xp||0)>0&&s.week_id===currentWk){
             var cw=s.week_id;
             if(cw){
               if(!weekMap[cw])weekMap[cw]=[];
@@ -5470,11 +5471,12 @@ function ReadingHub(p){
 // ─── LEAGUE ───
 function League(p){var u=p.u,lg=getLeague(u.weeklyXp);
 var[rivals,setRivals]=useState([]);
+var cw=weekId();
 useEffect(function(){
-  supabase.from('students').select('name,weekly_xp,avatar').eq('class_code','idrac2026').order('weekly_xp',{ascending:false}).limit(50)
+  supabase.from('students').select('name,weekly_xp,week_id,avatar').eq('class_code','idrac2026').limit(50)
     .then(function(res){if(res.data)setRivals(res.data);});
 },[u.weeklyXp]);
-var all=rivals.map(function(r){return{name:r.name===u.name?r.name+" (You)":r.name,avatar:r.avatar||"⚔️",xp:r.weekly_xp||0,me:r.name===u.name};});
+var all=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name===u.name?r.name+" (You)":r.name,avatar:r.avatar||"⚔️",xp:xp,me:r.name===u.name};});
 if(!all.find(function(a){return a.me;}))all.push({name:u.name+" (You)",avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
 all.sort(function(a,b){return b.xp-a.xp;});
 
