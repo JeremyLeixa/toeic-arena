@@ -5469,53 +5469,200 @@ function ReadingHub(p){
   </div>);
 }
 // ─── LEAGUE ───
+var SEASONS=[
+  {id:1,name:"Awakening",icon:"🌱",color:"var(--green)",weeks:["2026-W13","2026-W14","2026-W15"],start:"Mar 24",end:"Apr 13"},
+  {id:2,name:"Rising",icon:"🔥",color:"var(--orange)",weeks:["2026-W16","2026-W17","2026-W18"],start:"Apr 14",end:"May 4"},
+  {id:3,name:"Clash",icon:"⚔️",color:"var(--red)",weeks:["2026-W19","2026-W20","2026-W21"],start:"May 5",end:"May 25"},
+  {id:4,name:"Final Push",icon:"🏆",color:"var(--gold)",weeks:["2026-W22","2026-W23","2026-W24","2026-W25"],start:"May 26",end:"Jun 22"},
+];
+function getCurrentSeason(){var cw=weekId();for(var i=0;i<SEASONS.length;i++){if(SEASONS[i].weeks.indexOf(cw)!==-1)return SEASONS[i];}return SEASONS[SEASONS.length-1];}
+function getSeasonEndCountdown(season){
+  // Parse end date of season from its last week
+  var lastWk=season.weeks[season.weeks.length-1];
+  var m=lastWk.match(/(\d{4})-W(\d+)/);if(!m)return"";
+  var yr=parseInt(m[1]),wn=parseInt(m[2]);
+  var jan1=new Date(yr,0,1);var dayOfWeek=jan1.getDay()||7;
+  var mondayMs=jan1.getTime()+((wn-1)*7-(dayOfWeek-1))*864e5;
+  var sunday=new Date(mondayMs+6*864e5);
+  var now=new Date();var diff=Math.ceil((sunday-now)/(864e5));
+  return diff>0?diff+" days left":"Ended";
+}
+
+function computeRankings(students,cw,weeks){
+  // Build weekly XP map: {weekId: [{name, xp}]}
+  var weekMap={};
+  students.forEach(function(s){
+    var hist=s.weekly_history||[];
+    hist.forEach(function(h){
+      if(!weekMap[h.week])weekMap[h.week]=[];
+      weekMap[h.week].push({name:s.name,xp:h.xp||0});
+    });
+    // Include current week
+    if(s.week_id===cw&&(s.weekly_xp||0)>0){
+      if(!weekMap[cw])weekMap[cw]=[];
+      var exists=weekMap[cw].find(function(e){return e.name===s.name;});
+      if(!exists)weekMap[cw].push({name:s.name,xp:s.weekly_xp});
+    }
+  });
+
+  // Compute ranking points per student
+  var pointsMap={};
+  students.forEach(function(s){pointsMap[s.name]=0;});
+
+  var filteredWeeks=weeks?weeks:Object.keys(weekMap);
+  filteredWeeks.forEach(function(wk){
+    var entries=weekMap[wk]||[];
+    // Filter only active (xp > 0)
+    var active=entries.filter(function(e){return e.xp>0;}).sort(function(a,b){return b.xp-a.xp;});
+    var N=active.length;
+    active.forEach(function(entry,rank){
+      if(!pointsMap[entry.name])pointsMap[entry.name]=0;
+      pointsMap[entry.name]+=(N-rank); // 1st = N pts, 2nd = N-1, ...
+    });
+  });
+
+  // Convert to sorted array
+  var result=Object.keys(pointsMap).map(function(name){
+    var s=students.find(function(st){return st.name===name;});
+    return{name:name,pts:pointsMap[name],avatar:s?s.avatar||"⚔️":"⚔️"};
+  });
+  result.sort(function(a,b){return b.pts-a.pts;});
+  return result;
+}
+
 function League(p){var u=p.u,lg=getLeague(u.weeklyXp);
 var[rivals,setRivals]=useState([]);
+var[tab,setTab]=useState("week"); // week | season | overall
 var cw=weekId();
+var curSeason=getCurrentSeason();
+
 useEffect(function(){
-  supabase.from('students').select('name,weekly_xp,week_id,avatar').eq('class_code','idrac2026').limit(50)
+  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code','idrac2026').limit(50)
     .then(function(res){if(res.data)setRivals(res.data);});
 },[u.weeklyXp]);
-var all=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name===u.name?r.name+" (You)":r.name,avatar:r.avatar||"⚔️",xp:xp,me:r.name===u.name};});
-if(!all.find(function(a){return a.me;}))all.push({name:u.name+" (You)",avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
-all.sort(function(a,b){return b.xp-a.xp;});
 
-// Group by league (reverse order: highest tier first)
-var tiers=LEAGUES.slice().reverse();
-var groups=tiers.map(function(tier){
-  var members=all.filter(function(pl){return getLeague(pl.xp).id===tier.id;});
-  return{tier:tier,members:members};
-}).filter(function(g){return g.members.length>0;});
+// ── WEEK VIEW data ──
+var weekAll=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name===u.name?r.name+" (You)":r.name,avatar:r.avatar||"⚔️",xp:xp,me:r.name===u.name};});
+if(!weekAll.find(function(a){return a.me;}))weekAll.push({name:u.name+" (You)",avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
+weekAll.sort(function(a,b){return b.xp-a.xp;});
+
+// ── SEASON VIEW data ──
+var seasonRanking=useMemo(function(){
+  if(rivals.length===0)return[];
+  return computeRankings(rivals,cw,curSeason.weeks);
+},[rivals,cw]);
+
+// ── OVERALL VIEW data ──
+var allSeasonWeeks=useMemo(function(){var w=[];SEASONS.forEach(function(s){s.weeks.forEach(function(wk){w.push(wk);});});return w;},[]);
+var overallRanking=useMemo(function(){
+  if(rivals.length===0)return[];
+  return computeRankings(rivals,cw,allSeasonWeeks);
+},[rivals,cw]);
 
 var nx=LEAGUES.find(function(l){return l.min>u.weeklyXp;});
-var globalRank=all.findIndex(function(pl){return pl.me;})+1;
+var weekRank=weekAll.findIndex(function(pl){return pl.me;})+1;
+var seasonRank=(seasonRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-";
+var overallRank=(overallRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-";
+var countdown=getSeasonEndCountdown(curSeason);
 
-return(<div className="enter" style={{padding:"20px 16px 100px"}}><h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>League</h1><p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Weekly ranking</p>
-<div className="crd glo" style={{textAlign:"center",marginBottom:20,padding:24}}>
-<div style={{fontSize:48,marginBottom:8,animation:"glow 3s infinite"}}>{lg.icon}</div>
-<div className="out" style={{fontWeight:800,fontSize:24,color:lg.color}}>{lg.name} League</div>
-<div style={{fontSize:13,color:"var(--t2)",marginTop:4}}>{u.weeklyXp} XP this week · Rank #{globalRank}</div>
-{nx&&<div style={{marginTop:12}}><div style={{fontSize:11,color:"var(--t3)",marginBottom:6}}>{nx.min-u.weeklyXp} XP to {nx.name}</div><Bar value={u.weeklyXp-lg.min} max={nx.min-lg.min} h={4} color={nx.color}/></div>}</div>
+// ── Render helpers ──
+function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP";
+  return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(0,212,255,.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(0,212,255,.25)":"1px solid var(--bdr)",borderRadius:12}}>
+    <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?(rank===1?"🥇":rank===2?"🥈":"🥉"):rank}</div>
+    <div style={{fontSize:20,width:28,textAlign:"center"}}>{pl.avatar}</div>
+    <div style={{flex:1}}><div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)"}}>{isMe?pl.name+" (You)":pl.name}</div></div>
+    <div className="out" style={{fontWeight:700,fontSize:14,color:isMe?"var(--cyan)":"var(--t2)"}}>{pl.pts!==undefined?pl.pts:pl.xp} {unit}</div>
+  </div>);
+}
 
-{groups.map(function(g){var tier=g.tier;return(<div key={tier.id} style={{marginBottom:16}}>
-  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,padding:"0 4px"}}>
-    <span style={{fontSize:18}}>{tier.icon}</span>
-    <span className="out" style={{fontWeight:700,fontSize:14,color:tier.color}}>{tier.name}</span>
-    <span style={{fontSize:11,color:"var(--t3)"}}>({g.members.length})</span>
-    <div style={{flex:1,height:1,background:tier.color+"30",marginLeft:4}}/>
+return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+<h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>League</h1>
+
+{/* Season banner */}
+<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(0,212,255,.06),rgba(168,85,247,.06))",borderColor:"rgba(0,212,255,.15)"}}>
+  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+    <div style={{display:"flex",alignItems:"center",gap:8}}>
+      <span style={{fontSize:22}}>{curSeason.icon}</span>
+      <div>
+        <div className="out" style={{fontWeight:800,fontSize:15,color:curSeason.color}}>Season {curSeason.id}: {curSeason.name}</div>
+        <div style={{fontSize:11,color:"var(--t3)"}}>{curSeason.start} → {curSeason.end}</div>
+      </div>
+    </div>
+    <div style={{textAlign:"right"}}>
+      <div style={{fontSize:12,fontWeight:700,color:countdown==="Ended"?"var(--red)":"var(--cyan)"}}>{countdown}</div>
+    </div>
+  </div>
+</div>
+
+{/* Tab bar */}
+<div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:10,padding:3}}>
+  {[{k:"week",l:"Week"},{k:"season",l:"Season "+curSeason.id},{k:"overall",l:"Overall"}].map(function(t){
+    var active=tab===t.k;
+    return(<button key={t.k} onClick={function(){setTab(t.k);}} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:active?700:500,background:active?"var(--cyan)":"transparent",color:active?"#000":"var(--t3)",transition:"all .2s"}}>{t.l}</button>);
+  })}
+</div>
+
+{/* Stats summary */}
+<div style={{display:"flex",gap:8,marginBottom:16}}>
+  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--cyan)"}}>{u.weeklyXp}</div><div style={{fontSize:10,color:"var(--t3)"}}>Week XP</div></div>
+  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:curSeason.color}}>#{seasonRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Season</div></div>
+  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)"}}>#{overallRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Overall</div></div>
+</div>
+
+{/* ── WEEK TAB ── */}
+{tab==="week"&&(<div>
+  <div className="crd glo" style={{textAlign:"center",marginBottom:16,padding:20}}>
+    <div style={{fontSize:40,marginBottom:6,animation:"glow 3s infinite"}}>{lg.icon}</div>
+    <div className="out" style={{fontWeight:800,fontSize:20,color:lg.color}}>{lg.name} League</div>
+    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Rank #{weekRank} this week</div>
+    {nx&&<div style={{marginTop:10}}><div style={{fontSize:10,color:"var(--t3)",marginBottom:4}}>{nx.min-u.weeklyXp} XP to {nx.name}</div><Bar value={u.weeklyXp-lg.min} max={nx.min-lg.min} h={4} color={nx.color}/></div>}
   </div>
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
-    {g.members.map(function(pl,i){var me=pl.me;var gRk=all.indexOf(pl)+1;return(
-    <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:me?"rgba(0,212,255,.08)":"var(--bg2)",border:me?"1.5px solid rgba(0,212,255,.25)":"1px solid var(--bdr)",borderRadius:12}}>
-      <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:gRk<=3?"var(--gold)":"var(--t3)"}}>{gRk<=3?(gRk===1?"🥇":gRk===2?"🥈":"🥉"):gRk}</div>
-      <div style={{fontSize:20,width:28,textAlign:"center"}}>{pl.avatar}</div>
-      <div style={{flex:1}}><div className="out" style={{fontWeight:me?700:500,fontSize:14,color:me?"var(--cyan)":"var(--t1)"}}>{pl.name}</div></div>
-      <div className="out" style={{fontWeight:700,fontSize:14,color:me?"var(--cyan)":"var(--t2)"}}>{pl.xp} XP</div>
-    </div>);})}
+    {weekAll.map(function(pl,i){return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.me} unit="XP"/>);})}
   </div>
-</div>);})}
+  <p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:16}}>Resets every Monday · Ranking determines Season points</p>
+</div>)}
 
-<p style={{textAlign:"center",fontSize:12,color:"var(--t3)",marginTop:20}}>Leaderboard resets weekly</p></div>);}
+{/* ── SEASON TAB ── */}
+{tab==="season"&&(<div>
+  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(0,212,255,.04),rgba(168,85,247,.04))"}}>
+    <div style={{fontSize:36,marginBottom:6}}>{curSeason.icon}</div>
+    <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Season {curSeason.id}: {curSeason.name}</div>
+    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} weeks · {countdown}</div>
+    <div style={{fontSize:11,color:"var(--t3)",marginTop:8,lineHeight:1.5}}>Each week, 1st place gets N pts, 2nd gets N-1, ...<br/>Consistency wins over one big week!</div>
+  </div>
+  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    {seasonRanking.filter(function(pl){return pl.pts>0;}).map(function(pl,i){return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.name===u.name} unit="pts"/>);})}
+    {seasonRanking.filter(function(pl){return pl.pts>0;}).length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>No season data yet — start training!</p></div>}
+  </div>
+</div>)}
+
+{/* ── OVERALL TAB ── */}
+{tab==="overall"&&(<div>
+  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(245,158,11,.04),rgba(168,85,247,.04))"}}>
+    <div style={{fontSize:36,marginBottom:6}}>{"🏆"}</div>
+    <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--gold)"}}>Overall Ranking</div>
+    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Cumulative ranking points across all seasons</div>
+    <div style={{fontSize:11,color:"var(--t3)",marginTop:8}}>Top 3 + Top 10 = bonus points on your final grade</div>
+  </div>
+  {/* Season breakdown mini-bar */}
+  <div style={{display:"flex",gap:6,marginBottom:16}}>
+    {SEASONS.map(function(s){
+      var isCurrent=s.id===curSeason.id;var isPast=s.weeks[s.weeks.length-1]<cw;
+      return(<div key={s.id} className="crd" style={{flex:1,padding:"8px 4px",textAlign:"center",borderColor:isCurrent?"rgba(0,212,255,.3)":"var(--bdr)",opacity:(!isCurrent&&!isPast)?0.4:1}}>
+        <div style={{fontSize:16}}>{s.icon}</div>
+        <div style={{fontSize:9,color:isCurrent?"var(--cyan)":"var(--t3)",fontWeight:isCurrent?700:400}}>S{s.id}</div>
+        <div style={{fontSize:8,color:"var(--t3)"}}>{isPast?"Done":isCurrent?"Active":"Soon"}</div>
+      </div>);
+    })}
+  </div>
+  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    {overallRanking.filter(function(pl){return pl.pts>0;}).map(function(pl,i){return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.name===u.name} unit="pts"/>);})}
+    {overallRanking.filter(function(pl){return pl.pts>0;}).length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>No data yet — Season 1 starts March 24!</p></div>}
+  </div>
+</div>)}
+
+</div>);}
 
 // ─── PROFILE ───
 function Profile(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),acc=u.stats.totalQ>0?Math.round(u.stats.correct/u.stats.totalQ*100):0;
