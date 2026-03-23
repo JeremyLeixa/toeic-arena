@@ -2787,17 +2787,11 @@ function GamesHub(p){
     <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Arena Games</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Train your reflexes, earn XP</p>
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
-      <div className="crd" onClick={function(){p.nav("matchE");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
+      <div className="crd" onClick={function(){p.nav("smatch");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Speed Match</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Easy — 6 pairs</div>
-          {bestM&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestM.time}s · {bestM.moves} moves</div>}</div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("matchH");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#a855f7,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Speed Match</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Hard — 8 pairs</div>
-          {bestMH&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestMH.time}s · {bestMH.moves} moves</div>}</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Match words with definitions!</div>
+          {(bestM||bestMH)&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{bestM?"Easy: "+bestM.time+"s":""}{bestM&&bestMH?" · ":""}{bestMH?"Hard: "+bestMH.time+"s":""}</div>}</div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("wfall");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ef4444,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⬇️</div>
@@ -4111,6 +4105,29 @@ function ClueHunter(p){
 }
 
 // ─── SPEED MATCH ───
+function SpeedMatchHub(p){
+  var bestE=p.u.gameScores&&p.u.gameScores.matchEasy;
+  var bestH=p.u.gameScores&&p.u.gameScores.matchHard;
+  return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>{"🎯"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Speed Match</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Match each word with its definition.<br/>Flip tiles, find pairs, beat the clock!</p>
+    <div style={{display:"flex",flexDirection:"column",gap:12,maxWidth:320,margin:"0 auto",width:"100%"}}>
+      <div className="crd" onClick={function(){p.nav("matchE");}} style={{cursor:"pointer",padding:20,textAlign:"center"}}>
+        <div className="out" style={{fontWeight:800,fontSize:18,color:"var(--cyan)",marginBottom:4}}>Easy Mode</div>
+        <div style={{fontSize:12,color:"var(--t3)"}}>6 pairs · 4x3 grid</div>
+        {bestE&&<div style={{fontSize:11,color:"var(--gold)",marginTop:6}}>{"🏅"} Best: {bestE.time}s · {bestE.moves} moves</div>}
+      </div>
+      <div className="crd" onClick={function(){p.nav("matchH");}} style={{cursor:"pointer",padding:20,textAlign:"center"}}>
+        <div className="out" style={{fontWeight:800,fontSize:18,color:"var(--purple)",marginBottom:4}}>Hard Mode</div>
+        <div style={{fontSize:12,color:"var(--t3)"}}>8 pairs · 4x4 grid</div>
+        {bestH&&<div style={{fontSize:11,color:"var(--gold)",marginTop:6}}>{"🏅"} Best: {bestH.time}s · {bestH.moves} moves</div>}
+      </div>
+    </div>
+    <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%",maxWidth:320,margin:"24px auto 0"}}>Back to Games</button>
+  </div>);
+}
+
 function SpeedMatch(p){
   var pairCount=p.mode==="hard"?8:6;
   var cols=p.mode==="hard"?4:3;
@@ -4244,21 +4261,21 @@ function SpeedMatch(p){
       {pairs.map(function(tile){
         var isRevealed=revealed.indexOf(tile.id)!==-1;
         var isMatched=matched.indexOf(tile.pairId)!==-1;
-        var bgColor=isMatched?"rgba(0,230,118,.12)":isRevealed?(tile.type==="word"?"rgba(0,212,255,.15)":"rgba(168,85,247,.15)"):"var(--bg2)";
+        var bgColor=isMatched?"rgba(0,230,118,.18)":isRevealed?(tile.type==="word"?"rgba(0,212,255,.2)":"rgba(168,85,247,.2)"):"var(--bg3)";
         var borderColor=isMatched?"var(--green)":isRevealed?(tile.type==="word"?"var(--cyan)":"var(--purple)"):"var(--bdr)";
         if(lastWrong&&isRevealed)borderColor="var(--red)";
 
         return(<div key={tile.id} onClick={function(){tapTile(tile.id);}}
           style={{
             minHeight:p.mode==="hard"?68:78,display:"flex",alignItems:"center",justifyContent:"center",
-            background:isMatched?"rgba(0,230,118,.06)":bgColor,
+            background:isMatched?"rgba(0,230,118,.15)":bgColor,
             border:"1.5px solid "+borderColor,borderRadius:14,cursor:isMatched?"default":"pointer",
-            opacity:isMatched?.25:1,transition:"all .25s",padding:"8px 6px",
+            opacity:isMatched?.4:1,transition:"all .25s",padding:"8px 6px",
             transform:isRevealed&&!isMatched?"scale(1.04)":"scale(1)"
           }}>
           {(isRevealed||isMatched)?(<span className="out" style={{
             fontSize:tile.type==="word"?14:11,fontWeight:tile.type==="word"?800:500,
-            color:isMatched?"var(--green)":tile.type==="word"?"var(--cyan)":"var(--t1)",
+            color:isMatched?"#059669":tile.type==="word"?"var(--cyan)":"var(--t1)",
             textAlign:"center",lineHeight:1.35,wordBreak:"break-word"
           }}>{tile.content}</span>):(<span style={{fontSize:22,opacity:.25}}>?</span>)}
         </div>);
@@ -6008,41 +6025,43 @@ useEffect(function(){
     sU(null);sSP(null);sT("home");
   }
 
-  if(ld)return(<div className="app"><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
-  if(teacherMode)return(<div><style>{CSS}</style><TeacherDash back={function(){setTeacher(false);}}/></div>);
-  if(!u)return(<div><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover}/></div>);
-  if(sp==="daily")return(<div className="app"><style>{CSS}</style><Daily u={u} done={dailyDone} back={function(){sSP(null);}}/></div>);
-  if(sp==="csess"||sp==="cdom")return(<div className="app"><style>{CSS}</style><CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/></div>);
-  if(sp==="drill")return(<div className="app"><style>{CSS}</style><Drill u={u} done={drillDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="wordfam")return(<div className="app"><style>{CSS}</style><WordFam u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="connsort")return(<div className="app"><style>{CSS}</style><ConnSort u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="prepdrill")return(<div className="app"><style>{CSS}</style><PrepDrill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="gerinf")return(<div className="app"><style>{CSS}</style><GerInf u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="traps")return(<div className="app"><style>{CSS}</style><TrapsQuiz u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="falsefr")return(<div className="app"><style>{CSS}</style><FalseFriends u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="pvdojo")return(<div className="app"><style>{CSS}</style><PhrasalDojo u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="mock1")return(<div className="app"><style>{CSS}</style><MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="mock2")return(<div className="app"><style>{CSS}</style><MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="mock3")return(<div className="app"><style>{CSS}</style><MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="matchE")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="matchH")return(<div className="app"><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="wfall")return(<div className="app"><style>{CSS}</style><WordFall u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="duel")return(<div className="app"><style>{CSS}</style><DuelArena u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="sbuild")return(<div className="app"><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="clue")return(<div className="app"><style>{CSS}</style><ClueHunter u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="ablitz")return(<div className="app"><style>{CSS}</style><AudioBlitz u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="strats")return(<div className="app"><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
-  if(sp==="gramref")return(<div className="app"><style>{CSS}</style><GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/></div>);
-  if(sp==="stratquiz")return(<div className="app"><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="timesim")return(<div className="app"><style>{CSS}</style><TimeSim u={u} done={miniDone} nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="p6")return(<div className="app"><style>{CSS}</style><Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="p7")return(<div className="app"><style>{CSS}</style><Part7Read u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lis")return(<div className="app"><style>{CSS}</style><ListenHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lisP1")return(<div className="app"><style>{CSS}</style><ListenP1 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="read")return(<div className="app"><style>{CSS}</style><ReadingHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lisP2")return(<div className="app"><style>{CSS}</style><ListenP2 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lisP3")return(<div className="app"><style>{CSS}</style><ListenP3 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lisP4")return(<div className="app"><style>{CSS}</style><ListenP4 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  var lc="app"+(u&&u.theme==="light"?" light":"");
+  if(ld)return(<div className={lc}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
+  if(teacherMode)return(<div className={lc}><style>{CSS}</style><TeacherDash back={function(){setTeacher(false);}}/></div>);
+  if(!u)return(<div className={lc}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover}/></div>);
+  if(sp==="daily")return(<div className={lc}><style>{CSS}</style><Daily u={u} done={dailyDone} back={function(){sSP(null);}}/></div>);
+  if(sp==="csess"||sp==="cdom")return(<div className={lc}><style>{CSS}</style><CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/></div>);
+  if(sp==="drill")return(<div className={lc}><style>{CSS}</style><Drill u={u} done={drillDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="wordfam")return(<div className={lc}><style>{CSS}</style><WordFam u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="connsort")return(<div className={lc}><style>{CSS}</style><ConnSort u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="prepdrill")return(<div className={lc}><style>{CSS}</style><PrepDrill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="gerinf")return(<div className={lc}><style>{CSS}</style><GerInf u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="traps")return(<div className={lc}><style>{CSS}</style><TrapsQuiz u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="falsefr")return(<div className={lc}><style>{CSS}</style><FalseFriends u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="pvdojo")return(<div className={lc}><style>{CSS}</style><PhrasalDojo u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="mock1")return(<div className={lc}><style>{CSS}</style><MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="mock2")return(<div className={lc}><style>{CSS}</style><MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="mock3")return(<div className={lc}><style>{CSS}</style><MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="smatch")return(<div className={lc}><style>{CSS}</style><SpeedMatchHub u={u} nav={nav} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="matchE")return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={gameDone} back={function(){sSP("smatch");}}/></div>);
+  if(sp==="matchH")return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={gameDone} back={function(){sSP("smatch");}}/></div>);
+  if(sp==="wfall")return(<div className={lc}><style>{CSS}</style><WordFall u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="duel")return(<div className={lc}><style>{CSS}</style><DuelArena u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="sbuild")return(<div className={lc}><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="clue")return(<div className={lc}><style>{CSS}</style><ClueHunter u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="ablitz")return(<div className={lc}><style>{CSS}</style><AudioBlitz u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="strats")return(<div className={lc}><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
+  if(sp==="gramref")return(<div className={lc}><style>{CSS}</style><GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/></div>);
+  if(sp==="stratquiz")return(<div className={lc}><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="timesim")return(<div className={lc}><style>{CSS}</style><TimeSim u={u} done={miniDone} nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="p6")return(<div className={lc}><style>{CSS}</style><Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="p7")return(<div className={lc}><style>{CSS}</style><Part7Read u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lis")return(<div className={lc}><style>{CSS}</style><ListenHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP1")return(<div className={lc}><style>{CSS}</style><ListenP1 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="read")return(<div className={lc}><style>{CSS}</style><ReadingHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP2")return(<div className={lc}><style>{CSS}</style><ListenP2 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP3")return(<div className={lc}><style>{CSS}</style><ListenP3 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP4")return(<div className={lc}><style>{CSS}</style><ListenP4 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
 
   return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
