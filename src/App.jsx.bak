@@ -141,7 +141,7 @@ function SpeakBtn(p){
   }
   return(<button onClick={function(e){e.stopPropagation();go();}}
     style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:p.size||36,height:p.size||36,borderRadius:"50%",
-      background:playing?"rgba(212,148,58,.2)":"var(--bg3)",border:"1px solid "+(playing?"var(--cyan)":"var(--bdr)"),
+      background:playing?"rgba(0,212,255,.2)":"var(--bg3)",border:"1px solid "+(playing?"var(--cyan)":"var(--bdr)"),
       cursor:"pointer",transition:"all .2s",flexShrink:0}}>
     <span style={{fontSize:p.size?p.size*0.5:18,lineHeight:1}}>{playing?"🔊":"🔈"}</span>
   </button>);
@@ -468,10 +468,10 @@ async function isPushSubscribed(){
 }
 
 // ─── CSS ───
-var CSS=`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+var CSS=`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040}
-.light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#8a7e6a}
+:root{--bg:#080b16;--bg2:#131833;--bg3:#1a2045;--bdr:rgba(100,130,255,0.08);--cyan:#00d4ff;--orange:#ff8c42;--gold:#ffd700;--green:#00e676;--red:#ff4757;--purple:#a855f7;--t1:#eef2ff;--t2:#7b86a8;--t3:#4a5478}
+.light{--bg:#f5f5f7;--bg2:#ffffff;--bg3:#e8e8ed;--bdr:rgba(0,0,0,0.1);--cyan:#006faa;--orange:#c96a12;--gold:#a67c00;--green:#15803d;--red:#c42020;--purple:#6d28d9;--t1:#111827;--t2:#3f4456;--t3:#6b6f82}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
@@ -484,21 +484,21 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
 .app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
 .enter{animation:fadeIn .3s ease-out}
-.crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:20px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04)}
-.glo{box-shadow:0 0 30px rgba(212,148,58,.06)}
-.btn1{background:linear-gradient(135deg,#d4943a,#a06e20);color:#0f0c08;border:none;border-radius:12px;padding:14px 28px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:all .2s}
+.crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:20px}
+.glo{box-shadow:0 0 30px rgba(0,212,255,.06)}
+.btn1{background:linear-gradient(135deg,#00d4ff,#0088cc);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:all .2s}
 .btn1:active{transform:scale(.97)}
-.btn2{background:var(--bg2);border:1px solid var(--bdr);color:var(--t1);border-radius:12px;padding:12px 24px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:14px;cursor:pointer}
+.btn2{background:var(--bg2);border:1px solid var(--bdr);color:var(--t1);border-radius:12px;padding:12px 24px;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer}
 .fl{animation:flame 1.5s ease-in-out infinite;display:inline-block}
 .sk{animation:shake .4s ease-in-out}
-.out{font-family:'Cinzel','Outfit',serif;letter-spacing:0.5px}`;
+.out{font-family:'Outfit',sans-serif}`;
 
 // ─── SMALL COMPONENTS ───
-function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,#d4943a,#c87a35)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
+function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,#00d4ff,#0088ff)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
 
 function AchToast(p){if(!p.v)return null;
   return(<div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",zIndex:250,animation:"achPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
-    <div style={{background:"linear-gradient(135deg,#1a1610,#201a12)",border:"1px solid rgba(255,215,0,.3)",padding:"16px 28px",borderRadius:20,boxShadow:"0 8px 40px rgba(255,215,0,.25)",minWidth:220}}>
+    <div style={{background:"linear-gradient(135deg,#1a1a2e,#16213e)",border:"1px solid rgba(255,215,0,.3)",padding:"16px 28px",borderRadius:20,boxShadow:"0 8px 40px rgba(255,215,0,.25)",minWidth:220}}>
       <div style={{fontSize:40,marginBottom:6,animation:"pulse 1s infinite"}}>{p.v.icon}</div>
       <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--gold)",textTransform:"uppercase",letterSpacing:2,marginBottom:4}}>Achievement Unlocked!</div>
       <div className="out" style={{fontWeight:800,fontSize:18,color:"var(--t1)",marginBottom:2}}>{p.v.name}</div>
@@ -515,8 +515,8 @@ function XpToast(p){if(!p.v)return null;
     </div>}
   </div>);}
 
-function Tabs(p){var tabs=[{id:"home",l:"Home",i:"⚡"},{id:"train",l:"Train",i:"🎯"},{id:"cards",l:"Cards",i:"🃏"},{id:"games",l:"Games",i:"🎲"},{id:"league",l:"League",i:"🏆"},{id:"profile",l:"Profile",i:"👤"}];
-return(<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px 12px",zIndex:100,display:"flex",justifyContent:"space-around"}}>
+function Tabs(p){var tabs=[{id:"home",l:"Home",i:"⚡"},{id:"train",l:"Train",i:"🎯"},{id:"cards",l:"Cards",i:"🃏"},{id:"games",l:"Games",i:"🎮"},{id:"league",l:"League",i:"🏆"},{id:"profile",l:"Profile",i:"👤"}];
+return(<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(8,11,22,0) 0%,rgba(8,11,22,.95) 20%,#080b16 100%)",padding:"8px 12px 12px",zIndex:100,display:"flex",justifyContent:"space-around"}}>
 {tabs.map(function(t){var a=p.cur===t.id;return(<button key={t.id} onClick={function(){p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"6px 12px",borderRadius:12,color:a?"var(--cyan)":"var(--t3)",transform:a?"scale(1.05)":"scale(1)",transition:"all .2s"}}>
 <span style={{fontSize:22,lineHeight:1}}>{t.i}</span><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:1}}/>}</button>);})}</div>);}
 
@@ -549,7 +549,7 @@ var[step,sSt]=useState("name");
     <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .8s ease-out"}}>
         <div style={{fontSize:64,marginBottom:16}}>⚔️</div>
-        <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,#d4943a,#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>TOEIC ARENA</h1>
+        <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,#00d4ff,#a855f7)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>TOEIC ARENA</h1>
         <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>Train smarter. Climb the ranks.<br/>Conquer the TOEIC.</p>
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Your arena name</label>
@@ -588,7 +588,7 @@ var[step,sSt]=useState("name");
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
         </div>
         <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visiteur / Free Access");}}
-          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>🌍 Join as Visitor</button>
+          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(168,85,247,.3)",color:"var(--purple)"}}>🌍 Join as Visitor</button>
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
       </div>
     </div>);
@@ -648,7 +648,7 @@ var[step,sSt]=useState("name");
         <div style={{fontSize:56,marginBottom:12,animation:"countUp .6s"}}>{sc>=13?"🏆":sc>=9?"⚔️":sc>=5?"🛡️":"📚"}</div>
         <h2 className="out" style={{fontWeight:900,fontSize:28,marginBottom:4}}>Placement Result</h2>
         <div className="out" style={{fontSize:48,fontWeight:900,color:"var(--cyan)",marginBottom:8,animation:"countUp .8s"}}>{sc}/15</div>
-        <div style={{display:"inline-block",padding:"6px 16px",borderRadius:99,background:"rgba(212,148,58,.1)",border:"1px solid rgba(212,148,58,.2)",marginBottom:12}}>
+        <div style={{display:"inline-block",padding:"6px 16px",borderRadius:99,background:"rgba(0,212,255,.1)",border:"1px solid rgba(0,212,255,.2)",marginBottom:12}}>
           <span className="out" style={{fontWeight:800,fontSize:16,color:"var(--cyan)"}}>{lvl.label}</span>
         </div>
         <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:8}}>{lvl.msg}</p>
@@ -671,7 +671,7 @@ var[step,sSt]=useState("name");
           })}
         </div>
       </div>
-      <Bar value={ci} max={15} h={4} color="linear-gradient(90deg,#d4943a,#8b5e83)"/>
+      <Bar value={ci} max={15} h={4} color="linear-gradient(90deg,#00d4ff,#a855f7)"/>
 
       <div style={{display:"flex",gap:4,marginTop:12,marginBottom:4}}>
         {[1,2,3,4,5].map(function(d){
@@ -697,7 +697,7 @@ var[step,sSt]=useState("name");
       </div>
 
       {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:14}}>
+        <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:14}}>
           <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
         <button className="btn1" onClick={nxt} style={{marginTop:14}}>{ci<14?"Next":"See Results"}</button>
       </div>}
@@ -726,13 +726,13 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily
 <div className="crd glo" style={{marginBottom:16}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
 <div style={{display:"flex",alignItems:"center",gap:10}}>
-<div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#a06e20)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:16}} className="out">{lv.level}</div>
+<div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#0088cc)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:16}} className="out">{lv.level}</div>
 <div><div className="out" style={{fontSize:13,fontWeight:700}}>Level {lv.level}</div><div style={{fontSize:11,color:"var(--t2)"}}>{lv.cur} / {lv.next} XP</div></div></div>
 <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"var(--bg3)",borderRadius:99}}>
 <span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
-<div className="crd" onClick={function(){if(!dd)p.nav("daily");}} style={{marginBottom:16,cursor:dd?"default":"pointer",background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(212,148,58,.12),rgba(139,94,131,.12))",border:dd?"1px solid var(--bdr)":"1px solid rgba(212,148,58,.2)"}}>
+<div className="crd" onClick={function(){if(!dd)p.nav("daily");}} style={{marginBottom:16,cursor:dd?"default":"pointer",background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(0,212,255,.12),rgba(168,85,247,.12))",border:dd?"1px solid var(--bdr)":"1px solid rgba(0,212,255,.2)"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
 <div><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:20}}>{dd?"✅":"⚡"}</span><span className="out" style={{fontWeight:700,fontSize:16}}>Daily Challenge</span></div>
 {dd?<p style={{color:"var(--green)",fontSize:13,fontWeight:600}}>Completed! +{u.daily.xpE} XP</p>:<p style={{color:"var(--t2)",fontSize:13}}>5 questions · 30s each · Bonus XP</p>}</div>
@@ -803,7 +803,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily
   var dayIndex=0;var d=today();for(var i=0;i<d.length;i++)dayIndex+=d.charCodeAt(i);
   var todayTip=allTips[dayIndex%allTips.length];
   return(<div style={{marginTop:20}}>
-    <div className="crd" style={{padding:0,overflow:"hidden",border:"1px solid rgba(180,140,80,.12)",background:"linear-gradient(160deg,rgba(180,140,80,.06) 0%,rgba(139,94,131,.04) 100%)"}}>
+    <div className="crd" style={{padding:0,overflow:"hidden",border:"1px solid rgba(14,165,233,.12)",background:"linear-gradient(160deg,rgba(14,165,233,.06) 0%,rgba(168,85,247,.04) 100%)"}}>
       <div style={{padding:"16px 18px 14px"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -816,7 +816,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily
         <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>{todayTip.tip.d}</p>
       </div>
       <button onClick={function(){p.nav("strats");}}
-        style={{width:"100%",padding:"10px 18px",background:"rgba(180,140,80,.06)",borderTop:"1px solid rgba(180,140,80,.08)",border:"none",borderTop:"1px solid rgba(180,140,80,.08)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+        style={{width:"100%",padding:"10px 18px",background:"rgba(14,165,233,.06)",borderTop:"1px solid rgba(14,165,233,.08)",border:"none",borderTop:"1px solid rgba(14,165,233,.08)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
         <span style={{fontSize:12,color:"var(--cyan)",fontWeight:600}} className="out">All 54 strategies</span>
         <span style={{fontSize:12,color:"var(--cyan)"}}>{"→"}</span>
       </button>
@@ -868,7 +868,7 @@ if(sr&&iC){bg="rgba(0,230,118,.12)";bd="var(--green)";}else if(sr&&iS&&!iC){bg="
 return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph==="fb"} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
 <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(sr&&iC?"var(--green)":sr&&iS?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:sr&&iC?"var(--green)":sr&&iS&&!iC?"var(--red)":"transparent",color:sr&&(iC||iS)?"#fff":"var(--t3)"}}>
 {sr&&iC?"✓":sr&&iS?"✗":String.fromCharCode(65+i)}</div><span>{opt}</span></button>);})}</div>
-{ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s ease-out"}}><div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
+{ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s ease-out"}}><div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
 <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next Question":"See Results"}</button></div>}</div>);}
 
 // ─── TRAIN PAGE ───
@@ -876,14 +876,14 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
   var dd=p.u.daily&&p.u.daily.date===today()&&p.u.daily.done;
   var sections=[
     {title:"Exercises",sub:"TOEIC Parts training",items:[
-      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd},
+      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#00d4ff,#a855f7)",lock:dd},
       {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"🎧",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
-      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#8b5cf6)"},
     ]},
     {title:"Grammar & Vocabulary",sub:"Build your foundations",items:[
       {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
       {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
-      {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
+      {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"🔀",bg:"linear-gradient(135deg,#a855f7,#ec4899)"},
       {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
       {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
       {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
@@ -894,7 +894,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       var u1=canUnlockMock(p.u,1);
       items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"📝",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
       var u2=canUnlockMock(p.u,2);
-      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📝",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
+      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📝",bg:u2.ok?"linear-gradient(135deg,#a855f7,#ec4899)":"var(--bg3)",lock:!u2.ok,mockId:2});
 	  var u3=canUnlockMock(p.u,3);
 	  items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"📝",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
       // Show completed badge
@@ -903,10 +903,10 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       return items;
     })()},
     {title:"Tips & Strategies",sub:"Master the exam itself",items:[
-      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"📋",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
-      {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
+      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"📋",bg:"linear-gradient(135deg,#0ea5e9,#06b6d4)"},
+      {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#a855f7,#6366f1)"},
       {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
-      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#8b5cf6)"},
     ]},
   ];
   var animIdx=0;
@@ -948,7 +948,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}><h1 className=
 <div><div style={{fontSize:11,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Mastered</div><div className="out" style={{fontWeight:800,fontSize:22,color:"var(--green)"}}>{mc}/{all.length}</div></div>
 <div style={{textAlign:"center"}}><div style={{fontSize:11,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Due today</div><div className="out" style={{fontWeight:800,fontSize:22,color:dc.length>0?"var(--orange)":"var(--green)"}}>{dc.length}</div></div>
 <div style={{textAlign:"right"}}><div style={{fontSize:11,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Reviews</div><div className="out" style={{fontWeight:800,fontSize:22,color:"var(--cyan)"}}>{p.u.stats.cardsRev||0}</div></div></div>
-<Bar value={mc} max={all.length} h={6} color="linear-gradient(90deg,#4abe60,#3a9a70)"/></div>
+<Bar value={mc} max={all.length} h={6} color="linear-gradient(90deg,#00e676,#00bfa5)"/></div>
 {dc.length>0&&<button className="btn1" onClick={function(){p.nav("csess");}} style={{marginBottom:20}}>Review {dc.length} cards</button>}
 <h2 className="out" style={{fontWeight:700,fontSize:15,color:"var(--t2)",marginBottom:12}}>Vocabulary Domains</h2>
 <div style={{display:"flex",flexDirection:"column",gap:10}}>{VOCAB.map(function(dom){var ms=0;dom.cards.forEach(function(c){var s=p.u.cardStates[c.id];if(s&&s.interval>=7)ms++;});
@@ -982,7 +982,7 @@ return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
   {isDomainMode&&<div style={{fontSize:9,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:.5,marginTop:2}} className="out">Study mode</div>}
 </div>
 <div style={{width:40}}/></div>
-<Bar value={ci} max={rev.length} h={4} color="linear-gradient(90deg,#c87a35,#f0c850)"/>
+<Bar value={ci} max={rev.length} h={4} color="linear-gradient(90deg,#ff8c42,#ffd700)"/>
 <div onClick={function(){sF(!fl);}} style={{marginTop:40,cursor:"pointer",minHeight:280}}>
 <div className="crd glo" style={{padding:32,textAlign:"center",display:"flex",flexDirection:"column",justifyContent:"center",minHeight:280,animation:fl?"flip .3s ease-out":"none"}}>
 {!fl?<div><div className="out" style={{fontSize:11,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>WHAT DOES THIS MEAN?</div>
@@ -1001,7 +1001,7 @@ return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
   </div>
 </div></div>}</div></div>
 {fl&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginTop:24,animation:"fadeIn .3s ease-out"}}>
-{[{r:1,l:"Again",c:"var(--red)",b:"rgba(255,71,87,.12)"},{r:2,l:"Hard",c:"var(--orange)",b:"rgba(255,140,66,.12)"},{r:3,l:"Good",c:"var(--green)",b:"rgba(0,230,118,.12)"},{r:4,l:"Easy",c:"var(--cyan)",b:"rgba(212,148,58,.12)"}].map(function(b){
+{[{r:1,l:"Again",c:"var(--red)",b:"rgba(255,71,87,.12)"},{r:2,l:"Hard",c:"var(--orange)",b:"rgba(255,140,66,.12)"},{r:3,l:"Good",c:"var(--green)",b:"rgba(0,230,118,.12)"},{r:4,l:"Easy",c:"var(--cyan)",b:"rgba(0,212,255,.12)"}].map(function(b){
 return(<button key={b.r} onClick={function(e){e.stopPropagation();rate(b.r);}} style={{padding:"12px 8px",background:b.b,border:"1px solid "+b.c+"33",borderRadius:12,cursor:"pointer",color:b.c,fontWeight:700,fontSize:13}} className="out">{b.l}</button>);})}</div>}</div>);}
 
 // ─── DRILL SESSION ───
@@ -1026,7 +1026,7 @@ if(sr&&iC){bg="rgba(0,230,118,.12)";bd="var(--green)";}else if(sr&&iS&&!iC){bg="
 return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph==="fb"} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
 <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(sr&&iC?"var(--green)":sr&&iS?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:sr&&iC?"var(--green)":sr&&iS&&!iC?"var(--red)":"transparent",color:sr&&(iC||iS)?"#fff":"var(--t3)"}}>
 {sr&&iC?"✓":sr&&iS?"✗":String.fromCharCode(65+i)}</div><span>{opt}</span></button>);})}</div>
-{ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}><div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
+{ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}><div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
 <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next":"See Results"}</button></div>}</div>);}
 
 // ─── WORD FAMILIES CLASSIFIER ───
@@ -1137,7 +1137,7 @@ function WordFam(p){
       {isMulti&&<div style={{padding:"8px 14px",background:"rgba(255,215,0,.08)",border:"1px solid rgba(255,215,0,.2)",borderRadius:10,marginBottom:10}}>
         <p style={{fontSize:12,color:"var(--gold)",fontWeight:600}}>This word can be both: {it.validAnswers.join(" & ")}</p>
       </div>}
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.8}}>
           <strong style={{color:"var(--t1)"}}>Word family:</strong><br/>
           {fam.v&&<span>Verb: <strong style={{color:"var(--green)"}}>{fam.v}</strong> &nbsp;</span>}
@@ -1170,7 +1170,7 @@ function ConnSort(p){
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
-    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#8b5e83,#c4587a)"/>
+    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#a855f7,#ec4899)"/>
     <div style={{textAlign:"center",marginTop:32,marginBottom:28}}>
       <div className="out" style={{fontSize:11,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>THIS CONNECTOR IS FOLLOWED BY...</div>
       <div className="out" style={{fontWeight:800,fontSize:30,marginBottom:4}}>{it.word}</div></div>
@@ -1187,7 +1187,7 @@ function ConnSort(p){
             <div style={{fontSize:11,color:"var(--t3)"}}>{r.desc}</div></div></button>);})}
     </div>
     {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.tip}</p>
         <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",marginTop:8}}>"{it.ex}"</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button></div>}
@@ -1261,7 +1261,7 @@ function PrepDrill(p){
           <div className="out" style={{fontWeight:700,fontSize:16,color:col,textTransform:"uppercase"}}>{pr}</div></button>);})}
     </div>
     {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
           <p style={{fontSize:14,color:"var(--t1)"}}><strong>{it.base} {it.prep}</strong></p>
           <SpeakBtn text={it.base+" "+it.prep} size={26}/></div>
@@ -1275,7 +1275,7 @@ function PrepDrill(p){
 // Study Mode collapsible group sub-component
 function StudyGroup(p){
   var[open,sO]=useState(false);
-  var prepColors={for:"#22c55e",in:"#f59e0b",with:"#8b5e83",on:"#ef4444",of:"#06b6d4",to:"#ec4899"};
+  var prepColors={for:"#22c55e",in:"#f59e0b",with:"#a855f7",on:"#ef4444",of:"#06b6d4",to:"#ec4899"};
   var col=prepColors[p.prep]||"var(--cyan)";
   return(<div className="crd" style={{padding:0,overflow:"hidden",borderColor:open?col+"44":"var(--bdr)",transition:"all .3s"}}>
     <button onClick={function(){sO(!open);}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 18px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
@@ -1334,7 +1334,7 @@ function GerInf(p){
     </div>
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div className="crd" onClick={function(){setMode("study");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📚"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📚"}</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Study the Patterns</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Learn WHY before you guess</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
@@ -1395,7 +1395,7 @@ function GerInf(p){
               <span style={{fontSize:12,color:"var(--t3)",fontWeight:600}}>+ {v.takes==="ing"?"-ING":v.takes==="to"?"TO":"-ING / TO"}</span>
             </div>
             <p style={{fontSize:13,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5,marginBottom:6}}>"{v.ex}"</p>
-            <div style={{padding:"8px 12px",background:"rgba(212,148,58,.06)",borderRadius:8,border:"1px solid rgba(212,148,58,.1)"}}>
+            <div style={{padding:"8px 12px",background:"rgba(0,212,255,.06)",borderRadius:8,border:"1px solid rgba(0,212,255,.1)"}}>
               <p style={{fontSize:11,color:"var(--cyan)",lineHeight:1.5}}>{v.tip}</p>
             </div>
           </div>);
@@ -1452,11 +1452,11 @@ function GerInf(p){
       </div>
 
       {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
+        <div className="crd" style={{padding:14,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{q.verb}</span>
             <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:99,
-              background:q.pattern==="ing"?"rgba(255,140,66,.1)":q.pattern==="to"?"rgba(212,148,58,.1)":q.pattern==="both"?"rgba(255,71,87,.1)":"rgba(139,94,131,.1)",
+              background:q.pattern==="ing"?"rgba(255,140,66,.1)":q.pattern==="to"?"rgba(0,212,255,.1)":q.pattern==="both"?"rgba(255,71,87,.1)":"rgba(168,85,247,.1)",
               color:info2.color}}>{q.pattern==="ing"?"always -ING":q.pattern==="to"?"always TO":q.pattern==="both"?"depends on meaning":"preposition → -ING"}</span>
           </div>
           <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,marginBottom:4}}>{q.tip}</p>
@@ -1527,7 +1527,7 @@ function TrapsQuiz(p){
     </div>
 
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}>
         <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",marginBottom:6}}>Pro Tip</p>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{t.tip}</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<traps.length-1?"Next Trap":"See Results"}</button></div>}
@@ -1575,7 +1575,7 @@ var GRAMMAR_SHEETS = [
       {p:"Common suffixes",d:"-tion/-ment/-ness = noun | -ive/-able/-ful = adj | -ly = adverb | -ize/-fy = verb",ex:"The implementation (N) was effective (adj) and completed efficiently (adv)."},
     ],
     traps:"Look at what comes BEFORE and AFTER the blank. 'The _____ of' = noun. '_____ increase' before a noun = adjective. '_____ly' after a verb = adverb. The suffix is your best friend."},
-  {id:"connectors",title:"Connectors & Linking Words",icon:"🔗",color:"#8b5e83",
+  {id:"connectors",title:"Connectors & Linking Words",icon:"🔗",color:"#a855f7",
     rule:"Connectors join ideas. The TOEIC tests whether you know if a connector introduces a clause, a noun phrase, or a new sentence.",
     patterns:[
       {p:"Clause connectors (+ subject + verb)",d:"although, because, while, if, unless, since, when, before, after",ex:"Although sales declined, profits remained stable."},
@@ -1642,7 +1642,7 @@ var GRAMMAR_SHEETS = [
       {p:"A = one of many, The = we both know which",d:"Compare these two",ex:"I had a meeting (some meeting). I had the meeting (the one we discussed)."},
     ],
     traps:"No article with uncountable nouns in general: 'Information is available' NOT 'The information is available' (unless specific info). Job titles after 'as': 'She works as a manager' (with article)."},
-  {id:"collocations",title:"Collocations & Fixed Expressions",icon:"🧲",color:"#6a8a50",
+  {id:"collocations",title:"Collocations & Fixed Expressions",icon:"🧲",color:"#0ea5e9",
     rule:"Some word combinations are fixed in English. The TOEIC tests common business collocations.",
     patterns:[
       {p:"Make vs Do",d:"make: a decision, a profit, an offer, progress | do: business, research, damage, a favor",ex:"The company made significant progress last quarter."},
@@ -1681,7 +1681,7 @@ function GrammarRef(p){
 
           {isOpen&&<div style={{padding:"12px 16px 16px",animation:"fadeIn .2s"}}>
             {/* Rule summary */}
-            <div style={{padding:"10px 14px",background:"rgba(212,148,58,.06)",border:"1px solid rgba(212,148,58,.12)",borderRadius:10,marginBottom:12}}>
+            <div style={{padding:"10px 14px",background:"rgba(0,212,255,.06)",border:"1px solid rgba(0,212,255,.12)",borderRadius:10,marginBottom:12}}>
               <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,fontWeight:500}}>{g.rule}</p>
             </div>
 
@@ -1779,7 +1779,7 @@ function PhrasalDojo(p){
     </div>
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div className="crd" onClick={function(){setMode("study");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📚"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📚"}</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Study Mode</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Browse by verb family</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
@@ -1809,7 +1809,7 @@ function PhrasalDojo(p){
         var isOpen=studyOpen===grp.verb;
         return(<div key={grp.verb}>
           <div className="crd" onClick={function(){setStudyOpen(isOpen?null:grp.verb);}}
-            style={{cursor:"pointer",padding:"12px 16px",borderColor:isOpen?"rgba(212,148,58,.3)":"var(--bdr)",background:isOpen?"rgba(212,148,58,.04)":"var(--bg2)",transition:"all .2s"}}>
+            style={{cursor:"pointer",padding:"12px 16px",borderColor:isOpen?"rgba(0,212,255,.3)":"var(--bdr)",background:isOpen?"rgba(0,212,255,.04)":"var(--bg2)",transition:"all .2s"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <span className="out" style={{fontWeight:800,fontSize:16,color:"var(--cyan)",textTransform:"uppercase",minWidth:70}}>{grp.verb}</span>
@@ -1823,7 +1823,7 @@ function PhrasalDojo(p){
               return(<div key={j} style={{padding:"10px 16px 10px 28px",borderLeft:"3px solid var(--cyan)",marginBottom:6,marginLeft:12}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
                   <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>{pv.pv}</span>
-                  <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(139,94,131,.1)",borderRadius:99}}>{pv.fr}</span>
+                  <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(168,85,247,.1)",borderRadius:99}}>{pv.fr}</span>
                 </div>
                 <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.5,marginBottom:4}}>{pv.m}</p>
                 <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{pv.ex}"</p>
@@ -1871,10 +1871,10 @@ function PhrasalDojo(p){
         })}
       </div>
       {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
+        <div className="crd" style={{padding:14,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{mq.pv}</span>
-            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(139,94,131,.1)",borderRadius:99}}>{mq.fr}</span>
+            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(168,85,247,.1)",borderRadius:99}}>{mq.fr}</span>
           </div>
           <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",lineHeight:1.5}}>"{mq.ex}"</p>
         </div>
@@ -1935,10 +1935,10 @@ function PhrasalDojo(p){
       {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .2s"}}>
         {pick===-1&&<div style={{textAlign:"center",marginBottom:12}}>
           <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
-        <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
+        <div className="crd" style={{padding:14,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{pq.pv}</span>
-            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(139,94,131,.1)",borderRadius:99}}>{pq.fr}</span>
+            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(168,85,247,.1)",borderRadius:99}}>{pq.fr}</span>
           </div>
           <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{pq.ex}"</p>
         </div>
@@ -1963,7 +1963,7 @@ function StratCards(p){
       <span className="out" style={{fontWeight:700,fontSize:15}}>Strategy Cards</span>
       <div style={{width:40}}/></div>
 
-    <div className="crd" style={{padding:14,marginBottom:16,textAlign:"center",background:"rgba(212,148,58,.04)",borderColor:"rgba(212,148,58,.12)"}}>
+    <div className="crd" style={{padding:14,marginBottom:16,textAlign:"center",background:"rgba(0,212,255,.04)",borderColor:"rgba(0,212,255,.12)"}}>
       <span className="out" style={{fontWeight:800,fontSize:22,color:"var(--cyan)"}}>{totalTips}</span>
       <span style={{fontSize:13,color:"var(--t2)",marginLeft:6}}>expert strategies across all TOEIC Parts</span></div>
 
@@ -1971,7 +1971,7 @@ function StratCards(p){
       {[{id:"all",l:"All"},{id:"Listening",l:"🎧 Listening"},{id:"Reading",l:"📖 Reading"}].map(function(f){
         var act=filter===f.id;return(
         <button key={f.id} onClick={function(){sF(f.id);sO(null);}}
-          style={{flex:1,padding:"8px 4px",borderRadius:10,border:act?"1px solid var(--cyan)":"1px solid var(--bdr)",background:act?"rgba(212,148,58,.1)":"var(--bg2)",cursor:"pointer"}}>
+          style={{flex:1,padding:"8px 4px",borderRadius:10,border:act?"1px solid var(--cyan)":"1px solid var(--bdr)",background:act?"rgba(0,212,255,.1)":"var(--bg2)",cursor:"pointer"}}>
           <span className="out" style={{fontSize:12,fontWeight:act?700:500,color:act?"var(--cyan)":"var(--t3)"}}>{f.l}</span></button>);})}
     </div>
 
@@ -1986,7 +1986,7 @@ function StratCards(p){
               <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)"}}>{s.part} {"—"} {s.title}</div>
               <div style={{display:"flex",gap:8,marginTop:3}}>
                 {s.qs>0&&<span style={{fontSize:10,color:"var(--t3)",background:"var(--bg3)",padding:"2px 6px",borderRadius:4}}>{s.qs} Qs</span>}
-                <span style={{fontSize:10,color:"var(--cyan)",background:"rgba(212,148,58,.06)",padding:"2px 6px",borderRadius:4}}>{tipCount} tips</span>
+                <span style={{fontSize:10,color:"var(--cyan)",background:"rgba(0,212,255,.06)",padding:"2px 6px",borderRadius:4}}>{tipCount} tips</span>
               </div></div>
             <span style={{fontSize:12,color:"var(--t3)",transform:isOpen?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>{"▼"}</span>
           </button>
@@ -2044,12 +2044,12 @@ function StratQuizPage(p){
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{qs.length}</span></div>
-    <Bar value={ci} max={qs.length} h={4} color="linear-gradient(90deg,#b07830,#8b5e83)"/>
+    <Bar value={ci} max={qs.length} h={4} color="linear-gradient(90deg,#0ea5e9,#a855f7)"/>
 
     <div style={{marginTop:16,marginBottom:20}}>
       <span className="out" style={{fontSize:10,fontWeight:700,color:pc,textTransform:"uppercase",letterSpacing:1,padding:"3px 8px",background:pc+"18",borderRadius:6}}>{q.part}</span></div>
 
-    <div className="crd" style={{padding:16,marginBottom:20,background:"rgba(139,94,131,.05)",borderColor:"rgba(139,94,131,.12)"}}>
+    <div className="crd" style={{padding:16,marginBottom:20,background:"rgba(168,85,247,.05)",borderColor:"rgba(168,85,247,.12)"}}>
       <p className="out" style={{fontSize:11,fontWeight:600,color:"var(--purple)",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Situation</p>
       <p style={{fontSize:15,color:"var(--t1)",lineHeight:1.6}}>{q.scenario}</p></div>
 
@@ -2067,7 +2067,7 @@ function StratQuizPage(p){
     </div>
 
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}>
         <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",marginBottom:6}}>Why this works</p>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.explain}</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next":"See Results"}</button></div>}
@@ -2197,7 +2197,7 @@ function TimeSim(p){
               </div>);
             })}
           </div>
-          {q.x&&<div style={{marginTop:10,padding:10,background:"rgba(212,148,58,.06)",borderRadius:8,border:"1px solid rgba(212,148,58,.12)"}}>
+          {q.x&&<div style={{marginTop:10,padding:10,background:"rgba(0,212,255,.06)",borderRadius:8,border:"1px solid rgba(0,212,255,.12)"}}>
             <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p>
           </div>}
           {sheetId&&<button onClick={function(){p.nav("gramref",sheetId);}}
@@ -2300,7 +2300,7 @@ function Part6Drill(p){
         var answered=thisIdx<bi;
         var label=answered?blanks[thisIdx].options[blanks[thisIdx].correct]:"____("+(thisIdx+1)+")____";
         return <span key={i} style={{padding:"2px 6px",borderRadius:4,fontWeight:700,
-          background:isCurrent?"rgba(212,148,58,.2)":answered?"rgba(0,230,118,.1)":"var(--bg3)",
+          background:isCurrent?"rgba(0,212,255,.2)":answered?"rgba(0,230,118,.1)":"var(--bg3)",
           color:isCurrent?"var(--cyan)":answered?"var(--green)":"var(--t3)",
           border:isCurrent?"1px solid var(--cyan)":"1px solid transparent"}}>{label}</span>;
       }
@@ -2313,7 +2313,7 @@ function Part6Drill(p){
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Text {ti+1}/{texts.length}</span></div>
     <div style={{display:"flex",gap:6,marginBottom:12}}>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(139,94,131,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}</span>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(168,85,247,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}</span>
       <span style={{fontSize:10,padding:"3px 8px",background:"var(--bg3)",color:"var(--t3)",borderRadius:6}} className="out">From: {curText.from}</span></div>
     <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--t1)"}}>Subject: {curText.subject}</div>
     <div className="crd" style={{padding:16,marginBottom:20}}>
@@ -2326,9 +2326,9 @@ function Part6Drill(p){
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Blank {totalB+1}/{totalBlanks}</span></div>
-    <Bar value={totalB} max={totalBlanks} h={4} color="linear-gradient(90deg,#c4587a,#8b5e83)"/>
+    <Bar value={totalB} max={totalBlanks} h={4} color="linear-gradient(90deg,#ec4899,#a855f7)"/>
     <div style={{marginTop:12,marginBottom:6}}>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(139,94,131,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}: {curText.subject}</span></div>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(168,85,247,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}: {curText.subject}</span></div>
     <div className="crd" style={{padding:14,marginBottom:20,background:"var(--bg3)"}}>
       <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.9,whiteSpace:"pre-line"}}>{renderText()}</p></div>
     <p className="out" style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--cyan)"}}>Fill blank ({bi+1}):</p>
@@ -2343,7 +2343,7 @@ function Part6Drill(p){
           {opt}</button>);})}
     </div>
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:14}}>
+      <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:14}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{curBlank.x}</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:14}}>{bi<blanks.length-1?"Next Blank":(ti<texts.length-1?"Next Text":"See Results")}</button></div>}
   </div>);
@@ -2396,8 +2396,8 @@ function Part7Read(p){
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:12}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type}</span>
-      <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(139,94,131,.15)":"var(--bg3)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions ▲":"Preview questions ▼"} ({curPass.questions.length})</button></div>
-    {showQPreview&&<div className="crd" style={{padding:12,marginBottom:12,borderColor:"rgba(139,94,131,.2)",background:"rgba(139,94,131,.04)"}}>
+      <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(168,85,247,.15)":"var(--bg3)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions ▲":"Preview questions ▼"} ({curPass.questions.length})</button></div>
+    {showQPreview&&<div className="crd" style={{padding:12,marginBottom:12,borderColor:"rgba(168,85,247,.2)",background:"rgba(168,85,247,.04)"}}>
       <div style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Read these first!</div>
       {curPass.questions.map(function(q,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,padding:"4px 0",borderBottom:i<curPass.questions.length-1?"1px solid var(--bdr)":"none"}}><span style={{color:"var(--purple)",fontWeight:700}}>Q{i+1}.</span> {q.q}</div>);})}</div>}
     <div className="crd" style={{padding:16,marginBottom:16}}>
@@ -2430,7 +2430,7 @@ function Part7Read(p){
           <span>{opt}</span></button>);})}
     </div>
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:14}}>
+      <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:14}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{curQ.x}</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:14}}>{qi<curPass.questions.length-1?"Next Question":(pi<passages.length-1?"Next Passage":"See Results")}</button></div>}
   </div>);
@@ -2474,7 +2474,7 @@ function FalseFriends(p){
 
     <div style={{marginTop:20,marginBottom:20}}>
       <div className="out" style={{fontSize:11,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>What does the underlined word mean here?</div>
-      <div className="crd" style={{padding:16,background:"rgba(139,94,131,.05)",borderColor:"rgba(139,94,131,.12)"}}>
+      <div className="crd" style={{padding:16,background:"rgba(168,85,247,.05)",borderColor:"rgba(168,85,247,.12)"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
           <SpeakBtn text={it.ex} size={28} rate={0.85}/>
           <p style={{fontSize:15,color:"var(--t1)",lineHeight:1.6}}>
@@ -2501,7 +2501,7 @@ function FalseFriends(p){
     </div>
 
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:16}}>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
           <span style={{fontSize:14}}>🎭</span>
           <span className="out" style={{fontWeight:700,fontSize:13,color:"var(--orange)"}}>False Friend Alert</span></div>
@@ -2635,7 +2635,7 @@ function MockTest(p){
         <span className="out" style={{fontSize:18,fontWeight:800,color:timerCol,fontVariantNumeric:"tabular-nums"}}>{formatTime(timeLeft)}</span>
       </div>
       <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:2,overflow:"hidden"}}>
-        <div style={{height:"100%",width:progressPct+"%",background:"linear-gradient(90deg,#d4943a,#8b5e83)",borderRadius:2,transition:"width .3s"}}/>
+        <div style={{height:"100%",width:progressPct+"%",background:"linear-gradient(90deg,#00d4ff,#a855f7)",borderRadius:2,transition:"width .3s"}}/>
       </div>
       <div style={{fontSize:10,color:"var(--t3)",marginTop:4,textAlign:"right"}}>{answered}/{totalQ}</div>
     </div>);
@@ -2649,7 +2649,7 @@ function MockTest(p){
           <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginTop:8,marginBottom:24}}>{q.s}</h2>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {q.o.map(function(opt,i){
-              var bg=selected===i?"rgba(212,148,58,.15)":"var(--bg2)";
+              var bg=selected===i?"rgba(0,212,255,.15)":"var(--bg2)";
               var bd=selected===i?"var(--cyan)":"var(--bdr)";
               return(<button key={i} onClick={function(){pickAnswer(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:"pointer",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
                 <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(selected===i?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:selected===i?"var(--cyan)":"transparent",color:selected===i?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -2682,12 +2682,12 @@ function MockTest(p){
               if(dp.type==="text")return(<span key={i}>{dp.content}</span>);
               var isCurrent=dp.index===bi;
               var hasAnswer=ans.p6[qi][dp.index]>=0;
-              return(<span key={i} className="out" style={{display:"inline",padding:"2px 8px",borderRadius:6,fontWeight:700,background:isCurrent?"rgba(212,148,58,.2)":hasAnswer?"rgba(0,230,118,.12)":"var(--bg3)",color:isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--t3)",border:"1px solid "+(isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--bdr)"),fontSize:12}}>{("["+String.fromCharCode(65+dp.index)+"]")}{hasAnswer&&!isCurrent?" ✓":""}</span>);
+              return(<span key={i} className="out" style={{display:"inline",padding:"2px 8px",borderRadius:6,fontWeight:700,background:isCurrent?"rgba(0,212,255,.2)":hasAnswer?"rgba(0,230,118,.12)":"var(--bg3)",color:isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--t3)",border:"1px solid "+(isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--bdr)"),fontSize:12}}>{("["+String.fromCharCode(65+dp.index)+"]")}{hasAnswer&&!isCurrent?" ✓":""}</span>);
             })}
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {currentBlank.options.map(function(opt,i){
-              var bg=selected6===i?"rgba(212,148,58,.15)":"var(--bg2)";
+              var bg=selected6===i?"rgba(0,212,255,.15)":"var(--bg2)";
               var bd=selected6===i?"var(--cyan)":"var(--bdr)";
               return(<button key={i} onClick={function(){pickAnswer(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
                 <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(selected6===i?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:selected6===i?"var(--cyan)":"transparent",color:selected6===i?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -2713,7 +2713,7 @@ function MockTest(p){
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pq.q}</h3>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {pq.options.map(function(opt,i){
-              var bg=selected7===i?"rgba(212,148,58,.15)":"var(--bg2)";
+              var bg=selected7===i?"rgba(0,212,255,.15)":"var(--bg2)";
               var bd=selected7===i?"var(--cyan)":"var(--bdr)";
               return(<button key={i} onClick={function(){pickAnswer(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
                 <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(selected7===i?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:selected7===i?"var(--cyan)":"transparent",color:selected7===i?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -2882,7 +2882,7 @@ function GamesHub(p){
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Train your reflexes, earn XP</p>
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div className="crd" onClick={function(){p.nav("smatch");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Speed Match</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Match words with definitions!</div>
           {(bestM||bestMH)&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{bestM?"Easy: "+bestM.time+"s":""}{bestM&&bestMH?" · ":""}{bestMH?"Hard: "+bestMH.time+"s":""}</div>}</div>
@@ -2894,7 +2894,7 @@ function GamesHub(p){
           {bestF&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestF.score} pts · x{bestF.maxCombo} combo</div>}</div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("sbuild");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🔀</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🔀</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Sentence Builder</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Tap blocks in the right order!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
@@ -2904,14 +2904,14 @@ function GamesHub(p){
           <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#4abe60)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🔍"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#00d4ff,#10b981)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🔍"}</div>
         <div style={{flex:1}}>
           <div className="out" style={{fontWeight:700,fontSize:15}}>Clue Hunter</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Find the clue, fill the blank!</div>
         </div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#c84040,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Duel</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Real-time 1v1 — challenge a classmate!</div>
           <div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>NEW</div></div>
@@ -3005,7 +3005,7 @@ function DailyTip(p){
     <div style={{width:"100%",maxWidth:420,background:"var(--bg2)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
 
       {/* Header */}
-      <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(212,148,58,.08),rgba(139,94,131,.08))"}}>
+      <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(0,212,255,.08),rgba(168,85,247,.08))"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontSize:22}}>{"💡"}</span>
@@ -3150,9 +3150,9 @@ function SentenceBuilder(p){
         var showResult=ph==="fb";
         var posCorrect=chunk.idx===i;
         return(<span key={i} style={{padding:"8px 14px",borderRadius:10,fontSize:14,fontWeight:600,
-          background:showResult?(posCorrect?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)"):"rgba(212,148,58,.1)",
+          background:showResult?(posCorrect?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)"):"rgba(0,212,255,.1)",
           color:showResult?(posCorrect?"var(--green)":"var(--red)"):"var(--cyan)",
-          border:"1px solid "+(showResult?(posCorrect?"var(--green)":"var(--red)"):"rgba(212,148,58,.2)"),
+          border:"1px solid "+(showResult?(posCorrect?"var(--green)":"var(--red)"):"rgba(0,212,255,.2)"),
           transition:"all .2s"}}>{chunk.text}</span>);
       })}
     </div>
@@ -3320,7 +3320,7 @@ function AudioBlitz(p){
       </div>}
       {played>=2&&ph==="q"&&<div>
         <p className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:12}}>{it.q}</p>
-        {replays===0&&<button onClick={replay} style={{background:"rgba(139,94,131,.1)",border:"1px solid rgba(139,94,131,.2)",
+        {replays===0&&<button onClick={replay} style={{background:"rgba(168,85,247,.1)",border:"1px solid rgba(168,85,247,.2)",
           borderRadius:10,padding:"8px 20px",cursor:"pointer",fontSize:12,color:"var(--purple)",fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>
           {"🔁"} Replay once</button>}
         {replays>=1&&<span style={{fontSize:11,color:"var(--t3)"}}>No more replays</span>}
@@ -3334,7 +3334,7 @@ function AudioBlitz(p){
         var bg="var(--bg2)";var bd="var(--bdr)";
         if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
         else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-        else if(ph==="q"&&isPick){bg="rgba(212,148,58,.1)";bd="var(--cyan)";}
+        else if(ph==="q"&&isPick){bg="rgba(0,212,255,.1)";bd="var(--cyan)";}
         return(<button key={i} onClick={function(){doAnswer(i);}} disabled={show}
           style={{padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,
             cursor:ph==="q"?"pointer":"default",fontSize:14,color:"var(--t1)",textAlign:"left",
@@ -3349,7 +3349,7 @@ function AudioBlitz(p){
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
       {pick===-1&&<div style={{textAlign:"center",marginBottom:12}}>
         <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
-      <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
+      <div className="crd" style={{padding:14,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)"}}>
         <p className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",marginBottom:6}}>Transcript:</p>
         <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,fontStyle:"italic"}}>"{it.text}"</p>
       </div>
@@ -3619,7 +3619,7 @@ function DuelArena(p){
       <div style={{fontSize:56,marginBottom:8}}>{"⚔️"}</div>
       <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Vocabulary Duel</h1>
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{ROUNDS} rounds, {TIMER_SEC}s per question. Fastest wins!</p>
-      <div style={{marginTop:8,padding:"6px 16px",display:"inline-block",background:"rgba(212,148,58,.08)",borderRadius:20}}>
+      <div style={{marginTop:8,padding:"6px 16px",display:"inline-block",background:"rgba(0,212,255,.08)",borderRadius:20}}>
         <span style={{fontSize:13,color:"var(--cyan)",fontWeight:700}}>Your XP: {p.u.xp}</span>
       </div>
     </div>
@@ -3627,7 +3627,7 @@ function DuelArena(p){
       <p style={{fontSize:12,color:"var(--red)"}}>{error}</p></div>}
 
     {/* Friendly mode */}
-    <div className="crd" style={{padding:16,marginBottom:10,cursor:"pointer",borderColor:"rgba(212,148,58,.15)"}} onClick={function(){
+    <div className="crd" style={{padding:16,marginBottom:10,cursor:"pointer",borderColor:"rgba(0,212,255,.15)"}} onClick={function(){
       setWager(0);setError(null);setPhase("pickAction");
     }}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
@@ -3641,9 +3641,9 @@ function DuelArena(p){
     </div>
 
     {/* Ranked mode */}
-    <div className="crd" style={{padding:16,marginBottom:10,background:"linear-gradient(135deg,rgba(255,71,87,.05),rgba(139,94,131,.05))",borderColor:"rgba(255,71,87,.15)"}}>
+    <div className="crd" style={{padding:16,marginBottom:10,background:"linear-gradient(135deg,rgba(255,71,87,.05),rgba(168,85,247,.05))",borderColor:"rgba(255,71,87,.15)"}}>
       <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:12}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#c84040,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"🔥"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ff4757,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"🔥"}</div>
         <div style={{flex:1}}>
           <div className="out" style={{fontWeight:700,fontSize:15}}>Ranked Duel</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Wager XP — winner takes all!</div>
@@ -3705,7 +3705,7 @@ function DuelArena(p){
       <div className="out" style={{fontSize:56,fontWeight:900,letterSpacing:12,color:"var(--cyan)",animation:"pulse 2s infinite"}}>{roomCode}</div>
     </div>
     {oppName?(<div style={{animation:"fadeIn .3s"}}>
-      <div style={{fontSize:18,marginBottom:8}}>{"🎲"}</div>
+      <div style={{fontSize:18,marginBottom:8}}>{"🎮"}</div>
       <p className="out" style={{fontWeight:700,fontSize:16,color:"var(--green)",marginBottom:16}}>{oppName} joined!</p>
       <button className="btn1" onClick={function(){
         var qs=generateQuestions();setQuestions(qs);questionsRef.current=qs;
@@ -3801,7 +3801,7 @@ function DuelArena(p){
         {q.opts.map(function(opt,i){
           var picked=myPick===i;
           return(<button key={i} onClick={function(){doAnswer(i);}} disabled={myPick!==-1}
-            style={{padding:"14px 16px",background:picked?"rgba(212,148,58,.1)":"var(--bg2)",
+            style={{padding:"14px 16px",background:picked?"rgba(0,212,255,.1)":"var(--bg2)",
               border:picked?"2px solid var(--cyan)":"1px solid var(--bdr)",borderRadius:12,
               cursor:myPick!==-1?"default":"pointer",fontSize:14,color:picked?"var(--cyan)":"var(--t1)",
               textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s",lineHeight:1.5,
@@ -3904,8 +3904,8 @@ function DuelArena(p){
 
       {/* Wager result */}
       {wager>0&&<div className="crd" style={{padding:14,marginBottom:16,textAlign:"center",
-        background:iWon?"rgba(0,230,118,.06)":tied?"rgba(212,148,58,.06)":"rgba(255,71,87,.06)",
-        borderColor:iWon?"rgba(0,230,118,.2)":tied?"rgba(212,148,58,.2)":"rgba(255,71,87,.2)"}}>
+        background:iWon?"rgba(0,230,118,.06)":tied?"rgba(0,212,255,.06)":"rgba(255,71,87,.06)",
+        borderColor:iWon?"rgba(0,230,118,.2)":tied?"rgba(0,212,255,.2)":"rgba(255,71,87,.2)"}}>
         <div style={{fontSize:13,color:"var(--t2)",marginBottom:4}}>Wager: {wager} XP per player</div>
         <div className="out" style={{fontSize:24,fontWeight:900,color:iWon?"var(--green)":tied?"var(--cyan)":"var(--red)"}}>
           {iWon?"+"+wager+" XP won!":tied?"XP returned":"-"+wager+" XP lost"}
@@ -3984,7 +3984,7 @@ function ClueHunter(p){
   function SentenceCard({item,answerWord,isCorrect}){
     var parts=item.sentence.split("___");
     return(
-      <div className="crd" style={{padding:"28px 24px",marginBottom:24,background:"rgba(212,148,58,.04)",borderColor:"rgba(212,148,58,.12)"}}>
+      <div className="crd" style={{padding:"28px 24px",marginBottom:24,background:"rgba(0,212,255,.04)",borderColor:"rgba(0,212,255,.12)"}}>
         <p style={{fontSize:20,lineHeight:1.8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif"}}>
           {parts.map(function(part,i){return(<span key={i}>{part}
             {i<parts.length-1&&(answerWord
@@ -4002,7 +4002,7 @@ function ClueHunter(p){
         <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
         <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1} / {TOTAL}</span>
       </div>
-      <Bar value={phase==="ans_fb"?ci+1:ci} max={TOTAL} h={4} color="linear-gradient(90deg,#d4943a,#8b5e83)"/>
+      <Bar value={phase==="ans_fb"?ci+1:ci} max={TOTAL} h={4} color="linear-gradient(90deg,#00d4ff,#a855f7)"/>
       <div style={{marginTop:20,marginBottom:12}}>
         <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{"🔍"} {items[ci].cat}</span>
       </div>
@@ -4026,7 +4026,7 @@ function ClueHunter(p){
             {n:"3",t:"Fill the blank",d:"Right clue + right answer = max XP."},
           ].map(function(s){return(
             <div key={s.n} style={{display:"flex",gap:14,alignItems:"flex-start"}}>
-              <div style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <div style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 <span className="out" style={{fontSize:13,fontWeight:800,color:"#fff"}}>{s.n}</span>
               </div>
               <div><div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>{s.t}</div>
@@ -4084,7 +4084,7 @@ function ClueHunter(p){
           var isSel=selected.includes(idx);
           return(
             <button key={idx} onClick={function(){toggleChip(idx);}}
-              style={{padding:"11px 20px",borderRadius:28,border:"2px solid "+(isSel?"var(--cyan)":"var(--bdr)"),background:isSel?"rgba(212,148,58,.12)":"var(--bg2)",color:isSel?"var(--cyan)":"var(--t1)",fontSize:15,fontFamily:"'DM Sans',sans-serif",fontWeight:isSel?700:500,cursor:"pointer",transition:"all .15s",transform:isSel?"scale(1.05)":"scale(1)"}}>
+              style={{padding:"11px 20px",borderRadius:28,border:"2px solid "+(isSel?"var(--cyan)":"var(--bdr)"),background:isSel?"rgba(0,212,255,.12)":"var(--bg2)",color:isSel?"var(--cyan)":"var(--t1)",fontSize:15,fontFamily:"'DM Sans',sans-serif",fontWeight:isSel?700:500,cursor:"pointer",transition:"all .15s",transform:isSel?"scale(1.05)":"scale(1)"}}>
               {chip.w}
             </button>);
         })}
@@ -4116,7 +4116,7 @@ function ClueHunter(p){
             </div>);
         })}
       </div>
-      <div className="crd" style={{padding:20,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",marginBottom:28}}>
+      <div className="crd" style={{padding:20,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",marginBottom:28}}>
         <p className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>{"💡"} Clue analysis</p>
         <p style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{item.clue}</p>
       </div>
@@ -4174,7 +4174,7 @@ function ClueHunter(p){
               </div>);
           })}
         </div>
-        <div className="crd" style={{padding:18,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",marginBottom:24}}>
+        <div className="crd" style={{padding:18,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",marginBottom:24}}>
           <p style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{item.exp}</p>
         </div>
         <div style={{marginTop:"auto"}}>
@@ -4338,13 +4338,13 @@ function SpeedMatch(p){
       <span style={{fontSize:12,color:"var(--t2)"}}>{matched.length}/{pairCount}</span>
     </div>
     <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:2,marginBottom:20,overflow:"hidden"}}>
-      <div style={{height:"100%",width:Math.round(matched.length/pairCount*100)+"%",background:"linear-gradient(90deg,#d4943a,#8b5e83)",borderRadius:2,transition:"width .3s"}}/></div>
+      <div style={{height:"100%",width:Math.round(matched.length/pairCount*100)+"%",background:"linear-gradient(90deg,#00d4ff,#a855f7)",borderRadius:2,transition:"width .3s"}}/></div>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat("+cols+",1fr)",gridTemplateRows:"repeat("+rows+",1fr)",gap:6,flex:1}}>
       {pairs.map(function(tile){
         var isRevealed=revealed.indexOf(tile.id)!==-1;
         var isMatched=matched.indexOf(tile.pairId)!==-1;
-        var bgColor=isMatched?"rgba(0,230,118,.18)":isRevealed?(tile.type==="word"?"rgba(212,148,58,.2)":"rgba(139,94,131,.2)"):"var(--bg3)";
+        var bgColor=isMatched?"rgba(0,230,118,.18)":isRevealed?(tile.type==="word"?"rgba(0,212,255,.2)":"rgba(168,85,247,.2)"):"var(--bg3)";
         var borderColor=isMatched?"var(--green)":isRevealed?(tile.type==="word"?"var(--cyan)":"var(--purple)"):"var(--bdr)";
         if(lastWrong&&isRevealed)borderColor="var(--red)";
 
@@ -4640,7 +4640,7 @@ function TeacherDash(p){
   useEffect(function(){loadStudents();},[classCode])
 
   // ── Chart colors matching app theme ──
-  var CHART_COLORS=["#d4943a","#8b5e83","#c87a35","#f0c850","#4abe60","#e05252","#c4587a","#5a7a9a","#2a9a8a","#d4943a","#7a5a80","#3a9080"];
+  var CHART_COLORS=["#00d4ff","#a855f7","#ff8c42","#ffd700","#00e676","#ff4757","#ec4899","#3b82f6","#06b6d4","#f59e0b","#8b5cf6","#14b8a6"];
 
   // ── Compute class-wide module accuracy data ──
   function getClassModuleData(){
@@ -4780,7 +4780,7 @@ function TeacherDash(p){
 
       {/* Student header */}
       <div style={{textAlign:"center",marginBottom:24}}>
-        <div style={{width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 10px",fontSize:24,fontWeight:900}} className="out">{s.name.charAt(0).toUpperCase()}</div>
+        <div style={{width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 10px",fontSize:24,fontWeight:900}} className="out">{s.name.charAt(0).toUpperCase()}</div>
         <h2 className="out" style={{fontWeight:800,fontSize:20}}>{s.name}</h2>
         <div style={{display:"flex",justifyContent:"center",gap:12,marginTop:6}}>
           <span style={{fontSize:12,color:"var(--t2)"}}>Level {getLevel(s.xp||0).level}</span>
@@ -4832,7 +4832,7 @@ function TeacherDash(p){
             <XAxis dataKey="date" tick={{fill:"var(--t3)",fontSize:9}} axisLine={{stroke:"var(--bdr)"}} tickLine={false}/>
             <YAxis domain={[0,100]} tick={{fill:"var(--t3)",fontSize:10}} axisLine={{stroke:"var(--bdr)"}} tickLine={false} width={30}/>
             <Tooltip content={ChartTip}/>
-            <Line type="monotone" dataKey="accuracy" stroke="#d4943a" strokeWidth={2} dot={{fill:"#d4943a",r:4}} activeDot={{r:6,fill:"#8b5e83"}}/>
+            <Line type="monotone" dataKey="accuracy" stroke="#00d4ff" strokeWidth={2} dot={{fill:"#00d4ff",r:4}} activeDot={{r:6,fill:"#a855f7"}}/>
           </LineChart>
         </ResponsiveContainer>):(<div style={{textAlign:"center",padding:"20px 8px"}}><p style={{fontSize:12,color:"var(--t3)"}}>📉 Not enough data points yet. History builds from new sessions.</p></div>)}
       </div>)}
@@ -4903,7 +4903,7 @@ function TeacherDash(p){
             border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
             transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
             <div style={{width:48,height:48,borderRadius:14,
-              background:g.type==="school"?"rgba(212,148,58,.1)":g.type==="pro"?"rgba(255,140,66,.1)":"rgba(139,94,131,.1)",
+              background:g.type==="school"?"rgba(0,212,255,.1)":g.type==="pro"?"rgba(255,140,66,.1)":"rgba(168,85,247,.1)",
               display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{typeIcon}</div>
             <div style={{flex:1,minWidth:0}}>
               <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{g.name}</div>
@@ -4941,7 +4941,7 @@ function TeacherDash(p){
  {/* Current group indicator */}
     {function(){var g=groups.find(function(x){return x.code===classCode;});
       var typeIcon=g?(g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍"):"📋";
-      return(<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,padding:"8px 14px",background:"rgba(212,148,58,.06)",borderRadius:12,border:"1px solid rgba(212,148,58,.12)"}}>
+      return(<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,padding:"8px 14px",background:"rgba(0,212,255,.06)",borderRadius:12,border:"1px solid rgba(0,212,255,.12)"}}>
         <span style={{fontSize:16}}>{typeIcon}</span>
         <span className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",flex:1}}>{g?g.name:classCode}</span>
         <button onClick={function(){setDashPhase("picker");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}} className="out">Change ›</button>
@@ -4961,7 +4961,7 @@ function TeacherDash(p){
       {/* Action buttons */}
       <div style={{display:"flex",gap:8,marginBottom:16}}>
         <button className="btn1" onClick={function(){setLoad(true);loadStudents();}} style={{flex:1,fontSize:13}}>🔄 Refresh</button>
-        <button className="btn2" onClick={exportCSV} style={{flex:1,fontSize:13,borderColor:"rgba(212,148,58,.3)",color:"var(--cyan)"}}>📥 Export CSV</button>
+        <button className="btn2" onClick={exportCSV} style={{flex:1,fontSize:13,borderColor:"rgba(0,212,255,.3)",color:"var(--cyan)"}}>📥 Export CSV</button>
       </div>
 
       {/* Student list */}
@@ -4975,7 +4975,7 @@ function TeacherDash(p){
           var accCol=sAcc>=70?"var(--green)":sAcc>=50?"var(--orange)":"var(--red)";
           return(<div key={i} className="crd" style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",cursor:"pointer"}}
             onClick={function(){setDetail(i);}}>
-            <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,flexShrink:0}} className="out">{s.name.charAt(0).toUpperCase()}</div>
+            <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,flexShrink:0}} className="out">{s.name.charAt(0).toUpperCase()}</div>
             <div style={{flex:1,minWidth:0}}>
               <div className="out" style={{fontWeight:700,fontSize:14}}>{s.name}</div>
               <div style={{display:"flex",gap:8,marginTop:2}}>
@@ -5069,7 +5069,7 @@ function TeacherDash(p){
             return(<div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
               <span style={{width:70,fontSize:11,color:"var(--t2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} className="out">{s.name.split(" ")[0]}</span>
               <div style={{flex:1,height:14,background:"var(--bg3)",borderRadius:7,overflow:"hidden"}}>
-                <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,#d4943a,#8b5e83)",borderRadius:7,transition:"width .4s ease"}}/>
+                <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,#00d4ff,#a855f7)",borderRadius:7,transition:"width .4s ease"}}/>
               </div>
               <span style={{fontSize:10,color:"var(--t3)",width:40,textAlign:"right"}}>{sess} sess</span>
             </div>);
@@ -5122,7 +5122,7 @@ function TeacherDash(p){
               }
               var isCurrentWeek=wk===(students[0]&&students[0].week_id);
 
-              return(<div key={wk} className="crd" style={{padding:14,borderColor:isCurrentWeek?"rgba(212,148,58,.2)":"var(--bdr)"}}>
+              return(<div key={wk} className="crd" style={{padding:14,borderColor:isCurrentWeek?"rgba(0,212,255,.2)":"var(--bdr)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                   <span className="out" style={{fontWeight:700,fontSize:13,color:isCurrentWeek?"var(--cyan)":"var(--t1)"}}>{weekLabel}{isCurrentWeek?" (current)":""}</span>
                   <span style={{fontSize:11,color:"var(--t3)"}}>{weekMap[wk].length} students</span>
@@ -5146,7 +5146,7 @@ function TeacherDash(p){
       }()}
 
       {/* CSV export in analytics too */}
-      <button className="btn2" onClick={exportCSV} style={{width:"100%",fontSize:13,borderColor:"rgba(212,148,58,.3)",color:"var(--cyan)",marginBottom:16}}>📥 Export class data (CSV)</button>
+      <button className="btn2" onClick={exportCSV} style={{width:"100%",fontSize:13,borderColor:"rgba(0,212,255,.3)",color:"var(--cyan)",marginBottom:16}}>📥 Export class data (CSV)</button>
     </div>)}
 
   </div>);
@@ -5258,7 +5258,7 @@ function ListenP2(p){
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
-    <div className="crd" style={{marginTop:16,padding:14,background:"rgba(139,94,131,.05)",borderColor:"rgba(139,94,131,.12)"}}>
+    <div className="crd" style={{marginTop:16,padding:14,background:"rgba(168,85,247,.05)",borderColor:"rgba(168,85,247,.12)"}}>
       <p className="out" style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:6}}>Question</p>
       <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.5}}>{it.q}</p></div>
     <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:16}}>
@@ -5273,7 +5273,7 @@ function ListenP2(p){
           <span>{opt}</span></div>);
       })}
     </div>
-    <div className="crd" style={{marginTop:16,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:14,animation:"fadeIn .3s"}}>
+    <div className="crd" style={{marginTop:16,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:14,animation:"fadeIn .3s"}}>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.x}</p></div>
     <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button>
   </div>);
@@ -5375,7 +5375,7 @@ function ListenP1(p){
       })}
     </div>
 
-    <div className="crd" style={{marginTop:12,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:12,animation:"fadeIn .3s"}}>
+    <div className="crd" style={{marginTop:12,background:"rgba(0,212,255,.06)",borderColor:"rgba(0,212,255,.15)",padding:12,animation:"fadeIn .3s"}}>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.x}</p></div>
     <button className="btn1" onClick={nxt} style={{marginTop:14}}>{ci<items.length-1?"Next":"See Results"}</button>
   </div>);
@@ -5610,7 +5610,7 @@ function ReadingHub(p){
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 5 — Exam Simulation</div><div style={{fontSize:11,color:"var(--t3)"}}>30 Qs in 10 min, real pace</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
       <div className="crd" onClick={function(){p.nav("p6");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#c4587a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📄</div>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#ec4899,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📄</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 6 — Text Completion</div><div style={{fontSize:11,color:"var(--t3)"}}>Business texts with blanks</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
       <div className="crd" onClick={function(){p.nav("p7");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
@@ -5720,7 +5720,7 @@ var countdown=getSeasonEndCountdown(curSeason);
 
 // ── Render helpers ──
 function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP";
-  return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(212,148,58,.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(212,148,58,.25)":"1px solid var(--bdr)",borderRadius:12}}>
+  return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(0,212,255,.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(0,212,255,.25)":"1px solid var(--bdr)",borderRadius:12}}>
     <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?(rank===1?"🥇":rank===2?"🥈":"🥉"):rank}</div>
     <div style={{fontSize:20,width:28,textAlign:"center"}}>{pl.avatar}</div>
     <div style={{flex:1}}><div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)"}}>{isMe?pl.name+" (You)":pl.name}</div></div>
@@ -5731,11 +5731,11 @@ function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=pro
 return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>League</h1>
 {leagueGroup!==u.classCode&&<div style={{textAlign:"center",marginBottom:8}}>
-  <span style={{fontSize:11,padding:"4px 12px",borderRadius:99,background:"rgba(139,94,131,.12)",border:"1px solid rgba(139,94,131,.25)",color:"var(--purple)"}} className="out">👁️ Viewing: {leagueGroup}</span>
+  <span style={{fontSize:11,padding:"4px 12px",borderRadius:99,background:"rgba(168,85,247,.12)",border:"1px solid rgba(168,85,247,.25)",color:"var(--purple)"}} className="out">👁️ Viewing: {leagueGroup}</span>
 </div>}
 
 {/* Season banner */}
-<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(212,148,58,.06),rgba(139,94,131,.06))",borderColor:"rgba(212,148,58,.15)"}}>
+<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(0,212,255,.06),rgba(168,85,247,.06))",borderColor:"rgba(0,212,255,.15)"}}>
   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
       <span style={{fontSize:22}}>{curSeason.icon}</span>
@@ -5760,7 +5760,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 {/* Stats summary */}
 {u.name==="Teacher"?
-<div className="crd" style={{padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,rgba(245,158,11,.06),rgba(139,94,131,.06))",borderColor:"rgba(245,158,11,.15)"}}>
+<div className="crd" style={{padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,rgba(245,158,11,.06),rgba(168,85,247,.06))",borderColor:"rgba(245,158,11,.15)"}}>
   <span style={{fontSize:18}}>{"👁️"}</span>
   <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--gold)"}}>Observer mode</div>
   <div style={{fontSize:11,color:"var(--t3)"}}>Your stats are hidden from the leaderboard</div></div>
@@ -5788,7 +5788,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 {/* ── SEASON TAB ── */}
 {tab==="season"&&(<div>
-  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(212,148,58,.04),rgba(139,94,131,.04))"}}>
+  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(0,212,255,.04),rgba(168,85,247,.04))"}}>
     <div style={{fontSize:36,marginBottom:6}}>{curSeason.icon}</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Season {curSeason.id}: {curSeason.name}</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} weeks · {countdown}</div>
@@ -5802,7 +5802,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 {/* ── OVERALL TAB ── */}
 {tab==="overall"&&(<div>
-  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(245,158,11,.04),rgba(139,94,131,.04))"}}>
+  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(245,158,11,.04),rgba(168,85,247,.04))"}}>
     <div style={{fontSize:36,marginBottom:6}}>{"🏆"}</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--gold)"}}>Overall Ranking</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Cumulative ranking points across all seasons</div>
@@ -5812,7 +5812,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   <div style={{display:"flex",gap:6,marginBottom:16}}>
     {SEASONS.map(function(s){
       var isCurrent=s.id===curSeason.id;var isPast=s.weeks[s.weeks.length-1]<cw;
-      return(<div key={s.id} className="crd" style={{flex:1,padding:"8px 4px",textAlign:"center",borderColor:isCurrent?"rgba(212,148,58,.3)":"var(--bdr)",opacity:(!isCurrent&&!isPast)?0.4:1}}>
+      return(<div key={s.id} className="crd" style={{flex:1,padding:"8px 4px",textAlign:"center",borderColor:isCurrent?"rgba(0,212,255,.3)":"var(--bdr)",opacity:(!isCurrent&&!isPast)?0.4:1}}>
         <div style={{fontSize:16}}>{s.icon}</div>
         <div style={{fontSize:9,color:isCurrent?"var(--cyan)":"var(--t3)",fontWeight:isCurrent?700:400}}>S{s.id}</div>
         <div style={{fontSize:8,color:"var(--t3)"}}>{isPast?"Done":isCurrent?"Active":"Soon"}</div>
@@ -5834,7 +5834,7 @@ useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});},[]);
 var uC=Object.assign({},u);var ea=ACHIEVEMENTS.filter(function(a){return a.check(uC);});var la=ACHIEVEMENTS.filter(function(a){return!a.check(uC);});
 return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{textAlign:"center",marginBottom:24}}>
-<div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:38}}>{u.avatar||"⚔️"}</div>
+<div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#00d4ff,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:38}}>{u.avatar||"⚔️"}</div>
 <h1 className="out" style={{fontWeight:800,fontSize:22}}>{u.name}</h1>
 <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8,flexWrap:"wrap"}}>
 <span style={{fontSize:13,color:"var(--t2)"}}>Level {lv.level}</span><span style={{fontSize:13,color:lg.color}}>{lg.icon} {lg.name}</span><span style={{fontSize:13,color:"var(--orange)"}}>🔥 {u.streak}</span></div></div>
@@ -5846,7 +5846,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <button className="btn2" onClick={function(){
   var code=prompt("Teacher code:");
   if(code===TEACHER_CODE)p.goTeacher();
-}} style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>👨‍🏫 Teacher Dashboard</button>
+}} style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(0,212,255,.2)",color:"var(--cyan)"}}>👨‍🏫 Teacher Dashboard</button>
 
 <div className="crd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:16,marginBottom:20}}>
   <div><div className="out" style={{fontWeight:700,fontSize:14}}>Appearance</div>
@@ -5920,7 +5920,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     var sel=av===(u.avatar||"⚔️");
     return(<button key={av} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar=av;p.setAvatar(c);}}
       style={{width:44,height:44,borderRadius:12,border:sel?"2px solid var(--cyan)":"2px solid var(--bdr)",
-        background:sel?"rgba(212,148,58,.1)":"var(--bg2)",cursor:"pointer",fontSize:22,
+        background:sel?"rgba(0,212,255,.1)":"var(--bg2)",cursor:"pointer",fontSize:22,
         display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
       {av}</button>);
   })}
