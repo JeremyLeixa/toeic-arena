@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { CLUE_HUNTER } from "./data/clueHunter.js";
-import { playCorrect, playWrong, playXP, playLevelUp, setSoundEnabled, isSoundEnabled } from "./sounds.js";
+import { playCorrect, playWrong, playXP, playLevelUp, playCombo, playStreak, playTimer, playClick, playArenaCall, playJingleEnter, playJingleAchieve, playJingleLeague, playJingleMock, playJingleMockOk, playJingleDaily, playBGM, stopBGM, setSoundEnabled, isSoundEnabled } from "./sounds.js";
 import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
 /* ═══════════════════════════════════════════
@@ -654,7 +653,7 @@ var[step,sSt]=useState("name");
         </div>
         <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:8}}>{lvl.msg}</p>
         <p style={{color:"var(--gold)",fontSize:13,fontWeight:600,marginBottom:32}}>Starting with {lvl.startXp} XP in {lvl.league.charAt(0).toUpperCase()+lvl.league.slice(1)} League</p>
-        <button className="btn1" onClick={function(){p.go(name.trim(),classCode||'visitor',sc,lvl);}} style={{fontSize:18,padding:"16px 32px"}}>Enter the Arena</button>
+        <button className="btn1" onClick={function(){playArenaCall();p.go(name.trim(),classCode||'visitor',sc,lvl);}} style={{fontSize:18,padding:"16px 32px"}}>Enter the Arena</button>
       </div>
     </div>);
 
@@ -6000,6 +5999,16 @@ useEffect(function(){
     });
     return function(){sub.data.subscription.unsubscribe();};
   },[]);
+  
+  // ── Auto-start Home BGM on first user interaction ──
+  var bgmStarted=useRef(false);
+  useEffect(function(){
+    if(ld||!u||bgmStarted.current)return;
+    function startBGM(){bgmStarted.current=true;if(tab==="home")playBGM("bgm_home");document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);}
+    document.addEventListener("click",startBGM,{once:true});
+    document.addEventListener("touchstart",startBGM,{once:true});
+    return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
+  },[ld]);
 
   // ── Time tracking: increment every 60s, save every 5 min ──
   var timeRef=useRef({ticks:0});
@@ -6034,7 +6043,7 @@ useEffect(function(){
       ACHIEVEMENTS.forEach(function(a){
         if(a.check(d)&&d.unlockedAch.indexOf(a.id)===-1){
           d.unlockedAch.push(a.id);
-          try{playLevelUp();}catch(e){}
+          try{playJingleAchieve();}catch(e){}
           setAchToast({name:a.name,icon:a.icon,desc:a.desc});
           setTimeout(function(){setAchToast(null);},3500);
         }
@@ -6086,15 +6095,18 @@ useEffect(function(){
       if(isFirstToday){amt+=10;bonuses.push({label:"+10 daily login",color:"#00e676"});}
     }
 
+var prevLeague=getLeague(c.weeklyXp);
     c.xp+=amt;c.weeklyXp+=amt;
     // Floor: never go below 0 XP
     if(c.xp<0)c.xp=0;
     if(c.weeklyXp<0)c.weeklyXp=0;
+    var newLeague=getLeague(c.weeklyXp);
+    if(newLeague.id!==prevLeague.id&&c.weeklyXp>prevLeague.min)try{playJingleLeague();}catch(e){}
     var toastInfo={total:amt,base:baseAmt,bonuses:bonuses};
     sXpt(toastInfo);setTimeout(function(){sXpt(null);},2200);
     return c;
   }
-  function nav(pg,arg){sSP(pg);sSPA(arg||null);}
+  function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
   async function onboard(name,classCode,placementScore,lvl){
     classCode=classCode||'idrac2026';
     // Check if student already exists (use limit(1) — safe even with duplicates)
@@ -6165,7 +6177,7 @@ useEffect(function(){
   }
  
   function goTeacher(){setTeacher(true);}
-  function mockDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};c.mockResults["mock"+result.mockId]=result;recordModule(c,"mock"+result.mockId,result.score,result.total);sv(c);}
+  function mockDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};c.mockResults["mock"+result.mockId]=result;recordModule(c,"mock"+result.mockId,result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);}
   function gameDone(modeKey,result,xp){var c=addXp(xp);if(!c.gameScores)c.gameScores={};
     if(modeKey==="duel"){
       // Accumulate duel stats instead of overwriting
@@ -6176,7 +6188,7 @@ useEffect(function(){
     }
     c.stats.sessions+=1;sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
-  function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");sv(c);}
+  function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");try{playJingleDaily();}catch(e){}sv(c);}
   function drillDone(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"drill");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
@@ -6208,11 +6220,11 @@ useEffect(function(){
   if(sp==="mock2")return(<div className={lc}><style>{CSS}</style><MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="mock3")return(<div className={lc}><style>{CSS}</style><MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="smatch")return(<div className={lc}><style>{CSS}</style><SpeedMatchHub u={u} nav={nav} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="matchE")return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={gameDone} back={function(){sSP("smatch");}}/></div>);
-  if(sp==="matchH")return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={gameDone} back={function(){sSP("smatch");}}/></div>);
-  if(sp==="wfall")return(<div className={lc}><style>{CSS}</style><WordFall u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="duel")return(<div className={lc}><style>{CSS}</style><DuelArena u={u} done={gameDone} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="sbuild")return(<div className={lc}><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
+if(sp==="matchE"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/></div>);}
+  if(sp==="matchH"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/></div>);}
+ if(sp==="wfall"){playBGM("bgm_wfall");return(<div className={lc}><style>{CSS}</style><WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
+if(sp==="duel"){playBGM("bgm_duel");return(<div className={lc}><style>{CSS}</style><DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
+  if(sp==="sbuild"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){stopBGM();var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
   if(sp==="clue")return(<div className={lc}><style>{CSS}</style><ClueHunter u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="ablitz")return(<div className={lc}><style>{CSS}</style><AudioBlitz u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="strats")return(<div className={lc}><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
@@ -6230,6 +6242,6 @@ useEffect(function(){
 
   return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
-    {tab==="home"&&<Home u={u} nav={nav}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="games"&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
-    <Tabs cur={tab} go={function(t){sT(t);sSP(null);}}/></div>);
+    {tab==="home"&&<Home u={u} nav={nav} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="games"&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
+    <Tabs cur={tab} go={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/></div>);
 }
