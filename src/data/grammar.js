@@ -78,6 +78,11 @@ export var QUESTIONS = [
   {id:"g72",s:"Applications _____ until the position is filled.",o:["accept","are being accepted","accepting","have accepting"],c:1,x:"Present continuous passive: 'are being accepted' = ongoing process.",cat:"Passive Voice"},
   {id:"g73",s:"The damaged goods should _____ to the manufacturer.",o:["return","be returned","returning","returned"],c:1,x:"'Should be returned' = passive with modal 'should'.",cat:"Passive Voice"},
   {id:"g74",s:"It _____ that the merger will be completed by June.",o:["expects","is expected","expecting","has expecting"],c:1,x:"'It is expected that...' = impersonal passive construction.",cat:"Passive Voice"},
+    {id:"g75",s:"The safety inspection _____ by an external auditor next Tuesday.",o:["conducts","will be conducted","conducting","has conducted"],c:1,x:"Future passive: 'will be conducted' — the auditor performs the action, not the inspection.",cat:"Passive Voice"},
+  {id:"g76",s:"More than 500 units _____ from the warehouse last quarter.",o:["shipped","were shipped","have shipping","are shipping"],c:1,x:"Past passive: 'were shipped' — the units didn't ship themselves, someone shipped them.",cat:"Passive Voice"},
+  {id:"g77",s:"All customer complaints should _____ within 48 hours.",o:["address","be addressed","addressing","addressed"],c:1,x:"Modal passive: should + be + past participle. 'Should be addressed'.",cat:"Passive Voice"},
+  {id:"g78",s:"The building _____ currently _____ to meet new fire regulations.",o:["is...renovating","is...being renovated","has...renovated","was...renovating"],c:1,x:"Present continuous passive: 'is being renovated' — renovation is in progress right now.",cat:"Passive Voice"},
+  {id:"g79",s:"Employees who _____ for the leadership program will be notified by email.",o:["select","are selected","selecting","have selecting"],c:1,x:"Present passive in relative clause: employees are selected BY someone.",cat:"Passive Voice"},
   // ─── SUBJECT-VERB AGREEMENT (+4) ───
   {id:"g75",s:"A number of employees _____ requested additional training.",o:["has","have","is","was"],c:1,x:"'A number of' = plural meaning ('many'). HAVE requested. (vs 'The number of' = singular.)",cat:"Subject-Verb Agreement"},
   {id:"g76",s:"Every manager and supervisor _____ expected to attend.",o:["are","is","were","have"],c:1,x:"'Every' + singular = singular verb. 'Every manager IS expected'.",cat:"Subject-Verb Agreement"},
@@ -202,6 +207,47 @@ export var QUESTIONS = [
   {id:"g163",s:"She was appointed _____ chairperson of the committee last month.",o:["a","an","the","—"],c:3,x:"Zero article after 'appointed/elected/named' + unique title. 'Appointed chairperson' (not 'the chairperson').",cat:"Articles"},
   {id:"g164",s:"Could you give me _____ update on the merger negotiations?",o:["a","an","the","—"],c:1,x:"'An' before vowel sound. 'Update' starts with a vowel sound. Non-specific = indefinite article.",cat:"Articles"},
   {id:"g165",s:"_____ research conducted by our team suggests that demand will increase.",o:["A","An","The","—"],c:2,x:"'The research' = specific research (conducted by our team). Definite article for identified/specified nouns.",cat:"Articles"},
+  // ─── CONDITIONALS (+5) ───
+  {id:"g80",s:"If demand _____, we will need to hire additional staff.",o:["increases","increased","will increase","would increase"],c:0,x:"First conditional: If + present simple, will + base verb. Real/likely future situation.",cat:"Conditionals"},
+  {id:"g81",s:"Had the shipment arrived on time, we _____ the deadline.",o:["met","would meet","would have met","will meet"],c:2,x:"Third conditional (inverted): Had + past participle, would have + past participle. Unreal past.",cat:"Conditionals"},
+  {id:"g82",s:"If I _____ you, I would accept the promotion without hesitation.",o:["am","was","were","will be"],c:2,x:"Second conditional: If I WERE (subjunctive) — 'were' for all persons in formal/TOEIC English.",cat:"Conditionals"},
+  {id:"g83",s:"The warranty will be voided _____ the product is not used as directed.",o:["unless","if","whether","so that"],c:1,x:"First conditional with 'if': the warranty WILL be voided IF the product is misused.",cat:"Conditionals"},
+  {id:"g84",s:"_____ the budget been approved earlier, we could have started in January.",o:["Should","Had","Would","If"],c:1,x:"Third conditional (inversion): 'Had the budget been approved' = 'If the budget had been approved'.",cat:"Conditionals"},
+ 
+  // ─── RELATIVE PRONOUNS (+5) ───
+  {id:"g85",s:"The candidate _____ résumé impressed the panel was offered the position.",o:["who","whose","whom","which"],c:1,x:"'Whose' = possessive relative pronoun. 'The candidate whose résumé...' (his/her résumé).",cat:"Relative Pronouns"},
+  {id:"g86",s:"The conference, _____ was attended by over 2,000 delegates, lasted three days.",o:["that","which","who","whose"],c:1,x:"Non-defining relative clause (with commas) uses 'which', never 'that'.",cat:"Relative Pronouns"},
+  {id:"g87",s:"Employees _____ wish to enroll in the program should contact HR by Friday.",o:["whom","which","who","whose"],c:2,x:"'Who' = subject of the relative clause. Employees WHO wish... (they wish = subject).",cat:"Relative Pronouns"},
+  {id:"g88",s:"The building in _____ the head office is located was built in 1965.",o:["that","where","which","what"],c:2,x:"After a preposition: 'in WHICH'. 'That' cannot follow a preposition directly.",cat:"Relative Pronouns"},
+  {id:"g89",s:"Ms. Lee is the executive to _____ you should address your complaint.",o:["who","whose","which","whom"],c:3,x:"After a preposition: 'to WHOM'. 'Whom' is the object form of 'who'.",cat:"Relative Pronouns"},
+ 
+  // ─── COMPARATIVES (+5) ───
+  {id:"g90",s:"The new model is far _____ reliable than the previous one.",o:["most","more","as","very"],c:1,x:"'Far more' = intensified comparative. 'Far/much/significantly + more + adjective'.",cat:"Comparatives"},
+  {id:"g91",s:"Of the three candidates, Ms. Tanaka has the _____ relevant experience.",o:["more","most","much","very"],c:1,x:"Superlative with 3+ items: 'the most relevant'. 'More' is for comparing two.",cat:"Comparatives"},
+  {id:"g92",s:"Sales this year are nearly twice _____ high as last year.",o:["so","as","more","than"],c:1,x:"'Twice AS high AS' — multiplier comparison. Number + as + adj + as.",cat:"Comparatives"},
+  {id:"g93",s:"This quarter's profits are _____ lower than what analysts predicted.",o:["significant","significantly","significance","more significant"],c:1,x:"Adverb modifying a comparative: 'significantly lower'. Not adjective 'significant'.",cat:"Comparatives"},
+  {id:"g94",s:"The later the project starts, the _____ expensive it becomes.",o:["more","most","much","very"],c:0,x:"Double comparative: 'The later..., the more expensive...' Parallel structure.",cat:"Comparatives"},
+ 
+  // ─── GERUNDS vs INFINITIVES (+5) ───
+  {id:"g95",s:"The company avoided _____ any unnecessary expenses during the downturn.",o:["to incur","incurring","incur","incurred"],c:1,x:"'Avoid' always takes a gerund (-ing). Avoid incurring.",cat:"Gerunds vs Infinitives"},
+  {id:"g96",s:"We expect all participants _____ the terms and conditions before registering.",o:["reading","read","to read","having read"],c:2,x:"'Expect + object + to-infinitive'. We expect participants TO READ.",cat:"Gerunds vs Infinitives"},
+  {id:"g97",s:"The manager postponed _____ a decision until more data was available.",o:["to make","making","make","made"],c:1,x:"'Postpone' takes a gerund. Postponed making a decision.",cat:"Gerunds vs Infinitives"},
+  {id:"g98",s:"She seems _____ very familiar with the new accounting software.",o:["being","to be","be","been"],c:1,x:"'Seem' takes an infinitive (to). She seems TO BE familiar.",cat:"Gerunds vs Infinitives"},
+  {id:"g99",s:"The employees were asked _____ overtime until the project was delivered.",o:["working","to work","work","worked"],c:1,x:"Passive + infinitive: 'were asked TO WORK'. Ask/tell/advise + object + to-infinitive.",cat:"Gerunds vs Infinitives"},
+ 
+  // ─── SUBJECT-VERB AGREEMENT (+5) ───
+  {id:"g100",s:"A number of employees _____ requested additional training this quarter.",o:["has","is","have","was"],c:2,x:"'A number of' = plural meaning (= many). HAVE requested. vs 'THE number of' = singular.",cat:"Subject-Verb Agreement"},
+  {id:"g101",s:"The equipment delivered to both offices _____ still under warranty.",o:["are","were","have","is"],c:3,x:"'Equipment' is uncountable = singular. The equipment IS under warranty.",cat:"Subject-Verb Agreement"},
+  {id:"g102",s:"Every one of the proposals submitted last week _____ been reviewed.",o:["have","are","has","were"],c:2,x:"'Every one' = singular. Every one HAS been reviewed. Don't be fooled by 'proposals' (plural).",cat:"Subject-Verb Agreement"},
+  {id:"g103",s:"The news about the upcoming layoffs _____ not yet been confirmed.",o:["have","are","has","were"],c:2,x:"'News' is uncountable singular. The news HAS not been confirmed.",cat:"Subject-Verb Agreement"},
+  {id:"g104",s:"Not only the director but also the board members _____ expected to attend.",o:["is","was","has","are"],c:3,x:"'Not only A but also B' — verb agrees with B (closest). 'Board members' = plural → ARE.",cat:"Subject-Verb Agreement"},
+ 
+  // ─── CONNECTORS (+5) ───
+  {id:"g105",s:"The product is popular among consumers; _____, production has been increased.",o:["nevertheless","accordingly","although","despite"],c:1,x:"'Accordingly' = as a result, logically. Cause → consequence.",cat:"Connectors"},
+  {id:"g106",s:"_____ completing the online form, applicants must submit two references.",o:["In addition to","However","Therefore","Despite"],c:0,x:"'In addition to' + -ing/noun. Adds an extra requirement.",cat:"Connectors"},
+  {id:"g107",s:"The workshop was cancelled _____ insufficient enrollment.",o:["because","due to","although","so that"],c:1,x:"'Due to' + noun phrase (no clause). 'Because' would need a clause: 'because enrollment was insufficient'.",cat:"Connectors"},
+  {id:"g108",s:"Mr. Sato agreed to the terms; _____, he signed the contract immediately.",o:["otherwise","whereas","furthermore","therefore"],c:3,x:"'Therefore' = consequence. He agreed, therefore he signed.",cat:"Connectors"},
+  {id:"g109",s:"The CEO will visit the Tokyo office _____ the Osaka branch next week.",o:["as well as","however","therefore","despite"],c:0,x:"'As well as' = in addition to. Connecting two parallel items.",cat:"Connectors"},
 ];
 
 // ─── WORD FAMILIES DATA ───

@@ -257,4 +257,74 @@ export var PART6_TEXTS = [
         "Office supplies can be ordered through the new procurement system."
       ],correct:0,x:"Sentence insertion: must provide a contact for questions about the certification renewal."},
     ]},
+	// ─── NEW PART 6 TEXTS (p6t17–p6t20) — paste after last entry in PART6_TEXTS ───
+// Types: Advertisement, Article, Report, Instructions
+
+  { id:"p6t17", type:"Advertisement", from:"GreenTech Solutions", to:"", subject:"Smart Energy for Modern Businesses",
+    parts:[
+      {text:"Are you looking for ways to reduce your company's energy costs? GreenTech Solutions offers cutting-edge solar panel systems "},
+      {blank:true,options:["designed","designing","design","designer"],correct:0,x:"Past participle as adjective: 'systems designed for...' (= which were designed)."},
+      {text:" specifically for commercial buildings.\n\nOur systems are easy to install and require minimal maintenance. Businesses that have switched to GreenTech "},
+      {blank:true,options:["have reported","reporting","reports","are reporting"],correct:0,x:"Present perfect: 'Businesses that have switched... HAVE REPORTED'. Result visible now."},
+      {text:" energy savings of up to 40% within the first year. "},
+      {blank:true,options:["Moreover","Although","Despite","Unless"],correct:0,x:"'Moreover' adds a benefit. The ad lists advantages one after another."},
+      {text:", all installations come with a 10-year warranty and free annual inspections.\n\n"},
+      {blank:true,options:[
+        "Contact us today for a free consultation and site assessment.",
+        "Our CEO will retire at the end of the fiscal year.",
+        "The company's main warehouse is located in New Jersey.",
+        "Employees must complete their timesheets by Friday."
+      ],correct:0,x:"Sentence insertion: a call to action is the natural ending for an advertisement."},
+    ]},
+
+  { id:"p6t18", type:"Article", from:"Business Weekly", to:"", subject:"Remote Work: The New Standard?",
+    parts:[
+      {text:"A recent survey conducted by the Global Workforce Institute reveals that more than 60% of companies plan to offer permanent remote work options. The shift, which "},
+      {blank:true,options:["accelerated","was accelerated","accelerating","has accelerating"],correct:1,x:"Passive: 'which WAS ACCELERATED by the pandemic'. The pandemic accelerated the shift."},
+      {text:" by the global pandemic, has fundamentally changed how organizations think about office space.\n\nMany employees have expressed a strong "},
+      {blank:true,options:["prefer","preference","preferably","preferred"],correct:1,x:"Article + adjective + NOUN: 'a strong preference'. Noun needed after 'a strong'."},
+      {text:" for hybrid work arrangements. Productivity data from several major firms supports this trend. "},
+      {blank:true,options:["Nevertheless","Because of","In addition","So that"],correct:0,x:"'Nevertheless' introduces a counterpoint: despite positive data, there are also concerns."},
+      {text:", some managers remain concerned about team cohesion and the difficulty of maintaining company culture remotely.\n\n"},
+      {blank:true,options:[
+        "The debate over remote work policies is likely to continue for years to come.",
+        "The company picnic will be held in Central Park this Saturday.",
+        "Flights to Tokyo are currently available at discounted rates.",
+        "The new cafeteria menu features several vegetarian options."
+      ],correct:0,x:"Sentence insertion: a forward-looking conclusion fits an article discussing an ongoing trend."},
+    ]},
+
+  { id:"p6t19", type:"Report", from:"Quality Assurance Department", to:"Senior Management", subject:"Annual Product Quality Report",
+    parts:[
+      {text:"This report summarizes the findings of the quality audits conducted across all manufacturing facilities during the last fiscal year.\n\nOverall, product defect rates have decreased "},
+      {blank:true,options:["significantly","significant","significance","signify"],correct:0,x:"Adverb modifying the verb 'have decreased'. 'Decreased significantly'."},
+      {text:" compared to the previous year, dropping from 3.2% to 1.8%. This improvement is largely "},
+      {blank:true,options:["attributed","attributing","attributable","attribution"],correct:2,x:"'Attributable to' = adjective + preposition. 'This improvement is attributable to...'"},
+      {text:" to the new automated inspection systems installed in Q2. "},
+      {blank:true,options:["However","Furthermore","As a result","In addition to"],correct:0,x:"'However' introduces a concern despite the good news. Contrast connector."},
+      {text:", two facilities — Plant C in Mexico and Plant F in Vietnam — continue to show defect rates above the acceptable threshold.\n\n"},
+      {blank:true,options:[
+        "We recommend targeted audits and additional staff training at these locations.",
+        "The holiday schedule has been posted on the company intranet.",
+        "Several employees will attend the trade fair in Berlin next month.",
+        "The parking lot will be resurfaced during the first week of August."
+      ],correct:0,x:"Sentence insertion: a recommendation logically concludes a quality report highlighting issues."},
+    ]},
+
+  { id:"p6t20", type:"Instructions", from:"IT Department", to:"All Employees", subject:"Setting Up Two-Factor Authentication",
+    parts:[
+      {text:"As part of our ongoing efforts to strengthen data security, all employees are now required to enable two-factor authentication (2FA) on their company accounts.\n\nTo set up 2FA, first log in to your account and navigate to the Security Settings page. Then, click on 'Enable Two-Factor Authentication' and follow the "},
+      {blank:true,options:["on-screen","on-screening","on-screened","on-screens"],correct:0,x:"Compound adjective: 'on-screen prompts'. Adjective modifying 'prompts'."},
+      {text:" prompts to link your mobile device. You will need to download an authenticator app "},
+      {blank:true,options:["prior to","while","during","until"],correct:0,x:"'Prior to' + noun/-ing = before. 'Prior to completing the setup.'"},
+      {text:" completing the setup process. "},
+      {blank:true,options:["Once","Despite","Unless","Although"],correct:0,x:"'Once' = when/after. 'Once 2FA is enabled, you will need...' Time clause."},
+      {text:" 2FA is enabled, you will be asked to enter a verification code each time you log in from an unrecognized device.\n\n"},
+      {blank:true,options:[
+        "If you experience any difficulties, please contact the IT helpdesk at extension 500.",
+        "The company holiday party will be held on December 15th.",
+        "Our stock price has increased by 12% this quarter.",
+        "New office chairs will be delivered to all departments next week."
+      ],correct:0,x:"Sentence insertion: a support/contact line naturally concludes setup instructions."},
+    ]},
 ];
