@@ -4625,9 +4625,10 @@ function TeacherDash(p){
   var[dashTab,setDashTab]=useState("overview"); // "overview" | "analytics"
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
   var[groups,setGroups]=useState([]);
+  var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard"
 
   function loadGroups(){
-    supabase.from('groups').select('*').order('created_at',{ascending:true})
+    supabase.from('groups').select('*').order('type',{ascending:true}).order('name',{ascending:true})
       .then(function(res){if(res.data)setGroups(res.data);});
   }
   useEffect(function(){loadGroups();},[]);
@@ -4882,9 +4883,45 @@ function TeacherDash(p){
   // Class module data for analytics chart
   var classModData=getClassModuleData();
 
+  // ─── PROMO PICKER PHASE ───
+  if(dashPhase==="picker")return(<div className="app enter" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32}}>
+    <div style={{width:"100%",maxWidth:380,animation:"fadeIn .5s"}}>
+      <div style={{textAlign:"center",marginBottom:32}}>
+        <div style={{fontSize:48,marginBottom:12}}>👨‍🏫</div>
+        <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6}}>Teacher Dashboard</h1>
+        <p style={{color:"var(--t2)",fontSize:13}}>Select a group to manage</p>
+      </div>
+      {groups.length===0&&<div style={{textAlign:"center",padding:20}}><p style={{color:"var(--t3)",fontSize:13}}>Loading groups...</p></div>}
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {groups.map(function(g){
+          var typeIcon=g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍";
+          var typeLabel=g.type==="school"?"School":g.type==="pro"?"Professional":"Visitor";
+          return(<button key={g.code} onClick={function(){
+            setClassCode(g.code);
+            try{localStorage.setItem('toeic-dash-group',g.code);}catch(e){}
+            setLoad(true);setDetail(null);setDashPhase("dashboard");
+          }} className="crd" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 20px",cursor:"pointer",
+            border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
+            transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{width:48,height:48,borderRadius:14,
+              background:g.type==="school"?"rgba(0,212,255,.1)":g.type==="pro"?"rgba(255,140,66,.1)":"rgba(168,85,247,.1)",
+              display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{typeIcon}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{g.name}</div>
+              <div style={{fontSize:11,color:"var(--t3)"}}>{typeLabel} · {g.code}</div>
+            </div>
+            <div style={{color:"var(--t3)",fontSize:16}}>→</div>
+          </button>);
+        })}
+      </div>
+      <button onClick={p.back} style={{display:"block",margin:"28px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Exit</button>
+    </div>
+  </div>);
+
+  // ─── DASHBOARD PHASE ───
   return(<div className="app enter" style={{padding:"20px 16px 40px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>← Back</button>
+      <button onClick={function(){setDashPhase("picker");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>← Groups</button>
       <span className="out" style={{fontWeight:700,fontSize:15}}>Teacher Dashboard</span>
       <div style={{width:40}}/>
     </div>
@@ -4902,18 +4939,15 @@ function TeacherDash(p){
       })}
     </div>
 
-    {/* Group selector */}
-    {groups.length>1&&<div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
-      {groups.map(function(g){var active=classCode===g.code;var typeIcon=g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍";
-        return(<button key={g.code} onClick={function(){setClassCode(g.code);try{localStorage.setItem('toeic-dash-group',g.code);}catch(e){}setLoad(true);setDetail(null);}}
-          style={{padding:"6px 14px",borderRadius:99,border:"1px solid "+(active?"var(--cyan)":"var(--bdr)"),
-            background:active?"rgba(0,212,255,.12)":"var(--bg2)",color:active?"var(--cyan)":"var(--t2)",
-            fontSize:12,fontWeight:active?700:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",
-            display:"flex",alignItems:"center",gap:5,transition:"all .2s"}} className="out">
-          <span>{typeIcon}</span>{g.name}
-        </button>);
-      })}
-    </div>}
+ {/* Current group indicator */}
+    {function(){var g=groups.find(function(x){return x.code===classCode;});
+      var typeIcon=g?(g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍"):"📋";
+      return(<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,padding:"8px 14px",background:"rgba(0,212,255,.06)",borderRadius:12,border:"1px solid rgba(0,212,255,.12)"}}>
+        <span style={{fontSize:16}}>{typeIcon}</span>
+        <span className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",flex:1}}>{g?g.name:classCode}</span>
+        <button onClick={function(){setDashPhase("picker");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}} className="out">Change ›</button>
+      </div>);
+    }()}
 
     {/* Class KPI cards */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:16}}>
