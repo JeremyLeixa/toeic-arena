@@ -411,6 +411,58 @@ function canUnlockMock(u,mockId){
 // ─── TEACHER DASHBOARD CONFIG ───
 var TEACHER_CODE="idrac2026";
 
+// ─── PUSH NOTIFICATIONS ───
+var VAPID_PUBLIC_KEY="BGiKomKxy1j081qd5ZaZnp7EUAYXIGRPWu8ePQySLGhQ0T45-m3oKTqgj-teqm2l5RoR0jnamCWHZ6pMYjrPVy4";
+
+function urlBase64ToUint8Array(base64String){
+  var padding="=".repeat((4-base64String.length%4)%4);
+  var base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
+  var rawData=window.atob(base64);var outputArray=new Uint8Array(rawData.length);
+  for(var i=0;i<rawData.length;++i)outputArray[i]=rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function subscribePush(userName){
+  try{
+    if(!("serviceWorker" in navigator)||!("PushManager" in window))return null;
+    var reg=await navigator.serviceWorker.ready;
+    var existing=await reg.pushManager.getSubscription();
+    if(existing)return existing;
+    var sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    // Store in Supabase
+    await supabase.from("push_subscriptions").upsert({
+      student_name:userName,
+      class_code:"idrac2026",
+      subscription:sub.toJSON()
+    },{onConflict:"student_name,class_code,subscription"});
+    return sub;
+  }catch(e){console.log("Push subscription failed:",e);return null;}
+}
+
+async function unsubscribePush(userName){
+  try{
+    if(!("serviceWorker" in navigator))return;
+    var reg=await navigator.serviceWorker.ready;
+    var sub=await reg.pushManager.getSubscription();
+    if(sub){
+      await sub.unsubscribe();
+      await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code","idrac2026");
+    }
+  }catch(e){console.log("Push unsubscribe failed:",e);}
+}
+
+async function isPushSubscribed(){
+  try{
+    if(!("serviceWorker" in navigator)||!("PushManager" in window))return false;
+    var reg=await navigator.serviceWorker.ready;
+    var sub=await reg.pushManager.getSubscription();
+    return!!sub;
+  }catch(e){return false;}
+}
+
 // ─── CSS ───
 var CSS=`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -3843,18 +3895,9 @@ function DuelArena(p){
 
       <button className="btn1" onClick={function(){
         if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
-        // Store duel stats properly
         var result={score:myScore,won:iWon,tied:tied,wager:wager,wagerWon:iWon?wager:0};
         p.done("duel",result,totalXp);
       }}>Collect XP</button>
-      <button className="btn2" onClick={function(){
-        if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
-        setPhase("hub");setOppName(null);setRoomCode("");setInputCode("");setQuestions([]);setQi(0);setMyScore(0);setOppScore(0);setRoundResults([]);setWager(0);
-      }} style={{marginTop:10,width:"100%"}}>Play Again</button>
-      <button className="btn2" onClick={function(){
-        if(channelRef.current){supabase.removeChannel(channelRef.current);channelRef.current=null;}
-        p.back();
-      }} style={{marginTop:10,width:"100%"}}>Back to Games</button>
     </div>);
   }
 
@@ -3980,7 +4023,6 @@ function ClueHunter(p){
           </div>
         </div>
         <button className="btn1" onClick={function(){p.done(perfect,TOTAL,xp);}}>Collect XP</button>
-        <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back to Games</button>
       </div>);
   }
  
@@ -4240,7 +4282,6 @@ function SpeedMatch(p){
       <div style={{fontSize:28,marginBottom:4}}>{["","⭐","⭐⭐","⭐⭐⭐"][stars]}</div>
       <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:24}}>+{xp} XP</div>
       <button className="btn1" onClick={function(){p.done(modeKey,{time:finalTime,moves:moves},xp);}}>Collect XP</button>
-      <button className="btn2" onClick={p.back} style={{marginTop:10,width:"100%"}}>Back to Games</button>
     </div>);
   }
 
@@ -4440,7 +4481,6 @@ function animateFall(){
       </div>
       <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:24}}>+{xp} XP</div>
       <button className="btn1" onClick={function(){p.done("wordFall",{score:score,maxCombo:maxCombo,questions:qi+1},xp);}}>Collect XP</button>
-      <button className="btn2" onClick={p.back} style={{marginTop:10,width:"100%"}}>Back to Games</button>
     </div>);
   }
 
@@ -5686,6 +5726,8 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 // ─── PROFILE ───
 function Profile(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),acc=u.stats.totalQ>0?Math.round(u.stats.correct/u.stats.totalQ*100):0;
+var[pushOn,setPushOn]=useState(false);
+useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});},[]);
 var uC=Object.assign({},u);var ea=ACHIEVEMENTS.filter(function(a){return a.check(uC);});var la=ACHIEVEMENTS.filter(function(a){return!a.check(uC);});
 return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{textAlign:"center",marginBottom:24}}>
@@ -5727,6 +5769,21 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       left:soundOn?27:3,transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
   </button>
 </div>);}()}
+
+{/* Push Notifications toggle */}
+{("PushManager" in window)&&<div className="crd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:16,marginBottom:20}}>
+  <div><div className="out" style={{fontWeight:700,fontSize:14}}>Notifications</div>
+    <div style={{fontSize:12,color:"var(--t2)"}}>{pushOn?"Streak reminders & weekly results":"Disabled"}</div></div>
+  <button onClick={function(){
+    if(pushOn){unsubscribePush(u.name).then(function(){setPushOn(false);});}
+    else{subscribePush(u.name).then(function(sub){if(sub)setPushOn(true);});}
+  }}
+    style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",position:"relative",
+      background:pushOn?"var(--cyan)":"var(--t3)",transition:"background .3s"}}>
+    <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:3,
+      left:pushOn?27:3,transition:"left .3s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
+  </button>
+</div>}
 
 {/* Daily Tips toggle */}
 {function(){
