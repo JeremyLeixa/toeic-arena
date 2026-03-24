@@ -256,7 +256,9 @@ async function load() {
     var cachedName = null;
     try { cachedName = localStorage.getItem('toeic-arena-name'); } catch(e) {}
     if (cachedName) {
-      var res2 = await supabase.from('students').select('*').eq('name', cachedName).eq('class_code', 'idrac2026').order('xp', {ascending:false}).limit(1);
+      var cachedClass = null;
+      try { cachedClass = localStorage.getItem('toeic-arena-class'); } catch(e) {}
+      var res2 = await supabase.from('students').select('*').eq('name', cachedName).eq('class_code', cachedClass || 'idrac2026').order('xp', {ascending:false}).limit(1);
       if (res2.data && res2.data.length > 0) {
         res = { data: res2.data[0] };
       }
@@ -266,9 +268,11 @@ async function load() {
   if (!res.data) return null;
   var data = res.data;
   try { localStorage.setItem('toeic-arena-name', data.name); } catch(e) {}
+  try { localStorage.setItem('toeic-arena-class', data.class_code || 'idrac2026'); } catch(e) {}
 
   return {
     name: data.name,
+    classCode: data.class_code || 'idrac2026',
     xp: data.xp,
     weeklyXp: data.weekly_xp,
     weekId: data.week_id,
@@ -294,6 +298,7 @@ async function save(d) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   try { localStorage.setItem('toeic-arena-name', d.name); } catch(e) {}
+  try { localStorage.setItem('toeic-arena-class', d.classCode || 'idrac2026'); } catch(e) {}
 
   // Single upsert that conflicts on (name, class_code) — NOT on id
   // This means: if a row with this name+class exists, UPDATE it. Otherwise INSERT.
@@ -301,7 +306,7 @@ async function save(d) {
   var { error } = await supabase.from('students').upsert({
     id: user.id,
     name: d.name,
-    class_code: 'idrac2026',
+    class_code: d.classCode || 'idrac2026',
     xp: d.xp,
     weekly_xp: d.weeklyXp,
     week_id: d.weekId,
@@ -323,7 +328,7 @@ async function save(d) {
   }, { onConflict: 'name,class_code' });
   if(error) console.error("SAVE ERROR:", error.message, error.details);
 }
-function fresh(name){return{name:name,xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{}};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{}};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -422,7 +427,7 @@ function urlBase64ToUint8Array(base64String){
   return outputArray;
 }
 
-async function subscribePush(userName){
+async function subscribePush(userName,userClassCode){
   try{
     if(!("serviceWorker" in navigator)||!("PushManager" in window))return null;
     var reg=await navigator.serviceWorker.ready;
@@ -435,21 +440,21 @@ async function subscribePush(userName){
     // Store in Supabase
     await supabase.from("push_subscriptions").upsert({
       student_name:userName,
-      class_code:"idrac2026",
+      class_code:userClassCode||"idrac2026",
       subscription:sub.toJSON()
     },{onConflict:"student_name,class_code,subscription"});
     return sub;
   }catch(e){console.log("Push subscription failed:",e);return null;}
 }
 
-async function unsubscribePush(userName){
+async function unsubscribePush(userName,userClassCode){
   try{
     if(!("serviceWorker" in navigator))return;
     var reg=await navigator.serviceWorker.ready;
     var sub=await reg.pushManager.getSubscription();
     if(sub){
       await sub.unsubscribe();
-      await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code","idrac2026");
+      await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code",userClassCode||"idrac2026");
     }
   }catch(e){console.log("Push unsubscribe failed:",e);}
 }
@@ -522,7 +527,17 @@ var[step,sSt]=useState("name");
   var[name,sN]=useState("");
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");
   var[teacherCode,sTC]=useState("");
-  var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("idrac2026");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
+  var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
+  var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
+
+  async function checkGroupCode(code){
+    if(!code.trim()){setClassValid(null);setClassGroupName("");return;}
+    setClassChecking(true);
+    var res=await supabase.from('groups').select('name,type').eq('code',code.trim().toLowerCase()).maybeSingle();
+    if(res.data){setClassValid(true);setClassGroupName(res.data.name);}
+    else{setClassValid(false);setClassGroupName("");}
+    setClassChecking(false);
+  }
 
   function startTest(){sSt("test");}
   function doAns(i){sS(i);if(i===PLACEMENT_TEST[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
@@ -542,15 +557,43 @@ var[step,sSt]=useState("name");
           <input type="text" value={name} onChange={function(e){sN(e.target.value);}} placeholder="Enter your name..."
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
-        <button className="btn1" onClick={function(){if(name.trim())startTest();}}
-          style={{opacity:name.trim()?1:.4,pointerEvents:name.trim()?"auto":"none",fontSize:18,padding:"16px 32px"}}>Next — Take Placement Test</button>
+        <button className="btn1" onClick={function(){if(name.trim())sSt("classcode");}}
+          style={{opacity:name.trim()?1:.4,pointerEvents:name.trim()?"auto":"none",fontSize:18,padding:"16px 32px"}}>Next</button>
         <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:20}}>
           <button onClick={function(){sSt("recover");}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>I already have an account</button>
           <button onClick={function(){sSt("teacher");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Teacher access</button>
         </div>
       </div>
     </div>);
-	
+
+  // ─ Class code selection ─
+  if(step==="classcode")return(
+    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+      <div style={{animation:"fadeIn .5s"}}>
+        <div style={{fontSize:48,marginBottom:16}}>🏫</div>
+        <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Join a Group</h2>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>Enter the class code given by your teacher, or join as a visitor.</p>
+        <div style={{marginBottom:16,textAlign:"left"}}>
+          <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Class code</label>
+          <input type="text" value={classCode} onChange={function(e){var v=e.target.value.toLowerCase().replace(/\s/g,'');setClassCode(v);setClassValid(null);setClassGroupName("");}} onBlur={function(){checkGroupCode(classCode);}} placeholder="e.g. idrac2026"
+            style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid "+(classValid===true?"var(--green)":classValid===false?"var(--red)":"var(--bdr)"),borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none",transition:"border .2s"}}/>
+          {classChecking&&<p style={{fontSize:11,color:"var(--t3)",marginTop:6}}>Checking...</p>}
+          {classValid===true&&<p style={{fontSize:12,color:"var(--green)",marginTop:6,fontWeight:600}}>✓ {classGroupName}</p>}
+          {classValid===false&&<p style={{fontSize:12,color:"var(--red)",marginTop:6}}>Code not found. Check with your teacher.</p>}
+        </div>
+        <button className="btn1" onClick={function(){if(classValid)startTest();}}
+          style={{opacity:classValid?1:.4,pointerEvents:classValid?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>Next — Take Placement Test</button>
+        <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
+          <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">or</span>
+          <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
+        </div>
+        <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visiteur / Free Access");}}
+          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(168,85,247,.3)",color:"var(--purple)"}}>🌍 Join as Visitor</button>
+        <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
+      </div>
+    </div>);
+
 // ─ Account recovery ─
   if(step==="recover")return(
     <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
@@ -611,7 +654,7 @@ var[step,sSt]=useState("name");
         </div>
         <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:8}}>{lvl.msg}</p>
         <p style={{color:"var(--gold)",fontSize:13,fontWeight:600,marginBottom:32}}>Starting with {lvl.startXp} XP in {lvl.league.charAt(0).toUpperCase()+lvl.league.slice(1)} League</p>
-        <button className="btn1" onClick={function(){p.go(name.trim(),sc,lvl);}} style={{fontSize:18,padding:"16px 32px"}}>Enter the Arena</button>
+        <button className="btn1" onClick={function(){p.go(name.trim(),classCode||'visitor',sc,lvl);}} style={{fontSize:18,padding:"16px 32px"}}>Enter the Arena</button>
       </div>
     </div>);
 
@@ -4578,16 +4621,23 @@ function TeacherDash(p){
     return h>0?h+"h"+String(m).padStart(2,"0"):m+"m";
   }
   var[students,setStudents]=useState([]);var[loading,setLoad]=useState(true);
-  var[detail,setDetail]=useState(null);var[classCode,setClassCode]=useState("idrac2026");
+  var[detail,setDetail]=useState(null);var[classCode,setClassCode]=useState(function(){try{return localStorage.getItem('toeic-dash-group')||"idrac2026";}catch(e){return"idrac2026";}});
   var[dashTab,setDashTab]=useState("overview"); // "overview" | "analytics"
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
+  var[groups,setGroups]=useState([]);
+
+  function loadGroups(){
+    supabase.from('groups').select('*').order('created_at',{ascending:true})
+      .then(function(res){if(res.data)setGroups(res.data);});
+  }
+  useEffect(function(){loadGroups();},[]);
 
   function loadStudents(){
     supabase.from('students').select('*').eq('class_code',classCode).order('xp',{ascending:false}).limit(200)
       .then(function(res){setStudents(res.data||[]);setLoad(false);})
       .catch(function(){setLoad(false);});
   }
-  useEffect(function(){loadStudents();},[classCode]);
+  useEffect(function(){loadStudents();},[classCode])
 
   // ── Chart colors matching app theme ──
   var CHART_COLORS=["#00d4ff","#a855f7","#ff8c42","#ffd700","#00e676","#ff4757","#ec4899","#3b82f6","#06b6d4","#f59e0b","#8b5cf6","#14b8a6"];
@@ -4851,6 +4901,19 @@ function TeacherDash(p){
         }} className="out">{t.label}</button>);
       })}
     </div>
+
+    {/* Group selector */}
+    {groups.length>1&&<div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+      {groups.map(function(g){var active=classCode===g.code;var typeIcon=g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍";
+        return(<button key={g.code} onClick={function(){setClassCode(g.code);try{localStorage.setItem('toeic-dash-group',g.code);}catch(e){}setLoad(true);setDetail(null);}}
+          style={{padding:"6px 14px",borderRadius:99,border:"1px solid "+(active?"var(--cyan)":"var(--bdr)"),
+            background:active?"rgba(0,212,255,.12)":"var(--bg2)",color:active?"var(--cyan)":"var(--t2)",
+            fontSize:12,fontWeight:active?700:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",
+            display:"flex",alignItems:"center",gap:5,transition:"all .2s"}} className="out">
+          <span>{typeIcon}</span>{g.name}
+        </button>);
+      })}
+    </div>}
 
     {/* Class KPI cards */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:16}}>
@@ -5589,10 +5652,14 @@ var[tab,setTab]=useState("week"); // week | season | overall
 var cw=weekId();
 var curSeason=getCurrentSeason();
 
+var viewGroup=u.classCode||'idrac2026';
+try{var dg=localStorage.getItem('toeic-dash-group');if(dg)viewGroup=dg;}catch(e){}
+var[leagueGroup,setLeagueGroup]=useState(viewGroup);
+
 useEffect(function(){
-  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code','idrac2026').limit(50)
+  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code',leagueGroup).limit(50)
     .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
-},[u.weeklyXp]);
+},[u.weeklyXp,leagueGroup]);
 
 // ── WEEK VIEW data ──
 var weekAll=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name===u.name?r.name+" (You)":r.name,avatar:r.avatar||"⚔️",xp:xp,me:r.name===u.name};});
@@ -5630,6 +5697,9 @@ function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=pro
 
 return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>League</h1>
+{leagueGroup!==u.classCode&&<div style={{textAlign:"center",marginBottom:8}}>
+  <span style={{fontSize:11,padding:"4px 12px",borderRadius:99,background:"rgba(168,85,247,.12)",border:"1px solid rgba(168,85,247,.25)",color:"var(--purple)"}} className="out">👁️ Viewing: {leagueGroup}</span>
+</div>}
 
 {/* Season banner */}
 <div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(0,212,255,.06),rgba(168,85,247,.06))",borderColor:"rgba(0,212,255,.15)"}}>
@@ -5740,6 +5810,11 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {[{l:"Total XP",v:u.xp,i:"⭐"},{l:"Accuracy",v:acc+"%",i:"🎯"},{l:"Sessions",v:u.stats.sessions,i:"📊"},{l:"Cards Reviewed",v:u.stats.cardsRev||0,i:"🃏"},{l:"Drills Done",v:u.stats.drills||0,i:"📝"},{l:"Perfect Dailies",v:u.stats.perfects||0,i:"✨"}].map(function(s){return(
 <div key={s.l} className="crd" style={{padding:14,textAlign:"center"}}><div style={{fontSize:18,marginBottom:4}}>{s.i}</div><div className="out" style={{fontSize:20,fontWeight:800}}>{s.v}</div><div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>{s.l}</div></div>);})}</div>
 
+<button className="btn2" onClick={function(){
+  var code=prompt("Teacher code:");
+  if(code===TEACHER_CODE)p.goTeacher();
+}} style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(0,212,255,.2)",color:"var(--cyan)"}}>👨‍🏫 Teacher Dashboard</button>
+
 <div className="crd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:16,marginBottom:20}}>
   <div><div className="out" style={{fontWeight:700,fontSize:14}}>Appearance</div>
     <div style={{fontSize:12,color:"var(--t2)"}}>{u.theme==="light"?"Light mode":"Dark mode"}</div></div>
@@ -5775,8 +5850,8 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   <div><div className="out" style={{fontWeight:700,fontSize:14}}>Notifications</div>
     <div style={{fontSize:12,color:"var(--t2)"}}>{pushOn?"Streak reminders & weekly results":"Disabled"}</div></div>
   <button onClick={function(){
-    if(pushOn){unsubscribePush(u.name).then(function(){setPushOn(false);});}
-    else{subscribePush(u.name).then(function(sub){if(sub)setPushOn(true);});}
+    if(pushOn){unsubscribePush(u.name,u.classCode).then(function(){setPushOn(false);});}
+    else{subscribePush(u.name,u.classCode).then(function(sub){if(sub)setPushOn(true);});}
   }}
     style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",position:"relative",
       background:pushOn?"var(--cyan)":"var(--t3)",transition:"background .3s"}}>
@@ -5835,10 +5910,6 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {la.map(function(a){return(<div key={a.id} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:14,opacity:.4}}>
 <div style={{fontSize:24}}>🔒</div><div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{a.name}</div><div style={{fontSize:12,color:"var(--t2)"}}>{a.desc}</div></div></div>);})}</div>
 <div style={{textAlign:"center",marginTop:32}}>
-  <button className="btn2" onClick={function(){
-    var code=prompt("Teacher code:");
-    if(code===TEACHER_CODE)p.goTeacher();
-  }} style={{fontSize:12,width:"100%",marginBottom:10}}>👨‍🏫 Teacher Dashboard</button>
   <button className="btn2" onClick={function(){
     var code=prompt("Enter teacher code to reset:");
     if(code===TEACHER_CODE)p.reset();
@@ -5990,12 +6061,13 @@ useEffect(function(){
     return c;
   }
   function nav(pg,arg){sSP(pg);sSPA(arg||null);}
-  async function onboard(name,placementScore,lvl){
+  async function onboard(name,classCode,placementScore,lvl){
+    classCode=classCode||'idrac2026';
     // Check if student already exists (use limit(1) — safe even with duplicates)
-    var existing=await supabase.from('students').select('*').eq('name',name).eq('class_code','idrac2026').order('xp',{ascending:false}).limit(1);
+    var existing=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
     if(existing.data&&existing.data.length>0){
       // Student exists — recover instead of creating duplicate
-      var recovered=await recover(name,'idrac2026');
+      var recovered=await recover(name,classCode);
       if(recovered)return;
     }
 
@@ -6008,7 +6080,7 @@ useEffect(function(){
       userId=authRes.data.user.id;
     }
 
-    var u=fresh(name);
+    var u=fresh(name,classCode);
     if(lvl){u.xp=lvl.startXp;u.weeklyXp=lvl.startXp;}
     if(placementScore!==undefined){
       u.stats.totalQ=15;u.stats.correct=placementScore;u.stats.sessions=1;
@@ -6024,6 +6096,7 @@ useEffect(function(){
     }
     sU(u);
     try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
+    try { localStorage.setItem('toeic-arena-class', classCode); } catch(e) {}
     // save() handles insert-by-name or update-by-name — no duplicate possible
     save(u);
   }
@@ -6042,7 +6115,8 @@ useEffect(function(){
     }
 
     try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
-    var u={name:d.name,xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
+    try { localStorage.setItem('toeic-arena-class', classCode); } catch(e) {}
+    var u={name:d.name,classCode:classCode||d.class_code||'idrac2026',xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
       lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
       stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
       moduleScores:d.module_scores||{},mockResults:d.mock_results||{},gameScores:d.game_scores||{},mission:d.mission||{date:null,actId:null,done:false},
