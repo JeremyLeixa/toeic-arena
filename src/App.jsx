@@ -4899,6 +4899,9 @@ function TeacherDash(p){
             setClassCode(g.code);
             try{localStorage.setItem('toeic-dash-group',g.code);}catch(e){}
             setLoad(true);setDetail(null);setDashPhase("dashboard");
+            supabase.from('students').select('*').eq('class_code',g.code).order('xp',{ascending:false}).limit(200)
+              .then(function(res){setStudents(res.data||[]);setLoad(false);})
+              .catch(function(){setLoad(false);});
           }} className="crd" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 20px",cursor:"pointer",
             border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
             transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
@@ -5281,7 +5284,7 @@ function ListenP2(p){
 
 // ─── PART 1 LISTENING ───
 function ListenP1(p){
-  var items=useMemo(function(){return shuffle(LISTENING_P1);},[]);
+  var items=useMemo(function(){return shuffle(LISTENING_P1).slice(0,10);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curOpt,setCurOpt]=useState(-1);
 
