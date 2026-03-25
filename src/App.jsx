@@ -51,8 +51,9 @@ async function speak(text,rate){
     a.play().catch(function(){});
     return;
   }
-  // Try ElevenLabs API
-  var isLocal=window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1';
+  // ElevenLabs disabled for live TTS — use browser speechSynthesis instead
+  // (ElevenLabs is only used for pre-generated Listening audio files)
+  var isLocal=true;
   if(!isLocal)try{
     var res=await fetch('/api/tts',{
       method:'POST',
@@ -88,7 +89,7 @@ function speakAndWait(text,rate){
       a.play().catch(resolve);
       return;
     }
-    if(!isLocal){
+    if(false){
       fetch('/api/tts',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({text:text,voice:'us_female'})
