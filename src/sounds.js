@@ -639,7 +639,7 @@ export function stopBGM(cb) {
   var ref = bgmAudio;
   var fadeOut = setInterval(function() {
     if (ref.volume > 0.02) {
-      ref.volume = Math.max(0, ref.volume - 0.012);
+      ref.volume = Math.max(0, ref.volume - 0.020);
     } else {
       clearInterval(fadeOut);
       ref.pause();

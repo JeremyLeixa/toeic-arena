@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { CLUE_HUNTER } from "./data/clueHunter.js";
 import { playCorrect, playWrong, playXP, playLevelUp, playCombo, playStreak, playTimer, playClick, playArenaCall, playJingleEnter, playJingleAchieve, playJingleLeague, playJingleMock, playJingleMockOk, playJingleDaily, playBGM, stopBGM, setSoundEnabled, isSoundEnabled } from "./sounds.js";
 import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
@@ -21,7 +22,6 @@ import { PLACEMENT_TEST, PLACEMENT_LEVELS, MISSION_MODULES } from "./data/placem
 import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
-import { CLUE_HUNTER } from "./data/clueHunter.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
 
 
@@ -371,7 +371,7 @@ function getDailyMission(u){
     var ms=u.moduleScores[m.id];
     if(!ms){
       // Never tried — high priority
-      candidates.push({mod:m,priority:100,reason:"You haven't tried this yet!"});
+      candidates.push({mod:m,priority:0,reason:"You haven't tried this yet!"});
     } else {
       var acc=ms.total>0?ms.correct/ms.total:0;
       var daysSince=ms.lastDate?Math.floor((new Date()-new Date(ms.lastDate))/(864e5)):999;
@@ -414,7 +414,7 @@ function canUnlockMock(u,mockId){
 }
 
 // ─── TEACHER DASHBOARD CONFIG ───
-var TEACHER_CODE="arena-teacher-2026";
+var TEACHER_CODE="idrac2026";
 
 // ─── PUSH NOTIFICATIONS ───
 var VAPID_PUBLIC_KEY="BGiKomKxy1j081qd5ZaZnp7EUAYXIGRPWu8ePQySLGhQ0T45-m3oKTqgj-teqm2l5RoR0jnamCWHZ6pMYjrPVy4";
@@ -529,32 +529,6 @@ var[step,sSt]=useState("name");
   var[teacherCode,sTC]=useState("");
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
-  var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
-
-  async function lookupName(n){
-    setLookingUp(true);
-    try{
-      var res=await supabase.from('students').select('name,class_code,xp').eq('name',n.trim());
-      if(res.data&&res.data.length>0){
-        var groupRes=await supabase.from('groups').select('code,name,type');
-        var groupMap={};
-        if(groupRes.data)groupRes.data.forEach(function(g){groupMap[g.code]={name:g.name,type:g.type};});
-        var accounts=res.data.map(function(s){
-          var g=groupMap[s.class_code];
-          return{class_code:s.class_code,xp:s.xp||0,
-            groupName:g?g.name:(s.class_code==="visitor"?"Visitor / Free Access":s.class_code),
-            groupType:g?g.type:"visitor",
-            typeIcon:g?(g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍"):"🌍"};
-        });
-        setFoundAccounts(accounts);
-        sSt("recognize");
-      } else {
-        setFoundAccounts([]);
-        sSt("classcode");
-      }
-    }catch(e){sSt("classcode");}
-    setLookingUp(false);
-  }
 
   async function checkGroupCode(code){
     if(!code.trim()){setClassValid(null);setClassGroupName("");return;}
@@ -583,48 +557,12 @@ var[step,sSt]=useState("name");
           <input type="text" value={name} onChange={function(e){sN(e.target.value);}} placeholder="Enter your name..."
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
-        <button className="btn1" onClick={function(){if(name.trim()&&!lookingUp)lookupName(name);}} disabled={lookingUp}
-          style={{opacity:name.trim()&&!lookingUp?1:.4,pointerEvents:name.trim()&&!lookingUp?"auto":"none",fontSize:18,padding:"16px 32px"}}>{lookingUp?"Checking...":"Next"}</button>
+        <button className="btn1" onClick={function(){if(name.trim())sSt("classcode");}}
+          style={{opacity:name.trim()?1:.4,pointerEvents:name.trim()?"auto":"none",fontSize:18,padding:"16px 32px"}}>Next</button>
         <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:20}}>
+          <button onClick={function(){sSt("recover");}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>I already have an account</button>
           <button onClick={function(){sSt("teacher");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Teacher access</button>
         </div>
-      </div>
-    </div>);
-
-  // ─ Account recognition ─
-  if(step==="recognize")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:48,marginBottom:12}}>👋</div>
-        <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6}}>Welcome back, {name.trim()}!</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>We found your account. Select your group to continue:</p>
-        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-          {foundAccounts.map(function(acc){
-            return(<button key={acc.class_code} onClick={async function(){
-              var ok=await p.recover(name.trim(),acc.class_code);
-              if(!ok){sSt("classcode");}
-            }} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:"16px 18px",cursor:"pointer",
-              border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
-              transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
-              <div style={{width:44,height:44,borderRadius:12,
-                background:acc.groupType==="school"?"rgba(212,148,58,.1)":acc.groupType==="pro"?"rgba(200,122,53,.1)":"rgba(139,94,131,.1)",
-                display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{acc.typeIcon}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{acc.groupName}</div>
-                <div style={{fontSize:11,color:"var(--t3)"}}>{acc.class_code} · {acc.xp} XP</div>
-              </div>
-              <div style={{color:"var(--cyan)",fontSize:16}}>→</div>
-            </button>);
-          })}
-        </div>
-        <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
-          <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
-          <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">not you?</span>
-          <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
-        </div>
-        <button className="btn2" onClick={function(){setFoundAccounts([]);sSt("classcode");}}
-          style={{width:"100%",fontSize:14,padding:"12px 24px"}}>I'm new — create an account</button>
-        <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
       </div>
     </div>);
 
@@ -650,16 +588,8 @@ var[step,sSt]=useState("name");
           <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">or</span>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
         </div>
-        {!visitorConfirm?<button className="btn2" onClick={function(){setVisitorConfirm(true);}}
+        <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visiteur / Free Access");}}
           style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>🌍 Join as Visitor</button>
-        :<div style={{animation:"fadeIn .3s",padding:16,background:"rgba(139,94,131,.08)",border:"1px solid rgba(139,94,131,.2)",borderRadius:14}}>
-          <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>⚠️ If your teacher gave you a class code, use it above — otherwise your progress won't appear in your group!</p>
-          <div style={{display:"flex",gap:8}}>
-            <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>Cancel</button>
-            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);}}
-              style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>Continue as Visitor</button>
-          </div>
-        </div>}
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
       </div>
     </div>);
@@ -948,7 +878,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
   var sections=[
     {title:"Exercises",sub:"TOEIC Parts training",items:[
       {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd},
-      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
+      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"🎧",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
       {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
     {title:"Grammar & Vocabulary",sub:"Build your foundations",items:[
@@ -963,18 +893,18 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
     {title:"Mock Exam",sub:"Test yourself under real conditions",items:(function(){
       var items=[];
       var u1=canUnlockMock(p.u,1);
-      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"📜",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
+      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"📝",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
       var u2=canUnlockMock(p.u,2);
-      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📜",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
+      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📝",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
 	  var u3=canUnlockMock(p.u,3);
-	  items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"📜",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
+	  items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"📝",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
       // Show completed badge
       if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495";items[0].lock=true;items[0].bg="var(--bg3)";}
       if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495";items[1].lock=true;items[1].bg="var(--bg3)";}
       return items;
     })()},
     {title:"Tips & Strategies",sub:"Master the exam itself",items:[
-      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"🗺️",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
+      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"📋",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
       {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
       {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
       {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
@@ -1547,7 +1477,7 @@ function GerInf(p){
 
 // ─── TOEIC TRAPS QUIZ ───
 function TrapsQuiz(p){
-  var traps=useMemo(function(){return shuffle(TOEIC_TRAPS).slice(0,10);},[]);
+  var traps=useMemo(function(){return shuffle(TOEIC_TRAPS);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   function doAns(i){sPk(i);if(i===traps[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
@@ -2039,7 +1969,7 @@ function StratCards(p){
       <span style={{fontSize:13,color:"var(--t2)",marginLeft:6}}>expert strategies across all TOEIC Parts</span></div>
 
     <div style={{display:"flex",gap:8,marginBottom:16}}>
-      {[{id:"all",l:"All"},{id:"Listening",l:"👂 Listening"},{id:"Reading",l:"📖 Reading"}].map(function(f){
+      {[{id:"all",l:"All"},{id:"Listening",l:"🎧 Listening"},{id:"Reading",l:"📖 Reading"}].map(function(f){
         var act=filter===f.id;return(
         <button key={f.id} onClick={function(){sF(f.id);sO(null);}}
           style={{flex:1,padding:"8px 4px",borderRadius:10,border:act?"1px solid var(--cyan)":"1px solid var(--bdr)",background:act?"rgba(212,148,58,.1)":"var(--bg2)",cursor:"pointer"}}>
@@ -2085,7 +2015,7 @@ function StratCards(p){
 
 // ─── STRATEGY QUIZ ───
 function StratQuizPage(p){
-  var qs=useMemo(function(){return shuffle(STRAT_QUIZ).slice(0,10);},[]);
+  var qs=useMemo(function(){return shuffle(STRAT_QUIZ);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   function doAns(i){sPk(i);if(i===qs[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
@@ -2347,7 +2277,7 @@ function Part6Drill(p){
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>📜</div>
+    <div style={{fontSize:56,marginBottom:16}}>📄</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 6 — Text Completion</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>{texts.length} business texts with 4 blanks each.<br/>Read the full text, then complete the blanks.</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Context is everything here!</p>
@@ -2675,7 +2605,7 @@ function MockTest(p){
   // ════════════════ INTRO ════════════════
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:56,marginBottom:16}}>📜</div>
+      <div style={{fontSize:56,marginBottom:16}}>📝</div>
       <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Mock Test {mockId}</h1>
       <p style={{color:"var(--t2)",fontSize:14,marginBottom:24,lineHeight:1.6}}>Reading Section — Half Test</p>
       <div className="crd" style={{textAlign:"left",padding:16,marginBottom:20}}>
@@ -2970,12 +2900,12 @@ function GamesHub(p){
           <div style={{fontSize:11,color:"var(--t3)"}}>Tap blocks in the right order!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
       <div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎵</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎧</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#4abe60)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🧭"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#4abe60)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🔍"}</div>
         <div style={{flex:1}}>
           <div className="out" style={{fontWeight:700,fontSize:15}}>Clue Hunter</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Find the clue, fill the blank!</div>
@@ -3189,7 +3119,7 @@ function SentenceBuilder(p){
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Builder Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button>
+    <button className="btn1" onClick={p.back}>Back to Games</button>
   </div>);}
 
   // ═══ PLAY + FEEDBACK ═══
@@ -3347,7 +3277,7 @@ function AudioBlitz(p){
 
   // ═══ INTRO ═══
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>{"🎵"}</div>
+    <div style={{fontSize:56,marginBottom:16}}>{"🎧"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Audio Blitz</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Listen to a short audio clip, then answer the question.<br/>The audio plays automatically — focus!</p>
     <div style={{display:"flex",justifyContent:"center",gap:16,marginBottom:32}}>
@@ -3365,7 +3295,7 @@ function AudioBlitz(p){
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Blitz Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button>
+    <button className="btn1" onClick={p.back}>Back to Games</button>
   </div>);}
 
   // ═══ PLAY ═══
@@ -3683,8 +3613,10 @@ function DuelArena(p){
 
   // ═══ HUB ═══
   if(phase==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
-    <div style={{textAlign:"center",marginBottom:16}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
       <span className="out" style={{fontWeight:700,fontSize:15}}>Duel Arena</span>
+      <div style={{width:40}}/>
     </div>
     <div style={{textAlign:"center",marginBottom:20}}>
       <div style={{fontSize:56,marginBottom:8}}>{"⚔️"}</div>
@@ -3744,7 +3676,6 @@ function DuelArena(p){
         <div>{"⚡"} Fastest correct answer = 100 pts, slower = 50 pts</div>
       </div>
     </div>
-	<button className="btn2" onClick={p.back} style={{marginTop:16,width:"100%"}}>Back</button>
   </div>);
 
   // ═══ PICK ACTION (create or join) ═══
@@ -4076,7 +4007,7 @@ function ClueHunter(p){
       </div>
       <Bar value={phase==="ans_fb"?ci+1:ci} max={TOTAL} h={4} color="linear-gradient(90deg,#d4943a,#8b5e83)"/>
       <div style={{marginTop:20,marginBottom:12}}>
-        <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{"🧭"} {phase==="clue_fb"||phase==="ans_fb"?items[ci].cat:"Find the clue..."}</span>
+        <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{"🔍"} {items[ci].cat}</span>
       </div>
     </>);
   }
@@ -4085,7 +4016,7 @@ function ClueHunter(p){
   if(phase==="intro")return(
     <div className="enter" style={{padding:"32px 24px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center"}}>
       <div style={{textAlign:"center",marginBottom:36}}>
-        <div style={{fontSize:72,marginBottom:16}}>{"🧭"}</div>
+        <div style={{fontSize:72,marginBottom:16}}>{"🔍"}</div>
         <h1 className="out" style={{fontWeight:900,fontSize:32,marginBottom:10}}>Clue Hunter</h1>
         <p style={{color:"var(--t2)",fontSize:15,lineHeight:1.7}}>Spot the grammatical clue in the sentence.<br/>Then fill in the blank.</p>
       </div>
@@ -4122,7 +4053,7 @@ function ClueHunter(p){
     var clueOnly=scores.filter(function(s){return s.clue&&!s.ans;}).length;
     var ansOnly=scores.filter(function(s){return !s.clue&&s.ans;}).length;
     var pct=Math.round(total/(TOTAL*10)*100);
-    var emoji=pct>=80?"🏆":pct>=60?"⚔️":pct>=40?"🧭":"📚";
+    var emoji=pct>=80?"🏆":pct>=60?"⚔️":pct>=40?"🔍":"📚";
     return(
       <div className="enter" style={{padding:"32px 24px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
         <div style={{fontSize:64,marginBottom:16}}>{emoji}</div>
@@ -4166,7 +4097,6 @@ function ClueHunter(p){
           style={{opacity:selected.length>0?1:.3,pointerEvents:selected.length>0?"auto":"none",fontSize:16}}>
           Confirm my clue{selected.length>1?"s":""} →
         </button>
-        <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button>
       </div>
     </div>);
  
@@ -4195,7 +4125,6 @@ function ClueHunter(p){
       </div>
       <div style={{marginTop:"auto"}}>
         <button className="btn1" onClick={goAnswer} style={{fontSize:16}}>Now answer →</button>
-        <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button>
       </div>
     </div>);
  
@@ -4217,7 +4146,6 @@ function ClueHunter(p){
             </button>);
         })}
       </div>
-      <button className="btn2" onClick={p.back} style={{marginTop:16,width:"100%"}}>Back</button>
     </div>);
  
   // ── ANSWER FEEDBACK ──
@@ -4256,7 +4184,6 @@ function ClueHunter(p){
           <button className="btn1" onClick={next} style={{fontSize:16}}>
             {ci<items.length-1?"Next Question →":"See Results"}
           </button>
-          <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button>
         </div>
       </div>);
   }
@@ -4284,7 +4211,7 @@ function SpeedMatchHub(p){
         {bestH&&<div style={{fontSize:11,color:"var(--gold)",marginTop:6}}>{"🏅"} Best: {bestH.time}s · {bestH.moves} moves</div>}
       </div>
     </div>
-    <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%",maxWidth:320,margin:"24px auto 0"}}>Back</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%",maxWidth:320,margin:"24px auto 0"}}>Back to Games</button>
   </div>);
 }
 
@@ -4406,7 +4333,7 @@ function SpeedMatch(p){
 // ── PLAY ──
   return(<div style={{padding:"12px",height:"100vh",display:"flex",flexDirection:"column"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-      <div/>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <div style={{display:"flex",gap:16,alignItems:"center"}}>
         <span className="out" style={{fontSize:16,fontWeight:800,color:"var(--cyan)",fontVariantNumeric:"tabular-nums"}}>{elapsed}s</span>
         <span style={{fontSize:12,color:"var(--t3)"}}>{moves} moves</span>
@@ -4440,7 +4367,6 @@ function SpeedMatch(p){
         </div>);
       })}
     </div>
-    <button className="btn2" onClick={p.back} style={{marginTop:8,width:"100%",flexShrink:0}}>Back</button>
   </div>);
 }
 
@@ -5234,24 +5160,24 @@ function TeacherDash(p){
 // ─── LISTENING HUB ───
 function ListenHub(p){
   return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>👂</div>
+    <div style={{fontSize:56,marginBottom:16}}>🎧</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Listening Practice</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train your ear for the TOEIC Listening section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
       <div className="crd" onClick={function(){p.nav("lisP1");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#22c55e,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🖼️</div>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#22c55e,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📷</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 1 — Photographs</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P1.length}</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
       <div className="crd" onClick={function(){p.nav("lisP2");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>❓</div>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>💬</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 2 — Question-Response</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P2.length}</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
 		<div className="crd" onClick={function(){p.nav("lisP3");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#8b5cf6,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>👥</div>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#8b5cf6,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🗣️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 3 — Conversations</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P3.length}</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
       <div className="crd" onClick={function(){p.nav("lisP4");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#06b6d4,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📜</div>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#06b6d4,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🎙️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 4 — Talks</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P4.length}</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
     </div>
@@ -5284,7 +5210,7 @@ function ListenP2(p){
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);sP("listen");}else{sP("done");p.done(sc,items.length,25+sc*6);}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>❓</div>
+    <div style={{fontSize:56,marginBottom:16}}>💬</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 2 — Question-Response</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>You will hear a question followed by 3 responses.<br/>Choose the best response.</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Listen carefully — audio plays once!</p>
@@ -5381,7 +5307,7 @@ function ListenP1(p){
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);setCurOpt(-1);sP("listen");}else{sP("done");p.done(sc,items.length,20+sc*5);}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>🖼️</div>
+    <div style={{fontSize:56,marginBottom:16}}>📷</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 1 — Photographs</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Look at the photograph, then listen to 4 statements.<br/>Choose the one that best describes the image.</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Listen carefully to each statement!</p>
@@ -5499,7 +5425,7 @@ function ListenP3(p){
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>👥</div>
+    <div style={{fontSize:56,marginBottom:16}}>🗣️</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 3 — Conversations</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Listen to short conversations between 2 people.<br/>Answer 3 questions about each conversation.</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Read the questions BEFORE listening!</p>
@@ -5600,7 +5526,7 @@ function ListenP4(p){
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>📜</div>
+    <div style={{fontSize:56,marginBottom:16}}>🎙️</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Part 4 — Talks</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Listen to short talks: announcements, voicemails, reports.<br/>Answer 3 questions about each talk.</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Read the questions BEFORE listening!</p>
@@ -5682,7 +5608,7 @@ function ReadingHub(p){
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train for the TOEIC Reading section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
       <div className="crd" onClick={function(){p.nav("drill");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#00e676,#00bfa5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📜</div>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#00e676,#00bfa5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📝</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 5 — Sentence Completion</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random questions from 100</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
       <div className="crd" onClick={function(){p.nav("timesim");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
@@ -5690,7 +5616,7 @@ function ReadingHub(p){
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 5 — Exam Simulation</div><div style={{fontSize:11,color:"var(--t3)"}}>30 Qs in 10 min, real pace</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
       <div className="crd" onClick={function(){p.nav("p6");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#c4587a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📜</div>
+        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#c4587a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📄</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 6 — Text Completion</div><div style={{fontSize:11,color:"var(--t3)"}}>Business texts with blanks</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
       <div className="crd" onClick={function(){p.nav("p7");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
@@ -5949,7 +5875,6 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     var cur=isSoundEnabled();
     setSoundEnabled(!cur);
     if(!cur)try{playCorrect();}catch(e){}
-    if(cur)stopBGM();
     var c=JSON.parse(JSON.stringify(u));p.setAvatar(c);
   }}
     style={{width:52,height:28,borderRadius:14,border:"none",cursor:"pointer",position:"relative",
@@ -6306,7 +6231,7 @@ if(sp==="matchE"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</
  if(sp==="wfall"){playBGM("bgm_wfall");return(<div className={lc}><style>{CSS}</style><WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
 if(sp==="duel"){playBGM("bgm_duel");return(<div className={lc}><style>{CSS}</style><DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
   if(sp==="sbuild"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){stopBGM();var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
-  if(sp==="clue"){playBGM("bgm_clue");return(<div className={lc}><style>{CSS}</style><ClueHunter u={u} done={function(sc,tot,xp){stopBGM();var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
+  if(sp==="clue")return(<div className={lc}><style>{CSS}</style><ClueHunter u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="ablitz")return(<div className={lc}><style>{CSS}</style><AudioBlitz u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="strats")return(<div className={lc}><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
   if(sp==="gramref")return(<div className={lc}><style>{CSS}</style><GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/></div>);
@@ -6315,11 +6240,11 @@ if(sp==="duel"){playBGM("bgm_duel");return(<div className={lc}><style>{CSS}</sty
   if(sp==="p6")return(<div className={lc}><style>{CSS}</style><Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="p7")return(<div className={lc}><style>{CSS}</style><Part7Read u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="lis")return(<div className={lc}><style>{CSS}</style><ListenHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lisP1")return(<div className={lc}><style>{CSS}</style><ListenP1 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
+  if(sp==="lisP1")return(<div className={lc}><style>{CSS}</style><ListenP1 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="read")return(<div className={lc}><style>{CSS}</style><ReadingHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lisP2")return(<div className={lc}><style>{CSS}</style><ListenP2 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
-  if(sp==="lisP3")return(<div className={lc}><style>{CSS}</style><ListenP3 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
-  if(sp==="lisP4")return(<div className={lc}><style>{CSS}</style><ListenP4 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
+  if(sp==="lisP2")return(<div className={lc}><style>{CSS}</style><ListenP2 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP3")return(<div className={lc}><style>{CSS}</style><ListenP3 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="lisP4")return(<div className={lc}><style>{CSS}</style><ListenP4 u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
 
   return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
