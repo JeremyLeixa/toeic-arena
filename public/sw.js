@@ -106,3 +106,31 @@ self.addEventListener("notificationclick", function (e) {
     })
   );
 });
+
+self.addEventListener('push', function(event) {
+  var data = {};
+  try { data = event.data.json(); } catch(e) {}
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'TOEIC Arena', {
+      body: data.body || 'Time to train!',
+      icon: data.icon || '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: data.tag || 'toeic-default',
+      data: { url: data.url || '/' }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  var url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(function(list) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].url.includes(url) && 'focus' in list[i]) return list[i].focus();
+      }
+      return clients.openWindow(url);
+    })
+  );
+});
