@@ -34,9 +34,9 @@ export var PART6_TEXTS = [
     ]},
   { id:"p6t3", type:"Notice", from:"Building Management", to:"Tenants", subject:"Elevator Maintenance",
     parts:[
-      {text:"Dear building tenants,\n\nPlease be advised that the elevators in Tower A will undergo scheduled maintenance from April 5th to April 8th. "},
+      {text:"Dear building tenants,\n\nPlease be advised that the elevators in Tower A will undergo scheduled maintenance from April 5th to April 8th. _____ this period, only the service elevator will be operational.\n\nWe "},
       {blank:true,options:["During","While","Since","For"],correct:0,x:"'During' + noun phrase (this period). 'While' would need a clause."},
-      {text:" this period, only the service elevator will be operational.\n\nWe "},
+      {text:""},
       {blank:true,options:["sincerely","sincere","sincerity","sincerer"],correct:0,x:"'We sincerely apologize' — adverb modifies the verb 'apologize'."},
       {text:" apologize for any inconvenience this may cause. Tenants on floors 15 and above are "},
       {blank:true,options:["encouraged","encouraging","encouragement","encourage"],correct:0,x:"Passive: 'are encouraged' to use the stairs or plan accordingly."},
@@ -162,9 +162,9 @@ export var PART6_TEXTS = [
     ]},
   { id:"p6t11", type:"Memo", from:"Quality Assurance", to:"Production Team", subject:"Product Recall",
     parts:[
-      {text:"A quality issue has been identified in Batch #4872 of the ProMax 500 series. "},
+      {text:"A quality issue has been identified in Batch #4872 of the ProMax 500 series. _____ an internal investigation, it was determined that a faulty component from a third-party supplier caused the defect.\n\n"},
       {blank:true,options:["Following","Followed","Follow","Follows"],correct:0,x:"'Following' = after/as a result of. Preposition + noun phrase."},
-      {text:" an internal investigation, it was determined that a faulty component from a third-party supplier caused the defect.\n\nAll units from this batch must be "},
+      {text:"All units from this batch must be "},
       {blank:true,options:["withdrawal","withdrawing","withdrawn","withdrew"],correct:2,x:"Passive: 'must be withdrawn'. Past participle of 'withdraw'."},
       {text:" from sale immediately. The supplier has been notified and has agreed to cover all "},
       {blank:true,options:["associated","associating","association","associate"],correct:0,x:"'Associated costs' — adjective modifying 'costs'. Past participle as adjective."},
