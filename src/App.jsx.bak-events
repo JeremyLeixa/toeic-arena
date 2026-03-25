@@ -416,7 +416,6 @@ function canUnlockMock(u,mockId){
 // ─── TEACHER DASHBOARD CONFIG ───
 var TEACHER_CODE="arena-teacher-2026";
 var PUSH_SECRET="toeic-push-2026-xyz";
-var PUSH_SECRET="toeic-push-2026-xyz";
 
 // ─── PUSH NOTIFICATIONS ───
 var VAPID_PUBLIC_KEY="BGiKomKxy1j081qd5ZaZnp7EUAYXIGRPWu8ePQySLGhQ0T45-m3oKTqgj-teqm2l5RoR0jnamCWHZ6pMYjrPVy4";
@@ -796,41 +795,11 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily
     if(ev.type==="flash_hour")pills.push({label:"x"+m+" Flash",col:"#f0c850",icon:"⚡"});
     if(ev.type==="underdog"&&p.u.xp<(p.medianXp||0))pills.push({label:"x"+m+" Underdog",col:"#4abe60",icon:"💪"});
   });
-  if(p.events)p.events.forEach(function(ev){
-    var cfg=ev.config||{};var m=cfg.multiplier||2;
-    if(ev.type==="spotlight")pills.push({label:"x"+m+" "+((cfg.module||"").charAt(0).toUpperCase()+(cfg.module||"").slice(1)),col:"#d4943a",icon:"🎯"});
-    if(ev.type==="flash_hour")pills.push({label:"x"+m+" Flash",col:"#f0c850",icon:"⚡"});
-    if(ev.type==="underdog"&&p.u.xp<(p.medianXp||0))pills.push({label:"x"+m+" Underdog",col:"#4abe60",icon:"💪"});
-  });
   if(pills.length===0)return null;
   return(<div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
     {pills.map(function(p,i){return (<div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:99,background:p.col+"15",border:"1px solid "+p.col+"30",fontSize:11,fontWeight:600,color:p.col}} className="out"><span style={{fontSize:12}}>{p.icon}</span>{p.label}</div>);})}
   </div>);
 }()}
-
-{/* Active Events Banner */}
-{p.events&&p.events.length>0&&p.events.map(function(ev,ei){
-  var cfg=ev.config||{};var m=cfg.multiplier||2;
-  var end=new Date(ev.end_at);var now=new Date();var hoursLeft=Math.max(0,Math.round((end-now)/36e5));
-  var timeLabel=hoursLeft>=24?Math.floor(hoursLeft/24)+"d "+hoursLeft%24+"h left":hoursLeft+"h left";
-  var icon=ev.type==="spotlight"?"🎯":ev.type==="flash_hour"?"⚡":"💪";
-  var bg=ev.type==="spotlight"?"rgba(212,148,58,.1)":ev.type==="flash_hour"?"rgba(240,200,80,.12)":"rgba(74,190,96,.1)";
-  var bd=ev.type==="spotlight"?"rgba(212,148,58,.25)":ev.type==="flash_hour"?"rgba(240,200,80,.3)":"rgba(74,190,96,.25)";
-  var col=ev.type==="spotlight"?"var(--cyan)":ev.type==="flash_hour"?"var(--gold)":"var(--green)";
-  var isUnderdog=ev.type==="underdog";
-  var qualifies=!isUnderdog||p.u.xp<(p.medianXp||0);
-  return(<div key={ei} className="crd" style={{marginBottom:12,padding:14,background:bg,border:"1px solid "+bd,animation:"pulse 3s infinite"}}>
-    <div style={{display:"flex",alignItems:"center",gap:10}}>
-      <span style={{fontSize:24}}>{icon}</span>
-      <div style={{flex:1}}>
-        <div className="out" style={{fontWeight:700,fontSize:14,color:col}}>{ev.title}</div>
-        <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>{ev.description||(ev.type==="spotlight"?"x"+m+" XP on "+cfg.module:ev.type==="flash_hour"?"x"+m+" XP on everything":"x"+m+" XP if below class median")}</div>
-        {isUnderdog&&!qualifies&&<div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>You are above the median</div>}
-      </div>
-      <div style={{textAlign:"right"}}><div className="out" style={{fontSize:12,fontWeight:700,color:col}}>{timeLabel}</div></div>
-    </div>
-  </div>);
-})}
 
 {/* Active Events Banner */}
 {p.events&&p.events.length>0&&p.events.map(function(ev,ei){
@@ -4803,45 +4772,6 @@ function TeacherDash(p){
       setTimeout(function(){setEvPushResult(null);},5000);
     }catch(e){console.log('Push failed:',e);setEvPushResult({error:"Push send failed"});setTimeout(function(){setEvPushResult(null);},5000);}
   }
-  var[dashEvents,setDashEvents]=useState([]);var[evForm,setEvForm]=useState({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:"all"});var[evSaving,setEvSaving]=useState(false);var[evPushResult,setEvPushResult]=useState(null);
-
-  function loadEvents(){
-    supabase.from('events').select('*').order('start_at',{ascending:false}).limit(20)
-      .then(function(res){if(res.data)setDashEvents(res.data);});
-  }
-  async function sendEventPush(title,body,targetClass){
-    try{
-      // 1. Fetch subscriptions from Supabase
-      var query=supabase.from('push_subscriptions').select('subscription,student_name,class_code');
-      if(targetClass&&targetClass!=='all')query=query.eq('class_code',targetClass);
-      var subRes=await query;
-      var subs=(subRes.data||[]).map(function(s){return s.subscription;}).filter(Boolean);
-      if(subs.length===0){setEvPushResult({error:"No push subscribers found",total:0});setTimeout(function(){setEvPushResult(null);},5000);return;}
-      // 2. Call existing /api/push-send
-      var res=await fetch('/api/push-send',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-push-secret':PUSH_SECRET},
-        body:JSON.stringify({subscriptions:subs,title:title,body:body,tag:'toeic-event'})
-      });
-      var data=await res.json();
-      // 3. Clean stale subscriptions from Supabase
-      var staleCount=0;
-      if(data.errors){
-        for(var i=0;i<data.errors.length;i++){
-          if(data.errors[i].expired){
-            var staleEndpoint=data.errors[i].endpoint;
-            var staleSub=subRes.data.find(function(s){return s.subscription&&s.subscription.endpoint===staleEndpoint;});
-            if(staleSub){
-              await supabase.from('push_subscriptions').delete().eq('student_name',staleSub.student_name).eq('class_code',staleSub.class_code);
-              staleCount++;
-            }
-          }
-        }
-      }
-      setEvPushResult({sent:data.sent||0,total:subs.length,staleCount:staleCount});
-      setTimeout(function(){setEvPushResult(null);},5000);
-    }catch(e){console.log('Push failed:',e);setEvPushResult({error:"Push send failed"});setTimeout(function(){setEvPushResult(null);},5000);}
-  }
 
   function loadGroups(){
     supabase.from('groups').select('*').order('type',{ascending:true}).order('name',{ascending:true})
@@ -6294,8 +6224,6 @@ export default function App(){
   var[showTip,setShowTip]=useState(false);
   var[activeEvents,setActiveEvents]=useState([]);
   var[classMedianXp,setClassMedianXp]=useState(0);
-  var[activeEvents,setActiveEvents]=useState([]);
-  var[classMedianXp,setClassMedianXp]=useState(0);
 
 useEffect(function(){
     var loaded=false;
@@ -6358,26 +6286,6 @@ useEffect(function(){
         setClassMedianXp(xps.length%2?xps[mid]:Math.round((xps[mid-1]+xps[mid])/2));
       });
   },[u&&u.name]);
-
-  // ── Load active events from Supabase ──
-  useEffect(function(){
-    if(!u)return;
-    var now=new Date().toISOString();
-    supabase.from('events').select('*').eq('active',true).lte('start_at',now).gte('end_at',now)
-      .then(function(res){
-        var evts=(res.data||[]).filter(function(e){
-          return e.class_code==='all'||e.class_code===(u.classCode||'idrac2026');
-        });
-        setActiveEvents(evts);
-      });
-    supabase.from('students').select('xp').eq('class_code',u.classCode||'idrac2026')
-      .then(function(res){
-        if(!res.data||res.data.length<3){setClassMedianXp(0);return;}
-        var xps=res.data.map(function(s){return s.xp||0;}).sort(function(a,b){return a-b;});
-        var mid=Math.floor(xps.length/2);
-        setClassMedianXp(xps.length%2?xps[mid]:Math.round((xps[mid-1]+xps[mid])/2));
-      });
-  },[u&&u.name,tab]);
 
   // ── Auto-start Home BGM on first user interaction ──
   var bgmStarted=useRef(false);
@@ -6468,19 +6376,14 @@ useEffect(function(){
       if(c.streak>=7){mult*=1.5;bonuses.push({label:"Streak x1.5 ("+c.streak+"d)",color:"#ff8c42"});}
       else if(c.streak>=3){mult*=1.2;bonuses.push({label:"Streak x1.2 ("+c.streak+"d)",color:"#ff8c42"});}
 
-      console.log("EVENT_DEBUG:",JSON.stringify(activeEvents),activeEvents&&activeEvents.length);
       // Event multipliers
-      console.log("MULT_BEFORE:", mult);
       if(activeEvents&&activeEvents.length>0){
         activeEvents.forEach(function(ev){
           var cfg=ev.config||{};var m=cfg.multiplier||2;
-          console.log("EV_CHECK:", ev.type, "m=", m, "type===flash_hour?", ev.type==="flash_hour");
-          if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"\u26A1 Flash Hour x"+m,color:"#f0c850"});}
-          if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"\uD83D\uDCAA Underdog x"+m,color:"#4abe60"});}
+          if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"⚡ Flash Hour x"+m,color:"#f0c850"});}
+          if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"💪 Underdog x"+m,color:"#4abe60"});}
         });
       }
-      console.log("MULT_AFTER:", mult, "bonuses:", JSON.stringify(bonuses));
-
 
       amt=Math.round(baseAmt*mult);
 
@@ -6498,14 +6401,6 @@ var prevLeague=getLeague(c.weeklyXp);
     var toastInfo={total:amt,base:baseAmt,bonuses:bonuses};
     sXpt(toastInfo);setTimeout(function(){sXpt(null);},2200);
     return c;
-  }
-  function getSpotlightMult(modId){
-    if(!activeEvents)return 1;
-    var m=1;
-    activeEvents.forEach(function(ev){
-      if(ev.type==="spotlight"&&ev.config&&ev.config.module===modId)m=ev.config.multiplier||2;
-    });
-    return m;
   }
   function getSpotlightMult(modId){
     if(!activeEvents)return 1;
