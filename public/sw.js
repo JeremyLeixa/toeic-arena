@@ -99,7 +99,7 @@ self.addEventListener("push", function (e) {
       icon: data.icon,
       badge: "/icon-192.png",
       tag: data.tag,
-      vibrate: [200, 100, 200],
+      vibrate: [210, 100, 210],
       requireInteraction: false,
       data: { url: data.url }
     })
