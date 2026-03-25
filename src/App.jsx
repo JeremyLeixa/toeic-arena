@@ -433,18 +433,17 @@ async function subscribePush(userName,userClassCode){
   try{
     if(!("serviceWorker" in navigator)||!("PushManager" in window))return null;
     var reg=await navigator.serviceWorker.ready;
-    var existing=await reg.pushManager.getSubscription();
-    if(existing)return existing;
-    var sub=await reg.pushManager.subscribe({
+var existing=await reg.pushManager.getSubscription();
+    var sub=existing||await reg.pushManager.subscribe({
       userVisibleOnly:true,
       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
-    // Store in Supabase
+    // Always store in Supabase (even if browser already had subscription)
     await supabase.from("push_subscriptions").upsert({
       student_name:userName,
-      class_code:userClassCode||"idrac2026",
+      class_code:"idrac2026",
       subscription:sub.toJSON()
-    },{onConflict:"student_name,class_code,subscription"});
+    },{onConflict:"student_name,class_code"});
     return sub;
   }catch(e){console.log("Push subscription failed:",e);return null;}
 }
