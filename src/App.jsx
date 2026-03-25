@@ -438,12 +438,13 @@ var existing=await reg.pushManager.getSubscription();
       userVisibleOnly:true,
       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
-    // Always store in Supabase (even if browser already had subscription)
-    await supabase.from("push_subscriptions").upsert({
+// Always store in Supabase — delete old + insert fresh
+    await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code","idrac2026");
+    await supabase.from("push_subscriptions").insert({
       student_name:userName,
       class_code:"idrac2026",
       subscription:sub.toJSON()
-    },{onConflict:"student_name,class_code"});
+    });
     return sub;
   }catch(e){console.log("Push subscription failed:",e);return null;}
 }
