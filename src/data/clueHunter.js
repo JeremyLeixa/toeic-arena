@@ -532,4 +532,327 @@ export var CLUE_HUNTER = [
     clue:"'The sharp' = article + adjective → noun follows. 'declining' is a gerund/adjective but 'the sharp declining' doesn't work. The noun form is: decline.",
     ref:"grammar"
   },
+  // ─── CLUE HUNTER — 30 NEW ITEMS (ch51–ch80) ───
+// Paste these entries inside the CLUE_HUNTER array, after ch50.
+
+  // ═══════════════════════════════
+  // PREPOSITIONS & COLLOCATIONS (8)
+  // ═══════════════════════════════
+  {
+    id:"ch51",
+    sentence:"The regional manager is responsible ___ overseeing all distribution centres in the area.",
+    chips:[{w:"responsible",c:true},{w:"overseeing",c:false},{w:"distribution centres",c:false},{w:"regional manager",c:false}],
+    opts:["of","about","for","with"],ans:2,
+    cat:"Preposition: Collocation",
+    exp:"'Responsible for' is a fixed collocation — the only correct preposition.",
+    clue:"'responsible' always locks onto 'for'. This is a collocation — it doesn't follow logic, it's just fixed. Other common traps: 'responsible of' (French calque), 'responsible about' (sounds natural but is wrong).",
+    ref:"grammar"
+  },
+  {
+    id:"ch52",
+    sentence:"Our new sales strategy is based ___ detailed market research conducted last quarter.",
+    chips:[{w:"based",c:true},{w:"new sales strategy",c:false},{w:"market research",c:false},{w:"conducted",c:false}],
+    opts:["in","on","at","from"],ans:1,
+    cat:"Preposition: Collocation",
+    exp:"'Based on' is a fixed collocation — 'on' is the only correct preposition.",
+    clue:"'based on' = fixed pair. Very common in business English. 'Based in' means a location ('based in Paris'). Don't confuse the two — the meaning changes completely.",
+    ref:"grammar"
+  },
+  {
+    id:"ch53",
+    sentence:"She has been working ___ this account for three years and knows every detail.",
+    chips:[{w:"working",c:true},{w:"three years",c:false},{w:"every detail",c:false},{w:"has been",c:false}],
+    opts:["with","at","on","about"],ans:2,
+    cat:"Preposition: Collocation",
+    exp:"'Work on' (a project/account/task) = fixed collocation.",
+    clue:"'work on something' = to be responsible for it or developing it. 'work with someone' = collaboration with a person. The object here is 'this account' (a task), not a person → 'on'.",
+    ref:"grammar"
+  },
+  {
+    id:"ch54",
+    sentence:"The consultant specialises ___ corporate restructuring and post-merger integration.",
+    chips:[{w:"specialises",c:true},{w:"corporate restructuring",c:false},{w:"consultant",c:false},{w:"integration",c:false}],
+    opts:["at","in","on","about"],ans:1,
+    cat:"Preposition: Collocation",
+    exp:"'Specialise in' is the fixed collocation in British English (also 'specialize in').",
+    clue:"'specialise in' = fixed. Common error: 'specialise on' (doesn't exist). Compare: 'an expert in', 'focus on', 'concentrate on' — each verb has its own locked preposition.",
+    ref:"grammar"
+  },
+  {
+    id:"ch55",
+    sentence:"The project was completed ___ schedule, which impressed the entire board of directors.",
+    chips:[{w:"completed",c:false},{w:"schedule",c:true},{w:"ahead of",c:true},{w:"impressed",c:false}],
+    opts:["in","on","ahead of","beyond"],ans:2,
+    cat:"Preposition: Schedule expressions",
+    exp:"'Ahead of schedule' = finished earlier than planned. 'On schedule' = on time. The context ('impressed the board') implies it was early, not just on time.",
+    clue:"Three key schedule expressions: 'on schedule' (on time), 'ahead of schedule' (early — positive), 'behind schedule' (late — problem). Context here is positive surprise → 'ahead of'.",
+    ref:"grammar"
+  },
+  {
+    id:"ch56",
+    sentence:"Please ensure that all invoices are submitted ___ compliance with our new billing policy.",
+    chips:[{w:"compliance",c:true},{w:"invoices",c:false},{w:"submitted",c:false},{w:"billing policy",c:false}],
+    opts:["in","on","by","for"],ans:0,
+    cat:"Preposition: Fixed phrase",
+    exp:"'In compliance with' = in conformity with (a rule/policy). Fixed three-word phrase.",
+    clue:"'in compliance with' = fixed phrase meaning 'following the rules of'. Other similar phrases: 'in accordance with', 'in line with'. They all use 'in' — memorise the trio.",
+    ref:"grammar"
+  },
+  {
+    id:"ch57",
+    sentence:"The training programme aims to provide employees ___ the skills needed for digital transformation.",
+    chips:[{w:"provide",c:true},{w:"employees",c:false},{w:"training programme",c:false},{w:"skills",c:false}],
+    opts:["for","to","with","about"],ans:2,
+    cat:"Preposition: Collocation",
+    exp:"'Provide someone with something' = the correct structure.",
+    clue:"'provide' has two patterns: 'provide something for someone' OR 'provide someone with something'. Here 'employees' follows directly → we're in the 'provide [person] with' pattern → 'with'.",
+    ref:"grammar"
+  },
+  {
+    id:"ch58",
+    sentence:"The board's decision was met ___ strong opposition from the shareholders' association.",
+    chips:[{w:"met",c:true},{w:"strong opposition",c:false},{w:"board's decision",c:false},{w:"shareholders",c:false}],
+    opts:["by","with","from","against"],ans:1,
+    cat:"Preposition: Fixed phrase",
+    exp:"'Met with [reaction]' = to receive a certain response. Fixed collocation.",
+    clue:"'met with' = received (a reaction). 'The proposal was met with applause / resistance / scepticism.' Don't confuse with 'met by someone' (a person greeting you) or 'met from' (doesn't exist).",
+    ref:"grammar"
+  },
+
+  // ═══════════════════════════════
+  // RELATIVE PRONOUNS (6)
+  // ═══════════════════════════════
+  {
+    id:"ch59",
+    sentence:"The candidate ___ application impressed the panel was offered the position immediately.",
+    chips:[{w:"candidate",c:true},{w:"application",c:true},{w:"impressed the panel",c:false},{w:"offered the position",c:false}],
+    opts:["who","which","whose","whom"],ans:2,
+    cat:"Relative Pronoun: Whose",
+    exp:"'Candidate' is a person, and the blank introduces a possessive relative clause (application = belonging to the candidate) → 'whose'.",
+    clue:"'candidate' = person + 'application' comes right after the blank = possession. 'whose' = the possessive relative pronoun. Quick test: replace with 'his/her application' — if it works, you need 'whose'.",
+    ref:"grammar"
+  },
+  {
+    id:"ch60",
+    sentence:"The software ___ was installed last week has already reduced processing time by 40%.",
+    chips:[{w:"software",c:true},{w:"installed last week",c:true},{w:"reduced",c:false},{w:"processing time",c:false}],
+    opts:["who","which","whose","whom"],ans:1,
+    cat:"Relative Pronoun: Which",
+    exp:"'Software' is a thing, not a person → 'which' (or 'that').",
+    clue:"Person → 'who/whom/whose'. Thing → 'which/that'. 'Software' = a thing → 'which'. Also: 'that' would work here too, but 'which' is preferred in formal written English (TOEIC context).",
+    ref:"grammar"
+  },
+  {
+    id:"ch61",
+    sentence:"The manager to ___ I reported for five years has just been promoted to VP.",
+    chips:[{w:"to",c:true},{w:"reported",c:true},{w:"manager",c:false},{w:"promoted",c:false}],
+    opts:["who","which","whose","whom"],ans:3,
+    cat:"Relative Pronoun: Whom (after preposition)",
+    exp:"After a preposition ('to'), use 'whom' — not 'who'. 'Manager' is a person.",
+    clue:"Preposition + relative pronoun referring to a person = 'whom', always. 'to who' is wrong in formal English. Pattern: 'the person to whom I spoke', 'the director with whom we met'. The preposition pulls 'whom' out.",
+    ref:"grammar"
+  },
+  {
+    id:"ch62",
+    sentence:"The conference, ___ was held in Singapore, attracted over 3,000 industry professionals.",
+    chips:[{w:"conference",c:true},{w:"was held",c:false},{w:"Singapore",c:false},{w:"attracted",c:false}],
+    opts:["that","which","who","where"],ans:1,
+    cat:"Relative Pronoun: Which (non-restrictive)",
+    exp:"Non-restrictive clause (between commas) = 'which', never 'that'.",
+    clue:"The commas are the key signal. A clause between commas = non-restrictive = extra info, not identification. Non-restrictive clauses NEVER use 'that' — only 'which' for things. This is a rule, not a style preference.",
+    ref:"grammar"
+  },
+  {
+    id:"ch63",
+    sentence:"The office ___ the finance team works is being renovated starting next month.",
+    chips:[{w:"office",c:true},{w:"finance team works",c:true},{w:"renovated",c:false},{w:"starting next month",c:false}],
+    opts:["which","that","where","whose"],ans:2,
+    cat:"Relative Pronoun: Where",
+    exp:"'Office' is a place and the clause describes what happens there → 'where'.",
+    clue:"'office' = a place. The clause describes an activity happening in that place → 'where'. You could also say 'the office in which the team works' — 'where' is the elegant shortcut for 'in which' with places.",
+    ref:"grammar"
+  },
+  {
+    id:"ch64",
+    sentence:"The employee ___ received the highest performance rating will be promoted next quarter.",
+    chips:[{w:"employee",c:true},{w:"highest performance rating",c:false},{w:"received",c:true},{w:"promoted",c:false}],
+    opts:["whom","whose","which","who"],ans:3,
+    cat:"Relative Pronoun: Who (subject)",
+    exp:"'Employee' is a person and the blank is the subject of 'received' → 'who'.",
+    clue:"'who' vs 'whom': if the relative pronoun IS the subject of the clause (it does the action), use 'who'. If it's the object (something happens TO it), use 'whom'. Here: '___received' = subject position → 'who'.",
+    ref:"grammar"
+  },
+
+  // ═══════════════════════════════
+  // PASSIVE VOICE (6)
+  // ═══════════════════════════════
+  {
+    id:"ch65",
+    sentence:"All shipments ___ carefully before they leave the warehouse to ensure quality standards.",
+    chips:[{w:"All shipments",c:true},{w:"before they leave",c:false},{w:"quality standards",c:false},{w:"carefully",c:false}],
+    opts:["inspect","are inspected","inspected","have inspected"],ans:1,
+    cat:"Passive Voice: Present simple",
+    exp:"'All shipments' is the subject receiving the action (they are inspected, not doing the inspecting) → present simple passive: are inspected.",
+    clue:"'All shipments' can't inspect anything — they ARE inspected. Subject receives action = passive. Present simple passive = am/is/are + past participle. 'Carefully' is just an adverb, not a tense signal.",
+    ref:"grammar"
+  },
+  {
+    id:"ch66",
+    sentence:"The new product line ___ at the annual trade fair next spring.",
+    chips:[{w:"new product line",c:true},{w:"annual trade fair",c:false},{w:"next spring",c:true},{w:"launched",c:false}],
+    opts:["will launch","is launching","will be launched","has been launched"],ans:2,
+    cat:"Passive Voice: Future",
+    exp:"'Next spring' = future. 'Product line' receives the action (it gets launched by someone) → future passive: will be launched.",
+    clue:"'next spring' = future → eliminate present forms. 'Product line' doesn't launch itself → passive. Future passive = will + be + past participle. 'will launch' is active — it means the product line launches something else.",
+    ref:"grammar"
+  },
+  {
+    id:"ch67",
+    sentence:"The annual report ___ by the external auditors before the board meeting yesterday.",
+    chips:[{w:"annual report",c:true},{w:"before the board meeting",c:false},{w:"yesterday",c:true},{w:"external auditors",c:true}],
+    opts:["reviewed","was reviewed","has been reviewed","is reviewed"],ans:1,
+    cat:"Passive Voice: Past simple",
+    exp:"'Yesterday' = specific past moment → past simple. 'Annual report' receives the action → passive: was reviewed.",
+    clue:"Three signals: 'annual report' (receives action), 'by the external auditors' ('by' phrase = almost always passive), 'yesterday' (past simple, not present perfect). Past simple passive = was/were + past participle.",
+    ref:"grammar"
+  },
+  {
+    id:"ch68",
+    sentence:"Employees ___ to submit their expense reports within 30 days of the trip.",
+    chips:[{w:"Employees",c:true},{w:"submit",c:false},{w:"within 30 days",c:false},{w:"required",c:true}],
+    opts:["require","are required","have required","requiring"],ans:1,
+    cat:"Passive Voice: Modal-like passive",
+    exp:"'Employees' don't require themselves — the company requires them → passive: are required.",
+    clue:"'Employees' = the ones being required, not the ones requiring. This is a very common TOEIC pattern: 'be required to', 'be expected to', 'be encouraged to', 'be asked to' — all passive + infinitive structures.",
+    ref:"grammar"
+  },
+  {
+    id:"ch69",
+    sentence:"By the time the client arrived, the presentation ___ entirely by the junior team.",
+    chips:[{w:"By the time",c:true},{w:"client arrived",c:true},{w:"entirely",c:false},{w:"junior team",c:false}],
+    opts:["prepared","was prepared","had been prepared","has been prepared"],ans:2,
+    cat:"Passive Voice: Past perfect",
+    exp:"'By the time... arrived' = action completed before another past action → past perfect. 'Presentation' receives the action → past perfect passive: had been prepared.",
+    clue:"'By the time' + past action = past perfect for the earlier event. Add passive because the presentation was prepared BY someone → past perfect passive = had been + past participle. Don't confuse with 'was prepared' (past simple passive — also possible but changes meaning slightly here).",
+    ref:"grammar"
+  },
+  {
+    id:"ch70",
+    sentence:"The merger ___ subject to regulatory approval before it can be finalised.",
+    chips:[{w:"merger",c:true},{w:"subject to",c:true},{w:"regulatory approval",c:false},{w:"finalised",c:false}],
+    opts:["is","is being","was","will be"],ans:0,
+    cat:"Passive Voice: State passive",
+    exp:"'Is subject to' = a current state, not an action in progress → present simple: is.",
+    clue:"'subject to' here is not an action — it's a condition or state. 'Is subject to' = it currently depends on. State passives (be subject to, be known for, be located in) use simple forms, not progressive. 'Is being subject to' = wrong.",
+    ref:"grammar"
+  },
+
+  // ═══════════════════════════════
+  // INFINITIVE vs GERUND (5)
+  // ═══════════════════════════════
+  {
+    id:"ch71",
+    sentence:"The HR director suggested ___ a flexible working policy to improve staff retention.",
+    chips:[{w:"suggested",c:true},{w:"flexible working",c:false},{w:"improve",c:false},{w:"staff retention",c:false}],
+    opts:["to introduce","introduce","introducing","to introducing"],ans:2,
+    cat:"Infinitive vs Gerund: suggest",
+    exp:"'Suggest' is always followed by a gerund (-ing) or a 'that' clause — never a bare infinitive or 'to + verb'.",
+    clue:"'suggest' = gerund-only verb. Pattern: 'suggest doing', never 'suggest to do'. Same family: 'recommend doing', 'avoid doing', 'consider doing', 'mind doing'. These verbs hate infinitives.",
+    ref:"grammar"
+  },
+  {
+    id:"ch72",
+    sentence:"We have decided ___ our product range in response to customer feedback.",
+    chips:[{w:"decided",c:true},{w:"product range",c:false},{w:"customer feedback",c:false},{w:"response",c:false}],
+    opts:["expanding","expand","to expand","to expanding"],ans:2,
+    cat:"Infinitive vs Gerund: decide",
+    exp:"'Decide' is always followed by an infinitive: decide to do.",
+    clue:"'decide' = infinitive-only verb. Pattern: 'decide to do'. Same family: 'agree to', 'refuse to', 'manage to', 'plan to', 'hope to', 'expect to'. These verbs love infinitives. Don't mix up 'decide to expand' with 'consider expanding'.",
+    ref:"grammar"
+  },
+  {
+    id:"ch73",
+    sentence:"The technician stopped ___ the manual before attempting to repair the machine.",
+    chips:[{w:"stopped",c:true},{w:"before",c:true},{w:"attempting",c:false},{w:"repair",c:false}],
+    opts:["reading","to read","read","to reading"],ans:1,
+    cat:"Infinitive vs Gerund: stop + meaning",
+    exp:"'Stop to do' = stopped in order to do something (purpose). 'Stop doing' = ceased the action. Context: the technician paused what they were doing in order to read → 'stop to read'.",
+    clue:"'stop' changes meaning entirely: 'stopped reading' = was reading, then quit. 'stopped to read' = paused (something else) in order to read. The 'before attempting to repair' confirms they stopped mid-task to consult the manual first → purpose → infinitive.",
+    ref:"grammar"
+  },
+  {
+    id:"ch74",
+    sentence:"I remember ___ this supplier at the trade fair three years ago — they had an impressive stand.",
+    chips:[{w:"remember",c:true},{w:"three years ago",c:true},{w:"trade fair",c:false},{w:"impressive stand",c:false}],
+    opts:["to meet","meeting","meet","to meeting"],ans:1,
+    cat:"Infinitive vs Gerund: remember + meaning",
+    exp:"'Remember doing' = recall a past event. 'Remember to do' = don't forget a future task. 'Three years ago' signals a past memory → gerund: meeting.",
+    clue:"'remember' has two meanings: 'remember doing' = looking back at a past event (I recall meeting them). 'remember to do' = a reminder for a future task (remember to send the report). 'three years ago' = clearly a past memory → gerund.",
+    ref:"grammar"
+  },
+  {
+    id:"ch75",
+    sentence:"The finance team needs ___ the quarterly projections before the investor call on Friday.",
+    chips:[{w:"needs",c:true},{w:"quarterly projections",c:false},{w:"investor call",c:false},{w:"Friday",c:true}],
+    opts:["updating","to update","update","being updated"],ans:1,
+    cat:"Infinitive vs Gerund: need",
+    exp:"'Need' with a person subject = infinitive: need to do. ('Need' + gerund = passive meaning: 'the report needs updating' = needs to be updated.)",
+    clue:"'The finance team needs to update' = active, the team does it. Compare: 'the projections need updating' = passive meaning (they need to be updated by someone). Subject here is a person/team → active meaning → infinitive. Friday is just context, not a tense trigger.",
+    ref:"grammar"
+  },
+
+  // ═══════════════════════════════
+  // CONDITIONALS (5)
+  // ═══════════════════════════════
+  {
+    id:"ch76",
+    sentence:"If the delivery ___ by Friday, we will have to source the components from a different supplier.",
+    chips:[{w:"If",c:true},{w:"will have to",c:true},{w:"delivery",c:false},{w:"different supplier",c:false}],
+    opts:["doesn't arrive","won't arrive","didn't arrive","hadn't arrived"],ans:0,
+    cat:"Conditional: Type 1",
+    exp:"Type 1 conditional: if + present simple → future. 'Will have to' in the main clause confirms it's Type 1 → 'doesn't arrive'.",
+    clue:"Golden rule: in a Type 1 conditional, the 'if' clause NEVER uses 'will'. 'If it will arrive' = wrong. 'Will have to' in the main clause = Type 1 = if + present simple in the condition. Eliminate 'won't arrive' — no future in the if-clause.",
+    ref:"grammar"
+  },
+  {
+    id:"ch77",
+    sentence:"If the company ___ more in R&D, it would be in a stronger competitive position today.",
+    chips:[{w:"If",c:true},{w:"would be",c:true},{w:"competitive position",c:false},{w:"today",c:true}],
+    opts:["invests","invested","had invested","would invest"],ans:1,
+    cat:"Conditional: Type 2",
+    exp:"Type 2 conditional: if + past simple → would + infinitive. 'Today' + 'would be' confirms it's an unreal present situation → 'invested'.",
+    clue:"'Would be... today' = Type 2 = hypothetical present. If + past simple (not past perfect) → would + base verb. 'today' is the key — it's about now, not the past. Type 3 would need 'had invested' + 'would have been'. The tense mismatch is a classic TOEIC trap.",
+    ref:"grammar"
+  },
+  {
+    id:"ch78",
+    sentence:"If the board ___ the proposal last spring, the project would have launched on schedule.",
+    chips:[{w:"If",c:true},{w:"last spring",c:true},{w:"would have launched",c:true},{w:"board",c:false}],
+    opts:["approves","approved","had approved","would approve"],ans:2,
+    cat:"Conditional: Type 3",
+    exp:"Type 3 conditional: if + past perfect → would have + past participle. 'Last spring' + 'would have launched' confirm it's a past unreal situation → 'had approved'.",
+    clue:"Three signals: 'last spring' (past), 'would have launched' (Type 3 result), and the sense of regret (it didn't happen). Type 3 = if + had + past participle. 'Approved' alone (Type 2) contradicts the past time marker 'last spring'.",
+    ref:"grammar"
+  },
+  {
+    id:"ch79",
+    sentence:"Should you ___ any issues with the installation, please contact our technical support team.",
+    chips:[{w:"Should",c:true},{w:"any issues",c:false},{w:"installation",c:false},{w:"contact",c:true}],
+    opts:["encounter","encountered","have encountered","encountering"],ans:0,
+    cat:"Conditional: Inverted (formal)",
+    exp:"'Should + subject + base verb' = formal inversion of 'If you encounter...'. Inverted conditionals always use the base form.",
+    clue:"'Should you...' = inverted conditional = formal version of 'If you should encounter'. The structure is: Should + subject + BASE VERB (no 'to', no -ing, no past form). Very common in formal business writing and TOEIC texts.",
+    ref:"grammar"
+  },
+  {
+    id:"ch80",
+    sentence:"___ the talks fail, both parties have agreed to submit the dispute to international arbitration.",
+    chips:[{w:"the talks fail",c:true},{w:"both parties",c:false},{w:"agreed",c:true},{w:"international arbitration",c:false}],
+    opts:["If","Should","Unless","Provided that"],ans:1,
+    cat:"Conditional: Should (formal inversion)",
+    exp:"'Should the talks fail' = formal inverted conditional for a possible but uncertain future scenario. 'Should' at the start + subject + base verb = the structure.",
+    clue:"'Should' at the start of a sentence (before the subject) = inverted conditional. Same meaning as 'If the talks should fail' but more formal. This structure is very common in legal and business texts — exactly what appears in TOEIC Part 7. 'Unless' would mean 'if they don't fail', which reverses the meaning.",
+    ref:"grammar"
+  },
+];
 ];
