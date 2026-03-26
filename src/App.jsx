@@ -244,10 +244,12 @@ function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.l
 
 var SK="toeic-arena-v2";
 import { supabase } from './supabase.js'
+var _cachedUserId=null;
 
 async function load() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+  _cachedUserId=user.id;
 
   // 1) Try by auth ID (fast path — same device)
   var res = await supabase.from('students').select('*').eq('id', user.id).maybeSingle();
@@ -296,8 +298,7 @@ async function load() {
 }
 
 async function save(d) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!_cachedUserId) return;
   try { localStorage.setItem('toeic-arena-name', d.name); } catch(e) {}
   try { localStorage.setItem('toeic-arena-class', d.classCode || 'idrac2026'); } catch(e) {}
 
@@ -305,7 +306,7 @@ async function save(d) {
   // This means: if a row with this name+class exists, UPDATE it. Otherwise INSERT.
   // Works regardless of which device/auth ID is saving.
   var { error } = await supabase.from('students').upsert({
-    id: user.id,
+        id: _cachedUserId,
     name: d.name,
     class_code: d.classCode || 'idrac2026',
     xp: d.xp,
