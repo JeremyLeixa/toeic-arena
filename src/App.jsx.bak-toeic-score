@@ -51,8 +51,9 @@ async function speak(text,rate){
     a.play().catch(function(){});
     return;
   }
-  // Try ElevenLabs API
-  var isLocal=window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1';
+  // ElevenLabs disabled for live TTS — use browser speechSynthesis instead
+  // (ElevenLabs is only used for pre-generated Listening audio files)
+  var isLocal=true;
   if(!isLocal)try{
     var res=await fetch('/api/tts',{
       method:'POST',
@@ -88,7 +89,7 @@ function speakAndWait(text,rate){
       a.play().catch(resolve);
       return;
     }
-    if(!isLocal){
+    if(false){
       fetch('/api/tts',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({text:text,voice:'us_female'})
@@ -244,89 +245,105 @@ function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.l
 var SK="toeic-arena-v2";
 import { supabase } from './supabase.js'
 
-async function load() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+// ─── localStorage-first persistence layer ───
+var _cachedUserId=null;
+var _syncDirty=false;
+var _lastSync=0;
 
-  // 1) Try by auth ID (fast path — same device)
-  var res = await supabase.from('students').select('*').eq('id', user.id).maybeSingle();
+function loadLocal(){
+  try{
+    var raw=localStorage.getItem("toeic-arena-profile");
+    if(raw){var d=JSON.parse(raw);if(d&&d.name)return d;}
+  }catch(e){}
+  return null;
+}
 
-  // 2) Fallback: try by cached name (different device, different auth ID)
-  if (!res.data) {
-    var cachedName = null;
-    try { cachedName = localStorage.getItem('toeic-arena-name'); } catch(e) {}
-    if (cachedName) {
-      var cachedClass = null;
-      try { cachedClass = localStorage.getItem('toeic-arena-class'); } catch(e) {}
-      var res2 = await supabase.from('students').select('*').eq('name', cachedName).eq('class_code', cachedClass || 'idrac2026').order('xp', {ascending:false}).limit(1);
-      if (res2.data && res2.data.length > 0) {
-        res = { data: res2.data[0] };
-      }
-    }
-  }
+function saveLocal(d){
+  try{
+    localStorage.setItem("toeic-arena-profile",JSON.stringify(d));
+    localStorage.setItem("toeic-arena-name",d.name);
+    localStorage.setItem("toeic-arena-class",d.classCode||"idrac2026");
+    _syncDirty=true;
+  }catch(e){}
+}
 
-  if (!res.data) return null;
-  var data = res.data;
-  try { localStorage.setItem('toeic-arena-name', data.name); } catch(e) {}
-  try { localStorage.setItem('toeic-arena-class', data.class_code || 'idrac2026'); } catch(e) {}
-
-  return {
-    name: data.name,
-    classCode: data.class_code || 'idrac2026',
-    xp: data.xp,
-    weeklyXp: data.weekly_xp,
-    weekId: data.week_id,
-    streak: data.streak,
-    lastActive: data.last_active,
-    cardStates: data.card_states || {},
-    daily: data.daily_challenge || {date:null,done:false,score:0,xpE:0},
-    stats: data.stats,
-    moduleScores: data.module_scores,
-    mockResults: data.mock_results || {},
-    gameScores: data.game_scores || {},
-    mission: data.mission,
-    unlockedAch: data.unlocked_ach || [],
-    avatar: data.avatar || "⚔️",
-    theme: data.theme || "dark",
-    totalTime: data.total_time || 0,
-    weeklyHistory: data.weekly_history || [],
-    dailyModSessions: data.daily_mod_sessions || {},
+function supaToLocal(data){
+  return{
+    name:data.name,classCode:data.class_code||"idrac2026",
+    xp:data.xp,weeklyXp:data.weekly_xp,weekId:data.week_id,
+    streak:data.streak,lastActive:data.last_active,
+    cardStates:data.card_states||{},
+    daily:data.daily_challenge||{date:null,done:false,score:0,xpE:0},
+    stats:data.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
+    moduleScores:data.module_scores||{},mockResults:data.mock_results||{},
+    gameScores:data.game_scores||{},mission:data.mission||{date:null,actId:null,done:false},
+    unlockedAch:data.unlocked_ach||[],avatar:data.avatar||"⚔️",theme:data.theme||"dark",
+    totalTime:data.total_time||0,weeklyHistory:data.weekly_history||[],
+    dailyModSessions:data.daily_mod_sessions||{},
   };
 }
 
-async function save(d) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-  try { localStorage.setItem('toeic-arena-name', d.name); } catch(e) {}
-  try { localStorage.setItem('toeic-arena-class', d.classCode || 'idrac2026'); } catch(e) {}
+// load() — localStorage first (instant), Supabase fallback (slow path for first visit)
+async function load(userId){
+  var local=loadLocal();
+  if(local){
+    if(userId)_cachedUserId=userId;
+    return local;
+  }
+  if(!userId)return null;
+  _cachedUserId=userId;
+  try{
+    var res=await supabase.from("students").select("*").eq("id",userId).maybeSingle();
+    if(!res.data){
+      var cn=null;try{cn=localStorage.getItem("toeic-arena-name");}catch(e){}
+      if(cn){
+        var cc=null;try{cc=localStorage.getItem("toeic-arena-class");}catch(e){}
+        var res2=await supabase.from("students").select("*").eq("name",cn).eq("class_code",cc||"idrac2026").order("xp",{ascending:false}).limit(1);
+        if(res2.data&&res2.data.length>0)res={data:res2.data[0]};
+      }
+    }
+    if(!res.data)return null;
+    var d=supaToLocal(res.data);
+    saveLocal(d);
+    _syncDirty=false;
+    return d;
+  }catch(e){return null;}
+}
 
-  // Single upsert that conflicts on (name, class_code) — NOT on id
-  // This means: if a row with this name+class exists, UPDATE it. Otherwise INSERT.
-  // Works regardless of which device/auth ID is saving.
-  var { error } = await supabase.from('students').upsert({
-    id: user.id,
-    name: d.name,
-    class_code: d.classCode || 'idrac2026',
-    xp: d.xp,
-    weekly_xp: d.weeklyXp,
-    week_id: d.weekId,
-    streak: d.streak,
-    last_active: d.lastActive,
-    card_states: d.cardStates,
-    daily_challenge: d.daily,
-    stats: d.stats,
-    module_scores: d.moduleScores,
-    mock_results: d.mockResults,
-    game_scores: d.gameScores,
-    mission: d.mission,
-    avatar: d.avatar || "⚔️",
-    theme: d.theme || "dark",
-    unlocked_ach: d.unlockedAch || [],
-    total_time: d.totalTime || 0,
-    weekly_history: d.weeklyHistory || [],
-    daily_mod_sessions: d.dailyModSessions || {},
-  }, { onConflict: 'name,class_code' });
-  if(error) console.error("SAVE ERROR:", error.message, error.details);
+// save() — localStorage ONLY (0ms, never touches Supabase)
+function save(d){saveLocal(d);}
+
+// syncToCloud() — background push to Supabase (called every 2 min)
+async function syncToCloud(d){
+  if(!d||!d.name||!_syncDirty)return;
+  var now=Date.now();
+  if(now-_lastSync<10000)return;
+  _lastSync=now;
+  try{
+    var userId=_cachedUserId;
+    if(!userId){
+      try{
+        var sess=await supabase.auth.getSession();
+        userId=sess.data.session?sess.data.session.user.id:null;
+        if(userId)_cachedUserId=userId;
+      }catch(e){}
+    }
+    if(!userId)return;
+    var _result=await supabase.from("students").upsert({
+      id:userId,name:d.name,class_code:d.classCode||"idrac2026",
+      xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
+      streak:d.streak,last_active:d.lastActive,
+      card_states:d.cardStates,daily_challenge:d.daily,
+      stats:d.stats,module_scores:d.moduleScores,
+      mock_results:d.mockResults,game_scores:d.gameScores,
+      mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
+      unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
+      weekly_history:d.weeklyHistory||[],
+      daily_mod_sessions:d.dailyModSessions||{},
+    },{onConflict:"name,class_code"});
+    if(!_result.error){_syncDirty=false;}
+    else{console.warn("[SYNC] Upsert failed — will retry:",_result.error.message);}
+  }catch(e){console.warn("[SYNC] Exception:",e);}
 }
 function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{}};}
 
@@ -416,6 +433,7 @@ function canUnlockMock(u,mockId){
 // ─── TEACHER DASHBOARD CONFIG ───
 var TEACHER_CODE="arena-teacher-2026";
 var PUSH_SECRET="toeic-push-2026-xyz";
+var PUSH_SECRET="toeic-push-2026-xyz";
 
 // ─── PUSH NOTIFICATIONS ───
 var VAPID_PUBLIC_KEY="BGiKomKxy1j081qd5ZaZnp7EUAYXIGRPWu8ePQySLGhQ0T45-m3oKTqgj-teqm2l5RoR0jnamCWHZ6pMYjrPVy4";
@@ -432,18 +450,20 @@ async function subscribePush(userName,userClassCode){
   try{
     if(!("serviceWorker" in navigator)||!("PushManager" in window))return null;
     var reg=await navigator.serviceWorker.ready;
-    var existing=await reg.pushManager.getSubscription();
-    if(existing)return existing;
-    var sub=await reg.pushManager.subscribe({
+var existing=await reg.pushManager.getSubscription();
+    var sub=existing||await reg.pushManager.subscribe({
       userVisibleOnly:true,
       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
-    // Store in Supabase
-    await supabase.from("push_subscriptions").upsert({
+// Store in Supabase — one row per device (keyed by endpoint)
+    var subJson=sub.toJSON();
+    await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code","idrac2026").eq("endpoint",subJson.endpoint);
+    await supabase.from("push_subscriptions").insert({
       student_name:userName,
-      class_code:userClassCode||"idrac2026",
-      subscription:sub.toJSON()
-    },{onConflict:"student_name,class_code,subscription"});
+      class_code:"idrac2026",
+      subscription:subJson,
+      endpoint:subJson.endpoint
+    });
     return sub;
   }catch(e){console.log("Push subscription failed:",e);return null;}
 }
@@ -455,7 +475,7 @@ async function unsubscribePush(userName,userClassCode){
     var sub=await reg.pushManager.getSubscription();
     if(sub){
       await sub.unsubscribe();
-      await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code",userClassCode||"idrac2026");
+      await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code","idrac2026").eq("endpoint",sub.endpoint);
     }
   }catch(e){console.log("Push unsubscribe failed:",e);}
 }
@@ -481,7 +501,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 @keyframes flame{0%,100%{transform:scale(1) rotate(-2deg)}25%{transform:scale(1.1) rotate(2deg)}50%{transform:scale(1.05) rotate(-1deg)}75%{transform:scale(1.12) rotate(1deg)}}
 @keyframes achPop{0%{transform:translateY(30px) scale(.7);opacity:0}10%{transform:translateY(-5px) scale(1.05);opacity:1}15%{transform:translateY(0) scale(1);opacity:1}85%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-20px) scale(.95);opacity:0}}
-@keyframes xpPop{0%{transform:translateY(0) scale(.5);opacity:0}30%{transform:translateY(-10px) scale(1.2);opacity:1}100%{transform:translateY(-40px) scale(1);opacity:0}}
+@keyframes xpPop{0%{transform:translateY(0) scale(.5);opacity:0}15%{transform:translateY(-10px) scale(1.1);opacity:1}75%{transform:translateY(-10px) scale(1);opacity:1}100%{transform:translateY(-30px) scale(.95);opacity:0}}
 @keyframes flip{0%{transform:rotateY(90deg);opacity:0}100%{transform:rotateY(0);opacity:1}}
 @keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
 .app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
@@ -510,8 +530,9 @@ function AchToast(p){if(!p.v)return null;
 
 function XpToast(p){if(!p.v)return null;
   var info=typeof p.v==="object"?p.v:{total:p.v,base:p.v,bonuses:[]};
-  return(<div style={{position:"fixed",top:70,left:"50%",transform:"translateX(-50%)",zIndex:200,animation:"xpPop 2s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
-    <div style={{background:"linear-gradient(135deg,#ffd700,#ff8c42)",color:"#000",padding:"8px 20px",borderRadius:99,fontWeight:800,fontSize:18,boxShadow:"0 4px 20px rgba(255,215,0,.4)"}} className="out">+{info.total} XP</div>
+  return(<div style={{position:"fixed",top:70,left:"50%",transform:"translateX(-50%)",zIndex:200,animation:"xpPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
+    <div style={{background:"linear-gradient(135deg,#ffd700,#ff8c42)",color:"#000",padding:"10px 24px",borderRadius:99,fontWeight:800,fontSize:22,boxShadow:"0 4px 20px rgba(255,215,0,.4)"}} className="out">+{info.total} XP</div>
+    {info.bonuses&&info.bonuses.length>0&&info.total!==info.base&&<div style={{fontSize:11,color:"var(--gold)",marginTop:4,fontWeight:600}} className="out">{info.base} base → {info.total} with bonuses</div>}
     {info.bonuses&&info.bonuses.length>0&&<div style={{marginTop:6,display:"flex",flexDirection:"column",gap:3,alignItems:"center"}}>
       {info.bonuses.map(function(b,i){return (<div key={i} style={{background:"rgba(0,0,0,.7)",padding:"3px 12px",borderRadius:99,fontSize:11,fontWeight:600,color:b.color||"var(--gold)"}} className="out">{b.label}</div>);})}
     </div>}
@@ -535,6 +556,12 @@ var[step,sSt]=useState("name");
   async function lookupName(n){
     setLookingUp(true);
     try{
+      // Ensure anon auth exists before querying
+      var sess=await supabase.auth.getSession();
+      if(!sess.data.session){
+        var authRes=await supabase.auth.signInAnonymously();
+        if(!authRes.data.user){setLookingUp(false);sSt("classcode");return;}
+      }
       var res=await supabase.from('students').select('name,class_code,xp').eq('name',n.trim());
       if(res.data&&res.data.length>0){
         var groupRes=await supabase.from('groups').select('code,name,type');
@@ -2362,7 +2389,21 @@ function Part6Drill(p){
   // Get current text and its blanks
   var curText=texts[ti];
   var blanks=curText?curText.parts.filter(function(p){return p.blank;}):[];
-  var curBlank=blanks[bi];
+  // Shuffle options for each blank — keep track of correct answer
+  var shuffledBlanks=useMemo(function(){
+    var all=[];
+    texts.forEach(function(t){
+      t.parts.forEach(function(p){
+        if(!p.blank)return;
+        var indices=[0,1,2,3];
+        for(var i=indices.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=indices[i];indices[i]=indices[j];indices[j]=tmp;}
+        all.push({options:indices.map(function(k){return p.options[k];}),correct:indices.indexOf(p.correct),x:p.x});
+      });
+    });
+    return all;
+  },[]);
+  var blankOffset=useMemo(function(){var c=0;for(var i=0;i<ti;i++){texts[i].parts.forEach(function(p){if(p.blank)c++;});}return c;},[ti]);
+  var curBlank=shuffledBlanks[blankOffset+bi];
 
   function doAns(i){
     sPk(i);
@@ -3490,6 +3531,7 @@ function DuelArena(p){
   var channelRef=useRef(null);
   var timerRef=useRef(null);
   var countdownRef=useRef(null);
+  var oppFallbackRef=useRef(null);
   var answeredRef=useRef(false);
   var myIdRef=useRef("p_"+Math.random().toString(36).substring(2,8)); // unique per session
 
@@ -3560,14 +3602,15 @@ function DuelArena(p){
 
   // ── Channel cleanup ──
   useEffect(function(){
-    return function(){
-      if(channelRef.current){
-        supabase.removeChannel(channelRef.current);
-        channelRef.current=null;
-      }
-      clearInterval(timerRef.current);
-      clearInterval(countdownRef.current);
-    };
+return function(){
+  if(channelRef.current){
+    supabase.removeChannel(channelRef.current);
+    channelRef.current=null;
+  }
+  clearInterval(timerRef.current);
+  clearInterval(countdownRef.current);
+  clearTimeout(oppFallbackRef.current);
+};
   },[]);
 
   // ── Play timer ──
@@ -3636,14 +3679,15 @@ function DuelArena(p){
       setPhase("countdown");
     });
 
-    ch.on("broadcast",{event:"answer"},function(msg){
-      if(msg.payload.pid===myId)return;
-      console.log("[DUEL] opp answer:",msg.payload);
-      oppAnswerRef.current={pick:msg.payload.pick,time:msg.payload.time};
-      setOppPick(msg.payload.pick);setOppTime(msg.payload.time);
-      setDbg("Opp: pick="+msg.payload.pick+" t="+msg.payload.time);
-      checkBothDone();
-    });
+ch.on("broadcast",{event:"answer"},function(msg){
+  if(msg.payload.pid===myId)return;
+  console.log("[DUEL] opp answer:",msg.payload);
+  clearTimeout(oppFallbackRef.current);
+  oppAnswerRef.current={pick:msg.payload.pick,time:msg.payload.time};
+  setOppPick(msg.payload.pick);setOppTime(msg.payload.time);
+  setDbg("Opp: pick="+msg.payload.pick+" t="+msg.payload.time);
+  checkBothDone();
+});
 
     ch.on("broadcast",{event:"next_round"},function(msg){
       if(msg.payload.pid===myId)return;
@@ -3673,20 +3717,30 @@ function DuelArena(p){
   }
 
   // ── Answer handler ──
-  function doAnswer(i){
-    if(answeredRef.current)return;
-    answeredRef.current=true;
-    clearInterval(timerRef.current);
-    var timeLeft=timer;
-    myAnswerRef.current={pick:i,time:timeLeft};
-    setMyPick(i);setMyTime(timeLeft);
-    setDbg("Me: pick="+i+" t="+timeLeft);
-    console.log("[DUEL] doAnswer: pick="+i+" time="+timeLeft);
-    if(channelRef.current){
-      channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:i,time:timeLeft,pid:myIdRef.current}});
-    }
-    checkBothDone();
+function doAnswer(i){
+  if(answeredRef.current)return;
+  answeredRef.current=true;
+  clearInterval(timerRef.current);
+  clearTimeout(oppFallbackRef.current);
+  var timeLeft=timer;
+  myAnswerRef.current={pick:i,time:timeLeft};
+  setMyPick(i);setMyTime(timeLeft);
+  setDbg("Me: pick="+i+" t="+timeLeft);
+  console.log("[DUEL] doAnswer: pick="+i+" time="+timeLeft);
+  if(channelRef.current){
+    channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:i,time:timeLeft,pid:myIdRef.current}});
   }
+  checkBothDone();
+  // Fallback: if opp answer not received within 8s, treat as timeout
+  oppFallbackRef.current=setTimeout(function(){
+    if(!oppAnswerRef.current&&phaseRef.current==="play"){
+      console.log("[DUEL] opp fallback timeout — treating as no answer");
+      oppAnswerRef.current={pick:-1,time:0};
+      setOppPick(-1);setOppTime(0);
+      checkBothDone();
+    }
+  },8000);
+}
 
   // ── Next round (host drives) ──
   function nextRound(){
@@ -4733,6 +4787,45 @@ function TeacherDash(p){
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
   var[groups,setGroups]=useState([]);
   var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard"
+  var[dashEvents,setDashEvents]=useState([]);var[evForm,setEvForm]=useState({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:"all"});var[evSaving,setEvSaving]=useState(false);var[evPushResult,setEvPushResult]=useState(null);
+
+  function loadEvents(){
+    supabase.from('events').select('*').order('start_at',{ascending:false}).limit(20)
+      .then(function(res){if(res.data)setDashEvents(res.data);});
+  }
+  async function sendEventPush(title,body,targetClass){
+    try{
+      // 1. Fetch subscriptions from Supabase
+      var query=supabase.from('push_subscriptions').select('subscription,student_name,class_code');
+      if(targetClass&&targetClass!=='all')query=query.eq('class_code',targetClass);
+      var subRes=await query;
+      var subs=(subRes.data||[]).map(function(s){return s.subscription;}).filter(Boolean);
+      if(subs.length===0){setEvPushResult({error:"No push subscribers found",total:0});setTimeout(function(){setEvPushResult(null);},5000);return;}
+      // 2. Call existing /api/push-send
+      var res=await fetch('/api/push-send',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-push-secret':PUSH_SECRET},
+        body:JSON.stringify({subscriptions:subs,title:title,body:body,tag:'toeic-event'})
+      });
+      var data=await res.json();
+      // 3. Clean stale subscriptions from Supabase
+      var staleCount=0;
+      if(data.errors){
+        for(var i=0;i<data.errors.length;i++){
+          if(data.errors[i].expired){
+            var staleEndpoint=data.errors[i].endpoint;
+            var staleSub=subRes.data.find(function(s){return s.subscription&&s.subscription.endpoint===staleEndpoint;});
+            if(staleSub){
+              await supabase.from('push_subscriptions').delete().eq('student_name',staleSub.student_name).eq('class_code',staleSub.class_code);
+              staleCount++;
+            }
+          }
+        }
+      }
+      setEvPushResult({sent:data.sent||0,total:subs.length,staleCount:staleCount});
+      setTimeout(function(){setEvPushResult(null);},5000);
+    }catch(e){console.log('Push failed:',e);setEvPushResult({error:"Push send failed"});setTimeout(function(){setEvPushResult(null);},5000);}
+  }
   var[dashEvents,setDashEvents]=useState([]);var[evForm,setEvForm]=useState({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:"all"});var[evSaving,setEvSaving]=useState(false);var[evPushResult,setEvPushResult]=useState(null);
 
   function loadEvents(){
@@ -5952,16 +6045,30 @@ var curSeason=getCurrentSeason();
 var viewGroup=u.classCode||'idrac2026';
 try{var dg=localStorage.getItem('toeic-dash-group');if(dg)viewGroup=dg;}catch(e){}
 var[leagueGroup,setLeagueGroup]=useState(viewGroup);
+var[showAllLeagues,setShowAllLeagues]=useState(false);
 
 useEffect(function(){
-  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code',leagueGroup).limit(50)
+  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code',leagueGroup).order('weekly_xp',{ascending:false}).limit(150)
     .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
 },[u.weeklyXp,leagueGroup]);
 
+// Auto-refresh leaderboard every 30s when on League tab
+useEffect(function(){
+  var iv=setInterval(function(){
+    supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code',leagueGroup).limit(50)
+      .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
+  },180000);
+  return function(){clearInterval(iv);};
+},[leagueGroup]);
+
 // ── WEEK VIEW data ──
-var weekAll=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name===u.name?r.name+" (You)":r.name,avatar:r.avatar||"⚔️",xp:xp,me:r.name===u.name};});
-if(u.name!=="Teacher"&&!weekAll.find(function(a){return a.me;}))weekAll.push({name:u.name+" (You)",avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
-weekAll.sort(function(a,b){return b.xp-a.xp;});
+var weekAll=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name,avatar:r.avatar||"⚔️",xp:(r.weekly_xp||0),inactive:r.week_id!==cw,me:r.name===u.name};});
+if(u.name!=="Teacher"&&!weekAll.find(function(a){return a.me;}))weekAll.push({name:u.name,avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
+
+weekAll.sort(function(a,b){
+  if(a.inactive!==b.inactive)return a.inactive?1:-1; // actifs d'abord
+  return b.xp-a.xp;
+});
 
 // ── SEASON VIEW data ──
 var seasonRanking=useMemo(function(){
@@ -5977,7 +6084,9 @@ var overallRanking=useMemo(function(){
 },[rivals,cw]);
 
 var nx=LEAGUES.find(function(l){return l.min>u.weeklyXp;});
-var weekRank=weekAll.findIndex(function(pl){return pl.me;})+1;
+var weekActive=weekAll.filter(function(pl){return !pl.inactive;});
+var weekFiltered=weekActive.filter(function(pl){return getLeague(pl.xp).id===lg.id;});
+var weekRank=weekFiltered.findIndex(function(pl){return pl.me;})+1;
 var seasonRank=(seasonRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-";
 var overallRank=(overallRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-";
 var countdown=getSeasonEndCountdown(curSeason);
@@ -6044,9 +6153,37 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Rank #{weekRank} this week</div>
     {nx&&<div style={{marginTop:10}}><div style={{fontSize:10,color:"var(--t3)",marginBottom:4}}>{nx.min-u.weeklyXp} XP to {nx.name}</div><Bar value={u.weeklyXp-lg.min} max={nx.min-lg.min} h={4} color={nx.color}/></div>}
   </div>}
-  <div style={{display:"flex",flexDirection:"column",gap:6}}>
-    {weekAll.map(function(pl,i){return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.me} unit="XP"/>);})}
-  </div>
+  {(function(){
+    var isTeacher=u.name==="Teacher";
+    // Pour Teacher : tous les étudiants actifs, triés par XP, avec badge ligue
+    // Pour étudiant : filtrés par sa propre ligue
+    var active=weekAll;
+    var displayed=isTeacher?active:(showAllLeagues?active:active.filter(function(pl){return pl.inactive||getLeague(pl.xp).id===lg.id;}));
+    var hidden=isTeacher?[]:(active.filter(function(pl){return !pl.inactive&&getLeague(pl.xp).id!==lg.id;}));
+    return(<div>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {displayed.map(function(pl,i){
+          var plLg=getLeague(pl.xp);
+          return(<div key={pl.name} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:pl.me?"rgba(212,148,58,.08)":pl.inactive?"var(--bg1)":"var(--bg2)",border:pl.me?"1.5px solid rgba(212,148,58,.25)":"1px solid var(--bdr)",borderRadius:12,opacity:pl.inactive?0.55:1}}>
+            <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:(!pl.inactive&&i<3)?"var(--gold)":"var(--t3)"}}>{pl.inactive?"—":i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</div>
+            <div style={{fontSize:20,width:28,textAlign:"center"}}>{pl.avatar}</div>
+            <div style={{flex:1}}>
+              <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t1)"}}>{pl.me?pl.name+" (You)":pl.name}</div>
+              {pl.inactive&&<div style={{fontSize:10,color:"var(--t3)",fontWeight:500}}>{"⏸ Inactive this week"}</div>}
+              {!pl.inactive&&isTeacher&&<div style={{fontSize:10,color:plLg.color,fontWeight:600}}>{plLg.icon} {plLg.name}</div>}
+            </div>
+            <div className="out" style={{fontWeight:700,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t2)"}}>{pl.inactive?"—":pl.xp+" XP"}</div>
+          </div>);
+        })}
+        {displayed.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>No one in {lg.name} League yet 🚀</p></div>}
+      </div>
+      {!isTeacher&&hidden.length>0&&<div style={{textAlign:"center",marginTop:12}}>
+        <button onClick={function(){setShowAllLeagues(function(v){return !v;});}} style={{background:"none",border:"1px solid var(--bdr)",borderRadius:8,padding:"6px 14px",fontSize:11,color:"var(--t3)",cursor:"pointer",fontFamily:"inherit"}}>
+          {showAllLeagues?"Show my league only ←":"👁 View all "+active.length+" active students"}
+        </button>
+      </div>}
+    </div>);
+  })()}
   <p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:16}}>Resets every Monday · Ranking determines Season points</p>
 </div>)}
 
@@ -6222,6 +6359,11 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
   var[showTip,setShowTip]=useState(false);
+  useEffect(function(){
+    if(!xpt||sp)return;
+    var t=setTimeout(function(){sXpt(null);},4000);
+    return function(){clearTimeout(t);};
+  },[xpt,sp]);
   var[activeEvents,setActiveEvents]=useState([]);
   var[classMedianXp,setClassMedianXp]=useState(0);
 
@@ -6230,7 +6372,7 @@ useEffect(function(){
     var sub=supabase.auth.onAuthStateChange(function(event,session){
       if(event==="TOKEN_REFRESHED"){return;} // Skip token refresh — state is already in memory
       if(session&&!loaded){
-        load().then(function(d){
+        load(session.user.id).then(function(d){
           if(d){
             var td=today(),yd=new Date();yd.setDate(yd.getDate()-1);var ys=yd.toISOString().split("T")[0];
             if(d.lastActive!==td&&d.lastActive!==ys)d.streak=0;
@@ -6260,31 +6402,34 @@ useEffect(function(){
         sL(false);
       }
     });
-    // Also check immediately in case session is already restored
-    supabase.auth.getSession().then(function(res){
-      if(!res.data.session)sL(false);
-    });
-    return function(){sub.data.subscription.unsubscribe();};
+// Fallback: if no auth event fires within 3s, stop loading
+    var fallback=setTimeout(function(){sL(false);},3000);
+    return function(){sub.data.subscription.unsubscribe();clearTimeout(fallback);};
   },[]);
   
-  // ── Load active events from Supabase ──
+  // ── Load active events from Supabase (once + every 5 min) ──
   useEffect(function(){
     if(!u)return;
-    var now=new Date().toISOString();
-    supabase.from('events').select('*').eq('active',true).lte('start_at',now).gte('end_at',now)
-      .then(function(res){
-        var evts=(res.data||[]).filter(function(e){
-          return e.class_code==='all'||e.class_code===(u.classCode||'idrac2026');
+    function loadEvents(){
+      var now=new Date().toISOString();
+      supabase.from('events').select('*').eq('active',true).lte('start_at',now).gte('end_at',now)
+        .then(function(res){
+          var evts=(res.data||[]).filter(function(e){
+            return e.class_code==='all'||e.class_code===(u.classCode||'idrac2026');
+          });
+          setActiveEvents(evts);
         });
-        setActiveEvents(evts);
-      });
-    supabase.from('students').select('xp').eq('class_code',u.classCode||'idrac2026')
-      .then(function(res){
-        if(!res.data||res.data.length<3){setClassMedianXp(0);return;}
-        var xps=res.data.map(function(s){return s.xp||0;}).sort(function(a,b){return a-b;});
-        var mid=Math.floor(xps.length/2);
-        setClassMedianXp(xps.length%2?xps[mid]:Math.round((xps[mid-1]+xps[mid])/2));
-      });
+      supabase.from('students').select('xp').eq('class_code',u.classCode||'idrac2026')
+        .then(function(res){
+          if(!res.data||res.data.length<3){setClassMedianXp(0);return;}
+          var xps=res.data.map(function(s){return s.xp||0;}).sort(function(a,b){return a-b;});
+          var mid=Math.floor(xps.length/2);
+          setClassMedianXp(xps.length%2?xps[mid]:Math.round((xps[mid-1]+xps[mid])/2));
+        });
+    }
+    loadEvents();
+    var iv=setInterval(loadEvents,300000); // refresh every 5 min
+    return function(){clearInterval(iv);};
   },[u&&u.name]);
 
   // ── Auto-start Home BGM on first user interaction ──
@@ -6297,7 +6442,7 @@ useEffect(function(){
     return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
   },[ld]);
 
-  // ── Time tracking: increment every 60s, save every 5 min ──
+  // ── Time tracking (60s) + Cloud sync (every 2 min) + beforeunload ──
   var timeRef=useRef({ticks:0});
   useEffect(function(){
     if(!u)return;
@@ -6306,25 +6451,63 @@ useEffect(function(){
         if(!prev)return prev;
         var c=JSON.parse(JSON.stringify(prev));
         c.totalTime=(c.totalTime||0)+60;
+        saveLocal(c);
         timeRef.current.ticks+=1;
-        if(timeRef.current.ticks%5===0) save(c); // save every 5 min
+        // Sync to cloud every 2 min (every 2nd tick)
+        if(timeRef.current.ticks%2===0)syncToCloud(c);
         return c;
       });
     },60000);
+    // Sync on tab hide (mobile: switching apps)
     function onVis(){
       if(document.visibilityState==="hidden"){
         sU(function(prev){
           if(!prev)return prev;
-          save(prev);
+          saveLocal(prev);
+          syncToCloud(prev);
           return prev;
         });
       }
     }
+    // Last-chance sync on page close
+    function onUnload(){
+      try{
+        var raw=localStorage.getItem("toeic-arena-profile");
+        if(raw&&_cachedUserId&&_syncDirty){
+          var d=JSON.parse(raw);
+          var payload=JSON.stringify([{
+            id:_cachedUserId,name:d.name,class_code:d.classCode||"idrac2026",
+            xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
+            streak:d.streak,last_active:d.lastActive,
+            card_states:d.cardStates,daily_challenge:d.daily,
+            stats:d.stats,module_scores:d.moduleScores,
+            mock_results:d.mockResults,game_scores:d.gameScores,
+            mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
+            unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
+            weekly_history:d.weeklyHistory||[],
+            daily_mod_sessions:d.dailyModSessions||{},
+          }]);
+          // fetch keepalive : survit à la fermeture ET envoie les auth headers
+          // (sendBeacon ne peut pas envoyer Authorization → bloqué par Supabase RLS)
+          try{fetch("https://huklmklwvwwhhrrcyytq.supabase.co/rest/v1/students?on_conflict=name,class_code",{
+            method:"POST",keepalive:true,
+            headers:{
+              "Content-Type":"application/json",
+              "Prefer":"resolution=merge-duplicates",
+              "apikey":"sb_publishable_08NyAR2_pLIUa6icJRbw6w_Ek1VrT6t",
+              "Authorization":"Bearer sb_publishable_08NyAR2_pLIUa6icJRbw6w_Ek1VrT6t"
+            },
+            body:payload
+          });}catch(e){}
+        }
+      }catch(e){}
+    }
     document.addEventListener("visibilitychange",onVis);
-    return function(){clearInterval(iv);document.removeEventListener("visibilitychange",onVis);};
+    window.addEventListener("beforeunload",onUnload);
+    return function(){clearInterval(iv);document.removeEventListener("visibilitychange",onVis);window.removeEventListener("beforeunload",onUnload);};
   },[!!u]);
 
-  function sv(d){
+function sv(d){
     // Check for new achievements
     if(d&&d.unlockedAch){
       ACHIEVEMENTS.forEach(function(a){
@@ -6336,7 +6519,8 @@ useEffect(function(){
         }
       });
     }
-    sU(d);save(d);
+    sU(d);
+    saveLocal(d);
   }
   function applyXpGates(baseXp,sc,tot,modId){
     // ── PILIER 1 : seuil d'accuracy ──
@@ -6380,10 +6564,11 @@ useEffect(function(){
       if(activeEvents&&activeEvents.length>0){
         activeEvents.forEach(function(ev){
           var cfg=ev.config||{};var m=cfg.multiplier||2;
-          if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"⚡ Flash Hour x"+m,color:"#f0c850"});}
-          if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"💪 Underdog x"+m,color:"#4abe60"});}
+          if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"\u26A1 Flash Hour x"+m,color:"#f0c850"});}
+          if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"\uD83D\uDCAA Underdog x"+m,color:"#4abe60"});}
         });
       }
+
 
       amt=Math.round(baseAmt*mult);
 
@@ -6399,8 +6584,16 @@ var prevLeague=getLeague(c.weeklyXp);
     var newLeague=getLeague(c.weeklyXp);
     if(newLeague.id!==prevLeague.id&&c.weeklyXp>prevLeague.min)try{playJingleLeague();}catch(e){}
     var toastInfo={total:amt,base:baseAmt,bonuses:bonuses};
-    sXpt(toastInfo);setTimeout(function(){sXpt(null);},2200);
+    sXpt(toastInfo);
     return c;
+  }
+  function getSpotlightMult(modId){
+    if(!activeEvents)return 1;
+    var m=1;
+    activeEvents.forEach(function(ev){
+      if(ev.type==="spotlight"&&ev.config&&ev.config.module===modId)m=ev.config.multiplier||2;
+    });
+    return m;
   }
   function getSpotlightMult(modId){
     if(!activeEvents)return 1;
@@ -6422,13 +6615,12 @@ var prevLeague=getLeague(c.weeklyXp);
     }
 
     // Get or create auth session
-    var sess=await supabase.auth.getSession();
-    var userId=sess.data.session?sess.data.session.user.id:null;
-    if(!userId){
-      var authRes=await supabase.auth.signInAnonymously();
-      if(!authRes.data.user)return;
-      userId=authRes.data.user.id;
-    }
+    try{
+        var sess=await supabase.auth.getSession();
+        if(!sess.data.session){
+          await supabase.auth.signInAnonymously();
+        }
+      }catch(authErr){/* ignore lock errors — session may already exist */}
 
     var u=fresh(name,classCode);
     if(lvl){u.xp=lvl.startXp;u.weeklyXp=lvl.startXp;}
@@ -6445,10 +6637,10 @@ var prevLeague=getLeague(c.weeklyXp);
       });
     }
     sU(u);
-    try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
-    try { localStorage.setItem('toeic-arena-class', classCode); } catch(e) {}
-    // save() handles insert-by-name or update-by-name — no duplicate possible
-    save(u);
+    saveLocal(u);
+    // Initial sync to create the row in Supabase
+    _syncDirty=true;
+    syncToCloud(u);
   }
   async function recover(name,classCode){
     // Find the best row (highest XP) for this student
@@ -6475,8 +6667,7 @@ var prevLeague=getLeague(c.weeklyXp);
     if(!u.mission)u.mission={date:null,actId:null,done:false};
     if(!u.unlockedAch)u.unlockedAch=[];
     sU(u);
-    // save() will update by name — handles duplicates automatically
-    save(u);
+    saveLocal(u);
     return true;
   }
  
