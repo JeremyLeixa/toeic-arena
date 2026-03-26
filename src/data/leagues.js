@@ -5,6 +5,7 @@ export var LEAGUES = [
   { id: "platinum", name: "Platinum", icon: "💎", color: "#00d4ff", min: 1500 },
   { id: "diamond", name: "Diamond", icon: "👑", color: "#ff6bff", min: 3000 },
   { id: "champion", name: "Champion", icon: "🏆", color: "#ff4757", min: 5000 },
+  { id: "legend", name: "Légende", icon: "⚡", color: "#ffae00", min: 30000 },
 ];
 
 export var COMPETITORS = [
