@@ -3530,6 +3530,7 @@ function DuelArena(p){
   var channelRef=useRef(null);
   var timerRef=useRef(null);
   var countdownRef=useRef(null);
+  var oppFallbackRef=useRef(null);
   var answeredRef=useRef(false);
   var myIdRef=useRef("p_"+Math.random().toString(36).substring(2,8)); // unique per session
 
@@ -3600,14 +3601,15 @@ function DuelArena(p){
 
   // ── Channel cleanup ──
   useEffect(function(){
-    return function(){
-      if(channelRef.current){
-        supabase.removeChannel(channelRef.current);
-        channelRef.current=null;
-      }
-      clearInterval(timerRef.current);
-      clearInterval(countdownRef.current);
-    };
+return function(){
+  if(channelRef.current){
+    supabase.removeChannel(channelRef.current);
+    channelRef.current=null;
+  }
+  clearInterval(timerRef.current);
+  clearInterval(countdownRef.current);
+  clearTimeout(oppFallbackRef.current);
+};
   },[]);
 
   // ── Play timer ──
@@ -3676,14 +3678,15 @@ function DuelArena(p){
       setPhase("countdown");
     });
 
-    ch.on("broadcast",{event:"answer"},function(msg){
-      if(msg.payload.pid===myId)return;
-      console.log("[DUEL] opp answer:",msg.payload);
-      oppAnswerRef.current={pick:msg.payload.pick,time:msg.payload.time};
-      setOppPick(msg.payload.pick);setOppTime(msg.payload.time);
-      setDbg("Opp: pick="+msg.payload.pick+" t="+msg.payload.time);
-      checkBothDone();
-    });
+ch.on("broadcast",{event:"answer"},function(msg){
+  if(msg.payload.pid===myId)return;
+  console.log("[DUEL] opp answer:",msg.payload);
+  clearTimeout(oppFallbackRef.current);
+  oppAnswerRef.current={pick:msg.payload.pick,time:msg.payload.time};
+  setOppPick(msg.payload.pick);setOppTime(msg.payload.time);
+  setDbg("Opp: pick="+msg.payload.pick+" t="+msg.payload.time);
+  checkBothDone();
+});
 
     ch.on("broadcast",{event:"next_round"},function(msg){
       if(msg.payload.pid===myId)return;
@@ -3713,20 +3716,30 @@ function DuelArena(p){
   }
 
   // ── Answer handler ──
-  function doAnswer(i){
-    if(answeredRef.current)return;
-    answeredRef.current=true;
-    clearInterval(timerRef.current);
-    var timeLeft=timer;
-    myAnswerRef.current={pick:i,time:timeLeft};
-    setMyPick(i);setMyTime(timeLeft);
-    setDbg("Me: pick="+i+" t="+timeLeft);
-    console.log("[DUEL] doAnswer: pick="+i+" time="+timeLeft);
-    if(channelRef.current){
-      channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:i,time:timeLeft,pid:myIdRef.current}});
-    }
-    checkBothDone();
+function doAnswer(i){
+  if(answeredRef.current)return;
+  answeredRef.current=true;
+  clearInterval(timerRef.current);
+  clearTimeout(oppFallbackRef.current);
+  var timeLeft=timer;
+  myAnswerRef.current={pick:i,time:timeLeft};
+  setMyPick(i);setMyTime(timeLeft);
+  setDbg("Me: pick="+i+" t="+timeLeft);
+  console.log("[DUEL] doAnswer: pick="+i+" time="+timeLeft);
+  if(channelRef.current){
+    channelRef.current.send({type:"broadcast",event:"answer",payload:{pick:i,time:timeLeft,pid:myIdRef.current}});
   }
+  checkBothDone();
+  // Fallback: if opp answer not received within 8s, treat as timeout
+  oppFallbackRef.current=setTimeout(function(){
+    if(!oppAnswerRef.current&&phaseRef.current==="play"){
+      console.log("[DUEL] opp fallback timeout — treating as no answer");
+      oppAnswerRef.current={pick:-1,time:0};
+      setOppPick(-1);setOppTime(0);
+      checkBothDone();
+    }
+  },8000);
+}
 
   // ── Next round (host drives) ──
   function nextRound(){
@@ -6031,6 +6044,7 @@ var curSeason=getCurrentSeason();
 var viewGroup=u.classCode||'idrac2026';
 try{var dg=localStorage.getItem('toeic-dash-group');if(dg)viewGroup=dg;}catch(e){}
 var[leagueGroup,setLeagueGroup]=useState(viewGroup);
+var[showAllLeagues,setShowAllLeagues]=useState(false);
 
 useEffect(function(){
   supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code',leagueGroup).limit(50)
@@ -6047,8 +6061,9 @@ useEffect(function(){
 },[leagueGroup]);
 
 // ── WEEK VIEW data ──
-var weekAll=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name===u.name?r.name+" (You)":r.name,avatar:r.avatar||"⚔️",xp:xp,me:r.name===u.name};});
-if(u.name!=="Teacher"&&!weekAll.find(function(a){return a.me;}))weekAll.push({name:u.name+" (You)",avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
+var weekAll=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name,avatar:r.avatar||"⚔️",xp:xp,me:r.name===u.name};});
+if(u.name!=="Teacher"&&!weekAll.find(function(a){return a.me;}))weekAll.push({name:u.name,avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
+
 weekAll.sort(function(a,b){return b.xp-a.xp;});
 
 // ── SEASON VIEW data ──
@@ -6065,7 +6080,8 @@ var overallRanking=useMemo(function(){
 },[rivals,cw]);
 
 var nx=LEAGUES.find(function(l){return l.min>u.weeklyXp;});
-var weekRank=weekAll.findIndex(function(pl){return pl.me;})+1;
+var weekFiltered=weekAll.filter(function(pl){return getLeague(pl.xp).id===lg.id;});
+var weekRank=weekFiltered.findIndex(function(pl){return pl.me;})+1;
 var seasonRank=(seasonRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-";
 var overallRank=(overallRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-";
 var countdown=getSeasonEndCountdown(curSeason);
@@ -6132,9 +6148,21 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Rank #{weekRank} this week</div>
     {nx&&<div style={{marginTop:10}}><div style={{fontSize:10,color:"var(--t3)",marginBottom:4}}>{nx.min-u.weeklyXp} XP to {nx.name}</div><Bar value={u.weeklyXp-lg.min} max={nx.min-lg.min} h={4} color={nx.color}/></div>}
   </div>}
-  <div style={{display:"flex",flexDirection:"column",gap:6}}>
-    {weekAll.map(function(pl,i){return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.me} unit="XP"/>);})}
-  </div>
+  {(function(){
+    var displayed=showAllLeagues?weekAll:weekAll.filter(function(pl){return getLeague(pl.xp).id===lg.id;});
+    var others=weekAll.filter(function(pl){return getLeague(pl.xp).id!==lg.id;});
+    return(<div>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {displayed.map(function(pl,i){return(<RankRow key={pl.name} pl={pl} rank={i+1} isMe={pl.me} unit="XP"/>);})}
+        {displayed.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>No one else in {lg.name} League yet — keep training! 🚀</p></div>}
+      </div>
+      {others.length>0&&<div style={{textAlign:"center",marginTop:12}}>
+        <button onClick={function(){setShowAllLeagues(function(v){return !v;});}} style={{background:"none",border:"1px solid var(--bdr)",borderRadius:8,padding:"6px 14px",fontSize:11,color:"var(--t3)",cursor:"pointer",fontFamily:"inherit"}}>
+          {showAllLeagues?"Show my league only":"👁 View all "+weekAll.length+" students"}
+        </button>
+      </div>}
+    </div>);
+  })()}
   <p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:16}}>Resets every Monday · Ranking determines Season points</p>
 </div>)}
 
