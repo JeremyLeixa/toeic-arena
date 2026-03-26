@@ -6022,6 +6022,15 @@ useEffect(function(){
     .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
 },[u.weeklyXp,leagueGroup]);
 
+// Auto-refresh leaderboard every 30s when on League tab
+useEffect(function(){
+  var iv=setInterval(function(){
+    supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code',leagueGroup).limit(50)
+      .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
+  },30000);
+  return function(){clearInterval(iv);};
+},[leagueGroup]);
+
 // ── WEEK VIEW data ──
 var weekAll=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name===u.name?r.name+" (You)":r.name,avatar:r.avatar||"⚔️",xp:xp,me:r.name===u.name};});
 if(u.name!=="Teacher"&&!weekAll.find(function(a){return a.me;}))weekAll.push({name:u.name+" (You)",avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
