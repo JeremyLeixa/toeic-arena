@@ -3,8 +3,8 @@ export var LEAGUES = [
   { id: "silver", name: "Silver", icon: "🥈", color: "#c0c0c0", min: 200 },
   { id: "gold", name: "Gold", icon: "🥇", color: "#ffd700", min: 600 },
   { id: "platinum", name: "Platinum", icon: "💎", color: "#00d4ff", min: 1500 },
-  { id: "diamond", name: "Diamond", icon: "👑", color: "#ff6bff", min: 3000 },
-  { id: "champion", name: "Champion", icon: "🏆", color: "#ff4757", min: 5000 },
+  { id: "diamond", name: "Diamond", icon: "👑", color: "#ff6bff", min: 5000 },
+  { id: "champion", name: "Champion", icon: "🏆", color: "#ff4757", min: 10000 },
   { id: "legend", name: "Légende", icon: "⚡", color: "#ffae00", min: 30000 },
 ];
 
