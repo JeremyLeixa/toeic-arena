@@ -245,9 +245,6 @@ function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.l
 var SK="toeic-arena-v2";
 import { supabase } from './supabase.js'
 var _cachedUserId=null;
-var _syncDirty=false;
-var _lastSync=0;
-var _cachedUserId=null;
 
 async function load(userId) {
   if (!userId) return null;
@@ -6306,6 +6303,8 @@ export default function App(){
   },[xpt,sp]);
   var[activeEvents,setActiveEvents]=useState([]);
   var[classMedianXp,setClassMedianXp]=useState(0);
+  var[activeEvents,setActiveEvents]=useState([]);
+  var[classMedianXp,setClassMedianXp]=useState(0);
 
 useEffect(function(){
     var loaded=false;
@@ -6382,7 +6381,7 @@ useEffect(function(){
     return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
   },[ld]);
 
-  // ── Time tracking (60s) + Cloud sync (every 2 min) + beforeunload ──
+  // ── Time tracking: increment every 60s, save every 5 min ──
   var timeRef=useRef({ticks:0});
   useEffect(function(){
     if(!u)return;
@@ -6391,53 +6390,22 @@ useEffect(function(){
         if(!prev)return prev;
         var c=JSON.parse(JSON.stringify(prev));
         c.totalTime=(c.totalTime||0)+60;
-        saveLocal(c);
         timeRef.current.ticks+=1;
-        // Sync to cloud every 2 min (every 2nd tick)
-        if(timeRef.current.ticks%2===0)syncToCloud(c);
+        if(timeRef.current.ticks%5===0) save(c); // save every 5 min
         return c;
       });
     },60000);
-    // Sync on tab hide (mobile: switching apps)
     function onVis(){
       if(document.visibilityState==="hidden"){
         sU(function(prev){
           if(!prev)return prev;
-          saveLocal(prev);
-          syncToCloud(prev);
+          save(prev);
           return prev;
         });
       }
     }
-    // Last-chance sync on page close
-    function onUnload(){
-      try{
-        var raw=localStorage.getItem("toeic-arena-profile");
-        if(raw&&_cachedUserId){
-          var d=JSON.parse(raw);
-          var payload=JSON.stringify({
-            id:_cachedUserId,name:d.name,class_code:d.classCode||"idrac2026",
-            xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
-            streak:d.streak,last_active:d.lastActive,
-            card_states:d.cardStates,daily_challenge:d.daily,
-            stats:d.stats,module_scores:d.moduleScores,
-            mock_results:d.mockResults,game_scores:d.gameScores,
-            mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
-            unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
-            weekly_history:d.weeklyHistory||[],
-            daily_mod_sessions:d.dailyModSessions||{},
-          });
-          // sendBeacon doesn't block page close — fire and forget
-          navigator.sendBeacon&&navigator.sendBeacon(
-            "https://huklmklwvwwhhrrcyytq.supabase.co/rest/v1/students?on_conflict=name,class_code",
-            new Blob([payload],{type:"application/json"})
-          );
-        }
-      }catch(e){}
-    }
     document.addEventListener("visibilitychange",onVis);
-    window.addEventListener("beforeunload",onUnload);
-    return function(){clearInterval(iv);document.removeEventListener("visibilitychange",onVis);window.removeEventListener("beforeunload",onUnload);};
+    return function(){clearInterval(iv);document.removeEventListener("visibilitychange",onVis);};
   },[!!u]);
 
   var saveTimer=useRef(null);
@@ -6577,10 +6545,10 @@ var prevLeague=getLeague(c.weeklyXp);
       });
     }
     sU(u);
-    saveLocal(u);
-    // Initial sync to create the row in Supabase
-    _syncDirty=true;
-    syncToCloud(u);
+    try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
+    try { localStorage.setItem('toeic-arena-class', classCode); } catch(e) {}
+    // save() handles insert-by-name or update-by-name — no duplicate possible
+    save(u);
   }
   async function recover(name,classCode){
     // Find the best row (highest XP) for this student
@@ -6607,7 +6575,8 @@ var prevLeague=getLeague(c.weeklyXp);
     if(!u.mission)u.mission={date:null,actId:null,done:false};
     if(!u.unlockedAch)u.unlockedAch=[];
     sU(u);
-    saveLocal(u);
+    // save() will update by name — handles duplicates automatically
+    save(u);
     return true;
   }
  
