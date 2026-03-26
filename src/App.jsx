@@ -6028,7 +6028,7 @@ useEffect(function(){
   var iv=setInterval(function(){
     supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code',leagueGroup).limit(50)
       .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
-  },120000);
+  },180000);
   return function(){clearInterval(iv);};
 },[leagueGroup]);
 
@@ -6424,7 +6424,7 @@ useEffect(function(){
     sU(d); // instant local update
     // Debounce Supabase write — batches rapid actions into one save
     if(saveTimer.current)clearTimeout(saveTimer.current);
-    saveTimer.current=setTimeout(function(){save(d);},1500);
+    saveTimer.current=setTimeout(function(){save(d);},5000);
   }
   function applyXpGates(baseXp,sc,tot,modId){
     // ── PILIER 1 : seuil d'accuracy ──
