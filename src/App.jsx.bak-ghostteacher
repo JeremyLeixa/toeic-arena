@@ -315,10 +315,8 @@ async function load(userId){
 function save(d){saveLocal(d);}
 
 // syncToCloud() — background push to Supabase (called every 2 min)
-var GHOST_NAME="Teacher"; // ghost mode — this account never syncs to Supabase
 async function syncToCloud(d){
   if(!d||!d.name||!_syncDirty)return;
-  if(d.name===GHOST_NAME){_syncDirty=false;return;} // ghost mode
   var now=Date.now();
   if(now-_lastSync<10000)return;
   _lastSync=now;
@@ -4879,7 +4877,7 @@ function TeacherDash(p){
 
   function loadStudents(){
     supabase.from('students').select('*').eq('class_code',classCode).order('xp',{ascending:false}).limit(200)
-      .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
+      .then(function(res){setStudents(res.data||[]);setLoad(false);})
       .catch(function(){setLoad(false);});
   }
   useEffect(function(){loadStudents();},[classCode])
@@ -5178,7 +5176,7 @@ function TeacherDash(p){
             try{localStorage.setItem('toeic-dash-group',g.code);}catch(e){}
             setLoad(true);setDetail(null);setDashPhase("dashboard");
             supabase.from('students').select('*').eq('class_code',g.code).order('xp',{ascending:false}).limit(200)
-              .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
+              .then(function(res){setStudents(res.data||[]);setLoad(false);})
               .catch(function(){setLoad(false);});
           }} className="crd" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 20px",cursor:"pointer",
             border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
