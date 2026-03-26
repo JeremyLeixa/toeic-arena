@@ -6524,13 +6524,12 @@ var prevLeague=getLeague(c.weeklyXp);
     }
 
     // Get or create auth session
-    var sess=await supabase.auth.getSession();
-    var userId=sess.data.session?sess.data.session.user.id:null;
-    if(!userId){
-      var authRes=await supabase.auth.signInAnonymously();
-      if(!authRes.data.user)return;
-      userId=authRes.data.user.id;
-    }
+    try{
+        var sess=await supabase.auth.getSession();
+        if(!sess.data.session){
+          await supabase.auth.signInAnonymously();
+        }
+      }catch(authErr){/* ignore lock errors — session may already exist */}
 
     var u=fresh(name,classCode);
     if(lvl){u.xp=lvl.startXp;u.weeklyXp=lvl.startXp;}
