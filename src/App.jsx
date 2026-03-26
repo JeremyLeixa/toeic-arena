@@ -246,10 +246,10 @@ var SK="toeic-arena-v2";
 import { supabase } from './supabase.js'
 var _cachedUserId=null;
 
-async function load() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  _cachedUserId=user.id;
+async function load(userId) {
+  if (!userId) return null;
+  _cachedUserId=userId;
+  var user={id:userId};
 
   // 1) Try by auth ID (fast path — same device)
   var res = await supabase.from('students').select('*').eq('id', user.id).maybeSingle();
@@ -6311,7 +6311,7 @@ useEffect(function(){
     var sub=supabase.auth.onAuthStateChange(function(event,session){
       if(event==="TOKEN_REFRESHED"){return;} // Skip token refresh — state is already in memory
       if(session&&!loaded){
-        load().then(function(d){
+        load(session.user.id).then(function(d){
           if(d){
             var td=today(),yd=new Date();yd.setDate(yd.getDate()-1);var ys=yd.toISOString().split("T")[0];
             if(d.lastActive!==td&&d.lastActive!==ys)d.streak=0;
@@ -6341,11 +6341,9 @@ useEffect(function(){
         sL(false);
       }
     });
-    // Also check immediately in case session is already restored
-    supabase.auth.getSession().then(function(res){
-      if(!res.data.session)sL(false);
-    });
-    return function(){sub.data.subscription.unsubscribe();};
+// Fallback: if no auth event fires within 3s, stop loading
+    var fallback=setTimeout(function(){sL(false);},3000);
+    return function(){sub.data.subscription.unsubscribe();clearTimeout(fallback);};
   },[]);
   
   // ── Load active events from Supabase (once + every 5 min) ──
