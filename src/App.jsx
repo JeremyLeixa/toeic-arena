@@ -278,8 +278,9 @@ function supaToLocal(data){
     moduleScores:data.module_scores||{},mockResults:data.mock_results||{},
     gameScores:data.game_scores||{},mission:data.mission||{date:null,actId:null,done:false},
     unlockedAch:data.unlocked_ach||[],avatar:data.avatar||"⚔️",theme:data.theme||"dark",
-    totalTime:data.total_time||0,weeklyHistory:data.weekly_history||[],
-    dailyModSessions:data.daily_mod_sessions||{},
+    totalTime:data.total_time||0,weeklyHistory: data.weekly_history || [],
+    dailyModSessions: data.daily_mod_sessions || {},
+    weeklyDailyCount: data.weekly_daily_count || 0,
   };
 }
 
@@ -338,14 +339,15 @@ async function syncToCloud(d){
       mock_results:d.mockResults,game_scores:d.gameScores,
       mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
       unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
-      weekly_history:d.weeklyHistory||[],
-      daily_mod_sessions:d.dailyModSessions||{},
-    },{onConflict:"name,class_code"});
+      weekly_history: d.weeklyHistory || [],
+    daily_mod_sessions: d.dailyModSessions || {},
+    weekly_daily_count: d.weeklyDailyCount || 0,
+  }, { onConflict: 'name,class_code' });
     if(!_result.error){_syncDirty=false;}
     else{console.warn("[SYNC] Upsert failed — will retry:",_result.error.message);}
   }catch(e){console.warn("[SYNC] Exception:",e);}
 }
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{}};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -6515,8 +6517,38 @@ useEffect(function(){
             if(d.lastActive!==td&&d.lastActive!==ys)d.streak=0;
             var cw=weekId();if(d.weekId!==cw){
               if(!d.weeklyHistory)d.weeklyHistory=[];
-              if(d.weeklyXp>0&&d.weekId){d.weeklyHistory.push({week:d.weekId,xp:d.weeklyXp});if(d.weeklyHistory.length>20)d.weeklyHistory=d.weeklyHistory.slice(-20);}
-              d.weeklyXp=0;d.weekId=cw;
+              if(d.weeklyXp>0&&d.weekId){
+                // ── Save weekly snapshot before reset ──
+                (function(snap){
+                  supabase.auth.getUser().then(function(r){
+                    if(!r.data||!r.data.user)return;
+                    var parts=snap.weekId.split('-W');
+                    var yr=parseInt(parts[0]),wk=parseInt(parts[1]);
+                    var jan1=new Date(yr,0,1);
+                    var ws=new Date(jan1.getTime()+(wk-1)*7*86400000);
+                    var dy=ws.getDay();ws.setDate(ws.getDate()+(dy===0?-6:1-dy));
+                    supabase.from('weekly_snapshots').upsert({
+                      user_id:r.data.user.id,
+                      student_name:snap.name,
+                      class_code:snap.classCode||'idrac2026',
+                      week_id:snap.weekId,
+                      week_start:ws.toISOString().split('T')[0],
+                      xp_this_week:snap.weeklyXp,
+                      xp_cumulative:snap.xp,
+                      daily_completions:snap.weeklyDailyCount||0,
+                      streak_at_end:snap.streak,
+                      stats_snapshot:snap.stats,
+                      module_scores_snapshot:snap.moduleScores,
+                      mock_results_snapshot:snap.mockResults||{},
+                      achievements_count:(snap.unlockedAch||[]).length
+                    },{onConflict:'student_name,class_code,week_id'})
+                    .then(function(res){if(res.error)console.error('Snapshot error:',res.error.message);});
+                  });
+                })(d);
+                d.weeklyHistory.push({week:d.weekId,xp:d.weeklyXp});
+                if(d.weeklyHistory.length>20)d.weeklyHistory=d.weeklyHistory.slice(-20);
+              }
+              d.weeklyXp=0;d.weeklyDailyCount=0;d.weekId=cw;
             }
             if(!d.moduleScores)d.moduleScores={};
             if(!d.mission)d.mission={date:null,actId:null,done:false};
@@ -6820,7 +6852,7 @@ var prevLeague=getLeague(c.weeklyXp);
     }
     c.stats.sessions+=1;sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
-  function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");try{playJingleDaily();}catch(e){}sv(c);}
+  function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");try{playJingleDaily();}catch(e){}sv(c);}
   function drillDone(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"drill");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);gxp=Math.round(gxp*getSpotlightMult(modId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
