@@ -6027,7 +6027,7 @@ useEffect(function(){
   var iv=setInterval(function(){
     supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code',leagueGroup).limit(50)
       .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
-  },30000);
+  },120000);
   return function(){clearInterval(iv);};
 },[leagueGroup]);
 
