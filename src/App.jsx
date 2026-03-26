@@ -244,94 +244,105 @@ function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.l
 
 var SK="toeic-arena-v2";
 import { supabase } from './supabase.js'
+
+// ─── localStorage-first persistence layer ───
 var _cachedUserId=null;
 var _syncDirty=false;
 var _lastSync=0;
-var _cachedUserId=null;
 
-async function load(userId) {
-  if (!userId) return null;
-  _cachedUserId=userId;
-  var user={id:userId};
+function loadLocal(){
+  try{
+    var raw=localStorage.getItem("toeic-arena-profile");
+    if(raw){var d=JSON.parse(raw);if(d&&d.name)return d;}
+  }catch(e){}
+  return null;
+}
 
-  // 1) Try by auth ID (fast path — same device)
-  var res = await supabase.from('students').select('*').eq('id', user.id).maybeSingle();
+function saveLocal(d){
+  try{
+    localStorage.setItem("toeic-arena-profile",JSON.stringify(d));
+    localStorage.setItem("toeic-arena-name",d.name);
+    localStorage.setItem("toeic-arena-class",d.classCode||"idrac2026");
+    _syncDirty=true;
+  }catch(e){}
+}
 
-  // 2) Fallback: try by cached name (different device, different auth ID)
-  if (!res.data) {
-    var cachedName = null;
-    try { cachedName = localStorage.getItem('toeic-arena-name'); } catch(e) {}
-    if (cachedName) {
-      var cachedClass = null;
-      try { cachedClass = localStorage.getItem('toeic-arena-class'); } catch(e) {}
-      var res2 = await supabase.from('students').select('*').eq('name', cachedName).eq('class_code', cachedClass || 'idrac2026').order('xp', {ascending:false}).limit(1);
-      if (res2.data && res2.data.length > 0) {
-        res = { data: res2.data[0] };
-      }
-    }
-  }
-
-  if (!res.data) return null;
-  var data = res.data;
-  try { localStorage.setItem('toeic-arena-name', data.name); } catch(e) {}
-  try { localStorage.setItem('toeic-arena-class', data.class_code || 'idrac2026'); } catch(e) {}
-
-  return {
-    name: data.name,
-    classCode: data.class_code || 'idrac2026',
-    xp: data.xp,
-    weeklyXp: data.weekly_xp,
-    weekId: data.week_id,
-    streak: data.streak,
-    lastActive: data.last_active,
-    cardStates: data.card_states || {},
-    daily: data.daily_challenge || {date:null,done:false,score:0,xpE:0},
-    stats: data.stats,
-    moduleScores: data.module_scores,
-    mockResults: data.mock_results || {},
-    gameScores: data.game_scores || {},
-    mission: data.mission,
-    unlockedAch: data.unlocked_ach || [],
-    avatar: data.avatar || "⚔️",
-    theme: data.theme || "dark",
-    totalTime: data.total_time || 0,
-    weeklyHistory: data.weekly_history || [],
-    dailyModSessions: data.daily_mod_sessions || {},
+function supaToLocal(data){
+  return{
+    name:data.name,classCode:data.class_code||"idrac2026",
+    xp:data.xp,weeklyXp:data.weekly_xp,weekId:data.week_id,
+    streak:data.streak,lastActive:data.last_active,
+    cardStates:data.card_states||{},
+    daily:data.daily_challenge||{date:null,done:false,score:0,xpE:0},
+    stats:data.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
+    moduleScores:data.module_scores||{},mockResults:data.mock_results||{},
+    gameScores:data.game_scores||{},mission:data.mission||{date:null,actId:null,done:false},
+    unlockedAch:data.unlocked_ach||[],avatar:data.avatar||"⚔️",theme:data.theme||"dark",
+    totalTime:data.total_time||0,weeklyHistory:data.weekly_history||[],
+    dailyModSessions:data.daily_mod_sessions||{},
   };
 }
 
-async function save(d) {
-  if (!_cachedUserId) return;
-  try { localStorage.setItem('toeic-arena-name', d.name); } catch(e) {}
-  try { localStorage.setItem('toeic-arena-class', d.classCode || 'idrac2026'); } catch(e) {}
+// load() — localStorage first (instant), Supabase fallback (slow path for first visit)
+async function load(userId){
+  var local=loadLocal();
+  if(local){
+    if(userId)_cachedUserId=userId;
+    return local;
+  }
+  if(!userId)return null;
+  _cachedUserId=userId;
+  try{
+    var res=await supabase.from("students").select("*").eq("id",userId).maybeSingle();
+    if(!res.data){
+      var cn=null;try{cn=localStorage.getItem("toeic-arena-name");}catch(e){}
+      if(cn){
+        var cc=null;try{cc=localStorage.getItem("toeic-arena-class");}catch(e){}
+        var res2=await supabase.from("students").select("*").eq("name",cn).eq("class_code",cc||"idrac2026").order("xp",{ascending:false}).limit(1);
+        if(res2.data&&res2.data.length>0)res={data:res2.data[0]};
+      }
+    }
+    if(!res.data)return null;
+    var d=supaToLocal(res.data);
+    saveLocal(d);
+    _syncDirty=false;
+    return d;
+  }catch(e){return null;}
+}
 
-  // Single upsert that conflicts on (name, class_code) — NOT on id
-  // This means: if a row with this name+class exists, UPDATE it. Otherwise INSERT.
-  // Works regardless of which device/auth ID is saving.
-  var { error } = await supabase.from('students').upsert({
-        id: _cachedUserId,
-    name: d.name,
-    class_code: d.classCode || 'idrac2026',
-    xp: d.xp,
-    weekly_xp: d.weeklyXp,
-    week_id: d.weekId,
-    streak: d.streak,
-    last_active: d.lastActive,
-    card_states: d.cardStates,
-    daily_challenge: d.daily,
-    stats: d.stats,
-    module_scores: d.moduleScores,
-    mock_results: d.mockResults,
-    game_scores: d.gameScores,
-    mission: d.mission,
-    avatar: d.avatar || "⚔️",
-    theme: d.theme || "dark",
-    unlocked_ach: d.unlockedAch || [],
-    total_time: d.totalTime || 0,
-    weekly_history: d.weeklyHistory || [],
-    daily_mod_sessions: d.dailyModSessions || {},
-  }, { onConflict: 'name,class_code' });
-  if(error) console.error("SAVE ERROR:", error.message, error.details);
+// save() — localStorage ONLY (0ms, never touches Supabase)
+function save(d){saveLocal(d);}
+
+// syncToCloud() — background push to Supabase (called every 2 min)
+async function syncToCloud(d){
+  if(!d||!d.name||!_syncDirty)return;
+  var now=Date.now();
+  if(now-_lastSync<10000)return;
+  _lastSync=now;
+  try{
+    var userId=_cachedUserId;
+    if(!userId){
+      try{
+        var sess=await supabase.auth.getSession();
+        userId=sess.data.session?sess.data.session.user.id:null;
+        if(userId)_cachedUserId=userId;
+      }catch(e){}
+    }
+    if(!userId)return;
+    await supabase.from("students").upsert({
+      id:userId,name:d.name,class_code:d.classCode||"idrac2026",
+      xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
+      streak:d.streak,last_active:d.lastActive,
+      card_states:d.cardStates,daily_challenge:d.daily,
+      stats:d.stats,module_scores:d.moduleScores,
+      mock_results:d.mockResults,game_scores:d.gameScores,
+      mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
+      unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
+      weekly_history:d.weeklyHistory||[],
+      daily_mod_sessions:d.dailyModSessions||{},
+    },{onConflict:"name,class_code"});
+    _syncDirty=false;
+  }catch(e){}
 }
 function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{}};}
 
@@ -6440,8 +6451,7 @@ useEffect(function(){
     return function(){clearInterval(iv);document.removeEventListener("visibilitychange",onVis);window.removeEventListener("beforeunload",onUnload);};
   },[!!u]);
 
-  var saveTimer=useRef(null);
-  function sv(d){
+function sv(d){
     // Check for new achievements
     if(d&&d.unlockedAch){
       ACHIEVEMENTS.forEach(function(a){
@@ -6453,10 +6463,8 @@ useEffect(function(){
         }
       });
     }
-    sU(d); // instant local update
-    // Debounce Supabase write — batches rapid actions into one save
-    if(saveTimer.current)clearTimeout(saveTimer.current);
-    saveTimer.current=setTimeout(function(){save(d);},5000);
+    sU(d);
+    saveLocal(d);
   }
   function applyXpGates(baseXp,sc,tot,modId){
     // ── PILIER 1 : seuil d'accuracy ──
@@ -6496,18 +6504,14 @@ useEffect(function(){
       if(c.streak>=7){mult*=1.5;bonuses.push({label:"Streak x1.5 ("+c.streak+"d)",color:"#ff8c42"});}
       else if(c.streak>=3){mult*=1.2;bonuses.push({label:"Streak x1.2 ("+c.streak+"d)",color:"#ff8c42"});}
 
-      console.log("EVENT_DEBUG:",JSON.stringify(activeEvents),activeEvents&&activeEvents.length);
       // Event multipliers
-      console.log("MULT_BEFORE:", mult);
       if(activeEvents&&activeEvents.length>0){
         activeEvents.forEach(function(ev){
           var cfg=ev.config||{};var m=cfg.multiplier||2;
-          console.log("EV_CHECK:", ev.type, "m=", m, "type===flash_hour?", ev.type==="flash_hour");
           if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"\u26A1 Flash Hour x"+m,color:"#f0c850"});}
           if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"\uD83D\uDCAA Underdog x"+m,color:"#4abe60"});}
         });
       }
-      console.log("MULT_AFTER:", mult, "bonuses:", JSON.stringify(bonuses));
 
 
       amt=Math.round(baseAmt*mult);
