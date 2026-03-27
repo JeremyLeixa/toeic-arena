@@ -521,6 +521,14 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 
 // ─── SMALL COMPONENTS ───
 function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,#d4943a,#c87a35)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
+// ─── Avatar renderer — handles both emoji and base64 photo ───
+function renderAv(avatar,size){
+  var s=size||32;
+  if(avatar&&avatar.startsWith("data:")){
+    return(<img src={avatar} style={{width:s,height:s,borderRadius:"50%",objectFit:"cover",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
+  }
+  return(<span style={{fontSize:s*0.6,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,flexShrink:0}}>{avatar||"⚔️"}</span>);
+}
 
 function AchToast(p){if(!p.v)return null;
   return(<div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",zIndex:250,animation:"achPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
@@ -810,7 +818,7 @@ var[step,sSt]=useState("name");
 function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getLeague(u.weeklyXp),dd=u.daily.date===today()&&u.daily.done;return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24}}>{u.name} {u.avatar||"⚔️"}</h1></div>
+<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28)}</h1></div>
 <div style={{textAlign:"center"}}><span className="fl" style={{fontSize:28}}>{u.streak>0?"🔥":"❄️"}</span><div className="out" style={{fontSize:13,fontWeight:700,color:u.streak>0?"var(--orange)":"var(--t3)"}}>{u.streak}</div></div></div>
 
 {/* Active bonus indicators */}
@@ -6178,7 +6186,7 @@ var countdown=getSeasonEndCountdown(curSeason);
 function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP";
   return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(212,148,58,.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(212,148,58,.25)":"1px solid var(--bdr)",borderRadius:12}}>
     <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?(rank===1?"🥇":rank===2?"🥈":"🥉"):rank}</div>
-    <div style={{fontSize:20,width:28,textAlign:"center"}}>{pl.avatar}</div>
+    <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
     <div style={{flex:1}}><div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)"}}>{isMe?pl.name+" (You)":pl.name}</div></div>
     <div className="out" style={{fontWeight:700,fontSize:14,color:isMe?"var(--cyan)":"var(--t2)"}}>{pl.pts!==undefined?pl.pts:pl.xp} {unit}</div>
   </div>);
@@ -6249,7 +6257,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
           var plLg=getLeague(pl.xp);
           return(<div key={pl.name} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:pl.me?"rgba(212,148,58,.08)":pl.inactive?"var(--bg1)":"var(--bg2)",border:pl.me?"1.5px solid rgba(212,148,58,.25)":"1px solid var(--bdr)",borderRadius:12,opacity:pl.inactive?0.55:1}}>
             <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:(!pl.inactive&&i<3)?"var(--gold)":"var(--t3)"}}>{pl.inactive?"—":i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</div>
-            <div style={{fontSize:20,width:28,textAlign:"center"}}>{pl.avatar}</div>
+            <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
             <div style={{flex:1}}>
               <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t1)"}}>{pl.me?pl.name+" (You)":pl.name}</div>
               {pl.inactive&&<div style={{fontSize:10,color:"var(--t3)",fontWeight:500}}>{"⏸ Inactive this week"}</div>}
