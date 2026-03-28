@@ -6267,14 +6267,11 @@ var overallRank=(overallRanking.findIndex(function(pl){return pl.name===u.name;}
 var countdown=getSeasonEndCountdown(curSeason);
 
 // ── Render helpers ──
-function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP",bonus=props.bonus||null;
+function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP";
   return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(212,148,58,.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(212,148,58,.25)":"1px solid var(--bdr)",borderRadius:12}}>
     <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?(rank===1?"🥇":rank===2?"🥈":"🥉"):rank}</div>
     <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
-    <div style={{flex:1}}>
-      <div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)"}}>{isMe?pl.name+" (Toi)":pl.name}</div>
-      {bonus&&<div style={{fontSize:10,color:"var(--gold)",fontWeight:700,marginTop:1}}>{bonus}</div>}
-    </div>
+    <div style={{flex:1}}><div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)"}}>{isMe?pl.name+" (You)":pl.name}</div></div>
     <div className="out" style={{fontWeight:700,fontSize:14,color:isMe?"var(--cyan)":"var(--t2)"}}>{pl.pts!==undefined?pl.pts:pl.xp} {unit}</div>
   </div>);
 }
@@ -6291,19 +6288,19 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
       <span style={{fontSize:22}}>{curSeason.icon}</span>
       <div>
-        <div className="out" style={{fontWeight:800,fontSize:15,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
+        <div className="out" style={{fontWeight:800,fontSize:15,color:curSeason.color}}>Season {curSeason.id}: {curSeason.name}</div>
         <div style={{fontSize:11,color:"var(--t3)"}}>{curSeason.start} → {curSeason.end}</div>
       </div>
     </div>
     <div style={{textAlign:"right"}}>
-      <div style={{fontSize:12,fontWeight:700,color:countdown==="Ended"?"var(--red)":"var(--cyan)"}}>{ countdown==="Ended"?"Terminée":countdown}</div>
+      <div style={{fontSize:12,fontWeight:700,color:countdown==="Ended"?"var(--red)":"var(--cyan)"}}>{countdown}</div>
     </div>
   </div>
 </div>
 
 {/* Tab bar */}
 <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:10,padding:3}}>
-  {[{k:"week",l:"Semaine"},{k:"season",l:"Saison "+curSeason.id},{k:"overall",l:"Général"},{k:"progress",l:"📈 Progrès"}].map(function(t){
+  {[{k:"week",l:"Week"},{k:"season",l:"Season "+curSeason.id},{k:"overall",l:"Overall"},{k:"progress",l:"📈 Progress"}].map(function(t){
     var active=tab===t.k;
     return(<button key={t.k} onClick={function(){setTab(t.k);if(t.k==="progress")loadProgressionData();}} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:active?700:500,background:active?"var(--cyan)":"transparent",color:active?"#000":"var(--t3)",transition:"all .2s"}}>{t.l}</button>);
   })}
@@ -6313,23 +6310,23 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {u.name==="Teacher"?
 <div className="crd" style={{padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,rgba(245,158,11,.06),rgba(139,94,131,.06))",borderColor:"rgba(245,158,11,.15)"}}>
   <span style={{fontSize:18}}>{"👁️"}</span>
-  <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--gold)"}}>Mode observateur</div>
-  <div style={{fontSize:11,color:"var(--t3)"}}>Tes stats sont masquées du classement</div></div>
+  <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--gold)"}}>Observer mode</div>
+  <div style={{fontSize:11,color:"var(--t3)"}}>Your stats are hidden from the leaderboard</div></div>
 </div>
 :
 <div style={{display:"flex",gap:8,marginBottom:16}}>
-  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--cyan)"}}>{u.weeklyXp}</div><div style={{fontSize:10,color:"var(--t3)"}}>XP semaine</div></div>
-  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:curSeason.color}}>#{seasonRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Saison</div></div>
-  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)"}}>#{overallRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Général</div></div>
+  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--cyan)"}}>{u.weeklyXp}</div><div style={{fontSize:10,color:"var(--t3)"}}>Week XP</div></div>
+  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:curSeason.color}}>#{seasonRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Season</div></div>
+  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)"}}>#{overallRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Overall</div></div>
 </div>}
 
 {/* ── WEEK TAB ── */}
 {tab==="week"&&(<div>
   {u.name!=="Teacher"&&<div className="crd glo" style={{textAlign:"center",marginBottom:16,padding:20}}>
     <div style={{fontSize:40,marginBottom:6,animation:"glow 3s infinite"}}>{lg.icon}</div>
-    <div className="out" style={{fontWeight:800,fontSize:20,color:lg.color}}>Ligue {lg.name}</div>
-    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Rang #{weekRank} cette semaine</div>
-    {nx&&<div style={{marginTop:10}}><div style={{fontSize:10,color:"var(--t3)",marginBottom:4}}>{nx.min-u.weeklyXp} XP pour atteindre {nx.name}</div><Bar value={u.weeklyXp-lg.min} max={nx.min-lg.min} h={4} color={nx.color}/></div>}
+    <div className="out" style={{fontWeight:800,fontSize:20,color:lg.color}}>{lg.name} League</div>
+    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Rank #{weekRank} this week</div>
+    {nx&&<div style={{marginTop:10}}><div style={{fontSize:10,color:"var(--t3)",marginBottom:4}}>{nx.min-u.weeklyXp} XP to {nx.name}</div><Bar value={u.weeklyXp-lg.min} max={nx.min-lg.min} h={4} color={nx.color}/></div>}
   </div>}
   {(function(){
     var isTeacher=u.name==="Teacher";
@@ -6346,36 +6343,36 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
             <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:(!pl.inactive&&i<3)?"var(--gold)":"var(--t3)"}}>{pl.inactive?"—":i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</div>
             <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
             <div style={{flex:1}}>
-              <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t1)"}}>{pl.me?pl.name+" (Toi)":pl.name}</div>
-              {pl.inactive&&<div style={{fontSize:10,color:"var(--t3)",fontWeight:500}}>{"⏸ Inactif(ve) cette semaine"}</div>}
+              <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t1)"}}>{pl.me?pl.name+" (You)":pl.name}</div>
+              {pl.inactive&&<div style={{fontSize:10,color:"var(--t3)",fontWeight:500}}>{"⏸ Inactive this week"}</div>}
               {!pl.inactive&&isTeacher&&<div style={{fontSize:10,color:plLg.color,fontWeight:600}}>{plLg.icon} {plLg.name}</div>}
             </div>
             <div className="out" style={{fontWeight:700,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t2)"}}>{pl.inactive?"—":pl.xp+" XP"}</div>
           </div>);
         })}
-        {displayed.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>Personne en ligue {lg.name} pour l'instant 🚀</p></div>}
+        {displayed.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>No one in {lg.name} League yet 🚀</p></div>}
       </div>
       {!isTeacher&&hidden.length>0&&<div style={{textAlign:"center",marginTop:12}}>
         <button onClick={function(){setShowAllLeagues(function(v){return !v;});}} style={{background:"none",border:"1px solid var(--bdr)",borderRadius:8,padding:"6px 14px",fontSize:11,color:"var(--t3)",cursor:"pointer",fontFamily:"inherit"}}>
-          {showAllLeagues?"Ma ligue uniquement ←":"👁 Voir les "+active.length+" participants actifs"}
+          {showAllLeagues?"Show my league only ←":"👁 View all "+active.length+" active students"}
         </button>
       </div>}
     </div>);
   })()}
-  <p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:16}}>Réinitialisé chaque lundi · Le classement détermine les points de saison</p>
+  <p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:16}}>Resets every Monday · Ranking determines Season points</p>
 </div>)}
 
 {/* ── SEASON TAB ── */}
 {tab==="season"&&(<div>
   <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(212,148,58,.04),rgba(139,94,131,.04))"}}>
     <div style={{fontSize:36,marginBottom:6}}>{curSeason.icon}</div>
-    <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
-    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} semaines · {countdown}</div>
-    <div style={{fontSize:11,color:"var(--t3)",marginTop:8,lineHeight:1.5}}>Chaque semaine, le 1er gagne N pts, le 2ème N-1...<br/>La régularité prime sur les coups d'éclat !</div>
+    <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Season {curSeason.id}: {curSeason.name}</div>
+    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} weeks · {countdown}</div>
+    <div style={{fontSize:11,color:"var(--t3)",marginTop:8,lineHeight:1.5}}>Each week, 1st place gets N pts, 2nd gets N-1, ...<br/>Consistency wins over one big week!</div>
   </div>
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
     {seasonRanking.filter(function(pl){return pl.pts>0;}).map(function(pl,i){return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.name===u.name} unit="pts"/>);})}
-    {seasonRanking.filter(function(pl){return pl.pts>0;}).length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>Pas encore de données — entraîne-toi !</p></div>}
+    {seasonRanking.filter(function(pl){return pl.pts>0;}).length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>No season data yet — start training!</p></div>}
   </div>
 </div>)}
 
@@ -6383,10 +6380,9 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {tab==="overall"&&(<div>
   <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(245,158,11,.04),rgba(139,94,131,.04))"}}>
     <div style={{fontSize:36,marginBottom:6}}>{"🏆"}</div>
-    <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--gold)"}}>Classement Général</div>
-    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Points de classement cumulés sur toutes les saisons</div>
-    <div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600}}>⭐ Top 3 XP → +1 pt sur la note finale</div>
-    <div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>Cumulable avec le bonus Progression (max +3 pts au total)</div>
+    <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--gold)"}}>Overall Ranking</div>
+    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Cumulative ranking points across all seasons</div>
+    <div style={{fontSize:11,color:"var(--t3)",marginTop:8}}>Top 3 + Top 10 = bonus points on your final grade</div>
   </div>
   {/* Season breakdown mini-bar */}
   <div style={{display:"flex",gap:6,marginBottom:16}}>
@@ -6395,17 +6391,16 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       return(<div key={s.id} className="crd" style={{flex:1,padding:"8px 4px",textAlign:"center",borderColor:isCurrent?"rgba(212,148,58,.3)":"var(--bdr)",opacity:(!isCurrent&&!isPast)?0.4:1}}>
         <div style={{fontSize:16}}>{s.icon}</div>
         <div style={{fontSize:9,color:isCurrent?"var(--cyan)":"var(--t3)",fontWeight:isCurrent?700:400}}>S{s.id}</div>
-        <div style={{fontSize:8,color:"var(--t3)"}}>{isPast?"Terminé":isCurrent?"En cours":"Bientôt"}</div>
+        <div style={{fontSize:8,color:"var(--t3)"}}>{isPast?"Done":isCurrent?"Active":"Soon"}</div>
       </div>);
     })}
   </div>
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
-    {overallRanking.filter(function(pl){return pl.pts>0;}).map(function(pl,i){
-      var bonusLabel=i<3?"⭐ +1 pt note finale":null;
-      return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.name===u.name} unit="pts" bonus={bonusLabel}/>);
-    })}
-    {overallRanking.filter(function(pl){return pl.pts>0;}).length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>Pas encore de données — la Saison 1 a commencé le 24 mars !</p></div>}
+    {overallRanking.filter(function(pl){return pl.pts>0;}).map(function(pl,i){return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.name===u.name} unit="pts"/>);})}
+    {overallRanking.filter(function(pl){return pl.pts>0;}).length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>No data yet — Season 1 starts March 24!</p></div>}
   </div>
+</div>)}
+
 </div>)}
 
 {/* ── PROGRESSION TAB ── */}
@@ -6456,7 +6451,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
               <div style={{flex:1}}>
                 <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,
                   color:pl.me?"var(--cyan)":"var(--t1)"}}>
-                  {pl.me?pl.name+" (Toi)":pl.name}
+                  {pl.me?pl.name+" (You)":pl.name}
                 </div>
                 <div style={{fontSize:10,color:"var(--t3)",marginTop:1}}>
                   {pl.baseline} → {pl.currentToeic} pts TOEIC
@@ -6478,8 +6473,8 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {pending.map(function(pl){
             var reason=pl.assessedQ<50
-              ?("Modules évalués : "+pl.assessedQ+" / 50 questions minimum")
-              :"Pas encore de référence (reviens la semaine prochaine)";
+              ?("Modules évalués : "+pl.assessedQ+"/50 questions min")
+              :"Pas encore de baseline (semaine de référence manquante)";
             return(<div key={pl.name} style={{
               display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
               background:"var(--bg2)",border:"1px solid var(--bdr)",
@@ -6489,7 +6484,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
               <div style={{flex:1}}>
                 <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,
                   color:pl.me?"var(--cyan)":"var(--t1)"}}>
-                  {pl.me?pl.name+" (Toi)":pl.name}
+                  {pl.me?pl.name+" (You)":pl.name}
                 </div>
                 <div style={{fontSize:10,color:"var(--t3)",marginTop:1}}>{reason}</div>
               </div>
@@ -6592,38 +6587,38 @@ function Profile(p){
     <div className="enter" style={{padding:"20px 16px 100px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
         <button onClick={function(){setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>←</button>
-        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Mes Stats</h1>
+        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>My Stats</h1>
       </div>
       <div className="crd" style={{padding:"14px 18px",marginBottom:16,
         background:"linear-gradient(135deg,rgba(212,148,58,.06),rgba(139,94,131,.06))",
         borderColor:"rgba(212,148,58,.15)"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
-            <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Score TOEIC estimé</div>
+            <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Est. TOEIC Score</div>
             <div className="out" style={{fontWeight:900,fontSize:36,color:toeicCol,lineHeight:1}}>
               {toeic.total}<span style={{fontSize:14,color:"var(--t3)",fontWeight:400}}>/990</span>
             </div>
-            {toeic.total<=200&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>Complète d'autres modules pour affiner</div>}
+            {toeic.total<=200&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>Complete more modules to refine</div>}
           </div>
           <div style={{textAlign:"right"}}>
             <div style={{display:"flex",gap:16,marginBottom:4}}>
               <div style={{textAlign:"center"}}><div className="out" style={{fontWeight:700,fontSize:18,color:"var(--cyan)"}}>{toeic.listening}</div><div style={{fontSize:9,color:"var(--t3)"}}>Listening</div></div>
               <div style={{textAlign:"center"}}><div className="out" style={{fontWeight:700,fontSize:18,color:"var(--purple)"}}>{toeic.reading}</div><div style={{fontSize:9,color:"var(--t3)"}}>Reading</div></div>
             </div>
-            <div style={{fontSize:9,color:"var(--t3)"}}>Basé sur ton entraînement</div>
+            <div style={{fontSize:9,color:"var(--t3)"}}>Based on your training</div>
           </div>
         </div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         {[
-          {l:"XP Total",v:u.xp,i:"⭐"},
-          {l:"XP cette semaine",v:u.weeklyXp,i:"⚡"},
-          {l:"Précision",v:acc+"%",i:"🎯"},
+          {l:"Total XP",v:u.xp,i:"⭐"},
+          {l:"Weekly XP",v:u.weeklyXp,i:"⚡"},
+          {l:"Accuracy",v:acc+"%",i:"🎯"},
           {l:"Sessions",v:u.stats.sessions,i:"📊"},
-          {l:"Cartes révisées",v:u.stats.cardsRev||0,i:"🃏"},
-          {l:"Exercices faits",v:u.stats.drills||0,i:"📝"},
-          {l:"Défis parfaits",v:u.stats.perfects||0,i:"✨"},
-          {l:"Questions totales",v:u.stats.totalQ||0,i:"❓"}
+          {l:"Cards Reviewed",v:u.stats.cardsRev||0,i:"🃏"},
+          {l:"Drills Done",v:u.stats.drills||0,i:"📝"},
+          {l:"Perfect Dailies",v:u.stats.perfects||0,i:"✨"},
+          {l:"Questions Total",v:u.stats.totalQ||0,i:"❓"}
         ].map(function(s){return(
           <div key={s.l} className="crd" style={{padding:14,textAlign:"center"}}>
             <div style={{fontSize:18,marginBottom:4}}>{s.i}</div>
@@ -6698,9 +6693,9 @@ function Profile(p){
         </div>
         <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:8}}>
           <button onClick={function(){fileRef.current.click();}} className="btn1"
-            style={{fontSize:12,padding:"8px 18px"}}>📷 Importer une photo</button>
+            style={{fontSize:12,padding:"8px 18px"}}>📷 Upload photo</button>
           {isPhoto&&<button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar="⚔️";p.setAvatar(c);}}
-            className="btn2" style={{fontSize:12,padding:"8px 18px",color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>✕ Supprimer</button>}
+            className="btn2" style={{fontSize:12,padding:"8px 18px",color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>✕ Remove</button>}
         </div>
         <div style={{fontSize:11,color:"var(--t3)"}}>Photo redimensionnée · stockée en local</div>
       </div>
@@ -6725,7 +6720,7 @@ function Profile(p){
             {"🗝️"}</button>);
         })()}
       </div>
-      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:20,fontStyle:"italic"}}>🗝️ Game Master — avatar exclusif</div>}
+      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:20,fontStyle:"italic"}}>🗝️ Game Master — exclusive avatar</div>}
     </div>
   );
 
@@ -6776,38 +6771,38 @@ function Profile(p){
             {renderAvatar(28,18)}
           </div>
           <div className="out" style={{fontWeight:800,fontSize:16}}>Style</div>
-          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Apparence</div>
+          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Avatar</div>
           <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
         </button>
       </div>
 
       {/* Teacher dashboard */}
-      <button className="btn2" onClick={function(){var code=prompt("Code formateur :");if(code===TEACHER_CODE)p.goTeacher();}}
+      <button className="btn2" onClick={function(){var code=prompt("Teacher code:");if(code===TEACHER_CODE)p.goTeacher();}}
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
         👨‍🏫 Teacher Dashboard
       </button>
 
       {/* Settings */}
-      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Paramètres</div>
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Settings</div>
       <div className="crd" style={{padding:0,overflow:"hidden",marginBottom:20}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:"1px solid var(--bdr)"}}>
           <div>
-            <div className="out" style={{fontWeight:700,fontSize:14}}>Apparence</div>
-            <div style={{fontSize:12,color:"var(--t2)"}}>{u.theme==="light"?"Mode clair":"Mode sombre"}</div>
+            <div className="out" style={{fontWeight:700,fontSize:14}}>Appearance</div>
+            <div style={{fontSize:12,color:"var(--t2)"}}>{u.theme==="light"?"Light mode":"Dark mode"}</div>
           </div>
           {Toggle(u.theme==="light",function(){var c=JSON.parse(JSON.stringify(u));c.theme=c.theme==="light"?"dark":"light";p.setAvatar(c);})}
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:"1px solid var(--bdr)"}}>
           <div>
-            <div className="out" style={{fontWeight:700,fontSize:14}}>Effets sonores</div>
-            <div style={{fontSize:12,color:"var(--t2)"}}>{soundOn?"Activés":"Désactivés"}</div>
+            <div className="out" style={{fontWeight:700,fontSize:14}}>Sound Effects</div>
+            <div style={{fontSize:12,color:"var(--t2)"}}>{soundOn?"On":"Off"}</div>
           </div>
           {Toggle(soundOn,function(){var cur=isSoundEnabled();setSoundEnabled(!cur);setSoundOn(!cur);if(!cur)try{playCorrect();}catch(e){}if(cur)stopBGM();})}
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:("PushManager" in window)?"1px solid var(--bdr)":"none"}}>
           <div>
-            <div className="out" style={{fontWeight:700,fontSize:14}}>Conseils TOEIC</div>
-            <div style={{fontSize:12,color:"var(--t2)"}}>Affichés au démarrage</div>
+            <div className="out" style={{fontWeight:700,fontSize:14}}>Daily Tips</div>
+            <div style={{fontSize:12,color:"var(--t2)"}}>Show at startup</div>
           </div>
           {Toggle(!tipOff,function(){try{var cur=localStorage.getItem("toeic-tip-disabled")==="1";if(cur){localStorage.removeItem("toeic-tip-disabled");localStorage.removeItem("toeic-tip-date");setTipOff(false);}else{localStorage.setItem("toeic-tip-disabled","1");setTipOff(true);}}catch(e){}})}
         </div>
@@ -6815,7 +6810,7 @@ function Profile(p){
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px"}}>
             <div>
               <div className="out" style={{fontWeight:700,fontSize:14}}>Notifications</div>
-              <div style={{fontSize:12,color:"var(--t2)"}}>{pushOn?"Rappels de série":"Désactivées"}</div>
+              <div style={{fontSize:12,color:"var(--t2)"}}>{pushOn?"Streak reminders":"Disabled"}</div>
             </div>
             {Toggle(pushOn,function(){if(pushOn){unsubscribePush(u.name,u.classCode).then(function(){setPushOn(false);});}else{subscribePush(u.name,u.classCode).then(function(sub){if(sub)setPushOn(true);});}})}
           </div>
@@ -6823,9 +6818,9 @@ function Profile(p){
       </div>
 
       {/* Reset */}
-      <button className="btn2" onClick={function(){var code=prompt("Code formateur pour réinitialiser :");if(code===TEACHER_CODE)p.reset();}}
+      <button className="btn2" onClick={function(){var code=prompt("Enter teacher code to reset:");if(code===TEACHER_CODE)p.reset();}}
         style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>
-        Réinitialiser mes données
+        Reset all data
       </button>
     </div>
   );
@@ -7046,10 +7041,10 @@ function sv(d){
       var dms=u.dailyModSessions||{};
       var key=modId+"_"+today();
       var sessionCount=dms[key]||0;
-      // Flashcards : 100% / 60% / 30% / 0% — autres : 100% / 50% / 15% / 0%
+      // Flashcards : cap agressif 100%/30%/0% — autres : 100%/50%/15%/0%
       var farmMult;
       if(modId==="csess"){
-        farmMult=sessionCount===0?1:sessionCount===1?0.60:sessionCount===2?0.30:0;
+        farmMult=sessionCount===0?1:sessionCount===1?0.30:0;
       } else {
         farmMult=sessionCount===0?1:sessionCount===1?0.5:sessionCount===2?0.15:0;
       }
