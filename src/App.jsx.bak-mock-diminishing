@@ -2932,29 +2932,7 @@ function MockTest(p){
         })}
       </div>
 
-      {(function(){
-        var timeGateOk=(result.timeUsed||0)>=300;
-        var modId2="mock"+mockId;
-        var dms=p.u.dailyModSessions||{};
-        var sessCount=dms[modId2+"_"+today()]||0;
-        var mult=sessCount===0?1:sessCount===1?0.40:0;
-        var gxp=timeGateOk?Math.round(xp*mult):0;
-        if(!timeGateOk)return(<div style={{marginBottom:20}}>
-          <div className="out" style={{fontSize:16,fontWeight:700,color:"var(--t3)"}}>+0 XP</div>
-          <div style={{fontSize:11,color:"var(--red)",marginTop:2}}>Test complété en moins de 5 min — XP non comptabilisé</div>
-          <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>Tes résultats TOEIC sont sauvegardés</div>
-        </div>);
-        if(mult===1)return(<div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:20}}>+{gxp} XP</div>);
-        if(mult>0)return(<div style={{marginBottom:20}}>
-          <div className="out" style={{fontSize:18,fontWeight:800,color:"var(--orange)"}}>+{gxp} XP</div>
-          <div style={{fontSize:11,color:"var(--t3)",marginTop:2}}>XP réduit — 2ème tentative aujourd'hui</div>
-        </div>);
-        return(<div style={{marginBottom:20}}>
-          <div className="out" style={{fontSize:16,fontWeight:700,color:"var(--t3)"}}>+0 XP</div>
-          <div style={{fontSize:11,color:"var(--red)",marginTop:2}}>Limite journalière atteinte — reviens demain !</div>
-          <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>Tes résultats TOEIC sont sauvegardés</div>
-        </div>);
-      })()}
+      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:20}}>+{xp} XP</div>
 
       <button className="btn1" onClick={function(){setReviewMode(true);setReviewSection("p5");setReviewIdx(0);}}>📖 Review Answers</button>
       <button className="btn2" onClick={function(){result.mockId=mockId;p.done(result,xp);}} style={{marginTop:10,width:"100%"}}>Save & Exit</button>
@@ -5053,7 +5031,7 @@ function TeacherDash(p){
     var studentModData=MISSION_MODULES.map(function(m,i){
       var ms=modules[m.id];
       var modAcc=ms&&ms.total>0?Math.round(ms.correct/ms.total*100):0;
-      return{name:m.name.length>12?m.name.substring(0,11)+"…":m.name,fullName:m.name,accuracy:modAcc,sessions:ms?ms.sessions:0,questions:ms?ms.total:0,color:CHART_COLORS[i%CHART_COLORS.length],id:m.id,hasData:!!(ms&&ms.total>0)};
+      return{name:m.name.length>10?m.name.substring(0,9)+"…":m.name,fullName:m.name,accuracy:modAcc,sessions:ms?ms.sessions:0,questions:ms?ms.total:0,color:CHART_COLORS[i%CHART_COLORS.length],id:m.id,hasData:!!(ms&&ms.total>0)};
     }).filter(function(d){return d.hasData;});
     
     // Timeline data
@@ -7068,14 +7046,10 @@ function sv(d){
       var dms=u.dailyModSessions||{};
       var key=modId+"_"+today();
       var sessionCount=dms[key]||0;
-      // Flashcards : 100% / 60% / 30% / 0%
-      // Mock Tests  : 100% / 40% / 0%
-      // Autres      : 100% / 50% / 15% / 0%
+      // Flashcards : 100% / 60% / 30% / 0% — autres : 100% / 50% / 15% / 0%
       var farmMult;
       if(modId==="csess"){
         farmMult=sessionCount===0?1:sessionCount===1?0.60:sessionCount===2?0.30:0;
-      } else if(modId==="mock1"||modId==="mock2"||modId==="mock3"){
-        farmMult=sessionCount===0?1:sessionCount===1?0.40:0;
       } else {
         farmMult=sessionCount===0?1:sessionCount===1?0.5:sessionCount===2?0.15:0;
       }
@@ -7213,19 +7187,7 @@ var prevLeague=getLeague(c.weeklyXp);
   }
  
   function goTeacher(){setTeacher(true);}
-  function mockDone(result,xp){
-    var modId="mock"+result.mockId;
-    var timeGateOk=(result.timeUsed||0)>=300;
-    var gxp=timeGateOk?applyXpGates(xp,result.score,result.total,modId):0;
-    var c=addXp(gxp);
-    c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;
-    if(!c.mockResults)c.mockResults={};
-    c.mockResults["mock"+result.mockId]=result;
-    trackModSession(c,modId);
-    recordModule(c,modId,result.score,result.total);
-    try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}
-    sv(c);
-  }
+  function mockDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};c.mockResults["mock"+result.mockId]=result;recordModule(c,"mock"+result.mockId,result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);}
   function gameDone(modeKey,result,xp){var c=addXp(xp);if(!c.gameScores)c.gameScores={};
     if(modeKey==="duel"){
       // Accumulate duel stats instead of overwriting

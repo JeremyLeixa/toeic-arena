@@ -5053,7 +5053,7 @@ function TeacherDash(p){
     var studentModData=MISSION_MODULES.map(function(m,i){
       var ms=modules[m.id];
       var modAcc=ms&&ms.total>0?Math.round(ms.correct/ms.total*100):0;
-      return{name:m.name.length>12?m.name.substring(0,11)+"…":m.name,fullName:m.name,accuracy:modAcc,sessions:ms?ms.sessions:0,questions:ms?ms.total:0,color:CHART_COLORS[i%CHART_COLORS.length],id:m.id,hasData:!!(ms&&ms.total>0)};
+      return{name:m.name.length>10?m.name.substring(0,9)+"…":m.name,fullName:m.name,accuracy:modAcc,sessions:ms?ms.sessions:0,questions:ms?ms.total:0,color:CHART_COLORS[i%CHART_COLORS.length],id:m.id,hasData:!!(ms&&ms.total>0)};
     }).filter(function(d){return d.hasData;});
     
     // Timeline data
