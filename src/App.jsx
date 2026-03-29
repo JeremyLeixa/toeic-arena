@@ -1052,8 +1052,8 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
         <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Exercices</h1>
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {ModuleRow({id:"daily",n:"Défi Quotidien",d:dd?"Complété aujourd'hui ✓":"5 questions chronométrées",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd})}
-        {ModuleRow({id:"lis",n:"Listening Practice",d:"Parts 1-4 avec audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"})}
+        {ModuleRow({id:"daily",n:"Daily chalenge",d:dd?"Done today ✓":"5 timed questions",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd})}
+        {ModuleRow({id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"})}
         {ModuleRow({id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"})}
       </div>
     </div>
@@ -1067,13 +1067,13 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
         <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Grammar &amp; Vocabulary</h1>
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {ModuleRow({id:"csess",n:"Flashcard Review",d:"Répétition espacée SRS",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"})}
-        {ModuleRow({id:"wordfam",n:"Word Families",d:"Nom, Verbe, Adj, Adv",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"})}
-        {ModuleRow({id:"connsort",n:"Connectors Sorting",d:"Clause, Nom, Nouvelle phrase ?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"})}
-        {ModuleRow({id:"prepdrill",n:"Prépositions & Collocations",d:"Mode étude + drill",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"})}
-        {ModuleRow({id:"gerinf",n:"Gérondif vs Infinitif",d:"4 patterns · Étude + quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"})}
-        {ModuleRow({id:"falsefr",n:"False Friends",d:"Pièges FR/EN",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"})}
-        {ModuleRow({id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbes · Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"})}
+        {ModuleRow({id:"csess",n:"Flashcard Review",d:"SRS Spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"})}
+        {ModuleRow({id:"wordfam",n:"Word Families",d:"Noun, Verb, Adj or Adv ?",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"})}
+        {ModuleRow({id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, New phrase ?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"})}
+        {ModuleRow({id:"prepdrill",n:"Prepositions & Collocations",d:"Study Mode + drill",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"})}
+        {ModuleRow({id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"})}
+        {ModuleRow({id:"falsefr",n:"False Friends",d:"Traps in FR/EN",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"})}
+        {ModuleRow({id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"})}
       </div>
     </div>
   );
@@ -1086,10 +1086,10 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
         <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Tips &amp; Strategies</h1>
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {ModuleRow({id:"strats",n:"Strategy Cards",d:"54 conseils d'experts, toutes parties",i:"🗺️",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"})}
-        {ModuleRow({id:"stratquiz",n:"Strategy Quiz",d:"Teste ta connaissance de l'examen",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"})}
-        {ModuleRow({id:"traps",n:"TOEIC Traps Quiz",d:"Les 20 pièges classiques",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"})}
-        {ModuleRow({id:"gramref",n:"Grammar Reference",d:"12 fiches de grammaire essentielles",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"})}
+        {ModuleRow({id:"strats",n:"Strategy Cards",d:"54 experts tips, every parts",i:"🗺️",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"})}
+        {ModuleRow({id:"stratquiz",n:"Strategy Quiz",d:"Test your knowledge of the exam",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"})}
+        {ModuleRow({id:"traps",n:"TOEIC Traps Quiz",d:"The 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"})}
+        {ModuleRow({id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"})}
       </div>
     </div>
   );
