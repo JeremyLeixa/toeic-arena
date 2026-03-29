@@ -4992,12 +4992,14 @@ function TeacherDash(p){
   }
 
   // ── CSV Export exhaustif v2 ──
+  // CSV Export exhaustif v2
   function exportCSV(){
-    function qa(v){return'"'+(v===null||v===undefined?"":String(v).replace(/"/g,'""'))+'"';}
+    var DQ=String.fromCharCode(34);
+    function qa(v){return DQ+(v===null||v===undefined?"":String(v).replace(/"/g,DQ+DQ))+DQ;}
     function na(v){return(v===null||v===undefined||v===""||v!==v)?"":v;}
-    function pcta(correct,total){return total>0?Math.round(correct/total*100):"";}
+    function pcta(c,t){return t>0?Math.round(c/t*100):"";}
     function fdatea(d){return d||"";}
-    function ftimea(sec){return sec?Math.round(sec/60):"";}
+    function ftimea(s){return s?Math.round(s/60):"";}
     var headers=[
       "Nom","Classe","XP Total","XP Semaine","Niveau","Ligue","Streak","Derniere activite",
       "Sessions totales","Temps total (min)",
@@ -5025,9 +5027,7 @@ function TeacherDash(p){
       var lg=LEAGUES.slice().reverse().find(function(l){return(s.xp||0)>=l.min;})||LEAGUES[0];
       var toeic=estimateTOEIC(s);
       var noFlashQ=0,noFlashC=0;
-      Object.keys(ms).forEach(function(k){
-        if(k!=="csess"&&ms[k]&&ms[k].total>0){noFlashQ+=ms[k].total;noFlashC+=ms[k].correct;}
-      });
+      Object.keys(ms).forEach(function(k){if(k!=="csess"&&ms[k]&&ms[k].total>0){noFlashQ+=ms[k].total;noFlashC+=ms[k].correct;}});
       function mockC(mk){var r=mr[mk];if(!r)return["","","","",""];return[na(r.toeicEstimate),r.total>0?Math.round(r.score/r.total*100):"",na(r.total),fdatea(r.date),ftimea(r.timeUsed)];}
       var ach=s.unlocked_ach||s.unlockedAch||[];
       var row=[
@@ -5055,10 +5055,8 @@ function TeacherDash(p){
       });
       return row.join(",");
     });
-    var csv=headers.join(",")+"
-"+rows.join("
-");
-    var blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8;"});
+    var csv=headers.join(",")+"\n"+rows.join("\n");
+    var blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
     var url=URL.createObjectURL(blob);
     var a=document.createElement("a");
     a.href=url;a.download="toeic_arena_export_"+classCode+"_"+today()+".csv";

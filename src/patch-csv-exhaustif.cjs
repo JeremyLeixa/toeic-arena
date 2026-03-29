@@ -1,10 +1,11 @@
 // patch-csv-exhaustif.cjs
-// Export CSV exhaustif — remplace exportCSV() par une version complète (~100 colonnes)
+// Export CSV exhaustif v2 — 108 colonnes
 // Usage : node patch-csv-exhaustif.cjs
 
-const fs = require("fs");
+const fs   = require("fs");
 const path = require("path");
-const FILE = path.join(__dirname, "App.jsx");
+
+const FILE   = path.join(__dirname, "App.jsx");
 const BACKUP = FILE + ".bak-csv-exhaustif";
 
 if (!fs.existsSync(FILE)) { console.error("❌ App.jsx introuvable."); process.exit(1); }
@@ -12,24 +13,45 @@ if (!fs.existsSync(FILE)) { console.error("❌ App.jsx introuvable."); process.e
 let src = fs.readFileSync(FILE, "utf8");
 const original = src;
 
-// Appliqué directement par remplacement de la fonction exportCSV existante
-const OLD_COMMENT = "  // ── CSV Export ──\n  function exportCSV(){";
-const END_ANCHOR  = "\n\n  // ── Custom Recharts Tooltip ──";
+// ── Locate exportCSV block ──────────────────────────────────────────────────
+// Search for the function opening — unique enough
+const FUNC_START = "function exportCSV(){";
+const FUNC_ANCHOR = "var headers=[\"Name\",\"XP\",\"Level\"";
 
-const startIdx = src.indexOf(OLD_COMMENT);
-const endIdx   = src.indexOf(END_ANCHOR, startIdx);
+let funcIdx = src.indexOf(FUNC_START);
+if (funcIdx === -1) { console.error("❌ exportCSV() introuvable."); process.exit(1); }
 
-if (startIdx === -1) { console.error("❌ Bloc exportCSV introuvable."); process.exit(1); }
-if (endIdx   === -1) { console.error("❌ Ancre de fin introuvable."); process.exit(1); }
+// Verify it's the right one (has the old headers)
+let headersIdx = src.indexOf(FUNC_ANCHOR, funcIdx);
+if (headersIdx === -1 || headersIdx - funcIdx > 200) {
+  console.error("❌ Ancien format exportCSV introuvable — patch déjà appliqué ?");
+  process.exit(1);
+}
 
+// Walk back to find the comment line start
+let blockStart = src.lastIndexOf("\n  //", funcIdx) + 1;
+if (blockStart <= 1) blockStart = funcIdx;
 
-const NEW_BLOCK = `  // ── CSV Export exhaustif v2 ──
+// Walk forward to find the closing brace of the function
+let depth = 0, i = funcIdx;
+while (i < src.length) {
+  if (src[i] === "{") depth++;
+  else if (src[i] === "}") { depth--; if (depth === 0) { i++; break; } }
+  i++;
+}
+const blockEnd = i;
+
+console.log("Bloc exportCSV trouvé :", blockEnd - blockStart, "chars");
+
+// ── New function ─────────────────────────────────────────────────────────────
+const NEW_BLOCK = `  // CSV Export exhaustif v2
   function exportCSV(){
-    function qa(v){return'"'+(v===null||v===undefined?"":String(v).replace(/"/g,'""'))+'"';}
+    var DQ=String.fromCharCode(34);
+    function qa(v){return DQ+(v===null||v===undefined?"":String(v).replace(/"/g,DQ+DQ))+DQ;}
     function na(v){return(v===null||v===undefined||v===""||v!==v)?"":v;}
-    function pcta(correct,total){return total>0?Math.round(correct/total*100):"";}
+    function pcta(c,t){return t>0?Math.round(c/t*100):"";}
     function fdatea(d){return d||"";}
-    function ftimea(sec){return sec?Math.round(sec/60):"";}
+    function ftimea(s){return s?Math.round(s/60):"";}
     var headers=[
       "Nom","Classe","XP Total","XP Semaine","Niveau","Ligue","Streak","Derniere activite",
       "Sessions totales","Temps total (min)",
@@ -57,9 +79,7 @@ const NEW_BLOCK = `  // ── CSV Export exhaustif v2 ──
       var lg=LEAGUES.slice().reverse().find(function(l){return(s.xp||0)>=l.min;})||LEAGUES[0];
       var toeic=estimateTOEIC(s);
       var noFlashQ=0,noFlashC=0;
-      Object.keys(ms).forEach(function(k){
-        if(k!=="csess"&&ms[k]&&ms[k].total>0){noFlashQ+=ms[k].total;noFlashC+=ms[k].correct;}
-      });
+      Object.keys(ms).forEach(function(k){if(k!=="csess"&&ms[k]&&ms[k].total>0){noFlashQ+=ms[k].total;noFlashC+=ms[k].correct;}});
       function mockC(mk){var r=mr[mk];if(!r)return["","","","",""];return[na(r.toeicEstimate),r.total>0?Math.round(r.score/r.total*100):"",na(r.total),fdatea(r.date),ftimea(r.timeUsed)];}
       var ach=s.unlocked_ach||s.unlockedAch||[];
       var row=[
@@ -87,8 +107,8 @@ const NEW_BLOCK = `  // ── CSV Export exhaustif v2 ──
       });
       return row.join(",");
     });
-    var csv=headers.join(",")+"\n"+rows.join("\n");
-    var blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+    var csv=headers.join(",")+"\\n"+rows.join("\\n");
+    var blob=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
     var url=URL.createObjectURL(blob);
     var a=document.createElement("a");
     a.href=url;a.download="toeic_arena_export_"+classCode+"_"+today()+".csv";
@@ -96,7 +116,7 @@ const NEW_BLOCK = `  // ── CSV Export exhaustif v2 ──
     URL.revokeObjectURL(url);
   }`;
 
-src = src.slice(0, startIdx) + NEW_BLOCK + src.slice(endIdx);
+src = src.slice(0, blockStart) + NEW_BLOCK + src.slice(blockEnd);
 
 if (src === original) { console.warn("⚠️ Aucun changement."); process.exit(0); }
 
@@ -105,12 +125,5 @@ console.log("📦 Backup : App.jsx.bak-csv-exhaustif");
 fs.writeFileSync(FILE, src, "utf8");
 console.log("✅ exportCSV() remplacé — export exhaustif v2");
 console.log("");
-console.log("Colonnes exportées (~" + (41 + 22*3) + " colonnes) :");
-console.log("  Identité & global   : Nom, Classe, XP, XP semaine, Niveau, Ligue, Streak, Dernière activité");
-console.log("  Stats               : Sessions, Temps, Questions, Précision, Précision HORS Flashcards");
-console.log("                        Cartes, Drills, Défis parfaits, Daily count");
-console.log("  TOEIC estimé        : Total / Listening / Reading");
-console.log("  Mock 1 & 2          : TOEIC estimé, Score%, Questions, Date, Temps (min)");
-console.log("  Jeux                : SpeedMatch Easy/Hard, WordFall, Duel");
-console.log("  Achievements        : Débloqués / Total");
-console.log("  Par module (×22)    : Précision% + Sessions + Questions");
+console.log("108 colonnes : Identité · Stats · TOEIC · Mocks · Jeux · Achievements · Par module (×22)");
+console.log("Nouveau : Précision hors Flashcards · Temps mock · Sessions+Questions par module");
