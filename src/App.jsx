@@ -1027,138 +1027,70 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 
 // ─── TRAIN PAGE ───
   function Train(p){
-  var[cat,setCat]=useState(null);
   var dd=p.u.daily&&p.u.daily.date===today()&&p.u.daily.done;
-
-  function ModuleRow(m){
-    return(<div key={m.id} className="crd" onClick={function(){if(!m.lock)p.nav(m.id);}}
-      style={{display:"flex",alignItems:"center",gap:14,cursor:m.lock?"default":"pointer",
-        opacity:m.lock?.4:1,padding:"14px 16px"}}>
-      <div style={{width:42,height:42,borderRadius:12,background:m.bg,display:"flex",
-        alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
-      <div style={{flex:1,minWidth:0}}>
-        <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
-        <div style={{fontSize:11,color:"var(--t3)"}}>{m.d}</div>
-      </div>
-      {m.lock?<span style={{fontSize:16}}>🔒</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>→</span>}
-    </div>);
-  }
-
-  // ── Sous-vue : Exercices ─────────────────────────────────────
-  if(cat==="exercises")return(
-    <div className="enter" style={{padding:"20px 16px 100px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
-        <button onClick={function(){setCat(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>←</button>
-        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Exercices</h1>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {ModuleRow({id:"daily",n:"Daily chalenge",d:dd?"Done today ✓":"5 timed questions",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd})}
-        {ModuleRow({id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"})}
-        {ModuleRow({id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"})}
-      </div>
-    </div>
-  );
-
-  // ── Sous-vue : Grammar & Vocab ───────────────────────────────
-  if(cat==="grammar")return(
-    <div className="enter" style={{padding:"20px 16px 100px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
-        <button onClick={function(){setCat(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>←</button>
-        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Grammar &amp; Vocabulary</h1>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {ModuleRow({id:"csess",n:"Flashcard Review",d:"SRS Spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"})}
-        {ModuleRow({id:"wordfam",n:"Word Families",d:"Noun, Verb, Adj or Adv ?",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"})}
-        {ModuleRow({id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, New phrase ?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"})}
-        {ModuleRow({id:"prepdrill",n:"Prepositions & Collocations",d:"Study Mode + drill",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"})}
-        {ModuleRow({id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"})}
-        {ModuleRow({id:"falsefr",n:"False Friends",d:"Traps in FR/EN",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"})}
-        {ModuleRow({id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"})}
-      </div>
-    </div>
-  );
-
-  // ── Sous-vue : Tips & Strategies ────────────────────────────
-  if(cat==="tips")return(
-    <div className="enter" style={{padding:"20px 16px 100px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
-        <button onClick={function(){setCat(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>←</button>
-        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Tips &amp; Strategies</h1>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {ModuleRow({id:"strats",n:"Strategy Cards",d:"54 experts tips, every parts",i:"🗺️",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"})}
-        {ModuleRow({id:"stratquiz",n:"Strategy Quiz",d:"Test your knowledge of the exam",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"})}
-        {ModuleRow({id:"traps",n:"TOEIC Traps Quiz",d:"The 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"})}
-        {ModuleRow({id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"})}
-      </div>
-    </div>
-  );
-
-  // ── Sous-vue : Mock Exams ────────────────────────────────────
-  if(cat==="mock"){
-    var u1=canUnlockMock(p.u,1);var u2=canUnlockMock(p.u,2);var u3=canUnlockMock(p.u,3);
-    var mk1={id:"mock1",n:"Mock Test 1",d:p.u.mockResults&&p.u.mockResults.mock1?"Complété — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495":u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"📜",bg:u1.ok&&!(p.u.mockResults&&p.u.mockResults.mock1)?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok};
-    var mk2={id:"mock2",n:"Mock Test 2",d:p.u.mockResults&&p.u.mockResults.mock2?"Complété — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495":u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📜",bg:u2.ok&&!(p.u.mockResults&&p.u.mockResults.mock2)?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok};
-    var mk3={id:"mock3",n:"Mock Test 3",d:p.u.mockResults&&p.u.mockResults.mock3?"Complété — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495":u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"📜",bg:u3.ok&&!(p.u.mockResults&&p.u.mockResults.mock3)?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok};
-    return(
-      <div className="enter" style={{padding:"20px 16px 100px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-          <button onClick={function(){setCat(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>←</button>
-          <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Mock Exams</h1>
-        </div>
-        <div className="crd" style={{padding:"12px 16px",marginBottom:20,background:"rgba(212,148,58,.04)",borderColor:"rgba(212,148,58,.15)"}}>
-          <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>📋 Reading Half-Test · ~49 questions · 37 minutes<br/>Conditions réelles de l'examen TOEIC.</div>
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {ModuleRow(mk1)}{ModuleRow(mk2)}{ModuleRow(mk3)}
-        </div>
-      </div>
-    );
-  }
-
-  // ── Vue principale : grille 2×2 ─────────────────────────────
-  var cats=[
-    {id:"exercises",icon:"🎯",label:"Exercices",
-     desc:"Daily Challenge, Listening and Reading — Modules at the core of TOEIC.",
-     modules:"Daily · Listening · Reading",
-     color:"rgba(212,148,58,.08)",border:"rgba(212,148,58,.25)",accent:"var(--cyan)",
-     badge:dd?"✓":null,badgeLabel:"Challenge done!",badgeCol:"var(--green)"},
-    {id:"grammar",icon:"📚",label:"Grammar & Vocab",
-     desc:"Flashcards, Word families, Connectors, Prepositions and more.",
-     modules:"7 modules",
-     color:"rgba(139,94,131,.06)",border:"rgba(139,94,131,.2)",accent:"var(--purple)"},
-    {id:"tips",icon:"🕯️",label:"Tips & Strategies",
-     desc:"Strategies, Traps and Method Quizzes.",
-     modules:"Strategy · Traps · Quiz",
-     color:"rgba(74,190,96,.05)",border:"rgba(74,190,96,.2)",accent:"var(--green)"},
-    {id:"mock",icon:"📜",label:"Mock Exams",
-     desc:"Complete simulations in real time — 49 Q in 40 min.",
-     modules:"3 tests available",
-     color:"rgba(240,200,80,.05)",border:"rgba(240,200,80,.25)",accent:"var(--gold)"},
+  var sections=[
+    {title:"Exercises",sub:"TOEIC Parts training",items:[
+      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd},
+      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
+      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    ]},
+    {title:"Grammar & Vocabulary",sub:"Build your foundations",items:[
+      {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
+      {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+      {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
+      {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
+      {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
+      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
+      {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
+    ]},
+    {title:"Mock Exam",sub:"Test yourself under real conditions",items:(function(){
+      var items=[];
+      var u1=canUnlockMock(p.u,1);
+      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"📜",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
+      var u2=canUnlockMock(p.u,2);
+      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📜",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
+	  var u3=canUnlockMock(p.u,3);
+	  items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"📜",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
+      // Show completed badge
+      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495";items[0].lock=true;items[0].bg="var(--bg3)";}
+      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495";items[1].lock=true;items[1].bg="var(--bg3)";}
+      return items;
+    })()},
+    {title:"Tips & Strategies",sub:"Master the exam itself",items:[
+      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"🗺️",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
+      {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
+      {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
+      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    ]},
   ];
-
+  var animIdx=0;
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Training Grounds</h1>
-    <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Choose your weapon!</p>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-      {cats.map(function(c){return(
-        <button key={c.id} onClick={function(){setCat(c.id);}}
-          style={{display:"flex",flexDirection:"column",alignItems:"flex-start",
-            padding:"18px 16px",background:c.color,border:"1px solid "+c.border,
-            borderRadius:16,cursor:"pointer",textAlign:"left",
-            width:"100%",fontFamily:"inherit",minHeight:220,position:"relative"}}>
-          {c.badge&&<span style={{position:"absolute",top:10,right:10,
-            fontSize:10,color:c.badgeCol,fontWeight:700,
-            background:"rgba(74,190,96,.15)",padding:"2px 7px",borderRadius:10}}>
-            {c.badge} {c.badgeLabel}
-          </span>}
-          <div style={{fontSize:40,marginBottom:12,lineHeight:1}}>{c.icon}</div>
-          <div className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)",marginBottom:6,lineHeight:1.2}}>{c.label}</div>
-          <div style={{fontSize:11,color:"var(--t3)",lineHeight:1.5,flex:1}}>{c.desc}</div>
-          <div style={{marginTop:10,fontSize:10,color:c.accent,fontWeight:600}}>{c.modules} →</div>
-        </button>
-      );})}
-    </div>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Choose your battle</p>
+
+    {sections.map(function(sec,si){
+      return (<div key={si} style={{marginBottom:24}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:10}}>
+          <h2 className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)"}}>{sec.title}</h2>
+          <span style={{fontSize:11,color:"var(--t3)"}}>{sec.sub}</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {sec.items.map(function(m){
+            var ai=animIdx++;
+            return (
+              <div key={m.id} className="crd" onClick={function(){if(!m.lock)p.nav(m.id);}}
+                style={{display:"flex",alignItems:"center",gap:14,cursor:m.lock?"default":"pointer",opacity:m.lock?.4:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
+                <div style={{width:42,height:42,borderRadius:12,background:m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
+                  <div style={{fontSize:11,color:"var(--t3)"}}>{m.d}</div>
+                </div>
+                {m.lock?<span style={{fontSize:16}}>🔒</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+              </div>);
+          })}
+        </div>
+      </div>);
+    })}
   </div>);
 }
 
@@ -1185,9 +1117,22 @@ function CardSess(p){var all=[];if(p.domId){var dom=VOCAB.find(function(d){retur
 var rev=useMemo(function(){return p.domId?shuffle(all):dueCards(p.u.cardStates,all);},[]);var[ci,sC]=useState(0);var[fl,sF]=useState(false);var[done,sD]=useState(false);var[ok,sO]=useState(0);var[tot,sT]=useState(0);
 var lastSpoken=useRef(-1);var isDomainMode=!!p.domId;
 
-if(rev.length===0||done){var xp=Math.max(10,tot*3+ok*2);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-<div style={{fontSize:48,marginBottom:16}}>{done?"✨":"🎉"}</div><h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>{done?"Session Complete!":"All caught up!"}</h2>
-{done&&<div><p style={{color:"var(--t2)",marginBottom:4}}>{ok}/{tot} rated Good or Easy</p><p className="out" style={{color:"var(--gold)",fontWeight:700,fontSize:18}}>+{xp} XP</p></div>}
+if(rev.length===0||done){
+  var xp=Math.max(10,tot*3+ok*2);
+  var _dms=p.u.dailyModSessions||{};
+  var _sess=(_dms["csess_"+today()])||0;
+  var _mult=_sess===0?1:_sess===1?0.60:_sess===2?0.30:0;
+  var gxp=Math.round(xp*_mult);
+  return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+<div style={{fontSize:48,marginBottom:16}}>{done?"✨":"🎉"}</div>
+<h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>{done?"Session Complete!":"All caught up!"}</h2>
+{done&&<div>
+  <p style={{color:"var(--t2)",marginBottom:8}}>{ok}/{tot} rated Good or Easy</p>
+  {gxp>0
+    ?<p className="out" style={{color:"var(--gold)",fontWeight:700,fontSize:18}}>+{gxp} XP{_mult<1&&<span style={{fontSize:12,color:"var(--t3)",fontWeight:400,marginLeft:6}}>{"(session "+(_sess+1)+")"}</span>}</p>
+    :<div><p className="out" style={{fontSize:16,fontWeight:700,color:"var(--t3)"}}>+0 XP</p><p style={{fontSize:11,color:"var(--t3)",marginTop:4}}>Limite journalière — reviens demain !</p></div>
+  }
+</div>}
 {!done&&<p style={{color:"var(--t2)",fontSize:13}}>No cards due for review right now. Tap a specific domain to study anyway.</p>}
 <button className="btn1" onClick={function(){if(done)p.done(xp,ok,tot);else p.back();}} style={{marginTop:32}}>{done?"Collect XP":"Back"}</button></div>);}
 
@@ -5060,14 +5005,13 @@ function TeacherDash(p){
   }
 
   // ── CSV Export exhaustif v2 ──
-  // CSV Export exhaustif v2
   function exportCSV(){
     var DQ=String.fromCharCode(34);
     function qa(v){return DQ+(v===null||v===undefined?"":String(v).replace(/"/g,DQ+DQ))+DQ;}
     function na(v){return(v===null||v===undefined||v===""||v!==v)?"":v;}
-    function pcta(c,t){return t>0?Math.round(c/t*100):"";}
+    function pcta(correct,total){return total>0?Math.round(correct/total*100):"";}
     function fdatea(d){return d||"";}
-    function ftimea(s){return s?Math.round(s/60):"";}
+    function ftimea(sec){return sec?Math.round(sec/60):"";}
     var headers=[
       "Nom","Classe","XP Total","XP Semaine","Niveau","Ligue","Streak","Derniere activite",
       "Sessions totales","Temps total (min)",
@@ -5095,7 +5039,9 @@ function TeacherDash(p){
       var lg=LEAGUES.slice().reverse().find(function(l){return(s.xp||0)>=l.min;})||LEAGUES[0];
       var toeic=estimateTOEIC(s);
       var noFlashQ=0,noFlashC=0;
-      Object.keys(ms).forEach(function(k){if(k!=="csess"&&ms[k]&&ms[k].total>0){noFlashQ+=ms[k].total;noFlashC+=ms[k].correct;}});
+      Object.keys(ms).forEach(function(k){
+        if(k!=="csess"&&ms[k]&&ms[k].total>0){noFlashQ+=ms[k].total;noFlashC+=ms[k].correct;}
+      });
       function mockC(mk){var r=mr[mk];if(!r)return["","","","",""];return[na(r.toeicEstimate),r.total>0?Math.round(r.score/r.total*100):"",na(r.total),fdatea(r.date),ftimea(r.timeUsed)];}
       var ach=s.unlocked_ach||s.unlockedAch||[];
       var row=[
@@ -5124,7 +5070,7 @@ function TeacherDash(p){
       return row.join(",");
     });
     var csv=headers.join(",")+"\n"+rows.join("\n");
-    var blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+    var blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8;"});
     var url=URL.createObjectURL(blob);
     var a=document.createElement("a");
     a.href=url;a.download="toeic_arena_export_"+classCode+"_"+today()+".csv";
@@ -6412,9 +6358,9 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   <span style={{fontSize:11,padding:"4px 12px",borderRadius:99,background:"rgba(139,94,131,.12)",border:"1px solid rgba(139,94,131,.25)",color:"var(--purple)"}} className="out">👁️ Viewing: {leagueGroup}</span>
 </div>}
 
-{/* Season banner enrichi */}
+{/* Season banner */}
 <div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(212,148,58,.06),rgba(139,94,131,.06))",borderColor:"rgba(212,148,58,.15)"}}>
-  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
       <span style={{fontSize:22}}>{curSeason.icon}</span>
       <div>
@@ -6422,37 +6368,15 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
         <div style={{fontSize:11,color:"var(--t3)"}}>{curSeason.start} → {curSeason.end}</div>
       </div>
     </div>
-    <div style={{fontSize:12,fontWeight:700,color:countdown==="Ended"?"var(--red)":"var(--cyan)"}}>{ countdown==="Ended"?"Terminée":countdown}</div>
+    <div style={{textAlign:"right"}}>
+      <div style={{fontSize:12,fontWeight:700,color:countdown==="Ended"?"var(--red)":"var(--cyan)"}}>{ countdown==="Ended"?"Terminée":countdown}</div>
+    </div>
   </div>
-  <div style={{display:"flex",gap:4}}>
-    {SEASONS.map(function(s){
-      var isCurrent=s.id===curSeason.id;
-      var cw2=weekId();
-      var isPast=s.weeks[s.weeks.length-1]<cw2;
-      var isFuture=s.weeks[0]>cw2;
-      return(<div key={s.id} style={{flex:1,padding:"6px 4px",textAlign:"center",
-        background:isCurrent?"rgba(212,148,58,.15)":isPast?"rgba(74,190,96,.08)":"rgba(255,255,255,.03)",
-        borderRadius:8,border:"1px solid "+(isCurrent?"rgba(212,148,58,.3)":isPast?"rgba(74,190,96,.2)":"rgba(255,255,255,.06)"),
-        opacity:isFuture?.5:1}}>
-        <div style={{fontSize:14}}>{s.icon}</div>
-        <div style={{fontSize:9,fontWeight:isCurrent?700:400,color:isCurrent?"var(--cyan)":isPast?"var(--green)":"var(--t3)"}}>S{s.id}</div>
-        <div style={{fontSize:8,color:isPast?"var(--green)":isCurrent?"var(--cyan)":"var(--t3)"}}>{isPast?"✓":isCurrent?"En cours":"Bientôt"}</div>
-      </div>);
-    })}
-  </div>
-  {(function(){
-    var cw2=weekId();
-    var nextSeason=SEASONS.find(function(s){return s.weeks[0]>cw2;});
-    if(!nextSeason)return null;
-    return(<div style={{marginTop:10,fontSize:10,color:"var(--t3)",textAlign:"center"}}>
-      Saison {nextSeason.id} commence le {nextSeason.start} · Compteurs XP semaine remis à zéro
-    </div>);
-  })()}
 </div>
 
 {/* Tab bar */}
 <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:10,padding:3}}>
-  {[{k:"week",l:"Semaine"},{k:"overall",l:"Général"},{k:"progress",l:"📈 Progrès"}].map(function(t){
+  {[{k:"week",l:"Semaine"},{k:"season",l:"Saison "+curSeason.id},{k:"overall",l:"Général"},{k:"progress",l:"📈 Progrès"}].map(function(t){
     var active=tab===t.k;
     return(<button key={t.k} onClick={function(){setTab(t.k);if(t.k==="progress")loadProgressionData();}} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:active?700:500,background:active?"var(--cyan)":"transparent",color:active?"#000":"var(--t3)",transition:"all .2s"}}>{t.l}</button>);
   })}
@@ -6468,8 +6392,8 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 :
 <div style={{display:"flex",gap:8,marginBottom:16}}>
   <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--cyan)"}}>{u.weeklyXp}</div><div style={{fontSize:10,color:"var(--t3)"}}>XP semaine</div></div>
+  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:curSeason.color}}>#{seasonRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Saison</div></div>
   <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)"}}>#{overallRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Général</div></div>
-  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--green)"}}>{estimateTOEICScore(u.moduleScores||{}).total}</div><div style={{fontSize:10,color:"var(--t3)"}}>TOEIC est.</div></div>
 </div>}
 
 {/* ── WEEK TAB ── */}
@@ -6512,6 +6436,20 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     </div>);
   })()}
   <p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:16}}>Réinitialisé chaque lundi · Le classement détermine les points de saison</p>
+</div>)}
+
+{/* ── SEASON TAB ── */}
+{tab==="season"&&(<div>
+  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(212,148,58,.04),rgba(139,94,131,.04))"}}>
+    <div style={{fontSize:36,marginBottom:6}}>{curSeason.icon}</div>
+    <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
+    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} semaines · {countdown}</div>
+    <div style={{fontSize:11,color:"var(--t3)",marginTop:8,lineHeight:1.5}}>Chaque semaine, le 1er gagne N pts, le 2ème N-1...<br/>La régularité prime sur les coups d'éclat !</div>
+  </div>
+  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    {seasonRanking.filter(function(pl){return pl.pts>0;}).map(function(pl,i){return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.name===u.name} unit="pts"/>);})}
+    {seasonRanking.filter(function(pl){return pl.pts>0;}).length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>Pas encore de données — entraîne-toi !</p></div>}
+  </div>
 </div>)}
 
 {/* ── OVERALL TAB ── */}
