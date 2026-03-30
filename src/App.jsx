@@ -3081,7 +3081,7 @@ function BossTest(p){
     var grade=result.toeicEstimate>=800?"Legendary!":result.toeicEstimate>=600?"Excellent!":result.toeicEstimate>=400?"Good effort!":"Keep training!";
     var gradeIcon=result.toeicEstimate>=800?"👑":result.toeicEstimate>=600?"⚔️":result.toeicEstimate>=400?"🛡️":"📖";
     var gradeCol=result.toeicEstimate>=800?"var(--gold)":result.toeicEstimate>=600?"var(--green)":result.toeicEstimate>=400?"var(--orange)":"var(--red)";
-    var xp=100+result.score*3+(result.toeicEstimate>=800?100:result.toeicEstimate>=600?50:0);
+    var xp=Math.round(result.toeicEstimate*1.5)+(result.toeicEstimate>=800?200:result.toeicEstimate>=600?100:0);
 
     return(<div className="enter" style={{padding:"20px 16px 100px",minHeight:"100vh",textAlign:"center"}}>
       <div style={{fontSize:64,marginBottom:12,animation:"countUp .6s"}}>{gradeIcon}</div>
