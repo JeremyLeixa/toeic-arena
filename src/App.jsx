@@ -451,12 +451,12 @@ function canUnlockMock(u,mockId){
 function canUnlockBoss(u){
   if(!u||!u.stats)return{ok:false,reasons:[]};
   var reasons=[];
-  if(!u.mockResults||!u.mockResults.mock1)reasons.push("Complete Mock Test 1 first");
-  if(!u.mockResults||!u.mockResults.mock2)reasons.push("Complete Mock Test 2 first");
-  if(!u.mockResults||!u.mockResults.mock3)reasons.push("Complete Mock Test 3 first");
-  if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()){
-    reasons.push("24h cooldown \u2014 come back tomorrow");
-  }
+  // if(!u.mockResults||!u.mockResults.mock1)reasons.push("Complete Mock Test 1 first");
+  // if(!u.mockResults||!u.mockResults.mock2)reasons.push("Complete Mock Test 2 first");
+  // if(!u.mockResults||!u.mockResults.mock3)reasons.push("Complete Mock Test 3 first");
+  // if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()){
+    // reasons.push("24h cooldown — come back tomorrow");
+  // }
   return{ok:reasons.length===0,reasons:reasons};
 }
 
@@ -1046,38 +1046,38 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 
   // ── Section data (unchanged) ──
   var sections=[
-    {key:"exercises",title:"Exercises",sub:"TOEIC Parts training",icon:"\u2694\ufe0f",count:"Parts 1-7",items:[
-      {id:"daily",n:"Daily Challenge",d:dd?"Completed today \u2713":"5 daily questions, timed",i:"\u26a1",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd},
-      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"\ud83d\udc42",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
-      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"\ud83d\udcd6",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    {key:"exercises",title:"Exercises",sub:"TOEIC Parts training",icon:"⚔️",count:"Parts 1-7",items:[
+      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd},
+      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
+      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
-    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"\ud83e\udde9",count:"7 modules",items:[
-      {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"\ud83c\udccf",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
-      {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"\ud83e\udde9",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
-      {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"\ud83d\udd00",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
-      {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"\ud83c\udfaf",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
-      {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns \u00b7 Study + Context Quiz",i:"\u2696\ufe0f",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
-      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually \u2260 actuellement",i:"\ud83c\udfad",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
-      {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs \u00b7 Study, Match & Speed",i:"\u2694\ufe0f",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
+    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"🧩",count:"7 modules",items:[
+      {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
+      {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+      {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
+      {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
+      {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
+      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
+      {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
     ]},
-    {key:"mocks",title:"Mock Exams",sub:"Real conditions",icon:"\ud83d\udcdc",count:"3 tests",items:(function(){
+    {key:"mocks",title:"Mock Exams",sub:"Real conditions",icon:"📜",count:"3 tests",items:(function(){
       var items=[];
       var u1=canUnlockMock(p.u,1);
-      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test \u00b7 49 Q \u00b7 37 min":u1.reasons[0],i:"\ud83d\udcdc",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
+      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"📜",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
       var u2=canUnlockMock(p.u,2);
-      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test \u00b7 49 Q \u00b7 37 min":u2.reasons[0],i:"\ud83d\udcdc",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
+      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📜",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
       var u3=canUnlockMock(p.u,3);
-      items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test \u00b7 48 Q \u00b7 37 min":u3.reasons[0],i:"\ud83d\udcdc",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
-      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed \u2014 TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495";items[0].lock=true;items[0].bg="var(--bg3)";}
-      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed \u2014 TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495";items[1].lock=true;items[1].bg="var(--bg3)";}
-      if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed \u2014 TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495";items[2].lock=true;items[2].bg="var(--bg3)";}
+      items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"📜",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
+      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495";items[0].lock=true;items[0].bg="var(--bg3)";}
+      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495";items[1].lock=true;items[1].bg="var(--bg3)";}
+      if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495";items[2].lock=true;items[2].bg="var(--bg3)";}
       return items;
     })()},
-    {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"\ud83d\uddfa\ufe0f",count:"4 tools",items:[
-      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"\ud83d\uddfa\ufe0f",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
-      {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"\ud83e\udde0",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
-      {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"\ud83e\udea4",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
-      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"\ud83d\udcd6",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"🗺️",count:"4 tools",items:[
+      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"🗺️",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
+      {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
+      {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
+      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
   ];
 
@@ -1092,7 +1092,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
     var sec=sections[trainView];
     var animIdx=0;
     return(<div className="enter" style={{padding:"20px 16px 100px"}}>
-      <button onClick={function(){setTrainView(null);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"\u2190"} Training Grounds</button>
+      <button onClick={function(){setTrainView(null);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"←"} Training Grounds</button>
       <h2 className="out" style={{fontWeight:800,fontSize:20,marginBottom:4}}>{sec.title}</h2>
       <p style={{color:"var(--t3)",fontSize:12,marginBottom:16}}>{sec.sub}</p>
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -1106,7 +1106,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
                 <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
                 <div style={{fontSize:11,color:"var(--t3)"}}>{m.d}</div>
               </div>
-              {m.lock?<span style={{fontSize:16}}>{"\ud83d\udd12"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span>}
+              {m.lock?<span style={{fontSize:16}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
             </div>);
         })}
       </div>
@@ -1128,7 +1128,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
           <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{sec.sub}</div>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <span style={{fontSize:10,color:"var(--cyan)",fontWeight:600}}>{sec.count}</span>
-            <span style={{fontSize:14,color:"var(--cyan)"}}>{"\u2192"}</span>
+            <span style={{fontSize:14,color:"var(--cyan)"}}>{"→"}</span>
           </div>
         </div>);
       })}
@@ -1139,27 +1139,27 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       style={{padding:0,overflow:"hidden",cursor:bossLocked?"default":"pointer",opacity:bossLocked?.55:1,borderRadius:16,border:"1px solid "+(bossLocked?"var(--bdr)":"rgba(220,38,38,.5)"),background:"linear-gradient(135deg,#1a0505,#2a0a0a)",animation:"fadeIn .5s ease-out",animationDelay:".3s",animationFillMode:"both"}}>
       <div style={{background:"linear-gradient(135deg,#2a0a0a,#3d1a00,#1a0800)",padding:"18px 16px",position:"relative",overflow:"hidden"}}>
         {!bossLocked&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 80% 30%,rgba(245,158,11,.08),transparent 60%),radial-gradient(ellipse at 20% 70%,rgba(220,38,38,.06),transparent 50%)"}}/>}
-        {!bossLocked&&<div style={{position:"absolute",top:-8,right:12,fontSize:48,opacity:.1,transform:"scaleX(-1)"}}>{"\ud83d\udc09"}</div>}
+        {!bossLocked&&<div style={{position:"absolute",top:-8,right:12,fontSize:48,opacity:.1,transform:"scaleX(-1)"}}>{"🐉"}</div>}
         <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
-          <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#dc2626,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:bossLocked?"none":"0 0 20px rgba(220,38,38,.3)"}}>{"\ud83d\udc09"}</div>
+          <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#dc2626,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:bossLocked?"none":"0 0 20px rgba(220,38,38,.3)"}}>{"🐉"}</div>
           <div style={{flex:1}}>
             <div style={{marginBottom:2}}>
               <span className="out" style={{fontWeight:900,fontSize:16,background:"linear-gradient(90deg,#ff4444,#ff8c42,#ffd700)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>THE FINAL ARENA</span>
             </div>
-            {bossCompleted&&!bossLocked?<div style={{fontSize:12,color:"var(--gold)"}}>Best: TOEIC {p.u.mockResults.boss.toeicEstimate}/990 {"\u2014"} Retake?</div>
+            {bossCompleted&&!bossLocked?<div style={{fontSize:12,color:"var(--gold)"}}>Best: TOEIC {p.u.mockResults.boss.toeicEstimate}/990 {"—"} Retake?</div>
             :bossLocked?<div style={{fontSize:11,color:"var(--t3)"}}>{uBoss.reasons[0]}</div>
-            :<div style={{fontSize:12,color:"#cc8844"}}>Full TOEIC {"\u00b7"} 202 Q {"\u00b7"} 120 min</div>}
+            :<div style={{fontSize:12,color:"#cc8844"}}>Full TOEIC {"·"} 202 Q {"·"} 120 min</div>}
             {/* Mock completion pills */}
             <div style={{display:"flex",gap:4,marginTop:6}}>
               {["Mock 1","Mock 2","Mock 3"].map(function(label,i){
                 var done=mocksDone[i];
                 return(<span key={i} style={{fontSize:9,padding:"2px 7px",borderRadius:99,fontWeight:600,
                   background:done?"rgba(34,197,94,.15)":"rgba(255,255,255,.06)",
-                  color:done?"#22c55e":"var(--t3)"}}>{done?"\u2713 ":""}{label}</span>);
+                  color:done?"#22c55e":"var(--t3)"}}>{done?"✓ ":""}{label}</span>);
               })}
             </div>
           </div>
-          {bossLocked?<span style={{fontSize:18}}>{"\ud83d\udd12"}</span>:<span style={{fontSize:18,color:"rgba(220,38,38,.6)"}}>{"\u2794"}</span>}
+          {bossLocked?<span style={{fontSize:18}}>{"🔒"}</span>:<span style={{fontSize:18,color:"rgba(220,38,38,.6)"}}>{"➔"}</span>}
         </div>
       </div>
     </div>
@@ -2869,41 +2869,41 @@ function BossTest(p){
   ans.p7.forEach(function(ps){ps.forEach(function(a){if(a>=0)answered++;});});
 
   // ── Section labels ──
-  var secLabel=sec==="p1"?"Part 1 \u2014 Photos":sec==="p2"?"Part 2 \u2014 Q&R":sec==="p3"?"Part 3 \u2014 Conversations":sec==="p4"?"Part 4 \u2014 Talks":sec==="p5"?"Part 5 \u2014 Sentences":sec==="p6"?"Part 6 \u2014 Text Completion":"Part 7 \u2014 Reading";
+  var secLabel=sec==="p1"?"Part 1 — Photos":sec==="p2"?"Part 2 — Q&R":sec==="p3"?"Part 3 — Conversations":sec==="p4"?"Part 4 — Talks":sec==="p5"?"Part 5 — Sentences":sec==="p6"?"Part 6 — Text Completion":"Part 7 — Reading";
   var isListening=sec==="p1"||sec==="p2"||sec==="p3"||sec==="p4";
 
   // ═══ INTRO ═══
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:64,marginBottom:12,animation:"pulse 2s infinite"}}>&#x1F409;</div>
+      <div style={{fontSize:64,marginBottom:12,animation:"pulse 2s infinite"}}>🐉</div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,background:"linear-gradient(135deg,#dc2626,#f59e0b)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>THE FINAL ARENA</h1>
       <p style={{color:"var(--t2)",fontSize:14,marginBottom:20}}>Full TOEIC Simulation</p>
       <div className="crd" style={{textAlign:"left",padding:16,marginBottom:16}}>
-        <div style={{fontSize:11,color:"var(--orange)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>&#x1F50A; Listening Section</div>
+        <div style={{fontSize:11,color:"var(--orange)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>🔊 Listening Section</div>
         <div style={{fontSize:13,color:"var(--t1)",lineHeight:1.8}}>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 1 \u2014 Photographs</span><span className="out" style={{color:"var(--cyan)"}}>{LP1.length} Q</span></div>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 2 \u2014 Question-Response</span><span className="out" style={{color:"var(--cyan)"}}>{LP2.length} Q</span></div>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 3 \u2014 Conversations</span><span className="out" style={{color:"var(--cyan)"}}>{p3QC} Q</span></div>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 4 \u2014 Talks</span><span className="out" style={{color:"var(--cyan)"}}>{p4QC} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 1 — Photographs</span><span className="out" style={{color:"var(--cyan)"}}>{LP1.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 2 — Question-Response</span><span className="out" style={{color:"var(--cyan)"}}>{LP2.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 3 — Conversations</span><span className="out" style={{color:"var(--cyan)"}}>{p3QC} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 4 — Talks</span><span className="out" style={{color:"var(--cyan)"}}>{p4QC} Q</span></div>
           <div style={{borderTop:"1px solid var(--bdr)",marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontWeight:700}}><span>Subtotal</span><span style={{color:"var(--gold)"}}>{lisQ} Q</span></div>
         </div>
       </div>
       <div className="crd" style={{textAlign:"left",padding:16,marginBottom:16}}>
-        <div style={{fontSize:11,color:"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>&#x1F4D6; Reading Section</div>
+        <div style={{fontSize:11,color:"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>📖 Reading Section</div>
         <div style={{fontSize:13,color:"var(--t1)",lineHeight:1.8}}>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 5 \u2014 Incomplete Sentences</span><span className="out" style={{color:"var(--cyan)"}}>{RP5.length} Q</span></div>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 6 \u2014 Text Completion</span><span className="out" style={{color:"var(--cyan)"}}>{p6BC} Q</span></div>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 7 \u2014 Reading Comprehension</span><span className="out" style={{color:"var(--cyan)"}}>{p7QC} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 5 — Incomplete Sentences</span><span className="out" style={{color:"var(--cyan)"}}>{RP5.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 6 — Text Completion</span><span className="out" style={{color:"var(--cyan)"}}>{p6BC} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 7 — Reading Comprehension</span><span className="out" style={{color:"var(--cyan)"}}>{p7QC} Q</span></div>
           <div style={{borderTop:"1px solid var(--bdr)",marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontWeight:700}}><span>Subtotal</span><span style={{color:"var(--gold)"}}>{readQ} Q</span></div>
         </div>
       </div>
       <div className="crd glo" style={{padding:14,marginBottom:20}}>
-        <div style={{display:"flex",justifyContent:"space-between",fontWeight:800,fontSize:15,color:"var(--t1)"}}><span>TOTAL</span><span className="out" style={{color:"var(--gold)"}}>{totalQ} questions \u00b7 120 min</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",fontWeight:800,fontSize:15,color:"var(--t1)"}}><span>TOTAL</span><span className="out" style={{color:"var(--gold)"}}>{totalQ} questions · 120 min</span></div>
       </div>
       <div className="crd" style={{padding:14,marginBottom:24,borderColor:"rgba(220,38,38,.3)",background:"rgba(220,38,38,.06)"}}>
-        <p style={{fontSize:12,color:"var(--red)",lineHeight:1.6}}>\u26a0\ufe0f Real TOEIC conditions. No feedback. No going back. Audio plays ONCE. Your score is saved. Rejouable after 24h cooldown.</p>
+        <p style={{fontSize:12,color:"var(--red)",lineHeight:1.6}}>⚠️ Real TOEIC conditions. No feedback. No going back. Audio plays ONCE. Your score is saved. Rejouable after 24h cooldown.</p>
       </div>
-      <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:18,padding:"16px 32px"}} onClick={function(){setPhase("test");}}>&#x2694;\ufe0f Enter the Arena</button>
+      <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:18,padding:"16px 32px"}} onClick={function(){stopBGM();setPhase("test");}}>⚔️ Enter the Arena</button>
       <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Not ready yet</button>
     </div>);
   }
@@ -2915,7 +2915,7 @@ function BossTest(p){
     // Common header
     var header=(<div style={{marginBottom:16}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <div style={{fontSize:11,color:isListening?"var(--orange)":"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>{isListening?"\ud83d\udd0a Listening":"\ud83d\udcd6 Reading"}</div>
+        <div style={{fontSize:11,color:isListening?"var(--orange)":"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>{isListening?"🔊 Listening":"📖 Reading"}</div>
         <div className="out" style={{fontSize:14,fontWeight:800,color:timerCol}}>{fmtT(timeLeft)}</div>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -2925,48 +2925,50 @@ function BossTest(p){
       <Bar value={answered} max={totalQ} h={4} color={isListening?"linear-gradient(90deg,#f59e0b,#ef4444)":"linear-gradient(90deg,#22c55e,#06b6d4)"}/>
     </div>);
 
-    // ── P1: Photos ──
+    // ── P1: Photos (TOEIC: blind A/B/C/D, answer during audio) ──
     if(sec==="p1"){
-      var it=LP1[qi];
+      var it=LP1[qi];var selP1=ans.p1[qi];
       return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
         {header}
         <div style={{marginBottom:12,borderRadius:14,overflow:"hidden",border:"1px solid var(--bdr)"}}>
           <img src={it.img} alt="TOEIC photo" style={{width:"100%",display:"block",maxHeight:240,objectFit:"cover"}}/>
         </div>
         {aState==="ready"&&<div style={{textAlign:"center",marginBottom:16}}>
-          <button onClick={playP1} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#f59e0b,#ef4444)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>&#x25b6;\ufe0f</span></button>
-          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Tap to play statements</p></div>}
-        {aState==="playing"&&<div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>&#x1F50A;</div>
-          <p className="out" style={{color:"var(--orange)",fontSize:13,marginTop:8}}>Playing statement {String.fromCharCode(65+(curOpt>=0?curOpt:0))}...</p></div>}
-        {aState==="done"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {it.opts.map(function(opt,i){var sel=ans.p1[qi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
-            <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
-            <span>{opt}</span></button>);})}
+          <button onClick={playP1} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#f59e0b,#ef4444)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>{"▶️"}</span></button>
+          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Tap to play — listen and choose</p></div>}
+        {(aState==="playing"||aState==="done")&&<div>
+          {aState==="playing"&&<div style={{textAlign:"center",marginBottom:12}}>
+            <p className="out" style={{color:"var(--orange)",fontSize:13,animation:"pulse 1.5s infinite"}}>🔊 Playing statement {String.fromCharCode(65+(curOpt>=0?curOpt:0))}...</p></div>}
+          {aState==="done"&&selP1<0&&<div style={{textAlign:"center",marginBottom:12}}>
+            <p className="out" style={{color:"var(--green)",fontSize:13}}>Audio complete — choose your answer</p></div>}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            {["A","B","C","D"].map(function(letter,i){var sel=selP1===i;var playing2=aState==="playing"&&curOpt===i;return(<button key={i} onClick={function(){if(selP1<0)pick(i);}} style={{padding:"18px 10px",background:sel?"rgba(212,148,58,.2)":playing2?"rgba(245,158,11,.1)":"var(--bg2)",border:"2px solid "+(sel?"var(--cyan)":playing2?"var(--orange)":"var(--bdr)"),borderRadius:14,cursor:selP1<0?"pointer":"default",textAlign:"center",fontFamily:"'Cinzel','Outfit',serif",transition:"all .15s"}}>
+              <div className="out" style={{fontSize:24,fontWeight:900,color:sel?"var(--cyan)":playing2?"var(--orange)":"var(--t2)"}}>{letter}</div>
+            </button>);})}
+          </div>
         </div>}
       </div>);
     }
 
-    // ── P2: Q&R ──
+    // ── P2: Q&R (TOEIC: blind A/B/C, answer during audio) ──
     if(sec==="p2"){
-      var it2=LP2[qi];
+      var selP2=ans.p2[qi];
       return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
         {header}
-        <div style={{textAlign:"center",marginTop:20}}>
-          {aState==="ready"&&<div>
-            <button onClick={playP2} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#f59e0b,#ef4444)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>&#x25b6;\ufe0f</span></button>
-            <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Tap to play question + responses</p></div>}
-          {aState==="playing"&&<div>
-            <div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>&#x1F50A;</div>
-            <p className="out" style={{color:"var(--orange)",fontSize:13,marginTop:8}}>{curOpt>=0?"Playing response "+String.fromCharCode(65+curOpt)+"...":"Playing question..."}</p></div>}
-          {aState==="done"&&<div style={{textAlign:"left",animation:"fadeIn .3s"}}>
-            <p className="out" style={{color:"var(--green)",fontSize:13,fontWeight:600,marginBottom:16,textAlign:"center"}}>Choose the best response</p>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {it2.opts.map(function(opt,i){var sel=ans.p2[qi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
-                <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
-                <span>{opt}</span></button>);})}
-            </div></div>}
-        </div>
+        {aState==="ready"&&<div style={{textAlign:"center",marginTop:40}}>
+          <button onClick={playP2} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#f59e0b,#ef4444)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>{"▶️"}</span></button>
+          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Tap to play — listen and choose</p></div>}
+        {(aState==="playing"||aState==="done")&&<div>
+          {aState==="playing"&&<div style={{textAlign:"center",marginBottom:16}}>
+            <p className="out" style={{color:"var(--orange)",fontSize:13,animation:"pulse 1.5s infinite"}}>🔊 {curOpt>=0?"Response "+String.fromCharCode(65+curOpt)+"...":"Question..."}</p></div>}
+          {aState==="done"&&selP2<0&&<div style={{textAlign:"center",marginBottom:16}}>
+            <p className="out" style={{color:"var(--green)",fontSize:13}}>Audio complete — choose your answer</p></div>}
+          <div style={{display:"flex",flexDirection:"column",gap:12,maxWidth:280,margin:"20px auto 0"}}>
+            {["A","B","C"].map(function(letter,i){var sel=selP2===i;var playing2=aState==="playing"&&curOpt===i;return(<button key={i} onClick={function(){if(selP2<0)pick(i);}} style={{padding:"20px",background:sel?"rgba(212,148,58,.2)":playing2?"rgba(245,158,11,.1)":"var(--bg2)",border:"2px solid "+(sel?"var(--cyan)":playing2?"var(--orange)":"var(--bdr)"),borderRadius:14,cursor:selP2<0?"pointer":"default",textAlign:"center",fontFamily:"'Cinzel','Outfit',serif",transition:"all .15s"}}>
+              <div className="out" style={{fontSize:28,fontWeight:900,color:sel?"var(--cyan)":playing2?"var(--orange)":"var(--t2)"}}>{letter}</div>
+            </button>);})}
+          </div>
+        </div>}
       </div>);
     }
 
@@ -2975,15 +2977,15 @@ function BossTest(p){
       var c3=LP3[qi];var q3=c3.qs[sqi];
       return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
         {header}
-        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>Conversation {qi+1}/{LP3.length} \u2014 Question {sqi+1}/{c3.qs.length}</div>
+        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>Conversation {qi+1}/{LP3.length} — Question {sqi+1}/{c3.qs.length}</div>
         {aState==="ready"&&<div style={{textAlign:"center",marginTop:20,marginBottom:20}}>
           <div className="crd" style={{padding:12,marginBottom:16,textAlign:"left"}}>
             <div style={{fontSize:11,color:"var(--t3)",marginBottom:6}}>Preview questions:</div>
             {c3.qs.map(function(qq,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{i+1}. {qq.q}</div>);})}
           </div>
-          <button onClick={playP3} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#8b5cf6,#ec4899)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>&#x25b6;\ufe0f</span></button>
+          <button onClick={playP3} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#8b5cf6,#ec4899)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>▶️</span></button>
           <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Play conversation</p></div>}
-        {aState==="playing"&&<div style={{textAlign:"center",marginTop:30}}><div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>&#x1F5E3;\ufe0f</div><p className="out" style={{color:"var(--purple)",fontSize:13,marginTop:8}}>Listening to conversation...</p></div>}
+        {aState==="playing"&&<div style={{textAlign:"center",marginTop:30}}><div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>🗣️</div><p className="out" style={{color:"var(--purple)",fontSize:13,marginTop:8}}>Listening to conversation...</p></div>}
         {aState==="done"&&<div style={{animation:"fadeIn .3s"}}>
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{q3.q}</h3>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -2999,15 +3001,15 @@ function BossTest(p){
       var t4=LP4[qi];var q4=t4.qs[sqi];
       return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
         {header}
-        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>Talk {qi+1}/{LP4.length} ({t4.type}) \u2014 Question {sqi+1}/{t4.qs.length}</div>
+        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>Talk {qi+1}/{LP4.length} ({t4.type}) — Question {sqi+1}/{t4.qs.length}</div>
         {aState==="ready"&&<div style={{textAlign:"center",marginTop:20,marginBottom:20}}>
           <div className="crd" style={{padding:12,marginBottom:16,textAlign:"left"}}>
             <div style={{fontSize:11,color:"var(--t3)",marginBottom:6}}>Preview questions:</div>
             {t4.qs.map(function(qq,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{i+1}. {qq.q}</div>);})}
           </div>
-          <button onClick={playP4} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#06b6d4,#3b82f6)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>&#x25b6;\ufe0f</span></button>
+          <button onClick={playP4} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#06b6d4,#3b82f6)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>▶️</span></button>
           <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Play talk</p></div>}
-        {aState==="playing"&&<div style={{textAlign:"center",marginTop:30}}><div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>&#x1F3A4;</div><p className="out" style={{color:"var(--cyan)",fontSize:13,marginTop:8}}>Listening to talk...</p></div>}
+        {aState==="playing"&&<div style={{textAlign:"center",marginTop:30}}><div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>🎤</div><p className="out" style={{color:"var(--cyan)",fontSize:13,marginTop:8}}>Listening to talk...</p></div>}
         {aState==="done"&&<div style={{animation:"fadeIn .3s"}}>
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{q4.q}</h3>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -3043,7 +3045,7 @@ function BossTest(p){
       });
       return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
         {header}
-        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{t6.type} \u2014 Blank {sqi+1}/{blankNum}</div>
+        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{t6.type} — Blank {sqi+1}/{blankNum}</div>
         <div className="crd" style={{padding:14,marginBottom:16,maxHeight:200,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{renderedText}</div>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {bl6.options.map(function(opt,i){var isSel=sel6===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
@@ -3077,7 +3079,7 @@ function BossTest(p){
   if(phase==="done"&&result&&!revMode){
     var pct=Math.round(result.score/result.total*100);
     var grade=result.toeicEstimate>=800?"Legendary!":result.toeicEstimate>=600?"Excellent!":result.toeicEstimate>=400?"Good effort!":"Keep training!";
-    var gradeIcon=result.toeicEstimate>=800?"\ud83d\udc51":result.toeicEstimate>=600?"\u2694\ufe0f":result.toeicEstimate>=400?"\ud83d\udee1\ufe0f":"\ud83d\udcd6";
+    var gradeIcon=result.toeicEstimate>=800?"👑":result.toeicEstimate>=600?"⚔️":result.toeicEstimate>=400?"🛡️":"📖";
     var gradeCol=result.toeicEstimate>=800?"var(--gold)":result.toeicEstimate>=600?"var(--green)":result.toeicEstimate>=400?"var(--orange)":"var(--red)";
     var xp=100+result.score*3+(result.toeicEstimate>=800?100:result.toeicEstimate>=600?50:0);
 
@@ -3126,7 +3128,7 @@ function BossTest(p){
 
       <div className="out" style={{fontSize:22,fontWeight:800,color:"var(--gold)",marginBottom:20}}>+{xp} XP</div>
 
-      <button className="btn1" onClick={function(){setRevMode(true);setRevSec("p1");setRevIdx(0);}}>\ud83d\udcd6 Review Answers</button>
+      <button className="btn1" onClick={function(){setRevMode(true);setRevSec("p1");setRevIdx(0);}}>📖 Review Answers</button>
       <button className="btn2" onClick={function(){result.mockId="boss";p.done(result,xp);}} style={{marginTop:10,width:"100%",fontSize:16,padding:"14px 24px"}}>Save & Exit</button>
     </div>);
   }
@@ -3148,8 +3150,8 @@ function BossTest(p){
           var bg=isC?"rgba(0,230,118,.12)":isP?"rgba(255,71,87,.12)":"var(--bg2)";
           var bd=isC?"var(--green)":isP?"var(--red)":"var(--bdr)";
           return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:bg,border:"1px solid "+bd,borderRadius:10,fontSize:13}}>
-            <span style={{fontWeight:700,color:isC?"var(--green)":isP?"var(--red)":"var(--t3)",fontSize:12}}>{isC?"\u2713":isP?"\u2717":String.fromCharCode(65+i)}</span>
-            <span style={{color:"var(--t1)"}}>{typeof opt==="string"&&opt.length>80?opt.substring(0,77)+"\u2026":opt}</span></div>);
+            <span style={{fontWeight:700,color:isC?"var(--green)":isP?"var(--red)":"var(--t3)",fontSize:12}}>{isC?"✓":isP?"✗":String.fromCharCode(65+i)}</span>
+            <span style={{color:"var(--t1)"}}>{typeof opt==="string"&&opt.length>80?opt.substring(0,77)+"…":opt}</span></div>);
         })}
       </div>);
     }
@@ -3157,7 +3159,7 @@ function BossTest(p){
     // ── P1: Photos ──
     if(revSec==="p1"){
       var it=LP1[revIdx];rAnswer=ans.p1[revIdx];rCorrect=it.c;rExpl=it.x;
-      rLabel="Part 1 \u2014 Photo "+(revIdx+1);
+      rLabel="Part 1 — Photo "+(revIdx+1);
       rItem=(<div>
         <div style={{marginBottom:12,borderRadius:14,overflow:"hidden",border:"1px solid var(--bdr)"}}>
           <img src={it.img} alt="TOEIC photo" style={{width:"100%",display:"block",maxHeight:200,objectFit:"cover"}}/>
@@ -3169,7 +3171,7 @@ function BossTest(p){
     // ── P2: Q&R ──
     else if(revSec==="p2"){
       var it2=LP2[revIdx];rAnswer=ans.p2[revIdx];rCorrect=it2.c;rExpl=it2.x;
-      rLabel="Part 2 \u2014 Q"+(revIdx+1);
+      rLabel="Part 2 — Q"+(revIdx+1);
       rItem=(<div>
         <div className="crd" style={{padding:12,marginBottom:12,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
           <p className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",marginBottom:4}}>Question:</p>
@@ -3188,7 +3190,7 @@ function BossTest(p){
       }
       var conv=LP3[ci3];var q3r=conv.qs[qi3];
       rAnswer=ans.p3[ci3][qi3];rCorrect=q3r.c;rExpl="";
-      rLabel="Part 3 \u2014 Convo "+(ci3+1)+", Q"+(qi3+1);
+      rLabel="Part 3 — Convo "+(ci3+1)+", Q"+(qi3+1);
       rItem=(<div>
         <div className="crd" style={{padding:12,marginBottom:12,maxHeight:140,overflowY:"auto"}}>
           {conv.lines.map(function(ln,i){return(<div key={i} style={{fontSize:12,color:"var(--t1)",lineHeight:1.6,marginBottom:4}}>
@@ -3209,7 +3211,7 @@ function BossTest(p){
       }
       var talk=LP4[ti4];var q4r=talk.qs[qi4];
       rAnswer=ans.p4[ti4][qi4];rCorrect=q4r.c;rExpl="";
-      rLabel="Part 4 \u2014 Talk "+(ti4+1)+" ("+talk.type+"), Q"+(qi4+1);
+      rLabel="Part 4 — Talk "+(ti4+1)+" ("+talk.type+"), Q"+(qi4+1);
       rItem=(<div>
         <div className="crd" style={{padding:12,marginBottom:12,maxHeight:140,overflowY:"auto",fontSize:12,lineHeight:1.6,color:"var(--t1)",fontStyle:"italic"}}>
           {talk.text}
@@ -3222,7 +3224,7 @@ function BossTest(p){
     // ── P5: Incomplete Sentences ──
     else if(revSec==="p5"){
       var q5r=RP5[revIdx];rAnswer=ans.p5[revIdx];rCorrect=q5r.c;rExpl=q5r.x;
-      rLabel="Part 5 \u2014 Q"+(revIdx+1);
+      rLabel="Part 5 — Q"+(revIdx+1);
       rItem=(<div>
         <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{q5r.s}</h3>
         {revOpts(q5r.o,q5r.c,rAnswer)}
@@ -3236,7 +3238,7 @@ function BossTest(p){
       var t6r=RP6[tIdx6];var blanks6r=[];t6r.parts.forEach(function(pt){if(pt.blank)blanks6r.push(pt);});
       var bl6r=blanks6r[bIdx6];
       rAnswer=ans.p6[tIdx6][bIdx6];rCorrect=bl6r.correct;rExpl=bl6r.x;
-      rLabel="Part 6 \u2014 Text "+(tIdx6+1)+", Blank "+(bIdx6+1);
+      rLabel="Part 6 — Text "+(tIdx6+1)+", Blank "+(bIdx6+1);
       rItem=(<div>
         <div style={{fontSize:12,color:"var(--t2)",marginBottom:12}}>{t6r.type}: {t6r.subject||""}</div>
         {revOpts(bl6r.options,bl6r.correct,rAnswer)}
@@ -3252,7 +3254,7 @@ function BossTest(p){
       }
       var ps7r=RP7[pi7];var pq7r=ps7r.questions[qi7];
       rAnswer=ans.p7[pi7][qi7];rCorrect=pq7r.correct;rExpl=pq7r.x;
-      rLabel="Part 7 \u2014 Passage "+(pi7+1)+", Q"+(qi7+1);
+      rLabel="Part 7 — Passage "+(pi7+1)+", Q"+(qi7+1);
       rItem=(<div>
         <div style={{fontSize:11,color:"var(--t2)",marginBottom:8}}>{ps7r.type}</div>
         <h3 className="out" style={{fontWeight:700,fontSize:14,lineHeight:1.5,marginBottom:12}}>{pq7r.q}</h3>
@@ -3285,7 +3287,7 @@ function BossTest(p){
 
     return(<div style={{padding:"20px 16px 40px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <button onClick={function(){setRevMode(false);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>{"\u2190"} Results</button>
+        <button onClick={function(){setRevMode(false);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>{"←"} Results</button>
         <span className="out" style={{fontWeight:700,fontSize:12,color:"var(--purple)"}}>{rLabel}</span>
         <div style={{width:40}}/>
       </div>
@@ -3311,8 +3313,8 @@ function BossTest(p){
       </div>}
 
       <div style={{display:"flex",gap:10,marginTop:16}}>
-        {!isFirst&&<button className="btn2" onClick={revPrev} style={{flex:1}}>{"\u2190"} Prev</button>}
-        <button className="btn1" onClick={revNext} style={{flex:1}}>{isLast?"Back to Results":"Next \u2192"}</button>
+        {!isFirst&&<button className="btn2" onClick={revPrev} style={{flex:1}}>{"←"} Prev</button>}
+        <button className="btn1" onClick={revNext} style={{flex:1}}>{isLast?"Back to Results":"Next →"}</button>
       </div>
     </div>);
   }
@@ -4829,7 +4831,7 @@ function ClueHunter(p){
           {parts.map(function(part,i){return(<span key={i}>{part}
             {i<parts.length-1&&(answerWord
               ?<span style={{color:isCorrect?"var(--green)":"var(--red)",fontWeight:700,borderBottom:"3px solid "+(isCorrect?"var(--green)":"var(--red)"),padding:"0 4px"}}>{answerWord}</span>
-              :<span style={{display:"inline-block",minWidth:88,borderBottom:"3px solid var(--cyan)",margin:"0 6px",verticalAlign:"bottom",opacity:.6}}>{"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0"}</span>)}
+              :<span style={{display:"inline-block",minWidth:88,borderBottom:"3px solid var(--cyan)",margin:"0 6px",verticalAlign:"bottom",opacity:.6}}>{"        "}</span>)}
           </span>);})}
         </p>
       </div>
@@ -6318,19 +6320,19 @@ function ListenHub(p){
       <div className="crd" onClick={function(){p.nav("lisP1");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
         <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#22c55e,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🖼️</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 1 — Photographs</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P1.length}</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("lisP2");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
         <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>❓</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 2 — Question-Response</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P2.length}</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
 		<div className="crd" onClick={function(){p.nav("lisP3");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
         <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#8b5cf6,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>👥</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 3 — Conversations</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P3.length}</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("lisP4");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
         <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#06b6d4,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📜</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 4 — Talks</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P4.length}</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
     </div>
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
   </div>);
@@ -6761,19 +6763,19 @@ function ReadingHub(p){
       <div className="crd" onClick={function(){p.nav("drill");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
         <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#00e676,#00bfa5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📜</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 5 — Sentence Completion</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random questions from 100</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("timesim");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
         <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#8b5cf6,#6366f1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🏁</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 5 — Exam Simulation</div><div style={{fontSize:11,color:"var(--t3)"}}>30 Qs in 10 min, real pace</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("p6");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
         <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#c4587a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📜</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 6 — Text Completion</div><div style={{fontSize:11,color:"var(--t3)"}}>Business texts with blanks</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){p.nav("p7");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
         <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#3b82f6,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📖</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 7 — Reading Comprehension</div><div style={{fontSize:11,color:"var(--t3)"}}>Passages + questions</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span></div>
+        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
     </div>
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
   </div>);
@@ -7779,8 +7781,8 @@ function sv(d){
       if(activeEvents&&activeEvents.length>0){
         activeEvents.forEach(function(ev){
           var cfg=ev.config||{};var m=cfg.multiplier||2;
-          if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"\u26A1 Flash Hour x"+m,color:"#f0c850"});}
-          if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"\uD83D\uDCAA Underdog x"+m,color:"#4abe60"});}
+          if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"⚡ Flash Hour x"+m,color:"#f0c850"});}
+          if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"💪 Underdog x"+m,color:"#4abe60"});}
         });
       }
 
@@ -7951,7 +7953,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="mock1")return(<div className={lc}><style>{CSS}</style><MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="mock2")return(<div className={lc}><style>{CSS}</style><MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
 
-  if(sp==="boss")return(<div className={lc}><style>{CSS}</style><BossTest u={u} done={bossDone} back={function(){sSP(null);sT("train");}}/></div>);  if(sp==="mock3")return(<div className={lc}><style>{CSS}</style><MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="boss"){playBGM("bgm_final");return(<div className={lc}><style>{CSS}</style><BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sT("train");}}/></div>);}  if(sp==="mock3")return(<div className={lc}><style>{CSS}</style><MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="smatch")return(<div className={lc}><style>{CSS}</style><SpeedMatchHub u={u} nav={nav} back={function(){sSP(null);sT("games");}}/></div>);
 if(sp==="matchE"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/></div>);}
   if(sp==="matchH"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/></div>);}
