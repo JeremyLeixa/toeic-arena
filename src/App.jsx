@@ -7140,7 +7140,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
             var isTop3=rank<=3;var isTop10=rank<=10;
             var gainCol=pl.gain>100?"var(--green)":pl.gain>0?"var(--orange)":"var(--red)";
             var gainSign=pl.gain>0?"+":"";
-            var bonusLabel=isTop3?"🏆 +2pts":isTop10?"⭐ +1pt":"";
+            var bonusLabel=(pl.gain>0)?(isTop3?"🏆 +2pts":isTop10?"⭐ +1pt":""):"";
             return(<div key={pl.name} style={{
               display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
               background:pl.me?"rgba(212,148,58,.08)":"var(--bg2)",
