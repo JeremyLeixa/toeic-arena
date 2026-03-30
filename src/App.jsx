@@ -577,17 +577,18 @@ function XpToast(p){if(!p.v)return null;
     </div>}
   </div>);}
 
-function Tabs(p){var tabs=[{id:"home",l:"Home",i:"⚡"},{id:"train",l:"Train",i:"🎯"},{id:"cards",l:"Cards",i:"🃏"},{id:"games",l:"Games",i:"🎲"},{id:"league",l:"League",i:"🏆"},{id:"profile",l:"Profile",i:"👤"}];
+function Tabs(p){var tabs=[{id:"home",l:"Home",i:"\u26A1"},{id:"train",l:"Train",i:"\uD83C\uDFAF"},{id:"cards",l:"Cards",i:"\uD83C\uDCCF"},{id:"games",l:"Games",i:"\uD83C\uDFB2"},{id:"league",l:"League",i:"\uD83C\uDFC6"},{id:"profile",l:"Profile",i:"\uD83D\uDC64"}];
+var blocked=p.blocked||[];
 return(<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px 12px",zIndex:100,display:"flex",justifyContent:"space-around"}}>
-{tabs.map(function(t){var a=p.cur===t.id;return(<button key={t.id} onClick={function(){p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"6px 12px",borderRadius:12,color:a?"var(--cyan)":"var(--t3)",transform:a?"scale(1.05)":"scale(1)",transition:"all .2s"}}>
-<span style={{fontSize:22,lineHeight:1}}>{t.i}</span><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:1}}/>}</button>);})}</div>);}
+{tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 12px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t3)",transform:a&&!dis?"scale(1.05)":"scale(1)",opacity:dis?.35:1,transition:"all .2s"}}>
+<span style={{fontSize:22,lineHeight:1}}>{t.i}</span><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:1}}/>}</button>);})}</div>);}
 
 // ─── ONBOARDING ───
 function Onboard(p){
 var[step,sSt]=useState("name");
   var[name,sN]=useState("");
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");
-  var[teacherCode,sTC]=useState("");
+  var[teacherCode,sTC]=useState("");var[teacherChecking,setTeacherChecking]=useState(false);var[teacherErr,setTeacherErr]=useState(false);
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
@@ -772,9 +773,24 @@ var[step,sSt]=useState("name");
           <input type="password" value={teacherCode} onChange={function(e){sTC(e.target.value);}} placeholder="Enter teacher code..."
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
-        <button className="btn1" onClick={function(){if(teacherCode===TEACHER_CODE)p.goTeacher();}}
-          style={{opacity:teacherCode?1:.4,pointerEvents:teacherCode?"auto":"none"}}>Access Dashboard</button>
-        {teacherCode&&teacherCode!==TEACHER_CODE&&teacherCode.length>=4&&<p style={{color:"var(--red)",fontSize:12,marginTop:8}}>Invalid code</p>}
+        <button className="btn1" onClick={function(){
+          if(!teacherCode||teacherChecking)return;
+          // Check global code first
+          if(teacherCode===TEACHER_CODE){p.goTeacher();return;}
+          // Check per-group teacher_code
+          setTeacherChecking(true);setTeacherErr(false);
+          supabase.from('groups').select('code').eq('teacher_code',teacherCode).limit(1)
+            .then(function(res){
+              setTeacherChecking(false);
+              if(res.data&&res.data.length>0){
+                try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}
+                p.goTeacher();
+              }else{setTeacherErr(true);}
+            });
+        }} style={{opacity:teacherCode&&!teacherChecking?1:.4,pointerEvents:teacherCode&&!teacherChecking?"auto":"none"}}>
+          {teacherChecking?"V\u00e9rification...":"Access Dashboard"}
+        </button>
+        {teacherErr&&<p style={{color:"var(--red)",fontSize:12,marginTop:8}}>Invalid code</p>}
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>Back to student login</button>
       </div>
     </div>);
@@ -5494,7 +5510,9 @@ function TeacherDash(p){
   var[sortBy,setSortBy]=useState("toeic"); // "toeic"|"xp"|"accuracy"|"time"|"last_active"
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
   var[groups,setGroups]=useState([]);
-  var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard"
+  var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard" | "create-group"
+  var[cgForm,setCgForm]=useState({name:"",code:"",teacherCode:"",type:"school",startDate:"",endDate:""});
+  var[cgCodeErr,setCgCodeErr]=useState("");var[cgSaving,setCgSaving]=useState(false);
   var[dashEvents,setDashEvents]=useState([]);var[evForm,setEvForm]=useState({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:"all"});var[evSaving,setEvSaving]=useState(false);var[evPushResult,setEvPushResult]=useState(null);
 
   function loadEvents(){
@@ -5912,8 +5930,9 @@ function TeacherDash(p){
       {groups.length===0&&<div style={{textAlign:"center",padding:20}}><p style={{color:"var(--t3)",fontSize:13}}>Loading groups...</p></div>}
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {groups.map(function(g){
-          var typeIcon=g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍";
+          var typeIcon=g.type==="school"?"\uD83C\uDFEB":g.type==="pro"?"\uD83D\uDCBC":"\uD83C\uDF0D";
           var typeLabel=g.type==="school"?"School":g.type==="pro"?"Professional":"Visitor";
+          var isExpired=g.end_date&&new Date(g.end_date+"T23:59:59")<new Date();
           return(<button key={g.code} onClick={function(){
             setClassCode(g.code);
             try{localStorage.setItem('toeic-dash-group',g.code);}catch(e){}
@@ -5922,22 +5941,131 @@ function TeacherDash(p){
               .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
               .catch(function(){setLoad(false);});
           }} className="crd" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 20px",cursor:"pointer",
-            border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
+            border:"1px solid "+(isExpired?"rgba(255,71,87,.25)":"var(--bdr)"),background:"var(--bg2)",borderRadius:16,textAlign:"left",
             transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
             <div style={{width:48,height:48,borderRadius:14,
               background:g.type==="school"?"rgba(212,148,58,.1)":g.type==="pro"?"rgba(255,140,66,.1)":"rgba(139,94,131,.1)",
               display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{typeIcon}</div>
             <div style={{flex:1,minWidth:0}}>
-              <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{g.name}</div>
+              <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{g.name}{isExpired&&<span style={{marginLeft:8,fontSize:10,padding:"2px 8px",borderRadius:99,background:"rgba(255,71,87,.12)",color:"var(--red)",fontWeight:600}}>{"Expir\u00e9"}</span>}</div>
               <div style={{fontSize:11,color:"var(--t3)"}}>{typeLabel} · {g.code}</div>
             </div>
-            <div style={{color:"var(--t3)",fontSize:16}}>→</div>
+            <div style={{color:"var(--t3)",fontSize:16}}>{"\u2192"}</div>
           </button>);
         })}
       </div>
-      <button onClick={p.back} style={{display:"block",margin:"28px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Exit</button>
+      <button onClick={function(){setCgForm({name:"",code:"",teacherCode:"",type:"school",startDate:"",endDate:""});setCgCodeErr("");setDashPhase("create-group");}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
+        {"\u2795 Cr\u00e9er un groupe"}
+      </button>
+      <button onClick={p.back} style={{display:"block",margin:"16px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"\u2190"} Exit</button>
     </div>
   </div>);
+
+  // ─── CREATE GROUP PHASE ───
+  if(dashPhase==="create-group"){
+    var cgSeasons=cgForm.type==="visitor"?[]:generateSeasons(cgForm.startDate,cgForm.endDate);
+    var cgValid=cgForm.name.trim()&&cgForm.code.trim()&&cgForm.teacherCode.trim()&&!cgCodeErr
+      &&cgForm.startDate&&cgForm.endDate&&new Date(cgForm.endDate)>new Date(cgForm.startDate)
+      &&((new Date(cgForm.endDate)-new Date(cgForm.startDate))/(864e5)>=7)
+      &&(cgForm.type==="visitor"||cgSeasons.length>0);
+    return(<div className="app enter" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",minHeight:"100vh",padding:"32px 16px"}}>
+      <div style={{width:"100%",maxWidth:420,animation:"fadeIn .5s"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
+          <button onClick={function(){setDashPhase("picker");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>{"\u2190"}</button>
+          <h1 className="out" style={{fontWeight:800,fontSize:22}}>{"Cr\u00e9er un groupe"}</h1>
+        </div>
+
+        {/* Group Name */}
+        <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Nom du groupe</label>
+        <input value={cgForm.name} onChange={function(e){setCgForm(Object.assign({},cgForm,{name:e.target.value}));}}
+          placeholder="ex: IDRAC Lyon B3 2027" style={{width:"100%",padding:"12px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:16,boxSizing:"border-box"}}/>
+
+        {/* Student Code */}
+        <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>{"Code d\u0027acc\u00e8s \u00e9tudiant"}</label>
+        <input value={cgForm.code} onChange={function(e){
+          var v=e.target.value.toLowerCase().replace(/\s/g,"");
+          setCgForm(Object.assign({},cgForm,{code:v}));
+          if(v.length>=3){supabase.from('groups').select('code').eq('code',v).maybeSingle().then(function(res){setCgCodeErr(res.data?"Ce code existe d\u00e9j\u00e0":"");});}else{setCgCodeErr("");}
+
+        }} placeholder="ex: idrac2027" style={{width:"100%",padding:"12px 16px",background:"var(--bg2)",border:"1px solid "+(cgCodeErr?"var(--red)":"var(--bdr)"),borderRadius:12,color:"var(--t1)",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:4,boxSizing:"border-box"}}/>
+        {cgCodeErr&&<p style={{fontSize:11,color:"var(--red)",margin:"0 0 12px"}}>{cgCodeErr}</p>}
+        {!cgCodeErr&&<div style={{height:12}}/>}
+
+        {/* Teacher Code */}
+        <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>{"Code d\u0027acc\u00e8s enseignant"}</label>
+        <input value={cgForm.teacherCode} onChange={function(e){setCgForm(Object.assign({},cgForm,{teacherCode:e.target.value}));}}
+          placeholder="ex: arena-idrac2027" style={{width:"100%",padding:"12px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:16,boxSizing:"border-box"}}/>
+
+        {/* Type */}
+        <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>Type</label>
+        <div style={{display:"flex",gap:8,marginBottom:16}}>
+          {[{k:"school",l:"\uD83C\uDFEB School"},{k:"pro",l:"\uD83D\uDCBC Professional"},{k:"visitor",l:"\uD83C\uDF0D Visitor"}].map(function(t){
+            var sel=cgForm.type===t.k;
+            return(<button key={t.k} onClick={function(){setCgForm(Object.assign({},cgForm,{type:t.k}));}}
+              style={{flex:1,padding:"10px 8px",borderRadius:10,border:sel?"1.5px solid var(--cyan)":"1px solid var(--bdr)",background:sel?"rgba(0,224,255,.06)":"var(--bg2)",
+              color:sel?"var(--cyan)":"var(--t2)",fontSize:13,fontWeight:sel?700:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{t.l}</button>);
+          })}
+        </div>
+
+        {/* Dates */}
+        <div style={{display:"flex",gap:12,marginBottom:16}}>
+          <div style={{flex:1}}>
+            <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>{"D\u00e9but"}</label>
+            <input type="date" value={cgForm.startDate} onChange={function(e){setCgForm(Object.assign({},cgForm,{startDate:e.target.value}));}}
+              style={{width:"100%",padding:"10px 12px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+          </div>
+          <div style={{flex:1}}>
+            <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Fin</label>
+            <input type="date" value={cgForm.endDate} onChange={function(e){setCgForm(Object.assign({},cgForm,{endDate:e.target.value}));}}
+              style={{width:"100%",padding:"10px 12px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+          </div>
+        </div>
+
+        {/* Season Preview */}
+        {cgForm.type==="visitor"?
+          <div style={{padding:"16px 20px",background:"rgba(139,94,131,.06)",border:"1px solid rgba(139,94,131,.15)",borderRadius:12,marginBottom:20,textAlign:"center"}}>
+            <p style={{fontSize:13,color:"var(--t2)",margin:0}}>{"\uD83C\uDF0D Les visiteurs n\u0027ont pas de syst\u00e8me de saisons."}</p>
+          </div>
+        :cgForm.startDate&&cgForm.endDate&&new Date(cgForm.endDate)>new Date(cgForm.startDate)?
+          <div style={{marginBottom:20}}>
+            <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>{"Aper\u00e7u des saisons ("+cgSeasons.length+")"}</label>
+            {cgSeasons.length>0?
+              <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
+                {cgSeasons.map(function(s){
+                  return(<div key={s.id} style={{flex:"1 0 0",minWidth:70,padding:"10px 8px",background:"rgba(212,148,58,.04)",border:"1px solid rgba(212,148,58,.12)",borderRadius:10,textAlign:"center"}}>
+                    <div style={{fontSize:20,marginBottom:4}}>{s.icon}</div>
+                    <div className="out" style={{fontWeight:700,fontSize:12,color:s.color,marginBottom:2}}>S{s.id}</div>
+                    <div style={{fontSize:10,color:"var(--t2)",fontWeight:600}}>{s.name}</div>
+                    <div style={{fontSize:9,color:"var(--t3)",marginTop:4}}>{s.weeks.length} sem.</div>
+                    <div style={{fontSize:9,color:"var(--t3)"}}>{s.start}</div>
+                    <div style={{fontSize:9,color:"var(--t3)"}}>{s.end}</div>
+                  </div>);
+                })}
+              </div>
+            :<div style={{padding:12,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,textAlign:"center"}}><p style={{fontSize:12,color:"var(--t3)",margin:0}}>{"Dates trop proches pour g\u00e9n\u00e9rer des saisons"}</p></div>}
+          </div>
+        :null}
+
+        {/* Create Button */}
+        <button className="btn1" onClick={function(){
+          if(!cgValid||cgSaving)return;
+          setCgSaving(true);
+          supabase.from('groups').upsert({
+            code:cgForm.code,name:cgForm.name.trim(),type:cgForm.type,
+            start_date:cgForm.startDate,end_date:cgForm.endDate,
+            seasons:cgSeasons,teacher_code:cgForm.teacherCode.trim()
+          },{onConflict:'code'}).then(function(res){
+            setCgSaving(false);
+            if(res.error){alert("Erreur: "+res.error.message);return;}
+            loadGroups();setDashPhase("picker");
+          });
+        }} style={{width:"100%",padding:"14px 24px",fontSize:15,opacity:cgValid&&!cgSaving?1:.4,pointerEvents:cgValid&&!cgSaving?"auto":"none"}}>
+          {cgSaving?"Cr\u00e9ation...":"Cr\u00e9er le groupe"}
+
+        </button>
+      </div>
+    </div>);
+  }
 
   // ─── DASHBOARD PHASE ───
   return(<div className="app enter" style={{padding:"20px 16px 40px"}}>
@@ -6803,13 +6931,63 @@ function ReadingHub(p){
   </div>);
 }
 // ─── LEAGUE ───
+function generateSeasons(startDate,endDate){
+  if(!startDate||!endDate)return[];
+  // Get ISO week ID for a date
+  function isoWeek(d){var tmp=new Date(d.getTime());tmp.setHours(0,0,0,0);tmp.setDate(tmp.getDate()+3-(tmp.getDay()+6)%7);var jan4=new Date(tmp.getFullYear(),0,4);var wk=1+Math.round(((tmp-jan4)/864e5-3+(jan4.getDay()+6)%7)/7);return tmp.getFullYear()+"-W"+wk;}
+  // Parse dates
+  var sd=new Date(startDate+"T00:00:00");var ed=new Date(endDate+"T00:00:00");
+  if(isNaN(sd)||isNaN(ed)||ed<=sd)return[];
+  // Collect all ISO weeks between start and end
+  var weeks=[];var cur=new Date(sd.getTime());
+  // Move to Monday of start week
+  var dayOff=(cur.getDay()+6)%7;cur.setDate(cur.getDate()-dayOff);
+  var seen={};
+  while(cur<=ed){
+    var wid=isoWeek(cur);
+    if(!seen[wid]){seen[wid]=true;weeks.push(wid);}
+    cur.setDate(cur.getDate()+7);
+  }
+  if(weeks.length===0)return[];
+  // Decide number of seasons
+  var tw=weeks.length;var ns;
+  if(tw<=3)ns=1;else if(tw<=6)ns=2;else if(tw<=10)ns=3;else if(tw<=14)ns=4;else ns=5;
+  // Season pool
+  var pool=[
+    {name:"Awakening",icon:"\uD83C\uDF31",color:"var(--green)"},
+    {name:"Rising",icon:"\uD83D\uDD25",color:"var(--orange)"},
+    {name:"Clash",icon:"\u2694\uFE0F",color:"var(--red)"},
+    {name:"Final Push",icon:"\uD83C\uDFC6",color:"var(--gold)"},
+    {name:"Legends",icon:"\uD83D\uDC51",color:"var(--purple)"}
+  ];
+  // Distribute weeks
+  var base=Math.floor(tw/ns);var rem=tw%ns;var seasons=[];var idx=0;
+  for(var i=0;i<ns;i++){
+    var count=base+(i<ns-1?(i<rem?1:0):tw-idx); // last season gets remainder
+    if(i===ns-1)count=tw-idx;
+    var sw=weeks.slice(idx,idx+count);idx+=count;
+    // Compute start/end labels from week IDs
+    function weekToDate(wid){var pts=wid.split("-W");var yr=parseInt(pts[0]),wn=parseInt(pts[1]);var jan1=new Date(yr,0,1);var d=jan1.getDay();var mon=new Date(jan1);mon.setDate(jan1.getDate()+(d<=4?1-d:8-d)+(wn-1)*7);return mon;}
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var sDate=weekToDate(sw[0]);
+    var eDate=weekToDate(sw[sw.length-1]);eDate.setDate(eDate.getDate()+6); // Sunday
+    var endDateStr=eDate.getFullYear()+"-"+String(eDate.getMonth()+1).padStart(2,"0")+"-"+String(eDate.getDate()).padStart(2,"0");
+    var p=pool[i]||pool[pool.length-1];
+    seasons.push({id:i+1,name:p.name,icon:p.icon,color:p.color,weeks:sw,
+      start:months[sDate.getMonth()]+" "+sDate.getDate(),
+      end:months[eDate.getMonth()]+" "+eDate.getDate(),
+      endDate:endDateStr});
+  }
+  return seasons;
+}
+
 var SEASONS=[
   {id:1,name:"Awakening",icon:"🌱",color:"var(--green)",weeks:["2026-W12","2026-W13","2026-W14"],start:"Mar 23",end:"Apr 12",endDate:"2026-04-12"},
   {id:2,name:"Rising",icon:"🔥",color:"var(--orange)",weeks:["2026-W15","2026-W16","2026-W17"],start:"Apr 13",end:"May 3",endDate:"2026-05-03"},
   {id:3,name:"Clash",icon:"⚔️",color:"var(--red)",weeks:["2026-W18","2026-W19","2026-W20"],start:"May 4",end:"May 24",endDate:"2026-05-24"},
   {id:4,name:"Final Push",icon:"🏆",color:"var(--gold)",weeks:["2026-W21","2026-W22","2026-W23","2026-W24","2026-W25"],start:"May 25",end:"Jun 28",endDate:"2026-06-28"},
 ];
-function getCurrentSeason(){var cw=weekId();for(var i=0;i<SEASONS.length;i++){if(SEASONS[i].weeks.indexOf(cw)!==-1)return SEASONS[i];}return SEASONS[SEASONS.length-1];}
+function getCurrentSeason(ss){var arr=ss||SEASONS;if(!arr||arr.length===0)return null;var cw=weekId();for(var i=0;i<arr.length;i++){if(arr[i].weeks.indexOf(cw)!==-1)return arr[i];}return arr[arr.length-1];}
 function getSeasonEndCountdown(season){
   var parts=season.endDate.split("-");
   var endSunday=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]),23,59,59);
@@ -6864,7 +7042,6 @@ function League(p){var u=p.u,lg=getEffectiveLeague(u.weeklyXp,u.moduleScores);
 var[rivals,setRivals]=useState([]);
 var[tab,setTab]=useState("week"); // week | season | overall
 var cw=weekId();
-var curSeason=getCurrentSeason();
 
 var viewGroup=u.classCode||'idrac2026';
 try{var dg=localStorage.getItem('toeic-dash-group');if(dg)viewGroup=dg;}catch(e){}
@@ -6872,6 +7049,24 @@ var[leagueGroup,setLeagueGroup]=useState(viewGroup);
 var[showAllLeagues,setShowAllLeagues]=useState(false);
 var[progressionData,setProgressionData]=useState([]);
 var[progLoading,setProgLoading]=useState(false);
+var[groupData,setGroupData]=useState(null);
+
+// Fetch group seasons
+useEffect(function(){
+  supabase.from('groups').select('seasons,type,start_date,end_date').eq('code',leagueGroup).maybeSingle()
+    .then(function(res){if(res.data)setGroupData(res.data);else setGroupData(null);});
+},[leagueGroup]);
+
+// Resolve seasons: dynamic from group, fallback to SEASONS for idrac2026
+var dynSeasons=useMemo(function(){
+  if(groupData&&groupData.seasons&&groupData.seasons.length>0)return groupData.seasons;
+  if(!groupData&&leagueGroup==='idrac2026')return SEASONS; // fallback
+  if(leagueGroup==='idrac2026')return SEASONS; // fallback even if groupData exists but seasons empty
+  return[];
+},[groupData,leagueGroup]);
+var isVisitor=groupData&&groupData.type==="visitor";
+var hasSeasons=dynSeasons.length>0&&!isVisitor;
+var curSeason=hasSeasons?getCurrentSeason(dynSeasons):null;
 
 // Charge les snapshots pour le tab Progression (lazy — uniquement quand on clique dessus)
 function loadProgressionData(){
@@ -6967,24 +7162,24 @@ weekAll.sort(function(a,b){
 
 // ── SEASON VIEW data ──
 var seasonRanking=useMemo(function(){
-  if(rivals.length===0)return[];
+  if(rivals.length===0||!curSeason)return[];
   return computeRankings(rivals,cw,curSeason.weeks);
-},[rivals,cw]);
+},[rivals,cw,curSeason]);
 
 // ── OVERALL VIEW data ──
-var allSeasonWeeks=useMemo(function(){var w=[];SEASONS.forEach(function(s){s.weeks.forEach(function(wk){w.push(wk);});});return w;},[]);
+var allSeasonWeeks=useMemo(function(){var w=[];dynSeasons.forEach(function(s){s.weeks.forEach(function(wk){w.push(wk);});});return w;},[dynSeasons]);
 var overallRanking=useMemo(function(){
-  if(rivals.length===0)return[];
+  if(rivals.length===0||!hasSeasons)return[];
   return computeRankings(rivals,cw,allSeasonWeeks);
-},[rivals,cw]);
+},[rivals,cw,allSeasonWeeks,hasSeasons]);
 
 var nx=LEAGUES.find(function(l){return l.min>u.weeklyXp;});
 var weekActive=weekAll.filter(function(pl){return !pl.inactive;});
 var weekFiltered=weekActive.filter(function(pl){return getLeague(pl.xp).id===lg.id;});
 var weekRank=weekFiltered.findIndex(function(pl){return pl.me;})+1;
-var seasonRank=(seasonRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-";
-var overallRank=(overallRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-";
-var countdown=getSeasonEndCountdown(curSeason);
+var seasonRank=hasSeasons?(seasonRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-":"-";
+var overallRank=hasSeasons?(overallRanking.findIndex(function(pl){return pl.name===u.name;})+1)||"-":"-";
+var countdown=curSeason?getSeasonEndCountdown(curSeason):"";
 
 // ── Render helpers ──
 function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP",bonus=props.bonus||null,bonusColor=props.bonusColor||"var(--gold)";
@@ -7006,24 +7201,24 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 </div>}
 
 {/* Season banner */}
-<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(212,148,58,.06),rgba(139,94,131,.06))",borderColor:"rgba(212,148,58,.15)"}}>
+{curSeason&&<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(212,148,58,.06),rgba(139,94,131,.06))",borderColor:"rgba(212,148,58,.15)"}}>
   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
       <span style={{fontSize:22}}>{curSeason.icon}</span>
       <div>
         <div className="out" style={{fontWeight:800,fontSize:15,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
-        <div style={{fontSize:11,color:"var(--t3)"}}>{curSeason.start} → {curSeason.end}</div>
+        <div style={{fontSize:11,color:"var(--t3)"}}>{curSeason.start} {"\u2192"} {curSeason.end}</div>
       </div>
     </div>
     <div style={{textAlign:"right"}}>
-      <div style={{fontSize:12,fontWeight:700,color:countdown==="Ended"?"var(--red)":"var(--cyan)"}}>{ countdown==="Ended"?"Terminée":countdown}</div>
+      <div style={{fontSize:12,fontWeight:700,color:countdown==="Ended"?"var(--red)":"var(--cyan)"}}>{ countdown==="Ended"?"Termin\u00e9e":countdown}</div>
     </div>
   </div>
-</div>
+</div>}
 
 {/* Tab bar */}
 <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:10,padding:3}}>
-  {[{k:"week",l:"Semaine"},{k:"season",l:"Saison "+curSeason.id},{k:"overall",l:"Général"},{k:"progress",l:"📈 Progrès"}].map(function(t){
+  {(hasSeasons?[{k:"week",l:"Semaine"},{k:"season",l:"Saison "+(curSeason?curSeason.id:"")},{k:"overall",l:"G\u00e9n\u00e9ral"},{k:"progress",l:"\uD83D\uDCC8 Progr\u00e8s"}]:[{k:"week",l:"Semaine"}]).map(function(t){
     var active=tab===t.k;
     return(<button key={t.k} onClick={function(){setTab(t.k);if(t.k==="progress")loadProgressionData();}} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:active?700:500,background:active?"var(--cyan)":"transparent",color:active?"#000":"var(--t3)",transition:"all .2s"}}>{t.l}</button>);
   })}
@@ -7032,15 +7227,15 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {/* Stats summary */}
 {u.name==="Teacher"?
 <div className="crd" style={{padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,rgba(245,158,11,.06),rgba(139,94,131,.06))",borderColor:"rgba(245,158,11,.15)"}}>
-  <span style={{fontSize:18}}>{"👁️"}</span>
+  <span style={{fontSize:18}}>{"\uD83D\uDC41\uFE0F"}</span>
   <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--gold)"}}>Mode observateur</div>
-  <div style={{fontSize:11,color:"var(--t3)"}}>Tes stats sont masquées du classement</div></div>
+  <div style={{fontSize:11,color:"var(--t3)"}}>{"Tes stats sont masqu\u00e9es du classement"}</div></div>
 </div>
 :
 <div style={{display:"flex",gap:8,marginBottom:16}}>
   <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--cyan)"}}>{u.weeklyXp}</div><div style={{fontSize:10,color:"var(--t3)"}}>XP semaine</div></div>
-  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:curSeason.color}}>#{seasonRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Saison</div></div>
-  <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)"}}>#{overallRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Général</div></div>
+  {hasSeasons&&<div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:curSeason?curSeason.color:"var(--gold)"}}>#{seasonRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>Saison</div></div>}
+  {hasSeasons&&<div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)"}}>#{overallRank}</div><div style={{fontSize:10,color:"var(--t3)"}}>{"G\u00e9n\u00e9ral"}</div></div>}
 </div>}
 
 {/* ── WEEK TAB ── */}
@@ -7086,11 +7281,11 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 </div>)}
 
 {/* ── SEASON TAB ── */}
-{tab==="season"&&(<div>
+{tab==="season"&&curSeason&&(<div>
   <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(212,148,58,.04),rgba(139,94,131,.04))"}}>
     <div style={{fontSize:36,marginBottom:6}}>{curSeason.icon}</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
-    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} semaines · {countdown}</div>
+    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} semaines {"\u00B7"} {countdown}</div>
     <div style={{fontSize:11,color:"var(--t3)",marginTop:8,lineHeight:1.5}}>Chaque semaine, le 1er gagne N pts, le 2ème N-1...<br/>La régularité prime sur les coups d'éclat !</div>
   </div>
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -7110,7 +7305,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   </div>
   {/* Season breakdown mini-bar */}
   <div style={{display:"flex",gap:6,marginBottom:16}}>
-    {SEASONS.map(function(s){
+    {dynSeasons.map(function(s){
       var isCurrent=s.id===curSeason.id;var isPast=s.weeks[s.weeks.length-1]<cw;
       return(<div key={s.id} className="crd" style={{flex:1,padding:"8px 4px",textAlign:"center",borderColor:isCurrent?"rgba(212,148,58,.3)":"var(--bdr)",opacity:(!isCurrent&&!isPast)?0.4:1}}>
         <div style={{fontSize:16}}>{s.icon}</div>
@@ -7504,7 +7699,7 @@ function Profile(p){
       </div>
 
       {/* Teacher dashboard */}
-      <button className="btn2" onClick={function(){var code=prompt("Code formateur :");if(code===TEACHER_CODE)p.goTeacher();}}
+      <button className="btn2" onClick={function(){var code=prompt("Code formateur :");if(!code)return;if(code===TEACHER_CODE){p.goTeacher();return;}supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}p.goTeacher();}else{alert("Code invalide");}});}}
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
         👨‍🏫 Teacher Dashboard
       </button>
@@ -7545,7 +7740,7 @@ function Profile(p){
       </div>
 
       {/* Reset */}
-      <button className="btn2" onClick={function(){var code=prompt("Code formateur pour réinitialiser :");if(code===TEACHER_CODE)p.reset();}}
+      <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;if(code===TEACHER_CODE){p.reset();return;}supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
         style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>
         Réinitialiser mes données
       </button>
@@ -7568,6 +7763,7 @@ export default function App(){
   },[xpt,sp]);
   var[activeEvents,setActiveEvents]=useState([]);
   var[classMedianXp,setClassMedianXp]=useState(0);
+  var[groupAccess,setGroupAccess]=useState(null); // null | {status:"ok"} | {status:"expired",name,endDate} | {status:"not_started",name,startDate}
 
 useEffect(function(){
     var loaded=false;
@@ -7663,6 +7859,20 @@ useEffect(function(){
     var iv=setInterval(loadEvents,300000); // refresh every 5 min
     return function(){clearInterval(iv);};
   },[u&&u.name]);
+
+  // ── Check group access (start/end date) ──
+  useEffect(function(){
+    if(!u||u.name==="Teacher")return;
+    var cc=u.classCode||'idrac2026';
+    supabase.from('groups').select('start_date,end_date,name').eq('code',cc).maybeSingle()
+      .then(function(res){
+        if(!res.data){setGroupAccess({status:"ok"});return;}
+        var g=res.data;var now=new Date();now.setHours(0,0,0,0);
+        if(g.end_date){var ed=new Date(g.end_date+"T23:59:59");if(ed<now){setGroupAccess({status:"expired",name:g.name||cc,endDate:g.end_date});return;}}
+        if(g.start_date){var sd=new Date(g.start_date+"T00:00:00");if(sd>now){setGroupAccess({status:"not_started",name:g.name||cc,startDate:g.start_date});return;}}
+        setGroupAccess({status:"ok"});
+      });
+  },[u&&u.classCode]);
 
   // ── Auto-start Home BGM on first user interaction ──
   var bgmStarted=useRef(false);
@@ -7964,6 +8174,34 @@ var prevLeague=getLeague(c.weeklyXp);
   if(ld)return(<div className={lc}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
   if(teacherMode)return(<div className={lc}><style>{CSS}</style><TeacherDash back={function(){setTeacher(false);}}/></div>);
   if(!u)return(<div className={lc}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover}/></div>);
+
+  // ── Group access control ──
+  if(groupAccess&&groupAccess.status==="not_started")return(<div className={lc}><style>{CSS}</style>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+      <div style={{animation:"fadeIn .5s",maxWidth:360}}>
+        <div style={{fontSize:56,marginBottom:16}}>{"\uD83D\uDD12"}</div>
+        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:12}}>{"Ar\u00e8ne ferm\u00e9e"}</h2>
+        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6}}>{"L\u0027Ar\u00e8ne n\u0027est pas encore ouverte pour "}<strong style={{color:"var(--t1)"}}>{groupAccess.name}</strong>{"."}</p>
+        <p style={{color:"var(--cyan)",fontSize:15,fontWeight:700,marginTop:12}}>{"Ouverture le "}{groupAccess.startDate}</p>
+      </div>
+    </div>
+  </div>);
+
+  var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
+  // If expired and on a blocked tab, force to league or profile
+  if(isExpiredGroup&&(tab==="home"||tab==="train"||tab==="cards"||tab==="games")){sT("league");}
+  // If expired, block module navigation
+  if(isExpiredGroup&&sp)return(<div className={lc}><style>{CSS}</style>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+      <div style={{animation:"fadeIn .5s",maxWidth:360}}>
+        <div style={{fontSize:56,marginBottom:16}}>{"\u23F0"}</div>
+        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:12}}>{"Acc\u00e8s expir\u00e9"}</h2>
+        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6}}>{"L\u0027acc\u00e8s \u00e0 l\u0027Ar\u00e8ne pour "}<strong style={{color:"var(--t1)"}}>{groupAccess.name}</strong>{" a expir\u00e9 le "}{groupAccess.endDate}{"."}</p>
+        <button className="btn2" onClick={function(){sSP(null);sT("league");}} style={{marginTop:20}}>{"\u2190"} Retour</button>
+      </div>
+    </div>
+  </div>);
+
   if(sp==="daily")return(<div className={lc}><style>{CSS}</style><Daily u={u} done={dailyDone} back={function(){sSP(null);}}/></div>);
   if(sp==="csess"||sp==="cdom")return(<div className={lc}><style>{CSS}</style><CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/></div>);
   if(sp==="drill")return(<div className={lc}><style>{CSS}</style><Drill u={u} done={drillDone} back={function(){sSP(null);sT("train");}}/></div>);
@@ -7999,8 +8237,12 @@ if(sp==="duel"){playBGM("bgm_duel");return(<div className={lc}><style>{CSS}</sty
   if(sp==="lisP3")return(<div className={lc}><style>{CSS}</style><ListenP3 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
   if(sp==="lisP4")return(<div className={lc}><style>{CSS}</style><ListenP4 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
 
+  var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
   return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
-    {tab==="home"&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&<Train u={u} nav={nav}/>}{tab==="cards"&&<Cards u={u} nav={nav}/>}{tab==="games"&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
-    <Tabs cur={tab} go={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/></div>);
+    {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
+      <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
+    </div>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
+    <Tabs cur={tab} go={function(t){if(expBlocked.indexOf(t)!==-1)return;if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}} blocked={expBlocked}/></div>);
 }
