@@ -451,12 +451,12 @@ function canUnlockMock(u,mockId){
 function canUnlockBoss(u){
   if(!u||!u.stats)return{ok:false,reasons:[]};
   var reasons=[];
-  // if(!u.mockResults||!u.mockResults.mock1)reasons.push("Complete Mock Test 1 first");
-  // if(!u.mockResults||!u.mockResults.mock2)reasons.push("Complete Mock Test 2 first");
-  // if(!u.mockResults||!u.mockResults.mock3)reasons.push("Complete Mock Test 3 first");
-  // if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()){
-    // reasons.push("24h cooldown — come back tomorrow");
-  // }
+  if(!u.mockResults||!u.mockResults.mock1)reasons.push("Complete Mock Test 1 first");
+  if(!u.mockResults||!u.mockResults.mock2)reasons.push("Complete Mock Test 2 first");
+  if(!u.mockResults||!u.mockResults.mock3)reasons.push("Complete Mock Test 3 first");
+  if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()){
+    reasons.push("24h cooldown — come back tomorrow");
+  }
   return{ok:reasons.length===0,reasons:reasons};
 }
 
