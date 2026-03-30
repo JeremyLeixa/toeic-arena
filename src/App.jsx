@@ -4212,6 +4212,8 @@ function DuelArena(p){
   var[roundResults,setRoundResults]=useState([]);
   var[dbg,setDbg]=useState("");
   var[wager,setWager]=useState(0); // 0=friendly, 10/20/50/100=ranked
+  var[customWager,setCustomWager]=useState("");
+  var[wagerPopup,setWagerPopup]=useState(null);
 
   var channelRef=useRef(null);
   var timerRef=useRef(null);
@@ -4461,11 +4463,21 @@ function doAnswer(i){
       <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Vocabulary Duel</h1>
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{ROUNDS} rounds, {TIMER_SEC}s per question. Fastest wins!</p>
       <div style={{marginTop:8,padding:"6px 16px",display:"inline-block",background:"rgba(212,148,58,.08)",borderRadius:20}}>
-        <span style={{fontSize:13,color:"var(--cyan)",fontWeight:700}}>Your XP: {p.u.xp}</span>
+        <span style={{fontSize:13,color:"var(--cyan)",fontWeight:700}}>Weekly XP: {p.u.weeklyXp}</span>
       </div>
     </div>
     {error&&<div style={{padding:12,background:"rgba(255,71,87,.1)",border:"1px solid rgba(255,71,87,.2)",borderRadius:10,marginBottom:16,textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)"}}>{error}</p></div>}
+
+    {wagerPopup&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20,animation:"fadeIn .2s"}} onClick={function(){setWagerPopup(null);}}>
+      <div style={{background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:16,padding:24,maxWidth:340,width:"100%",textAlign:"center"}} onClick={function(e){e.stopPropagation();}}>
+        <div style={{fontSize:36,marginBottom:12}}>{"⚠️"}</div>
+        <div className="out" style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--red)"}}>Wager denied</div>
+        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:4}}>{wagerPopup}</p>
+        <p style={{fontSize:11,color:"var(--t3)",lineHeight:1.5,marginBottom:16}}>You can only bet XP you have earned this week. Keep training to increase your weekly XP!</p>
+        <button className="btn1" onClick={function(){setWagerPopup(null);}} style={{width:"100%"}}>Got it</button>
+      </div>
+    </div>}
 
     {/* Friendly mode */}
     <div className="crd" style={{padding:16,marginBottom:10,cursor:"pointer",borderColor:"rgba(212,148,58,.15)"}} onClick={function(){
@@ -4492,16 +4504,26 @@ function doAnswer(i){
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
         {WAGER_TIERS.map(function(w){
-          var canAfford=p.u.xp>=w;
+          var canAfford=p.u.weeklyXp>=w;
           return(<button key={w} onClick={function(){
-            if(!canAfford){setError("You need at least "+w+" XP to wager this amount!");return;}
-            setWager(w);setError(null);setPhase("pickAction");
+            if(!canAfford){setWagerPopup("You only have "+p.u.weeklyXp+" XP this week. You need at least "+w+" weekly XP to wager this amount!");return;}
+            setWager(w);setError(null);setCustomWager("");setPhase("pickAction");
           }} disabled={!canAfford}
             style={{padding:"12px 8px",background:canAfford?"rgba(255,71,87,.08)":"var(--bg3)",border:"1px solid "+(canAfford?"rgba(255,71,87,.2)":"var(--bg3)"),
               borderRadius:12,cursor:canAfford?"pointer":"not-allowed",opacity:canAfford?1:0.4,transition:"all .2s"}}>
             <div className="out" style={{fontWeight:800,fontSize:18,color:canAfford?"var(--red)":"var(--t3)"}}>{w} XP</div>
           </button>);
         })}
+      </div>
+      <div style={{marginTop:10,display:"flex",gap:8,alignItems:"center"}}>
+        <input type="number" min="1" placeholder="Custom XP" value={customWager} onChange={function(e){setCustomWager(e.target.value);}}
+          style={{flex:1,padding:"10px 12px",borderRadius:10,border:"1px solid rgba(255,71,87,.2)",background:"var(--bg3)",color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",fontSize:15,fontWeight:700,outline:"none"}}/>
+        <button onClick={function(){
+          var v=parseInt(customWager,10);
+          if(!v||v<1){setWagerPopup("Enter a valid amount (minimum 1 XP).");return;}
+          if(v>p.u.weeklyXp){setWagerPopup("You only earned "+p.u.weeklyXp+" XP this week. Your wager cannot exceed your weekly XP!");return;}
+          setWager(v);setError(null);setWagerPopup(null);setCustomWager("");setPhase("pickAction");
+        }} style={{padding:"10px 18px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#c84040,#8b5e83)",color:"#fff",fontWeight:800,fontSize:14,cursor:"pointer",whiteSpace:"nowrap"}}>Bet!</button>
       </div>
     </div>
 
