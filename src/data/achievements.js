@@ -44,6 +44,10 @@ export var ACHIEVEMENTS = [
   {id:"duel_15",name:"Undefeated",desc:"Win 15 duels",icon:"👊",check:function(s){return s.gameScores&&s.gameScores.duel&&s.gameScores.duel.wins>=15;}},
   {id:"xp_thief",name:"XP Thief",desc:"Win a ranked duel (steal your opponent's XP!)",icon:"🦹",check:function(s){return s.gameScores&&s.gameScores.duel&&s.gameScores.duel.wagerWon>0;}},
   {id:"high_roller",name:"High Roller",desc:"Win 200+ XP in ranked duels",icon:"🎰",check:function(s){return s.gameScores&&s.gameScores.duel&&s.gameScores.duel.wagerWon>=200;}},
+
+  // ─── BOSS TEST ───
+  {id:"boss_complete",name:"Arena Conqueror",desc:"Complete The Final Arena",icon:"\ud83d\udc09",check:function(s){return s.mockResults&&s.mockResults.boss;}},
+  {id:"boss_800",name:"Dragon Slayer",desc:"Score 800+ on The Final Arena",icon:"\ud83d\udd25",check:function(s){return s.mockResults&&s.mockResults.boss&&s.mockResults.boss.toeicEstimate>=800;}},
   // ─── GAME DIVERSITY ───
   {id:"all_games",name:"Game Master",desc:"Play all 5 arena games",icon:"🎮",check:function(s){return s.gameScores&&s.gameScores.matchEasy&&s.gameScores.wordFall&&s.gameScores.duel&&s.gameScores.duel.played>=1;}},
 ];

@@ -23,6 +23,7 @@ import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
+import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
 
 
 function today(){return new Date().toISOString().split("T")[0];}
@@ -446,6 +447,19 @@ function canUnlockMock(u,mockId){
   if(mockId===3&&(!u.mockResults||!u.mockResults.mock2))reasons.push("Complete Mock Test 2 first");
   return{ok:reasons.length===0,reasons:reasons};
 }
+
+function canUnlockBoss(u){
+  if(!u||!u.stats)return{ok:false,reasons:[]};
+  var reasons=[];
+  if(!u.mockResults||!u.mockResults.mock1)reasons.push("Complete Mock Test 1 first");
+  if(!u.mockResults||!u.mockResults.mock2)reasons.push("Complete Mock Test 2 first");
+  if(!u.mockResults||!u.mockResults.mock3)reasons.push("Complete Mock Test 3 first");
+  if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()){
+    reasons.push("24h cooldown \u2014 come back tomorrow");
+  }
+  return{ok:reasons.length===0,reasons:reasons};
+}
+
 
 // ─── TEACHER DASHBOARD CONFIG ───
 var TEACHER_CODE="arena-teacher-2026";
@@ -1027,70 +1041,128 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 
 // ─── TRAIN PAGE ───
   function Train(p){
+  var[trainView,setTrainView]=useState(null);
   var dd=p.u.daily&&p.u.daily.date===today()&&p.u.daily.done;
+
+  // ── Section data (unchanged) ──
   var sections=[
-    {title:"Exercises",sub:"TOEIC Parts training",items:[
-      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd},
-      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
-      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    {key:"exercises",title:"Exercises",sub:"TOEIC Parts training",icon:"\u2694\ufe0f",count:"Parts 1-7",items:[
+      {id:"daily",n:"Daily Challenge",d:dd?"Completed today \u2713":"5 daily questions, timed",i:"\u26a1",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd},
+      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"\ud83d\udc42",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
+      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"\ud83d\udcd6",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
-    {title:"Grammar & Vocabulary",sub:"Build your foundations",items:[
-      {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
-      {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
-      {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
-      {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
-      {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
-      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
-      {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
+    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"\ud83e\udde9",count:"7 modules",items:[
+      {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"\ud83c\udccf",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
+      {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"\ud83e\udde9",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+      {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"\ud83d\udd00",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
+      {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"\ud83c\udfaf",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
+      {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns \u00b7 Study + Context Quiz",i:"\u2696\ufe0f",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
+      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually \u2260 actuellement",i:"\ud83c\udfad",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
+      {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs \u00b7 Study, Match & Speed",i:"\u2694\ufe0f",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
     ]},
-    {title:"Mock Exam",sub:"Test yourself under real conditions",items:(function(){
+    {key:"mocks",title:"Mock Exams",sub:"Real conditions",icon:"\ud83d\udcdc",count:"3 tests",items:(function(){
       var items=[];
       var u1=canUnlockMock(p.u,1);
-      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"📜",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
+      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test \u00b7 49 Q \u00b7 37 min":u1.reasons[0],i:"\ud83d\udcdc",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
       var u2=canUnlockMock(p.u,2);
-      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📜",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
-	  var u3=canUnlockMock(p.u,3);
-	  items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"📜",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
-      // Show completed badge
-      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495";items[0].lock=true;items[0].bg="var(--bg3)";}
-      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495";items[1].lock=true;items[1].bg="var(--bg3)";}
+      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test \u00b7 49 Q \u00b7 37 min":u2.reasons[0],i:"\ud83d\udcdc",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
+      var u3=canUnlockMock(p.u,3);
+      items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test \u00b7 48 Q \u00b7 37 min":u3.reasons[0],i:"\ud83d\udcdc",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
+      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed \u2014 TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495";items[0].lock=true;items[0].bg="var(--bg3)";}
+      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed \u2014 TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495";items[1].lock=true;items[1].bg="var(--bg3)";}
+      if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed \u2014 TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495";items[2].lock=true;items[2].bg="var(--bg3)";}
       return items;
     })()},
-    {title:"Tips & Strategies",sub:"Master the exam itself",items:[
-      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"🗺️",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
-      {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
-      {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
-      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"\ud83d\uddfa\ufe0f",count:"4 tools",items:[
+      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"\ud83d\uddfa\ufe0f",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
+      {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"\ud83e\udde0",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
+      {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"\ud83e\udea4",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
+      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"\ud83d\udcd6",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
   ];
-  var animIdx=0;
+
+  // ── Boss Test status ──
+  var uBoss=canUnlockBoss(p.u);
+  var bossCompleted=p.u.mockResults&&p.u.mockResults.boss;
+  var bossLocked=!uBoss.ok;
+  var mocksDone=[p.u.mockResults&&p.u.mockResults.mock1,p.u.mockResults&&p.u.mockResults.mock2,p.u.mockResults&&p.u.mockResults.mock3];
+
+  // ═══ SUB-VIEW — show items of selected section ═══
+  if(trainView!==null){
+    var sec=sections[trainView];
+    var animIdx=0;
+    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+      <button onClick={function(){setTrainView(null);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"\u2190"} Training Grounds</button>
+      <h2 className="out" style={{fontWeight:800,fontSize:20,marginBottom:4}}>{sec.title}</h2>
+      <p style={{color:"var(--t3)",fontSize:12,marginBottom:16}}>{sec.sub}</p>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {sec.items.map(function(m){
+          var ai=animIdx++;
+          return(
+            <div key={m.id} className="crd" onClick={function(){if(!m.lock)p.nav(m.id);}}
+              style={{display:"flex",alignItems:"center",gap:14,cursor:m.lock?"default":"pointer",opacity:m.lock?.4:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
+              <div style={{width:42,height:42,borderRadius:12,background:m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
+                <div style={{fontSize:11,color:"var(--t3)"}}>{m.d}</div>
+              </div>
+              {m.lock?<span style={{fontSize:16}}>{"\ud83d\udd12"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"\u2192"}</span>}
+            </div>);
+        })}
+      </div>
+    </div>);
+  }
+
+  // ═══ MAIN GRID VIEW — 2x2 tiles + Boss banner ═══
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Training Grounds</h1>
-    <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Choose your battle</p>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>Choose your battle</p>
 
-    {sections.map(function(sec,si){
-      return (<div key={si} style={{marginBottom:24}}>
-        <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:10}}>
-          <h2 className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)"}}>{sec.title}</h2>
-          <span style={{fontSize:11,color:"var(--t3)"}}>{sec.sub}</span>
+    {/* 2x2 Tile Grid */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+      {sections.map(function(sec,si){
+        return(<div key={sec.key} className="crd" onClick={function(){setTrainView(si);}}
+          style={{padding:"18px 14px",cursor:"pointer",minHeight:200,borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:(si*.06)+"s",animationFillMode:"both"}}>
+          <div style={{fontSize:28,marginBottom:8}}>{sec.icon}</div>
+          <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>{sec.title}</div>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{sec.sub}</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <span style={{fontSize:10,color:"var(--cyan)",fontWeight:600}}>{sec.count}</span>
+            <span style={{fontSize:14,color:"var(--cyan)"}}>{"\u2192"}</span>
+          </div>
+        </div>);
+      })}
+    </div>
+
+    {/* Boss Test Banner */}
+    <div className="" onClick={function(){if(!bossLocked)p.nav("boss");}}
+      style={{padding:0,overflow:"hidden",cursor:bossLocked?"default":"pointer",opacity:bossLocked?.55:1,borderRadius:16,border:"1px solid "+(bossLocked?"var(--bdr)":"rgba(220,38,38,.5)"),background:"linear-gradient(135deg,#1a0505,#2a0a0a)",animation:"fadeIn .5s ease-out",animationDelay:".3s",animationFillMode:"both"}}>
+      <div style={{background:"linear-gradient(135deg,#2a0a0a,#3d1a00,#1a0800)",padding:"18px 16px",position:"relative",overflow:"hidden"}}>
+        {!bossLocked&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 80% 30%,rgba(245,158,11,.08),transparent 60%),radial-gradient(ellipse at 20% 70%,rgba(220,38,38,.06),transparent 50%)"}}/>}
+        {!bossLocked&&<div style={{position:"absolute",top:-8,right:12,fontSize:48,opacity:.1,transform:"scaleX(-1)"}}>{"\ud83d\udc09"}</div>}
+        <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
+          <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#dc2626,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:bossLocked?"none":"0 0 20px rgba(220,38,38,.3)"}}>{"\ud83d\udc09"}</div>
+          <div style={{flex:1}}>
+            <div style={{marginBottom:2}}>
+              <span className="out" style={{fontWeight:900,fontSize:16,background:"linear-gradient(90deg,#ff4444,#ff8c42,#ffd700)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>THE FINAL ARENA</span>
+            </div>
+            {bossCompleted&&!bossLocked?<div style={{fontSize:12,color:"var(--gold)"}}>Best: TOEIC {p.u.mockResults.boss.toeicEstimate}/990 {"\u2014"} Retake?</div>
+            :bossLocked?<div style={{fontSize:11,color:"var(--t3)"}}>{uBoss.reasons[0]}</div>
+            :<div style={{fontSize:12,color:"#cc8844"}}>Full TOEIC {"\u00b7"} 202 Q {"\u00b7"} 120 min</div>}
+            {/* Mock completion pills */}
+            <div style={{display:"flex",gap:4,marginTop:6}}>
+              {["Mock 1","Mock 2","Mock 3"].map(function(label,i){
+                var done=mocksDone[i];
+                return(<span key={i} style={{fontSize:9,padding:"2px 7px",borderRadius:99,fontWeight:600,
+                  background:done?"rgba(34,197,94,.15)":"rgba(255,255,255,.06)",
+                  color:done?"#22c55e":"var(--t3)"}}>{done?"\u2713 ":""}{label}</span>);
+              })}
+            </div>
+          </div>
+          {bossLocked?<span style={{fontSize:18}}>{"\ud83d\udd12"}</span>:<span style={{fontSize:18,color:"rgba(220,38,38,.6)"}}>{"\u2794"}</span>}
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {sec.items.map(function(m){
-            var ai=animIdx++;
-            return (
-              <div key={m.id} className="crd" onClick={function(){if(!m.lock)p.nav(m.id);}}
-                style={{display:"flex",alignItems:"center",gap:14,cursor:m.lock?"default":"pointer",opacity:m.lock?.4:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
-                <div style={{width:42,height:42,borderRadius:12,background:m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
-                  <div style={{fontSize:11,color:"var(--t3)"}}>{m.d}</div>
-                </div>
-                {m.lock?<span style={{fontSize:16}}>🔒</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
-              </div>);
-          })}
-        </div>
-      </div>);
-    })}
+      </div>
+    </div>
   </div>);
 }
 
@@ -2697,6 +2769,370 @@ function FalseFriends(p){
 }
 
 // ─── MOCK TEST ───
+
+// ─── BOSS TEST — The Final Arena (Full TOEIC 200Q) ───
+function BossTest(p){
+  var LP1=BOSS_P1,LP2=BOSS_P2,LP3=BOSS_P3,LP4=BOSS_P4;
+  var RP5=BOSS_P5,RP6=BOSS_P6,RP7=BOSS_P7;
+  var p3QC=0;LP3.forEach(function(c){p3QC+=c.qs.length;});
+  var p4QC=0;LP4.forEach(function(t){p4QC+=t.qs.length;});
+  var lisQ=LP1.length+LP2.length+p3QC+p4QC;
+  var p6BC=0;RP6.forEach(function(t){t.parts.forEach(function(pt){if(pt.blank)p6BC++;});});
+  var p7QC=0;RP7.forEach(function(ps){p7QC+=ps.questions.length;});
+  var readQ=RP5.length+p6BC+p7QC;
+  var totalQ=lisQ+readQ;
+  var TOTAL_TIME=120*60;
+
+  var[phase,setPhase]=useState("intro");
+  var[sec,setSec]=useState("p1");
+  var[qi,setQi]=useState(0);
+  var[sqi,setSqi]=useState(0);
+  var[ans,setAns]=useState(function(){return{
+    p1:LP1.map(function(){return -1;}),p2:LP2.map(function(){return -1;}),
+    p3:LP3.map(function(c){return c.qs.map(function(){return -1;});}),
+    p4:LP4.map(function(t){return t.qs.map(function(){return -1;});}),
+    p5:RP5.map(function(){return -1;}),
+    p6:RP6.map(function(t){var n=0;t.parts.forEach(function(pt){if(pt.blank)n++;});return Array(n).fill(-1);}),
+    p7:RP7.map(function(ps){return ps.questions.map(function(){return -1;});})
+  };});
+  var[timeLeft,setTimeLeft]=useState(TOTAL_TIME);
+  var[result,setResult]=useState(null);
+  var[aState,setAState]=useState("ready");
+  var[curOpt,setCurOpt]=useState(-1);
+  var[revMode,setRevMode]=useState(false);
+  var[revSec,setRevSec]=useState("p1");
+  var[revIdx,setRevIdx]=useState(0);
+  var timerRef=useRef(null);
+
+  useEffect(function(){
+    if(phase!=="test"||result)return;
+    if(timeLeft<=0){doSubmit();return;}
+    timerRef.current=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
+    return function(){clearTimeout(timerRef.current);};
+  });
+
+  function fmtT(s){var m=Math.floor(s/60);var sc2=s%60;return m+":"+(sc2<10?"0":"")+sc2;}
+  function pad(n){return String(n).padStart(2,"0");}
+
+  // ── Audio ──
+  async function playP1(){if(aState!=="ready")return;setAState("playing");for(var i=0;i<LP1[qi].opts.length;i++){setCurOpt(i);await playAudioFile("/audio/boss/p1_"+pad(qi+1)+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
+  async function playP2(){if(aState!=="ready")return;setAState("playing");var id=pad(qi+1);await playAudioFile("/audio/boss/p2_"+id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+id+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,300);});}setCurOpt(-1);setAState("done");}
+  async function playP3(){if(aState!=="ready")return;setAState("playing");await playAudioFile("/audio/boss/p3_"+pad(qi+1)+".mp3");setAState("done");}
+  async function playP4(){if(aState!=="ready")return;setAState("playing");await playAudioFile("/audio/boss/p4_"+pad(qi+1)+".mp3");setAState("done");}
+
+  // ── Answer & Navigate ──
+  function pick(val){
+    var a=JSON.parse(JSON.stringify(ans));
+    if(sec==="p1")a.p1[qi]=val;
+    else if(sec==="p2")a.p2[qi]=val;
+    else if(sec==="p3")a.p3[qi][sqi]=val;
+    else if(sec==="p4")a.p4[qi][sqi]=val;
+    else if(sec==="p5")a.p5[qi]=val;
+    else if(sec==="p6")a.p6[qi][sqi]=val;
+    else if(sec==="p7")a.p7[qi][sqi]=val;
+    setAns(a);setTimeout(nxt,300);
+  }
+  function nxt(){
+    if(sec==="p1"){if(qi<LP1.length-1){setQi(qi+1);setAState("ready");setCurOpt(-1);}else{setSec("p2");setQi(0);setSqi(0);setAState("ready");setCurOpt(-1);}}
+    else if(sec==="p2"){if(qi<LP2.length-1){setQi(qi+1);setAState("ready");setCurOpt(-1);}else{setSec("p3");setQi(0);setSqi(0);setAState("ready");}}
+    else if(sec==="p3"){if(sqi<LP3[qi].qs.length-1)setSqi(sqi+1);else if(qi<LP3.length-1){setQi(qi+1);setSqi(0);setAState("ready");}else{setSec("p4");setQi(0);setSqi(0);setAState("ready");}}
+    else if(sec==="p4"){if(sqi<LP4[qi].qs.length-1)setSqi(sqi+1);else if(qi<LP4.length-1){setQi(qi+1);setSqi(0);setAState("ready");}else{setSec("p5");setQi(0);setSqi(0);}}
+    else if(sec==="p5"){if(qi<RP5.length-1)setQi(qi+1);else{setSec("p6");setQi(0);setSqi(0);}}
+    else if(sec==="p6"){var bN=ans.p6[qi].length;if(sqi<bN-1)setSqi(sqi+1);else if(qi<RP6.length-1){setQi(qi+1);setSqi(0);}else{setSec("p7");setQi(0);setSqi(0);}}
+    else if(sec==="p7"){if(sqi<RP7[qi].questions.length-1)setSqi(sqi+1);else if(qi<RP7.length-1){setQi(qi+1);setSqi(0);}else doSubmit();}
+  }
+
+  // ── Scoring ──
+  function doSubmit(){
+    clearTimeout(timerRef.current);
+    var p1s=0;LP1.forEach(function(q,i){if(ans.p1[i]===q.c)p1s++;});
+    var p2s=0;LP2.forEach(function(q,i){if(ans.p2[i]===q.c)p2s++;});
+    var p3s=0;LP3.forEach(function(c,i){c.qs.forEach(function(q,j){if(ans.p3[i][j]===q.c)p3s++;});});
+    var p4s=0;LP4.forEach(function(t,i){t.qs.forEach(function(q,j){if(ans.p4[i][j]===q.c)p4s++;});});
+    var lRaw=p1s+p2s+p3s+p4s;var lT=estimateToeic(lRaw,lisQ);
+    var p5s=0;RP5.forEach(function(q,i){if(ans.p5[i]===q.c)p5s++;});
+    var p6s=0;RP6.forEach(function(t,ti){var bi=0;t.parts.forEach(function(pt){if(pt.blank){if(ans.p6[ti][bi]===pt.correct)p6s++;bi++;}});});
+    var p7s=0;RP7.forEach(function(ps,pi){ps.questions.forEach(function(q,qi2){if(ans.p7[pi][qi2]===q.correct)p7s++;});});
+    var rRaw=p5s+p6s+p7s;var rT=estimateToeic(rRaw,readQ);
+    var res={date:today(),mockId:"boss",score:lRaw+rRaw,total:totalQ,
+      listening:{score:lRaw,total:lisQ,toeic:lT,p1:{score:p1s,total:LP1.length},p2:{score:p2s,total:LP2.length},p3:{score:p3s,total:p3QC},p4:{score:p4s,total:p4QC}},
+      reading:{score:rRaw,total:readQ,toeic:rT,p5:{score:p5s,total:RP5.length},p6:{score:p6s,total:p6BC},p7:{score:p7s,total:p7QC}},
+      toeicEstimate:lT+rT,timeUsed:TOTAL_TIME-timeLeft};
+    setResult(res);setPhase("done");
+  }
+
+  // ── Progress ──
+  var answered=0;
+  ans.p1.forEach(function(a){if(a>=0)answered++;});ans.p2.forEach(function(a){if(a>=0)answered++;});
+  ans.p3.forEach(function(c){c.forEach(function(a){if(a>=0)answered++;});});ans.p4.forEach(function(t){t.forEach(function(a){if(a>=0)answered++;});});
+  ans.p5.forEach(function(a){if(a>=0)answered++;});ans.p6.forEach(function(t){t.forEach(function(a){if(a>=0)answered++;});});
+  ans.p7.forEach(function(ps){ps.forEach(function(a){if(a>=0)answered++;});});
+
+  // ── Section labels ──
+  var secLabel=sec==="p1"?"Part 1 \u2014 Photos":sec==="p2"?"Part 2 \u2014 Q&R":sec==="p3"?"Part 3 \u2014 Conversations":sec==="p4"?"Part 4 \u2014 Talks":sec==="p5"?"Part 5 \u2014 Sentences":sec==="p6"?"Part 6 \u2014 Text Completion":"Part 7 \u2014 Reading";
+  var isListening=sec==="p1"||sec==="p2"||sec==="p3"||sec==="p4";
+
+  // ═══ INTRO ═══
+  if(phase==="intro"){
+    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:64,marginBottom:12,animation:"pulse 2s infinite"}}>&#x1F409;</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:28,background:"linear-gradient(135deg,#dc2626,#f59e0b)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>THE FINAL ARENA</h1>
+      <p style={{color:"var(--t2)",fontSize:14,marginBottom:20}}>Full TOEIC Simulation</p>
+      <div className="crd" style={{textAlign:"left",padding:16,marginBottom:16}}>
+        <div style={{fontSize:11,color:"var(--orange)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>&#x1F50A; Listening Section</div>
+        <div style={{fontSize:13,color:"var(--t1)",lineHeight:1.8}}>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 1 \u2014 Photographs</span><span className="out" style={{color:"var(--cyan)"}}>{LP1.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 2 \u2014 Question-Response</span><span className="out" style={{color:"var(--cyan)"}}>{LP2.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 3 \u2014 Conversations</span><span className="out" style={{color:"var(--cyan)"}}>{p3QC} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 4 \u2014 Talks</span><span className="out" style={{color:"var(--cyan)"}}>{p4QC} Q</span></div>
+          <div style={{borderTop:"1px solid var(--bdr)",marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontWeight:700}}><span>Subtotal</span><span style={{color:"var(--gold)"}}>{lisQ} Q</span></div>
+        </div>
+      </div>
+      <div className="crd" style={{textAlign:"left",padding:16,marginBottom:16}}>
+        <div style={{fontSize:11,color:"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>&#x1F4D6; Reading Section</div>
+        <div style={{fontSize:13,color:"var(--t1)",lineHeight:1.8}}>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 5 \u2014 Incomplete Sentences</span><span className="out" style={{color:"var(--cyan)"}}>{RP5.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 6 \u2014 Text Completion</span><span className="out" style={{color:"var(--cyan)"}}>{p6BC} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 7 \u2014 Reading Comprehension</span><span className="out" style={{color:"var(--cyan)"}}>{p7QC} Q</span></div>
+          <div style={{borderTop:"1px solid var(--bdr)",marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontWeight:700}}><span>Subtotal</span><span style={{color:"var(--gold)"}}>{readQ} Q</span></div>
+        </div>
+      </div>
+      <div className="crd glo" style={{padding:14,marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontWeight:800,fontSize:15,color:"var(--t1)"}}><span>TOTAL</span><span className="out" style={{color:"var(--gold)"}}>{totalQ} questions \u00b7 120 min</span></div>
+      </div>
+      <div className="crd" style={{padding:14,marginBottom:24,borderColor:"rgba(220,38,38,.3)",background:"rgba(220,38,38,.06)"}}>
+        <p style={{fontSize:12,color:"var(--red)",lineHeight:1.6}}>\u26a0\ufe0f Real TOEIC conditions. No feedback. No going back. Audio plays ONCE. Your score is saved. Rejouable after 24h cooldown.</p>
+      </div>
+      <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:18,padding:"16px 32px"}} onClick={function(){setPhase("test");}}>&#x2694;\ufe0f Enter the Arena</button>
+      <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Not ready yet</button>
+    </div>);
+  }
+
+  // ═══ TEST PHASE ═══
+  if(phase==="test"&&!result){
+    var timerCol=timeLeft>600?"var(--cyan)":timeLeft>120?"var(--orange)":"var(--red)";
+
+    // Common header
+    var header=(<div style={{marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <div style={{fontSize:11,color:isListening?"var(--orange)":"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>{isListening?"\ud83d\udd0a Listening":"\ud83d\udcd6 Reading"}</div>
+        <div className="out" style={{fontSize:14,fontWeight:800,color:timerCol}}>{fmtT(timeLeft)}</div>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <span className="out" style={{fontSize:13,fontWeight:700}}>{secLabel}</span>
+        <span style={{fontSize:11,color:"var(--t3)"}}>{answered}/{totalQ} answered</span>
+      </div>
+      <Bar value={answered} max={totalQ} h={4} color={isListening?"linear-gradient(90deg,#f59e0b,#ef4444)":"linear-gradient(90deg,#22c55e,#06b6d4)"}/>
+    </div>);
+
+    // ── P1: Photos ──
+    if(sec==="p1"){
+      var it=LP1[qi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{marginBottom:12,borderRadius:14,overflow:"hidden",border:"1px solid var(--bdr)"}}>
+          <img src={it.img} alt="TOEIC photo" style={{width:"100%",display:"block",maxHeight:240,objectFit:"cover"}}/>
+        </div>
+        {aState==="ready"&&<div style={{textAlign:"center",marginBottom:16}}>
+          <button onClick={playP1} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#f59e0b,#ef4444)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>&#x25b6;\ufe0f</span></button>
+          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Tap to play statements</p></div>}
+        {aState==="playing"&&<div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>&#x1F50A;</div>
+          <p className="out" style={{color:"var(--orange)",fontSize:13,marginTop:8}}>Playing statement {String.fromCharCode(65+(curOpt>=0?curOpt:0))}...</p></div>}
+        {aState==="done"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {it.opts.map(function(opt,i){var sel=ans.p1[qi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+            <span>{opt}</span></button>);})}
+        </div>}
+      </div>);
+    }
+
+    // ── P2: Q&R ──
+    if(sec==="p2"){
+      var it2=LP2[qi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{textAlign:"center",marginTop:20}}>
+          {aState==="ready"&&<div>
+            <button onClick={playP2} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#f59e0b,#ef4444)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>&#x25b6;\ufe0f</span></button>
+            <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Tap to play question + responses</p></div>}
+          {aState==="playing"&&<div>
+            <div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>&#x1F50A;</div>
+            <p className="out" style={{color:"var(--orange)",fontSize:13,marginTop:8}}>{curOpt>=0?"Playing response "+String.fromCharCode(65+curOpt)+"...":"Playing question..."}</p></div>}
+          {aState==="done"&&<div style={{textAlign:"left",animation:"fadeIn .3s"}}>
+            <p className="out" style={{color:"var(--green)",fontSize:13,fontWeight:600,marginBottom:16,textAlign:"center"}}>Choose the best response</p>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {it2.opts.map(function(opt,i){var sel=ans.p2[qi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+                <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+                <span>{opt}</span></button>);})}
+            </div></div>}
+        </div>
+      </div>);
+    }
+
+    // ── P3: Conversations ──
+    if(sec==="p3"){
+      var c3=LP3[qi];var q3=c3.qs[sqi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>Conversation {qi+1}/{LP3.length} \u2014 Question {sqi+1}/{c3.qs.length}</div>
+        {aState==="ready"&&<div style={{textAlign:"center",marginTop:20,marginBottom:20}}>
+          <div className="crd" style={{padding:12,marginBottom:16,textAlign:"left"}}>
+            <div style={{fontSize:11,color:"var(--t3)",marginBottom:6}}>Preview questions:</div>
+            {c3.qs.map(function(qq,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{i+1}. {qq.q}</div>);})}
+          </div>
+          <button onClick={playP3} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#8b5cf6,#ec4899)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>&#x25b6;\ufe0f</span></button>
+          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Play conversation</p></div>}
+        {aState==="playing"&&<div style={{textAlign:"center",marginTop:30}}><div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>&#x1F5E3;\ufe0f</div><p className="out" style={{color:"var(--purple)",fontSize:13,marginTop:8}}>Listening to conversation...</p></div>}
+        {aState==="done"&&<div style={{animation:"fadeIn .3s"}}>
+          <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{q3.q}</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {q3.opts.map(function(opt,i){var sel=ans.p3[qi][sqi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+              <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+              <span>{opt}</span></button>);})}
+          </div></div>}
+      </div>);
+    }
+
+    // ── P4: Talks ──
+    if(sec==="p4"){
+      var t4=LP4[qi];var q4=t4.qs[sqi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>Talk {qi+1}/{LP4.length} ({t4.type}) \u2014 Question {sqi+1}/{t4.qs.length}</div>
+        {aState==="ready"&&<div style={{textAlign:"center",marginTop:20,marginBottom:20}}>
+          <div className="crd" style={{padding:12,marginBottom:16,textAlign:"left"}}>
+            <div style={{fontSize:11,color:"var(--t3)",marginBottom:6}}>Preview questions:</div>
+            {t4.qs.map(function(qq,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{i+1}. {qq.q}</div>);})}
+          </div>
+          <button onClick={playP4} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#06b6d4,#3b82f6)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>&#x25b6;\ufe0f</span></button>
+          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Play talk</p></div>}
+        {aState==="playing"&&<div style={{textAlign:"center",marginTop:30}}><div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>&#x1F3A4;</div><p className="out" style={{color:"var(--cyan)",fontSize:13,marginTop:8}}>Listening to talk...</p></div>}
+        {aState==="done"&&<div style={{animation:"fadeIn .3s"}}>
+          <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{q4.q}</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {q4.opts.map(function(opt,i){var sel=ans.p4[qi][sqi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+              <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+              <span>{opt}</span></button>);})}
+          </div></div>}
+      </div>);
+    }
+
+    // ── P5: Incomplete Sentences ──
+    if(sec==="p5"){
+      var q5=RP5[qi];var sel5=ans.p5[qi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <h3 className="out" style={{fontWeight:700,fontSize:16,lineHeight:1.5,marginBottom:20}}>{q5.s}</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {q5.o.map(function(opt,i){var isSel=sel5===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:isSel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--cyan)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+            <span>{opt}</span></button>);})}
+        </div>
+      </div>);
+    }
+
+    // ── P6: Text Completion ──
+    if(sec==="p6"){
+      var t6=RP6[qi];var blanks6=[];var blankNum=0;
+      t6.parts.forEach(function(pt){if(pt.blank){blanks6.push(pt);blankNum++;}});
+      var bl6=blanks6[sqi];var sel6=ans.p6[qi][sqi];
+      var renderedText=[];t6.parts.forEach(function(pt,pi){
+        if(pt.blank){var bIdx=blanks6.indexOf(pt)+1;renderedText.push(<span key={pi} style={{padding:"2px 8px",borderRadius:4,background:bIdx-1===sqi?"rgba(212,148,58,.2)":"rgba(100,100,100,.15)",fontWeight:700,color:bIdx-1===sqi?"var(--cyan)":"var(--t2)"}}>{"["+bIdx+"]"}</span>);}
+        else renderedText.push(<span key={pi}>{pt.text}</span>);
+      });
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{t6.type} \u2014 Blank {sqi+1}/{blankNum}</div>
+        <div className="crd" style={{padding:14,marginBottom:16,maxHeight:200,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{renderedText}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {bl6.options.map(function(opt,i){var isSel=sel6===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--cyan)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+            <span>{opt}</span></button>);})}
+        </div>
+      </div>);
+    }
+
+    // ── P7: Reading Comprehension ──
+    if(sec==="p7"){
+      var ps7=RP7[qi];var pq7=ps7.questions[sqi];var sel7=ans.p7[qi][sqi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+          <span style={{fontSize:11,color:"var(--t3)"}}>{ps7.type}</span>
+          <span style={{fontSize:11,color:"var(--cyan)"}}>Q {sqi+1}/{ps7.questions.length}</span>
+        </div>
+        <div className="crd" style={{padding:14,marginBottom:16,maxHeight:200,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{ps7.text}</div>
+        <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pq7.q}</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {pq7.options.map(function(opt,i){var isSel=sel7===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--cyan)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+            <span>{opt}</span></button>);})}
+        </div>
+      </div>);
+    }
+  }
+
+  // ═══ RESULTS ═══
+  if(phase==="done"&&result&&!revMode){
+    var pct=Math.round(result.score/result.total*100);
+    var grade=result.toeicEstimate>=800?"Legendary!":result.toeicEstimate>=600?"Excellent!":result.toeicEstimate>=400?"Good effort!":"Keep training!";
+    var gradeIcon=result.toeicEstimate>=800?"\ud83d\udc51":result.toeicEstimate>=600?"\u2694\ufe0f":result.toeicEstimate>=400?"\ud83d\udee1\ufe0f":"\ud83d\udcd6";
+    var gradeCol=result.toeicEstimate>=800?"var(--gold)":result.toeicEstimate>=600?"var(--green)":result.toeicEstimate>=400?"var(--orange)":"var(--red)";
+    var xp=100+result.score*3+(result.toeicEstimate>=800?100:result.toeicEstimate>=600?50:0);
+
+    return(<div className="enter" style={{padding:"20px 16px 100px",minHeight:"100vh",textAlign:"center"}}>
+      <div style={{fontSize:64,marginBottom:12,animation:"countUp .6s"}}>{gradeIcon}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:26,background:"linear-gradient(135deg,#dc2626,#f59e0b)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>THE FINAL ARENA</h1>
+      <p style={{color:gradeCol,fontWeight:700,fontSize:16,marginBottom:20}}>{grade}</p>
+
+      <div className="crd glo" style={{padding:20,marginBottom:16,textAlign:"center"}}>
+        <div style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Estimated TOEIC Score</div>
+        <div className="out" style={{fontSize:52,fontWeight:900,color:"var(--gold)",lineHeight:1}}>{result.toeicEstimate}</div>
+        <div style={{fontSize:13,color:"var(--t2)",marginTop:4}}>/ 990</div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+        <div className="crd" style={{padding:14,textAlign:"center"}}>
+          <div style={{fontSize:11,color:"var(--orange)",fontWeight:600,marginBottom:4}}>Listening</div>
+          <div className="out" style={{fontSize:28,fontWeight:900,color:"var(--orange)"}}>{result.listening.toeic}</div>
+          <div style={{fontSize:10,color:"var(--t3)"}}>{result.listening.score}/{result.listening.total} ({Math.round(result.listening.score/result.listening.total*100)}%)</div>
+        </div>
+        <div className="crd" style={{padding:14,textAlign:"center"}}>
+          <div style={{fontSize:11,color:"var(--green)",fontWeight:600,marginBottom:4}}>Reading</div>
+          <div className="out" style={{fontSize:28,fontWeight:900,color:"var(--green)"}}>{result.reading.toeic}</div>
+          <div style={{fontSize:10,color:"var(--t3)"}}>{result.reading.score}/{result.reading.total} ({Math.round(result.reading.score/result.reading.total*100)}%)</div>
+        </div>
+      </div>
+
+      <div className="crd" style={{padding:14,marginBottom:16,textAlign:"left"}}>
+        <div style={{fontSize:12,fontWeight:700,color:"var(--t2)",marginBottom:8}}>Breakdown</div>
+        {[{l:"P1 Photos",d:result.listening.p1},{l:"P2 Q&R",d:result.listening.p2},{l:"P3 Convos",d:result.listening.p3},{l:"P4 Talks",d:result.listening.p4},{l:"P5 Sentences",d:result.reading.p5},{l:"P6 Text",d:result.reading.p6},{l:"P7 Reading",d:result.reading.p7}].map(function(s){
+          var sp=s.d.total>0?Math.round(s.d.score/s.d.total*100):0;
+          var sc=sp>=70?"var(--green)":sp>=50?"var(--orange)":"var(--red)";
+          return(<div key={s.l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid var(--bdr)"}}>
+            <span style={{fontSize:12,color:"var(--t1)"}}>{s.l}</span>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:11,color:"var(--t3)"}}>{s.d.score}/{s.d.total}</span>
+              <span className="out" style={{fontWeight:800,fontSize:13,color:sc}}>{sp}%</span>
+            </div></div>);
+        })}
+      </div>
+
+      <div style={{display:"flex",gap:8,marginBottom:16}}>
+        <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--purple)"}}>{fmtT(result.timeUsed)}</div><div style={{fontSize:10,color:"var(--t3)"}}>Time used</div></div>
+        <div className="crd" style={{flex:1,padding:12,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--cyan)"}}>{pct}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Overall</div></div>
+      </div>
+
+      <div className="out" style={{fontSize:22,fontWeight:800,color:"var(--gold)",marginBottom:20}}>+{xp} XP</div>
+
+      <button className="btn2" onClick={function(){result.mockId="boss";p.done(result,xp);}} style={{width:"100%",fontSize:16,padding:"14px 24px"}}>Save & Exit</button>
+    </div>);
+  }
+
+  return null;
+}
+
 function MockTest(p){
   var mockId=p.mockId;
   var data=mockId===1?{p5:MOCK1_P5,p6:MOCK1_P6,p7:MOCK1_P7}:mockId===2?{p5:MOCK2_P5,p6:MOCK2_P6,p7:MOCK2_P7}:{p5:MOCK3_P5,p6:MOCK3_P6,p7:MOCK3_P7};
@@ -7264,6 +7700,8 @@ var prevLeague=getLeague(c.weeklyXp);
   }
  
   function goTeacher(){setTeacher(true);}
+
+  function bossDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);}
   function mockDone(result,xp){
     var modId="mock"+result.mockId;
     var timeGateOk=(result.timeUsed||0)>=300;
@@ -7325,7 +7763,8 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="pvdojo")return(<div className={lc}><style>{CSS}</style><PhrasalDojo u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="mock1")return(<div className={lc}><style>{CSS}</style><MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="mock2")return(<div className={lc}><style>{CSS}</style><MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="mock3")return(<div className={lc}><style>{CSS}</style><MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
+
+  if(sp==="boss")return(<div className={lc}><style>{CSS}</style><BossTest u={u} done={bossDone} back={function(){sSP(null);sT("train");}}/></div>);  if(sp==="mock3")return(<div className={lc}><style>{CSS}</style><MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
   if(sp==="smatch")return(<div className={lc}><style>{CSS}</style><SpeedMatchHub u={u} nav={nav} back={function(){sSP(null);sT("games");}}/></div>);
 if(sp==="matchE"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/></div>);}
   if(sp==="matchH"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/></div>);}
