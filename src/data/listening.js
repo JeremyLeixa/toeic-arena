@@ -384,6 +384,112 @@ export var LISTENING_P2 = [
   {id:"p2_50",q:"I don't think we have enough chairs for the workshop.",
     opts:["The workshop is about leadership skills.","I can bring a few more from the next room.","It starts at 2 PM."],
     c:1,x:"Statement expressing a problem. B offers a solution. A gives the workshop topic and C gives the time. B is the most helpful response."},
+	// ═══════════════════════════════════════════════════════════
+// NEW PART 2 ITEMS — p2_51 → p2_75
+// Append these items inside the LISTENING_P2 array in listening.js
+// (before the closing "];")
+// Audio: public/audio/p2/{id}_q.mp3 + {id}_{0-2}.mp3
+// ═══════════════════════════════════════════════════════════
+
+  {id:"p2_51",q:"What floor is the human resources department on?",
+    opts:["They handle recruitment and benefits.","It's on the seventh floor, next to legal.","The department has fifteen employees."],
+    c:1,x:"'What floor' asks for a location. B gives the floor (seventh). A describes what HR does and C gives headcount."},
+
+  {id:"p2_52",q:"I don't think the projector is working properly.",
+    opts:["The presentation was very clear.","Have you tried restarting it?","The projector was expensive."],
+    c:1,x:"Statement expressing a problem. B offers a practical suggestion. A comments on a past presentation and C mentions cost."},
+
+  {id:"p2_53",q:"How far is the nearest post office from here?",
+    opts:["It closes at 5 PM.","About a ten-minute walk down Main Street.","I need to mail a package."],
+    c:1,x:"'How far' asks for distance. B gives distance/directions. A gives closing time and C states a need."},
+
+  {id:"p2_54",q:"Weren't we supposed to receive the samples today?",
+    opts:["The samples look great.","The supplier said they'll arrive by Thursday.","We ordered fifty samples."],
+    c:1,x:"Negative question about expected delivery. B corrects with a new timeline. A comments on quality and C gives quantity."},
+
+  {id:"p2_55",q:"Would you like me to arrange a taxi for you?",
+    opts:["The taxi fare is about fifteen dollars.","That would be very helpful, thank you.","I took a taxi yesterday."],
+    c:1,x:"Offer of help. B accepts the offer. A gives a fare and C talks about a past taxi ride."},
+
+  {id:"p2_56",q:"What did the technician say about the server?",
+    opts:["He said it needs a new hard drive.","The server room is on the basement level.","The technician arrived at noon."],
+    c:0,x:"'What did X say' asks for reported speech. A reports the diagnosis. B gives location and C gives arrival time."},
+
+  {id:"p2_57",q:"Should we order lunch for the workshop participants or let them go out?",
+    opts:["Yes, the workshop starts at one.","Ordering in would save time.","About twenty people signed up."],
+    c:1,x:"'Or' question. B makes a choice (ordering in). A says 'Yes' (or-question trap). C gives attendance numbers."},
+
+  {id:"p2_58",q:"How much did the office furniture cost?",
+    opts:["It was delivered on Monday.","Around twelve thousand dollars for everything.","The furniture looks very modern."],
+    c:1,x:"'How much' asks for a price. B gives the cost. A gives a delivery date and C gives an opinion on style."},
+
+  {id:"p2_59",q:"You haven't met the new regional manager yet, have you?",
+    opts:["No, but I've heard great things about her.","The regional office is in Boston.","We had a manager's meeting last week."],
+    c:0,x:"Negative tag question. A confirms (haven't met) with additional info. B gives office location and C talks about a past meeting."},
+
+  {id:"p2_60",q:"Let's take a short break before we continue.",
+    opts:["The break room has coffee and snacks.","Good idea — I could use some fresh air.","We started at nine this morning."],
+    c:1,x:"'Let's' is a suggestion. B agrees enthusiastically. A gives info about the break room and C gives start time."},
+
+  {id:"p2_61",q:"Whose turn is it to chair the meeting this week?",
+    opts:["The meeting was rescheduled.","I believe it's Sarah's turn.","The chair in the conference room is broken."],
+    c:1,x:"'Whose turn' asks for a person. B names someone (Sarah). A gives scheduling info and C is a word trap ('chair' = furniture vs role)."},
+
+  {id:"p2_62",q:"How long have you been working on the Henderson account?",
+    opts:["Mr. Henderson called this morning.","Since the beginning of March.","It's one of our biggest accounts."],
+    c:1,x:"'How long' asks for duration. B gives a timeframe. A mentions a call and C describes the account size."},
+
+  {id:"p2_63",q:"Do you know if the copy machine has been fixed?",
+    opts:["I made twenty copies for the meeting.","The repair technician is coming tomorrow.","The copy machine is near the elevator."],
+    c:1,x:"Indirect yes/no question. B gives a status update. A mentions copies made and C gives location."},
+
+  {id:"p2_64",q:"I'm not sure how to use this new expense tracking software.",
+    opts:["The expenses were approved last month.","There's a tutorial video on the company intranet.","The software costs fifty dollars per license."],
+    c:1,x:"Statement expressing difficulty. B offers a helpful resource. A talks about past expenses and C mentions cost."},
+
+  {id:"p2_65",q:"What time should we arrive at the client's office?",
+    opts:["The office is on Maple Street.","The client seemed pleased with our work.","The meeting is at 10, so let's get there by 9:45."],
+    c:2,x:"'What time' asks for a specific time. C gives an arrival time. A gives location and B gives an opinion about the client."},
+
+  {id:"p2_66",q:"Would it be possible to extend the warranty by one year?",
+    opts:["The warranty covers parts and labor.","Yes, for an additional seventy-five dollars.","We bought it two years ago."],
+    c:1,x:"Polite request for possibility. B answers yes with a cost. A describes coverage and C gives purchase date."},
+
+  {id:"p2_67",q:"Who else is attending the product launch event?",
+    opts:["The product launches next Friday.","Most of the sales and marketing teams.","The event was a big success."],
+    c:1,x:"'Who else' asks for other attendees. B names teams. A gives the launch date and C comments on a past event."},
+
+  {id:"p2_68",q:"This isn't the right form for a refund request, is it?",
+    opts:["You're right — you need form 7B from the finance office.","The refund was processed yesterday.","I'll fill out the form this afternoon."],
+    c:0,x:"Negative tag question seeking correction. A confirms and provides the correct form. B talks about a past refund and C offers future action."},
+
+  {id:"p2_69",q:"Why is the lobby so crowded this morning?",
+    opts:["There's a job fair on the ground floor today.","The lobby was redecorated last month.","I arrived early to avoid the traffic."],
+    c:0,x:"'Why' asks for a reason. A explains the cause. B mentions renovation and C gives arrival info."},
+
+  {id:"p2_70",q:"Have the clients from Tokyo confirmed their arrival date?",
+    opts:["Tokyo is nine hours ahead of London.","They'll be here on the twenty-third.","The clients were very impressed with our facility."],
+    c:1,x:"Yes/no about confirmation. B gives the confirmed date. A gives a time zone fact and C gives an opinion."},
+
+  {id:"p2_71",q:"Would you prefer the corner office or the one near the kitchen?",
+    opts:["Yes, I'd like an office with a window.","The corner office is quieter, so I'll take that one.","Both offices have been recently painted."],
+    c:1,x:"'Or' question. B makes a choice with reasoning. A says 'Yes' (or-question trap). C describes both offices equally."},
+
+  {id:"p2_72",q:"Hasn't anyone responded to the job posting yet?",
+    opts:["The posting was put up on the company website.","We've received about forty applications so far.","The position requires five years of experience."],
+    c:1,x:"Negative question about response status. B gives a number of responses. A says where it was posted and C describes requirements."},
+
+  {id:"p2_73",q:"I left my umbrella in the meeting room, I think.",
+    opts:["It's supposed to rain all afternoon.","Let me check — yes, it's on the table by the window.","The meeting went very well today."],
+    c:1,x:"Statement implying a need for help. B confirms and locates the item. A comments on weather and C on the meeting quality."},
+
+  {id:"p2_74",q:"How many people can the conference hall hold?",
+    opts:["The conference is about digital marketing.","Up to three hundred, with extra seating available.","We reserved it for next Thursday."],
+    c:1,x:"'How many' asks for capacity. B gives a number with detail. A gives the topic and C gives a reservation date."},
+
+  {id:"p2_75",q:"You're going to the industry expo next week, aren't you?",
+    opts:["Actually, I've decided to send my assistant instead.","The expo features over two hundred exhibitors.","I went to the expo last year in Chicago."],
+    c:0,x:"Tag question expecting confirmation. A gives an unexpected but natural answer (not going personally). B describes the expo and C talks about a past one."},
 ];
 
 // ─── PART 3 — Conversations (20 conversations, 60 questions) ───
@@ -590,6 +696,112 @@ export var LISTENING_P3 = [
       {q:"Where does this conversation take place?",opts:["At a law firm","At a bank","At a government office","At an accounting firm"],c:1},
       {q:"What does the man want to open?",opts:["A savings account","A personal account","A business checking account","A credit card"],c:2},
       {q:"When will online banking be available?",opts:["Immediately","Within 24 hours","In one week","After approval"],c:1}]},
+	  // ═══════════════════════════════════════════════════════════
+// NEW PART 3 CONVERSATIONS — p3_21 → p3_30
+// Append these items inside the LISTENING_P3 array in listening.js
+// (before the closing "];")
+// Audio: public/audio/p3/{id}_line{i}.mp3
+// ═══════════════════════════════════════════════════════════
+
+  {id:"p3_21",lines:[
+      {s:"M",t:"I just got the email — we're officially moving to the new office on the fifteenth."},
+      {s:"W",t:"That's only two weeks away. Have the movers been booked?"},
+      {s:"M",t:"Yes, but we need everyone to label their boxes by next Wednesday at the latest."},
+      {s:"W",t:"I'll send a reminder to all departments this afternoon."}],
+    qs:[
+      {q:"When is the office move?",opts:["Next week","On the 15th","At the end of the month","On Wednesday"],c:1},
+      {q:"What must employees do before the move?",opts:["Pack the furniture","Label their boxes","Choose their new desks","Cancel their meetings"],c:1},
+      {q:"What will the woman do?",opts:["Book the movers","Label the boxes","Send a reminder","Postpone the move"],c:2}]},
+
+  {id:"p3_22",lines:[
+      {s:"W",t:"I've received a complaint from a client about the quality of the latest shipment."},
+      {s:"M",t:"What exactly was the issue?"},
+      {s:"W",t:"Several items arrived damaged. The packaging didn't have enough protective material."},
+      {s:"M",t:"We should send replacements immediately and review our packaging process with the warehouse team."}],
+    qs:[
+      {q:"What is the problem?",opts:["A late delivery","Damaged items","Missing items","Wrong products"],c:1},
+      {q:"What caused the damage?",opts:["A factory defect","Insufficient packaging","Rough handling by the courier","Extreme temperatures"],c:1},
+      {q:"What does the man suggest doing first?",opts:["Contacting the courier","Offering a discount","Sending replacements","Changing the supplier"],c:2}]},
+
+  {id:"p3_23",lines:[
+      {s:"M",t:"I heard the company is introducing a new transport allowance for employees who use public transit."},
+      {s:"W",t:"That's right. It's seventy-five dollars a month, starting in January."},
+      {s:"M",t:"Does it apply to everyone, or just full-time staff?"},
+      {s:"W",t:"Full-time employees only, but part-time staff can apply for a partial subsidy."}],
+    qs:[
+      {q:"What is the new benefit?",opts:["Free parking","A company car","A transport allowance","Flexible working hours"],c:2},
+      {q:"How much is the allowance?",opts:["$57 a month","$75 a month","$175 a month","$70 a month"],c:1},
+      {q:"Who is fully eligible?",opts:["All employees","Part-time staff only","Full-time employees","Managers only"],c:2}]},
+
+  {id:"p3_24",lines:[
+      {s:"W",t:"The IT department has scheduled a system upgrade for this Saturday from 6 AM to noon."},
+      {s:"M",t:"So the network will be down for six hours? That's going to affect anyone working over the weekend."},
+      {s:"W",t:"They've set up a temporary Wi-Fi network for basic email and browsing during the downtime."},
+      {s:"M",t:"Good. I'll make sure my team saves everything to their local drives on Friday before they leave."}],
+    qs:[
+      {q:"When will the system upgrade take place?",opts:["Friday evening","Saturday morning","Sunday afternoon","Monday morning"],c:1},
+      {q:"How long will the network be unavailable?",opts:["Two hours","Four hours","Six hours","Eight hours"],c:2},
+      {q:"What alternative has been provided?",opts:["A backup server","A temporary Wi-Fi network","Printed copies of files","Remote desktop access"],c:1}]},
+
+  {id:"p3_25",lines:[
+      {s:"M",t:"Have you signed up for the leadership development program yet? Registration closes tomorrow."},
+      {s:"W",t:"I was thinking about it, but isn't it only for senior managers?"},
+      {s:"M",t:"No, they opened it up this year. Anyone with at least two years at the company can apply."},
+      {s:"W",t:"Oh, that's great. I've been here for three years, so I'll register today."}],
+    qs:[
+      {q:"When does registration close?",opts:["Today","Tomorrow","Next week","Next month"],c:1},
+      {q:"Who can participate in the program?",opts:["Only senior managers","New employees","Anyone with 2+ years at the company","All department heads"],c:2},
+      {q:"How long has the woman worked at the company?",opts:["One year","Two years","Three years","Five years"],c:2}]},
+
+  {id:"p3_26",lines:[
+      {s:"W",t:"We need to finalize the catering for the annual company picnic next Saturday."},
+      {s:"M",t:"How many people have confirmed so far?"},
+      {s:"W",t:"About a hundred and forty, including employees and their families."},
+      {s:"M",t:"Let's order for a hundred and sixty, just to be safe. We always get last-minute sign-ups."}],
+    qs:[
+      {q:"What event are they planning?",opts:["A board meeting","A product launch","A company picnic","A holiday party"],c:2},
+      {q:"How many people have confirmed?",opts:["40","114","140","160"],c:2},
+      {q:"How many servings does the man want to order?",opts:["140","150","160","200"],c:2}]},
+
+  {id:"p3_27",lines:[
+      {s:"M",t:"Welcome aboard! I'm James from HR. I'll be showing you around the office today."},
+      {s:"W",t:"Thank you. I'm really excited to start. Where should I set up my workstation?"},
+      {s:"M",t:"Your desk is on the third floor, near the marketing team. Your laptop and badge are already there."},
+      {s:"W",t:"Perfect. Is there anything I need to complete before the team meeting at eleven?"}],
+    qs:[
+      {q:"What is happening in this conversation?",opts:["A job interview","A first day at work","A farewell party","A performance review"],c:1},
+      {q:"Where is the woman's desk?",opts:["On the first floor","On the second floor","On the third floor","In the HR office"],c:2},
+      {q:"What time is the team meeting?",opts:["At 9:00","At 10:00","At 11:00","At noon"],c:2}]},
+
+  {id:"p3_28",lines:[
+      {s:"W",t:"I've just finished the inventory count, and we're short two hundred units of the XT-500 model."},
+      {s:"M",t:"Two hundred? That doesn't match the delivery records. The supplier confirmed the full order was shipped."},
+      {s:"W",t:"I double-checked. It's possible some boxes were delivered to the wrong warehouse."},
+      {s:"M",t:"I'll contact the logistics team right away and ask them to trace the shipment."}],
+    qs:[
+      {q:"What problem did the woman discover?",opts:["Damaged products","A billing error","Missing inventory","An expired shipment"],c:2},
+      {q:"How many units are missing?",opts:["20","120","200","250"],c:2},
+      {q:"What will the man do next?",opts:["Recount the inventory","Order new stock","Contact the logistics team","Return the shipment"],c:2}]},
+
+  {id:"p3_29",lines:[
+      {s:"M",t:"I submitted my travel expenses for the Tokyo trip two weeks ago, but I haven't been reimbursed yet."},
+      {s:"W",t:"Let me check the system. It looks like your receipts for the hotel were flagged because the amount exceeded the daily limit."},
+      {s:"M",t:"The hotel was more expensive because it was close to the conference venue. My manager approved the exception."},
+      {s:"W",t:"In that case, I just need your manager's written approval. Once I have that, I can process it within three business days."}],
+    qs:[
+      {q:"What is the man's problem?",opts:["His flight was cancelled","His expenses haven't been reimbursed","He lost his receipts","His trip was denied"],c:1},
+      {q:"Why were the hotel expenses flagged?",opts:["The receipts were missing","The hotel was not on the approved list","The amount was over the daily limit","The currency was wrong"],c:2},
+      {q:"What does the woman need to process the claim?",opts:["New receipts","A different hotel booking","Written approval from the manager","A revised expense report"],c:2}]},
+
+  {id:"p3_30",lines:[
+      {s:"W",t:"Our office lease expires in September, and the landlord has offered us a renewal at a ten percent increase."},
+      {s:"M",t:"Ten percent is quite steep. Have we looked at other locations?"},
+      {s:"W",t:"I've visited two other buildings. One is cheaper but farther from the metro, and the other is similar in price."},
+      {s:"M",t:"Let's negotiate with the current landlord first. We've been reliable tenants for five years — that should give us some leverage."}],
+    qs:[
+      {q:"When does the lease expire?",opts:["In June","In July","In September","In December"],c:2},
+      {q:"How much would the rent increase?",opts:["5%","8%","10%","15%"],c:2},
+      {q:"What does the man want to do first?",opts:["Move to a new building","Negotiate with the current landlord","Hire a real estate agent","Reduce office space"],c:1}]},
 ];
 
 // ─── PART 4 — Talks (20 talks, 60 questions) ───
@@ -735,4 +947,80 @@ export var LISTENING_P4 = [
       {q:"What event is taking place?",opts:["A product launch","A shareholders' meeting","An awards ceremony","A retirement party"],c:2},
       {q:"How many nominations were received?",opts:["Over 50","Over 80","Over 100","Over 120"],c:3},
       {q:"What award is presented first?",opts:["Best Team","Employee of the Year","Best New Product","Innovation Leader"],c:2}]},
+	  // ═══════════════════════════════════════════════════════════
+// NEW PART 4 TALKS — p4_21 → p4_30
+// Append these items inside the LISTENING_P4 array in listening.js
+// (before the closing "];")
+// Audio: public/audio/p4/{id}.mp3
+// ═══════════════════════════════════════════════════════════
+
+  {id:"p4_21",type:"Voicemail",voice:"W",
+    text:"Hi, this is Angela from Westfield Insurance. I'm calling regarding your claim for the water damage in your office. I've reviewed the assessment report, and we can cover the repairs up to eighteen thousand dollars. However, the replacement of electronic equipment will require separate authorization. Could you send me a list of the damaged devices along with their purchase receipts? You can email them to claims@westfieldinsurance.com or fax them to 555-0241. I'll need those by next Friday to process the claim before the end of the quarter.",
+    qs:[
+      {q:"Why is Angela calling?",opts:["To sell insurance","About a damage claim","To schedule an inspection","To cancel a policy"],c:1},
+      {q:"How much can be covered for repairs?",opts:["$8,000","$18,000","$80,000","$1,800"],c:1},
+      {q:"What must the listener send?",opts:["A signed contract","Photos of the office","A list of damaged devices with receipts","An insurance application"],c:2}]},
+
+  {id:"p4_22",type:"News report",voice:"M",
+    text:"In local business news, the city council has approved a twenty-five-million-dollar plan to redevelop the waterfront district. The project, which is expected to take three years to complete, will include a new conference center, a public park, and a mixed-use commercial space with shops and restaurants. Construction is set to begin in September. Mayor Reeves said the redevelopment will create an estimated 800 permanent jobs and attract over a million visitors per year to the area.",
+    qs:[
+      {q:"What has the city council approved?",opts:["A new hospital","A waterfront redevelopment","A highway extension","A school renovation"],c:1},
+      {q:"How long will the project take?",opts:["One year","Two years","Three years","Five years"],c:2},
+      {q:"How many permanent jobs are expected?",opts:["80","180","800","8,000"],c:2}]},
+
+  {id:"p4_23",type:"Training session",voice:"W",
+    text:"Now that everyone has logged in to the new customer management system, let me walk you through the main features. On the left side of your screen, you'll see the client directory. You can search by name, company, or account number. When you open a client profile, their entire history — including calls, emails, and past orders — appears in the center panel. To add a note after a phone call, click the blue plus icon at the top right. It's important that every interaction is logged within 24 hours. Any questions so far?",
+    qs:[
+      {q:"What is being demonstrated?",opts:["An email program","A customer management system","A billing tool","A scheduling app"],c:1},
+      {q:"Where is the client directory located on screen?",opts:["At the top","On the right side","On the left side","At the bottom"],c:2},
+      {q:"When must interactions be logged?",opts:["Immediately","Within 24 hours","By the end of the week","Before the next meeting"],c:1}]},
+
+  {id:"p4_24",type:"Announcement",voice:"M",
+    text:"Attention all employees. Due to essential maintenance work on the building's electrical system, there will be a planned power outage this Sunday from 8 AM to 2 PM. All computers and sensitive equipment should be shut down and unplugged before leaving on Friday evening. The backup generators will provide emergency lighting during the outage, but elevators will not be operational. If you need to access the building on Sunday, please use the stairwells and bring a flashlight. Normal operations will resume on Monday morning.",
+    qs:[
+      {q:"When will the power outage occur?",opts:["Friday evening","Saturday morning","Sunday morning","Monday morning"],c:2},
+      {q:"What should employees do before leaving Friday?",opts:["Lock their desks","Back up their files online","Shut down and unplug equipment","Notify their managers"],c:2},
+      {q:"What will NOT work during the outage?",opts:["Emergency lights","Stairwells","Elevators","The main entrance"],c:2}]},
+
+  {id:"p4_25",type:"Tour guide",voice:"W",
+    text:"As we enter the east wing, you'll notice this gallery is devoted entirely to Impressionist paintings from the late nineteenth century. The collection was donated by the Harrison family in 1987 and includes works by several well-known French artists. The highlight of this room is the large landscape on the far wall, which was painted in 1893. Please note that this wing will close thirty minutes before the rest of the museum. Audio guides are available for rent at the information desk near the entrance for five dollars each.",
+    qs:[
+      {q:"What type of art is displayed in this gallery?",opts:["Modern sculpture","Renaissance art","Impressionist paintings","Abstract photography"],c:2},
+      {q:"When was the collection donated?",opts:["1893","1978","1987","1997"],c:2},
+      {q:"How much does an audio guide cost?",opts:["Free","$3","$5","$15"],c:2}]},
+
+  {id:"p4_26",type:"Advertisement",voice:"M",
+    text:"Tired of spending hours on payroll every month? Let SmartPay handle it for you. SmartPay is an automated payroll service designed for small and medium-sized businesses. We calculate taxes, process direct deposits, and generate year-end reports — all for a flat fee of $99 per month for up to fifty employees. Setup takes less than ten minutes, and our support team is available seven days a week. Visit smartpay.com and use the code SAVE20 to get your first three months at half price.",
+    qs:[
+      {q:"What service does SmartPay provide?",opts:["Office cleaning","Legal advice","Automated payroll","Employee recruitment"],c:2},
+      {q:"What is the monthly fee for up to 50 employees?",opts:["$49","$59","$99","$199"],c:2},
+      {q:"What does the discount code offer?",opts:["A free month","20% off for a year","Three months at half price","A full refund"],c:2}]},
+
+  {id:"p4_27",type:"Recorded message",voice:"W",
+    text:"Thank you for calling Clearview Medical Center. Our office hours are Monday through Friday, 8 AM to 6 PM, and Saturday from 9 AM to 1 PM. We are closed on Sundays and public holidays. If this is a medical emergency, please hang up and dial 911. To make or change an appointment, press 1. To request a prescription refill, press 2. To speak to the billing department, press 3. To hear these options again, press the star key. Please note that wait times may be longer than usual due to high call volume.",
+    qs:[
+      {q:"What are the Saturday hours?",opts:["8 AM to 6 PM","9 AM to 1 PM","9 AM to 5 PM","Closed"],c:1},
+      {q:"What should callers do in an emergency?",opts:["Press 1","Stay on the line","Hang up and call 911","Visit the center"],c:2},
+      {q:"Which button is for prescription refills?",opts:["1","2","3","Star key"],c:1}]},
+
+  {id:"p4_28",type:"Company update",voice:"M",
+    text:"I'm pleased to report that our customer retention rate has risen to 92 percent this year, up from 87 percent last year. This is largely thanks to the new loyalty program we launched in March, which now has over ten thousand active members. Our survey data shows that response time and product quality are the two factors customers value most. Looking ahead, we plan to introduce a premium membership tier in January that will include priority support and exclusive discounts. I'd like to thank the entire customer service team for their outstanding work this year.",
+    qs:[
+      {q:"What is the current customer retention rate?",opts:["78%","87%","92%","97%"],c:2},
+      {q:"How many members does the loyalty program have?",opts:["Over 1,000","Over 5,000","Over 10,000","Over 100,000"],c:2},
+      {q:"What is planned for January?",opts:["A price increase","A new loyalty program","A premium membership tier","A company restructuring"],c:2}]},
+
+  {id:"p4_29",type:"Instructions",voice:"W",
+    text:"Before we start the test, let me go over the examination rules. You have exactly 90 minutes to complete all sections. Please write your answers on the answer sheet using a number 2 pencil only. Pens and mechanical pencils are not accepted. Electronic devices, including phones and smartwatches, must be turned off and placed in the bag at the front of the room. You may not leave the room during the first 30 minutes. If you finish early, you may review your answers but please remain seated until the proctor collects your materials.",
+    qs:[
+      {q:"How long is the test?",opts:["60 minutes","75 minutes","90 minutes","120 minutes"],c:2},
+      {q:"What must be used to mark the answer sheet?",opts:["A pen","A mechanical pencil","A number 2 pencil","A marker"],c:2},
+      {q:"When may test-takers leave the room?",opts:["At any time","After 15 minutes","After 30 minutes","Only when the test ends"],c:2}]},
+
+  {id:"p4_30",type:"Event introduction",voice:"M",
+    text:"Good evening, and welcome to the twenty-third annual Hospitality Excellence Awards. We have over 400 guests here tonight, representing the finest hotels, restaurants, and travel companies in the region. This year, we received a record-breaking 250 nominations across 12 categories. I'd like to begin by recognizing our platinum sponsor, Pacific Coast Hotels, for their generous support. Before we present the awards, please enjoy a short video highlighting the achievements of this year's finalists. The first award tonight is for Outstanding Customer Experience.",
+    qs:[
+      {q:"What industry is this event for?",opts:["Technology","Hospitality","Healthcare","Finance"],c:1},
+      {q:"How many nominations were received?",opts:["25","120","205","250"],c:3},
+      {q:"What will happen before the awards are presented?",opts:["A keynote speech","Dinner is served","A video will be shown","A dance performance"],c:2}]},
 ];

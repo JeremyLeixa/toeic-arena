@@ -1,4 +1,4 @@
-// ─── AUDIO BLITZ DATA (30 items) ───
+// ─── AUDIO BLITZ DATA (60 items) ───
 // Short business utterances — listen once, answer fast
 // audio: path to MP3 (to be generated via ElevenLabs)
 // text: transcript (hidden during game, shown in feedback)
@@ -7,6 +7,10 @@
 // c: correct index
 
 export var AUDIO_BLITZ = [
+  // ══════════════════════════════════════════════
+  // BATCH 1 — Original 30 items (ab_01 → ab_30)
+  // ══════════════════════════════════════════════
+
   // ── Announcements / Instructions ──
   {id:"ab_01",text:"The meeting has been moved from Conference Room A to Room 312 on the third floor.",
     q:"Where is the meeting now?",opts:["Conference Room A","Room 312","The third-floor lobby","Room 213"],c:1,
@@ -110,4 +114,110 @@ export var AUDIO_BLITZ = [
   {id:"ab_30",text:"The contract states that payment is due within thirty days of receiving the invoice.",
     q:"When is payment due?",opts:["Immediately","Within 13 days","Within 30 days","Within 3 months"],c:2,
     audio:"/audio/blitz/ab_30.mp3"},
+
+  // ══════════════════════════════════════════════
+  // BATCH 2 — New 30 items (ab_31 → ab_60)
+  // ══════════════════════════════════════════════
+
+  // ── Announcements / Instructions ──
+  {id:"ab_31",text:"The staff meeting originally scheduled for Tuesday has been moved to Thursday at the same time.",
+    q:"When is the meeting now?",opts:["Monday","Tuesday","Wednesday","Thursday"],c:3,
+    audio:"/audio/blitz/ab_31.mp3"},
+  {id:"ab_32",text:"Please remember to badge in and out every day. The security team will be checking records starting next week.",
+    q:"What must employees do?",opts:["Submit timesheets online","Badge in and out daily","Arrive before 8 AM","Notify security of absences"],c:1,
+    audio:"/audio/blitz/ab_32.mp3"},
+  {id:"ab_33",text:"All visitors must sign in at the front desk and wear a visitor badge at all times while in the building.",
+    q:"What are visitors required to wear?",opts:["A name tag","A hard hat","A visitor badge","A lanyard"],c:2,
+    audio:"/audio/blitz/ab_33.mp3"},
+  {id:"ab_34",text:"Recycling bins have been placed on every floor. Please separate paper from plastic and glass.",
+    q:"What should be separated?",opts:["Food from drinks","Paper from plastic and glass","Cardboard from metal","Nothing — all goes in one bin"],c:1,
+    audio:"/audio/blitz/ab_34.mp3"},
+  {id:"ab_35",text:"The company gym will be closed for renovations from March first through March fifteenth.",
+    q:"How long will the gym be closed?",opts:["One week","Two weeks","One month","Three days"],c:1,
+    audio:"/audio/blitz/ab_35.mp3"},
+
+  // ── Phone / Voicemail ──
+  {id:"ab_36",text:"Hi, this is David from the IT help desk. Your laptop has been repaired and is ready for pickup.",
+    q:"Why is David calling?",opts:["To report a problem","To schedule a repair","To say the laptop is ready","To order new equipment"],c:2,
+    audio:"/audio/blitz/ab_36.mp3"},
+  {id:"ab_37",text:"Good afternoon, this is Dr. Morgan's office. We need to reschedule your appointment from the tenth to the twelfth.",
+    q:"What is the new appointment date?",opts:["The 2nd","The 10th","The 12th","The 20th"],c:2,
+    audio:"/audio/blitz/ab_37.mp3"},
+  {id:"ab_38",text:"Hello, I'm calling from Greenfield Catering. The order for sixty sandwiches will be delivered by noon tomorrow.",
+    q:"How many sandwiches were ordered?",opts:["16","6","60","66"],c:2,
+    audio:"/audio/blitz/ab_38.mp3"},
+  {id:"ab_39",text:"This is a reminder that your subscription expires on April thirtieth. Please renew online to avoid service interruption.",
+    q:"When does the subscription expire?",opts:["April 3rd","April 13th","April 30th","March 14th"],c:2,
+    audio:"/audio/blitz/ab_39.mp3"},
+
+  // ── Short dialogues / Workplace ──
+  {id:"ab_40",text:"I've just spoken to the client, and they've agreed to extend the deadline by one week.",
+    q:"What did the client agree to?",opts:["A price reduction","A one-week extension","Cancelling the project","Adding more features"],c:1,
+    audio:"/audio/blitz/ab_40.mp3"},
+  {id:"ab_41",text:"The conference room on the fourth floor has a projector, but the one on the sixth floor does not.",
+    q:"Which room has a projector?",opts:["The second floor","The fourth floor","The sixth floor","Both rooms"],c:1,
+    audio:"/audio/blitz/ab_41.mp3"},
+  {id:"ab_42",text:"Could you forward me the email from the supplier? I need the tracking number for the shipment.",
+    q:"What does the speaker need?",opts:["A phone number","A tracking number","An invoice","A delivery address"],c:1,
+    audio:"/audio/blitz/ab_42.mp3"},
+  {id:"ab_43",text:"We've decided to go with the second vendor because their quote was fifteen percent lower.",
+    q:"Why was the second vendor chosen?",opts:["Better quality","Faster delivery","Lower price","More experience"],c:2,
+    audio:"/audio/blitz/ab_43.mp3"},
+  {id:"ab_44",text:"The air conditioning in the east wing is being repaired today, so please use the west wing meeting rooms.",
+    q:"Where should meetings be held today?",opts:["In the east wing","In the west wing","On the rooftop","At the main lobby"],c:1,
+    audio:"/audio/blitz/ab_44.mp3"},
+
+  // ── Numbers & Details (listening traps) ──
+  {id:"ab_45",text:"Last quarter, our team processed eighteen hundred customer requests, up from fifteen hundred the quarter before.",
+    q:"How many requests were processed last quarter?",opts:["1,500","1,800","800","1,850"],c:1,
+    audio:"/audio/blitz/ab_45.mp3"},
+  {id:"ab_46",text:"The seminar starts at two forty-five, not two fifteen as printed in the original schedule.",
+    q:"What is the correct start time?",opts:["2:15","2:45","2:14","2:50"],c:1,
+    audio:"/audio/blitz/ab_46.mp3"},
+  {id:"ab_47",text:"We need to order three hundred and fifty chairs for the event, plus forty tables.",
+    q:"How many chairs are needed?",opts:["315","350","340","450"],c:1,
+    audio:"/audio/blitz/ab_47.mp3"},
+  {id:"ab_48",text:"The storage unit costs ninety-five dollars a month, with a minimum rental period of six months.",
+    q:"What is the minimum rental period?",opts:["3 months","5 months","6 months","9 months"],c:2,
+    audio:"/audio/blitz/ab_48.mp3"},
+  {id:"ab_49",text:"Our office has expanded from seventy employees to over a hundred and thirty in just two years.",
+    q:"How many employees are there now?",opts:["70","100","113","Over 130"],c:3,
+    audio:"/audio/blitz/ab_49.mp3"},
+
+  // ── Inference / Tone ──
+  {id:"ab_50",text:"The report is mostly fine, but I'd like you to double-check the figures in section three before we send it out.",
+    q:"What should be done before sending the report?",opts:["Rewrite the whole report","Check the numbers in section 3","Add a new section","Get the manager's signature"],c:1,
+    audio:"/audio/blitz/ab_50.mp3"},
+  {id:"ab_51",text:"I was hoping to take Friday off, but it looks like we'll need all hands on deck for the product launch.",
+    q:"Will the speaker take Friday off?",opts:["Yes, definitely","Probably not","It depends on the weather","The manager said yes"],c:1,
+    audio:"/audio/blitz/ab_51.mp3"},
+  {id:"ab_52",text:"While the new software is more expensive, it should save us a significant amount of time in the long run.",
+    q:"What is the advantage of the new software?",opts:["It's cheaper","It's easier to install","It saves time","It has fewer features"],c:2,
+    audio:"/audio/blitz/ab_52.mp3"},
+  {id:"ab_53",text:"I wouldn't say the presentation was bad, but there's definitely room for improvement.",
+    q:"What does the speaker think of the presentation?",opts:["It was excellent","It was terrible","It was acceptable but could be better","It was cancelled"],c:2,
+    audio:"/audio/blitz/ab_53.mp3"},
+  {id:"ab_54",text:"We could either hire a full-time employee or outsource the work. Personally, I'd lean towards outsourcing.",
+    q:"What does the speaker prefer?",opts:["Hiring someone full-time","Outsourcing the work","Doing nothing","Asking for volunteers"],c:1,
+    audio:"/audio/blitz/ab_54.mp3"},
+
+  // ── Similar-sounding / Negation traps ──
+  {id:"ab_55",text:"The package should be sent to the Berlin office, not the Dublin office.",
+    q:"Where should the package go?",opts:["Dublin","Bergen","Berlin","Durban"],c:2,
+    audio:"/audio/blitz/ab_55.mp3"},
+  {id:"ab_56",text:"Ms. Park asked for fifty binders, not fifteen, for the training session.",
+    q:"How many binders are needed?",opts:["15","50","55","5"],c:1,
+    audio:"/audio/blitz/ab_56.mp3"},
+  {id:"ab_57",text:"The report should be sent to the director, not the editor, for final approval.",
+    q:"Who should receive the report?",opts:["The editor","The auditor","The director","The manager"],c:2,
+    audio:"/audio/blitz/ab_57.mp3"},
+  {id:"ab_58",text:"We're looking for a consultant, not a permanent employee, to help with the transition.",
+    q:"What kind of hire is needed?",opts:["A permanent employee","A consultant","An intern","A freelance designer"],c:1,
+    audio:"/audio/blitz/ab_58.mp3"},
+  {id:"ab_59",text:"Please note that the presentation is on the third floor, not the first floor as previously announced.",
+    q:"Where is the presentation?",opts:["The first floor","The second floor","The third floor","The fourth floor"],c:2,
+    audio:"/audio/blitz/ab_59.mp3"},
+  {id:"ab_60",text:"The workshop will last two and a half hours, including a fifteen-minute break in the middle.",
+    q:"How long is the workshop?",opts:["1.5 hours","2 hours","2.5 hours","3 hours"],c:2,
+    audio:"/audio/blitz/ab_60.mp3"},
 ];
