@@ -6987,13 +6987,13 @@ var overallRank=(overallRanking.findIndex(function(pl){return pl.name===u.name;}
 var countdown=getSeasonEndCountdown(curSeason);
 
 // ── Render helpers ──
-function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP",bonus=props.bonus||null;
+function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP",bonus=props.bonus||null,bonusColor=props.bonusColor||"var(--gold)";
   return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(212,148,58,.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(212,148,58,.25)":"1px solid var(--bdr)",borderRadius:12}}>
     <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?(rank===1?"🥇":rank===2?"🥈":"🥉"):rank}</div>
     <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
     <div style={{flex:1}}>
       <div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)"}}>{isMe?pl.name+" (Toi)":pl.name}</div>
-      {bonus&&<div style={{fontSize:10,color:"var(--gold)",fontWeight:700,marginTop:1}}>{bonus}</div>}
+      {bonus&&<div style={{fontSize:10,color:bonusColor,fontWeight:700,marginTop:2}}>{bonus}</div>}
     </div>
     <div className="out" style={{fontWeight:700,fontSize:14,color:isMe?"var(--cyan)":"var(--t2)"}}>{pl.pts!==undefined?pl.pts:pl.xp} {unit}</div>
   </div>);
@@ -7105,8 +7105,8 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{fontSize:36,marginBottom:6}}>{"🏆"}</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--gold)"}}>Classement Général</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Points de classement cumulés sur toutes les saisons</div>
-    <div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600}}>⭐ Top 3 XP → +1 pt sur la note finale</div>
-    <div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>Cumulable avec le bonus Progression (max +3 pts au total)</div>
+    <div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600}}>{"🏆"} Top 3 {"→"} +2 pts {"·"} Top 10 {"→"} +1 pt sur la note finale</div>
+    <div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>Cumulable avec le bonus Progression (max +4 pts au total)</div>
   </div>
   {/* Season breakdown mini-bar */}
   <div style={{display:"flex",gap:6,marginBottom:16}}>
@@ -7121,8 +7121,10 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   </div>
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
     {overallRanking.filter(function(pl){return pl.pts>0;}).map(function(pl,i){
-      var bonusLabel=i<3?"⭐ +1 pt note finale":null;
-      return(<RankRow key={i} pl={pl} rank={i+1} isMe={pl.name===u.name} unit="pts" bonus={bonusLabel}/>);
+      var rank=i+1;
+      var bonusLabel=rank<=3?"\uD83C\uDFC6 +2pts note finale":rank<=10?"\u2B50 +1pt note finale":null;
+      var bColor=rank<=3?"var(--gold)":"var(--cyan)";
+      return(<RankRow key={i} pl={pl} rank={rank} isMe={pl.name===u.name} unit="pts" bonus={bonusLabel} bonusColor={bColor}/>);
     })}
     {overallRanking.filter(function(pl){return pl.pts>0;}).length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>Pas encore de données — la Saison 1 a commencé le 24 mars !</p></div>}
   </div>
