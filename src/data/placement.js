@@ -1,29 +1,86 @@
-// ─── PLACEMENT TEST ───
-export var PLACEMENT_TEST = [
-  {id:"pt1",s:"She _____ at this company since 2019.",o:["works","worked","has worked","is working"],c:2,x:"'Since 2019' = present perfect.",diff:1,cat:"Tenses"},
-  {id:"pt2",s:"The report must be _____ by Friday.",o:["submit","submitted","submitting","submits"],c:1,x:"Passive with modal: must be + past participle.",diff:1,cat:"Passive Voice"},
-  {id:"pt3",s:"All employees are responsible _____ their own equipment.",o:["of","for","to","with"],c:1,x:"'Responsible for' = fixed collocation.",diff:1,cat:"Prepositions"},
-  {id:"pt4",s:"The _____ of the new policy surprised everyone.",o:["announce","announcement","announced","announcing"],c:1,x:"'The _____ of' = noun needed. 'Announcement'.",diff:2,cat:"Word Families"},
-  {id:"pt5",s:"_____ the budget cuts, the project was completed on time.",o:["Despite","Although","However","Because"],c:0,x:"'Despite' + noun phrase (no clause).",diff:2,cat:"Connectors"},
-  {id:"pt6",s:"The company plans to _____ a survey among its customers.",o:["conduct","make","do","perform"],c:0,x:"'Conduct a survey' = standard business collocation.",diff:2,cat:"Collocations"},
-  {id:"pt7",s:"Neither the CEO nor the directors _____ available for comment.",o:["was","is","were","has"],c:2,x:"'Neither...nor' = verb agrees with nearest subject (directors = plural).",diff:3,cat:"Subject-Verb Agreement"},
-  {id:"pt8",s:"The team suggested _____ the launch to next quarter.",o:["to postpone","postponing","postpone","postponed"],c:1,x:"'Suggest' takes gerund (-ing).",diff:3,cat:"Gerunds vs Infinitives"},
-  {id:"pt9",s:"This model is _____ than the previous one.",o:["more efficient","most efficient","as efficient","efficiently"],c:0,x:"Comparative: more + adjective + THAN.",diff:3,cat:"Comparatives"},
-  {id:"pt10",s:"Had we known about the issue earlier, we _____ it sooner.",o:["fixed","would fix","would have fixed","will fix"],c:2,x:"Third conditional: Had + past participle, would have + past participle.",diff:3,cat:"Conditionals"},
-  {id:"pt11",s:"The client _____ the proposal was sent has not responded.",o:["who","to whom","which","whose"],c:1,x:"'To whom' = formal. The proposal was sent TO the client.",diff:4,cat:"Relative Pronouns"},
-  {id:"pt12",s:"The factory _____ 10,000 units by the end of this month.",o:["produces","will have produced","produced","producing"],c:1,x:"'By the end of' = future perfect: will have produced.",diff:4,cat:"Tenses"},
-  {id:"pt13",s:"_____ information in this report is confidential.",o:["A","An","The","Some"],c:2,x:"'The' = specific information (in THIS report). Definite article.",diff:4,cat:"Articles"},
-  {id:"pt14",s:"The new regulation _____ into effect on April 1st.",o:["goes","went","has gone","is going"],c:0,x:"Scheduled future event = present simple.",diff:5,cat:"Tenses"},
-  {id:"pt15",s:"It _____ that the merger will be completed by June.",o:["expects","is expected","expecting","has expecting"],c:1,x:"'It is expected that...' = impersonal passive construction.",diff:5,cat:"Passive Voice"},
+// ─── BATTLE SCAN — Diagnostic d'entrée multi-compétences ───
+
+export var BATTLE_SCAN = [
+  // ── SECTION 0 : BLADE PRECISION (Grammar Instinct) ──
+  {
+    id:"grammar", name:"Blade Precision", subtitle:"Grammar Instinct",
+    icon:"⚔️", color:"#d4943a",
+    desc:"A warrior's blade must be precise. Test your command of English structure.",
+    moduleMap:["drill","connsort","wordfam","gerinf","prepdrill"],
+    questions:[
+      {id:"bs_g1",s:"She _____ at this company since 2019.",o:["works","worked","has worked","is working"],c:2,x:"'Since 2019' → present perfect.",mod:"drill"},
+      {id:"bs_g2",s:"_____ the budget cuts, the project was completed on time.",o:["Despite","Although","However","Because"],c:0,x:"'Despite' + noun phrase (no clause needed).",mod:"connsort"},
+      {id:"bs_g3",s:"The _____ of the new policy surprised everyone.",o:["announce","announcement","announced","announcing"],c:1,x:"'The _____ of' = noun needed → 'announcement'.",mod:"wordfam"},
+      {id:"bs_g4",s:"The team suggested _____ the launch to next quarter.",o:["to postpone","postponing","postpone","postponed"],c:1,x:"'Suggest' takes gerund (-ing form).",mod:"gerinf"},
+      {id:"bs_g5",s:"Had we known earlier, we _____ it sooner.",o:["fixed","would fix","would have fixed","will fix"],c:2,x:"Third conditional: Had + past participle → would have + past participle.",mod:"drill"}
+    ]
+  },
+  // ── SECTION 1 : ARCANE LORE (Vocabulary Power) ──
+  {
+    id:"vocab", name:"Arcane Lore", subtitle:"Vocabulary Power",
+    icon:"📚", color:"#8b5cf6",
+    desc:"Knowledge is power. How deep is your business vocabulary?",
+    moduleMap:["csess"],
+    questions:[
+      {id:"bs_v1",s:"The company's annual _____ exceeded $2 million last year.",o:["revenue","salary","budget","profit margin"],c:0,x:"'Revenue' = total income from business operations.",mod:"csess"},
+      {id:"bs_v2",s:"We need to _____ a survey among our customers to understand their needs.",o:["make","do","conduct","perform"],c:2,x:"'Conduct a survey' = standard business collocation.",mod:"csess"},
+      {id:"bs_v3",s:"The _____ drive attracted over 500 applicants.",o:["application","recruitment","employment","staffing"],c:1,x:"'Recruitment drive' = organized effort to hire new people.",mod:"csess"},
+      {id:"bs_v4",s:"All _____ over $10,000 must be reported to compliance.",o:["interactions","transactions","operations","procedures"],c:1,x:"'Transactions' = instances of buying/selling.",mod:"csess"},
+      {id:"bs_v5",s:"The manager asked for _____ from the team before making a decision.",o:["response","feedback","answer","reaction"],c:1,x:"'Feedback' = constructive comments/opinions on performance or a plan.",mod:"csess"}
+    ]
+  },
+  // ── SECTION 2 : TACTICAL SIGHT (Reading Comprehension) ──
+  {
+    id:"reading", name:"Tactical Sight", subtitle:"Reading Comprehension",
+    icon:"🔍", color:"#22c55e",
+    desc:"A keen eye sees through any deception. Decode written English.",
+    moduleMap:["p7","p6"],
+    passage:{
+      title:"Internal Memo",
+      text:"TO: All department managers\nFROM: Sarah Chen, VP of Operations\nDATE: March 15\nRE: Office relocation update\n\nAs previously announced, our headquarters will be moving to the Greenfield Business Park on April 22. The new facility offers 40% more floor space, a modern cafeteria, and improved parking. Each department will receive detailed floor plans by March 25.\n\nPlease note that the IT team will begin transferring equipment on April 18. Employees should back up all files to the cloud drive before April 15. Personal items left in old offices after April 21 will be discarded.\n\nA welcome orientation at the new building is scheduled for April 23 at 9 AM. Attendance is mandatory for all managers.\n\nThank you for your cooperation during this transition."
+    },
+    questions:[
+      {id:"bs_r1",s:"What is the main purpose of this memo?",o:["To announce a hiring freeze","To inform about an office move","To introduce a new VP","To request budget approval"],c:1,x:"The memo details the upcoming office relocation to Greenfield Business Park.",mod:"p7"},
+      {id:"bs_r2",s:"By what date should employees back up their files?",o:["March 15","March 25","April 15","April 22"],c:2,x:"'Employees should back up all files to the cloud drive before April 15.'",mod:"p7"},
+      {id:"bs_r3",s:"What will happen to items left in the old offices after April 21?",o:["They will be moved automatically","They will be stored","They will be thrown away","They will be returned"],c:2,x:"'Personal items left in old offices after April 21 will be discarded.'",mod:"p7"},
+      {id:"bs_r4",s:"The orientation at the new building is _____ for all managers.",o:["optional","voluntary","recommended","mandatory"],c:3,x:"'Attendance is mandatory for all managers.' Part 6 style: vocabulary in context.",mod:"p6"},
+      {id:"bs_r5",s:"What benefit of the new facility is NOT mentioned?",o:["More floor space","Better parking","A fitness center","A modern cafeteria"],c:2,x:"The memo mentions floor space, cafeteria, and parking — but not a fitness center.",mod:"p7"}
+    ]
+  },
+  // ── SECTION 3 : BATTLE SENSE (Listening Readiness) ──
+  {
+    id:"listening", name:"Battle Sense", subtitle:"Listening Readiness",
+    icon:"👂", color:"#3b82f6",
+    desc:"In battle, you must understand what you hear — instantly. How sharp is your ear?",
+    moduleMap:["lisP2","lisP1"],
+    note:"These questions test your ability to identify correct spoken responses — a core TOEIC Listening skill.",
+    questions:[
+      {id:"bs_l1",s:"\"Where is the meeting room?\"",prompt:"Choose the best response:",o:["Yes, I'll attend the meeting.","It's on the third floor.","The meeting starts at two.","I don't like meetings."],c:1,x:"The question asks about location → the answer gives a location.",mod:"lisP2"},
+      {id:"bs_l2",s:"\"Would you like me to send the report now or after lunch?\"",prompt:"Choose the best response:",o:["Yes, I would.","The report looks great.","After lunch is fine.","I sent it yesterday."],c:2,x:"A choice question (A or B?) → the answer picks one option.",mod:"lisP2"},
+      {id:"bs_l3",s:"\"Who's in charge of the marketing campaign?\"",prompt:"Choose the best response:",o:["It starts next Monday.","Ms. Park is leading it.","Marketing is important.","The campaign went well."],c:1,x:"'Who' question → the answer identifies a person.",mod:"lisP2"},
+      {id:"bs_l4",s:"\"Haven't the quarterly results been released yet?\"",prompt:"Choose the best response:",o:["Yes, they have very good results.","No, they'll be out on Friday.","The quarter ends in March.","I don't work in finance."],c:1,x:"Negative question ('Haven't they...?') → answer addresses the timing/status.",mod:"lisP2"},
+      {id:"bs_l5",s:"\"How often does the shuttle run to the airport?\"",prompt:"Choose the best response:",o:["It's about 30 minutes away.","Every 45 minutes.","I prefer taking a taxi.","The airport is very busy."],c:1,x:"'How often' → the answer gives a frequency.",mod:"lisP2"}
+    ]
+  }
 ];
 
-export var PLACEMENT_LEVELS=[
-  {min:0,max:4,label:"Beginner",startXp:0,league:"bronze",msg:"The Arena awaits — let's build your skills from the ground up!"},
-  {min:5,max:8,label:"Intermediate",startXp:100,league:"bronze",msg:"Solid base! Time to sharpen your weak spots and climb the ranks."},
-  {min:9,max:12,label:"Upper Intermediate",startXp:250,league:"silver",msg:"Strong foundation! Focus on advanced grammar and test strategies."},
-  {min:13,max:15,label:"Advanced",startXp:500,league:"gold",msg:"Impressive! You're ready for exam simulation and fine-tuning."},
+// ── Section stat names for the radar ──
+export var SCAN_STATS = [
+  {id:"grammar", label:"Grammar", arena:"Blade Precision", icon:"⚔️", color:"#d4943a", angle:270},
+  {id:"vocab",   label:"Vocabulary", arena:"Arcane Lore", icon:"📚", color:"#8b5cf6", angle:0},
+  {id:"reading", label:"Reading", arena:"Tactical Sight", icon:"🔍", color:"#22c55e", angle:90},
+  {id:"listening",label:"Listening", arena:"Battle Sense", icon:"👂", color:"#3b82f6", angle:180}
 ];
 
+// ── First mission mapping (weakest axis → recommended module) ──
+export var FIRST_MISSIONS = [
+  {stat:"grammar",  modules:["drill","connsort"],  label:"Part 5 Drill",       icon:"📝", msg:"Your grammar foundations need sharpening. Start with Part 5 drills to build precision."},
+  {stat:"vocab",    modules:["csess"],              label:"Flashcard Review",   icon:"🃏", msg:"Your vocabulary needs reinforcement. Start a flashcard session to expand your word arsenal."},
+  {stat:"reading",  modules:["p7","p6"],            label:"Part 7 Reading",     icon:"📖", msg:"Reading comprehension is your weak spot. Tackle a Part 7 passage to sharpen your eye."},
+  {stat:"listening",modules:["lisP1","lisP2"],      label:"Listening Part 1–2", icon:"🎧", msg:"Your listening skills need the most work. Dive into Listening exercises to train your ear."}
+];
+
+// Keep MISSION_MODULES for daily missions (unchanged)
 export var MISSION_MODULES=[
   {id:"drill",name:"Part 5 Drill",icon:"📝",reason:"Grammar practice"},
   {id:"wordfam",name:"Word Families",icon:"🧩",reason:"Word form mastery"},
