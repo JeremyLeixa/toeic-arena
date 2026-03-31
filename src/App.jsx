@@ -7969,7 +7969,7 @@ function Profile(p){
       {/* 3 tuiles de navigation */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
         <button onClick={function(){setView("stats");}} className="crd"
-          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"none",border:"1px solid var(--bdr)",width:"100%"}}>
+          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(212,148,58,.03)",border:"1px solid rgba(212,148,58,.2)",width:"100%"}}>
           <div style={{fontSize:22,marginBottom:4}}>📊</div>
           <div className="out" style={{fontWeight:800,fontSize:16}}>{u.xp}</div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Stats</div>
@@ -7983,7 +7983,7 @@ function Profile(p){
           <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
         </button>
         <button onClick={function(){setView("avatar");}} className="crd"
-          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"none",border:"1px solid var(--bdr)",width:"100%"}}>
+          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(212,148,58,.03)",border:"1px solid rgba(212,148,58,.2)",width:"100%"}}>
           <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:4}}>
             {renderAvatar(28,18)}
           </div>
