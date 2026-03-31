@@ -7971,7 +7971,7 @@ function Profile(p){
         <button onClick={function(){setView("stats");}} className="crd"
           style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(212,148,58,.03)",border:"1px solid rgba(212,148,58,.2)",width:"100%"}}>
           <div style={{fontSize:22,marginBottom:4}}>📊</div>
-          <div className="out" style={{fontWeight:800,fontSize:16}}>{u.xp}</div>
+          <div style={{fontWeight:800,fontSize:16,color:"var(--t1)"}}>{u.xp}</div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Stats</div>
           <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
         </button>
@@ -7987,7 +7987,7 @@ function Profile(p){
           <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:4}}>
             {renderAvatar(28,18)}
           </div>
-          <div className="out" style={{fontWeight:800,fontSize:16}}>Style</div>
+          <div style={{fontWeight:800,fontSize:16,color:"var(--t1)"}}>Style</div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Apparence</div>
           <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
         </button>
