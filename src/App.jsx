@@ -5954,7 +5954,7 @@ function TeacherDash(p){
           </button>);
         })}
       </div>
-      <button onClick={function(){setCgForm({name:"",code:"",teacherCode:"",type:"school",startDate:"",endDate:""});setCgCodeErr("");setDashPhase("create-group");}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
+      <button onClick={function(){var code=prompt("Code administrateur :");if(code===TEACHER_CODE){setCgForm({name:"",code:"",teacherCode:"",type:"school",startDate:"",endDate:""});setCgCodeErr("");setDashPhase("create-group");}else if(code){alert("Code invalide");}}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
         {"\u2795 Cr\u00e9er un groupe"}
       </button>
       <button onClick={p.back} style={{display:"block",margin:"16px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"\u2190"} Exit</button>
