@@ -8433,7 +8433,7 @@ var prevLeague=getLeague(c.weeklyXp);
  
   function goTeacher(){setTeacher(true);}
 
-  function bossDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);}
+  function bossDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
   function mockDone(result,xp){
     var modId="mock"+result.mockId;
     var timeGateOk=(result.timeUsed||0)>=300;
@@ -8445,7 +8445,7 @@ var prevLeague=getLeague(c.weeklyXp);
     trackModSession(c,modId);
     recordModule(c,modId,result.score,result.total);
     try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}
-    sv(c);
+    sv(c);sSP(null);sT("train");
   }
   function gameDone(modeKey,result,xp){var c=addXp(xp);if(!c.gameScores)c.gameScores={};
     if(modeKey==="duel"){
