@@ -8550,6 +8550,9 @@ var prevLeague=getLeague(c.weeklyXp);
   </div>);
 
   var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
+  var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
+  var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);setTimeout(function(){evalCoachTips(u,t);},800);};
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{content}<Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);}
   // If expired and on a blocked tab, force to league or profile
   if(isExpiredGroup&&(tab==="home"||tab==="train"||tab==="cards"||tab==="games")){sT("league");}
   // If expired, block module navigation
@@ -8564,42 +8567,42 @@ var prevLeague=getLeague(c.weeklyXp);
     </div>
   </div>);
 
-  if(sp==="daily")return(<div className={lc}><style>{CSS}</style><Daily u={u} done={dailyDone} back={function(){sSP(null);}}/></div>);
-  if(sp==="csess"||sp==="cdom")return(<div className={lc}><style>{CSS}</style><CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/></div>);
-  if(sp==="drill")return(<div className={lc}><style>{CSS}</style><Drill u={u} done={drillDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="wordfam")return(<div className={lc}><style>{CSS}</style><WordFam u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="connsort")return(<div className={lc}><style>{CSS}</style><ConnSort u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="prepdrill")return(<div className={lc}><style>{CSS}</style><PrepDrill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="gerinf")return(<div className={lc}><style>{CSS}</style><GerInf u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="traps")return(<div className={lc}><style>{CSS}</style><TrapsQuiz u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="falsefr")return(<div className={lc}><style>{CSS}</style><FalseFriends u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="pvdojo")return(<div className={lc}><style>{CSS}</style><PhrasalDojo u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="mock1")return(<div className={lc}><style>{CSS}</style><MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="mock2")return(<div className={lc}><style>{CSS}</style><MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
+  if(sp==="daily")return pg(<Daily u={u} done={dailyDone} back={function(){sSP(null);}}/>);
+  if(sp==="csess"||sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
+  if(sp==="drill")return pg(<Drill u={u} done={drillDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="wordfam")return pg(<WordFam u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="connsort")return pg(<ConnSort u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="prepdrill")return pg(<PrepDrill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="gerinf")return pg(<GerInf u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="traps")return pg(<TrapsQuiz u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="falsefr")return pg(<FalseFriends u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="pvdojo")return pg(<PhrasalDojo u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="mock1")return pg(<MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="mock2")return pg(<MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/>);
 
-  if(sp==="boss"){playBGM("bgm_final");return(<div className={lc}><style>{CSS}</style><BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sT("train");}}/></div>);}  if(sp==="mock3")return(<div className={lc}><style>{CSS}</style><MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="smatch")return(<div className={lc}><style>{CSS}</style><SpeedMatchHub u={u} nav={nav} back={function(){sSP(null);sT("games");}}/></div>);
-if(sp==="matchE"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/></div>);}
-  if(sp==="matchH"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/></div>);}
- if(sp==="wfall"){playBGM("bgm_wfall");return(<div className={lc}><style>{CSS}</style><WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
-if(sp==="duel"){playBGM("bgm_duel");return(<div className={lc}><style>{CSS}</style><DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
-  if(sp==="sbuild"){playBGM("bgm_build");return(<div className={lc}><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
-  if(sp==="clue"){playBGM("bgm_clue");return(<div className={lc}><style>{CSS}</style><ClueHunter u={u} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
-  if(sp==="ablitz")return(<div className={lc}><style>{CSS}</style><AudioBlitz u={u} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
-  if(sp==="strats")return(<div className={lc}><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
-  if(sp==="gramref")return(<div className={lc}><style>{CSS}</style><GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/></div>);
-  if(sp==="stratquiz")return(<div className={lc}><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="timesim")return(<div className={lc}><style>{CSS}</style><TimeSim u={u} done={miniDone} nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="p6")return(<div className={lc}><style>{CSS}</style><Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="p7")return(<div className={lc}><style>{CSS}</style><Part7Read u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lis")return(<div className={lc}><style>{CSS}</style><ListenHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lisP1")return(<div className={lc}><style>{CSS}</style><ListenP1 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
-  if(sp==="read")return(<div className={lc}><style>{CSS}</style><ReadingHub nav={nav} back={function(){sSP(null);sT("train");}}/></div>);
-  if(sp==="lisP2")return(<div className={lc}><style>{CSS}</style><ListenP2 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
-  if(sp==="lisP3")return(<div className={lc}><style>{CSS}</style><ListenP3 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
-  if(sp==="lisP4")return(<div className={lc}><style>{CSS}</style><ListenP4 u={u} done={miniDone} back={function(){sSP("lis");}}/></div>);
+  if(sp==="boss"){playBGM("bgm_final");return pg(<BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sT("train");}}/>);}
+  if(sp==="mock3")return pg(<MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="smatch")return pg(<SpeedMatchHub u={u} nav={nav} back={function(){sSP(null);sT("games");}}/>);
+  if(sp==="matchE"){playBGM("bgm_speed");return pg(<SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/>);}
+  if(sp==="matchH"){playBGM("bgm_speed");return pg(<SpeedMatch mode="hard" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/>);}
+  if(sp==="wfall"){playBGM("bgm_wfall");return pg(<WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="duel"){playBGM("bgm_duel");return pg(<DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="sbuild"){playBGM("bgm_build");return pg(<SentenceBuilder u={u} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="clue"){playBGM("bgm_clue");return pg(<ClueHunter u={u} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="ablitz")return pg(<AudioBlitz u={u} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/>);
+  if(sp==="strats")return pg(<StratCards back={function(){sSP(null);}}/>);
+  if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/>);
+  if(sp==="stratquiz")return pg(<StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="timesim")return pg(<TimeSim u={u} done={miniDone} nav={nav} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="p6")return pg(<Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="p7")return pg(<Part7Read u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="lis")return pg(<ListenHub nav={nav} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="lisP1")return pg(<ListenP1 u={u} done={miniDone} back={function(){sSP("lis");}}/>);
+  if(sp==="read")return pg(<ReadingHub nav={nav} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="lisP2")return pg(<ListenP2 u={u} done={miniDone} back={function(){sSP("lis");}}/>);
+  if(sp==="lisP3")return pg(<ListenP3 u={u} done={miniDone} back={function(){sSP("lis");}}/>);
+  if(sp==="lisP4")return pg(<ListenP4 u={u} done={miniDone} back={function(){sSP("lis");}}/>);
 
-  var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
   return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
@@ -8607,5 +8610,5 @@ if(sp==="duel"){playBGM("bgm_duel");return(<div className={lc}><style>{CSS}</sty
     </div>}
     {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     {coachTip&&!sp&&<CoachTip tip={coachTip} onDismiss={dismissTip} goTab={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/>}
-    <Tabs cur={tab} go={function(t){if(expBlocked.indexOf(t)!==-1)return;if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);setTimeout(function(){evalCoachTips(u,t);},800);}} blocked={expBlocked}/></div>);
+    <Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);
 }
