@@ -8533,8 +8533,13 @@ var prevLeague=getLeague(c.weeklyXp);
   }
 
   var lc="app"+(u&&u.theme==="light"?" light":"");
+  var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
+  var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
+  var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);setTimeout(function(){evalCoachTips(u,t);},800);};
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{content}<Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);}
+
   if(ld)return(<div className={lc}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
-  if(teacherMode)return(<div className={lc}><style>{CSS}</style><TeacherDash back={function(){setTeacher(false);}}/></div>);
+  if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
   if(!u)return(<div className={lc}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover}/></div>);
 
   // ── Group access control ──
@@ -8548,11 +8553,6 @@ var prevLeague=getLeague(c.weeklyXp);
       </div>
     </div>
   </div>);
-
-  var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
-  var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
-  var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);setTimeout(function(){evalCoachTips(u,t);},800);};
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{content}<Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);}
   // If expired and on a blocked tab, force to league or profile
   if(isExpiredGroup&&(tab==="home"||tab==="train"||tab==="cards"||tab==="games")){sT("league");}
   // If expired, block module navigation
