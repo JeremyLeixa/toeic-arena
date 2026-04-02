@@ -550,7 +550,20 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .btn2{background:var(--bg2);border:1px solid var(--bdr);color:var(--t1);border-radius:12px;padding:12px 24px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:14px;cursor:pointer}
 .fl{animation:flame 1.5s ease-in-out infinite;display:inline-block}
 .sk{animation:shake .4s ease-in-out}
-.out{font-family:'Cinzel','Outfit',serif;letter-spacing:0.5px}`;
+.out{font-family:'Cinzel','Outfit',serif;letter-spacing:0.5px}
+@media(min-width:768px){
+.app{max-width:900px;padding:0 24px}
+.tab-bar{max-width:900px!important}
+.light .tab-bar{background:linear-gradient(180deg,rgba(245,240,232,0) 0%,rgba(245,240,232,.95) 20%,#f5f0e8 100%)!important}
+.crd{padding:24px}
+.crd:hover{border-color:rgba(180,140,80,.18);box-shadow:0 2px 12px rgba(212,148,58,.06)}
+.btn1{width:auto;padding:14px 36px}
+.btn2{padding:12px 28px}
+.rg2{grid-template-columns:1fr 1fr 1fr!important}
+.rg3{grid-template-columns:repeat(4,1fr)!important}
+.rg-games{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
+.desk-wide{max-width:100%!important}
+}`;
 
 // ─── SMALL COMPONENTS ───
 function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,#d4943a,#c87a35)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
@@ -619,7 +632,7 @@ function CoachTip(p){
 
 function Tabs(p){var tabs=[{id:"home",l:"Home",i:"\u26A1"},{id:"train",l:"Train",i:"\uD83C\uDFAF"},{id:"cards",l:"Cards",i:"\uD83C\uDCCF"},{id:"games",l:"Games",i:"\uD83C\uDFB2"},{id:"league",l:"League",i:"\uD83C\uDFC6"},{id:"profile",l:"Profile",i:"\uD83D\uDC64"}];
 var blocked=p.blocked||[];
-return(<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px 12px",zIndex:100,display:"flex",justifyContent:"space-around"}}>
+return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px 12px",zIndex:100,display:"flex",justifyContent:"space-around"}}>
 {tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 12px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t3)",transform:a&&!dis?"scale(1.05)":"scale(1)",opacity:dis?.35:1,transition:"all .2s"}}>
 <span style={{fontSize:22,lineHeight:1}}>{t.i}</span><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:1}}/>}</button>);})}</div>);}
 
@@ -1191,12 +1204,12 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
   </div>);
 }()}
 
-<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+<div className="rg3" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
 {[{l:"Total XP",v:u.xp,i:"⭐",c:"var(--gold)"},{l:"This week",v:u.weeklyXp,i:"📈",c:"var(--cyan)"},{l:"Sessions",v:u.stats.sessions,i:"🎯",c:"var(--purple)"}].map(function(s){return(
 <div key={s.l} className="crd" style={{padding:14,textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{s.i}</div><div className="out" style={{fontSize:20,fontWeight:800,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>{s.l}</div></div>);})}</div>
 
 <h2 className="out" style={{fontWeight:700,fontSize:16,marginBottom:12,color:"var(--t2)"}}>Quick Start</h2>
-<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+<div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
 <div className="crd" style={{cursor:"pointer",padding:16}} onClick={function(){p.nav("csess");}}><div style={{fontSize:28,marginBottom:8}}>🃏</div><div className="out" style={{fontWeight:700,fontSize:14}}>Review Cards</div><div style={{fontSize:11,color:"var(--t2)",marginTop:4}}>SRS flashcards</div></div>
 <div className="crd" style={{cursor:"pointer",padding:16}} onClick={function(){p.nav("drill");}}><div style={{fontSize:28,marginBottom:8}}>📝</div><div className="out" style={{fontWeight:700,fontSize:14}}>Grammar Drill</div><div style={{fontSize:11,color:"var(--t2)",marginTop:4}}>Part 5 practice</div></div></div>
 
@@ -1330,7 +1343,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       <button onClick={function(){setTrainView(null);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"←"} Training Grounds</button>
       <h2 className="out" style={{fontWeight:800,fontSize:20,marginBottom:4}}>{sec.title}</h2>
       <p style={{color:"var(--t3)",fontSize:12,marginBottom:16}}>{sec.sub}</p>
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:8}}>
         {sec.items.map(function(m){
           var ai=animIdx++;
           return(
@@ -1354,7 +1367,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>Choose your battle</p>
 
     {/* 2x2 Tile Grid */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+    <div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
       {sections.map(function(sec,si){
         return(<div key={sec.key} className="crd" onClick={function(){setTrainView(si);}}
           style={{padding:"18px 14px",cursor:"pointer",minHeight:200,borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:(si*.06)+"s",animationFillMode:"both"}}>
@@ -3943,7 +3956,7 @@ function GamesHub(p){
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Arena Games</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Train your reflexes, earn XP</p>
-    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+    <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:12}}>
       <div className="crd" onClick={function(){p.nav("smatch");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Speed Match</div>
@@ -7780,7 +7793,7 @@ function Profile(p){
           </div>
         </div>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+      <div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         {[
           {l:"XP Total",v:u.xp,i:"⭐"},
           {l:"XP cette semaine",v:u.weeklyXp,i:"⚡"},
@@ -7897,7 +7910,7 @@ function Profile(p){
       </div>
       {ea.length>0&&<>
         <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Débloqués ({ea.length})</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
+        <div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
           {ea.map(function(a){return(
             <div key={a.id} className="crd" style={{padding:14,background:"rgba(255,215,0,.05)",borderColor:"rgba(255,215,0,.15)"}}>
               <div style={{fontSize:22,marginBottom:6}}>{a.icon}</div>
@@ -7909,7 +7922,7 @@ function Profile(p){
       </>}
       {la.length>0&&<>
         <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>À débloquer ({la.length})</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {la.map(function(a){return(
             <div key={a.id} className="crd" style={{padding:14,opacity:.4}}>
               <div style={{fontSize:22,marginBottom:6,filter:"grayscale(1)"}}>🔒</div>
