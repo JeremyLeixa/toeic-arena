@@ -552,9 +552,15 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .sk{animation:shake .4s ease-in-out}
 .out{font-family:'Cinzel','Outfit',serif;letter-spacing:0.5px}
 @media(min-width:768px){
-.app{max-width:900px;padding:0 24px}
-.tab-bar{max-width:900px!important}
-.light .tab-bar{background:linear-gradient(180deg,rgba(245,240,232,0) 0%,rgba(245,240,232,.95) 20%,#f5f0e8 100%)!important}
+.app{max-width:none;margin-left:200px;padding:0 32px}
+.tab-bar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;transform:none!important;width:200px!important;max-width:200px!important;height:100vh!important;flex-direction:column!important;justify-content:flex-start!important;padding:24px 12px!important;background:var(--bg2)!important;border-right:1px solid var(--bdr)!important;gap:4px!important}
+.light .tab-bar{background:var(--bg2)!important}
+.tab-bar button{flex-direction:row!important;gap:10px!important;padding:12px 14px!important;border-radius:10px!important;justify-content:flex-start!important;width:100%!important}
+.sidebar-brand{display:flex!important;align-items:center;gap:10px;padding:8px 14px 20px;margin-bottom:8px;border-bottom:1px solid var(--bdr)}
+.tab-bar button span:first-child{font-size:18px!important}
+.tab-bar button span:nth-child(2){font-size:13px!important;font-weight:600!important}
+.tab-bar button div{display:none!important}
+.enter{padding-bottom:32px!important}
 .crd{padding:24px}
 .crd:hover{border-color:rgba(180,140,80,.18);box-shadow:0 2px 12px rgba(212,148,58,.06)}
 .btn1{width:auto;padding:14px 36px}
@@ -562,7 +568,11 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .rg2{grid-template-columns:1fr 1fr 1fr!important}
 .rg3{grid-template-columns:repeat(4,1fr)!important}
 .rg-games{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
-.desk-wide{max-width:100%!important}
+.p1-photo{max-height:420px!important}
+.p1-photo-sm{max-height:320px!important}
+.read-text{font-size:15px!important;line-height:2!important}
+.read-opts button{font-size:15px!important;padding:14px 16px!important}
+.q-heading{font-size:19px!important}
 }`;
 
 // ─── SMALL COMPONENTS ───
@@ -633,6 +643,7 @@ function CoachTip(p){
 function Tabs(p){var tabs=[{id:"home",l:"Home",i:"\u26A1"},{id:"train",l:"Train",i:"\uD83C\uDFAF"},{id:"cards",l:"Cards",i:"\uD83C\uDCCF"},{id:"games",l:"Games",i:"\uD83C\uDFB2"},{id:"league",l:"League",i:"\uD83C\uDFC6"},{id:"profile",l:"Profile",i:"\uD83D\uDC64"}];
 var blocked=p.blocked||[];
 return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px 12px",zIndex:100,display:"flex",justifyContent:"space-around"}}>
+<div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,#d4943a,#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>TOEIC ARENA</span></div>
 {tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 12px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t3)",transform:a&&!dis?"scale(1.05)":"scale(1)",opacity:dis?.35:1,transition:"all .2s"}}>
 <span style={{fontSize:22,lineHeight:1}}>{t.i}</span><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:1}}/>}</button>);})}</div>);}
 
@@ -2818,7 +2829,7 @@ function Part6Drill(p){
       <span style={{fontSize:10,padding:"3px 8px",background:"var(--bg3)",color:"var(--t3)",borderRadius:6}} className="out">From: {curText.from}</span></div>
     <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--t1)"}}>Subject: {curText.subject}</div>
     <div className="crd" style={{padding:16,marginBottom:20}}>
-      <p style={{fontSize:13,color:"var(--t2)",lineHeight:2,whiteSpace:"pre-line"}}>{renderText()}</p></div>
+      <p className="read-text" style={{fontSize:13,color:"var(--t2)",lineHeight:2,whiteSpace:"pre-line"}}>{renderText()}</p></div>
     <p style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:16}}>Read the full text, then tap below to fill in the blanks.</p>
     <button className="btn1" onClick={function(){sP("q");}}>Fill in the blanks</button></div>);
 
@@ -2831,9 +2842,9 @@ function Part6Drill(p){
     <div style={{marginTop:12,marginBottom:6}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(139,94,131,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}: {curText.subject}</span></div>
     <div className="crd" style={{padding:14,marginBottom:20,background:"var(--bg3)"}}>
-      <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.9,whiteSpace:"pre-line"}}>{renderText()}</p></div>
-    <p className="out" style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--cyan)"}}>Fill blank ({bi+1}):</p>
-    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      <p className="read-text" style={{fontSize:12,color:"var(--t2)",lineHeight:1.9,whiteSpace:"pre-line"}}>{renderText()}</p></div>
+    <p className="out q-heading" style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--cyan)"}}>Fill blank ({bi+1}):</p>
+    <div className="read-opts" style={{display:"flex",flexDirection:"column",gap:8}}>
       {curBlank.options.map(function(opt,i){
         var isCor=i===curBlank.correct;var isPick=pick===i;var show=ph==="fb";
         var bg="var(--bg2)";var bd="var(--bdr)";
@@ -2902,7 +2913,7 @@ function Part7Read(p){
       <div style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Read these first!</div>
       {curPass.questions.map(function(q,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,padding:"4px 0",borderBottom:i<curPass.questions.length-1?"1px solid var(--bdr)":"none"}}><span style={{color:"var(--purple)",fontWeight:700}}>Q{i+1}.</span> {q.q}</div>);})}</div>}
     <div className="crd" style={{padding:16,marginBottom:16}}>
-      <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.8,whiteSpace:"pre-line"}}>{curPass.text}</p></div>
+      <p className="read-text" style={{fontSize:13,color:"var(--t2)",lineHeight:1.8,whiteSpace:"pre-line"}}>{curPass.text}</p></div>
     <button className="btn1" onClick={function(){sP("q");setShowQPreview(false);setShowText(false);}}>Answer Questions</button></div>);
 
 // Question mode
@@ -2915,10 +2926,10 @@ function Part7Read(p){
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type} — Passage {pi+1}</span>
       <button onClick={function(){setShowText(!showText);}} style={{fontSize:10,padding:"3px 8px",background:showText?"rgba(6,182,212,.15)":"var(--bg3)",color:showText?"var(--cyan)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showText?"Hide text ▲":"Show text ▼"}</button></div>
     {showText&&<div className="crd" style={{padding:14,marginBottom:12,maxHeight:200,overflowY:"auto",borderColor:"rgba(6,182,212,.2)"}}>
-      <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,whiteSpace:"pre-line"}}>{curPass.text}</p></div>}
+      <p className="read-text" style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,whiteSpace:"pre-line"}}>{curPass.text}</p></div>}
 
-    <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:12}}>{curQ.q}</h2>
-    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+    <h2 className="out q-heading" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:12}}>{curQ.q}</h2>
+    <div className="read-opts" style={{display:"flex",flexDirection:"column",gap:8}}>
       {curQ.options.map(function(opt,i){
         var isCor=i===curQ.correct;var isPick=pick===i;var show=ph==="fb";
         var bg="var(--bg2)";var bd="var(--bdr)";
@@ -6895,7 +6906,7 @@ function ListenP1(p){
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
 
     <div style={{marginTop:12,marginBottom:16,borderRadius:14,overflow:"hidden",border:"1px solid var(--bdr)"}}>
-      <img src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",maxHeight:260,objectFit:"cover"}}/>
+      <img className="p1-photo" src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",maxHeight:260,objectFit:"cover"}}/>
     </div>
 
     {!played?<div style={{textAlign:"center"}}>
@@ -6930,7 +6941,7 @@ function ListenP1(p){
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
 
     <div style={{marginTop:8,marginBottom:12,borderRadius:12,overflow:"hidden",border:"1px solid var(--bdr)"}}>
-      <img src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",maxHeight:200,objectFit:"cover"}}/>
+      <img className="p1-photo-sm" src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",maxHeight:200,objectFit:"cover"}}/>
     </div>
 
     <div style={{display:"flex",flexDirection:"column",gap:6}}>
