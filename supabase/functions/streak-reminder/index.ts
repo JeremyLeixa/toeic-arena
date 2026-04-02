@@ -18,11 +18,10 @@ serve(async (req: Request) => {
     // Today's date in YYYY-MM-DD
     const today = new Date().toISOString().split("T")[0];
 
-    // Get all students with a streak ≥ 2 who haven't been active today
+    // Get all students with a streak ≥ 2 who haven't been active today (all groups)
     const { data: students, error: sErr } = await supabase
       .from("students")
-      .select("name, streak, last_active")
-      .eq("class_code", "idrac2026")
+      .select("name, class_code, streak, last_active")
       .gte("streak", 2)
       .neq("last_active", today);
 
@@ -33,12 +32,11 @@ serve(async (req: Request) => {
       });
     }
 
-    // Get push subscriptions for those students
+    // Get push subscriptions for those students (match by name + class_code)
     const names = students.map((s: any) => s.name);
     const { data: subs, error: pErr } = await supabase
       .from("push_subscriptions")
-      .select("student_name, subscription")
-      .eq("class_code", "idrac2026")
+      .select("student_name, class_code, subscription")
       .in("student_name", names);
 
     if (pErr) throw pErr;
@@ -52,16 +50,18 @@ serve(async (req: Request) => {
     const VERCEL_URL = Deno.env.get("VERCEL_APP_URL")!; // e.g. https://toeic-arena.vercel.app
     const PUSH_SECRET = Deno.env.get("PUSH_SECRET")!;
 
-    // Group subscriptions by student for personalized messages
-    const byStudent: Record<string, any[]> = {};
+    // Group subscriptions by student_name+class_code
+    const byKey: Record<string, any[]> = {};
     for (const sub of subs) {
-      if (!byStudent[sub.student_name]) byStudent[sub.student_name] = [];
-      byStudent[sub.student_name].push(sub.subscription);
+      const key = sub.student_name + "|" + sub.class_code;
+      if (!byKey[key]) byKey[key] = [];
+      byKey[key].push(sub.subscription);
     }
 
     let totalSent = 0;
     for (const student of students) {
-      const studentSubs = byStudent[student.name];
+      const key = student.name + "|" + student.class_code;
+      const studentSubs = byKey[key];
       if (!studentSubs) continue;
 
       const res = await fetch(`${VERCEL_URL}/api/push-send`, {

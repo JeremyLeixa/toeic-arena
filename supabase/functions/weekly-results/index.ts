@@ -14,11 +14,10 @@ serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get all students with their weekly XP (last week's data is in weekly_history)
+    // Get all students with their weekly XP (all groups)
     const { data: students, error: sErr } = await supabase
       .from("students")
-      .select("name, weekly_xp, week_id, weekly_history")
-      .eq("class_code", "idrac2026")
+      .select("name, class_code, weekly_xp, week_id, weekly_history")
       .neq("name", "Teacher");
 
     if (sErr) throw sErr;
@@ -28,26 +27,25 @@ serve(async (req: Request) => {
       });
     }
 
-    // Last week's data: the most recent entry in weekly_history
-    // (since it's Monday morning, the weekly reset may or may not have happened yet)
-    // We look at the last entry in weekly_history for each student
-    const lastWeekRanking: { name: string; xp: number }[] = [];
+    // Group students by class_code, build per-group rankings
+    const byGroup: Record<string, { name: string; class_code: string; xp: number }[]> = {};
     for (const s of students) {
       const hist = s.weekly_history || [];
-      if (hist.length > 0) {
-        const last = hist[hist.length - 1];
-        lastWeekRanking.push({ name: s.name, xp: last.xp || 0 });
-      }
+      if (hist.length === 0) continue;
+      const last = hist[hist.length - 1];
+      const cc = s.class_code || "visitor";
+      if (!byGroup[cc]) byGroup[cc] = [];
+      byGroup[cc].push({ name: s.name, class_code: cc, xp: last.xp || 0 });
     }
-
-    // Sort by XP descending
-    lastWeekRanking.sort((a, b) => b.xp - a.xp);
+    // Sort each group by XP descending
+    for (const cc of Object.keys(byGroup)) {
+      byGroup[cc].sort((a, b) => b.xp - a.xp);
+    }
 
     // Get all push subscriptions
     const { data: subs, error: pErr } = await supabase
       .from("push_subscriptions")
-      .select("student_name, subscription")
-      .eq("class_code", "idrac2026");
+      .select("student_name, class_code, subscription");
 
     if (pErr) throw pErr;
     if (!subs || subs.length === 0) {
@@ -56,58 +54,66 @@ serve(async (req: Request) => {
       });
     }
 
-    // Group subscriptions by student
-    const byStudent: Record<string, any[]> = {};
+    // Group subscriptions by student_name+class_code
+    const byKey: Record<string, any[]> = {};
     for (const sub of subs) {
-      if (!byStudent[sub.student_name]) byStudent[sub.student_name] = [];
-      byStudent[sub.student_name].push(sub.subscription);
+      const key = sub.student_name + "|" + sub.class_code;
+      if (!byKey[key]) byKey[key] = [];
+      byKey[key].push(sub.subscription);
     }
 
     const VERCEL_URL = Deno.env.get("VERCEL_APP_URL")!;
     const PUSH_SECRET = Deno.env.get("PUSH_SECRET")!;
 
     let totalSent = 0;
+    let totalRanked = 0;
     const medals = ["🥇", "🥈", "🥉"];
 
-    for (const student of lastWeekRanking) {
-      const studentSubs = byStudent[student.name];
-      if (!studentSubs) continue;
+    for (const cc of Object.keys(byGroup)) {
+      const ranking = byGroup[cc];
+      totalRanked += ranking.length;
 
-      const rank = lastWeekRanking.indexOf(student) + 1;
-      const medal = rank <= 3 ? medals[rank - 1] + " " : "";
-      const total = lastWeekRanking.length;
+      for (const student of ranking) {
+        const key = student.name + "|" + student.class_code;
+        const studentSubs = byKey[key];
+        if (!studentSubs) continue;
 
-      let body: string;
-      if (rank === 1) {
-        body = `${medal}1er ! Tu as dominé la semaine avec ${student.xp} XP. Continue comme ça !`;
-      } else if (rank <= 3) {
-        body = `${medal}${rank}e place avec ${student.xp} XP ! Le podium, beau travail.`;
-      } else if (rank <= 10) {
-        body = `#${rank} sur ${total} avec ${student.xp} XP — Top 10 ! Objectif podium cette semaine ?`;
-      } else {
-        body = `#${rank} sur ${total} avec ${student.xp} XP. Chaque semaine compte pour le classement Overall !`;
+        const rank = ranking.indexOf(student) + 1;
+        const medal = rank <= 3 ? medals[rank - 1] + " " : "";
+        const total = ranking.length;
+
+        let body: string;
+        if (rank === 1) {
+          body = `${medal}1er ! Tu as dominé la semaine avec ${student.xp} XP. Continue comme ça !`;
+        } else if (rank <= 3) {
+          body = `${medal}${rank}e place avec ${student.xp} XP ! Le podium, beau travail.`;
+        } else if (rank <= 10) {
+          body = `#${rank} sur ${total} avec ${student.xp} XP — Top 10 ! Objectif podium cette semaine ?`;
+        } else {
+          body = `#${rank} sur ${total} avec ${student.xp} XP. Chaque semaine compte pour le classement Overall !`;
+        }
+
+        const res = await fetch(`${VERCEL_URL}/api/push-send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-push-secret": PUSH_SECRET,
+          },
+          body: JSON.stringify({
+            subscriptions: studentSubs,
+            title: "📊 Résultat de la semaine",
+            body,
+            tag: "weekly-results",
+            url: "/",
+          }),
+        });
+
+        const result = await res.json();
+        totalSent += result.sent || 0;
       }
-
-      const res = await fetch(`${VERCEL_URL}/api/push-send`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-push-secret": PUSH_SECRET,
-        },
-        body: JSON.stringify({
-          subscriptions: studentSubs,
-          title: "📊 Résultat de la semaine",
-          body,
-          tag: "weekly-results",
-          url: "/",
-        }),
-      });
-
-      const result = await res.json();
-      totalSent += result.sent || 0;
     }
 
-    return new Response(JSON.stringify({ message: "Weekly results sent", totalSent, ranked: lastWeekRanking.length }), {
+    return new Response(JSON.stringify({ message: "Weekly results sent", totalSent, ranked: totalRanked }), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
