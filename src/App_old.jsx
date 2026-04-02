@@ -17,7 +17,7 @@ import { CONNECTORS, PREP_COLLOCATIONS, GERUND_INF, TOEIC_TRAPS, FALSE_FRIENDS, 
 import { PART6_TEXTS } from "./data/part6.js";
 import { PART7_PASSAGES } from "./data/part7.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "./data/listening.js";
-import { BATTLE_SCAN, SCAN_STATS, FIRST_MISSIONS, MISSION_MODULES } from "./data/placement.js";
+import { PLACEMENT_TEST, PLACEMENT_LEVELS, MISSION_MODULES } from "./data/placement.js";
 import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
@@ -295,8 +295,6 @@ function supaToLocal(data){
     totalTime:data.total_time||0,weeklyHistory: data.weekly_history || [],
     dailyModSessions: data.daily_mod_sessions || {},
     weeklyDailyCount: data.weekly_daily_count || 0,
-    battleScan: data.battle_scan || null,
-    tipsShown: data.tips_shown || [],
   };
 }
 
@@ -360,14 +358,12 @@ async function syncToCloud(d){
       weekly_history: d.weeklyHistory || [],
     daily_mod_sessions: d.dailyModSessions || {},
     weekly_daily_count: d.weeklyDailyCount || 0,
-    battle_scan: d.battleScan || null,
-    tips_shown: d.tipsShown || [],
   }, { onConflict: 'name,class_code' });
     if(!_result.error){_syncDirty=false;}
     else{console.warn("[SYNC] Upsert failed — will retry:",_result.error.message);}
   }catch(e){console.warn("[SYNC] Exception:",e);}
 }
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[]};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -485,20 +481,20 @@ async function subscribePush(userName,userClassCode){
   try{
     if(!("serviceWorker" in navigator)||!("PushManager" in window))return null;
     var reg=await navigator.serviceWorker.ready;
-    var existing=await reg.pushManager.getSubscription();
+var existing=await reg.pushManager.getSubscription();
     var sub=existing||await reg.pushManager.subscribe({
       userVisibleOnly:true,
       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
+// Store in Supabase — one row per device (keyed by endpoint)
     var subJson=sub.toJSON();
-    await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code",userClassCode).eq("endpoint",subJson.endpoint);
-    var res=await supabase.from("push_subscriptions").insert({
+    await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code","idrac2026").eq("endpoint",subJson.endpoint);
+    await supabase.from("push_subscriptions").insert({
       student_name:userName,
-      class_code:userClassCode,
+      class_code:"idrac2026",
       subscription:subJson,
       endpoint:subJson.endpoint
     });
-    if(res.error){console.error("Push DB insert failed:",res.error.message);return null;}
     return sub;
   }catch(e){console.log("Push subscription failed:",e);return null;}
 }
@@ -510,7 +506,7 @@ async function unsubscribePush(userName,userClassCode){
     var sub=await reg.pushManager.getSubscription();
     if(sub){
       await sub.unsubscribe();
-      await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code",userClassCode).eq("endpoint",sub.endpoint);
+      await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code","idrac2026").eq("endpoint",sub.endpoint);
     }
   }catch(e){console.log("Push unsubscribe failed:",e);}
 }
@@ -539,8 +535,6 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes xpPop{0%{transform:translateY(0) scale(.5);opacity:0}15%{transform:translateY(-10px) scale(1.1);opacity:1}75%{transform:translateY(-10px) scale(1);opacity:1}100%{transform:translateY(-30px) scale(.95);opacity:0}}
 @keyframes flip{0%{transform:rotateY(90deg);opacity:0}100%{transform:rotateY(0);opacity:1}}
 @keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
-@keyframes tipSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes tipFade{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(20px)}}
 .app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
 .enter{animation:fadeIn .3s ease-out}
 .crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:20px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04)}
@@ -583,40 +577,6 @@ function XpToast(p){if(!p.v)return null;
     </div>}
   </div>);}
 
-// ─── COACH TIP ───
-var COACH_TIPS=[
-  {id:"welcome",icon:"\u2694\uFE0F",title:"Welcome to the Arena!",msg:"Tap Train to start your first exercise — your journey begins there.",tab:"train",
-    check:function(u,tab){return tab==="home"&&u.stats.sessions<=1;}},
-  {id:"first_clear",icon:"\uD83C\uDF1F",title:"First victory!",msg:"Your progress is tracked in Profile \u2014 check your Battle Scan results too.",tab:"profile",
-    check:function(u,tab){return tab==="home"&&u.stats.sessions>=2&&u.stats.sessions<=4;}},
-  {id:"league",icon:"\uD83C\uDFC6",title:"Ready to compete?",msg:"League shows how you rank against classmates. Updated every week!",tab:"league",
-    check:function(u,tab){return tab==="home"&&u.stats.sessions>=5&&u.weeklyXp>0;}},
-  {id:"streak",icon:"\uD83D\uDD25",title:"Streak started!",msg:"Come back tomorrow to keep it alive \u2014 streaks unlock bonus XP!",tab:null,
-    check:function(u,tab){return tab==="home"&&u.daily&&u.daily.date===today()&&u.daily.done&&u.streak>=1&&u.streak<=2;}},
-  {id:"listening_gap",icon:"\uD83D\uDC42",title:"Don\u0027t forget your ears!",msg:"You haven\u0027t tried any Listening exercises yet. Head to Train to give it a shot.",tab:"train",
-    check:function(u,tab){if(tab!=="home"||u.stats.sessions<8)return false;var ms=u.moduleScores||{};var hasLis=(ms.lisP1&&ms.lisP1.total>0)||(ms.lisP2&&ms.lisP2.total>0)||(ms.lisP3&&ms.lisP3.total>0)||(ms.lisP4&&ms.lisP4.total>0);return !hasLis;}}
-];
-
-function CoachTip(p){
-  var[closing,setClosing]=useState(false);
-  function dismiss(){setClosing(true);setTimeout(function(){p.onDismiss(p.tip.id);},300);}
-  var tip=p.tip;
-  return(
-    <div style={{position:"fixed",bottom:76,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,zIndex:150,animation:closing?"tipFade .3s ease forwards":"tipSlide .4s ease-out",pointerEvents:"auto"}}>
-      <div style={{background:"var(--bg2)",border:"1px solid rgba(212,148,58,.25)",borderRadius:16,padding:"14px 16px",boxShadow:"0 -4px 24px rgba(0,0,0,.4)",display:"flex",gap:12,alignItems:"flex-start"}}>
-        <div style={{fontSize:28,flexShrink:0,marginTop:2}}>{tip.icon}</div>
-        <div style={{flex:1,minWidth:0}}>
-          <div className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",marginBottom:3}}>{tip.title}</div>
-          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0}}>{tip.msg}</p>
-          {tip.tab&&<button onClick={function(){p.goTab(tip.tab);dismiss();}}
-            style={{marginTop:8,padding:"6px 14px",background:"rgba(212,148,58,.1)",border:"1px solid rgba(212,148,58,.2)",borderRadius:8,color:"var(--cyan)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{tip.tab==="train"?"Go to Train":tip.tab==="profile"?"View Profile":tip.tab==="league"?"See League":"Go"}</button>}
-        </div>
-        <button onClick={dismiss} style={{background:"none",border:"none",color:"var(--t3)",fontSize:18,cursor:"pointer",padding:0,lineHeight:1,flexShrink:0,marginTop:-2}}>{String.fromCharCode(215)}</button>
-      </div>
-    </div>);
-}
-
-
 function Tabs(p){var tabs=[{id:"home",l:"Home",i:"\u26A1"},{id:"train",l:"Train",i:"\uD83C\uDFAF"},{id:"cards",l:"Cards",i:"\uD83C\uDCCF"},{id:"games",l:"Games",i:"\uD83C\uDFB2"},{id:"league",l:"League",i:"\uD83C\uDFC6"},{id:"profile",l:"Profile",i:"\uD83D\uDC64"}];
 var blocked=p.blocked||[];
 return(<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px 12px",zIndex:100,display:"flex",justifyContent:"space-around"}}>
@@ -628,10 +588,6 @@ function Onboard(p){
 var[step,sSt]=useState("name");
   var[name,sN]=useState("");
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");
-  var[scanSec,setScanSec]=useState(0);var[scanScores,setScanScores]=useState({grammar:0,vocab:0,reading:0,listening:0});var[scanPhase,setScanPhase]=useState("intro");var[scanCorrect,setScanCorrect]=useState([]);
-  var[ttsPlaying,setTtsPlaying]=useState(false);var ttsUtter=useRef(null);
-  function speakQ(text){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=0.9;u.onstart=function(){setTtsPlaying(true);};u.onend=function(){setTtsPlaying(false);};u.onerror=function(){setTtsPlaying(false);};ttsUtter.current=u;window.speechSynthesis.speak(u);}
-  function stopTts(){if(window.speechSynthesis)window.speechSynthesis.cancel();setTtsPlaying(false);}
   var[teacherCode,sTC]=useState("");var[teacherChecking,setTeacherChecking]=useState(false);var[teacherErr,setTeacherErr]=useState(false);
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
@@ -677,21 +633,11 @@ var[step,sSt]=useState("name");
     setClassChecking(false);
   }
 
-  function startTest(){sSt("scan");setScanSec(0);setScanScores({grammar:0,vocab:0,reading:0,listening:0});setScanPhase("intro");sC(0);sS(-1);setScanCorrect([]);}
-  function doScanAns(i){
-    sS(i);var sec=BATTLE_SCAN[scanSec];var q=sec.questions[ci];var correct=i===q.c;
-    if(correct){var ns=Object.assign({},scanScores);ns[sec.id]=(ns[sec.id]||0)+1;setScanScores(ns);try{playCorrect();}catch(e){}}
-    else{try{playWrong();}catch(e){}}
-    setScanCorrect(function(prev){return prev.concat([correct]);});
-    setScanPhase("fb");
-  }
-  function nxtScan(){
-    stopTts();var sec=BATTLE_SCAN[scanSec];
-    if(ci<sec.questions.length-1){var ni=ci+1;sC(ni);sS(-1);setScanPhase("q");if(sec.id==="listening"&&sec.questions[ni])setTimeout(function(){speakQ(sec.questions[ni].s);},400);}
-    else if(scanSec<BATTLE_SCAN.length-1){setScanPhase("done");}
-    else{sSt("results");}
-  }
-  function nxtSection(){stopTts();setScanSec(scanSec+1);sC(0);sS(-1);setScanPhase("intro");}
+  function startTest(){sSt("test");}
+  function doAns(i){sS(i);if(i===PLACEMENT_TEST[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
+  function nxt(){if(ci<PLACEMENT_TEST.length-1){sC(ci+1);sS(-1);sP("q");}else sSt("results");}
+
+  var lvl=PLACEMENT_LEVELS.find(function(l){return sc>=l.min&&sc<=l.max;})||PLACEMENT_LEVELS[0];
 
   // ─ Name entry ─
   if(step==="name")return(
@@ -766,7 +712,7 @@ var[step,sSt]=useState("name");
           {classValid===false&&<p style={{fontSize:12,color:"var(--red)",marginTop:6}}>Code not found. Check with your teacher.</p>}
         </div>
         <button className="btn1" onClick={function(){if(classValid)startTest();}}
-          style={{opacity:classValid?1:.4,pointerEvents:classValid?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>Next — Battle Scan</button>
+          style={{opacity:classValid?1:.4,pointerEvents:classValid?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>Next — Take Placement Test</button>
         <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
           <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">or</span>
@@ -849,230 +795,65 @@ var[step,sSt]=useState("name");
       </div>
     </div>);
 
-  // ─ Battle Report ─
-  if(step==="results"){
-    var cx=150,cy=150,rad=110;
-    var statOrder=["grammar","vocab","reading","listening"];
-    var statMeta={grammar:{icon:"\u2694\uFE0F",label:"Grammar",arena:"Blade Precision",color:"#d4943a"},vocab:{icon:"\uD83D\uDCDA",label:"Vocabulary",arena:"Arcane Lore",color:"#8b5cf6"},reading:{icon:"\uD83D\uDD0D",label:"Reading",arena:"Tactical Sight",color:"#22c55e"},listening:{icon:"\uD83D\uDC42",label:"Listening",arena:"Battle Sense",color:"#3b82f6"}};
-    var dxArr=[0,1,0,-1],dyArr=[-1,0,1,0];
-    function gridDiam(s){return cx+","+(cy-rad*s)+" "+(cx+rad*s)+","+cy+" "+cx+","+(cy+rad*s)+" "+(cx-rad*s)+","+cy;}
-    var playerPts=statOrder.map(function(st,i){var v=Math.max(scanScores[st],0.15)/5;return(cx+dxArr[i]*rad*v)+","+(cy+dyArr[i]*rad*v);}).join(" ");
-    var totalSc=scanScores.grammar+scanScores.vocab+scanScores.reading+scanScores.listening;
-    var weakest=statOrder.reduce(function(a,b){return scanScores[a]<=scanScores[b]?a:b;});
-    var mission=FIRST_MISSIONS.find(function(m){return m.stat===weakest;});
-    var tierLabel=totalSc>=16?"Battle-Ready":totalSc>=12?"Skilled Fighter":totalSc>=8?"Apprentice":"Recruit";
-    var tierIcon=totalSc>=16?"\uD83C\uDFC6":totalSc>=12?"\u2694\uFE0F":totalSc>=8?"\uD83D\uDEE1\uFE0F":"\uD83D\uDCDA";
-    return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center",overflow:"auto"}}>
-      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:3,marginBottom:8}} className="out">Battle Report</div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,background:"linear-gradient(135deg,#d4943a,#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>Warrior Assessment</h2>
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 14px",borderRadius:99,background:"rgba(212,148,58,.1)",border:"1px solid rgba(212,148,58,.2)",marginBottom:20}}>
-          <span style={{fontSize:16}}>{tierIcon}</span>
-          <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{tierLabel}</span>
-          <span style={{fontSize:12,color:"var(--t3)"}}>{totalSc}/20</span>
-        </div>
-
-        {/* ── RADAR SVG ── */}
-        <div style={{position:"relative",width:280,height:280,margin:"0 auto 8px"}}>
-          <svg viewBox="0 0 300 300" width="280" height="280" style={{display:"block"}}>
-            <defs>
-              <radialGradient id="radarGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#d4943a" stopOpacity="0.08"/>
-                <stop offset="100%" stopColor="#d4943a" stopOpacity="0"/>
-              </radialGradient>
-            </defs>
-            <circle cx={cx} cy={cy} r={rad+10} fill="url(#radarGlow)"/>
-            {[0.2,0.4,0.6,0.8,1.0].map(function(s,i){return(<polygon key={i} points={gridDiam(s)} fill="none" stroke={"rgba(180,140,80,"+(s===1?0.25:0.1)+")"} strokeWidth={s===1?"1.5":"0.7"}/>);})}
-            {statOrder.map(function(st,i){return(<line key={st} x1={cx} y1={cy} x2={cx+dxArr[i]*rad} y2={cy+dyArr[i]*rad} stroke="rgba(180,140,80,0.15)" strokeWidth="1"/>);})}
-            <polygon points={playerPts} fill="rgba(212,148,58,0.18)" stroke="#d4943a" strokeWidth="2.5" strokeLinejoin="round" style={{filter:"drop-shadow(0 0 10px rgba(212,148,58,0.3))",animation:"fadeIn .8s"}}/>
-            {statOrder.map(function(st,i){var v=Math.max(scanScores[st],0.15)/5;return(<circle key={st} cx={cx+dxArr[i]*rad*v} cy={cy+dyArr[i]*rad*v} r="5" fill={statMeta[st].color} stroke="var(--bg)" strokeWidth="2" style={{animation:"fadeIn 1s"}}/>);})}
-          </svg>
-          {/* Axis labels positioned around the radar */}
-          <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%) translateY(-4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.grammar.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.grammar.color}}>{scanScores.grammar}/5</div>
-          </div>
-          <div style={{position:"absolute",top:"50%",right:0,transform:"translateY(-50%) translateX(4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.vocab.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.vocab.color}}>{scanScores.vocab}/5</div>
-          </div>
-          <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%) translateY(4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.reading.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.reading.color}}>{scanScores.reading}/5</div>
-          </div>
-          <div style={{position:"absolute",top:"50%",left:0,transform:"translateY(-50%) translateX(-4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.listening.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.listening.color}}>{scanScores.listening}/5</div>
-          </div>
-        </div>
-
-        {/* ── STAT BARS ── */}
-        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24,textAlign:"left"}}>
-          {statOrder.map(function(st){var m=statMeta[st];var pct=scanScores[st]/5*100;return(
-            <div key={st} style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:18,width:28,textAlign:"center"}}>{m.icon}</span>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-                  <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--t1)"}}>{m.arena}</span>
-                  <span className="out" style={{fontSize:11,fontWeight:700,color:m.color}}>{scanScores[st]}/5</span>
-                </div>
-                <div style={{height:6,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}>
-                  <div style={{width:pct+"%",height:"100%",background:m.color,borderRadius:99,transition:"width 1s cubic-bezier(.4,0,.2,1)"}}/>
-                </div>
-              </div>
-            </div>);
-          })}
-        </div>
-
-        {/* ── FIRST MISSION ── */}
-        {mission&&<div className="crd" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
-          style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16,marginBottom:24,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-            <span style={{fontSize:20}}>📜</span>
-            <span className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:14,color:"var(--cyan)"}}>First Quest</span>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:28}}>{mission.icon}</span>
-            <div>
-              <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:2}}>{mission.label}</div>
-              <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0}}>{mission.msg}</p>
-            </div>
-          </div>
-        </div>}
-
-        {mission&&<button className="btn1" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
-          style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,#d4943a,#8b5e83)"}}>
-          Start Your Quest — {mission.label}</button>}
-        <button className="btn2" onClick={function(){stopTts();playArenaCall();p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect);}}
-          style={{fontSize:14,padding:"12px 28px",width:"100%"}}>Enter the Arena</button>
-        <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your stats will evolve as you train. This is just the beginning.</p>
-      </div>
-    </div>);}
-
-  // ─ Battle Scan ─
-  var sec=BATTLE_SCAN[scanSec]||BATTLE_SCAN[0];
-  var scanQs=sec.questions;
-  var scanQ=scanQs[ci]||scanQs[0];
-
-  // Section Intro
-  if(scanPhase==="intro")return(
+  // ─ Results ─
+  if(step==="results")return(
     <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
-        <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:24}}>
-          {BATTLE_SCAN.map(function(s,i){return(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:4}}>
-              <div style={{width:i===scanSec?32:10,height:10,borderRadius:5,background:i<scanSec?s.color:i===scanSec?s.color:"var(--bg3)",opacity:i<=scanSec?1:.4,transition:"all .4s"}}/>
-            </div>);})}
+      <div style={{animation:"fadeIn .5s"}}>
+        <div style={{fontSize:56,marginBottom:12,animation:"countUp .6s"}}>{sc>=13?"🏆":sc>=9?"⚔️":sc>=5?"🛡️":"📚"}</div>
+        <h2 className="out" style={{fontWeight:900,fontSize:28,marginBottom:4}}>Placement Result</h2>
+        <div className="out" style={{fontSize:48,fontWeight:900,color:"var(--cyan)",marginBottom:8,animation:"countUp .8s"}}>{sc}/15</div>
+        <div style={{display:"inline-block",padding:"6px 16px",borderRadius:99,background:"rgba(212,148,58,.1)",border:"1px solid rgba(212,148,58,.2)",marginBottom:12}}>
+          <span className="out" style={{fontWeight:800,fontSize:16,color:"var(--cyan)"}}>{lvl.label}</span>
         </div>
-        <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:2,marginBottom:16}}>Section {scanSec+1} of 4</div>
-        <div style={{fontSize:72,marginBottom:12,animation:"countUp .6s"}}>{sec.icon}</div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:28,color:sec.color,marginBottom:4}}>{sec.name}</h2>
-        <p className="out" style={{color:"var(--t2)",fontSize:14,fontWeight:500,marginBottom:8}}>{sec.subtitle}</p>
-        <p style={{color:"var(--t3)",fontSize:13,lineHeight:1.6,marginBottom:8,maxWidth:300,margin:"0 auto 24px"}}>{sec.desc}</p>
-        {sec.note&&<p style={{color:"var(--t3)",fontSize:11,fontStyle:"italic",marginBottom:16,lineHeight:1.5}}>{sec.note}</p>}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:24}}>
-          <span style={{fontSize:13,color:"var(--t2)"}}>5 questions</span>
-          <span style={{color:"var(--t3)"}}>·</span>
-          <span style={{fontSize:13,color:"var(--t2)"}}>{"\u223C"}2 min</span>
-        </div>
-        <button className="btn1" onClick={function(){setScanPhase("q");sC(0);sS(-1);var s=BATTLE_SCAN[scanSec];if(s.id==="listening"&&s.questions[0])setTimeout(function(){speakQ(s.questions[0].s);},400);}} style={{fontSize:16,padding:"14px 32px"}}>Begin</button>
+        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:8}}>{lvl.msg}</p>
+        <p style={{color:"var(--gold)",fontSize:13,fontWeight:600,marginBottom:32}}>Starting with {lvl.startXp} XP in {lvl.league.charAt(0).toUpperCase()+lvl.league.slice(1)} League</p>
+        <button className="btn1" onClick={function(){playArenaCall();p.go(name.trim(),classCode||'visitor',sc,lvl);}} style={{fontSize:18,padding:"16px 32px"}}>Enter the Arena</button>
       </div>
     </div>);
 
-  // Section Done
-  if(scanPhase==="done")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
-        <div style={{fontSize:56,marginBottom:12,animation:"countUp .5s"}}>{sec.icon}</div>
-        <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:22,color:sec.color,marginBottom:4}}>{sec.name}</h3>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>{sec.subtitle} — Complete</p>
-        <div style={{display:"inline-block",padding:"12px 28px",borderRadius:16,background:"rgba(212,148,58,.08)",border:"1px solid rgba(212,148,58,.15)",marginBottom:24}}>
-          <div className="out" style={{fontSize:42,fontWeight:900,color:sec.color,animation:"countUp .6s"}}>{scanScores[sec.id]}<span style={{fontSize:20,color:"var(--t3)"}}>/5</span></div>
-        </div>
-        <div style={{display:"flex",gap:4,justifyContent:"center",marginBottom:32}}>
-          {[0,1,2,3,4].map(function(i){return(
-            <div key={i} style={{width:36,height:8,borderRadius:4,background:i<scanScores[sec.id]?sec.color:"var(--bg3)",transition:"background .3s "+(i*0.1)+"s"}}/>);})}
-        </div>
-        {scanSec<BATTLE_SCAN.length-1?
-          <button className="btn1" onClick={nxtSection} style={{fontSize:16,padding:"14px 32px"}}>Next Section</button>
-          :<button className="btn1" onClick={function(){sSt("results");}} style={{fontSize:16,padding:"14px 32px",background:"linear-gradient(135deg,#d4943a,#8b5e83)"}}>See Your Battle Report</button>}
-      </div>
-    </div>);
-
-  // Questions
-  var isReading=sec.id==="reading"&&sec.passage;
+  // ─ Placement Test ─
+  var q=PLACEMENT_TEST[ci];
   return(
     <div className="app" style={{padding:"20px 16px",minHeight:"100vh"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        <div>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:18}}>{sec.icon}</span>
-            <p className="out" style={{fontWeight:700,fontSize:14,color:sec.color}}>{sec.name}</p>
-          </div>
-          <p style={{fontSize:11,color:"var(--t3)"}}>Question {ci+1} of {scanQs.length}</p>
-        </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div><p className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>Placement Test</p>
+          <p style={{fontSize:11,color:"var(--t3)"}}>Question {ci+1} of 15</p></div>
         <div style={{display:"flex",alignItems:"center",gap:3}}>
-          {scanQs.map(function(q,i){
-            var col=i<ci?sec.color:i===ci?"var(--cyan)":"var(--t3)";
-            return(<div key={i} style={{width:i===ci?16:8,height:5,borderRadius:3,background:col,transition:"all .3s"}}/>);})}
+          {PLACEMENT_TEST.map(function(q,i){
+            var col=i<ci?"var(--green)":i===ci?"var(--cyan)":"var(--t3)";
+            return (<div key={i} style={{width:i===ci?14:6,height:5,borderRadius:3,background:col,transition:"all .3s"}}/>);
+          })}
         </div>
       </div>
-      <Bar value={ci+1} max={scanQs.length} h={4} color={sec.color}/>
+      <Bar value={ci} max={15} h={4} color="linear-gradient(90deg,#d4943a,#8b5e83)"/>
 
-      {/* Reading passage */}
-      {isReading&&ci===0&&<div className="crd" style={{marginTop:16,padding:14,maxHeight:200,overflowY:"auto",fontSize:13,lineHeight:1.7,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
-        <div className="out" style={{fontWeight:700,fontSize:12,color:sec.color,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>{sec.passage.title}</div>
-        {sec.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"6px 0 0",fontWeight:line.match(/^(TO|FROM|DATE|RE):/)?600:400,color:line.match(/^(TO|FROM|DATE|RE):/)?sec.color:"var(--t2)"}}>{line}</p>);})}
-      </div>}
-      {isReading&&ci>0&&<details style={{marginTop:12,marginBottom:4}}>
-        <summary style={{fontSize:12,color:"var(--t3)",cursor:"pointer",marginBottom:4}}>Show passage</summary>
-        <div className="crd" style={{padding:12,maxHeight:160,overflowY:"auto",fontSize:12,lineHeight:1.6,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
-          {sec.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"4px 0 0"}}>{line}</p>);})}
-        </div>
-      </details>}
+      <div style={{display:"flex",gap:4,marginTop:12,marginBottom:4}}>
+        {[1,2,3,4,5].map(function(d){
+          var active=q.diff===d;
+          return (<div key={d} style={{width:8,height:8,borderRadius:"50%",background:active?"var(--gold)":"var(--t3)",opacity:active?1:.3}}/>);
+        })}
+        <span style={{fontSize:10,color:"var(--t3)",marginLeft:4}} className="out">Difficulty {q.diff}/5</span>
+      </div>
 
-      {/* Prompt for listening */}
-      {scanQ.prompt&&<p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",marginTop:12,marginBottom:4}}>{scanQ.prompt}</p>}
-
-      {sec.id==="listening"&&<div style={{display:"flex",alignItems:"center",gap:8,marginTop:12,marginBottom:8}}>
-        <button onClick={function(){speakQ(scanQ.s);}} disabled={ttsPlaying}
-          style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",background:ttsPlaying?"rgba(59,130,246,.15)":"var(--bg2)",border:"1px solid "+(ttsPlaying?"rgba(59,130,246,.3)":"var(--bdr)"),borderRadius:10,cursor:ttsPlaying?"default":"pointer",fontSize:13,fontWeight:600,color:ttsPlaying?"#3b82f6":"var(--t2)",fontFamily:"'DM Sans',sans-serif",transition:"all .3s"}}>
-          <span style={{fontSize:18}}>{ttsPlaying?"\uD83D\uDD0A":"\uD83D\uDD09"}</span>{ttsPlaying?"Playing...":"Listen again"}
-        </button>
-      </div>}
-
-      {sec.id==="listening"&&scanPhase==="q"?(
-        <div style={{textAlign:"center",padding:"24px 0",marginTop:12,marginBottom:20}}>
-          <div style={{fontSize:48,marginBottom:12,animation:ttsPlaying?"pulse 1.5s infinite":"none"}}>{ttsPlaying?"\uD83D\uDD0A":"\uD83D\uDD09"}</div>
-          <p className="out" style={{fontSize:14,fontWeight:600,color:ttsPlaying?"#3b82f6":"var(--t3)",transition:"color .3s"}}>{ttsPlaying?"Listen carefully...":"Press play to listen"}</p>
-        </div>
-      ):sec.id==="listening"&&scanPhase==="fb"?(
-        <div style={{marginTop:12,marginBottom:20}}>
-          <p style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>You heard:</p>
-          <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,color:"var(--t2)"}}>{scanQ.s}</h2>
-        </div>
-      ):(
-        <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginBottom:20,marginTop:isReading?12:16}}>{scanQ.s}</h2>
-      )}
+      <h2 className="out" style={{fontWeight:700,fontSize:19,lineHeight:1.5,marginBottom:24,marginTop:16}}>{q.s}</h2>
 
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {scanQ.o.map(function(opt,i){
-          var isCor=i===scanQ.c;var isPick=sel===i;var show=scanPhase==="fb";
+        {q.o.map(function(opt,i){
+          var isCor=i===q.c;var isPick=sel===i;var show=ph==="fb";
           var bg="var(--bg2)";var bd="var(--bdr)";
           if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-          return(<button key={i} onClick={function(){if(scanPhase==="q")doScanAns(i);}} disabled={show}
-            style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:scanPhase==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
+          return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={show}
+            style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
             <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(show&&isCor?"var(--green)":show&&isPick?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:show&&isCor?"var(--green)":show&&isPick&&!isCor?"var(--red)":"transparent",color:show&&(isCor||isPick)?"#fff":"var(--t3)"}}>
-              {show&&isCor?"\u2713":show&&isPick?"\u2717":String.fromCharCode(65+i)}</div>
+              {show&&isCor?"✓":show&&isPick?"✗":String.fromCharCode(65+i)}</div>
             <span>{opt}</span></button>);})}
       </div>
 
-      {scanPhase==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
+      {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
         <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:14}}>
-          <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{scanQ.x}</p></div>
-        <button className="btn1" onClick={nxtScan} style={{marginTop:14}}>{ci<scanQs.length-1?"Next":(scanSec<BATTLE_SCAN.length-1?"Section Complete":"See Your Battle Report")}</button>
+          <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
+        <button className="btn1" onClick={nxt} style={{marginTop:14}}>{ci<14?"Next":"See Results"}</button>
       </div>}
     </div>);
 }
@@ -7768,82 +7549,6 @@ function Profile(p){
           </div>
         );})}
       </div>
-
-      {/* ── BATTLE SCAN RESULTS ── */}
-      {u.battleScan&&u.battleScan.scores&&function(){
-        var bs=u.battleScan,sc=bs.scores;
-        var axes=[{id:"grammar",label:"Grammar",arena:"Blade Precision",icon:"\u2694\uFE0F",color:"#d4943a"},{id:"vocab",label:"Vocabulary",arena:"Arcane Lore",icon:"\uD83D\uDCDA",color:"#8b5cf6"},{id:"reading",label:"Reading",arena:"Tactical Sight",icon:"\uD83D\uDD0D",color:"#22c55e"},{id:"listening",label:"Listening",arena:"Battle Sense",icon:"\uD83D\uDC42",color:"#3b82f6"}];
-        var cx=90,cy=90,rad=70;
-        var dxA=[0,1,0,-1],dyA=[-1,0,1,0];
-        var pts=axes.map(function(a,i){var v=Math.max(sc[a.id]||0,0.15)/5;return(cx+dxA[i]*rad*v)+","+(cy+dyA[i]*rad*v);}).join(" ");
-        var gridD=function(s){return cx+","+(cy-rad*s)+" "+(cx+rad*s)+","+cy+" "+cx+","+(cy+rad*s)+" "+(cx-rad*s)+","+cy;};
-        return(
-        <div className="crd" style={{marginTop:16,padding:"16px 14px"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-            <div>
-              <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:2}}>Battle Scan</div>
-              <div className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:14,color:"var(--cyan)"}}>{bs.tier}</div>
-            </div>
-            <div style={{textAlign:"right"}}>
-              <div className="out" style={{fontWeight:800,fontSize:22,color:"var(--cyan)"}}>{bs.total}<span style={{fontSize:12,color:"var(--t3)"}}>/20</span></div>
-              <div style={{fontSize:9,color:"var(--t3)"}}>{bs.date||"Day 1"}</div>
-            </div>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <svg viewBox="0 0 180 180" width="140" height="140" style={{flexShrink:0}}>
-              {[0.2,0.4,0.6,0.8,1.0].map(function(s,i){return(<polygon key={i} points={gridD(s)} fill="none" stroke={"rgba(180,140,80,"+(s===1?0.25:0.1)+")"} strokeWidth={s===1?"1":"0.5"}/>);})}
-              {axes.map(function(a,i){return(<line key={a.id} x1={cx} y1={cy} x2={cx+dxA[i]*rad} y2={cy+dyA[i]*rad} stroke="rgba(180,140,80,0.12)" strokeWidth="0.5"/>);})}
-              <polygon points={pts} fill="rgba(212,148,58,0.18)" stroke="#d4943a" strokeWidth="2" strokeLinejoin="round"/>
-              {axes.map(function(a,i){var v=Math.max(sc[a.id]||0,0.15)/5;return(<circle key={a.id} cx={cx+dxA[i]*rad*v} cy={cy+dyA[i]*rad*v} r="3.5" fill={a.color} stroke="var(--bg)" strokeWidth="1.5"/>);})}
-            </svg>
-            <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
-              {axes.map(function(a){var v=sc[a.id]||0;return(
-                <div key={a.id} style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:14,width:20,textAlign:"center"}}>{a.icon}</span>
-                  <div style={{flex:1}}>
-                    <div style={{height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}>
-                      <div style={{width:(v/5*100)+"%",height:"100%",background:a.color,borderRadius:99}}/>
-                    </div>
-                  </div>
-                  <span className="out" style={{fontSize:10,fontWeight:700,color:a.color,minWidth:22,textAlign:"right"}}>{v}/5</span>
-                </div>);})}
-            </div>
-          </div>
-        </div>);
-      }()}
-
-      {/* ── ACCURACY BY MODULE ── */}
-      {function(){
-        var modData=MISSION_MODULES.map(function(m){
-          var ms=u.moduleScores&&u.moduleScores[m.id];
-          var acc=ms&&ms.total>0?Math.round(ms.correct/ms.total*100):null;
-          return{id:m.id,name:m.name,icon:m.icon,accuracy:acc,sessions:ms?ms.sessions:0,total:ms?ms.total:0,hasData:acc!==null};
-        });
-        var active=modData.filter(function(d){return d.hasData;});
-        var notStarted=modData.filter(function(d){return!d.hasData;});
-        if(active.length===0)return null;
-        return(
-        <div className="crd" style={{marginTop:16,padding:"16px 8px 8px"}}>
-          <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:12,color:"var(--t2)",paddingLeft:8}}>📊 Précision par module</h3>
-          <ResponsiveContainer width="100%" height={Math.max(160,active.length*32)}>
-            <BarChart data={active} layout="vertical" margin={{top:0,right:16,left:4,bottom:0}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--bdr)" horizontal={false}/>
-              <XAxis type="number" domain={[0,100]} tick={{fill:"var(--t3)",fontSize:10}} axisLine={{stroke:"var(--bdr)"}} tickLine={false} unit="%"/>
-              <YAxis type="category" dataKey="name" width={100} tick={{fill:"var(--t2)",fontSize:10}} axisLine={false} tickLine={false}/>
-              <Tooltip formatter={function(v){return v+"%";}} contentStyle={{background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:8,fontSize:12}} labelStyle={{color:"var(--t1)",fontWeight:700}} itemStyle={{color:"var(--t1)"}} cursor={{fill:"rgba(180,140,80,0.06)"}}/>
-              <RBar dataKey="accuracy" radius={[0,6,6,0]} barSize={18}>
-                {active.map(function(entry,i){
-                  var col=entry.accuracy>=70?"#4abe60":entry.accuracy>=50?"#ff8c42":"#e05252";
-                  return(<Cell key={i} fill={col}/>);
-                })}
-              </RBar>
-            </BarChart>
-          </ResponsiveContainer>
-          {notStarted.length>0&&<div style={{paddingLeft:8,paddingRight:8,paddingTop:8,paddingBottom:4}}>
-            <p style={{fontSize:11,color:"var(--t3)",margin:0}}>{notStarted.length} module{notStarted.length>1?"s":""} non commencé{notStarted.length>1?"s":""} : {notStarted.map(function(d){return d.icon;}).join(" ")}</p>
-          </div>}
-        </div>);
-      }()}
     </div>
   );
 
@@ -7969,9 +7674,9 @@ function Profile(p){
       {/* 3 tuiles de navigation */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
         <button onClick={function(){setView("stats");}} className="crd"
-          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(212,148,58,.03)",border:"1px solid rgba(212,148,58,.2)",width:"100%"}}>
+          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"none",border:"1px solid var(--bdr)",width:"100%"}}>
           <div style={{fontSize:22,marginBottom:4}}>📊</div>
-          <div style={{fontWeight:800,fontSize:16,color:"var(--t1)"}}>{u.xp}</div>
+          <div className="out" style={{fontWeight:800,fontSize:16}}>{u.xp}</div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Stats</div>
           <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
         </button>
@@ -7983,11 +7688,11 @@ function Profile(p){
           <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
         </button>
         <button onClick={function(){setView("avatar");}} className="crd"
-          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(212,148,58,.03)",border:"1px solid rgba(212,148,58,.2)",width:"100%"}}>
+          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"none",border:"1px solid var(--bdr)",width:"100%"}}>
           <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:4}}>
             {renderAvatar(28,18)}
           </div>
-          <div style={{fontWeight:800,fontSize:16,color:"var(--t1)"}}>Style</div>
+          <div className="out" style={{fontWeight:800,fontSize:16}}>Style</div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Apparence</div>
           <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
         </button>
@@ -8050,12 +7755,6 @@ function Profile(p){
 // ═══════════════════════════════════════════
 export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
-  var[coachTip,setCoachTip]=useState(null);var coachTimer=useRef(null);
-  function dismissTip(tipId){setCoachTip(null);if(!u)return;var c=JSON.parse(JSON.stringify(u));if(!c.tipsShown)c.tipsShown=[];if(c.tipsShown.indexOf(tipId)===-1)c.tipsShown.push(tipId);sv(c);}
-  function evalCoachTips(usr,curTab){if(!usr||!curTab)return;var shown=usr.tipsShown||[];
-    for(var i=0;i<COACH_TIPS.length;i++){var t=COACH_TIPS[i];if(shown.indexOf(t.id)===-1&&t.check(usr,curTab)){if(coachTimer.current)clearTimeout(coachTimer.current);coachTimer.current=setTimeout(function(){setCoachTip(t);},1500);return;}}
-    setCoachTip(null);
-  }
   var[showTip,setShowTip]=useState(false);
   useEffect(function(){
     if(!xpt||sp)return;
@@ -8179,7 +7878,7 @@ useEffect(function(){
   var bgmStarted=useRef(false);
   useEffect(function(){
     if(ld||!u||bgmStarted.current)return;
-    function startBGM(){bgmStarted.current=true;if(tab==="home")playBGM("bgm_home");document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);setTimeout(function(){evalCoachTips(u,"home");},2000);}
+    function startBGM(){bgmStarted.current=true;if(tab==="home")playBGM("bgm_home");document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);}
     document.addEventListener("click",startBGM,{once:true});
     document.addEventListener("touchstart",startBGM,{once:true});
     return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
@@ -8251,8 +7950,6 @@ useEffect(function(){
   },[!!u]);
 
 function sv(d){
-    // Evaluate coach tips after state changes
-    setTimeout(function(){evalCoachTips(d,tab);},1000);
     // Check for new achievements
     if(d&&d.unlockedAch){
       ACHIEVEMENTS.forEach(function(a){
@@ -8358,7 +8055,7 @@ var prevLeague=getLeague(c.weeklyXp);
     return m;
   }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
-  async function onboard(name,classCode,bsScores,bsCorrect,firstNav){
+  async function onboard(name,classCode,placementScore,lvl){
     classCode=classCode||'idrac2026';
     // Check if student already exists (use limit(1) — safe even with duplicates)
     var existing=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
@@ -8377,30 +8074,24 @@ var prevLeague=getLeague(c.weeklyXp);
       }catch(authErr){/* ignore lock errors — session may already exist */}
 
     var u=fresh(name,classCode);
-    if(bsScores){
-      var totalCorrect=bsScores.grammar+bsScores.vocab+bsScores.reading+bsScores.listening;
-      u.stats.totalQ=20;u.stats.correct=totalCorrect;u.stats.sessions=1;
-      var idx=0;
-      BATTLE_SCAN.forEach(function(sec){
-        sec.questions.forEach(function(q){
-          var correct=bsCorrect&&bsCorrect[idx]||false;
-          var modId=q.mod||"drill";
+    if(lvl){u.xp=lvl.startXp;u.weeklyXp=lvl.startXp;}
+    if(placementScore!==undefined){
+      u.stats.totalQ=15;u.stats.correct=placementScore;u.stats.sessions=1;
+      PLACEMENT_TEST.forEach(function(q,i){
+        var answered=i<15;
+        if(answered){
+          var cat=q.cat;var modMap={"Tenses":"drill","Passive Voice":"drill","Prepositions":"prepdrill","Word Families":"wordfam","Connectors":"connsort","Subject-Verb Agreement":"drill","Gerunds vs Infinitives":"gerinf","Conditionals":"drill","Relative Pronouns":"drill","Collocations":"drill","Comparatives":"drill","Articles":"drill"};
+          var modId=modMap[cat]||"drill";
           if(!u.moduleScores[modId])u.moduleScores[modId]={correct:0,total:0,sessions:1,lastDate:today()};
           u.moduleScores[modId].total+=1;
-          if(correct)u.moduleScores[modId].correct+=1;
-          idx++;
-        });
+        }
       });
-      var totalSc=bsScores.grammar+bsScores.vocab+bsScores.reading+bsScores.listening;
-      var tierLabel=totalSc>=16?"Battle-Ready":totalSc>=12?"Skilled Fighter":totalSc>=8?"Apprentice":"Recruit";
-      u.battleScan={date:today(),scores:bsScores,total:totalSc,tier:tierLabel};
     }
     sU(u);
     saveLocal(u);
     // Initial sync to create the row in Supabase
     _syncDirty=true;
     syncToCloud(u);
-    if(firstNav){setTimeout(function(){sSP(firstNav);},300);}
   }
   async function recover(name,classCode){
     // Find the best row (highest XP) for this student
@@ -8433,7 +8124,7 @@ var prevLeague=getLeague(c.weeklyXp);
  
   function goTeacher(){setTeacher(true);}
 
-  function bossDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
+  function bossDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);}
   function mockDone(result,xp){
     var modId="mock"+result.mockId;
     var timeGateOk=(result.timeUsed||0)>=300;
@@ -8445,7 +8136,7 @@ var prevLeague=getLeague(c.weeklyXp);
     trackModSession(c,modId);
     recordModule(c,modId,result.score,result.total);
     try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}
-    sv(c);sSP(null);sT("train");
+    sv(c);
   }
   function gameDone(modeKey,result,xp){var c=addXp(xp);if(!c.gameScores)c.gameScores={};
     if(modeKey==="duel"){
@@ -8553,6 +8244,5 @@ if(sp==="duel"){playBGM("bgm_duel");return(<div className={lc}><style>{CSS}</sty
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
     {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
-    {coachTip&&!sp&&<CoachTip tip={coachTip} onDismiss={dismissTip} goTab={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/>}
-    <Tabs cur={tab} go={function(t){if(expBlocked.indexOf(t)!==-1)return;if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);setTimeout(function(){evalCoachTips(u,t);},800);}} blocked={expBlocked}/></div>);
+    <Tabs cur={tab} go={function(t){if(expBlocked.indexOf(t)!==-1)return;if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}} blocked={expBlocked}/></div>);
 }
