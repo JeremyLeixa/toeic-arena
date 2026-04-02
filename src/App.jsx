@@ -552,7 +552,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .sk{animation:shake .4s ease-in-out}
 .out{font-family:'Cinzel','Outfit',serif;letter-spacing:0.5px}
 @media(min-width:768px){
-.app{max-width:none;margin-left:200px;padding:0 32px}
+.app{max-width:none;margin:0 0 0 200px;padding:0 32px}
 .tab-bar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;transform:none!important;width:200px!important;max-width:200px!important;height:100vh!important;flex-direction:column!important;justify-content:flex-start!important;padding:24px 12px!important;background:var(--bg2)!important;border-right:1px solid var(--bdr)!important;gap:4px!important}
 .light .tab-bar{background:var(--bg2)!important}
 .tab-bar button{flex-direction:row!important;gap:10px!important;padding:12px 14px!important;border-radius:10px!important;justify-content:flex-start!important;width:100%!important}
