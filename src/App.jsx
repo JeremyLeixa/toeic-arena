@@ -4456,6 +4456,9 @@ function DuelArena(p){
   var oppFallbackRef=useRef(null);
   var answeredRef=useRef(false);
   var myIdRef=useRef("p_"+Math.random().toString(36).substring(2,8)); // unique per session
+  var hostRef=useRef(false);
+  var myScoreRef=useRef(0);
+  var oppScoreRef=useRef(0);
 
   // Build question pool from VOCAB
   var allCards=useMemo(function(){
@@ -4486,6 +4489,9 @@ function DuelArena(p){
   questionsRef.current=questions;
   qiRef.current=qi;
   phaseRef.current=phase;
+  myScoreRef.current=myScore;
+  oppScoreRef.current=oppScore;
+  hostRef.current=isHost;
 
   // Generate room code
   function genCode(){return String(Math.floor(1000+Math.random()*9000));}
@@ -4520,6 +4526,14 @@ function DuelArena(p){
     try{if(myCorrect)playCorrect();else playWrong();}catch(e){}
     setRoundResults(function(prev){return prev.concat([{qi:qi2,myPick:ma.pick,oppPick:oa.pick,myPts:myPts,oppPts:oppPts,correct:q.c}]);});
     setPhase("feedback");
+    // Host broadcasts authoritative scores so both players stay in sync
+    if(hostRef.current&&channelRef.current){
+      channelRef.current.send({type:"broadcast",event:"round_result",payload:{
+        hostScore:myScoreRef.current+myPts,guestScore:oppScoreRef.current+oppPts,
+        hostPick:ma.pick,guestPick:oa.pick,hostTime:ma.time,guestTime:oa.time,
+        hostPts:myPts,guestPts:oppPts,qi:qi2,correct:q.c,pid:myIdRef.current
+      }});
+    }
   }
 
   // ── Channel cleanup ──
@@ -4620,6 +4634,22 @@ ch.on("broadcast",{event:"answer"},function(msg){
       setQi(msg.payload.qi);qiRef.current=msg.payload.qi;
       setDbg("");
       setPhase("play");
+    });
+
+    ch.on("broadcast",{event:"round_result"},function(msg){
+      if(msg.payload.pid===myId)return;
+      console.log("[DUEL] round_result from host — syncing scores");
+      // Guest receives host's authoritative scores — apply swapped perspective
+      setMyScore(msg.payload.guestScore);
+      setOppScore(msg.payload.hostScore);
+      setRoundResults(function(prev){
+        var updated=prev.slice();
+        var idx=updated.length-1;
+        if(idx>=0&&updated[idx].qi===msg.payload.qi){
+          updated[idx]=Object.assign({},updated[idx],{myPts:msg.payload.guestPts,oppPts:msg.payload.hostPts});
+        }
+        return updated;
+      });
     });
 
     ch.on("broadcast",{event:"game_done"},function(msg){
@@ -8433,7 +8463,7 @@ var prevLeague=getLeague(c.weeklyXp);
  
   function goTeacher(){setTeacher(true);}
 
-  function bossDone(result,xp){var c=addXp(xp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
+  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
   function mockDone(result,xp){
     var modId="mock"+result.mockId;
     var timeGateOk=(result.timeUsed||0)>=300;
@@ -8447,7 +8477,7 @@ var prevLeague=getLeague(c.weeklyXp);
     try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}
     sv(c);sSP(null);sT("train");
   }
-  function gameDone(modeKey,result,xp){var c=addXp(xp);if(!c.gameScores)c.gameScores={};
+  function gameDone(modeKey,result,xp){var gxp=applyXpGates(xp,result.score||xp,result.total||xp,"game_"+modeKey);var c=addXp(gxp);if(!c.gameScores)c.gameScores={};
     if(modeKey==="duel"){
       // Accumulate duel stats instead of overwriting
       var prev=c.gameScores.duel||{wins:0,played:0,wagerWon:0};
@@ -8455,7 +8485,7 @@ var prevLeague=getLeague(c.weeklyXp);
     } else {
       var prev2=c.gameScores[modeKey];var dominated=!prev2||(result.time!==undefined?result.time<prev2.time:(result.score>prev2.score||(result.score===prev2.score&&result.maxCombo>(prev2.maxCombo||0))));if(dominated){c.gameScores[modeKey]=result;}else if(prev2&&result.maxCombo!==undefined&&result.maxCombo>(prev2.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev2,{maxCombo:result.maxCombo});}
     }
-    c.stats.sessions+=1;sv(c);sSP(null);sT("games");}
+    c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
   function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");try{playJingleDaily();}catch(e){}sv(c);}
   function drillDone(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"drill");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
@@ -8530,9 +8560,9 @@ if(sp==="matchE"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</
   if(sp==="matchH"){playBGM("bgm_speed");return(<div className={lc}><style>{CSS}</style><SpeedMatch mode="hard" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/></div>);}
  if(sp==="wfall"){playBGM("bgm_wfall");return(<div className={lc}><style>{CSS}</style><WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
 if(sp==="duel"){playBGM("bgm_duel");return(<div className={lc}><style>{CSS}</style><DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
-  if(sp==="sbuild"){playBGM("bgm_build");return(<div className={lc}><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){stopBGM();var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
-  if(sp==="clue"){playBGM("bgm_clue");return(<div className={lc}><style>{CSS}</style><ClueHunter u={u} done={function(sc,tot,xp){stopBGM();var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
-  if(sp==="ablitz")return(<div className={lc}><style>{CSS}</style><AudioBlitz u={u} done={function(sc,tot,xp){var c=addXp(xp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
+  if(sp==="sbuild"){playBGM("bgm_build");return(<div className={lc}><style>{CSS}</style><SentenceBuilder u={u} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
+  if(sp==="clue"){playBGM("bgm_clue");return(<div className={lc}><style>{CSS}</style><ClueHunter u={u} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/></div>);}
+  if(sp==="ablitz")return(<div className={lc}><style>{CSS}</style><AudioBlitz u={u} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/></div>);
   if(sp==="strats")return(<div className={lc}><style>{CSS}</style><StratCards back={function(){sSP(null);}}/></div>);
   if(sp==="gramref")return(<div className={lc}><style>{CSS}</style><GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/></div>);
   if(sp==="stratquiz")return(<div className={lc}><style>{CSS}</style><StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/></div>);
