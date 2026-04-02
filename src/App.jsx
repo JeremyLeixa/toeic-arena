@@ -568,8 +568,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .rg2{grid-template-columns:1fr 1fr 1fr!important}
 .rg3{grid-template-columns:repeat(4,1fr)!important}
 .rg-games{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
-.p1-photo{max-height:420px!important}
-.p1-photo-sm{max-height:320px!important}
+.p1-photo,.p1-photo-sm{max-height:500px!important}
 .read-text{font-size:15px!important;line-height:2!important}
 .read-opts button{font-size:15px!important;padding:14px 16px!important}
 .q-heading{font-size:19px!important}
@@ -6906,7 +6905,7 @@ function ListenP1(p){
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
 
     <div style={{marginTop:12,marginBottom:16,borderRadius:14,overflow:"hidden",border:"1px solid var(--bdr)"}}>
-      <img className="p1-photo" src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",maxHeight:260,objectFit:"cover"}}/>
+      <img className="p1-photo" src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",objectFit:"contain"}}/>
     </div>
 
     {!played?<div style={{textAlign:"center"}}>
@@ -6941,7 +6940,7 @@ function ListenP1(p){
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
 
     <div style={{marginTop:8,marginBottom:12,borderRadius:12,overflow:"hidden",border:"1px solid var(--bdr)"}}>
-      <img className="p1-photo-sm" src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",maxHeight:200,objectFit:"cover"}}/>
+      <img className="p1-photo-sm" src={it.img} alt="TOEIC photograph" style={{width:"100%",display:"block",objectFit:"contain"}}/>
     </div>
 
     <div style={{display:"flex",flexDirection:"column",gap:6}}>
