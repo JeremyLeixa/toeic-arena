@@ -860,7 +860,7 @@ var[step,sSt]=useState("name");
           <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>⚠️ Free access includes 8 training modules. All modules are unlocked with a class code from your school.</p>
           <div style={{display:"flex",gap:8}}>
             <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>Cancel</button>
-            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);}}
+            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);sSt("consent");}}
               style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>Start Free Discovery</button>
           </div>
         </div>}
@@ -900,7 +900,7 @@ var[step,sSt]=useState("name");
             </div>
           </div>
         </div>
-        <button className="btn1" onClick={function(){startTest();}}
+        <button className="btn1" onClick={function(){if(classCode==="visitor"){sSt("secure");return;}startTest();}}
           style={{fontSize:16,padding:"14px 28px",width:"100%",marginBottom:10}}>{"J\u2019accepte \u2014 Continuer"}</button>
         <button onClick={function(){setShowPrivacy(true);}}
           style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",marginBottom:10}}>{"Lire la politique de confidentialit\u00e9 compl\u00e8te"}</button>
@@ -992,9 +992,9 @@ var[step,sSt]=useState("name");
               style={{width:48,height:56,textAlign:"center",fontSize:24,fontWeight:800,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>);
           })}
         </div>
-        <button className="btn1" onClick={function(){if(pin.length===4){playArenaCall();p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,null,pin);}}}
+        <button className="btn1" onClick={function(){if(pin.length===4){playArenaCall();p.go(name.trim(),"visitor",null,null,null,pin);}}}
           style={{opacity:pin.length===4?1:.4,pointerEvents:pin.length===4?"auto":"none",fontSize:18,padding:"16px 32px",marginBottom:12}}>Enter the Arena</button>
-        <button onClick={function(){playArenaCall();p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,null,null);}}
+        <button onClick={function(){playArenaCall();p.go(name.trim(),"visitor",null,null,null,null);}}
           style={{background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"Skip — I'll set it later"}</button>
       </div>
     </div>);
