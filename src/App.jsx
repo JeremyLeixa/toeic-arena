@@ -177,15 +177,26 @@ function dailyQs(date,u){
     return b;
   }
 
-  // Group QUESTIONS by category
+  // Filter out questions seen in the last 30 days
+  var recentIds={};
+  if(u&&u.dailySeen){
+    var cutoff=new Date();cutoff.setDate(cutoff.getDate()-30);
+    var cutoffStr=cutoff.toISOString().slice(0,10);
+    u.dailySeen.forEach(function(entry){if(entry.date>=cutoffStr)recentIds[entry.id]=true;});
+  }
+
+  // Group QUESTIONS by category, excluding recently seen
   var catMap={};
-  QUESTIONS.forEach(function(q){if(!catMap[q.cat])catMap[q.cat]=[];catMap[q.cat].push(q);});
+  QUESTIONS.forEach(function(q){if(!recentIds[q.id]){if(!catMap[q.cat])catMap[q.cat]=[];catMap[q.cat].push(q);}});
+  // Fallback: if filtering empties a category, include all for that cat
+  QUESTIONS.forEach(function(q){if(!catMap[q.cat]||catMap[q.cat].length===0){if(!catMap[q.cat])catMap[q.cat]=[];catMap[q.cat].push(q);}});
   var allCats=Object.keys(catMap);
 
   // Map specific modules to grammar categories for weakness detection
   var modToCat={
     "wordfam":"Word Families","connsort":"Connectors","prepdrill":"Prepositions",
-    "gerinf":"Gerunds vs Infinitives","falsefr":"False Friends"
+    "gerinf":"Gerunds vs Infinitives","falsefr":"False Friends",
+    "pvdojo":"Phrasal Verbs","csess":"Vocabulary"
   };
 
   // Score each category by weakness (lower = weaker = higher priority)
@@ -243,6 +254,17 @@ function dailyQs(date,u){
     if(pool2.length>0){picked.push(pool2[0]);usedCats[cat2]=true;}
   }
 
+  // Bias: ensure PV or Vocab appears if neither was picked via weakness/random
+  var hasNewCat=picked.some(function(q){return q.cat==="Phrasal Verbs"||q.cat==="Vocabulary";});
+  if(!hasNewCat&&picked.length<5){
+    var newCats=["Phrasal Verbs","Vocabulary"].filter(function(c){return catMap[c]&&catMap[c].length>0&&!usedCats[c];});
+    if(newCats.length>0){
+      var forceCat=newCats[Math.floor(srand(seed+777)*newCats.length)];
+      var forcePool=seededPick(catMap[forceCat],seed+888);
+      if(forcePool.length>0){picked.push(forcePool[0]);usedCats[forceCat]=true;}
+    }
+  }
+
   // Fallback: if still < 5, fill with unused questions
   if(picked.length<5){
     var usedIds={};picked.forEach(function(q){usedIds[q.id]=true;});
@@ -297,6 +319,7 @@ function supaToLocal(data){
     weeklyDailyCount: data.weekly_daily_count || 0,
     battleScan: data.battle_scan || null,
     tipsShown: data.tips_shown || [],
+    dailySeen: data.daily_seen || [],
   };
 }
 
@@ -362,12 +385,13 @@ async function syncToCloud(d){
     weekly_daily_count: d.weeklyDailyCount || 0,
     battle_scan: d.battleScan || null,
     tips_shown: d.tipsShown || [],
+    daily_seen: d.dailySeen || [],
   }, { onConflict: 'name,class_code' });
     if(!_result.error){_syncDirty=false;}
     else{console.warn("[SYNC] Upsert failed — will retry:",_result.error.message);}
   }catch(e){console.warn("[SYNC] Exception:",e);}
 }
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[]};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[]};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -8268,6 +8292,7 @@ useEffect(function(){
             unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
             weekly_history:d.weeklyHistory||[],
             daily_mod_sessions:d.dailyModSessions||{},
+            daily_seen:d.dailySeen||[],
           }]);
           // fetch keepalive : survit à la fermeture ET envoie les auth headers
           // (sendBeacon ne peut pas envoyer Authorization → bloqué par Supabase RLS)
@@ -8496,7 +8521,15 @@ var prevLeague=getLeague(c.weeklyXp);
     }
     c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
-  function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");try{playJingleDaily();}catch(e){}sv(c);}
+  function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");try{playJingleDaily();}catch(e){}
+    // Track seen questions for anti-repetition
+    if(!c.dailySeen)c.dailySeen=[];
+    var todayQsArr=dailyQs(today(),c);
+    todayQsArr.forEach(function(q){c.dailySeen.push({id:q.id,date:today()});});
+    // Prune entries older than 45 days
+    var pruneDate=new Date();pruneDate.setDate(pruneDate.getDate()-45);var pruneStr=pruneDate.toISOString().slice(0,10);
+    c.dailySeen=c.dailySeen.filter(function(entry){return entry.date>=pruneStr;});
+    sv(c);}
   function drillDone(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"drill");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);gxp=Math.round(gxp*getSpotlightMult(modId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
