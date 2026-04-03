@@ -615,35 +615,47 @@ export function playJingleDaily() {
 // ═══════════════════════════════════════════════════════════
 
 var bgmAudio = null;
+var _bgmFadeTimer = null;
 
 export function playBGM(track) {
   if (isMuted()) return;
   if (bgmAudio && bgmAudio._track === track && !bgmAudio.paused) return;
   stopBGM(function() {
-    bgmAudio = new Audio("/audio/bgm/" + track + ".mp3");
-    bgmAudio._track = track;
-    bgmAudio.loop = true;
-    bgmAudio.volume = 0;
-    bgmAudio.play().catch(function(){});
-    var fadeIn = setInterval(function() {
-      if (!bgmAudio) { clearInterval(fadeIn); return; }
-      if (bgmAudio.volume < 0.25) {
-        bgmAudio.volume = Math.min(0.25, bgmAudio.volume + 0.02);
-      } else { clearInterval(fadeIn); }
-    }, 50);
+    var audio = new Audio("/audio/bgm/" + track + ".mp3");
+    audio._track = track;
+    audio.loop = true;
+    audio.volume = 0;
+    audio.play().then(function() {
+      // Only adopt this audio if nothing else took over during async gap
+      if (bgmAudio && bgmAudio !== audio) { audio.pause(); return; }
+      bgmAudio = audio;
+      _bgmFadeTimer = setInterval(function() {
+        if (!bgmAudio || bgmAudio !== audio) { clearInterval(_bgmFadeTimer); return; }
+        if (bgmAudio.volume < 0.25) {
+          bgmAudio.volume = Math.min(0.25, bgmAudio.volume + 0.02);
+        } else { clearInterval(_bgmFadeTimer); _bgmFadeTimer = null; }
+      }, 50);
+    }).catch(function() {
+      // Safari autoplay blocked — do NOT store a zombie reference
+      audio.src = "";
+    });
   });
 }
 
 export function stopBGM(cb) {
-  if (!bgmAudio || bgmAudio.paused) { if (cb) cb(); return; }
+  // Kill any in-progress fade-in first
+  if (_bgmFadeTimer) { clearInterval(_bgmFadeTimer); _bgmFadeTimer = null; }
+  if (!bgmAudio) { if (cb) cb(); return; }
   var ref = bgmAudio;
+  bgmAudio = null; // Immediately clear so no race with playBGM
+  if (ref.paused) { ref.src = ""; if (cb) cb(); return; }
   var fadeOut = setInterval(function() {
     if (ref.volume > 0.02) {
       ref.volume = Math.max(0, ref.volume - 0.020);
     } else {
       clearInterval(fadeOut);
       ref.pause();
-      if (bgmAudio === ref) bgmAudio = null;
+      ref.src = ""; // Release iOS audio session
       if (cb) cb();
     }
   }, 50);
