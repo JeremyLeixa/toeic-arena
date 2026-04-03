@@ -541,7 +541,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
 @keyframes tipSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes tipFade{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(20px)}}
-.app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
+.app{max-width:430px;margin:0 auto;min-height:100dvh;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
+@supports(height:100dvh){.app{min-height:100dvh}}
 .enter{animation:fadeIn .3s ease-out}
 .crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:20px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04)}
 .glo{box-shadow:0 0 30px rgba(212,148,58,.06)}
@@ -5484,7 +5485,7 @@ function SpeedMatch(p){
   }
 
 // ── PLAY ──
-  return(<div style={{padding:"12px",height:"100vh",display:"flex",flexDirection:"column"}}>
+  return(<div style={{padding:"12px",height:"100dvh",display:"flex",flexDirection:"column",paddingBottom:70}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
       <div/>
       <div style={{display:"flex",gap:16,alignItems:"center"}}>
@@ -5689,7 +5690,7 @@ function animateFall(){
   var tierCol=qi>=15?"var(--red)":qi>=10?"var(--orange)":qi>=5?"var(--cyan)":"var(--green)";
   var comboMult=combo>=6?3:combo>=3?2:1;
 
-  return(<div className={shake?"sk":""} style={{height:"100vh",display:"flex",flexDirection:"column",background:"var(--bg)",overflow:"hidden"}}>
+  return(<div className={shake?"sk":""} style={{height:"100dvh",display:"flex",flexDirection:"column",background:"var(--bg)",overflow:"hidden",paddingBottom:70}}>
     {/* Header */}
     <div style={{padding:"12px 16px 0",flexShrink:0}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -5793,34 +5794,15 @@ function TeacherDash(p){
   }
   async function sendEventPush(title,body,targetClass){
     try{
-      // 1. Fetch subscriptions from Supabase
-      var query=supabase.from('push_subscriptions').select('subscription,student_name,class_code');
-      if(targetClass&&targetClass!=='all')query=query.eq('class_code',targetClass);
-      var subRes=await query;
-      var subs=(subRes.data||[]).map(function(s){return s.subscription;}).filter(Boolean);
-      if(subs.length===0){setEvPushResult({error:"No push subscribers found",total:0});setTimeout(function(){setEvPushResult(null);},5000);return;}
-      // 2. Call existing /api/push-send
       var res=await fetch('/api/push-send',{
         method:'POST',
         headers:{'Content-Type':'application/json','x-push-secret':PUSH_SECRET},
-        body:JSON.stringify({subscriptions:subs,title:title,body:body,tag:'toeic-event'})
+        body:JSON.stringify({class_code:targetClass||'all',title:title,body:body,tag:'toeic-event'})
       });
       var data=await res.json();
-      // 3. Clean stale subscriptions from Supabase
-      var staleCount=0;
-      if(data.errors){
-        for(var i=0;i<data.errors.length;i++){
-          if(data.errors[i].expired){
-            var staleEndpoint=data.errors[i].endpoint;
-            var staleSub=subRes.data.find(function(s){return s.subscription&&s.subscription.endpoint===staleEndpoint;});
-            if(staleSub){
-              await supabase.from('push_subscriptions').delete().eq('student_name',staleSub.student_name).eq('class_code',staleSub.class_code);
-              staleCount++;
-            }
-          }
-        }
-      }
-      setEvPushResult({sent:data.sent||0,total:subs.length,staleCount:staleCount});
+      if(data.total===0){setEvPushResult({error:"No push subscribers found",total:0});setTimeout(function(){setEvPushResult(null);},5000);return;}
+      var staleCount=(data.errors||[]).filter(function(e){return e.expired;}).length;
+      setEvPushResult({sent:data.sent||0,total:data.total||0,staleCount:staleCount});
       setTimeout(function(){setEvPushResult(null);},5000);
     }catch(e){console.log('Push failed:',e);setEvPushResult({error:"Push send failed"});setTimeout(function(){setEvPushResult(null);},5000);}
   }
@@ -5829,39 +5811,6 @@ function TeacherDash(p){
   function loadEvents(){
     supabase.from('events').select('*').order('start_at',{ascending:false}).limit(20)
       .then(function(res){if(res.data)setDashEvents(res.data);});
-  }
-  async function sendEventPush(title,body,targetClass){
-    try{
-      // 1. Fetch subscriptions from Supabase
-      var query=supabase.from('push_subscriptions').select('subscription,student_name,class_code');
-      if(targetClass&&targetClass!=='all')query=query.eq('class_code',targetClass);
-      var subRes=await query;
-      var subs=(subRes.data||[]).map(function(s){return s.subscription;}).filter(Boolean);
-      if(subs.length===0){setEvPushResult({error:"No push subscribers found",total:0});setTimeout(function(){setEvPushResult(null);},5000);return;}
-      // 2. Call existing /api/push-send
-      var res=await fetch('/api/push-send',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-push-secret':PUSH_SECRET},
-        body:JSON.stringify({subscriptions:subs,title:title,body:body,tag:'toeic-event'})
-      });
-      var data=await res.json();
-      // 3. Clean stale subscriptions from Supabase
-      var staleCount=0;
-      if(data.errors){
-        for(var i=0;i<data.errors.length;i++){
-          if(data.errors[i].expired){
-            var staleEndpoint=data.errors[i].endpoint;
-            var staleSub=subRes.data.find(function(s){return s.subscription&&s.subscription.endpoint===staleEndpoint;});
-            if(staleSub){
-              await supabase.from('push_subscriptions').delete().eq('student_name',staleSub.student_name).eq('class_code',staleSub.class_code);
-              staleCount++;
-            }
-          }
-        }
-      }
-      setEvPushResult({sent:data.sent||0,total:subs.length,staleCount:staleCount});
-      setTimeout(function(){setEvPushResult(null);},5000);
-    }catch(e){console.log('Push failed:',e);setEvPushResult({error:"Push send failed"});setTimeout(function(){setEvPushResult(null);},5000);}
   }
 
   function loadGroups(){
@@ -8536,7 +8485,7 @@ var prevLeague=getLeague(c.weeklyXp);
   var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
   var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
   var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);setTimeout(function(){evalCoachTips(u,t);},800);};
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{content}<Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);}
+  function pg(content){return(<div className={lc}><style>{CSS}</style><div style={{paddingBottom:70}}>{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);}
 
   if(ld)return(<div className={lc}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
   if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
