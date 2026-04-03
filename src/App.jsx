@@ -151,6 +151,14 @@ function getEffectiveLeague(wxp,ms){
   }
   return l;
 }
+// ─── FREEMIUM: modules available in visitor/free mode ───
+var FREE_MODULES = ["daily","drill","csess","sbuild","lisP2","stratquiz","strats","gramref","wfall"];
+var FREE_FLASHCARD_DOMAINS = ["finance","travel","office"];
+function isModuleLocked(moduleId, gType) {
+  if (gType !== "visitor") return false;
+  return FREE_MODULES.indexOf(moduleId) === -1;
+}
+
 function dailyQs(date,u){
   var seed=0;for(var i=0;i<date.length;i++)seed+=date.charCodeAt(i);
 
@@ -305,6 +313,7 @@ function supaToLocal(data){
     tipsShown: data.tips_shown || [],
     dailySeen: data.daily_seen || [],
     gdprConsent: data.gdpr_consent || null,
+    pin: data.pin || null,
   };
 }
 
@@ -372,12 +381,13 @@ async function syncToCloud(d){
     tips_shown: d.tipsShown || [],
     daily_seen: d.dailySeen || [],
     gdpr_consent: d.gdprConsent || null,
+    pin: d.pin || null,
   }, { onConflict: 'name,class_code' });
     if(!_result.error){_syncDirty=false;}
     else{console.warn("[SYNC] Upsert failed — will retry:",_result.error.message);}
   }catch(e){console.warn("[SYNC] Exception:",e);}
 }
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -705,6 +715,7 @@ var[step,sSt]=useState("name");
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
+  var[pin,setPin]=useState("");var[pendingRecover,setPendingRecover]=useState(null);var[pinError,setPinError]=useState(false);
 
   async function lookupName(n){
     setLookingUp(true);
@@ -792,6 +803,8 @@ var[step,sSt]=useState("name");
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
           {foundAccounts.map(function(acc){
             return(<button key={acc.class_code} onClick={async function(){
+              var pinRes=await supabase.from("students").select("pin").eq("name",name.trim()).eq("class_code",acc.class_code).maybeSingle();
+              if(pinRes.data&&pinRes.data.pin){setPendingRecover({name:name.trim(),classCode:acc.class_code});setPin("");setPinError(false);sSt("enterpin");return;}
               var ok=await p.recover(name.trim(),acc.class_code);
               if(!ok){sSt("classcode");}
             }} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:"16px 18px",cursor:"pointer",
@@ -825,10 +838,10 @@ var[step,sSt]=useState("name");
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>🏫</div>
         <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Join a Group</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>Enter the class code given by your teacher, or join as a visitor.</p>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>Enter the class code given by your teacher to unlock all modules, or discover TOEIC Arena for free.</p>
         <div style={{marginBottom:16,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Class code</label>
-          <input type="text" value={classCode} onChange={function(e){var v=e.target.value.toLowerCase().replace(/\s/g,'');setClassCode(v);setClassValid(null);setClassGroupName("");}} onBlur={function(){checkGroupCode(classCode);}} placeholder="e.g. idrac2026"
+          <input type="text" value={classCode} onChange={function(e){var v=e.target.value.toLowerCase().replace(/\s/g,'');setClassCode(v);setClassValid(null);setClassGroupName("");}} onBlur={function(){checkGroupCode(classCode);}} placeholder="Code from your teacher"
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid "+(classValid===true?"var(--green)":classValid===false?"var(--red)":"var(--bdr)"),borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none",transition:"border .2s"}}/>
           {classChecking&&<p style={{fontSize:11,color:"var(--t3)",marginTop:6}}>Checking...</p>}
           {classValid===true&&<p style={{fontSize:12,color:"var(--green)",marginTop:6,fontWeight:600}}>✓ {classGroupName}</p>}
@@ -842,13 +855,13 @@ var[step,sSt]=useState("name");
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
         </div>
         {!visitorConfirm?<button className="btn2" onClick={function(){setVisitorConfirm(true);}}
-          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>🌍 Join as Visitor</button>
+          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>{"🌍 Discover for Free"}</button>
         :<div style={{animation:"fadeIn .3s",padding:16,background:"rgba(139,94,131,.08)",border:"1px solid rgba(139,94,131,.2)",borderRadius:14}}>
-          <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>⚠️ If your teacher gave you a class code, use it above — otherwise your progress won't appear in your group!</p>
+          <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>⚠️ Free access includes 8 training modules. All modules are unlocked with a class code from your school.</p>
           <div style={{display:"flex",gap:8}}>
             <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>Cancel</button>
             <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);}}
-              style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>Continue as Visitor</button>
+              style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>Start Free Discovery</button>
           </div>
         </div>}
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
@@ -910,12 +923,14 @@ var[step,sSt]=useState("name");
         </div>
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Class code</label>
-          <input type="text" value={recCode} onChange={function(e){setRecCode(e.target.value);setRecMsg(null);}} placeholder="idrac2026"
+          <input type="text" value={recCode} onChange={function(e){setRecCode(e.target.value);setRecMsg(null);}} placeholder="Class code"
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
         <button className="btn1" onClick={async function(){
           if(!recName.trim())return;
           setRecLoading(true);setRecMsg(null);
+          var pinRes=await supabase.from("students").select("pin").eq("name",recName.trim()).eq("class_code",recCode.trim()||"visitor").maybeSingle();
+          if(pinRes.data&&pinRes.data.pin){setRecLoading(false);setPendingRecover({name:recName.trim(),classCode:recCode.trim()||"visitor"});setPin("");setPinError(false);sSt("enterpin");return;}
           var ok=await p.recover(recName.trim(),recCode.trim());
           setRecLoading(false);
           if(!ok)setRecMsg("No account found with that name and class code. Check spelling and try again.");
@@ -955,6 +970,63 @@ var[step,sSt]=useState("name");
         </button>
         {teacherErr&&<p style={{color:"var(--red)",fontSize:12,marginTop:8}}>Invalid code</p>}
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>Back to student login</button>
+      </div>
+    </div>);
+
+  // ─ PIN setup (visitors only) ─
+  if(step==="secure")return(
+    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+      <div style={{animation:"fadeIn .5s"}}>
+        <div style={{fontSize:48,marginBottom:16}}>{"🔐"}</div>
+        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Protect Your Progress</h2>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.6}}>{"Set a 4-digit PIN to secure your account. You'll need it to log back in."}</p>
+        <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:24}}>
+          {[0,1,2,3].map(function(i){
+            return(<input key={i} type="tel" maxLength={1} inputMode="numeric"
+              value={pin[i]||""}
+              onChange={function(e){
+                var v=e.target.value.replace(/\D/g,"");
+                var np=pin.split("");np[i]=v;setPin(np.join(""));
+                if(v&&i<3){var next=e.target.parentElement.children[i+1];if(next)next.focus();}
+              }}
+              style={{width:48,height:56,textAlign:"center",fontSize:24,fontWeight:800,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>);
+          })}
+        </div>
+        <button className="btn1" onClick={function(){if(pin.length===4){playArenaCall();p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,null,pin);}}}
+          style={{opacity:pin.length===4?1:.4,pointerEvents:pin.length===4?"auto":"none",fontSize:18,padding:"16px 32px",marginBottom:12}}>Enter the Arena</button>
+        <button onClick={function(){playArenaCall();p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,null,null);}}
+          style={{background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"Skip — I'll set it later"}</button>
+      </div>
+    </div>);
+
+  // ─ PIN verification on recover ─
+  if(step==="enterpin")return(
+    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+      <div style={{animation:"fadeIn .5s"}}>
+        <div style={{fontSize:48,marginBottom:16}}>{"🔐"}</div>
+        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Enter Your PIN</h2>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24}}>This account is protected. Enter your 4-digit PIN.</p>
+        <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:8}}>
+          {[0,1,2,3].map(function(i){
+            return(<input key={i} type="tel" maxLength={1} inputMode="numeric"
+              value={pin[i]||""}
+              onChange={function(e){
+                var v=e.target.value.replace(/\D/g,"");
+                var np=pin.split("");np[i]=v;setPin(np.join(""));
+                if(v&&i<3){var next=e.target.parentElement.children[i+1];if(next)next.focus();}
+              }}
+              style={{width:48,height:56,textAlign:"center",fontSize:24,fontWeight:800,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>);
+          })}
+        </div>
+        {pinError&&<p style={{color:"var(--red)",fontSize:12,marginBottom:8}}>Wrong PIN. Try again.</p>}
+        <button className="btn1" onClick={async function(){
+          if(!pendingRecover||pin.length!==4)return;
+          var res=await supabase.from("students").select("pin").eq("name",pendingRecover.name).eq("class_code",pendingRecover.classCode).maybeSingle();
+          if(res.data&&res.data.pin===pin){await p.recover(pendingRecover.name,pendingRecover.classCode);}
+          else{setPinError(true);setPin("");}
+        }} style={{opacity:pin.length===4?1:.4,pointerEvents:pin.length===4?"auto":"none",marginTop:12}}>Unlock</button>
+        <button onClick={function(){sSt("name");setPin("");setPinError(false);setPendingRecover(null);}}
+          style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>Back</button>
       </div>
     </div>);
 
@@ -1035,7 +1107,7 @@ var[step,sSt]=useState("name");
         </div>
 
         {/* ── FIRST MISSION ── */}
-        {mission&&<div className="crd" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
+        {mission&&<div className="crd" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
           style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16,marginBottom:24,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
             <span style={{fontSize:20}}>📜</span>
@@ -1050,10 +1122,10 @@ var[step,sSt]=useState("name");
           </div>
         </div>}
 
-        {mission&&<button className="btn1" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
+        {mission&&<button className="btn1" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,#d4943a,#8b5e83)"}}>
           Start Your Quest — {mission.label}</button>}
-        <button className="btn2" onClick={function(){stopTts();playArenaCall();p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect);}}
+        <button className="btn2" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect);}}
           style={{fontSize:14,padding:"12px 28px",width:"100%"}}>Enter the Arena</button>
         <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your stats will evolve as you train. This is just the beginning.</p>
       </div>
@@ -1431,6 +1503,13 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
   var bossLocked=!uBoss.ok;
   var mocksDone=[p.u.mockResults&&p.u.mockResults.mock1,p.u.mockResults&&p.u.mockResults.mock2,p.u.mockResults&&p.u.mockResults.mock3];
 
+  // ── Visitor locking ──
+  if(p.groupType==="visitor"){
+    sections.forEach(function(sec){sec.items.forEach(function(m){
+      if(isModuleLocked(m.id,p.groupType))m.visitorLocked=true;
+    });});
+  }
+
   // ═══ SUB-VIEW — show items of selected section ═══
   if(trainView!==null){
     var sec=sections[trainView];
@@ -1442,15 +1521,16 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:8}}>
         {sec.items.map(function(m){
           var ai=animIdx++;
+          var vl=m.visitorLocked;
           return(
-            <div key={m.id} className="crd" onClick={function(){if(!m.lock)p.nav(m.id);}}
-              style={{display:"flex",alignItems:"center",gap:14,cursor:m.lock?"default":"pointer",opacity:m.lock?.4:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
-              <div style={{width:42,height:42,borderRadius:12,background:m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+            <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}if(!m.lock)p.nav(m.id);}}
+              style={{display:"flex",alignItems:"center",gap:14,cursor:(m.lock||vl)?"default":"pointer",opacity:m.lock?.4:vl?.55:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
+              <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
-                <div style={{fontSize:11,color:"var(--t3)"}}>{m.d}</div>
+                <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
               </div>
-              {m.lock?<span style={{fontSize:16}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+              {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:m.lock?<span style={{fontSize:16}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
             </div>);
         })}
       </div>
@@ -1511,7 +1591,8 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 }
 
 // ─── CARDS PAGE ───
-function Cards(p){var all=[];VOCAB.forEach(function(d){d.cards.forEach(function(c){all.push(c);});});var dc=dueCards(p.u.cardStates,all);var mc=0;Object.keys(p.u.cardStates).forEach(function(k){if(p.u.cardStates[k].interval>=7)mc++;});
+function Cards(p){var isVis=p.groupType==="visitor";var visibleDomains=isVis?VOCAB.filter(function(d){return FREE_FLASHCARD_DOMAINS.indexOf(d.id)!==-1;}):VOCAB;
+var all=[];visibleDomains.forEach(function(d){d.cards.forEach(function(c){all.push(c);});});var dc=dueCards(p.u.cardStates,all);var mc=0;Object.keys(p.u.cardStates).forEach(function(k){if(p.u.cardStates[k].interval>=7)mc++;});
 return(<div className="enter" style={{padding:"20px 16px 100px"}}><h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Flashcards</h1><p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Spaced repetition vocabulary</p>
 <div className="crd glo" style={{marginBottom:20,padding:16}}>
 <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
@@ -1521,11 +1602,11 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}><h1 className=
 <Bar value={mc} max={all.length} h={6} color="linear-gradient(90deg,#4abe60,#3a9a70)"/></div>
 {dc.length>0&&<button className="btn1" onClick={function(){p.nav("csess");}} style={{marginBottom:20}}>Review {dc.length} cards</button>}
 <h2 className="out" style={{fontWeight:700,fontSize:15,color:"var(--t2)",marginBottom:12}}>Vocabulary Domains</h2>
-<div style={{display:"flex",flexDirection:"column",gap:10}}>{VOCAB.map(function(dom){var ms=0;dom.cards.forEach(function(c){var s=p.u.cardStates[c.id];if(s&&s.interval>=7)ms++;});
-return(<div key={dom.id} className="crd" onClick={function(){p.nav("cdom",dom.id);}} style={{display:"flex",alignItems:"center",gap:14,cursor:"pointer",padding:"14px 16px"}}>
-<div style={{width:42,height:42,borderRadius:12,background:dom.col+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{dom.icon}</div>
-<div style={{flex:1,minWidth:0}}><div className="out" style={{fontWeight:600,fontSize:14}}>{dom.name}</div><div style={{fontSize:11,color:"var(--t2)"}}>{ms}/{dom.cards.length} mastered</div></div>
-<div style={{width:48}}><Bar value={ms} max={dom.cards.length} h={4} color={dom.col}/></div></div>);})}</div></div>);}
+<div style={{display:"flex",flexDirection:"column",gap:10}}>{VOCAB.map(function(dom){var vl=isVis&&FREE_FLASHCARD_DOMAINS.indexOf(dom.id)===-1;var ms=0;dom.cards.forEach(function(c){var s=p.u.cardStates[c.id];if(s&&s.interval>=7)ms++;});
+return(<div key={dom.id} className="crd" onClick={function(){if(vl){p.onPremium(dom.name+" Flashcards");return;}p.nav("cdom",dom.id);}} style={{display:"flex",alignItems:"center",gap:14,cursor:vl?"default":"pointer",padding:"14px 16px",opacity:vl?.55:1}}>
+<div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":dom.col+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{dom.icon}</div>
+<div style={{flex:1,minWidth:0}}><div className="out" style={{fontWeight:600,fontSize:14}}>{dom.name}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t2)"}}>{vl?"Arena Premium":ms+"/"+dom.cards.length+" mastered"}</div></div>
+{vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<div style={{width:48}}><Bar value={ms} max={dom.cards.length} h={4} color={dom.col}/></div>}</div>);})}</div></div>);}
 
 // ─── FLASHCARD SESSION ───
 function CardSess(p){var all=[];if(p.domId){var dom=VOCAB.find(function(d){return d.id===p.domId;});if(dom)all=dom.cards;}else{VOCAB.forEach(function(d){d.cards.forEach(function(c){all.push(c);});});}
@@ -4064,45 +4145,27 @@ function GamesHub(p){
   var bestM=p.u.gameScores&&p.u.gameScores.matchEasy?p.u.gameScores.matchEasy:null;
   var bestMH=p.u.gameScores&&p.u.gameScores.matchHard?p.u.gameScores.matchHard:null;
   var bestF=p.u.gameScores&&p.u.gameScores.wordFall?p.u.gameScores.wordFall:null;
+  var games=[
+    {id:"smatch",n:"Speed Match",d:"Match words with definitions!",i:"🎯",bg:"linear-gradient(135deg,#d4943a,#8b5e83)",extra:(bestM||bestMH)?(bestM?"Easy: "+bestM.time+"s":"")+(bestM&&bestMH?" · ":"")+(bestMH?"Hard: "+bestMH.time+"s":""):null},
+    {id:"wfall",n:"Word Fall",d:"Catch the falling sentences!",i:"⬇️",bg:"linear-gradient(135deg,#ef4444,#f59e0b)",extra:bestF?"Best: "+bestF.score+" pts · x"+bestF.maxCombo+" combo":null},
+    {id:"sbuild",n:"Sentence Builder",d:"Tap blocks in the right order!",i:"🔀",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    {id:"ablitz",n:"Audio Blitz",d:"Listen once, answer fast!",i:"🎵",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+    {id:"clue",n:"Clue Hunter",d:"Find the clue, fill the blank!",i:"🧭",bg:"linear-gradient(135deg,#d4943a,#4abe60)"},
+    {id:"duel",n:"Vocabulary Arena",d:"Real-time 1v1 — challenge a classmate!",i:"⚔️",bg:"linear-gradient(135deg,#c84040,#8b5e83)",tag:"NEW"},
+  ];
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Arena Games</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Train your reflexes, earn XP</p>
     <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:12}}>
-      <div className="crd" onClick={function(){p.nav("smatch");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Speed Match</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Match words with definitions!</div>
-          {(bestM||bestMH)&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{bestM?"Easy: "+bestM.time+"s":""}{bestM&&bestMH?" · ":""}{bestMH?"Hard: "+bestMH.time+"s":""}</div>}</div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("wfall");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#ef4444,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⬇️</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Word Fall</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Catch the falling sentences!</div>
-          {bestF&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>Best: {bestF.score} pts · x{bestF.maxCombo} combo</div>}</div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("sbuild");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🔀</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Sentence Builder</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Tap blocks in the right order!</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
-      <div className="crd" onClick={function(){p.nav("ablitz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎵</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Audio Blitz</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Listen once, answer fast!</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
-      <div className="crd" onClick={function(){p.nav("clue");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#4abe60)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"🧭"}</div>
-        <div style={{flex:1}}>
-          <div className="out" style={{fontWeight:700,fontSize:15}}>Clue Hunter</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Find the clue, fill the blank!</div>
-        </div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
-      <div className="crd" onClick={function(){p.nav("duel");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#c84040,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚔️</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Arena</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Real-time 1v1 — challenge a classmate!</div>
-          <div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>NEW</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>→</span></div>
+      {games.map(function(m){var vl=isModuleLocked(m.id,p.groupType);return(
+        <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",opacity:vl?.55:1}}>
+          <div style={{width:48,height:48,borderRadius:14,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{m.i}</div>
+          <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>{m.n}</div>
+            <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
+            {!vl&&m.extra&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{m.extra}</div>}
+            {!vl&&m.tag&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{m.tag}</div>}</div>
+          {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+        </div>);})}
     </div>
   </div>);
 }
@@ -6828,27 +6891,23 @@ function TeacherDash(p){
 }
 // ─── LISTENING HUB ───
 function ListenHub(p){
+  var parts=[
+    {id:"lisP1",n:"Part 1 — Photographs",d:"10 random / "+LISTENING_P1.length,i:"🖼️",bg:"linear-gradient(135deg,#22c55e,#06b6d4)"},
+    {id:"lisP2",n:"Part 2 — Question-Response",d:"10 random / "+LISTENING_P2.length,i:"❓",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+    {id:"lisP3",n:"Part 3 — Conversations",d:"10 random / "+LISTENING_P3.length,i:"👥",bg:"linear-gradient(135deg,#8b5cf6,#ec4899)"},
+    {id:"lisP4",n:"Part 4 — Talks",d:"10 random / "+LISTENING_P4.length,i:"📜",bg:"linear-gradient(135deg,#06b6d4,#3b82f6)"},
+  ];
   return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:56,marginBottom:16}}>👂</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Listening Practice</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train your ear for the TOEIC Listening section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
-      <div className="crd" onClick={function(){p.nav("lisP1");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#22c55e,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🖼️</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 1 — Photographs</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P1.length}</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
-      <div className="crd" onClick={function(){p.nav("lisP2");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>❓</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 2 — Question-Response</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P2.length}</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
-		<div className="crd" onClick={function(){p.nav("lisP3");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#8b5cf6,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>👥</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 3 — Conversations</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P3.length}</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
-      <div className="crd" onClick={function(){p.nav("lisP4");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#06b6d4,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📜</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 4 — Talks</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random / {LISTENING_P4.length}</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
+      {parts.map(function(m){var vl=isModuleLocked(m.id,p.groupType);return(
+        <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
+          <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+          <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
+          {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+        </div>);})}
     </div>
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
   </div>);
@@ -7271,27 +7330,23 @@ function ListenP4(p){
 
 // ─── READING HUB ───
 function ReadingHub(p){
+  var parts=[
+    {id:"drill",n:"Part 5 — Sentence Completion",d:"10 random questions from 100",i:"📜",bg:"linear-gradient(135deg,#00e676,#00bfa5)"},
+    {id:"timesim",n:"Part 5 — Exam Simulation",d:"30 Qs in 10 min, real pace",i:"🏁",bg:"linear-gradient(135deg,#8b5cf6,#6366f1)"},
+    {id:"p6",n:"Part 6 — Text Completion",d:"Business texts with blanks",i:"📜",bg:"linear-gradient(135deg,#c4587a,#8b5e83)"},
+    {id:"p7",n:"Part 7 — Reading Comprehension",d:"Passages + questions",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#06b6d4)"},
+  ];
   return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:56,marginBottom:16}}>📖</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Reading Practice</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train for the TOEIC Reading section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
-      <div className="crd" onClick={function(){p.nav("drill");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#00e676,#00bfa5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📜</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 5 — Sentence Completion</div><div style={{fontSize:11,color:"var(--t3)"}}>10 random questions from 100</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
-      <div className="crd" onClick={function(){p.nav("timesim");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#8b5cf6,#6366f1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🏁</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 5 — Exam Simulation</div><div style={{fontSize:11,color:"var(--t3)"}}>30 Qs in 10 min, real pace</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
-      <div className="crd" onClick={function(){p.nav("p6");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#c4587a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📜</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 6 — Text Completion</div><div style={{fontSize:11,color:"var(--t3)"}}>Business texts with blanks</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
-      <div className="crd" onClick={function(){p.nav("p7");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
-        <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#3b82f6,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>📖</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>Part 7 — Reading Comprehension</div><div style={{fontSize:11,color:"var(--t3)"}}>Passages + questions</div></div>
-        <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
+      {parts.map(function(m){var vl=isModuleLocked(m.id,p.groupType);return(
+        <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
+          <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+          <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
+          {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+        </div>);})}
     </div>
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
   </div>);
@@ -8202,6 +8257,22 @@ function Profile(p){
         {"🛡️ Politique de confidentialit\u00e9"}
       </button>
 
+      {/* PIN management */}
+      <button className="btn2" onClick={function(){
+        var current=u.pin;
+        var msg=current?"Enter a new 4-digit PIN (current PIN will be replaced):":"Set a 4-digit PIN to protect your account:";
+        var newPin=prompt(msg);
+        if(newPin===null)return;
+        newPin=newPin.replace(/\D/g,"");
+        if(newPin.length!==4){alert("PIN must be exactly 4 digits.");return;}
+        supabase.from("students").update({pin:newPin}).eq("name",u.name).eq("class_code",u.classCode).then(function(){
+          var c=JSON.parse(JSON.stringify(u));c.pin=newPin;p.setAvatar(c);
+          alert("PIN "+(current?"updated":"set")+" successfully!");
+        });
+      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(212,148,58,.2)",color:"var(--gold)"}}>
+        {u.pin?"\uD83D\uDD10 Change PIN":"\uD83D\uDD10 Set a PIN"}
+      </button>
+
       {/* Logout */}
       <button className="btn2" onClick={function(){if(confirm("Se d\u00e9connecter ? Vos donn\u00e9es sont sauvegard\u00e9es, vous pourrez les retrouver en vous reconnectant."))p.logout();}}
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
@@ -8252,6 +8323,8 @@ export default function App(){
   var[activeEvents,setActiveEvents]=useState([]);
   var[classMedianXp,setClassMedianXp]=useState(0);
   var[groupAccess,setGroupAccess]=useState(null); // null | {status:"ok"} | {status:"expired",name,endDate} | {status:"not_started",name,startDate}
+  var[groupType,setGroupType]=useState("school"); // "school"|"pro"|"visitor" — default school = full access
+  var[premiumPrompt,setPremiumPrompt]=useState(null);
 
 useEffect(function(){
     var loaded=false;
@@ -8352,10 +8425,13 @@ useEffect(function(){
   useEffect(function(){
     if(!u||u.name==="Teacher")return;
     var cc=u.classCode||'idrac2026';
-    supabase.from('groups').select('start_date,end_date,name').eq('code',cc).maybeSingle()
+    if(cc==="visitor"){setGroupType("visitor");setGroupAccess({status:"ok"});return;}
+    supabase.from('groups').select('start_date,end_date,name,type').eq('code',cc).maybeSingle()
       .then(function(res){
-        if(!res.data){setGroupAccess({status:"ok"});return;}
-        var g=res.data;var now=new Date();now.setHours(0,0,0,0);
+        if(!res.data){setGroupType("school");setGroupAccess({status:"ok"});return;}
+        var g=res.data;
+        setGroupType(g.type||"school");
+        var now=new Date();now.setHours(0,0,0,0);
         if(g.end_date){var ed=new Date(g.end_date+"T23:59:59");if(ed<now){setGroupAccess({status:"expired",name:g.name||cc,endDate:g.end_date});return;}}
         if(g.start_date){var sd=new Date(g.start_date+"T00:00:00");if(sd>now){setGroupAccess({status:"not_started",name:g.name||cc,startDate:g.start_date});return;}}
         setGroupAccess({status:"ok"});
@@ -8418,6 +8494,7 @@ useEffect(function(){
             daily_mod_sessions:d.dailyModSessions||{},
             daily_seen:d.dailySeen||[],
             gdpr_consent:d.gdprConsent||null,
+            pin:d.pin||null,
           }]);
           // fetch keepalive : survit à la fermeture ET envoie les auth headers
           // (sendBeacon ne peut pas envoyer Authorization → bloqué par Supabase RLS)
@@ -8547,7 +8624,7 @@ var prevLeague=getLeague(c.weeklyXp);
     return m;
   }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
-  async function onboard(name,classCode,bsScores,bsCorrect,firstNav){
+  async function onboard(name,classCode,bsScores,bsCorrect,firstNav,pinValue){
     classCode=classCode||'idrac2026';
     // Check if student already exists (use limit(1) — safe even with duplicates)
     var existing=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
@@ -8567,6 +8644,7 @@ var prevLeague=getLeague(c.weeklyXp);
 
     var u=fresh(name,classCode);
     u.gdprConsent=today();
+    if(pinValue)u.pin=pinValue;
     if(bsScores){
       var totalCorrect=bsScores.grammar+bsScores.vocab+bsScores.reading+bsScores.listening;
       u.stats.totalQ=20;u.stats.correct=totalCorrect;u.stats.sessions=1;
@@ -8768,9 +8846,9 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="timesim")return pg(<TimeSim u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"timesim");}} nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="p6")return pg(<Part6Drill u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"p6");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="p7")return pg(<Part7Read u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"p7");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
-  if(sp==="lis")return pg(<ListenHub nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="lis")return pg(<ListenHub nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="lisP1")return pg(<ListenP1 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP1");}} back={function(){sSP("lis");}}/>);
-  if(sp==="read")return pg(<ReadingHub nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="read")return pg(<ReadingHub nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="lisP2")return pg(<ListenP2 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP2");}} back={function(){sSP("lis");}}/>);
   if(sp==="lisP3")return pg(<ListenP3 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP3");}} back={function(){sSP("lis");}}/>);
   if(sp==="lisP4")return pg(<ListenP4 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP4");}} back={function(){sSP("lis");}}/>);
@@ -8780,7 +8858,16 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} initialView={spA}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     {coachTip&&!sp&&<CoachTip tip={coachTip} onDismiss={dismissTip} goTab={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/>}
+    {premiumPrompt&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={function(){setPremiumPrompt(null);}}>
+      <div style={{background:"var(--bg2)",borderRadius:20,padding:28,maxWidth:340,textAlign:"center",animation:"fadeIn .3s",border:"1px solid var(--bdr)"}} onClick={function(e){e.stopPropagation();}}>
+        <div style={{fontSize:48,marginBottom:12}}>{"🏰"}</div>
+        <h3 className="out" style={{fontWeight:800,fontSize:20,marginBottom:8,color:"var(--gold)"}}>Arena Premium</h3>
+        <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6,marginBottom:16}}><strong style={{color:"var(--t1)"}}>{premiumPrompt}</strong> is available with Arena Premium or through your school.</p>
+        <p style={{color:"var(--t3)",fontSize:12,lineHeight:1.5,marginBottom:20}}>If your teacher gave you a class code, go to Settings to change your group and unlock all modules.</p>
+        <button className="btn1" onClick={function(){setPremiumPrompt(null);}} style={{width:"100%",fontSize:14}}>Got it</button>
+      </div>
+    </div>}
     <Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);
 }
