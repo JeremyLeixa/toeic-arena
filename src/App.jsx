@@ -680,7 +680,7 @@ function PrivacyPolicy(p){
     {t:"3. Base l\u00e9gale",c:"Int\u00e9r\u00eat l\u00e9gitime p\u00e9dagogique (article 6.1.f du RGPD) pour le suivi de la progression des apprenants dans le cadre d'une formation. Consentement explicite recueilli lors de la cr\u00e9ation du profil."},
     {t:"4. Finalit\u00e9s",c:"Suivi p\u00e9dagogique individuel et collectif, classements et gamification, personnalisation des exercices et recommandations, rapport hebdomadaire au responsable p\u00e9dagogique."},
     {t:"5. Destinataires",c:"Votre formateur (acc\u00e8s au tableau de bord enseignant), le responsable p\u00e9dagogique (rapports agr\u00e9g\u00e9s). Aucune donn\u00e9e n'est vendue ou transmise \u00e0 des tiers \u00e0 des fins commerciales."},
-    {t:"6. Sous-traitants",c:"Supabase Inc. (h\u00e9bergement base de donn\u00e9es, authentification — serveurs UE/US), Vercel Inc. (h\u00e9bergement de l'application), Google Fonts (polices de caract\u00e8res — votre navigateur contacte les serveurs Google pour t\u00e9l\u00e9charger les polices)."},
+    {t:"6. Sous-traitants",c:"Supabase Inc. (h\u00e9bergement base de donn\u00e9es, authentification \u2014 serveurs UE/US), Vercel Inc. (h\u00e9bergement de l'application), Google Fonts (polices de caract\u00e8res \u2014 votre navigateur contacte les serveurs Google pour t\u00e9l\u00e9charger les polices)."},
     {t:"7. Dur\u00e9e de conservation",c:"Donn\u00e9es conserv\u00e9es pendant la dur\u00e9e de la formation, puis supprim\u00e9es \u00e0 la fin de l'ann\u00e9e scolaire ou sur demande. Les snapshots hebdomadaires sont conserv\u00e9s 12 mois maximum pour le suivi p\u00e9dagogique."},
     {t:"8. Vos droits (RGPD Art. 15-20)",c:"Acc\u00e8s\u00a0: consultez votre profil \u00e0 tout moment.\nPortabilit\u00e9\u00a0: exportez vos donn\u00e9es en JSON depuis votre profil.\nRectification\u00a0: modifiez votre avatar et pr\u00e9f\u00e9rences dans le profil.\nEffacement\u00a0: supprimez votre compte et toutes vos donn\u00e9es depuis le profil.\nPour toute demande\u00a0: jeremy.leixa@mail-formateur.net"},
     {t:"9. Stockage local",c:"L'application stocke une copie de votre profil dans le localStorage de votre navigateur pour un acc\u00e8s hors-ligne. Ces donn\u00e9es sont supprim\u00e9es lorsque vous supprimez votre compte."},
@@ -690,13 +690,14 @@ function PrivacyPolicy(p){
   ];
   return(<div style={{maxWidth:480,margin:"0 auto",padding:"24px 16px",maxHeight:"85vh",overflow:"auto"}}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-      <h2 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Politique de confidentialit\u00e9</h2>
-      {p.onClose&&<button onClick={p.onClose} style={{background:"none",border:"none",color:"var(--t3)",fontSize:22,cursor:"pointer",padding:4,lineHeight:1}}>\u00d7</button>}
+      <h2 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>{"Politique de confidentialit\u00e9"}</h2>
+      {p.onClose&&<button onClick={p.onClose} style={{background:"none",border:"none",color:"var(--t3)",fontSize:22,cursor:"pointer",padding:4,lineHeight:1}}>{"\u00d7"}</button>}
     </div>
     {sections.map(function(s,i){return(<div key={i} style={{marginBottom:18}}>
       <h3 className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)",marginBottom:6}}>{s.t}</h3>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.7,margin:0,whiteSpace:"pre-line"}}>{s.c}</p>
     </div>);})}
+    {p.onClose&&<button className="btn2" onClick={p.onClose} style={{width:"100%",fontSize:14,marginTop:8,marginBottom:24}}>{"\u2190 Retour"}</button>}
   </div>);
 }
 
@@ -869,39 +870,39 @@ var[step,sSt]=useState("name");
     <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       {showPrivacy?<PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>:
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:420}}>
-        <div style={{fontSize:48,marginBottom:16}}>🛡️</div>
-        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Protection de vos donn\u00e9es</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.6}}>Avant de commencer, voici comment TOEIC Arena utilise vos donn\u00e9es :</p>
+        <div style={{fontSize:48,marginBottom:16}}>{"🛡️"}</div>
+        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{"Protection de vos donn\u00e9es"}</h2>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.6}}>{"Avant de commencer, voici comment TOEIC Arena utilise vos donn\u00e9es :"}</p>
         <div style={{textAlign:"left",padding:"16px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:14,marginBottom:20}}>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>📊</span>
-              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>Donn\u00e9es collect\u00e9es</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>Votre pr\u00e9nom, code classe, scores, progression, temps d'entra\u00eenement. Aucun e-mail, aucun mot de passe.</p></div>
+              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>{"📊"}</span>
+              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Donn\u00e9es collect\u00e9es"}</div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Votre pr\u00e9nom, code classe, scores, progression, temps d\u2019entra\u00eenement. Aucun e-mail, aucun mot de passe."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>🎯</span>
-              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>Finalit\u00e9</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>Suivi p\u00e9dagogique, classements, et personnalisation de l'entra\u00eenement. Donn\u00e9es accessibles \u00e0 votre formateur.</p></div>
+              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>{"🎯"}</span>
+              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Finalit\u00e9"}</div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Suivi p\u00e9dagogique, classements, et personnalisation de l\u2019entra\u00eenement. Donn\u00e9es accessibles \u00e0 votre formateur."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>🔒</span>
-              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>Vos droits</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>Vous pouvez \u00e0 tout moment exporter, modifier ou supprimer vos donn\u00e9es depuis votre profil.</p></div>
+              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>{"🔒"}</span>
+              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Vos droits"}</div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Vous pouvez \u00e0 tout moment exporter, modifier ou supprimer vos donn\u00e9es depuis votre profil."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>🌐</span>
-              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>H\u00e9bergement</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>Donn\u00e9es stock\u00e9es chez Supabase (UE/US) et Vercel. Aucune revente \u00e0 des tiers.</p></div>
+              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>{"🌐"}</span>
+              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"H\u00e9bergement"}</div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Donn\u00e9es stock\u00e9es chez Supabase (UE/US) et Vercel. Aucune revente \u00e0 des tiers."}</p></div>
             </div>
           </div>
         </div>
         <button className="btn1" onClick={function(){startTest();}}
-          style={{fontSize:16,padding:"14px 28px",width:"100%",marginBottom:10}}>J'accepte — Continuer</button>
+          style={{fontSize:16,padding:"14px 28px",width:"100%",marginBottom:10}}>{"J\u2019accepte \u2014 Continuer"}</button>
         <button onClick={function(){setShowPrivacy(true);}}
-          style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",marginBottom:10}}>Lire la politique de confidentialit\u00e9 compl\u00e8te</button>
+          style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",marginBottom:10}}>{"Lire la politique de confidentialit\u00e9 compl\u00e8te"}</button>
         <br/>
-        <button onClick={function(){sSt("classcode");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>\u2190 Retour</button>
+        <button onClick={function(){sSt("classcode");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"\u2190 Retour"}</button>
       </div>}
     </div>);
 
@@ -8178,19 +8179,19 @@ function Profile(p){
         a.download="toeic_arena_mes_donnees_"+u.name.replace(/\s+/g,"_")+"_"+today()+".json";
         a.click();URL.revokeObjectURL(a.href);
       }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
-        📥 Exporter mes donn\u00e9es (JSON)
+        {"📥 Exporter mes donn\u00e9es (JSON)"}
       </button>
 
       {/* Privacy policy */}
       <button className="btn2" onClick={function(){setShowPrivacy(true);}}
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
-        🛡️ Politique de confidentialit\u00e9
+        {"🛡️ Politique de confidentialit\u00e9"}
       </button>
 
       {/* Logout */}
       <button className="btn2" onClick={function(){if(confirm("Se d\u00e9connecter ? Vos donn\u00e9es sont sauvegard\u00e9es, vous pourrez les retrouver en vous reconnectant."))p.logout();}}
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
-        Se d\u00e9connecter
+        {"Se d\u00e9connecter"}
       </button>
 
       {/* Self-delete account (GDPR Art. 17) */}
@@ -8199,13 +8200,13 @@ function Profile(p){
         if(!confirm("Derni\u00e8re confirmation : toutes vos donn\u00e9es (scores, progression, achievements) seront perdues."))return;
         p.deleteAccount();
       }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>
-        Supprimer mon compte et mes donn\u00e9es
+        {"Supprimer mon compte et mes donn\u00e9es"}
       </button>
 
       {/* Teacher reset (legacy) */}
       <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
         style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.1)",width:"100%",marginTop:4}}>
-        R\u00e9initialiser (formateur)
+        {"R\u00e9initialiser (formateur)"}
       </button>
 
       {showPrivacy&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
