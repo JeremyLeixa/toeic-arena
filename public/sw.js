@@ -40,22 +40,24 @@ self.addEventListener("activate", function (e) {
 self.addEventListener("fetch", function (e) {
   var url = new URL(e.request.url);
 
-  // Always go to network for API calls, Supabase, audio
+  // Only cache same-origin GET requests
+  if (e.request.method !== "GET" || url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Skip API calls and large media files
   if (
-    url.hostname.includes("supabase") ||
-    url.hostname.includes("elevenlabs") ||
     url.pathname.startsWith("/api/") ||
-    url.pathname.match(/\.(mp3|wav|ogg)$/) ||
-    e.request.method !== "GET"
+    url.pathname.match(/\.(mp3|wav|ogg)$/)
   ) {
     return;
   }
 
-  // Everything else: network-first with cache fallback
+  // Network-first with cache fallback (same-origin only)
   e.respondWith(
     fetch(e.request)
       .then(function (response) {
-        if (response.ok) {
+        if (response.ok && response.type === "basic") {
           var clone = response.clone();
           caches.open(CACHE_NAME).then(function (cache) {
             cache.put(e.request, clone);
@@ -69,7 +71,19 @@ self.addEventListener("fetch", function (e) {
   );
 });
 
-// ─── PUSH NOTIFICATION: parse payload + show with vibration ───
+// ─── PUSH NOTIFICATION: parse payload + sanitize + show ───
+function sanitizeText(str, maxLen) {
+  if (typeof str !== "string") return null;
+  // Strip HTML tags and limit length
+  return str.replace(/<[^>]*>/g, "").substring(0, maxLen || 200);
+}
+function sanitizeUrl(str) {
+  if (typeof str !== "string") return null;
+  // Only allow relative paths starting with /
+  if (str.charAt(0) === "/") return str;
+  return "/";
+}
+
 self.addEventListener("push", function (e) {
   var data = {
     title: "TOEIC Arena",
@@ -82,15 +96,19 @@ self.addEventListener("push", function (e) {
   try {
     if (e.data) {
       var payload = e.data.json();
-      if (payload.title) data.title = payload.title;
-      if (payload.body) data.body = payload.body;
-      if (payload.icon) data.icon = payload.icon;
-      if (payload.tag) data.tag = payload.tag;
-      if (payload.url) data.url = payload.url;
+      var t = sanitizeText(payload.title, 100);
+      var b = sanitizeText(payload.body, 300);
+      var tag = sanitizeText(payload.tag, 50);
+      var u = sanitizeUrl(payload.url);
+      if (t) data.title = t;
+      if (b) data.body = b;
+      if (tag) data.tag = tag;
+      if (u) data.url = u;
+      // icon: only allow same-origin paths
+      if (typeof payload.icon === "string" && payload.icon.charAt(0) === "/") data.icon = payload.icon;
     }
   } catch (err) {
-    // If JSON parse fails, try plain text
-    if (e.data) data.body = e.data.text();
+    // If JSON parse fails, use defaults
   }
 
   e.waitUntil(

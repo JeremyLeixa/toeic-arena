@@ -1,8 +1,11 @@
-// Simple in-memory rate limiter (per serverless instance)
+// Best-effort in-memory rate limiter (per serverless instance).
+// Resets on cold starts — blocks burst abuse within a warm instance only.
 var _rateMap = {};
+var _rateMapSize = 0;
 function rateLimit(key, maxReqs, windowMs) {
   var now = Date.now();
-  if (!_rateMap[key]) _rateMap[key] = [];
+  if (_rateMapSize > 1000) { _rateMap = {}; _rateMapSize = 0; }
+  if (!_rateMap[key]) { _rateMap[key] = []; _rateMapSize++; }
   _rateMap[key] = _rateMap[key].filter(function(t) { return t > now - windowMs; });
   if (_rateMap[key].length >= maxReqs) return false;
   _rateMap[key].push(now);
