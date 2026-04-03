@@ -490,9 +490,7 @@ function canUnlockBoss(u){
 
 
 // ─── TEACHER DASHBOARD CONFIG ───
-var TEACHER_CODE="arena-teacher-2026";
-var PUSH_SECRET="toeic-push-2026-xyz";
-var PUSH_SECRET="toeic-push-2026-xyz";
+var PUSH_SECRET=import.meta.env.VITE_PUSH_SECRET||"";
 
 // ─── PUSH NOTIFICATIONS ───
 var VAPID_PUBLIC_KEY="BGiKomKxy1j081qd5ZaZnp7EUAYXIGRPWu8ePQySLGhQ0T45-m3oKTqgj-teqm2l5RoR0jnamCWHZ6pMYjrPVy4";
@@ -879,8 +877,7 @@ var[step,sSt]=useState("name");
         <button className="btn1" onClick={function(){
           if(!teacherCode||teacherChecking)return;
           // Check global code first
-          if(teacherCode===TEACHER_CODE){p.goTeacher();return;}
-          // Check per-group teacher_code
+          // Check teacher_code in Supabase groups table
           setTeacherChecking(true);setTeacherErr(false);
           supabase.from('groups').select('code').eq('teacher_code',teacherCode).limit(1)
             .then(function(res){
@@ -6236,7 +6233,7 @@ function TeacherDash(p){
           </button>);
         })}
       </div>
-      <button onClick={function(){var code=prompt("Code administrateur :");if(code===TEACHER_CODE){setCgForm({name:"",code:"",teacherCode:"",type:"school",startDate:"",endDate:""});setCgCodeErr("");setDashPhase("create-group");}else if(code){alert("Code invalide");}}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
+      <button onClick={function(){var code=prompt("Code administrateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){setCgForm({name:"",code:"",teacherCode:"",type:"school",startDate:"",endDate:""});setCgCodeErr("");setDashPhase("create-group");}else{alert("Code invalide");}});}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
         {"\u2795 Cr\u00e9er un groupe"}
       </button>
       <button onClick={p.back} style={{display:"block",margin:"16px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"\u2190"} Exit</button>
@@ -8057,7 +8054,7 @@ function Profile(p){
       </div>
 
       {/* Teacher dashboard */}
-      <button className="btn2" onClick={function(){var code=prompt("Code formateur :");if(!code)return;if(code===TEACHER_CODE){p.goTeacher();return;}supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}p.goTeacher();}else{alert("Code invalide");}});}}
+      <button className="btn2" onClick={function(){var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}p.goTeacher();}else{alert("Code invalide");}});}}
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
         👨‍🏫 Teacher Dashboard
       </button>
@@ -8098,7 +8095,7 @@ function Profile(p){
       </div>
 
       {/* Reset */}
-      <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;if(code===TEACHER_CODE){p.reset();return;}supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
+      <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
         style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>
         Réinitialiser mes données
       </button>
@@ -8296,13 +8293,13 @@ useEffect(function(){
           }]);
           // fetch keepalive : survit à la fermeture ET envoie les auth headers
           // (sendBeacon ne peut pas envoyer Authorization → bloqué par Supabase RLS)
-          try{fetch("https://huklmklwvwwhhrrcyytq.supabase.co/rest/v1/students?on_conflict=name,class_code",{
+          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/students?on_conflict=name,class_code",{
             method:"POST",keepalive:true,
             headers:{
               "Content-Type":"application/json",
               "Prefer":"resolution=merge-duplicates",
-              "apikey":"sb_publishable_08NyAR2_pLIUa6icJRbw6w_Ek1VrT6t",
-              "Authorization":"Bearer sb_publishable_08NyAR2_pLIUa6icJRbw6w_Ek1VrT6t"
+              "apikey":_anonKey,
+              "Authorization":"Bearer "+_anonKey
             },
             body:payload
           });}catch(e){}
