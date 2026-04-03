@@ -320,6 +320,7 @@ function supaToLocal(data){
     battleScan: data.battle_scan || null,
     tipsShown: data.tips_shown || [],
     dailySeen: data.daily_seen || [],
+    gdprConsent: data.gdpr_consent || null,
   };
 }
 
@@ -386,12 +387,13 @@ async function syncToCloud(d){
     battle_scan: d.battleScan || null,
     tips_shown: d.tipsShown || [],
     daily_seen: d.dailySeen || [],
+    gdpr_consent: d.gdprConsent || null,
   }, { onConflict: 'name,class_code' });
     if(!_result.error){_syncDirty=false;}
     else{console.warn("[SYNC] Upsert failed — will retry:",_result.error.message);}
   }catch(e){console.warn("[SYNC] Exception:",e);}
 }
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[]};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -670,6 +672,34 @@ return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",tra
 {tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 12px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t3)",transform:a&&!dis?"scale(1.05)":"scale(1)",opacity:dis?.35:1,transition:"all .2s"}}>
 <span style={{fontSize:22,lineHeight:1}}>{t.i}</span><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:1}}/>}</button>);})}</div>);}
 
+// ─── PRIVACY POLICY ───
+function PrivacyPolicy(p){
+  var sections=[
+    {t:"1. Responsable du traitement",c:"J\u00e9r\u00e9my Leixa, formateur en anglais. Contact\u00a0: jeremy.leixa@mail-formateur.net"},
+    {t:"2. Donn\u00e9es collect\u00e9es",c:"Pr\u00e9nom ou pseudonyme (pas de nom de famille obligatoire), code classe, scores et progression par module, temps d'entra\u00eenement cumul\u00e9, \u00e9tats de r\u00e9vision des flashcards, r\u00e9sultats aux tests blancs, avatar choisi, pr\u00e9f\u00e9rence de th\u00e8me (sombre/clair). Aucun e-mail, aucun mot de passe, aucune donn\u00e9e de localisation."},
+    {t:"3. Base l\u00e9gale",c:"Int\u00e9r\u00eat l\u00e9gitime p\u00e9dagogique (article 6.1.f du RGPD) pour le suivi de la progression des apprenants dans le cadre d'une formation. Consentement explicite recueilli lors de la cr\u00e9ation du profil."},
+    {t:"4. Finalit\u00e9s",c:"Suivi p\u00e9dagogique individuel et collectif, classements et gamification, personnalisation des exercices et recommandations, rapport hebdomadaire au responsable p\u00e9dagogique."},
+    {t:"5. Destinataires",c:"Votre formateur (acc\u00e8s au tableau de bord enseignant), le responsable p\u00e9dagogique (rapports agr\u00e9g\u00e9s). Aucune donn\u00e9e n'est vendue ou transmise \u00e0 des tiers \u00e0 des fins commerciales."},
+    {t:"6. Sous-traitants",c:"Supabase Inc. (h\u00e9bergement base de donn\u00e9es, authentification — serveurs UE/US), Vercel Inc. (h\u00e9bergement de l'application), Google Fonts (polices de caract\u00e8res — votre navigateur contacte les serveurs Google pour t\u00e9l\u00e9charger les polices)."},
+    {t:"7. Dur\u00e9e de conservation",c:"Donn\u00e9es conserv\u00e9es pendant la dur\u00e9e de la formation, puis supprim\u00e9es \u00e0 la fin de l'ann\u00e9e scolaire ou sur demande. Les snapshots hebdomadaires sont conserv\u00e9s 12 mois maximum pour le suivi p\u00e9dagogique."},
+    {t:"8. Vos droits (RGPD Art. 15-20)",c:"Acc\u00e8s\u00a0: consultez votre profil \u00e0 tout moment.\nPortabilit\u00e9\u00a0: exportez vos donn\u00e9es en JSON depuis votre profil.\nRectification\u00a0: modifiez votre avatar et pr\u00e9f\u00e9rences dans le profil.\nEffacement\u00a0: supprimez votre compte et toutes vos donn\u00e9es depuis le profil.\nPour toute demande\u00a0: jeremy.leixa@mail-formateur.net"},
+    {t:"9. Stockage local",c:"L'application stocke une copie de votre profil dans le localStorage de votre navigateur pour un acc\u00e8s hors-ligne. Ces donn\u00e9es sont supprim\u00e9es lorsque vous supprimez votre compte."},
+    {t:"10. Cookies",c:"TOEIC Arena n'utilise aucun cookie publicitaire ni traqueur. Seul le stockage local du navigateur (localStorage) est utilis\u00e9 pour la persistance de session."},
+    {t:"11. Notifications push",c:"Optionnelles. Vous pouvez les activer ou d\u00e9sactiver \u00e0 tout moment dans votre profil. L'abonnement push est stock\u00e9 c\u00f4t\u00e9 serveur et supprim\u00e9 lors de la d\u00e9sactivation ou de la suppression du compte."},
+    {t:"12. Mise \u00e0 jour",c:"Cette politique peut \u00eatre mise \u00e0 jour. La date de derni\u00e8re modification est indiqu\u00e9e ci-dessous. Derni\u00e8re mise \u00e0 jour\u00a0: 3 avril 2026."},
+  ];
+  return(<div style={{maxWidth:480,margin:"0 auto",padding:"24px 16px",maxHeight:"85vh",overflow:"auto"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+      <h2 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Politique de confidentialit\u00e9</h2>
+      {p.onClose&&<button onClick={p.onClose} style={{background:"none",border:"none",color:"var(--t3)",fontSize:22,cursor:"pointer",padding:4,lineHeight:1}}>\u00d7</button>}
+    </div>
+    {sections.map(function(s,i){return(<div key={i} style={{marginBottom:18}}>
+      <h3 className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)",marginBottom:6}}>{s.t}</h3>
+      <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.7,margin:0,whiteSpace:"pre-line"}}>{s.c}</p>
+    </div>);})}
+  </div>);
+}
+
 // ─── ONBOARDING ───
 function Onboard(p){
 var[step,sSt]=useState("name");
@@ -679,6 +709,7 @@ var[step,sSt]=useState("name");
   var[ttsPlaying,setTtsPlaying]=useState(false);var ttsUtter=useRef(null);
   function speakQ(text){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=0.9;u.onstart=function(){setTtsPlaying(true);};u.onend=function(){setTtsPlaying(false);};u.onerror=function(){setTtsPlaying(false);};ttsUtter.current=u;window.speechSynthesis.speak(u);}
   function stopTts(){if(window.speechSynthesis)window.speechSynthesis.cancel();setTtsPlaying(false);}
+  var[showPrivacy,setShowPrivacy]=useState(false);
   var[teacherCode,sTC]=useState("");var[teacherChecking,setTeacherChecking]=useState(false);var[teacherErr,setTeacherErr]=useState(false);
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
@@ -812,8 +843,8 @@ var[step,sSt]=useState("name");
           {classValid===true&&<p style={{fontSize:12,color:"var(--green)",marginTop:6,fontWeight:600}}>✓ {classGroupName}</p>}
           {classValid===false&&<p style={{fontSize:12,color:"var(--red)",marginTop:6}}>Code not found. Check with your teacher.</p>}
         </div>
-        <button className="btn1" onClick={function(){if(classValid)startTest();}}
-          style={{opacity:classValid?1:.4,pointerEvents:classValid?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>Next — Battle Scan</button>
+        <button className="btn1" onClick={function(){if(classValid)sSt("consent");}}
+          style={{opacity:classValid?1:.4,pointerEvents:classValid?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>Next</button>
         <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
           <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">or</span>
@@ -831,6 +862,47 @@ var[step,sSt]=useState("name");
         </div>}
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
       </div>
+    </div>);
+
+  // ─ GDPR Consent ─
+  if(step==="consent")return(
+    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+      {showPrivacy?<PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>:
+      <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:420}}>
+        <div style={{fontSize:48,marginBottom:16}}>🛡️</div>
+        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Protection de vos donn\u00e9es</h2>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.6}}>Avant de commencer, voici comment TOEIC Arena utilise vos donn\u00e9es :</p>
+        <div style={{textAlign:"left",padding:"16px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:14,marginBottom:20}}>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>📊</span>
+              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>Donn\u00e9es collect\u00e9es</div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>Votre pr\u00e9nom, code classe, scores, progression, temps d'entra\u00eenement. Aucun e-mail, aucun mot de passe.</p></div>
+            </div>
+            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>🎯</span>
+              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>Finalit\u00e9</div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>Suivi p\u00e9dagogique, classements, et personnalisation de l'entra\u00eenement. Donn\u00e9es accessibles \u00e0 votre formateur.</p></div>
+            </div>
+            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>🔒</span>
+              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>Vos droits</div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>Vous pouvez \u00e0 tout moment exporter, modifier ou supprimer vos donn\u00e9es depuis votre profil.</p></div>
+            </div>
+            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>🌐</span>
+              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>H\u00e9bergement</div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>Donn\u00e9es stock\u00e9es chez Supabase (UE/US) et Vercel. Aucune revente \u00e0 des tiers.</p></div>
+            </div>
+          </div>
+        </div>
+        <button className="btn1" onClick={function(){startTest();}}
+          style={{fontSize:16,padding:"14px 28px",width:"100%",marginBottom:10}}>J'accepte — Continuer</button>
+        <button onClick={function(){setShowPrivacy(true);}}
+          style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",marginBottom:10}}>Lire la politique de confidentialit\u00e9 compl\u00e8te</button>
+        <br/>
+        <button onClick={function(){sSt("classcode");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>\u2190 Retour</button>
+      </div>}
     </div>);
 
 // ─ Account recovery ─
@@ -7737,6 +7809,7 @@ function Profile(p){
   var[pushOn,setPushOn]=useState(false);
   var[soundOn,setSoundOn]=useState(isSoundEnabled());
   var[tipOff,setTipOff]=useState(false);
+  var[showPrivacy,setShowPrivacy]=useState(false);
   var fileRef=useRef(null);
 
   useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});},[]);
@@ -8094,11 +8167,50 @@ function Profile(p){
         }
       </div>
 
-      {/* Reset */}
-      <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
-        style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>
-        Réinitialiser mes données
+      {/* GDPR: Export data */}
+      <button className="btn2" onClick={function(){
+        var data={nom:u.name,classe:u.classCode,xp:u.xp,xpHebdo:u.weeklyXp,serie:u.streak,derniereActivite:u.lastActive,
+          stats:u.stats,scoresModules:u.moduleScores,resultatsTests:u.mockResults,scoresJeux:u.gameScores,
+          succes:u.unlockedAch,avatar:u.avatar,theme:u.theme,tempsTotal:u.totalTime,
+          consentementRGPD:u.gdprConsent,exportDate:new Date().toISOString()};
+        var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+        var a=document.createElement("a");a.href=URL.createObjectURL(blob);
+        a.download="toeic_arena_mes_donnees_"+u.name.replace(/\s+/g,"_")+"_"+today()+".json";
+        a.click();URL.revokeObjectURL(a.href);
+      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
+        📥 Exporter mes donn\u00e9es (JSON)
       </button>
+
+      {/* Privacy policy */}
+      <button className="btn2" onClick={function(){setShowPrivacy(true);}}
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
+        🛡️ Politique de confidentialit\u00e9
+      </button>
+
+      {/* Logout */}
+      <button className="btn2" onClick={function(){if(confirm("Se d\u00e9connecter ? Vos donn\u00e9es sont sauvegard\u00e9es, vous pourrez les retrouver en vous reconnectant."))p.logout();}}
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
+        Se d\u00e9connecter
+      </button>
+
+      {/* Self-delete account (GDPR Art. 17) */}
+      <button className="btn2" onClick={function(){
+        if(!confirm("Supprimer d\u00e9finitivement votre compte et toutes vos donn\u00e9es ?\n\nCette action est irr\u00e9versible."))return;
+        if(!confirm("Derni\u00e8re confirmation : toutes vos donn\u00e9es (scores, progression, achievements) seront perdues."))return;
+        p.deleteAccount();
+      }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>
+        Supprimer mon compte et mes donn\u00e9es
+      </button>
+
+      {/* Teacher reset (legacy) */}
+      <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
+        style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.1)",width:"100%",marginTop:4}}>
+        R\u00e9initialiser (formateur)
+      </button>
+
+      {showPrivacy&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
+        <PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>
+      </div>}
     </div>
   );
 }
@@ -8290,6 +8402,7 @@ useEffect(function(){
             weekly_history:d.weeklyHistory||[],
             daily_mod_sessions:d.dailyModSessions||{},
             daily_seen:d.dailySeen||[],
+            gdpr_consent:d.gdprConsent||null,
           }]);
           // fetch keepalive : survit à la fermeture ET envoie les auth headers
           // (sendBeacon ne peut pas envoyer Authorization → bloqué par Supabase RLS)
@@ -8438,6 +8551,7 @@ var prevLeague=getLeague(c.weeklyXp);
       }catch(authErr){/* ignore lock errors — session may already exist */}
 
     var u=fresh(name,classCode);
+    u.gdprConsent=today();
     if(bsScores){
       var totalCorrect=bsScores.grammar+bsScores.vocab+bsScores.reading+bsScores.listening;
       u.stats.totalQ=20;u.stats.correct=totalCorrect;u.stats.sessions=1;
@@ -8475,18 +8589,19 @@ var prevLeague=getLeague(c.weeklyXp);
     if(!userId){
       var authRes=await supabase.auth.signInAnonymously();
       if(!authRes.data.user)return false;
+      userId=authRes.data.user.id;
+    }
+
+    // Bind this profile to the current session's user_id
+    // This ensures the next load() by ID returns the correct profile
+    if(d.id!==userId){
+      await supabase.from('students').update({id:userId}).eq('id',d.id);
+      _cachedUserId=userId;
     }
 
     try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     try { localStorage.setItem('toeic-arena-class', classCode); } catch(e) {}
-    var u={name:d.name,classCode:classCode||d.class_code||'idrac2026',xp:d.xp||0,weeklyXp:d.weekly_xp||0,weekId:d.week_id,streak:d.streak||0,
-      lastActive:d.last_active,cardStates:d.card_states||{},daily:d.daily_challenge||{date:null,done:false,score:0,xpE:0},
-      stats:d.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
-      moduleScores:d.module_scores||{},mockResults:d.mock_results||{},gameScores:d.game_scores||{},mission:d.mission||{date:null,actId:null,done:false},
-      unlockedAch:d.unlocked_ach||[],avatar:d.avatar||"⚔️",theme:d.theme||"dark",totalTime:d.total_time||0,weeklyHistory:d.weekly_history||[]};
-    if(!u.moduleScores)u.moduleScores={};
-    if(!u.mission)u.mission={date:null,actId:null,done:false};
-    if(!u.unlockedAch)u.unlockedAch=[];
+    var u=supaToLocal(d);
     sU(u);
     saveLocal(u);
     return true;
@@ -8539,12 +8654,38 @@ var prevLeague=getLeague(c.weeklyXp);
     checkMission(c,"csess");
     sv(c);sSP(null);
   }
+  async function logout(){
+    try{await supabase.auth.signOut();}catch(e){}
+    try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
+    _cachedUserId=null;_syncDirty=false;
+    sU(null);sSP(null);sT("home");
+  }
+
+  async function deleteAccount(){
+    var sess=await supabase.auth.getSession();
+    var uid=sess.data.session?sess.data.session.user.id:null;
+    if(uid){
+      // Delete all user data across all tables
+      await supabase.from('weekly_snapshots').delete().eq('user_id',uid);
+      await supabase.from('push_subscriptions').delete().eq('student_name',u.name).eq('class_code',u.classCode);
+      await supabase.from('students').delete().eq('id',uid);
+      try{await supabase.auth.signOut();}catch(e){}
+    }
+    try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
+    _cachedUserId=null;_syncDirty=false;
+    sU(null);sSP(null);sT("home");
+  }
   async function reset(){
     var sess=await supabase.auth.getSession();
-    if(sess.data.session){
-      await supabase.from('students').delete().eq('id',sess.data.session.user.id);
-      await supabase.auth.signOut();
+    var uid=sess.data.session?sess.data.session.user.id:null;
+    if(uid){
+      await supabase.from('weekly_snapshots').delete().eq('user_id',uid);
+      await supabase.from('push_subscriptions').delete().eq('student_name',u.name).eq('class_code',u.classCode);
+      await supabase.from('students').delete().eq('id',uid);
+      try{await supabase.auth.signOut();}catch(e){}
     }
+    try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
+    _cachedUserId=null;_syncDirty=false;
     sU(null);sSP(null);sT("home");
   }
 
@@ -8624,7 +8765,7 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     {coachTip&&!sp&&<CoachTip tip={coachTip} onDismiss={dismissTip} goTab={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/>}
     <Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);
 }

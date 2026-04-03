@@ -1,6 +1,17 @@
 import webpush from "web-push";
 import { createClient } from "@supabase/supabase-js";
 
+// Simple in-memory rate limiter (per serverless instance)
+var _rateMap = {};
+function rateLimit(key, maxReqs, windowMs) {
+  var now = Date.now();
+  if (!_rateMap[key]) _rateMap[key] = [];
+  _rateMap[key] = _rateMap[key].filter(function(t) { return t > now - windowMs; });
+  if (_rateMap[key].length >= maxReqs) return false;
+  _rateMap[key].push(now);
+  return true;
+}
+
 webpush.setVapidDetails(
   "mailto:jeremy.leixa@mail-formateur.net",
   process.env.VAPID_PUBLIC_KEY,
@@ -16,6 +27,12 @@ var supaAdmin = createClient(
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // Rate limit: 10 requests per minute per IP
+  var ip = req.headers["x-forwarded-for"] || "unknown";
+  if (!rateLimit(ip, 10, 60000)) {
+    return res.status(429).json({ error: "Too many requests" });
   }
 
   var secret = req.headers["x-push-secret"];
