@@ -1360,7 +1360,7 @@ if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHei
 <p style={{color:"var(--t2)",marginBottom:8}}>5 grammar questions · 30 seconds each</p><p style={{color:"var(--gold)",fontWeight:600,marginBottom:40,fontSize:14}}>Up to 100 XP + Perfect Bonus!</p>
 <button className="btn1" onClick={function(){sP("q");}}>Start Challenge</button><button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-if(ph==="done"){var fx=30+sc*14+(sc===5?20:0);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+if(ph==="done"){var fx=30+sc*14+(sc===5?20:0);if(p.gate)fx=p.gate(fx,sc,5);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
 <div style={{fontSize:64,marginBottom:16,animation:"countUp .6s"}}>{sc===5?"👑":sc>=3?"⚔️":"🛡️"}</div><h1 className="out" style={{fontWeight:900,fontSize:32,marginBottom:8}}>{sc===5?"FLAWLESS!":sc>=4?"Great fight!":sc>=3?"Not bad!":"Keep training!"}</h1>
 <div className="out" style={{fontSize:48,fontWeight:900,color:"var(--cyan)",marginBottom:4,animation:"countUp .8s"}}>{sc}/5</div>
 <div className="out" style={{fontSize:22,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{fx} XP</div>
@@ -1385,7 +1385,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 
 // ─── TRAIN PAGE ───
   function Train(p){
-  var[trainView,setTrainView]=useState(null);
+  var[trainView,setTrainView]=useState(p.initialView!=null?p.initialView:null);
   var dd=p.u.daily&&p.u.daily.date===today()&&p.u.daily.done;
 
   // ── Section data (unchanged) ──
@@ -1592,7 +1592,7 @@ function Drill(p){var qs=useMemo(function(){return shuffle(QUESTIONS).slice(0,10
 function doAns(i){sS(i);if(i===qs[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},500);}sP("fb");}
 function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sP("done");p.done(sc,qs.length,20+sc*7);}}
 
-if(ph==="done"){var fx=20+sc*7;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+if(ph==="done"){var fx=20+sc*7;if(p.gate)fx=p.gate(fx,sc,qs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
 <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Drill Complete</h1>
 <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{qs.length}</div>
 <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{fx} XP</div><button className="btn1" onClick={p.back}>Back to Training</button></div>);}
@@ -1686,7 +1686,7 @@ function WordFam(p){
   }
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
 
-  if(ph==="done"){var xp=15+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"🏆":sc>=8?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Classifier Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
@@ -1741,7 +1741,7 @@ function ConnSort(p){
   function doAns(rule){sPk(rule);if(rule===items[ci].rule){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
 
-  if(ph==="done"){var xp=15+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Sorting Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
@@ -1814,7 +1814,7 @@ function PrepDrill(p){
     </div>
     <button className="btn1" onClick={function(){sP("q");}} style={{marginTop:24}}>Ready! Start Drill</button></div>);
 
-  if(ph==="done"){var xp=15+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Prep Drill Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
@@ -1993,7 +1993,7 @@ function GerInf(p){
   if(mode==="quiz"){
     var q=quizItems[ci];
 
-    if(ph==="done"){var xp=20+sc*4;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    if(ph==="done"){var xp=20+sc*4;if(p.gate)xp=p.gate(xp,sc,quizItems.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
       <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=25?"🏆":sc>=18?"⚔️":"🛡️"}</div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Quiz Complete</h1>
       <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=25?"var(--green)":sc>=18?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{quizItems.length}</div>
@@ -2073,7 +2073,7 @@ function TrapsQuiz(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start Quiz</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=25+sc*6;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,quizItems.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Traps Mastered!</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{traps.length}</div>
@@ -2426,7 +2426,7 @@ function PhrasalDojo(p){
   if(mode==="match"){
     var mq=matchQs[ci];var mOpts=matchAllOpts[ci];
 
-    if(ph==="done"){var mxp=20+sc*4;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    if(ph==="done"){var mxp=20+sc*4;if(p.gate)mxp=p.gate(mxp,sc,matchQs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
       <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"🏆":sc>=8?"⚔️":"🛡️"}</div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Meaning Match</h1>
       <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{matchQs.length}</div>
@@ -2481,7 +2481,7 @@ function PhrasalDojo(p){
   if(mode==="picker"){
     var pq=pickerQs[ci];var pOpts=pickerAllOpts[ci];
 
-    if(ph==="done"){var pxp=25+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    if(ph==="done"){var pxp=25+sc*5;if(p.gate)pxp=p.gate(pxp,sc,pickerQs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
       <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"⚡":sc>=8?"🔥":"💪"}</div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Particle Picker</h1>
       <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{pickerQs.length}</div>
@@ -2626,7 +2626,7 @@ function StratQuizPage(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start Quiz</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=20+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,qs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=13?"🏆":sc>=9?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Quiz Complete!</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=13?"var(--green)":sc>=9?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{qs.length}</div>
@@ -2702,7 +2702,7 @@ function TimeSim(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start Exam</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;var totalTime=elapsed;
+  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,qs.length);var totalTime=elapsed;
 
     return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{textAlign:"center",marginBottom:24}}>
@@ -2895,7 +2895,7 @@ function Part6Drill(p){
     <button className="btn1" onClick={function(){sP("text");}}>Start</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=25+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=25+sc*5;if(p.gate)xp=p.gate(xp,sc,totalBlanks);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalBlanks*0.8?"🏆":sc>=totalBlanks*0.5?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 6 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalBlanks*0.8?"var(--green)":sc>=totalBlanks*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalBlanks}</div>
@@ -2993,7 +2993,7 @@ function Part7Read(p){
     <button className="btn1" onClick={function(){sP("read");}}>Start</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQs);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Reading Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
@@ -3069,7 +3069,7 @@ function FalseFriends(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=20+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>False Friends Defeated!</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
@@ -4244,7 +4244,12 @@ function SentenceBuilder(p){
     if(ph==="q"){
       var it=items[ci];
       setPlaced([]);
-      setRemaining(shuffle(it.chunks.map(function(c,i){return{text:c,idx:i};})));
+      setRemaining(shuffle(it.chunks.map(function(c,i){
+        var t=c;
+        if(i===0)t=t.charAt(0).toLowerCase()+t.slice(1);
+        if(i===it.chunks.length-1)t=t.replace(/\.$/,"");
+        return{text:t,idx:i};
+      })));
       setTimer(TIMER_SEC);
       timerRef.current=setInterval(function(){
         setTimer(function(t){
@@ -4300,7 +4305,7 @@ function SentenceBuilder(p){
   </div>);
 
   // ═══ DONE ═══
-  if(ph==="done"){var xp=20+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,TOTAL);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"🏆":sc>=8?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Builder Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
@@ -4479,7 +4484,7 @@ function AudioBlitz(p){
   </div>);
 
   // ═══ DONE ═══
-  if(ph==="done"){var xp=25+sc*6;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,TOTAL);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Blitz Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
@@ -5339,6 +5344,7 @@ function ClueHunter(p){
     var total=scores.reduce(function(s,x){return s+x.pts;},0);
     var xp=20+Math.round(total*2.5);
     var perfect=scores.filter(function(s){return s.clue&&s.ans;}).length;
+    if(p.gate)xp=p.gate(xp,perfect,TOTAL);
     var clueOnly=scores.filter(function(s){return s.clue&&!s.ans;}).length;
     var ansOnly=scores.filter(function(s){return !s.clue&&s.ans;}).length;
     var pct=Math.round(total/(TOTAL*10)*100);
@@ -6880,7 +6886,7 @@ function ListenP2(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=25+sc*6;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Listening Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
@@ -6977,7 +6983,7 @@ function ListenP1(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=20+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 1 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
@@ -7095,7 +7101,7 @@ function ListenP3(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ+1);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 3 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
@@ -7196,7 +7202,7 @@ function ListenP4(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ+1);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 4 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
@@ -8701,7 +8707,7 @@ var prevLeague=getLeague(c.weeklyXp);
   var lc="app"+(u&&u.theme==="light"?" light":"");
   var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
   var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
-  var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);setTimeout(function(){evalCoachTips(u,t);},800);};
+  var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);sSPA(null);setTimeout(function(){evalCoachTips(u,t);},800);};
   function pg(content){return(<div className={lc}><style>{CSS}</style><div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);}
 
   if(ld)return(<div className={lc}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
@@ -8733,48 +8739,48 @@ var prevLeague=getLeague(c.weeklyXp);
     </div>
   </div>);
 
-  if(sp==="daily")return pg(<Daily u={u} done={dailyDone} back={function(){sSP(null);}}/>);
+  if(sp==="daily")return pg(<Daily u={u} done={dailyDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"daily");}} back={function(){sSP(null);}}/>);
   if(sp==="csess"||sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
-  if(sp==="drill")return pg(<Drill u={u} done={drillDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="wordfam")return pg(<WordFam u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="connsort")return pg(<ConnSort u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="prepdrill")return pg(<PrepDrill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="gerinf")return pg(<GerInf u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="traps")return pg(<TrapsQuiz u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="falsefr")return pg(<FalseFriends u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="pvdojo")return pg(<PhrasalDojo u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="mock1")return pg(<MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="mock2")return pg(<MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="drill")return pg(<Drill u={u} done={drillDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"drill");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="wordfam")return pg(<WordFam u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"wordfam");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="connsort")return pg(<ConnSort u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"connsort");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="prepdrill")return pg(<PrepDrill u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"prepdrill");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="gerinf")return pg(<GerInf u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"gerinf");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="traps")return pg(<TrapsQuiz u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"traps");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
+  if(sp==="falsefr")return pg(<FalseFriends u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"falsefr");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="pvdojo")return pg(<PhrasalDojo u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"pvdojo");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="mock1")return pg(<MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sSPA(2);sT("train");}}/>);
+  if(sp==="mock2")return pg(<MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sSPA(2);sT("train");}}/>);
 
-  if(sp==="boss"){playBGM("bgm_final");return pg(<BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sT("train");}}/>);}
-  if(sp==="mock3")return pg(<MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sT("train");}}/>);
+  if(sp==="boss"){playBGM("bgm_final");return pg(<BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sSPA(2);sT("train");}}/>);}
+  if(sp==="mock3")return pg(<MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sSPA(2);sT("train");}}/>);
   if(sp==="smatch")return pg(<SpeedMatchHub u={u} nav={nav} back={function(){sSP(null);sT("games");}}/>);
   if(sp==="matchE"){playBGM("bgm_speed");return pg(<SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/>);}
   if(sp==="matchH"){playBGM("bgm_speed");return pg(<SpeedMatch mode="hard" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/>);}
   if(sp==="wfall"){playBGM("bgm_wfall");return pg(<WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="duel"){playBGM("bgm_duel");return pg(<DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
-  if(sp==="sbuild"){playBGM("bgm_build");return pg(<SentenceBuilder u={u} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
-  if(sp==="clue"){playBGM("bgm_clue");return pg(<ClueHunter u={u} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
-  if(sp==="ablitz")return pg(<AudioBlitz u={u} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/>);
-  if(sp==="strats")return pg(<StratCards back={function(){sSP(null);}}/>);
-  if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(null);}}/>);
-  if(sp==="stratquiz")return pg(<StratQuizPage u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="timesim")return pg(<TimeSim u={u} done={miniDone} nav={nav} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="p6")return pg(<Part6Drill u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="p7")return pg(<Part7Read u={u} done={miniDone} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="lis")return pg(<ListenHub nav={nav} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="lisP1")return pg(<ListenP1 u={u} done={miniDone} back={function(){sSP("lis");}}/>);
-  if(sp==="read")return pg(<ReadingHub nav={nav} back={function(){sSP(null);sT("train");}}/>);
-  if(sp==="lisP2")return pg(<ListenP2 u={u} done={miniDone} back={function(){sSP("lis");}}/>);
-  if(sp==="lisP3")return pg(<ListenP3 u={u} done={miniDone} back={function(){sSP("lis");}}/>);
-  if(sp==="lisP4")return pg(<ListenP4 u={u} done={miniDone} back={function(){sSP("lis");}}/>);
+  if(sp==="sbuild"){playBGM("bgm_build");return pg(<SentenceBuilder u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"sbuild");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="clue"){playBGM("bgm_clue");return pg(<ClueHunter u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"clue");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="ablitz")return pg(<AudioBlitz u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"ablitz");}} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/>);
+  if(sp==="strats")return pg(<StratCards back={function(){sSP(null);sSPA(3);sT("train");}}/>);
+  if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
+  if(sp==="stratquiz")return pg(<StratQuizPage u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"stratquiz");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
+  if(sp==="timesim")return pg(<TimeSim u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"timesim");}} nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="p6")return pg(<Part6Drill u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"p6");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="p7")return pg(<Part7Read u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"p7");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="lis")return pg(<ListenHub nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="lisP1")return pg(<ListenP1 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP1");}} back={function(){sSP("lis");}}/>);
+  if(sp==="read")return pg(<ReadingHub nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="lisP2")return pg(<ListenP2 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP2");}} back={function(){sSP("lis");}}/>);
+  if(sp==="lisP3")return pg(<ListenP3 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP3");}} back={function(){sSP("lis");}}/>);
+  if(sp==="lisP4")return pg(<ListenP4 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP4");}} back={function(){sSP("lis");}}/>);
 
   return(<div className={"app"+(u&&u.theme==="light"?" light":"")}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} initialView={spA}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     {coachTip&&!sp&&<CoachTip tip={coachTip} onDismiss={dismissTip} goTab={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/>}
     <Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);
 }
