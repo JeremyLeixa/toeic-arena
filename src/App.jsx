@@ -28,12 +28,11 @@ import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from ".
 
 function today(){return new Date().toISOString().split("T")[0];}
 
-// ─── TTS ENGINE (swap to ElevenLabs when migrated) ───
+// ─── TTS ENGINE (pre-generated MP3 → browser TTS fallback) ───
 var _voices=null;
 function getEnVoice(){
   if(_voices)return _voices;
   var all=window.speechSynthesis?window.speechSynthesis.getVoices():[];
-  // Prefer: US English > UK English > any English
   var pref=["en-US","en-GB","en-AU","en"];
   for(var p=0;p<pref.length;p++){
     for(var i=0;i<all.length;i++){
@@ -43,35 +42,30 @@ function getEnVoice(){
   return all[0]||null;
 }
 var _audioCache={};
-async function speak(text,rate){
-  var key=text.toLowerCase().trim();
-  // Check cache first
-  if(_audioCache[key]){
-    var a=_audioCache[key].cloneNode();
-    a.playbackRate=rate||0.9;
-    a.play().catch(function(){});
-    return;
-  }
-  // ElevenLabs disabled for live TTS — use browser speechSynthesis instead
-  // (ElevenLabs is only used for pre-generated Listening audio files)
-  var isLocal=true;
-  if(!isLocal)try{
-    var res=await fetch('/api/tts',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:text,voice:'us_female'})
-    });
-    if(res.ok){
-      var blob=await res.blob();
-      var url=URL.createObjectURL(blob);
-      var audio=new Audio(url);
-      audio.playbackRate=rate||0.9;
-      _audioCache[key]=audio;
-      audio.play().catch(function(){});
+var _mp3Failed={};
+async function speak(text,rate,audioPath){
+  // If an explicit MP3 path is given, try it first
+  if(audioPath&&!_mp3Failed[audioPath]){
+    if(_audioCache[audioPath]){
+      var a=_audioCache[audioPath].cloneNode();
+      a.playbackRate=rate||0.9;
+      a.play().catch(function(){});
       return;
     }
-  }catch(e){}
-  // Fallback to browser TTS if ElevenLabs fails
+    try{
+      var audio=new Audio(audioPath);
+      await new Promise(function(resolve,reject){
+        audio.oncanplaythrough=resolve;
+        audio.onerror=reject;
+        audio.load();
+      });
+      audio.playbackRate=rate||0.9;
+      _audioCache[audioPath]=audio;
+      audio.play().catch(function(){});
+      return;
+    }catch(e){_mp3Failed[audioPath]=true;}
+  }
+  // Fallback to browser TTS
   if(!window.speechSynthesis)return;
   window.speechSynthesis.cancel();
   var u=new SpeechSynthesisUtterance(text);
@@ -79,35 +73,25 @@ async function speak(text,rate){
   var v=getEnVoice();if(v)u.voice=v;u.lang="en-US";
   window.speechSynthesis.speak(u);
 }
-function speakAndWait(text,rate){
+function speakAndWait(text,rate,audioPath){
   return new Promise(function(resolve){
-    var isLocal=window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1';
-    if(!isLocal&&_audioCache[text.toLowerCase().trim()]){
-      var a=_audioCache[text.toLowerCase().trim()].cloneNode();
-      a.playbackRate=rate||0.9;
-      a.onended=resolve;
-      a.onerror=resolve;
-      a.play().catch(resolve);
-      return;
-    }
-    if(false){
-      fetch('/api/tts',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:text,voice:'us_female'})
-      }).then(function(res){
-        if(res.ok)return res.blob();
-        throw new Error('tts failed');
-      }).then(function(blob){
-        var url=URL.createObjectURL(blob);
-        var audio=new Audio(url);
+    if(audioPath&&!_mp3Failed[audioPath]){
+      if(_audioCache[audioPath]){
+        var a=_audioCache[audioPath].cloneNode();
+        a.playbackRate=rate||0.9;
+        a.onended=resolve;a.onerror=resolve;
+        a.play().catch(resolve);
+        return;
+      }
+      var audio=new Audio(audioPath);
+      audio.oncanplaythrough=function(){
         audio.playbackRate=rate||0.9;
-        _audioCache[text.toLowerCase().trim()]=audio;
-        audio.onended=resolve;
-        audio.onerror=resolve;
+        _audioCache[audioPath]=audio;
+        audio.onended=resolve;audio.onerror=resolve;
         audio.play().catch(resolve);
-      }).catch(function(){
-        speakBrowserTTS(text,rate,resolve);
-      });
+      };
+      audio.onerror=function(){_mp3Failed[audioPath]=true;speakBrowserTTS(text,rate,resolve);};
+      audio.load();
       return;
     }
     speakBrowserTTS(text,rate,resolve);
@@ -139,7 +123,7 @@ function SpeakBtn(p){
   var[playing,sP]=useState(false);
   function go(){
     sP(true);
-    speak(p.text,p.rate||0.9);
+    speak(p.text,p.rate||0.9,p.audio||null);
     setTimeout(function(){sP(false);},Math.max(1000,p.text.length*80));
   }
   return(<button onClick={function(e){e.stopPropagation();go();}}
@@ -1571,7 +1555,7 @@ if(rev.length===0||done){
 var card=rev[ci];function rate(r){sO(ok+(r>=3?1:0));sT(tot+1);p.rate(card.id,r);if(ci<rev.length-1){sC(ci+1);sF(false);}else sD(true);}
 
 // Auto-pronounce word when new card appears
-if(card&&!fl&&lastSpoken.current!==ci){lastSpoken.current=ci;setTimeout(function(){speak(card.w,0.85);},400);}
+if(card&&!fl&&lastSpoken.current!==ci){lastSpoken.current=ci;setTimeout(function(){speak(card.w,0.85,"/audio/vocab/"+card.id+".mp3");},400);}
 
 return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -1587,16 +1571,16 @@ return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
 {!fl?<div><div className="out" style={{fontSize:11,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>WHAT DOES THIS MEAN?</div>
 <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:16}}>
   <div className="out" style={{fontWeight:800,fontSize:32}}>{card.w}</div>
-  <SpeakBtn text={card.w} size={36}/></div>
+  <SpeakBtn text={card.w} size={36} audio={"/audio/vocab/"+card.id+".mp3"}/></div>
 <div style={{fontSize:13,color:"var(--t3)"}}>Tap to reveal</div></div>
 :<div><div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:12}}>
   <div className="out" style={{fontWeight:700,fontSize:20,color:"var(--cyan)"}}>{card.w}</div>
-  <SpeakBtn text={card.w} size={30}/></div>
+  <SpeakBtn text={card.w} size={30} audio={"/audio/vocab/"+card.id+".mp3"}/></div>
 <div style={{fontSize:16,lineHeight:1.6,marginBottom:16}}>{card.d}</div>
 <div style={{fontSize:13,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5,padding:"12px 16px",background:"var(--bg3)",borderRadius:10,position:"relative"}}>
   <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
     <span style={{flex:1}}>"{card.e}"</span>
-    <SpeakBtn text={card.e} size={28} rate={0.85}/>
+    <SpeakBtn text={card.e} size={28} rate={0.85} audio={"/audio/vocab/"+card.id+"_ex.mp3"}/>
   </div>
 </div></div>}</div></div>
 {fl&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginTop:24,animation:"fadeIn .3s ease-out"}}>
@@ -2422,10 +2406,14 @@ function PhrasalDojo(p){
               return(<div key={j} style={{padding:"10px 16px 10px 28px",borderLeft:"3px solid var(--cyan)",marginBottom:6,marginLeft:12}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
                   <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>{pv.pv}</span>
+                  <SpeakBtn text={pv.pv} size={24} audio={"/audio/phrasal/"+pv.pv.replace(/\s+/g,"_")+".mp3"}/>
                   <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(139,94,131,.1)",borderRadius:99}}>{pv.fr}</span>
                 </div>
                 <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.5,marginBottom:4}}>{pv.m}</p>
-                <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{pv.ex}"</p>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",flex:1}}>"{pv.ex}"</p>
+                  <SpeakBtn text={pv.ex} size={22} rate={0.85} audio={"/audio/phrasal/"+pv.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
+                </div>
               </div>);
             })}
           </div>}
@@ -2455,7 +2443,10 @@ function PhrasalDojo(p){
       <Bar value={ci} max={matchQs.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
       <div style={{textAlign:"center",marginTop:24,marginBottom:24}}>
         <span className="out" style={{fontSize:11,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>What does this mean?</span>
-        <span className="out" style={{fontSize:28,fontWeight:900,color:"var(--cyan)"}}>{mq.pv}</span>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
+          <span className="out" style={{fontSize:28,fontWeight:900,color:"var(--cyan)"}}>{mq.pv}</span>
+          <SpeakBtn text={mq.pv} size={32} audio={"/audio/phrasal/"+mq.pv.replace(/\s+/g,"_")+".mp3"}/>
+        </div>
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
         {mOpts.opts.map(function(opt,i){
@@ -2473,9 +2464,13 @@ function PhrasalDojo(p){
         <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{mq.pv}</span>
+            <SpeakBtn text={mq.pv} size={22} audio={"/audio/phrasal/"+mq.pv.replace(/\s+/g,"_")+".mp3"}/>
             <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(139,94,131,.1)",borderRadius:99}}>{mq.fr}</span>
           </div>
-          <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",lineHeight:1.5}}>"{mq.ex}"</p>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",lineHeight:1.5,flex:1}}>"{mq.ex}"</p>
+            <SpeakBtn text={mq.ex} size={20} rate={0.85} audio={"/audio/phrasal/"+mq.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
+          </div>
         </div>
         <button className="btn1" onClick={function(){sPk(-1);if(ci<matchQs.length-1){sC(ci+1);sP("q");}else{sP("done");p.done(sc,matchQs.length,20+sc*4);}}} style={{marginTop:12}}>{ci<matchQs.length-1?"Next":"See Results"}</button>
       </div>}
@@ -2537,9 +2532,13 @@ function PhrasalDojo(p){
         <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{pq.pv}</span>
+            <SpeakBtn text={pq.pv} size={22} audio={"/audio/phrasal/"+pq.pv.replace(/\s+/g,"_")+".mp3"}/>
             <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(139,94,131,.1)",borderRadius:99}}>{pq.fr}</span>
           </div>
-          <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{pq.ex}"</p>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",flex:1}}>"{pq.ex}"</p>
+            <SpeakBtn text={pq.ex} size={20} rate={0.85} audio={"/audio/phrasal/"+pq.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
+          </div>
         </div>
         <button className="btn1" onClick={function(){sPk(-1);if(ci<pickerQs.length-1){sC(ci+1);sP("q");}else{sP("done");p.done(sc,pickerQs.length,25+sc*5);}}} style={{marginTop:12}}>{ci<pickerQs.length-1?"Next":"See Results"}</button>
       </div>}
@@ -4372,7 +4371,10 @@ function SentenceBuilder(p){
           <span style={{fontSize:16}}>{isCorrect?"✅":"❌"}</span>
           <span className="out" style={{fontWeight:700,fontSize:14,color:isCorrect?"var(--green)":"var(--red)"}}>{isCorrect?"Perfect!":"Correct order:"}</span>
         </div>
-        <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.6,fontWeight:500}}>{it.s}</p>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.6,fontWeight:500,flex:1}}>{it.s}</p>
+          <SpeakBtn text={it.s} size={26} rate={0.85} audio={"/audio/sentences/sb_"+String(SENTENCES.indexOf(it)+1).padStart(2,"0")+".mp3"}/>
+        </div>
       </div>
       <button className="btn1" onClick={next} style={{marginTop:12}}>{ci<items.length-1?"Next":"See Results"}</button>
     </div>}
