@@ -1593,7 +1593,33 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 // ─── CARDS PAGE ───
 function Cards(p){var isVis=p.groupType==="visitor";var visibleDomains=isVis?VOCAB.filter(function(d){return FREE_FLASHCARD_DOMAINS.indexOf(d.id)!==-1;}):VOCAB;
 var all=[];visibleDomains.forEach(function(d){d.cards.forEach(function(c){all.push(c);});});var dc=dueCards(p.u.cardStates,all);var mc=0;Object.keys(p.u.cardStates).forEach(function(k){if(p.u.cardStates[k].interval>=7)mc++;});
-return(<div className="enter" style={{padding:"20px 16px 100px"}}><h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Flashcards</h1><p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Spaced repetition vocabulary</p>
+var[srsHelp,setSrsHelp]=useState(function(){return !localStorage.getItem("srsHelpSeen");});
+function closeSrsHelp(){setSrsHelp(false);localStorage.setItem("srsHelpSeen","1");}
+return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+{srsHelp&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s"}} onClick={closeSrsHelp}>
+<div style={{background:"var(--bg2)",borderRadius:16,border:"1px solid var(--bdr)",padding:"28px 22px",maxWidth:380,width:"100%",animation:"fadeIn .3s ease-out"}} onClick={function(e){e.stopPropagation();}}>
+<div style={{fontSize:32,textAlign:"center",marginBottom:12}}>{"🧠"}</div>
+<h2 className="out" style={{fontWeight:800,fontSize:18,textAlign:"center",marginBottom:16}}>How do Flashcards work?</h2>
+<p style={{fontSize:13,color:"var(--t2)",lineHeight:1.7,marginBottom:14}}>Flashcards use <b style={{color:"var(--t1)"}}>spaced repetition</b>: you rate yourself after seeing each answer, and the app schedules your next review accordingly.</p>
+<div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(255,71,87,.08)"}}>
+<span style={{fontWeight:700,color:"var(--red)",minWidth:52,fontSize:13}}>Again</span>
+<span style={{fontSize:12,color:"var(--t2)"}}>I had no idea — show me again soon</span></div>
+<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(255,140,66,.08)"}}>
+<span style={{fontWeight:700,color:"var(--orange)",minWidth:52,fontSize:13}}>Hard</span>
+<span style={{fontSize:12,color:"var(--t2)"}}>I struggled but eventually remembered</span></div>
+<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(0,230,118,.08)"}}>
+<span style={{fontWeight:700,color:"var(--green)",minWidth:52,fontSize:13}}>Good</span>
+<span style={{fontSize:12,color:"var(--t2)"}}>I remembered after a moment of thought</span></div>
+<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(212,148,58,.08)"}}>
+<span style={{fontWeight:700,color:"var(--cyan)",minWidth:52,fontSize:13}}>Easy</span>
+<span style={{fontSize:12,color:"var(--t2)"}}>Instant recall — I know this one well</span></div></div>
+<p style={{fontSize:12,color:"var(--t3)",lineHeight:1.6,marginBottom:18}}>Be honest! Cards you mark "Again" come back sooner, while "Easy" cards are spaced further apart. The goal is long-term memorisation, not a high score.</p>
+<button className="btn1" onClick={closeSrsHelp} style={{width:"100%"}}>Got it!</button>
+</div></div>}
+<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:0}}>Flashcards</h1>
+<button onClick={function(){setSrsHelp(true);}} style={{background:"var(--bg3)",border:"1px solid var(--bdr)",borderRadius:"50%",width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--t2)",fontSize:14,fontWeight:700}} title="How do flashcards work?">?</button></div>
+<p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Spaced repetition vocabulary</p>
 <div className="crd glo" style={{marginBottom:20,padding:16}}>
 <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
 <div><div style={{fontSize:11,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Mastered</div><div className="out" style={{fontWeight:800,fontSize:22,color:"var(--green)"}}>{mc}/{all.length}</div></div>
