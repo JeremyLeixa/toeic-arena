@@ -387,6 +387,33 @@ async function syncToCloud(d){
     else{console.warn("[SYNC] Upsert failed — will retry:",_result.error.message);}
   }catch(e){console.warn("[SYNC] Exception:",e);}
 }
+// ─── BIOMETRIC AUTH (WebAuthn) for Teacher Dashboard ───
+var BIOMETRIC_KEY="toeic-teacher-bio";
+async function biometricAvailable(){try{if(!window.PublicKeyCredential)return false;return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}}
+function getBioCredId(){try{var v=localStorage.getItem(BIOMETRIC_KEY);return v?Uint8Array.from(atob(v),function(c){return c.charCodeAt(0);}):null;}catch(e){return null;}}
+function storeBioCredId(rawId){try{var b=btoa(String.fromCharCode.apply(null,new Uint8Array(rawId)));localStorage.setItem(BIOMETRIC_KEY,b);}catch(e){}}
+async function bioRegister(){
+  var challenge=crypto.getRandomValues(new Uint8Array(32));
+  var userId=crypto.getRandomValues(new Uint8Array(16));
+  var cred=await navigator.credentials.create({publicKey:{
+    challenge:challenge,rp:{name:"TOEIC Arena",id:location.hostname},
+    user:{id:userId,name:"teacher",displayName:"Teacher"},
+    pubKeyCredParams:[{alg:-7,type:"public-key"},{alg:-257,type:"public-key"}],
+    authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},
+    timeout:60000
+  }});
+  storeBioCredId(cred.rawId);return true;
+}
+async function bioAuthenticate(){
+  var credId=getBioCredId();if(!credId)return false;
+  var challenge=crypto.getRandomValues(new Uint8Array(32));
+  await navigator.credentials.get({publicKey:{
+    challenge:challenge,allowCredentials:[{id:credId,type:"public-key",transports:["internal"]}],
+    userVerification:"required",timeout:60000
+  }});
+  return true;
+}
+
 function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null};}
 
 // ─── MODULE SCORE TRACKING ───
@@ -712,6 +739,8 @@ var[step,sSt]=useState("name");
   function stopTts(){if(window.speechSynthesis)window.speechSynthesis.cancel();setTtsPlaying(false);}
   var[showPrivacy,setShowPrivacy]=useState(false);
   var[teacherCode,sTC]=useState("");var[teacherChecking,setTeacherChecking]=useState(false);var[teacherErr,setTeacherErr]=useState(false);
+  var[bioAvail,setBioAvail]=useState(false);var[bioRegistered,setBioRegistered]=useState(!!getBioCredId());
+  useEffect(function(){biometricAvailable().then(function(v){setBioAvail(v);});},[]);
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
@@ -947,6 +976,10 @@ var[step,sSt]=useState("name");
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>👨‍🏫</div>
         <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:20}}>Teacher Dashboard</h2>
+        {bioAvail&&bioRegistered&&<button className="btn1" style={{marginBottom:20,display:"flex",alignItems:"center",justifyContent:"center",gap:10,width:"100%"}} onClick={async function(){
+          try{var ok=await bioAuthenticate();if(ok)p.goTeacher();}catch(e){setTeacherErr(true);}
+        }}>{"🔒"} Unlock with biometrics</button>}
+        {bioAvail&&bioRegistered&&<div style={{fontSize:12,color:"var(--t3)",marginBottom:16}}>or enter code manually</div>}
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Access code</label>
           <input type="password" value={teacherCode} onChange={function(e){sTC(e.target.value);}} placeholder="Enter teacher code..."
@@ -954,14 +987,14 @@ var[step,sSt]=useState("name");
         </div>
         <button className="btn1" onClick={function(){
           if(!teacherCode||teacherChecking)return;
-          // Check global code first
-          // Check teacher_code in Supabase groups table
           setTeacherChecking(true);setTeacherErr(false);
           supabase.from('groups').select('code').eq('teacher_code',teacherCode).limit(1)
-            .then(function(res){
+            .then(async function(res){
               setTeacherChecking(false);
               if(res.data&&res.data.length>0){
                 try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}
+                // Propose biometric enrollment if available and not yet registered
+                if(bioAvail&&!bioRegistered){try{await bioRegister();setBioRegistered(true);}catch(e){}}
                 p.goTeacher();
               }else{setTeacherErr(true);}
             });
@@ -7953,8 +7986,9 @@ function Profile(p){
   var[tipOff,setTipOff]=useState(false);
   var[showPrivacy,setShowPrivacy]=useState(false);
   var fileRef=useRef(null);
+  var[bioAvail,setBioAvail]=useState(false);var[bioRegistered,setBioRegistered]=useState(!!getBioCredId());
 
-  useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});},[]);
+  useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});biometricAvailable().then(function(v){setBioAvail(v);});},[]);
   useEffect(function(){try{setTipOff(localStorage.getItem("toeic-tip-disabled")==="1");}catch(e){}},[]);
 
   var lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores);
@@ -8269,7 +8303,11 @@ function Profile(p){
       </div>
 
       {/* Teacher dashboard */}
-      <button className="btn2" onClick={function(){var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}p.goTeacher();}else{alert("Code invalide");}});}}
+      <button className="btn2" onClick={async function(){
+        // Try biometric first if registered
+        if(bioAvail&&bioRegistered){try{var ok=await bioAuthenticate();if(ok){p.goTeacher();return;}}catch(e){}}
+        // Fall back to password prompt
+        var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(async function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}if(bioAvail&&!bioRegistered){try{await bioRegister();setBioRegistered(true);}catch(e){}}p.goTeacher();}else{alert("Code invalide");}});}}
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
         👨‍🏫 Teacher Dashboard
       </button>
