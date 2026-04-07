@@ -618,7 +618,10 @@ var CSS=`
 .skin-obsidienne .crd{border-color:rgba(160,128,224,.2)!important;background:linear-gradient(135deg,rgba(160,128,224,.10),rgba(192,160,48,.06),rgba(128,96,192,.08))!important;animation:obsidianPulse 4s ease-in-out infinite!important;transition:none!important}
 .skin-obsidienne .glo{animation:obsidianPulse 3s ease-in-out infinite!important}
 .skin-obsidienne .btn2{border-color:rgba(160,128,224,.3)!important;color:#b090f0!important;box-shadow:0 0 12px rgba(160,130,255,.12)!important}
-.skin-obsidienne .tab-bar{box-shadow:0 -4px 30px rgba(160,130,255,.15),0 -2px 20px rgba(192,160,48,.08)!important;animation:obsidianPulse 5s ease-in-out infinite!important}
+.skin-argent .tab-bar,.skin-emeraude .tab-bar,.skin-saphir .tab-bar{box-shadow:0 -30px 50px rgba(var(--cx),.07)!important}
+.skin-rubis .tab-bar,.skin-amethyste .tab-bar,.skin-corail .tab-bar,.skin-jade .tab-bar{box-shadow:0 -40px 60px rgba(var(--cx),.10)!important}
+.skin-obsidienne .tab-bar,.skin-aurore .tab-bar{box-shadow:0 -50px 80px rgba(var(--cx),.14)!important}
+.skin-obsidienne .tab-bar{animation:obsidianPulse 5s ease-in-out infinite!important}
 .skin-obsidienne .out{text-shadow:0 0 16px rgba(160,130,255,.12)}
 /* ── AURORE BORÉALE — 4-color aurora gradient animation ── */
 .skin-aurore .btn1{background:linear-gradient(135deg,#40d0c0,#6060e8,#c040a0,#40d0c0)!important;background-size:300%!important;animation:aurora 2.5s ease infinite!important;transition:none!important;color:#08090e!important;box-shadow:0 4px 32px rgba(64,208,192,.5),0 0 60px rgba(96,96,232,.2),0 0 0 1px rgba(64,208,192,.3)!important}
@@ -626,7 +629,7 @@ var CSS=`
 .skin-aurore .crd{border-color:rgba(64,208,192,.2)!important;background:linear-gradient(135deg,rgba(64,208,192,.08),rgba(96,96,232,.07),rgba(192,64,160,.06))!important;background-size:300% 100%!important;animation:aurora 4s ease infinite!important;transition:none!important;box-shadow:0 0 16px rgba(64,208,192,.1),inset 0 1px 0 rgba(64,208,192,.1)!important}
 .skin-aurore .glo{box-shadow:0 0 40px rgba(64,208,192,.2)!important;background:linear-gradient(135deg,rgba(64,208,192,.08),rgba(96,96,232,.06),rgba(192,64,160,.05))!important;background-size:300%!important;animation:aurora 4s ease infinite!important}
 .skin-aurore .btn2{border-color:rgba(64,208,192,.3)!important;color:#40d0c0!important;box-shadow:0 0 16px rgba(64,208,192,.12)!important}
-.skin-aurore .tab-bar{box-shadow:0 -4px 30px rgba(64,208,192,.15),0 -2px 20px rgba(96,96,232,.1)!important}
+.skin-aurore .tab-bar{animation:aurora 4s ease infinite!important}
 .skin-aurore .out{text-shadow:0 0 20px rgba(64,208,192,.12)}
 .light.skin-rubis .btn1,.light.skin-amethyste .btn1,.light.skin-corail .btn1,.light.skin-jade .btn1{box-shadow:0 4px 16px rgba(var(--cx),.3)!important}
 .light.skin-obsidienne .btn1{box-shadow:0 4px 20px rgba(80,60,140,.35),0 0 30px rgba(80,60,140,.12)!important}
