@@ -604,8 +604,8 @@ var CSS=`
 .light.skin-obsidienne{--cx:80,60,140;--cx-hex:#503c8c;--cx-dark:#382868;--cyan:#503c8c;--orange:#382868}
 .light.skin-aurore{--cx:20,120,90;--cx-hex:#147858;--cx-dark:#0c5a40;--cyan:#147858;--orange:#0c5a40}
 /* ── EPIC SKINS ── */
-.skin-rubis .btn1,.skin-amethyste .btn1,.skin-corail .btn1,.skin-jade .btn1{background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark),var(--cx-hex))!important;background-size:200%!important;animation:skinShimmer 3s ease infinite!important;box-shadow:0 4px 20px rgba(var(--cx),.4),0 0 0 1px rgba(var(--cx),.2)!important}
-.skin-rubis .bar-fill,.skin-amethyste .bar-fill,.skin-corail .bar-fill,.skin-jade .bar-fill{background:linear-gradient(90deg,var(--cx-hex),var(--cx-dark),var(--cx-hex))!important;background-size:200%!important;animation:skinShimmer 2.5s ease infinite!important}
+.skin-rubis .btn1,.skin-amethyste .btn1,.skin-corail .btn1,.skin-jade .btn1{background:linear-gradient(105deg,var(--cx-hex) 35%,rgba(255,255,255,.25) 50%,var(--cx-hex) 65%)!important;background-size:300%!important;animation:skinShimmer 2.5s ease-in-out infinite!important;box-shadow:0 4px 20px rgba(var(--cx),.4),0 0 0 1px rgba(var(--cx),.2)!important}
+.skin-rubis .bar-fill,.skin-amethyste .bar-fill,.skin-corail .bar-fill,.skin-jade .bar-fill{background:linear-gradient(90deg,var(--cx-hex) 35%,rgba(255,255,255,.2) 50%,var(--cx-hex) 65%)!important;background-size:300%!important;animation:skinShimmer 2s ease-in-out infinite!important}
 .skin-rubis .crd,.skin-amethyste .crd,.skin-corail .crd,.skin-jade .crd{border-color:rgba(var(--cx),.18)!important;box-shadow:0 0 12px rgba(var(--cx),.08),inset 0 1px 0 rgba(var(--cx),.08)!important}
 .skin-rubis .glo,.skin-amethyste .glo,.skin-corail .glo,.skin-jade .glo{box-shadow:0 0 30px rgba(var(--cx),.12)!important}
 .skin-rubis .btn2,.skin-amethyste .btn2,.skin-corail .btn2,.skin-jade .btn2{border-color:rgba(var(--cx),.3)!important;color:var(--cyan)!important}
