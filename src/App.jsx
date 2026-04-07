@@ -9205,8 +9205,8 @@ var prevLeague=getLeague(c.weeklyXp);
         else if(result.maxCombo>=10)grantWeeklyChest("wfall_combo10","novice",c);
       }
       // SpeedMatch
-      if(modeKey==="matchEasy"&&result.total>0&&result.score/result.total>=0.8)grantWeeklyChest("smatch_easy_80","novice",c);
-      if(modeKey==="matchHard"&&result.total>0&&result.score/result.total>=0.8)grantWeeklyChest("smatch_hard_80","guerrier",c);
+      if(modeKey==="matchEasy"&&result.time){var starsE=result.time<24?3:result.time<42?2:1;if(starsE>=2)grantWeeklyChest("smatch_easy_good","novice",c);}
+      if(modeKey==="matchHard"&&result.time){var starsH=result.time<32?3:result.time<56?2:1;if(starsH>=2)grantWeeklyChest("smatch_hard_good","guerrier",c);}
     }
     c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
