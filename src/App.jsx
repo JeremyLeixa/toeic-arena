@@ -622,9 +622,9 @@ var CSS=`
 .skin-obsidienne .tab-bar{box-shadow:0 -4px 30px rgba(var(--cx),.15)!important}
 .skin-obsidienne .out{text-shadow:0 0 20px rgba(var(--cx),.15)}
 /* ── AURORE BORÉALE — 4-color aurora gradient animation ── */
-.skin-aurore .btn1{background:linear-gradient(135deg,#40d0c0,#6060e8,#c040a0,#40d0c0)!important;background-size:300%!important;animation:aurora 2.5s ease infinite!important;color:#08090e!important;box-shadow:0 4px 32px rgba(64,208,192,.5),0 0 60px rgba(96,96,232,.2),0 0 0 1px rgba(64,208,192,.3)!important}
-.skin-aurore .bar-fill{background:linear-gradient(90deg,#40d0c0,#6060e8,#c040a0,#40c8a0,#40d0c0)!important;background-size:300%!important;animation:aurora 3s ease infinite!important}
-.skin-aurore .crd{border-color:rgba(64,208,192,.2)!important;background:linear-gradient(135deg,rgba(64,208,192,.08),rgba(96,96,232,.07),rgba(192,64,160,.06))!important;background-size:300% 100%!important;animation:aurora 4s ease infinite!important;box-shadow:0 0 16px rgba(64,208,192,.1),inset 0 1px 0 rgba(64,208,192,.1)!important}
+.skin-aurore .btn1{background:linear-gradient(135deg,#40d0c0,#6060e8,#c040a0,#40d0c0)!important;background-size:300%!important;animation:aurora 2.5s ease infinite!important;transition:none!important;color:#08090e!important;box-shadow:0 4px 32px rgba(64,208,192,.5),0 0 60px rgba(96,96,232,.2),0 0 0 1px rgba(64,208,192,.3)!important}
+.skin-aurore .bar-fill{background:linear-gradient(90deg,#40d0c0,#6060e8,#c040a0,#40c8a0,#40d0c0)!important;background-size:300%!important;animation:aurora 3s ease infinite!important;transition:none!important}
+.skin-aurore .crd{border-color:rgba(64,208,192,.2)!important;background:linear-gradient(135deg,rgba(64,208,192,.08),rgba(96,96,232,.07),rgba(192,64,160,.06))!important;background-size:300% 100%!important;animation:aurora 4s ease infinite!important;transition:none!important;box-shadow:0 0 16px rgba(64,208,192,.1),inset 0 1px 0 rgba(64,208,192,.1)!important}
 .skin-aurore .glo{box-shadow:0 0 40px rgba(64,208,192,.2)!important;background:linear-gradient(135deg,rgba(64,208,192,.08),rgba(96,96,232,.06),rgba(192,64,160,.05))!important;background-size:300%!important;animation:aurora 4s ease infinite!important}
 .skin-aurore .btn2{border-color:rgba(64,208,192,.3)!important;color:#40d0c0!important;box-shadow:0 0 16px rgba(64,208,192,.12)!important}
 .skin-aurore .tab-bar{box-shadow:0 -4px 30px rgba(64,208,192,.15),0 -2px 20px rgba(96,96,232,.1)!important}
