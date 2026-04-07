@@ -6151,7 +6151,7 @@ function AvatarMedal(p){
   return(<svg viewBox="0 0 100 100" width={size} height={size} style={svgStyle}>
     <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill={rs.bg} stroke={rs.stroke} strokeWidth="1.5"/>
     <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke={rs.stroke} strokeWidth="0.7" opacity="0.35"/>
-    <svg x="16" y="18" width="68" height="65" viewBox="0 0 512 512">
+    <svg x="16" y="18" width="68" height="65" viewBox="0 0 512 512" style={{color:rs.icon}}>
       <g fill={rs.icon} dangerouslySetInnerHTML={{__html:iconPath}}/>
     </svg>
   </svg>);
