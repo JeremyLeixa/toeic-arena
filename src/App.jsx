@@ -584,15 +584,15 @@ var CSS=`
 @font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url('/fonts/outfit-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;--cx:212,148,58;--cx-hex:#d4943a;--cx-dark:#a06e20}
-.skin-argent{--cx:180,180,200;--cx-hex:#b4b4c8;--cx-dark:#888898}
-.skin-emeraude{--cx:46,180,100;--cx-hex:#2eb464;--cx-dark:#1a8a46}
-.skin-saphir{--cx:58,148,220;--cx-hex:#3a94dc;--cx-dark:#1a6aaa}
-.skin-rubis{--cx:220,58,80;--cx-hex:#dc3a50;--cx-dark:#c01830}
-.skin-amethyste{--cx:160,90,220;--cx-hex:#a05adc;--cx-dark:#7030aa}
-.skin-corail{--cx:220,100,50;--cx-hex:#dc6432;--cx-dark:#c03018}
-.skin-jade{--cx:20,180,170;--cx-hex:#14b4aa;--cx-dark:#0a8880}
-.skin-obsidienne{--cx:176,144,240;--cx-hex:#b090f0;--cx-dark:#8060c0}
-.skin-aurore{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870}
+.skin-argent{--cx:180,180,200;--cx-hex:#b4b4c8;--cx-dark:#888898;--cyan:#b4b4c8;--orange:#888898}
+.skin-emeraude{--cx:46,180,100;--cx-hex:#2eb464;--cx-dark:#1a8a46;--cyan:#2eb464;--orange:#1a8a46}
+.skin-saphir{--cx:58,148,220;--cx-hex:#3a94dc;--cx-dark:#1a6aaa;--cyan:#3a94dc;--orange:#1a6aaa}
+.skin-rubis{--cx:220,58,80;--cx-hex:#dc3a50;--cx-dark:#c01830;--cyan:#dc3a50;--orange:#c01830}
+.skin-amethyste{--cx:160,90,220;--cx-hex:#a05adc;--cx-dark:#7030aa;--cyan:#a05adc;--orange:#7030aa}
+.skin-corail{--cx:220,100,50;--cx-hex:#dc6432;--cx-dark:#c03018;--cyan:#dc6432;--orange:#c03018}
+.skin-jade{--cx:20,180,170;--cx-hex:#14b4aa;--cx-dark:#0a8880;--cyan:#14b4aa;--orange:#0a8880}
+.skin-obsidienne{--cx:176,144,240;--cx-hex:#b090f0;--cx-dark:#8060c0;--cyan:#b090f0;--orange:#8060c0}
+.skin-aurore{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870}
 .light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#8a7e6a}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -616,7 +616,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .enter{animation:fadeIn .3s ease-out}
 .crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:20px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04)}
 .glo{box-shadow:0 0 30px rgba(var(--cx),.06)}
-.btn1{background:linear-gradient(135deg,var(--cx-hex),#a06e20);color:#0f0c08;border:none;border-radius:12px;padding:14px 28px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:all .2s}
+.btn1{background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));color:#0f0c08;border:none;border-radius:12px;padding:14px 28px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:all .2s}
 .btn1:active{transform:scale(.97)}
 .btn2{background:var(--bg2);border:1px solid var(--bdr);color:var(--t1);border-radius:12px;padding:12px 24px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:14px;cursor:pointer}
 .fl{animation:flame 1.5s ease-in-out infinite;display:inline-block}
@@ -650,8 +650,12 @@ function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div st
 // ─── Avatar renderer — handles both emoji and base64 photo ───
 function renderAv(avatar,size){
   var s=size||32;
-  if(avatar&&avatar.startsWith("data:")){
+  if(avatar&&avatar.startsWith&&avatar.startsWith("data:")){
     return(<img src={avatar} style={{width:s,height:s,borderRadius:"50%",objectFit:"cover",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
+  }
+  // Check if avatar is a chest system avatar ID
+  if(avatar&&AVATARS[avatar]){
+    return(<AvatarMedal avatarId={avatar} size={s}/>);
   }
   return(<span style={{fontSize:s*0.6,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,flexShrink:0}}>{avatar||"⚔️"}</span>);
 }
@@ -8154,6 +8158,7 @@ function Profile(p){
 
   function renderAvatar(size,fs){
     if(isPhoto)return(<img src={u.avatar} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",display:"block"}}/>);
+    if(u.avatar&&AVATARS[u.avatar])return(<AvatarMedal avatarId={u.avatar} size={size}/>);
     return(<div style={{width:size,height:size,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs||(size*0.5)}}>{u.avatar||"⚔️"}</div>);
   }
 
