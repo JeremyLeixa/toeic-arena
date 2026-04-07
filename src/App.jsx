@@ -22,6 +22,8 @@ import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
+import { CHEST_TYPES, RARITIES, AVATARS, SKINS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, rollRarity, pickReward, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, openChestFromPending } from "./data/chests.js";
+import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
 
@@ -128,7 +130,7 @@ function SpeakBtn(p){
   }
   return(<button onClick={function(e){e.stopPropagation();go();}}
     style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:p.size||36,height:p.size||36,borderRadius:"50%",
-      background:playing?"rgba(212,148,58,.2)":"var(--bg3)",border:"1px solid "+(playing?"var(--cyan)":"var(--bdr)"),
+      background:playing?"rgba(var(--cx),.2)":"var(--bg3)",border:"1px solid "+(playing?"var(--cyan)":"var(--bdr)"),
       cursor:"pointer",transition:"all .2s",flexShrink:0}}>
     <span style={{fontSize:p.size?p.size*0.5:18,lineHeight:1}}>{playing?"🔊":"🔈"}</span>
   </button>);
@@ -304,8 +306,9 @@ function supaToLocal(data){
     daily:data.daily_challenge||{date:null,done:false,score:0,xpE:0},
     stats:data.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
     moduleScores:data.module_scores||{},mockResults:data.mock_results||{},
-    gameScores:data.game_scores||{},mission:data.mission||{date:null,actId:null,done:false},
+    gameScores:data.game_scores||{pityCount:0},mission:data.mission||{date:null,actId:null,done:false},
     unlockedAch:data.unlocked_ach||[],avatar:data.avatar||"⚔️",theme:data.theme||"dark",
+    equippedSkin:data.equipped_skin||null,
     totalTime:data.total_time||0,weeklyHistory: data.weekly_history || [],
     dailyModSessions: data.daily_mod_sessions || {},
     weeklyDailyCount: data.weekly_daily_count || 0,
@@ -373,6 +376,7 @@ async function syncToCloud(d){
       stats:d.stats,module_scores:d.moduleScores,
       mock_results:d.mockResults,game_scores:d.gameScores,
       mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
+      equipped_skin:d.equippedSkin||null,
       unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
       weekly_history: d.weeklyHistory || [],
     daily_mod_sessions: d.dailyModSessions || {},
@@ -415,7 +419,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -579,7 +583,16 @@ var CSS=`
 @font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url('/fonts/outfit-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url('/fonts/outfit-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040}
+:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;--cx:212,148,58;--cx-hex:#d4943a;--cx-dark:#a06e20}
+.skin-argent{--cx:180,180,200;--cx-hex:#b4b4c8;--cx-dark:#888898}
+.skin-emeraude{--cx:46,180,100;--cx-hex:#2eb464;--cx-dark:#1a8a46}
+.skin-saphir{--cx:58,148,220;--cx-hex:#3a94dc;--cx-dark:#1a6aaa}
+.skin-rubis{--cx:220,58,80;--cx-hex:#dc3a50;--cx-dark:#c01830}
+.skin-amethyste{--cx:160,90,220;--cx-hex:#a05adc;--cx-dark:#7030aa}
+.skin-corail{--cx:220,100,50;--cx-hex:#dc6432;--cx-dark:#c03018}
+.skin-jade{--cx:20,180,170;--cx-hex:#14b4aa;--cx-dark:#0a8880}
+.skin-obsidienne{--cx:176,144,240;--cx-hex:#b090f0;--cx-dark:#8060c0}
+.skin-aurore{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870}
 .light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#8a7e6a}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -589,6 +602,10 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes flame{0%,100%{transform:scale(1) rotate(-2deg)}25%{transform:scale(1.1) rotate(2deg)}50%{transform:scale(1.05) rotate(-1deg)}75%{transform:scale(1.12) rotate(1deg)}}
 @keyframes achPop{0%{transform:translateY(30px) scale(.7);opacity:0}10%{transform:translateY(-5px) scale(1.05);opacity:1}15%{transform:translateY(0) scale(1);opacity:1}85%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-20px) scale(.95);opacity:0}}
 @keyframes xpPop{0%{transform:translateY(0) scale(.5);opacity:0}15%{transform:translateY(-10px) scale(1.1);opacity:1}75%{transform:translateY(-10px) scale(1);opacity:1}100%{transform:translateY(-30px) scale(.95);opacity:0}}
+@keyframes chestShake{0%,100%{transform:rotate(0)}10%{transform:rotate(-8deg)}20%{transform:rotate(8deg)}30%{transform:rotate(-6deg)}40%{transform:rotate(6deg)}50%{transform:rotate(-3deg)}60%{transform:rotate(3deg)}70%{transform:rotate(-1deg)}80%{transform:rotate(1deg)}}
+@keyframes chestFlash{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(2)}}
+@keyframes chestReveal{0%{opacity:0;transform:translateY(30px) scale(.6)}60%{opacity:1;transform:translateY(-8px) scale(1.05)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes chestParticle{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(0)}}
 @keyframes flip{0%{transform:rotateY(90deg);opacity:0}100%{transform:rotateY(0);opacity:1}}
 @keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
 @keyframes tipSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
@@ -598,8 +615,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .pg-wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px))}
 .enter{animation:fadeIn .3s ease-out}
 .crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:20px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04)}
-.glo{box-shadow:0 0 30px rgba(212,148,58,.06)}
-.btn1{background:linear-gradient(135deg,#d4943a,#a06e20);color:#0f0c08;border:none;border-radius:12px;padding:14px 28px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:all .2s}
+.glo{box-shadow:0 0 30px rgba(var(--cx),.06)}
+.btn1{background:linear-gradient(135deg,var(--cx-hex),#a06e20);color:#0f0c08;border:none;border-radius:12px;padding:14px 28px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:all .2s}
 .btn1:active{transform:scale(.97)}
 .btn2{background:var(--bg2);border:1px solid var(--bdr);color:var(--t1);border-radius:12px;padding:12px 24px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:14px;cursor:pointer}
 .fl{animation:flame 1.5s ease-in-out infinite;display:inline-block}
@@ -616,7 +633,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .tab-bar button div{display:none!important}
 .enter{padding-bottom:32px!important}
 .crd{padding:24px}
-.crd:hover{border-color:rgba(180,140,80,.18);box-shadow:0 2px 12px rgba(212,148,58,.06)}
+.crd:hover{border-color:rgba(180,140,80,.18);box-shadow:0 2px 12px rgba(var(--cx),.06)}
 .btn1{width:auto;padding:14px 36px}
 .btn2{padding:12px 28px}
 .rg2{grid-template-columns:1fr 1fr 1fr!important}
@@ -629,7 +646,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 }`;
 
 // ─── SMALL COMPONENTS ───
-function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,#d4943a,#c87a35)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
+function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,var(--cx-hex),#c87a35)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
 // ─── Avatar renderer — handles both emoji and base64 photo ───
 function renderAv(avatar,size){
   var s=size||32;
@@ -679,13 +696,13 @@ function CoachTip(p){
   var tip=p.tip;
   return(
     <div style={{position:"fixed",bottom:76,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,zIndex:150,animation:closing?"tipFade .3s ease forwards":"tipSlide .4s ease-out",pointerEvents:"auto"}}>
-      <div style={{background:"var(--bg2)",border:"1px solid rgba(212,148,58,.25)",borderRadius:16,padding:"14px 16px",boxShadow:"0 -4px 24px rgba(0,0,0,.4)",display:"flex",gap:12,alignItems:"flex-start"}}>
+      <div style={{background:"var(--bg2)",border:"1px solid rgba(var(--cx),.25)",borderRadius:16,padding:"14px 16px",boxShadow:"0 -4px 24px rgba(0,0,0,.4)",display:"flex",gap:12,alignItems:"flex-start"}}>
         <div style={{fontSize:28,flexShrink:0,marginTop:2}}>{tip.icon}</div>
         <div style={{flex:1,minWidth:0}}>
           <div className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",marginBottom:3}}>{tip.title}</div>
           <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0}}>{tip.msg}</p>
           {tip.tab&&<button onClick={function(){p.goTab(tip.tab);dismiss();}}
-            style={{marginTop:8,padding:"6px 14px",background:"rgba(212,148,58,.1)",border:"1px solid rgba(212,148,58,.2)",borderRadius:8,color:"var(--cyan)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{tip.tab==="train"?"Go to Train":tip.tab==="profile"?"View Profile":tip.tab==="league"?"See League":"Go"}</button>}
+            style={{marginTop:8,padding:"6px 14px",background:"rgba(var(--cx),.1)",border:"1px solid rgba(var(--cx),.2)",borderRadius:8,color:"var(--cyan)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{tip.tab==="train"?"Go to Train":tip.tab==="profile"?"View Profile":tip.tab==="league"?"See League":"Go"}</button>}
         </div>
         <button onClick={dismiss} style={{background:"none",border:"none",color:"var(--t3)",fontSize:18,cursor:"pointer",padding:0,lineHeight:1,flexShrink:0,marginTop:-2}}>{String.fromCharCode(215)}</button>
       </div>
@@ -696,7 +713,7 @@ function CoachTip(p){
 function Tabs(p){var tabs=[{id:"home",l:"Home",i:"\u26A1"},{id:"train",l:"Train",i:"\uD83C\uDFAF"},{id:"cards",l:"Cards",i:"\uD83C\uDCCF"},{id:"games",l:"Games",i:"\uD83C\uDFB2"},{id:"league",l:"League",i:"\uD83C\uDFC6"},{id:"profile",l:"Profile",i:"\uD83D\uDC64"}];
 var blocked=p.blocked||[];
 return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-around"}}>
-<div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,#d4943a,#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>TOEIC ARENA</span></div>
+<div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>TOEIC ARENA</span></div>
 {tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 12px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t3)",transform:a&&!dis?"scale(1.05)":"scale(1)",opacity:dis?.35:1,transition:"all .2s"}}>
 <span style={{fontSize:22,lineHeight:1}}>{t.i}</span><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:1}}/>}</button>);})}</div>);}
 
@@ -808,7 +825,7 @@ var[step,sSt]=useState("name");
     <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .8s ease-out"}}>
         <div style={{fontSize:64,marginBottom:16}}>⚔️</div>
-        <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,#d4943a,#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>TOEIC ARENA</h1>
+        <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>TOEIC ARENA</h1>
         <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>Train smarter. Climb the ranks.<br/>Conquer the TOEIC.</p>
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Your arena name</label>
@@ -841,7 +858,7 @@ var[step,sSt]=useState("name");
               border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
               transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
               <div style={{width:44,height:44,borderRadius:12,
-                background:acc.groupType==="school"?"rgba(212,148,58,.1)":acc.groupType==="pro"?"rgba(200,122,53,.1)":"rgba(139,94,131,.1)",
+                background:acc.groupType==="school"?"rgba(var(--cx),.1)":acc.groupType==="pro"?"rgba(200,122,53,.1)":"rgba(139,94,131,.1)",
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{acc.typeIcon}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{acc.groupName}</div>
@@ -1066,7 +1083,7 @@ var[step,sSt]=useState("name");
   if(step==="results"){
     var cx=150,cy=150,rad=110;
     var statOrder=["grammar","vocab","reading","listening"];
-    var statMeta={grammar:{icon:"\u2694\uFE0F",label:"Grammar",arena:"Blade Precision",color:"#d4943a"},vocab:{icon:"\uD83D\uDCDA",label:"Vocabulary",arena:"Arcane Lore",color:"#8b5cf6"},reading:{icon:"\uD83D\uDD0D",label:"Reading",arena:"Tactical Sight",color:"#22c55e"},listening:{icon:"\uD83D\uDC42",label:"Listening",arena:"Battle Sense",color:"#3b82f6"}};
+    var statMeta={grammar:{icon:"\u2694\uFE0F",label:"Grammar",arena:"Blade Precision",color:"var(--cx-hex)"},vocab:{icon:"\uD83D\uDCDA",label:"Vocabulary",arena:"Arcane Lore",color:"#8b5cf6"},reading:{icon:"\uD83D\uDD0D",label:"Reading",arena:"Tactical Sight",color:"#22c55e"},listening:{icon:"\uD83D\uDC42",label:"Listening",arena:"Battle Sense",color:"#3b82f6"}};
     var dxArr=[0,1,0,-1],dyArr=[-1,0,1,0];
     function gridDiam(s){return cx+","+(cy-rad*s)+" "+(cx+rad*s)+","+cy+" "+cx+","+(cy+rad*s)+" "+(cx-rad*s)+","+cy;}
     var playerPts=statOrder.map(function(st,i){var v=Math.max(scanScores[st],0.15)/5;return(cx+dxArr[i]*rad*v)+","+(cy+dyArr[i]*rad*v);}).join(" ");
@@ -1079,8 +1096,8 @@ var[step,sSt]=useState("name");
     <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center",overflow:"auto"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
         <div style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:3,marginBottom:8}} className="out">Battle Report</div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,background:"linear-gradient(135deg,#d4943a,#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>Warrior Assessment</h2>
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 14px",borderRadius:99,background:"rgba(212,148,58,.1)",border:"1px solid rgba(212,148,58,.2)",marginBottom:20}}>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>Warrior Assessment</h2>
+        <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 14px",borderRadius:99,background:"rgba(var(--cx),.1)",border:"1px solid rgba(var(--cx),.2)",marginBottom:20}}>
           <span style={{fontSize:16}}>{tierIcon}</span>
           <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{tierLabel}</span>
           <span style={{fontSize:12,color:"var(--t3)"}}>{totalSc}/20</span>
@@ -1091,14 +1108,14 @@ var[step,sSt]=useState("name");
           <svg viewBox="0 0 300 300" width="280" height="280" style={{display:"block"}}>
             <defs>
               <radialGradient id="radarGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#d4943a" stopOpacity="0.08"/>
-                <stop offset="100%" stopColor="#d4943a" stopOpacity="0"/>
+                <stop offset="0%" stopColor="var(--cx-hex)" stopOpacity="0.08"/>
+                <stop offset="100%" stopColor="var(--cx-hex)" stopOpacity="0"/>
               </radialGradient>
             </defs>
             <circle cx={cx} cy={cy} r={rad+10} fill="url(#radarGlow)"/>
             {[0.2,0.4,0.6,0.8,1.0].map(function(s,i){return(<polygon key={i} points={gridDiam(s)} fill="none" stroke={"rgba(180,140,80,"+(s===1?0.25:0.1)+")"} strokeWidth={s===1?"1.5":"0.7"}/>);})}
             {statOrder.map(function(st,i){return(<line key={st} x1={cx} y1={cy} x2={cx+dxArr[i]*rad} y2={cy+dyArr[i]*rad} stroke="rgba(180,140,80,0.15)" strokeWidth="1"/>);})}
-            <polygon points={playerPts} fill="rgba(212,148,58,0.18)" stroke="#d4943a" strokeWidth="2.5" strokeLinejoin="round" style={{filter:"drop-shadow(0 0 10px rgba(212,148,58,0.3))",animation:"fadeIn .8s"}}/>
+            <polygon points={playerPts} fill="rgba(var(--cx),0.18)" stroke="var(--cx-hex)" strokeWidth="2.5" strokeLinejoin="round" style={{filter:"drop-shadow(0 0 10px rgba(var(--cx),0.3))",animation:"fadeIn .8s"}}/>
             {statOrder.map(function(st,i){var v=Math.max(scanScores[st],0.15)/5;return(<circle key={st} cx={cx+dxArr[i]*rad*v} cy={cy+dyArr[i]*rad*v} r="5" fill={statMeta[st].color} stroke="var(--bg)" strokeWidth="2" style={{animation:"fadeIn 1s"}}/>);})}
           </svg>
           {/* Axis labels positioned around the radar */}
@@ -1140,7 +1157,7 @@ var[step,sSt]=useState("name");
 
         {/* ── FIRST MISSION ── */}
         {mission&&<div className="crd" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
-          style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16,marginBottom:24,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
+          style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16,marginBottom:24,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
             <span style={{fontSize:20}}>📜</span>
             <span className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:14,color:"var(--cyan)"}}>First Quest</span>
@@ -1155,7 +1172,7 @@ var[step,sSt]=useState("name");
         </div>}
 
         {mission&&<button className="btn1" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
-          style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,#d4943a,#8b5e83)"}}>
+          style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
           Start Your Quest — {mission.label}</button>}
         <button className="btn2" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect);}}
           style={{fontSize:14,padding:"12px 28px",width:"100%"}}>Enter the Arena</button>
@@ -1200,7 +1217,7 @@ var[step,sSt]=useState("name");
         <div style={{fontSize:56,marginBottom:12,animation:"countUp .5s"}}>{sec.icon}</div>
         <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:22,color:sec.color,marginBottom:4}}>{sec.name}</h3>
         <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>{sec.subtitle} — Complete</p>
-        <div style={{display:"inline-block",padding:"12px 28px",borderRadius:16,background:"rgba(212,148,58,.08)",border:"1px solid rgba(212,148,58,.15)",marginBottom:24}}>
+        <div style={{display:"inline-block",padding:"12px 28px",borderRadius:16,background:"rgba(var(--cx),.08)",border:"1px solid rgba(var(--cx),.15)",marginBottom:24}}>
           <div className="out" style={{fontSize:42,fontWeight:900,color:sec.color,animation:"countUp .6s"}}>{scanScores[sec.id]}<span style={{fontSize:20,color:"var(--t3)"}}>/5</span></div>
         </div>
         <div style={{display:"flex",gap:4,justifyContent:"center",marginBottom:32}}>
@@ -1209,7 +1226,7 @@ var[step,sSt]=useState("name");
         </div>
         {scanSec<BATTLE_SCAN.length-1?
           <button className="btn1" onClick={nxtSection} style={{fontSize:16,padding:"14px 32px"}}>Next Section</button>
-          :<button className="btn1" onClick={function(){sSt("results");}} style={{fontSize:16,padding:"14px 32px",background:"linear-gradient(135deg,#d4943a,#8b5e83)"}}>See Your Battle Report</button>}
+          :<button className="btn1" onClick={function(){sSt("results");}} style={{fontSize:16,padding:"14px 32px",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>See Your Battle Report</button>}
       </div>
     </div>);
 
@@ -1283,7 +1300,7 @@ var[step,sSt]=useState("name");
       </div>
 
       {scanPhase==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:14}}>
+        <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
           <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{scanQ.x}</p></div>
         <button className="btn1" onClick={nxtScan} style={{marginTop:14}}>{ci<scanQs.length-1?"Next":(scanSec<BATTLE_SCAN.length-1?"Section Complete":"See Your Battle Report")}</button>
       </div>}
@@ -1305,7 +1322,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
   if(u.lastActive!==today())pills.push({label:"+10 Login bonus",col:"#00e676",icon:"🎁"});
   if(p.events)p.events.forEach(function(ev){
     var cfg=ev.config||{};var m=cfg.multiplier||2;
-    if(ev.type==="spotlight")pills.push({label:"x"+m+" "+((cfg.module||"").charAt(0).toUpperCase()+(cfg.module||"").slice(1)),col:"#d4943a",icon:"🎯"});
+    if(ev.type==="spotlight")pills.push({label:"x"+m+" "+((cfg.module||"").charAt(0).toUpperCase()+(cfg.module||"").slice(1)),col:"var(--cx-hex)",icon:"🎯"});
     if(ev.type==="flash_hour")pills.push({label:"x"+m+" Flash",col:"#f0c850",icon:"⚡"});
     if(ev.type==="underdog"&&p.u.xp<(p.medianXp||0))pills.push({label:"x"+m+" Underdog",col:"#4abe60",icon:"💪"});
   });
@@ -1315,14 +1332,22 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
   </div>);
 }()}
 
+{/* Pending Chests */}
+{p.pendingChests>0&&<button onClick={function(){p.onOpenChest();}} style={{width:"100%",marginBottom:14,padding:"14px 18px",background:"linear-gradient(135deg,rgba(255,192,32,.12),rgba(var(--cx),.08))",border:"1px solid rgba(255,192,32,.3)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:"'DM Sans',sans-serif",animation:"pulse 2s infinite"}}>
+  <span style={{fontSize:28}}>{"\uD83D\uDCE6"}</span>
+  <div style={{flex:1,textAlign:"left"}}><div className="out" style={{fontWeight:800,fontSize:14,color:"var(--gold)"}}>Treasure Chest{p.pendingChests>1?"s":""} Available!</div>
+  <div style={{fontSize:11,color:"var(--t2)"}}>{p.pendingChests} chest{p.pendingChests>1?"s":""} waiting to be opened</div></div>
+  <span style={{fontSize:20,color:"var(--gold)"}}>{">"}</span>
+</button>}
+
 {/* Active Events Banner */}
 {p.events&&p.events.length>0&&p.events.map(function(ev,ei){
   var cfg=ev.config||{};var m=cfg.multiplier||2;
   var end=new Date(ev.end_at);var now=new Date();var hoursLeft=Math.max(0,Math.round((end-now)/36e5));
   var timeLabel=hoursLeft>=24?Math.floor(hoursLeft/24)+"d "+hoursLeft%24+"h left":hoursLeft+"h left";
   var icon=ev.type==="spotlight"?"🎯":ev.type==="flash_hour"?"⚡":"💪";
-  var bg=ev.type==="spotlight"?"rgba(212,148,58,.1)":ev.type==="flash_hour"?"rgba(240,200,80,.12)":"rgba(74,190,96,.1)";
-  var bd=ev.type==="spotlight"?"rgba(212,148,58,.25)":ev.type==="flash_hour"?"rgba(240,200,80,.3)":"rgba(74,190,96,.25)";
+  var bg=ev.type==="spotlight"?"rgba(var(--cx),.1)":ev.type==="flash_hour"?"rgba(240,200,80,.12)":"rgba(74,190,96,.1)";
+  var bd=ev.type==="spotlight"?"rgba(var(--cx),.25)":ev.type==="flash_hour"?"rgba(240,200,80,.3)":"rgba(74,190,96,.25)";
   var col=ev.type==="spotlight"?"var(--cyan)":ev.type==="flash_hour"?"var(--gold)":"var(--green)";
   var isUnderdog=ev.type==="underdog";
   var qualifies=!isUnderdog||p.u.xp<(p.medianXp||0);
@@ -1342,13 +1367,13 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
 <div className="crd glo" style={{marginBottom:16}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
 <div style={{display:"flex",alignItems:"center",gap:10}}>
-<div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#a06e20)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:16}} className="out">{lv.level}</div>
+<div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#a06e20)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:16}} className="out">{lv.level}</div>
 <div><div className="out" style={{fontSize:13,fontWeight:700}}>Level {lv.level}</div><div style={{fontSize:11,color:"var(--t2)"}}>{lv.cur} / {lv.next} XP</div></div></div>
 <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"var(--bg3)",borderRadius:99}}>
 <span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
-<div className="crd" onClick={function(){if(!dd)p.nav("daily");}} style={{marginBottom:16,cursor:dd?"default":"pointer",background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(212,148,58,.12),rgba(139,94,131,.12))",border:dd?"1px solid var(--bdr)":"1px solid rgba(212,148,58,.2)"}}>
+<div className="crd" onClick={function(){if(!dd)p.nav("daily");}} style={{marginBottom:16,cursor:dd?"default":"pointer",background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(var(--cx),.12),rgba(139,94,131,.12))",border:dd?"1px solid var(--bdr)":"1px solid rgba(var(--cx),.2)"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
 <div><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:20}}>{dd?"✅":"⚡"}</span><span className="out" style={{fontWeight:700,fontSize:16}}>Daily Challenge</span></div>
 {dd?<p style={{color:"var(--green)",fontSize:13,fontWeight:600}}>Completed! +{u.daily.xpE} XP</p>:<p style={{color:"var(--t2)",fontSize:13}}>5 questions · 30s each · Bonus XP</p>}</div>
@@ -1484,7 +1509,7 @@ if(sr&&iC){bg="rgba(0,230,118,.12)";bd="var(--green)";}else if(sr&&iS&&!iC){bg="
 return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph==="fb"} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
 <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(sr&&iC?"var(--green)":sr&&iS?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:sr&&iC?"var(--green)":sr&&iS&&!iC?"var(--red)":"transparent",color:sr&&(iC||iS)?"#fff":"var(--t3)"}}>
 {sr&&iC?"✓":sr&&iS?"✗":String.fromCharCode(65+i)}</div><span>{opt}</span></button>);})}</div>
-{ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s ease-out"}}><div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
+{ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s ease-out"}}><div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
 <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next Question":"See Results"}</button></div>}</div>);}
 
 // ─── TRAIN PAGE ───
@@ -1495,7 +1520,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
   // ── Section data (unchanged) ──
   var sections=[
     {key:"exercises",title:"Exercises",sub:"TOEIC Parts training",icon:"⚔️",count:"Parts 1-7",items:[
-      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,#d4943a,#8b5e83)",lock:dd},
+      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,var(--cx-hex),#8b5e83)",lock:dd},
       {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
       {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
@@ -1643,7 +1668,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(0,230,118,.08)"}}>
 <span style={{fontWeight:700,color:"var(--green)",minWidth:52,fontSize:13}}>Good</span>
 <span style={{fontSize:12,color:"var(--t2)"}}>I remembered after a moment of thought</span></div>
-<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(212,148,58,.08)"}}>
+<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(var(--cx),.08)"}}>
 <span style={{fontWeight:700,color:"var(--cyan)",minWidth:52,fontSize:13}}>Easy</span>
 <span style={{fontSize:12,color:"var(--t2)"}}>Instant recall — I know this one well</span></div></div>
 <p style={{fontSize:12,color:"var(--t3)",lineHeight:1.6,marginBottom:18}}>Be honest! Cards you mark "Again" come back sooner, while "Easy" cards are spaced further apart. The goal is long-term memorisation, not a high score.</p>
@@ -1723,7 +1748,7 @@ return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
   </div>
 </div></div>}</div></div>
 {fl&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginTop:24,animation:"fadeIn .3s ease-out"}}>
-{[{r:1,l:"Again",c:"var(--red)",b:"rgba(255,71,87,.12)"},{r:2,l:"Hard",c:"var(--orange)",b:"rgba(255,140,66,.12)"},{r:3,l:"Good",c:"var(--green)",b:"rgba(0,230,118,.12)"},{r:4,l:"Easy",c:"var(--cyan)",b:"rgba(212,148,58,.12)"}].map(function(b){
+{[{r:1,l:"Again",c:"var(--red)",b:"rgba(255,71,87,.12)"},{r:2,l:"Hard",c:"var(--orange)",b:"rgba(255,140,66,.12)"},{r:3,l:"Good",c:"var(--green)",b:"rgba(0,230,118,.12)"},{r:4,l:"Easy",c:"var(--cyan)",b:"rgba(var(--cx),.12)"}].map(function(b){
 return(<button key={b.r} onClick={function(e){e.stopPropagation();rate(b.r);}} style={{padding:"12px 8px",background:b.b,border:"1px solid "+b.c+"33",borderRadius:12,cursor:"pointer",color:b.c,fontWeight:700,fontSize:13}} className="out">{b.l}</button>);})}</div>}</div>);}
 
 // ─── DRILL SESSION ───
@@ -1748,7 +1773,7 @@ if(sr&&iC){bg="rgba(0,230,118,.12)";bd="var(--green)";}else if(sr&&iS&&!iC){bg="
 return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph==="fb"} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
 <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(sr&&iC?"var(--green)":sr&&iS?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:sr&&iC?"var(--green)":sr&&iS&&!iC?"var(--red)":"transparent",color:sr&&(iC||iS)?"#fff":"var(--t3)"}}>
 {sr&&iC?"✓":sr&&iS?"✗":String.fromCharCode(65+i)}</div><span>{opt}</span></button>);})}</div>
-{ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}><div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
+{ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}><div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
 <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next":"See Results"}</button></div>}</div>);}
 
 // ─── WORD FAMILIES CLASSIFIER ───
@@ -1859,7 +1884,7 @@ function WordFam(p){
       {isMulti&&<div style={{padding:"8px 14px",background:"rgba(255,215,0,.08)",border:"1px solid rgba(255,215,0,.2)",borderRadius:10,marginBottom:10}}>
         <p style={{fontSize:12,color:"var(--gold)",fontWeight:600}}>This word can be both: {it.validAnswers.join(" & ")}</p>
       </div>}
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.8}}>
           <strong style={{color:"var(--t1)"}}>Word family:</strong><br/>
           {fam.v&&<span>Verb: <strong style={{color:"var(--green)"}}>{fam.v}</strong> &nbsp;</span>}
@@ -1909,7 +1934,7 @@ function ConnSort(p){
             <div style={{fontSize:11,color:"var(--t3)"}}>{r.desc}</div></div></button>);})}
     </div>
     {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.tip}</p>
         <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",marginTop:8}}>"{it.ex}"</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button></div>}
@@ -1983,7 +2008,7 @@ function PrepDrill(p){
           <div className="out" style={{fontWeight:700,fontSize:16,color:col,textTransform:"uppercase"}}>{pr}</div></button>);})}
     </div>
     {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
           <p style={{fontSize:14,color:"var(--t1)"}}><strong>{it.base} {it.prep}</strong></p>
           <SpeakBtn text={it.base+" "+it.prep} size={26}/></div>
@@ -2117,7 +2142,7 @@ function GerInf(p){
               <span style={{fontSize:12,color:"var(--t3)",fontWeight:600}}>+ {v.takes==="ing"?"-ING":v.takes==="to"?"TO":"-ING / TO"}</span>
             </div>
             <p style={{fontSize:13,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5,marginBottom:6}}>"{v.ex}"</p>
-            <div style={{padding:"8px 12px",background:"rgba(212,148,58,.06)",borderRadius:8,border:"1px solid rgba(212,148,58,.1)"}}>
+            <div style={{padding:"8px 12px",background:"rgba(var(--cx),.06)",borderRadius:8,border:"1px solid rgba(var(--cx),.1)"}}>
               <p style={{fontSize:11,color:"var(--cyan)",lineHeight:1.5}}>{v.tip}</p>
             </div>
           </div>);
@@ -2174,11 +2199,11 @@ function GerInf(p){
       </div>
 
       {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
+        <div className="crd" style={{padding:14,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{q.verb}</span>
             <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:99,
-              background:q.pattern==="ing"?"rgba(255,140,66,.1)":q.pattern==="to"?"rgba(212,148,58,.1)":q.pattern==="both"?"rgba(255,71,87,.1)":"rgba(139,94,131,.1)",
+              background:q.pattern==="ing"?"rgba(255,140,66,.1)":q.pattern==="to"?"rgba(var(--cx),.1)":q.pattern==="both"?"rgba(255,71,87,.1)":"rgba(139,94,131,.1)",
               color:info2.color}}>{q.pattern==="ing"?"always -ING":q.pattern==="to"?"always TO":q.pattern==="both"?"depends on meaning":"preposition → -ING"}</span>
           </div>
           <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,marginBottom:4}}>{q.tip}</p>
@@ -2249,7 +2274,7 @@ function TrapsQuiz(p){
     </div>
 
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
         <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",marginBottom:6}}>Pro Tip</p>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{t.tip}</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<traps.length-1?"Next Trap":"See Results"}</button></div>}
@@ -2403,7 +2428,7 @@ function GrammarRef(p){
 
           {isOpen&&<div style={{padding:"12px 16px 16px",animation:"fadeIn .2s"}}>
             {/* Rule summary */}
-            <div style={{padding:"10px 14px",background:"rgba(212,148,58,.06)",border:"1px solid rgba(212,148,58,.12)",borderRadius:10,marginBottom:12}}>
+            <div style={{padding:"10px 14px",background:"rgba(var(--cx),.06)",border:"1px solid rgba(var(--cx),.12)",borderRadius:10,marginBottom:12}}>
               <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,fontWeight:500}}>{g.rule}</p>
             </div>
 
@@ -2531,7 +2556,7 @@ function PhrasalDojo(p){
         var isOpen=studyOpen===grp.verb;
         return(<div key={grp.verb}>
           <div className="crd" onClick={function(){setStudyOpen(isOpen?null:grp.verb);}}
-            style={{cursor:"pointer",padding:"12px 16px",borderColor:isOpen?"rgba(212,148,58,.3)":"var(--bdr)",background:isOpen?"rgba(212,148,58,.04)":"var(--bg2)",transition:"all .2s"}}>
+            style={{cursor:"pointer",padding:"12px 16px",borderColor:isOpen?"rgba(var(--cx),.3)":"var(--bdr)",background:isOpen?"rgba(var(--cx),.04)":"var(--bg2)",transition:"all .2s"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <span className="out" style={{fontWeight:800,fontSize:16,color:"var(--cyan)",textTransform:"uppercase",minWidth:70}}>{grp.verb}</span>
@@ -2600,7 +2625,7 @@ function PhrasalDojo(p){
         })}
       </div>
       {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
+        <div className="crd" style={{padding:14,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{mq.pv}</span>
             <SpeakBtn text={mq.pv} size={22} audio={"/audio/phrasal/"+mq.pv.replace(/\s+/g,"_")+".mp3"}/>
@@ -2668,7 +2693,7 @@ function PhrasalDojo(p){
       {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .2s"}}>
         {pick===-1&&<div style={{textAlign:"center",marginBottom:12}}>
           <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
-        <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
+        <div className="crd" style={{padding:14,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{pq.pv}</span>
             <SpeakBtn text={pq.pv} size={22} audio={"/audio/phrasal/"+pq.pv.replace(/\s+/g,"_")+".mp3"}/>
@@ -2700,7 +2725,7 @@ function StratCards(p){
       <span className="out" style={{fontWeight:700,fontSize:15}}>Strategy Cards</span>
       <div style={{width:40}}/></div>
 
-    <div className="crd" style={{padding:14,marginBottom:16,textAlign:"center",background:"rgba(212,148,58,.04)",borderColor:"rgba(212,148,58,.12)"}}>
+    <div className="crd" style={{padding:14,marginBottom:16,textAlign:"center",background:"rgba(var(--cx),.04)",borderColor:"rgba(var(--cx),.12)"}}>
       <span className="out" style={{fontWeight:800,fontSize:22,color:"var(--cyan)"}}>{totalTips}</span>
       <span style={{fontSize:13,color:"var(--t2)",marginLeft:6}}>expert strategies across all TOEIC Parts</span></div>
 
@@ -2708,7 +2733,7 @@ function StratCards(p){
       {[{id:"all",l:"All"},{id:"Listening",l:"👂 Listening"},{id:"Reading",l:"📖 Reading"}].map(function(f){
         var act=filter===f.id;return(
         <button key={f.id} onClick={function(){sF(f.id);sO(null);}}
-          style={{flex:1,padding:"8px 4px",borderRadius:10,border:act?"1px solid var(--cyan)":"1px solid var(--bdr)",background:act?"rgba(212,148,58,.1)":"var(--bg2)",cursor:"pointer"}}>
+          style={{flex:1,padding:"8px 4px",borderRadius:10,border:act?"1px solid var(--cyan)":"1px solid var(--bdr)",background:act?"rgba(var(--cx),.1)":"var(--bg2)",cursor:"pointer"}}>
           <span className="out" style={{fontSize:12,fontWeight:act?700:500,color:act?"var(--cyan)":"var(--t3)"}}>{f.l}</span></button>);})}
     </div>
 
@@ -2723,7 +2748,7 @@ function StratCards(p){
               <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)"}}>{s.part} {"—"} {s.title}</div>
               <div style={{display:"flex",gap:8,marginTop:3}}>
                 {s.qs>0&&<span style={{fontSize:10,color:"var(--t3)",background:"var(--bg3)",padding:"2px 6px",borderRadius:4}}>{s.qs} Qs</span>}
-                <span style={{fontSize:10,color:"var(--cyan)",background:"rgba(212,148,58,.06)",padding:"2px 6px",borderRadius:4}}>{tipCount} tips</span>
+                <span style={{fontSize:10,color:"var(--cyan)",background:"rgba(var(--cx),.06)",padding:"2px 6px",borderRadius:4}}>{tipCount} tips</span>
               </div></div>
             <span style={{fontSize:12,color:"var(--t3)",transform:isOpen?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>{"▼"}</span>
           </button>
@@ -2804,7 +2829,7 @@ function StratQuizPage(p){
     </div>
 
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
         <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",marginBottom:6}}>Why this works</p>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.explain}</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next":"See Results"}</button></div>}
@@ -2934,7 +2959,7 @@ function TimeSim(p){
               </div>);
             })}
           </div>
-          {q.x&&<div style={{marginTop:10,padding:10,background:"rgba(212,148,58,.06)",borderRadius:8,border:"1px solid rgba(212,148,58,.12)"}}>
+          {q.x&&<div style={{marginTop:10,padding:10,background:"rgba(var(--cx),.06)",borderRadius:8,border:"1px solid rgba(var(--cx),.12)"}}>
             <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p>
           </div>}
           {sheetId&&<button onClick={function(){p.nav("gramref",sheetId);}}
@@ -3051,7 +3076,7 @@ function Part6Drill(p){
         var answered=thisIdx<bi;
         var label=answered?blanks[thisIdx].options[blanks[thisIdx].correct]:"____("+(thisIdx+1)+")____";
         return <span key={i} style={{padding:"2px 6px",borderRadius:4,fontWeight:700,
-          background:isCurrent?"rgba(212,148,58,.2)":answered?"rgba(0,230,118,.1)":"var(--bg3)",
+          background:isCurrent?"rgba(var(--cx),.2)":answered?"rgba(0,230,118,.1)":"var(--bg3)",
           color:isCurrent?"var(--cyan)":answered?"var(--green)":"var(--t3)",
           border:isCurrent?"1px solid var(--cyan)":"1px solid transparent"}}>{label}</span>;
       }
@@ -3094,7 +3119,7 @@ function Part6Drill(p){
           {opt}</button>);})}
     </div>
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:14}}>
+      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{curBlank.x}</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:14}}>{bi<blanks.length-1?"Next Blank":(ti<texts.length-1?"Next Text":"See Results")}</button></div>}
   </div>);
@@ -3181,7 +3206,7 @@ function Part7Read(p){
           <span>{opt}</span></button>);})}
     </div>
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:14}}>
+      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{curQ.x}</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:14}}>{qi<curPass.questions.length-1?"Next Question":(pi<passages.length-1?"Next Passage":"See Results")}</button></div>}
   </div>);
@@ -3252,7 +3277,7 @@ function FalseFriends(p){
     </div>
 
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:16}}>
+      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
           <span style={{fontSize:14}}>🎭</span>
           <span className="out" style={{fontWeight:700,fontSize:13,color:"var(--orange)"}}>False Friend Alert</span></div>
@@ -3486,7 +3511,7 @@ function BossTest(p){
           {aState==="done"&&selP1<0&&<div style={{textAlign:"center",marginBottom:12}}>
             <p className="out" style={{color:"var(--green)",fontSize:13}}>Audio complete — choose your answer</p></div>}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {["A","B","C","D"].map(function(letter,i){var sel=selP1===i;var playing2=aState==="playing"&&curOpt===i;return(<button key={i} onClick={function(){if(selP1<0)pick(i);}} style={{padding:"18px 10px",background:sel?"rgba(212,148,58,.2)":playing2?"rgba(245,158,11,.1)":"var(--bg2)",border:"2px solid "+(sel?"var(--cyan)":playing2?"var(--orange)":"var(--bdr)"),borderRadius:14,cursor:selP1<0?"pointer":"default",textAlign:"center",fontFamily:"'Cinzel','Outfit',serif",transition:"all .15s"}}>
+            {["A","B","C","D"].map(function(letter,i){var sel=selP1===i;var playing2=aState==="playing"&&curOpt===i;return(<button key={i} onClick={function(){if(selP1<0)pick(i);}} style={{padding:"18px 10px",background:sel?"rgba(var(--cx),.2)":playing2?"rgba(245,158,11,.1)":"var(--bg2)",border:"2px solid "+(sel?"var(--cyan)":playing2?"var(--orange)":"var(--bdr)"),borderRadius:14,cursor:selP1<0?"pointer":"default",textAlign:"center",fontFamily:"'Cinzel','Outfit',serif",transition:"all .15s"}}>
               <div className="out" style={{fontSize:24,fontWeight:900,color:sel?"var(--cyan)":playing2?"var(--orange)":"var(--t2)"}}>{letter}</div>
             </button>);})}
           </div>
@@ -3508,7 +3533,7 @@ function BossTest(p){
           {aState==="done"&&selP2<0&&<div style={{textAlign:"center",marginBottom:16}}>
             <p className="out" style={{color:"var(--green)",fontSize:13}}>Audio complete — choose your answer</p></div>}
           <div style={{display:"flex",flexDirection:"column",gap:12,maxWidth:280,margin:"20px auto 0"}}>
-            {["A","B","C"].map(function(letter,i){var sel=selP2===i;var playing2=aState==="playing"&&curOpt===i;return(<button key={i} onClick={function(){if(selP2<0)pick(i);}} style={{padding:"20px",background:sel?"rgba(212,148,58,.2)":playing2?"rgba(245,158,11,.1)":"var(--bg2)",border:"2px solid "+(sel?"var(--cyan)":playing2?"var(--orange)":"var(--bdr)"),borderRadius:14,cursor:selP2<0?"pointer":"default",textAlign:"center",fontFamily:"'Cinzel','Outfit',serif",transition:"all .15s"}}>
+            {["A","B","C"].map(function(letter,i){var sel=selP2===i;var playing2=aState==="playing"&&curOpt===i;return(<button key={i} onClick={function(){if(selP2<0)pick(i);}} style={{padding:"20px",background:sel?"rgba(var(--cx),.2)":playing2?"rgba(245,158,11,.1)":"var(--bg2)",border:"2px solid "+(sel?"var(--cyan)":playing2?"var(--orange)":"var(--bdr)"),borderRadius:14,cursor:selP2<0?"pointer":"default",textAlign:"center",fontFamily:"'Cinzel','Outfit',serif",transition:"all .15s"}}>
               <div className="out" style={{fontSize:28,fontWeight:900,color:sel?"var(--cyan)":playing2?"var(--orange)":"var(--t2)"}}>{letter}</div>
             </button>);})}
           </div>
@@ -3533,7 +3558,7 @@ function BossTest(p){
         {aState==="done"&&<div style={{animation:"fadeIn .3s"}}>
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{q3.q}</h3>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {q3.opts.map(function(opt,i){var sel=ans.p3[qi][sqi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            {q3.opts.map(function(opt,i){var sel=ans.p3[qi][sqi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(var(--cx),.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
               <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
               <span>{opt}</span></button>);})}
           </div></div>}
@@ -3557,7 +3582,7 @@ function BossTest(p){
         {aState==="done"&&<div style={{animation:"fadeIn .3s"}}>
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{q4.q}</h3>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {q4.opts.map(function(opt,i){var sel=ans.p4[qi][sqi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            {q4.opts.map(function(opt,i){var sel=ans.p4[qi][sqi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(var(--cx),.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
               <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
               <span>{opt}</span></button>);})}
           </div></div>}
@@ -3571,7 +3596,7 @@ function BossTest(p){
         {header}
         <h3 className="out" style={{fontWeight:700,fontSize:16,lineHeight:1.5,marginBottom:20}}>{q5.s}</h3>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {q5.o.map(function(opt,i){var isSel=sel5===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:isSel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+          {q5.o.map(function(opt,i){var isSel=sel5===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:isSel?"rgba(var(--cx),.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
             <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--cyan)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
             <span>{opt}</span></button>);})}
         </div>
@@ -3584,7 +3609,7 @@ function BossTest(p){
       t6.parts.forEach(function(pt){if(pt.blank){blanks6.push(pt);blankNum++;}});
       var bl6=blanks6[sqi];var sel6=ans.p6[qi][sqi];
       var renderedText=[];t6.parts.forEach(function(pt,pi){
-        if(pt.blank){var bIdx=blanks6.indexOf(pt)+1;renderedText.push(<span key={pi} style={{padding:"2px 8px",borderRadius:4,background:bIdx-1===sqi?"rgba(212,148,58,.2)":"rgba(100,100,100,.15)",fontWeight:700,color:bIdx-1===sqi?"var(--cyan)":"var(--t2)"}}>{"["+bIdx+"]"}</span>);}
+        if(pt.blank){var bIdx=blanks6.indexOf(pt)+1;renderedText.push(<span key={pi} style={{padding:"2px 8px",borderRadius:4,background:bIdx-1===sqi?"rgba(var(--cx),.2)":"rgba(100,100,100,.15)",fontWeight:700,color:bIdx-1===sqi?"var(--cyan)":"var(--t2)"}}>{"["+bIdx+"]"}</span>);}
         else renderedText.push(<span key={pi}>{pt.text}</span>);
       });
       return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
@@ -3592,7 +3617,7 @@ function BossTest(p){
         <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{t6.type} — Blank {sqi+1}/{blankNum}</div>
         <div className="crd" style={{padding:14,marginBottom:16,maxHeight:200,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{renderedText}</div>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {bl6.options.map(function(opt,i){var isSel=sel6===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+          {bl6.options.map(function(opt,i){var isSel=sel6===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(var(--cx),.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
             <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--cyan)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
             <span>{opt}</span></button>);})}
         </div>
@@ -3611,7 +3636,7 @@ function BossTest(p){
         <div className="crd" style={{padding:14,marginBottom:16,maxHeight:200,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{ps7.text}</div>
         <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pq7.q}</h3>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {pq7.options.map(function(opt,i){var isSel=sel7===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(212,148,58,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+          {pq7.options.map(function(opt,i){var isSel=sel7===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(var(--cx),.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
             <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--cyan)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
             <span>{opt}</span></button>);})}
         </div>
@@ -3717,7 +3742,7 @@ function BossTest(p){
       var it2=LP2[revIdx];rAnswer=ans.p2[revIdx];rCorrect=it2.c;rExpl=it2.x;
       rLabel="Part 2 — Q"+(revIdx+1);
       rItem=(<div>
-        <div className="crd" style={{padding:12,marginBottom:12,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
+        <div className="crd" style={{padding:12,marginBottom:12,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
           <p className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",marginBottom:4}}>Question:</p>
           <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.5,fontStyle:"italic"}}>{it2.q}</p>
         </div>
@@ -3985,7 +4010,7 @@ function MockTest(p){
         <span className="out" style={{fontSize:18,fontWeight:800,color:timerCol,fontVariantNumeric:"tabular-nums"}}>{formatTime(timeLeft)}</span>
       </div>
       <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:2,overflow:"hidden"}}>
-        <div style={{height:"100%",width:progressPct+"%",background:"linear-gradient(90deg,#d4943a,#8b5e83)",borderRadius:2,transition:"width .3s"}}/>
+        <div style={{height:"100%",width:progressPct+"%",background:"linear-gradient(90deg,var(--cx-hex),#8b5e83)",borderRadius:2,transition:"width .3s"}}/>
       </div>
       <div style={{fontSize:10,color:"var(--t3)",marginTop:4,textAlign:"right"}}>{answered}/{totalQ}</div>
     </div>);
@@ -3999,7 +4024,7 @@ function MockTest(p){
           <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginTop:8,marginBottom:24}}>{q.s}</h2>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {q.o.map(function(opt,i){
-              var bg=selected===i?"rgba(212,148,58,.15)":"var(--bg2)";
+              var bg=selected===i?"rgba(var(--cx),.15)":"var(--bg2)";
               var bd=selected===i?"var(--cyan)":"var(--bdr)";
               return(<button key={i} onClick={function(){pickAnswer(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:"pointer",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
                 <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(selected===i?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:selected===i?"var(--cyan)":"transparent",color:selected===i?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -4032,12 +4057,12 @@ function MockTest(p){
               if(dp.type==="text")return(<span key={i}>{dp.content}</span>);
               var isCurrent=dp.index===bi;
               var hasAnswer=ans.p6[qi][dp.index]>=0;
-              return(<span key={i} className="out" style={{display:"inline",padding:"2px 8px",borderRadius:6,fontWeight:700,background:isCurrent?"rgba(212,148,58,.2)":hasAnswer?"rgba(0,230,118,.12)":"var(--bg3)",color:isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--t3)",border:"1px solid "+(isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--bdr)"),fontSize:12}}>{("["+String.fromCharCode(65+dp.index)+"]")}{hasAnswer&&!isCurrent?" ✓":""}</span>);
+              return(<span key={i} className="out" style={{display:"inline",padding:"2px 8px",borderRadius:6,fontWeight:700,background:isCurrent?"rgba(var(--cx),.2)":hasAnswer?"rgba(0,230,118,.12)":"var(--bg3)",color:isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--t3)",border:"1px solid "+(isCurrent?"var(--cyan)":hasAnswer?"var(--green)":"var(--bdr)"),fontSize:12}}>{("["+String.fromCharCode(65+dp.index)+"]")}{hasAnswer&&!isCurrent?" ✓":""}</span>);
             })}
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {currentBlank.options.map(function(opt,i){
-              var bg=selected6===i?"rgba(212,148,58,.15)":"var(--bg2)";
+              var bg=selected6===i?"rgba(var(--cx),.15)":"var(--bg2)";
               var bd=selected6===i?"var(--cyan)":"var(--bdr)";
               return(<button key={i} onClick={function(){pickAnswer(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
                 <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(selected6===i?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:selected6===i?"var(--cyan)":"transparent",color:selected6===i?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -4063,7 +4088,7 @@ function MockTest(p){
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pq.q}</h3>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {pq.options.map(function(opt,i){
-              var bg=selected7===i?"rgba(212,148,58,.15)":"var(--bg2)";
+              var bg=selected7===i?"rgba(var(--cx),.15)":"var(--bg2)";
               var bd=selected7===i?"var(--cyan)":"var(--bdr)";
               return(<button key={i} onClick={function(){pickAnswer(i);}} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:"pointer",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
                 <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(selected7===i?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:selected7===i?"var(--cyan)":"transparent",color:selected7===i?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -4250,11 +4275,11 @@ function GamesHub(p){
   var bestMH=p.u.gameScores&&p.u.gameScores.matchHard?p.u.gameScores.matchHard:null;
   var bestF=p.u.gameScores&&p.u.gameScores.wordFall?p.u.gameScores.wordFall:null;
   var games=[
-    {id:"smatch",n:"Speed Match",d:"Match words with definitions!",i:"🎯",bg:"linear-gradient(135deg,#d4943a,#8b5e83)",extra:(bestM||bestMH)?(bestM?"Easy: "+bestM.time+"s":"")+(bestM&&bestMH?" · ":"")+(bestMH?"Hard: "+bestMH.time+"s":""):null},
+    {id:"smatch",n:"Speed Match",d:"Match words with definitions!",i:"🎯",bg:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",extra:(bestM||bestMH)?(bestM?"Easy: "+bestM.time+"s":"")+(bestM&&bestMH?" · ":"")+(bestMH?"Hard: "+bestMH.time+"s":""):null},
     {id:"wfall",n:"Word Fall",d:"Catch the falling sentences!",i:"⬇️",bg:"linear-gradient(135deg,#ef4444,#f59e0b)",extra:bestF?"Best: "+bestF.score+" pts · x"+bestF.maxCombo+" combo":null},
     {id:"sbuild",n:"Sentence Builder",d:"Tap blocks in the right order!",i:"🔀",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     {id:"ablitz",n:"Audio Blitz",d:"Listen once, answer fast!",i:"🎵",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
-    {id:"clue",n:"Clue Hunter",d:"Find the clue, fill the blank!",i:"🧭",bg:"linear-gradient(135deg,#d4943a,#4abe60)"},
+    {id:"clue",n:"Clue Hunter",d:"Find the clue, fill the blank!",i:"🧭",bg:"linear-gradient(135deg,var(--cx-hex),#4abe60)"},
     {id:"duel",n:"Vocabulary Arena",d:"Real-time 1v1 — challenge a classmate!",i:"⚔️",bg:"linear-gradient(135deg,#c84040,#8b5e83)",tag:"NEW"},
   ];
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -4359,7 +4384,7 @@ function DailyTip(p){
     <div style={{width:"100%",maxWidth:420,background:"var(--bg2)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
 
       {/* Header */}
-      <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(212,148,58,.08),rgba(139,94,131,.08))"}}>
+      <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(139,94,131,.08))"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontSize:22}}>{"💡"}</span>
@@ -4509,9 +4534,9 @@ function SentenceBuilder(p){
         var showResult=ph==="fb";
         var posCorrect=chunk.idx===i;
         return(<span key={i} style={{padding:"8px 14px",borderRadius:10,fontSize:14,fontWeight:600,
-          background:showResult?(posCorrect?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)"):"rgba(212,148,58,.1)",
+          background:showResult?(posCorrect?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)"):"rgba(var(--cx),.1)",
           color:showResult?(posCorrect?"var(--green)":"var(--red)"):"var(--cyan)",
-          border:"1px solid "+(showResult?(posCorrect?"var(--green)":"var(--red)"):"rgba(212,148,58,.2)"),
+          border:"1px solid "+(showResult?(posCorrect?"var(--green)":"var(--red)"):"rgba(var(--cx),.2)"),
           transition:"all .2s"}}>{chunk.text}</span>);
       })}
     </div>
@@ -4697,7 +4722,7 @@ function AudioBlitz(p){
         var bg="var(--bg2)";var bd="var(--bdr)";
         if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
         else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-        else if(ph==="q"&&isPick){bg="rgba(212,148,58,.1)";bd="var(--cyan)";}
+        else if(ph==="q"&&isPick){bg="rgba(var(--cx),.1)";bd="var(--cyan)";}
         return(<button key={i} onClick={function(){doAnswer(i);}} disabled={show}
           style={{padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,
             cursor:ph==="q"?"pointer":"default",fontSize:14,color:"var(--t1)",textAlign:"left",
@@ -4712,7 +4737,7 @@ function AudioBlitz(p){
     {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
       {pick===-1&&<div style={{textAlign:"center",marginBottom:12}}>
         <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
-      <div className="crd" style={{padding:14,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)"}}>
+      <div className="crd" style={{padding:14,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
         <p className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",marginBottom:6}}>Transcript:</p>
         <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,fontStyle:"italic"}}>"{it.text}"</p>
       </div>
@@ -5042,7 +5067,7 @@ function DuelArena(p){
       <div style={{fontSize:56,marginBottom:8}}>{"⚔️"}</div>
       <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Vocabulary Arena</h1>
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{ROUNDS} rounds, {TIMER_SEC}s per question. Fastest wins!</p>
-      <div style={{marginTop:8,padding:"6px 16px",display:"inline-block",background:"rgba(212,148,58,.08)",borderRadius:20}}>
+      <div style={{marginTop:8,padding:"6px 16px",display:"inline-block",background:"rgba(var(--cx),.08)",borderRadius:20}}>
         <span style={{fontSize:13,color:"var(--cyan)",fontWeight:700}}>Weekly XP: {p.u.weeklyXp}</span>
       </div>
     </div>
@@ -5059,7 +5084,7 @@ function DuelArena(p){
       </div>
     </div>}
 
-    <div className="crd" style={{padding:16,marginBottom:10,cursor:"pointer",borderColor:"rgba(212,148,58,.15)"}} onClick={function(){
+    <div className="crd" style={{padding:16,marginBottom:10,cursor:"pointer",borderColor:"rgba(var(--cx),.15)"}} onClick={function(){
       setWager(0);setError(null);setPhase("pickAction");
     }}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
@@ -5146,7 +5171,7 @@ function DuelArena(p){
       <div style={{fontSize:14,color:"var(--t2)",marginBottom:12}}>Share this code with your class:</div>
       <div className="out" style={{fontSize:44,fontWeight:900,letterSpacing:8,color:"var(--cyan)",animation:"pulse 2s infinite"}}>{roomCode}</div>
     </div>
-    <div style={{padding:"12px 20px",background:"rgba(212,148,58,.08)",borderRadius:16,marginBottom:20}}>
+    <div style={{padding:"12px 20px",background:"rgba(var(--cx),.08)",borderRadius:16,marginBottom:20}}>
       <span style={{fontSize:36,fontWeight:900,color:"var(--cyan)"}}>{playerCount}</span>
       <span style={{fontSize:14,color:"var(--t2)",marginLeft:8}}>{playerCount===1?"player (you)":"players"}</span>
     </div>
@@ -5191,7 +5216,7 @@ function DuelArena(p){
     <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Room {roomCode}</h2>
     {wager>0&&<div style={{padding:"8px 20px",background:"rgba(255,71,87,.1)",borderRadius:20,display:"inline-block",marginBottom:12}}>
       <span style={{fontSize:16,fontWeight:800,color:"var(--red)"}}>Wager: {wager} XP</span></div>}
-    <div style={{padding:"12px 20px",background:"rgba(212,148,58,.08)",borderRadius:16,marginBottom:16}}>
+    <div style={{padding:"12px 20px",background:"rgba(var(--cx),.08)",borderRadius:16,marginBottom:16}}>
       <span style={{fontSize:36,fontWeight:900,color:"var(--cyan)"}}>{playerCount}</span>
       <span style={{fontSize:14,color:"var(--t2)",marginLeft:8}}>players in room</span>
     </div>
@@ -5246,7 +5271,7 @@ function DuelArena(p){
         {q.opts.map(function(opt,i){
           var picked=myPick===i;
           return(<button key={i} onClick={function(){doAnswer(i);}} disabled={myPick!==-1}
-            style={{padding:"14px 16px",background:picked?"rgba(212,148,58,.1)":"var(--bg2)",
+            style={{padding:"14px 16px",background:picked?"rgba(var(--cx),.1)":"var(--bg2)",
               border:picked?"2px solid var(--cyan)":"1px solid var(--bdr)",borderRadius:12,
               cursor:myPick!==-1?"default":"pointer",fontSize:14,color:picked?"var(--cyan)":"var(--t1)",
               textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .15s",lineHeight:1.5,
@@ -5286,7 +5311,7 @@ function DuelArena(p){
           {top5.map(function(r,i){
             var isMe=r.pid===myIdRef.current;
             var correct3=r.pick===q2.c;
-            return(<div key={r.pid} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:10,background:isMe?"rgba(212,148,58,.08)":"transparent"}}>
+            return(<div key={r.pid} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:10,background:isMe?"rgba(var(--cx),.08)":"transparent"}}>
               <span style={{width:24,fontSize:14,textAlign:"center"}}>{i<3?MEDALS[i]:(i+1)}</span>
               <span style={{flex:1,fontSize:13,fontWeight:isMe?700:400,color:isMe?"var(--cyan)":"var(--t1)"}}>{r.name}{isMe?" (you)":""}</span>
               <span style={{fontSize:11,color:correct3?"var(--green)":"var(--red)",fontWeight:600}}>{correct3?"✓":"✗"}</span>
@@ -5295,7 +5320,7 @@ function DuelArena(p){
           })}
           {showMe&&myEntry2&&<div>
             <div style={{textAlign:"center",color:"var(--t3)",fontSize:11,padding:"4px 0"}}>···</div>
-            <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:10,background:"rgba(212,148,58,.08)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:10,background:"rgba(var(--cx),.08)"}}>
               <span style={{width:24,fontSize:12,textAlign:"center",color:"var(--t3)"}}>{myRank}</span>
               <span style={{flex:1,fontSize:13,fontWeight:700,color:"var(--cyan)"}}>{myEntry2.name} (you)</span>
               <span style={{fontSize:11,color:myEntry2.pick===q2.c?"var(--green)":"var(--red)",fontWeight:600}}>{myEntry2.pick===q2.c?"✓":"✗"}</span>
@@ -5364,15 +5389,15 @@ function DuelArena(p){
       </div>
 
       {/* My position if not podium */}
-      {myFinalRank>3&&myFinal&&<div className="crd" style={{padding:14,marginBottom:16,textAlign:"center",borderColor:"rgba(212,148,58,.2)"}}>
+      {myFinalRank>3&&myFinal&&<div className="crd" style={{padding:14,marginBottom:16,textAlign:"center",borderColor:"rgba(var(--cx),.2)"}}>
         <div style={{fontSize:11,color:"var(--t3)",marginBottom:4}}>Your position</div>
         <div className="out" style={{fontSize:20,fontWeight:900,color:"var(--cyan)"}}>#{myFinalRank} — {myFinal.score} pts</div>
       </div>}
 
       {/* Wager result */}
       {wager>0&&<div className="crd" style={{padding:14,marginBottom:16,textAlign:"center",
-        background:wagerNet>0?"rgba(0,230,118,.06)":wagerNet===0?"rgba(212,148,58,.06)":"rgba(255,71,87,.06)",
-        borderColor:wagerNet>0?"rgba(0,230,118,.2)":wagerNet===0?"rgba(212,148,58,.2)":"rgba(255,71,87,.2)"}}>
+        background:wagerNet>0?"rgba(0,230,118,.06)":wagerNet===0?"rgba(var(--cx),.06)":"rgba(255,71,87,.06)",
+        borderColor:wagerNet>0?"rgba(0,230,118,.2)":wagerNet===0?"rgba(var(--cx),.2)":"rgba(255,71,87,.2)"}}>
         <div style={{fontSize:13,color:"var(--t2)",marginBottom:4}}>Pot: {wager*pc} XP ({pc} players × {wager})</div>
         <div className="out" style={{fontSize:24,fontWeight:900,color:wagerNet>0?"var(--green)":wagerNet===0?"var(--cyan)":"var(--red)"}}>
           {wagerNet>0?"+"+wagerNet+" XP won!":wagerNet===0?"XP returned":wagerNet+" XP lost"}
@@ -5448,7 +5473,7 @@ function ClueHunter(p){
   function SentenceCard({item,answerWord,isCorrect}){
     var parts=item.sentence.split("___");
     return(
-      <div className="crd" style={{padding:"28px 24px",marginBottom:24,background:"rgba(212,148,58,.04)",borderColor:"rgba(212,148,58,.12)"}}>
+      <div className="crd" style={{padding:"28px 24px",marginBottom:24,background:"rgba(var(--cx),.04)",borderColor:"rgba(var(--cx),.12)"}}>
         <p style={{fontSize:20,lineHeight:1.8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif"}}>
           {parts.map(function(part,i){return(<span key={i}>{part}
             {i<parts.length-1&&(answerWord
@@ -5466,7 +5491,7 @@ function ClueHunter(p){
         <div/>
         <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1} / {TOTAL}</span>
       </div>
-      <Bar value={phase==="ans_fb"?ci+1:ci} max={TOTAL} h={4} color="linear-gradient(90deg,#d4943a,#8b5e83)"/>
+      <Bar value={phase==="ans_fb"?ci+1:ci} max={TOTAL} h={4} color="linear-gradient(90deg,var(--cx-hex),#8b5e83)"/>
       <div style={{marginTop:20,marginBottom:12}}>
         <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{"🧭"} {phase==="clue_fb"||phase==="ans_fb"?items[ci].cat:"Find the clue..."}</span>
       </div>
@@ -5490,7 +5515,7 @@ function ClueHunter(p){
             {n:"3",t:"Fill the blank",d:"Right clue + right answer = max XP."},
           ].map(function(s){return(
             <div key={s.n} style={{display:"flex",gap:14,alignItems:"flex-start"}}>
-              <div style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <div style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 <span className="out" style={{fontSize:13,fontWeight:800,color:"#fff"}}>{s.n}</span>
               </div>
               <div><div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>{s.t}</div>
@@ -5549,7 +5574,7 @@ function ClueHunter(p){
           var isSel=selected.includes(idx);
           return(
             <button key={idx} onClick={function(){toggleChip(idx);}}
-              style={{padding:"11px 20px",borderRadius:28,border:"2px solid "+(isSel?"var(--cyan)":"var(--bdr)"),background:isSel?"rgba(212,148,58,.12)":"var(--bg2)",color:isSel?"var(--cyan)":"var(--t1)",fontSize:15,fontFamily:"'DM Sans',sans-serif",fontWeight:isSel?700:500,cursor:"pointer",transition:"all .15s",transform:isSel?"scale(1.05)":"scale(1)"}}>
+              style={{padding:"11px 20px",borderRadius:28,border:"2px solid "+(isSel?"var(--cyan)":"var(--bdr)"),background:isSel?"rgba(var(--cx),.12)":"var(--bg2)",color:isSel?"var(--cyan)":"var(--t1)",fontSize:15,fontFamily:"'DM Sans',sans-serif",fontWeight:isSel?700:500,cursor:"pointer",transition:"all .15s",transform:isSel?"scale(1.05)":"scale(1)"}}>
               {chip.w}
             </button>);
         })}
@@ -5582,7 +5607,7 @@ function ClueHunter(p){
             </div>);
         })}
       </div>
-      <div className="crd" style={{padding:20,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",marginBottom:28}}>
+      <div className="crd" style={{padding:20,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",marginBottom:28}}>
         <p className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>{"💡"} Clue analysis</p>
         <p style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{item.clue}</p>
       </div>
@@ -5642,7 +5667,7 @@ function ClueHunter(p){
               </div>);
           })}
         </div>
-        <div className="crd" style={{padding:18,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",marginBottom:24}}>
+        <div className="crd" style={{padding:18,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",marginBottom:24}}>
           <p style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{item.exp}</p>
         </div>
         <div style={{marginTop:"auto"}}>
@@ -5807,13 +5832,13 @@ function SpeedMatch(p){
       <span style={{fontSize:12,color:"var(--t2)"}}>{matched.length}/{pairCount}</span>
     </div>
     <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:2,marginBottom:20,overflow:"hidden"}}>
-      <div style={{height:"100%",width:Math.round(matched.length/pairCount*100)+"%",background:"linear-gradient(90deg,#d4943a,#8b5e83)",borderRadius:2,transition:"width .3s"}}/></div>
+      <div style={{height:"100%",width:Math.round(matched.length/pairCount*100)+"%",background:"linear-gradient(90deg,var(--cx-hex),#8b5e83)",borderRadius:2,transition:"width .3s"}}/></div>
 
     <div style={{display:"grid",gridTemplateColumns:"repeat("+cols+",1fr)",gridTemplateRows:"repeat("+rows+",1fr)",gap:6,flex:1}}>
       {pairs.map(function(tile){
         var isRevealed=revealed.indexOf(tile.id)!==-1;
         var isMatched=matched.indexOf(tile.pairId)!==-1;
-        var bgColor=isMatched?"rgba(0,230,118,.18)":isRevealed?(tile.type==="word"?"rgba(212,148,58,.2)":"rgba(139,94,131,.2)"):"var(--bg3)";
+        var bgColor=isMatched?"rgba(0,230,118,.18)":isRevealed?(tile.type==="word"?"rgba(var(--cx),.2)":"rgba(139,94,131,.2)"):"var(--bg3)";
         var borderColor=isMatched?"var(--green)":isRevealed?(tile.type==="word"?"var(--cyan)":"var(--purple)"):"var(--bdr)";
         if(lastWrong&&isRevealed)borderColor="var(--red)";
 
@@ -6079,6 +6104,116 @@ function animateFall(){
 
 
 // ═══════════════════════════════════════════════════════════════
+// AVATAR MEDAL — SVG shield + Game Icons icon
+// ═══════════════════════════════════════════════════════════════
+function AvatarMedal(p){
+  var avatarId=p.avatarId;var size=p.size||48;
+  var av=AVATARS[avatarId];
+  if(!av)return(<div style={{width:size,height:size,borderRadius:size*.35,background:"var(--bg3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.5}}>{"?"}</div>);
+  var rarity=RARITIES.find(function(r){return r.id===av.rarity;})||RARITIES[0];
+  var iconPath=GAME_ICON_PATHS[av.icon]||"";
+  var iconSize=size*.55;
+  return(<div style={{width:size,height:size,position:"relative",flexShrink:0}}>
+    {/* Shield background */}
+    <svg viewBox="0 0 100 100" width={size} height={size}>
+      <defs>
+        <linearGradient id={"avg_"+avatarId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={rarity.color} stopOpacity="0.3"/>
+          <stop offset="100%" stopColor={rarity.color} stopOpacity="0.1"/>
+        </linearGradient>
+      </defs>
+      {/* Shield shape */}
+      <path d="M50 5 L90 20 L90 55 Q90 80 50 95 Q10 80 10 55 L10 20 Z" fill={"url(#avg_"+avatarId+")"} stroke={rarity.color} strokeWidth="2.5"/>
+    </svg>
+    {/* Icon overlay */}
+    <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:iconSize,height:iconSize}}>
+      <svg viewBox={GAME_ICON_VIEWBOX} width={iconSize} height={iconSize} fill={rarity.color}>
+        <g dangerouslySetInnerHTML={{__html:iconPath}}/>
+      </svg>
+    </div>
+  </div>);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHEST OPEN MODAL — 3-phase animation
+// ═══════════════════════════════════════════════════════════════
+function ChestOpenModal(p){
+  var[phase,setPhase]=useState("shake"); // shake → flash → reveal
+  var chest=p.chest;var result=p.result;
+  var ct=CHEST_TYPES[chest.chest_type]||CHEST_TYPES.novice;
+
+  useEffect(function(){
+    if(phase==="shake"){
+      // Phase 1: shake for 1.2s, then auto-open
+      var t=setTimeout(function(){p.onOpen();setPhase("flash");},1200);
+      return function(){clearTimeout(t);};
+    }
+    if(phase==="flash"){
+      var t2=setTimeout(function(){setPhase("reveal");},800);
+      return function(){clearTimeout(t2);};
+    }
+  },[phase]);
+
+  // Particles for flash phase
+  var particles=[];
+  if(phase==="flash"||phase==="reveal"){
+    for(var i=0;i<12;i++){
+      var angle=(i/12)*360;var rad=angle*Math.PI/180;
+      particles.push({x:Math.cos(rad)*60,y:Math.sin(rad)*60,delay:i*0.05,color:result?result.rarityColor:"#ffc020"});
+    }
+  }
+
+  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div style={{textAlign:"center",maxWidth:340,width:"100%"}}>
+
+      {/* Phase 1: Shaking chest */}
+      {phase==="shake"&&<div style={{animation:"chestShake 1.2s ease-in-out"}}>
+        <div style={{fontSize:80,marginBottom:16}}>{ct.icon}</div>
+        <div className="out" style={{fontSize:18,fontWeight:800,color:"var(--gold)",animation:"pulse 1s infinite"}}>{ct.label} Chest</div>
+        <p style={{color:"var(--t3)",fontSize:12,marginTop:8}}>Opening...</p>
+      </div>}
+
+      {/* Phase 2: Flash + particles */}
+      {phase==="flash"&&<div style={{position:"relative",height:200,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{position:"absolute",width:120,height:120,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,192,32,.8),transparent 70%)",animation:"chestFlash .8s ease-out forwards"}}/>
+        {particles.map(function(pt,i){return(<div key={i} style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:pt.color,left:"50%",top:"50%",marginLeft:pt.x,marginTop:pt.y,animation:"chestParticle .8s ease-out "+pt.delay+"s forwards",opacity:0.8}}/>);})}
+        <div style={{fontSize:64,position:"relative",zIndex:1,animation:"pulse .4s"}}>{ct.icon}</div>
+      </div>}
+
+      {/* Phase 3: Reveal reward */}
+      {phase==="reveal"&&result&&<div style={{animation:"chestReveal .6s ease-out"}}>
+        <div style={{width:100,height:100,borderRadius:20,margin:"0 auto 20px",display:"flex",alignItems:"center",justifyContent:"center",
+          background:"linear-gradient(135deg,"+result.rarityColor+"22,"+result.rarityColor+"44)",
+          border:"2px solid "+result.rarityColor,boxShadow:"0 0 30px "+result.rarityColor+"33"}}>
+          {result.reward.type==="xp"?<span style={{fontSize:48}}>{"\uD83D\uDC8E"}</span>:
+           result.reward.type==="avatar"?<AvatarMedal avatarId={result.reward.id} size={72}/>:
+           <span style={{fontSize:48}}>{"\uD83C\uDFA8"}</span>}
+        </div>
+        <div className="out" style={{fontSize:12,fontWeight:700,color:result.rarityColor,textTransform:"uppercase",letterSpacing:2,marginBottom:6}}>{result.rarityLabel}</div>
+        <div className="out" style={{fontSize:22,fontWeight:900,color:"var(--t1)",marginBottom:8}}>
+          {result.reward.type==="xp"?"+"+result.xpAmount+" XP":
+           result.reward.type==="avatar"?(AVATARS[result.reward.id]?AVATARS[result.reward.id].name:result.reward.id):
+           result.reward.type==="skin"?(SKINS[result.reward.id]?SKINS[result.reward.id].name:result.reward.id):"???"}
+        </div>
+        <div style={{fontSize:13,color:"var(--t2)",marginBottom:24}}>
+          {result.reward.type==="xp"?"XP Gem — bonus added!":
+           result.reward.type==="avatar"?"New avatar unlocked!":
+           "New skin unlocked!"}
+        </div>
+        {result.reward.type==="skin"&&SKINS[result.reward.id]&&<div style={{width:60,height:60,borderRadius:14,margin:"0 auto 20px",background:"linear-gradient(135deg,"+SKINS[result.reward.id].hex+","+SKINS[result.reward.id].dark+")",border:"2px solid "+result.rarityColor}}/>}
+        <button className="btn1" onClick={p.onClose} style={{width:"100%",fontSize:15}}>Collect</button>
+      </div>}
+
+      {/* Reveal but no result yet (loading) */}
+      {phase==="reveal"&&!result&&<div>
+        <div style={{fontSize:48,animation:"pulse 1s infinite"}}>{"⏳"}</div>
+        <p style={{color:"var(--t3)",fontSize:13,marginTop:12}}>Rolling...</p>
+      </div>}
+    </div>
+  </div>);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // TeacherDash v2.0 — Stats avancées + Export CSV
 // REPLACES the existing TeacherDash function (lines 3124-3250)
 // ═══════════════════════════════════════════════════════════════
@@ -6141,7 +6276,7 @@ function TeacherDash(p){
   useEffect(function(){loadStudents();},[classCode])
 
   // ── Chart colors matching app theme ──
-  var CHART_COLORS=["#d4943a","#8b5e83","#c87a35","#f0c850","#4abe60","#e05252","#c4587a","#5a7a9a","#2a9a8a","#d4943a","#7a5a80","#3a9080"];
+  var CHART_COLORS=["var(--cx-hex)","#8b5e83","#c87a35","#f0c850","#4abe60","#e05252","#c4587a","#5a7a9a","#2a9a8a","var(--cx-hex)","#7a5a80","#3a9080"];
 
   // ── Compute class-wide module accuracy data ──
   function getClassModuleData(){
@@ -6325,7 +6460,7 @@ function TeacherDash(p){
 
       {/* Student header */}
       <div style={{textAlign:"center",marginBottom:24}}>
-        <div style={{width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 10px",fontSize:24,fontWeight:900}} className="out">{s.name.charAt(0).toUpperCase()}</div>
+        <div style={{width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 10px",fontSize:24,fontWeight:900}} className="out">{s.name.charAt(0).toUpperCase()}</div>
         <h2 className="out" style={{fontWeight:800,fontSize:20}}>{s.name}</h2>
         <div style={{display:"flex",justifyContent:"center",gap:12,marginTop:6}}>
           <span style={{fontSize:12,color:"var(--t2)"}}>Level {getLevel(s.xp||0).level}</span>
@@ -6340,7 +6475,7 @@ function TeacherDash(p){
         var toeicCol=toeic.total>=750?"var(--green)":toeic.total>=500?"var(--orange)":"var(--red)";
         return(<div style={{marginBottom:20}}>
           {/* TOEIC Score — full width banner */}
-          <div className="crd" style={{padding:"12px 16px",marginBottom:8,background:"linear-gradient(135deg,rgba(212,148,58,.06),rgba(139,94,131,.06))",borderColor:"rgba(212,148,58,.15)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div className="crd" style={{padding:"12px 16px",marginBottom:8,background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(139,94,131,.06))",borderColor:"rgba(var(--cx),.15)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div>
               <div className="out" style={{fontWeight:800,fontSize:11,color:"var(--t3)",letterSpacing:1,textTransform:"uppercase",marginBottom:2}}>Est. TOEIC Score</div>
               <div className="out" style={{fontWeight:900,fontSize:28,color:toeicCol,lineHeight:1}}>{toeic.total}<span style={{fontSize:13,color:"var(--t3)",fontWeight:400}}>/990</span></div>
@@ -6404,7 +6539,7 @@ function TeacherDash(p){
             <XAxis dataKey="date" tick={{fill:"var(--t3)",fontSize:9}} axisLine={{stroke:"var(--bdr)"}} tickLine={false}/>
             <YAxis domain={[0,100]} tick={{fill:"var(--t3)",fontSize:10}} axisLine={{stroke:"var(--bdr)"}} tickLine={false} width={30}/>
             <Tooltip content={ChartTip}/>
-            <Line type="monotone" dataKey="accuracy" stroke="#d4943a" strokeWidth={2} dot={{fill:"#d4943a",r:4}} activeDot={{r:6,fill:"#8b5e83"}}/>
+            <Line type="monotone" dataKey="accuracy" stroke="var(--cx-hex)" strokeWidth={2} dot={{fill:"var(--cx-hex)",r:4}} activeDot={{r:6,fill:"#8b5e83"}}/>
           </LineChart>
         </ResponsiveContainer>):(<div style={{textAlign:"center",padding:"20px 8px"}}><p style={{fontSize:12,color:"var(--t3)"}}>📉 Not enough data points yet. History builds from new sessions.</p></div>)}
       </div>)}
@@ -6466,7 +6601,7 @@ function TeacherDash(p){
         var btn=ev.currentTarget;btn.textContent="Registering...";
         try{await bioRegister();setTdBioReg(true);}catch(e){alert("Biometric setup failed: "+(e.message||e));btn.textContent="Retry";}
       }}
-        style={{width:"100%",padding:"12px 16px",marginBottom:16,background:"rgba(212,148,58,.08)",border:"1px solid rgba(212,148,58,.25)",borderRadius:12,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:"'DM Sans',sans-serif"}}>
+        style={{width:"100%",padding:"12px 16px",marginBottom:16,background:"rgba(var(--cx),.08)",border:"1px solid rgba(var(--cx),.25)",borderRadius:12,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:"'DM Sans',sans-serif"}}>
         <span style={{fontSize:22}}>{"🔒"}</span>
         <div style={{textAlign:"left",flex:1}}><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)"}}>Enable biometric unlock</div>
         <div style={{fontSize:11,color:"var(--t3)"}}>Use fingerprint or Face ID for quick access</div></div>
@@ -6493,7 +6628,7 @@ function TeacherDash(p){
             border:"1px solid "+(isExpired?"rgba(255,71,87,.25)":"var(--bdr)"),background:"var(--bg2)",borderRadius:16,textAlign:"left",
             transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
             <div style={{width:48,height:48,borderRadius:14,
-              background:g.type==="school"?"rgba(212,148,58,.1)":g.type==="pro"?"rgba(255,140,66,.1)":"rgba(139,94,131,.1)",
+              background:g.type==="school"?"rgba(var(--cx),.1)":g.type==="pro"?"rgba(255,140,66,.1)":"rgba(139,94,131,.1)",
               display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{typeIcon}</div>
             <div style={{flex:1,minWidth:0}}>
               <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{g.name}{isExpired&&<span style={{marginLeft:8,fontSize:10,padding:"2px 8px",borderRadius:99,background:"rgba(255,71,87,.12)",color:"var(--red)",fontWeight:600}}>{"Expir\u00e9"}</span>}</div>
@@ -6581,7 +6716,7 @@ function TeacherDash(p){
             {cgSeasons.length>0?
               <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
                 {cgSeasons.map(function(s){
-                  return(<div key={s.id} style={{flex:"1 0 0",minWidth:70,padding:"10px 8px",background:"rgba(212,148,58,.04)",border:"1px solid rgba(212,148,58,.12)",borderRadius:10,textAlign:"center"}}>
+                  return(<div key={s.id} style={{flex:"1 0 0",minWidth:70,padding:"10px 8px",background:"rgba(var(--cx),.04)",border:"1px solid rgba(var(--cx),.12)",borderRadius:10,textAlign:"center"}}>
                     <div style={{fontSize:20,marginBottom:4}}>{s.icon}</div>
                     <div className="out" style={{fontWeight:700,fontSize:12,color:s.color,marginBottom:2}}>S{s.id}</div>
                     <div style={{fontSize:10,color:"var(--t2)",fontWeight:600}}>{s.name}</div>
@@ -6640,7 +6775,7 @@ function TeacherDash(p){
  {/* Current group indicator */}
     {function(){var g=groups.find(function(x){return x.code===classCode;});
       var typeIcon=g?(g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍"):"📋";
-      return(<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,padding:"8px 14px",background:"rgba(212,148,58,.06)",borderRadius:12,border:"1px solid rgba(212,148,58,.12)"}}>
+      return(<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,padding:"8px 14px",background:"rgba(var(--cx),.06)",borderRadius:12,border:"1px solid rgba(var(--cx),.12)"}}>
         <span style={{fontSize:16}}>{typeIcon}</span>
         <span className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",flex:1}}>{g?g.name:classCode}</span>
         <button onClick={function(){setDashPhase("picker");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}} className="out">Change ›</button>
@@ -6660,7 +6795,7 @@ function TeacherDash(p){
       {/* Action buttons */}
       <div style={{display:"flex",gap:8,marginBottom:16}}>
         <button className="btn1" onClick={function(){setLoad(true);loadStudents();}} style={{flex:1,fontSize:13}}>🔄 Refresh</button>
-        <button className="btn2" onClick={exportCSV} style={{flex:1,fontSize:13,borderColor:"rgba(212,148,58,.3)",color:"var(--cyan)"}}>📥 Export CSV</button>
+        <button className="btn2" onClick={exportCSV} style={{flex:1,fontSize:13,borderColor:"rgba(var(--cx),.3)",color:"var(--cyan)"}}>📥 Export CSV</button>
       </div>
 
       {/* Student list */}
@@ -6714,7 +6849,7 @@ function TeacherDash(p){
               var lastSeen=s.last_active?s.last_active.substring(5):"—";
               return(<div key={i} className="crd" style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",cursor:"pointer"}}
                 onClick={function(){setDetail(origIdx);}}>
-                <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0}} className="out">{s.name.charAt(0).toUpperCase()}</div>
+                <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0}} className="out">{s.name.charAt(0).toUpperCase()}</div>
                 <div style={{flex:1,minWidth:0}}>
                   <div className="out" style={{fontWeight:700,fontSize:13}}>{s.name}</div>
                   <div style={{display:"flex",gap:6,marginTop:2,flexWrap:"wrap"}}>
@@ -6813,7 +6948,7 @@ function TeacherDash(p){
             return(<div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
               <span style={{width:70,fontSize:11,color:"var(--t2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} className="out">{s.name.split(" ")[0]}</span>
               <div style={{flex:1,height:14,background:"var(--bg3)",borderRadius:7,overflow:"hidden"}}>
-                <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,#d4943a,#8b5e83)",borderRadius:7,transition:"width .4s ease"}}/>
+                <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,var(--cx-hex),#8b5e83)",borderRadius:7,transition:"width .4s ease"}}/>
               </div>
               <span style={{fontSize:10,color:"var(--t3)",width:40,textAlign:"right"}}>{sess} sess</span>
             </div>);
@@ -6866,7 +7001,7 @@ function TeacherDash(p){
               }
               var isCurrentWeek=wk===(students[0]&&students[0].week_id);
 
-              return(<div key={wk} className="crd" style={{padding:14,borderColor:isCurrentWeek?"rgba(212,148,58,.2)":"var(--bdr)"}}>
+              return(<div key={wk} className="crd" style={{padding:14,borderColor:isCurrentWeek?"rgba(var(--cx),.2)":"var(--bdr)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                   <span className="out" style={{fontWeight:700,fontSize:13,color:isCurrentWeek?"var(--cyan)":"var(--t1)"}}>{weekLabel}{isCurrentWeek?" (current)":""}</span>
                   <span style={{fontSize:11,color:"var(--t3)"}}>{weekMap[wk].length} students</span>
@@ -6890,7 +7025,7 @@ function TeacherDash(p){
       }()}
 
       {/* CSV export in analytics too */}
-      <button className="btn2" onClick={exportCSV} style={{width:"100%",fontSize:13,borderColor:"rgba(212,148,58,.3)",color:"var(--cyan)",marginBottom:16}}>📥 Export class data (CSV)</button>
+      <button className="btn2" onClick={exportCSV} style={{width:"100%",fontSize:13,borderColor:"rgba(var(--cx),.3)",color:"var(--cyan)",marginBottom:16}}>📥 Export class data (CSV)</button>
     </div>)}
 
     {/* ═══ EVENTS TAB ═══ */}
@@ -6903,7 +7038,7 @@ function TeacherDash(p){
             {[{id:"spotlight",l:"🎯 Spotlight",c:"var(--cyan)"},{id:"flash_hour",l:"⚡ Flash Hour",c:"var(--gold)"},{id:"underdog",l:"💪 Underdog",c:"var(--green)"}].map(function(t){
               return(<button key={t.id} onClick={function(){setEvForm(function(f){return Object.assign({},f,{type:t.id});});}}
                 style={{flex:1,padding:"10px 6px",borderRadius:10,border:"1px solid "+(evForm.type===t.id?t.c:"var(--bdr)"),
-                  background:evForm.type===t.id?"rgba(212,148,58,.08)":"var(--bg3)",color:evForm.type===t.id?t.c:"var(--t3)",
+                  background:evForm.type===t.id?"rgba(var(--cx),.08)":"var(--bg3)",color:evForm.type===t.id?t.c:"var(--t3)",
                   fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}} className="out">{t.l}</button>);
             })}
           </div>
@@ -6983,7 +7118,7 @@ function TeacherDash(p){
           var isPast=new Date(ev.end_at)<now;
           var icon=ev.type==="spotlight"?"🎯":ev.type==="flash_hour"?"⚡":"💪";
           var cfg=ev.config||{};
-          return(<div key={ev.id} className="crd" style={{padding:14,opacity:isPast?.5:1,borderColor:isActive?"rgba(212,148,58,.3)":"var(--bdr)"}}>
+          return(<div key={ev.id} className="crd" style={{padding:14,opacity:isPast?.5:1,borderColor:isActive?"rgba(var(--cx),.3)":"var(--bdr)"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <span style={{fontSize:20}}>{icon}</span>
               <div style={{flex:1}}>
@@ -7127,7 +7262,7 @@ function ListenP2(p){
           <span>{opt}</span></div>);
       })}
     </div>
-    <div className="crd" style={{marginTop:16,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:14,animation:"fadeIn .3s"}}>
+    <div className="crd" style={{marginTop:16,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14,animation:"fadeIn .3s"}}>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.x}</p></div>
     <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button>
   </div>);
@@ -7229,7 +7364,7 @@ function ListenP1(p){
       })}
     </div>
 
-    <div className="crd" style={{marginTop:12,background:"rgba(212,148,58,.06)",borderColor:"rgba(212,148,58,.15)",padding:12,animation:"fadeIn .3s"}}>
+    <div className="crd" style={{marginTop:12,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:12,animation:"fadeIn .3s"}}>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.x}</p></div>
     <button className="btn1" onClick={nxt} style={{marginTop:14}}>{ci<items.length-1?"Next":"See Results"}</button>
   </div>);
@@ -7724,7 +7859,7 @@ var countdown=curSeason?getSeasonEndCountdown(curSeason):"";
 
 // ── Render helpers ──
 function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP",bonus=props.bonus||null,bonusColor=props.bonusColor||"var(--gold)";
-  return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(212,148,58,.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(212,148,58,.25)":"1px solid var(--bdr)",borderRadius:12}}>
+  return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(var(--cx),.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12}}>
     <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?(rank===1?"🥇":rank===2?"🥈":"🥉"):rank}</div>
     <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
     <div style={{flex:1}}>
@@ -7742,7 +7877,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 </div>}
 
 {/* Season banner */}
-{curSeason&&<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(212,148,58,.06),rgba(139,94,131,.06))",borderColor:"rgba(212,148,58,.15)"}}>
+{curSeason&&<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(139,94,131,.06))",borderColor:"rgba(var(--cx),.15)"}}>
   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
       <span style={{fontSize:22}}>{curSeason.icon}</span>
@@ -7798,7 +7933,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
         {displayed.map(function(pl,i){
           var plLg=getLeague(pl.xp);
-          return(<div key={pl.name} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:pl.me?"rgba(212,148,58,.08)":pl.inactive?"var(--bg1)":"var(--bg2)",border:pl.me?"1.5px solid rgba(212,148,58,.25)":"1px solid var(--bdr)",borderRadius:12,opacity:pl.inactive?0.55:1}}>
+          return(<div key={pl.name} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:pl.me?"rgba(var(--cx),.08)":pl.inactive?"var(--bg1)":"var(--bg2)",border:pl.me?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12,opacity:pl.inactive?0.55:1}}>
             <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:(!pl.inactive&&i<3)?"var(--gold)":"var(--t3)"}}>{pl.inactive?"—":i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</div>
             <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
             <div style={{flex:1}}>
@@ -7823,7 +7958,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 {/* ── SEASON TAB ── */}
 {tab==="season"&&curSeason&&(<div>
-  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(212,148,58,.04),rgba(139,94,131,.04))"}}>
+  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(var(--cx),.04),rgba(139,94,131,.04))"}}>
     <div style={{fontSize:36,marginBottom:6}}>{curSeason.icon}</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} semaines {"\u00B7"} {countdown}</div>
@@ -7848,7 +7983,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   <div style={{display:"flex",gap:6,marginBottom:16}}>
     {dynSeasons.map(function(s){
       var isCurrent=s.id===curSeason.id;var isPast=s.weeks[s.weeks.length-1]<cw;
-      return(<div key={s.id} className="crd" style={{flex:1,padding:"8px 4px",textAlign:"center",borderColor:isCurrent?"rgba(212,148,58,.3)":"var(--bdr)",opacity:(!isCurrent&&!isPast)?0.4:1}}>
+      return(<div key={s.id} className="crd" style={{flex:1,padding:"8px 4px",textAlign:"center",borderColor:isCurrent?"rgba(var(--cx),.3)":"var(--bdr)",opacity:(!isCurrent&&!isPast)?0.4:1}}>
         <div style={{fontSize:16}}>{s.icon}</div>
         <div style={{fontSize:9,color:isCurrent?"var(--cyan)":"var(--t3)",fontWeight:isCurrent?700:400}}>S{s.id}</div>
         <div style={{fontSize:8,color:"var(--t3)"}}>{isPast?"Terminé":isCurrent?"En cours":"Bientôt"}</div>
@@ -7903,8 +8038,8 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
             var bonusLabel=(pl.gain>0)?(isTop3?"🏆 +2pts":isTop10?"⭐ +1pt":""):"";
             return(<div key={pl.name} style={{
               display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
-              background:pl.me?"rgba(212,148,58,.08)":"var(--bg2)",
-              border:pl.me?"1.5px solid rgba(212,148,58,.25)":isTop3?"1px solid rgba(74,190,96,.25)":"1px solid var(--bdr)",
+              background:pl.me?"rgba(var(--cx),.08)":"var(--bg2)",
+              border:pl.me?"1.5px solid rgba(var(--cx),.25)":isTop3?"1px solid rgba(74,190,96,.25)":"1px solid var(--bdr)",
               borderRadius:12}}>
               <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,
                 color:rank===1?"var(--gold)":rank===2?"#c0c0c0":rank===3?"#cd7f32":"var(--t3)"}}>
@@ -8017,7 +8152,7 @@ function Profile(p){
 
   function renderAvatar(size,fs){
     if(isPhoto)return(<img src={u.avatar} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",display:"block"}}/>);
-    return(<div style={{width:size,height:size,borderRadius:"50%",background:"linear-gradient(135deg,#d4943a,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs||(size*0.5)}}>{u.avatar||"⚔️"}</div>);
+    return(<div style={{width:size,height:size,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs||(size*0.5)}}>{u.avatar||"⚔️"}</div>);
   }
 
   function handlePhotoUpload(e){
@@ -8055,8 +8190,8 @@ function Profile(p){
         <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Mes Stats</h1>
       </div>
       <div className="crd" style={{padding:"14px 18px",marginBottom:16,
-        background:"linear-gradient(135deg,rgba(212,148,58,.06),rgba(139,94,131,.06))",
-        borderColor:"rgba(212,148,58,.15)"}}>
+        background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(139,94,131,.06))",
+        borderColor:"rgba(var(--cx),.15)"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
             <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Score TOEIC estimé</div>
@@ -8096,7 +8231,7 @@ function Profile(p){
       {/* ── BATTLE SCAN RESULTS ── */}
       {u.battleScan&&u.battleScan.scores&&function(){
         var bs=u.battleScan,sc=bs.scores;
-        var axes=[{id:"grammar",label:"Grammar",arena:"Blade Precision",icon:"\u2694\uFE0F",color:"#d4943a"},{id:"vocab",label:"Vocabulary",arena:"Arcane Lore",icon:"\uD83D\uDCDA",color:"#8b5cf6"},{id:"reading",label:"Reading",arena:"Tactical Sight",icon:"\uD83D\uDD0D",color:"#22c55e"},{id:"listening",label:"Listening",arena:"Battle Sense",icon:"\uD83D\uDC42",color:"#3b82f6"}];
+        var axes=[{id:"grammar",label:"Grammar",arena:"Blade Precision",icon:"\u2694\uFE0F",color:"var(--cx-hex)"},{id:"vocab",label:"Vocabulary",arena:"Arcane Lore",icon:"\uD83D\uDCDA",color:"#8b5cf6"},{id:"reading",label:"Reading",arena:"Tactical Sight",icon:"\uD83D\uDD0D",color:"#22c55e"},{id:"listening",label:"Listening",arena:"Battle Sense",icon:"\uD83D\uDC42",color:"#3b82f6"}];
         var cx=90,cy=90,rad=70;
         var dxA=[0,1,0,-1],dyA=[-1,0,1,0];
         var pts=axes.map(function(a,i){var v=Math.max(sc[a.id]||0,0.15)/5;return(cx+dxA[i]*rad*v)+","+(cy+dyA[i]*rad*v);}).join(" ");
@@ -8117,7 +8252,7 @@ function Profile(p){
             <svg viewBox="0 0 180 180" width="140" height="140" style={{flexShrink:0}}>
               {[0.2,0.4,0.6,0.8,1.0].map(function(s,i){return(<polygon key={i} points={gridD(s)} fill="none" stroke={"rgba(180,140,80,"+(s===1?0.25:0.1)+")"} strokeWidth={s===1?"1":"0.5"}/>);})}
               {axes.map(function(a,i){return(<line key={a.id} x1={cx} y1={cy} x2={cx+dxA[i]*rad} y2={cy+dyA[i]*rad} stroke="rgba(180,140,80,0.12)" strokeWidth="0.5"/>);})}
-              <polygon points={pts} fill="rgba(212,148,58,0.18)" stroke="#d4943a" strokeWidth="2" strokeLinejoin="round"/>
+              <polygon points={pts} fill="rgba(var(--cx),0.18)" stroke="var(--cx-hex)" strokeWidth="2" strokeLinejoin="round"/>
               {axes.map(function(a,i){var v=Math.max(sc[a.id]||0,0.15)/5;return(<circle key={a.id} cx={cx+dxA[i]*rad*v} cy={cy+dyA[i]*rad*v} r="3.5" fill={a.color} stroke="var(--bg)" strokeWidth="1.5"/>);})}
             </svg>
             <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
@@ -8185,7 +8320,7 @@ function Profile(p){
           <span style={{fontWeight:700,color:"var(--gold)"}}>{Math.round(ea.length/ACHIEVEMENTS.length*100)}%</span>
         </div>
         <div style={{height:6,background:"var(--bg3)",borderRadius:3,overflow:"hidden"}}>
-          <div style={{height:6,borderRadius:3,background:"linear-gradient(90deg,#d4943a,#8b5e83)",
+          <div style={{height:6,borderRadius:3,background:"linear-gradient(90deg,var(--cx-hex),#8b5e83)",
             width:(ea.length/ACHIEVEMENTS.length*100)+"%",transition:"width .6s"}}/>
         </div>
       </div>
@@ -8217,6 +8352,92 @@ function Profile(p){
   );
 
   // ── SUB-VIEW : AVATAR ───────────────────────────────────────────────────
+  // ═══ INVENTORY VIEW ═══
+  if(view==="inventory"){
+    var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
+    useEffect(function(){
+      getOwnedRewards(u.name,u.classCode||"idrac2026").then(function(rewards){setInvData(rewards);setInvLoading(false);});
+    },[]);
+    var ownedAvatars=invData?invData.filter(function(r){return r.reward_type==="avatar";}):[];
+    var ownedSkins=invData?invData.filter(function(r){return r.reward_type==="skin";}):[];
+    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
+        <button onClick={function(){setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>{"\u2190"}</button>
+        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Inventory</h1>
+      </div>
+
+      {invLoading&&<p style={{color:"var(--t3)",textAlign:"center",padding:40}}>Loading...</p>}
+
+      {!invLoading&&<>
+        {/* AVATARS */}
+        <div style={{marginBottom:28}}>
+          <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Avatars ({ownedAvatars.length}/{Object.keys(AVATARS).length})</div>
+          {ownedAvatars.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{color:"var(--t3)",fontSize:13}}>No avatars yet. Open chests to unlock them!</p></div>}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:10}}>
+            {ownedAvatars.map(function(r){
+              var av=AVATARS[r.reward_id];if(!av)return null;
+              var rarity=RARITIES.find(function(rt){return rt.id===r.rarity;})||RARITIES[0];
+              var isEquipped=u.avatar===r.reward_id;
+              return(<button key={r.id} onClick={function(){
+                var c=JSON.parse(JSON.stringify(u));c.avatar=r.reward_id;p.setAvatar(c);
+              }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:10,borderRadius:14,cursor:"pointer",
+                background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
+                border:isEquipped?"2px solid var(--cx-hex)":"1px solid var(--bdr)",
+                fontFamily:"'DM Sans',sans-serif"}}>
+                <AvatarMedal avatarId={r.reward_id} size={48}/>
+                <div style={{fontSize:10,fontWeight:700,color:rarity.color,textAlign:"center"}}>{av.name}</div>
+                {isEquipped&&<div style={{fontSize:8,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+              </button>);
+            })}
+          </div>
+        </div>
+
+        {/* SKINS */}
+        <div style={{marginBottom:28}}>
+          <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Skins ({ownedSkins.length}/{Object.keys(SKINS).length})</div>
+          {ownedSkins.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{color:"var(--t3)",fontSize:13}}>No skins yet. Open Rare+ chests to find them!</p></div>}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(100px,1fr))",gap:10}}>
+            {ownedSkins.map(function(r){
+              var sk=SKINS[r.reward_id];if(!sk)return null;
+              var rarity=RARITIES.find(function(rt){return rt.id===sk.rarity;})||RARITIES[0];
+              var isEquipped=u.equippedSkin===r.reward_id;
+              return(<button key={r.id} onClick={function(){
+                var c=JSON.parse(JSON.stringify(u));c.equippedSkin=isEquipped?null:r.reward_id;p.setAvatar(c);
+              }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:12,borderRadius:14,cursor:"pointer",
+                background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
+                border:isEquipped?"2px solid "+sk.hex:"1px solid var(--bdr)",
+                fontFamily:"'DM Sans',sans-serif"}}>
+                <div style={{width:48,height:48,borderRadius:12,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+rarity.color}}/>
+                <div style={{fontSize:11,fontWeight:700,color:rarity.color}}>{sk.name}</div>
+                {isEquipped&&<div style={{fontSize:8,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+              </button>);
+            })}
+          </div>
+        </div>
+
+        {/* Remove skin button */}
+        {u.equippedSkin&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedSkin=null;p.setAvatar(c);}}
+          style={{width:"100%",marginBottom:20,fontSize:13}}>Remove current skin</button>}
+
+        {/* All avatars preview (locked ones grayed out) */}
+        <div>
+          <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Collection</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(60px,1fr))",gap:6}}>
+            {Object.keys(AVATARS).map(function(aid){
+              var av=AVATARS[aid];var owned=ownedAvatars.some(function(r){return r.reward_id===aid;});
+              var rarity=RARITIES.find(function(rt){return rt.id===av.rarity;})||RARITIES[0];
+              return(<div key={aid} style={{display:"flex",flexDirection:"column",alignItems:"center",padding:6,borderRadius:10,
+                opacity:owned?1:0.25,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
+                <AvatarMedal avatarId={aid} size={36}/>
+                <div style={{fontSize:8,marginTop:2,color:owned?rarity.color:"var(--t3)",fontWeight:600}}>{av.name}</div>
+              </div>);
+            })}
+          </div>
+        </div>
+      </>}
+    </div>);
+  }
+
   if(view==="avatar")return(
     <div className="enter" style={{padding:"20px 16px 100px"}}>
       <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handlePhotoUpload}/>
@@ -8246,7 +8467,7 @@ function Profile(p){
           var sel=!isPhoto&&av===(u.avatar||"⚔️");
           return(<button key={av} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar=av;p.setAvatar(c);}}
             style={{width:48,height:48,borderRadius:14,border:sel?"2px solid var(--cyan)":"2px solid var(--bdr)",
-              background:sel?"rgba(212,148,58,.1)":"var(--bg2)",cursor:"pointer",fontSize:24,
+              background:sel?"rgba(var(--cx),.1)":"var(--bg2)",cursor:"pointer",fontSize:24,
               display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
             {av}</button>);
         })}
@@ -8280,7 +8501,7 @@ function Profile(p){
         </button>
         <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{u.name}</h1>
         <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
-          <span style={{fontSize:12,background:"rgba(212,148,58,.1)",color:"var(--orange)",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(212,148,58,.2)"}}>Lv. {lv.level}</span>
+          <span style={{fontSize:12,background:"rgba(var(--cx),.1)",color:"var(--orange)",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(var(--cx),.2)"}}>Lv. {lv.level}</span>
           <span style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"1px solid rgba(139,94,131,.2)",background:"rgba(139,94,131,.1)",color:lg.color}}>
   {lg.icon} {lg.name}
   {lg.locked&&<span style={{fontSize:10,color:"var(--t3)",marginLeft:4}}>🔒</span>}
@@ -8290,30 +8511,33 @@ function Profile(p){
         </div>
       </div>
 
-      {/* 3 tuiles de navigation */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
+      {/* 4 tuiles de navigation */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
         <button onClick={function(){setView("stats");}} className="crd"
-          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(212,148,58,.03)",border:"1px solid rgba(212,148,58,.2)",width:"100%"}}>
+          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(var(--cx),.03)",border:"1px solid rgba(var(--cx),.2)",width:"100%"}}>
           <div style={{fontSize:22,marginBottom:4}}>📊</div>
           <div style={{fontWeight:800,fontSize:16,color:"var(--t1)"}}>{u.xp}</div>
-          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Stats</div>
-          <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
+          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Stats</div>
         </button>
         <button onClick={function(){setView("trophees");}} className="crd"
           style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(255,215,0,.03)",border:"1px solid rgba(255,215,0,.15)",width:"100%"}}>
           <div style={{fontSize:22,marginBottom:4}}>🏆</div>
           <div className="out" style={{fontWeight:800,fontSize:16,color:"var(--gold)"}}>{ea.length}<span style={{fontSize:11,color:"var(--t3)",fontWeight:400}}>/{ACHIEVEMENTS.length}</span></div>
-          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Trophées</div>
-          <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
+          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Trophées</div>
         </button>
         <button onClick={function(){setView("avatar");}} className="crd"
-          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(212,148,58,.03)",border:"1px solid rgba(212,148,58,.2)",width:"100%"}}>
+          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(var(--cx),.03)",border:"1px solid rgba(var(--cx),.2)",width:"100%"}}>
           <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:4}}>
             {renderAvatar(28,18)}
           </div>
           <div style={{fontWeight:800,fontSize:16,color:"var(--t1)"}}>Style</div>
-          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Apparence</div>
-          <div style={{fontSize:10,color:"var(--t3)"}}>→</div>
+          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Apparence</div>
+        </button>
+        <button onClick={function(){setView("inventory");}} className="crd"
+          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(192,96,240,.03)",border:"1px solid rgba(192,96,240,.15)",width:"100%"}}>
+          <div style={{fontSize:22,marginBottom:4}}>{"\uD83C\uDFF0"}</div>
+          <div style={{fontWeight:800,fontSize:16,color:"#c060f0"}}>Coffres</div>
+          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Inventaire</div>
         </button>
       </div>
 
@@ -8323,7 +8547,7 @@ function Profile(p){
         if(bioAvail&&bioRegistered){try{var ok=await bioAuthenticate();if(ok){p.goTeacher();return;}}catch(e){}}
         // Fall back to password prompt
         var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}p.goTeacher();}else{alert("Code invalide");}});}}
-        style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
+        style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
         👨‍🏫 Teacher Dashboard
       </button>
 
@@ -8372,7 +8596,7 @@ function Profile(p){
         var a=document.createElement("a");a.href=URL.createObjectURL(blob);
         a.download="toeic_arena_mes_donnees_"+u.name.replace(/\s+/g,"_")+"_"+today()+".json";
         a.click();URL.revokeObjectURL(a.href);
-      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
+      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
         {"📥 Exporter mes donn\u00e9es (JSON)"}
       </button>
 
@@ -8394,13 +8618,13 @@ function Profile(p){
           var c=JSON.parse(JSON.stringify(u));c.pin=newPin;p.setAvatar(c);
           alert("PIN "+(current?"updated":"set")+" successfully!");
         });
-      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(212,148,58,.2)",color:"var(--gold)"}}>
+      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--gold)"}}>
         {u.pin?"\uD83D\uDD10 Change PIN":"\uD83D\uDD10 Set a PIN"}
       </button>
 
       {/* Logout */}
       <button className="btn2" onClick={function(){if(confirm("Se d\u00e9connecter ? Vos donn\u00e9es sont sauvegard\u00e9es, vous pourrez les retrouver en vous reconnectant."))p.logout();}}
-        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
         {"Se d\u00e9connecter"}
       </button>
 
@@ -8433,6 +8657,7 @@ function Profile(p){
 // ═══════════════════════════════════════════
 export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
+  var[pendingChestCount,setPendingChestCount]=useState(0);var[chestModal,setChestModal]=useState(null);var[chestResult,setChestResult]=useState(null);var[chestPending,setChestPending]=useState([]);
   var[coachTip,setCoachTip]=useState(null);var coachTimer=useRef(null);
   function dismissTip(tipId){setCoachTip(null);if(!u)return;var c=JSON.parse(JSON.stringify(u));if(!c.tipsShown)c.tipsShown=[];if(c.tipsShown.indexOf(tipId)===-1)c.tipsShown.push(tipId);sv(c);}
   function evalCoachTips(usr,curTab){if(!usr||!curTab)return;var shown=usr.tipsShown||[];
@@ -8502,6 +8727,8 @@ useEffect(function(){
 			if(!d.avatar)d.avatar="⚔️";
 			if(!d.theme)d.theme="dark";
             sU(d);
+            // Load pending chests
+            if(d.name&&d.name!==GHOST_NAME)refreshPendingChests(d.name,d.classCode||"idrac2026");
             // Show daily tip if not disabled and not already shown today
             try{
               var tipDisabled=localStorage.getItem("toeic-tip-disabled")==="1";
@@ -8641,6 +8868,50 @@ useEffect(function(){
     return function(){clearInterval(iv);document.removeEventListener("visibilitychange",onVis);window.removeEventListener("beforeunload",onUnload);};
   },[!!u]);
 
+// ─── CHEST SYSTEM ───
+  // Fire-and-forget: grant a unique chest (checks Supabase for duplicates)
+  function grantChestLocal(trigger,chestType){
+    if(!u||!u.name||u.name===GHOST_NAME)return;
+    var un=u.name,cc=u.classCode||"idrac2026";
+    hasUniqueTrigger(un,cc,trigger).then(function(done){
+      if(!done){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);});}
+    });
+  }
+  // Fire-and-forget: grant a weekly chest (7-day cooldown per trigger)
+  function grantWeeklyChest(trigger,chestType){
+    if(!u||!u.name||u.name===GHOST_NAME)return;
+    var un=u.name,cc=u.classCode||"idrac2026";
+    isWeeklyCooldown(un,cc,trigger).then(function(onCd){
+      if(!onCd){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);});}
+    });
+  }
+  async function refreshPendingChests(un,cc){
+    var list=await getPendingChests(un,cc);
+    setChestPending(list);setPendingChestCount(list.length);
+  }
+  async function doOpenChest(){
+    if(chestPending.length===0)return;
+    var chest=chestPending[0];
+    var rewards=await getOwnedRewards(chest.user_name,chest.class_code);
+    var ownA=rewards.filter(function(r){return r.reward_type==="avatar";}).map(function(r){return r.reward_id;});
+    var ownS=rewards.filter(function(r){return r.reward_type==="skin";}).map(function(r){return r.reward_id;});
+    var pity=(u&&u.gameScores?u.gameScores.pityCount:0)||0;
+    var result=await openChestFromPending(chest,pity,ownA,ownS);
+    // Update pity in user profile
+    var c=JSON.parse(JSON.stringify(u));
+    if(!c.gameScores)c.gameScores={};
+    c.gameScores.pityCount=result.newPityCount;
+    // If XP reward, add it (bypasses gates — it's a reward, not a module)
+    if(result.reward.type==="xp"&&result.xpAmount>0){
+      c.xp+=result.xpAmount;c.weeklyXp+=result.xpAmount;
+    }
+    sv(c);
+    setChestResult(result);
+    // Refresh pending list
+    var remaining=chestPending.slice(1);
+    setChestPending(remaining);setPendingChestCount(remaining.length);
+  }
+
 function sv(d){
     // Evaluate coach tips after state changes
     setTimeout(function(){evalCoachTips(d,tab);},1000);
@@ -8652,6 +8923,10 @@ function sv(d){
           try{playJingleAchieve();}catch(e){}
           setAchToast({name:a.name,icon:a.icon,desc:a.desc});
           setTimeout(function(){setAchToast(null);},3500);
+          // Coffre légendaire pour les achievements rares
+          if(LEGENDARY_ACHIEVEMENTS.indexOf(a.id)!==-1){
+            grantChestLocal("ach_legendary_"+a.id,"legendaire");
+          }
         }
       });
     }
@@ -8730,6 +9005,26 @@ var prevLeague=getLeague(c.weeklyXp);
     if(newLeague.id!==prevLeague.id&&c.weeklyXp>prevLeague.min)try{playJingleLeague();}catch(e){}
     var toastInfo={total:amt,base:baseAmt,bonuses:bonuses};
     sXpt(toastInfo);
+
+    // ── Coffres : paliers XP ──
+    if(amt>0){
+      var prevXp=c.xp-amt;
+      var xpMilestones=[[1000,"novice"],[3000,"novice"],[5000,"novice"],[10000,"guerrier"],[20000,"guerrier"],[30000,"champion"],[50000,"champion"]];
+      xpMilestones.forEach(function(m){
+        if(prevXp<m[0]&&c.xp>=m[0])grantChestLocal("xp_"+(m[0]>=1000?(m[0]/1000)+"k":m[0]),m[1]);
+      });
+    }
+    // ── Coffres : streaks ──
+    if(isFirstToday){
+      if(c.streak===7)grantChestLocal("streak_7","novice");
+      if(c.streak===30)grantChestLocal("streak_30","guerrier");
+      if(c.streak===100)grantChestLocal("streak_100","champion");
+    }
+    // ── Coffres : passage de league ──
+    if(newLeague.id!==prevLeague.id&&c.weeklyXp>prevLeague.min){
+      grantChestLocal("league_up_"+newLeague.id,"guerrier");
+    }
+
     return c;
   }
   function getSpotlightMult(modId){
@@ -8839,6 +9134,11 @@ var prevLeague=getLeague(c.weeklyXp);
     trackModSession(c,modId);
     recordModule(c,modId,result.score,result.total);
     try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}
+    // Coffres : Mock Tests + Boss Test
+    if(result.mockId==="1"||result.mockId===1)grantChestLocal("mock_1","champion");
+    if(result.mockId==="2"||result.mockId===2)grantChestLocal("mock_2","champion");
+    if(result.mockId==="3"||result.mockId===3)grantChestLocal("mock_3","champion");
+    if(result.mockId==="boss")grantChestLocal("boss_test","legendaire");
     sv(c);sSP(null);sT("train");
   }
   function gameDone(modeKey,result,xp){var gxp=applyXpGates(xp,result.score||xp,result.total||xp,"game_"+modeKey);var c=addXp(gxp);if(!c.gameScores)c.gameScores={};
@@ -8846,8 +9146,20 @@ var prevLeague=getLeague(c.weeklyXp);
       // Accumulate duel stats instead of overwriting
       var prev=c.gameScores.duel||{wins:0,played:0,wagerWon:0};
       c.gameScores.duel={wins:prev.wins+(result.won?1:0),played:prev.played+1,wagerWon:(prev.wagerWon||0)+(result.wagerWon||0)};
+      // Chest triggers: duel win + 3 consecutive wins
+      if(result.won){grantWeeklyChest("duel_win","guerrier",c);
+        if(result.winStreak>=3)grantWeeklyChest("duel_win3","champion",c);}
     } else {
       var prev2=c.gameScores[modeKey];var dominated=!prev2||(result.time!==undefined?result.time<prev2.time:(result.score>prev2.score||(result.score===prev2.score&&result.maxCombo>(prev2.maxCombo||0))));if(dominated){c.gameScores[modeKey]=result;}else if(prev2&&result.maxCombo!==undefined&&result.maxCombo>(prev2.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev2,{maxCombo:result.maxCombo});}
+      // Chest triggers: WordFall combos
+      if(modeKey==="wordFall"&&result.maxCombo){
+        if(result.maxCombo>=30)grantWeeklyChest("wfall_combo30","champion",c);
+        else if(result.maxCombo>=20)grantWeeklyChest("wfall_combo20","guerrier",c);
+        else if(result.maxCombo>=10)grantWeeklyChest("wfall_combo10","novice",c);
+      }
+      // SpeedMatch
+      if(modeKey==="matchEasy"&&result.total>0&&result.score/result.total>=0.8)grantWeeklyChest("smatch_easy_80","novice",c);
+      if(modeKey==="matchHard"&&result.total>0&&result.score/result.total>=0.8)grantWeeklyChest("smatch_hard_80","guerrier",c);
     }
     c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
@@ -8907,7 +9219,7 @@ var prevLeague=getLeague(c.weeklyXp);
     sU(null);sSP(null);sT("home");
   }
 
-  var lc="app"+(u&&u.theme==="light"?" light":"");
+  var lc="app"+(u&&u.theme==="light"?" light":"")+(u&&u.equippedSkin?" skin-"+u.equippedSkin:"");
   var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
   var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
   var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);sSPA(null);setTimeout(function(){evalCoachTips(u,t);},800);};
@@ -8962,9 +9274,9 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="matchH"){playBGM("bgm_speed");return pg(<SpeedMatch mode="hard" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/>);}
   if(sp==="wfall"){playBGM("bgm_wfall");return pg(<WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="duel"){playBGM("bgm_duel");return pg(<DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
-  if(sp==="sbuild"){playBGM("bgm_build");return pg(<SentenceBuilder u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"sbuild");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
-  if(sp==="clue"){playBGM("bgm_clue");return pg(<ClueHunter u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"clue");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
-  if(sp==="ablitz")return pg(<AudioBlitz u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"ablitz");}} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/>);
+  if(sp==="sbuild"){playBGM("bgm_build");return pg(<SentenceBuilder u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"sbuild");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);if(tot>0&&sc/tot>=0.9)grantWeeklyChest("sbuild_90","novice");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="clue"){playBGM("bgm_clue");return pg(<ClueHunter u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"clue");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");if(sc===tot&&tot>0)grantWeeklyChest("clue_perfect","guerrier");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="ablitz")return pg(<AudioBlitz u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"ablitz");}} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);if(tot>0){var abPct=sc/tot;if(abPct>=0.9)grantWeeklyChest("ablitz_90","guerrier");else if(abPct>=0.7)grantWeeklyChest("ablitz_70","novice");}sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/>);
   if(sp==="strats")return pg(<StratCards back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="stratquiz")return pg(<StratQuizPage u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"stratquiz");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
@@ -8983,8 +9295,11 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     {coachTip&&!sp&&<CoachTip tip={coachTip} onDismiss={dismissTip} goTab={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/>}
+    {/* ═══ CHEST OPEN MODAL ═══ */}
+    {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
+
     {premiumPrompt&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={function(){setPremiumPrompt(null);}}>
       <div style={{background:"var(--bg2)",borderRadius:20,padding:28,maxWidth:340,textAlign:"center",animation:"fadeIn .3s",border:"1px solid var(--bdr)"}} onClick={function(e){e.stopPropagation();}}>
         <div style={{fontSize:48,marginBottom:12}}>{"🏰"}</div>
