@@ -603,6 +603,15 @@ var CSS=`
 .light.skin-jade{--cx:10,110,105;--cx-hex:#0a6e69;--cx-dark:#085250;--cyan:#0a6e69;--orange:#085250}
 .light.skin-obsidienne{--cx:80,60,140;--cx-hex:#503c8c;--cx-dark:#382868;--cyan:#503c8c;--orange:#382868}
 .light.skin-aurore{--cx:20,120,90;--cx-hex:#147858;--cx-dark:#0c5a40;--cyan:#147858;--orange:#0c5a40}
+.skin-rubis .btn1,.skin-amethyste .btn1,.skin-corail .btn1,.skin-jade .btn1{background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark),var(--cx-hex))!important;background-size:200%!important;animation:skinShimmer 3s ease infinite!important;box-shadow:0 4px 20px rgba(var(--cx),.35),0 0 0 1px rgba(var(--cx),.15)!important}
+.skin-rubis .bar-fill,.skin-amethyste .bar-fill,.skin-corail .bar-fill,.skin-jade .bar-fill{background:linear-gradient(90deg,var(--cx-hex),var(--cx-dark),var(--cx-hex))!important;background-size:200%!important;animation:skinShimmer 2.5s ease infinite!important}
+.skin-rubis .crd,.skin-amethyste .crd,.skin-corail .crd,.skin-jade .crd{border-color:rgba(var(--cx),.14)!important;box-shadow:inset 0 1px 0 rgba(var(--cx),.06)!important}
+.skin-obsidienne .btn1,.skin-aurore .btn1{background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark),var(--cx-hex))!important;background-size:300%!important;animation:skinShimmer 2s ease infinite!important;box-shadow:0 4px 28px rgba(var(--cx),.5),0 0 48px rgba(var(--cx),.2),0 0 0 1px rgba(var(--cx),.2)!important}
+.skin-obsidienne .bar-fill,.skin-aurore .bar-fill{background:linear-gradient(90deg,var(--cx-hex),var(--cx-dark),var(--cx-hex))!important;background-size:300%!important;animation:skinShimmer 1.8s ease infinite!important}
+.skin-obsidienne .crd,.skin-aurore .crd{border-color:rgba(var(--cx),.2)!important;box-shadow:0 0 16px rgba(var(--cx),.1),inset 0 1px 0 rgba(var(--cx),.1)!important}
+.skin-obsidienne .glo,.skin-aurore .glo{box-shadow:0 0 40px rgba(var(--cx),.2)!important}
+.light.skin-rubis .btn1,.light.skin-amethyste .btn1,.light.skin-corail .btn1,.light.skin-jade .btn1{box-shadow:0 4px 16px rgba(var(--cx),.25)!important}
+.light.skin-obsidienne .btn1,.light.skin-aurore .btn1{box-shadow:0 4px 20px rgba(var(--cx),.35)!important}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
@@ -611,6 +620,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes flame{0%,100%{transform:scale(1) rotate(-2deg)}25%{transform:scale(1.1) rotate(2deg)}50%{transform:scale(1.05) rotate(-1deg)}75%{transform:scale(1.12) rotate(1deg)}}
 @keyframes achPop{0%{transform:translateY(30px) scale(.7);opacity:0}10%{transform:translateY(-5px) scale(1.05);opacity:1}15%{transform:translateY(0) scale(1);opacity:1}85%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-20px) scale(.95);opacity:0}}
 @keyframes xpPop{0%{transform:translateY(0) scale(.5);opacity:0}15%{transform:translateY(-10px) scale(1.1);opacity:1}75%{transform:translateY(-10px) scale(1);opacity:1}100%{transform:translateY(-30px) scale(.95);opacity:0}}
+@keyframes skinShimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @keyframes chestShake{0%,100%{transform:rotate(0)}10%{transform:rotate(-8deg)}20%{transform:rotate(8deg)}30%{transform:rotate(-6deg)}40%{transform:rotate(6deg)}50%{transform:rotate(-3deg)}60%{transform:rotate(3deg)}70%{transform:rotate(-1deg)}80%{transform:rotate(1deg)}}
 @keyframes chestFlash{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(2)}}
 @keyframes chestReveal{0%{opacity:0;transform:translateY(30px) scale(.6)}60%{opacity:1;transform:translateY(-8px) scale(1.05)}100%{opacity:1;transform:translateY(0) scale(1)}}
@@ -655,7 +665,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 }`;
 
 // ─── SMALL COMPONENTS ───
-function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,var(--cx-hex),#c87a35)",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
+function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div className="bar-fill" style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,var(--cx-hex),var(--cx-dark))",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
 // ─── Avatar renderer — handles both emoji and base64 photo ───
 function renderAv(avatar,size){
   var s=size||32;
