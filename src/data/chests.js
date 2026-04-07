@@ -7,7 +7,7 @@ export var RARITIES = [
   {id:"uncommon",  label:"Peu Commun",  color:"#3ecc78", tier:1},
   {id:"rare",      label:"Rare",        color:"#3a8ee0", tier:2},
   {id:"epic",      label:"\u00c9pique", color:"#c060f0", tier:3},
-  {id:"legendary", label:"L\u00e9gendaire", color:"#ffc020", tier:4},
+  {id:"legend", label:"L\u00e9gendaire", color:"#ffc020", tier:4},
 ];
 
 // ═══ CHEST TYPES ═══
@@ -55,8 +55,8 @@ export var AVATARS = {
   st_tempete:{name:"Seigneur Temp\u00eate",rarity:"epic",icon:"lightning-storm"},
   inquisiteur:{name:"Inquisiteur",rarity:"epic",icon:"crossed-swords"},
   // Légendaires (2)
-  pourfendeur:{name:"Pourfendeur",rarity:"legendary",icon:"broadsword"},
-  champion:{name:"Champion",rarity:"legendary",icon:"laurel-crown"},
+  pourfendeur:{name:"Pourfendeur",rarity:"legend",icon:"broadsword"},
+  champion:{name:"Champion",rarity:"legend",icon:"laurel-crown"},
 };
 
 // ═══ SKINS ═══
@@ -68,8 +68,8 @@ export var SKINS = {
   amethyste: {name:"Am\u00e9thyste",  rarity:"epic",      cx:"160,90,220",  hex:"#a05adc", dark:"#7030aa"},
   corail:    {name:"Corail",          rarity:"epic",      cx:"220,100,50",  hex:"#dc6432", dark:"#c03018"},
   jade:      {name:"Jade",            rarity:"epic",      cx:"20,180,170",  hex:"#14b4aa", dark:"#0a8880"},
-  obsidienne:{name:"Obsidienne",      rarity:"legendary", cx:"176,144,240", hex:"#b090f0", dark:"#8060c0"},
-  aurore:    {name:"Aurore Bor\u00e9ale", rarity:"legendary", cx:"64,208,192", hex:"#40d0c0", dark:"#3a9870"},
+  obsidienne:{name:"Obsidienne",      rarity:"legend", cx:"176,144,240", hex:"#b090f0", dark:"#8060c0"},
+  aurore:    {name:"Aurore Bor\u00e9ale", rarity:"legend", cx:"64,208,192", hex:"#40d0c0", dark:"#3a9870"},
 };
 
 // ═══ REWARD POOLS (by rarity tier) ═══
