@@ -8137,8 +8137,10 @@ function Profile(p){
   var[showPrivacy,setShowPrivacy]=useState(false);
   var fileRef=useRef(null);
   var[bioAvail,setBioAvail]=useState(false);var[bioRegistered,setBioRegistered]=useState(!!getBioCredId());
+  var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
 
   useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});biometricAvailable().then(function(v){setBioAvail(v);});},[]);
+  useEffect(function(){if(view==="inventory"){setInvLoading(true);getOwnedRewards(u.name,u.classCode||"idrac2026").then(function(rewards){setInvData(rewards);setInvLoading(false);});}},[view]);
   useEffect(function(){try{setTipOff(localStorage.getItem("toeic-tip-disabled")==="1");}catch(e){}},[]);
 
   var lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores);
@@ -8354,10 +8356,6 @@ function Profile(p){
   // ── SUB-VIEW : AVATAR ───────────────────────────────────────────────────
   // ═══ INVENTORY VIEW ═══
   if(view==="inventory"){
-    var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
-    useEffect(function(){
-      getOwnedRewards(u.name,u.classCode||"idrac2026").then(function(rewards){setInvData(rewards);setInvLoading(false);});
-    },[]);
     var ownedAvatars=invData?invData.filter(function(r){return r.reward_type==="avatar";}):[];
     var ownedSkins=invData?invData.filter(function(r){return r.reward_type==="skin";}):[];
     return(<div className="enter" style={{padding:"20px 16px 100px"}}>
