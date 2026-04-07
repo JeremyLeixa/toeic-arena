@@ -9194,19 +9194,19 @@ var prevLeague=getLeague(c.weeklyXp);
       var prev=c.gameScores.duel||{wins:0,played:0,wagerWon:0};
       c.gameScores.duel={wins:prev.wins+(result.won?1:0),played:prev.played+1,wagerWon:(prev.wagerWon||0)+(result.wagerWon||0)};
       // Chest triggers: duel win + 3 consecutive wins
-      if(result.won){grantWeeklyChest("duel_win","guerrier",c);
-        if(result.winStreak>=3)grantWeeklyChest("duel_win3","champion",c);}
+      if(result.won){grantWeeklyChest("duel_win","guerrier");
+        if(result.winStreak>=3)grantWeeklyChest("duel_win3","champion");}
     } else {
       var prev2=c.gameScores[modeKey];var dominated=!prev2||(result.time!==undefined?result.time<prev2.time:(result.score>prev2.score||(result.score===prev2.score&&result.maxCombo>(prev2.maxCombo||0))));if(dominated){c.gameScores[modeKey]=result;}else if(prev2&&result.maxCombo!==undefined&&result.maxCombo>(prev2.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev2,{maxCombo:result.maxCombo});}
       // Chest triggers: WordFall combos
       if(modeKey==="wordFall"&&result.maxCombo){
-        if(result.maxCombo>=30)grantWeeklyChest("wfall_combo30","champion",c);
-        else if(result.maxCombo>=20)grantWeeklyChest("wfall_combo20","guerrier",c);
-        else if(result.maxCombo>=10)grantWeeklyChest("wfall_combo10","novice",c);
+        if(result.maxCombo>=30)grantWeeklyChest("wfall_combo30","champion");
+        else if(result.maxCombo>=20)grantWeeklyChest("wfall_combo20","guerrier");
+        else if(result.maxCombo>=10)grantWeeklyChest("wfall_combo10","novice");
       }
       // SpeedMatch
-      if(modeKey==="matchEasy"&&result.time){var starsE=result.time<24?3:result.time<42?2:1;if(starsE>=2)grantWeeklyChest("smatch_easy_good","novice",c);}
-      if(modeKey==="matchHard"&&result.time){var starsH=result.time<32?3:result.time<56?2:1;if(starsH>=2)grantWeeklyChest("smatch_hard_good","guerrier",c);}
+      if(modeKey==="matchEasy"&&result.time){var starsE=result.time<24?3:result.time<42?2:1;if(starsE>=2)grantWeeklyChest("smatch_easy_good","novice");}
+      if(modeKey==="matchHard"&&result.time){var starsH=result.time<32?3:result.time<56?2:1;if(starsH>=2)grantWeeklyChest("smatch_hard_good","guerrier");}
     }
     c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
