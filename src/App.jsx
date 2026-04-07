@@ -347,49 +347,52 @@ async function load(userId){
   }catch(e){return null;}
 }
 
-// save() — localStorage ONLY (0ms, never touches Supabase)
-function save(d){saveLocal(d);}
-
-// syncToCloud() — background push to Supabase (called every 2 min)
+// save() — localStorage + Supabase (UPDATE first, INSERT if no row)
 var GHOST_NAME="Teacher"; // ghost mode — this account never syncs to Supabase
+async function save(d){
+  saveLocal(d);
+  if(!d||!d.name)return;
+  if(d.name===GHOST_NAME)return;
+  var sess=await supabase.auth.getUser();
+  var user=sess.data?sess.data.user:null;
+  if(!user)return;
+  _cachedUserId=user.id;
+  var payload={
+    xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
+    streak:d.streak,last_active:d.lastActive,
+    card_states:d.cardStates,daily_challenge:d.daily,
+    stats:d.stats,module_scores:d.moduleScores,
+    mock_results:d.mockResults,game_scores:d.gameScores,
+    mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
+    equipped_skin:d.equippedSkin||null,
+    unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
+    weekly_history:d.weeklyHistory||[],
+    daily_mod_sessions:d.dailyModSessions||{},
+    weekly_daily_count:d.weeklyDailyCount||0,
+    battle_scan:d.battleScan||null,
+    tips_shown:d.tipsShown||[],
+    daily_seen:d.dailySeen||[],
+    gdpr_consent:d.gdprConsent||null,
+    pin:d.pin||null,
+  };
+  var cc=d.classCode||"idrac2026";
+  try{
+    // Step 1: UPDATE by (name, class_code) — cross-device safe, never mutates PK
+    var upd=await supabase.from("students").update(payload).eq("name",d.name).eq("class_code",cc).select("id");
+    if(upd.error){console.error("[SAVE] UPDATE error:",upd.error.message);return;}
+    if(!upd.data||upd.data.length===0){
+      // No row yet — first ever save, INSERT with current auth ID
+      var ins=await supabase.from("students").insert({id:user.id,name:d.name,class_code:cc,...payload});
+      if(ins.error)console.error("[SAVE] INSERT error:",ins.error.message);
+    }
+    _syncDirty=false;
+  }catch(e){console.warn("[SAVE] Exception:",e);}
+}
+
+// syncToCloud() — replaced by save(), kept as no-op for existing call sites
 async function syncToCloud(d){
   if(!d||!d.name||!_syncDirty)return;
-  if(d.name===GHOST_NAME){_syncDirty=false;return;} // ghost mode
-  var now=Date.now();
-  if(now-_lastSync<10000)return;
-  _lastSync=now;
-  try{
-    var userId=_cachedUserId;
-    if(!userId){
-      try{
-        var sess=await supabase.auth.getSession();
-        userId=sess.data.session?sess.data.session.user.id:null;
-        if(userId)_cachedUserId=userId;
-      }catch(e){}
-    }
-    if(!userId)return;
-    var _result=await supabase.from("students").upsert({
-      id:userId,name:d.name,class_code:d.classCode||"idrac2026",
-      xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
-      streak:d.streak,last_active:d.lastActive,
-      card_states:d.cardStates,daily_challenge:d.daily,
-      stats:d.stats,module_scores:d.moduleScores,
-      mock_results:d.mockResults,game_scores:d.gameScores,
-      mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
-      equipped_skin:d.equippedSkin||null,
-      unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
-      weekly_history: d.weeklyHistory || [],
-    daily_mod_sessions: d.dailyModSessions || {},
-    weekly_daily_count: d.weeklyDailyCount || 0,
-    battle_scan: d.battleScan || null,
-    tips_shown: d.tipsShown || [],
-    daily_seen: d.dailySeen || [],
-    gdpr_consent: d.gdprConsent || null,
-    pin: d.pin || null,
-  }, { onConflict: 'name,class_code' });
-    if(!_result.error){_syncDirty=false;}
-    else{console.warn("[SYNC] Upsert failed — will retry:",_result.error.message);}
-  }catch(e){console.warn("[SYNC] Exception:",e);}
+  return save(d);
 }
 // ─── BIOMETRIC AUTH (WebAuthn) for Teacher Dashboard ───
 var BIOMETRIC_KEY="toeic-teacher-bio";
@@ -8874,38 +8877,41 @@ useEffect(function(){
         });
       }
     }
-    // Last-chance sync on page close
+    // Last-chance sync on page close — UPDATE by (name, class_code), no PK mutation
     function onUnload(){
       try{
         var raw=localStorage.getItem("toeic-arena-profile");
-        if(raw&&_cachedUserId&&_syncDirty){
+        if(raw&&_syncDirty){
           var d=JSON.parse(raw);
-          var payload=JSON.stringify([{
-            id:_cachedUserId,name:d.name,class_code:d.classCode||"idrac2026",
+          var cc=d.classCode||"idrac2026";
+          var payload={
             xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
             streak:d.streak,last_active:d.lastActive,
             card_states:d.cardStates,daily_challenge:d.daily,
             stats:d.stats,module_scores:d.moduleScores,
             mock_results:d.mockResults,game_scores:d.gameScores,
             mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
+            equipped_skin:d.equippedSkin||null,
             unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
             weekly_history:d.weeklyHistory||[],
             daily_mod_sessions:d.dailyModSessions||{},
+            weekly_daily_count:d.weeklyDailyCount||0,
+            battle_scan:d.battleScan||null,
+            tips_shown:d.tipsShown||[],
             daily_seen:d.dailySeen||[],
             gdpr_consent:d.gdprConsent||null,
             pin:d.pin||null,
-          }]);
-          // fetch keepalive : survit à la fermeture ET envoie les auth headers
-          // (sendBeacon ne peut pas envoyer Authorization → bloqué par Supabase RLS)
-          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/students?on_conflict=name,class_code",{
-            method:"POST",keepalive:true,
+          };
+          // fetch keepalive with PATCH (=UPDATE) — survives tab close, sends auth headers
+          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/students?name=eq."+encodeURIComponent(d.name)+"&class_code=eq."+encodeURIComponent(cc),{
+            method:"PATCH",keepalive:true,
             headers:{
               "Content-Type":"application/json",
-              "Prefer":"resolution=merge-duplicates",
+              "Prefer":"return=minimal",
               "apikey":_anonKey,
               "Authorization":"Bearer "+_anonKey
             },
-            body:payload
+            body:JSON.stringify(payload)
           });}catch(e){}
         }
       }catch(e){}
