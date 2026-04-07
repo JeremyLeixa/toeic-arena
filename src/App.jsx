@@ -620,6 +620,9 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes flame{0%,100%{transform:scale(1) rotate(-2deg)}25%{transform:scale(1.1) rotate(2deg)}50%{transform:scale(1.05) rotate(-1deg)}75%{transform:scale(1.12) rotate(1deg)}}
 @keyframes achPop{0%{transform:translateY(30px) scale(.7);opacity:0}10%{transform:translateY(-5px) scale(1.05);opacity:1}15%{transform:translateY(0) scale(1);opacity:1}85%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-20px) scale(.95);opacity:0}}
 @keyframes xpPop{0%{transform:translateY(0) scale(.5);opacity:0}15%{transform:translateY(-10px) scale(1.1);opacity:1}75%{transform:translateY(-10px) scale(1);opacity:1}100%{transform:translateY(-30px) scale(.95);opacity:0}}
+@keyframes legendGlow{0%,100%{filter:drop-shadow(0 0 5px #ffc020bb) drop-shadow(0 0 12px #ffc02055)}50%{filter:drop-shadow(0 0 10px #ffc020dd) drop-shadow(0 0 24px #ffc02088)}}
+@keyframes epicGlow{0%,100%{filter:drop-shadow(0 0 3px #c060f099)}50%{filter:drop-shadow(0 0 8px #c060f0cc)}}
+@keyframes rareGlow{0%,100%{filter:drop-shadow(0 0 2px #3a8ee066)}50%{filter:drop-shadow(0 0 6px #3a8ee0aa)}}
 @keyframes skinShimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @keyframes chestShake{0%,100%{transform:rotate(0)}10%{transform:rotate(-8deg)}20%{transform:rotate(8deg)}30%{transform:rotate(-6deg)}40%{transform:rotate(6deg)}50%{transform:rotate(-3deg)}60%{transform:rotate(3deg)}70%{transform:rotate(-1deg)}80%{transform:rotate(1deg)}}
 @keyframes chestFlash{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(2)}}
@@ -6129,32 +6132,29 @@ function animateFall(){
 // ═══════════════════════════════════════════════════════════════
 // AVATAR MEDAL — SVG shield + Game Icons icon
 // ═══════════════════════════════════════════════════════════════
+var RARITY_STYLES={
+  common:{bg:"#1a1a1a",stroke:"#808080",icon:"#d0d0d0",glow:null,anim:null},
+  uncommon:{bg:"#0b1e10",stroke:"#3ecc78",icon:"#80f0a0",glow:null,anim:null},
+  rare:{bg:"#091628",stroke:"#3a8ee0",icon:"#80c0f8",glow:"drop-shadow(0 0 4px #3a8ee066) drop-shadow(0 0 8px #3a8ee033)",anim:"rareGlow 3s ease-in-out infinite"},
+  epic:{bg:"#160824",stroke:"#c060f0",icon:"#e090ff",glow:"drop-shadow(0 0 5px #c060f088) drop-shadow(0 0 10px #c060f044)",anim:"epicGlow 2.5s ease-in-out infinite"},
+  legend:{bg:"#0a0608",stroke:"#ffc020",icon:"#ffe080",glow:"drop-shadow(0 0 6px #ffc020aa) drop-shadow(0 0 14px #ffc02055)",anim:"legendGlow 2s ease-in-out infinite"},
+};
 function AvatarMedal(p){
   var avatarId=p.avatarId;var size=p.size||48;
   var av=AVATARS[avatarId];
   if(!av)return(<div style={{width:size,height:size,borderRadius:size*.35,background:"var(--bg3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.5}}>{"?"}</div>);
-  var rarity=RARITIES.find(function(r){return r.id===av.rarity;})||RARITIES[0];
+  var rs=RARITY_STYLES[av.rarity]||RARITY_STYLES.common;
   var iconPath=GAME_ICON_PATHS[av.icon]||"";
-  var iconSize=size*.55;
-  return(<div style={{width:size,height:size,position:"relative",flexShrink:0}}>
-    {/* Shield background */}
-    <svg viewBox="0 0 100 100" width={size} height={size}>
-      <defs>
-        <linearGradient id={"avg_"+avatarId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={rarity.color} stopOpacity="0.3"/>
-          <stop offset="100%" stopColor={rarity.color} stopOpacity="0.1"/>
-        </linearGradient>
-      </defs>
-      {/* Shield shape */}
-      <path d="M50 5 L90 20 L90 55 Q90 80 50 95 Q10 80 10 55 L10 20 Z" fill={"url(#avg_"+avatarId+")"} stroke={rarity.color} strokeWidth="2.5"/>
+  var svgStyle={overflow:"visible",flexShrink:0,display:"inline-block",verticalAlign:"middle"};
+  if(rs.anim)svgStyle.animation=rs.anim;
+  else if(rs.glow)svgStyle.filter=rs.glow;
+  return(<svg viewBox="0 0 100 100" width={size} height={size} style={svgStyle}>
+    <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill={rs.bg} stroke={rs.stroke} strokeWidth="1.5"/>
+    <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke={rs.stroke} strokeWidth="0.7" opacity="0.35"/>
+    <svg x="16" y="18" width="68" height="65" viewBox="0 0 512 512">
+      <g fill={rs.icon} dangerouslySetInnerHTML={{__html:iconPath}}/>
     </svg>
-    {/* Icon overlay */}
-    <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:iconSize,height:iconSize}}>
-      <svg viewBox={GAME_ICON_VIEWBOX} width={iconSize} height={iconSize} fill={rarity.color}>
-        <g dangerouslySetInnerHTML={{__html:iconPath}}/>
-      </svg>
-    </div>
-  </div>);
+  </svg>);
 }
 
 // ═══════════════════════════════════════════════════════════════
