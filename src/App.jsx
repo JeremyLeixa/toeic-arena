@@ -395,13 +395,14 @@ function storeBioCredId(rawId){try{var b=btoa(String.fromCharCode.apply(null,new
 async function bioRegister(){
   var challenge=crypto.getRandomValues(new Uint8Array(32));
   var userId=crypto.getRandomValues(new Uint8Array(16));
-  var cred=await navigator.credentials.create({publicKey:{
-    challenge:challenge,rp:{name:"TOEIC Arena",id:location.hostname},
+  var opts={publicKey:{
+    challenge:challenge,rp:{name:"TOEIC Arena"},
     user:{id:userId,name:"teacher",displayName:"Teacher"},
     pubKeyCredParams:[{alg:-7,type:"public-key"},{alg:-257,type:"public-key"}],
-    authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},
-    timeout:60000
-  }});
+    authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},
+    timeout:120000
+  }};
+  var cred=await navigator.credentials.create(opts);
   storeBioCredId(cred.rawId);return true;
 }
 async function bioAuthenticate(){
@@ -409,7 +410,7 @@ async function bioAuthenticate(){
   var challenge=crypto.getRandomValues(new Uint8Array(32));
   await navigator.credentials.get({publicKey:{
     challenge:challenge,allowCredentials:[{id:credId,type:"public-key",transports:["internal"]}],
-    userVerification:"required",timeout:60000
+    userVerification:"required",timeout:120000
   }});
   return true;
 }
@@ -6461,7 +6462,10 @@ function TeacherDash(p){
         <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6}}>Teacher Dashboard</h1>
         <p style={{color:"var(--t2)",fontSize:13}}>Select a group to manage</p>
       </div>
-      {tdBioAvail&&!tdBioReg&&<button onClick={async function(){try{await bioRegister();setTdBioReg(true);}catch(e){}}}
+      {tdBioAvail&&!tdBioReg&&<button onClick={async function(ev){
+        var btn=ev.currentTarget;btn.textContent="Registering...";
+        try{await bioRegister();setTdBioReg(true);}catch(e){alert("Biometric setup failed: "+(e.message||e));btn.textContent="Retry";}
+      }}
         style={{width:"100%",padding:"12px 16px",marginBottom:16,background:"rgba(212,148,58,.08)",border:"1px solid rgba(212,148,58,.25)",borderRadius:12,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:"'DM Sans',sans-serif"}}>
         <span style={{fontSize:22}}>{"🔒"}</span>
         <div style={{textAlign:"left",flex:1}}><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)"}}>Enable biometric unlock</div>
