@@ -99,8 +99,6 @@ export var MISSION_MODULES=[
   {id:"lisP2",name:"Listening Part 2",icon:"🎧",reason:"Q&A listening"},
   {id:"lisP3",name:"Listening Part 3",icon:"💬",reason:"Conversations"},
   {id:"lisP4",name:"Listening Part 4",icon:"📢",reason:"Monologues"},
-  {id:"mock1",name:"Mock Test 1",icon:"📋",reason:"Full exam simulation"},
-  {id:"mock2",name:"Mock Test 2",icon:"📋",reason:"Full exam simulation"},
   {id:"sbuild",name:"Sentence Builder",icon:"🔀",reason:"Sentence structure"},
   {id:"ablitz",name:"Audio Blitz",icon:"⚡",reason:"Listening speed"},
   {id:"clue",name:"Clue Hunter",icon:"🔍",reason:"Grammar clue detection"},

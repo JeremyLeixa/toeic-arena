@@ -3248,20 +3248,29 @@ function BossTest(p){
   var readQ=RP5.length+p6BC+p7QC;
   var totalQ=lisQ+readQ;
   var TOTAL_TIME=120*60;
+  var BOSS_STORAGE_KEY="bossTestSession";
 
-  var[phase,setPhase]=useState("intro");
-  var[sec,setSec]=useState("p1");
-  var[qi,setQi]=useState(0);
-  var[sqi,setSqi]=useState(0);
-  var[ans,setAns]=useState(function(){return{
+  // ── Restore saved session if any ──
+  var saved=useMemo(function(){try{var raw=localStorage.getItem(BOSS_STORAGE_KEY);if(!raw)return null;var d=JSON.parse(raw);if(d.date!==today())return null;if(!d.ans||!d.sec||d.timeLeft==null)return null;return d;}catch(e){return null;}},[]);
+
+  var freshAns=function(){return{
     p1:LP1.map(function(){return -1;}),p2:LP2.map(function(){return -1;}),
     p3:LP3.map(function(c){return c.qs.map(function(){return -1;});}),
     p4:LP4.map(function(t){return t.qs.map(function(){return -1;});}),
     p5:RP5.map(function(){return -1;}),
     p6:RP6.map(function(t){var n=0;t.parts.forEach(function(pt){if(pt.blank)n++;});return Array(n).fill(-1);}),
     p7:RP7.map(function(ps){return ps.questions.map(function(){return -1;});})
-  };});
-  var[timeLeft,setTimeLeft]=useState(TOTAL_TIME);
+  };};
+
+  var[phase,setPhase]=useState(saved?"resume":"intro");
+  var[sec,setSec]=useState(saved?saved.sec:"p1");
+  var[qi,setQi]=useState(saved?saved.qi:0);
+  var[sqi,setSqi]=useState(saved?saved.sqi:0);
+  var[ans,setAns]=useState(function(){return saved?saved.ans:freshAns();});
+  var[timeLeft,setTimeLeft]=useState(saved?saved.timeLeft:TOTAL_TIME);
+
+  function saveBossSession(a,s,q,sq,tl){try{localStorage.setItem(BOSS_STORAGE_KEY,JSON.stringify({date:today(),ans:a,sec:s,qi:q,sqi:sq,timeLeft:tl}));}catch(e){}}
+  function clearBossSession(){try{localStorage.removeItem(BOSS_STORAGE_KEY);}catch(e){}}
   var[result,setResult]=useState(null);
   var[aState,setAState]=useState("ready");
   var[curOpt,setCurOpt]=useState(-1);
@@ -3276,6 +3285,20 @@ function BossTest(p){
     timerRef.current=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
     return function(){clearTimeout(timerRef.current);};
   });
+
+  // ── Auto-save session every 5 seconds + on page unload ──
+  var bossStateRef=useRef({ans:ans,sec:sec,qi:qi,sqi:sqi,timeLeft:timeLeft,phase:phase});
+  bossStateRef.current={ans:ans,sec:sec,qi:qi,sqi:sqi,timeLeft:timeLeft,phase:phase};
+  useEffect(function(){
+    if(phase!=="test"||result)return;
+    var id=setTimeout(function(){saveBossSession(ans,sec,qi,sqi,timeLeft);},5000);
+    return function(){clearTimeout(id);};
+  });
+  useEffect(function(){
+    function onUnload(){var s=bossStateRef.current;if(s.phase==="test")saveBossSession(s.ans,s.sec,s.qi,s.sqi,s.timeLeft);}
+    window.addEventListener("beforeunload",onUnload);
+    return function(){window.removeEventListener("beforeunload",onUnload);};
+  },[]);
 
   function fmtT(s){var m=Math.floor(s/60);var sc2=s%60;return m+":"+(sc2<10?"0":"")+sc2;}
   function pad(n){return String(n).padStart(2,"0");}
@@ -3310,7 +3333,7 @@ function BossTest(p){
 
   // ── Scoring ──
   function doSubmit(){
-    clearTimeout(timerRef.current);
+    clearTimeout(timerRef.current);clearBossSession();
     var p1s=0;LP1.forEach(function(q,i){if(ans.p1[i]===q.c)p1s++;});
     var p2s=0;LP2.forEach(function(q,i){if(ans.p2[i]===q.c)p2s++;});
     var p3s=0;LP3.forEach(function(c,i){c.qs.forEach(function(q,j){if(ans.p3[i][j]===q.c)p3s++;});});
@@ -3337,6 +3360,29 @@ function BossTest(p){
   // ── Section labels ──
   var secLabel=sec==="p1"?"Part 1 — Photos":sec==="p2"?"Part 2 — Q&R":sec==="p3"?"Part 3 — Conversations":sec==="p4"?"Part 4 — Talks":sec==="p5"?"Part 5 — Sentences":sec==="p6"?"Part 6 — Text Completion":"Part 7 — Reading";
   var isListening=sec==="p1"||sec==="p2"||sec==="p3"||sec==="p4";
+
+  // ═══ RESUME ═══
+  if(phase==="resume"&&saved){
+    var rAnswered=0;
+    saved.ans.p1.forEach(function(a){if(a>=0)rAnswered++;});saved.ans.p2.forEach(function(a){if(a>=0)rAnswered++;});
+    saved.ans.p3.forEach(function(c){c.forEach(function(a){if(a>=0)rAnswered++;});});saved.ans.p4.forEach(function(t){t.forEach(function(a){if(a>=0)rAnswered++;});});
+    saved.ans.p5.forEach(function(a){if(a>=0)rAnswered++;});saved.ans.p6.forEach(function(t){t.forEach(function(a){if(a>=0)rAnswered++;});});
+    saved.ans.p7.forEach(function(ps){ps.forEach(function(a){if(a>=0)rAnswered++;});});
+    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:56,marginBottom:12}}>{"🛡️"}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:24,marginBottom:8}}>Session in progress</h1>
+      <p style={{color:"var(--t2)",fontSize:14,marginBottom:24}}>You have an unfinished Final Arena attempt from today.</p>
+      <div className="crd" style={{padding:16,marginBottom:24,textAlign:"left"}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><span style={{color:"var(--t2)",fontSize:13}}>Progress</span><span className="out" style={{fontWeight:700,color:"var(--cyan)",fontSize:14}}>{rAnswered}/{totalQ} answered</span></div>
+        <Bar value={rAnswered} max={totalQ} h={6} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:10}}><span style={{color:"var(--t2)",fontSize:13}}>Time remaining</span><span className="out" style={{fontWeight:700,color:saved.timeLeft>600?"var(--cyan)":"var(--orange)",fontSize:14}}>{fmtT(saved.timeLeft)}</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}><span style={{color:"var(--t2)",fontSize:13}}>Current section</span><span className="out" style={{fontWeight:600,fontSize:13}}>{saved.sec==="p1"?"Part 1":saved.sec==="p2"?"Part 2":saved.sec==="p3"?"Part 3":saved.sec==="p4"?"Part 4":saved.sec==="p5"?"Part 5":saved.sec==="p6"?"Part 6":"Part 7"}</span></div>
+      </div>
+      <button className="btn1" style={{background:"linear-gradient(135deg,#22c55e,#06b6d4)",fontSize:16,padding:"14px 28px",marginBottom:12}} onClick={function(){stopBGM();setPhase("test");}}>Resume session</button>
+      <button className="btn2" style={{marginBottom:8}} onClick={function(){clearBossSession();setAns(freshAns());setSec("p1");setQi(0);setSqi(0);setTimeLeft(TOTAL_TIME);setPhase("intro");}}>Start over</button>
+      <button className="btn2" onClick={p.back}>Back</button>
+    </div>);
+  }
 
   // ═══ INTRO ═══
   if(phase==="intro"){
