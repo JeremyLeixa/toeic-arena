@@ -320,31 +320,38 @@ function supaToLocal(data){
   };
 }
 
-// load() — localStorage first (instant), Supabase fallback (slow path for first visit)
+// load() — always fetch from Supabase when online, use localStorage as fallback
 async function load(userId){
   var local=loadLocal();
-  if(local){
-    if(userId)_cachedUserId=userId;
-    return local;
-  }
-  if(!userId)return null;
-  _cachedUserId=userId;
-  try{
-    var res=await supabase.from("students").select("*").eq("id",userId).maybeSingle();
-    if(!res.data){
-      var cn=null;try{cn=localStorage.getItem("toeic-arena-name");}catch(e){}
+  if(userId)_cachedUserId=userId;
+  // Try to fetch the freshest data from Supabase
+  if(userId){
+    try{
+      var cn=local?local.name:null;
+      if(!cn)try{cn=localStorage.getItem("toeic-arena-name");}catch(e){}
+      var cc=local?local.classCode:null;
+      if(!cc)try{cc=localStorage.getItem("toeic-arena-class");}catch(e){}
+      var remote=null;
+      // Primary: lookup by (name, class_code) — works cross-device
       if(cn){
-        var cc=null;try{cc=localStorage.getItem("toeic-arena-class");}catch(e){}
-        var res2=await supabase.from("students").select("*").eq("name",cn).eq("class_code",cc||"idrac2026").order("xp",{ascending:false}).limit(1);
-        if(res2.data&&res2.data.length>0)res={data:res2.data[0]};
+        var res=await supabase.from("students").select("*").eq("name",cn).eq("class_code",cc||"idrac2026").order("xp",{ascending:false}).limit(1);
+        if(res.data&&res.data.length>0)remote=res.data[0];
       }
-    }
-    if(!res.data)return null;
-    var d=supaToLocal(res.data);
-    saveLocal(d);
-    _syncDirty=false;
-    return d;
-  }catch(e){return null;}
+      // Fallback: lookup by auth ID
+      if(!remote){
+        var res2=await supabase.from("students").select("*").eq("id",userId).maybeSingle();
+        if(res2.data)remote=res2.data;
+      }
+      if(remote){
+        var d=supaToLocal(remote);
+        saveLocal(d);
+        _syncDirty=false;
+        return d;
+      }
+    }catch(e){/* Supabase unreachable — fall through to local */}
+  }
+  // Offline or no userId: use localStorage
+  return local||null;
 }
 
 // save() — localStorage + Supabase (UPDATE first, INSERT if no row)
