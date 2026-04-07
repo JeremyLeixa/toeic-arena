@@ -592,7 +592,7 @@ var CSS=`
 .skin-corail{--cx:220,100,50;--cx-hex:#dc6432;--cx-dark:#c03018;--cyan:#dc6432;--orange:#c03018}
 .skin-jade{--cx:20,180,170;--cx-hex:#14b4aa;--cx-dark:#0a8880;--cyan:#14b4aa;--orange:#0a8880}
 .skin-obsidienne{--cx:176,144,240;--cx-hex:#b090f0;--cx-dark:#8060c0;--cyan:#b090f0;--orange:#8060c0}
-.skin-aurore{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870}
+.skin-aurore{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870;--bg:#08090e;--bg2:#10121c;--bg3:#18202c;--t1:#d8f0e8;--t2:#5898a0;--bdr:rgba(64,208,192,.08)}
 .light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#8a7e6a;--cx:139,105,20;--cx-hex:#8b6914;--cx-dark:#6a4e10}
 .light.skin-argent{--cx:80,80,110;--cx-hex:#505070;--cx-dark:#383848;--cyan:#505070;--orange:#383848}
 .light.skin-emeraude{--cx:18,110,52;--cx-hex:#126e34;--cx-dark:#0c5228;--cyan:#126e34;--orange:#0c5228}
@@ -604,27 +604,34 @@ var CSS=`
 .light.skin-obsidienne{--cx:80,60,140;--cx-hex:#503c8c;--cx-dark:#382868;--cyan:#503c8c;--orange:#382868}
 .light.skin-aurore{--cx:20,120,90;--cx-hex:#147858;--cx-dark:#0c5a40;--cyan:#147858;--orange:#0c5a40}
 /* ── SHIMMER OVERLAY via ::after (immune to inline style overrides) ── */
-.skin-rubis .btn1,.skin-amethyste .btn1,.skin-corail .btn1,.skin-jade .btn1,.skin-obsidienne .btn1,.skin-aurore .btn1{position:relative!important;overflow:hidden!important}
-.skin-rubis .btn1::after,.skin-amethyste .btn1::after,.skin-corail .btn1::after,.skin-jade .btn1::after{content:''!important;position:absolute!important;inset:0!important;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.2) 50%,transparent 65%)!important;background-size:300%!important;animation:skinShimmer 2.5s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
-.skin-obsidienne .btn1::after,.skin-aurore .btn1::after{content:''!important;position:absolute!important;inset:0!important;background:linear-gradient(105deg,transparent 25%,rgba(255,255,255,.35) 50%,transparent 75%)!important;background-size:400%!important;animation:skinShimmer 1.8s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
-/* ── EPIC SKINS — glow + bar shimmer ── */
-.skin-rubis .btn1,.skin-amethyste .btn1,.skin-corail .btn1,.skin-jade .btn1{box-shadow:0 4px 20px rgba(var(--cx),.4),0 0 0 1px rgba(var(--cx),.2)!important}
-.skin-rubis .bar-fill,.skin-amethyste .bar-fill,.skin-corail .bar-fill,.skin-jade .bar-fill{position:relative!important;overflow:hidden!important}
-.skin-rubis .bar-fill::after,.skin-amethyste .bar-fill::after,.skin-corail .bar-fill::after,.skin-jade .bar-fill::after{content:''!important;position:absolute!important;inset:0!important;background:linear-gradient(90deg,transparent 35%,rgba(255,255,255,.25) 50%,transparent 65%)!important;background-size:300%!important;animation:skinShimmer 2s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
+/* ── EPIC SKINS — ::after shimmer overlay ── */
+.skin-rubis .btn1,.skin-amethyste .btn1,.skin-corail .btn1,.skin-jade .btn1,.skin-obsidienne .btn1{position:relative!important;overflow:hidden!important;box-shadow:0 4px 20px rgba(var(--cx),.4),0 0 0 1px rgba(var(--cx),.2)!important}
+.skin-rubis .btn1::after,.skin-amethyste .btn1::after,.skin-corail .btn1::after,.skin-jade .btn1::after,.skin-obsidienne .btn1::after{content:''!important;position:absolute!important;inset:0!important;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.2) 50%,transparent 65%)!important;background-size:300%!important;animation:skinShimmer 2.5s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
+.skin-rubis .bar-fill,.skin-amethyste .bar-fill,.skin-corail .bar-fill,.skin-jade .bar-fill,.skin-obsidienne .bar-fill{position:relative!important;overflow:hidden!important}
+.skin-rubis .bar-fill::after,.skin-amethyste .bar-fill::after,.skin-corail .bar-fill::after,.skin-jade .bar-fill::after,.skin-obsidienne .bar-fill::after{content:''!important;position:absolute!important;inset:0!important;background:linear-gradient(90deg,transparent 35%,rgba(255,255,255,.25) 50%,transparent 65%)!important;background-size:300%!important;animation:skinShimmer 2s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
 .skin-rubis .crd,.skin-amethyste .crd,.skin-corail .crd,.skin-jade .crd{border-color:rgba(var(--cx),.18)!important;box-shadow:0 0 12px rgba(var(--cx),.08),inset 0 1px 0 rgba(var(--cx),.08)!important}
 .skin-rubis .glo,.skin-amethyste .glo,.skin-corail .glo,.skin-jade .glo{box-shadow:0 0 30px rgba(var(--cx),.12)!important}
 .skin-rubis .btn2,.skin-amethyste .btn2,.skin-corail .btn2,.skin-jade .btn2{border-color:rgba(var(--cx),.3)!important;color:var(--cyan)!important}
-/* ── LEGENDARY SKINS — maximum visual impact ── */
-.skin-obsidienne .btn1,.skin-aurore .btn1{box-shadow:0 4px 32px rgba(var(--cx),.6),0 0 60px rgba(var(--cx),.25),0 0 0 1px rgba(var(--cx),.3)!important;filter:brightness(1.1)!important}
-.skin-obsidienne .bar-fill,.skin-aurore .bar-fill{position:relative!important;overflow:hidden!important}
-.skin-obsidienne .bar-fill::after,.skin-aurore .bar-fill::after{content:''!important;position:absolute!important;inset:0!important;background:linear-gradient(90deg,transparent 25%,rgba(255,255,255,.35) 50%,transparent 75%)!important;background-size:400%!important;animation:skinShimmer 1.5s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
-.skin-obsidienne .crd,.skin-aurore .crd{border-color:rgba(var(--cx),.25)!important;box-shadow:0 0 20px rgba(var(--cx),.12),inset 0 1px 0 rgba(var(--cx),.12)!important;animation:legendCardPulse 3s ease-in-out infinite!important}
-.skin-obsidienne .glo,.skin-aurore .glo{box-shadow:0 0 50px rgba(var(--cx),.25)!important;animation:legendCardPulse 3s ease-in-out infinite!important}
-.skin-obsidienne .btn2,.skin-aurore .btn2{border-color:rgba(var(--cx),.35)!important;color:var(--cyan)!important;box-shadow:0 0 16px rgba(var(--cx),.15)!important}
-.skin-obsidienne .tab-bar,.skin-aurore .tab-bar{box-shadow:0 -4px 30px rgba(var(--cx),.15)!important}
-.skin-obsidienne .out,.skin-aurore .out{text-shadow:0 0 20px rgba(var(--cx),.15)}
+/* ── OBSIDIENNE — intense shimmer ── */
+.skin-obsidienne .btn1{box-shadow:0 4px 32px rgba(var(--cx),.6),0 0 60px rgba(var(--cx),.25),0 0 0 1px rgba(var(--cx),.3)!important;filter:brightness(1.1)!important}
+.skin-obsidienne .btn1::after{background:linear-gradient(105deg,transparent 25%,rgba(255,255,255,.35) 50%,transparent 75%)!important;background-size:400%!important;animation:skinShimmer 1.8s ease-in-out infinite!important}
+.skin-obsidienne .bar-fill::after{background:linear-gradient(90deg,transparent 25%,rgba(255,255,255,.35) 50%,transparent 75%)!important;background-size:400%!important;animation:skinShimmer 1.5s ease-in-out infinite!important}
+.skin-obsidienne .crd{border-color:rgba(var(--cx),.25)!important;box-shadow:0 0 20px rgba(var(--cx),.12),inset 0 1px 0 rgba(var(--cx),.12)!important;animation:legendCardPulse 3s ease-in-out infinite!important}
+.skin-obsidienne .glo{box-shadow:0 0 50px rgba(var(--cx),.25)!important;animation:legendCardPulse 3s ease-in-out infinite!important}
+.skin-obsidienne .btn2{border-color:rgba(var(--cx),.35)!important;color:var(--cyan)!important;box-shadow:0 0 16px rgba(var(--cx),.15)!important}
+.skin-obsidienne .tab-bar{box-shadow:0 -4px 30px rgba(var(--cx),.15)!important}
+.skin-obsidienne .out{text-shadow:0 0 20px rgba(var(--cx),.15)}
+/* ── AURORE BORÉALE — 4-color aurora gradient animation ── */
+.skin-aurore .btn1{background:linear-gradient(135deg,#40d0c0,#6060e8,#c040a0,#40d0c0)!important;background-size:300%!important;animation:aurora 2.5s ease infinite!important;color:#08090e!important;box-shadow:0 4px 32px rgba(64,208,192,.5),0 0 60px rgba(96,96,232,.2),0 0 0 1px rgba(64,208,192,.3)!important}
+.skin-aurore .bar-fill{background:linear-gradient(90deg,#40d0c0,#6060e8,#c040a0,#40c8a0,#40d0c0)!important;background-size:300%!important;animation:aurora 3s ease infinite!important}
+.skin-aurore .crd{border-color:rgba(64,208,192,.2)!important;background:linear-gradient(135deg,rgba(64,208,192,.08),rgba(96,96,232,.07),rgba(192,64,160,.06))!important;background-size:300% 100%!important;animation:aurora 4s ease infinite!important;box-shadow:0 0 16px rgba(64,208,192,.1),inset 0 1px 0 rgba(64,208,192,.1)!important}
+.skin-aurore .glo{box-shadow:0 0 40px rgba(64,208,192,.2)!important;background:linear-gradient(135deg,rgba(64,208,192,.08),rgba(96,96,232,.06),rgba(192,64,160,.05))!important;background-size:300%!important;animation:aurora 4s ease infinite!important}
+.skin-aurore .btn2{border-color:rgba(64,208,192,.3)!important;color:#40d0c0!important;box-shadow:0 0 16px rgba(64,208,192,.12)!important}
+.skin-aurore .tab-bar{box-shadow:0 -4px 30px rgba(64,208,192,.15),0 -2px 20px rgba(96,96,232,.1)!important}
+.skin-aurore .out{text-shadow:0 0 20px rgba(64,208,192,.12)}
 .light.skin-rubis .btn1,.light.skin-amethyste .btn1,.light.skin-corail .btn1,.light.skin-jade .btn1{box-shadow:0 4px 16px rgba(var(--cx),.3)!important}
-.light.skin-obsidienne .btn1,.light.skin-aurore .btn1{box-shadow:0 4px 24px rgba(var(--cx),.4),0 0 40px rgba(var(--cx),.15)!important}
+.light.skin-obsidienne .btn1{box-shadow:0 4px 24px rgba(var(--cx),.4),0 0 40px rgba(var(--cx),.15)!important}
+.light.skin-aurore .btn1{box-shadow:0 4px 20px rgba(20,120,90,.4)!important}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
@@ -637,6 +644,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes epicGlow{0%,100%{filter:drop-shadow(0 0 3px #c060f099)}50%{filter:drop-shadow(0 0 8px #c060f0cc)}}
 @keyframes rareGlow{0%,100%{filter:drop-shadow(0 0 2px #3a8ee066)}50%{filter:drop-shadow(0 0 6px #3a8ee0aa)}}
 @keyframes skinShimmer{0%{background-position:-100% 50%}100%{background-position:200% 50%}}
+@keyframes aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @keyframes legendCardPulse{0%,100%{box-shadow:0 0 16px rgba(var(--cx),.1),inset 0 1px 0 rgba(var(--cx),.1)}50%{box-shadow:0 0 28px rgba(var(--cx),.2),inset 0 1px 0 rgba(var(--cx),.18)}}
 @keyframes chestShake{0%,100%{transform:rotate(0)}10%{transform:rotate(-8deg)}20%{transform:rotate(8deg)}30%{transform:rotate(-6deg)}40%{transform:rotate(6deg)}50%{transform:rotate(-3deg)}60%{transform:rotate(3deg)}70%{transform:rotate(-1deg)}80%{transform:rotate(1deg)}}
 @keyframes chestFlash{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(2)}}
