@@ -8775,7 +8775,7 @@ useEffect(function(){
 			if(!d.theme)d.theme="dark";
             sU(d);
             // Load pending chests
-            if(d.name&&d.name!==GHOST_NAME)refreshPendingChests(d.name,d.classCode||"idrac2026");
+            if(d.name)refreshPendingChests(d.name,d.classCode||"idrac2026");
             // Show daily tip if not disabled and not already shown today
             try{
               var tipDisabled=localStorage.getItem("toeic-tip-disabled")==="1";
