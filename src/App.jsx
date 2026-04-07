@@ -989,12 +989,10 @@ var[step,sSt]=useState("name");
           if(!teacherCode||teacherChecking)return;
           setTeacherChecking(true);setTeacherErr(false);
           supabase.from('groups').select('code').eq('teacher_code',teacherCode).limit(1)
-            .then(async function(res){
+            .then(function(res){
               setTeacherChecking(false);
               if(res.data&&res.data.length>0){
                 try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}
-                // Propose biometric enrollment if available and not yet registered
-                if(bioAvail&&!bioRegistered){try{await bioRegister();setBioRegistered(true);}catch(e){}}
                 p.goTeacher();
               }else{setTeacherErr(true);}
             });
@@ -6085,6 +6083,8 @@ function animateFall(){
 // ═══════════════════════════════════════════════════════════════
 
 function TeacherDash(p){
+  var[tdBioAvail,setTdBioAvail]=useState(false);var[tdBioReg,setTdBioReg]=useState(!!getBioCredId());
+  useEffect(function(){biometricAvailable().then(function(v){setTdBioAvail(v);});},[]);
   function fmtTime(sec){
     if(!sec||sec<60)return"<1m";
     var h=Math.floor(sec/3600);var m=Math.floor((sec%3600)/60);
@@ -6461,6 +6461,17 @@ function TeacherDash(p){
         <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6}}>Teacher Dashboard</h1>
         <p style={{color:"var(--t2)",fontSize:13}}>Select a group to manage</p>
       </div>
+      {tdBioAvail&&!tdBioReg&&<button onClick={async function(){try{await bioRegister();setTdBioReg(true);}catch(e){}}}
+        style={{width:"100%",padding:"12px 16px",marginBottom:16,background:"rgba(212,148,58,.08)",border:"1px solid rgba(212,148,58,.25)",borderRadius:12,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:"'DM Sans',sans-serif"}}>
+        <span style={{fontSize:22}}>{"🔒"}</span>
+        <div style={{textAlign:"left",flex:1}}><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)"}}>Enable biometric unlock</div>
+        <div style={{fontSize:11,color:"var(--t3)"}}>Use fingerprint or Face ID for quick access</div></div>
+      </button>}
+      {tdBioAvail&&tdBioReg&&<div style={{width:"100%",padding:"10px 16px",marginBottom:16,background:"rgba(0,230,118,.06)",border:"1px solid rgba(0,230,118,.2)",borderRadius:12,display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:16}}>{"✓"}</span>
+        <span style={{fontSize:12,color:"var(--green)"}}>Biometric unlock enabled</span>
+        <button onClick={function(){try{localStorage.removeItem(BIOMETRIC_KEY);setTdBioReg(false);}catch(e){}}} style={{marginLeft:"auto",background:"none",border:"none",color:"var(--t3)",fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Disable</button>
+      </div>}
       {groups.length===0&&<div style={{textAlign:"center",padding:20}}><p style={{color:"var(--t3)",fontSize:13}}>Loading groups...</p></div>}
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {groups.map(function(g){
@@ -8307,7 +8318,7 @@ function Profile(p){
         // Try biometric first if registered
         if(bioAvail&&bioRegistered){try{var ok=await bioAuthenticate();if(ok){p.goTeacher();return;}}catch(e){}}
         // Fall back to password prompt
-        var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(async function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}if(bioAvail&&!bioRegistered){try{await bioRegister();setBioRegistered(true);}catch(e){}}p.goTeacher();}else{alert("Code invalide");}});}}
+        var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}p.goTeacher();}else{alert("Code invalide");}});}}
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(212,148,58,.2)",color:"var(--cyan)"}}>
         👨‍🏫 Teacher Dashboard
       </button>
