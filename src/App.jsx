@@ -3178,12 +3178,12 @@ function Part6Drill(p){
 
 // ─── PART 7 READING COMPREHENSION ───
 function Part7Read(p){
-  var passages=useMemo(function(){return shuffle(PART7_PASSAGES).slice(0,7);},[]);
+  var passages=useMemo(function(){return shuffle(PART7_PASSAGES).filter(function(p){return p&&p.questions&&p.questions.length>0;}).slice(0,7);},[]);
   var[pi,sPi]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
   var[showQPreview,setShowQPreview]=useState(false);var[showText,setShowText]=useState(false);
 
-  var totalQs=useMemo(function(){var c=0;passages.forEach(function(p){c+=p.questions.length;});return c;},[]);
+  var totalQs=useMemo(function(){var c=0;passages.forEach(function(p){if(p&&p.questions)c+=p.questions.length;});return c;},[]);
   var curPass=passages[pi];
   var curQ=curPass?curPass.questions[qi]:null;
 
