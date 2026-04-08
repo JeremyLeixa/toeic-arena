@@ -329,6 +329,7 @@ function supaToLocal(data){
 // load() — always fetch from Supabase when online, use localStorage as fallback
 async function load(userId){
   var local=loadLocal();
+  console.warn("[LOAD] start — userId:",userId?"yes":"no","local:",local?local.name:"null");
   if(userId)_cachedUserId=userId;
   // Try to fetch the freshest data from Supabase
   if(userId){
@@ -337,24 +338,29 @@ async function load(userId){
       if(!cn)try{cn=localStorage.getItem("toeic-arena-name");}catch(e){}
       var cc=local?local.classCode:null;
       if(!cc)try{cc=localStorage.getItem("toeic-arena-class");}catch(e){}
+      console.warn("[LOAD] querying Supabase for:",cn,cc);
       var remote=null;
       // Primary: lookup by (name, class_code) — works cross-device
       if(cn){
         var res=await supabase.from("students").select("*").eq("name",cn).eq("class_code",cc||"idrac2026").order("xp",{ascending:false}).limit(1);
+        if(res.error)console.error("[LOAD] SELECT error:",res.error.message);
         if(res.data&&res.data.length>0)remote=res.data[0];
       }
       // Fallback: lookup by auth ID
       if(!remote){
+        console.warn("[LOAD] primary miss, trying fallback by auth ID");
         var res2=await supabase.from("students").select("*").eq("id",userId).maybeSingle();
         if(res2.data)remote=res2.data;
       }
       if(remote){
+        console.warn("[LOAD] got remote — xp:",remote.xp,"weekly_xp:",remote.weekly_xp,"streak:",remote.streak);
         // If localStorage has very recent unsaved changes, it is ahead of Supabase — use it and re-sync
         // Timestamp-based: only trust dirty flag if < 15s old (same pageload), ignore stale flags from other sessions/devices
         var dirtyTs=0;
         try{dirtyTs=parseInt(localStorage.getItem("toeic-arena-dirty")||"0");}catch(e){}
         var isRecentDirty=dirtyTs>0&&(Date.now()-dirtyTs)<15000;
         if(isRecentDirty&&local&&local.name){
+          console.warn("[LOAD] dirty flag recent — using local instead of remote");
           _syncDirty=true;
           save(local);
           return local;
@@ -363,7 +369,7 @@ async function load(userId){
         saveLocal(d);
         _syncDirty=false;
         return d;
-      }
+      }else{console.warn("[LOAD] no remote data found");}
     }catch(e){/* Supabase unreachable — fall through to local */}
   }
   // Offline or no userId: use localStorage
