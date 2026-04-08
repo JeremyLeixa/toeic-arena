@@ -6246,14 +6246,14 @@ function ChestOpenModal(p){
     }
   }
 
-  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-    <div style={{textAlign:"center",maxWidth:340,width:"100%"}}>
+  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div style={{textAlign:"center",maxWidth:340,width:"100%",background:"linear-gradient(180deg,#1a1610,#0f0c08)",border:"1px solid rgba(255,192,32,.12)",borderRadius:24,padding:"32px 24px",boxShadow:"0 12px 60px rgba(0,0,0,.6)"}}>
 
       {/* Phase 1: Shaking chest */}
       {phase==="shake"&&<div style={{animation:"chestShake 1.2s ease-in-out"}}>
         <div style={{fontSize:80,marginBottom:16}}>{ct.icon}</div>
-        <div className="out" style={{fontSize:18,fontWeight:800,color:"var(--gold)",animation:"pulse 1s infinite"}}>{ct.label} Chest</div>
-        <p style={{color:"var(--t3)",fontSize:12,marginTop:8}}>Opening...</p>
+        <div className="out" style={{fontSize:18,fontWeight:800,color:"#f0c850",animation:"pulse 1s infinite"}}>{ct.label} Chest</div>
+        <p style={{color:"#8a7e6a",fontSize:13,marginTop:8}}>Opening...</p>
       </div>}
 
       {/* Phase 2: Flash + particles */}
@@ -6267,30 +6267,30 @@ function ChestOpenModal(p){
       {phase==="reveal"&&result&&<div style={{animation:"chestReveal .6s ease-out"}}>
         <div style={{width:100,height:100,borderRadius:20,margin:"0 auto 20px",display:"flex",alignItems:"center",justifyContent:"center",
           background:"linear-gradient(135deg,"+result.rarityColor+"22,"+result.rarityColor+"44)",
-          border:"2px solid "+result.rarityColor,boxShadow:"0 0 30px "+result.rarityColor+"33"}}>
+          border:"2px solid "+result.rarityColor,boxShadow:"0 0 40px "+result.rarityColor+"44"}}>
           {result.reward.type==="xp"?<span style={{fontSize:48}}>{"\uD83D\uDC8E"}</span>:
            result.reward.type==="avatar"?<AvatarMedal avatarId={result.reward.id} size={72}/>:
            <span style={{fontSize:48}}>{"\uD83C\uDFA8"}</span>}
         </div>
-        <div className="out" style={{fontSize:12,fontWeight:700,color:result.rarityColor,textTransform:"uppercase",letterSpacing:2,marginBottom:6}}>{result.rarityLabel}</div>
-        <div className="out" style={{fontSize:22,fontWeight:900,color:"var(--t1)",marginBottom:8}}>
+        <div className="out" style={{fontSize:11,fontWeight:700,color:result.rarityColor,textTransform:"uppercase",letterSpacing:2,marginBottom:8}}>{result.rarityLabel}</div>
+        <div className="out" style={{fontSize:24,fontWeight:900,color:"#ede4d4",marginBottom:8}}>
           {result.reward.type==="xp"?"+"+result.xpAmount+" XP":
            result.reward.type==="avatar"?(AVATARS[result.reward.id]?AVATARS[result.reward.id].name:result.reward.id):
            result.reward.type==="skin"?(SKINS[result.reward.id]?SKINS[result.reward.id].name:result.reward.id):"???"}
         </div>
-        <div style={{fontSize:13,color:"var(--t2)",marginBottom:24}}>
+        <div style={{fontSize:13,color:"#b0a890",marginBottom:24}}>
           {result.reward.type==="xp"?"XP Gem — bonus added!":
            result.reward.type==="avatar"?"New avatar unlocked!":
            "New skin unlocked!"}
         </div>
-        {result.reward.type==="skin"&&SKINS[result.reward.id]&&<div style={{width:60,height:60,borderRadius:14,margin:"0 auto 20px",background:"linear-gradient(135deg,"+SKINS[result.reward.id].hex+","+SKINS[result.reward.id].dark+")",border:"2px solid "+result.rarityColor}}/>}
+        {result.reward.type==="skin"&&SKINS[result.reward.id]&&<div style={{width:60,height:60,borderRadius:14,margin:"0 auto 20px",background:"linear-gradient(135deg,"+SKINS[result.reward.id].hex+","+SKINS[result.reward.id].dark+")",border:"2px solid "+result.rarityColor,boxShadow:"0 0 20px "+SKINS[result.reward.id].hex+"44"}}/>}
         <button className="btn1" onClick={p.onClose} style={{width:"100%",fontSize:15}}>Collect</button>
       </div>}
 
       {/* Reveal but no result yet (loading) */}
       {phase==="reveal"&&!result&&<div>
         <div style={{fontSize:48,animation:"pulse 1s infinite"}}>{"⏳"}</div>
-        <p style={{color:"var(--t3)",fontSize:13,marginTop:12}}>Rolling...</p>
+        <p style={{color:"#8a7e6a",fontSize:13,marginTop:12}}>Rolling...</p>
       </div>}
     </div>
   </div>);
