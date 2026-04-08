@@ -277,6 +277,9 @@ var BUILD_ID="2026-04-08a";
 import { supabase } from './supabase.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
 
+// ─── Name normalization (accent-insensitive + lowercase) ───
+function normalizeName(s){return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();}
+
 // ─── localStorage-first persistence layer ───
 var _cachedUserId=null;
 var _syncDirty=false;
@@ -851,12 +854,17 @@ var[step,sSt]=useState("name");
         var authRes=await supabase.auth.signInAnonymously();
         if(!authRes.data.user){setLookingUp(false);sSt("classcode");return;}
       }
-      var res=await supabase.from('students').select('name,class_code,xp').ilike('name',n.trim());
-      if(res.data&&res.data.length>0){
+      // Fetch all students, filter by normalized name (accent + case insensitive)
+      var norm=normalizeName(n);
+      var res=await supabase.from('students').select('name,class_code,xp');
+      var matches=(res.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
+      if(matches.length>0){
+        // Use the DB name (original casing) so recovery works with the exact stored name
+        setName(matches[0].name);
         var groupRes=await supabase.from('groups').select('code,name,type');
         var groupMap={};
         if(groupRes.data)groupRes.data.forEach(function(g){groupMap[g.code]={name:g.name,type:g.type};});
-        var accounts=res.data.map(function(s){
+        var accounts=matches.map(function(s){
           var g=groupMap[s.class_code];
           return{class_code:s.class_code,xp:s.xp||0,
             groupName:g?g.name:(s.class_code==="visitor"?"Visitor / Free Access":s.class_code),
@@ -9159,10 +9167,15 @@ var prevLeague=getLeague(c.weeklyXp);
   async function onboard(name,classCode,bsScores,bsCorrect,firstNav,pinValue){
     classCode=classCode||'idrac2026';
     // Check if student already exists (use limit(1) — safe even with duplicates)
-    var existing=await supabase.from('students').select('*').ilike('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
+    // Check for existing student (accent + case insensitive)
+    var norm=normalizeName(name);
+    var allInClass=await supabase.from('students').select('*').eq('class_code',classCode);
+    var existingMatch=(allInClass.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
+    existingMatch.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
+    var existing={data:existingMatch.length>0?existingMatch:null};
     if(existing.data&&existing.data.length>0){
-      // Student exists — recover instead of creating duplicate
-      var recovered=await recover(name,classCode);
+      // Student exists — recover using the DB-stored name (preserves original casing)
+      var recovered=await recover(existing.data[0].name,classCode);
       if(recovered)return;
     }
 
@@ -9204,8 +9217,13 @@ var prevLeague=getLeague(c.weeklyXp);
   }
   async function recover(name,classCode){
     // Find the best row (highest XP) for this student
-    var res=await supabase.from('students').select('*').ilike('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
-    if(!res.data||res.data.length===0)return false;
+    // Accent + case insensitive lookup
+    var rnorm=normalizeName(name);
+    var rAll=await supabase.from('students').select('*').eq('class_code',classCode);
+    var rMatches=(rAll.data||[]).filter(function(s){return normalizeName(s.name)===rnorm;});
+    rMatches.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
+    if(rMatches.length===0)return false;
+    var res={data:rMatches};
     var d=res.data[0];
 
     // Get or create auth session
