@@ -403,7 +403,7 @@ async function save(d){
       // No row yet — first ever save, INSERT with current auth ID
       var ins=await supabase.from("students").insert({id:user.id,name:d.name,class_code:cc,...payload});
       if(ins.error)console.error("[SAVE] INSERT error:",ins.error.message);
-    }else{console.debug("[SAVE] OK —",d.name,cc,"updated");}
+    }else{console.warn("[SAVE] OK —",d.name,cc,"updated");}
     _syncDirty=false;
     try{localStorage.removeItem("toeic-arena-dirty");}catch(e2){}
   }catch(e){console.warn("[SAVE] Exception:",e);}
