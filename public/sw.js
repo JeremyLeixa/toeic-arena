@@ -3,7 +3,7 @@
 // Cache static assets + handle push notifications
 // ═══════════════════════════════════════════════════════════
 
-var CACHE_NAME = "toeic-arena-v2";
+var CACHE_NAME = "toeic-arena-v3";
 
 // ─── INSTALL: cache app shell + force activate ───
 self.addEventListener("install", function (e) {
