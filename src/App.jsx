@@ -293,7 +293,7 @@ function saveLocal(d){
     localStorage.setItem("toeic-arena-profile",JSON.stringify(d));
     localStorage.setItem("toeic-arena-name",d.name);
     localStorage.setItem("toeic-arena-class",d.classCode||"idrac2026");
-    localStorage.setItem("toeic-arena-dirty","1");
+    localStorage.setItem("toeic-arena-dirty",String(Date.now()));
     _syncDirty=true;
   }catch(e){}
 }
@@ -344,10 +344,12 @@ async function load(userId){
         if(res2.data)remote=res2.data;
       }
       if(remote){
-        // If localStorage has unsaved changes, it is ahead of Supabase — use it and re-sync
-        var dirtyFlag=false;
-        try{dirtyFlag=localStorage.getItem("toeic-arena-dirty")==="1";}catch(e){}
-        if(dirtyFlag&&local&&local.name){
+        // If localStorage has very recent unsaved changes, it is ahead of Supabase — use it and re-sync
+        // Timestamp-based: only trust dirty flag if < 15s old (same pageload), ignore stale flags from other sessions/devices
+        var dirtyTs=0;
+        try{dirtyTs=parseInt(localStorage.getItem("toeic-arena-dirty")||"0");}catch(e){}
+        var isRecentDirty=dirtyTs>0&&(Date.now()-dirtyTs)<15000;
+        if(isRecentDirty&&local&&local.name){
           _syncDirty=true;
           save(local);
           return local;
