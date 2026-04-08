@@ -8215,7 +8215,7 @@ function Profile(p){
   var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
 
   useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});biometricAvailable().then(function(v){setBioAvail(v);});},[]);
-  useEffect(function(){if(view==="inventory"){setInvLoading(true);getOwnedRewards(u.name,u.classCode||"idrac2026").then(function(rewards){setInvData(rewards);setInvLoading(false);});}},[view]);
+  useEffect(function(){if(view==="inventory"||view==="avatar"){setInvLoading(true);getOwnedRewards(u.name,u.classCode||"idrac2026").then(function(rewards){setInvData(rewards);setInvLoading(false);});}},[view]);
   useEffect(function(){try{setTipOff(localStorage.getItem("toeic-tip-disabled")==="1");}catch(e){}},[]);
 
   var lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores);
@@ -8437,65 +8437,15 @@ function Profile(p){
     return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
         <button onClick={function(){setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>{"\u2190"}</button>
-        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Inventory</h1>
+        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Collection</h1>
       </div>
 
       {invLoading&&<p style={{color:"var(--t3)",textAlign:"center",padding:40}}>Loading...</p>}
 
       {!invLoading&&<>
-        {/* AVATARS */}
+        {/* All avatars (locked ones grayed out) */}
         <div style={{marginBottom:28}}>
           <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Avatars ({ownedAvatars.length}/{Object.keys(AVATARS).length})</div>
-          {ownedAvatars.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{color:"var(--t3)",fontSize:13}}>No avatars yet. Open chests to unlock them!</p></div>}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:10}}>
-            {ownedAvatars.map(function(r){
-              var av=AVATARS[r.reward_id];if(!av)return null;
-              var rarity=RARITIES.find(function(rt){return rt.id===r.rarity;})||RARITIES[0];
-              var isEquipped=u.avatar===r.reward_id;
-              return(<button key={r.id} onClick={function(){
-                var c=JSON.parse(JSON.stringify(u));c.avatar=r.reward_id;p.setAvatar(c);
-              }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:10,borderRadius:14,cursor:"pointer",
-                background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
-                border:isEquipped?"2px solid var(--cx-hex)":"1px solid var(--bdr)",
-                fontFamily:"'DM Sans',sans-serif"}}>
-                <AvatarMedal avatarId={r.reward_id} size={48}/>
-                <div style={{fontSize:10,fontWeight:700,color:rarity.color,textAlign:"center"}}>{av.name}</div>
-                {isEquipped&&<div style={{fontSize:8,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
-              </button>);
-            })}
-          </div>
-        </div>
-
-        {/* SKINS */}
-        <div style={{marginBottom:28}}>
-          <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Skins ({ownedSkins.length}/{Object.keys(SKINS).length})</div>
-          {ownedSkins.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{color:"var(--t3)",fontSize:13}}>No skins yet. Open Rare+ chests to find them!</p></div>}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(100px,1fr))",gap:10}}>
-            {ownedSkins.map(function(r){
-              var sk=SKINS[r.reward_id];if(!sk)return null;
-              var rarity=RARITIES.find(function(rt){return rt.id===sk.rarity;})||RARITIES[0];
-              var isEquipped=u.equippedSkin===r.reward_id;
-              return(<button key={r.id} onClick={function(){
-                var c=JSON.parse(JSON.stringify(u));c.equippedSkin=isEquipped?null:r.reward_id;p.setAvatar(c);
-              }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:12,borderRadius:14,cursor:"pointer",
-                background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
-                border:isEquipped?"2px solid "+sk.hex:"1px solid var(--bdr)",
-                fontFamily:"'DM Sans',sans-serif"}}>
-                <div style={{width:48,height:48,borderRadius:12,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+rarity.color}}/>
-                <div style={{fontSize:11,fontWeight:700,color:rarity.color}}>{sk.name}</div>
-                {isEquipped&&<div style={{fontSize:8,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
-              </button>);
-            })}
-          </div>
-        </div>
-
-        {/* Remove skin button */}
-        {u.equippedSkin&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedSkin=null;p.setAvatar(c);}}
-          style={{width:"100%",marginBottom:20,fontSize:13}}>Remove current skin</button>}
-
-        {/* All avatars preview (locked ones grayed out) */}
-        <div>
-          <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Collection</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(60px,1fr))",gap:6}}>
             {Object.keys(AVATARS).map(function(aid){
               var av=AVATARS[aid];var owned=ownedAvatars.some(function(r){return r.reward_id===aid;});
@@ -8508,16 +8458,35 @@ function Profile(p){
             })}
           </div>
         </div>
+
+        {/* All skins (locked ones grayed out) */}
+        <div>
+          <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Skins ({ownedSkins.length}/{Object.keys(SKINS).length})</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:8}}>
+            {Object.keys(SKINS).map(function(sid){
+              var sk=SKINS[sid];var owned=ownedSkins.some(function(r){return r.reward_id===sid;});
+              var rarity=RARITIES.find(function(rt){return rt.id===sk.rarity;})||RARITIES[0];
+              return(<div key={sid} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,
+                opacity:owned?1:0.25,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
+                <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+(owned?rarity.color:"var(--bg3)")}}/>
+                <div style={{fontSize:9,fontWeight:600,color:owned?rarity.color:"var(--t3)"}}>{sk.name}</div>
+              </div>);
+            })}
+          </div>
+        </div>
       </>}
     </div>);
   }
 
-  if(view==="avatar")return(
+  if(view==="avatar"){
+    var styleAvatars=invData?invData.filter(function(r){return r.reward_type==="avatar";}):[];
+    var styleSkins=invData?invData.filter(function(r){return r.reward_type==="skin";}):[];
+    return(
     <div className="enter" style={{padding:"20px 16px 100px"}}>
       <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handlePhotoUpload}/>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
         <button onClick={function(){setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>←</button>
-        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Avatar</h1>
+        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Style</h1>
       </div>
       <div style={{textAlign:"center",marginBottom:28}}>
         <div style={{position:"relative",display:"inline-block",marginBottom:16}}>
@@ -8556,9 +8525,64 @@ function Profile(p){
             {"🗝️"}</button>);
         })()}
       </div>
-      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:20,fontStyle:"italic"}}>🗝️ Game Master — avatar exclusif</div>}
-    </div>
-  );
+      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:16,fontStyle:"italic"}}>🗝️ Game Master — avatar exclusif</div>}
+
+      {/* Chest avatars */}
+      {!invLoading&&styleAvatars.length>0&&<>
+        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Avatars coffres</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(72px,1fr))",gap:8,marginBottom:20}}>
+          {styleAvatars.map(function(r){
+            var av=AVATARS[r.reward_id];if(!av)return null;
+            var rarity=RARITIES.find(function(rt){return rt.id===r.rarity;})||RARITIES[0];
+            var isEquipped=u.avatar===r.reward_id;
+            return(<button key={r.id} onClick={function(){
+              var c=JSON.parse(JSON.stringify(u));c.avatar=r.reward_id;p.setAvatar(c);
+            }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,cursor:"pointer",
+              background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
+              border:isEquipped?"2px solid var(--cx-hex)":"1px solid var(--bdr)",
+              fontFamily:"'DM Sans',sans-serif"}}>
+              <AvatarMedal avatarId={r.reward_id} size={40}/>
+              <div style={{fontSize:9,fontWeight:700,color:rarity.color,textAlign:"center"}}>{av.name}</div>
+              {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+            </button>);
+          })}
+        </div>
+      </>}
+
+      {/* ── SKINS ── */}
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Skin</div>
+      {invLoading&&<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>}
+      {!invLoading&&styleSkins.length===0&&<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>Aucun skin. Ouvre des coffres Rare+ pour en trouver !</p></div>}
+      {!invLoading&&styleSkins.length>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:8,marginBottom:12}}>
+        {styleSkins.map(function(r){
+          var sk=SKINS[r.reward_id];if(!sk)return null;
+          var rarity=RARITIES.find(function(rt){return rt.id===sk.rarity;})||RARITIES[0];
+          var isEquipped=u.equippedSkin===r.reward_id;
+          return(<button key={r.id} onClick={function(){
+            var c=JSON.parse(JSON.stringify(u));c.equippedSkin=isEquipped?null:r.reward_id;p.setAvatar(c);
+          }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:10,borderRadius:14,cursor:"pointer",
+            background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
+            border:isEquipped?"2px solid "+sk.hex:"1px solid var(--bdr)",
+            fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+rarity.color}}/>
+            <div style={{fontSize:10,fontWeight:700,color:rarity.color}}>{sk.name}</div>
+            {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+          </button>);
+        })}
+      </div>}
+      {u.equippedSkin&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedSkin=null;p.setAvatar(c);}}
+        style={{width:"100%",marginBottom:20,fontSize:12}}>Retirer le skin actuel</button>}
+
+      {/* ── THEME ── */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0"}}>
+        <div>
+          <div className="out" style={{fontWeight:700,fontSize:13}}>Mode</div>
+          <div style={{fontSize:11,color:"var(--t2)"}}>{u.theme==="light"?"Clair":"Sombre"}</div>
+        </div>
+        {Toggle(u.theme==="light",function(){var c=JSON.parse(JSON.stringify(u));c.theme=c.theme==="light"?"dark":"light";p.setAvatar(c);})}
+      </div>
+    </div>);
+  }
 
   // ── VUE PRINCIPALE ──────────────────────────────────────────────────────
   return(
@@ -8610,8 +8634,8 @@ function Profile(p){
         <button onClick={function(){setView("inventory");}} className="crd"
           style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(192,96,240,.03)",border:"1px solid rgba(192,96,240,.15)",width:"100%"}}>
           <div style={{fontSize:22,marginBottom:4}}>{"\uD83C\uDFF0"}</div>
-          <div style={{fontWeight:800,fontSize:16,color:"#c060f0"}}>Coffres</div>
-          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Inventaire</div>
+          <div style={{fontWeight:800,fontSize:16,color:"#c060f0"}}>Collection</div>
+          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Catalogue</div>
         </button>
       </div>
 
