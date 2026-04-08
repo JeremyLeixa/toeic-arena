@@ -366,11 +366,11 @@ async function load(userId){
 }
 
 // save() — localStorage + Supabase (UPDATE first, INSERT if no row)
-var GHOST_NAME="Teacher"; // ghost mode — this account never syncs to Supabase
+var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync to Supabase
 async function save(d){
   saveLocal(d);
   if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
-  if(d.name===GHOST_NAME){return;}
+  // Teacher now syncs to Supabase (hidden from leaderboards via League/TeacherDash filters)
   var sess=await supabase.auth.getUser();
   var user=sess.data?sess.data.user:null;
   if(!user){console.error("[SAVE] BLOCKED: getUser() returned null — auth session lost?",sess.error?sess.error.message:"no error");return;}
