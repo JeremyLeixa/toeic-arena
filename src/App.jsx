@@ -8733,8 +8733,8 @@ function Profile(p){
 export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
   var[pendingChestCount,setPendingChestCount]=useState(0);var[chestModal,setChestModal]=useState(null);var[chestResult,setChestResult]=useState(null);var[chestPending,setChestPending]=useState([]);
-  var[coachTip,setCoachTip]=useState(null);var coachTimer=useRef(null);
-  function dismissTip(tipId){setCoachTip(null);if(!u)return;var c=JSON.parse(JSON.stringify(u));if(!c.tipsShown)c.tipsShown=[];if(c.tipsShown.indexOf(tipId)===-1)c.tipsShown.push(tipId);sv(c);}
+  var[coachTip,setCoachTip]=useState(null);var coachTimer=useRef(null);var _dismissedTips=useRef([]);
+  function dismissTip(tipId){setCoachTip(null);if(!u)return;var c=JSON.parse(JSON.stringify(u));if(!c.tipsShown)c.tipsShown=[];if(c.tipsShown.indexOf(tipId)===-1)c.tipsShown.push(tipId);if(_dismissedTips.current.indexOf(tipId)===-1)_dismissedTips.current.push(tipId);sv(c);}
   function evalCoachTips(usr,curTab){if(!usr||!curTab)return;var shown=usr.tipsShown||[];
     for(var i=0;i<COACH_TIPS.length;i++){var t=COACH_TIPS[i];if(shown.indexOf(t.id)===-1&&t.check(usr,curTab)){if(coachTimer.current)clearTimeout(coachTimer.current);coachTimer.current=setTimeout(function(){setCoachTip(t);},1500);return;}}
     setCoachTip(null);
@@ -8991,6 +8991,9 @@ useEffect(function(){
   }
 
 function sv(d){
+    // Guard: merge dismissed tips so stale closures never un-dismiss them
+    if(!d.tipsShown)d.tipsShown=[];
+    for(var ti=0;ti<_dismissedTips.current.length;ti++){if(d.tipsShown.indexOf(_dismissedTips.current[ti])===-1)d.tipsShown.push(_dismissedTips.current[ti]);}
     // Evaluate coach tips after state changes
     setTimeout(function(){evalCoachTips(d,tab);},1000);
     // Check for new achievements
