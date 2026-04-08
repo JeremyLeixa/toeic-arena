@@ -282,8 +282,8 @@ var _cachedUserId=null;
 var _syncDirty=false;
 var _lastSync=0;
 
-// On boot: clear stale dirty flags from old code (boolean "1" instead of timestamp)
-try{var _df=localStorage.getItem("toeic-arena-dirty");if(_df==="1")localStorage.removeItem("toeic-arena-dirty");}catch(e){}
+// Clean up dirty flag — no longer used, was causing cross-device overwrites
+try{localStorage.removeItem("toeic-arena-dirty");}catch(e){}
 
 function loadLocal(){
   try{
@@ -298,7 +298,6 @@ function saveLocal(d){
     localStorage.setItem("toeic-arena-profile",JSON.stringify(d));
     localStorage.setItem("toeic-arena-name",d.name);
     localStorage.setItem("toeic-arena-class",d.classCode||"idrac2026");
-    localStorage.setItem("toeic-arena-dirty",String(Date.now()));
     _syncDirty=true;
   }catch(e){}
 }
@@ -354,17 +353,6 @@ async function load(userId){
       }
       if(remote){
         console.warn("[LOAD] got remote — xp:",remote.xp,"weekly_xp:",remote.weekly_xp,"streak:",remote.streak);
-        // If localStorage has very recent unsaved changes, it is ahead of Supabase — use it and re-sync
-        // Timestamp-based: only trust dirty flag if < 15s old (same pageload), ignore stale flags from other sessions/devices
-        var dirtyTs=0;
-        try{dirtyTs=parseInt(localStorage.getItem("toeic-arena-dirty")||"0");}catch(e){}
-        var isRecentDirty=dirtyTs>0&&(Date.now()-dirtyTs)<15000;
-        if(isRecentDirty&&local&&local.name){
-          console.warn("[LOAD] dirty flag recent — using local instead of remote");
-          _syncDirty=true;
-          save(local);
-          return local;
-        }
         var d=supaToLocal(remote);
         saveLocal(d);
         _syncDirty=false;
@@ -416,7 +404,6 @@ async function save(d){
       if(ins.error)console.error("[SAVE] INSERT error:",ins.error.message);
     }else{console.warn("[SAVE] OK —",d.name,cc,"updated");}
     _syncDirty=false;
-    try{localStorage.removeItem("toeic-arena-dirty");}catch(e2){}
   }catch(e){console.warn("[SAVE] Exception:",e);}
 }
 
