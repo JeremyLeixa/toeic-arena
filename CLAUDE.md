@@ -20,7 +20,7 @@ The app is a **monolithic React application** — all UI logic lives in `src/App
 - **Hosting:** Vercel (serverless functions at `api/`)
 - **Audio:** Web Audio API (SFX/jingles in `src/data/sounds.js`), pre-generated MP3s via ElevenLabs (stored in `public/audio/`)
 - **BGM:** 5 loops generated via Mureka AI (`public/audio/bgm/`)
-- **PWA:** `manifest.json`, `sw.js` v2, VAPID push notifications
+- **PWA:** `manifest.json`, `sw.js` v3, VAPID push notifications
 
 ---
 
@@ -85,10 +85,13 @@ api/
 - **Data files are read-only at runtime.** All content is imported at build time. No dynamic fetching of question data.
 
 ### State & Data
+- **Supabase is always the source of truth on load.** `load()` always fetches from Supabase when online. No dirty flags or local-first overrides.
+- **`sv()` calls `save(d)` immediately** on every state change. No delayed sync — Supabase is updated within milliseconds of any user action.
+- **Cross-device sync:** Background tabs don't sync to cloud (timer blocked when `visibilityState !== "visible"`). When a tab becomes visible, it reloads from Supabase to pick up changes from other devices.
 - **Supabase data is cumulative, not time-series.** Weekly deltas require the `weekly_snapshots` mechanism. Never assume you can compute "this week's progress" from current data alone.
 - **`cardsDone()` must go through `applyXpGates()`.** Bypassing it breaks diminishing returns entirely. This was a critical bug.
 - **Upsert on `{onConflict: 'name,class_code'}`** prevents multi-device duplicate profiles. Never upsert by anonymous auth ID.
-- **`fresh()` function** initializes a new student profile. Any new field must be added here AND in the Supabase load mapping AND the save mapping.
+- **`fresh()` function** initializes a new student profile. Any new field must be added here AND in the Supabase load mapping (`supaToLocal`) AND the save mapping (`save()` payload). Column names must match Supabase exactly (e.g., `skin_id` not `equipped_skin`).
 - **`mockResults`** stores results as `mock1`, `mock2`, `mock3`, `boss`. The Boss Test saves best score but updates `date` on every attempt (for cooldown).
 
 ### XP System
@@ -104,8 +107,9 @@ api/
 ### Flashcards
 - **Flashcard accuracy is NOT a performance metric.** It reflects SRS self-evaluation (Hard/Good/Easy), not right/wrong answers. Never treat low flashcard accuracy as a problem.
 
-### Ghost Mode
-- The `Teacher` account (pseudo: "Teacher") has ghost mode. Test sessions from this account must not pollute student statistics.
+### Teacher Account
+- The `Teacher` account (pseudo: "Teacher") **syncs to Supabase** like any other account but is **hidden from all leaderboards** (League, TeacherDash). It is Jérémy's test/admin account.
+- `GHOST_NAME` variable still exists and is used to filter Teacher from league rankings, dashboard student lists, and chest grants — NOT to block saves.
 
 ### Listening (Boss Test — TOEIC Faithful)
 - **P1:** Photo displayed + blind A/B/C/D buttons (no text). Student can answer DURING audio. Currently playing statement highlights in orange.
@@ -147,6 +151,8 @@ api/
 - **`fetch({ keepalive: true })` with auth headers** replaces `sendBeacon` for unload saves (RLS blocks unauthenticated beacon calls).
 - **Realtime:** Avoid `self:false`; use unique session PIDs for message filtering instead of name-based filters.
 - **RLS on `push_subscriptions`** was ultimately disabled after persistent auth issues.
+- **RLS on `weekly_snapshots`** was disabled (same cross-device anonymous auth issue).
+- **Supabase column `skin_id`** (not `equipped_skin`) stores the equipped skin. Always verify column names against the actual schema before adding to payloads.
 
 ### React
 - **Hooks must be at component top level** before any conditional returns.
@@ -155,6 +161,14 @@ api/
 ### CSS
 - **`.crd` class** forces `background: var(--bg2)`. To override background on a card-like element, remove the class and add `borderRadius:16, border:"1px solid var(--bdr)"` manually.
 - **Light/dark mode:** CSS variables `--bg`, `--bg2`, `--bg3`, `--t1`, `--t2`, `--t3`, `--bdr`, `--cyan`, `--gold`, `--green`, `--red`, `--orange`, `--purple` are defined at top of the CSS block in App.jsx.
+- **Skin animations: use `background-image:` NOT `background:` shorthand** when the element has a CSS animation on `background-position`. The `background` shorthand with `!important` implicitly makes `background-position` important too, which blocks CSS animations from changing it. Same applies to `box-shadow !important` with `obsidianPulse`.
+- **Shimmer overlays use `::after` pseudo-elements** with `skinShimmer` animation. Parent needs `position:relative!important;overflow:hidden!important` for the overlay to work.
+
+### PWA / Service Worker
+- **`sw.js` v3** — network-first with `{cache:'no-cache'}` for HTML/JS files to bypass browser HTTP cache.
+- **`index.html`** registers SW with `{updateViaCache:'none'}` — always checks for new SW from network.
+- **`controllerchange`** listener auto-reloads the page when a new SW takes control.
+- **Build ID** (`BUILD_ID` variable in App.jsx) is logged on startup for deployment verification across devices.
 
 ---
 
@@ -213,7 +227,7 @@ Jérémy prefers: direct, informal, technically precise. French for conversation
 
 ---
 
-## Current Status (March 2026)
+## Current Status (April 2026)
 
 ### Completed
 - Full app with 2000+ content items across 20+ modules
@@ -225,6 +239,10 @@ Jérémy prefers: direct, informal, technically precise. French for conversation
 - Push notifications (PWA, VAPID)
 - CSV export (~108 columns)
 - Weekly snapshots for pedagogical reporting foundation
+- GDPR compliance (consent, privacy policy, data deletion/export, self-hosted fonts)
+- Cross-device sync: Supabase as single source of truth, immediate saves, visibility-aware sync
+- Skin animations (shimmer overlays + aurora gradient + obsidian pulse) for Obsidienne, Aurore, and epic skins
+- PWA reliability: SW v3 with cache-busting, auto-update, build ID verification
 
 ### On the Horizon
 - Weekly pedagogical report (Word/PDF) for the pedagogical director
