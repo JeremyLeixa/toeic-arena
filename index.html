@@ -23,7 +23,15 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js');
+        navigator.serviceWorker.register('/sw.js').then(function(reg) {
+          // Force check for SW updates on every page load
+          reg.update();
+        });
+      });
+      // Auto-reload when a new SW takes control (cache bump)
+      var _swRefreshing=false;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if(!_swRefreshing){_swRefreshing=true;window.location.reload();}
       });
     }
   </script>
