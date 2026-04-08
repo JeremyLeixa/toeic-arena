@@ -9253,7 +9253,7 @@ var prevLeague=getLeague(c.weeklyXp);
     if(result.mockId==="boss")grantChestLocal("boss_test","legendaire");
     sv(c);sSP(null);sT("train");
   }
-  function gameDone(modeKey,result,xp){var gxp=applyXpGates(xp,result.score||xp,result.total||xp,"game_"+modeKey);var c=addXp(gxp);if(!c.gameScores)c.gameScores={};
+  function gameDone(modeKey,result,xp){var sc=result.correct!==undefined?result.correct:(result.score||xp);var tot=result.total!==undefined?result.total:sc;var gxp=applyXpGates(xp,sc,tot,"game_"+modeKey);var c=addXp(gxp);if(!c.gameScores)c.gameScores={};
     if(modeKey==="duel"){
       // Accumulate duel stats instead of overwriting
       var prev=c.gameScores.duel||{wins:0,played:0,wagerWon:0};
