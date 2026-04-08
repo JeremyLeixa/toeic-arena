@@ -634,9 +634,11 @@ var CSS=`
 .skin-rubis .crd,.skin-amethyste .crd,.skin-corail .crd,.skin-jade .crd{border-color:rgba(var(--cx),.18)!important;box-shadow:0 0 12px rgba(var(--cx),.08),inset 0 1px 0 rgba(var(--cx),.08)!important}
 .skin-rubis .glo,.skin-amethyste .glo,.skin-corail .glo,.skin-jade .glo{box-shadow:0 0 30px rgba(var(--cx),.12)!important}
 .skin-rubis .btn2,.skin-amethyste .btn2,.skin-corail .btn2,.skin-jade .btn2{border-color:rgba(var(--cx),.3)!important;color:var(--cyan)!important}
-/* ── OBSIDIENNE — violet+or pulsation (no scroll, glow breathes) ── */
-.skin-obsidienne .btn1{background:linear-gradient(135deg,#b090f0,#8060c0,#c0a030,#8060c0,#b090f0)!important;background-size:300%!important;animation:obsidianPulse 3s ease-in-out infinite!important;transition:none!important;filter:brightness(1.1)!important;color:#080810!important;box-shadow:0 4px 28px rgba(160,130,255,.45),0 0 50px rgba(192,160,48,.15),0 0 0 1px rgba(160,130,255,.25)!important}
-.skin-obsidienne .bar-fill{background:linear-gradient(90deg,#b090f0,#8060c0,#c0a030,#b090f0)!important;background-size:200%!important;animation:obsidianPulse 4s ease-in-out infinite!important;transition:none!important;box-shadow:0 0 12px rgba(var(--cx),.5)!important}
+/* ── OBSIDIENNE — violet+or pulsation + shimmer overlay ── */
+.skin-obsidienne .btn1{position:relative!important;overflow:hidden!important;background:linear-gradient(135deg,#b090f0,#8060c0,#c0a030,#8060c0,#b090f0)!important;background-size:300%!important;animation:obsidianPulse 3s ease-in-out infinite!important;transition:none!important;filter:brightness(1.1)!important;color:#080810!important;box-shadow:0 4px 28px rgba(160,130,255,.45),0 0 50px rgba(192,160,48,.15),0 0 0 1px rgba(160,130,255,.25)!important}
+.skin-obsidienne .btn1::after{content:''!important;position:absolute!important;inset:0!important;background:linear-gradient(105deg,transparent 30%,rgba(200,180,255,.25) 45%,rgba(255,220,120,.15) 55%,transparent 70%)!important;background-size:300%!important;animation:skinShimmer 3s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
+.skin-obsidienne .bar-fill{position:relative!important;overflow:hidden!important;background:linear-gradient(90deg,#b090f0,#8060c0,#c0a030,#b090f0)!important;background-size:200%!important;animation:obsidianPulse 4s ease-in-out infinite!important;transition:none!important;box-shadow:0 0 12px rgba(var(--cx),.5)!important}
+.skin-obsidienne .bar-fill::after{content:''!important;position:absolute!important;inset:0!important;background:linear-gradient(90deg,transparent 30%,rgba(200,180,255,.3) 45%,rgba(255,220,120,.18) 55%,transparent 70%)!important;background-size:300%!important;animation:skinShimmer 2.5s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
 .skin-obsidienne .crd{border-color:rgba(160,128,224,.2)!important;background:linear-gradient(135deg,rgba(160,128,224,.10),rgba(192,160,48,.06),rgba(128,96,192,.08))!important;animation:obsidianPulse 4s ease-in-out infinite!important;transition:none!important}
 .skin-obsidienne .glo{animation:obsidianPulse 3s ease-in-out infinite!important}
 .skin-obsidienne .btn2{border-color:rgba(160,128,224,.3)!important;color:#b090f0!important;box-shadow:0 0 12px rgba(160,130,255,.12)!important}
@@ -669,7 +671,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes rareGlow{0%,100%{filter:drop-shadow(0 0 2px #3a8ee066)}50%{filter:drop-shadow(0 0 6px #3a8ee0aa)}}
 @keyframes skinShimmer{0%{background-position:-100% 50%}100%{background-position:200% 50%}}
 @keyframes aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-@keyframes obsidianPulse{0%,100%{box-shadow:0 0 8px rgba(160,130,255,.15),inset 0 0 20px rgba(80,50,180,.06)}50%{box-shadow:0 0 18px rgba(160,130,255,.28),inset 0 0 30px rgba(80,50,180,.12)}}
+@keyframes obsidianPulse{0%,100%{box-shadow:0 0 12px rgba(160,130,255,.20),inset 0 0 24px rgba(80,50,180,.08)}50%{box-shadow:0 0 32px rgba(160,130,255,.45),inset 0 0 40px rgba(80,50,180,.18)}}
 @keyframes legendCardPulse{0%,100%{box-shadow:0 0 16px rgba(var(--cx),.1),inset 0 1px 0 rgba(var(--cx),.1)}50%{box-shadow:0 0 28px rgba(var(--cx),.2),inset 0 1px 0 rgba(var(--cx),.18)}}
 @keyframes chestShake{0%,100%{transform:rotate(0)}10%{transform:rotate(-8deg)}20%{transform:rotate(8deg)}30%{transform:rotate(-6deg)}40%{transform:rotate(6deg)}50%{transform:rotate(-3deg)}60%{transform:rotate(3deg)}70%{transform:rotate(-1deg)}80%{transform:rotate(1deg)}}
 @keyframes chestFlash{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(2)}}
