@@ -1393,7 +1393,7 @@ var[step,sSt]=useState("name");
     </div>);
 }
 // ─── HOME ───
-function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily.date===today()&&u.daily.done;return(
+function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily&&u.daily.date===today()&&u.daily.done;return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
 <div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28)}</h1></div>
@@ -1482,7 +1482,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
   }
 
   // Initialize mission in userData if new
-  if(mission.status==="new"&&u.mission.date!==today()){
+  if(mission.status==="new"&&(!u.mission||u.mission.date!==today())){
     u.mission={date:today(),actId:mission.actId,done:false};
     save(u);
   }
@@ -1740,24 +1740,24 @@ var[srsHelp,setSrsHelp]=useState(function(){return !localStorage.getItem("srsHel
 function closeSrsHelp(){setSrsHelp(false);localStorage.setItem("srsHelpSeen","1");}
 return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {srsHelp&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s"}} onClick={closeSrsHelp}>
-<div style={{background:"var(--bg2)",borderRadius:16,border:"1px solid var(--bdr)",padding:"28px 22px",maxWidth:380,width:"100%",animation:"fadeIn .3s ease-out"}} onClick={function(e){e.stopPropagation();}}>
+<div style={{background:"linear-gradient(180deg,#1a1610,#0f0c08)",borderRadius:16,border:"1px solid rgba(180,140,80,.12)",padding:"28px 22px",maxWidth:380,width:"100%",animation:"fadeIn .3s ease-out",boxShadow:"0 12px 40px rgba(0,0,0,.5)"}} onClick={function(e){e.stopPropagation();}}>
 <div style={{fontSize:32,textAlign:"center",marginBottom:12}}>{"🧠"}</div>
-<h2 className="out" style={{fontWeight:800,fontSize:18,textAlign:"center",marginBottom:16}}>How do Flashcards work?</h2>
-<p style={{fontSize:13,color:"var(--t2)",lineHeight:1.7,marginBottom:14}}>Flashcards use <b style={{color:"var(--t1)"}}>spaced repetition</b>: you rate yourself after seeing each answer, and the app schedules your next review accordingly.</p>
+<h2 className="out" style={{fontWeight:800,fontSize:18,textAlign:"center",marginBottom:16,color:"#ede4d4"}}>How do Flashcards work?</h2>
+<p style={{fontSize:13,color:"#b0a890",lineHeight:1.7,marginBottom:14}}>Flashcards use <b style={{color:"#ede4d4"}}>spaced repetition</b>: you rate yourself after seeing each answer, and the app schedules your next review accordingly.</p>
 <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
 <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(255,71,87,.08)"}}>
-<span style={{fontWeight:700,color:"var(--red)",minWidth:52,fontSize:13}}>Again</span>
-<span style={{fontSize:12,color:"var(--t2)"}}>I had no idea — show me again soon</span></div>
+<span style={{fontWeight:700,color:"#e05252",minWidth:52,fontSize:13}}>Again</span>
+<span style={{fontSize:12,color:"#b0a890"}}>I had no idea — show me again soon</span></div>
 <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(255,140,66,.08)"}}>
-<span style={{fontWeight:700,color:"var(--orange)",minWidth:52,fontSize:13}}>Hard</span>
-<span style={{fontSize:12,color:"var(--t2)"}}>I struggled but eventually remembered</span></div>
+<span style={{fontWeight:700,color:"#c87a35",minWidth:52,fontSize:13}}>Hard</span>
+<span style={{fontSize:12,color:"#b0a890"}}>I struggled but eventually remembered</span></div>
 <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(0,230,118,.08)"}}>
-<span style={{fontWeight:700,color:"var(--green)",minWidth:52,fontSize:13}}>Good</span>
-<span style={{fontSize:12,color:"var(--t2)"}}>I remembered after a moment of thought</span></div>
-<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(var(--cx),.08)"}}>
-<span style={{fontWeight:700,color:"var(--cyan)",minWidth:52,fontSize:13}}>Easy</span>
-<span style={{fontSize:12,color:"var(--t2)"}}>Instant recall — I know this one well</span></div></div>
-<p style={{fontSize:12,color:"var(--t3)",lineHeight:1.6,marginBottom:18}}>Be honest! Cards you mark "Again" come back sooner, while "Easy" cards are spaced further apart. The goal is long-term memorisation, not a high score.</p>
+<span style={{fontWeight:700,color:"#4abe60",minWidth:52,fontSize:13}}>Good</span>
+<span style={{fontSize:12,color:"#b0a890"}}>I remembered after a moment of thought</span></div>
+<div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(212,148,58,.08)"}}>
+<span style={{fontWeight:700,color:"#d4943a",minWidth:52,fontSize:13}}>Easy</span>
+<span style={{fontSize:12,color:"#b0a890"}}>Instant recall — I know this one well</span></div></div>
+<p style={{fontSize:12,color:"#8a7e6a",lineHeight:1.6,marginBottom:18}}>Be honest! Cards you mark "Again" come back sooner, while "Easy" cards are spaced further apart. The goal is long-term memorisation, not a high score.</p>
 <button className="btn1" onClick={closeSrsHelp} style={{width:"100%"}}>Got it!</button>
 </div></div>}
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:0}}>Flashcards</h1>
@@ -1800,7 +1800,7 @@ if(rev.length===0||done){
   }
 </div>}
 {!done&&<p style={{color:"var(--t2)",fontSize:13}}>No cards due for review right now. Tap a specific domain to study anyway.</p>}
-<button className="btn1" onClick={function(){if(done)p.done(xp,ok,tot);else p.back();}} style={{marginTop:32}}>{done?"Collect XP":"Back"}</button></div>);}
+<button className="btn1" onClick={function(){if(done)p.done(gxp,ok,tot);else p.back();}} style={{marginTop:32}}>{done?"Collect XP":"Back"}</button></div>);}
 
 var card=rev[ci];function rate(r){sO(ok+(r>=3?1:0));sT(tot+1);p.rate(card.id,r);if(ci<rev.length-1){sC(ci+1);sF(false);}else sD(true);}
 
@@ -3002,7 +3002,7 @@ function TimeSim(p){
           cats[cat].total++;
           if(a.correct)cats[cat].ok++;
         });
-        var catArr=Object.keys(cats).map(function(k){return{cat:k,ok:cats[k].ok,total:cats[k].total,pct:Math.round(cats[k].ok/cats[k].total*100)};});
+        var catArr=Object.keys(cats).map(function(k){return{cat:k,ok:cats[k].ok,total:cats[k].total,pct:cats[k].total>0?Math.round(cats[k].ok/cats[k].total*100):0};});
         catArr.sort(function(a,b){return a.pct-b.pct;});
         return(<div className="crd" style={{padding:14,marginBottom:16}}>
           <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--t2)",marginBottom:10}}>Score by Category</p>
@@ -5160,12 +5160,12 @@ function DuelArena(p){
     {error&&<div style={{padding:12,background:"rgba(255,71,87,.1)",border:"1px solid rgba(255,71,87,.2)",borderRadius:10,marginBottom:16,textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)"}}>{error}</p></div>}
 
-    {wagerPopup&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20,animation:"fadeIn .2s"}} onClick={function(){setWagerPopup(null);}}>
-      <div style={{background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:16,padding:24,maxWidth:340,width:"100%",textAlign:"center"}} onClick={function(e){e.stopPropagation();}}>
+    {wagerPopup&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20,animation:"fadeIn .2s"}} onClick={function(){setWagerPopup(null);}}>
+      <div style={{background:"linear-gradient(180deg,#1a1610,#0f0c08)",border:"1px solid rgba(180,140,80,.12)",borderRadius:16,padding:24,maxWidth:340,width:"100%",textAlign:"center",boxShadow:"0 12px 40px rgba(0,0,0,.5)"}} onClick={function(e){e.stopPropagation();}}>
         <div style={{fontSize:36,marginBottom:12}}>{"⚠️"}</div>
-        <div className="out" style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--red)"}}>Wager denied</div>
-        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:4}}>{wagerPopup}</p>
-        <p style={{fontSize:11,color:"var(--t3)",lineHeight:1.5,marginBottom:16}}>You can only bet XP you have earned this week. Keep training to increase your weekly XP!</p>
+        <div className="out" style={{fontWeight:700,fontSize:15,marginBottom:8,color:"#e05252"}}>Wager denied</div>
+        <p style={{fontSize:13,color:"#b0a890",lineHeight:1.6,marginBottom:4}}>{wagerPopup}</p>
+        <p style={{fontSize:11,color:"#8a7e6a",lineHeight:1.5,marginBottom:16}}>You can only bet XP you have earned this week. Keep training to increase your weekly XP!</p>
         <button className="btn1" onClick={function(){setWagerPopup(null);}} style={{width:"100%"}}>Got it</button>
       </div>
     </div>}
@@ -5622,7 +5622,8 @@ function ClueHunter(p){
     var total=scores.reduce(function(s,x){return s+x.pts;},0);
     var xp=20+Math.round(total*2.5);
     var perfect=scores.filter(function(s){return s.clue&&s.ans;}).length;
-    if(p.gate)xp=p.gate(xp,perfect,TOTAL);
+    var correct=scores.filter(function(s){return s.clue||s.ans;}).length;
+    if(p.gate)xp=p.gate(xp,correct,TOTAL);
     var clueOnly=scores.filter(function(s){return s.clue&&!s.ans;}).length;
     var ansOnly=scores.filter(function(s){return !s.clue&&s.ans;}).length;
     var pct=Math.round(total/(TOTAL*10)*100);
@@ -5640,7 +5641,7 @@ function ClueHunter(p){
             <div><div className="out" style={{fontSize:32,fontWeight:900,color:"var(--orange)"}}>{ansOnly}</div><div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Answer only{"\n"}(lucky!)</div></div>
           </div>
         </div>
-        <button className="btn1" onClick={function(){p.done(perfect,TOTAL,xp);}}>Collect XP</button>
+        <button className="btn1" onClick={function(){var correct=scores.filter(function(s){return s.clue||s.ans;}).length;p.done(correct,TOTAL,xp);}}>Collect XP</button>
       </div>);
   }
  
@@ -9155,14 +9156,6 @@ var prevLeague=getLeague(c.weeklyXp);
     });
     return m;
   }
-  function getSpotlightMult(modId){
-    if(!activeEvents)return 1;
-    var m=1;
-    activeEvents.forEach(function(ev){
-      if(ev.type==="spotlight"&&ev.config&&ev.config.module===modId)m=ev.config.multiplier||2;
-    });
-    return m;
-  }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
   async function onboard(name,classCode,bsScores,bsCorrect,firstNav,pinValue){
     classCode=classCode||'idrac2026';
@@ -9271,7 +9264,12 @@ var prevLeague=getLeague(c.weeklyXp);
     if(result.mockId==="boss")grantChestLocal("boss_test","legendaire");
     sv(c);sSP(null);sT("train");
   }
-  function gameDone(modeKey,result,xp){var sc=result.correct!==undefined?result.correct:(result.score||xp);var tot=result.total!==undefined?result.total:sc;var gxp=applyXpGates(xp,sc,tot,"game_"+modeKey);var c=addXp(gxp);if(!c.gameScores)c.gameScores={};
+  function gameDone(modeKey,result,xp){
+    // Score-based games (WordFall, SpeedMatch, Duel) have no meaningful accuracy
+    // Pass sc=tot=1 to skip accuracy gate; only diminishing returns apply
+    var hasAccuracy=result.correct!==undefined&&result.total!==undefined;
+    var sc=hasAccuracy?result.correct:1;var tot=hasAccuracy?result.total:1;
+    var gxp=applyXpGates(xp,sc,tot,"game_"+modeKey);var c=addXp(gxp);if(!c.gameScores)c.gameScores={};
     if(modeKey==="duel"){
       // Accumulate duel stats instead of overwriting
       var prev=c.gameScores.duel||{wins:0,played:0,wagerWon:0};
@@ -9306,8 +9304,9 @@ var prevLeague=getLeague(c.weeklyXp);
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);gxp=Math.round(gxp*getSpotlightMult(modId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
   function cardsDone(xp,ok,tot){
-    var gxp=applyXpGates(xp,ok||0,tot||1,"csess");
-    var c=addXp(gxp);
+    // XP arrives already gated (CardSession applies diminishing returns locally)
+    // Flashcard accuracy is SRS self-eval, not performance — no accuracy gate needed
+    var c=addXp(xp);
     c.stats.sessions+=1;
     trackModSession(c,"csess");
     recordModule(c,"csess",ok||0,tot||1);
