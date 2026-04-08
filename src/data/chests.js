@@ -141,34 +141,51 @@ export function pickReward(rarityTier, ownedAvatars, ownedSkins){
 
 // ═══ SUPABASE HELPERS ═══
 
-// Check if a unique trigger has already been granted
+// Check if a unique trigger has already been granted (log OR pending)
 export async function hasUniqueTrigger(userName, classCode, triggerSource){
-  var res=await supabase.from("chest_log").select("id").eq("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).limit(1);
-  return res.data&&res.data.length>0;
+  try{
+    var res=await supabase.from("chest_log").select("id").ilike("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).limit(1);
+    if(res.data&&res.data.length>0)return true;
+    // Also check pending (not yet opened) to prevent double-grant
+    var pen=await supabase.from("pending_chests").select("id").ilike("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).limit(1);
+    return pen.data&&pen.data.length>0;
+  }catch(e){console.error("[CHEST] hasUniqueTrigger error:",e);return true;} // fail-safe: assume granted
 }
 
-// Check if a weekly trigger is on cooldown (7 days)
+// Check if a weekly trigger is on cooldown (7 days) — checks log AND pending
 export async function isWeeklyCooldown(userName, classCode, triggerSource){
-  var cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);
-  var res=await supabase.from("chest_log").select("id").eq("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).gte("opened_at",cutoff.toISOString()).limit(1);
-  return res.data&&res.data.length>0;
+  try{
+    var cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);
+    var res=await supabase.from("chest_log").select("id").ilike("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).gte("opened_at",cutoff.toISOString()).limit(1);
+    if(res.data&&res.data.length>0)return true;
+    // Also check pending to prevent double-grant within the same week
+    var pen=await supabase.from("pending_chests").select("id").ilike("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).limit(1);
+    return pen.data&&pen.data.length>0;
+  }catch(e){console.error("[CHEST] isWeeklyCooldown error:",e);return true;} // fail-safe: assume on cooldown
 }
 
 // Add a pending chest
 export async function grantChest(userName, classCode, chestType, triggerSource){
-  await supabase.from("pending_chests").insert({user_name:userName,class_code:classCode,chest_type:chestType,trigger_source:triggerSource});
+  try{
+    var res=await supabase.from("pending_chests").insert({user_name:userName,class_code:classCode,chest_type:chestType,trigger_source:triggerSource});
+    if(res.error)console.error("[CHEST] grantChest error:",res.error.message);
+  }catch(e){console.error("[CHEST] grantChest exception:",e);}
 }
 
 // Get pending chests for a user
 export async function getPendingChests(userName, classCode){
-  var res=await supabase.from("pending_chests").select("*").eq("user_name",userName).eq("class_code",classCode).order("earned_at",{ascending:true});
-  return res.data||[];
+  try{
+    var res=await supabase.from("pending_chests").select("*").ilike("user_name",userName).eq("class_code",classCode).order("earned_at",{ascending:true});
+    return res.data||[];
+  }catch(e){console.error("[CHEST] getPendingChests error:",e);return[];}
 }
 
 // Get owned rewards
 export async function getOwnedRewards(userName, classCode){
-  var res=await supabase.from("player_rewards").select("*").eq("user_name",userName).eq("class_code",classCode);
-  return res.data||[];
+  try{
+    var res=await supabase.from("player_rewards").select("*").ilike("user_name",userName).eq("class_code",classCode);
+    return res.data||[];
+  }catch(e){console.error("[CHEST] getOwnedRewards error:",e);return[];}
 }
 
 // Open a chest: roll, pick, log, delete pending, return result
@@ -178,24 +195,29 @@ export async function openChestFromPending(pendingChest, pityCount, ownedAvatars
   var rarityId=RARITIES[tier].id;
   var newPity=(tier<2)?(pityCount+1):0;
 
-  // Insert into player_rewards (skip for XP — no inventory entry needed)
-  if(reward.type!=="xp"){
-    await supabase.from("player_rewards").insert({
+  try{
+    // Insert into player_rewards (skip for XP — no inventory entry needed)
+    if(reward.type!=="xp"){
+      var rw=await supabase.from("player_rewards").insert({
+        user_name:pendingChest.user_name, class_code:pendingChest.class_code,
+        reward_type:reward.type, reward_id:reward.id, rarity:rarityId,
+      });
+      if(rw.error)console.error("[CHEST] player_rewards insert error:",rw.error.message);
+    }
+
+    // Log (must succeed before deleting pending — audit trail)
+    var lg=await supabase.from("chest_log").insert({
       user_name:pendingChest.user_name, class_code:pendingChest.class_code,
-      reward_type:reward.type, reward_id:reward.id, rarity:rarityId,
+      chest_type:pendingChest.chest_type, trigger_source:pendingChest.trigger_source,
+      rarity_obtained:rarityId, reward_type:reward.type, reward_id:reward.id,
+      xp_amount:reward.type==="xp"?REWARD_POOL[tier].xp:null,
     });
-  }
+    if(lg.error)console.error("[CHEST] chest_log insert error:",lg.error.message);
 
-  // Log
-  await supabase.from("chest_log").insert({
-    user_name:pendingChest.user_name, class_code:pendingChest.class_code,
-    chest_type:pendingChest.chest_type, trigger_source:pendingChest.trigger_source,
-    rarity_obtained:rarityId, reward_type:reward.type, reward_id:reward.id,
-    xp_amount:reward.type==="xp"?REWARD_POOL[tier].xp:null,
-  });
-
-  // Remove from pending
-  await supabase.from("pending_chests").delete().eq("id",pendingChest.id);
+    // Remove from pending (only after log succeeded)
+    var dl=await supabase.from("pending_chests").delete().eq("id",pendingChest.id);
+    if(dl.error)console.error("[CHEST] pending delete error:",dl.error.message);
+  }catch(e){console.error("[CHEST] openChest exception:",e);}
 
   return{
     chestType:pendingChest.chest_type,

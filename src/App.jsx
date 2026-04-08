@@ -8990,16 +8990,16 @@ useEffect(function(){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"idrac2026";
     hasUniqueTrigger(un,cc,trigger).then(function(done){
-      if(!done){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);});}
-    });
+      if(!done){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
+    }).catch(function(e){console.error("[CHEST] uniqueTrigger check error:",e);});
   }
   // Fire-and-forget: grant a weekly chest (7-day cooldown per trigger)
   function grantWeeklyChest(trigger,chestType){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"idrac2026";
     isWeeklyCooldown(un,cc,trigger).then(function(onCd){
-      if(!onCd){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);});}
-    });
+      if(!onCd){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
+    }).catch(function(e){console.error("[CHEST] cooldown check error:",e);});
   }
   async function refreshPendingChests(un,cc){
     var list=await getPendingChests(un,cc);
