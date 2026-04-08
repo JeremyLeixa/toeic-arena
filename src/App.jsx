@@ -293,6 +293,7 @@ function saveLocal(d){
     localStorage.setItem("toeic-arena-profile",JSON.stringify(d));
     localStorage.setItem("toeic-arena-name",d.name);
     localStorage.setItem("toeic-arena-class",d.classCode||"idrac2026");
+    localStorage.setItem("toeic-arena-dirty","1");
     _syncDirty=true;
   }catch(e){}
 }
@@ -343,6 +344,14 @@ async function load(userId){
         if(res2.data)remote=res2.data;
       }
       if(remote){
+        // If localStorage has unsaved changes, it is ahead of Supabase — use it and re-sync
+        var dirtyFlag=false;
+        try{dirtyFlag=localStorage.getItem("toeic-arena-dirty")==="1";}catch(e){}
+        if(dirtyFlag&&local&&local.name){
+          _syncDirty=true;
+          save(local);
+          return local;
+        }
         var d=supaToLocal(remote);
         saveLocal(d);
         _syncDirty=false;
@@ -393,6 +402,7 @@ async function save(d){
       if(ins.error)console.error("[SAVE] INSERT error:",ins.error.message);
     }
     _syncDirty=false;
+    try{localStorage.removeItem("toeic-arena-dirty");}catch(e2){}
   }catch(e){console.warn("[SAVE] Exception:",e);}
 }
 
@@ -8992,6 +9002,7 @@ function sv(d){
     }
     sU(d);
     saveLocal(d);
+    save(d);
   }
   function applyXpGates(baseXp,sc,tot,modId){
     // ── PILIER 1 : seuil d'accuracy ──
