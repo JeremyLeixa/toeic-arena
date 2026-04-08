@@ -6022,7 +6022,7 @@ function animateFall(){
       var mult=newCombo>=6?3:newCombo>=3?2:1;
       setScore(score+mult);
       try{playCorrect();}catch(e){}
-      setFeedback({type:"ok",text:mult>1?"x"+mult+" COMBO!":"Correct!"});
+      setFeedback({type:"ok",text:newCombo>=3?newCombo+"-combo! x"+mult:"Correct!"});
       setTimeout(nextQuestion,600);
     } else {
       handleMiss();
