@@ -8987,7 +8987,7 @@ useEffect(function(){
 // ─── CHEST SYSTEM ───
   // Fire-and-forget: grant a unique chest (checks Supabase for duplicates)
   function grantChestLocal(trigger,chestType){
-    if(!u||!u.name||u.name===GHOST_NAME)return;
+    if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"idrac2026";
     hasUniqueTrigger(un,cc,trigger).then(function(done){
       if(!done){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);});}
@@ -8995,7 +8995,7 @@ useEffect(function(){
   }
   // Fire-and-forget: grant a weekly chest (7-day cooldown per trigger)
   function grantWeeklyChest(trigger,chestType){
-    if(!u||!u.name||u.name===GHOST_NAME)return;
+    if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"idrac2026";
     isWeeklyCooldown(un,cc,trigger).then(function(onCd){
       if(!onCd){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);});}
