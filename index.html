@@ -22,13 +22,24 @@
   </head>
   <script>
     if ('serviceWorker' in navigator) {
+      // Nuclear option: unregister old SW, re-register fresh
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        var needsRefresh = false;
+        regs.forEach(function(reg) {
+          // Force update check
+          reg.update();
+          // If SW is stuck on old cache, unregister and reload
+          if (reg.active && reg.active.scriptURL.indexOf('sw.js') !== -1) {
+            reg.active.postMessage({type: 'VERSION_CHECK'});
+          }
+        });
+      });
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js').then(function(reg) {
-          // Force check for SW updates on every page load
+        navigator.serviceWorker.register('/sw.js', {updateViaCache: 'none'}).then(function(reg) {
           reg.update();
         });
       });
-      // Auto-reload when a new SW takes control (cache bump)
+      // Auto-reload when a new SW takes control
       var _swRefreshing=false;
       navigator.serviceWorker.addEventListener('controllerchange', function() {
         if(!_swRefreshing){_swRefreshing=true;window.location.reload();}

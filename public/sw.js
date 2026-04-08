@@ -54,8 +54,15 @@ self.addEventListener("fetch", function (e) {
   }
 
   // Network-first with cache fallback (same-origin only)
+  // Use cache:'no-cache' to bypass browser HTTP cache for HTML/JS
+  // (forces revalidation with server, ensures fresh builds are picked up)
+  var fetchOpts = {};
+  if (url.pathname.endsWith(".html") || url.pathname.endsWith(".js") || url.pathname === "/") {
+    fetchOpts.cache = "no-cache";
+  }
+
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, fetchOpts)
       .then(function (response) {
         if (response.ok && response.type === "basic") {
           var clone = response.clone();
