@@ -369,11 +369,11 @@ async function load(userId){
 var GHOST_NAME="Teacher"; // ghost mode — this account never syncs to Supabase
 async function save(d){
   saveLocal(d);
-  if(!d||!d.name)return;
-  if(d.name===GHOST_NAME)return;
+  if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
+  if(d.name===GHOST_NAME){return;}
   var sess=await supabase.auth.getUser();
   var user=sess.data?sess.data.user:null;
-  if(!user)return;
+  if(!user){console.error("[SAVE] BLOCKED: getUser() returned null — auth session lost?",sess.error?sess.error.message:"no error");return;}
   _cachedUserId=user.id;
   var payload={
     xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
