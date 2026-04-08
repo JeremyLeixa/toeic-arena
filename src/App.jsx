@@ -399,10 +399,11 @@ async function save(d){
     var upd=await supabase.from("students").update(payload).eq("name",d.name).eq("class_code",cc).select("id");
     if(upd.error){console.error("[SAVE] UPDATE error:",upd.error.message);return;}
     if(!upd.data||upd.data.length===0){
+      console.warn("[SAVE] UPDATE matched 0 rows for",d.name,cc,"— RLS may be blocking. Trying INSERT...");
       // No row yet — first ever save, INSERT with current auth ID
       var ins=await supabase.from("students").insert({id:user.id,name:d.name,class_code:cc,...payload});
       if(ins.error)console.error("[SAVE] INSERT error:",ins.error.message);
-    }
+    }else{console.debug("[SAVE] OK —",d.name,cc,"updated");}
     _syncDirty=false;
     try{localStorage.removeItem("toeic-arena-dirty");}catch(e2){}
   }catch(e){console.warn("[SAVE] Exception:",e);}
