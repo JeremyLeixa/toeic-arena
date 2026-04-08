@@ -341,7 +341,7 @@ async function load(userId){
       var remote=null;
       // Primary: lookup by (name, class_code) — works cross-device
       if(cn){
-        var res=await supabase.from("students").select("*").eq("name",cn).eq("class_code",cc||"idrac2026").order("xp",{ascending:false}).limit(1);
+        var res=await supabase.from("students").select("*").ilike("name",cn).eq("class_code",cc||"idrac2026").order("xp",{ascending:false}).limit(1);
         if(res.error)console.error("[LOAD] SELECT error:",res.error.message);
         if(res.data&&res.data.length>0)remote=res.data[0];
       }
@@ -395,7 +395,7 @@ async function save(d){
   var cc=d.classCode||"idrac2026";
   try{
     // Step 1: UPDATE by (name, class_code) — cross-device safe, never mutates PK
-    var upd=await supabase.from("students").update(payload).eq("name",d.name).eq("class_code",cc).select("id");
+    var upd=await supabase.from("students").update(payload).ilike("name",d.name).eq("class_code",cc).select("id");
     if(upd.error){console.error("[SAVE] UPDATE error:",upd.error.message);return;}
     if(!upd.data||upd.data.length===0){
       console.warn("[SAVE] UPDATE matched 0 rows for",d.name,cc,"— RLS may be blocking. Trying INSERT...");
@@ -851,7 +851,7 @@ var[step,sSt]=useState("name");
         var authRes=await supabase.auth.signInAnonymously();
         if(!authRes.data.user){setLookingUp(false);sSt("classcode");return;}
       }
-      var res=await supabase.from('students').select('name,class_code,xp').eq('name',n.trim());
+      var res=await supabase.from('students').select('name,class_code,xp').ilike('name',n.trim());
       if(res.data&&res.data.length>0){
         var groupRes=await supabase.from('groups').select('code,name,type');
         var groupMap={};
@@ -928,7 +928,7 @@ var[step,sSt]=useState("name");
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
           {foundAccounts.map(function(acc){
             return(<button key={acc.class_code} onClick={async function(){
-              var pinRes=await supabase.from("students").select("pin").eq("name",name.trim()).eq("class_code",acc.class_code).maybeSingle();
+              var pinRes=await supabase.from("students").select("pin").ilike("name",name.trim()).eq("class_code",acc.class_code).maybeSingle();
               if(pinRes.data&&pinRes.data.pin){setPendingRecover({name:name.trim(),classCode:acc.class_code});setPin("");setPinError(false);sSt("enterpin");return;}
               var ok=await p.recover(name.trim(),acc.class_code);
               if(!ok){sSt("classcode");}
@@ -1054,7 +1054,7 @@ var[step,sSt]=useState("name");
         <button className="btn1" onClick={async function(){
           if(!recName.trim())return;
           setRecLoading(true);setRecMsg(null);
-          var pinRes=await supabase.from("students").select("pin").eq("name",recName.trim()).eq("class_code",recCode.trim()||"visitor").maybeSingle();
+          var pinRes=await supabase.from("students").select("pin").ilike("name",recName.trim()).eq("class_code",recCode.trim()||"visitor").maybeSingle();
           if(pinRes.data&&pinRes.data.pin){setRecLoading(false);setPendingRecover({name:recName.trim(),classCode:recCode.trim()||"visitor"});setPin("");setPinError(false);sSt("enterpin");return;}
           var ok=await p.recover(recName.trim(),recCode.trim());
           setRecLoading(false);
@@ -1148,7 +1148,7 @@ var[step,sSt]=useState("name");
         {pinError&&<p style={{color:"var(--red)",fontSize:12,marginBottom:8}}>Wrong PIN. Try again.</p>}
         <button className="btn1" onClick={async function(){
           if(!pendingRecover||pin.length!==4)return;
-          var res=await supabase.from("students").select("pin").eq("name",pendingRecover.name).eq("class_code",pendingRecover.classCode).maybeSingle();
+          var res=await supabase.from("students").select("pin").ilike("name",pendingRecover.name).eq("class_code",pendingRecover.classCode).maybeSingle();
           if(res.data&&res.data.pin===pin){await p.recover(pendingRecover.name,pendingRecover.classCode);}
           else{setPinError(true);setPin("");}
         }} style={{opacity:pin.length===4?1:.4,pointerEvents:pin.length===4?"auto":"none",marginTop:12}}>Unlock</button>
@@ -8712,7 +8712,7 @@ function Profile(p){
         if(newPin===null)return;
         newPin=newPin.replace(/\D/g,"");
         if(newPin.length!==4){alert("PIN must be exactly 4 digits.");return;}
-        supabase.from("students").update({pin:newPin}).eq("name",u.name).eq("class_code",u.classCode).then(function(){
+        supabase.from("students").update({pin:newPin}).ilike("name",u.name).eq("class_code",u.classCode).then(function(){
           var c=JSON.parse(JSON.stringify(u));c.pin=newPin;p.setAvatar(c);
           alert("PIN "+(current?"updated":"set")+" successfully!");
         });
@@ -8958,7 +8958,7 @@ useEffect(function(){
             pin:d.pin||null,
           };
           // fetch keepalive with PATCH (=UPDATE) — survives tab close, sends auth headers
-          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/students?name=eq."+encodeURIComponent(d.name)+"&class_code=eq."+encodeURIComponent(cc),{
+          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/students?name=ilike."+encodeURIComponent(d.name)+"&class_code=eq."+encodeURIComponent(cc),{
             method:"PATCH",keepalive:true,
             headers:{
               "Content-Type":"application/json",
@@ -9159,7 +9159,7 @@ var prevLeague=getLeague(c.weeklyXp);
   async function onboard(name,classCode,bsScores,bsCorrect,firstNav,pinValue){
     classCode=classCode||'idrac2026';
     // Check if student already exists (use limit(1) — safe even with duplicates)
-    var existing=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
+    var existing=await supabase.from('students').select('*').ilike('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
     if(existing.data&&existing.data.length>0){
       // Student exists — recover instead of creating duplicate
       var recovered=await recover(name,classCode);
@@ -9204,7 +9204,7 @@ var prevLeague=getLeague(c.weeklyXp);
   }
   async function recover(name,classCode){
     // Find the best row (highest XP) for this student
-    var res=await supabase.from('students').select('*').eq('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
+    var res=await supabase.from('students').select('*').ilike('name',name).eq('class_code',classCode).order('xp',{ascending:false}).limit(1);
     if(!res.data||res.data.length===0)return false;
     var d=res.data[0];
 
