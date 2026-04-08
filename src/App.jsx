@@ -8898,12 +8898,12 @@ useEffect(function(){
         c.totalTime=(c.totalTime||0)+60;
         saveLocal(c);
         timeRef.current.ticks+=1;
-        // Sync to cloud every 2 min (every 2nd tick)
-        if(timeRef.current.ticks%2===0)syncToCloud(c);
+        // Sync to cloud every 2 min — ONLY if tab is visible (prevents overwriting other devices)
+        if(timeRef.current.ticks%2===0&&document.visibilityState==="visible")syncToCloud(c);
         return c;
       });
     },60000);
-    // Sync on tab hide (mobile: switching apps)
+    // Sync on tab hide (mobile: switching apps) + reload from cloud on tab show
     function onVis(){
       if(document.visibilityState==="hidden"){
         sU(function(prev){
@@ -8912,6 +8912,13 @@ useEffect(function(){
           syncToCloud(prev);
           return prev;
         });
+      }else if(document.visibilityState==="visible"){
+        // Tab became visible — reload from Supabase in case another device updated
+        if(_cachedUserId){
+          load(_cachedUserId).then(function(d){
+            if(d){sU(d);console.warn("[SYNC] Reloaded from Supabase on tab focus");}
+          });
+        }
       }
     }
     // Last-chance sync on page close — UPDATE by (name, class_code), no PK mutation
