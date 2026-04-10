@@ -327,4 +327,155 @@ export var PART6_TEXTS = [
         "New office chairs will be delivered to all departments next week."
       ],correct:0,x:"Sentence insertion: a support/contact line naturally concludes setup instructions."},
     ]},
+	
+	{ id:"p6t21", type:"Email", from:"Project Manager", to:"Development Team", subject:"Sprint Planning Update",
+  parts:[
+    {text:"Hi team,\n\nI hope this email finds you well. I'm writing to confirm the details for next week's sprint planning session, "},
+    {blank:true,options:["what","where","which","who"],correct:2,x:"'Which' = relative pronoun for things. Refers back to 'session'."},
+    {text:" will take place on Monday at ten in the morning. As usual, we'll be meeting in the Blue Room on the third floor.\n\nBefore the meeting, please "},
+    {blank:true,options:["reviewing","review","reviewed","reviews"],correct:1,x:"'Please' + base verb (imperative form). 'Please review'."},
+    {text:" the backlog items assigned to you and come prepared with effort estimates. "},
+    {blank:true,options:["Moreover","However","Nevertheless","Because"],correct:0,x:"'Moreover' adds information. The next sentence adds another piece of preparation."},
+    {text:", please flag any blockers or dependencies you've identified so we can address them early.\n\n"},
+    {blank:true,options:[
+      "The vending machine is currently out of order.",
+      "Our new logo was unveiled last Friday.",
+      "Looking forward to a productive session.",
+      "The quarterly financials will be audited soon."
+    ],correct:2,x:"Sentence insertion: logical closing for an email about an upcoming meeting."}]},
+{ id:"p6t22", type:"Memo", from:"Facilities Manager", to:"All Employees", subject:"Parking Lot Repainting",
+  parts:[
+    {text:"To all employees,\n\nPlease be aware that the north parking lot will be closed from Saturday morning "},
+    {blank:true,options:["from","to","until","since"],correct:2,x:"'From Saturday morning until Sunday evening' = duration with a clear endpoint."},
+    {text:" Sunday evening for repainting of the parking lines and handicap spaces. During this period, all vehicles "},
+    {blank:true,options:["must be moved","must moving","must to move","must moves"],correct:0,x:"Modal 'must' + passive infinitive 'be moved'. Subject 'vehicles' receives the action."},
+    {text:" to the south lot or the visitor area on Grove Street.\n\nAny vehicles remaining in the north lot after Friday at six in the evening will be towed at the owner's expense. "},
+    {blank:true,options:["Regardless","Unfortunately","Consequently","Despite"],correct:2,x:"'Consequently' = as a result. The towing is the direct consequence of the previous warning."},
+    {text:", we strongly recommend moving your car before leaving on Friday.\n\n"},
+    {blank:true,options:[
+      "The company picnic has been rescheduled to July.",
+      "We appreciate your cooperation during this brief inconvenience.",
+      "Overtime pay rules have changed this month.",
+      "New desk chairs will arrive by the end of the quarter."
+    ],correct:1,x:"Sentence insertion: polite closing for a notice about facilities work."}]},
+{ id:"p6t23", type:"Notice", from:"Library Administration", to:"All Members", subject:"Extended Opening Hours",
+  parts:[
+    {text:"Dear library members,\n\nWe are delighted to announce that, "},
+    {blank:true,options:["because of","in spite of","instead of","due to"],correct:3,x:"'Due to' = because of (formal). Introduces the reason for the positive change."},
+    {text:" popular demand, the Central Library will be extending its opening hours starting next month. The library "},
+    {blank:true,options:["will open","will be opened","opens","has opened"],correct:0,x:"Future simple active: 'The library will open' (habitual future state). 'Will be opened' is passive and awkward here."},
+    {text:" one hour earlier on weekdays and will remain open until ten in the evening on Thursdays and Fridays.\n\nThese new hours are designed to better accommodate students and working professionals "},
+    {blank:true,options:["whose","who","which","whom"],correct:1,x:"'Who' = relative pronoun for people as subject of the clause ('who cannot visit')."},
+    {text:" cannot visit during traditional daytime hours.\n\n"},
+    {blank:true,options:[
+      "The annual fundraising gala will take place in November.",
+      "Please note that late returns incur a small fee.",
+      "We hope these changes make our services more accessible to you.",
+      "Our membership fees will increase starting next year."
+    ],correct:2,x:"Sentence insertion: matches the positive, accommodating tone of the announcement."}]},
+{ id:"p6t24", type:"Letter", from:"Ashford Insurance", to:"Ms. Delacroix", subject:"Policy Renewal Notice",
+  parts:[
+    {text:"Dear Ms. Delacroix,\n\nWe are writing to remind you that your home insurance policy "},
+    {blank:true,options:["expiring","expires","expired","expiration"],correct:1,x:"Simple present for scheduled future events: 'your policy expires on June 30'."},
+    {text:" on June 30. To ensure continuous coverage, please renew before this date.\n\nYour renewal premium for the coming year is four hundred and twenty dollars, which represents a "},
+    {blank:true,options:["slight","slightly","slighted","slightness"],correct:0,x:"Adjective modifying the noun 'increase'. 'A slight increase' (not the adverb 'slightly')."},
+    {text:" increase of two percent compared to last year. This small adjustment reflects rising repair costs in your region.\n\n"},
+    {blank:true,options:["Enclosed","Enclosing","To enclose","Enclose"],correct:0,x:"Past participle as adjective/adverbial: 'Enclosed you will find' = 'Attached is'. Common formal opener."},
+    {text:" you will find the full policy document and a prepaid return envelope for your convenience.\n\n"},
+    {blank:true,options:[
+      "Our office will close for renovations in August.",
+      "We have recently launched a new mobile app.",
+      "A customer survey will be emailed to you separately.",
+      "Thank you for your continued trust in Ashford Insurance."
+    ],correct:3,x:"Sentence insertion: standard polite closing for a formal business letter."}]},
+{ id:"p6t25", type:"Instructions", from:"Building Security", to:"All Personnel", subject:"New Access Card System",
+  parts:[
+    {text:"Please read these instructions carefully before using the new access card system, "},
+    {blank:true,options:["which","when","where","what"],correct:0,x:"'Which' = relative pronoun introducing a non-defining clause about 'system'."},
+    {text:" was installed last weekend. To enter the building, simply hold your card within three centimeters of the reader.\n\nThe green light confirms access; a red light "},
+    {blank:true,options:["indicating","indicated","indicates","indication"],correct:2,x:"Simple present, third person singular: 'a red light indicates' (the system's behavior)."},
+    {text:" that your card is either inactive or not registered for that door. "},
+    {blank:true,options:["If","Unless","Whenever","Although"],correct:0,x:"'If' introduces a conditional. 'If this happens, contact security' — standard conditional instruction."},
+    {text:" this happens, please contact the security desk on the ground floor.\n\n"},
+    {blank:true,options:[
+      "The holiday schedule has been posted on the intranet.",
+      "Lost or stolen cards must be reported immediately.",
+      "Coffee machines on each floor have been replaced.",
+      "Annual fire drill practice will resume in September."
+    ],correct:1,x:"Sentence insertion: logically extends security instructions about access cards."}]},
+{ id:"p6t26", type:"Email", from:"Travel Coordinator", to:"Sales Team", subject:"Conference Travel Arrangements",
+  parts:[
+    {text:"Dear team,\n\nI'm writing with details about the upcoming sales conference in Barcelona. All flights and hotel reservations "},
+    {blank:true,options:["has been booked","have been booked","are booking","being booked"],correct:1,x:"Present perfect passive, plural subject: 'flights and hotels have been booked'."},
+    {text:" through the company's travel portal. You should have received your individual confirmation emails by now.\n\nThe conference hotel is located "},
+    {blank:true,options:["at","in","within","on"],correct:3,x:"'On' + street name: 'located on Rambla Avenue' (standard English preposition for street addresses)."},
+    {text:" Rambla Avenue, approximately fifteen minutes from the venue by metro. "},
+    {blank:true,options:["Although","Since","Despite","Yet"],correct:1,x:"'Since' = because. Gives the reason the shuttle won't be provided."},
+    {text:" the metro is convenient and reliable, no shuttle service will be provided.\n\n"},
+    {blank:true,options:[
+      "Please retain all receipts for expense reimbursement.",
+      "The office will be closed for the entire week.",
+      "Remember to update your LinkedIn profile.",
+      "Parking permits are available at reception."
+    ],correct:0,x:"Sentence insertion: practical closing advice for business travelers attending a conference."}]},
+{ id:"p6t27", type:"Memo", from:"Human Resources", to:"All Managers", subject:"New Onboarding Process",
+  parts:[
+    {text:"Dear managers,\n\nStarting next month, we will be rolling out a revised onboarding process for new hires. The updated program "},
+    {blank:true,options:["designed","designing","was designed","has been designed"],correct:3,x:"Present perfect passive expressing recent completion: 'has been designed' (and the result is now available)."},
+    {text:" to make the first week more structured and welcoming for new employees.\n\nUnder the new system, each new hire will be assigned a peer mentor for their first thirty days. "},
+    {blank:true,options:["This","That","These","Those"],correct:0,x:"'This' = demonstrative pronoun referring to the singular concept just mentioned (the mentorship arrangement)."},
+    {text:" is intended to provide immediate support and accelerate integration into the team. Managers "},
+    {blank:true,options:["should","must","may","might"],correct:0,x:"'Should' = strong recommendation. Fits the advisory tone about scheduling check-ins."},
+    {text:" also schedule weekly check-ins during the first month.\n\n"},
+    {blank:true,options:[
+      "The cafeteria menu will rotate on a biweekly basis.",
+      "Full details will be shared during next week's management briefing.",
+      "Dress code policies are currently under review.",
+      "Please submit holiday requests by the end of the month."
+    ],correct:1,x:"Sentence insertion: naturally closes a memo previewing a process change that requires more details."}]},
+{ id:"p6t28", type:"Notice", from:"Municipal Services", to:"Local Businesses", subject:"Street Cleaning Schedule",
+  parts:[
+    {text:"Attention business owners,\n\nPlease be advised that Elm Street will undergo deep cleaning on the first Tuesday of every month, "},
+    {blank:true,options:["start","started","starting","to start"],correct:2,x:"Present participle introducing a temporal adverbial phrase: 'starting next month'."},
+    {text:" next month. Cleaning will take place between five and eight in the morning.\n\nDuring these hours, no parking "},
+    {blank:true,options:["allowed","is allowed","allowing","allows"],correct:1,x:"Present passive: 'no parking is allowed'. The subject 'parking' receives the action."},
+    {text:" along the entire length of the street. Vehicles found in violation will be ticketed and may be towed.\n\n"},
+    {blank:true,options:["Furthermore","Although","Instead","Because"],correct:0,x:"'Furthermore' adds another piece of information. Introduces an additional request after the parking restriction."},
+    {text:", we ask businesses to ensure their outdoor displays and signage are temporarily removed during cleaning hours.\n\n"},
+    {blank:true,options:[
+      "Your cooperation helps keep our community clean and attractive.",
+      "Summer festival dates will be announced shortly.",
+      "Business licenses must be renewed every two years.",
+      "The town hall is hosting an open house this weekend."
+    ],correct:0,x:"Sentence insertion: closes a municipal notice by appealing to civic cooperation."}]},
+{ id:"p6t29", type:"Letter", from:"Bennington Publishing", to:"Mr. Callahan", subject:"Manuscript Acceptance",
+  parts:[
+    {text:"Dear Mr. Callahan,\n\nWe are delighted to inform you that your manuscript, 'Echoes of the Highlands,' "},
+    {blank:true,options:["accepting","has been accepted","accepts","is accepting"],correct:1,x:"Present perfect passive: 'has been accepted' (the action is complete and relevant now)."},
+    {text:" for publication by Bennington Press. Our editorial board was particularly impressed by your vivid descriptions and compelling characters.\n\nThe next steps involve working "},
+    {blank:true,options:["closely","close","closing","closeness"],correct:0,x:"Adverb modifying the verb 'working': 'working closely'. 'Close' is an adjective."},
+    {text:" with our senior editor, Margaret Holloway, who will guide you through the revision process. "},
+    {blank:true,options:["During","While","Throughout","Between"],correct:2,x:"'Throughout' = from start to finish. 'Throughout this period' = over the entire duration of the editing."},
+    {text:" this period, you may be asked to make adjustments to pacing, dialogue, and certain plot elements.\n\n"},
+    {blank:true,options:[
+      "Please note that our office hours have changed.",
+      "All authors receive a complimentary tote bag.",
+      "The bookstore across the street is closing permanently.",
+      "Congratulations, and welcome to the Bennington family."
+    ],correct:3,x:"Sentence insertion: warm closing matching the celebratory tone of an acceptance letter."}]},
+{ id:"p6t30", type:"Instructions", from:"Laboratory Director", to:"Research Assistants", subject:"New Equipment Protocol",
+  parts:[
+    {text:"Research assistants,\n\nThe new spectrometer has arrived and is now operational. Before using it, all assistants "},
+    {blank:true,options:["must complete","completing","must to complete","are completed"],correct:0,x:"Modal 'must' + base verb: 'must complete'. Expresses obligation."},
+    {text:" the online certification course available on the lab portal.\n\nWhen operating the equipment, always wear the provided safety goggles and gloves, "},
+    {blank:true,options:["despite","regardless","regardless of","in spite"],correct:2,x:"'Regardless of' = not taking into account. Complete prepositional phrase required before a noun."},
+    {text:" the duration of your session. Even short measurements require full protective gear.\n\n"},
+    {blank:true,options:["Before","After","While","Since"],correct:1,x:"'After' each use — chronological instruction for post-use procedure."},
+    {text:" each use, please log your session in the shared tracking sheet and report any irregularities to the senior technician.\n\n"},
+    {blank:true,options:[
+      "Lab coats are available in the supply closet.",
+      "Several new interns will join the team in June.",
+      "Failure to follow these protocols may result in equipment damage or injury.",
+      "The cafeteria now offers vegetarian options daily."
+    ],correct:2,x:"Sentence insertion: reinforces safety instructions with a clear warning about consequences."}]}
 ];

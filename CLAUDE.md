@@ -4,7 +4,7 @@
 
 TOEIC Arena is a gamified TOEIC exam preparation web application built by Jérémy Leixa, English trainer at IDRAC Business School (Lyon/Grenoble). Used by ~66 Bachelor 3 students (class code: `idrac2026`) and planned for deployment at other institutions (CESI, professional learners).
 
-The app is a **monolithic React application** — all UI logic lives in `src/App.jsx` (~8,000 lines). Jérémy is the sole developer; Claude is the technical partner.
+The app is a **monolithic React application** — all UI logic lives in `src/App.jsx` (~9,400 lines). Jérémy is the sole developer; Claude is the technical partner.
 
 **Live URL:** Deployed on Vercel  
 **Supabase project ref:** `huklmklwvwwhhrrcyytq`
@@ -13,7 +13,7 @@ The app is a **monolithic React application** — all UI logic lives in `src/App
 
 ## Tech Stack
 
-- **Frontend:** React 18 + Vite (build tool: Rolldown via Vite)
+- **Frontend:** React 19 + Vite 8 (build tool: Rolldown via Vite)
 - **Main file:** `src/App.jsx` — monolithic, contains all components and inline CSS
 - **Data files:** `src/data/*.js` — content separated by module
 - **Backend:** Supabase (PostgreSQL, Realtime for duels, Edge Functions for cron)
@@ -24,15 +24,28 @@ The app is a **monolithic React application** — all UI logic lives in `src/App
 
 ---
 
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Vite dev server (localhost:5173) avec HMR |
+| `npm run build` | Build production → `dist/` |
+| `npm run lint` | ESLint (flat config) |
+| `npm run preview` | Preview du build production en local |
+
+No test framework integrated — testing is manual.
+
+---
+
 ## Project Structure
 
 ```
 src/
-  App.jsx              — Main app (~8,000 lines, all components + inline CSS)
+  App.jsx              — Main app (~9,400 lines, all components + inline CSS)
   main.jsx             — React entry point
   data/
     vocab.js           — 390 flashcards, 18 domains
-    grammar.js         — 202 Part 5 drill questions
+    grammar.js         — 523 Part 5 drill questions (14 categories)
     listening.js       — P1 (43), P2 (75), P3 (30 convos), P4 (30 talks)
     part6.js           — 20 texts, 80 blanks
     part7.js           — 24 passages, 87 questions
@@ -46,9 +59,11 @@ src/
     placement.js       — 15 placement test Qs + levels + mission modules
     achievements.js    — 38 achievements
     leagues.js         — 7 league tiers + bot competitors
+    avatarIcons.js     — Iconify SVG paths for game icons
     helpers.js         — getLevel(xp) utility
-    sounds.js          — Web Audio API synthesized SFX + jingles
-    supabase.js        — Supabase client init
+  sounds.js            — Web Audio API synthesized SFX + jingles (~22KB)
+  chests.js            — Loot/reward system, skins, avatars, drop tables (~16KB)
+  supabase.js          — Supabase client init
 public/
   audio/
     bgm/               — bgm_speed.mp3, bgm_wfall.mp3, bgm_duel.mp3, bgm_clue.mp3, bgm_final.mp3
@@ -74,6 +89,14 @@ api/
 | `events` | Teacher-created events (Spotlight, Flash Hour, Underdog) |
 | `weekly_snapshots` | Weekly stats snapshots for pedagogical reporting |
 | `groups` | Multi-campus class codes and group metadata |
+
+---
+
+## Workflow Guidelines
+
+- **Use Plan Mode** (`/plan`) before any structural change to App.jsx (new module, refactor, new Supabase table). Explore and validate the approach BEFORE writing code.
+- **Use `/compact`** after 3-4 exchanges or whenever Claude seems to lose context on App.jsx specifics.
+- **Use `/clear`** when switching to a completely different topic.
 
 ---
 
@@ -187,7 +210,6 @@ api/
 - Voices: Sarah (W) = `EXAVITQu4vr4xnSDxMaL`, Adam (M) = `pNInz6obpgDQGcFmaJgB`
 - Model: `eleven_multilingual_v2`
 - Settings: `stability: 0.55, similarity_boost: 0.75, speed: 0.85`
-- Budget: started at 100,000 chars, ~81,400 remaining before Boss Test audio.
 - Audio files are pre-generated and stored locally. ElevenLabs credits are ONLY for generating new content, never for runtime playback.
 
 ### BGM Wiring Pattern
@@ -212,40 +234,40 @@ if(sp==="moduleName"){playBGM("bgm_name");return(<div className={lc}><style>{CSS
 
 ## Credentials & Secrets (DO NOT COMMIT)
 
-These are in Vercel environment variables and `.env`:
-- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`
-- `ELEVENLABS_API_KEY` (for audio generation scripts only)
-- `VAPID_PUBLIC_KEY` (in App.jsx, public)
-- `PUSH_SECRET="toeic-push-2026-xyz"` (in App.jsx, for push endpoint auth)
-- Teacher dashboard password: `arena-teacher-2026`
+All secrets are stored in `.env` (local) and Vercel environment variables. **Never hardcode values in source files.**
+
+| Secret | Location | Notes |
+|--------|----------|-------|
+| `VITE_SUPABASE_URL` | `.env` + Vercel | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | `.env` + Vercel | Must use `import.meta.env`, never hardcode |
+| `ELEVENLABS_API_KEY` | `.env` | Audio generation scripts only, not runtime |
+| `VAPID_PUBLIC_KEY` | App.jsx (public) | Safe to expose client-side |
+| `VAPID_PRIVATE_KEY` | Vercel only | Server-side push signing |
+| `VITE_PUSH_SECRET` | `.env` + Vercel | Push endpoint auth |
+| Teacher dashboard password | Vercel env vars | Do not store in code or docs |
 
 ---
 
-## Communication Style
+## Companion Documentation
 
-Jérémy prefers: direct, informal, technically precise. French for conversation, English for code/TOEIC content. Responses can be long. Opinions welcome. He applies patches manually and reports build errors precisely.
+- `CLAUDE_chest.md` — Loot system: chest types, rarities, drop tables, skins, avatars, weekly cooldowns
+- `DAILY_CHALLENGE_BRIEF.md` — Daily Challenge specs: 30-day seen tracking, weakness-based selection, seeded randomness
 
 ---
 
-## Current Status (April 2026)
+## Freemium System
 
-### Completed
-- Full app with 2000+ content items across 20+ modules
-- 4 mock tests including The Final Arena (full TOEIC simulation)
-- Medieval fantasy sonic identity (5 BGM loops, synthesized SFX)
-- Train screen refactored into 2×2 tile grid + Boss Test banner
-- Multi-campus architecture (groups table, class code selection)
-- Events system (Spotlight, Flash Hour, Underdog Boost)
-- Push notifications (PWA, VAPID)
-- CSV export (~108 columns)
-- Weekly snapshots for pedagogical reporting foundation
-- GDPR compliance (consent, privacy policy, data deletion/export, self-hosted fonts)
-- Cross-device sync: Supabase as single source of truth, immediate saves, visibility-aware sync
-- Skin animations (shimmer overlays + aurora gradient + obsidian pulse) for Obsidienne, Aurore, and epic skins
-- PWA reliability: SW v3 with cache-busting, auto-update, build ID verification
+```javascript
+FREE_MODULES = ["daily", "drill", "csess", "sbuild", "lisP2", "stratquiz", "strats", "gramref", "wfall"]
+FREE_FLASHCARD_DOMAINS = ["finance", "travel", "office"]
+```
 
-### On the Horizon
+Visitor mode (no class code) locks premium modules and flashcard domains. All content unlocks with a valid class code.
+
+---
+
+## Active Priorities
+
 - Weekly pedagogical report (Word/PDF) for the pedagogical director
 - Visual redesign toward medieval fantasy aesthetic (DA session planned)
 - Multi-campus operational rollout
-- Institutional compensation discussion (hybrid licensing model)

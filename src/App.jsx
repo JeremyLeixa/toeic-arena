@@ -541,6 +541,55 @@ function canUnlockBoss(u){
 }
 
 
+// ─── ENDLESS ARENA HELPERS ───
+function getEndlessState(u){
+  if(!u.mockResults||!u.mockResults.boss)return"hidden";
+  if((u.mockResults.boss.toeicEstimate||0)<650)return"locked";
+  var last=u.mockResults.endless&&u.mockResults.endless.lastAttempt;
+  if(last&&(Date.now()-last)<24*60*60*1000)return"cooldown";
+  return"ready";
+}
+
+function generateEndlessTest(){
+  // Merge training + boss pools
+  var allP1=LISTENING_P1.concat(BOSS_P1);
+  var allP2=LISTENING_P2.concat(BOSS_P2);
+  var allP3=LISTENING_P3.concat(BOSS_P3);
+  var allP4=LISTENING_P4.concat(BOSS_P4);
+  var allP5=QUESTIONS.concat(BOSS_P5);
+  var allP6=PART6_TEXTS.concat(BOSS_P6);
+  var allP7=PART7_PASSAGES.concat(BOSS_P7);
+
+  // Fisher-Yates shuffle helper
+  function fy(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+  // Shuffle options for a 4-option question, return {options, correct}
+  function shufOpts4(opts,correct){
+    var idx=[0,1,2,3];idx=fy(idx);
+    return{options:idx.map(function(k){return opts[k];}),correct:idx.indexOf(correct)};
+  }
+  function shufOpts3(opts,correct){
+    var idx=[0,1,2];idx=fy(idx);
+    return{options:idx.map(function(k){return opts[k];}),correct:idx.indexOf(correct)};
+  }
+
+  // Pick & shuffle items, then shuffle their options
+  var ep1=fy(allP1).slice(0,6).map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});});
+  var ep2=fy(allP2).slice(0,25).map(function(q){var s=shufOpts3(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});});
+  var ep3=fy(allP3).slice(0,13).map(function(conv){return Object.assign({},conv,{qs:conv.qs.map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});})});});
+  var ep4=fy(allP4).slice(0,10).map(function(talk){return Object.assign({},talk,{qs:talk.qs.map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});})});});
+  var ep5=fy(allP5).slice(0,30).map(function(q){var s=shufOpts4(q.o,q.c);return Object.assign({},q,{o:s.options,c:s.correct});});
+  var ep6=fy(allP6).slice(0,4).map(function(t){return Object.assign({},t,{parts:t.parts.map(function(pt){if(!pt.blank)return pt;var s=shufOpts4(pt.options,pt.correct);return Object.assign({},pt,{options:s.options,correct:s.correct});})});});
+  // P7: pick enough passages for ~54 questions
+  var p7Shuffled=fy(allP7);var ep7=[];var p7qCount=0;
+  for(var i=0;i<p7Shuffled.length&&p7qCount<54;i++){
+    var ps=p7Shuffled[i];if(!ps||!ps.questions||!ps.questions.length)continue;
+    ep7.push(Object.assign({},ps,{questions:ps.questions.map(function(q){var s=shufOpts4(q.options,q.correct);return Object.assign({},q,{options:s.options,correct:s.correct});})}));
+    p7qCount+=ps.questions.length;
+  }
+  return{p1:ep1,p2:ep2,p3:ep3,p4:ep4,p5:ep5,p6:ep6,p7:ep7};
+}
+
 // ─── TEACHER DASHBOARD CONFIG ───
 var PUSH_SECRET=import.meta.env.VITE_PUSH_SECRET||"";
 
@@ -607,7 +656,7 @@ var CSS=`
 @font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url('/fonts/outfit-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url('/fonts/outfit-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;--cx:212,148,58;--cx-hex:#d4943a;--cx-dark:#a06e20}
+:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;--cx:212,148,58;--cx-hex:#d4943a;--cx-dark:#a06e20;--endless:#1B70CF;--endless-dark:#0a3a6e;--endless-light:#7fb8e8;--endless-mid:#4a9fe0;--endless-muted:#7a9ac0}
 .skin-argent{--cx:180,180,200;--cx-hex:#b4b4c8;--cx-dark:#888898;--cyan:#b4b4c8;--orange:#888898}
 .skin-emeraude{--cx:46,180,100;--cx-hex:#2eb464;--cx-dark:#1a8a46;--cyan:#2eb464;--orange:#1a8a46}
 .skin-saphir{--cx:58,148,220;--cx-hex:#3a94dc;--cx-dark:#1a6aaa;--cyan:#3a94dc;--orange:#1a6aaa}
@@ -681,6 +730,15 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes legendCardPulse{0%,100%{box-shadow:0 0 16px rgba(var(--cx),.1),inset 0 1px 0 rgba(var(--cx),.1)}50%{box-shadow:0 0 28px rgba(var(--cx),.2),inset 0 1px 0 rgba(var(--cx),.18)}}
 @keyframes chestShake{0%,100%{transform:rotate(0)}10%{transform:rotate(-8deg)}20%{transform:rotate(8deg)}30%{transform:rotate(-6deg)}40%{transform:rotate(6deg)}50%{transform:rotate(-3deg)}60%{transform:rotate(3deg)}70%{transform:rotate(-1deg)}80%{transform:rotate(1deg)}}
 @keyframes chestFlash{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(2)}}
+@keyframes endless-star-twinkle{0%,100%{opacity:0.15;transform:scale(0.8)}50%{opacity:0.95;transform:scale(1.1)}}
+@keyframes endless-halo-breathe{0%,100%{opacity:0.25}50%{opacity:0.55}}
+@keyframes final-ember-rise{0%{transform:translateY(0) scale(0.6);opacity:0}15%{opacity:0.85}100%{transform:translateY(-55px) scale(0.2);opacity:0}}
+@keyframes final-ember-glow{0%,100%{opacity:0.4}50%{opacity:0.75}}
+.fx-ember{position:absolute;width:3px;height:3px;border-radius:50%;background:#ff8c42;animation:final-ember-rise 4s ease-out infinite;pointer-events:none;will-change:transform,opacity}
+.fx-ember.sm{width:2px;height:2px;background:#ffaa66}
+.fx-ember.lg{width:4px;height:4px;background:#ff6020}
+.fx-star{position:absolute;border-radius:50%;animation:endless-star-twinkle 3s ease-in-out infinite;pointer-events:none;will-change:transform,opacity}
+@media(prefers-reduced-motion:reduce){.fx-ember,.fx-star{animation:none}.fx-ember{opacity:0}}
 @keyframes chestReveal{0%{opacity:0;transform:translateY(30px) scale(.6)}60%{opacity:1;transform:translateY(-8px) scale(1.05)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes chestParticle{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(0)}}
 @keyframes flip{0%{transform:rotateY(90deg);opacity:0}100%{transform:rotateY(0);opacity:1}}
@@ -944,7 +1002,7 @@ var[step,sSt]=useState("name");
               border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
               transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
               <div style={{width:44,height:44,borderRadius:12,
-                background:acc.groupType==="school"?"rgba(var(--cx),.1)":acc.groupType==="pro"?"rgba(200,122,53,.1)":"rgba(139,94,131,.1)",
+                background:acc.groupType==="school"?"rgba(var(--cx),.1)":acc.groupType==="pro"?"rgba(200,122,53,.1)":"rgba(27,112,207,.1)",
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{acc.typeIcon}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{acc.groupName}</div>
@@ -988,13 +1046,13 @@ var[step,sSt]=useState("name");
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
         </div>
         {!visitorConfirm?<button className="btn2" onClick={function(){setVisitorConfirm(true);}}
-          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>{"🌍 Discover for Free"}</button>
-        :<div style={{animation:"fadeIn .3s",padding:16,background:"rgba(139,94,131,.08)",border:"1px solid rgba(139,94,131,.2)",borderRadius:14}}>
+          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>{"🌍 Discover for Free"}</button>
+        :<div style={{animation:"fadeIn .3s",padding:16,background:"rgba(27,112,207,.08)",border:"1px solid rgba(27,112,207,.2)",borderRadius:14}}>
           <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>⚠️ Free access includes 8 training modules. All modules are unlocked with a class code from your school.</p>
           <div style={{display:"flex",gap:8}}>
             <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>Cancel</button>
             <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);sSt("consent");}}
-              style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(139,94,131,.3)",color:"var(--purple)"}}>Start Free Discovery</button>
+              style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>Start Free Discovery</button>
           </div>
         </div>}
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
@@ -1459,7 +1517,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
 <span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
-<div className="crd" onClick={function(){if(!dd)p.nav("daily");}} style={{marginBottom:16,cursor:dd?"default":"pointer",background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(var(--cx),.12),rgba(139,94,131,.12))",border:dd?"1px solid var(--bdr)":"1px solid rgba(var(--cx),.2)"}}>
+<div className="crd" onClick={function(){if(!dd)p.nav("daily");}} style={{marginBottom:16,cursor:dd?"default":"pointer",background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))",border:dd?"1px solid var(--bdr)":"1px solid rgba(var(--cx),.2)"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
 <div><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:20}}>{dd?"✅":"⚡"}</span><span className="out" style={{fontWeight:700,fontSize:16}}>Daily Challenge</span></div>
 {dd?<p style={{color:"var(--green)",fontSize:13,fontWeight:600}}>Completed! +{u.daily.xpE} XP</p>:<p style={{color:"var(--t2)",fontSize:13}}>5 questions · 30s each · Bonus XP</p>}</div>
@@ -1530,7 +1588,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
   var dayIndex=0;var d=today();for(var i=0;i<d.length;i++)dayIndex+=d.charCodeAt(i);
   var todayTip=allTips[dayIndex%allTips.length];
   return(<div style={{marginTop:20}}>
-    <div className="crd" style={{padding:0,overflow:"hidden",border:"1px solid rgba(180,140,80,.12)",background:"linear-gradient(160deg,rgba(180,140,80,.06) 0%,rgba(139,94,131,.04) 100%)"}}>
+    <div className="crd" style={{padding:0,overflow:"hidden",border:"1px solid rgba(180,140,80,.12)",background:"linear-gradient(160deg,rgba(180,140,80,.06) 0%,rgba(27,112,207,.04) 100%)"}}>
       <div style={{padding:"16px 18px 14px"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1646,6 +1704,16 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
   var bossLocked=!uBoss.ok;
   var mocksDone=[p.u.mockResults&&p.u.mockResults.mock1,p.u.mockResults&&p.u.mockResults.mock2,p.u.mockResults&&p.u.mockResults.mock3];
 
+  // ── Endless Arena status ──
+  var endlessState=getEndlessState(p.u);
+  var endlessData=p.u.mockResults&&p.u.mockResults.endless;
+  var endlessCooldownH=endlessData&&endlessData.lastAttempt?Math.max(0,Math.ceil((24*60*60*1000-(Date.now()-endlessData.lastAttempt))/3600000)):0;
+  var endlessCooldownM=endlessData&&endlessData.lastAttempt?Math.max(0,Math.ceil(((24*60*60*1000-(Date.now()-endlessData.lastAttempt))%3600000)/60000)):0;
+
+  // ── Grid sections (exercises, grammar, tips — NOT mocks) ──
+  var gridSections=[sections[0],sections[1],sections[3]]; // exercises, grammar, tips
+  var mocksSection=sections[2]; // mocks kept for sub-view
+
   // ── Visitor locking ──
   if(p.groupType==="visitor"){
     sections.forEach(function(sec){sec.items.forEach(function(m){
@@ -1655,80 +1723,226 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 
   // ═══ SUB-VIEW — show items of selected section ═══
   if(trainView!==null){
-    var sec=sections[trainView];
-    var animIdx=0;
-    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
-      <button onClick={function(){setTrainView(null);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"←"} Training Grounds</button>
-      <h2 className="out" style={{fontWeight:800,fontSize:20,marginBottom:4}}>{sec.title}</h2>
-      <p style={{color:"var(--t3)",fontSize:12,marginBottom:16}}>{sec.sub}</p>
-      <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:8}}>
-        {sec.items.map(function(m){
-          var ai=animIdx++;
-          var vl=m.visitorLocked;
-          return(
-            <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}if(!m.lock)p.nav(m.id);}}
-              style={{display:"flex",alignItems:"center",gap:14,cursor:(m.lock||vl)?"default":"pointer",opacity:m.lock?.4:vl?.55:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
-              <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
-                <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
+    // trainView "mocks" = special sub-view with Ultimate Trials
+    if(trainView==="mocks"){
+      var animIdx2=0;
+      return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+        <button onClick={function(){setTrainView(null);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"←"} Training Grounds</button>
+        <h2 className="out" style={{fontWeight:800,fontSize:20,marginBottom:4}}>Mock Exams</h2>
+        <p style={{color:"var(--t3)",fontSize:12,marginBottom:16}}>Real conditions {"·"} full tests</p>
+
+        {/* Mock Test 1/2/3 cards */}
+        <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:8}}>
+          {mocksSection.items.map(function(m){
+            var ai=animIdx2++;
+            return(
+              <div key={m.id} className="crd" onClick={function(){if(!m.lock)p.nav(m.id);}}
+                style={{display:"flex",alignItems:"center",gap:14,cursor:m.lock?"default":"pointer",opacity:m.lock?.4:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
+                <div style={{width:42,height:42,borderRadius:12,background:m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
+                  <div style={{fontSize:11,color:"var(--t3)"}}>{m.d}</div>
+                </div>
+                {m.lock?<span style={{fontSize:16}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+              </div>);
+          })}
+        </div>
+
+        {/* ── ULTIMATE TRIALS separator ── */}
+        <div style={{display:"flex",alignItems:"center",gap:10,margin:"18px 0 12px"}}>
+          <div style={{flex:1,height:1,background:"#3a2a15"}}/>
+          <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#8a7e6a",letterSpacing:2}}>ULTIMATE TRIALS</div>
+          <div style={{flex:1,height:1,background:"#3a2a15"}}/>
+        </div>
+
+        {/* ── Hero Final Arena ── */}
+        <div onClick={function(){if(!bossLocked)p.nav("boss");}}
+          style={{padding:0,overflow:"hidden",cursor:bossLocked?"default":"pointer",opacity:bossLocked?.55:1,borderRadius:16,border:"1px solid "+(bossLocked?"var(--bdr)":"rgba(220,38,38,.5)"),background:"linear-gradient(135deg,#1a0505,#2a0a0a)",marginBottom:10,animation:"fadeIn .4s ease-out",animationDelay:".15s",animationFillMode:"both"}}>
+          <div style={{background:"linear-gradient(135deg,#2a0a0a,#3d1a00,#1a0800)",padding:"18px 16px",position:"relative",overflow:"hidden"}}>
+            {!bossCompleted&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 30% 90%,rgba(255,100,20,0.35),transparent 55%)",animation:"final-ember-glow 3.5s ease-in-out infinite",pointerEvents:"none"}}/>}
+            {!bossCompleted&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 70% 85%,rgba(220,38,38,0.25),transparent 50%)",animation:"final-ember-glow 4.5s ease-in-out infinite 0.8s",pointerEvents:"none"}}/>}
+            {!bossCompleted&&<><div className="fx-ember sm" style={{left:"18%",bottom:10,animationDelay:"0s"}}/><div className="fx-ember" style={{left:"28%",bottom:8,animationDelay:"0.7s"}}/><div className="fx-ember lg" style={{left:"40%",bottom:12,animationDelay:"1.4s"}}/><div className="fx-ember sm" style={{left:"52%",bottom:6,animationDelay:"2.1s"}}/><div className="fx-ember" style={{left:"63%",bottom:10,animationDelay:"0.3s"}}/><div className="fx-ember sm" style={{left:"74%",bottom:8,animationDelay:"1.0s"}}/><div className="fx-ember" style={{left:"85%",bottom:12,animationDelay:"1.7s"}}/><div className="fx-ember lg" style={{left:"22%",bottom:14,animationDelay:"2.8s"}}/><div className="fx-ember sm" style={{left:"58%",bottom:6,animationDelay:"3.2s"}}/></>}
+            {!bossLocked&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 80% 30%,rgba(245,158,11,.08),transparent 60%),radial-gradient(ellipse at 20% 70%,rgba(220,38,38,.06),transparent 50%)"}}/>}
+            {!bossLocked&&<div style={{position:"absolute",top:-8,right:12,fontSize:48,opacity:.1,transform:"scaleX(-1)"}}>{"🐉"}</div>}
+            <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
+              <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#dc2626,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:bossLocked?"none":"0 0 20px rgba(220,38,38,.3)"}}>{"🐉"}</div>
+              <div style={{flex:1}}>
+                <div style={{marginBottom:2}}>
+                  <span className="out" style={{fontWeight:900,fontSize:16,background:"linear-gradient(90deg,#ff4444,#ff8c42,#ffd700)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>THE FINAL ARENA</span>
+                </div>
+                {bossCompleted&&!bossLocked?<div style={{fontSize:12,color:"var(--gold)"}}>Best: TOEIC {p.u.mockResults.boss.toeicEstimate}/990 {"—"} Retake?</div>
+                :bossLocked?<div style={{fontSize:11,color:"var(--t3)"}}>{uBoss.reasons[0]}</div>
+                :<div style={{fontSize:12,color:"#cc8844"}}>Full TOEIC {"·"} 202 Q {"·"} 120 min</div>}
+                <div style={{display:"flex",gap:4,marginTop:6}}>
+                  {["Mock 1","Mock 2","Mock 3"].map(function(label,i){
+                    var done=mocksDone[i];
+                    return(<span key={i} style={{fontSize:9,padding:"2px 7px",borderRadius:99,fontWeight:600,
+                      background:done?"rgba(34,197,94,.15)":"rgba(255,255,255,.06)",
+                      color:done?"#22c55e":"var(--t3)"}}>{done?"✓ ":""}{label}</span>);
+                  })}
+                </div>
               </div>
-              {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:m.lock?<span style={{fontSize:16}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
-            </div>);
-        })}
-      </div>
-    </div>);
+              {bossLocked?<span style={{fontSize:18}}>{"🔒"}</span>:<span style={{fontSize:18,color:"rgba(220,38,38,.6)"}}>{"➔"}</span>}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Hero Endless Arena (if visible) ── */}
+        {endlessState!=="hidden"&&(function(){
+          var isLocked=endlessState==="locked";
+          var isCooldown=endlessState==="cooldown";
+          var isReady=endlessState==="ready";
+          var bossScore=bossCompleted?p.u.mockResults.boss.toeicEstimate:0;
+          var progressPct=isLocked?Math.max(0,Math.min(100,((bossScore-200)/(650-200))*100)):0;
+
+          return(<div onClick={function(){if(isReady)p.nav("endless");}}
+            style={{padding:0,overflow:"hidden",cursor:isReady?"pointer":"default",opacity:isCooldown?.75:isLocked?.55:1,borderRadius:16,border:"1.5px solid rgba(27,112,207,0.4)",background:"linear-gradient(135deg,#081828,#0d2a45)",animation:"fadeIn .4s ease-out",animationDelay:".25s",animationFillMode:"both"}}>
+            <div style={{background:"linear-gradient(135deg,#0a1e35,#102844,#081828)",padding:"18px 16px",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 75% 20%,rgba(27,112,207,0.35),transparent 55%)",animation:"endless-halo-breathe 5s ease-in-out infinite",pointerEvents:"none"}}/>
+              <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 15% 85%,rgba(74,159,224,0.18),transparent 45%)",animation:"endless-halo-breathe 6s ease-in-out infinite 1.5s",pointerEvents:"none"}}/>
+              <div className="fx-star" style={{top:"14%",left:"8%",width:2,height:2,background:"#a8d4ff",animationDelay:"0s"}}/><div className="fx-star" style={{top:"22%",left:"18%",width:1.5,height:1.5,background:"#d4943a",animationDelay:"0.5s"}}/><div className="fx-star" style={{top:"10%",left:"32%",width:2.5,height:2.5,background:"#ffffff",animationDelay:"1.2s"}}/><div className="fx-star" style={{top:"28%",left:"45%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"1.8s"}}/><div className="fx-star" style={{top:"18%",left:"58%",width:2,height:2,background:"#a8d4ff",animationDelay:"0.3s"}}/><div className="fx-star" style={{top:"8%",left:"72%",width:2,height:2,background:"#d4943a",animationDelay:"2.2s"}}/><div className="fx-star" style={{top:"24%",left:"85%",width:1.5,height:1.5,background:"#ffffff",animationDelay:"0.9s"}}/><div className="fx-star" style={{top:"35%",left:"28%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"2.5s"}}/><div className="fx-star" style={{top:"40%",left:"62%",width:2,height:2,background:"#d4943a",animationDelay:"1.5s"}}/><div className="fx-star" style={{top:"48%",left:"15%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"0.7s"}}/><div className="fx-star" style={{top:"55%",left:"78%",width:2,height:2,background:"#ffffff",animationDelay:"2.8s"}}/><div className="fx-star" style={{top:"65%",left:"38%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"1.1s"}}/><div className="fx-star" style={{top:"72%",left:"88%",width:2,height:2,background:"#d4943a",animationDelay:"0.4s"}}/><div className="fx-star" style={{top:"80%",left:"22%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"2.0s"}}/><div className="fx-star" style={{top:"85%",left:"55%",width:2,height:2,background:"#ffffff",animationDelay:"1.3s"}}/>
+              <div style={{position:"absolute",top:-6,right:14,fontSize:46,opacity:.08}}>{"⏳"}</div>
+              <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
+                <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#1B70CF,#0a3a6e)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px rgba(27,112,207,0.35)"}}>{"⏳"}</div>
+                <div style={{flex:1}}>
+                  <div style={{marginBottom:2}}>
+                    <span className="out" style={{fontWeight:900,fontSize:16,letterSpacing:.5,background:"linear-gradient(90deg,#7fb8e8,#4a9fe0,#d4943a)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>ENDLESS ARENA</span>
+                  </div>
+                  <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:11,color:"#8a7e6a"}}>the arena never sleeps</div>
+                </div>
+                {isReady?<span style={{fontSize:18,color:"#7fb8e8"}}>{"→"}</span>:<span style={{fontSize:18}}>{"🔒"}</span>}
+              </div>
+
+              {/* Locked: progress bar toward 650 gate */}
+              {isLocked&&<div style={{marginTop:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#8a7e6a",marginBottom:4}}>
+                  <span>Your score</span><span>Gate</span>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                  <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:14,color:"#7fb8e8"}}>{bossScore}</span>
+                  <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:14,color:"#d4943a"}}>650</span>
+                </div>
+                <div style={{height:6,background:"rgba(27,112,207,.18)",borderRadius:99}}>
+                  <div style={{width:progressPct+"%",height:"100%",borderRadius:99,background:"linear-gradient(90deg,#0a3a6e,#1B70CF)"}}/>
+                </div>
+                <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:11,color:"#4a9fe0",textAlign:"center",marginTop:6}}>So close {"·"} {650-bossScore} points from glory</div>
+              </div>}
+
+              {/* Ready: stats line */}
+              {isReady&&endlessData&&endlessData.attempts>0&&<div style={{borderTop:"1px solid rgba(27,112,207,.3)",marginTop:10,paddingTop:10}}>
+                <div style={{fontSize:11,color:"#8a7e6a"}}>Runs: <span style={{color:"#7fb8e8"}}>{endlessData.attempts}</span>  {"·"}  Best: <span style={{color:"#7fb8e8"}}>{endlessData.best}</span>  {"·"}  <span style={{color:"#7fb8e8"}}>Ready to enter</span></div>
+              </div>}
+              {isReady&&(!endlessData||endlessData.attempts===0)&&<div style={{marginTop:10,textAlign:"center"}}>
+                <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:12,color:"#7fb8e8"}}>First run awaits {"·"} enter the sanctuary</div>
+              </div>}
+
+              {/* Cooldown: stats with timer */}
+              {isCooldown&&endlessData&&<div style={{borderTop:"1px solid rgba(27,112,207,.3)",marginTop:10,paddingTop:10}}>
+                <div style={{fontSize:11,color:"#8a7e6a"}}>Runs: <span style={{color:"#7fb8e8"}}>{endlessData.attempts}</span>  {"·"}  Best: <span style={{color:"#7fb8e8"}}>{endlessData.best}</span>  {"·"}  Ready in <span style={{color:"#7fb8e8"}}>{endlessCooldownH}h {endlessCooldownM}m</span></div>
+              </div>}
+            </div>
+          </div>);
+        })()}
+      </div>);
+    }
+
+    // Regular sub-view (exercises, grammar, tips)
+    var sec=trainView==="mocks"?mocksSection:gridSections[trainView];
+    if(sec){
+      var animIdx=0;
+      return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+        <button onClick={function(){setTrainView(null);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"←"} Training Grounds</button>
+        <h2 className="out" style={{fontWeight:800,fontSize:20,marginBottom:4}}>{sec.title}</h2>
+        <p style={{color:"var(--t3)",fontSize:12,marginBottom:16}}>{sec.sub}</p>
+        <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:8}}>
+          {sec.items.map(function(m){
+            var ai=animIdx++;
+            var vl=m.visitorLocked;
+            return(
+              <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}if(!m.lock)p.nav(m.id);}}
+                style={{display:"flex",alignItems:"center",gap:14,cursor:(m.lock||vl)?"default":"pointer",opacity:m.lock?.4:vl?.55:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
+                <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
+                  <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
+                </div>
+                {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:m.lock?<span style={{fontSize:16}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+              </div>);
+          })}
+        </div>
+      </div>);
+    }
   }
 
-  // ═══ MAIN GRID VIEW — 2x2 tiles + Boss banner ═══
+  // ═══ MAIN VIEW — Hero Mock Exams + 3 tiles grid ═══
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Training Grounds</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>Choose your battle</p>
 
-    {/* 2x2 Tile Grid */}
-    <div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-      {sections.map(function(sec,si){
-        return(<div key={sec.key} className="crd" onClick={function(){setTrainView(si);}}
-          style={{padding:"18px 14px",cursor:"pointer",minHeight:200,borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:(si*.06)+"s",animationFillMode:"both"}}>
-          <div style={{fontSize:28,marginBottom:8}}>{sec.icon}</div>
-          <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>{sec.title}</div>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{sec.sub}</div>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <span style={{fontSize:10,color:"var(--cyan)",fontWeight:600}}>{sec.count}</span>
-            <span style={{fontSize:14,color:"var(--cyan)"}}>{"→"}</span>
-          </div>
-        </div>);
-      })}
+    {/* Hero Mock Exams */}
+    <div onClick={function(){setTrainView("mocks");}}
+      style={{borderRadius:16,border:"1.5px solid rgba(212,148,58,0.35)",background:"linear-gradient(135deg,#1a1610,#28221a)",padding:16,marginBottom:14,cursor:"pointer"}}>
+      <div style={{display:"flex",alignItems:"center",gap:14}}>
+        <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#8b6020)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>{"📜"}</div>
+        <div style={{flex:1}}>
+          <div className="out" style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:16,letterSpacing:1.5,color:"#f0c850"}}>MOCK EXAMS</div>
+          <div style={{fontSize:12,color:"#8a7e6a"}}>Real conditions {"·"} full tests</div>
+        </div>
+        <span style={{fontSize:16,color:"#d4943a"}}>{"→"}</span>
+      </div>
+      {/* Mock pills */}
+      <div style={{display:"flex",gap:6,marginTop:14}}>
+        {["Mock 1","Mock 2","Mock 3"].map(function(label,i){
+          var done=mocksDone[i];
+          return(<span key={i} style={{fontSize:11,padding:"3px 9px",borderRadius:99,fontWeight:600,
+            background:done?"rgba(74,190,96,0.15)":"rgba(255,255,255,0.05)",
+            color:done?"#4abe60":"#5a5040"}}>{done?"\u2713 ":""}{label}</span>);
+        })}
+      </div>
+      {/* Separator */}
+      <div style={{height:1,background:"rgba(180,140,80,0.15)",margin:"10px -4px"}}/>
+      {/* Event rows: Final Arena + Endless Arena */}
+      <div style={{display:"flex",alignItems:"center",gap:11,padding:"7px 4px"}}>
+        <span style={{fontSize:19,width:22,textAlign:"center"}}>{"🐉"}</span>
+        <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:13,fontWeight:700,color:bossCompleted?"#4abe60":bossLocked?"#8a7e6a":"#e8c88a",flex:1}}>Final Arena</span>
+        <span style={{fontSize:11,color:bossCompleted?"#4abe60":bossLocked?"#8a7e6a":"#f0c850"}}>{bossCompleted?"conquered \xb7 "+(p.u.mockResults.boss.toeicEstimate||""):bossLocked?"awaiting \xb7 finish mocks":"unlocked \xb7 enter \u2192"}</span>
+      </div>
+      {endlessState!=="hidden"&&<div style={{display:"flex",alignItems:"center",gap:11,padding:"8px 4px 6px",background:"rgba(27,112,207,0.08)",borderRadius:8,margin:"2px -4px 0"}}>
+        <span style={{fontSize:19,width:22,textAlign:"center"}}>{"⏳"}</span>
+        <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:13,fontWeight:700,color:"#7fb8e8",flex:1}}>Endless Arena</span>
+        <span style={{fontSize:11,color:endlessState==="ready"?"#4a9fe0":endlessState==="cooldown"?"#8a7e6a":"#8a7e6a"}}>{endlessState==="locked"?"locked \xb7 requires 650+":endlessState==="ready"?"ready to enter":endlessState==="cooldown"?"ready in "+endlessCooldownH+"h":""}</span>
+      </div>}
     </div>
 
-    {/* Boss Test Banner */}
-    <div className="" onClick={function(){if(!bossLocked)p.nav("boss");}}
-      style={{padding:0,overflow:"hidden",cursor:bossLocked?"default":"pointer",opacity:bossLocked?.55:1,borderRadius:16,border:"1px solid "+(bossLocked?"var(--bdr)":"rgba(220,38,38,.5)"),background:"linear-gradient(135deg,#1a0505,#2a0a0a)",animation:"fadeIn .5s ease-out",animationDelay:".3s",animationFillMode:"both"}}>
-      <div style={{background:"linear-gradient(135deg,#2a0a0a,#3d1a00,#1a0800)",padding:"18px 16px",position:"relative",overflow:"hidden"}}>
-        {!bossLocked&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 80% 30%,rgba(245,158,11,.08),transparent 60%),radial-gradient(ellipse at 20% 70%,rgba(220,38,38,.06),transparent 50%)"}}/>}
-        {!bossLocked&&<div style={{position:"absolute",top:-8,right:12,fontSize:48,opacity:.1,transform:"scaleX(-1)"}}>{"🐉"}</div>}
-        <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
-          <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#dc2626,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:bossLocked?"none":"0 0 20px rgba(220,38,38,.3)"}}>{"🐉"}</div>
-          <div style={{flex:1}}>
-            <div style={{marginBottom:2}}>
-              <span className="out" style={{fontWeight:900,fontSize:16,background:"linear-gradient(90deg,#ff4444,#ff8c42,#ffd700)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>THE FINAL ARENA</span>
+    {/* 3 Tiles Grid: Exercises + Grammar (row 1), Tips (row 2 full-width) */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+      {gridSections.map(function(sec,si){
+        var isFullWidth=si===2; // Tips & Strategy
+        return(<div key={sec.key} className="crd" onClick={function(){setTrainView(si);}}
+          style={{padding:"18px 14px",cursor:"pointer",gridColumn:isFullWidth?"1 / -1":"auto",borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:(si*.06)+"s",animationFillMode:"both"}}>
+          {isFullWidth?
+            <div style={{display:"flex",alignItems:"center",gap:14}}>
+              <div style={{fontSize:32,flexShrink:0}}>{sec.icon}</div>
+              <div style={{flex:1}}>
+                <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>{sec.title}</div>
+                <div style={{fontSize:11,color:"var(--t3)"}}>{sec.sub}</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:10,color:"var(--cyan)",fontWeight:600}}>{sec.count}</span>
+                <span style={{fontSize:14,color:"var(--cyan)"}}>{"→"}</span>
+              </div>
             </div>
-            {bossCompleted&&!bossLocked?<div style={{fontSize:12,color:"var(--gold)"}}>Best: TOEIC {p.u.mockResults.boss.toeicEstimate}/990 {"—"} Retake?</div>
-            :bossLocked?<div style={{fontSize:11,color:"var(--t3)"}}>{uBoss.reasons[0]}</div>
-            :<div style={{fontSize:12,color:"#cc8844"}}>Full TOEIC {"·"} 202 Q {"·"} 120 min</div>}
-            {/* Mock completion pills */}
-            <div style={{display:"flex",gap:4,marginTop:6}}>
-              {["Mock 1","Mock 2","Mock 3"].map(function(label,i){
-                var done=mocksDone[i];
-                return(<span key={i} style={{fontSize:9,padding:"2px 7px",borderRadius:99,fontWeight:600,
-                  background:done?"rgba(34,197,94,.15)":"rgba(255,255,255,.06)",
-                  color:done?"#22c55e":"var(--t3)"}}>{done?"✓ ":""}{label}</span>);
-              })}
+          :<div>
+            <div style={{fontSize:28,marginBottom:8}}>{sec.icon}</div>
+            <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>{sec.title}</div>
+            <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{sec.sub}</div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <span style={{fontSize:10,color:"var(--cyan)",fontWeight:600}}>{sec.count}</span>
+              <span style={{fontSize:14,color:"var(--cyan)"}}>{"→"}</span>
             </div>
-          </div>
-          {bossLocked?<span style={{fontSize:18}}>{"🔒"}</span>:<span style={{fontSize:18,color:"rgba(220,38,38,.6)"}}>{"➔"}</span>}
-        </div>
-      </div>
+          </div>}
+        </div>);
+      })}
     </div>
   </div>);
 }
@@ -2289,7 +2503,7 @@ function GerInf(p){
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{q.verb}</span>
             <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:99,
-              background:q.pattern==="ing"?"rgba(255,140,66,.1)":q.pattern==="to"?"rgba(var(--cx),.1)":q.pattern==="both"?"rgba(255,71,87,.1)":"rgba(139,94,131,.1)",
+              background:q.pattern==="ing"?"rgba(255,140,66,.1)":q.pattern==="to"?"rgba(var(--cx),.1)":q.pattern==="both"?"rgba(255,71,87,.1)":"rgba(27,112,207,.1)",
               color:info2.color}}>{q.pattern==="ing"?"always -ING":q.pattern==="to"?"always TO":q.pattern==="both"?"depends on meaning":"preposition → -ING"}</span>
           </div>
           <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,marginBottom:4}}>{q.tip}</p>
@@ -2657,7 +2871,7 @@ function PhrasalDojo(p){
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
                   <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>{pv.pv}</span>
                   <SpeakBtn text={pv.pv} size={24} audio={"/audio/phrasal/"+pv.pv.replace(/\s+/g,"_")+".mp3"}/>
-                  <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(139,94,131,.1)",borderRadius:99}}>{pv.fr}</span>
+                  <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(27,112,207,.1)",borderRadius:99}}>{pv.fr}</span>
                 </div>
                 <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.5,marginBottom:4}}>{pv.m}</p>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -2715,7 +2929,7 @@ function PhrasalDojo(p){
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{mq.pv}</span>
             <SpeakBtn text={mq.pv} size={22} audio={"/audio/phrasal/"+mq.pv.replace(/\s+/g,"_")+".mp3"}/>
-            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(139,94,131,.1)",borderRadius:99}}>{mq.fr}</span>
+            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(27,112,207,.1)",borderRadius:99}}>{mq.fr}</span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",lineHeight:1.5,flex:1}}>"{mq.ex}"</p>
@@ -2783,7 +2997,7 @@ function PhrasalDojo(p){
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{pq.pv}</span>
             <SpeakBtn text={pq.pv} size={22} audio={"/audio/phrasal/"+pq.pv.replace(/\s+/g,"_")+".mp3"}/>
-            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(139,94,131,.1)",borderRadius:99}}>{pq.fr}</span>
+            <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(27,112,207,.1)",borderRadius:99}}>{pq.fr}</span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",flex:1}}>"{pq.ex}"</p>
@@ -2897,7 +3111,7 @@ function StratQuizPage(p){
     <div style={{marginTop:16,marginBottom:20}}>
       <span className="out" style={{fontSize:10,fontWeight:700,color:pc,textTransform:"uppercase",letterSpacing:1,padding:"3px 8px",background:pc+"18",borderRadius:6}}>{q.part}</span></div>
 
-    <div className="crd" style={{padding:16,marginBottom:20,background:"rgba(139,94,131,.05)",borderColor:"rgba(139,94,131,.12)"}}>
+    <div className="crd" style={{padding:16,marginBottom:20,background:"rgba(27,112,207,.05)",borderColor:"rgba(27,112,207,.12)"}}>
       <p className="out" style={{fontSize:11,fontWeight:600,color:"var(--purple)",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Situation</p>
       <p style={{fontSize:15,color:"var(--t1)",lineHeight:1.6}}>{q.scenario}</p></div>
 
@@ -3175,7 +3389,7 @@ function Part6Drill(p){
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Text {ti+1}/{texts.length}</span></div>
     <div style={{display:"flex",gap:6,marginBottom:12}}>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(139,94,131,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}</span>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(27,112,207,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}</span>
       <span style={{fontSize:10,padding:"3px 8px",background:"var(--bg3)",color:"var(--t3)",borderRadius:6}} className="out">From: {curText.from}</span></div>
     <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--t1)"}}>Subject: {curText.subject}</div>
     <div className="crd" style={{padding:16,marginBottom:20}}>
@@ -3190,7 +3404,7 @@ function Part6Drill(p){
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Blank {totalB+1}/{totalBlanks}</span></div>
     <Bar value={totalB} max={totalBlanks} h={4} color="linear-gradient(90deg,#c4587a,#8b5e83)"/>
     <div style={{marginTop:12,marginBottom:6}}>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(139,94,131,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}: {curText.subject}</span></div>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(27,112,207,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}: {curText.subject}</span></div>
     <div className="crd" style={{padding:14,marginBottom:20,background:"var(--bg3)"}}>
       <p className="read-text" style={{fontSize:12,color:"var(--t2)",lineHeight:1.9,whiteSpace:"pre-line"}}>{renderText()}</p></div>
     <p className="out q-heading" style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--cyan)"}}>Fill blank ({bi+1}):</p>
@@ -3219,8 +3433,9 @@ function Part7Read(p){
   var[showQPreview,setShowQPreview]=useState(false);var[showText,setShowText]=useState(false);
 
   var totalQs=useMemo(function(){var c=0;passages.forEach(function(p){if(p&&p.questions)c+=p.questions.length;});return c;},[]);
+  var shuffledQMap=useMemo(function(){var m={};passages.forEach(function(ps){if(!ps||!ps.questions)return;m[ps.id]=ps.questions.map(function(q){var idx=[0,1,2,3];for(var i=idx.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=idx[i];idx[i]=idx[j];idx[j]=tmp;}return{options:idx.map(function(k){return q.options[k];}),correct:idx.indexOf(q.correct),x:q.x,q:q.q};});});return m;},[]);
   var curPass=passages[pi];
-  var curQ=curPass?curPass.questions[qi]:null;
+  var curQ=curPass&&shuffledQMap[curPass.id]?shuffledQMap[curPass.id][qi]:null;
 
   function doAns(i){
     sPk(i);
@@ -3258,10 +3473,10 @@ function Part7Read(p){
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:12}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type}</span>
-      <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(139,94,131,.15)":"var(--bg3)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions ▲":"Preview questions ▼"} ({curPass.questions.length})</button></div>
-    {showQPreview&&<div className="crd" style={{padding:12,marginBottom:12,borderColor:"rgba(139,94,131,.2)",background:"rgba(139,94,131,.04)"}}>
+      <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(27,112,207,.15)":"var(--bg3)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions ▲":"Preview questions ▼"} ({curPass.questions.length})</button></div>
+    {showQPreview&&<div className="crd" style={{padding:12,marginBottom:12,borderColor:"rgba(27,112,207,.2)",background:"rgba(27,112,207,.04)"}}>
       <div style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Read these first!</div>
-      {curPass.questions.map(function(q,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,padding:"4px 0",borderBottom:i<curPass.questions.length-1?"1px solid var(--bdr)":"none"}}><span style={{color:"var(--purple)",fontWeight:700}}>Q{i+1}.</span> {q.q}</div>);})}</div>}
+      {(shuffledQMap[curPass.id]||curPass.questions).map(function(q,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,padding:"4px 0",borderBottom:i<curPass.questions.length-1?"1px solid var(--bdr)":"none"}}><span style={{color:"var(--purple)",fontWeight:700}}>Q{i+1}.</span> {q.q}</div>);})}</div>}
     <div className="crd" style={{padding:16,marginBottom:16}}>
       <p className="read-text" style={{fontSize:13,color:"var(--t2)",lineHeight:1.8,whiteSpace:"pre-line"}}>{curPass.text}</p></div>
     <button className="btn1" onClick={function(){sP("q");setShowQPreview(false);setShowText(false);}}>Answer Questions</button></div>);
@@ -3336,7 +3551,7 @@ function FalseFriends(p){
 
     <div style={{marginTop:20,marginBottom:20}}>
       <div className="out" style={{fontSize:11,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>What does the underlined word mean here?</div>
-      <div className="crd" style={{padding:16,background:"rgba(139,94,131,.05)",borderColor:"rgba(139,94,131,.12)"}}>
+      <div className="crd" style={{padding:16,background:"rgba(27,112,207,.05)",borderColor:"rgba(27,112,207,.12)"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
           <SpeakBtn text={it.ex} size={28} rate={0.85}/>
           <p style={{fontSize:15,color:"var(--t1)",lineHeight:1.6}}>
@@ -3977,6 +4192,470 @@ function BossTest(p){
   return null;
 }
 
+// ─── ENDLESS ARENA ───
+function EndlessArena(p){
+  var test=useMemo(function(){return generateEndlessTest();},[]);
+  var LP1=test.p1,LP2=test.p2,LP3=test.p3,LP4=test.p4;
+  var RP5=test.p5,RP6=test.p6,RP7=test.p7;
+  var p3QC=0;LP3.forEach(function(c){p3QC+=c.qs.length;});
+  var p4QC=0;LP4.forEach(function(t){p4QC+=t.qs.length;});
+  var lisQ=LP1.length+LP2.length+p3QC+p4QC;
+  var p6BC=0;RP6.forEach(function(t){t.parts.forEach(function(pt){if(pt.blank)p6BC++;});});
+  var p7QC=0;RP7.forEach(function(ps){p7QC+=ps.questions.length;});
+  var readQ=RP5.length+p6BC+p7QC;
+  var totalQ=lisQ+readQ;
+  var TOTAL_TIME=120*60;
+  var ENDLESS_STORAGE_KEY="endlessArenaSession";
+
+  // ── Audio path builder — detect training vs boss items ──
+  function isBoss(id){return id&&id.charAt(0)==="b";}
+  function bossIdx(id){return parseInt(id.replace(/^bp\d_/,""),10);}
+
+  // ── Restore saved session ──
+  var saved=useMemo(function(){try{var raw=localStorage.getItem(ENDLESS_STORAGE_KEY);if(!raw)return null;var d=JSON.parse(raw);if(d.date!==today())return null;if(!d.ans||!d.sec||d.timeLeft==null)return null;return d;}catch(e){return null;}},[]);
+
+  var freshAns=function(){return{
+    p1:LP1.map(function(){return -1;}),p2:LP2.map(function(){return -1;}),
+    p3:LP3.map(function(c){return c.qs.map(function(){return -1;});}),
+    p4:LP4.map(function(t){return t.qs.map(function(){return -1;});}),
+    p5:RP5.map(function(){return -1;}),
+    p6:RP6.map(function(t){var n=0;t.parts.forEach(function(pt){if(pt.blank)n++;});return Array(n).fill(-1);}),
+    p7:RP7.map(function(ps){return ps.questions.map(function(){return -1;});})
+  };};
+
+  var[phase,setPhase]=useState(saved?"resume":"intro");
+  var[sec,setSec]=useState(saved?saved.sec:"p1");
+  var[qi,setQi]=useState(saved?saved.qi:0);
+  var[sqi,setSqi]=useState(saved?saved.sqi:0);
+  var[ans,setAns]=useState(function(){return saved?saved.ans:freshAns();});
+  var[timeLeft,setTimeLeft]=useState(saved?saved.timeLeft:TOTAL_TIME);
+
+  function saveSession(a,s,q,sq,tl){try{localStorage.setItem(ENDLESS_STORAGE_KEY,JSON.stringify({date:today(),ans:a,sec:s,qi:q,sqi:sq,timeLeft:tl}));}catch(e){}}
+  function clearSession(){try{localStorage.removeItem(ENDLESS_STORAGE_KEY);}catch(e){}}
+  var[result,setResult]=useState(null);
+  var[aState,setAState]=useState("ready");
+  var[curOpt,setCurOpt]=useState(-1);
+  var timerRef=useRef(null);
+
+  useEffect(function(){
+    if(phase!=="test"||result)return;
+    if(timeLeft<=0){doSubmit();return;}
+    timerRef.current=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
+    return function(){clearTimeout(timerRef.current);};
+  });
+
+  // ── Auto-save session ──
+  var stateRef=useRef({ans:ans,sec:sec,qi:qi,sqi:sqi,timeLeft:timeLeft,phase:phase});
+  stateRef.current={ans:ans,sec:sec,qi:qi,sqi:sqi,timeLeft:timeLeft,phase:phase};
+  useEffect(function(){
+    if(phase!=="test"||result)return;
+    var id=setTimeout(function(){saveSession(ans,sec,qi,sqi,timeLeft);},5000);
+    return function(){clearTimeout(id);};
+  });
+  useEffect(function(){
+    function onUnload(){var s=stateRef.current;if(s.phase==="test")saveSession(s.ans,s.sec,s.qi,s.sqi,s.timeLeft);}
+    window.addEventListener("beforeunload",onUnload);
+    return function(){window.removeEventListener("beforeunload",onUnload);};
+  },[]);
+
+  function fmtT(s){var m=Math.floor(s/60);var sc2=s%60;return m+":"+(sc2<10?"0":"")+sc2;}
+
+  // ── Audio — dynamic paths based on item origin ──
+  async function playP1(){if(aState!=="ready")return;setAState("playing");var it=LP1[qi];for(var i=0;i<it.opts.length;i++){setCurOpt(i);if(isBoss(it.id)){await playAudioFile("/audio/boss/p1_"+String(bossIdx(it.id)).padStart(2,"0")+"_"+i+".mp3");}else{await playAudioFile("/audio/p1/"+it.id+"_"+i+".mp3");}await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
+  async function playP2(){if(aState!=="ready")return;setAState("playing");var it=LP2[qi];if(isBoss(it.id)){var bid=String(bossIdx(it.id)).padStart(2,"0");await playAudioFile("/audio/boss/p2_"+bid+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+bid+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,300);});};}else{await playAudioFile("/audio/p2/"+it.id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i2=0;i2<3;i2++){setCurOpt(i2);await playAudioFile("/audio/p2/"+it.id+"_"+i2+".mp3");await new Promise(function(r){setTimeout(r,300);});}}setCurOpt(-1);setAState("done");}
+  async function playP3(){if(aState!=="ready")return;setAState("playing");var it=LP3[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p3_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p3/"+it.id+".mp3");}setAState("done");}
+  async function playP4(){if(aState!=="ready")return;setAState("playing");var it=LP4[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p4_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p4/"+it.id+".mp3");}setAState("done");}
+
+  // ── Answer & Navigate ──
+  function pick(val){
+    var a=JSON.parse(JSON.stringify(ans));
+    if(sec==="p1")a.p1[qi]=val;
+    else if(sec==="p2")a.p2[qi]=val;
+    else if(sec==="p3")a.p3[qi][sqi]=val;
+    else if(sec==="p4")a.p4[qi][sqi]=val;
+    else if(sec==="p5")a.p5[qi]=val;
+    else if(sec==="p6")a.p6[qi][sqi]=val;
+    else if(sec==="p7")a.p7[qi][sqi]=val;
+    setAns(a);setTimeout(nxt,300);
+  }
+  function nxt(){
+    if(sec==="p1"){if(qi<LP1.length-1){setQi(qi+1);setAState("ready");setCurOpt(-1);}else{setSec("p2");setQi(0);setSqi(0);setAState("ready");setCurOpt(-1);}}
+    else if(sec==="p2"){if(qi<LP2.length-1){setQi(qi+1);setAState("ready");setCurOpt(-1);}else{setSec("p3");setQi(0);setSqi(0);setAState("ready");}}
+    else if(sec==="p3"){if(sqi<LP3[qi].qs.length-1)setSqi(sqi+1);else if(qi<LP3.length-1){setQi(qi+1);setSqi(0);setAState("ready");}else{setSec("p4");setQi(0);setSqi(0);setAState("ready");}}
+    else if(sec==="p4"){if(sqi<LP4[qi].qs.length-1)setSqi(sqi+1);else if(qi<LP4.length-1){setQi(qi+1);setSqi(0);setAState("ready");}else{setSec("p5");setQi(0);setSqi(0);}}
+    else if(sec==="p5"){if(qi<RP5.length-1)setQi(qi+1);else{setSec("p6");setQi(0);setSqi(0);}}
+    else if(sec==="p6"){var bN=ans.p6[qi].length;if(sqi<bN-1)setSqi(sqi+1);else if(qi<RP6.length-1){setQi(qi+1);setSqi(0);}else{setSec("p7");setQi(0);setSqi(0);}}
+    else if(sec==="p7"){if(sqi<RP7[qi].questions.length-1)setSqi(sqi+1);else if(qi<RP7.length-1){setQi(qi+1);setSqi(0);}else doSubmit();}
+  }
+
+  // ── Scoring ──
+  function doSubmit(){
+    clearTimeout(timerRef.current);clearSession();
+    var p1s=0;LP1.forEach(function(q,i){if(ans.p1[i]===q.c)p1s++;});
+    var p2s=0;LP2.forEach(function(q,i){if(ans.p2[i]===q.c)p2s++;});
+    var p3s=0;LP3.forEach(function(c,i){c.qs.forEach(function(q,j){if(ans.p3[i][j]===q.c)p3s++;});});
+    var p4s=0;LP4.forEach(function(t,i){t.qs.forEach(function(q,j){if(ans.p4[i][j]===q.c)p4s++;});});
+    var lRaw=p1s+p2s+p3s+p4s;var lT=estimateToeic(lRaw,lisQ);
+    var p5s=0;RP5.forEach(function(q,i){if(ans.p5[i]===q.c)p5s++;});
+    var p6s=0;RP6.forEach(function(t,ti){var bi=0;t.parts.forEach(function(pt){if(pt.blank){if(ans.p6[ti][bi]===pt.correct)p6s++;bi++;}});});
+    var p7s=0;RP7.forEach(function(ps,pi){ps.questions.forEach(function(q,qi2){if(ans.p7[pi][qi2]===q.correct)p7s++;});});
+    var rRaw=p5s+p6s+p7s;var rT=estimateToeic(rRaw,readQ);
+
+    // Per-part accuracy for weakest detection
+    var partAcc={1:LP1.length>0?p1s/LP1.length:1,2:LP2.length>0?p2s/LP2.length:1,3:p3QC>0?p3s/p3QC:1,4:p4QC>0?p4s/p4QC:1,5:RP5.length>0?p5s/RP5.length:1,6:p6BC>0?p6s/p6BC:1,7:p7QC>0?p7s/p7QC:1};
+    var weakestPart=1;var weakestAcc=partAcc[1];
+    for(var pp=2;pp<=7;pp++){
+      if(partAcc[pp]<weakestAcc||(partAcc[pp]===weakestAcc&&pp<=4&&weakestPart>4)){weakestPart=pp;weakestAcc=partAcc[pp];}
+    }
+
+    var toeicEst=lT+rT;
+    var res={date:today(),score:lRaw+rRaw,total:totalQ,toeicEstimate:toeicEst,
+      listening:{score:lRaw,total:lisQ,toeic:lT,p1:{score:p1s,total:LP1.length},p2:{score:p2s,total:LP2.length},p3:{score:p3s,total:p3QC},p4:{score:p4s,total:p4QC}},
+      reading:{score:rRaw,total:readQ,toeic:rT,p5:{score:p5s,total:RP5.length},p6:{score:p6s,total:p6BC},p7:{score:p7s,total:p7QC}},
+      weakestPart:weakestPart,weakestAccuracy:weakestAcc,timeUsed:TOTAL_TIME-timeLeft};
+    setResult(res);setPhase("done");
+  }
+
+  // ── Progress ──
+  var answered=0;
+  ans.p1.forEach(function(a){if(a>=0)answered++;});ans.p2.forEach(function(a){if(a>=0)answered++;});
+  ans.p3.forEach(function(c){c.forEach(function(a){if(a>=0)answered++;});});ans.p4.forEach(function(t){t.forEach(function(a){if(a>=0)answered++;});});
+  ans.p5.forEach(function(a){if(a>=0)answered++;});ans.p6.forEach(function(t){t.forEach(function(a){if(a>=0)answered++;});});
+  ans.p7.forEach(function(ps){ps.forEach(function(a){if(a>=0)answered++;});});
+
+  var secLabel=sec==="p1"?"Part 1 — Photos":sec==="p2"?"Part 2 — Q&R":sec==="p3"?"Part 3 — Conversations":sec==="p4"?"Part 4 — Talks":sec==="p5"?"Part 5 — Sentences":sec==="p6"?"Part 6 — Text Completion":"Part 7 — Reading";
+  var isListening=sec==="p1"||sec==="p2"||sec==="p3"||sec==="p4";
+
+  // ═══ RESUME ═══
+  if(phase==="resume"&&saved){
+    var rAnswered=0;
+    saved.ans.p1.forEach(function(a){if(a>=0)rAnswered++;});saved.ans.p2.forEach(function(a){if(a>=0)rAnswered++;});
+    saved.ans.p3.forEach(function(c){c.forEach(function(a){if(a>=0)rAnswered++;});});saved.ans.p4.forEach(function(t){t.forEach(function(a){if(a>=0)rAnswered++;});});
+    saved.ans.p5.forEach(function(a){if(a>=0)rAnswered++;});saved.ans.p6.forEach(function(t){t.forEach(function(a){if(a>=0)rAnswered++;});});
+    saved.ans.p7.forEach(function(ps){ps.forEach(function(a){if(a>=0)rAnswered++;});});
+    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:56,marginBottom:12}}>{"⏳"}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:24,marginBottom:8}}>Session in progress</h1>
+      <p style={{color:"var(--t2)",fontSize:14,marginBottom:24}}>You have an unfinished Endless Arena attempt from today.</p>
+      <div className="crd" style={{padding:16,marginBottom:24,textAlign:"left"}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><span style={{color:"var(--t2)",fontSize:13}}>Progress</span><span className="out" style={{fontWeight:700,color:"var(--endless)",fontSize:14}}>{rAnswered}/{totalQ} answered</span></div>
+        <Bar value={rAnswered} max={totalQ} h={6} color="linear-gradient(90deg,#0a3a6e,#1B70CF)"/>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:10}}><span style={{color:"var(--t2)",fontSize:13}}>Time remaining</span><span className="out" style={{fontWeight:700,color:saved.timeLeft>600?"var(--endless)":"var(--orange)",fontSize:14}}>{fmtT(saved.timeLeft)}</span></div>
+      </div>
+      <button className="btn1" style={{background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",fontSize:16,padding:"14px 28px",marginBottom:12}} onClick={function(){stopBGM();setPhase("test");}}>Resume session</button>
+      <button className="btn2" style={{marginBottom:8}} onClick={function(){clearSession();setAns(freshAns());setSec("p1");setQi(0);setSqi(0);setTimeLeft(TOTAL_TIME);setPhase("intro");}}>Start over</button>
+      <button className="btn2" onClick={p.back}>Back</button>
+    </div>);
+  }
+
+  // ═══ INTRO ═══
+  if(phase==="intro"){
+    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:64,marginBottom:12,animation:"pulse 2s infinite"}}>{"⏳"}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:28,background:"linear-gradient(90deg,#7fb8e8,#4a9fe0,#d4943a)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>ENDLESS ARENA</h1>
+      <p style={{color:"var(--t2)",fontSize:14,fontStyle:"italic",marginBottom:20}}>the arena never sleeps</p>
+      <div className="crd" style={{textAlign:"left",padding:16,marginBottom:16}}>
+        <div style={{fontSize:11,color:"var(--orange)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>{"🔊"} Listening Section</div>
+        <div style={{fontSize:13,color:"var(--t1)",lineHeight:1.8}}>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 1 — Photographs</span><span className="out" style={{color:"var(--endless)"}}>{LP1.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 2 — Question-Response</span><span className="out" style={{color:"var(--endless)"}}>{LP2.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 3 — Conversations</span><span className="out" style={{color:"var(--endless)"}}>{p3QC} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 4 — Talks</span><span className="out" style={{color:"var(--endless)"}}>{p4QC} Q</span></div>
+          <div style={{borderTop:"1px solid var(--bdr)",marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontWeight:700}}><span>Subtotal</span><span style={{color:"var(--gold)"}}>{lisQ} Q</span></div>
+        </div>
+      </div>
+      <div className="crd" style={{textAlign:"left",padding:16,marginBottom:16}}>
+        <div style={{fontSize:11,color:"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>{"📖"} Reading Section</div>
+        <div style={{fontSize:13,color:"var(--t1)",lineHeight:1.8}}>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 5 — Incomplete Sentences</span><span className="out" style={{color:"var(--endless)"}}>{RP5.length} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 6 — Text Completion</span><span className="out" style={{color:"var(--endless)"}}>{p6BC} Q</span></div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span>Part 7 — Reading Comprehension</span><span className="out" style={{color:"var(--endless)"}}>{p7QC} Q</span></div>
+          <div style={{borderTop:"1px solid var(--bdr)",marginTop:6,paddingTop:6,display:"flex",justifyContent:"space-between",fontWeight:700}}><span>Subtotal</span><span style={{color:"var(--gold)"}}>{readQ} Q</span></div>
+        </div>
+      </div>
+      <div className="crd glo" style={{padding:14,marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontWeight:800,fontSize:15,color:"var(--t1)"}}><span>TOTAL</span><span className="out" style={{color:"var(--gold)"}}>{totalQ} questions {"·"} 120 min</span></div>
+      </div>
+      <div className="crd" style={{padding:14,marginBottom:24,borderColor:"rgba(27,112,207,.3)",background:"rgba(27,112,207,.06)"}}>
+        <p style={{fontSize:12,color:"var(--endless)",lineHeight:1.6}}>{"⏳"} Randomly generated from the full content pool. No feedback during test. Your score and weakest part will be analyzed.</p>
+      </div>
+      <button className="btn1" style={{background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",fontSize:18,padding:"16px 32px"}} onClick={function(){stopBGM();setPhase("test");}}>{"⏳"} Enter the Sanctuary</button>
+      <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Not ready yet</button>
+    </div>);
+  }
+
+  // ═══ TEST PHASE ═══
+  if(phase==="test"&&!result){
+    var timerCol=timeLeft>600?"var(--endless)":timeLeft>120?"var(--orange)":"var(--red)";
+    var header=(<div style={{marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <div style={{fontSize:11,color:isListening?"var(--orange)":"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>{isListening?"🔊 Listening":"📖 Reading"}</div>
+        <div className="out" style={{fontSize:14,fontWeight:800,color:timerCol}}>{fmtT(timeLeft)}</div>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <span className="out" style={{fontSize:13,fontWeight:700}}>{secLabel}</span>
+        <span style={{fontSize:11,color:"var(--t3)"}}>{answered}/{totalQ} answered</span>
+      </div>
+      <Bar value={answered} max={totalQ} h={4} color={isListening?"linear-gradient(90deg,#f59e0b,#1B70CF)":"linear-gradient(90deg,#22c55e,#1B70CF)"}/>
+    </div>);
+
+    // ── P1 ──
+    if(sec==="p1"){
+      var it=LP1[qi];var selP1=ans.p1[qi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{marginBottom:12,borderRadius:14,overflow:"hidden",border:"1px solid var(--bdr)"}}>
+          <img src={it.img} alt="TOEIC photo" style={{width:"100%",display:"block",maxHeight:240,objectFit:"cover"}}/>
+        </div>
+        {aState==="ready"&&<div style={{textAlign:"center",marginBottom:16}}>
+          <button onClick={playP1} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>{"▶️"}</span></button>
+          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Tap to play — listen and choose</p></div>}
+        {(aState==="playing"||aState==="done")&&<div>
+          {aState==="playing"&&<div style={{textAlign:"center",marginBottom:12}}>
+            <p className="out" style={{color:"var(--orange)",fontSize:13,animation:"pulse 1.5s infinite"}}>{"🔊"} Playing statement {String.fromCharCode(65+(curOpt>=0?curOpt:0))}...</p></div>}
+          {aState==="done"&&selP1<0&&<div style={{textAlign:"center",marginBottom:12}}>
+            <p className="out" style={{color:"var(--green)",fontSize:13}}>Audio complete — choose your answer</p></div>}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {["A","B","C","D"].map(function(lbl,i){var isCur=curOpt===i;var isSel=selP1===i;return(<button key={i} onClick={function(){if(aState==="done"||aState==="playing")pick(i);}} style={{padding:"14px 8px",borderRadius:12,border:"2px solid "+(isSel?"var(--endless)":isCur?"var(--orange)":"var(--bdr)"),background:isSel?"rgba(27,112,207,.15)":isCur?"rgba(245,158,11,.1)":"var(--bg2)",cursor:"pointer",fontSize:16,fontWeight:800,color:isSel?"var(--endless)":isCur?"var(--orange)":"var(--t1)",fontFamily:"'Cinzel','Outfit',serif",animation:isCur?"pulse 1s infinite":"none"}}>{lbl}</button>);})}
+          </div>
+        </div>}
+      </div>);
+    }
+
+    // ── P2 ──
+    if(sec==="p2"){
+      var selP2=ans.p2[qi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{fontSize:12,color:"var(--t2)",marginBottom:16}}>Question {qi+1}/{LP2.length}</div>
+        {aState==="ready"&&<div style={{textAlign:"center",marginBottom:16}}>
+          <button onClick={playP2} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>{"▶️"}</span></button>
+          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Tap to play</p></div>}
+        {(aState==="playing"||aState==="done")&&<div>
+          {aState==="playing"&&<div style={{textAlign:"center",marginBottom:16}}>
+            <p className="out" style={{color:"var(--orange)",fontSize:13,animation:"pulse 1.5s infinite"}}>{"🔊"} Playing{curOpt>=0?" response "+String.fromCharCode(65+curOpt):""}...</p></div>}
+          {aState==="done"&&selP2<0&&<p className="out" style={{color:"var(--green)",fontSize:13,textAlign:"center",marginBottom:12}}>Choose your answer</p>}
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {["A","B","C"].map(function(lbl,i){var isCur=curOpt===i;var isSel=selP2===i;return(<button key={i} onClick={function(){if(aState==="done"||aState==="playing")pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"14px",borderRadius:12,border:"2px solid "+(isSel?"var(--endless)":isCur?"var(--orange)":"var(--bdr)"),background:isSel?"rgba(27,112,207,.15)":isCur?"rgba(245,158,11,.1)":"var(--bg2)",cursor:"pointer",fontSize:16,fontWeight:800,color:isSel?"var(--endless)":isCur?"var(--orange)":"var(--t1)",fontFamily:"'Cinzel','Outfit',serif",animation:isCur?"pulse 1s infinite":"none"}}>{lbl}</button>);})}
+          </div>
+        </div>}
+      </div>);
+    }
+
+    // ── P3 ──
+    if(sec==="p3"){
+      var conv=LP3[qi];var q3=conv.qs[sqi];var sel3=ans.p3[qi][sqi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        {sqi===0&&aState==="ready"&&<div style={{textAlign:"center",marginBottom:16}}>
+          <button onClick={playP3} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>{"▶️"}</span></button>
+          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Listen to the conversation</p></div>}
+        {sqi===0&&aState==="playing"&&<p className="out" style={{color:"var(--orange)",fontSize:13,textAlign:"center",marginBottom:12,animation:"pulse 1.5s infinite"}}>{"🔊"} Playing conversation...</p>}
+        {(aState==="done"||sqi>0)&&<div>
+          <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>Q{sqi+1}. {q3.q}</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {q3.opts.map(function(opt,i){var isSel=sel3===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(27,112,207,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--endless)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+              <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--endless)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--endless)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+              <span>{opt}</span></button>);})}
+          </div>
+        </div>}
+      </div>);
+    }
+
+    // ── P4 ──
+    if(sec==="p4"){
+      var talk=LP4[qi];var q4=talk.qs[sqi];var sel4=ans.p4[qi][sqi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        {sqi===0&&aState==="ready"&&<div style={{textAlign:"center",marginBottom:16}}>
+          <button onClick={playP4} style={{width:70,height:70,borderRadius:"50%",border:"none",background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}><span style={{fontSize:28}}>{"▶️"}</span></button>
+          <p style={{color:"var(--t2)",fontSize:12,marginTop:8}}>Listen to the {talk.type||"talk"}</p></div>}
+        {sqi===0&&aState==="playing"&&<p className="out" style={{color:"var(--orange)",fontSize:13,textAlign:"center",marginBottom:12,animation:"pulse 1.5s infinite"}}>{"🔊"} Playing...</p>}
+        {(aState==="done"||sqi>0)&&<div>
+          <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>Q{sqi+1}. {q4.q}</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {q4.opts.map(function(opt,i){var isSel=sel4===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(27,112,207,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--endless)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+              <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--endless)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--endless)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+              <span>{opt}</span></button>);})}
+          </div>
+        </div>}
+      </div>);
+    }
+
+    // ── P5 ──
+    if(sec==="p5"){
+      var q5=RP5[qi];var sel5=ans.p5[qi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:20}}>{q5.s}</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {q5.o.map(function(opt,i){var isSel=sel5===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(27,112,207,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--endless)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--endless)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--endless)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+            <span>{opt}</span></button>);})}
+        </div>
+      </div>);
+    }
+
+    // ── P6 ──
+    if(sec==="p6"){
+      var t6=RP6[qi];var blanks6=[];var blankNum=0;
+      t6.parts.forEach(function(pt){if(pt.blank){blanks6.push(pt);blankNum++;}});
+      var bl6=blanks6[sqi];var sel6=ans.p6[qi][sqi];
+      var renderedText=[];
+      t6.parts.forEach(function(pt,pi){
+        if(pt.blank){var bIdx=0;for(var bb=0;bb<pi;bb++)if(t6.parts[bb].blank)bIdx++;renderedText.push(<span key={pi} style={{background:bIdx===sqi?"rgba(27,112,207,.25)":"rgba(27,112,207,.1)",padding:"2px 8px",borderRadius:4,fontWeight:bIdx===sqi?700:400,color:bIdx===sqi?"var(--endless)":"var(--t2)"}}>{"[___]"}</span>);}
+        else renderedText.push(<span key={pi}>{pt.text}</span>);
+      });
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{t6.type} — Blank {sqi+1}/{blankNum}</div>
+        <div className="crd" style={{padding:14,marginBottom:16,maxHeight:200,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{renderedText}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {bl6.options.map(function(opt,i){var isSel=sel6===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(27,112,207,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--endless)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--endless)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--endless)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+            <span>{opt}</span></button>);})}
+        </div>
+      </div>);
+    }
+
+    // ── P7 ──
+    if(sec==="p7"){
+      var ps7=RP7[qi];var pq7=ps7.questions[sqi];var sel7=ans.p7[qi][sqi];
+      return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+        {header}
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+          <span style={{fontSize:11,color:"var(--t3)"}}>{ps7.type}</span>
+          <span style={{fontSize:11,color:"var(--endless)"}}>Q {sqi+1}/{ps7.questions.length}</span>
+        </div>
+        <div className="crd" style={{padding:14,marginBottom:16,maxHeight:200,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{ps7.text}</div>
+        <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pq7.q}</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {pq7.options.map(function(opt,i){var isSel=sel7===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(27,112,207,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--endless)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--endless)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--endless)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
+            <span>{opt}</span></button>);})}
+        </div>
+      </div>);
+    }
+  }
+
+  // ═══ RESULTS ═══
+  if(phase==="done"&&result){
+    // Compute XP and PB
+    var prevEndless=p.u.mockResults&&p.u.mockResults.endless;
+    var prevBest=prevEndless&&prevEndless.best?prevEndless.best:0;
+    var attempts=(prevEndless&&prevEndless.attempts?prevEndless.attempts:0)+1;
+    var isNewPB=result.toeicEstimate>prevBest;
+    var baseXp=Math.round(result.toeicEstimate*1.5*0.7);
+    var pbBonus=isNewPB&&attempts>1?500:0;
+    var totalXp=baseXp+pbBonus;
+
+    // Part labels & icons for weakest recommendation
+    var PART_MAP={1:{label:"Part 1 \xb7 Photos",icon:"\ud83d\uddbc\ufe0f",nav:"lisP1"},2:{label:"Part 2 \xb7 Q&R",icon:"\ud83c\udfa7",nav:"lisP2"},3:{label:"Part 3 \xb7 Conversations",icon:"\ud83d\udcac",nav:"lisP3"},4:{label:"Part 4 \xb7 Talks",icon:"\ud83d\udce2",nav:"lisP4"},5:{label:"Part 5 \xb7 Grammar",icon:"\ud83d\udcdd",nav:"drill"},6:{label:"Part 6 \xb7 Text completion",icon:"\ud83d\udcc4",nav:"p6"},7:{label:"Part 7 \xb7 Reading",icon:"\ud83d\udcd6",nav:"p7"}};
+    var wp=PART_MAP[result.weakestPart]||PART_MAP[5];
+    var wAcc=Math.round(result.weakestAccuracy*100);
+
+    // History for progression chart
+    var history=prevEndless&&prevEndless.history?prevEndless.history.slice(-6):[];
+    history.push({date:Date.now(),toeicEstimate:result.toeicEstimate,listening:result.listening.toeic,reading:result.reading.toeic,weakestPart:result.weakestPart,weakestAccuracy:result.weakestAccuracy});
+
+    return(<div className="enter" style={{padding:"20px 16px 100px",minHeight:"100vh"}}>
+      {/* Breadcrumb */}
+      <div style={{fontSize:13,color:"#8a7e6a",marginBottom:14,cursor:"pointer"}} onClick={function(){p.done(result,totalXp,{history:history,attempts:attempts,isNewPB:isNewPB});}}>{"← ⏳ Endless Arena"}</div>
+
+      {/* PB Banner or First Run */}
+      {attempts===1?(<div style={{background:"linear-gradient(135deg,#3a2810 0%,#0a1e35 50%,#3a2810 100%)",border:"1.5px solid #f0c850",borderRadius:12,padding:"11px 14px",marginBottom:14,textAlign:"center"}}>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:13,color:"#f0c850",letterSpacing:2}}>{"⭐"} FIRST RUN COMPLETE {"⭐"}</div>
+        <div style={{fontSize:11,color:"#7fb8e8",marginTop:3}}>Welcome to the Endless Arena</div>
+      </div>)
+      :isNewPB?(<div style={{background:"linear-gradient(135deg,#3a2810 0%,#0a1e35 50%,#3a2810 100%)",border:"1.5px solid #f0c850",borderRadius:12,padding:"11px 14px",marginBottom:14,textAlign:"center"}}>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:13,color:"#f0c850",letterSpacing:2}}>{"⭐"} NEW PERSONAL BEST {"⭐"}</div>
+        <div style={{fontSize:11,color:"#7fb8e8",marginTop:3}}>+{result.toeicEstimate-prevBest} vs previous best</div>
+      </div>)
+      :null}
+
+      {/* Score Hero Card */}
+      <div style={{background:"linear-gradient(135deg,#1a1610,#0f1a2a)",border:"1px solid rgba(27,112,207,0.25)",borderRadius:16,padding:"22px 16px 18px",textAlign:"center",position:"relative",overflow:"hidden",marginBottom:14}}>
+        <div style={{position:"absolute",top:-4,right:10,fontSize:46,opacity:.06}}>{"⏳"}</div>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#8a7e6a",letterSpacing:2,marginBottom:6}}>RUN #{attempts} {"·"} COMPLETE</div>
+        <div style={{position:"relative"}}>
+          <span className="out" style={{fontWeight:900,fontSize:56,lineHeight:1,background:"linear-gradient(180deg,#f0c850,#d4943a)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{result.toeicEstimate}</span>
+          <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:16,color:"#8a7e6a",marginLeft:4}}>/ 990</span>
+        </div>
+        <div style={{display:"flex",gap:8,marginTop:16}}>
+          <div style={{flex:1,background:"rgba(180,140,80,.08)",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
+            <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:.5}}>LISTENING</div>
+            <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:18,color:"#ede4d4"}}>{result.listening.toeic}<span style={{fontSize:11,color:"#5a5040"}}> / 495</span></div>
+          </div>
+          <div style={{flex:1,background:"rgba(180,140,80,.08)",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
+            <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:.5}}>READING</div>
+            <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:18,color:"#ede4d4"}}>{result.reading.toeic}<span style={{fontSize:11,color:"#5a5040"}}> / 495</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* XP Earned */}
+      <div style={{background:"var(--bg2)",border:"1px solid rgba(180,140,80,.12)",borderRadius:12,padding:"12px 16px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:11,color:"#8a7e6a"}}>XP EARNED</div>
+          <div style={{fontSize:11,color:"#5a5040"}}>{pbBonus>0?"base "+baseXp+" + PB bonus "+pbBonus:"base "+baseXp}</div>
+        </div>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:22,color:"#f0c850"}}>+{totalXp}</div>
+      </div>
+
+      {/* Progression History */}
+      <div style={{background:"var(--bg2)",border:"1px solid rgba(180,140,80,.12)",borderRadius:12,padding:"14px 16px",marginBottom:14}}>
+        {history.length<=1?(<div>
+          <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#8a7e6a",letterSpacing:2,marginBottom:8}}>PROGRESSION</div>
+          <div style={{fontSize:12,color:"#7fb8e8",fontStyle:"italic"}}>Your first Endless run {"·"} come back tomorrow to see your progress</div>
+        </div>):(<div>
+          <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#8a7e6a",letterSpacing:2,marginBottom:12}}>PROGRESSION {"·"} LAST {history.length} RUNS</div>
+          {history.map(function(run,ri){
+            var isLast=ri===history.length-1;
+            var barW=Math.max(5,Math.min(100,((run.toeicEstimate-500)/(990-500))*100));
+            var barCol=isLast?"linear-gradient(90deg,#0a3a6e,#1B70CF)":run.toeicEstimate>=750?"#a07028":run.toeicEstimate>=700?"#8b6020":"#5a4225";
+            return(<div key={ri} style={{display:"flex",gap:10,alignItems:"center",marginBottom:4}}>
+              <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,width:38,color:isLast?"#7fb8e8":"#5a5040",fontWeight:isLast?700:400}}>Run {ri+1}</span>
+              <div style={{flex:1,height:8,borderRadius:99,background:isLast?"rgba(27,112,207,.15)":"rgba(180,140,80,.08)"}}>
+                <div style={{width:barW+"%",height:"100%",borderRadius:99,background:barCol}}/>
+              </div>
+              <span style={{width:32,textAlign:"right",fontSize:11,fontWeight:isLast?700:600,color:isLast?"#7fb8e8":"#8a7e6a"}}>{run.toeicEstimate}</span>
+            </div>);
+          })}
+        </div>)}
+      </div>
+
+      {/* Weakest Recommendation */}
+      <div style={{background:"linear-gradient(135deg,#0a1828,#0f2038)",border:"1.5px solid rgba(27,112,207,.35)",borderRadius:12,padding:"14px 16px",marginBottom:16}}>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#4a9fe0",letterSpacing:2,marginBottom:10}}>WEAKEST THIS RUN</div>
+        <div style={{display:"flex",gap:12,alignItems:"center"}}>
+          <div style={{width:42,height:42,borderRadius:12,background:"rgba(27,112,207,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{wp.icon}</div>
+          <div>
+            <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:700,fontSize:14,color:"#ede4d4"}}>{wp.label}</div>
+            <div style={{fontSize:11,color:"var(--red)",fontWeight:600}}>{wAcc}% accuracy — train this next</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Primary Button — Train weakest */}
+      <button onClick={function(){p.done(result,totalXp,{history:history,attempts:attempts,isNewPB:isNewPB});setTimeout(function(){p.nav(wp.nav);},100);}}
+        style={{width:"100%",padding:14,background:"linear-gradient(135deg,#d4943a,#8b6020)",border:"none",borderRadius:12,fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:13,color:"#0f0c08",letterSpacing:1,cursor:"pointer",marginBottom:10}}>
+        {wp.icon} TRAIN PART {result.weakestPart} NOW {"→"}
+      </button>
+
+      {/* Secondary Button */}
+      <button onClick={function(){p.done(result,totalXp,{history:history,attempts:attempts,isNewPB:isNewPB});}}
+        style={{width:"100%",padding:12,background:"transparent",border:"1px solid rgba(180,140,80,.25)",borderRadius:12,fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13,color:"#8a7e6a",cursor:"pointer",marginBottom:16}}>
+        Back to the training grounds
+      </button>
+
+      {/* Cooldown hint */}
+      <div style={{textAlign:"center",fontSize:11,color:"#5a5040",marginBottom:16}}>{"⏳"} Next Endless run available in 24h</div>
+    </div>);
+  }
+
+  return null;
+}
+
 function MockTest(p){
   var mockId=p.mockId;
   var data=mockId===1?{p5:MOCK1_P5,p6:MOCK1_P6,p7:MOCK1_P7}:mockId===2?{p5:MOCK2_P5,p6:MOCK2_P6,p7:MOCK2_P7}:{p5:MOCK3_P5,p6:MOCK3_P6,p7:MOCK3_P7};
@@ -4470,7 +5149,7 @@ function DailyTip(p){
     <div style={{width:"100%",maxWidth:420,background:"var(--bg2)",borderRadius:20,border:"1px solid var(--bdr)",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
 
       {/* Header */}
-      <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(139,94,131,.08))"}}>
+      <div style={{padding:"20px 20px 12px",background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(27,112,207,.08))"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontSize:22}}>{"💡"}</span>
@@ -4794,7 +5473,7 @@ function AudioBlitz(p){
       </div>}
       {played>=2&&ph==="q"&&<div>
         <p className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:12}}>{it.q}</p>
-        {replays===0&&<button onClick={replay} style={{background:"rgba(139,94,131,.1)",border:"1px solid rgba(139,94,131,.2)",
+        {replays===0&&<button onClick={replay} style={{background:"rgba(27,112,207,.1)",border:"1px solid rgba(27,112,207,.2)",
           borderRadius:10,padding:"8px 20px",cursor:"pointer",fontSize:12,color:"var(--purple)",fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>
           {"🔁"} Replay once</button>}
         {replays>=1&&<span style={{fontSize:11,color:"var(--t3)"}}>No more replays</span>}
@@ -5183,7 +5862,7 @@ function DuelArena(p){
       </div>
     </div>
 
-    <div className="crd" style={{padding:16,marginBottom:10,background:"linear-gradient(135deg,rgba(255,71,87,.05),rgba(139,94,131,.05))",borderColor:"rgba(255,71,87,.15)"}}>
+    <div className="crd" style={{padding:16,marginBottom:10,background:"linear-gradient(135deg,rgba(255,71,87,.05),rgba(27,112,207,.05))",borderColor:"rgba(255,71,87,.15)"}}>
       <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:12}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#c84040,#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"🔥"}</div>
         <div style={{flex:1}}>
@@ -5925,7 +6604,7 @@ function SpeedMatch(p){
       {pairs.map(function(tile){
         var isRevealed=revealed.indexOf(tile.id)!==-1;
         var isMatched=matched.indexOf(tile.pairId)!==-1;
-        var bgColor=isMatched?"rgba(0,230,118,.18)":isRevealed?(tile.type==="word"?"rgba(var(--cx),.2)":"rgba(139,94,131,.2)"):"var(--bg3)";
+        var bgColor=isMatched?"rgba(0,230,118,.18)":isRevealed?(tile.type==="word"?"rgba(var(--cx),.2)":"rgba(27,112,207,.2)"):"var(--bg3)";
         var borderColor=isMatched?"var(--green)":isRevealed?(tile.type==="word"?"var(--cyan)":"var(--purple)"):"var(--bdr)";
         if(lastWrong&&isRevealed)borderColor="var(--red)";
 
@@ -6559,7 +7238,7 @@ function TeacherDash(p){
         var toeicCol=toeic.total>=750?"var(--green)":toeic.total>=500?"var(--orange)":"var(--red)";
         return(<div style={{marginBottom:20}}>
           {/* TOEIC Score — full width banner */}
-          <div className="crd" style={{padding:"12px 16px",marginBottom:8,background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(139,94,131,.06))",borderColor:"rgba(var(--cx),.15)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div className="crd" style={{padding:"12px 16px",marginBottom:8,background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(27,112,207,.06))",borderColor:"rgba(var(--cx),.15)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div>
               <div className="out" style={{fontWeight:800,fontSize:11,color:"var(--t3)",letterSpacing:1,textTransform:"uppercase",marginBottom:2}}>Est. TOEIC Score</div>
               <div className="out" style={{fontWeight:900,fontSize:28,color:toeicCol,lineHeight:1}}>{toeic.total}<span style={{fontSize:13,color:"var(--t3)",fontWeight:400}}>/990</span></div>
@@ -6712,7 +7391,7 @@ function TeacherDash(p){
             border:"1px solid "+(isExpired?"rgba(255,71,87,.25)":"var(--bdr)"),background:"var(--bg2)",borderRadius:16,textAlign:"left",
             transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
             <div style={{width:48,height:48,borderRadius:14,
-              background:g.type==="school"?"rgba(var(--cx),.1)":g.type==="pro"?"rgba(255,140,66,.1)":"rgba(139,94,131,.1)",
+              background:g.type==="school"?"rgba(var(--cx),.1)":g.type==="pro"?"rgba(255,140,66,.1)":"rgba(27,112,207,.1)",
               display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{typeIcon}</div>
             <div style={{flex:1,minWidth:0}}>
               <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{g.name}{isExpired&&<span style={{marginLeft:8,fontSize:10,padding:"2px 8px",borderRadius:99,background:"rgba(255,71,87,.12)",color:"var(--red)",fontWeight:600}}>{"Expir\u00e9"}</span>}</div>
@@ -6791,7 +7470,7 @@ function TeacherDash(p){
 
         {/* Season Preview */}
         {cgForm.type==="visitor"?
-          <div style={{padding:"16px 20px",background:"rgba(139,94,131,.06)",border:"1px solid rgba(139,94,131,.15)",borderRadius:12,marginBottom:20,textAlign:"center"}}>
+          <div style={{padding:"16px 20px",background:"rgba(27,112,207,.06)",border:"1px solid rgba(27,112,207,.15)",borderRadius:12,marginBottom:20,textAlign:"center"}}>
             <p style={{fontSize:13,color:"var(--t2)",margin:0}}>{"\uD83C\uDF0D Les visiteurs n\u0027ont pas de syst\u00e8me de saisons."}</p>
           </div>
         :cgForm.startDate&&cgForm.endDate&&new Date(cgForm.endDate)>new Date(cgForm.startDate)?
@@ -7331,7 +8010,7 @@ function ListenP2(p){
       <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
-    <div className="crd" style={{marginTop:16,padding:14,background:"rgba(139,94,131,.05)",borderColor:"rgba(139,94,131,.12)"}}>
+    <div className="crd" style={{marginTop:16,padding:14,background:"rgba(27,112,207,.05)",borderColor:"rgba(27,112,207,.12)"}}>
       <p className="out" style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:6}}>Question</p>
       <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.5}}>{it.q}</p></div>
     <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:16}}>
@@ -7957,11 +8636,11 @@ function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=pro
 return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>League</h1>
 {leagueGroup!==u.classCode&&<div style={{textAlign:"center",marginBottom:8}}>
-  <span style={{fontSize:11,padding:"4px 12px",borderRadius:99,background:"rgba(139,94,131,.12)",border:"1px solid rgba(139,94,131,.25)",color:"var(--purple)"}} className="out">👁️ Viewing: {leagueGroup}</span>
+  <span style={{fontSize:11,padding:"4px 12px",borderRadius:99,background:"rgba(27,112,207,.12)",border:"1px solid rgba(27,112,207,.25)",color:"var(--purple)"}} className="out">👁️ Viewing: {leagueGroup}</span>
 </div>}
 
 {/* Season banner */}
-{curSeason&&<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(139,94,131,.06))",borderColor:"rgba(var(--cx),.15)"}}>
+{curSeason&&<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(27,112,207,.06))",borderColor:"rgba(var(--cx),.15)"}}>
   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
       <span style={{fontSize:22}}>{curSeason.icon}</span>
@@ -7986,7 +8665,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 {/* Stats summary */}
 {u.name==="Teacher"?
-<div className="crd" style={{padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,rgba(245,158,11,.06),rgba(139,94,131,.06))",borderColor:"rgba(245,158,11,.15)"}}>
+<div className="crd" style={{padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,rgba(245,158,11,.06),rgba(27,112,207,.06))",borderColor:"rgba(245,158,11,.15)"}}>
   <span style={{fontSize:18}}>{"\uD83D\uDC41\uFE0F"}</span>
   <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--gold)"}}>Mode observateur</div>
   <div style={{fontSize:11,color:"var(--t3)"}}>{"Tes stats sont masqu\u00e9es du classement"}</div></div>
@@ -8042,7 +8721,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 {/* ── SEASON TAB ── */}
 {tab==="season"&&curSeason&&(<div>
-  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(var(--cx),.04),rgba(139,94,131,.04))"}}>
+  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(var(--cx),.04),rgba(27,112,207,.04))"}}>
     <div style={{fontSize:36,marginBottom:6}}>{curSeason.icon}</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} semaines {"\u00B7"} {countdown}</div>
@@ -8056,7 +8735,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 {/* ── OVERALL TAB ── */}
 {tab==="overall"&&(<div>
-  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(245,158,11,.04),rgba(139,94,131,.04))"}}>
+  <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(245,158,11,.04),rgba(27,112,207,.04))"}}>
     <div style={{fontSize:36,marginBottom:6}}>{"🏆"}</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--gold)"}}>Classement Général</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Points de classement cumulés sur toutes les saisons</div>
@@ -8088,7 +8767,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {/* ── PROGRESSION TAB ── */}
 {tab==="progress"&&(<div>
   <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,
-    background:"linear-gradient(135deg,rgba(74,190,96,.04),rgba(139,94,131,.04))",
+    background:"linear-gradient(135deg,rgba(74,190,96,.04),rgba(27,112,207,.04))",
     borderColor:"rgba(74,190,96,.15)"}}>
     <div style={{fontSize:36,marginBottom:6}}>📈</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--green)"}}>Classement Progression</div>
@@ -8277,7 +8956,7 @@ function Profile(p){
         <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Mes Stats</h1>
       </div>
       <div className="crd" style={{padding:"14px 18px",marginBottom:16,
-        background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(139,94,131,.06))",
+        background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(27,112,207,.06))",
         borderColor:"rgba(var(--cx),.15)"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
@@ -8609,7 +9288,7 @@ function Profile(p){
         <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{u.name}</h1>
         <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
           <span style={{fontSize:12,background:"rgba(var(--cx),.1)",color:"var(--orange)",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(var(--cx),.2)"}}>Lv. {lv.level}</span>
-          <span style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"1px solid rgba(139,94,131,.2)",background:"rgba(139,94,131,.1)",color:lg.color}}>
+          <span style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"1px solid rgba(27,112,207,.2)",background:"rgba(27,112,207,.1)",color:lg.color}}>
   {lg.icon} {lg.name}
   {lg.locked&&<span style={{fontSize:10,color:"var(--t3)",marginLeft:4}}>🔒</span>}
 </span>
@@ -9246,6 +9925,24 @@ var prevLeague=getLeague(c.weeklyXp);
   function goTeacher(){setTeacher(true);}
 
   function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
+  function endlessDone(result,xp,meta){
+    var c=addXp(xp);
+    c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;
+    if(!c.mockResults)c.mockResults={};
+    var prev=c.mockResults.endless||{attempts:0,best:0,bestDate:null,lastAttempt:null,history:[]};
+    var newBest=result.toeicEstimate>prev.best?result.toeicEstimate:prev.best;
+    var newBestDate=result.toeicEstimate>prev.best?Date.now():prev.bestDate;
+    c.mockResults.endless={
+      attempts:meta.attempts,
+      best:newBest,
+      bestDate:newBestDate,
+      lastAttempt:Date.now(),
+      history:meta.history.slice(-50)
+    };
+    trackModSession(c,"endless");recordModule(c,"endless",result.score,result.total);
+    try{if(result.toeicEstimate>=800)playJingleMock();else playJingleMockOk();}catch(e){}
+    sv(c);sSP(null);sT("train");
+  }
   function mockDone(result,xp){
     var modId="mock"+result.mockId;
     var timeGateOk=(result.timeUsed||0)>=300;
@@ -9397,6 +10094,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="mock2")return pg(<MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sSPA(2);sT("train");}}/>);
 
   if(sp==="boss"){playBGM("bgm_final");return pg(<BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sSPA(2);sT("train");}}/>);}
+  if(sp==="endless"){playBGM("bgm_final");return pg(<EndlessArena u={u} nav={nav} done={function(r,xp,meta){stopBGM();endlessDone(r,xp,meta);}} back={function(){stopBGM();sSP(null);sSPA(2);sT("train");}}/>);}
   if(sp==="mock3")return pg(<MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sSPA(2);sT("train");}}/>);
   if(sp==="smatch")return pg(<SpeedMatchHub u={u} nav={nav} back={function(){sSP(null);sT("games");}}/>);
   if(sp==="matchE"){playBGM("bgm_speed");return pg(<SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/>);}

@@ -802,6 +802,187 @@ export var LISTENING_P3 = [
       {q:"When does the lease expire?",opts:["In June","In July","In September","In December"],c:2},
       {q:"How much would the rent increase?",opts:["5%","8%","10%","15%"],c:2},
       {q:"What does the man want to do first?",opts:["Move to a new building","Negotiate with the current landlord","Hire a real estate agent","Reduce office space"],c:1}]},
+	  
+{id:"p3_31",lines:[
+    {s:"W",t:"Hi Marcus, I wanted to check in about the Henderson proposal. Are we still on track for the Friday deadline?"},
+    {s:"M",t:"Honestly, I'm a bit worried. The finance team hasn't sent me their numbers yet, and I can't finalize the budget section without them."},
+    {s:"W",t:"That's frustrating. Do you want me to escalate it to Diane? She can usually get things moving."},
+    {s:"M",t:"Yes, please. If we don't have the figures by tomorrow morning, we'll have to push the submission to Monday."}],
+  qs:[
+    {q:"What is the main problem the man is facing?",opts:["He is waiting for data from another department","He missed a meeting with Diane","The proposal was rejected","He has too many projects"],c:0},
+    {q:"What does the woman offer to do?",opts:["Write the budget section","Contact a manager for help","Extend the deadline","Reassign the project"],c:1},
+    {q:"What will likely happen if the numbers don't arrive on time?",opts:["The proposal will be cancelled","Marcus will be replaced","The deadline will be delayed","Diane will take over"],c:2}]},
+{id:"p3_32",lines:[
+    {s:"M",t:"Good evening, I have a reservation for Petersen, party of four at seven thirty."},
+    {s:"W",t:"Let me check... I'm sorry sir, I see your reservation but unfortunately we're running about twenty minutes behind schedule tonight."},
+    {s:"M",t:"Oh, that's unfortunate. We actually have theater tickets for nine o'clock."},
+    {s:"W",t:"In that case, let me speak to the manager. We may be able to seat you at the bar area immediately and send over complimentary appetizers while you wait."}],
+  qs:[
+    {q:"Why is there a delay at the restaurant?",opts:["A staff shortage","A kitchen problem","A reservation error","The restaurant is behind schedule"],c:3},
+    {q:"What is the man concerned about?",opts:["The quality of the food","Making it to another event on time","The cost of the meal","Finding parking"],c:1},
+    {q:"What does the woman propose?",opts:["Cancelling the reservation","Offering a free meal","Seating them elsewhere with a complimentary offer","Calling the theater"],c:2}]},
+{id:"p3_33",lines:[
+    {s:"W",t:"Welcome to the Grand Meridian. I have you down for a standard king room for three nights, is that correct?"},
+    {s:"M",t:"Yes, but I was wondering if there's any chance of an upgrade. I'm here for our company's annual conference."},
+    {s:"W",t:"Let me see what I can do. As a loyalty program member, I can actually offer you a junior suite for an additional thirty dollars per night."},
+    {s:"M",t:"That sounds reasonable. I'll take it. Can you also add breakfast to the package?"}],
+  qs:[
+    {q:"What is the purpose of the man's visit?",opts:["A vacation","A family event","A business conference","A job interview"],c:2},
+    {q:"Why is the man eligible for a discounted upgrade?",opts:["He booked early","He is paying in cash","He complained about the room","He is a loyalty member"],c:3},
+    {q:"What does the man request at the end?",opts:["Breakfast included","A late checkout","A room change","Airport transport"],c:0}]},
+{id:"p3_34",lines:[
+    {s:"M",t:"Excuse me, I'm trying to find out what's happening with flight 447 to Frankfurt. The board still shows 'delayed' but no new time."},
+    {s:"W",t:"I apologize for the confusion. We just received an update. Unfortunately, the aircraft has a mechanical issue and we're waiting for a replacement plane from Munich."},
+    {s:"M",t:"How long are we talking about? I have a connection in Frankfurt at six."},
+    {s:"W",t:"Realistically, at least four hours. I'd recommend visiting the rebooking desk at gate B12 to protect your connection."}],
+  qs:[
+    {q:"Why is the flight delayed?",opts:["Bad weather","A mechanical problem","Crew availability","Security issues"],c:1},
+    {q:"What is the man worried about?",opts:["Missing a connecting flight","Getting a refund","Losing his luggage","Paying extra fees"],c:0},
+    {q:"What does the woman suggest?",opts:["Waiting at the gate","Going to another airport","Cancelling the trip","Speaking to rebooking staff"],c:3}]},
+{id:"p3_35",lines:[
+    {s:"W",t:"Hi, I bought this jacket online last week, but the size doesn't fit. I'd like to exchange it for a medium."},
+    {s:"M",t:"Of course. Do you have the original packaging and the receipt with you?"},
+    {s:"W",t:"I have the receipt on my phone, but I threw out the box. Is that a problem?"},
+    {s:"M",t:"Not at all, as long as the tags are still attached and the item is unworn. Let me just scan your digital receipt and we'll process the exchange."}],
+  qs:[
+    {q:"Why is the woman returning the jacket?",opts:["It's damaged","It's the wrong color","It doesn't fit","She changed her mind"],c:2},
+    {q:"What does the woman not have with her?",opts:["The original box","The receipt","The jacket","Her ID"],c:0},
+    {q:"What does the man need to check?",opts:["That she has a loyalty card","That the tags are attached","That the item is on sale","That she paid by card"],c:1}]},
+{id:"p3_36",lines:[
+    {s:"M",t:"Hello, I'd like to schedule a follow-up appointment with Dr. Chen, please. She asked me to come back in two weeks."},
+    {s:"W",t:"Certainly. Dr. Chen's next available slot is actually on the twenty-second at ten fifteen. Does that work?"},
+    {s:"M",t:"The twenty-second is a Thursday, right? I can't make mornings on Thursdays because of my work schedule."},
+    {s:"W",t:"In that case, I can offer you Tuesday the twentieth at four thirty in the afternoon, or Friday the twenty-third at nine."}],
+  qs:[
+    {q:"Why does the man need an appointment?",opts:["For a new problem","For a follow-up visit","For a vaccination","For a prescription"],c:1},
+    {q:"Why does the man reject the first option?",opts:["It's too expensive","It's too late","Dr. Chen isn't available","It conflicts with his work"],c:3},
+    {q:"What does the woman do next?",opts:["Cancel the appointment","Transfer the call","Propose alternative times","Ask for insurance"],c:2}]},
+{id:"p3_37",lines:[
+    {s:"W",t:"Good morning. I'm interested in learning more about your small business loan options. I'm opening a bakery."},
+    {s:"M",t:"Congratulations. We have several products designed for new businesses. The key factors will be your credit history, your business plan, and the amount you're looking to borrow."},
+    {s:"W",t:"I'm estimating I'll need around sixty thousand dollars for equipment and initial inventory."},
+    {s:"M",t:"That's well within our range. I'd suggest scheduling a longer consultation with one of our business advisors. I can book you in for Thursday afternoon if that works."}],
+  qs:[
+    {q:"What is the woman planning to do?",opts:["Expand an existing business","Refinance a loan","Invest in stocks","Open a new bakery"],c:3},
+    {q:"How much money does the woman need?",opts:["Thirty thousand","Ninety thousand","Sixty thousand","One hundred thousand"],c:2},
+    {q:"What does the man recommend?",opts:["Meeting with an advisor","Applying online","Waiting six months","Using a different bank"],c:0}]},
+{id:"p3_38",lines:[
+    {s:"M",t:"Before we start the line, I need everyone to review the updated safety protocols. There have been three near-misses this month."},
+    {s:"W",t:"I noticed the new signage near station four. Is that related?"},
+    {s:"M",t:"Exactly. Management decided we need clearer visual warnings around the conveyor belt. Also, hard hats are now mandatory in that zone, not just recommended."},
+    {s:"W",t:"Got it. Should I brief the temp workers starting today, or will HR handle that?"}],
+  qs:[
+    {q:"Why are the safety protocols being updated?",opts:["Recent near-miss incidents","A government inspection","A workers' complaint","A new machine"],c:0},
+    {q:"What has changed about hard hats?",opts:["They are now optional","They must be a new color","They will be provided for free","They are now required in a specific area"],c:3},
+    {q:"What does the woman ask about?",opts:["Her own safety gear","Training responsibilities","The inspection date","Overtime pay"],c:1}]},
+{id:"p3_39",lines:[
+    {s:"W",t:"The booth setup is almost done, but we have a problem. The banners we ordered arrived with the wrong logo."},
+    {s:"M",t:"You're kidding. The conference opens in less than eighteen hours. Can the printer redo them in time?"},
+    {s:"W",t:"I already called. They can rush a new set for an additional four hundred dollars, delivered by seven tomorrow morning."},
+    {s:"M",t:"Approve it. We cannot represent the company with the wrong branding. I'll explain the extra cost to finance later."}],
+  qs:[
+    {q:"What is the problem with the banners?",opts:["They are damaged","They have the wrong logo","They are too small","They arrived late"],c:1},
+    {q:"How much will the rush order cost?",opts:["One hundred dollars","Eighteen hundred dollars","Four hundred dollars","Seven hundred dollars"],c:2},
+    {q:"What does the man decide?",opts:["To approve the extra expense","To use the wrong banners anyway","To cancel the booth","To contact a different printer"],c:0}]},
+{id:"p3_40",lines:[
+    {s:"M",t:"Central Cab, how can I help you?"},
+    {s:"W",t:"Hi, I need to book a pickup from 442 Oak Street to the airport for tomorrow morning. My flight is at nine fifteen."},
+    {s:"M",t:"For a nine fifteen departure, I'd recommend a six thirty pickup. Traffic on the expressway can be unpredictable, especially on weekdays."},
+    {s:"W",t:"That's earlier than I thought, but I'll trust your advice. Can I pay by card when the driver arrives?"}],
+  qs:[
+    {q:"Where does the woman need to go?",opts:["A hotel","The train station","The airport","A meeting"],c:2},
+    {q:"Why does the man recommend an early pickup?",opts:["The driver is busy","The airport is far","It's cheaper","Traffic may cause delays"],c:3},
+    {q:"What does the woman ask about?",opts:["The price","Payment methods","Luggage limits","The driver's name"],c:1}]},
+{id:"p3_41",lines:[
+    {s:"W",t:"This is the two-bedroom unit I mentioned. As you can see, the living room gets excellent natural light in the afternoon."},
+    {s:"M",t:"It's lovely. What about the neighborhood? I work downtown and I'd prefer not to spend an hour commuting each way."},
+    {s:"W",t:"The metro station is just a seven-minute walk, and it's about twenty minutes to the business district. There's also a supermarket on the corner."},
+    {s:"M",t:"Perfect. And is the rent negotiable, or is the listing price firm?"}],
+  qs:[
+    {q:"What type of property is being shown?",opts:["A two-bedroom apartment","A studio","A three-bedroom house","An office space"],c:0},
+    {q:"What is the man concerned about?",opts:["The size","The price","The commute","The noise"],c:2},
+    {q:"What does the man ask at the end?",opts:["About parking","About utilities","About the lease length","About the rent price"],c:3}]},
+{id:"p3_42",lines:[
+    {s:"M",t:"IT Helpdesk, this is Raj. What seems to be the problem?"},
+    {s:"W",t:"Hi Raj, it's Linda from accounting. The new expense software keeps freezing every time I try to upload a receipt."},
+    {s:"M",t:"That's a known issue with the latest version. Have you tried clearing your browser cache?"},
+    {s:"W",t:"I haven't. Honestly, I'm not entirely sure how to do that. Could you walk me through it, or should I bring my laptop to your office?"}],
+  qs:[
+    {q:"What problem is the woman having?",opts:["She lost her password","Her computer won't start","She can't print","Software keeps freezing"],c:3},
+    {q:"What does the man suggest?",opts:["Restarting the computer","Clearing the browser cache","Buying new software","Calling the vendor"],c:1},
+    {q:"What does the woman imply about herself?",opts:["She is not tech-savvy","She is an expert","She is in a hurry","She is working from home"],c:0}]},
+{id:"p3_43",lines:[
+    {s:"W",t:"Welcome to Apex Consulting. I'll be walking you through your first-day onboarding this morning."},
+    {s:"M",t:"Thanks, I'm really excited to be here. Should I have brought anything specific with me today?"},
+    {s:"W",t:"Your HR email mentioned a passport or ID card for the employment verification. Everything else, including your laptop and access badge, we'll provide."},
+    {s:"M",t:"Great, I have my passport. What does the rest of the day look like?"}],
+  qs:[
+    {q:"What is the woman's role?",opts:["An onboarding representative","A new employee","A manager","A visitor"],c:0},
+    {q:"What does the man need to provide?",opts:["A resume","An ID document","A laptop","References"],c:1},
+    {q:"What will the company provide?",opts:["Training videos only","A parking space","Equipment and access","Meals"],c:2}]},
+{id:"p3_44",lines:[
+    {s:"M",t:"Let's review the Q3 campaign numbers. Overall engagement was up fifteen percent compared to Q2."},
+    {s:"W",t:"That's great news, but I noticed the conversion rate on the email campaigns actually dropped slightly."},
+    {s:"M",t:"You're right. The subject line testing we did mid-quarter may have been too aggressive. We lost some subscribers."},
+    {s:"W",t:"For Q4, I'd suggest going back to a more conservative approach and focusing on personalization instead."}],
+  qs:[
+    {q:"What is the overall trend in Q3?",opts:["Engagement went down","No change","Not mentioned","Engagement went up"],c:3},
+    {q:"What was the problem with the email campaigns?",opts:["They were too expensive","They weren't sent","Conversion rate decreased","Too few were sent"],c:2},
+    {q:"What does the woman recommend for Q4?",opts:["More aggressive testing","A personalized approach","Cancelling email campaigns","Hiring a new agency"],c:1}]},
+{id:"p3_45",lines:[
+    {s:"W",t:"Hi, I'd like to place a catering order for a corporate meeting next Wednesday. We'll need coffee and pastries for about twenty people."},
+    {s:"M",t:"No problem. Our corporate package includes two large carafes of coffee, plus a selection of pastries and fresh fruit. That runs about one hundred twenty dollars."},
+    {s:"W",t:"Could we add some tea options as well? Not everyone drinks coffee."},
+    {s:"M",t:"Absolutely. I'll add a selection of black, green, and herbal teas for an extra fifteen dollars. Should I deliver it around eight thirty?"}],
+  qs:[
+    {q:"How many people will attend the meeting?",opts:["Ten","Fifteen","Twenty","Twenty-five"],c:2},
+    {q:"What does the woman want to add to the order?",opts:["Tea options","More pastries","Sandwiches","Juice"],c:0},
+    {q:"What will the total likely include?",opts:["Only coffee","A full lunch","Just beverages","Coffee, pastries, fruit, and tea"],c:3}]},
+{id:"p3_46",lines:[
+    {s:"M",t:"I'm interested in signing up for a gym membership, but I wanted to ask about the different plans first."},
+    {s:"W",t:"Of course. We have three tiers. The basic plan gives you gym access only, the standard adds group classes, and the premium includes personal training sessions."},
+    {s:"M",t:"I'm mostly interested in the yoga and spin classes. Would the standard plan cover those?"},
+    {s:"W",t:"Yes, all group classes including yoga and spin are included in the standard tier. It's currently fifty-five dollars a month."}],
+  qs:[
+    {q:"How many membership tiers are there?",opts:["Two","Three","Four","Five"],c:1},
+    {q:"What classes is the man interested in?",opts:["Boxing and weights","Swimming","Personal training","Yoga and spin"],c:3},
+    {q:"What plan will the man likely choose?",opts:["Standard","Basic","Premium","None"],c:0}]},
+{id:"p3_47",lines:[
+    {s:"W",t:"I need five hundred tri-fold brochures printed for a trade show next Friday. What are my options?"},
+    {s:"M",t:"For that quantity, we can do either standard matte paper or a glossy premium finish. Standard is ninety cents per brochure, glossy is one dollar twenty."},
+    {s:"W",t:"How long does each option take to produce?"},
+    {s:"M",t:"Standard would be ready in two business days, glossy takes three. For a trade show, I'd honestly recommend the glossy. It looks far more professional under booth lighting."}],
+  qs:[
+    {q:"How many brochures does the woman need?",opts:["One hundred","Three hundred","Five hundred","One thousand"],c:2},
+    {q:"What is the price of the glossy option per brochure?",opts:["Ninety cents","One dollar twenty","Two dollars","Fifty cents"],c:1},
+    {q:"What does the man recommend?",opts:["The glossy finish","The standard finish","Cancelling the order","A faster delivery method"],c:0}]},
+{id:"p3_48",lines:[
+    {s:"M",t:"Hi, I reserved a compact car under the name Walker for a three-day rental."},
+    {s:"W",t:"I see your reservation, Mr. Walker. Unfortunately, we're out of compact cars today. I can offer you a free upgrade to a mid-size sedan at no extra cost."},
+    {s:"M",t:"That works for me. One question though: does the mid-size have better fuel economy? I'm driving to the coast and back."},
+    {s:"W",t:"It's slightly less efficient, but we'll give you a full tank of gas included to compensate. It should be more than enough for a round trip."}],
+  qs:[
+    {q:"What was originally reserved?",opts:["A mid-size sedan","An SUV","A luxury car","A compact car"],c:3},
+    {q:"Why is the man being offered an upgrade?",opts:["He is a loyal customer","His original car isn't available","He complained","It's a promotion"],c:1},
+    {q:"What is the man concerned about?",opts:["The rental cost","Insurance","Fuel efficiency","Driving distance"],c:2}]},
+{id:"p3_49",lines:[
+    {s:"W",t:"Hi, I'm picking up a prescription for Martinez. I also wanted to ask about a flu shot while I'm here."},
+    {s:"M",t:"Let me grab your prescription. For the flu shot, do you have a few minutes to wait? Our pharmacist can do it right now if you're free."},
+    {s:"W",t:"Really? I thought I'd need an appointment. How much does it cost?"},
+    {s:"M",t:"No appointment needed. With most insurance plans, it's fully covered. If you don't have coverage, it's twenty-five dollars."}],
+  qs:[
+    {q:"What is the woman picking up?",opts:["Medical supplies","Lab results","Vitamins","A prescription"],c:3},
+    {q:"What additional service does she ask about?",opts:["A flu vaccination","A blood test","A consultation","A mask"],c:0},
+    {q:"What does the man say about insurance?",opts:["It's not accepted","It needs to be verified","It usually covers the cost","It requires paperwork"],c:2}]},
+{id:"p3_50",lines:[
+    {s:"M",t:"Hi, I'm interested in the day pass for the coworking space. What does it include?"},
+    {s:"W",t:"The day pass gives you access to any open desk, unlimited coffee, printing up to twenty pages, and one of our phone booths for private calls."},
+    {s:"M",t:"Do I need to reserve a meeting room separately if I have a video call?"},
+    {s:"W",t:"Phone booths are first-come-first-served and included. For larger meeting rooms, yes, you'd book those through our app for an additional fee."}],
+  qs:[
+    {q:"What is included in the day pass?",opts:["Only desk access","Desk, coffee, limited printing, and a phone booth","Meals and drinks","Overnight stays"],c:1},
+    {q:"What does the man need for his video call?",opts:["Privacy","A laptop","A meeting room","Headphones"],c:0},
+    {q:"How are larger meeting rooms reserved?",opts:["At the front desk","First-come-first-served","They aren't available","Via an app"],c:3}]}
 ];
 
 // ─── PART 4 — Talks (20 talks, 60 questions) ───
@@ -1023,4 +1204,95 @@ export var LISTENING_P4 = [
       {q:"What industry is this event for?",opts:["Technology","Hospitality","Healthcare","Finance"],c:1},
       {q:"How many nominations were received?",opts:["25","120","205","250"],c:3},
       {q:"What will happen before the awards are presented?",opts:["A keynote speech","Dinner is served","A video will be shown","A dance performance"],c:2}]},
+	  
+	{id:"p4_31",type:"Voicemail",voice:"W",
+  text:"Hi David, it's Monica from Riverside Construction. I'm calling about the proposal you submitted last week for the Lakewood project. Our team reviewed it on Tuesday and we're very interested in moving forward, but we have a few questions about the timeline. Specifically, the six-week framing phase seems a bit optimistic given the current lumber supply situation. Could you give me a call back when you get a chance? I'll be in meetings most of tomorrow morning, but I'm free after two in the afternoon. My number is 555-0142. Thanks.",
+  qs:[
+    {q:"What is the purpose of the call?",opts:["To decline a proposal","To discuss a submitted proposal","To request a new bid","To cancel a project"],c:1},
+    {q:"What concern does the speaker raise?",opts:["The budget is too high","A deadline seems unrealistic","The materials are wrong","The team is too small"],c:1},
+    {q:"When does the speaker ask David to call back?",opts:["Tomorrow afternoon","Tomorrow morning","Tuesday","In two days"],c:0}]},
+{id:"p4_32",type:"Announcement",voice:"M",
+  text:"Attention all passengers on platform four. The eight forty-seven express service to Manchester Piccadilly has been delayed by approximately twenty minutes due to a signalling issue near Milton Keynes. Customers with onward connections from Manchester are advised to speak to a member of our customer service team, located near the main entrance, who can assist with rebooking. We apologize for the inconvenience and thank you for your patience. A further announcement will be made once we have an updated departure time.",
+  qs:[
+    {q:"Where is this announcement being made?",opts:["At an airport","At a bus station","At a train station","On a ferry"],c:2},
+    {q:"Why is the service delayed?",opts:["Bad weather","A signalling problem","Driver shortage","A security alert"],c:1},
+    {q:"What should passengers with connections do?",opts:["Wait on the platform","Return home","Buy new tickets online","Speak to customer service staff"],c:3}]},
+{id:"p4_33",type:"Meeting introduction",voice:"W",
+  text:"Good morning everyone, and thank you for joining today's quarterly review. Before we dive into the financial results, I want to acknowledge the marketing team for their outstanding work on the product launch last month. Sales exceeded our projections by eighteen percent. Today's agenda has three main items: we'll start with the Q3 financial overview, then move on to the new customer retention strategy, and finally we'll discuss the budget allocation for next quarter. I've asked Thomas to present the financial section, so I'll hand it over to him in just a moment.",
+  qs:[
+    {q:"What event is taking place?",opts:["A product launch","A training session","A quarterly review meeting","A job interview"],c:2},
+    {q:"Why is the marketing team praised?",opts:["They exceeded sales projections","They saved money","They hired new staff","They won an award"],c:0},
+    {q:"What will happen next?",opts:["The meeting will end","A break will be taken","The budget will be announced","Thomas will speak"],c:3}]},
+{id:"p4_34",type:"Tour guide",voice:"M",
+  text:"Welcome everyone to the Riverside Historic Brewery, one of the oldest operating breweries in the region. My name is James and I'll be your guide for the next forty-five minutes. Before we begin, a few safety notes: please stay with the group at all times, the floors can be slippery in the production areas, and flash photography is prohibited inside the fermentation hall. At the end of the tour, you'll have the opportunity to sample four of our seasonal beers in the tasting room. If anyone needs to use the restrooms, now would be a good time, as we won't have another break for about thirty minutes.",
+  qs:[
+    {q:"How long will the tour last?",opts:["Thirty minutes","Forty-five minutes","Sixty minutes","Two hours"],c:1},
+    {q:"What is NOT allowed during the tour?",opts:["Flash photography","Talking","Taking notes","Wearing hats"],c:0},
+    {q:"What will happen at the end?",opts:["A beer tasting","A lunch break","A gift shop visit","A question session"],c:0}]},
+{id:"p4_35",type:"Training session",voice:"W",
+  text:"Alright team, let's get started with today's customer service refresher. The main topic is handling difficult conversations, specifically complaint calls. Research shows that most escalated complaints could have been resolved in the first sixty seconds if the agent had used three key techniques: active listening, acknowledgment, and offering a clear next step. We'll be doing role-play exercises in pairs this afternoon, so please pay attention during the theory portion. There's a handout being passed around right now with the script templates we'll reference. Any questions before we start?",
+  qs:[
+    {q:"What is the main topic?",opts:["Sales techniques","Handling complaint calls","New product features","Team building"],c:1},
+    {q:"How many key techniques are mentioned?",opts:["Two","Four","Three","Five"],c:2},
+    {q:"What will participants do in the afternoon?",opts:["Watch a video","Take a test","Meet customers","Practice role-plays"],c:3}]},
+{id:"p4_36",type:"News report",voice:"M",
+  text:"In local business news, tech startup Brightwave Solutions announced yesterday that it will be opening a second office in downtown Austin, creating an estimated two hundred new jobs over the next eighteen months. The expansion comes after the company secured forty million dollars in Series B funding last quarter. CEO Rachel Kim stated that the Austin location will focus primarily on their enterprise software division. Hiring is expected to begin in early November, with positions available in engineering, sales, and customer support. Interested candidates can apply through the company website.",
+  qs:[
+    {q:"What is the news about?",opts:["A company expansion","A company closure","A merger","A lawsuit"],c:0},
+    {q:"How many jobs will be created?",opts:["One hundred","Two hundred","Four hundred","Eighteen hundred"],c:1},
+    {q:"When will hiring begin?",opts:["Immediately","In early November","Next year","After the new CEO starts"],c:1}]},
+{id:"p4_37",type:"Advertisement",voice:"W",
+  text:"Tired of losing track of your business expenses? Say hello to Ledgerly, the expense management app designed for freelancers and small business owners. With Ledgerly, you can snap a photo of any receipt and our smart technology automatically categorizes it for tax season. No more shoeboxes full of crumpled papers. Our users save an average of six hours per month on bookkeeping. Sign up today and get your first three months completely free, with no credit card required. Visit ledgerly dot com slash free to start. Offer ends this Sunday.",
+  qs:[
+    {q:"Who is the target audience?",opts:["Freelancers and small business owners","Large corporations","Accountants only","Students"],c:0},
+    {q:"What does the app do automatically?",opts:["Files taxes","Categorizes receipts","Pays bills","Creates invoices"],c:1},
+    {q:"What is the promotional offer?",opts:["A discount","A free gift","Free access for three months","A lifetime subscription"],c:2}]},
+{id:"p4_38",type:"Instructions",voice:"M",
+  text:"Okay everyone, gather around. Before we start the hands-on portion of the safety workshop, I need to walk you through the proper use of the harness system. First, always inspect the harness for any visible damage before putting it on. Second, the leg straps should be snug but not tight. Third, and most importantly, the chest strap must sit at sternum level, not on the stomach or on the neck. Finally, before climbing, always clip your lanyard to the designated anchor point and give it a firm tug to make sure it's locked. If you're unsure about any step, raise your hand and I'll come check.",
+  qs:[
+    {q:"What is being demonstrated?",opts:["How to use a harness","How to climb a ladder","How to repair equipment","How to lift heavy objects"],c:0},
+    {q:"Where should the chest strap sit?",opts:["On the stomach","On the neck","At the sternum","At the waist"],c:2},
+    {q:"What should participants do if unsure?",opts:["Keep trying","Ask a colleague","Read the manual","Raise their hand for help"],c:3}]},
+{id:"p4_39",type:"Recorded message",voice:"W",
+  text:"Thank you for calling Brighton Bank customer service. Please listen carefully as our menu options have recently changed. For account balances and recent transactions, press one. For transferring funds or making a payment, press two. To report a lost or stolen card, press three, or stay on the line and you will be connected to the next available representative. For online banking support, please visit our website at Brighton Bank dot com slash help. Our current estimated wait time is approximately fifteen minutes. Please note that for faster service, most common requests can be handled through our mobile app.",
+  qs:[
+    {q:"Why should callers listen carefully?",opts:["The menu has changed","The bank is closing","There is a promotion","The line is busy"],c:0},
+    {q:"Which option reports a lost card?",opts:["One","Two","Three","Four"],c:2},
+    {q:"What is the estimated wait time?",opts:["Five minutes","Fifteen minutes","Thirty minutes","One hour"],c:1}]},
+{id:"p4_40",type:"Voicemail",voice:"M",
+  text:"Hi Sarah, this is Michael from the design agency. I'm calling about the logo revisions we discussed on Monday. The team has finalized three new concepts based on your feedback, and I've just emailed them over to you. I'd really appreciate it if you could take a look before our Thursday meeting, since we want to lock in the direction before moving to the branding guide phase. Oh, and one more thing: we found a small typo in the tagline on the original version. It's already been fixed in the new concepts. Talk to you Thursday.",
+  qs:[
+    {q:"Why is Michael calling?",opts:["To cancel a meeting","To apologize","To provide an update on revisions","To request payment"],c:2},
+    {q:"What does he ask Sarah to do?",opts:["Call him back","Review the concepts before Thursday","Come to his office","Send new feedback"],c:1},
+    {q:"What mistake did the team find?",opts:["A wrong color","A typo in the tagline","A missing element","A wrong file format"],c:1}]},
+{id:"p4_41",type:"Announcement",voice:"W",
+  text:"Good afternoon shoppers, and welcome to Greenwood Market. As a friendly reminder, our store will be closing thirty minutes earlier than usual this evening, at eight o'clock, due to staff training. Please make your way to the checkout counters by seven forty-five to allow our team enough time to process your purchases. Additionally, our bakery section is currently offering all items at fifty percent off to reduce end-of-day waste. Take advantage of this offer before it's gone. Thank you for shopping with us, and we hope to see you again soon.",
+  qs:[
+    {q:"Why is the store closing early?",opts:["A holiday","Staff training","A power outage","Inventory check"],c:1},
+    {q:"By what time should shoppers be at checkout?",opts:["Seven thirty","Seven forty-five","Eight o'clock","Eight fifteen"],c:1},
+    {q:"What is on special offer?",opts:["Fresh produce","Dairy products","Bakery items","Frozen foods"],c:2}]},
+{id:"p4_42",type:"News report",voice:"M",
+  text:"In transportation news, the city council voted last night to approve funding for the long-awaited metro line extension. The new line will add six stations and connect the western suburbs to downtown, reducing average commute times by an estimated twenty minutes. Construction is scheduled to begin next spring and is expected to take approximately four years to complete. The total project cost is estimated at one point two billion dollars, funded through a combination of federal grants and a modest increase in local property taxes. Commuter advocacy groups have welcomed the decision.",
+  qs:[
+    {q:"What did the city council approve?",opts:["A new tax","A metro line extension","A bus route","A highway project"],c:1},
+    {q:"How long will construction take?",opts:["One year","Two years","Four years","Six years"],c:2},
+    {q:"How is the project being funded?",opts:["Grants and taxes","Private investment only","Donations","A lottery"],c:0}]},
+{id:"p4_43",type:"Tour guide",voice:"W",
+  text:"As we enter the main gallery, please take a moment to look up at the ceiling. Those frescoes were painted between 1612 and 1618 by the Italian master Giovanni Albertelli, and they depict scenes from classical mythology. The gallery itself houses over four hundred paintings from the Baroque period, and we're standing in front of one of the most famous pieces in the entire collection. Notice the dramatic use of light and shadow, a technique known as chiaroscuro. I'll give you a few minutes to explore on your own before we move to the sculpture wing.",
+  qs:[
+    {q:"Where is the tour taking place?",opts:["A church","An art museum","A palace","A library"],c:1},
+    {q:"When were the ceiling frescoes painted?",opts:["In the early 1600s","In the 1700s","In the 1800s","In modern times"],c:0},
+    {q:"What will the group do next?",opts:["Leave the building","Explore the gallery independently","Watch a film","Have lunch"],c:1}]},
+{id:"p4_44",type:"Training session",voice:"M",
+  text:"Welcome to the second module of our new hire orientation. This session focuses on our company's data security policies, which all employees must follow regardless of role. The three core principles are: never share your login credentials with anyone including colleagues, always lock your computer when you step away from your desk, and report any suspicious emails to the IT department immediately. Violations of these policies can result in disciplinary action, and in serious cases, termination. At the end of this session, you'll need to complete a short quiz to confirm your understanding.",
+  qs:[
+    {q:"Who is this session for?",opts:["IT specialists","Managers","New hires","External vendors"],c:2},
+    {q:"What should employees do with suspicious emails?",opts:["Delete them","Forward them to a colleague","Reply to the sender","Report them to IT"],c:3},
+    {q:"What will happen at the end?",opts:["A break","A quiz","A group discussion","A certificate ceremony"],c:1}]},
+{id:"p4_45",type:"Advertisement",voice:"M",
+  text:"Looking to transform your backyard into the entertaining space of your dreams? GreenScape Landscaping has been designing and building custom outdoor environments for over twenty-five years. From simple patio installations to full outdoor kitchens with pergolas and lighting, our award-winning team handles every project from concept to completion. Right now, we're offering free design consultations for all new customers, plus ten percent off any project booked before the end of October. Call us today at 555-0178 or visit greenscape landscaping dot com to schedule your consultation.",
+  qs:[
+    {q:"What service does the company offer?",opts:["Interior design","Roofing","Landscaping and outdoor construction","House cleaning"],c:2},
+    {q:"How long has the company been in business?",opts:["Over twenty-five years","Over ten years","Over fifty years","Five years"],c:0},
+    {q:"What is the current promotion?",opts:["A free gift","Free delivery","A free design consultation and a discount","Lifetime warranty"],c:2}]}  
 ];
