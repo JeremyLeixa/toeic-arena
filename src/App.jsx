@@ -541,6 +541,10 @@ function canUnlockBoss(u){
 }
 
 
+// ─── HAPTIC FEEDBACK ───
+var HAPTICS={chest:[100,50,100],chestOpen:[50,30,50,30,150],levelUp:[100,50,200],achieve:[80,40,80,40,80],league:[200,100,300],pb:[100,50,100,50,200],streak:[80,60,120],complete:[150]};
+function haptic(k){try{if(navigator.vibrate&&HAPTICS[k])navigator.vibrate(HAPTICS[k]);}catch(e){}}
+
 // ─── ENDLESS ARENA HELPERS ───
 function getEndlessState(u){
   if(!u.mockResults||!u.mockResults.boss)return"hidden";
@@ -4545,6 +4549,7 @@ function EndlessArena(p){
     var prevBest=prevEndless&&prevEndless.best?prevEndless.best:0;
     var attempts=(prevEndless&&prevEndless.attempts?prevEndless.attempts:0)+1;
     var isNewPB=result.toeicEstimate>prevBest;
+    if(isNewPB&&attempts>1)haptic("pb");
     var baseXp=Math.round(result.toeicEstimate*1.5*0.7);
     var pbBonus=isNewPB&&attempts>1?500:0;
     var totalXp=baseXp+pbBonus;
@@ -9702,7 +9707,7 @@ useEffect(function(){
       c.xp+=result.xpAmount;c.weeklyXp+=result.xpAmount;
     }
     sv(c);
-    setChestResult(result);
+    setChestResult(result);haptic("chestOpen");
     // Refresh pending list
     var remaining=chestPending.slice(1);
     setChestPending(remaining);setPendingChestCount(remaining.length);
@@ -9719,7 +9724,7 @@ function sv(d){
       ACHIEVEMENTS.forEach(function(a){
         if(a.check(d)&&d.unlockedAch.indexOf(a.id)===-1){
           d.unlockedAch.push(a.id);
-          try{playJingleAchieve();}catch(e){}
+          try{playJingleAchieve();}catch(e){}haptic("achieve");
           setAchToast({name:a.name,icon:a.icon,desc:a.desc});
           setTimeout(function(){setAchToast(null);},3500);
           // Coffre légendaire pour les achievements rares
@@ -9802,7 +9807,9 @@ var prevLeague=getLeague(c.weeklyXp);
     if(c.xp<0)c.xp=0;
     if(c.weeklyXp<0)c.weeklyXp=0;
     var newLeague=getLeague(c.weeklyXp);
-    if(newLeague.id!==prevLeague.id&&c.weeklyXp>prevLeague.min)try{playJingleLeague();}catch(e){}
+    if(newLeague.id!==prevLeague.id&&c.weeklyXp>prevLeague.min){try{playJingleLeague();}catch(e){}haptic("league");}
+    // ── Level up detection ──
+    if(amt>0){var _pl=getLevel(c.xp-amt).level,_nl=getLevel(c.xp).level;if(_nl>_pl){try{playLevelUp();}catch(e){}haptic("levelUp");}}
     var toastInfo={total:amt,base:baseAmt,bonuses:bonuses};
     sXpt(toastInfo);
 
@@ -9816,9 +9823,9 @@ var prevLeague=getLeague(c.weeklyXp);
     }
     // ── Coffres : streaks ──
     if(isFirstToday){
-      if(c.streak===7)grantChestLocal("streak_7","novice");
-      if(c.streak===30)grantChestLocal("streak_30","guerrier");
-      if(c.streak===100)grantChestLocal("streak_100","champion");
+      if(c.streak===7){grantChestLocal("streak_7","novice");haptic("streak");}
+      if(c.streak===30){grantChestLocal("streak_30","guerrier");haptic("streak");}
+      if(c.streak===100){grantChestLocal("streak_100","champion");haptic("streak");}
     }
     // ── Coffres : passage de league ──
     if(newLeague.id!==prevLeague.id&&c.weeklyXp>prevLeague.min){
@@ -9940,7 +9947,7 @@ var prevLeague=getLeague(c.weeklyXp);
       history:meta.history.slice(-50)
     };
     trackModSession(c,"endless");recordModule(c,"endless",result.score,result.total);
-    try{if(result.toeicEstimate>=800)playJingleMock();else playJingleMockOk();}catch(e){}
+    try{if(result.toeicEstimate>=800)playJingleMock();else playJingleMockOk();}catch(e){}haptic("complete");
     sv(c);sSP(null);sT("train");
   }
   function mockDone(result,xp){
@@ -9953,7 +9960,7 @@ var prevLeague=getLeague(c.weeklyXp);
     c.mockResults["mock"+result.mockId]=result;
     trackModSession(c,modId);
     recordModule(c,modId,result.score,result.total);
-    try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}
+    try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}haptic("complete");
     // Coffres : Mock Tests + Boss Test
     if(result.mockId==="1"||result.mockId===1)grantChestLocal("mock_1","champion");
     if(result.mockId==="2"||result.mockId===2)grantChestLocal("mock_2","champion");
