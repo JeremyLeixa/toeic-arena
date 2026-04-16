@@ -325,6 +325,7 @@ function supaToLocal(data){
     dailySeen: data.daily_seen || [],
     gdprConsent: data.gdpr_consent || null,
     pin: data.pin || null,
+    joinedAt: data.joined_at || null,
   };
 }
 
@@ -394,6 +395,7 @@ async function save(d){
     daily_seen:d.dailySeen||[],
     gdpr_consent:d.gdprConsent||null,
     pin:d.pin||null,
+    joined_at:d.joinedAt||null,
   };
   var cc=d.classCode||"idrac2026";
   try{
@@ -443,7 +445,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null,joinedAt:today()};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -540,6 +542,17 @@ function canUnlockBoss(u){
   return{ok:reasons.length===0,reasons:reasons};
 }
 
+
+// ─── SEASON & MOCK NUDGE ───
+var SEASON_START="2026-09-01";
+function needsMockNudge(u){
+  if(!u||!u.name)return false;
+  if(u.mockResults&&(u.mockResults.mock1||u.mockResults.mock2||u.mockResults.mock3))return false;
+  var joined=u.joinedAt?new Date(u.joinedAt):null;
+  if(joined&&(Date.now()-joined.getTime())>=3*24*60*60*1000)return true;
+  if(today()>=SEASON_START)return true;
+  return false;
+}
 
 // ─── HAPTIC FEEDBACK ───
 var HAPTICS={chest:[100,50,100],chestOpen:[50,30,50,30,150],levelUp:[100,50,200],achieve:[80,40,80,40,80],league:[200,100,300],pb:[100,50,100,50,200],streak:[80,60,120],complete:[150]};
@@ -830,7 +843,9 @@ var COACH_TIPS=[
   {id:"streak",icon:"\uD83D\uDD25",title:"Streak started!",msg:"Come back tomorrow to keep it alive \u2014 streaks unlock bonus XP!",tab:null,
     check:function(u,tab){return tab==="home"&&u.daily&&u.daily.date===today()&&u.daily.done&&u.streak>=1&&u.streak<=2;}},
   {id:"listening_gap",icon:"\uD83D\uDC42",title:"Don\u0027t forget your ears!",msg:"You haven\u0027t tried any Listening exercises yet. Head to Train to give it a shot.",tab:"train",
-    check:function(u,tab){if(tab!=="home"||u.stats.sessions<8)return false;var ms=u.moduleScores||{};var hasLis=(ms.lisP1&&ms.lisP1.total>0)||(ms.lisP2&&ms.lisP2.total>0)||(ms.lisP3&&ms.lisP3.total>0)||(ms.lisP4&&ms.lisP4.total>0);return !hasLis;}}
+    check:function(u,tab){if(tab!=="home"||u.stats.sessions<8)return false;var ms=u.moduleScores||{};var hasLis=(ms.lisP1&&ms.lisP1.total>0)||(ms.lisP2&&ms.lisP2.total>0)||(ms.lisP3&&ms.lisP3.total>0)||(ms.lisP4&&ms.lisP4.total>0);return !hasLis;}},
+  {id:"mock_reminder",icon:"\uD83D\uDCDC",title:"Your Mock Test awaits!",msg:"Complete a Mock Test to measure your real TOEIC level. It\u0027s the best way to track your progress.",tab:"train",
+    check:function(u,tab){if(tab!=="home")return false;if(u.mockResults&&(u.mockResults.mock1||u.mockResults.mock2||u.mockResults.mock3))return false;var joined=u.joinedAt?new Date(u.joinedAt):null;var days=joined?Math.floor((Date.now()-joined.getTime())/(864e5)):99;return days>=5&&u.stats.sessions>=5;}}
 ];
 
 function CoachTip(p){
@@ -1486,6 +1501,14 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
   <div style={{flex:1,textAlign:"left"}}><div className="out" style={{fontWeight:800,fontSize:14,color:"var(--gold)"}}>Treasure Chest{p.pendingChests>1?"s":""} Available!</div>
   <div style={{fontSize:11,color:"var(--t2)"}}>{p.pendingChests} chest{p.pendingChests>1?"s":""} waiting to be opened</div></div>
   <span style={{fontSize:20,color:"var(--gold)"}}>{">"}</span>
+</button>}
+
+{/* Mock Test Nudge */}
+{needsMockNudge(p.u)&&<button onClick={function(){p.nav("mock1");}} style={{width:"100%",marginBottom:14,padding:"14px 18px",background:"linear-gradient(135deg,rgba(var(--cx),.12),rgba(var(--cx),.06))",border:"1.5px solid rgba(var(--cx),.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:"'DM Sans',sans-serif"}}>
+  <span style={{fontSize:28}}>{"\uD83D\uDCDC"}</span>
+  <div style={{flex:1,textAlign:"left"}}><div className="out" style={{fontWeight:800,fontSize:14,color:"var(--cx-hex)"}}>Take Your First Mock Test</div>
+  <div style={{fontSize:11,color:"var(--t2)"}}>Measure your real TOEIC level — unlocks score tracking</div></div>
+  <span style={{fontSize:18,color:"var(--cx-hex)"}}>{">"}</span>
 </button>}
 
 {/* Active Events Banner */}
