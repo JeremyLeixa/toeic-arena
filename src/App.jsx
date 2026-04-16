@@ -154,7 +154,7 @@ function getEffectiveLeague(wxp,ms){
   return l;
 }
 // ─── FREEMIUM: modules available in visitor/free mode ───
-var FREE_MODULES = ["daily","drill","csess","sbuild","lisP2","stratquiz","strats","gramref","wfall"];
+var FREE_MODULES = ["daily","drill","csess","sbuild","lisP2","stratquiz","strats","gramref","wfall","tavern"];
 var FREE_FLASHCARD_DOMAINS = ["finance","travel","office"];
 function isModuleLocked(moduleId, gType) {
   if (gType !== "visitor") return false;
@@ -2025,23 +2025,15 @@ var rev=useMemo(function(){return p.domId?shuffle(all):dueCards(p.u.cardStates,a
 var lastSpoken=useRef(-1);var isDomainMode=!!p.domId;
 
 if(rev.length===0||done){
-  var xp=Math.max(10,tot*3+ok*2);
-  var _dms=p.u.dailyModSessions||{};
-  var _sess=(_dms["csess_"+today()])||0;
-  var _mult=_sess===0?1:_sess===1?0.60:_sess===2?0.30:0;
-  var gxp=Math.round(xp*_mult);
   return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
 <div style={{fontSize:48,marginBottom:16}}>{done?"✨":"🎉"}</div>
 <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>{done?"Session Complete!":"All caught up!"}</h2>
 {done&&<div>
   <p style={{color:"var(--t2)",marginBottom:8}}>{ok}/{tot} rated Good or Easy</p>
-  {gxp>0
-    ?<p className="out" style={{color:"var(--gold)",fontWeight:700,fontSize:18}}>+{gxp} XP{_mult<1&&<span style={{fontSize:12,color:"var(--t3)",fontWeight:400,marginLeft:6}}>{"(session "+(_sess+1)+")"}</span>}</p>
-    :<div><p className="out" style={{fontSize:16,fontWeight:700,color:"var(--t3)"}}>+0 XP</p><p style={{fontSize:11,color:"var(--t3)",marginTop:4}}>Limite journalière — reviens demain !</p></div>
-  }
+  <p style={{fontSize:12,color:"var(--t3)",marginTop:4}}>Flashcards help you memorize — test your knowledge in Word Tavern to earn XP!</p>
 </div>}
 {!done&&<p style={{color:"var(--t2)",fontSize:13}}>No cards due for review right now. Tap a specific domain to study anyway.</p>}
-<button className="btn1" onClick={function(){if(done)p.done(gxp,ok,tot);else p.back();}} style={{marginTop:32}}>{done?"Collect XP":"Back"}</button></div>);}
+<button className="btn1" onClick={function(){if(done)p.done(0,ok,tot);else p.back();}} style={{marginTop:32}}>{done?"Done":"Back"}</button></div>);}
 
 var card=rev[ci];function rate(r){sO(ok+(r>=3?1:0));sT(tot+1);p.rate(card.id,r);if(ci<rev.length-1){sC(ci+1);sF(false);}else sD(true);}
 
@@ -5065,10 +5057,11 @@ function MockTest(p){
 // ─── GAMES HUB ───
 function GamesHub(p){
   var bestM=p.u.gameScores&&p.u.gameScores.matchEasy?p.u.gameScores.matchEasy:null;
-  var bestMH=p.u.gameScores&&p.u.gameScores.matchHard?p.u.gameScores.matchHard:null;
   var bestF=p.u.gameScores&&p.u.gameScores.wordFall?p.u.gameScores.wordFall:null;
+  var bestT=p.u.moduleScores&&p.u.moduleScores.tavern?p.u.moduleScores.tavern:null;
   var games=[
-    {id:"smatch",n:"Speed Match",d:"Match words with definitions!",i:"🎯",bg:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",extra:(bestM||bestMH)?(bestM?"Easy: "+bestM.time+"s":"")+(bestM&&bestMH?" · ":"")+(bestMH?"Hard: "+bestMH.time+"s":""):null},
+    {id:"tavern",n:"Word Tavern",d:"Prove your vocabulary!",i:"\uD83C\uDF7A",bg:"linear-gradient(135deg,#c87a35,#8b5e83)",tag:"NEW",extra:bestT?"Best: "+bestT.correct+"/"+bestT.total:null},
+    {id:"matchE",n:"Speed Match",d:"Match words with definitions!",i:"🎯",bg:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",extra:bestM?"Best: "+bestM.time+"s · "+bestM.moves+" moves":null},
     {id:"wfall",n:"Word Fall",d:"Catch the falling sentences!",i:"⬇️",bg:"linear-gradient(135deg,#ef4444,#f59e0b)",extra:bestF?"Best: "+bestF.score+" pts · x"+bestF.maxCombo+" combo":null},
     {id:"sbuild",n:"Sentence Builder",d:"Tap blocks in the right order!",i:"🔀",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     {id:"ablitz",n:"Audio Blitz",d:"Listen once, answer fast!",i:"🎵",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
@@ -6476,29 +6469,144 @@ function ClueHunter(p){
   return null;
 }
 
-// ─── SPEED MATCH ───
-function SpeedMatchHub(p){
-  var bestE=p.u.gameScores&&p.u.gameScores.matchEasy;
-  var bestH=p.u.gameScores&&p.u.gameScores.matchHard;
-  return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>{"🎯"}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Speed Match</h1>
-    <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Match each word with its definition.<br/>Flip tiles, find pairs, beat the clock!</p>
-    <div style={{display:"flex",flexDirection:"column",gap:12,maxWidth:320,margin:"0 auto",width:"100%"}}>
-      <div className="crd" onClick={function(){p.nav("matchE");}} style={{cursor:"pointer",padding:20,textAlign:"center"}}>
-        <div className="out" style={{fontWeight:800,fontSize:18,color:"var(--cyan)",marginBottom:4}}>Easy Mode</div>
-        <div style={{fontSize:12,color:"var(--t3)"}}>6 pairs · 4x3 grid</div>
-        {bestE&&<div style={{fontSize:11,color:"var(--gold)",marginTop:6}}>{"🏅"} Best: {bestE.time}s · {bestE.moves} moves</div>}
-      </div>
-      <div className="crd" onClick={function(){p.nav("matchH");}} style={{cursor:"pointer",padding:20,textAlign:"center"}}>
-        <div className="out" style={{fontWeight:800,fontSize:18,color:"var(--purple)",marginBottom:4}}>Hard Mode</div>
-        <div style={{fontSize:12,color:"var(--t3)"}}>8 pairs · 4x4 grid</div>
-        {bestH&&<div style={{fontSize:11,color:"var(--gold)",marginTop:6}}>{"🏅"} Best: {bestH.time}s · {bestH.moves} moves</div>}
+// ─── WORD TAVERN ───
+function WordTavern(p){
+  var TOTAL=15;
+  var qs=useMemo(function(){
+    // Build flat list of all cards with their domain
+    var all=[];
+    VOCAB.forEach(function(dom){dom.cards.forEach(function(c){all.push({card:c,domId:dom.id,domCards:dom.cards});});});
+    var pool=shuffle(all.slice()).slice(0,TOTAL);
+    var questions=[];
+    for(var i=0;i<pool.length;i++){
+      var item=pool[i];var card=item.card;var domCards=item.domCards;
+      // Pick 3 distractors from same domain (excluding correct card)
+      var others=domCards.filter(function(c){return c.id!==card.id;});
+      others=shuffle(others).slice(0,3);
+      // If domain has < 4 cards, pad from other domains
+      if(others.length<3){var extra=all.filter(function(a){return a.card.id!==card.id&&others.every(function(o){return o.id!==a.card.id;});});extra=shuffle(extra);while(others.length<3&&extra.length>0)others.push(extra.pop().card);}
+      // Determine question type: 0-4=A (def→word), 5-9=B (word→def), 10-14=C (fill-blank)
+      var qtype=i<5?"defToWord":i<10?"wordToDef":"fillBlank";
+      var q=null;
+      if(qtype==="defToWord"){
+        var opts=shuffle([{text:card.w,correct:true}].concat(others.map(function(o){return{text:o.w,correct:false};})));
+        q={type:"defToWord",prompt:card.d,opts:opts,card:card,example:card.e};
+      } else if(qtype==="wordToDef"){
+        var opts2=shuffle([{text:card.d,correct:true}].concat(others.map(function(o){return{text:o.d,correct:false};})));
+        q={type:"wordToDef",prompt:card.w,opts:opts2,card:card,example:card.e};
+      } else {
+        // Fill-in-the-blank: replace word in example sentence
+        var sentence=card.e;var regex=new RegExp("\\b"+card.w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i");
+        if(regex.test(sentence)){
+          var blanked=sentence.replace(regex,"_____");
+          var opts3=shuffle([{text:card.w,correct:true}].concat(others.map(function(o){return{text:o.w,correct:false};})));
+          q={type:"fillBlank",prompt:blanked,opts:opts3,card:card,example:card.e};
+        } else {
+          // Fallback to defToWord if word not found in example
+          var opts4=shuffle([{text:card.w,correct:true}].concat(others.map(function(o){return{text:o.w,correct:false};})));
+          q={type:"defToWord",prompt:card.d,opts:opts4,card:card,example:card.e};
+        }
+      }
+      questions.push(q);
+    }
+    return shuffle(questions);
+  },[]);
+
+  var[ci,sC]=useState(0);
+  var[sc,sSc]=useState(0);
+  var[phase,sP]=useState("intro");
+  var[sel,sSel]=useState(-1);
+  var[missed,setMissed]=useState([]);
+
+  function answer(idx){
+    if(sel!==-1)return;
+    sSel(idx);
+    var correct=qs[ci].opts[idx].correct;
+    if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}
+    else{
+      try{playWrong();}catch(e){}
+      // SRS reset: send missed word back to review
+      var cardId=qs[ci].card.id;
+      setMissed(function(prev){return prev.concat([cardId]);});
+      if(p.u&&p.u.cardStates){
+        var c=JSON.parse(JSON.stringify(p.u));
+        c.cardStates[cardId]={ease:2.5,interval:0,nextReview:today(),correct:(c.cardStates[cardId]?c.cardStates[cardId].correct:0)||0,total:(c.cardStates[cardId]?c.cardStates[cardId].total:0)||0};
+        p.resetCard(c);
+      }
+    }
+    setTimeout(function(){
+      if(ci<qs.length-1){sC(ci+1);sSel(-1);}
+      else{
+        var finalSc=sc+(correct?1:0);
+        var baseXp=20+finalSc*6;
+        var gxp=p.gate?p.gate(baseXp,finalSc,TOTAL):baseXp;
+        sP("done");
+        p.done(finalSc,TOTAL,gxp);
+      }
+    },1200);
+  }
+
+  // ── INTRO ──
+  if(phase==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:56,marginBottom:16}}>{"\uD83C\uDF7A"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Word Tavern</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>15 questions to test your vocabulary.<br/>Words you miss go back to flashcard review.</p>
+    <p style={{color:"var(--t3)",fontSize:11,marginBottom:32}}>Definitions, meanings, and fill-in-the-blank</p>
+    <button className="btn1" onClick={function(){sP("q");}}>Enter the Tavern</button>
+    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
+
+  // ── DONE ──
+  if(phase==="done"){
+    var pct=TOTAL>0?sc/TOTAL:0;
+    var emoji=pct>=0.8?"\uD83C\uDFC6":pct>=0.5?"\u2694\uFE0F":"\uD83D\uDEE1\uFE0F";
+    var title=pct>=0.8?"Excellent!":pct>=0.5?"Well done!":"Keep studying!";
+    var baseXp=20+sc*6;
+    var gxp=p.gate?p.gate(baseXp,sc,TOTAL):baseXp;
+    var missedCount=missed.length;
+    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:56,marginBottom:16,animation:"countUp .6s"}}>{emoji}</div>
+      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>{title}</h1>
+      <p style={{color:"var(--t2)",fontSize:16,marginBottom:4}}>{sc} / {TOTAL}</p>
+      <p className="out" style={{color:"var(--gold)",fontWeight:700,fontSize:20,marginBottom:16}}>+{gxp} XP</p>
+      {missedCount>0&&<p style={{fontSize:12,color:"var(--red)",marginBottom:16}}>{missedCount} word{missedCount>1?"s":""} sent back to flashcard review</p>}
+      <button className="btn1" onClick={p.back} style={{marginTop:8}}>Back to Games</button>
+    </div>);
+  }
+
+  // ── QUESTION ──
+  var q=qs[ci];
+  var qLabel=q.type==="defToWord"?"Which word matches this definition?":q.type==="wordToDef"?"What does this word mean?":"Fill in the blank:";
+  return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{TOTAL}</span>
+      <div style={{width:40}}/>
+    </div>
+    <Bar value={ci} max={TOTAL} h={4} color="linear-gradient(90deg,#c87a35,#8b5e83)"/>
+    <div style={{marginTop:32,marginBottom:24}}>
+      <div className="out" style={{fontSize:11,color:"var(--cx-hex)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12}}>{qLabel}</div>
+      <div className="crd" style={{padding:20,textAlign:"center",minHeight:80,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{fontSize:q.type==="fillBlank"?15:q.type==="wordToDef"?24:15,fontWeight:q.type==="wordToDef"?800:400,lineHeight:1.5}}>{q.prompt}</div>
       </div>
     </div>
-    <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%",maxWidth:320,margin:"24px auto 0"}}>Back</button>
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      {q.opts.map(function(opt,oi){
+        var isSelected=sel===oi;
+        var isCorrect=opt.correct;
+        var showResult=sel!==-1;
+        var bg="var(--bg2)";var bdr="var(--bdr)";var col="var(--t1)";
+        if(showResult&&isCorrect){bg="rgba(74,190,96,.15)";bdr="rgba(74,190,96,.5)";col="var(--green)";}
+        else if(showResult&&isSelected&&!isCorrect){bg="rgba(224,82,82,.15)";bdr="rgba(224,82,82,.5)";col="var(--red)";}
+        return(<button key={oi} onClick={function(){answer(oi);}} disabled={sel!==-1} style={{padding:"14px 16px",background:bg,border:"1.5px solid "+bdr,borderRadius:12,cursor:sel===-1?"pointer":"default",textAlign:"left",fontSize:14,color:col,lineHeight:1.4,fontFamily:"'DM Sans',sans-serif"}}>{opt.text}</button>);
+      })}
+    </div>
+    {sel!==-1&&<div style={{marginTop:16,padding:"12px 16px",background:"var(--bg3)",borderRadius:10}}>
+      <div style={{fontSize:12,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5}}>{"\u201C"}{q.example}{"\u201D"}</div>
+    </div>}
   </div>);
 }
+
+// ─── SPEED MATCH ───
 
 function SpeedMatch(p){
   var pairCount=p.mode==="hard"?8:6;
@@ -10014,7 +10122,6 @@ var prevLeague=getLeague(c.weeklyXp);
       }
       // SpeedMatch
       if(modeKey==="matchEasy"&&result.time){var starsE=result.time<24?3:result.time<42?2:1;if(starsE>=2)grantWeeklyChest("smatch_easy_good","novice");}
-      if(modeKey==="matchHard"&&result.time){var starsH=result.time<32?3:result.time<56?2:1;if(starsH>=2)grantWeeklyChest("smatch_hard_good","guerrier");}
     }
     c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
@@ -10126,9 +10233,8 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="boss"){playBGM("bgm_final");return pg(<BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sSPA("mocks");sT("train");}}/>);}
   if(sp==="endless"){playBGM("bgm_endless");return pg(<EndlessArena u={u} nav={nav} done={function(r,xp,meta){stopBGM();endlessDone(r,xp,meta);}} back={function(){stopBGM();sSP(null);sSPA("mocks");sT("train");}}/>);}
   if(sp==="mock3")return pg(<MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
-  if(sp==="smatch")return pg(<SpeedMatchHub u={u} nav={nav} back={function(){sSP(null);sT("games");}}/>);
-  if(sp==="matchE"){playBGM("bgm_speed");return pg(<SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/>);}
-  if(sp==="matchH"){playBGM("bgm_speed");return pg(<SpeedMatch mode="hard" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP("smatch");}}/>);}
+  if(sp==="tavern")return pg(<WordTavern u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"tavern");}} resetCard={function(c){sv(c);}} back={function(){sSP(null);sT("games");}}/>);
+  if(sp==="matchE"){playBGM("bgm_speed");return pg(<SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="wfall"){playBGM("bgm_wfall");return pg(<WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="duel"){playBGM("bgm_duel");return pg(<DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="sbuild"){playBGM("bgm_build");return pg(<SentenceBuilder u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"sbuild");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);if(tot>0&&sc/tot>=0.9)grantWeeklyChest("sbuild_90","novice");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
