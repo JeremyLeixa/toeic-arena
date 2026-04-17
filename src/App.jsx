@@ -326,6 +326,7 @@ function supaToLocal(data){
     gdprConsent: data.gdpr_consent || null,
     pin: data.pin || null,
     joinedAt: data.joined_at || null,
+    tutorialPending: data.tutorial_pending===true,
   };
 }
 
@@ -398,6 +399,7 @@ async function save(d){
     gdpr_consent:d.gdprConsent||null,
     pin:d.pin||null,
     joined_at:d.joinedAt||null,
+    tutorial_pending:d.tutorialPending===true,
   };
   var cc=d.classCode||"idrac2026";
   try{
@@ -447,7 +449,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null,joinedAt:today()};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null,joinedAt:today(),tutorialPending:true};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -870,6 +872,32 @@ function CoachTip(p){
 }
 
 
+// ─── TUTORIAL TOUR (shown once on first Home visit for new students) ───
+var TUTORIAL_STEPS=[
+  {icon:"\u26A1",title:"Daily Challenge",body:"Ton r\u00e9flexe quotidien : 5 questions par jour, 30 secondes chacune. C'est court, rapide, et \u00e7a garde ta s\u00e9rie en vie. Commence par l\u00e0 chaque jour.",pos:"top"},
+  {icon:"\uD83C\uDFC6",title:"Progression & Ligue",body:"Ton niveau et ton rang dans la classe s'affichent juste ici. Chaque XP te rapproche du niveau sup\u00e9rieur. L'onglet League te montre qui m\u00e8ne la course cette semaine.",pos:"middle"},
+  {icon:"\u2694\uFE0F",title:"Onglet Train",body:"Tous tes modules TOEIC sont dans l'onglet Train en bas : Part 1 \u00e0 7, Mock Tests, Boss Arena, Word Tavern... Ton premier Mock Test est \u00e0 faire dans les 7 jours.",pos:"bottom"}
+];
+function TutorialTour(p){
+  var[i,setI]=useState(0);
+  var step=TUTORIAL_STEPS[i];
+  var isLast=i===TUTORIAL_STEPS.length-1;
+  function next(){if(isLast)p.onDone();else setI(i+1);}
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,.7)",backdropFilter:"blur(3px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px",animation:"fadeIn .3s"}}>
+      <div style={{background:"var(--bg2)",border:"1.5px solid rgba(var(--cx),.3)",borderRadius:18,padding:"22px 20px",maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.5)",textAlign:"center"}}>
+        <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:18}}>
+          {TUTORIAL_STEPS.map(function(_,idx){return(<div key={idx} style={{width:idx===i?24:8,height:6,borderRadius:99,background:idx<=i?"var(--cx-hex)":"var(--bg3)",transition:"all .3s"}}/>);})}
+        </div>
+        <div style={{fontSize:48,marginBottom:10,animation:"fadeIn .4s"}} key={i}>{step.icon}</div>
+        <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:20,color:"var(--t1)",marginBottom:10}}>{step.title}</h3>
+        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:20}}>{step.body}</p>
+        <button className="btn1" onClick={next} style={{width:"100%",padding:"12px 20px",fontSize:14}}>{isLast?"C'est parti \u2694\uFE0F":"Compris \u2192"}</button>
+        {!isLast&&<button onClick={p.onDone} style={{background:"none",border:"none",color:"var(--t3)",fontSize:11,cursor:"pointer",marginTop:10,padding:4,fontFamily:"'DM Sans',sans-serif"}}>Passer la visite</button>}
+      </div>
+    </div>);
+}
+
 function Tabs(p){var tabs=[{id:"home",l:"Home",i:"\u26A1"},{id:"train",l:"Train",i:"\uD83C\uDFAF"},{id:"cards",l:"Cards",i:"\uD83C\uDCCF"},{id:"games",l:"Games",i:"\uD83C\uDFB2"},{id:"league",l:"League",i:"\uD83C\uDFC6"},{id:"profile",l:"Profile",i:"\uD83D\uDC64"}];
 var blocked=p.blocked||[];
 return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-around"}}>
@@ -923,6 +951,13 @@ var[step,sSt]=useState("name");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
   var[pin,setPin]=useState("");var[pendingRecover,setPendingRecover]=useState(null);var[pinError,setPinError]=useState(false);
+  var[pendingNav,setPendingNav]=useState(null);var[pushBusy,setPushBusy]=useState(false);
+  function goAfterPushStep(firstNav){
+    // If browser lacks Push API, skip the opt-in phase entirely
+    var hasPush=("serviceWorker" in navigator)&&("PushManager" in window);
+    if(!hasPush){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,firstNav);return;}
+    setPendingNav(firstNav||null);sSt("pushPrompt");
+  }
 
   async function lookupName(n){
     setLookingUp(true);
@@ -1257,6 +1292,9 @@ var[step,sSt]=useState("name");
     var mission=FIRST_MISSIONS.find(function(m){return m.stat===weakest;});
     var tierLabel=totalSc>=16?"Battle-Ready":totalSc>=12?"Skilled Fighter":totalSc>=8?"Apprentice":"Recruit";
     var tierIcon=totalSc>=16?"\uD83C\uDFC6":totalSc>=12?"\u2694\uFE0F":totalSc>=8?"\uD83D\uDEE1\uFE0F":"\uD83D\uDCDA";
+    // Map Battle Scan score (0-20) to estimated TOEIC score (200-990, rounded to 5)
+    var toeicEst=Math.round((200+(totalSc/20)*790)/5)*5;
+    var toeicColor=toeicEst>=750?"var(--green)":toeicEst>=500?"var(--gold)":"var(--orange)";
     return(
     <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center",overflow:"auto"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
@@ -1266,6 +1304,13 @@ var[step,sSt]=useState("name");
           <span style={{fontSize:16}}>{tierIcon}</span>
           <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{tierLabel}</span>
           <span style={{fontSize:12,color:"var(--t3)"}}>{totalSc}/20</span>
+        </div>
+
+        {/* ── TOEIC ESTIMATE ── */}
+        <div className="crd" style={{padding:"14px 16px",marginBottom:20,background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(240,200,80,.06))",border:"1px solid rgba(240,200,80,.2)"}}>
+          <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>{"\uD83C\uDFAF"} Estimated TOEIC</div>
+          <div className="out" style={{fontFamily:"'Cinzel',serif",fontSize:32,fontWeight:900,color:toeicColor,lineHeight:1}}>{toeicEst}<span style={{fontSize:14,color:"var(--t3)",fontWeight:400,marginLeft:6}}>{"/ 990"}</span></div>
+          <p style={{fontSize:11,color:"var(--t2)",lineHeight:1.5,margin:"8px 0 0",textAlign:"left"}}>Le TOEIC r\u00e9el se compose \u00e0 50% d'<b style={{color:"#3b82f6"}}>\u00e9coute</b> + 50% de <b style={{color:"#22c55e"}}>lecture</b>. Entra\u00eene les deux pour progresser.</p>
         </div>
 
         {/* ── RADAR SVG ── */}
@@ -1321,7 +1366,7 @@ var[step,sSt]=useState("name");
         </div>
 
         {/* ── FIRST MISSION ── */}
-        {mission&&<div className="crd" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
+        {mission&&<div className="crd" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
           style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16,marginBottom:24,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
             <span style={{fontSize:20}}>📜</span>
@@ -1336,12 +1381,53 @@ var[step,sSt]=useState("name");
           </div>
         </div>}
 
-        {mission&&<button className="btn1" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,navTarget);}}
+        {mission&&<button className="btn1" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
           Start Your Quest — {mission.label}</button>}
-        <button className="btn2" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect);}}
+        <button className="btn2" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();goAfterPushStep(null);}}
           style={{fontSize:14,padding:"12px 28px",width:"100%"}}>Enter the Arena</button>
         <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your stats will evolve as you train. This is just the beginning.</p>
+      </div>
+    </div>);}
+
+  // ─ Push notification opt-in ─
+  if(step==="pushPrompt"){
+    function finishOnb(){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,pendingNav||undefined);}
+    async function enableAndGo(){
+      if(pushBusy)return;
+      setPushBusy(true);
+      try{await subscribePush(name.trim(),classCode||"visitor");}catch(e){console.warn("[push] subscribe failed:",e);}
+      setPushBusy(false);
+      finishOnb();
+    }
+    return(
+    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
+      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
+        <div style={{fontSize:64,marginBottom:16}}>{"\uD83D\uDD14"}</div>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:24,color:"var(--t1)",marginBottom:10}}>Stay connected to your quest</h2>
+        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:24}}>
+          Active les rappels pour ne pas perdre ta s\u00e9rie, rester inform\u00e9 de tes progr\u00e8s hebdomadaires, et recevoir des encouragements de ton prof.
+        </p>
+        <div className="crd" style={{padding:"14px 16px",marginBottom:20,textAlign:"left",background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
+          <div style={{display:"flex",gap:10,marginBottom:8}}>
+            <span style={{fontSize:20}}>{"\uD83D\uDD25"}</span>
+            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Streak reminder</div><div style={{fontSize:11,color:"var(--t2)"}}>20h tous les soirs, si tu n'as rien fait</div></div>
+          </div>
+          <div style={{display:"flex",gap:10,marginBottom:8}}>
+            <span style={{fontSize:20}}>{"\uD83D\uDCCA"}</span>
+            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Weekly results</div><div style={{fontSize:11,color:"var(--t2)"}}>Lundi matin, ton classement</div></div>
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <span style={{fontSize:20}}>{"\u2694\uFE0F"}</span>
+            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Re-engagement</div><div style={{fontSize:11,color:"var(--t2)"}}>Rappels doux apr\u00e8s quelques jours d'absence</div></div>
+          </div>
+        </div>
+        <button className="btn1" onClick={enableAndGo} disabled={pushBusy}
+          style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10,opacity:pushBusy?0.6:1}}>
+          {pushBusy?"\u2026":"Activer les rappels"}</button>
+        <button className="btn2" onClick={finishOnb} disabled={pushBusy}
+          style={{fontSize:13,padding:"12px 28px",width:"100%"}}>Plus tard</button>
+        <p style={{color:"var(--t3)",fontSize:10,marginTop:12,lineHeight:1.5}}>Tu peux changer d'avis \u00e0 tout moment depuis ton Profil.</p>
       </div>
     </div>);}
 
@@ -10282,6 +10368,7 @@ var prevLeague=getLeague(c.weeklyXp);
     </div>}
     {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     {coachTip&&!sp&&<CoachTip tip={coachTip} onDismiss={dismissTip} goTab={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/>}
+    {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
 
