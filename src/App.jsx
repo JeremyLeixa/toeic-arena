@@ -780,7 +780,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes chestV2BurstExpand{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(80)}}
 @keyframes chestV2DustExpand{0%{opacity:0;transform:translate(-50%,-50%) scale(0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(3.5)}}
 @keyframes chestV2ShardFly{0%{opacity:1;transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(0) rotate(0deg)}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(var(--dist,200px)) rotate(720deg)}}
-@keyframes chestV2BeamGrow{0%{height:0;opacity:.4}100%{height:800px;opacity:1}}
+@keyframes chestV2BeamGrow{0%{height:0;opacity:.4}100%{height:100vh;opacity:1}}
 @keyframes chestV2BeamShrink{to{opacity:0}}
 @keyframes chestV2RewardFall{0%{opacity:0;transform:translateY(-220px) scale(.6) rotate(-8deg)}30%{opacity:1}100%{transform:translateY(0) scale(1) rotate(0deg);opacity:1}}
 @keyframes chestV2RewardSettle{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-10px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
@@ -7349,8 +7349,8 @@ function ChestOpenModal(p){
         {metalShards.map(function(s,i){return(<div key={"m"+i} style={{position:"absolute",width:6,height:10,background:"linear-gradient(180deg,#8b6a30,#5a4418)",top:"50%",left:"50%",borderRadius:1,opacity:0,boxShadow:"0 0 4px rgba(212,148,58,.6)",animation:"chestV2ShardFly .9s ease-out .2s forwards","--angle":s.angle+"deg","--dist":s.dist+"px",zIndex:6}}/>);})}
         {/* Magic shards */}
         {magicShards.map(function(s,i){return(<div key={"mg"+i} style={{position:"absolute",width:5,height:12,background:rarityColor,top:"50%",left:"50%",borderRadius:2,opacity:0,filter:"drop-shadow(0 0 6px "+rarityColor+")",animation:"chestV2ShardFly 1s ease-out .2s forwards","--angle":s.angle+"deg","--dist":s.dist+"px",zIndex:6}}/>);})}
-        {/* Vertical beam */}
-        <div style={{position:"absolute",top:"50%",left:"50%",width:80,height:0,background:"linear-gradient(to top,transparent 0%,"+rarityColor+" 30%,rgba(255,255,255,.9) 70%,transparent 100%)",transform:"translate(-50%,-50%)",opacity:0,animation:"chestV2BeamGrow .5s ease-out .2s forwards, chestV2BeamShrink .5s ease-in 1.2s forwards",zIndex:2,filter:"blur(1px)",pointerEvents:"none"}}/>
+        {/* Vertical beam — fixed to viewport so it spans the full screen height */}
+        <div style={{position:"fixed",top:"50%",left:"50%",width:80,height:0,background:"linear-gradient(to top,transparent 0%,"+rarityColor+" 30%,rgba(255,255,255,.9) 70%,transparent 100%)",transform:"translate(-50%,-50%)",opacity:0,animation:"chestV2BeamGrow .5s ease-out .2s forwards, chestV2BeamShrink .5s ease-in 1.2s forwards",zIndex:2,filter:"blur(1px)",pointerEvents:"none"}}/>
       </>}
 
       {/* Reveal phase */}
