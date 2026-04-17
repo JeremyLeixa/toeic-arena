@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chest Animation — Tarot Flip</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #0f0c08 0%, #1a1410 50%, #0a0706 100%);
+    color: #ede4d4;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+  .controls {
+    display: flex; gap: 8px; margin: 20px 0 10px; flex-wrap: wrap;
+    justify-content: center; z-index: 10;
+  }
+  .controls button {
+    padding: 6px 14px; border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4); color: #ede4d4;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer;
+  }
+  .controls button.active { background: rgba(212,148,58,0.2); border-color: #d4943a; color: #d4943a; }
+  .title { font-family: 'Cinzel', serif; font-weight: 900; font-size: 22px; margin: 24px 0 6px; letter-spacing: 2px; color: #d4943a; text-align: center; }
+  .subtitle { font-size: 12px; color: #8a7e6a; margin-bottom: 20px; letter-spacing: 1px; text-transform: uppercase; }
+  .stage {
+    position: relative;
+    width: 340px;
+    height: 500px;
+    perspective: 1600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Ambient halo */
+  .halo {
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--rarity-soft, rgba(255,192,32,0.25)) 0%, transparent 60%);
+    opacity: 0;
+    animation: haloBreath 3s ease-in-out infinite, haloFadeIn 0.6s ease-out forwards;
+    pointer-events: none;
+  }
+
+  /* Card container */
+  .card {
+    position: relative;
+    width: 220px;
+    height: 340px;
+    transform-style: preserve-3d;
+    opacity: 0;
+    transform: translateY(40px) rotateY(0deg) scale(0.85);
+    animation: cardEntry 0.8s cubic-bezier(.2,.8,.3,1.2) 0.2s forwards,
+               cardFlip 1.2s cubic-bezier(.6,0,.3,1) 2.4s forwards;
+  }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    backface-visibility: hidden;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  /* Back face (decorative, shown initially) */
+  .card-back {
+    background: linear-gradient(135deg, #2a1a10 0%, #1a1008 50%, #2a1a10 100%);
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid rgba(212,148,58,0.5);
+  }
+  .card-back::before {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border: 1px solid rgba(212,148,58,0.3);
+    border-radius: 10px;
+  }
+  .card-back-emblem {
+    width: 120px; height: 120px;
+    position: relative;
+  }
+  .card-back-emblem svg {
+    width: 100%; height: 100%;
+  }
+  .card-back-emblem svg path,
+  .card-back-emblem svg circle,
+  .card-back-emblem svg line {
+    stroke: #d4943a;
+    fill: none;
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 3px rgba(212,148,58,0.5));
+  }
+  .card-back-emblem .filled { fill: rgba(212,148,58,0.2); }
+
+  /* Front face (reward, hidden until flip) */
+  .card-front {
+    background: linear-gradient(180deg, #2a1e14 0%, #1a1208 100%);
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 18px;
+    border: 2px solid var(--rarity, #d4943a);
+    box-shadow: 0 0 50px var(--rarity-soft, rgba(255,192,32,0.4)),
+                inset 0 0 40px var(--rarity-soft, rgba(255,192,32,0.15));
+  }
+  .card-front::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid var(--rarity, #d4943a);
+    border-radius: 10px;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .rarity-band {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--rarity, #d4943a);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid var(--rarity, #d4943a);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.4);
+  }
+  .reward-icon-big {
+    font-size: 100px;
+    filter: drop-shadow(0 0 20px var(--rarity, #d4943a));
+    animation: iconPulse 2s ease-in-out infinite;
+  }
+  .reward-info { text-align: center; }
+  .reward-name {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: #ede4d4;
+    margin-bottom: 6px;
+  }
+  .reward-sub { font-size: 11px; color: #8a7e6a; letter-spacing: 1px; }
+
+  /* Legendary: shimmer sweep on the card */
+  .card-front.legendary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+    background-size: 300%;
+    animation: shimmer 2.5s ease-in-out infinite;
+    animation-delay: 3.8s;
+    pointer-events: none;
+    border-radius: 14px;
+  }
+
+  /* Floating particles for legendary */
+  .floatie {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--rarity, #d4943a);
+    filter: drop-shadow(0 0 4px var(--rarity, #d4943a));
+    opacity: 0;
+    animation: floatie 4s ease-in-out infinite;
+  }
+
+  /* Replay */
+  .replay {
+    margin: 30px 0 40px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #d4943a, #8b5e83);
+    border: none; border-radius: 10px;
+    color: #0f0c08;
+    font-family: 'Cinzel', serif;
+    font-weight: 800; font-size: 14px;
+    cursor: pointer; letter-spacing: 1px;
+  }
+  .replay:active { transform: scale(0.96); }
+
+  /* Keyframes */
+  @keyframes haloFadeIn { to { opacity: 1; } }
+  @keyframes haloBreath {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.15); opacity: 1; }
+  }
+  @keyframes cardEntry {
+    to { opacity: 1; transform: translateY(0) rotateY(0deg) scale(1); }
+  }
+  @keyframes cardFlip {
+    0% { transform: translateY(0) rotateY(0deg) scale(1); }
+    50% { transform: translateY(-20px) rotateY(90deg) scale(1.08); }
+    100% { transform: translateY(0) rotateY(180deg) scale(1); }
+  }
+  @keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  @keyframes shimmer {
+    0%, 100% { background-position: -150% 50%; }
+    50% { background-position: 250% 50%; }
+  }
+  @keyframes floatie {
+    0% { opacity: 0; transform: translate(0,0); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx,0), -80px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="title">Tarot Flip</div>
+<div class="subtitle">Option B · Decorative card reveal</div>
+
+<div class="controls">
+  <button data-rarity="common" data-color="#909090" data-soft="rgba(144,144,144,0.25)">Common</button>
+  <button data-rarity="uncommon" data-color="#3ecc78" data-soft="rgba(62,204,120,0.25)">Uncommon</button>
+  <button data-rarity="rare" data-color="#3a8ee0" data-soft="rgba(58,142,224,0.25)">Rare</button>
+  <button data-rarity="epic" data-color="#c060f0" data-soft="rgba(192,96,240,0.25)">Epic</button>
+  <button data-rarity="legendary" data-color="#ffc020" data-soft="rgba(255,192,32,0.3)" class="active">Legendary</button>
+</div>
+
+<div id="stage" class="stage" style="--rarity: #ffc020; --rarity-soft: rgba(255,192,32,0.3)"></div>
+
+<button id="replay" class="replay">Replay Animation</button>
+
+<script>
+  const stage = document.getElementById('stage');
+  const replayBtn = document.getElementById('replay');
+  const buttons = document.querySelectorAll('.controls button');
+
+  const rarityData = {
+    common:    { color: '#909090', soft: 'rgba(144,144,144,0.25)', label: 'Common',    icon: '🎁', name: 'Peasant',  sub: 'Common Avatar' },
+    uncommon:  { color: '#3ecc78', soft: 'rgba(62,204,120,0.25)',  label: 'Uncommon',  icon: '🛡️', name: 'Knight',   sub: 'Uncommon Avatar' },
+    rare:      { color: '#3a8ee0', soft: 'rgba(58,142,224,0.25)',  label: 'Rare',      icon: '💙', name: 'Sapphire', sub: 'Rare Skin' },
+    epic:      { color: '#c060f0', soft: 'rgba(192,96,240,0.25)',  label: 'Epic',      icon: '🔮', name: 'Amethyst', sub: 'Epic Skin' },
+    legendary: { color: '#ffc020', soft: 'rgba(255,192,32,0.3)',   label: 'Legendary', icon: '💎', name: 'Aurora Borealis', sub: 'Legendary Skin' }
+  };
+  let current = rarityData.legendary;
+
+  function buildScene() {
+    stage.innerHTML = '';
+    stage.style.setProperty('--rarity', current.color);
+    stage.style.setProperty('--rarity-soft', current.soft);
+
+    // Halo
+    const halo = document.createElement('div');
+    halo.className = 'halo';
+    stage.appendChild(halo);
+
+    // Card
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    // Back face
+    const back = document.createElement('div');
+    back.className = 'card-face card-back';
+    back.innerHTML = `
+      <div class="card-back-emblem">
+        <svg viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="55"/>
+          <circle cx="60" cy="60" r="40"/>
+          <circle cx="60" cy="60" r="12" class="filled"/>
+          <path d="M 60 10 L 70 50 L 60 60 L 50 50 Z" class="filled"/>
+          <path d="M 60 110 L 70 70 L 60 60 L 50 70 Z" class="filled"/>
+          <path d="M 10 60 L 50 50 L 60 60 L 50 70 Z" class="filled"/>
+          <path d="M 110 60 L 70 50 L 60 60 L 70 70 Z" class="filled"/>
+          <circle cx="60" cy="60" r="3" fill="#d4943a"/>
+        </svg>
+      </div>
+    `;
+    card.appendChild(back);
+
+    // Front face
+    const front = document.createElement('div');
+    front.className = 'card-face card-front';
+    if (current.label === 'Legendary') front.classList.add('legendary');
+    front.innerHTML = `
+      <div class="rarity-band">${current.label}</div>
+      <div class="reward-icon-big">${current.icon}</div>
+      <div class="reward-info">
+        <div class="reward-name">${current.name}</div>
+        <div class="reward-sub">${current.sub}</div>
+      </div>
+    `;
+    card.appendChild(front);
+
+    stage.appendChild(card);
+
+    // Legendary: floating particles around the card after reveal
+    if (current.label === 'Legendary') {
+      setTimeout(() => {
+        for (let i = 0; i < 15; i++) {
+          const p = document.createElement('div');
+          p.className = 'floatie';
+          const angle = Math.random() * Math.PI * 2;
+          const radius = 130 + Math.random() * 30;
+          p.style.left = `calc(50% + ${Math.cos(angle) * radius}px)`;
+          p.style.top = `calc(50% + ${Math.sin(angle) * radius}px)`;
+          p.style.setProperty('--dx', (Math.random() * 40 - 20) + 'px');
+          p.style.animationDelay = (Math.random() * 3) + 's';
+          stage.appendChild(p);
+        }
+      }, 3800);
+    }
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      current = rarityData[btn.dataset.rarity];
+      buildScene();
+    });
+  });
+  replayBtn.addEventListener('click', buildScene);
+  buildScene();
+</script>
+</body>
+</html>

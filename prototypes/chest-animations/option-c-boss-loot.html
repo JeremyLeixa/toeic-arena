@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chest Animation — Boss Loot</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at center, #1a0a00 0%, #080402 100%);
+    color: #ede4d4;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.6) 80%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .controls {
+    display: flex; gap: 8px; margin: 20px 0 10px; flex-wrap: wrap;
+    justify-content: center; z-index: 20; position: relative;
+  }
+  .controls button {
+    padding: 6px 14px; border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4); color: #ede4d4;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer;
+  }
+  .controls button.active { background: rgba(212,148,58,0.2); border-color: #d4943a; color: #d4943a; }
+  .title { font-family: 'Cinzel', serif; font-weight: 900; font-size: 22px; margin: 24px 0 6px; letter-spacing: 2px; color: #d4943a; text-align: center; z-index: 20; position: relative; }
+  .subtitle { font-size: 12px; color: #8a7e6a; margin-bottom: 20px; letter-spacing: 1px; text-transform: uppercase; z-index: 20; position: relative; }
+
+  .stage {
+    position: relative;
+    width: 360px;
+    height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    overflow: hidden;
+  }
+
+  /* ── Screen flash ── */
+  .flash-white {
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    animation: screenFlash 0.4s ease-out 2.0s;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* ── Chest (phase 1-2) ── */
+  .chest {
+    position: absolute;
+    font-size: 72px;
+    opacity: 0;
+    transform: scale(0.3);
+    animation: chestZoom 0.6s cubic-bezier(.2,.8,.4,1.3) 0.2s forwards,
+               chestTrembor 0.5s ease-in-out 1.0s 2,
+               chestDestroy 0.3s ease-out 2.0s forwards;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+    z-index: 3;
+  }
+
+  /* ── Explosion burst at impact ── */
+  .burst {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle, white 0%, var(--rarity, #ffc020) 30%, transparent 70%);
+    opacity: 0;
+    animation: burstExpand 0.6s ease-out 2.0s forwards;
+    z-index: 4;
+  }
+
+  /* ── Shards ── */
+  .shard {
+    position: absolute;
+    width: 4px; height: 14px;
+    background: var(--rarity, #ffc020);
+    top: 50%; left: 50%;
+    border-radius: 2px;
+    opacity: 0;
+    filter: drop-shadow(0 0 4px var(--rarity, #ffc020));
+    animation: shardFly 0.8s ease-out 2.1s forwards;
+  }
+
+  /* ── Vertical light beam (phase 3) ── */
+  .beam-mega {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 0;
+    background: linear-gradient(to top,
+      transparent 0%,
+      var(--rarity, #ffc020) 30%,
+      rgba(255,255,255,0.9) 70%,
+      transparent 100%);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    animation: beamGrow 0.5s ease-out 2.2s forwards,
+               beamShrink 0.5s ease-in 4.2s forwards;
+    z-index: 2;
+    filter: blur(1px);
+    pointer-events: none;
+  }
+  .beam-mega::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    filter: blur(12px);
+    opacity: 0.5;
+  }
+  .beam-mega::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--rarity, #ffc020) 0%, transparent 60%);
+    opacity: 0.6;
+    filter: blur(20px);
+  }
+
+  /* ── Reward descending ── */
+  .reward-card {
+    position: absolute;
+    width: 200px;
+    padding: 22px 18px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #2a1e14 0%, #1a1208 100%);
+    border: 2px solid var(--rarity, #ffc020);
+    box-shadow:
+      0 0 60px var(--rarity, #ffc020),
+      0 0 120px var(--rarity-soft, rgba(255,192,32,0.4)),
+      inset 0 0 30px rgba(0,0,0,0.6);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(-220px) scale(0.6) rotate(-8deg);
+    animation: rewardFall 0.8s cubic-bezier(.3,.1,.4,1.4) 2.6s forwards,
+               rewardSettle 0.4s ease-out 3.4s forwards;
+    z-index: 5;
+  }
+  .reward-rarity {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--rarity, #ffc020);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding: 4px 10px;
+    display: inline-block;
+    border: 1px solid var(--rarity, #ffc020);
+    border-radius: 4px;
+  }
+  .reward-icon {
+    font-size: 72px;
+    margin: 10px 0;
+    filter: drop-shadow(0 0 18px var(--rarity, #ffc020));
+    animation: iconFloat 2s ease-in-out infinite;
+    animation-delay: 3.5s;
+  }
+  .reward-name {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: #ede4d4;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .reward-sub { font-size: 11px; color: #8a7e6a; letter-spacing: 1px; }
+
+  /* ── Ground impact ring when reward lands ── */
+  .impact-ring {
+    position: absolute;
+    top: 65%;
+    left: 50%;
+    width: 200px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--rarity, #ffc020);
+    transform: translate(-50%, -50%) scaleY(0.4);
+    opacity: 0;
+    animation: impactRing 0.8s ease-out 3.4s forwards;
+    filter: blur(1px);
+  }
+
+  /* ── Speed lines during fall (emphasizes descent) ── */
+  .speed-line {
+    position: absolute;
+    width: 2px;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, var(--rarity, #ffc020), transparent);
+    opacity: 0;
+    animation: speedLineFall 0.8s ease-out 2.6s;
+  }
+
+  /* ── Replay ── */
+  .replay {
+    margin: 30px 0 40px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #dc2626, #d4943a);
+    border: none; border-radius: 10px;
+    color: #0f0c08;
+    font-family: 'Cinzel', serif;
+    font-weight: 800; font-size: 14px;
+    cursor: pointer; letter-spacing: 1px;
+    position: relative; z-index: 20;
+  }
+  .replay:active { transform: scale(0.96); }
+
+  /* Keyframes */
+  @keyframes chestZoom {
+    0% { opacity: 0; transform: scale(0.3); }
+    60% { transform: scale(1.15); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes chestTrembor {
+    0%, 100% { transform: scale(1) translate(0,0) rotate(0); }
+    25% { transform: scale(1.05) translate(-5px,-3px) rotate(-4deg); }
+    75% { transform: scale(1.05) translate(5px,-3px) rotate(4deg); }
+  }
+  @keyframes chestDestroy {
+    0% { opacity: 1; transform: scale(1.15); filter: brightness(3); }
+    100% { opacity: 0; transform: scale(0.4); filter: brightness(5); }
+  }
+  @keyframes screenFlash {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.85; }
+  }
+  @keyframes burstExpand {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(80); }
+  }
+  @keyframes shardFly {
+    0% { opacity: 1; transform: translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(0); }
+    100% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(var(--dist,200px)); }
+  }
+  @keyframes beamGrow {
+    0% { height: 0; opacity: 0.4; }
+    100% { height: 800px; opacity: 1; }
+  }
+  @keyframes beamShrink {
+    to { opacity: 0; }
+  }
+  @keyframes rewardFall {
+    0% { opacity: 0; transform: translateY(-220px) scale(0.6) rotate(-8deg); }
+    30% { opacity: 1; }
+    100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  }
+  @keyframes rewardSettle {
+    0% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-10px) scale(1.05); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  @keyframes impactRing {
+    0% { opacity: 1; transform: translate(-50%,-50%) scaleY(0.4) scaleX(0.3); }
+    100% { opacity: 0; transform: translate(-50%,-50%) scaleY(0.4) scaleX(2.5); }
+  }
+  @keyframes speedLineFall {
+    0% { opacity: 0; transform: translateY(-100px); }
+    30% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(200px); }
+  }
+  @keyframes iconFloat {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="title">Boss Loot</div>
+<div class="subtitle">Option C · Cinematic drama with vertical beam</div>
+
+<div class="controls">
+  <button data-rarity="common" data-color="#909090" data-soft="rgba(144,144,144,0.3)">Common</button>
+  <button data-rarity="uncommon" data-color="#3ecc78" data-soft="rgba(62,204,120,0.3)">Uncommon</button>
+  <button data-rarity="rare" data-color="#3a8ee0" data-soft="rgba(58,142,224,0.3)">Rare</button>
+  <button data-rarity="epic" data-color="#c060f0" data-soft="rgba(192,96,240,0.3)">Epic</button>
+  <button data-rarity="legendary" data-color="#ffc020" data-soft="rgba(255,192,32,0.4)" class="active">Legendary</button>
+</div>
+
+<div id="stage" class="stage" style="--rarity: #ffc020; --rarity-soft: rgba(255,192,32,0.4)"></div>
+
+<button id="replay" class="replay">Replay Animation</button>
+
+<script>
+  const stage = document.getElementById('stage');
+  const replayBtn = document.getElementById('replay');
+  const buttons = document.querySelectorAll('.controls button');
+
+  const rarityData = {
+    common:    { color: '#909090', soft: 'rgba(144,144,144,0.3)', label: 'Common',    icon: '🎁', name: 'Peasant',  sub: 'Common Avatar' },
+    uncommon:  { color: '#3ecc78', soft: 'rgba(62,204,120,0.3)',  label: 'Uncommon',  icon: '🛡️', name: 'Knight',   sub: 'Uncommon Avatar' },
+    rare:      { color: '#3a8ee0', soft: 'rgba(58,142,224,0.3)',  label: 'Rare',      icon: '💙', name: 'Sapphire', sub: 'Rare Skin' },
+    epic:      { color: '#c060f0', soft: 'rgba(192,96,240,0.3)',  label: 'Epic',      icon: '🔮', name: 'Amethyst', sub: 'Epic Skin' },
+    legendary: { color: '#ffc020', soft: 'rgba(255,192,32,0.4)',  label: 'Legendary', icon: '💎', name: 'Aurora Borealis', sub: 'Legendary Skin' }
+  };
+  let current = rarityData.legendary;
+
+  function buildScene() {
+    stage.innerHTML = '';
+    stage.style.setProperty('--rarity', current.color);
+    stage.style.setProperty('--rarity-soft', current.soft);
+
+    // Chest
+    const chest = document.createElement('div');
+    chest.className = 'chest';
+    chest.textContent = '📦';
+    stage.appendChild(chest);
+
+    // Explosion burst
+    const burst = document.createElement('div');
+    burst.className = 'burst';
+    stage.appendChild(burst);
+
+    // Shards
+    for (let i = 0; i < 12; i++) {
+      const shard = document.createElement('div');
+      shard.className = 'shard';
+      const angle = (i / 12) * 360;
+      const dist = 150 + Math.random() * 80;
+      shard.style.setProperty('--angle', angle + 'deg');
+      shard.style.setProperty('--dist', dist + 'px');
+      stage.appendChild(shard);
+    }
+
+    // Screen flash
+    const flash = document.createElement('div');
+    flash.className = 'flash-white';
+    stage.appendChild(flash);
+
+    // Beam
+    const beam = document.createElement('div');
+    beam.className = 'beam-mega';
+    stage.appendChild(beam);
+
+    // Speed lines during fall
+    for (let i = 0; i < 6; i++) {
+      const sl = document.createElement('div');
+      sl.className = 'speed-line';
+      sl.style.left = (20 + i * 12) + '%';
+      sl.style.top = '15%';
+      sl.style.animationDelay = (2.6 + Math.random() * 0.3) + 's';
+      stage.appendChild(sl);
+    }
+
+    // Impact ring
+    const ring = document.createElement('div');
+    ring.className = 'impact-ring';
+    stage.appendChild(ring);
+
+    // Reward card (falls from top)
+    const reward = document.createElement('div');
+    reward.className = 'reward-card';
+    reward.innerHTML = `
+      <div class="reward-rarity">${current.label}</div>
+      <div class="reward-icon">${current.icon}</div>
+      <div class="reward-name">${current.name}</div>
+      <div class="reward-sub">${current.sub}</div>
+    `;
+    stage.appendChild(reward);
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      current = rarityData[btn.dataset.rarity];
+      buildScene();
+    });
+  });
+  replayBtn.addEventListener('click', buildScene);
+  buildScene();
+</script>
+</body>
+</html>

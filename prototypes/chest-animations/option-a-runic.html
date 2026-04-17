@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chest Animation — Runic Invocation</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at center, #1a1410 0%, #0a0706 70%);
+    color: #ede4d4;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin: 20px 0 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    z-index: 10;
+  }
+  .controls button {
+    padding: 6px 14px;
+    border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4);
+    color: #ede4d4;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .controls button.active { background: rgba(212,148,58,0.2); border-color: #d4943a; color: #d4943a; }
+  .controls button:hover:not(.active) { background: rgba(255,255,255,0.08); }
+  .title { font-family: 'Cinzel', serif; font-weight: 900; font-size: 22px; margin: 24px 0 6px; letter-spacing: 2px; color: #d4943a; text-align: center; }
+  .subtitle { font-size: 12px; color: #8a7e6a; margin-bottom: 20px; letter-spacing: 1px; text-transform: uppercase; }
+  .stage {
+    position: relative;
+    width: 340px;
+    height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+  /* ── Phase 1: Rune circle ── */
+  .rune-circle {
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    opacity: 0;
+    animation: runeAppear 1s ease-out forwards;
+  }
+  .rune-circle svg { width: 100%; height: 100%; }
+  .rune-circle circle, .rune-circle path, .rune-circle line {
+    stroke: var(--rarity, #d4943a);
+    fill: none;
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 6px var(--rarity, #d4943a));
+  }
+  .rune-circle .outer { stroke-dasharray: 880; stroke-dashoffset: 880; animation: drawCircle 0.8s ease-out 0.1s forwards; }
+  .rune-circle .inner { stroke-dasharray: 440; stroke-dashoffset: 440; animation: drawCircle 0.7s ease-out 0.3s forwards; }
+  .rune-circle .spoke { stroke-dasharray: 100; stroke-dashoffset: 100; animation: drawCircle 0.4s ease-out 0.5s forwards; }
+  .rune-circle .rune-glyph {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 900;
+    fill: var(--rarity, #d4943a);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    opacity: 0;
+    animation: runeGlyphAppear 0.3s ease-out 0.8s forwards;
+    filter: drop-shadow(0 0 4px var(--rarity, #d4943a));
+  }
+  .rune-circle.rotating { animation: runeRotate 12s linear infinite; }
+
+  /* ── Chest ── */
+  .chest {
+    position: relative;
+    font-size: 80px;
+    z-index: 3;
+    opacity: 0;
+    animation: chestAppear 0.4s ease-out 1s forwards, chestShake 0.3s ease-in-out 1.4s 4;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.8));
+  }
+  /* ── Shockwave ── */
+  .shockwave {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid var(--rarity, #d4943a);
+    opacity: 0;
+    animation: shockwave 0.8s ease-out 2.6s forwards;
+    z-index: 2;
+  }
+  .shockwave.w2 { animation-delay: 2.8s; border-width: 2px; }
+  .shockwave.w3 { animation-delay: 3.0s; border-width: 1px; }
+
+  /* ── Vertical light beam ── */
+  .beam {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    width: 30px;
+    height: 0;
+    background: linear-gradient(to top, transparent, var(--rarity, #d4943a), rgba(255,255,255,0.9));
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+    animation: beamRise 0.6s ease-out 2.9s forwards, beamFade 0.5s ease-out 4.2s forwards;
+    filter: blur(2px);
+    z-index: 2;
+  }
+  .beam::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    filter: blur(8px);
+    opacity: 0.7;
+  }
+
+  /* ── Reward card ── */
+  .reward {
+    position: absolute;
+    width: 180px;
+    padding: 18px 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(40,30,20,0.95), rgba(20,14,10,0.95));
+    border: 2px solid var(--rarity, #d4943a);
+    box-shadow: 0 0 40px var(--rarity, #d4943a), 0 0 80px var(--rarity, #d4943a);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    animation: rewardAppear 0.6s ease-out 3.4s forwards;
+    z-index: 4;
+  }
+  .reward-icon { font-size: 56px; margin-bottom: 8px; }
+  .reward-rarity {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--rarity, #d4943a);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .reward-name { font-family: 'Cinzel', serif; font-size: 20px; font-weight: 900; color: #ede4d4; }
+
+  /* ── Ambient particles for legendary ── */
+  .particle {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--rarity, #d4943a);
+    opacity: 0;
+    animation: particleRise 3s ease-out infinite;
+    filter: drop-shadow(0 0 4px var(--rarity, #d4943a));
+  }
+
+  /* ── Keyframes ── */
+  @keyframes runeAppear { to { opacity: 1; } }
+  @keyframes drawCircle { to { stroke-dashoffset: 0; } }
+  @keyframes runeGlyphAppear { to { opacity: 1; } }
+  @keyframes runeRotate { to { transform: rotate(360deg); } }
+  @keyframes chestAppear {
+    from { opacity: 0; transform: scale(0.3) translateY(30px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes chestShake {
+    0%, 100% { transform: translate(0,0) rotate(0); }
+    25% { transform: translate(-4px, -2px) rotate(-3deg); }
+    75% { transform: translate(4px, -2px) rotate(3deg); }
+  }
+  @keyframes shockwave {
+    0% { opacity: 1; transform: scale(0.3); }
+    100% { opacity: 0; transform: scale(3); }
+  }
+  @keyframes beamRise {
+    0% { height: 0; opacity: 0.2; }
+    100% { height: 300px; opacity: 1; }
+  }
+  @keyframes beamFade {
+    to { opacity: 0; }
+  }
+  @keyframes rewardAppear {
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes particleRise {
+    0% { opacity: 0; transform: translate(0,0) scale(0.5); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx,0), -160px) scale(1.2); }
+  }
+
+  /* ── Replay ── */
+  .replay {
+    margin: 20px 0 40px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #d4943a, #8b5e83);
+    border: none;
+    border-radius: 10px;
+    color: #0f0c08;
+    font-family: 'Cinzel', serif;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform .1s;
+  }
+  .replay:active { transform: scale(0.96); }
+</style>
+</head>
+<body>
+
+<div class="title">Runic Invocation</div>
+<div class="subtitle">Option A · Magic circle + energy beam</div>
+
+<div class="controls">
+  <button data-rarity="common" data-color="#909090">Common</button>
+  <button data-rarity="uncommon" data-color="#3ecc78">Uncommon</button>
+  <button data-rarity="rare" data-color="#3a8ee0">Rare</button>
+  <button data-rarity="epic" data-color="#c060f0">Epic</button>
+  <button data-rarity="legendary" data-color="#ffc020" class="active">Legendary</button>
+</div>
+
+<div id="stage" class="stage" style="--rarity: #ffc020"></div>
+
+<button id="replay" class="replay">Replay Animation</button>
+
+<script>
+  const stage = document.getElementById('stage');
+  const replayBtn = document.getElementById('replay');
+  const buttons = document.querySelectorAll('.controls button');
+
+  let currentRarity = { color: '#ffc020', label: 'Legendary', icon: '💎', name: 'Aurora Borealis' };
+
+  const rarityData = {
+    common:    { color: '#909090', label: 'Common',    icon: '🎁', name: 'Peasant Avatar' },
+    uncommon:  { color: '#3ecc78', label: 'Uncommon',  icon: '🛡️', name: 'Knight Avatar' },
+    rare:      { color: '#3a8ee0', label: 'Rare',      icon: '💙', name: 'Sapphire Skin' },
+    epic:      { color: '#c060f0', label: 'Epic',      icon: '🔮', name: 'Amethyst Skin' },
+    legendary: { color: '#ffc020', label: 'Legendary', icon: '💎', name: 'Aurora Borealis' }
+  };
+
+  function buildScene() {
+    stage.innerHTML = '';
+    stage.style.setProperty('--rarity', currentRarity.color);
+
+    // Rune circle
+    const rune = document.createElement('div');
+    rune.className = 'rune-circle';
+    rune.innerHTML = `
+      <svg viewBox="0 0 300 300">
+        <g class="rotating-group">
+          <circle class="outer" cx="150" cy="150" r="140"/>
+          <circle class="inner" cx="150" cy="150" r="100"/>
+          <line class="spoke" x1="150" y1="10" x2="150" y2="50"/>
+          <line class="spoke" x1="150" y1="250" x2="150" y2="290"/>
+          <line class="spoke" x1="10" y1="150" x2="50" y2="150"/>
+          <line class="spoke" x1="250" y1="150" x2="290" y2="150"/>
+          <text class="rune-glyph" x="150" y="30">ᚨ</text>
+          <text class="rune-glyph" x="150" y="275">ᚱ</text>
+          <text class="rune-glyph" x="30" y="150">ᛖ</text>
+          <text class="rune-glyph" x="270" y="150">ᚾ</text>
+          <text class="rune-glyph" x="70" y="70">ᛟ</text>
+          <text class="rune-glyph" x="230" y="70">ᛏ</text>
+          <text class="rune-glyph" x="70" y="230">ᛉ</text>
+          <text class="rune-glyph" x="230" y="230">ᛗ</text>
+        </g>
+      </svg>
+    `;
+    // After draw phase, start rotation on the group
+    setTimeout(() => {
+      const group = rune.querySelector('svg');
+      group.style.animation = 'runeRotate 20s linear infinite';
+    }, 1200);
+    stage.appendChild(rune);
+
+    // Chest
+    const chest = document.createElement('div');
+    chest.className = 'chest';
+    chest.textContent = '📦';
+    stage.appendChild(chest);
+
+    // Shockwaves
+    for (let i = 1; i <= 3; i++) {
+      const sw = document.createElement('div');
+      sw.className = 'shockwave' + (i > 1 ? ' w' + i : '');
+      stage.appendChild(sw);
+    }
+
+    // Beam
+    const beam = document.createElement('div');
+    beam.className = 'beam';
+    stage.appendChild(beam);
+
+    // Hide chest at reveal
+    setTimeout(() => {
+      chest.style.transition = 'opacity 0.3s';
+      chest.style.opacity = '0';
+    }, 3200);
+
+    // Reward
+    const reward = document.createElement('div');
+    reward.className = 'reward';
+    reward.innerHTML = `
+      <div class="reward-icon">${currentRarity.icon}</div>
+      <div class="reward-rarity">${currentRarity.label}</div>
+      <div class="reward-name">${currentRarity.name}</div>
+    `;
+    stage.appendChild(reward);
+
+    // Legendary: add ambient particles
+    if (currentRarity.label === 'Legendary') {
+      setTimeout(() => {
+        for (let i = 0; i < 20; i++) {
+          const p = document.createElement('div');
+          p.className = 'particle';
+          const angle = Math.random() * Math.PI * 2;
+          const radius = 80 + Math.random() * 60;
+          p.style.left = `calc(50% + ${Math.cos(angle) * radius}px)`;
+          p.style.top = `calc(50% + ${Math.sin(angle) * radius}px)`;
+          p.style.setProperty('--dx', (Math.random() * 40 - 20) + 'px');
+          p.style.animationDelay = (Math.random() * 2) + 's';
+          stage.appendChild(p);
+        }
+      }, 4000);
+    }
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentRarity = rarityData[btn.dataset.rarity];
+      buildScene();
+    });
+  });
+
+  replayBtn.addEventListener('click', buildScene);
+
+  buildScene();
+</script>
+</body>
+</html>
