@@ -370,6 +370,8 @@ async function load(userId){
 
 // save() — localStorage + Supabase (UPDATE first, INSERT if no row)
 var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync to Supabase
+// A "ghost student" is a registered student (non-visitor) who barely engaged with the app
+function isGhost(s){if(!s)return false;if(s.class_code==="visitor")return false;var tq=(s.stats&&s.stats.totalQ)||0;var cr=(s.stats&&s.stats.cardsRev)||0;return tq<=15&&cr<=10;}
 async function save(d){
   saveLocal(d);
   if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
@@ -7129,6 +7131,7 @@ function TeacherDash(p){
   var[detail,setDetail]=useState(null);var[classCode,setClassCode]=useState(function(){try{return localStorage.getItem('toeic-dash-group')||"idrac2026";}catch(e){return"idrac2026";}});
   var[dashTab,setDashTab]=useState("overview"); // "overview" | "analytics"
   var[sortBy,setSortBy]=useState("toeic"); // "toeic"|"xp"|"accuracy"|"time"|"last_active"
+  var[showGhostsOnly,setShowGhostsOnly]=useState(false);
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
   var[groups,setGroups]=useState([]);
   var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard" | "create-group"
@@ -7682,12 +7685,14 @@ function TeacherDash(p){
     }()}
 
     {/* Class KPI cards */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:16}}>
-      <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--cyan)"}}>{students.length}</div><div style={{fontSize:10,color:"var(--t3)"}}>Students</div></div>
-      <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:classAcc>=60?"var(--green)":"var(--orange)"}}>{classAcc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Accuracy</div></div>
-      <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--purple)"}}>{totalSess}</div><div style={{fontSize:10,color:"var(--t3)"}}>Sessions</div></div>
-      <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:20,fontWeight:800,color:"var(--orange)"}}>{fmtTime(totalClassTime)}</div><div style={{fontSize:10,color:"var(--t3)"}}>Total time</div></div>
-    </div>
+    {(function(){var ghostCount=students.filter(isGhost).length;return(
+    <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6,marginBottom:16}}>
+      <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--cyan)"}}>{students.length}</div><div style={{fontSize:10,color:"var(--t3)"}}>Students</div></div>
+      <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:classAcc>=60?"var(--green)":"var(--orange)"}}>{classAcc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Accuracy</div></div>
+      <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--purple)"}}>{totalSess}</div><div style={{fontSize:10,color:"var(--t3)"}}>Sessions</div></div>
+      <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--orange)"}}>{fmtTime(totalClassTime)}</div><div style={{fontSize:10,color:"var(--t3)"}}>Time</div></div>
+      <div className="crd" onClick={function(){if(ghostCount>0){setShowGhostsOnly(!showGhostsOnly);setDashTab("overview");}}} style={{padding:10,textAlign:"center",cursor:ghostCount>0?"pointer":"default",background:showGhostsOnly?"rgba(224,82,82,.12)":"var(--bg2)",borderColor:showGhostsOnly?"rgba(224,82,82,.4)":"var(--bdr)"}}><div className="out" style={{fontSize:18,fontWeight:800,color:ghostCount>0?"var(--red)":"var(--t3)"}}>{ghostCount}</div><div style={{fontSize:10,color:"var(--t3)"}}>{"\uD83D\uDC7B"} Ghosts</div></div>
+    </div>);})()}
 
     {/* ═══ OVERVIEW TAB ═══ */}
     {dashTab==="overview"&&(<div>
@@ -7698,7 +7703,7 @@ function TeacherDash(p){
       </div>
 
       {/* Student list */}
-      <h3 className="out" style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--t2)"}}>Students ({students.length})</h3>
+      <h3 className="out" style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--t2)"}}>{showGhostsOnly?"\uD83D\uDC7B Ghost students":"Students"} ({showGhostsOnly?students.filter(isGhost).length:students.length})</h3>
       {students.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}>
         <p style={{color:"var(--t3)",fontSize:13}}>No students yet. Students appear automatically after onboarding.</p>
       </div>}
@@ -7712,7 +7717,8 @@ function TeacherDash(p){
             {id:"time",label:"Time"},
             {id:"last_active",label:"Last Active"},
           ];
-          var sorted=students.slice().sort(function(a,b){
+          var pool=showGhostsOnly?students.filter(isGhost):students;
+          var sorted=pool.slice().sort(function(a,b){
             if(sortBy==="toeic"){return estimateTOEIC(b).total-estimateTOEIC(a).total;}
             if(sortBy==="xp"){return(b.xp||0)-(a.xp||0);}
             if(sortBy==="accuracy"){
@@ -7728,8 +7734,8 @@ function TeacherDash(p){
             return 0;
           });
           return(<div>
-            {/* Sort pills */}
-            <div style={{display:"flex",gap:4,marginBottom:12,flexWrap:"wrap"}}>
+            {/* Sort pills + Ghost filter toggle */}
+            <div style={{display:"flex",gap:4,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
               {SORT_OPTS.map(function(o){
                 var active=sortBy===o.id;
                 return(<button key={o.id} onClick={function(){setSortBy(o.id);}}
@@ -7737,6 +7743,10 @@ function TeacherDash(p){
                     background:active?"rgba(0,212,255,.1)":"transparent",color:active?"var(--cyan)":"var(--t3)",
                     fontSize:11,fontWeight:active?700:400,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}} className="out">{o.label}</button>);
               })}
+              <button onClick={function(){setShowGhostsOnly(!showGhostsOnly);}}
+                style={{padding:"5px 10px",borderRadius:99,border:"1px solid "+(showGhostsOnly?"rgba(224,82,82,.6)":"var(--bdr)"),
+                  background:showGhostsOnly?"rgba(224,82,82,.15)":"transparent",color:showGhostsOnly?"var(--red)":"var(--t3)",
+                  fontSize:11,fontWeight:showGhostsOnly?700:400,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginLeft:"auto"}} className="out">{"\uD83D\uDC7B"} Ghosts only</button>
             </div>
             {/* Student rows */}
             {sorted.map(function(s,i){
@@ -7750,7 +7760,7 @@ function TeacherDash(p){
                 onClick={function(){setDetail(origIdx);}}>
                 <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:800,flexShrink:0}} className="out">{s.name.charAt(0).toUpperCase()}</div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div className="out" style={{fontWeight:700,fontSize:13}}>{s.name}</div>
+                  <div className="out" style={{fontWeight:700,fontSize:13,display:"flex",alignItems:"center",gap:6}}>{s.name}{isGhost(s)&&<span title="Ghost student: ≤15 questions and ≤10 cards" style={{fontSize:11,opacity:.7}}>{"\uD83D\uDC7B"}</span>}</div>
                   <div style={{display:"flex",gap:6,marginTop:2,flexWrap:"wrap"}}>
                     <span style={{fontSize:10,color:"var(--t3)"}}>{s.stats?s.stats.sessions:0} sess</span>
                     <span style={{fontSize:10,color:"var(--t3)"}}>⏱{fmtTime(s.total_time||0)}</span>
