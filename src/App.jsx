@@ -7185,6 +7185,360 @@ function ChestOpenModal(p){
 }
 
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// WEEKLY REPORT — Rapport pédagogique hebdomadaire (FR)
+// Génère un rapport print-friendly pour le directeur pédagogique
+// ═══════════════════════════════════════════════════════════════
+
+function WeeklyReport(p){
+  // p.classCode, p.students (current), p.onBack
+  var [snaps,setSnaps]=useState(null);
+  var [loading,setLoading]=useState(true);
+
+  // Compute week boundaries: last completed week (Monday-Sunday)
+  var now=new Date();
+  var dow=now.getDay()||7; // 1=Mon..7=Sun
+  var lastMonday=new Date(now);lastMonday.setDate(now.getDate()-dow+1-7);lastMonday.setHours(0,0,0,0);
+  var lastSunday=new Date(lastMonday);lastSunday.setDate(lastMonday.getDate()+6);
+  var prevMonday=new Date(lastMonday);prevMonday.setDate(lastMonday.getDate()-7);
+  var lastMondayStr=lastMonday.toISOString().split("T")[0];
+  var prevMondayStr=prevMonday.toISOString().split("T")[0];
+
+  useEffect(function(){
+    supabase.from("weekly_snapshots")
+      .select("*")
+      .eq("class_code",p.classCode)
+      .in("week_start",[lastMondayStr,prevMondayStr])
+      .then(function(res){setSnaps(res.data||[]);setLoading(false);});
+  },[]);
+
+  function fmtDate(d){var dd=String(d.getDate()).padStart(2,"0");var mm=String(d.getMonth()+1).padStart(2,"0");return dd+"/"+mm;}
+  function fmtDelta(n,unit){if(n===null||n===undefined||isNaN(n))return"—";var sign=n>0?"+":"";return sign+Math.round(n)+(unit||"");}
+  function fmtPct(n){if(n===null||n===undefined||isNaN(n))return"—";return(n>=0?"+":"")+Math.round(n)+"%";}
+
+  if(loading)return(<div style={{padding:40,textAlign:"center"}}><p style={{color:"var(--t2)"}}>Chargement du rapport...</p></div>);
+
+  // Filter Teacher out
+  var thisWeek=(snaps||[]).filter(function(s){return s.week_start===lastMondayStr&&s.student_name!=="Teacher";});
+  var prevWeek=(snaps||[]).filter(function(s){return s.week_start===prevMondayStr&&s.student_name!=="Teacher";});
+
+  // Map previous week by name for delta computation
+  var prevByName={};prevWeek.forEach(function(s){prevByName[s.student_name]=s;});
+  var studentsByName={};(p.students||[]).forEach(function(s){if(s.name!=="Teacher")studentsByName[s.name]=s;});
+
+  // ──── KPIs ────
+  var activeThis=thisWeek.filter(function(s){return(s.xp_this_week||0)>0||(s.daily_completions||0)>0;}).length;
+  var activePrev=prevWeek.filter(function(s){return(s.xp_this_week||0)>0||(s.daily_completions||0)>0;}).length;
+  var classXP=thisWeek.reduce(function(a,s){return a+(s.xp_this_week||0);},0);
+  var classXPPrev=prevWeek.reduce(function(a,s){return a+(s.xp_this_week||0);},0);
+
+  // Sessions this week = delta of cumulative
+  var sessionsThis=0,sessionsPrev=0,qThis=0,qPrev=0,correctThis=0,correctPrev=0;
+  thisWeek.forEach(function(s){
+    var p=prevByName[s.student_name];
+    var ts=(s.stats_snapshot&&s.stats_snapshot.sessions)||0;var ps=(p&&p.stats_snapshot&&p.stats_snapshot.sessions)||0;
+    sessionsThis+=Math.max(0,ts-ps);
+    var tq=(s.stats_snapshot&&s.stats_snapshot.totalQ)||0;var pq=(p&&p.stats_snapshot&&p.stats_snapshot.totalQ)||0;
+    qThis+=Math.max(0,tq-pq);
+    var tc=(s.stats_snapshot&&s.stats_snapshot.correct)||0;var pc=(p&&p.stats_snapshot&&p.stats_snapshot.correct)||0;
+    correctThis+=Math.max(0,tc-pc);
+  });
+  prevWeek.forEach(function(s){
+    // For prev week session/accuracy, we'd need week-2 snapshot — skip for simplicity
+    sessionsPrev+=0;qPrev+=0;correctPrev+=0;
+  });
+  var accThis=qThis>0?Math.round(correctThis/qThis*100):0;
+
+  // Top 3 performers (by weekly XP)
+  var topPerf=thisWeek.slice().sort(function(a,b){return(b.xp_this_week||0)-(a.xp_this_week||0);}).slice(0,3);
+
+  // Engagement: active vs moderate vs absent
+  var allKnown=Object.keys(studentsByName);
+  var engagement={active:0,moderate:0,absent:0};
+  allKnown.forEach(function(n){
+    var s=thisWeek.find(function(x){return x.student_name===n;});
+    var dc=(s&&s.daily_completions)||0;
+    if(dc>=3)engagement.active++;
+    else if(dc>=1)engagement.moderate++;
+    else engagement.absent++;
+  });
+
+  // Ghost students (persistent low engagement)
+  var ghosts=(p.students||[]).filter(isGhost);
+
+  // Module engagement this week (based on module_scores delta)
+  var MODULE_LABELS={drill:"Part 5 Drill",csess:"Flashcards",tavern:"Word Tavern",lisP1:"Listening P1",lisP2:"Listening P2",lisP3:"Listening P3",lisP4:"Listening P4",p6:"Part 6",p7:"Part 7",ablitz:"Audio Blitz",clue:"Clue Hunter",sbuild:"Sentence Builder",wfall:"Word Fall",matchEasy:"Speed Match",pvdojo:"Phrasal Verbs",stratquiz:"Strategy Quiz",timesim:"Time Sim",mock1:"Mock Test 1",mock2:"Mock Test 2",mock3:"Mock Test 3"};
+  var modEngagement={}; // modId → count of students who practiced
+  thisWeek.forEach(function(s){
+    var p=prevByName[s.student_name];
+    var cms=s.module_scores_snapshot||{};var pms=(p&&p.module_scores_snapshot)||{};
+    Object.keys(cms).forEach(function(k){
+      var ct=(cms[k]&&cms[k].total)||0;var pt=(pms[k]&&pms[k].total)||0;
+      if(ct>pt){modEngagement[k]=(modEngagement[k]||0)+1;}
+    });
+  });
+  var totalStudentsWithSnap=Math.max(1,thisWeek.length);
+  var modEngagementSorted=Object.keys(modEngagement).map(function(k){return{id:k,label:MODULE_LABELS[k]||k,count:modEngagement[k],pct:Math.round(modEngagement[k]/totalStudentsWithSnap*100)};}).sort(function(a,b){return b.pct-a.pct;});
+
+  // Per-module accuracy this week with delta vs prev
+  var modAccThis={},modAccPrev={};
+  thisWeek.forEach(function(s){
+    var p=prevByName[s.student_name];
+    var cms=s.module_scores_snapshot||{};var pms=(p&&p.module_scores_snapshot)||{};
+    Object.keys(cms).forEach(function(k){
+      var ct=(cms[k]&&cms[k].total)||0;var cc=(cms[k]&&cms[k].correct)||0;
+      var pt=(pms[k]&&pms[k].total)||0;var pc=(pms[k]&&pms[k].correct)||0;
+      var dt=ct-pt;var dc=cc-pc;
+      if(dt>0){
+        if(!modAccThis[k])modAccThis[k]={c:0,t:0};
+        modAccThis[k].c+=dc;modAccThis[k].t+=dt;
+      }
+    });
+  });
+  // For prev week accuracy, need week-2 snapshots — omit for MVP
+  var modAccSorted=Object.keys(modAccThis).filter(function(k){return modAccThis[k].t>=5;}).map(function(k){return{id:k,label:MODULE_LABELS[k]||k,acc:Math.round(modAccThis[k].c/modAccThis[k].t*100),vol:modAccThis[k].t};}).sort(function(a,b){return a.acc-b.acc;});
+
+  // Mock Tests this week (new completions)
+  var mocksThisWeek=[];
+  thisWeek.forEach(function(s){
+    var cmr=s.mock_results_snapshot||{};var pmr=(prevByName[s.student_name]&&prevByName[s.student_name].mock_results_snapshot)||{};
+    ["mock1","mock2","mock3","boss"].forEach(function(k){
+      if(cmr[k]&&!pmr[k])mocksThisWeek.push({name:s.student_name,mock:k,score:cmr[k].toeicEstimate||cmr[k].score||0});
+    });
+  });
+
+  // TOEIC distribution
+  var buckets={s0:0,s400:0,s500:0,s600:0,s700:0,s800:0};
+  (p.students||[]).forEach(function(s){
+    if(s.name==="Teacher")return;
+    var t=estimateTOEICScore(s.module_scores||{}).total;
+    if(t<400)buckets.s0++;
+    else if(t<500)buckets.s400++;
+    else if(t<600)buckets.s500++;
+    else if(t<700)buckets.s600++;
+    else if(t<800)buckets.s700++;
+    else buckets.s800++;
+  });
+
+  // Top 5 XP progressers (already sorted by topPerf above, extend to 5)
+  var top5XP=thisWeek.slice().sort(function(a,b){return(b.xp_this_week||0)-(a.xp_this_week||0);}).slice(0,5);
+
+  // Alertes
+  var dropouts=[];
+  allKnown.forEach(function(n){
+    var t=thisWeek.find(function(x){return x.student_name===n;});
+    var pv=prevByName[n];
+    var tActive=(t&&((t.xp_this_week||0)>0||(t.daily_completions||0)>0));
+    var pActive=(pv&&((pv.xp_this_week||0)>0||(pv.daily_completions||0)>0));
+    if(!tActive&&pActive)dropouts.push(n);
+  });
+  var nearMilestone=(p.students||[]).filter(function(s){
+    if(s.name==="Teacher")return false;
+    var t=estimateTOEICScore(s.module_scores||{}).total;
+    return(t>=620&&t<650)||(t>=670&&t<700);
+  }).map(function(s){var t=estimateTOEICScore(s.module_scores||{}).total;return{name:s.name,toeic:t,near:t<650?650:700};});
+
+  // Recommandations pédagogiques auto
+  var recos=[];
+  // Modules under-practiced (< 20% engagement)
+  var underPracticed=Object.keys(MODULE_LABELS).filter(function(k){
+    var eng=modEngagement[k]||0;
+    return eng/totalStudentsWithSnap<0.2&&["lisP1","lisP2","lisP3","lisP4","p6","p7"].indexOf(k)!==-1;
+  });
+  if(underPracticed.length>0){
+    recos.push("Modules peu travaillés cette semaine : "+underPracticed.map(function(k){return MODULE_LABELS[k];}).join(", ")+". Envisager une session dédiée en cours.");
+  }
+  // Very low engagement
+  if(engagement.absent>engagement.active+engagement.moderate){
+    recos.push("Plus de la moitié de la classe est absente cette semaine ("+engagement.absent+" étudiants sans activité). Signal fort de désengagement à adresser.");
+  }
+  // Mock-ready students
+  var mockReady=(p.students||[]).filter(function(s){return s.name!=="Teacher"&&(!s.mock_results||(!s.mock_results.mock1&&!s.mock_results.mock2&&!s.mock_results.mock3))&&(s.stats&&s.stats.totalQ>=50);}).length;
+  if(mockReady>=3){
+    recos.push(mockReady+" étudiants ont suffisamment pratiqué (50+ questions) mais n'ont pas encore fait de Mock Test. Envisager une session Mock collective.");
+  }
+  // Dropouts
+  if(dropouts.length>=3){
+    recos.push(dropouts.length+" étudiants actifs la semaine précédente n'ont rien fait cette semaine. Relance humaine recommandée.");
+  }
+  if(recos.length===0)recos.push("Dynamique de classe saine cette semaine. Poursuivre sur cette lancée.");
+
+  // ──── RENDER ────
+  var leagueName=p.classCode||"idrac2026";
+  return(
+  <div style={{minHeight:"100vh",background:"#fff",color:"#222",padding:"24px 20px"}} className="weekly-report">
+    <style>{"@media print{.no-print{display:none!important}.weekly-report{padding:0!important}body{background:#fff!important}.wr-card{page-break-inside:avoid}.wr-section{page-break-inside:avoid}}.weekly-report h1,.weekly-report h2,.weekly-report h3{font-family:'Cinzel','Outfit',serif;color:#1a1a1a}.weekly-report p,.weekly-report div,.weekly-report span{font-family:'DM Sans',Arial,sans-serif}"}</style>
+
+    {/* Top nav (hidden on print) */}
+    <div className="no-print" style={{display:"flex",gap:10,marginBottom:24,justifyContent:"space-between",maxWidth:820,margin:"0 auto 24px"}}>
+      <button onClick={p.onBack} style={{padding:"8px 16px",background:"#f0f0f0",border:"1px solid #ddd",borderRadius:8,cursor:"pointer",fontSize:13}}>{"← Retour"}</button>
+      <button onClick={function(){window.print();}} style={{padding:"8px 16px",background:"#1a1a1a",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600}}>{"🖨️ Imprimer / Enregistrer en PDF"}</button>
+    </div>
+
+    <div style={{maxWidth:820,margin:"0 auto"}}>
+      {/* ──── HEADER ──── */}
+      <div style={{borderBottom:"3px solid #1a1a1a",paddingBottom:16,marginBottom:24}}>
+        <p style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:"#666",margin:0}}>TOEIC Arena · Rapport hebdomadaire</p>
+        <h1 style={{fontSize:28,fontWeight:900,margin:"6px 0 4px"}}>Bilan pédagogique — {leagueName}</h1>
+        <p style={{fontSize:14,color:"#555",margin:0}}>Semaine du {fmtDate(lastMonday)} au {fmtDate(lastSunday)} · {p.students.length} étudiants inscrits</p>
+      </div>
+
+      {/* ──── SECTION 1 : EXECUTIVE SUMMARY ──── */}
+      <div className="wr-section" style={{marginBottom:28}}>
+        <h2 style={{fontSize:18,borderLeft:"4px solid #d4943a",paddingLeft:10,margin:"0 0 14px"}}>1. Synthèse de la semaine</h2>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10,marginBottom:16}}>
+          <div className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 12px"}}>
+            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:1}}>Actifs</div>
+            <div style={{fontSize:24,fontWeight:800}}>{activeThis}<span style={{fontSize:12,color:"#888",fontWeight:400}}>/{p.students.length}</span></div>
+            <div style={{fontSize:11,color:activeThis>=activePrev?"#22803d":"#b82020"}}>{activePrev>0?fmtPct((activeThis-activePrev)/activePrev*100)+" vs S-1":"—"}</div>
+          </div>
+          <div className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 12px"}}>
+            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:1}}>XP classe</div>
+            <div style={{fontSize:24,fontWeight:800}}>{classXP.toLocaleString()}</div>
+            <div style={{fontSize:11,color:classXP>=classXPPrev?"#22803d":"#b82020"}}>{classXPPrev>0?fmtPct((classXP-classXPPrev)/classXPPrev*100)+" vs S-1":"—"}</div>
+          </div>
+          <div className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 12px"}}>
+            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:1}}>Sessions</div>
+            <div style={{fontSize:24,fontWeight:800}}>{sessionsThis}</div>
+            <div style={{fontSize:11,color:"#888"}}>{qThis} questions répondues</div>
+          </div>
+          <div className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 12px"}}>
+            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:1}}>Précision</div>
+            <div style={{fontSize:24,fontWeight:800,color:accThis>=60?"#22803d":accThis>=40?"#c87a35":"#b82020"}}>{accThis}%</div>
+            <div style={{fontSize:11,color:"#888"}}>sur {qThis} questions</div>
+          </div>
+        </div>
+
+        <h3 style={{fontSize:13,fontWeight:700,margin:"12px 0 8px"}}>🏆 Top 3 performeurs de la semaine</h3>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+          {topPerf.map(function(s,i){var medal=["🥇","🥈","🥉"][i];return(
+            <div key={i} className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 12px",background:i===0?"#fff9e6":"#fafafa"}}>
+              <div style={{fontSize:20}}>{medal}</div>
+              <div style={{fontSize:13,fontWeight:700}}>{s.student_name}</div>
+              <div style={{fontSize:11,color:"#666"}}>{(s.xp_this_week||0).toLocaleString()} XP · {s.daily_completions||0} jours actifs</div>
+            </div>);
+          })}
+          {topPerf.length===0&&<div style={{gridColumn:"1/-1",fontSize:12,color:"#888",fontStyle:"italic"}}>Aucune activité enregistrée cette semaine.</div>}
+        </div>
+      </div>
+
+      {/* ──── SECTION 2 : ENGAGEMENT ──── */}
+      <div className="wr-section" style={{marginBottom:28}}>
+        <h2 style={{fontSize:18,borderLeft:"4px solid #d4943a",paddingLeft:10,margin:"0 0 14px"}}>2. Engagement des étudiants</h2>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+          <div className="wr-card" style={{border:"1px solid #c6e9d0",borderRadius:8,padding:"10px 12px",background:"#f3fbf6"}}>
+            <div style={{fontSize:10,color:"#22803d",textTransform:"uppercase",letterSpacing:1,fontWeight:700}}>Actifs (3j+)</div>
+            <div style={{fontSize:22,fontWeight:800,color:"#22803d"}}>{engagement.active}</div>
+          </div>
+          <div className="wr-card" style={{border:"1px solid #f0d8b0",borderRadius:8,padding:"10px 12px",background:"#fff8ed"}}>
+            <div style={{fontSize:10,color:"#c87a35",textTransform:"uppercase",letterSpacing:1,fontWeight:700}}>Modérés (1-2j)</div>
+            <div style={{fontSize:22,fontWeight:800,color:"#c87a35"}}>{engagement.moderate}</div>
+          </div>
+          <div className="wr-card" style={{border:"1px solid #f0c2c2",borderRadius:8,padding:"10px 12px",background:"#fdeeee"}}>
+            <div style={{fontSize:10,color:"#b82020",textTransform:"uppercase",letterSpacing:1,fontWeight:700}}>Absents (0j)</div>
+            <div style={{fontSize:22,fontWeight:800,color:"#b82020"}}>{engagement.absent}</div>
+          </div>
+        </div>
+
+        <h3 style={{fontSize:13,fontWeight:700,margin:"12px 0 8px"}}>📊 Engagement par module (% étudiants l'ayant pratiqué cette semaine)</h3>
+        <div className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 14px"}}>
+          {modEngagementSorted.slice(0,10).map(function(m,i){return(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+              <div style={{width:140,fontSize:11,color:"#333"}}>{m.label}</div>
+              <div style={{flex:1,height:12,background:"#f0f0f0",borderRadius:6,overflow:"hidden"}}>
+                <div style={{width:m.pct+"%",height:"100%",background:m.pct>=50?"#22803d":m.pct>=25?"#c87a35":"#b82020"}}/>
+              </div>
+              <div style={{width:50,fontSize:11,fontWeight:700,textAlign:"right"}}>{m.pct}% ({m.count})</div>
+            </div>);
+          })}
+          {modEngagementSorted.length===0&&<p style={{fontSize:11,color:"#888",margin:0,fontStyle:"italic"}}>Aucune activité de module enregistrée.</p>}
+        </div>
+
+        {ghosts.length>0&&<div className="wr-card" style={{marginTop:12,border:"1px solid #f0c2c2",borderRadius:8,padding:"10px 14px",background:"#fdeeee"}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#b82020",marginBottom:4}}>👻 Étudiants fantômes persistants ({ghosts.length})</div>
+          <div style={{fontSize:11,color:"#555",lineHeight:1.6}}>{ghosts.map(function(g){return g.name;}).join(" · ")}</div>
+          <div style={{fontSize:10,color:"#888",marginTop:4,fontStyle:"italic"}}>Critère : ≤15 questions ET ≤10 cartes depuis l'inscription.</div>
+        </div>}
+      </div>
+
+      {/* ──── SECTION 3 : PROGRESSION ──── */}
+      <div className="wr-section" style={{marginBottom:28}}>
+        <h2 style={{fontSize:18,borderLeft:"4px solid #d4943a",paddingLeft:10,margin:"0 0 14px"}}>3. Progression pédagogique</h2>
+
+        <h3 style={{fontSize:13,fontWeight:700,margin:"8px 0 8px"}}>🎯 Précision par module cette semaine (10 modules les plus fragiles)</h3>
+        <div className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 14px",marginBottom:14}}>
+          {modAccSorted.slice(0,10).map(function(m,i){return(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+              <div style={{width:140,fontSize:11,color:"#333"}}>{m.label}</div>
+              <div style={{flex:1,height:12,background:"#f0f0f0",borderRadius:6,overflow:"hidden"}}>
+                <div style={{width:m.acc+"%",height:"100%",background:m.acc>=70?"#22803d":m.acc>=50?"#c87a35":"#b82020"}}/>
+              </div>
+              <div style={{width:80,fontSize:11,fontWeight:700,textAlign:"right",color:m.acc>=70?"#22803d":m.acc>=50?"#c87a35":"#b82020"}}>{m.acc}% <span style={{color:"#888",fontWeight:400}}>({m.vol}Q)</span></div>
+            </div>);
+          })}
+          {modAccSorted.length===0&&<p style={{fontSize:11,color:"#888",margin:0,fontStyle:"italic"}}>Pas assez de données de module cette semaine.</p>}
+        </div>
+
+        <h3 style={{fontSize:13,fontWeight:700,margin:"12px 0 8px"}}>📜 Mock Tests complétés cette semaine</h3>
+        <div className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 14px",marginBottom:14}}>
+          {mocksThisWeek.length>0?mocksThisWeek.map(function(m,i){var label=m.mock==="boss"?"Final Arena":"Mock "+m.mock.replace("mock","");return(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:12,padding:"3px 0"}}>
+              <span><strong>{m.name}</strong> — {label}</span>
+              <span style={{fontWeight:700,color:m.score>=700?"#22803d":m.score>=500?"#c87a35":"#b82020"}}>{m.score}</span>
+            </div>);
+          }):<p style={{fontSize:11,color:"#888",margin:0,fontStyle:"italic"}}>Aucun Mock Test complété cette semaine.</p>}
+        </div>
+
+        <h3 style={{fontSize:13,fontWeight:700,margin:"12px 0 8px"}}>📈 Distribution TOEIC estimé de la classe</h3>
+        <div className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 14px"}}>
+          {[{k:"s0",l:"< 400",c:"#b82020"},{k:"s400",l:"400–499",c:"#c87a35"},{k:"s500",l:"500–599",c:"#d4943a"},{k:"s600",l:"600–699",c:"#b0a030"},{k:"s700",l:"700–799",c:"#22803d"},{k:"s800",l:"800+",c:"#0f6020"}].map(function(b,i){
+            var tot=Object.keys(buckets).reduce(function(a,k){return a+buckets[k];},0);var pct=tot>0?Math.round(buckets[b.k]/tot*100):0;
+            return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+              <div style={{width:90,fontSize:11,color:"#333"}}>{b.l}</div>
+              <div style={{flex:1,height:10,background:"#f0f0f0",borderRadius:6,overflow:"hidden"}}>
+                <div style={{width:pct+"%",height:"100%",background:b.c}}/>
+              </div>
+              <div style={{width:60,fontSize:11,fontWeight:700,textAlign:"right"}}>{buckets[b.k]} ({pct}%)</div>
+            </div>);
+          })}
+        </div>
+      </div>
+
+      {/* ──── SECTION 4 : ALERTES & RECOMMANDATIONS ──── */}
+      <div className="wr-section" style={{marginBottom:28}}>
+        <h2 style={{fontSize:18,borderLeft:"4px solid #d4943a",paddingLeft:10,margin:"0 0 14px"}}>4. Alertes &amp; recommandations</h2>
+
+        {dropouts.length>0&&<div className="wr-card" style={{border:"1px solid #f0c2c2",borderRadius:8,padding:"10px 14px",background:"#fdeeee",marginBottom:10}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#b82020",marginBottom:4}}>⚠️ Décrochages récents ({dropouts.length})</div>
+          <div style={{fontSize:11,color:"#555",lineHeight:1.6}}>{dropouts.join(" · ")}</div>
+          <div style={{fontSize:10,color:"#888",marginTop:4,fontStyle:"italic"}}>Étudiants actifs la semaine précédente, inactifs cette semaine.</div>
+        </div>}
+
+        {nearMilestone.length>0&&<div className="wr-card" style={{border:"1px solid #c8deeb",borderRadius:8,padding:"10px 14px",background:"#f2f8fc",marginBottom:10}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#1e6dac",marginBottom:4}}>🎯 Étudiants proches d'un palier</div>
+          {nearMilestone.map(function(s,i){return(
+            <div key={i} style={{fontSize:11,color:"#333"}}><strong>{s.name}</strong> : TOEIC {s.toeic} → {s.toeic<650?"Endless Arena (650)":"certification TOEIC (700)"}</div>);
+          })}
+        </div>}
+
+        <div className="wr-card" style={{border:"1px solid #d4c090",borderRadius:8,padding:"10px 14px",background:"#fdf9ed"}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#8b6a15",marginBottom:6}}>💡 Recommandations pédagogiques</div>
+          <ul style={{margin:"0 0 0 18px",padding:0,fontSize:11,lineHeight:1.6,color:"#333"}}>
+            {recos.map(function(r,i){return(<li key={i} style={{marginBottom:4}}>{r}</li>);})}
+          </ul>
+        </div>
+      </div>
+
+      {/* ──── FOOTER ──── */}
+      <div style={{borderTop:"1px solid #ddd",paddingTop:12,marginTop:24,textAlign:"center"}}>
+        <p style={{fontSize:10,color:"#888",margin:0}}>TOEIC Arena · Rapport généré le {fmtDate(now)} · Jérémy Leixa · IDRAC Business School</p>
+      </div>
+    </div>
+  </div>);
+}
+
 // TeacherDash v2.0 — Stats avancées + Export CSV
 // REPLACES the existing TeacherDash function (lines 3124-3250)
 // ═══════════════════════════════════════════════════════════════
@@ -7202,6 +7556,7 @@ function TeacherDash(p){
   var[dashTab,setDashTab]=useState("overview"); // "overview" | "analytics"
   var[sortBy,setSortBy]=useState("toeic"); // "toeic"|"xp"|"accuracy"|"time"|"last_active"
   var[showGhostsOnly,setShowGhostsOnly]=useState(false);
+  var[showReport,setShowReport]=useState(false);
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
   var[groups,setGroups]=useState([]);
   var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard" | "create-group"
@@ -7399,6 +7754,7 @@ function TeacherDash(p){
   }
 
   if(loading)return(<div className="app" style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><p className="out" style={{color:"var(--t2)"}}>Loading dashboard...</p></div>);
+  if(showReport)return(<WeeklyReport classCode={classCode} students={students} onBack={function(){setShowReport(false);}}/>);
 
   // ═══════════════════════════════════
   // STUDENT DETAIL VIEW
@@ -7767,9 +8123,10 @@ function TeacherDash(p){
     {/* ═══ OVERVIEW TAB ═══ */}
     {dashTab==="overview"&&(<div>
       {/* Action buttons */}
-      <div style={{display:"flex",gap:8,marginBottom:16}}>
-        <button className="btn1" onClick={function(){setLoad(true);loadStudents();}} style={{flex:1,fontSize:13}}>🔄 Refresh</button>
-        <button className="btn2" onClick={exportCSV} style={{flex:1,fontSize:13,borderColor:"rgba(var(--cx),.3)",color:"var(--cyan)"}}>📥 Export CSV</button>
+      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+        <button className="btn1" onClick={function(){setLoad(true);loadStudents();}} style={{flex:"1 1 30%",fontSize:13}}>🔄 Refresh</button>
+        <button className="btn2" onClick={exportCSV} style={{flex:"1 1 30%",fontSize:13,borderColor:"rgba(var(--cx),.3)",color:"var(--cyan)"}}>📥 Export CSV</button>
+        <button className="btn2" onClick={function(){setShowReport(true);}} style={{flex:"1 1 30%",fontSize:13,borderColor:"rgba(240,200,80,.4)",color:"var(--gold)"}}>📄 Rapport hebdo</button>
       </div>
 
       {/* Student list */}
