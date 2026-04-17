@@ -4,10 +4,11 @@
 
 TOEIC Arena is a gamified TOEIC exam preparation web application built by Jérémy Leixa, English trainer at IDRAC Business School (Lyon/Grenoble). Used by ~66 Bachelor 3 students (class code: `idrac2026`) and planned for deployment at other institutions (CESI, professional learners).
 
-The app is a **monolithic React application** — all UI logic lives in `src/App.jsx` (~9,400 lines). Jérémy is the sole developer; Claude is the technical partner.
+The app is a **monolithic React application** — all UI logic lives in `src/App.jsx` (~10,700 lines as of 2026-04-17). Jérémy is the sole developer; Claude is the technical partner.
 
-**Live URL:** Deployed on Vercel  
+**Live URL:** Deployed on Vercel
 **Supabase project ref:** `huklmklwvwwhhrrcyytq`
+**Current state:** See `CONTEXT.md` at project root for the living state (what's done, what's next).
 
 ---
 
@@ -18,9 +19,10 @@ The app is a **monolithic React application** — all UI logic lives in `src/App
 - **Data files:** `src/data/*.js` — content separated by module
 - **Backend:** Supabase (PostgreSQL, Realtime for duels, Edge Functions for cron)
 - **Hosting:** Vercel (serverless functions at `api/`)
-- **Audio:** Web Audio API (SFX/jingles in `src/data/sounds.js`), pre-generated MP3s via ElevenLabs (stored in `public/audio/`)
-- **BGM:** 5 loops generated via Mureka AI (`public/audio/bgm/`)
+- **Audio:** Web Audio API (SFX/jingles in `src/sounds.js`), pre-generated MP3s via ElevenLabs (stored in `public/audio/`)
+- **BGM:** 7 loops generated via Mureka AI (`public/audio/bgm/`)
 - **PWA:** `manifest.json`, `sw.js` v3, VAPID push notifications
+- **Haptic:** `navigator.vibrate()` progressive enhancement (Android; silent on iOS)
 
 ---
 
@@ -41,62 +43,74 @@ No test framework integrated — testing is manual.
 
 ```
 src/
-  App.jsx              — Main app (~9,400 lines, all components + inline CSS)
+  App.jsx              — Main app (~10,700 lines, all components + inline CSS)
   main.jsx             — React entry point
+  sounds.js            — Web Audio API synthesized SFX + jingles
+  chests.js            — Loot/reward system (imported from src/data/chests.js)
+  supabase.js          — Supabase client init
   data/
     vocab.js           — 390 flashcards, 18 domains
-    grammar.js         — 523 Part 5 drill questions (14 categories)
-    listening.js       — P1 (43), P2 (75), P3 (30 convos), P4 (30 talks)
-    part6.js           — 20 texts, 80 blanks
-    part7.js           — 24 passages, 87 questions
-    mockTests.js       — Mock Tests 1-3 (P5+P6+P7 each)
+    grammar.js         — 523 Part 5 drill questions
+    listening.js       — P1 (43), P2 (75), P3 (50 convos), P4 (45 talks)
+    part6.js           — 30 texts, 120 blanks
+    part7.js           — 39 passages
+    mockTests.js       — Mock Tests 1-3
     bossTestFull.js    — The Final Arena (full TOEIC, 202Q, 7 parts)
-    miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps, Strategy
+    miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps
     audioBlitz.js      — 60 Audio Blitz items
     clueHunter.js      — 80 Clue Hunter items
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
-    placement.js       — 15 placement test Qs + levels + mission modules
-    achievements.js    — 38 achievements
+    placement.js       — 20 Battle Scan questions + tier levels + mission modules
+    achievements.js    — 42 achievements (incl. 4 Word Tavern, 4 Duel, etc.)
     leagues.js         — 7 league tiers + bot competitors
     avatarIcons.js     — Iconify SVG paths for game icons
+    chests.js          — CHEST_TYPES, RARITIES, AVATARS, SKINS, trigger logic
     helpers.js         — getLevel(xp) utility
-  sounds.js            — Web Audio API synthesized SFX + jingles (~22KB)
-  chests.js            — Loot/reward system, skins, avatars, drop tables (~16KB)
-  supabase.js          — Supabase client init
 public/
   audio/
-    bgm/               — bgm_speed.mp3, bgm_wfall.mp3, bgm_duel.mp3, bgm_clue.mp3, bgm_final.mp3
-    p1/, p2/, p3/, p4/  — Training listening MP3s
-    blitz/              — Audio Blitz MP3s
-    boss/               — Boss Test MP3s (P1-P4)
-  images/p1/            — Part 1 photos (.jpg, .webp, .png)
+    bgm/               — bgm_home, bgm_speed, bgm_wfall, bgm_duel, bgm_clue,
+                          bgm_build, bgm_final, bgm_endless, bgm_tavern
+    p1/, p2/, p3/, p4/ — Training listening MP3s
+    blitz/             — Audio Blitz MP3s
+    boss/              — Boss Test MP3s (P1-P4)
+  images/p1/           — Part 1 photos
   icon-192.png, icon-512.png
   manifest.json, sw.js
 api/
-  push-send.js          — Vercel serverless function for push notifications
-  tts.js                — ElevenLabs TTS proxy (used during audio generation)
+  push-send.js         — Vercel serverless function for push notifications
+  tts.js               — ElevenLabs TTS proxy
+supabase/
+  functions/
+    streak-reminder/   — Daily 20h CET push
+    weekly-results/    — Monday 08h CET ranking push
+    inactive-reminder/ — Every 3d 17h CET push for 7-30d inactive students
+prototypes/
+  chest-animations/    — HTML standalone design prototypes (not deployed)
 ```
 
 ---
 
 ## Supabase Tables
 
-| Table | Purpose |
-|-------|---------|
-| `students` | All user data (profile, stats, XP, moduleScores, mockResults, etc.) |
-| `push_subscriptions` | PWA push notification endpoints |
-| `events` | Teacher-created events (Spotlight, Flash Hour, Underdog) |
-| `weekly_snapshots` | Weekly stats snapshots for pedagogical reporting |
-| `groups` | Multi-campus class codes and group metadata |
+| Table | Purpose | Key Columns |
+|-------|---------|-------------|
+| `students` | All user data | profile, stats, XP, moduleScores, mockResults, `joined_at` (text), `tutorial_pending` (bool), `inactivity_push_sent` (timestamptz) |
+| `push_subscriptions` | PWA push endpoints | `student_name`, `class_code`, `subscription` (jsonb), `endpoint` |
+| `events` | Teacher-created events | Spotlight, Flash Hour, Underdog |
+| `weekly_snapshots` | Weekly stats snapshots | For pedagogical reporting + weekly progression tracking |
+| `groups` | Multi-campus class codes | `code`, `name`, `type` (school/pro/visitor), `start_date`, `end_date`, `teacher_code` |
+| `chest_log` | History of opened chests | `user_name`, `class_code`, `trigger_source`, `opened_at` |
+| `pending_chests` | Unopened chests queue | `user_name`, `class_code`, `chest_type`, `trigger_source` |
 
 ---
 
 ## Workflow Guidelines
 
-- **Use Plan Mode** (`/plan`) before any structural change to App.jsx (new module, refactor, new Supabase table). Explore and validate the approach BEFORE writing code.
+- **Use Plan Mode** (`/plan`) before any structural change to App.jsx (new module, refactor, new Supabase table).
 - **Use `/compact`** after 3-4 exchanges or whenever Claude seems to lose context on App.jsx specifics.
 - **Use `/clear`** when switching to a completely different topic.
+- **Auto push + pull authorized**: after each commit, push to main and pull on user's main repo automatically. No confirmation needed.
 
 ---
 
@@ -104,105 +118,154 @@ api/
 
 ### Architecture
 - **App.jsx is monolithic.** All components, state, routing, and CSS live in one file. Do not attempt to split it without explicit instruction.
-- **Inline CSS via template literal** at the top of App.jsx (the `CSS` variable). Class `.crd` has `background: var(--bg2)` which overrides inline styles — if a component needs its own background, remove the `className="crd"` and set border-radius/border manually.
+- **Inline CSS via template literal** at the top of App.jsx (the `CSS` variable). Class `.crd` has `background: var(--bg2)` which overrides inline styles.
+- **`.onboard-shell` class** overrides the desktop `.app` sidebar margin during onboarding/loading. Required on wrapper and on every Onboard phase div.
 - **Data files are read-only at runtime.** All content is imported at build time. No dynamic fetching of question data.
 
 ### State & Data
-- **Supabase is always the source of truth on load.** `load()` always fetches from Supabase when online. No dirty flags or local-first overrides.
-- **`sv()` calls `save(d)` immediately** on every state change. No delayed sync — Supabase is updated within milliseconds of any user action.
-- **Cross-device sync:** Background tabs don't sync to cloud (timer blocked when `visibilityState !== "visible"`). When a tab becomes visible, it reloads from Supabase to pick up changes from other devices.
-- **Supabase data is cumulative, not time-series.** Weekly deltas require the `weekly_snapshots` mechanism. Never assume you can compute "this week's progress" from current data alone.
-- **`cardsDone()` must go through `applyXpGates()`.** Bypassing it breaks diminishing returns entirely. This was a critical bug.
-- **Upsert on `{onConflict: 'name,class_code'}`** prevents multi-device duplicate profiles. Never upsert by anonymous auth ID.
-- **`fresh()` function** initializes a new student profile. Any new field must be added here AND in the Supabase load mapping (`supaToLocal`) AND the save mapping (`save()` payload). Column names must match Supabase exactly (e.g., `skin_id` not `equipped_skin`).
-- **`mockResults`** stores results as `mock1`, `mock2`, `mock3`, `boss`. The Boss Test saves best score but updates `date` on every attempt (for cooldown).
+- **Supabase is always the source of truth on load.** `load()` always fetches from Supabase when online.
+- **`sv()` calls `save(d)` immediately** on every state change. No delayed sync.
+- **Cross-device sync:** Background tabs don't sync to cloud. When visible again, reload from Supabase.
+- **Supabase data is cumulative, not time-series.** Weekly deltas require the `weekly_snapshots` mechanism.
+- **Upsert on `{onConflict: 'name,class_code'}`** prevents multi-device duplicate profiles.
+- **`fresh()` function** initializes a new student profile. Any new field must be added here AND in `supaToLocal` AND `save()` payload. Column names must match Supabase exactly.
+- **`mockResults`** stores `mock1`, `mock2`, `mock3`, `boss`. Boss Test saves best score but updates `date` on every attempt.
 
 ### XP System
-- **No daily XP cap.** Students who invest heavily should be rewarded. Diminishing returns per module per day are the anti-farming mechanism.
-- **Diminishing returns:** Flashcards 100/60/30/0% per day. Mock tests 100/40/0% per day. Other modules follow standard gates.
+- **No daily XP cap.** Diminishing returns per module per day are the anti-farming mechanism.
+- **Flashcards give 0 XP.** Reframed as memorization-only tool. Students earn XP on vocabulary via Word Tavern (15Q quiz) instead.
+- **Diminishing returns:** Mock tests 100/40/0% per day. Other modules follow standard gates.
 - **Accuracy gate:** <30% accuracy → 10% XP, 30-49% → 50%, ≥50% → 100%.
-- **TOEIC Progression ranking is the primary bonification metric.** XP Overall is secondary. Both are cumulable (max +3 bonus points).
+- **TOEIC Progression ranking is the primary bonification metric.** XP Overall is secondary.
 
 ### TOEIC Score Estimator
 - `estimateToeic(raw, total)` — piecewise curve, harder to gain at the top.
 - `estimateTOEICScore(u)` — weighted by module accuracy: Listening (P1×0.20, P2×0.30, P3×0.25, P4×0.25 → 5-495) + Reading (drill×0.35, P6×0.25, P7×0.30, vocab×0.10 → 5-495). Mock test bonus +5% per mock ≥60%. Clamped 200-990, rounded to nearest 5.
 
 ### Flashcards
-- **Flashcard accuracy is NOT a performance metric.** It reflects SRS self-evaluation (Hard/Good/Easy), not right/wrong answers. Never treat low flashcard accuracy as a problem.
+- **Flashcard accuracy is NOT a performance metric.** SRS self-evaluation, not right/wrong.
+- **Flashcards give 0 XP.** Reward for vocabulary knowledge happens in Word Tavern.
+- **Battle Scan does NOT populate moduleScores.** Only `u.battleScan` holds placement results. The old code that wrote scan answers to moduleScores triggered false "Explorer" achievement — removed 2026-04-17.
+
+### Word Tavern 🍺
+- Route `sp==="tavern"`. 15 questions per session, 3 types (def→word, word→def, fill-in-blank).
+- Distractors picked from SAME vocabulary domain as the correct card.
+- **Failed words auto-reset in SRS** (`cardStates[id] = {ease:2.5, interval:0, nextReview:today()}`) → they come back in next flashcard review.
+- BGM: `bgm_tavern.mp3`.
+
+### Chest System
+- **`ChestEarnedToast`** at grant moment (bottom-center, above tab bar). Queue (FIFO) + anti-interruption during tests (boss/endless/mock) + queue dispatcher useEffect.
+- **`ChestOpenModal` V2** = Boss Loot cinematic: build (2s) → explode (1.4s, screen flash, lid flies, body collapses, wood+metal+magic shards) → reveal (reward card falls from top + impact ring).
+- **`TreasureChestSvg`** = reusable inline SVG wooden chest with gold lock. Scales from 54px (toast) to 180px (modal).
+- **`getTriggerLabel(trigger)`** converts trigger IDs to human FR/EN labels (e.g. `mock_1` → "Mock Test 1 completed").
+- **Legendary differentiation**: 400ms gold radial flash before toast + shimmer sweep on toast + 12s display.
+- **Teacher account CAN receive chests** (GHOST_NAME filter is only for TeacherDash student list — NOT for chest grants, despite older CLAUDE.md wording).
 
 ### Teacher Account
-- The `Teacher` account (pseudo: "Teacher") **syncs to Supabase** like any other account but is **hidden from all leaderboards** (League, TeacherDash). It is Jérémy's test/admin account.
-- `GHOST_NAME` variable still exists and is used to filter Teacher from league rankings, dashboard student lists, and chest grants — NOT to block saves.
+- The `Teacher` account syncs to Supabase but is **hidden from all leaderboards** (League, TeacherDash student list).
+- `GHOST_NAME="Teacher"` filter is applied in: TeacherDash student list queries, League rankings. NOT applied to chest grants.
 
 ### Listening (Boss Test — TOEIC Faithful)
-- **P1:** Photo displayed + blind A/B/C/D buttons (no text). Student can answer DURING audio. Currently playing statement highlights in orange.
-- **P2:** Blind A/B/C buttons (no text). Student can answer DURING audio.
-- **P3:** Preview questions + written options BEFORE audio plays. Answer after listening.
-- **P4:** Same as P3 — preview questions, then listen, then answer.
-- **P5-P7:** Text + options, no audio, at student's own pace.
+- **P1:** Photo + blind A/B/C/D. Student can answer DURING audio.
+- **P2:** Blind A/B/C. Student can answer DURING audio.
+- **P3/P4:** Preview questions BEFORE audio. Answer after.
+- **P5-P7:** Text + options, no audio.
 
 ### Boss Test — The Final Arena
 - Unlocked after completing Mock Tests 1, 2, and 3.
 - 202 questions, 120 min timer, Listening first then Reading.
-- Rejouable with 24h cooldown (checks `mockResults.boss.date === today()`).
-- Scoring: Listening /495 + Reading /495 = Total /990.
+- 24h cooldown. Best score preserved.
 - XP: 100 base + 3 per correct + bonus at 600+ and 800+.
-- Best score preserved; date updated on every attempt.
 - Achievements: "Arena Conqueror" 🐉 (complete) + "Dragon Slayer" 🔥 (800+).
-- BGM: `bgm_final.mp3` plays on intro, stops when exam starts (`stopBGM()` on Enter the Arena).
+- BGM: `bgm_final.mp3`.
+
+### Endless Arena ⏳
+- Unlocked after Boss Test with ≥650 TOEIC. 24h cooldown.
+- Random full TOEIC test generated from all content pools.
+- Results screen shows weakness reco + suggested next module.
+- BGM: `bgm_endless.mp3`.
 
 ### League System
 - 7 tiers: Bronze (0) → Silver (200) → Gold (600) → Platinum (1500) → Diamond (5000) → Champion (10000) → Légende (30000).
 - `getEffectiveLeague()` requires TOEIC estimated score ≥ 400 to display Légende.
 - Season structure S1-S4, weekly snapshots, 3 tabs: Semaine, Général, Progrès.
 
+### Haptic Feedback
+- `haptic(key)` dispatches to `navigator.vibrate()`. Silent on iOS.
+- Patterns: chest, chestOpen, levelUp, achieve, league, pb, streak, complete.
+- Triggered at: achievement unlock, league promotion, level up, streak milestones, chest open, mock/boss/endless completion, Endless PB.
+
+### BGM Control (centralized)
+- Central useEffect in main App watches `sp` and `tab`. Stops BGM on entry to audio routes (lis, lisP1-P4, ablitz). Restores `bgm_home` on return to home/league/profile without subpage.
+- `SELF_MANAGED` routes that handle their own BGM: boss, endless, matchE, wfall, duel, sbuild, clue, tavern. These are excluded from centralized control.
+- Auto-start on first user interaction: only triggers `bgm_home` if `tab==="home" && !sp`.
+
+---
+
+## Language Policy
+
+- **Onboarding** (name, classcode, GDPR, Battle Scan, push opt-in): **French** — trust/consent flow, students need native language
+- **Battle Report**: **English** (except explicit French labels like "Notification push" in privacy section)
+- **langBridge transition screen**: **English** — signals language shift to students
+- **Main app** (Home, Train, Games, League, Profile, modules): **English**
+- **Push notifications** (all 3 Edge Functions): **English**
+- **Chests** (labels, rarities, avatar/skin names in chests.js): **English** (keys unchanged for DB compat)
+- **Privacy Policy**: **French** (legal document, FR audience)
+- **Teacher Dashboard**: **French** (Jérémy's own UI)
+- **Weekly Report**: **French** (document for pedagogical director)
+
+### JSX encoding rule
+- Unicode escapes (`\u00e9`, etc.) in JSX TEXT content don't decode — render as literal `\u00e9`.
+- **Fix**: wrap in `{"..."}` JS string expression, OR use real UTF-8 characters.
+- Works fine in JS string literals (array items, attribute values).
+
 ---
 
 ## Known Gotchas & Past Bugs
 
 ### Encoding
-- **Python raw strings (`r'''`) double-escape unicode.** Never use `r'''` for JSX content containing `\u` sequences. Use regular strings or build line-by-line.
-- **Surrogate pairs** (emoji like 🐉 = `\uD83D\uDC09`) must be written as real characters in Python, not as `\ud83d\udc09` in string literals which creates orphan surrogates on Windows.
-- **Always validate UTF-8 before writing:** `app.encode('utf-8')` in Python before `open(..., 'w', encoding='utf-8')`.
+- **Python raw strings (`r'''`) double-escape unicode.** Never use `r'''` for JSX content with `\u`.
+- **Surrogate pairs** (emoji like 🐉) must be written as real characters in Python, not as `\uD83D\uDC09`.
+- **Always validate UTF-8 before writing:** `app.encode('utf-8')` in Python.
 
 ### Vite/Rolldown
 - **Nested quotes in helper functions** cause parse errors. Use `String.fromCharCode(34)` for double-quote generation inside template strings.
-- **Unicode characters (──) in search anchors** for patch scripts fail on Windows (encoding mismatch). Use unique content strings as anchors instead.
+- **Unicode characters (──) in search anchors** for patch scripts fail on Windows. Use unique content strings as anchors.
 
 ### Supabase
-- **Anon key must NEVER be hardcoded** in App.jsx. Use `import.meta.env.VITE_SUPABASE_ANON_KEY`. Hardcoding triggered a GitGuardian alert.
-- **`fetch({ keepalive: true })` with auth headers** replaces `sendBeacon` for unload saves (RLS blocks unauthenticated beacon calls).
-- **Realtime:** Avoid `self:false`; use unique session PIDs for message filtering instead of name-based filters.
-- **RLS on `push_subscriptions`** was ultimately disabled after persistent auth issues.
-- **RLS on `weekly_snapshots`** was disabled (same cross-device anonymous auth issue).
-- **Supabase column `skin_id`** (not `equipped_skin`) stores the equipped skin. Always verify column names against the actual schema before adding to payloads.
+- **Anon key must NEVER be hardcoded** in App.jsx. Use `import.meta.env.VITE_SUPABASE_ANON_KEY`.
+- **`fetch({ keepalive: true })` with auth headers** replaces `sendBeacon` for unload saves.
+- **Realtime:** Avoid `self:false`; use unique session PIDs.
+- **RLS on `push_subscriptions` and `weekly_snapshots`** was disabled after persistent cross-device anonymous auth issues.
+- **Column `skin_id`** (not `equipped_skin`) stores the equipped skin.
+- **Assets in `public/`** must be `git add`-ed or Vercel won't deploy them (silent 404). Past bug: `bgm_tavern.mp3` existed locally but not in git → silent playback failure.
 
 ### React
 - **Hooks must be at component top level** before any conditional returns.
-- **`useMemo` with empty deps `[]`** for shuffled question sets — ensures stable order within a session.
+- **`useMemo` with empty deps `[]`** for shuffled question sets.
 
 ### CSS
-- **`.crd` class** forces `background: var(--bg2)`. To override background on a card-like element, remove the class and add `borderRadius:16, border:"1px solid var(--bdr)"` manually.
-- **Light/dark mode:** CSS variables `--bg`, `--bg2`, `--bg3`, `--t1`, `--t2`, `--t3`, `--bdr`, `--cyan`, `--gold`, `--green`, `--red`, `--orange`, `--purple` are defined at top of the CSS block in App.jsx.
-- **Skin animations: use `background-image:` NOT `background:` shorthand** when the element has a CSS animation on `background-position`. The `background` shorthand with `!important` implicitly makes `background-position` important too, which blocks CSS animations from changing it. Same applies to `box-shadow !important` with `obsidianPulse`.
-- **Shimmer overlays use `::after` pseudo-elements** with `skinShimmer` animation. Parent needs `position:relative!important;overflow:hidden!important` for the overlay to work.
+- **`.crd` class** forces `background: var(--bg2)`. Override requires removing the class.
+- **Skin animations:** use `background-image:` NOT `background:` shorthand when animated.
+- **Shimmer overlays use `::after` pseudo-elements** with parent `position:relative!important;overflow:hidden!important`.
+- **`.app:not(.onboard-shell)`** selector allows onboarding to skip the desktop 200px sidebar margin.
 
 ### PWA / Service Worker
-- **`sw.js` v3** — network-first with `{cache:'no-cache'}` for HTML/JS files to bypass browser HTTP cache.
-- **`index.html`** registers SW with `{updateViaCache:'none'}` — always checks for new SW from network.
-- **`controllerchange`** listener auto-reloads the page when a new SW takes control.
-- **Build ID** (`BUILD_ID` variable in App.jsx) is logged on startup for deployment verification across devices.
+- **`sw.js` v3** — network-first with `{cache:'no-cache'}` for HTML/JS.
+- **`index.html`** registers SW with `{updateViaCache:'none'}`.
+- **`controllerchange`** listener auto-reloads the page.
+- **Build ID** logged on startup for deployment verification.
 
 ---
 
 ## Audio Conventions
 
 ### File naming
-- **P1 training:** `public/audio/p1/{id}_{0-3}.mp3` (4 statements per photo)
+- **P1 training:** `public/audio/p1/{id}_{0-3}.mp3`
 - **P2 training:** `public/audio/p2/{id}_q.mp3` + `{id}_{0-2}.mp3`
-- **P3 training:** `public/audio/p3/{id}_line{0-3}.mp3` (individual) + `{id}.mp3` (stitched)
+- **P3 training:** `public/audio/p3/{id}_line{0-3}.mp3` + `{id}.mp3` (stitched)
 - **P4 training:** `public/audio/p4/{id}.mp3`
-- **Boss test:** `public/audio/boss/p1_XX_Y.mp3`, `p2_XX_q.mp3`, `p2_XX_Y.mp3`, `p3_XX.mp3`, `p4_XX.mp3`
+- **Boss test:** `public/audio/boss/p1_XX_Y.mp3`, etc.
 - **Audio Blitz:** `public/audio/blitz/{id}.mp3`
 - **BGM:** `public/audio/bgm/bgm_{name}.mp3`
 
@@ -210,64 +273,71 @@ api/
 - Voices: Sarah (W) = `EXAVITQu4vr4xnSDxMaL`, Adam (M) = `pNInz6obpgDQGcFmaJgB`
 - Model: `eleven_multilingual_v2`
 - Settings: `stability: 0.55, similarity_boost: 0.75, speed: 0.85`
-- Audio files are pre-generated and stored locally. ElevenLabs credits are ONLY for generating new content, never for runtime playback.
+- Audio files are pre-generated. ElevenLabs credits for generating new content only, never runtime.
 
 ### BGM Wiring Pattern
 ```javascript
-// In the router (around line 6770+):
-if(sp==="moduleName"){playBGM("bgm_name");return(<div className={lc}><style>{CSS}</style>
-  <Component u={u} done={function(...){stopBGM();handler(...);}} back={function(){stopBGM();sSP(null);sT("tab");}}/>
-</div>);}
+// In the router:
+if(sp==="moduleName"){playBGM("bgm_name");return pg(<Component done={function(...){stopBGM();handler(...);}} back={function(){stopBGM();sSP(null);sT("tab");}}/>);}
 ```
 
 ---
 
 ## Pedagogical Principles
 
-- **TOEIC score estimator as a pedagogical lever:** Shows students which sections they're neglecting (e.g., high accuracy but zero Listening = capped estimated score).
-- **Entire class had zero activity on Listening, P6, P7, Audio Blitz, TOEIC Traps** — identified via CSV analysis. Structural blind spot addressed in class sessions.
-- **Some students farm XP** with low TOEIC scores. Diminishing returns + accuracy gates are the countermeasure. Never add a hard daily cap.
-- **Clue Hunter:** Clue identification phase must be genuinely distinct from the answer phase. Category label in header spoils the exercise — only appears post-answer.
-- **Weekly snapshots are necessary** because Supabase data is cumulative. True weekly deltas require explicit snapshot mechanism.
+- **TOEIC score estimator as a pedagogical lever.**
+- **Anti-farming through module XP gates**, never a hard daily cap.
+- **Clue Hunter:** Clue identification phase distinct from answer. Category label hidden until post-answer.
+- **Weekly snapshots are necessary** — Supabase data is cumulative.
+- **Flashcards = learn, Word Tavern = prove (and earn XP).** Feedback loop: failed words in tavern → reset SRS → come back in next review.
+- **Onboarding enforces the right habits:** push opt-in prompt, English-only transition, 3-step Home tutorial, persistent Mock Test nudge.
 
 ---
 
 ## Credentials & Secrets (DO NOT COMMIT)
 
-All secrets are stored in `.env` (local) and Vercel environment variables. **Never hardcode values in source files.**
+All secrets in `.env` (local) and Vercel environment variables. **Never hardcode in source files.**
 
 | Secret | Location | Notes |
 |--------|----------|-------|
 | `VITE_SUPABASE_URL` | `.env` + Vercel | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | `.env` + Vercel | Must use `import.meta.env`, never hardcode |
-| `ELEVENLABS_API_KEY` | `.env` | Audio generation scripts only, not runtime |
-| `VAPID_PUBLIC_KEY` | App.jsx (public) | Safe to expose client-side |
+| `VITE_SUPABASE_ANON_KEY` | `.env` + Vercel | Use `import.meta.env`, never hardcode |
+| `ELEVENLABS_API_KEY` | `.env` | Audio generation scripts only |
+| `VAPID_PUBLIC_KEY` | App.jsx | Safe to expose client-side |
 | `VAPID_PRIVATE_KEY` | Vercel only | Server-side push signing |
-| `VITE_PUSH_SECRET` | `.env` + Vercel | Push endpoint auth |
-| Teacher dashboard password | Vercel env vars | Do not store in code or docs |
+| `VITE_PUSH_SECRET` / `PUSH_SECRET` | `.env` + Vercel | Push endpoint auth (same value, 2 names) |
+| Teacher dashboard password | Vercel env vars | Do not store in code |
 
 ---
 
 ## Companion Documentation
 
-- `CLAUDE_chest.md` — Loot system: chest types, rarities, drop tables, skins, avatars, weekly cooldowns
-- `DAILY_CHALLENGE_BRIEF.md` — Daily Challenge specs: 30-day seen tracking, weakness-based selection, seeded randomness
+- `CONTEXT.md` (project root) — Living state: what's done, what's in progress, what's next
+- `CLAUDE_chest.md` — Loot system deep-dive (chest types, rarities, drop tables)
+- `DAILY_CHALLENGE_BRIEF.md` — Daily Challenge specs
+- `TODO_S2.md` — Season 2 backlog (tracked in `.claude/projects/.../memory/project_todo_s2_progress.md`)
 
 ---
 
 ## Freemium System
 
 ```javascript
-FREE_MODULES = ["daily", "drill", "csess", "sbuild", "lisP2", "stratquiz", "strats", "gramref", "wfall"]
-FREE_FLASHCARD_DOMAINS = ["finance", "travel", "office"]
+FREE_MODULES = ["daily","drill","csess","sbuild","lisP2","stratquiz","strats","gramref","wfall","tavern"]
+FREE_FLASHCARD_DOMAINS = ["finance","travel","office"]
 ```
 
-Visitor mode (no class code) locks premium modules and flashcard domains. All content unlocks with a valid class code.
+Visitor mode (no class code) locks premium modules. All content unlocks with a valid class code.
 
 ---
 
-## Active Priorities
+## Push Notification Infrastructure
 
-- Weekly pedagogical report (Word/PDF) for the pedagogical director
-- Visual redesign toward medieval fantasy aesthetic (DA session planned)
-- Multi-campus operational rollout
+3 Edge Functions deployed, all in English:
+
+| Function | Schedule | Target |
+|----------|----------|--------|
+| `streak-reminder` | Daily 20h CET | Streak ≥ 2, inactive today |
+| `weekly-results` | Monday 08h CET | Personalized weekly ranking |
+| `inactive-reminder` | Every 3d 17h CET | Inactive 7-30d, active classes only |
+
+Anti-spam on `inactive-reminder` via `students.inactivity_push_sent` (max 1 per 14d).
