@@ -9727,7 +9727,7 @@ useEffect(function(){
     if(ld||!u||!bgmStarted.current)return;
     var AUDIO_ROUTES=["lis","lisP1","lisP2","lisP3","lisP4","ablitz"];
     // Routes that manage their own BGM (do not interfere):
-    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue"];
+    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern"];
     if(sp&&AUDIO_ROUTES.indexOf(sp)!==-1){stopBGM();return;}
     if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
     // No subpage active and on a home-BGM tab → ensure bgm_home is playing
@@ -10245,7 +10245,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="boss"){playBGM("bgm_final");return pg(<BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sSPA("mocks");sT("train");}}/>);}
   if(sp==="endless"){playBGM("bgm_endless");return pg(<EndlessArena u={u} nav={nav} done={function(r,xp,meta){stopBGM();endlessDone(r,xp,meta);}} back={function(){stopBGM();sSP(null);sSPA("mocks");sT("train");}}/>);}
   if(sp==="mock3")return pg(<MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
-  if(sp==="tavern")return pg(<WordTavern u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"tavern");}} resetCard={function(c){sv(c);}} back={function(){sSP(null);sT("games");}}/>);
+  if(sp==="tavern"){playBGM("bgm_tavern");return pg(<WordTavern u={u} done={function(sc,tot,xp){stopBGM();miniDone(sc,tot,xp);}} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"tavern");}} resetCard={function(c){sv(c);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="matchE"){playBGM("bgm_speed");return pg(<SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="wfall"){playBGM("bgm_wfall");return pg(<WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="duel"){playBGM("bgm_duel");return pg(<DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
