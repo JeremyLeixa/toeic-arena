@@ -779,7 +779,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .sk{animation:shake .4s ease-in-out}
 .out{font-family:'Cinzel','Outfit',serif;letter-spacing:0.5px}
 @media(min-width:768px){
-.app{max-width:none;margin:0 0 0 200px;padding:0 32px}
+.app:not(.onboard-shell){max-width:none;margin:0 0 0 200px;padding:0 32px}
+.app.onboard-shell{max-width:480px;margin:0 auto;padding:0 16px}
 .tab-bar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;transform:none!important;width:200px!important;max-width:200px!important;height:100vh!important;flex-direction:column!important;justify-content:flex-start!important;padding:24px 12px!important;background:var(--bg2)!important;border-right:1px solid var(--bdr)!important;gap:4px!important}
 .light .tab-bar{background:var(--bg2)!important}
 .tab-bar button{flex-direction:row!important;gap:10px!important;padding:12px 14px!important;border-radius:10px!important;justify-content:flex-start!important;width:100%!important}
@@ -1022,7 +1023,7 @@ var[step,sSt]=useState("name");
 
   // ─ Name entry ─
   if(step==="name")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .8s ease-out"}}>
         <div style={{fontSize:64,marginBottom:16}}>⚔️</div>
         <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>TOEIC ARENA</h1>
@@ -1042,7 +1043,7 @@ var[step,sSt]=useState("name");
 
   // ─ Account recognition ─
   if(step==="recognize")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:380}}>
         <div style={{fontSize:48,marginBottom:12}}>👋</div>
         <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6}}>Welcome back, {name.trim()}!</h2>
@@ -1081,7 +1082,7 @@ var[step,sSt]=useState("name");
 
   // ─ Class code selection ─
   if(step==="classcode")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>🏫</div>
         <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Join a Group</h2>
@@ -1117,7 +1118,7 @@ var[step,sSt]=useState("name");
 
   // ─ GDPR Consent ─
   if(step==="consent")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       {showPrivacy?<PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>:
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:420}}>
         <div style={{fontSize:48,marginBottom:16}}>{"🛡️"}</div>
@@ -1158,7 +1159,7 @@ var[step,sSt]=useState("name");
 
 // ─ Account recovery ─
   if(step==="recover")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>🔑</div>
         <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Recover My Account</h2>
@@ -1190,7 +1191,7 @@ var[step,sSt]=useState("name");
     </div>);
   // ─ Teacher login ─
   if(step==="teacher")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>👨‍🏫</div>
         <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:20}}>Teacher Dashboard</h2>
@@ -1224,7 +1225,7 @@ var[step,sSt]=useState("name");
 
   // ─ PIN setup (visitors only) ─
   if(step==="secure")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>{"🔐"}</div>
         <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Protect Your Progress</h2>
@@ -1250,7 +1251,7 @@ var[step,sSt]=useState("name");
 
   // ─ PIN verification on recover ─
   if(step==="enterpin")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>{"🔐"}</div>
         <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Enter Your PIN</h2>
@@ -1296,7 +1297,7 @@ var[step,sSt]=useState("name");
     var toeicEst=Math.round((200+(totalSc/20)*790)/5)*5;
     var toeicColor=toeicEst>=750?"var(--green)":toeicEst>=500?"var(--gold)":"var(--orange)";
     return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center",overflow:"auto"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center",overflow:"auto"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
         <div style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:3,marginBottom:8}} className="out">Battle Report</div>
         <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>Warrior Assessment</h2>
@@ -1310,7 +1311,7 @@ var[step,sSt]=useState("name");
         <div className="crd" style={{padding:"14px 16px",marginBottom:20,background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(240,200,80,.06))",border:"1px solid rgba(240,200,80,.2)"}}>
           <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>{"\uD83C\uDFAF"} Estimated TOEIC</div>
           <div className="out" style={{fontFamily:"'Cinzel',serif",fontSize:32,fontWeight:900,color:toeicColor,lineHeight:1}}>{toeicEst}<span style={{fontSize:14,color:"var(--t3)",fontWeight:400,marginLeft:6}}>{"/ 990"}</span></div>
-          <p style={{fontSize:11,color:"var(--t2)",lineHeight:1.5,margin:"8px 0 0",textAlign:"left"}}>Le TOEIC r\u00e9el se compose \u00e0 50% d'<b style={{color:"#3b82f6"}}>\u00e9coute</b> + 50% de <b style={{color:"#22c55e"}}>lecture</b>. Entra\u00eene les deux pour progresser.</p>
+          <p style={{fontSize:11,color:"var(--t2)",lineHeight:1.5,margin:"8px 0 0",textAlign:"left"}}>{"Le TOEIC réel se compose à 50% d'"}<b style={{color:"#3b82f6"}}>{"écoute"}</b>{" + 50% de "}<b style={{color:"#22c55e"}}>{"lecture"}</b>{". Entraîne les deux pour progresser."}</p>
         </div>
 
         {/* ── RADAR SVG ── */}
@@ -1401,12 +1402,12 @@ var[step,sSt]=useState("name");
       finishOnb();
     }
     return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
         <div style={{fontSize:64,marginBottom:16}}>{"\uD83D\uDD14"}</div>
         <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:24,color:"var(--t1)",marginBottom:10}}>Stay connected to your quest</h2>
         <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:24}}>
-          Active les rappels pour ne pas perdre ta s\u00e9rie, rester inform\u00e9 de tes progr\u00e8s hebdomadaires, et recevoir des encouragements de ton prof.
+          {"Active les rappels pour ne pas perdre ta série, rester informé de tes progrès hebdomadaires, et recevoir des encouragements de ton prof."}
         </p>
         <div className="crd" style={{padding:"14px 16px",marginBottom:20,textAlign:"left",background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
           <div style={{display:"flex",gap:10,marginBottom:8}}>
@@ -1419,7 +1420,7 @@ var[step,sSt]=useState("name");
           </div>
           <div style={{display:"flex",gap:10}}>
             <span style={{fontSize:20}}>{"\u2694\uFE0F"}</span>
-            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Re-engagement</div><div style={{fontSize:11,color:"var(--t2)"}}>Rappels doux apr\u00e8s quelques jours d'absence</div></div>
+            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Re-engagement</div><div style={{fontSize:11,color:"var(--t2)"}}>{"Rappels doux après quelques jours d'absence"}</div></div>
           </div>
         </div>
         <button className="btn1" onClick={enableAndGo} disabled={pushBusy}
@@ -1427,7 +1428,7 @@ var[step,sSt]=useState("name");
           {pushBusy?"\u2026":"Activer les rappels"}</button>
         <button className="btn2" onClick={finishOnb} disabled={pushBusy}
           style={{fontSize:13,padding:"12px 28px",width:"100%"}}>Plus tard</button>
-        <p style={{color:"var(--t3)",fontSize:10,marginTop:12,lineHeight:1.5}}>Tu peux changer d'avis \u00e0 tout moment depuis ton Profil.</p>
+        <p style={{color:"var(--t3)",fontSize:10,marginTop:12,lineHeight:1.5}}>{"Tu peux changer d'avis à tout moment depuis ton Profil."}</p>
       </div>
     </div>);}
 
@@ -1438,7 +1439,7 @@ var[step,sSt]=useState("name");
 
   // Section Intro
   if(scanPhase==="intro")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
         <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:24}}>
           {BATTLE_SCAN.map(function(s,i){return(
@@ -1463,7 +1464,7 @@ var[step,sSt]=useState("name");
 
   // Section Done
   if(scanPhase==="done")return(
-    <div className="app" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
         <div style={{fontSize:56,marginBottom:12,animation:"countUp .5s"}}>{sec.icon}</div>
         <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:22,color:sec.color,marginBottom:4}}>{sec.name}</h3>
@@ -1484,7 +1485,7 @@ var[step,sSt]=useState("name");
   // Questions
   var isReading=sec.id==="reading"&&sec.passage;
   return(
-    <div className="app" style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div className="app onboard-shell" style={{padding:"20px 16px",minHeight:"100vh"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
         <div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -10296,9 +10297,9 @@ var prevLeague=getLeague(c.weeklyXp);
   var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);sSPA(null);setTimeout(function(){evalCoachTips(u,t);},800);};
   function pg(content){return(<div className={lc}><style>{CSS}</style><div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);}
 
-  if(ld)return(<div className={lc}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
+  if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
   if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
-  if(!u)return(<div className={lc}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover}/></div>);
+  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover}/></div>);
 
   // ── Group access control ──
   if(groupAccess&&groupAccess.status==="not_started")return(<div className={lc}><style>{CSS}</style>
