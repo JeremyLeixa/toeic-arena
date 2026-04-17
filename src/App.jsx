@@ -10087,19 +10087,9 @@ var prevLeague=getLeague(c.weeklyXp);
     u.gdprConsent=today();
     if(pinValue)u.pin=pinValue;
     if(bsScores){
-      var totalCorrect=bsScores.grammar+bsScores.vocab+bsScores.reading+bsScores.listening;
-      u.stats.totalQ=20;u.stats.correct=totalCorrect;u.stats.sessions=1;
-      var idx=0;
-      BATTLE_SCAN.forEach(function(sec){
-        sec.questions.forEach(function(q){
-          var correct=bsCorrect&&bsCorrect[idx]||false;
-          var modId=q.mod||"drill";
-          if(!u.moduleScores[modId])u.moduleScores[modId]={correct:0,total:0,sessions:1,lastDate:today()};
-          u.moduleScores[modId].total+=1;
-          if(correct)u.moduleScores[modId].correct+=1;
-          idx++;
-        });
-      });
+      // Battle Scan is a diagnostic placement test — results live in u.battleScan only.
+      // Do NOT populate u.moduleScores with scan answers (would falsely trigger "Explorer"
+      // achievement and inflate module stats before any real training).
       var totalSc=bsScores.grammar+bsScores.vocab+bsScores.reading+bsScores.listening;
       var tierLabel=totalSc>=16?"Battle-Ready":totalSc>=12?"Skilled Fighter":totalSc>=8?"Apprentice":"Recruit";
       u.battleScan={date:today(),scores:bsScores,total:totalSc,tier:tierLabel};

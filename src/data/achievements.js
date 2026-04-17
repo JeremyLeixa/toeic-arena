@@ -35,8 +35,13 @@ export var ACHIEVEMENTS = [
   // ─── MOCK TEST ───
   {id:"mock_complete",name:"Trial by Fire",desc:"Complete a Mock Test",icon:"📝",check:function(s){return s.mockResults&&(s.mockResults.mock1||s.mockResults.mock2);}},
   {id:"toeic_master",name:"TOEIC Master",desc:"Score 400+ on a Mock Test",icon:"🏆",check:function(s){if(!s.mockResults)return false;var m1=s.mockResults.mock1;var m2=s.mockResults.mock2;return(m1&&m1.toeicEstimate>=400)||(m2&&m2.toeicEstimate>=400);}},
+  // ─── WORD TAVERN ───
+  {id:"tavern_first",name:"Tavern Visitor",desc:"Complete your first Word Tavern",icon:"🍺",check:function(s){return s.moduleScores&&s.moduleScores.tavern&&s.moduleScores.tavern.sessions>=1;}},
+  {id:"tavern_silver",name:"Silver Tongue",desc:"Score 13+/15 in one Word Tavern",icon:"🗣️",check:function(s){if(!s.moduleScores||!s.moduleScores.tavern||!s.moduleScores.tavern.history)return false;for(var i=0;i<s.moduleScores.tavern.history.length;i++){if(s.moduleScores.tavern.history[i].correct>=13)return true;}return false;}},
+  {id:"tavern_perfect",name:"Wordsmith",desc:"Perfect 15/15 in one Word Tavern",icon:"⚒️",check:function(s){if(!s.moduleScores||!s.moduleScores.tavern||!s.moduleScores.tavern.history)return false;for(var i=0;i<s.moduleScores.tavern.history.length;i++){var h=s.moduleScores.tavern.history[i];if(h.correct===15&&h.total===15)return true;}return false;}},
+  {id:"tavern_regular",name:"Tavern Regular",desc:"Complete 10 Word Tavern sessions",icon:"🍻",check:function(s){return s.moduleScores&&s.moduleScores.tavern&&s.moduleScores.tavern.sessions>=10;}},
   // ─── ARENA GAMES ───
-  {id:"arena_explorer",name:"Arena Explorer",desc:"Play all 3 arena games",icon:"🗺️",check:function(s){return s.gameScores&&s.gameScores.matchEasy&&s.gameScores.matchHard&&s.gameScores.wordFall;}},
+  {id:"arena_explorer",name:"Arena Explorer",desc:"Play 3 different arena games",icon:"🗺️",check:function(s){if(!s.gameScores)return false;var count=0;if(s.gameScores.matchEasy)count++;if(s.gameScores.wordFall)count++;if(s.gameScores.duel&&s.gameScores.duel.played>=1)count++;return count>=3;}},
   {id:"combo_king",name:"Combo King",desc:"Reach a x6 combo in Word Fall",icon:"👑",check:function(s){return s.gameScores&&s.gameScores.wordFall&&s.gameScores.wordFall.maxCombo>=6;}},
   // ─── DUEL ARENA ───
   {id:"duel_first",name:"First Duel",desc:"Complete your first vocabulary duel",icon:"⚔️",check:function(s){return s.gameScores&&s.gameScores.duel&&s.gameScores.duel.played>=1;}},
@@ -49,5 +54,5 @@ export var ACHIEVEMENTS = [
   {id:"boss_complete",name:"Arena Conqueror",desc:"Complete The Final Arena",icon:"\ud83d\udc09",check:function(s){return s.mockResults&&s.mockResults.boss;}},
   {id:"boss_800",name:"Dragon Slayer",desc:"Score 800+ on The Final Arena",icon:"\ud83d\udd25",check:function(s){return s.mockResults&&s.mockResults.boss&&s.mockResults.boss.toeicEstimate>=800;}},
   // ─── GAME DIVERSITY ───
-  {id:"all_games",name:"Game Master",desc:"Play all 5 arena games",icon:"🎮",check:function(s){return s.gameScores&&s.gameScores.matchEasy&&s.gameScores.wordFall&&s.gameScores.duel&&s.gameScores.duel.played>=1;}},
+  {id:"all_games",name:"Game Master",desc:"Play 6 different arena games",icon:"🎮",check:function(s){var count=0;if(s.gameScores){if(s.gameScores.matchEasy)count++;if(s.gameScores.wordFall)count++;if(s.gameScores.duel&&s.gameScores.duel.played>=1)count++;}if(s.moduleScores){if(s.moduleScores.tavern&&s.moduleScores.tavern.sessions>=1)count++;if(s.moduleScores.sbuild&&s.moduleScores.sbuild.sessions>=1)count++;if(s.moduleScores.ablitz&&s.moduleScores.ablitz.sessions>=1)count++;if(s.moduleScores.clue&&s.moduleScores.clue.sessions>=1)count++;}return count>=6;}},
 ];
