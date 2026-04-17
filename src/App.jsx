@@ -771,6 +771,28 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
 @keyframes tipSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes tipFade{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(20px)}}
+/* ── Chest V2 (Boss Loot) animations ── */
+@keyframes chestV2Zoom{0%{opacity:0;transform:scale(.3)}60%{transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+@keyframes chestV2Trembor{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-5px,-3px) rotate(-4deg)}75%{transform:translate(5px,-3px) rotate(4deg)}}
+@keyframes chestV2LidFly{0%{transform:translateY(0) rotate(0deg);opacity:1}40%{transform:translateY(-80px) rotate(-30deg);opacity:1}100%{transform:translateY(-200px) rotate(-80deg);opacity:0}}
+@keyframes chestV2BodyCollapse{0%{transform:scale(1,1) translateY(0);opacity:1;filter:brightness(1)}40%{transform:scale(1.1,.85) translateY(8px);filter:brightness(2)}100%{transform:scale(.4,.2) translateY(30px);opacity:0;filter:brightness(4)}}
+@keyframes chestV2ScreenFlash{0%,100%{opacity:0}50%{opacity:.85}}
+@keyframes chestV2BurstExpand{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(80)}}
+@keyframes chestV2DustExpand{0%{opacity:0;transform:translate(-50%,-50%) scale(0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(3.5)}}
+@keyframes chestV2ShardFly{0%{opacity:1;transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(0) rotate(0deg)}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(var(--dist,200px)) rotate(720deg)}}
+@keyframes chestV2BeamGrow{0%{height:0;opacity:.4}100%{height:800px;opacity:1}}
+@keyframes chestV2BeamShrink{to{opacity:0}}
+@keyframes chestV2RewardFall{0%{opacity:0;transform:translateY(-220px) scale(.6) rotate(-8deg)}30%{opacity:1}100%{transform:translateY(0) scale(1) rotate(0deg);opacity:1}}
+@keyframes chestV2RewardSettle{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-10px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
+@keyframes chestV2ImpactRing{0%{opacity:1;transform:translate(-50%,-50%) scaleY(.4) scaleX(.3)}100%{opacity:0;transform:translate(-50%,-50%) scaleY(.4) scaleX(2.5)}}
+@keyframes chestV2SpeedLine{0%{opacity:0;transform:translateY(-100px)}30%{opacity:1}100%{opacity:0;transform:translateY(200px)}}
+@keyframes chestV2IconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* ── Chest Earned Toast ── */
+@keyframes toastSlideUp{from{opacity:0;transform:translate(-50%,40px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes toastFadeOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-10px)}}
+@keyframes chestWiggle{0%,100%{transform:rotate(0deg)}15%{transform:rotate(-6deg)}30%{transform:rotate(6deg)}45%{transform:rotate(-4deg)}60%{transform:rotate(4deg)}75%{transform:rotate(-2deg)}90%{transform:rotate(2deg)}}
+@keyframes legendGoldFlash{0%,100%{opacity:0}35%{opacity:.6}}
+@keyframes legendShimmer{0%{background-position:-150% 50%}50%{background-position:250% 50%}100%{background-position:-150% 50%}}
 .app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
 @supports(height:100dvh){.app{min-height:100dvh}}
 .pg-wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px))}
@@ -7106,81 +7128,268 @@ function AvatarMedal(p){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CHEST OPEN MODAL — 3-phase animation
+// TREASURE CHEST SVG — reusable wooden chest (scales to any size)
+// Used in both ChestEarnedToast (small, wiggling) and ChestOpenModal (large, exploding)
 // ═══════════════════════════════════════════════════════════════
-function ChestOpenModal(p){
-  var[phase,setPhase]=useState("shake"); // shake → flash → reveal
-  var chest=p.chest;var result=p.result;
-  var ct=CHEST_TYPES[chest.chest_type]||CHEST_TYPES.novice;
+function TreasureChestSvg(p){
+  var size=p.size||180;
+  var animationClass=p.animationClass||"";
+  return(
+  <svg viewBox="0 0 180 150" width={size} height={size*150/180} style={{overflow:"visible"}} aria-hidden="true">
+    <defs>
+      <linearGradient id={"woodLid_"+(p.idSuffix||"def")} x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#8b5a2b"/><stop offset="60%" stopColor="#6b3f1a"/><stop offset="100%" stopColor="#4a2a10"/>
+      </linearGradient>
+      <linearGradient id={"woodBody_"+(p.idSuffix||"def")} x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#6b3f1a"/><stop offset="100%" stopColor="#3a1f0a"/>
+      </linearGradient>
+      <linearGradient id={"metalBand_"+(p.idSuffix||"def")} x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#6a4e20"/><stop offset="50%" stopColor="#4a3614"/><stop offset="100%" stopColor="#2e2008"/>
+      </linearGradient>
+      <linearGradient id={"goldLock_"+(p.idSuffix||"def")} x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#f0c850"/><stop offset="50%" stopColor="#d4943a"/><stop offset="100%" stopColor="#8b5e20"/>
+      </linearGradient>
+    </defs>
+    {/* Body (bottom half) */}
+    <g className={"chest-body-group "+(animationClass==="explode"?"chest-v2-body-explode":"")}>
+      <rect x="10" y="65" width="160" height="80" rx="3" fill={"url(#woodBody_"+(p.idSuffix||"def")+")"} stroke="#2a1509" strokeWidth="1.5"/>
+      <line x1="50" y1="68" x2="50" y2="142" stroke="#2a1509" strokeWidth="1" opacity="0.7"/>
+      <line x1="90" y1="68" x2="90" y2="142" stroke="#2a1509" strokeWidth="1" opacity="0.7"/>
+      <line x1="130" y1="68" x2="130" y2="142" stroke="#2a1509" strokeWidth="1" opacity="0.7"/>
+      <rect x="8" y="63" width="164" height="6" fill={"url(#metalBand_"+(p.idSuffix||"def")+")"} stroke="#1a1005" strokeWidth="0.5"/>
+      <rect x="8" y="100" width="164" height="4" fill={"url(#metalBand_"+(p.idSuffix||"def")+")"} stroke="#1a1005" strokeWidth="0.5"/>
+      <rect x="8" y="138" width="164" height="5" fill={"url(#metalBand_"+(p.idSuffix||"def")+")"} stroke="#1a1005" strokeWidth="0.5"/>
+      <circle cx="14" cy="66" r="1.8" fill="#8b6a30"/><circle cx="166" cy="66" r="1.8" fill="#8b6a30"/>
+      <circle cx="14" cy="141" r="1.8" fill="#8b6a30"/><circle cx="166" cy="141" r="1.8" fill="#8b6a30"/>
+      <rect x="12" y="138" width="18" height="8" rx="1" fill={"url(#metalBand_"+(p.idSuffix||"def")+")"}/>
+      <rect x="150" y="138" width="18" height="8" rx="1" fill={"url(#metalBand_"+(p.idSuffix||"def")+")"}/>
+      <rect x="78" y="78" width="24" height="22" rx="2" fill={"url(#goldLock_"+(p.idSuffix||"def")+")"} stroke="#5a3c10" strokeWidth="1"/>
+      <circle cx="90" cy="86" r="3" fill="#1a1005"/>
+      <path d="M 88.5 86 L 91.5 86 L 91 94 L 89 94 Z" fill="#1a1005"/>
+      <rect x="80" y="79" width="20" height="3" rx="1" fill="rgba(255,240,180,0.5)"/>
+    </g>
+    {/* Lid (top half) */}
+    <g className={"chest-lid-group "+(animationClass==="explode"?"chest-v2-lid-fly":"")}>
+      <path d="M 10 65 Q 10 15 90 15 Q 170 15 170 65 Z" fill={"url(#woodLid_"+(p.idSuffix||"def")+")"} stroke="#2a1509" strokeWidth="1.5"/>
+      <path d="M 10 65 Q 10 15 90 15 Q 170 15 170 65" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="1"/>
+      <path d="M 50 65 Q 55 25 65 20" fill="none" stroke="#2a1509" strokeWidth="1" opacity="0.6"/>
+      <path d="M 90 65 L 90 15" stroke="#2a1509" strokeWidth="1" opacity="0.6"/>
+      <path d="M 130 65 Q 125 25 115 20" fill="none" stroke="#2a1509" strokeWidth="1" opacity="0.6"/>
+      <path d="M 10 65 Q 10 15 90 15 Q 170 15 170 65" fill="none" stroke={"url(#metalBand_"+(p.idSuffix||"def")+")"} strokeWidth="5"/>
+      <rect x="87" y="16" width="6" height="49" fill={"url(#metalBand_"+(p.idSuffix||"def")+")"}/>
+      <circle cx="90" cy="19" r="2" fill="#d4943a" stroke="#5a3c10" strokeWidth="0.5"/>
+      <rect x="85" y="60" width="10" height="10" fill={"url(#goldLock_"+(p.idSuffix||"def")+")"} stroke="#5a3c10" strokeWidth="1"/>
+    </g>
+  </svg>);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TRIGGER LABEL — human-friendly description of why a chest was granted
+// ═══════════════════════════════════════════════════════════════
+function getTriggerLabel(trigger){
+  if(!trigger)return"Milestone reached";
+  if(trigger==="mock_1")return"Mock Test 1 completed";
+  if(trigger==="mock_2")return"Mock Test 2 completed";
+  if(trigger==="mock_3")return"Mock Test 3 completed";
+  if(trigger==="boss_test")return"The Final Arena conquered";
+  if(trigger==="streak_7")return"7-day streak";
+  if(trigger==="streak_30")return"30-day streak";
+  if(trigger==="streak_100")return"100-day streak";
+  if(trigger==="xp_1k")return"1,000 XP milestone";
+  if(trigger==="xp_3k")return"3,000 XP milestone";
+  if(trigger==="xp_5k")return"5,000 XP milestone";
+  if(trigger==="xp_10k")return"10,000 XP milestone";
+  if(trigger==="xp_20k")return"20,000 XP milestone";
+  if(trigger==="xp_30k")return"30,000 XP milestone";
+  if(trigger==="xp_50k")return"50,000 XP milestone";
+  if(trigger==="duel_win")return"Duel victory";
+  if(trigger==="duel_win3")return"3 duel wins in a row";
+  if(trigger==="wfall_combo10")return"Word Fall combo x10";
+  if(trigger==="wfall_combo20")return"Word Fall combo x20";
+  if(trigger==="wfall_combo30")return"Word Fall combo x30";
+  if(trigger==="smatch_easy_good")return"Speed Match mastered";
+  if(trigger==="smatch_easy_80")return"Speed Match 80%+";
+  if(trigger==="smatch_hard_80")return"Speed Match Hard 80%+";
+  if(trigger==="clue_perfect")return"Clue Hunter perfect run";
+  if(trigger==="ablitz_70")return"Audio Blitz 70%+";
+  if(trigger==="ablitz_90")return"Audio Blitz 90%+";
+  if(trigger==="sbuild_90")return"Sentence Builder 90%+";
+  if(trigger.indexOf("league_up_")===0){
+    var lg=trigger.substring(10);
+    return"Promoted to "+lg.charAt(0).toUpperCase()+lg.slice(1)+" League";
+  }
+  if(trigger.indexOf("ach_legendary_")===0){
+    var achId=trigger.substring(14);
+    var ach=ACHIEVEMENTS.find(function(a){return a.id===achId;});
+    return(ach?ach.name:"Legendary achievement")+" unlocked";
+  }
+  return"Milestone reached";
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHEST EARNED TOAST — appears at the moment a chest is granted
+// ═══════════════════════════════════════════════════════════════
+function ChestEarnedToast(p){
+  var ct=CHEST_TYPES[p.chestType]||CHEST_TYPES.novice;
+  var isLegend=p.chestType==="legendaire";
+  // Rarity color for border/glow — use ct label or default gold
+  var rarityColor=isLegend?"#ffc020":p.chestType==="champion"?"#d4943a":p.chestType==="guerrier"?"#3a8ee0":"#909090";
+  var [closing,setClosing]=useState(false);
+  var [showFlash,setShowFlash]=useState(isLegend);
+  var duration=isLegend?12000:p.chestType==="champion"?8000:5000;
 
   useEffect(function(){
-    if(phase==="shake"){
-      // Phase 1: shake for 1.2s, then auto-open
-      var t=setTimeout(function(){p.onOpen();setPhase("flash");},1200);
+    if(showFlash){
+      var tf=setTimeout(function(){setShowFlash(false);},400);
+      return function(){clearTimeout(tf);};
+    }
+  },[showFlash]);
+
+  useEffect(function(){
+    var t=setTimeout(function(){setClosing(true);setTimeout(p.onDismiss,300);},duration);
+    return function(){clearTimeout(t);};
+  },[]);
+
+  function doDismiss(){setClosing(true);setTimeout(p.onDismiss,300);}
+  function doOpenNow(){setClosing(true);setTimeout(p.onOpenNow,200);}
+
+  return(<>
+    {/* Legendary full-screen gold flash (only once, 400ms) */}
+    {showFlash&&<div style={{position:"fixed",inset:0,background:"radial-gradient(ellipse at center, rgba(255,200,50,.6), rgba(255,192,32,.3) 40%, transparent 80%)",pointerEvents:"none",zIndex:199,animation:"legendGoldFlash .4s ease-out forwards"}}/>}
+
+    <div style={{position:"fixed",bottom:86,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 24px)",maxWidth:380,zIndex:200,animation:closing?"toastFadeOut .3s ease-out forwards":"toastSlideUp .4s cubic-bezier(.2,.8,.3,1.2)",pointerEvents:"auto"}}>
+      <div style={{background:"linear-gradient(180deg,#1f1610,#120a04)",border:"1.5px solid "+rarityColor,borderRadius:16,padding:"12px 14px",boxShadow:"0 -6px 30px rgba(0,0,0,.6), 0 0 40px "+rarityColor+"55",display:"flex",gap:12,alignItems:"center",position:"relative",overflow:"hidden"}}>
+        {/* Legendary shimmer sweep */}
+        {isLegend&&<div style={{position:"absolute",inset:0,background:"linear-gradient(110deg,transparent 30%,rgba(255,220,120,.18) 50%,transparent 70%)",backgroundSize:"300%",animation:"legendShimmer 3s ease-in-out infinite",pointerEvents:"none",borderRadius:16}}/>}
+
+        {/* Mini chest with halo */}
+        <div style={{position:"relative",flexShrink:0,width:54,height:54,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{position:"absolute",inset:-4,borderRadius:"50%",background:"radial-gradient(circle,"+rarityColor+"55,transparent 70%)",filter:"blur(4px)"}}/>
+          <div style={{animation:"chestWiggle 1.4s ease-in-out infinite"}}>
+            <TreasureChestSvg size={54} idSuffix={"toast_"+p.toastId}/>
+          </div>
+        </div>
+
+        {/* Text */}
+        <div style={{flex:1,minWidth:0,position:"relative",zIndex:2}}>
+          <div className="out" style={{fontSize:10,fontWeight:700,color:rarityColor,letterSpacing:1.5,textTransform:"uppercase"}}>Treasure earned</div>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--t1)",marginTop:2}}>{ct.label} Chest</div>
+          <div style={{fontSize:11,color:"var(--t2)",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.reason}</div>
+        </div>
+
+        {/* Close X */}
+        <button onClick={doDismiss} aria-label="Dismiss" style={{background:"none",border:"none",color:"var(--t3)",fontSize:18,cursor:"pointer",padding:0,lineHeight:1,flexShrink:0,marginTop:-22,alignSelf:"flex-start",position:"relative",zIndex:2}}>{String.fromCharCode(215)}</button>
+      </div>
+
+      {/* Actions */}
+      <div style={{display:"flex",gap:6,marginTop:6}}>
+        <button onClick={doOpenNow} style={{flex:"1 1 auto",padding:"8px 12px",background:"linear-gradient(135deg,"+rarityColor+","+rarityColor+"bb)",border:"none",borderRadius:10,color:"#0f0c08",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Cinzel','Outfit',serif",letterSpacing:.5}}>Open now {"\u2694\uFE0F"}</button>
+        <button onClick={doDismiss} style={{padding:"8px 14px",background:"rgba(0,0,0,.3)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t2)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Later</button>
+      </div>
+    </div>
+  </>);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHEST OPEN MODAL V2 — Boss Loot cinematic animation
+// Phases: zoom (0.6s) → trembor (1s) → explode/beam (0.6s) → reveal
+// ═══════════════════════════════════════════════════════════════
+function ChestOpenModal(p){
+  var[phase,setPhase]=useState("build"); // build → explode → reveal
+  var chest=p.chest;var result=p.result;
+  var ct=CHEST_TYPES[chest.chest_type]||CHEST_TYPES.novice;
+  // Rarity color derived from chest type (fallback until result arrives)
+  var defaultColor=chest.chest_type==="legendaire"?"#ffc020":chest.chest_type==="champion"?"#d4943a":chest.chest_type==="guerrier"?"#3a8ee0":"#909090";
+  var rarityColor=(result&&result.rarityColor)||defaultColor;
+  var rarityLabel=(result&&result.rarityLabel)||ct.label;
+
+  useEffect(function(){
+    if(phase==="build"){
+      // Build-up (zoom + trembor): 2.0s → trigger open + explode
+      var t=setTimeout(function(){p.onOpen();setPhase("explode");},2000);
       return function(){clearTimeout(t);};
     }
-    if(phase==="flash"){
-      var t2=setTimeout(function(){setPhase("reveal");},800);
+    if(phase==="explode"){
+      var t2=setTimeout(function(){setPhase("reveal");},1400);
       return function(){clearTimeout(t2);};
     }
   },[phase]);
 
-  // Particles for flash phase
-  var particles=[];
-  if(phase==="flash"||phase==="reveal"){
-    for(var i=0;i<12;i++){
-      var angle=(i/12)*360;var rad=angle*Math.PI/180;
-      particles.push({x:Math.cos(rad)*60,y:Math.sin(rad)*60,delay:i*0.05,color:result?result.rarityColor:"#ffc020"});
-    }
-  }
+  // Build shard angles once
+  var woodShards=[];for(var i=0;i<8;i++){var a=(i/8)*360+22;woodShards.push({angle:a,dist:120+Math.random()*60});}
+  var metalShards=[];for(var j=0;j<5;j++){var a2=(j/5)*360+45;metalShards.push({angle:a2,dist:100+Math.random()*80});}
+  var magicShards=[];for(var k=0;k<6;k++){var a3=-70+(k/5)*140;magicShards.push({angle:a3,dist:150+Math.random()*80});}
+  var speedLines=[];for(var m=0;m<6;m++){speedLines.push({left:(20+m*12)+"%",delay:(Math.random()*0.3)+"s"});}
 
-  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-    <div style={{textAlign:"center",maxWidth:340,width:"100%",background:"linear-gradient(180deg,#1a1610,#0f0c08)",border:"1px solid rgba(255,192,32,.12)",borderRadius:24,padding:"32px 24px",boxShadow:"0 12px 60px rgba(0,0,0,.6)"}}>
+  return(<div style={{position:"fixed",inset:0,background:"radial-gradient(ellipse at center,#1a0a00 0%,#080402 100%)",zIndex:10000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20,overflow:"hidden"}}>
+    <div style={{position:"fixed",inset:0,background:"radial-gradient(ellipse at center,transparent 20%,rgba(0,0,0,.6) 80%)",pointerEvents:"none",zIndex:1}}/>
 
-      {/* Phase 1: Shaking chest */}
-      {phase==="shake"&&<div style={{animation:"chestShake 1.2s ease-in-out"}}>
-        <div style={{fontSize:80,marginBottom:16}}>{ct.icon}</div>
-        <div className="out" style={{fontSize:18,fontWeight:800,color:"#f0c850",animation:"pulse 1s infinite"}}>{ct.label} Chest</div>
-        <p style={{color:"#8a7e6a",fontSize:13,marginTop:8}}>Opening...</p>
+    {/* Stage */}
+    <div style={{position:"relative",width:360,maxWidth:"100%",height:480,display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,overflow:"hidden"}}>
+
+      {/* Phase 1-2: Chest (visible during build + explode phases) */}
+      {(phase==="build"||phase==="explode")&&<div style={{position:"absolute",width:180,height:150,opacity:0,transform:"scale(.3)",animation:"chestV2Zoom .6s cubic-bezier(.2,.8,.4,1.3) 0s forwards, chestV2Trembor .5s ease-in-out 1s 2"+(phase==="explode"?", none":""),filter:"drop-shadow(0 12px 20px rgba(0,0,0,.8))",zIndex:3}}>
+        <style>{"@keyframes v2LidFlyLocal { 0%{transform:translateY(0) rotate(0);opacity:1} 40%{transform:translateY(-80px) rotate(-30deg);opacity:1} 100%{transform:translateY(-200px) rotate(-80deg);opacity:0} } @keyframes v2BodyCollapseLocal { 0%{transform:scale(1,1) translateY(0);opacity:1;filter:brightness(1)} 40%{transform:scale(1.1,.85) translateY(8px);filter:brightness(2)} 100%{transform:scale(.4,.2) translateY(30px);opacity:0;filter:brightness(4)} } .cov2-exploding .chest-lid-group{transform-origin:50% 100%;animation:v2LidFlyLocal .6s ease-out forwards} .cov2-exploding .chest-body-group{transform-origin:50% 50%;animation:v2BodyCollapseLocal .5s ease-in .1s forwards}"}</style>
+        <div className={phase==="explode"?"cov2-exploding":""}>
+          <TreasureChestSvg size={180} idSuffix="modal"/>
+        </div>
       </div>}
 
-      {/* Phase 2: Flash + particles */}
-      {phase==="flash"&&<div style={{position:"relative",height:200,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <div style={{position:"absolute",width:120,height:120,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,192,32,.8),transparent 70%)",animation:"chestFlash .8s ease-out forwards"}}/>
-        {particles.map(function(pt,i){return(<div key={i} style={{position:"absolute",width:8,height:8,borderRadius:"50%",background:pt.color,left:"50%",top:"50%",marginLeft:pt.x,marginTop:pt.y,animation:"chestParticle .8s ease-out "+pt.delay+"s forwards",opacity:0.8}}/>);})}
-        <div style={{fontSize:64,position:"relative",zIndex:1,animation:"pulse .4s"}}>{ct.icon}</div>
-      </div>}
+      {/* Explode phase FX */}
+      {phase==="explode"&&<>
+        {/* Dust cloud */}
+        <div style={{position:"absolute",top:"50%",left:"50%",width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle,rgba(120,90,60,.4),transparent 70%)",transform:"translate(-50%,-50%) scale(0)",opacity:0,animation:"chestV2DustExpand 1s ease-out .1s forwards",zIndex:2,filter:"blur(3px)"}}/>
+        {/* Explosion burst */}
+        <div style={{position:"absolute",width:10,height:10,borderRadius:"50%",background:"radial-gradient(circle,white 0%,"+rarityColor+" 30%,transparent 70%)",opacity:0,animation:"chestV2BurstExpand .6s ease-out 0s forwards",zIndex:4}}/>
+        {/* Screen flash */}
+        <div style={{position:"fixed",inset:0,background:"white",opacity:0,animation:"chestV2ScreenFlash .4s ease-out 0s",zIndex:10,pointerEvents:"none"}}/>
+        {/* Wood shards */}
+        {woodShards.map(function(s,i){return(<div key={"w"+i} style={{position:"absolute",width:10,height:16,background:"linear-gradient(180deg,#6b3f1a,#4a2a10)",top:"50%",left:"50%",borderRadius:2,opacity:0,boxShadow:"inset 0 -2px 3px rgba(0,0,0,.5)",animation:"chestV2ShardFly .9s ease-out .1s forwards","--angle":s.angle+"deg","--dist":s.dist+"px",zIndex:6}}/>);})}
+        {/* Metal shards */}
+        {metalShards.map(function(s,i){return(<div key={"m"+i} style={{position:"absolute",width:6,height:10,background:"linear-gradient(180deg,#8b6a30,#5a4418)",top:"50%",left:"50%",borderRadius:1,opacity:0,boxShadow:"0 0 4px rgba(212,148,58,.6)",animation:"chestV2ShardFly .9s ease-out .2s forwards","--angle":s.angle+"deg","--dist":s.dist+"px",zIndex:6}}/>);})}
+        {/* Magic shards */}
+        {magicShards.map(function(s,i){return(<div key={"mg"+i} style={{position:"absolute",width:5,height:12,background:rarityColor,top:"50%",left:"50%",borderRadius:2,opacity:0,filter:"drop-shadow(0 0 6px "+rarityColor+")",animation:"chestV2ShardFly 1s ease-out .2s forwards","--angle":s.angle+"deg","--dist":s.dist+"px",zIndex:6}}/>);})}
+        {/* Vertical beam */}
+        <div style={{position:"absolute",top:"50%",left:"50%",width:80,height:0,background:"linear-gradient(to top,transparent 0%,"+rarityColor+" 30%,rgba(255,255,255,.9) 70%,transparent 100%)",transform:"translate(-50%,-50%)",opacity:0,animation:"chestV2BeamGrow .5s ease-out .2s forwards, chestV2BeamShrink .5s ease-in 1.2s forwards",zIndex:2,filter:"blur(1px)",pointerEvents:"none"}}/>
+      </>}
 
-      {/* Phase 3: Reveal reward */}
-      {phase==="reveal"&&result&&<div style={{animation:"chestReveal .6s ease-out"}}>
-        <div style={{width:100,height:100,borderRadius:20,margin:"0 auto 20px",display:"flex",alignItems:"center",justifyContent:"center",
-          background:"linear-gradient(135deg,"+result.rarityColor+"22,"+result.rarityColor+"44)",
-          border:"2px solid "+result.rarityColor,boxShadow:"0 0 40px "+result.rarityColor+"44"}}>
-          {result.reward.type==="xp"?<span style={{fontSize:48}}>{"\uD83D\uDC8E"}</span>:
-           result.reward.type==="avatar"?<AvatarMedal avatarId={result.reward.id} size={72}/>:
-           <span style={{fontSize:48}}>{"\uD83C\uDFA8"}</span>}
+      {/* Reveal phase */}
+      {phase==="reveal"&&result&&<>
+        {/* Speed lines during fall */}
+        {speedLines.map(function(sl,i){return(<div key={i} style={{position:"absolute",width:2,height:80,background:"linear-gradient(to bottom,transparent,"+rarityColor+",transparent)",left:sl.left,top:"15%",opacity:0,animation:"chestV2SpeedLine .8s ease-out "+sl.delay}}/>);})}
+        {/* Impact ring */}
+        <div style={{position:"absolute",top:"65%",left:"50%",width:200,height:40,borderRadius:"50%",border:"2px solid "+rarityColor,transform:"translate(-50%,-50%) scaleY(.4)",opacity:0,animation:"chestV2ImpactRing .8s ease-out .8s forwards",filter:"blur(1px)",zIndex:4}}/>
+        {/* Reward card */}
+        <div style={{position:"absolute",width:220,padding:"22px 18px",borderRadius:14,background:"linear-gradient(180deg,#2a1e14 0%,#1a1208 100%)",border:"2px solid "+rarityColor,boxShadow:"0 0 60px "+rarityColor+", 0 0 120px "+rarityColor+"66, inset 0 0 30px rgba(0,0,0,.6)",textAlign:"center",opacity:0,transform:"translateY(-220px) scale(.6) rotate(-8deg)",animation:"chestV2RewardFall .8s cubic-bezier(.3,.1,.4,1.4) 0s forwards, chestV2RewardSettle .4s ease-out .8s forwards",zIndex:5}}>
+          <div className="out" style={{fontSize:11,fontWeight:900,color:rarityColor,letterSpacing:3,textTransform:"uppercase",marginBottom:10,padding:"4px 10px",display:"inline-block",border:"1px solid "+rarityColor,borderRadius:4}}>{rarityLabel}</div>
+          <div style={{margin:"10px 0",filter:"drop-shadow(0 0 18px "+rarityColor+")",animation:"chestV2IconFloat 2s ease-in-out 1.5s infinite",display:"flex",justifyContent:"center"}}>
+            {result.reward.type==="xp"?<span style={{fontSize:72}}>{"\uD83D\uDC8E"}</span>:
+             result.reward.type==="avatar"?<AvatarMedal avatarId={result.reward.id} size={96}/>:
+             result.reward.type==="skin"&&SKINS[result.reward.id]?<div style={{width:96,height:96,borderRadius:20,background:"linear-gradient(135deg,"+SKINS[result.reward.id].hex+","+SKINS[result.reward.id].dark+")",border:"2px solid "+rarityColor,boxShadow:"0 0 24px "+SKINS[result.reward.id].hex+"88"}}/>:
+             <span style={{fontSize:72}}>{"\uD83C\uDFA8"}</span>}
+          </div>
+          <div className="out" style={{fontSize:22,fontWeight:900,color:"#ede4d4",marginBottom:4,letterSpacing:1}}>
+            {result.reward.type==="xp"?"+"+result.xpAmount+" XP":
+             result.reward.type==="avatar"?(AVATARS[result.reward.id]?AVATARS[result.reward.id].name:result.reward.id):
+             result.reward.type==="skin"?(SKINS[result.reward.id]?SKINS[result.reward.id].name:result.reward.id):"???"}
+          </div>
+          <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:1}}>
+            {result.reward.type==="xp"?"XP Gem — bonus added!":
+             result.reward.type==="avatar"?"New avatar unlocked":
+             "New skin unlocked"}
+          </div>
         </div>
-        <div className="out" style={{fontSize:11,fontWeight:700,color:result.rarityColor,textTransform:"uppercase",letterSpacing:2,marginBottom:8}}>{result.rarityLabel}</div>
-        <div className="out" style={{fontSize:24,fontWeight:900,color:"#ede4d4",marginBottom:8}}>
-          {result.reward.type==="xp"?"+"+result.xpAmount+" XP":
-           result.reward.type==="avatar"?(AVATARS[result.reward.id]?AVATARS[result.reward.id].name:result.reward.id):
-           result.reward.type==="skin"?(SKINS[result.reward.id]?SKINS[result.reward.id].name:result.reward.id):"???"}
-        </div>
-        <div style={{fontSize:13,color:"#b0a890",marginBottom:24}}>
-          {result.reward.type==="xp"?"XP Gem — bonus added!":
-           result.reward.type==="avatar"?"New avatar unlocked!":
-           "New skin unlocked!"}
-        </div>
-        {result.reward.type==="skin"&&SKINS[result.reward.id]&&<div style={{width:60,height:60,borderRadius:14,margin:"0 auto 20px",background:"linear-gradient(135deg,"+SKINS[result.reward.id].hex+","+SKINS[result.reward.id].dark+")",border:"2px solid "+result.rarityColor,boxShadow:"0 0 20px "+SKINS[result.reward.id].hex+"44"}}/>}
-        <button className="btn1" onClick={p.onClose} style={{width:"100%",fontSize:15}}>Collect</button>
-      </div>}
+      </>}
 
-      {/* Reveal but no result yet (loading) */}
-      {phase==="reveal"&&!result&&<div>
-        <div style={{fontSize:48,animation:"pulse 1s infinite"}}>{"⏳"}</div>
+      {/* Reveal but no result (loading) */}
+      {phase==="reveal"&&!result&&<div style={{position:"absolute",textAlign:"center"}}>
+        <div style={{fontSize:48,animation:"pulse 1s infinite"}}>{"\u231B"}</div>
         <p style={{color:"#8a7e6a",fontSize:13,marginTop:12}}>Rolling...</p>
       </div>}
     </div>
+
+    {/* Collect button (only in reveal phase) */}
+    {phase==="reveal"&&result&&<button className="btn1" onClick={p.onClose} style={{marginTop:20,width:240,maxWidth:"100%",fontSize:15,zIndex:20,background:"linear-gradient(135deg,"+rarityColor+","+rarityColor+"99)"}}>Collect</button>}
   </div>);
 }
 
@@ -10017,12 +10226,27 @@ function Profile(p){
 export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
   var[pendingChestCount,setPendingChestCount]=useState(0);var[chestModal,setChestModal]=useState(null);var[chestResult,setChestResult]=useState(null);var[chestPending,setChestPending]=useState([]);
+  var[chestToastQueue,setChestToastQueue]=useState([]);var[activeChestToast,setActiveChestToast]=useState(null);var chestToastIdRef=useRef(0);
   var[showTip,setShowTip]=useState(false);
   useEffect(function(){
     if(!xpt||sp)return;
     var t=setTimeout(function(){sXpt(null);},4000);
     return function(){clearTimeout(t);};
   },[xpt,sp]);
+  // ── Chest toast dispatcher: show next queued toast when conditions allow ──
+  useEffect(function(){
+    if(activeChestToast)return; // one toast at a time
+    if(chestToastQueue.length===0)return;
+    // Don't interrupt students mid-test
+    var TEST_ROUTES=["boss","endless","mock1","mock2","mock3"];
+    if(sp&&TEST_ROUTES.indexOf(sp)!==-1)return;
+    // Don't stack on top of the chest opening modal
+    if(chestModal)return;
+    // Pop next from queue
+    var next=chestToastQueue[0];
+    setChestToastQueue(function(q){return q.slice(1);});
+    setActiveChestToast(next);
+  },[chestToastQueue,activeChestToast,sp,chestModal]);
   var[activeEvents,setActiveEvents]=useState([]);
   var[classMedianXp,setClassMedianXp]=useState(0);
   var[groupAccess,setGroupAccess]=useState(null); // null | {status:"ok"} | {status:"expired",name,endDate} | {status:"not_started",name,startDate}
@@ -10245,11 +10469,15 @@ useEffect(function(){
 
 // ─── CHEST SYSTEM ───
   // Fire-and-forget: grant a unique chest (checks Supabase for duplicates)
+  function enqueueChestToast(trigger,chestType){
+    var id=++chestToastIdRef.current;
+    setChestToastQueue(function(q){return q.concat([{id:id,trigger:trigger,chestType:chestType}]);});
+  }
   function grantChestLocal(trigger,chestType){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"idrac2026";
     hasUniqueTrigger(un,cc,trigger).then(function(done){
-      if(!done){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
+      if(!done){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
     }).catch(function(e){console.error("[CHEST] uniqueTrigger check error:",e);});
   }
   // Fire-and-forget: grant a weekly chest (7-day cooldown per trigger)
@@ -10257,7 +10485,7 @@ useEffect(function(){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"idrac2026";
     isWeeklyCooldown(un,cc,trigger).then(function(onCd){
-      if(!onCd){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
+      if(!onCd){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
     }).catch(function(e){console.error("[CHEST] cooldown check error:",e);});
   }
   async function refreshPendingChests(un,cc){
@@ -10690,6 +10918,14 @@ var prevLeague=getLeague(c.weeklyXp);
     {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
+
+    {/* ═══ CHEST EARNED TOAST ═══ */}
+    {activeChestToast&&!chestModal&&<ChestEarnedToast
+      toastId={activeChestToast.id}
+      chestType={activeChestToast.chestType}
+      reason={getTriggerLabel(activeChestToast.trigger)}
+      onDismiss={function(){setActiveChestToast(null);}}
+      onOpenNow={function(){setActiveChestToast(null);if(chestPending.length>0)setChestModal(chestPending[0]);}}/>}
 
     {premiumPrompt&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={function(){setPremiumPrompt(null);}}>
       <div style={{background:"var(--bg2)",borderRadius:20,padding:28,maxWidth:340,textAlign:"center",animation:"fadeIn .3s",border:"1px solid var(--bdr)"}} onClick={function(e){e.stopPropagation();}}>
