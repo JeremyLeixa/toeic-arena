@@ -9716,11 +9716,23 @@ useEffect(function(){
   var bgmStarted=useRef(false);
   useEffect(function(){
     if(ld||!u||bgmStarted.current)return;
-    function startBGM(){bgmStarted.current=true;if(tab==="home")playBGM("bgm_home");document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);setTimeout(function(){evalCoachTips(u,"home");},2000);}
+    function startBGM(){bgmStarted.current=true;if(tab==="home"&&!sp)playBGM("bgm_home");document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);setTimeout(function(){evalCoachTips(u,"home");},2000);}
     document.addEventListener("click",startBGM,{once:true});
     document.addEventListener("touchstart",startBGM,{once:true});
     return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
   },[ld]);
+
+  // ── Centralized BGM control: silence audio routes, restore home BGM on return ──
+  useEffect(function(){
+    if(ld||!u||!bgmStarted.current)return;
+    var AUDIO_ROUTES=["lis","lisP1","lisP2","lisP3","lisP4","ablitz"];
+    // Routes that manage their own BGM (do not interfere):
+    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue"];
+    if(sp&&AUDIO_ROUTES.indexOf(sp)!==-1){stopBGM();return;}
+    if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
+    // No subpage active and on a home-BGM tab → ensure bgm_home is playing
+    if(!sp&&(tab==="home"||tab==="league"||tab==="profile"))playBGM("bgm_home");
+  },[sp,tab]);
 
   // ── Time tracking (60s) + Cloud sync (every 2 min) + beforeunload ──
   var timeRef=useRef({ticks:0});
