@@ -628,6 +628,11 @@ function urlBase64ToUint8Array(base64String){
 async function subscribePush(userName,userClassCode){
   try{
     if(!("serviceWorker" in navigator)||!("PushManager" in window))return null;
+    // Explicit permission request (some browsers don't auto-prompt on subscribe)
+    if("Notification" in window&&Notification.permission!=="granted"){
+      var perm=await Notification.requestPermission();
+      if(perm!=="granted"){console.log("Push permission denied:",perm);return null;}
+    }
     var reg=await navigator.serviceWorker.ready;
     var existing=await reg.pushManager.getSubscription();
     var sub=existing||await reg.pushManager.subscribe({
@@ -837,47 +842,11 @@ function XpToast(p){if(!p.v)return null;
     </div>}
   </div>);}
 
-// ─── COACH TIP ───
-var COACH_TIPS=[
-  {id:"welcome",icon:"\u2694\uFE0F",title:"Welcome to the Arena!",msg:"Tap Train to start your first exercise — your journey begins there.",tab:"train",
-    check:function(u,tab){return tab==="home"&&u.stats.sessions<=1;}},
-  {id:"first_clear",icon:"\uD83C\uDF1F",title:"First victory!",msg:"Your progress is tracked in Profile \u2014 check your Battle Scan results too.",tab:"profile",
-    check:function(u,tab){return tab==="home"&&u.stats.sessions>=2&&u.stats.sessions<=4;}},
-  {id:"league",icon:"\uD83C\uDFC6",title:"Ready to compete?",msg:"League shows how you rank against classmates. Updated every week!",tab:"league",
-    check:function(u,tab){return tab==="home"&&u.stats.sessions>=5&&u.weeklyXp>0;}},
-  {id:"streak",icon:"\uD83D\uDD25",title:"Streak started!",msg:"Come back tomorrow to keep it alive \u2014 streaks unlock bonus XP!",tab:null,
-    check:function(u,tab){return tab==="home"&&u.daily&&u.daily.date===today()&&u.daily.done&&u.streak>=1&&u.streak<=2;}},
-  {id:"listening_gap",icon:"\uD83D\uDC42",title:"Don\u0027t forget your ears!",msg:"You haven\u0027t tried any Listening exercises yet. Head to Train to give it a shot.",tab:"train",
-    check:function(u,tab){if(tab!=="home"||u.stats.sessions<8)return false;var ms=u.moduleScores||{};var hasLis=(ms.lisP1&&ms.lisP1.total>0)||(ms.lisP2&&ms.lisP2.total>0)||(ms.lisP3&&ms.lisP3.total>0)||(ms.lisP4&&ms.lisP4.total>0);return !hasLis;}},
-  {id:"mock_reminder",icon:"\uD83D\uDCDC",title:"Your Mock Test awaits!",msg:"Complete a Mock Test to measure your real TOEIC level. It\u0027s the best way to track your progress.",tab:"train",
-    check:function(u,tab){if(tab!=="home")return false;if(u.mockResults&&(u.mockResults.mock1||u.mockResults.mock2||u.mockResults.mock3))return false;var joined=u.joinedAt?new Date(u.joinedAt):null;var days=joined?Math.floor((Date.now()-joined.getTime())/(864e5)):99;return days>=5&&u.stats.sessions>=5;}}
-];
-
-function CoachTip(p){
-  var[closing,setClosing]=useState(false);
-  function dismiss(){setClosing(true);setTimeout(function(){p.onDismiss(p.tip.id);},300);}
-  var tip=p.tip;
-  return(
-    <div style={{position:"fixed",bottom:76,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:400,zIndex:150,animation:closing?"tipFade .3s ease forwards":"tipSlide .4s ease-out",pointerEvents:"auto"}}>
-      <div style={{background:"var(--bg2)",border:"1px solid rgba(var(--cx),.25)",borderRadius:16,padding:"14px 16px",boxShadow:"0 -4px 24px rgba(0,0,0,.4)",display:"flex",gap:12,alignItems:"flex-start"}}>
-        <div style={{fontSize:28,flexShrink:0,marginTop:2}}>{tip.icon}</div>
-        <div style={{flex:1,minWidth:0}}>
-          <div className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",marginBottom:3}}>{tip.title}</div>
-          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0}}>{tip.msg}</p>
-          {tip.tab&&<button onClick={function(){p.goTab(tip.tab);dismiss();}}
-            style={{marginTop:8,padding:"6px 14px",background:"rgba(var(--cx),.1)",border:"1px solid rgba(var(--cx),.2)",borderRadius:8,color:"var(--cyan)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{tip.tab==="train"?"Go to Train":tip.tab==="profile"?"View Profile":tip.tab==="league"?"See League":"Go"}</button>}
-        </div>
-        <button onClick={dismiss} style={{background:"none",border:"none",color:"var(--t3)",fontSize:18,cursor:"pointer",padding:0,lineHeight:1,flexShrink:0,marginTop:-2}}>{String.fromCharCode(215)}</button>
-      </div>
-    </div>);
-}
-
-
 // ─── TUTORIAL TOUR (shown once on first Home visit for new students) ───
 var TUTORIAL_STEPS=[
-  {icon:"\u26A1",title:"Daily Challenge",body:"Ton r\u00e9flexe quotidien : 5 questions par jour, 30 secondes chacune. C'est court, rapide, et \u00e7a garde ta s\u00e9rie en vie. Commence par l\u00e0 chaque jour.",pos:"top"},
-  {icon:"\uD83C\uDFC6",title:"Progression & Ligue",body:"Ton niveau et ton rang dans la classe s'affichent juste ici. Chaque XP te rapproche du niveau sup\u00e9rieur. L'onglet League te montre qui m\u00e8ne la course cette semaine.",pos:"middle"},
-  {icon:"\u2694\uFE0F",title:"Onglet Train",body:"Tous tes modules TOEIC sont dans l'onglet Train en bas : Part 1 \u00e0 7, Mock Tests, Boss Arena, Word Tavern... Ton premier Mock Test est \u00e0 faire dans les 7 jours.",pos:"bottom"}
+  {icon:"\u26A1",title:"Daily Challenge",body:"Your daily reflex: 5 questions a day, 30 seconds each. Short, fast, and it keeps your streak alive. Start here every single day.",pos:"top"},
+  {icon:"\uD83C\uDFC6",title:"Progress & League",body:"Your level and class rank show up right here. Every XP brings you closer to the next level. The League tab reveals who's leading the race this week.",pos:"middle"},
+  {icon:"\u2694\uFE0F",title:"Train tab",body:"All your TOEIC modules live in the Train tab below: Part 1 to 7, Mock Tests, Boss Arena, Word Tavern... Your first Mock Test is due within 7 days.",pos:"bottom"}
 ];
 function TutorialTour(p){
   var[i,setI]=useState(0);
@@ -893,8 +862,8 @@ function TutorialTour(p){
         <div style={{fontSize:48,marginBottom:10,animation:"fadeIn .4s"}} key={i}>{step.icon}</div>
         <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:20,color:"var(--t1)",marginBottom:10}}>{step.title}</h3>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:20}}>{step.body}</p>
-        <button className="btn1" onClick={next} style={{width:"100%",padding:"12px 20px",fontSize:14}}>{isLast?"C'est parti \u2694\uFE0F":"Compris \u2192"}</button>
-        {!isLast&&<button onClick={p.onDone} style={{background:"none",border:"none",color:"var(--t3)",fontSize:11,cursor:"pointer",marginTop:10,padding:4,fontFamily:"'DM Sans',sans-serif"}}>Passer la visite</button>}
+        <button className="btn1" onClick={next} style={{width:"100%",padding:"12px 20px",fontSize:14}}>{isLast?"Let's go \u2694\uFE0F":"Got it \u2192"}</button>
+        {!isLast&&<button onClick={p.onDone} style={{background:"none",border:"none",color:"var(--t3)",fontSize:11,cursor:"pointer",marginTop:10,padding:4,fontFamily:"'DM Sans',sans-serif"}}>Skip tour</button>}
       </div>
     </div>);
 }
@@ -1311,7 +1280,7 @@ var[step,sSt]=useState("name");
         <div className="crd" style={{padding:"14px 16px",marginBottom:20,background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(240,200,80,.06))",border:"1px solid rgba(240,200,80,.2)"}}>
           <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>{"\uD83C\uDFAF"} Estimated TOEIC</div>
           <div className="out" style={{fontFamily:"'Cinzel',serif",fontSize:32,fontWeight:900,color:toeicColor,lineHeight:1}}>{toeicEst}<span style={{fontSize:14,color:"var(--t3)",fontWeight:400,marginLeft:6}}>{"/ 990"}</span></div>
-          <p style={{fontSize:11,color:"var(--t2)",lineHeight:1.5,margin:"8px 0 0",textAlign:"left"}}>{"Le TOEIC réel se compose à 50% d'"}<b style={{color:"#3b82f6"}}>{"écoute"}</b>{" + 50% de "}<b style={{color:"#22c55e"}}>{"lecture"}</b>{". Entraîne les deux pour progresser."}</p>
+          <p style={{fontSize:11,color:"var(--t2)",lineHeight:1.5,margin:"8px 0 0",textAlign:"left"}}>Real TOEIC is 50% <b style={{color:"#3b82f6"}}>Listening</b> + 50% <b style={{color:"#22c55e"}}>Reading</b>. Train both to make progress.</p>
         </div>
 
         {/* ── RADAR SVG ── */}
@@ -1393,7 +1362,7 @@ var[step,sSt]=useState("name");
 
   // ─ Push notification opt-in ─
   if(step==="pushPrompt"){
-    function finishOnb(){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,pendingNav||undefined);}
+    function finishOnb(){sSt("langBridge");}
     async function enableAndGo(){
       if(pushBusy)return;
       setPushBusy(true);
@@ -1429,6 +1398,25 @@ var[step,sSt]=useState("name");
         <button className="btn2" onClick={finishOnb} disabled={pushBusy}
           style={{fontSize:13,padding:"12px 28px",width:"100%"}}>Plus tard</button>
         <p style={{color:"var(--t3)",fontSize:10,marginTop:12,lineHeight:1.5}}>{"Tu peux changer d'avis à tout moment depuis ton Profil."}</p>
+      </div>
+    </div>);}
+
+  // ─ Language bridge: transition to English ─
+  if(step==="langBridge"){
+    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,pendingNav||undefined);}
+    return(
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
+      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
+        <div style={{fontSize:64,marginBottom:18}}>{"\u2694\uFE0F"}</div>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:12}}>Welcome, Warrior</h2>
+        <p style={{color:"var(--t1)",fontSize:15,lineHeight:1.6,marginBottom:16,fontWeight:600}}>From here, your adventure continues in English.</p>
+        <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6,marginBottom:28}}>Every screen, every question, every feedback — English only. This is immersion. Trust the process.</p>
+        <div className="crd" style={{padding:"12px 16px",marginBottom:24,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
+          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0,fontStyle:"italic"}}>{"\u201C"}The best way to learn a language is to live in it.{"\u201D"}</p>
+        </div>
+        <button className="btn1" onClick={enterArena}
+          style={{fontSize:16,padding:"14px 32px",width:"100%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
+          Enter the Arena {"\u2192"}</button>
       </div>
     </div>);}
 
@@ -5022,18 +5010,18 @@ function MockTest(p){
         var gxp=timeGateOk?Math.round(xp*mult):0;
         if(!timeGateOk)return(<div style={{marginBottom:20}}>
           <div className="out" style={{fontSize:16,fontWeight:700,color:"var(--t3)"}}>+0 XP</div>
-          <div style={{fontSize:11,color:"var(--red)",marginTop:2}}>Test complété en moins de 5 min — XP non comptabilisé</div>
-          <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>Tes résultats TOEIC sont sauvegardés</div>
+          <div style={{fontSize:11,color:"var(--red)",marginTop:2}}>Completed in under 5 min — XP not counted</div>
+          <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>Your TOEIC results are saved</div>
         </div>);
         if(mult===1)return(<div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:20}}>+{gxp} XP</div>);
         if(mult>0)return(<div style={{marginBottom:20}}>
           <div className="out" style={{fontSize:18,fontWeight:800,color:"var(--orange)"}}>+{gxp} XP</div>
-          <div style={{fontSize:11,color:"var(--t3)",marginTop:2}}>XP réduit — 2ème tentative aujourd'hui</div>
+          <div style={{fontSize:11,color:"var(--t3)",marginTop:2}}>Reduced XP — 2nd attempt today</div>
         </div>);
         return(<div style={{marginBottom:20}}>
           <div className="out" style={{fontSize:16,fontWeight:700,color:"var(--t3)"}}>+0 XP</div>
-          <div style={{fontSize:11,color:"var(--red)",marginTop:2}}>Limite journalière atteinte — reviens demain !</div>
-          <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>Tes résultats TOEIC sont sauvegardés</div>
+          <div style={{fontSize:11,color:"var(--red)",marginTop:2}}>Daily limit reached — come back tomorrow!</div>
+          <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>Your TOEIC results are saved</div>
         </div>);
       })()}
 
@@ -9193,18 +9181,18 @@ function Profile(p){
         borderColor:"rgba(var(--cx),.15)"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
-            <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Score TOEIC estimé</div>
+            <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Estimated TOEIC Score</div>
             <div className="out" style={{fontWeight:900,fontSize:36,color:toeicCol,lineHeight:1}}>
               {toeic.total}<span style={{fontSize:14,color:"var(--t3)",fontWeight:400}}>/990</span>
             </div>
-            {toeic.total<=200&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>Complète d'autres modules pour affiner</div>}
+            {toeic.total<=200&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>{"Complete more modules to refine your score"}</div>}
           </div>
           <div style={{textAlign:"right"}}>
             <div style={{display:"flex",gap:16,marginBottom:4}}>
               <div style={{textAlign:"center"}}><div className="out" style={{fontWeight:700,fontSize:18,color:"var(--cyan)"}}>{toeic.listening}</div><div style={{fontSize:9,color:"var(--t3)"}}>Listening</div></div>
               <div style={{textAlign:"center"}}><div className="out" style={{fontWeight:700,fontSize:18,color:"var(--purple)"}}>{toeic.reading}</div><div style={{fontSize:9,color:"var(--t3)"}}>Reading</div></div>
             </div>
-            <div style={{fontSize:9,color:"var(--t3)"}}>Basé sur ton entraînement</div>
+            <div style={{fontSize:9,color:"var(--t3)"}}>Based on your training</div>
           </div>
         </div>
       </div>
@@ -9212,11 +9200,11 @@ function Profile(p){
         {[
           {l:"XP Total",v:u.xp,i:"⭐"},
           {l:"XP cette semaine",v:u.weeklyXp,i:"⚡"},
-          {l:"Précision",v:acc+"%",i:"🎯"},
+          {l:"Accuracy",v:acc+"%",i:"🎯"},
           {l:"Sessions",v:u.stats.sessions,i:"📊"},
-          {l:"Cartes révisées",v:u.stats.cardsRev||0,i:"🃏"},
+          {l:"Cards reviewed",v:u.stats.cardsRev||0,i:"🃏"},
           {l:"Exercices faits",v:u.stats.drills||0,i:"📝"},
-          {l:"Défis parfaits",v:u.stats.perfects||0,i:"✨"},
+          {l:"Perfect runs",v:u.stats.perfects||0,i:"✨"},
           {l:"Questions totales",v:u.stats.totalQ||0,i:"❓"}
         ].map(function(s){return(
           <div key={s.l} className="crd" style={{padding:14,textAlign:"center"}}>
@@ -9282,7 +9270,7 @@ function Profile(p){
         if(active.length===0)return null;
         return(
         <div className="crd" style={{marginTop:16,padding:"16px 8px 8px"}}>
-          <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:12,color:"var(--t2)",paddingLeft:8}}>📊 Précision par module</h3>
+          <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:12,color:"var(--t2)",paddingLeft:8}}>📊 Accuracy by module</h3>
           <ResponsiveContainer width="100%" height={Math.max(160,active.length*32)}>
             <BarChart data={active} layout="vertical" margin={{top:0,right:16,left:4,bottom:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--bdr)" horizontal={false}/>
@@ -9298,7 +9286,7 @@ function Profile(p){
             </BarChart>
           </ResponsiveContainer>
           {notStarted.length>0&&<div style={{paddingLeft:8,paddingRight:8,paddingTop:8,paddingBottom:4}}>
-            <p style={{fontSize:11,color:"var(--t3)",margin:0}}>{notStarted.length} module{notStarted.length>1?"s":""} non commencé{notStarted.length>1?"s":""} : {notStarted.map(function(d){return d.icon;}).join(" ")}</p>
+            <p style={{fontSize:11,color:"var(--t3)",margin:0}}>{notStarted.length} module{notStarted.length>1?"s":""} not yet started: {notStarted.map(function(d){return d.icon;}).join(" ")}</p>
           </div>}
         </div>);
       }()}
@@ -9310,7 +9298,7 @@ function Profile(p){
     <div className="enter" style={{padding:"20px 16px 100px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
         <button onClick={function(){setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>←</button>
-        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0,flex:1}}>Trophées</h1>
+        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0,flex:1}}>Achievements</h1>
         <span style={{fontSize:12,background:"rgba(255,215,0,.1)",color:"var(--gold)",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(255,215,0,.2)"}}>{ea.length} / {ACHIEVEMENTS.length}</span>
       </div>
       <div className="crd" style={{padding:"12px 16px",marginBottom:20}}>
@@ -9324,7 +9312,7 @@ function Profile(p){
         </div>
       </div>
       {ea.length>0&&<>
-        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Débloqués ({ea.length})</div>
+        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Unlocked ({ea.length})</div>
         <div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
           {ea.map(function(a){return(
             <div key={a.id} className="crd" style={{padding:14,background:"rgba(255,215,0,.05)",borderColor:"rgba(255,215,0,.15)"}}>
@@ -9336,7 +9324,7 @@ function Profile(p){
         </div>
       </>}
       {la.length>0&&<>
-        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>À débloquer ({la.length})</div>
+        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Locked ({la.length})</div>
         <div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {la.map(function(a){return(
             <div key={a.id} className="crd" style={{padding:14,opacity:.4}}>
@@ -9423,7 +9411,7 @@ function Profile(p){
           {isPhoto&&<button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar="⚔️";p.setAvatar(c);}}
             className="btn2" style={{fontSize:12,padding:"8px 18px",color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>✕ Supprimer</button>}
         </div>
-        <div style={{fontSize:11,color:"var(--t3)"}}>Photo redimensionnée · stockée en local</div>
+        <div style={{fontSize:11,color:"var(--t3)"}}>Photo resized · stored locally</div>
       </div>
       <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>ou choisis un emoji</div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
@@ -9525,7 +9513,7 @@ function Profile(p){
   {lg.icon} {lg.name}
   {lg.locked&&<span style={{fontSize:10,color:"var(--t3)",marginLeft:4}}>🔒</span>}
 </span>
-{lg.locked&&<span style={{fontSize:11,color:"var(--t3)",padding:"3px 10px",borderRadius:20,background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.15)"}}>Légende: TOEIC {lg.lockedScore}/400</span>}
+{lg.locked&&<span style={{fontSize:11,color:"var(--t3)",padding:"3px 10px",borderRadius:20,background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.15)"}}>Legend tier: reach TOEIC {lg.lockedScore}</span>}
           <span style={{fontSize:12,background:"rgba(255,100,0,.1)",color:"#ff6428",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(255,100,0,.2)"}}>🔥 {u.streak}</span>
         </div>
       </div>
@@ -9542,7 +9530,7 @@ function Profile(p){
           style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(255,215,0,.03)",border:"1px solid rgba(255,215,0,.15)",width:"100%"}}>
           <div style={{fontSize:22,marginBottom:4}}>🏆</div>
           <div className="out" style={{fontWeight:800,fontSize:16,color:"var(--gold)"}}>{ea.length}<span style={{fontSize:11,color:"var(--t3)",fontWeight:400}}>/{ACHIEVEMENTS.length}</span></div>
-          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Trophées</div>
+          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Achievements</div>
         </button>
         <button onClick={function(){setView("avatar");}} className="crd"
           style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(var(--cx),.03)",border:"1px solid rgba(var(--cx),.2)",width:"100%"}}>
@@ -9571,7 +9559,7 @@ function Profile(p){
       </button>
 
       {/* Settings */}
-      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Paramètres</div>
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Settings</div>
       <div className="crd" style={{padding:0,overflow:"hidden",marginBottom:20}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:"1px solid var(--bdr)"}}>
           <div>
@@ -9583,14 +9571,14 @@ function Profile(p){
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:"1px solid var(--bdr)"}}>
           <div>
             <div className="out" style={{fontWeight:700,fontSize:14}}>Effets sonores</div>
-            <div style={{fontSize:12,color:"var(--t2)"}}>{soundOn?"Activés":"Désactivés"}</div>
+            <div style={{fontSize:12,color:"var(--t2)"}}>{soundOn?"Enabled":"Disabled"}</div>
           </div>
           {Toggle(soundOn,function(){var cur=isSoundEnabled();setSoundEnabled(!cur);setSoundOn(!cur);if(!cur)try{playCorrect();}catch(e){}if(cur)stopBGM();})}
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:("PushManager" in window)?"1px solid var(--bdr)":"none"}}>
           <div>
             <div className="out" style={{fontWeight:700,fontSize:14}}>Conseils TOEIC</div>
-            <div style={{fontSize:12,color:"var(--t2)"}}>Affichés au démarrage</div>
+            <div style={{fontSize:12,color:"var(--t2)"}}>Shown on launch</div>
           </div>
           {Toggle(!tipOff,function(){try{var cur=localStorage.getItem("toeic-tip-disabled")==="1";if(cur){localStorage.removeItem("toeic-tip-disabled");localStorage.removeItem("toeic-tip-date");setTipOff(false);}else{localStorage.setItem("toeic-tip-disabled","1");setTipOff(true);}}catch(e){}})}
         </div>
@@ -9598,7 +9586,7 @@ function Profile(p){
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px"}}>
             <div>
               <div className="out" style={{fontWeight:700,fontSize:14}}>Notifications</div>
-              <div style={{fontSize:12,color:"var(--t2)"}}>{pushOn?"Rappels de série":"Désactivées"}</div>
+              <div style={{fontSize:12,color:"var(--t2)"}}>{pushOn?"Streak reminders ON":"Disabled"}</div>
             </div>
             {Toggle(pushOn,function(){if(pushOn){unsubscribePush(u.name,u.classCode).then(function(){setPushOn(false);});}else{subscribePush(u.name,u.classCode).then(function(sub){if(sub)setPushOn(true);});}})}
           </div>
@@ -9677,12 +9665,6 @@ function Profile(p){
 export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
   var[pendingChestCount,setPendingChestCount]=useState(0);var[chestModal,setChestModal]=useState(null);var[chestResult,setChestResult]=useState(null);var[chestPending,setChestPending]=useState([]);
-  var[coachTip,setCoachTip]=useState(null);var coachTimer=useRef(null);var _dismissedTips=useRef([]);
-  function dismissTip(tipId){setCoachTip(null);if(!u)return;var c=JSON.parse(JSON.stringify(u));if(!c.tipsShown)c.tipsShown=[];if(c.tipsShown.indexOf(tipId)===-1)c.tipsShown.push(tipId);if(_dismissedTips.current.indexOf(tipId)===-1)_dismissedTips.current.push(tipId);sv(c);}
-  function evalCoachTips(usr,curTab){if(!usr||!curTab)return;var shown=usr.tipsShown||[];
-    for(var i=0;i<COACH_TIPS.length;i++){var t=COACH_TIPS[i];if(shown.indexOf(t.id)===-1&&t.check(usr,curTab)){if(coachTimer.current)clearTimeout(coachTimer.current);coachTimer.current=setTimeout(function(){setCoachTip(t);},1500);return;}}
-    setCoachTip(null);
-  }
   var[showTip,setShowTip]=useState(false);
   useEffect(function(){
     if(!xpt||sp)return;
@@ -9813,7 +9795,7 @@ useEffect(function(){
   var bgmStarted=useRef(false);
   useEffect(function(){
     if(ld||!u||bgmStarted.current)return;
-    function startBGM(){bgmStarted.current=true;if(tab==="home"&&!sp)playBGM("bgm_home");document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);setTimeout(function(){evalCoachTips(u,"home");},2000);}
+    function startBGM(){bgmStarted.current=true;if(tab==="home"&&!sp)playBGM("bgm_home");document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);}
     document.addEventListener("click",startBGM,{once:true});
     document.addEventListener("touchstart",startBGM,{once:true});
     return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
@@ -9954,11 +9936,6 @@ useEffect(function(){
   }
 
 function sv(d){
-    // Guard: merge dismissed tips so stale closures never un-dismiss them
-    if(!d.tipsShown)d.tipsShown=[];
-    for(var ti=0;ti<_dismissedTips.current.length;ti++){if(d.tipsShown.indexOf(_dismissedTips.current[ti])===-1)d.tipsShown.push(_dismissedTips.current[ti]);}
-    // Evaluate coach tips after state changes
-    setTimeout(function(){evalCoachTips(d,tab);},1000);
     // Check for new achievements
     if(d&&d.unlockedAch){
       ACHIEVEMENTS.forEach(function(a){
@@ -10294,7 +10271,7 @@ var prevLeague=getLeague(c.weeklyXp);
   var lc="app"+(u&&u.theme==="light"?" light":"")+(u&&u.equippedSkin?" skin-"+u.equippedSkin:"");
   var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
   var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
-  var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);sSPA(null);setTimeout(function(){evalCoachTips(u,t);},800);};
+  var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);sSPA(null);};
   function pg(content){return(<div className={lc}><style>{CSS}</style><div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);}
 
   if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
@@ -10368,7 +10345,6 @@ var prevLeague=getLeague(c.weeklyXp);
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
     {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
-    {coachTip&&!sp&&<CoachTip tip={coachTip} onDismiss={dismissTip} goTab={function(t){if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);}}/>}
     {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}

@@ -4,7 +4,17 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "WebSearch",
+      "WebFetch(domain:medium.com)",
+      "Bash(npm run:*)",
+      "Bash(ls \"C:\\\\Users\\\\leixa\\\\Documents\\\\SynologyDrive\\\\FORMATION\\\\toeic-arena/\"*.md)",
+      "Bash(ls \"C:\\\\Users\\\\leixa\\\\Documents\\\\SynologyDrive\\\\FORMATION\\\\toeic-arena/\"*TODO*)",
+      "Bash(ls \"C:\\\\Users\\\\leixa\\\\Documents\\\\SynologyDrive\\\\FORMATION\\\\toeic-arena/\"*todo*)",
+      "Bash(ls \"C:\\\\Users\\\\leixa\\\\Documents\\\\SynologyDrive\\\\FORMATION\\\\toeic-arena/\"*S2*)",
+      "Bash(awk '/^function Home\\\\\\(/{found=1} found && /^function [A-Z]/{if\\(NR>1\\)exit} found' \"/c/Users/leixa/Documents/SynologyDrive/FORMATION/toeic-arena/.claude/worktrees/brave-bardeen/src/App.jsx\")",
+      "Bash(grep -n \"\\\\\\\\\\\\\\\\u00\" \"C:/Users/leixa/Documents/SynologyDrive/FORMATION/toeic-arena/.claude/worktrees/brave-bardeen/src/App.jsx\")"
     ]
   }
 }

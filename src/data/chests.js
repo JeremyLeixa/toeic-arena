@@ -3,73 +3,73 @@ import { supabase } from "../supabase.js";
 
 // ═══ RARITY TIERS ═══
 export var RARITIES = [
-  {id:"common",    label:"Commun",      color:"#909090", tier:0},
-  {id:"uncommon",  label:"Peu Commun",  color:"#3ecc78", tier:1},
+  {id:"common",    label:"Common",      color:"#909090", tier:0},
+  {id:"uncommon",  label:"Uncommon",    color:"#3ecc78", tier:1},
   {id:"rare",      label:"Rare",        color:"#3a8ee0", tier:2},
-  {id:"epic",      label:"\u00c9pique", color:"#c060f0", tier:3},
-  {id:"legend", label:"L\u00e9gendaire", color:"#ffc020", tier:4},
+  {id:"epic",      label:"Epic",        color:"#c060f0", tier:3},
+  {id:"legend",    label:"Legendary",   color:"#ffc020", tier:4},
 ];
 
 // ═══ CHEST TYPES ═══
 export var CHEST_TYPES = {
   novice:     {label:"Novice",     icon:"\uD83D\uDCE6", drop:[60,25,12,3,0]},
-  guerrier:   {label:"Guerrier",   icon:"\u2694\uFE0F", drop:[35,35,20,8,2]},
+  guerrier:   {label:"Warrior",    icon:"\u2694\uFE0F", drop:[35,35,20,8,2]},
   champion:   {label:"Champion",   icon:"\uD83C\uDFC6", drop:[15,30,35,15,5]},
-  legendaire: {label:"L\u00e9gendaire", icon:"\uD83D\uDC8E", drop:[0,10,25,40,25]},
+  legendaire: {label:"Legendary",  icon:"\uD83D\uDC8E", drop:[0,10,25,40,25]},
 };
 
 // ═══ AVATARS ═══
 export var AVATARS = {
-  // Communs (10)
-  paysan:{name:"Paysan",rarity:"common",icon:"chess-pawn"},
-  ecuyer:{name:"\u00c9cuyer",rarity:"common",icon:"sword-brandish"},
-  apprenti:{name:"Apprenti",rarity:"common",icon:"spell-book"},
+  // Common (10)
+  paysan:{name:"Peasant",rarity:"common",icon:"chess-pawn"},
+  ecuyer:{name:"Squire",rarity:"common",icon:"sword-brandish"},
+  apprenti:{name:"Apprentice",rarity:"common",icon:"spell-book"},
   archer:{name:"Archer",rarity:"common",icon:"pocket-bow"},
-  forgeron:{name:"Forgeron",rarity:"common",icon:"anvil"},
-  aubergiste:{name:"Aubergiste",rarity:"common",icon:"beer-stein"},
-  herboriste:{name:"Herboriste",rarity:"common",icon:"herbs-bundle"},
-  barde:{name:"Barde",rarity:"common",icon:"lyre"},
-  sentinelle:{name:"Sentinelle",rarity:"common",icon:"guards"},
-  marchand:{name:"Marchand",rarity:"common",icon:"trade"},
-  // Peu Communs (8)
-  chevalier:{name:"Chevalier",rarity:"uncommon",icon:"mounted-knight"},
-  roublard:{name:"Roublard",rarity:"uncommon",icon:"hooded-assassin"},
-  sorcier:{name:"Sorcier",rarity:"uncommon",icon:"wizard-staff"},
-  rodeuse:{name:"R\u00f4deuse",rarity:"uncommon",icon:"crossbow"},
-  clerc:{name:"Clerc",rarity:"uncommon",icon:"winged-scepter"},
-  alchimiste:{name:"Alchimiste",rarity:"uncommon",icon:"round-bottom-flask"},
-  mercenaire:{name:"Mercenaire",rarity:"uncommon",icon:"battle-axe"},
-  erudit:{name:"\u00c9rudit",rarity:"uncommon",icon:"bookmarklet"},
-  // Rares (7)
+  forgeron:{name:"Blacksmith",rarity:"common",icon:"anvil"},
+  aubergiste:{name:"Innkeeper",rarity:"common",icon:"beer-stein"},
+  herboriste:{name:"Herbalist",rarity:"common",icon:"herbs-bundle"},
+  barde:{name:"Bard",rarity:"common",icon:"lyre"},
+  sentinelle:{name:"Sentinel",rarity:"common",icon:"guards"},
+  marchand:{name:"Merchant",rarity:"common",icon:"trade"},
+  // Uncommon (8)
+  chevalier:{name:"Knight",rarity:"uncommon",icon:"mounted-knight"},
+  roublard:{name:"Rogue",rarity:"uncommon",icon:"hooded-assassin"},
+  sorcier:{name:"Warlock",rarity:"uncommon",icon:"wizard-staff"},
+  rodeuse:{name:"Ranger",rarity:"uncommon",icon:"crossbow"},
+  clerc:{name:"Cleric",rarity:"uncommon",icon:"winged-scepter"},
+  alchimiste:{name:"Alchemist",rarity:"uncommon",icon:"round-bottom-flask"},
+  mercenaire:{name:"Mercenary",rarity:"uncommon",icon:"battle-axe"},
+  erudit:{name:"Scholar",rarity:"uncommon",icon:"bookmarklet"},
+  // Rare (7)
   paladin:{name:"Paladin",rarity:"rare",icon:"templar-shield"},
-  archimage:{name:"Archimage",rarity:"rare",icon:"crystal-wand"},
+  archimage:{name:"Archmage",rarity:"rare",icon:"crystal-wand"},
   assassin:{name:"Assassin",rarity:"rare",icon:"daggers"},
-  druide:{name:"Druide",rarity:"rare",icon:"oak-leaf"},
-  mage_guerre:{name:"Mage de Guerre",rarity:"rare",icon:"flaming-trident"},
-  seigneur:{name:"Seigneur",rarity:"rare",icon:"throne-king"},
+  druide:{name:"Druid",rarity:"rare",icon:"oak-leaf"},
+  mage_guerre:{name:"War Mage",rarity:"rare",icon:"flaming-trident"},
+  seigneur:{name:"Lord",rarity:"rare",icon:"throne-king"},
   valkyrie:{name:"Valkyrie",rarity:"rare",icon:"winged-sword"},
-  // Épiques (5)
-  ch_dragon:{name:"Chasseur de Dragon",rarity:"epic",icon:"dragon-head"},
-  necro:{name:"N\u00e9cromancien",rarity:"epic",icon:"skull-staff"},
-  archere:{name:"Arch\u00e8re Sacr\u00e9e",rarity:"epic",icon:"archer"},
-  st_tempete:{name:"Seigneur Temp\u00eate",rarity:"epic",icon:"lightning-storm"},
-  inquisiteur:{name:"Inquisiteur",rarity:"epic",icon:"crossed-swords"},
-  // Légendaires (2)
-  pourfendeur:{name:"Pourfendeur",rarity:"legend",icon:"broadsword"},
+  // Epic (5)
+  ch_dragon:{name:"Dragon Hunter",rarity:"epic",icon:"dragon-head"},
+  necro:{name:"Necromancer",rarity:"epic",icon:"skull-staff"},
+  archere:{name:"Sacred Archer",rarity:"epic",icon:"archer"},
+  st_tempete:{name:"Storm Lord",rarity:"epic",icon:"lightning-storm"},
+  inquisiteur:{name:"Inquisitor",rarity:"epic",icon:"crossed-swords"},
+  // Legendary (2)
+  pourfendeur:{name:"Slayer",rarity:"legend",icon:"broadsword"},
   champion:{name:"Champion",rarity:"legend",icon:"laurel-crown"},
 };
 
 // ═══ SKINS ═══
 export var SKINS = {
-  argent:    {name:"Argent",          rarity:"rare",      cx:"180,180,200", hex:"#b4b4c8", dark:"#888898"},
-  emeraude:  {name:"\u00c9meraude",   rarity:"rare",      cx:"46,180,100",  hex:"#2eb464", dark:"#1a8a46"},
-  saphir:    {name:"Saphir",          rarity:"rare",      cx:"58,148,220",  hex:"#3a94dc", dark:"#1a6aaa"},
-  rubis:     {name:"Rubis",           rarity:"epic",      cx:"220,58,80",   hex:"#dc3a50", dark:"#c01830"},
-  amethyste: {name:"Am\u00e9thyste",  rarity:"epic",      cx:"160,90,220",  hex:"#a05adc", dark:"#7030aa"},
-  corail:    {name:"Corail",          rarity:"epic",      cx:"220,100,50",  hex:"#dc6432", dark:"#c03018"},
+  argent:    {name:"Silver",          rarity:"rare",      cx:"180,180,200", hex:"#b4b4c8", dark:"#888898"},
+  emeraude:  {name:"Emerald",         rarity:"rare",      cx:"46,180,100",  hex:"#2eb464", dark:"#1a8a46"},
+  saphir:    {name:"Sapphire",        rarity:"rare",      cx:"58,148,220",  hex:"#3a94dc", dark:"#1a6aaa"},
+  rubis:     {name:"Ruby",            rarity:"epic",      cx:"220,58,80",   hex:"#dc3a50", dark:"#c01830"},
+  amethyste: {name:"Amethyst",        rarity:"epic",      cx:"160,90,220",  hex:"#a05adc", dark:"#7030aa"},
+  corail:    {name:"Coral",           rarity:"epic",      cx:"220,100,50",  hex:"#dc6432", dark:"#c03018"},
   jade:      {name:"Jade",            rarity:"epic",      cx:"20,180,170",  hex:"#14b4aa", dark:"#0a8880"},
-  obsidienne:{name:"Obsidienne",      rarity:"legend", cx:"176,144,240", hex:"#b090f0", dark:"#8060c0"},
-  aurore:    {name:"Aurore Bor\u00e9ale", rarity:"legend", cx:"64,208,192", hex:"#40d0c0", dark:"#3a9870"},
+  obsidienne:{name:"Obsidian",        rarity:"legend",    cx:"176,144,240", hex:"#b090f0", dark:"#8060c0"},
+  aurore:    {name:"Aurora Borealis", rarity:"legend",    cx:"64,208,192",  hex:"#40d0c0", dark:"#3a9870"},
 };
 
 // ═══ REWARD POOLS (by rarity tier) ═══

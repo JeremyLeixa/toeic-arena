@@ -84,13 +84,13 @@ serve(async (req: Request) => {
 
         let body: string;
         if (rank === 1) {
-          body = `${medal}1er ! Tu as dominé la semaine avec ${student.xp} XP. Continue comme ça !`;
+          body = `${medal}1st place! You dominated the week with ${student.xp} XP. Keep it up!`;
         } else if (rank <= 3) {
-          body = `${medal}${rank}e place avec ${student.xp} XP ! Le podium, beau travail.`;
+          body = `${medal}${rank}${rank===2?"nd":"rd"} place with ${student.xp} XP! Podium finish — well done.`;
         } else if (rank <= 10) {
-          body = `#${rank} sur ${total} avec ${student.xp} XP — Top 10 ! Objectif podium cette semaine ?`;
+          body = `#${rank} of ${total} with ${student.xp} XP — Top 10! Aim for the podium this week?`;
         } else {
-          body = `#${rank} sur ${total} avec ${student.xp} XP. Chaque semaine compte pour le classement Overall !`;
+          body = `#${rank} of ${total} with ${student.xp} XP. Every week counts toward the Overall ranking!`;
         }
 
         const res = await fetch(`${VERCEL_URL}/api/push-send`, {
@@ -101,7 +101,7 @@ serve(async (req: Request) => {
           },
           body: JSON.stringify({
             subscriptions: studentSubs,
-            title: "📊 Résultat de la semaine",
+            title: "📊 Weekly results",
             body,
             tag: "weekly-results",
             url: "/",

@@ -72,8 +72,8 @@ serve(async (req: Request) => {
         },
         body: JSON.stringify({
           subscriptions: studentSubs,
-          title: "🔥 Streak en danger !",
-          body: `Ta série de ${student.streak} jours est menacée ! Ouvre TOEIC Arena pour la sauver.`,
+          title: "🔥 Streak at risk!",
+          body: `Your ${student.streak}-day streak is in danger. Open TOEIC Arena to save it.`,
           tag: "streak-reminder",
           url: "/",
         }),

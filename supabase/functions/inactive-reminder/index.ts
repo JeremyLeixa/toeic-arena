@@ -13,21 +13,21 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const MESSAGES: Array<Array<(s: any) => { title: string; body: string }>> = [
   // Tier 0: 7-13 days (light, gentle nudge)
   [
-    (s) => ({ title: "\u2694\uFE0F L'Ar\u00e8ne t'attend", body: `${s.name}, \u00e7a fait une semaine ! Tes comp\u00e9tences TOEIC rouillent...` }),
-    (s) => ({ title: "\uD83C\uDFAF Reviens t'entra\u00eener", body: `Une semaine sans combat, ${s.name} ? Un Mock Test t'attend dans l'Ar\u00e8ne.` }),
-    (s) => ({ title: "\uD83C\uDFF9 Tes classmates progressent", body: `Pendant que tu es absent, tes camarades grimpent la Ligue. Rattrape-les !` }),
+    (s) => ({ title: "\u2694\uFE0F The Arena awaits", body: `${s.name}, it's been a week! Your TOEIC skills are getting rusty...` }),
+    (s) => ({ title: "\uD83C\uDFAF Time to train again", body: `A week without a fight, ${s.name}? A Mock Test is waiting in the Arena.` }),
+    (s) => ({ title: "\uD83C\uDFF9 Your classmates are climbing", body: `While you're away, they're climbing the League. Catch up!` }),
   ],
   // Tier 1: 14-21 days (motivating, stakes rising)
   [
-    (s) => ({ title: "\uD83D\uDD25 2 semaines sans pratique", body: `${s.name}, le TOEIC se pr\u00e9pare r\u00e9guli\u00e8rement. 15 minutes aujourd'hui ?` }),
-    (s) => ({ title: "\uD83D\uDCAA Tu nous manques", body: `D\u00e9j\u00e0 2 semaines ! Tes ${s.xp || 0} XP attendent d'\u00eatre compl\u00e9t\u00e9s.` }),
-    (s) => ({ title: "\uD83E\uDDD9 L'examen se rapproche", body: `${s.name}, chaque semaine d'absence, c'est du niveau qui baisse. Reviens !` }),
+    (s) => ({ title: "\uD83D\uDD25 Two weeks without practice", body: `${s.name}, TOEIC is best prepared regularly. How about 15 minutes today?` }),
+    (s) => ({ title: "\uD83D\uDCAA We miss you", body: `Already 2 weeks! Your ${s.xp || 0} XP are waiting for more.` }),
+    (s) => ({ title: "\uD83E\uDDD9 The exam is getting closer", body: `${s.name}, every week of absence means a drop in level. Come back!` }),
   ],
   // Tier 2: 22-30 days (firmer, last call)
   [
-    (s) => ({ title: "\u26A0\uFE0F Derni\u00e8re chance", body: `${s.name}, \u00e7a fait 3 semaines. Ne laisse pas tomber ton score TOEIC !` }),
-    (s) => ({ title: "\uD83D\uDC09 Le Boss ricane...", body: `Le Final Arena reste invaincu sans toi, ${s.name}. Rel\u00e8ve le d\u00e9fi !` }),
-    (s) => ({ title: "\uD83D\uDCDC Ton aventure n'est pas finie", body: `${s.name}, 3 semaines d'absence. Un petit Drill pour te remettre ?` }),
+    (s) => ({ title: "\u26A0\uFE0F Last call", body: `${s.name}, it's been 3 weeks. Don't give up on your TOEIC score!` }),
+    (s) => ({ title: "\uD83D\uDC09 The Boss is laughing...", body: `The Final Arena remains unbeaten without you, ${s.name}. Rise to the challenge!` }),
+    (s) => ({ title: "\uD83D\uDCDC Your journey isn't over", body: `${s.name}, 3 weeks away. How about a quick Drill to get back in shape?` }),
   ],
 ];
 
