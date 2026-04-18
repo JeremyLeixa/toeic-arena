@@ -164,6 +164,8 @@ prototypes/
 ### Teacher Account
 - The `Teacher` account syncs to Supabase but is **hidden from all leaderboards** (League, TeacherDash student list).
 - `GHOST_NAME="Teacher"` filter is applied in: TeacherDash student list queries, League rankings. NOT applied to chest grants.
+- **Teacher student row lives on `class_code='teacher-internal'`** (permanent group, `end_date=NULL`) — decoupled from any student cohort since 2026-04-17. This insulates Jérémy's account from cohort cutoffs (e.g. `idrac2026` ending 2026-06-28).
+- Teacher dashboard login still uses `groups.teacher_code` (currently `arena-teacher-2026` on `idrac2026`). This is independent of the Teacher student row's class_code.
 
 ### Listening (Boss Test — TOEIC Faithful)
 - **P1:** Photo + blind A/B/C/D. Student can answer DURING audio.

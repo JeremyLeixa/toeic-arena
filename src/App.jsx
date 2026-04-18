@@ -7799,7 +7799,7 @@ function TeacherDash(p){
   }
 
   function loadGroups(){
-    supabase.from('groups').select('*').order('type',{ascending:true}).order('name',{ascending:true})
+    supabase.from('groups').select('*').neq('code','teacher-internal').order('type',{ascending:true}).order('name',{ascending:true})
       .then(function(res){if(res.data)setGroups(res.data);});
   }
   useEffect(function(){loadGroups();loadEvents();},[]);
@@ -9274,7 +9274,7 @@ var[groupData,setGroupData]=useState(null);
 
 // Fetch group seasons
 useEffect(function(){
-  supabase.from('groups').select('seasons,type,start_date,end_date').eq('code',leagueGroup).maybeSingle()
+  supabase.from('groups').select('seasons,type,start_date,end_date,grade_bonus_enabled').eq('code',leagueGroup).maybeSingle()
     .then(function(res){if(res.data)setGroupData(res.data);else setGroupData(null);});
 },[leagueGroup]);
 
@@ -9287,6 +9287,9 @@ var dynSeasons=useMemo(function(){
 },[groupData,leagueGroup]);
 var isVisitor=groupData&&groupData.type==="visitor";
 var hasSeasons=dynSeasons.length>0&&!isVisitor;
+// Grade bonus display: hidden if group explicitly opts out (Famille, Teacher, Visitor).
+// Defaults to true (e.g. IDRAC, CESI, ESGI) if the column is missing or group not loaded yet.
+var showGradeBonus=groupData?(groupData.grade_bonus_enabled!==false):true;
 var curSeason=hasSeasons?getCurrentSeason(dynSeasons):null;
 
 // Charge les snapshots pour le tab Progression (lazy — uniquement quand on clique dessus)
@@ -9521,8 +9524,8 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{fontSize:36,marginBottom:6}}>{"🏆"}</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--gold)"}}>Classement Général</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Points de classement cumulés sur toutes les saisons</div>
-    <div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600}}>{"🏆"} Top 3 {"→"} +2 pts {"·"} Top 10 {"→"} +1 pt sur la note finale</div>
-    <div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>Cumulable avec le bonus Progression (max +4 pts au total)</div>
+    {showGradeBonus&&<div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600}}>{"🏆"} Top 3 {"→"} +2 pts {"·"} Top 10 {"→"} +1 pt sur la note finale</div>}
+    {showGradeBonus&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>Cumulable avec le bonus Progression (max +4 pts au total)</div>}
   </div>
   {/* Season breakdown mini-bar */}
   <div style={{display:"flex",gap:6,marginBottom:16}}>
@@ -9538,7 +9541,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
     {overallRanking.filter(function(pl){return pl.pts>0;}).map(function(pl,i){
       var rank=i+1;
-      var bonusLabel=rank<=3?"\uD83C\uDFC6 +2pts note finale":rank<=10?"\u2B50 +1pt note finale":null;
+      var bonusLabel=showGradeBonus?(rank<=3?"\uD83C\uDFC6 +2pts note finale":rank<=10?"\u2B50 +1pt note finale":null):null;
       var bColor=rank<=3?"var(--gold)":"var(--cyan)";
       return(<RankRow key={i} pl={pl} rank={rank} isMe={pl.name===u.name} unit="pts" bonus={bonusLabel} bonusColor={bColor}/>);
     })}
@@ -9554,7 +9557,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{fontSize:36,marginBottom:6}}>📈</div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--green)"}}>Classement Progression</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Gain de score TOEIC estimé depuis la première semaine de données</div>
-    <div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600}}>🏆 Top 3 → +2 pts · Top 10 → +1 pt sur la note finale</div>
+    {showGradeBonus&&<div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600}}>🏆 Top 3 → +2 pts · Top 10 → +1 pt sur la note finale</div>}
   </div>
 
   {progLoading&&<div style={{textAlign:"center",padding:40}}>
@@ -9580,7 +9583,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
             var isTop3=rank<=3;var isTop10=rank<=10;
             var gainCol=pl.gain>100?"var(--green)":pl.gain>0?"var(--orange)":"var(--red)";
             var gainSign=pl.gain>0?"+":"";
-            var bonusLabel=(pl.gain>0)?(isTop3?"🏆 +2pts":isTop10?"⭐ +1pt":""):"";
+            var bonusLabel=(showGradeBonus&&pl.gain>0)?(isTop3?"🏆 +2pts":isTop10?"⭐ +1pt":""):"";
             return(<div key={pl.name} style={{
               display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
               background:pl.me?"rgba(var(--cx),.08)":"var(--bg2)",
