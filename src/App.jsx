@@ -673,6 +673,24 @@ async function isPushSubscribed(){
   }catch(e){return false;}
 }
 
+// ─── PLATFORM DETECTION ─── (used for install prompts, haptic, etc.)
+function isStandalonePWA(){
+  try{
+    if(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)return true;
+    if(window.navigator&&window.navigator.standalone===true)return true;
+  }catch(e){}
+  return false;
+}
+function isIOSDevice(){
+  try{
+    var ua=navigator.userAgent||"";
+    if(/iPad|iPhone|iPod/.test(ua))return true;
+    // iPadOS 13+ masquerades as Mac — detect via touch points
+    if(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)return true;
+  }catch(e){}
+  return false;
+}
+
 // ─── CSS ───
 var CSS=`
 @font-face{font-family:'Cinzel';font-style:normal;font-weight:600 900;font-display:swap;src:url('/fonts/cinzel-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
@@ -1414,6 +1432,21 @@ var[step,sSt]=useState("name");
             <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Re-engagement</div><div style={{fontSize:11,color:"var(--t2)"}}>{"Rappels doux après quelques jours d'absence"}</div></div>
           </div>
         </div>
+        {!isStandalonePWA()&&(
+          <div className="crd" style={{padding:"12px 14px",marginBottom:16,background:"rgba(240,200,80,.06)",borderColor:"rgba(240,200,80,.2)",textAlign:"left"}}>
+            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span style={{fontSize:20,flexShrink:0}}>{"\uD83D\uDCF2"}</span>
+              <div>
+                <div className="out" style={{fontSize:12,fontWeight:700,color:"var(--gold)",marginBottom:4}}>{"Installe l'app sur ton écran d'accueil"}</div>
+                <div style={{fontSize:11,color:"var(--t2)",lineHeight:1.5}}>
+                  {isIOSDevice()
+                    ? "Sur iPhone, les notifications ne marchent que si l'app est installée. Dans Safari : touche le bouton Partager (\u2B06\uFE0F en bas) puis « Sur l\u2019écran d\u2019accueil »."
+                    : "Pour recevoir les rappels même sans le navigateur ouvert : menu du navigateur puis « Installer l\u2019app » ou « Ajouter à l\u2019écran d\u2019accueil »."}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <button className="btn1" onClick={enableAndGo} disabled={pushBusy}
           style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10,opacity:pushBusy?0.6:1}}>
           {pushBusy?"\u2026":"Activer les rappels"}</button>
