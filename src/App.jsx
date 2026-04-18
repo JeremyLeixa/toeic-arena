@@ -1609,7 +1609,8 @@ var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=
 var _missionHome=getDailyMission(u);
 var _missionReady=_missionHome&&_missionHome.status!=="calibrating"&&_missionHome.mod;
 var _isMissionDoneHome=_missionReady&&(_missionHome.status==="completed"||_missionHome.done);
-var _dailyQuestActive=_missionReady?!_isMissionDoneHome:!dd;
+// Smart Daily Quest: active if Mission pending, OR if Challenge still pending (sequential reveal)
+var _dailyQuestActive=(_missionReady&&!_isMissionDoneHome)||!dd;
 var pulseSlot=p.pendingChests>0?"chest":needsMockNudge(u)?"mock":_dailyQuestActive?"daily":(p.events&&p.events.length>0)?"event":null;
 return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -1680,7 +1681,7 @@ return(
 <span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
-{/* ═══ Daily Quest (unified: Mission when calibrated, Challenge otherwise) ═══ */}
+{/* ═══ Smart Daily Quest — sequential reveal: Mission → Bonus Challenge → Rest ═══ */}
 {function(){
   var mission=getDailyMission(u);
   var missionReady=mission&&mission.status!=="calibrating"&&mission.mod;
@@ -1692,32 +1693,72 @@ return(
     save(u);
   }
 
-  // Route A — Calibrated user: show adaptive Daily Mission
-  if(missionReady){
+  // ROUTE A — Calibrated user, Mission pending: show adaptive Daily Mission
+  if(missionReady&&!isMissionDone){
     var m=mission.mod;
-    return(<div className="crd" onClick={function(){if(!isMissionDone)p.nav(mission.actId);}}
-      style={{marginBottom:16,cursor:isMissionDone?"default":"pointer",padding:"14px 16px",
-        background:isMissionDone?"var(--bg2)":"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.08))",
-        border:isMissionDone?"1px solid var(--bdr)":"1px solid rgba(255,215,0,.2)"}}>
+    return(<div className="crd" onClick={function(){p.nav(mission.actId);}}
+      style={{marginBottom:16,cursor:"pointer",padding:"14px 16px",
+        background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.08))",
+        border:"1px solid rgba(255,215,0,.2)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-          <span style={{fontSize:22}}>{isMissionDone?"\u2705":m.icon}</span>
+          <span style={{fontSize:22}}>{m.icon}</span>
           <div style={{minWidth:0,flex:1}}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-              <span className="out" style={{fontWeight:800,fontSize:15,color:isMissionDone?"var(--green)":"var(--t1)"}}>Daily Quest</span>
-              {!isMissionDone&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(255,215,0,.15)",color:"var(--gold)",fontWeight:700}} className="out">+15 XP</span>}
+              <span className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)"}}>Daily Quest</span>
+              <span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(255,215,0,.15)",color:"var(--gold)",fontWeight:700}} className="out">+15 XP</span>
             </div>
-            <div style={{fontSize:12,color:isMissionDone?"var(--green)":"var(--t2)",lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis"}}>
-              {isMissionDone?"Quest complete! Come back tomorrow.":m.name+" \u2014 "+mission.reason}
+            <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis"}}>
+              {m.name+" \u2014 "+mission.reason}
             </div>
           </div>
         </div>
-        {!isMissionDone&&<span style={{fontSize:20,color:"var(--gold)",marginLeft:8}}>{"\u2192"}</span>}
+        <span style={{fontSize:20,color:"var(--gold)",marginLeft:8}}>{"\u2192"}</span>
       </div>
     </div>);
   }
 
-  // Route B — Calibrating (not enough sessions yet): show Daily Challenge with calibration note
+  // ROUTE B — Calibrated user, Mission DONE but Daily Challenge still pending: BONUS QUEST unlocked
+  if(missionReady&&isMissionDone&&!dd){
+    return(<div className="crd" onClick={function(){p.nav("daily");}}
+      style={{marginBottom:16,cursor:"pointer",padding:"14px 16px",
+        background:"linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))",
+        border:"1px solid rgba(var(--cx),.25)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+          <span style={{fontSize:22}}>{"\u26A1"}</span>
+          <div style={{minWidth:0,flex:1}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2,flexWrap:"wrap"}}>
+              <span className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)"}}>Daily Quest</span>
+              <span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(255,215,0,.18)",color:"var(--gold)",fontWeight:700,letterSpacing:.5}} className="out">BONUS</span>
+              <span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(var(--cx),.15)",color:"var(--cyan)",fontWeight:700}} className="out">+100 XP</span>
+            </div>
+            <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.4}}>
+              Mission complete \u2014 bonus round unlocked: 5 grammar questions \u00B7 30s each
+            </div>
+          </div>
+        </div>
+        <span style={{fontSize:20,color:"var(--cyan)",marginLeft:8}}>{"\u2192"}</span>
+      </div>
+    </div>);
+  }
+
+  // ROUTE C — Calibrated user, BOTH done: visual rest state
+  if(missionReady&&isMissionDone&&dd){
+    return(<div className="crd" style={{marginBottom:16,padding:"14px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:22}}>{"\u2705"}</span>
+        <div style={{flex:1}}>
+          <div className="out" style={{fontWeight:800,fontSize:15,color:"var(--green)",marginBottom:2}}>Daily Quest</div>
+          <div style={{fontSize:12,color:"var(--green)",lineHeight:1.4}}>
+            All daily quests complete. See you tomorrow!
+          </div>
+        </div>
+      </div>
+    </div>);
+  }
+
+  // ROUTE D — Uncalibrated / no mission: show Daily Challenge with optional calibration hint
   var remaining=mission&&mission.status==="calibrating"?mission.remaining:null;
   return(<div className="crd" onClick={function(){if(!dd)p.nav("daily");}}
     style={{marginBottom:16,cursor:dd?"default":"pointer",padding:"14px 16px",
