@@ -908,12 +908,12 @@ function TutorialTour(p){
     </div>);
 }
 
-function Tabs(p){var tabs=[{id:"home",l:"Home",i:"\u26A1"},{id:"train",l:"Train",i:"\uD83C\uDFAF"},{id:"cards",l:"Cards",i:"\uD83C\uDCCF"},{id:"games",l:"Games",i:"\uD83C\uDFB2"},{id:"league",l:"League",i:"\uD83C\uDFC6"},{id:"profile",l:"Profile",i:"\uD83D\uDC64"}];
+function Tabs(p){var tabs=[{id:"home",l:"Home",i:"\u26A1"},{id:"train",l:"Train",i:"\uD83C\uDFAF"},{id:"games",l:"Games",i:"\uD83C\uDFB2"},{id:"league",l:"League",i:"\uD83C\uDFC6"},{id:"profile",l:"Profile",i:"\uD83D\uDC64"}];
 var blocked=p.blocked||[];
 return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-around"}}>
 <div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>TOEIC ARENA</span></div>
-{tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 12px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t3)",transform:a&&!dis?"scale(1.05)":"scale(1)",opacity:dis?.35:1,transition:"all .2s"}}>
-<span style={{fontSize:22,lineHeight:1}}>{t.i}</span><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:1}}/>}</button>);})}</div>);}
+{tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"8px 14px",borderRadius:14,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t3)",transform:a&&!dis?"scale(1.06)":"scale(1)",opacity:dis?.35:1,transition:"all .2s"}}>
+<span style={{fontSize:26,lineHeight:1}}>{t.i}</span><span style={{fontSize:11,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:2}}/>}</button>);})}</div>);}
 
 // ─── PRIVACY POLICY ───
 function PrivacyPolicy(p){
@@ -1602,7 +1602,16 @@ var[step,sSt]=useState("name");
     </div>);
 }
 // ─── HOME ───
-function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily&&u.daily.date===today()&&u.daily.done;return(
+function Home(p){
+var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily&&u.daily.date===today()&&u.daily.done;
+// ── Single-pulse priority (UX focus): chest > mock > daily > event ──
+// Only ONE CTA animates at a time so the eye isn't pulled in multiple directions.
+var _missionHome=getDailyMission(u);
+var _missionReady=_missionHome&&_missionHome.status!=="calibrating"&&_missionHome.mod;
+var _isMissionDoneHome=_missionReady&&(_missionHome.status==="completed"||_missionHome.done);
+var _dailyQuestActive=_missionReady?!_isMissionDoneHome:!dd;
+var pulseSlot=p.pendingChests>0?"chest":needsMockNudge(u)?"mock":_dailyQuestActive?"daily":(p.events&&p.events.length>0)?"event":null;
+return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
 <div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28)}</h1></div>
@@ -1623,7 +1632,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
 }()}
 
 {/* Pending Chests */}
-{p.pendingChests>0&&<button onClick={function(){p.onOpenChest();}} style={{width:"100%",marginBottom:14,padding:"14px 18px",background:"linear-gradient(135deg,rgba(255,192,32,.12),rgba(var(--cx),.08))",border:"1px solid rgba(255,192,32,.3)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:"'DM Sans',sans-serif",animation:"pulse 2s infinite"}}>
+{p.pendingChests>0&&<button onClick={function(){p.onOpenChest();}} style={{width:"100%",marginBottom:14,padding:"14px 18px",background:"linear-gradient(135deg,rgba(255,192,32,.12),rgba(var(--cx),.08))",border:"1px solid rgba(255,192,32,.3)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:"'DM Sans',sans-serif",animation:pulseSlot==="chest"?"pulse 2s infinite":"none"}}>
   <span style={{fontSize:28}}>{"\uD83D\uDCE6"}</span>
   <div style={{flex:1,textAlign:"left"}}><div className="out" style={{fontWeight:800,fontSize:14,color:"var(--gold)"}}>Treasure Chest{p.pendingChests>1?"s":""} Available!</div>
   <div style={{fontSize:11,color:"var(--t2)"}}>{p.pendingChests} chest{p.pendingChests>1?"s":""} waiting to be opened</div></div>
@@ -1649,7 +1658,7 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
   var col=ev.type==="spotlight"?"var(--cyan)":ev.type==="flash_hour"?"var(--gold)":"var(--green)";
   var isUnderdog=ev.type==="underdog";
   var qualifies=!isUnderdog||p.u.xp<(p.medianXp||0);
-  return(<div key={ei} className="crd" style={{marginBottom:12,padding:14,background:bg,border:"1px solid "+bd,animation:"pulse 3s infinite"}}>
+  return(<div key={ei} className="crd" style={{marginBottom:12,padding:14,background:bg,border:"1px solid "+bd,animation:(pulseSlot==="event"&&ei===0)?"pulse 3s infinite":"none"}}>
     <div style={{display:"flex",alignItems:"center",gap:10}}>
       <span style={{fontSize:24}}>{icon}</span>
       <div style={{flex:1}}>
@@ -1671,58 +1680,63 @@ function Home(p){var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.
 <span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
-<div className="crd" onClick={function(){if(!dd)p.nav("daily");}} style={{marginBottom:16,cursor:dd?"default":"pointer",background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))",border:dd?"1px solid var(--bdr)":"1px solid rgba(var(--cx),.2)"}}>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-<div><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:20}}>{dd?"✅":"⚡"}</span><span className="out" style={{fontWeight:700,fontSize:16}}>Daily Challenge</span></div>
-{dd?<p style={{color:"var(--green)",fontSize:13,fontWeight:600}}>Completed! +{u.daily.xpE} XP</p>:<p style={{color:"var(--t2)",fontSize:13}}>5 questions · 30s each · Bonus XP</p>}</div>
-{!dd&&<div style={{fontSize:24,color:"var(--cyan)"}}>{"→"}</div>}</div></div>
-
-{/* Daily Mission — adaptive recommendation */}
+{/* ═══ Daily Quest (unified: Mission when calibrated, Challenge otherwise) ═══ */}
 {function(){
   var mission=getDailyMission(u);
-  if(!mission)return null;
-
-  if(mission.status==="calibrating"){
-    return(<div className="crd" style={{marginBottom:16,padding:14,background:"var(--bg3)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:20}}>🎯</span>
-        <div><div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t3)"}}>Daily Mission</div>
-          <div style={{fontSize:12,color:"var(--t3)"}}>Complete {mission.remaining} more sessions to unlock personalized missions</div></div>
-      </div>
-      <div style={{marginTop:8}}><Bar value={u.stats.sessions||0} max={MISSION_THRESHOLD} h={4} color="var(--t3)"/></div>
-    </div>);
-  }
+  var missionReady=mission&&mission.status!=="calibrating"&&mission.mod;
+  var isMissionDone=missionReady&&(mission.status==="completed"||mission.done);
 
   // Initialize mission in userData if new
-  if(mission.status==="new"&&(!u.mission||u.mission.date!==today())){
+  if(missionReady&&mission.status==="new"&&(!u.mission||u.mission.date!==today())){
     u.mission={date:today(),actId:mission.actId,done:false};
     save(u);
   }
 
-  var m=mission.mod;
-  if(!m)return null;
-  var isDone=mission.status==="completed"||mission.done;
-
-  return(<div className="crd" onClick={function(){if(!isDone)p.nav(mission.actId);}}
-    style={{marginBottom:16,cursor:isDone?"default":"pointer",padding:0,overflow:"hidden",
-      background:isDone?"var(--bg2)":"linear-gradient(135deg,rgba(255,215,0,.06),rgba(255,140,66,.06))",
-      border:isDone?"1px solid var(--bdr)":"1px solid rgba(255,215,0,.15)"}}>
-    <div style={{padding:"14px 16px"}}>
+  // Route A — Calibrated user: show adaptive Daily Mission
+  if(missionReady){
+    var m=mission.mod;
+    return(<div className="crd" onClick={function(){if(!isMissionDone)p.nav(mission.actId);}}
+      style={{marginBottom:16,cursor:isMissionDone?"default":"pointer",padding:"14px 16px",
+        background:isMissionDone?"var(--bg2)":"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.08))",
+        border:isMissionDone?"1px solid var(--bdr)":"1px solid rgba(255,215,0,.2)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:20}}>{isDone?"✅":m.icon}</span>
-          <div>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <span className="out" style={{fontWeight:700,fontSize:14,color:isDone?"var(--green)":"var(--t1)"}}>Daily Mission</span>
-              {!isDone&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(255,215,0,.12)",color:"var(--gold)",fontWeight:700}} className="out">+15 XP</span>}
+        <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+          <span style={{fontSize:22}}>{isMissionDone?"\u2705":m.icon}</span>
+          <div style={{minWidth:0,flex:1}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+              <span className="out" style={{fontWeight:800,fontSize:15,color:isMissionDone?"var(--green)":"var(--t1)"}}>Daily Quest</span>
+              {!isMissionDone&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(255,215,0,.15)",color:"var(--gold)",fontWeight:700}} className="out">+15 XP</span>}
             </div>
-            <div style={{fontSize:12,color:isDone?"var(--green)":"var(--t2)",marginTop:2}}>
-              {isDone?"Mission complete! +15 XP bonus":m.name+" — "+mission.reason}
+            <div style={{fontSize:12,color:isMissionDone?"var(--green)":"var(--t2)",lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis"}}>
+              {isMissionDone?"Quest complete! Come back tomorrow.":m.name+" \u2014 "+mission.reason}
             </div>
           </div>
         </div>
-        {!isDone&&<span style={{fontSize:18,color:"var(--gold)"}}>{"→"}</span>}
+        {!isMissionDone&&<span style={{fontSize:20,color:"var(--gold)",marginLeft:8}}>{"\u2192"}</span>}
       </div>
+    </div>);
+  }
+
+  // Route B — Calibrating (not enough sessions yet): show Daily Challenge with calibration note
+  var remaining=mission&&mission.status==="calibrating"?mission.remaining:null;
+  return(<div className="crd" onClick={function(){if(!dd)p.nav("daily");}}
+    style={{marginBottom:16,cursor:dd?"default":"pointer",padding:"14px 16px",
+      background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))",
+      border:dd?"1px solid var(--bdr)":"1px solid rgba(var(--cx),.2)"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+        <span style={{fontSize:22}}>{dd?"\u2705":"\u26A1"}</span>
+        <div style={{minWidth:0,flex:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+            <span className="out" style={{fontWeight:800,fontSize:15,color:dd?"var(--green)":"var(--t1)"}}>Daily Quest</span>
+            {!dd&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(var(--cx),.15)",color:"var(--cyan)",fontWeight:700}} className="out">+100 XP</span>}
+          </div>
+          <div style={{fontSize:12,color:dd?"var(--green)":"var(--t2)",lineHeight:1.4}}>
+            {dd?"Quest complete! +"+u.daily.xpE+" XP earned":"5 grammar questions \u00B7 30s each"+(remaining?" \u00B7 "+remaining+" sessions to unlock adaptive missions":"")}
+          </div>
+        </div>
+      </div>
+      {!dd&&<span style={{fontSize:20,color:"var(--cyan)",marginLeft:8}}>{"\u2192"}</span>}
     </div>
   </div>);
 }()}
@@ -2068,25 +2082,12 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       </div>}
     </div>
 
-    {/* 3 Tiles Grid: Exercises + Grammar (row 1), Tips (row 2 full-width) */}
+    {/* Row 1 (2-col): Exercises + Grammar & Vocab */}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-      {gridSections.map(function(sec,si){
-        var isFullWidth=si===2; // Tips & Strategy
+      {[gridSections[0],gridSections[1]].map(function(sec,si){
         return(<div key={sec.key} className="crd" onClick={function(){setTrainView(si);}}
-          style={{padding:"18px 14px",cursor:"pointer",gridColumn:isFullWidth?"1 / -1":"auto",borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:(si*.06)+"s",animationFillMode:"both"}}>
-          {isFullWidth?
-            <div style={{display:"flex",alignItems:"center",gap:14}}>
-              <div style={{fontSize:32,flexShrink:0}}>{sec.icon}</div>
-              <div style={{flex:1}}>
-                <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>{sec.title}</div>
-                <div style={{fontSize:11,color:"var(--t3)"}}>{sec.sub}</div>
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:6}}>
-                <span style={{fontSize:10,color:"var(--cyan)",fontWeight:600}}>{sec.count}</span>
-                <span style={{fontSize:14,color:"var(--cyan)"}}>{"→"}</span>
-              </div>
-            </div>
-          :<div>
+          style={{padding:"18px 14px",cursor:"pointer",borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:(si*.06)+"s",animationFillMode:"both"}}>
+          <div>
             <div style={{fontSize:28,marginBottom:8}}>{sec.icon}</div>
             <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>{sec.title}</div>
             <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{sec.sub}</div>
@@ -2094,9 +2095,41 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
               <span style={{fontSize:10,color:"var(--cyan)",fontWeight:600}}>{sec.count}</span>
               <span style={{fontSize:14,color:"var(--cyan)"}}>{"→"}</span>
             </div>
-          </div>}
+          </div>
         </div>);
       })}
+    </div>
+
+    {/* Row 2 full-width: Flashcards banner (between Grammar&Vocab and Tips&Strategy) */}
+    <div className="crd" onClick={function(){if(p.tabGo)p.tabGo("cards");}}
+      style={{marginTop:10,padding:"18px 14px",cursor:"pointer",borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:".12s",animationFillMode:"both"}}>
+      <div style={{display:"flex",alignItems:"center",gap:14}}>
+        <div style={{fontSize:32,flexShrink:0}}>{"\uD83C\uDCCF"}</div>
+        <div style={{flex:1}}>
+          <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>Flashcards</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>SRS spaced repetition {"\u00B7"} 18 domains</div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <span style={{fontSize:10,color:"var(--cyan)",fontWeight:600}}>Browse</span>
+          <span style={{fontSize:14,color:"var(--cyan)"}}>{"\u2192"}</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Row 3 full-width: Tips & Strategy */}
+    <div className="crd" onClick={function(){setTrainView(2);}}
+      style={{marginTop:10,padding:"18px 14px",cursor:"pointer",borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:".18s",animationFillMode:"both"}}>
+      <div style={{display:"flex",alignItems:"center",gap:14}}>
+        <div style={{fontSize:32,flexShrink:0}}>{gridSections[2].icon}</div>
+        <div style={{flex:1}}>
+          <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>{gridSections[2].title}</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>{gridSections[2].sub}</div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <span style={{fontSize:10,color:"var(--cyan)",fontWeight:600}}>{gridSections[2].count}</span>
+          <span style={{fontSize:14,color:"var(--cyan)"}}>{"\u2192"}</span>
+        </div>
+      </div>
     </div>
   </div>);
 }
@@ -10950,7 +10983,7 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
     {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
