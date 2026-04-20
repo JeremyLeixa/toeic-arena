@@ -166,7 +166,7 @@ Tu peux ouvrir un **2ᵉ compte perso** à ta banque habituelle, et le dédier �
 ## Les 3 principaux médiateurs agréés (tous sur le site **economie.gouv.fr/mediation-conso/mediateurs-references**)
 
 ### CNPM Médiation Consommation
-- **Site** : https://cnpm-mediation-consommation.eu/
+- **Site** : https://medconsodev.eu/
 - **Tarif** : **gratuit pour les TPE** (<10 salariés, <2M€ CA) — cotisation 0€/an
 - **Point fort** : ciblé PME/TPE, process simple
 - **Défaut** : moins connu du grand public que Médicys
@@ -186,7 +186,7 @@ Tu peux ouvrir un **2ᵉ compte perso** à ta banque habituelle, et le dédier �
 ## Actions (pour CNPM — ma reco)
 
 ### 4.1 Adhésion CNPM
-- Va sur **https://cnpm-mediation-consommation.eu/adhesion**
+- Va sur **https://medconsodev.eu/** et cherche la page « Adhésion » ou « Professionnels »
 - Remplis le formulaire d'adhésion :
   - Raison sociale, SIRET, adresse
   - Activité : « Services numériques e-learning »
