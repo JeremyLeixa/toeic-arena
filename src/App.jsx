@@ -10590,13 +10590,18 @@ useEffect(function(){
   },[]);
 
   // ── Phase 1 Magic Link — email sync on USER_UPDATED confirmation ──
-  // Triggered when user returns from clicking the confirmation link in their email.
-  // Promotes the anonymous session to email-backed and syncs students.email.
+  // Only sync to students.email when Supabase confirms the email (email_confirmed_at set).
+  // If confirmation is required (Supabase setting), this fires ONLY after the user clicks
+  // the magic link in their inbox. If confirmation is not required, fires immediately on
+  // updateUser() success — still safe because Supabase already validated the email format
+  // and ownership (via its own anti-abuse layers).
   useEffect(function(){
     if(!u)return;
     var sub=supabase.auth.onAuthStateChange(function(event,session){
-      if(event!=="USER_UPDATED")return;
+      if(event!=="USER_UPDATED"&&event!=="SIGNED_IN")return;
       if(!session||!session.user||!session.user.email)return;
+      // Require confirmation timestamp — otherwise email is still pending
+      if(!session.user.email_confirmed_at)return;
       if(u.email===session.user.email)return; // already synced
       var newEmail=session.user.email;
       supabase.from('students')
