@@ -40,12 +40,17 @@ export async function requestMagicLink(email) {
 // Use case: user is already signed in anonymously and wants to "secure" their
 // account by attaching an email. Supabase sends a confirmation email; when
 // clicked, the same user_id is preserved — no data loss.
+// Always passes emailRedirectTo to force the confirmation link to return to the
+// app URL (not the Supabase Site URL default, which could point elsewhere).
 export async function linkEmailToAnonymous(email) {
   const e = normEmail(email);
   if (!e || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
     throw new Error('Adresse email invalide');
   }
-  const { data, error } = await supabase.auth.updateUser({ email: e });
+  const { data, error } = await supabase.auth.updateUser(
+    { email: e },
+    { emailRedirectTo: getRedirectUrl() }
+  );
   if (error) throw error;
   return data;
 }
