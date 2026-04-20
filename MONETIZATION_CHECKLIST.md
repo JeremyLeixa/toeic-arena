@@ -322,10 +322,28 @@ Si problème critique post-launch :
 
 ---
 
+## Stripe IDs enregistrés
+
+### Mode TEST (développement)
+
+| Produit | Product ID | Price ID |
+|---------|-----------|----------|
+| Abonnement Mensuel (9,99€) | `prod_UMyJgqYoNnQAkM` | `price_1TOEMo1D3Hu5MKuqEhw58nx7` |
+| TOEIC Pass 3 mois (22,99€) | `prod_UMyQt12EhBQgBW` | `price_1TOETE1D3Hu5MKuqne7WsPvt` |
+
+### Mode LIVE (production — à remplir lors de la bascule finale)
+
+| Produit | Product ID | Price ID |
+|---------|-----------|----------|
+| Abonnement Mensuel (9,99€) | `prod_________________` | `price_________________` |
+| TOEIC Pass 3 mois (22,99€) | `prod_________________` | `price_________________` |
+
+---
+
 ## Notes et décisions en attente
 
 - Dénomination commerciale définitive (TOEIC Arena seulement, ou TOEIC Arena by Jérémy Leixa ?)
-- Sous-domaine pour emails transactionnels
-- Médiateur retenu
-- Compte bancaire pro sélectionné
-- Ajout tier Pro futur (9,99€ avec coaching IA) ? → TBD post-PMF validation
+- Sous-domaine pour emails transactionnels (Supabase magic link + Stripe receipts)
+- Médiateur retenu : adhésion CNPM en cours (soumise 2026-04-20)
+- Compte bancaire pro : Qonto ouvert ✓
+- Ajout tier Pro futur (19,99€ avec coaching IA) ? → TBD post-PMF validation

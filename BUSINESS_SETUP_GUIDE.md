@@ -32,10 +32,12 @@ Stripe te demandera ton SIRET et ton code APE/NAF lors de la création du compte
 ### 1.1 Trouver son SIRET
 - Va sur **https://annuaire-entreprises.data.gouv.fr/**
 - Tape ton nom complet ou "Jérémy Leixa"
-- Note ton **SIRET** (14 chiffres) et ton **code APE/NAF** (ex: `85.59A` pour formation, `85.59B` pour autres enseignements)
+- Note ton **SIRET** (14 chiffres) et ton **code APE/NAF**
+  - `85.59A` = Formation continue d'adultes (organismes de formation déclarés DREETS)
+  - `85.59B` = Autres enseignements (formateur indépendant, cours particuliers — **cas typique pour un solo**)
 
 ### 1.2 Vérifier que ton activité couvre un service SaaS
-⚠️ Point important : ton code APE actuel est probablement `85.59A Formation continue d'adultes`. Ce code couvre **toutes les activités liées à la formation** y compris outils pédagogiques associés. TOEIC Arena est un outil pédagogique, donc pas besoin de changer.
+⚠️ Point important : ton code APE est `85.59B Autres enseignements` (formateur indépendant). Ce code couvre **toutes les activités liées à l'enseignement** y compris outils pédagogiques associés. TOEIC Arena est un outil pédagogique, donc pas besoin de changer.
 
 **Mais :** si un jour tu veux développer TOEIC Arena comme un pur produit SaaS sans prestation formation, tu devrais ajouter `62.01Z Programmation informatique`. Pas nécessaire aujourd'hui.
 
