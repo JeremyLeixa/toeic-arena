@@ -275,6 +275,7 @@ function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.l
 var SK="toeic-arena-v2";
 var BUILD_ID="2026-04-08a";
 import { supabase } from './supabase.js'
+import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
 
 // ─── Name normalization (accent-insensitive + lowercase) ───
@@ -327,6 +328,9 @@ function supaToLocal(data){
     pin: data.pin || null,
     joinedAt: data.joined_at || null,
     tutorialPending: data.tutorial_pending===true,
+    email: data.email || null,
+    accessLevel: data.access_level || 'free',
+    accessExpiresAt: data.access_expires_at || null,
   };
 }
 
@@ -400,6 +404,9 @@ async function save(d){
     pin:d.pin||null,
     joined_at:d.joinedAt||null,
     tutorial_pending:d.tutorialPending===true,
+    email:d.email||null,
+    access_level:d.accessLevel||'free',
+    access_expires_at:d.accessExpiresAt||null,
   };
   var cc=d.classCode||"idrac2026";
   try{
@@ -449,7 +456,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null,joinedAt:today(),tutorialPending:true};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -10407,6 +10414,30 @@ function Profile(p){
         {"🛡️ Politique de confidentialit\u00e9"}
       </button>
 
+      {/* Email account security — Phase 1 magic link */}
+      <button className="btn2" onClick={async function(){
+        if(u.email){
+          alert("Votre compte est d\u00e9j\u00e0 s\u00e9curis\u00e9 avec l'email :\n"+u.email+"\n\nVous recevrez les notifications importantes \u00e0 cette adresse.");
+          return;
+        }
+        var email=prompt("Entrez votre email pour s\u00e9curiser votre compte.\n\nVous recevrez un lien de confirmation par email.\nUne fois confirm\u00e9, votre progression sera li\u00e9e \u00e0 cet email et retrouvable depuis n'importe quel appareil.");
+        if(email===null)return;
+        email=email.trim().toLowerCase();
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+          alert("Adresse email invalide. Format attendu : nom@domaine.tld");
+          return;
+        }
+        try{
+          await linkEmailToAnonymous(email);
+          alert("\u2709\ufe0f Email de confirmation envoy\u00e9 \u00e0 :\n"+email+"\n\nV\u00e9rifiez votre bo\u00eete de r\u00e9ception (et vos spams). Cliquez sur le lien pour activer la s\u00e9curisation.\n\nVotre compte reste fonctionnel pendant l'attente.");
+        }catch(e){
+          var msg=(e&&e.message)?e.message:"impossible d'envoyer l'email de confirmation.";
+          alert("Erreur : "+msg);
+        }
+      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:u.email?"rgba(74,190,96,.3)":"rgba(var(--cx),.2)",color:u.email?"var(--green)":"var(--cyan)"}}>
+        {u.email?("\u2705 Compte s\u00e9curis\u00e9 \u2014 "+u.email):"\uD83D\uDD12 S\u00e9curiser avec un email"}
+      </button>
+
       {/* PIN management */}
       <button className="btn2" onClick={function(){
         var current=u.pin;
@@ -10557,6 +10588,29 @@ useEffect(function(){
     var fallback=setTimeout(function(){sL(false);},3000);
     return function(){sub.data.subscription.unsubscribe();clearTimeout(fallback);};
   },[]);
+
+  // ── Phase 1 Magic Link — email sync on USER_UPDATED confirmation ──
+  // Triggered when user returns from clicking the confirmation link in their email.
+  // Promotes the anonymous session to email-backed and syncs students.email.
+  useEffect(function(){
+    if(!u)return;
+    var sub=supabase.auth.onAuthStateChange(function(event,session){
+      if(event!=="USER_UPDATED")return;
+      if(!session||!session.user||!session.user.email)return;
+      if(u.email===session.user.email)return; // already synced
+      var newEmail=session.user.email;
+      supabase.from('students')
+        .update({email:newEmail})
+        .ilike('name',u.name)
+        .eq('class_code',u.classCode||'idrac2026')
+        .then(function(res){
+          if(res.error){console.error('[auth] email sync failed:',res.error.message);return;}
+          var c=JSON.parse(JSON.stringify(u));c.email=newEmail;sU(c);
+          console.log('[auth] email linked:',newEmail);
+        });
+    });
+    return function(){try{sub.data.subscription.unsubscribe();}catch(e){}};
+  },[u]);
   
   // ── Load active events from Supabase (once + every 5 min) ──
   useEffect(function(){
