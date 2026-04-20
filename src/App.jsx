@@ -10745,20 +10745,19 @@ function Profile(p){
         if(isPremium){
           var label=lvl==="premium_monthly"?"Premium Mensuel":"TOEIC Pass 3 mois";
           var icon=lvl==="premium_monthly"?"\uD83D\uDD01":"\uD83C\uDF9F\uFE0F";
-          return(<div className="crd" style={{marginBottom:12,padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.06))",border:"1px solid rgba(255,215,0,.2)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-              <span style={{fontSize:22}}>{icon}</span>
-              <div style={{flex:1}}>
-                <div className="out" style={{fontWeight:800,fontSize:14,color:"var(--gold)"}}>{label}</div>
-                <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>
-                  {lvl==="premium_monthly"?"Prochain pr\u00e9l\u00e8vement":"Expire"} {expStr?"le "+expStr:""}
-                </div>
-              </div>
+          var tagline=lvl==="premium_monthly"
+            ?(expStr?"Prochain pr\u00e9l\u00e8vement le "+expStr:"Actif")
+            :(expStr?"Expire le "+expStr:"Actif");
+          return(<div className="crd" style={{marginBottom:12,padding:"12px 14px",background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.06))",border:"1px solid rgba(255,215,0,.2)",display:"flex",alignItems:"center",gap:12}}>
+            <span style={{fontSize:22,flexShrink:0}}>{icon}</span>
+            <div style={{flex:1,minWidth:0}}>
+              <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--gold)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{label}</div>
+              <div style={{fontSize:10,color:"var(--t2)",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{tagline}</div>
             </div>
             <button className="btn2" onClick={async function(){
-              try{await openCustomerPortal();}catch(e){alert("Erreur : "+(e.message||"impossible d'ouvrir le portail."));}
-            }} style={{width:"100%",fontSize:13,padding:"10px 16px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
-              {lvl==="premium_monthly"?"\uD83D\uDD27 G\u00e9rer mon abonnement":"\uD83D\uDD27 G\u00e9rer (factures, infos)"}
+              try{await openCustomerPortal();}catch(e){alert("Erreur : "+((e&&e.message)||"impossible d'ouvrir le portail."));}
+            }} style={{flexShrink:0,fontSize:12,padding:"8px 12px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
+              {"\uD83D\uDD27 G\u00e9rer"}
             </button>
           </div>);
         }
