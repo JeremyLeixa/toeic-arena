@@ -112,6 +112,7 @@ async function updateStudentAccess(userId, accessLevel, expiresAtIso) {
 async function handleCheckoutCompleted(session) {
   const userId = session.metadata && session.metadata.supabase_user_id;
   const plan = session.metadata && session.metadata.plan;
+  console.log("[webhook] handleCheckoutCompleted start — userId=" + userId + " plan=" + plan + " session=" + session.id + " customer=" + session.customer + " amount=" + session.amount_total);
   if (!userId) {
     console.warn("[webhook] checkout.session.completed without supabase_user_id, skipping");
     return;
@@ -125,7 +126,8 @@ async function handleCheckoutCompleted(session) {
     // checkout.session.completed by default (requires expand), and our
     // passes.price_id is NOT NULL. The plan metadata tells us which price.
     const priceId = process.env.STRIPE_PRICE_PASS || "unknown";
-    const { error } = await supaAdmin.from("passes").upsert({
+    console.log("[webhook] passes upsert: id=" + session.id + " user_id=" + userId + " customer=" + session.customer + " pi=" + session.payment_intent + " priceId=" + priceId + " amount=" + (session.amount_total || 0));
+    const res = await supaAdmin.from("passes").upsert({
       id: session.id,
       user_id: userId,
       stripe_customer_id: session.customer,
@@ -134,16 +136,22 @@ async function handleCheckoutCompleted(session) {
       amount_paid: session.amount_total || 0,
       purchased_at: now.toISOString(),
       expires_at: expiresAt.toISOString(),
-    }, { onConflict: "id" });
-    if (error) {
-      // Propagate — don't markProcessed, let Stripe retry. Also surfaces in
-      // Vercel logs so we catch schema violations early.
-      console.error("[webhook] passes insert error:", error.message);
-      throw error;
+    }, { onConflict: "id" }).select("id");
+    console.log("[webhook] passes upsert result:", JSON.stringify({ error: res.error, dataLen: (res.data && res.data.length) || 0 }));
+    if (res.error) {
+      console.error("[webhook] passes insert error:", res.error.message);
+      throw res.error;
     }
 
     // Snapshot on students (id-first with email fallback for cross-device safety)
+    console.log("[webhook] updating student access for " + userId);
     await updateStudentAccess(userId, "premium_pass", expiresAt.toISOString());
+    console.log("[webhook] handleCheckoutCompleted done for pass3m");
+  } else if (plan === "monthly") {
+    // Subscription flow — the subscription.created event handles DB writes separately
+    console.log("[webhook] checkout for monthly — will be handled by subscription.created");
+  } else {
+    console.warn("[webhook] unknown plan: " + plan);
   }
 
   // For subscription mode, the subscription.created event will fire separately with full details.
