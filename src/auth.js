@@ -95,3 +95,53 @@ export function onAuthChange(cb) {
     try { data.subscription.unsubscribe(); } catch (e) {}
   };
 }
+
+// ─── STRIPE HELPERS (Phase 3) ───
+
+// Create a Checkout Session via our serverless endpoint and redirect to Stripe.
+// plan: "monthly" | "pass3m"
+// Throws on error; on success, navigates the browser away.
+export async function createCheckout(plan) {
+  const session = await getSession();
+  if (!session || !session.access_token) {
+    throw new Error('Tu dois être connecté pour souscrire.');
+  }
+  const res = await fetch('/api/stripe-checkout-create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + session.access_token,
+    },
+    body: JSON.stringify({ plan }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (data && data.error === 'email_required') {
+      throw new Error('email_required');
+    }
+    throw new Error((data && (data.message || data.error)) || 'Impossible de créer la session de paiement.');
+  }
+  if (!data.url) throw new Error('Réponse Stripe invalide.');
+  window.location.href = data.url;
+}
+
+// Open the Stripe Customer Portal in a new tab (or same tab, defaults to same)
+export async function openCustomerPortal() {
+  const session = await getSession();
+  if (!session || !session.access_token) {
+    throw new Error('Tu dois être connecté pour gérer ton abonnement.');
+  }
+  const res = await fetch('/api/stripe-portal-create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + session.access_token,
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data && (data.message || data.error)) || 'Impossible d\'ouvrir le portail de gestion.');
+  }
+  if (!data.url) throw new Error('Réponse portail invalide.');
+  window.location.href = data.url;
+}

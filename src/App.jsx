@@ -275,7 +275,7 @@ function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.l
 var SK="toeic-arena-v2";
 var BUILD_ID="2026-04-08a";
 import { supabase } from './supabase.js'
-import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange } from './auth.js'
+import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
 
 // ─── Name normalization (accent-insensitive + lowercase) ───
@@ -10020,6 +10020,92 @@ function estimateTOEICScore(ms){
   return{total:Math.round(total/5)*5,listening:lisScore,reading:rdScore};
 }
 
+// ─── UPGRADE SCREEN (Phase 3 Session 2) ───
+// Full-page screen presenting Monthly vs Pass 3m and launching Stripe Checkout.
+function UpgradeScreen(p){
+  var u=p.u;
+  var[busy,setBusy]=useState(null); // null | "monthly" | "pass3m"
+  var[err,setErr]=useState("");
+
+  async function go(plan){
+    if(busy)return;
+    setBusy(plan);setErr("");
+    try{
+      if(!u.email){setErr("Ajoute d'abord un email \u00e0 ton compte (Profil \u2192 S\u00e9curiser).");setBusy(null);return;}
+      await createCheckout(plan); // redirects window.location to Stripe
+    }catch(e){
+      var msg=(e&&e.message)||"Erreur";
+      if(msg==="email_required"){setErr("Ajoute d'abord un email \u00e0 ton compte (Profil \u2192 S\u00e9curiser).");}
+      else setErr(msg);
+      setBusy(null);
+    }
+  }
+
+  return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"\u2190 Back"}</button>
+
+    <div style={{textAlign:"center",marginBottom:24}}>
+      <div style={{fontSize:56,marginBottom:8}}>{"\uD83C\uDFF0"}</div>
+      <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Arena Premium</h1>
+      <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>Unlock the full arsenal {"\u00B7"} all modules, all tests, all rewards</p>
+    </div>
+
+    {/* TOEIC Pass 3 mois — Best value card (highlighted) */}
+    <div className="crd" style={{marginBottom:14,padding:0,overflow:"hidden",border:"1.5px solid rgba(255,215,0,.4)",background:"linear-gradient(135deg,rgba(255,215,0,.06),rgba(var(--cx),.08))",position:"relative"}}>
+      <div style={{position:"absolute",top:-1,right:12,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:800,fontSize:10,padding:"4px 10px",borderRadius:"0 0 8px 8px",letterSpacing:.5}} className="out">{"\uD83C\uDFC6 BEST VALUE"}</div>
+      <div style={{padding:"22px 18px 18px"}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:6}}>
+          <span className="out" style={{fontWeight:800,fontSize:18,color:"var(--gold)"}}>TOEIC Pass</span>
+          <span style={{fontSize:12,color:"var(--t2)"}}>{"\u00B7 3 mois"}</span>
+        </div>
+        <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:12}}>
+          <span className="out" style={{fontWeight:900,fontSize:32,color:"var(--t1)"}}>22,99{"\u00A0\u20AC"}</span>
+          <span style={{fontSize:12,color:"var(--t3)"}}>paiement unique</span>
+        </div>
+        <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,marginBottom:16}}>
+          <div>{"\u2713"} Tout l'acc\u00e8s Premium pendant 3 mois</div>
+          <div>{"\u2713"} Paiement unique, aucune reconduction</div>
+          <div>{"\u2713"} {"\u00C9conomise ~23% vs mensuel"}</div>
+          <div>{"\u2713"} Parfait avant un examen programm\u00e9</div>
+        </div>
+        <button className="btn1" disabled={busy==="pass3m"} onClick={function(){go("pass3m");}}
+          style={{width:"100%",fontSize:14,padding:"13px 20px",opacity:busy==="pass3m"?0.6:1,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610"}}>
+          {busy==="pass3m"?"\u2026":"Choose Pass 3 mois \u2192"}
+        </button>
+      </div>
+    </div>
+
+    {/* Monthly — standard card */}
+    <div className="crd" style={{marginBottom:14,padding:"18px",border:"1px solid var(--bdr)"}}>
+      <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:6}}>
+        <span className="out" style={{fontWeight:700,fontSize:16,color:"var(--t1)"}}>Premium Mensuel</span>
+        <span style={{fontSize:12,color:"var(--t3)"}}>{"\u00B7 sans engagement"}</span>
+      </div>
+      <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:12}}>
+        <span className="out" style={{fontWeight:800,fontSize:26,color:"var(--t1)"}}>9,99{"\u00A0\u20AC"}</span>
+        <span style={{fontSize:12,color:"var(--t3)"}}>{"/mois"}</span>
+      </div>
+      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,marginBottom:14}}>
+        <div>{"\u2713"} Tout l'acc\u00e8s Premium mois par mois</div>
+        <div>{"\u2713"} R\u00e9siliable \u00e0 tout moment</div>
+        <div>{"\u2713"} Flexible pour une pr\u00e9pa longue</div>
+      </div>
+      <button className="btn2" disabled={busy==="monthly"} onClick={function(){go("monthly");}}
+        style={{width:"100%",fontSize:14,padding:"12px 20px",opacity:busy==="monthly"?0.6:1}}>
+        {busy==="monthly"?"\u2026":"Choose Monthly \u2192"}
+      </button>
+    </div>
+
+    {err&&<div className="crd" style={{marginBottom:14,padding:"10px 14px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.25)",fontSize:12,color:"var(--red)"}}>{err}</div>}
+
+    {/* Fine print */}
+    <div style={{fontSize:10,color:"var(--t3)",lineHeight:1.6,textAlign:"center",marginTop:20}}>
+      Paiement s\u00e9curis\u00e9 par Stripe {"\u00B7"} TVA non applicable, art. 293 B du CGI<br/>
+      En souscrivant, tu acceptes les <a href="/cgv" target="_blank" style={{color:"var(--cyan)"}}>CGV</a> et renonces \u00e0 ton droit de r\u00e9tractation (acc\u00e8s imm\u00e9diat au service).
+    </div>
+  </div>);
+}
+
 function Profile(p){
   var u=p.u;
   var[view,setView]=useState(null);
@@ -10521,6 +10607,38 @@ function Profile(p){
         {"🛡️ Politique de confidentialit\u00e9"}
       </button>
 
+      {/* Subscription section — Phase 3 Session 2 */}
+      {(function(){
+        var lvl=u.accessLevel||"free";
+        var isPremium=lvl==="premium_monthly"||lvl==="premium_pass";
+        var expiresAt=u.accessExpiresAt?new Date(u.accessExpiresAt):null;
+        var expStr=expiresAt?expiresAt.toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"}):null;
+        if(isPremium){
+          var label=lvl==="premium_monthly"?"Premium Mensuel":"TOEIC Pass 3 mois";
+          var icon=lvl==="premium_monthly"?"\uD83D\uDD01":"\uD83C\uDF9F\uFE0F";
+          return(<div className="crd" style={{marginBottom:12,padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.06))",border:"1px solid rgba(255,215,0,.2)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+              <span style={{fontSize:22}}>{icon}</span>
+              <div style={{flex:1}}>
+                <div className="out" style={{fontWeight:800,fontSize:14,color:"var(--gold)"}}>{label}</div>
+                <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>
+                  {lvl==="premium_monthly"?"Prochain pr\u00e9l\u00e8vement":"Expire"} {expStr?"le "+expStr:""}
+                </div>
+              </div>
+            </div>
+            <button className="btn2" onClick={async function(){
+              try{await openCustomerPortal();}catch(e){alert("Erreur : "+(e.message||"impossible d'ouvrir le portail."));}
+            }} style={{width:"100%",fontSize:13,padding:"10px 16px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
+              {lvl==="premium_monthly"?"\uD83D\uDD27 G\u00e9rer mon abonnement":"\uD83D\uDD27 G\u00e9rer (factures, infos)"}
+            </button>
+          </div>);
+        }
+        return(<button className="btn1" onClick={function(){p.goUpgrade&&p.goUpgrade();}}
+          style={{width:"100%",fontSize:14,padding:"13px 20px",marginBottom:12,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700}}>
+          {"\uD83C\uDFF0 Passer \u00e0 Arena Premium"}
+        </button>);
+      })()}
+
       {/* Email account security — Phase 1 magic link */}
       <button className="btn2" onClick={async function(){
         if(u.email){
@@ -10694,6 +10812,37 @@ useEffect(function(){
 // Fallback: if no auth event fires within 3s, stop loading
     var fallback=setTimeout(function(){sL(false);},3000);
     return function(){sub.data.subscription.unsubscribe();clearTimeout(fallback);};
+  },[]);
+
+  // ── Phase 3 — Stripe checkout return handling ──
+  // Catches ?checkout=success / ?checkout=cancel / ?portal=return URL params
+  // when the user returns from Stripe. Shows a toast + cleans the URL.
+  // The actual DB update happens via the webhook, so we just trigger a refetch
+  // to pick up the new access_level from Supabase.
+  useEffect(function(){
+    try{
+      var params=new URLSearchParams(window.location.search);
+      var checkout=params.get("checkout");
+      var portal=params.get("portal");
+      var plan=params.get("plan");
+      if(checkout==="success"){
+        var label=plan==="pass3m"?"TOEIC Pass 3 mois":plan==="monthly"?"Premium Mensuel":"Premium";
+        alert("\uD83C\uDF89 Bienvenue dans Arena "+label+" !\n\nTon acc\u00e8s Premium est en cours d'activation. Si tu ne le vois pas encore, reload l'app dans 10 secondes.");
+        // Force refetch from Supabase to pick up new access_level
+        if(_cachedUserId)setTimeout(function(){load(_cachedUserId).then(function(d){if(d)sU(d);});},1500);
+      }else if(checkout==="cancel"){
+        alert("Paiement annul\u00e9. Aucun pr\u00e9l\u00e8vement n'a \u00e9t\u00e9 effectu\u00e9.");
+      }else if(portal==="return"){
+        // Refresh state in case user changed subscription status in Stripe portal
+        if(_cachedUserId)setTimeout(function(){load(_cachedUserId).then(function(d){if(d)sU(d);});},500);
+      }
+      // Clean up URL params so they don't retrigger on reload
+      if(checkout||portal){
+        var url=new URL(window.location.href);
+        ["checkout","plan","portal"].forEach(function(k){url.searchParams.delete(k);});
+        window.history.replaceState({},"",url.toString());
+      }
+    }catch(e){console.warn("[stripe] return handling error:",e);}
   },[]);
 
   // ── Phase 1 Magic Link — email sync on USER_UPDATED confirmation ──
@@ -11306,6 +11455,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="sbuild"){playBGM("bgm_build");return pg(<SentenceBuilder u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"sbuild");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);if(tot>0&&sc/tot>=0.9)grantWeeklyChest("sbuild_90","novice");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="clue"){playBGM("bgm_clue");return pg(<ClueHunter u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"clue");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");if(sc===tot&&tot>0)grantWeeklyChest("clue_perfect","guerrier");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="ablitz")return pg(<AudioBlitz u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"ablitz");}} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);if(tot>0){var abPct=sc/tot;if(abPct>=0.9)grantWeeklyChest("ablitz_90","guerrier");else if(abPct>=0.7)grantWeeklyChest("ablitz_70","novice");}sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/>);
+  if(sp==="upgrade")return pg(<UpgradeScreen u={u} back={function(){sSP(null);sT("profile");}}/>);
   if(sp==="abouttoeic")return pg(<AboutToeic back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="strats")return pg(<StratCards back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
@@ -11325,7 +11475,7 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}}/>}
     {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
