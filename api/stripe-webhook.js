@@ -1,0 +1,256 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Stripe Webhook handler
+// Phase 3 (2026-04-20): receives events from Stripe, processes them into
+// our Supabase tables (subscriptions, passes, stripe_events for dedup).
+//
+// Events handled:
+//   checkout.session.completed        — initial payment success (both modes)
+//   customer.subscription.created     — new Monthly sub
+//   customer.subscription.updated     — renewal, cancel-at-period-end toggle, status change
+//   customer.subscription.deleted     — final cancellation
+//   invoice.payment_succeeded         — recurring Monthly renewal
+//   invoice.payment_failed            — recurring Monthly failure
+//   charge.refunded                   — manual refund (pass or sub)
+//
+// Security:
+//   - Stripe signature verification via STRIPE_WEBHOOK_SECRET
+//   - Deduplication via stripe_events table (idempotent replays)
+//   - Service role Supabase client (bypasses RLS)
+//
+// Vercel note: this endpoint needs the RAW request body for signature verification.
+// We disable automatic body parsing via the config export below.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import Stripe from "stripe";
+import { createClient } from "@supabase/supabase-js";
+
+const STRIPE_MODE = process.env.STRIPE_MODE === "live" ? "live" : "test";
+const stripeKey = STRIPE_MODE === "live"
+  ? process.env.STRIPE_SECRET_KEY_LIVE
+  : process.env.STRIPE_SECRET_KEY_TEST;
+const webhookSecret = STRIPE_MODE === "live"
+  ? process.env.STRIPE_WEBHOOK_SECRET_LIVE
+  : process.env.STRIPE_WEBHOOK_SECRET_TEST;
+
+const stripe = new Stripe(stripeKey, { apiVersion: "2024-12-18.acacia" });
+
+const supaAdmin = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// Vercel: disable body parser so we can verify the raw body signature
+export const config = {
+  api: { bodyParser: false },
+};
+
+// Read raw body from the request stream (required for Stripe signature)
+async function readRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (c) => chunks.push(c));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
+}
+
+// Deduplicate events — Stripe may retry up to 3x on failure
+async function alreadyProcessed(eventId) {
+  const { data } = await supaAdmin
+    .from("stripe_events")
+    .select("id")
+    .eq("id", eventId)
+    .maybeSingle();
+  return !!data;
+}
+
+async function markProcessed(event) {
+  await supaAdmin.from("stripe_events").insert({
+    id: event.id,
+    type: event.type,
+    payload: event,
+  });
+}
+
+// ─── Event handlers ──────────────────────────────────────────────────────────
+
+async function handleCheckoutCompleted(session) {
+  const userId = session.metadata && session.metadata.supabase_user_id;
+  const plan = session.metadata && session.metadata.plan;
+  if (!userId) {
+    console.warn("[webhook] checkout.session.completed without supabase_user_id, skipping");
+    return;
+  }
+
+  if (plan === "pass3m") {
+    // One-time payment — create passes row
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+    const { error } = await supaAdmin.from("passes").upsert({
+      id: session.id,
+      user_id: userId,
+      stripe_customer_id: session.customer,
+      stripe_payment_intent_id: session.payment_intent,
+      price_id: (session.line_items && session.line_items.data[0] && session.line_items.data[0].price && session.line_items.data[0].price.id) || null,
+      amount_paid: session.amount_total || 0,
+      purchased_at: now.toISOString(),
+      expires_at: expiresAt.toISOString(),
+    }, { onConflict: "id" });
+    if (error) console.error("[webhook] passes insert error:", error.message);
+
+    // Snapshot on students for fast UI lookups
+    await supaAdmin
+      .from("students")
+      .update({
+        access_level: "premium_pass",
+        access_expires_at: expiresAt.toISOString(),
+      })
+      .eq("user_id", userId);
+  }
+
+  // For subscription mode, the subscription.created event will fire separately with full details.
+  // We don't double-write here.
+}
+
+async function handleSubscriptionUpsert(subscription) {
+  const userId = subscription.metadata && subscription.metadata.supabase_user_id;
+  if (!userId) {
+    console.warn("[webhook] subscription without supabase_user_id, skipping");
+    return;
+  }
+
+  const payload = {
+    id: subscription.id,
+    user_id: userId,
+    stripe_customer_id: subscription.customer,
+    price_id: (subscription.items && subscription.items.data[0] && subscription.items.data[0].price && subscription.items.data[0].price.id) || null,
+    status: subscription.status,
+    current_period_start: subscription.current_period_start
+      ? new Date(subscription.current_period_start * 1000).toISOString()
+      : null,
+    current_period_end: subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : null,
+    cancel_at_period_end: !!subscription.cancel_at_period_end,
+    canceled_at: subscription.canceled_at
+      ? new Date(subscription.canceled_at * 1000).toISOString()
+      : null,
+  };
+
+  const { error } = await supaAdmin.from("subscriptions").upsert(payload, { onConflict: "id" });
+  if (error) console.error("[webhook] subscriptions upsert error:", error.message);
+
+  // Snapshot on students
+  const isActive = subscription.status === "active" || subscription.status === "trialing";
+  await supaAdmin
+    .from("students")
+    .update({
+      access_level: isActive ? "premium_monthly" : "free",
+      access_expires_at: isActive ? payload.current_period_end : null,
+    })
+    .eq("user_id", userId);
+}
+
+async function handleSubscriptionDeleted(subscription) {
+  const userId = subscription.metadata && subscription.metadata.supabase_user_id;
+
+  // Mark the subscription canceled
+  await supaAdmin
+    .from("subscriptions")
+    .update({
+      status: "canceled",
+      canceled_at: new Date().toISOString(),
+    })
+    .eq("id", subscription.id);
+
+  // Downgrade the student
+  if (userId) {
+    await supaAdmin
+      .from("students")
+      .update({ access_level: "free", access_expires_at: null })
+      .eq("user_id", userId);
+  }
+}
+
+async function handleChargeRefunded(charge) {
+  // Manual refund — find if this charge belongs to a pass and downgrade if so
+  const paymentIntentId = charge.payment_intent;
+  if (!paymentIntentId) return;
+
+  const { data: pass } = await supaAdmin
+    .from("passes")
+    .select("user_id")
+    .eq("stripe_payment_intent_id", paymentIntentId)
+    .maybeSingle();
+
+  if (pass) {
+    // Mark pass as expired immediately
+    await supaAdmin
+      .from("passes")
+      .update({ expires_at: new Date().toISOString() })
+      .eq("stripe_payment_intent_id", paymentIntentId);
+
+    await supaAdmin
+      .from("students")
+      .update({ access_level: "free", access_expires_at: null })
+      .eq("user_id", pass.user_id);
+  }
+}
+
+// ─── Main handler ────────────────────────────────────────────────────────────
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const sig = req.headers["stripe-signature"];
+  if (!sig) return res.status(400).json({ error: "Missing stripe-signature header" });
+
+  let event;
+  try {
+    const rawBody = await readRawBody(req);
+    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+  } catch (err) {
+    console.error("[webhook] signature verification failed:", err && err.message);
+    return res.status(400).json({ error: "Invalid signature" });
+  }
+
+  // Idempotence — skip if already processed
+  if (await alreadyProcessed(event.id)) {
+    return res.status(200).json({ received: true, deduped: true });
+  }
+
+  try {
+    switch (event.type) {
+      case "checkout.session.completed":
+        await handleCheckoutCompleted(event.data.object);
+        break;
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+        await handleSubscriptionUpsert(event.data.object);
+        break;
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(event.data.object);
+        break;
+      case "invoice.payment_succeeded":
+      case "invoice.payment_failed":
+        // These update subscription.status on Stripe's side, which fires
+        // customer.subscription.updated — we process those instead. No-op here.
+        break;
+      case "charge.refunded":
+        await handleChargeRefunded(event.data.object);
+        break;
+      default:
+        // Ignore unhandled event types but mark them processed to skip future retries
+        break;
+    }
+
+    await markProcessed(event);
+    return res.status(200).json({ received: true });
+  } catch (err) {
+    console.error("[webhook] handler error for " + event.type + ":", err && err.message);
+    // Don't mark as processed — let Stripe retry
+    return res.status(500).json({ error: "Handler failed" });
+  }
+}
