@@ -969,6 +969,7 @@ var[step,sSt]=useState("name");
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
   var[pin,setPin]=useState("");var[pendingRecover,setPendingRecover]=useState(null);var[pinError,setPinError]=useState(false);
   var[pendingNav,setPendingNav]=useState(null);var[pushBusy,setPushBusy]=useState(false);
+  var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
   function goAfterPushStep(firstNav){
     // If browser lacks Push API, skip the opt-in phase entirely
     var hasPush=("serviceWorker" in navigator)&&("PushManager" in window);
@@ -1409,7 +1410,7 @@ var[step,sSt]=useState("name");
 
   // ─ Push notification opt-in ─
   if(step==="pushPrompt"){
-    function finishOnb(){sSt("langBridge");}
+    function finishOnb(){sSt("emailPrompt");}
     async function enableAndGo(){
       if(pushBusy)return;
       setPushBusy(true);
@@ -1462,6 +1463,65 @@ var[step,sSt]=useState("name");
         <p style={{color:"var(--t3)",fontSize:10,marginTop:12,lineHeight:1.5}}>{"Tu peux changer d'avis à tout moment depuis ton Profil."}</p>
       </div>
     </div>);}
+
+  // ─ Email security (Phase 1 Session 2): optional step to link an email ─
+  if(step==="emailPrompt"){
+    function skipEmail(){sSt("langBridge");}
+    async function submitEmail(){
+      if(emailBusy)return;
+      var e=(emailInput||"").trim().toLowerCase();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){setEmailErr("Adresse email invalide");return;}
+      setEmailErr("");setEmailBusy(true);
+      try{
+        await linkEmailToAnonymous(e);
+        setEmailSent(true);
+        setTimeout(function(){sSt("langBridge");},1800);
+      }catch(err){
+        var msg=(err&&err.message)||"Impossible d'envoyer l'email";
+        setEmailErr(msg);
+      }finally{setEmailBusy(false);}
+    }
+    return(
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
+      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
+        <div style={{fontSize:56,marginBottom:16}}>{emailSent?"\u2709\uFE0F":"\uD83D\uDD12"}</div>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:24,color:"var(--t1)",marginBottom:10}}>
+          {emailSent?"V\u00e9rifie ta bo\u00eete":"S\u00e9curise ton compte"}
+        </h2>
+        {!emailSent&&<p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
+          {"Lie un email pour retrouver ta progression depuis n'importe quel appareil et recevoir tes r\u00e9sultats hebdomadaires."}
+        </p>}
+        {emailSent&&<p style={{color:"var(--green)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
+          {"\u2709\uFE0F Lien de confirmation envoy\u00e9 \u00e0 "+emailInput+".\nTu peux continuer, le lien reste valable 24h."}
+        </p>}
+        {!emailSent&&<div className="crd" style={{padding:"14px 16px",marginBottom:14,textAlign:"left",background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
+          <div style={{display:"flex",gap:10,marginBottom:8}}>
+            <span style={{fontSize:18}}>{"\uD83D\uDD04"}</span>
+            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Sync multi-appareils</div><div style={{fontSize:11,color:"var(--t2)"}}>{"Retrouve ta progression sur ton t\u00e9l\u00e9phone et ton PC"}</div></div>
+          </div>
+          <div style={{display:"flex",gap:10,marginBottom:8}}>
+            <span style={{fontSize:18}}>{"\uD83D\uDCCA"}</span>
+            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>R\u00e9sultats hebdo</div><div style={{fontSize:11,color:"var(--t2)"}}>{"Ton classement chaque lundi matin par email"}</div></div>
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <span style={{fontSize:18}}>{"\uD83D\uDD10"}</span>
+            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Ton compte t'appartient</div><div style={{fontSize:11,color:"var(--t2)"}}>{"N\u00e9cessaire pour souscrire Premium plus tard"}</div></div>
+          </div>
+        </div>}
+        {!emailSent&&<>
+          <input type="email" value={emailInput} onChange={function(ev){setEmailInput(ev.target.value);setEmailErr("");}} placeholder="ton@email.com" autoComplete="email" disabled={emailBusy}
+            style={{width:"100%",padding:"12px 14px",fontSize:14,borderRadius:10,border:"1.5px solid "+(emailErr?"var(--red)":"rgba(var(--cx),.25)"),background:"var(--bg2)",color:"var(--t1)",marginBottom:emailErr?4:14,textAlign:"center",fontFamily:"'DM Sans',sans-serif"}}/>
+          {emailErr&&<div style={{fontSize:11,color:"var(--red)",marginBottom:10,textAlign:"left"}}>{emailErr}</div>}
+          <button className="btn1" onClick={submitEmail} disabled={emailBusy||!emailInput}
+            style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10,opacity:(emailBusy||!emailInput)?0.5:1}}>
+            {emailBusy?"\u2026":"Recevoir le lien magique"}</button>
+          <button className="btn2" onClick={skipEmail} disabled={emailBusy}
+            style={{fontSize:13,padding:"12px 28px",width:"100%"}}>Plus tard</button>
+          <p style={{color:"var(--t3)",fontSize:10,marginTop:12,lineHeight:1.5}}>{"Tu pourras l'ajouter quand tu veux depuis ton Profil."}</p>
+        </>}
+      </div>
+    </div>);
+  }
 
   // ─ Language bridge: transition to English ─
   if(step==="langBridge"){
@@ -1611,6 +1671,14 @@ var[step,sSt]=useState("name");
 // ─── HOME ───
 function Home(p){
 var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily&&u.daily.date===today()&&u.daily.done;
+// ── Secure email banner dismissal state (Phase 1 Session 2) ──
+// Visible if u has no email and is not a visitor. Dismissible for 7 days via localStorage.
+var[secureBannerHidden,setSecureBannerHidden]=useState(function(){
+  try{
+    var dismissedAt=parseInt(localStorage.getItem("secureEmailDismissedAt")||"0",10);
+    return Date.now()-dismissedAt<7*86400000;
+  }catch(e){return false;}
+});
 // ── Single-pulse priority (UX focus): chest > mock > daily > event ──
 // Only ONE CTA animates at a time so the eye isn't pulled in multiple directions.
 var _missionHome=getDailyMission(u);
@@ -1678,6 +1746,45 @@ return(
     </div>
   </div>);
 })}
+
+{/* Secure email banner — Phase 1 Session 2 */}
+{!u.email&&u.classCode!=="visitor"&&!secureBannerHidden&&(function(){
+  var isIDRAC=u.classCode==="idrac2026";
+  async function secureNow(){
+    var email=prompt("Entre ton email pour s\u00e9curiser ton compte.\n\nTu recevras un lien de confirmation. Une fois cliqu\u00e9, ta progression sera li\u00e9e \u00e0 cet email et retrouvable sur tous tes appareils.");
+    if(email===null)return;
+    email=email.trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert("Adresse email invalide.");return;}
+    try{
+      await linkEmailToAnonymous(email);
+      alert("\u2709\uFE0F Email envoy\u00e9 \u00e0 "+email+".\n\nClique le lien dans ta bo\u00eete (et checke les spams).");
+      setSecureBannerHidden(true);
+    }catch(e){
+      alert("Erreur : "+((e&&e.message)||"impossible d'envoyer l'email."));
+    }
+  }
+  function dismiss(){
+    try{localStorage.setItem("secureEmailDismissedAt",Date.now().toString());}catch(e){}
+    setSecureBannerHidden(true);
+  }
+  return(<div className="crd" style={{marginBottom:14,padding:"14px 16px",background:"linear-gradient(135deg,rgba(var(--cx),.10),rgba(27,112,207,.08))",border:"1px solid rgba(var(--cx),.25)"}}>
+    <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:10}}>
+      <span style={{fontSize:22,flexShrink:0}}>{"\uD83D\uDD12"}</span>
+      <div style={{flex:1,minWidth:0}}>
+        <div className="out" style={{fontWeight:800,fontSize:14,color:"var(--cx-hex)",marginBottom:3}}>Secure your account</div>
+        <div style={{fontSize:11,color:"var(--t2)",lineHeight:1.5}}>
+          {isIDRAC
+            ?"Link an email before the course ends on 2026-06-28 to keep your progress and continue training afterwards."
+            :"Link an email to sync your progress across devices and unlock Premium features later."}
+        </div>
+      </div>
+    </div>
+    <div style={{display:"flex",gap:8}}>
+      <button className="btn1" style={{flex:1,fontSize:12,padding:"9px 12px"}} onClick={secureNow}>Secure now</button>
+      <button className="btn2" style={{flex:"0 0 auto",fontSize:12,padding:"9px 16px"}} onClick={dismiss}>Later</button>
+    </div>
+  </div>);
+})()}
 
 <div className="crd glo" style={{marginBottom:16}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
