@@ -6,50 +6,78 @@
 
 ---
 
-## Last session: 2026-04-17 (session "intelligent-blackburn")
+## Last session: 2026-04-20 (session "intelligent-blackburn" — monetization build-out marathon)
 
-Session split en deux temps :
-1. **Matin (session "brave-bardeen")** : Major S2 pedagogical cycle — app passée de "MVP fonctionnel" à "expérience polie production-grade" (chest UX V2, weekly report, push campaigns).
-2. **Après-midi (session actuelle)** : **Kickoff chantier Monétisation**. Décisions business tranchées, migration Teacher, draft CGV, checklist exhaustive.
+Session démarrée le 17 avril (kickoff monétisation, CGV draft, migration Teacher) et **poursuivie sur le 20 avril** en grosse séance de construction + debug. À la clôture du 20 avril au soir : **Phases 1→4 code-complete**, **Phase 3 validée end-to-end** sur le compte Teacher, **Phase 4 bloquée sur un bug de propagation** détecté en test visitor (jay_test) en fin de session.
 
 ---
 
-## 💰 Monetization chantier — ACTIF (démarré 2026-04-17)
+## 💰 Monetization chantier — PHASES 1 à 4 livrées
 
-**Décisions business verrouillées :**
+### Décisions business verrouillées
 - **B2C pur** — pas d'architecture institutionnelle (écoles gérées cas par cas manuellement)
-- **Tarification (révisée 2026-04-20)** : **9,99€/mois** recurring OU **22,99€ TOEIC Pass 3 mois** one-shot (pas d'annuel). Rationale : le TOEIC est un produit d'intention ponctuelle, pas de consommation continue. Le Pass 3 mois matche la durée réelle d'usage.
-- **Pas de période d'essai** — freemium permanent conservé (resserré plus tard en Phase 4)
-- **Cutoff IDRAC 2026-06-28** (date réelle, pas juillet) → étudiants peuvent continuer en souscrivant, leur progression reste sur le même compte
+- **Tarification (révisée 2026-04-20)** : **9,99€/mois** recurring OU **22,99€ TOEIC Pass 3 mois** one-shot (pas d'annuel)
+- **Pas de période d'essai** — freemium permanent conservé (9 modules gratuits depuis retrait de `sbuild` le 2026-04-20)
+- **Cutoff IDRAC 2026-06-28** (date réelle)
 - **Statut éditeur** : micro-entreprise, franchise TVA art. 293 B CGI
-- **Jérémy (Teacher)** : migré sur `class_code='teacher-internal'` (permanent, end_date=NULL), insulé du cutoff IDRAC
+- **Jérémy (Teacher)** : migré sur `class_code='teacher-internal'` (permanent, end_date=NULL)
+- **Système PIN supprimé** le 2026-04-20 (commit 28450f4 + fix 24cdbce) — magic link auth remplace
 
-**Artefacts produits cette session :**
-- [`CGV_draft.md`](CGV_draft.md) — draft 20 articles, placeholders [À COMPLÉTER] pour SIRET/médiateur, franchise TVA active
-- [`MONETIZATION_CHECKLIST.md`](MONETIZATION_CHECKLIST.md) — 13 sections / ~90 items, timeline jusqu'au 28 juin 2026
-- Teacher migration SQL exécutée en prod Supabase (9 coffres, 3 push_subs, 3 snapshots migrés, 24195 XP préservés)
-- `CLAUDE.md` mis à jour (section Teacher Account)
+### Phases — état au 2026-04-20 soir
 
-**Plan d'exécution (7-8 sessions) :**
+| Phase | Statut | Détails |
+|-------|--------|---------|
+| 0a. Teacher class code standalone | ✅ DONE | Migration SQL exécutée (24195 XP Teacher préservés) |
+| 0b. Stripe setup + CGV + médiateur | 🟡 partiel | Compte Stripe test actif, produits créés, webhook configuré, env vars Vercel OK. CGV relecture juriste reportée. Adhésion CNPM soumise (attente validation). |
+| 1. Magic link auth | ✅ DONE (Sessions 1-3) | Profile email button + onboarding email step + Home banner + "Log in with email" pour cross-device |
+| 2. Data model subs | ✅ DONE | Tables `subscriptions`, `passes`, `stripe_events` créées en prod Supabase avec RLS |
+| 3. Stripe Checkout B2C | ✅ DONE + tested | 3 endpoints Vercel livrés. Testé end-to-end sur compte Teacher avec Pass 3m (webhook → passes row → students.access_level sync via email fallback). **14 commits de debug** pour arriver à stable. |
+| 4. Premium gating | 🟡 code livré, **bug bloquant** | `hasFullAccess()` helper + paywall redesigné avec CTA direct vers UpgradeScreen. Testé en Teacher (groupType=school, full access). **Test visitor jay_test pas concluant** : paiement Stripe validé mais `students.access_level` reste "free" côté app — voir section debug ci-dessous. |
+| 5. Cutoff IDRAC 2026-06-28 | ⏳ | À démarrer après Phase 4 stabilisée |
 
-| Phase | Statut | Owner |
-|-------|--------|-------|
-| 0a. Teacher class code standalone | ✅ DONE | 🤖 |
-| 0b. Stripe setup + CGV + GDPR policy update | 🟡 in_progress (homework Jérémy) | 👤 |
-| 1. Magic link auth | ⏳ NEXT — peut démarrer en parallèle du 0b | 🤖 |
-| 2. Data model subs | ⏳ | 🤖 |
-| 3. Stripe Checkout B2C | ⏳ | 🤖 |
-| 4. Gating premium + resserrement freemium | ⏳ | 🤖 |
-| 5. Cutoff IDRAC | ⏳ | 🤖 |
+### Artefacts produits
 
-**Timeline cibles :**
-- 2026-05-15 : Stripe test mode validé
-- 2026-06-10 : Stripe LIVE
-- 2026-06-28 : Cutoff IDRAC
+- [`CGV_draft.md`](CGV_draft.md) — 20 articles, pricing 9,99 + 22,99, franchise TVA, CNPM en attente
+- [`MONETIZATION_CHECKLIST.md`](MONETIZATION_CHECKLIST.md) — checklist exhaustive 13 sections
+- [`BUSINESS_SETUP_GUIDE.md`](BUSINESS_SETUP_GUIDE.md) — guide step-by-step Stripe/SIRET/médiateur (8 étapes)
+- `public/cgv.md` — copie statique accessible à `/cgv.md` pour le lien UI
+- `src/auth.js` — helpers magic link + Stripe checkout/portal (createCheckout, openCustomerPortal, requestMagicLink, linkEmailToAnonymous, getSession, signOutCompletely, onAuthChange)
+- 3 endpoints Vercel : `api/stripe-checkout-create.js`, `api/stripe-webhook.js` (avec id→email fallback), `api/stripe-portal-create.js`
 
-**Points d'attention prochaine session :**
-- Vérifier où en est Jérémy côté business (SIRET, compte pro, Stripe, médiateur)
-- Option recommandée : démarrer Phase 1 (magic link auth) en parallèle de sa prep business, c'est indépendant
+### Stripe TEST mode IDs enregistrés (production IDs à régénérer côté live)
+
+- Monthly price : `price_1TOEMo1D3Hu5MKuqEhw58nx7` (prod `prod_UMyJgqYoNnQAkM`)
+- Pass 3m price : `price_1TOETE1D3Hu5MKuqne7WsPvt` (prod `prod_UMyQt12EhBQgBW`)
+- Env vars Vercel : STRIPE_MODE=test, STRIPE_SECRET_KEY_TEST, STRIPE_WEBHOOK_SECRET_TEST, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_PASS (valeurs test présentes)
+
+### Bug en cours — à débugger demain matin
+
+**Contexte** : fin de session 2026-04-20, Jérémy teste en navigation privée avec un nouveau compte visitor `jay_test`. Il passe par le checkout Stripe, paiement validé côté Stripe, mais `students.access_level` reste "free" côté app.
+
+**Hypothèses à vérifier** :
+1. jay_test a-t-il un email confirmé (`email_confirmed_at` non-null) ? Si skip email ou pending, l'endpoint checkout devrait avoir rejeté avec `email_required`.
+2. Webhook reçu en 200 ? Vérifier Stripe Dashboard → Webhooks → Recent deliveries pour la session jay_test.
+3. Row insérée dans `passes` ? (requête SQL à lancer)
+4. `students.access_level` pour jay_test ?
+5. `students.id` vs `auth.users.id` pour jay_test ? (mismatch possible si visitor a eu plusieurs anon upgrades)
+
+**Queries de diagnostic à lancer demain matin** (reprendre dans cet ordre) :
+```sql
+SELECT id, name, class_code, email, access_level, access_expires_at FROM students WHERE name = 'jay_test';
+SELECT id, user_id, stripe_customer_id, amount_paid, purchased_at FROM passes ORDER BY purchased_at DESC LIMIT 3;
+SELECT id, type, processed_at FROM stripe_events ORDER BY processed_at DESC LIMIT 5;
+SELECT id, email, is_anonymous, email_confirmed_at FROM auth.users ORDER BY created_at DESC LIMIT 5;
+```
+
+Plus : Stripe Dashboard → Events → filtrer récents `checkout.session.completed` → vérifier livraisons webhook + status.
+
+Si le problème est l'email non confirmé : affiner le flow visitor pour forcer la confirmation email avant permettre checkout. Actuellement l'emailPrompt step dans onboarding advance 1.8s après envoi du link, sans attendre confirmation — possiblement prématuré pour un visitor qui veut payer.
+
+### Timeline cibles
+
+- 2026-05-15 : Stripe test mode validé (bug visitor à fixer avant)
+- 2026-06-10 : Stripe LIVE (récupérer nouveaux price_ids en live mode, env vars live)
+- 2026-06-28 : Cutoff IDRAC (Phase 5 à implémenter)
 
 ---
 
@@ -151,4 +179,4 @@ Session split en deux temps :
 
 ---
 
-_Last updated: 2026-04-17 · session "intelligent-blackburn" (monetization kickoff)_
+_Last updated: 2026-04-20 soir · session "intelligent-blackburn" (Phases 1-4 monétisation livrées, debug Phase 4 visitor à reprendre)_
