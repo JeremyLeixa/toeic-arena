@@ -10590,17 +10590,16 @@ useEffect(function(){
   },[]);
 
   // ── Phase 1 Magic Link — email sync on USER_UPDATED confirmation ──
-  // Only sync to students.email when Supabase confirms the email (email_confirmed_at set).
-  // If confirmation is required (Supabase setting), this fires ONLY after the user clicks
-  // the magic link in their inbox. If confirmation is not required, fires immediately on
-  // updateUser() success — still safe because Supabase already validated the email format
-  // and ownership (via its own anti-abuse layers).
+  // Syncs students.email when Supabase confirms the email (email_confirmed_at set).
+  // Runs on mount AND on future auth events to handle the magic link callback timing:
+  // the callback event often fires BEFORE this useEffect mounts (during initial page
+  // load after the redirect), so we also proactively read the current session on mount.
   useEffect(function(){
     if(!u)return;
-    var sub=supabase.auth.onAuthStateChange(function(event,session){
-      if(event!=="USER_UPDATED"&&event!=="SIGNED_IN")return;
-      if(!session||!session.user||!session.user.email)return;
-      // Require confirmation timestamp — otherwise email is still pending
+
+    function syncEmailFromSession(session){
+      if(!session||!session.user)return;
+      if(!session.user.email)return;
       if(!session.user.email_confirmed_at)return;
       if(u.email===session.user.email)return; // already synced
       var newEmail=session.user.email;
@@ -10613,6 +10612,18 @@ useEffect(function(){
           var c=JSON.parse(JSON.stringify(u));c.email=newEmail;sU(c);
           console.log('[auth] email linked:',newEmail);
         });
+    }
+
+    // 1. Immediate check — catches the case where auth event fired before this mount
+    //    (typical after magic link redirect: hash processed → event fires → u loads → this mounts)
+    supabase.auth.getSession().then(function(res){
+      if(res.data&&res.data.session)syncEmailFromSession(res.data.session);
+    });
+
+    // 2. Listen for future auth changes (re-confirmations, email updates, etc.)
+    var sub=supabase.auth.onAuthStateChange(function(event,session){
+      if(event==="TOKEN_REFRESHED"||event==="PASSWORD_RECOVERY")return;
+      syncEmailFromSession(session);
     });
     return function(){try{sub.data.subscription.unsubscribe();}catch(e){}};
   },[u]);
