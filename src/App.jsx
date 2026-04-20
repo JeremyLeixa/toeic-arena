@@ -1217,7 +1217,7 @@ var[step,sSt]=useState("name");
             </div>
           </div>
         </div>
-        <button className="btn1" onClick={function(){if(classCode==="visitor"){sSt("secure");return;}startTest();}}
+        <button className="btn1" onClick={function(){startTest();}}
           style={{fontSize:16,padding:"14px 28px",width:"100%",marginBottom:10}}>{"J\u2019accepte \u2014 Continuer"}</button>
         <button onClick={function(){setShowPrivacy(true);}}
           style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",marginBottom:10}}>{"Lire la politique de confidentialit\u00e9 compl\u00e8te"}</button>
@@ -1379,7 +1379,7 @@ var[step,sSt]=useState("name");
         </div>
 
         {/* ── FIRST MISSION ── */}
-        {mission&&<div className="crd" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
+        {mission&&<div className="crd" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
           style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16,marginBottom:24,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
             <span style={{fontSize:20}}>📜</span>
@@ -1394,10 +1394,10 @@ var[step,sSt]=useState("name");
           </div>
         </div>}
 
-        {mission&&<button className="btn1" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
+        {mission&&<button className="btn1" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
           Start Your Quest — {mission.label}</button>}
-        <button className="btn2" onClick={function(){stopTts();if((classCode||"visitor")==="visitor"){sSt("secure");return;}playArenaCall();goAfterPushStep(null);}}
+        <button className="btn2" onClick={function(){stopTts();playArenaCall();goAfterPushStep(null);}}
           style={{fontSize:14,padding:"12px 28px",width:"100%"}}>Enter the Arena</button>
         <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your stats will evolve as you train. This is just the beginning.</p>
       </div>
