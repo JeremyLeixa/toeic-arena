@@ -154,7 +154,7 @@ function getEffectiveLeague(wxp,ms){
   return l;
 }
 // ─── FREEMIUM: modules available in visitor/free mode ───
-var FREE_MODULES = ["daily","drill","csess","sbuild","lisP2","stratquiz","strats","gramref","wfall","tavern"];
+var FREE_MODULES = ["daily","drill","csess","lisP2","stratquiz","strats","gramref","wfall","tavern"];
 var FREE_FLASHCARD_DOMAINS = ["finance","travel","office"];
 function isModuleLocked(moduleId, gType) {
   if (gType !== "visitor") return false;
