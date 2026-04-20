@@ -1053,10 +1053,53 @@ var[step,sSt]=useState("name");
         <button className="btn1" onClick={function(){if(name.trim()&&!lookingUp)lookupName(name);}} disabled={lookingUp}
           style={{opacity:name.trim()&&!lookingUp?1:.4,pointerEvents:name.trim()&&!lookingUp?"auto":"none",fontSize:18,padding:"16px 32px"}}>{lookingUp?"Checking...":"Next"}</button>
         <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:20}}>
+          <button onClick={function(){sSt("emailLogin");setEmailInput("");setEmailErr("");setEmailSent(false);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"D\u00e9j\u00e0 un compte ? Me connecter"}</button>
           <button onClick={function(){sSt("teacher");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Teacher access</button>
         </div>
       </div>
     </div>);
+
+  // ─ Email login (cross-device) ─ Phase 1 Session 3 ─
+  if(step==="emailLogin"){
+    async function doLogin(){
+      if(emailBusy)return;
+      var e=(emailInput||"").trim().toLowerCase();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){setEmailErr("Adresse email invalide");return;}
+      setEmailErr("");setEmailBusy(true);
+      try{
+        await requestMagicLink(e);
+        setEmailSent(true);
+      }catch(err){
+        setEmailErr((err&&err.message)||"Erreur");
+      }finally{setEmailBusy(false);}
+    }
+    return(
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
+      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
+        <div style={{fontSize:56,marginBottom:16}}>{emailSent?"\u2709\uFE0F":"\uD83D\uDD11"}</div>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:24,color:"var(--t1)",marginBottom:10}}>
+          {emailSent?"V\u00e9rifie ta bo\u00eete":"Me connecter avec mon email"}
+        </h2>
+        {!emailSent&&<p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
+          {"Entre l'email que tu avais li\u00e9 \u00e0 ton compte. On t'envoie un lien magique pour te reconnecter sur ce device."}
+        </p>}
+        {emailSent&&<p style={{color:"var(--green)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
+          {"\u2709\uFE0F Lien envoy\u00e9 \u00e0 "+emailInput+".\n\nClique le lien dans ta bo\u00eete (check aussi les spams). Ta session sera restaur\u00e9e sur ce device. Tu peux fermer cet onglet ou attendre ici."}
+        </p>}
+        {!emailSent&&<>
+          <input type="email" value={emailInput} onChange={function(ev){setEmailInput(ev.target.value);setEmailErr("");}} placeholder="ton@email.com" autoComplete="email" disabled={emailBusy}
+            style={{width:"100%",padding:"12px 14px",fontSize:14,borderRadius:10,border:"1.5px solid "+(emailErr?"var(--red)":"rgba(var(--cx),.25)"),background:"var(--bg2)",color:"var(--t1)",marginBottom:emailErr?4:14,textAlign:"center",fontFamily:"'DM Sans',sans-serif"}}/>
+          {emailErr&&<div style={{fontSize:11,color:"var(--red)",marginBottom:10,textAlign:"left"}}>{emailErr}</div>}
+          <button className="btn1" onClick={doLogin} disabled={emailBusy||!emailInput}
+            style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10,opacity:(emailBusy||!emailInput)?0.5:1}}>
+            {emailBusy?"\u2026":"Recevoir le lien magique"}</button>
+          <button className="btn2" onClick={function(){sSt("name");}} disabled={emailBusy}
+            style={{fontSize:13,padding:"12px 28px",width:"100%"}}>{"\u2190 Retour"}</button>
+          <p style={{color:"var(--t3)",fontSize:10,marginTop:16,lineHeight:1.5}}>{"Pas encore de compte ? Retourne en arri\u00e8re et cr\u00e9e-en un avec ton nom."}</p>
+        </>}
+      </div>
+    </div>);
+  }
 
   // ─ Account recognition ─
   if(step==="recognize")return(
