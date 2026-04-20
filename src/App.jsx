@@ -1501,7 +1501,7 @@ var[step,sSt]=useState("name");
           </div>
           <div style={{display:"flex",gap:10,marginBottom:8}}>
             <span style={{fontSize:18}}>{"\uD83D\uDCCA"}</span>
-            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>R\u00e9sultats hebdo</div><div style={{fontSize:11,color:"var(--t2)"}}>{"Ton classement chaque lundi matin par email"}</div></div>
+            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>{"R\u00e9sultats hebdo"}</div><div style={{fontSize:11,color:"var(--t2)"}}>{"Ton classement chaque lundi matin par email"}</div></div>
           </div>
           <div style={{display:"flex",gap:10}}>
             <span style={{fontSize:18}}>{"\uD83D\uDD10"}</span>
@@ -10063,10 +10063,10 @@ function UpgradeScreen(p){
           <span style={{fontSize:12,color:"var(--t3)"}}>paiement unique</span>
         </div>
         <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,marginBottom:16}}>
-          <div>{"\u2713"} Tout l'acc\u00e8s Premium pendant 3 mois</div>
-          <div>{"\u2713"} Paiement unique, aucune reconduction</div>
-          <div>{"\u2713"} {"\u00C9conomise ~23% vs mensuel"}</div>
-          <div>{"\u2713"} Parfait avant un examen programm\u00e9</div>
+          <div>{"\u2713 Tout l'acc\u00e8s Premium pendant 3 mois"}</div>
+          <div>{"\u2713 Paiement unique, aucune reconduction"}</div>
+          <div>{"\u2713 \u00C9conomise ~23% vs mensuel"}</div>
+          <div>{"\u2713 Parfait avant un examen programm\u00e9"}</div>
         </div>
         <button className="btn1" disabled={busy==="pass3m"} onClick={function(){go("pass3m");}}
           style={{width:"100%",fontSize:14,padding:"13px 20px",opacity:busy==="pass3m"?0.6:1,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610"}}>
@@ -10086,9 +10086,9 @@ function UpgradeScreen(p){
         <span style={{fontSize:12,color:"var(--t3)"}}>{"/mois"}</span>
       </div>
       <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,marginBottom:14}}>
-        <div>{"\u2713"} Tout l'acc\u00e8s Premium mois par mois</div>
-        <div>{"\u2713"} R\u00e9siliable \u00e0 tout moment</div>
-        <div>{"\u2713"} Flexible pour une pr\u00e9pa longue</div>
+        <div>{"\u2713 Tout l'acc\u00e8s Premium mois par mois"}</div>
+        <div>{"\u2713 R\u00e9siliable \u00e0 tout moment"}</div>
+        <div>{"\u2713 Flexible pour une pr\u00e9pa longue"}</div>
       </div>
       <button className="btn2" disabled={busy==="monthly"} onClick={function(){go("monthly");}}
         style={{width:"100%",fontSize:14,padding:"12px 20px",opacity:busy==="monthly"?0.6:1}}>
@@ -10100,8 +10100,8 @@ function UpgradeScreen(p){
 
     {/* Fine print */}
     <div style={{fontSize:10,color:"var(--t3)",lineHeight:1.6,textAlign:"center",marginTop:20}}>
-      Paiement s\u00e9curis\u00e9 par Stripe {"\u00B7"} TVA non applicable, art. 293 B du CGI<br/>
-      En souscrivant, tu acceptes les <a href="/cgv" target="_blank" style={{color:"var(--cyan)"}}>CGV</a> et renonces \u00e0 ton droit de r\u00e9tractation (acc\u00e8s imm\u00e9diat au service).
+      {"Paiement s\u00e9curis\u00e9 par Stripe \u00B7 TVA non applicable, art. 293 B du CGI"}<br/>
+      {"En souscrivant, tu acceptes les "}<a href="/cgv" target="_blank" style={{color:"var(--cyan)"}}>CGV</a>{" et renonces \u00e0 ton droit de r\u00e9tractation (acc\u00e8s imm\u00e9diat au service)."}
     </div>
   </div>);
 }

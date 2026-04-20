@@ -105,7 +105,7 @@ async function handleCheckoutCompleted(session) {
         access_level: "premium_pass",
         access_expires_at: expiresAt.toISOString(),
       })
-      .eq("user_id", userId);
+      .eq("id", userId);
   }
 
   // For subscription mode, the subscription.created event will fire separately with full details.
@@ -168,7 +168,7 @@ async function handleSubscriptionDeleted(subscription) {
     await supaAdmin
       .from("students")
       .update({ access_level: "free", access_expires_at: null })
-      .eq("user_id", userId);
+      .eq("id", userId);
   }
 }
 
