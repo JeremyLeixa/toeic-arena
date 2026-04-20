@@ -10706,12 +10706,6 @@ function Profile(p){
 
       {/* (GDPR Export moved to Gestion du compte sub-page) */}
 
-      {/* Privacy policy */}
-      <button className="btn2" onClick={function(){setShowPrivacy(true);}}
-        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
-        {"🛡️ Politique de confidentialit\u00e9"}
-      </button>
-
       {/* DEBUG — force refetch Premium from Supabase (safe to keep, hidden when premium) */}
       {(u.accessLevel||"free")==="free"&&<button className="btn2" onClick={async function(){
         try{
@@ -10766,6 +10760,12 @@ function Profile(p){
           {"\uD83C\uDFF0 Passer \u00e0 Arena Premium"}
         </button>);
       })()}
+
+      {/* Privacy policy — placed after subscription block per UX request */}
+      <button className="btn2" onClick={function(){setShowPrivacy(true);}}
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
+        {"🛡️ Politique de confidentialit\u00e9"}
+      </button>
 
       {/* Gestion du compte — groups Email, PIN, Export, Delete, Reset into a sub-page */}
       <button className="btn2" onClick={function(){setView("account");}}
