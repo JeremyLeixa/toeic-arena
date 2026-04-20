@@ -121,17 +121,26 @@ async function handleCheckoutCompleted(session) {
     // One-time payment — create passes row
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+    // Derive price_id from env var — session.line_items isn't included in
+    // checkout.session.completed by default (requires expand), and our
+    // passes.price_id is NOT NULL. The plan metadata tells us which price.
+    const priceId = process.env.STRIPE_PRICE_PASS || "unknown";
     const { error } = await supaAdmin.from("passes").upsert({
       id: session.id,
       user_id: userId,
       stripe_customer_id: session.customer,
       stripe_payment_intent_id: session.payment_intent,
-      price_id: (session.line_items && session.line_items.data[0] && session.line_items.data[0].price && session.line_items.data[0].price.id) || null,
+      price_id: priceId,
       amount_paid: session.amount_total || 0,
       purchased_at: now.toISOString(),
       expires_at: expiresAt.toISOString(),
     }, { onConflict: "id" });
-    if (error) console.error("[webhook] passes insert error:", error.message);
+    if (error) {
+      // Propagate — don't markProcessed, let Stripe retry. Also surfaces in
+      // Vercel logs so we catch schema violations early.
+      console.error("[webhook] passes insert error:", error.message);
+      throw error;
+    }
 
     // Snapshot on students (id-first with email fallback for cross-device safety)
     await updateStudentAccess(userId, "premium_pass", expiresAt.toISOString());
