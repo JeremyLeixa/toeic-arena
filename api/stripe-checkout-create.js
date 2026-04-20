@@ -159,13 +159,18 @@ export default async function handler(req, res) {
         supabase_user_id: user.id,
         plan: plan,
       },
-      // Accept TOS / withdrawal waiver — Stripe-native handling
-      consent_collection: {
-        terms_of_service: "required",
-      },
-      // Automatically collect tax according to Stripe Tax config
-      automatic_tax: { enabled: true },
     };
+
+    // Opt-in features (disabled by default — require Stripe account setup)
+    // - Automatic tax: requires Stripe Tax activated + business address set
+    // - ToS consent collection: requires Terms of service URL set in Stripe settings
+    // Set STRIPE_AUTOMATIC_TAX=true and/or STRIPE_REQUIRE_TOS=true in Vercel to enable.
+    if (process.env.STRIPE_AUTOMATIC_TAX === "true") {
+      sessionConfig.automatic_tax = { enabled: true };
+    }
+    if (process.env.STRIPE_REQUIRE_TOS === "true") {
+      sessionConfig.consent_collection = { terms_of_service: "required" };
+    }
 
     // For subscriptions, also set subscription_data metadata so webhooks can match
     if (planConfig.mode === "subscription") {

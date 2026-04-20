@@ -119,7 +119,8 @@ export async function createCheckout(plan) {
     if (data && data.error === 'email_required') {
       throw new Error('email_required');
     }
-    throw new Error((data && (data.message || data.error)) || 'Impossible de créer la session de paiement.');
+    // Prefer detail (actual Stripe error) over generic error field
+    throw new Error((data && (data.detail || data.message || data.error)) || 'Impossible de créer la session de paiement.');
   }
   if (!data.url) throw new Error('Réponse Stripe invalide.');
   window.location.href = data.url;
