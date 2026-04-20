@@ -1899,7 +1899,8 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495";items[2].lock=true;items[2].bg="var(--bg3)";}
       return items;
     })()},
-    {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"🗺️",count:"4 tools",items:[
+    {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"🗺️",count:"5 tools",items:[
+      {id:"abouttoeic",n:"What is the TOEIC?",d:"Format, score, levels — the quick guide",i:"🎓",bg:"linear-gradient(135deg,#8b5e83,#5a7a9a)"},
       {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"🗺️",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
       {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
       {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
@@ -3233,6 +3234,128 @@ function PhrasalDojo(p){
 }
 
 // ─── STRATEGY CARDS (enriched) ───
+// ─── ABOUT TOEIC (info page for newcomers) ───
+function AboutToeic(p){
+  var cefrBands=[
+    {band:"120-220",cefr:"A1",label:"Basic user",col:"#888"},
+    {band:"225-545",cefr:"A2",label:"Elementary",col:"#c87a35"},
+    {band:"550-780",cefr:"B1",label:"Intermediate",col:"#d4943a"},
+    {band:"785-940",cefr:"B2",label:"Upper-intermediate \u2014 common pro target",col:"#4abe60"},
+    {band:"945-990",cefr:"C1",label:"Advanced",col:"#f0c850"},
+  ];
+  return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"\u2190"} Tips & Strategy</button>
+
+    <div style={{textAlign:"center",marginBottom:24}}>
+      <div style={{fontSize:56,marginBottom:8}}>{"\uD83C\uDF93"}</div>
+      <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>What is the TOEIC?</h1>
+      <p style={{color:"var(--t2)",fontSize:13}}>A quick guide to the exam you're training for</p>
+    </div>
+
+    {/* What & Who */}
+    <div className="crd" style={{marginBottom:14,padding:18}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+        <span style={{fontSize:26}}>{"\uD83D\uDCDC"}</span>
+        <h3 className="out" style={{fontWeight:700,fontSize:16,margin:0}}>The exam</h3>
+      </div>
+      <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:8}}>
+        <strong>TOEIC</strong> stands for <em>Test of English for International Communication</em>. Published by <strong>ETS</strong>, it measures your ability to use English in professional and everyday contexts.
+      </p>
+      <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>
+        It is the most widely recognized English certification in France for universities, recruiters and career moves {"\u2014"} over 7 million tests are taken worldwide each year.
+      </p>
+    </div>
+
+    {/* Structure */}
+    <h3 className="out" style={{fontWeight:700,fontSize:12,color:"var(--t2)",marginBottom:10,marginTop:20,textTransform:"uppercase",letterSpacing:1.5}}>Exam structure</h3>
+    <div className="crd" style={{marginBottom:10,padding:16,background:"linear-gradient(135deg,rgba(34,197,94,.06),rgba(245,158,11,.06))",borderColor:"rgba(34,197,94,.18)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+        <span style={{fontSize:26}}>{"\uD83D\uDC42"}</span>
+        <div>
+          <div className="out" style={{fontWeight:800,fontSize:15,color:"var(--green)"}}>Listening</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>45 minutes {"\u00B7"} 100 questions {"\u00B7"} Score 5-495</div>
+        </div>
+      </div>
+      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,paddingLeft:2}}>
+        <div>{"\u00B7"} <strong>Part 1</strong> {"\u2014"} Photographs (6 Q)</div>
+        <div>{"\u00B7"} <strong>Part 2</strong> {"\u2014"} Question-Response (25 Q)</div>
+        <div>{"\u00B7"} <strong>Part 3</strong> {"\u2014"} Conversations (39 Q)</div>
+        <div>{"\u00B7"} <strong>Part 4</strong> {"\u2014"} Short talks (30 Q)</div>
+      </div>
+    </div>
+    <div className="crd" style={{marginBottom:10,padding:16,background:"linear-gradient(135deg,rgba(90,122,154,.08),rgba(122,90,128,.08))",borderColor:"rgba(127,164,212,.25)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+        <span style={{fontSize:26}}>{"\uD83D\uDCD6"}</span>
+        <div>
+          <div className="out" style={{fontWeight:800,fontSize:15,color:"#7fa4d4"}}>Reading</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>75 minutes {"\u00B7"} 100 questions {"\u00B7"} Score 5-495</div>
+        </div>
+      </div>
+      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,paddingLeft:2}}>
+        <div>{"\u00B7"} <strong>Part 5</strong> {"\u2014"} Incomplete Sentences (30 Q)</div>
+        <div>{"\u00B7"} <strong>Part 6</strong> {"\u2014"} Text Completion (16 Q)</div>
+        <div>{"\u00B7"} <strong>Part 7</strong> {"\u2014"} Reading Passages (54 Q)</div>
+      </div>
+    </div>
+    <div style={{fontSize:11,color:"var(--t3)",textAlign:"center",marginBottom:18,fontStyle:"italic"}}>
+      Total: 200 multiple-choice questions {"\u00B7"} 2 hours {"\u00B7"} Final score 10\u2013990
+    </div>
+
+    {/* CEFR Scoring */}
+    <div className="crd" style={{marginBottom:14,padding:18}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+        <span style={{fontSize:26}}>{"\uD83C\uDFAF"}</span>
+        <h3 className="out" style={{fontWeight:700,fontSize:16,margin:0}}>What your score means</h3>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {cefrBands.map(function(r,i){return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"var(--bg3)",borderRadius:8}}>
+          <div className="out" style={{fontWeight:800,fontSize:12,color:r.col,minWidth:62}}>{r.band}</div>
+          <div className="out" style={{fontWeight:700,fontSize:11,color:r.col,minWidth:22,padding:"2px 6px",background:"rgba(255,255,255,.04)",borderRadius:4,textAlign:"center"}}>{r.cefr}</div>
+          <div style={{fontSize:11,color:"var(--t2)",flex:1,minWidth:0}}>{r.label}</div>
+        </div>);})}
+      </div>
+      <p style={{fontSize:11,color:"var(--t3)",lineHeight:1.5,marginTop:12,fontStyle:"italic"}}>
+        Most French business schools target <strong style={{color:"var(--green)"}}>B2 (785+)</strong>. Many companies list "TOEIC 750" as a hiring bar.
+      </p>
+    </div>
+
+    {/* Why & Validity */}
+    <div className="crd" style={{marginBottom:14,padding:18}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+        <span style={{fontSize:26}}>{"\uD83C\uDF0D"}</span>
+        <h3 className="out" style={{fontWeight:700,fontSize:16,margin:0}}>Why people take it</h3>
+      </div>
+      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
+        <div><span style={{fontSize:15}}>{"\uD83C\uDF93"}</span> <strong>Universities</strong> {"\u2014"} graduation requirement in many French business schools and engineering curricula</div>
+        <div><span style={{fontSize:15}}>{"\uD83D\uDCBC"}</span> <strong>Employers</strong> {"\u2014"} HR uses it as a quick English-level benchmark for hiring</div>
+        <div><span style={{fontSize:15}}>{"\u2708\uFE0F"}</span> <strong>International roles</strong> {"\u2014"} proof of working English for mobility, expat moves, internships abroad</div>
+      </div>
+      <div style={{borderTop:"1px solid var(--bdr)",marginTop:14,paddingTop:12,fontSize:11,color:"var(--t3)",lineHeight:1.5}}>
+        <strong>Validity:</strong> scores are officially valid for 2 years from the test date (ETS recommendation). Some employers accept older scores, most do not.
+      </div>
+    </div>
+
+    {/* Your roadmap */}
+    <div className="crd" style={{padding:18,background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(139,94,131,.08))",borderColor:"rgba(var(--cx),.25)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+        <span style={{fontSize:26}}>{"\u2694\uFE0F"}</span>
+        <h3 className="out" style={{fontWeight:700,fontSize:16,margin:0,color:"var(--cx-hex)"}}>How TOEIC Arena trains you</h3>
+      </div>
+      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.9}}>
+        <div><span style={{fontSize:15}}>{"\uD83C\uDFA7"}</span> <strong>Listening Practice</strong> {"\u2014"} all 4 parts, real audio, escalating difficulty</div>
+        <div><span style={{fontSize:15}}>{"\uD83D\uDCD6"}</span> <strong>Reading Practice</strong> {"\u2014"} Parts 5 to 7, from grammar drills to long passages</div>
+        <div><span style={{fontSize:15}}>{"\uD83D\uDCDC"}</span> <strong>3 Mock Tests</strong> {"\u2014"} exam-like half-tests to measure your real level</div>
+        <div><span style={{fontSize:15}}>{"\uD83D\uDC09"}</span> <strong>The Final Arena</strong> {"\u2014"} the full 200-question Boss Test</div>
+        <div><span style={{fontSize:15}}>{"\u23F3"}</span> <strong>Endless Arena</strong> {"\u2014"} unlimited replay once you hit 650+</div>
+        <div><span style={{fontSize:15}}>{"\uD83C\uDF7A"}</span> <strong>Word Tavern</strong> {"\u2014"} 390 business vocab across 18 domains</div>
+      </div>
+      <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid rgba(var(--cx),.15)",fontSize:11,color:"var(--t3)",textAlign:"center",fontStyle:"italic",lineHeight:1.5}}>
+        Every module you play feeds your <strong style={{color:"var(--cx-hex)"}}>TOEIC score estimate</strong>, visible in your Profile.
+      </div>
+    </div>
+  </div>);
+}
+
 function StratCards(p){
   var[open,sO]=useState(null);
   var[filter,sF]=useState("all");
@@ -11006,6 +11129,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="sbuild"){playBGM("bgm_build");return pg(<SentenceBuilder u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"sbuild");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"sbuild");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);if(tot>0&&sc/tot>=0.9)grantWeeklyChest("sbuild_90","novice");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="clue"){playBGM("bgm_clue");return pg(<ClueHunter u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"clue");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");if(sc===tot&&tot>0)grantWeeklyChest("clue_perfect","guerrier");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="ablitz")return pg(<AudioBlitz u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"ablitz");}} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);if(tot>0){var abPct=sc/tot;if(abPct>=0.9)grantWeeklyChest("ablitz_90","guerrier");else if(abPct>=0.7)grantWeeklyChest("ablitz_70","novice");}sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/>);
+  if(sp==="abouttoeic")return pg(<AboutToeic back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="strats")return pg(<StratCards back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="stratquiz")return pg(<StratQuizPage u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"stratquiz");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
