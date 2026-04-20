@@ -10144,7 +10144,7 @@ function UpgradeScreen(p){
     {/* Fine print */}
     <div style={{fontSize:10,color:"var(--t3)",lineHeight:1.6,textAlign:"center",marginTop:20}}>
       {"Paiement s\u00e9curis\u00e9 par Stripe \u00B7 TVA non applicable, art. 293 B du CGI"}<br/>
-      {"En souscrivant, tu acceptes les "}<a href="/cgv" target="_blank" style={{color:"var(--cyan)"}}>CGV</a>{" et renonces \u00e0 ton droit de r\u00e9tractation (acc\u00e8s imm\u00e9diat au service)."}
+      {"En souscrivant, tu acceptes les "}<a href="/cgv.md" target="_blank" rel="noopener" style={{color:"var(--cyan)"}}>CGV</a>{" et renonces \u00e0 ton droit de r\u00e9tractation (acc\u00e8s imm\u00e9diat au service)."}
     </div>
   </div>);
 }
@@ -10649,6 +10649,30 @@ function Profile(p){
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
         {"🛡️ Politique de confidentialit\u00e9"}
       </button>
+
+      {/* DEBUG — force refetch Premium from Supabase (safe to keep, hidden when premium) */}
+      {(u.accessLevel||"free")==="free"&&<button className="btn2" onClick={async function(){
+        try{
+          var sess=await supabase.auth.getSession();
+          var uid=sess.data&&sess.data.session?sess.data.session.user.id:null;
+          var res=await supabase.from("students").select("*").ilike("name",u.name).eq("class_code",u.classCode).maybeSingle();
+          if(res.error){alert("Erreur Supabase : "+res.error.message);return;}
+          if(!res.data){alert("Aucune ligne students trouv\u00e9e pour "+u.name+" / "+u.classCode);return;}
+          var dbLvl=res.data.access_level;
+          var dbExp=res.data.access_expires_at;
+          var dbEmail=res.data.email;
+          var dbId=res.data.id;
+          alert("\u27A4 DB snapshot\n\nstudents.id    : "+dbId+"\nemail          : "+(dbEmail||"null")+"\naccess_level   : "+dbLvl+"\nexpires        : "+(dbExp||"null")+"\n\nsession user_id: "+(uid||"null")+"\n\nid match DB: "+(uid===dbId?"\u2705":"\u274C")+"\n\nLocal state (avant refresh): "+(u.accessLevel||"free"));
+          // Force local update from fresh DB values
+          var c=JSON.parse(JSON.stringify(u));
+          c.accessLevel=dbLvl||"free";
+          c.accessExpiresAt=dbExp||null;
+          c.email=dbEmail||null;
+          p.setAvatar(c); // reuses the setAvatar prop which just calls sv() to update state
+        }catch(e){alert("Erreur : "+(e.message||e));}
+      }} style={{fontSize:12,width:"100%",marginBottom:12,borderColor:"rgba(var(--cx),.2)",color:"var(--t2)"}}>
+        {"\uD83D\uDD04 Diagnostiquer + forcer synchro Premium"}
+      </button>}
 
       {/* Subscription section — Phase 3 Session 2 */}
       {(function(){
