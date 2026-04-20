@@ -10530,6 +10530,80 @@ function Profile(p){
     </div>);
   }
 
+  // ── SOUS-PAGE GESTION DU COMPTE ─────────────────────────────────────────
+  if(view==="account"){
+    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+      <button onClick={function(){setView("home");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"\u2190 Back"}</button>
+      <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:4}}>{"Gestion du compte"}</h1>
+      <p style={{color:"var(--t3)",fontSize:12,marginBottom:24}}>{"S\u00e9curit\u00e9, donn\u00e9es, actions critiques"}</p>
+
+      {/* ─── SECTION SÉCURITÉ ─── */}
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"\uD83D\uDD12 S\u00e9curit\u00e9"}</div>
+      <button className="btn2" onClick={async function(){
+        if(u.email){
+          alert("Votre compte est d\u00e9j\u00e0 s\u00e9curis\u00e9 avec l'email :\n"+u.email+"\n\nVous recevrez les notifications importantes \u00e0 cette adresse.");
+          return;
+        }
+        var email=prompt("Entrez votre email pour s\u00e9curiser votre compte.\n\nVous recevrez un lien de confirmation par email.\nUne fois confirm\u00e9, votre progression sera li\u00e9e \u00e0 cet email et retrouvable depuis n'importe quel appareil.");
+        if(email===null)return;
+        email=email.trim().toLowerCase();
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert("Adresse email invalide. Format attendu : nom@domaine.tld");return;}
+        try{
+          await linkEmailToAnonymous(email);
+          alert("\u2709\ufe0f Email de confirmation envoy\u00e9 \u00e0 :\n"+email+"\n\nV\u00e9rifiez votre bo\u00eete de r\u00e9ception (et vos spams). Cliquez sur le lien pour activer la s\u00e9curisation.");
+        }catch(e){alert("Erreur : "+((e&&e.message)||"impossible d'envoyer l'email."));}
+      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:u.email?"rgba(74,190,96,.3)":"rgba(var(--cx),.2)",color:u.email?"var(--green)":"var(--cyan)"}}>
+        {u.email?("\u2705 Compte s\u00e9curis\u00e9 \u2014 "+u.email):"\uD83D\uDD12 S\u00e9curiser avec un email"}
+      </button>
+      <button className="btn2" onClick={function(){
+        var current=u.pin;
+        var msg=current?"Enter a new 4-digit PIN (current PIN will be replaced):":"Set a 4-digit PIN to protect your account:";
+        var newPin=prompt(msg);
+        if(newPin===null)return;
+        newPin=newPin.replace(/\D/g,"");
+        if(newPin.length!==4){alert("PIN must be exactly 4 digits.");return;}
+        supabase.from("students").update({pin:newPin}).ilike("name",u.name).eq("class_code",u.classCode).then(function(){
+          var c=JSON.parse(JSON.stringify(u));c.pin=newPin;p.setAvatar(c);
+          alert("PIN "+(current?"updated":"set")+" successfully!");
+        });
+      }} style={{fontSize:13,width:"100%",marginBottom:20,borderColor:"rgba(var(--cx),.2)",color:"var(--gold)"}}>
+        {u.pin?"\uD83D\uDD10 Change PIN":"\uD83D\uDD10 Set a PIN"}
+      </button>
+
+      {/* ─── SECTION MES DONNÉES ─── */}
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"\uD83D\uDCC2 Mes donn\u00e9es"}</div>
+      <button className="btn2" onClick={function(){
+        var data={nom:u.name,classe:u.classCode,xp:u.xp,xpHebdo:u.weeklyXp,serie:u.streak,derniereActivite:u.lastActive,
+          stats:u.stats,scoresModules:u.moduleScores,resultatsTests:u.mockResults,scoresJeux:u.gameScores,
+          succes:u.unlockedAch,avatar:u.avatar,theme:u.theme,tempsTotal:u.totalTime,
+          consentementRGPD:u.gdprConsent,exportDate:new Date().toISOString()};
+        var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+        var a=document.createElement("a");a.href=URL.createObjectURL(blob);
+        a.download="toeic_arena_mes_donnees_"+u.name.replace(/\s+/g,"_")+"_"+today()+".json";
+        a.click();URL.revokeObjectURL(a.href);
+      }} style={{fontSize:13,width:"100%",marginBottom:20,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
+        {"\uD83D\uDCE5 Exporter mes donn\u00e9es (JSON)"}
+      </button>
+
+      {/* ─── SECTION ACTIONS CRITIQUES ─── */}
+      <div style={{fontSize:10,color:"var(--red)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"\u26A0\uFE0F Actions critiques"}</div>
+      <div className="crd" style={{padding:14,background:"rgba(255,71,87,.04)",border:"1px solid rgba(255,71,87,.15)",marginBottom:16}}>
+        <p style={{fontSize:11,color:"var(--t3)",lineHeight:1.5,marginBottom:12}}>{"Les actions ci-dessous sont irr\u00e9versibles. Assure-toi de bien comprendre avant de confirmer."}</p>
+        <button className="btn2" onClick={function(){
+          if(!confirm("Supprimer d\u00e9finitivement votre compte et toutes vos donn\u00e9es ?\n\nCette action est irr\u00e9versible."))return;
+          if(!confirm("Derni\u00e8re confirmation : toutes vos donn\u00e9es (scores, progression, achievements) seront perdues."))return;
+          p.deleteAccount();
+        }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.3)",width:"100%",marginBottom:8}}>
+          {"\uD83D\uDDD1\uFE0F Supprimer mon compte et mes donn\u00e9es"}
+        </button>
+        <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
+          style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.15)",width:"100%"}}>
+          {"\uD83D\uDD04 R\u00e9initialiser (formateur)"}
+        </button>
+      </div>
+    </div>);
+  }
+
   // ── VUE PRINCIPALE ──────────────────────────────────────────────────────
   return(
     <div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -10630,19 +10704,7 @@ function Profile(p){
         }
       </div>
 
-      {/* GDPR: Export data */}
-      <button className="btn2" onClick={function(){
-        var data={nom:u.name,classe:u.classCode,xp:u.xp,xpHebdo:u.weeklyXp,serie:u.streak,derniereActivite:u.lastActive,
-          stats:u.stats,scoresModules:u.moduleScores,resultatsTests:u.mockResults,scoresJeux:u.gameScores,
-          succes:u.unlockedAch,avatar:u.avatar,theme:u.theme,tempsTotal:u.totalTime,
-          consentementRGPD:u.gdprConsent,exportDate:new Date().toISOString()};
-        var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-        var a=document.createElement("a");a.href=URL.createObjectURL(blob);
-        a.download="toeic_arena_mes_donnees_"+u.name.replace(/\s+/g,"_")+"_"+today()+".json";
-        a.click();URL.revokeObjectURL(a.href);
-      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
-        {"📥 Exporter mes donn\u00e9es (JSON)"}
-      </button>
+      {/* (GDPR Export moved to Gestion du compte sub-page) */}
 
       {/* Privacy policy */}
       <button className="btn2" onClick={function(){setShowPrivacy(true);}}
@@ -10706,65 +10768,17 @@ function Profile(p){
         </button>);
       })()}
 
-      {/* Email account security — Phase 1 magic link */}
-      <button className="btn2" onClick={async function(){
-        if(u.email){
-          alert("Votre compte est d\u00e9j\u00e0 s\u00e9curis\u00e9 avec l'email :\n"+u.email+"\n\nVous recevrez les notifications importantes \u00e0 cette adresse.");
-          return;
-        }
-        var email=prompt("Entrez votre email pour s\u00e9curiser votre compte.\n\nVous recevrez un lien de confirmation par email.\nUne fois confirm\u00e9, votre progression sera li\u00e9e \u00e0 cet email et retrouvable depuis n'importe quel appareil.");
-        if(email===null)return;
-        email=email.trim().toLowerCase();
-        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-          alert("Adresse email invalide. Format attendu : nom@domaine.tld");
-          return;
-        }
-        try{
-          await linkEmailToAnonymous(email);
-          alert("\u2709\ufe0f Email de confirmation envoy\u00e9 \u00e0 :\n"+email+"\n\nV\u00e9rifiez votre bo\u00eete de r\u00e9ception (et vos spams). Cliquez sur le lien pour activer la s\u00e9curisation.\n\nVotre compte reste fonctionnel pendant l'attente.");
-        }catch(e){
-          var msg=(e&&e.message)?e.message:"impossible d'envoyer l'email de confirmation.";
-          alert("Erreur : "+msg);
-        }
-      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:u.email?"rgba(74,190,96,.3)":"rgba(var(--cx),.2)",color:u.email?"var(--green)":"var(--cyan)"}}>
-        {u.email?("\u2705 Compte s\u00e9curis\u00e9 \u2014 "+u.email):"\uD83D\uDD12 S\u00e9curiser avec un email"}
+      {/* Gestion du compte — groups Email, PIN, Export, Delete, Reset into a sub-page */}
+      <button className="btn2" onClick={function(){setView("account");}}
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px"}}>
+        <span>{"\u2699\uFE0F Gestion du compte"}</span>
+        <span style={{fontSize:16,color:"var(--t3)"}}>{"\u2192"}</span>
       </button>
 
-      {/* PIN management */}
-      <button className="btn2" onClick={function(){
-        var current=u.pin;
-        var msg=current?"Enter a new 4-digit PIN (current PIN will be replaced):":"Set a 4-digit PIN to protect your account:";
-        var newPin=prompt(msg);
-        if(newPin===null)return;
-        newPin=newPin.replace(/\D/g,"");
-        if(newPin.length!==4){alert("PIN must be exactly 4 digits.");return;}
-        supabase.from("students").update({pin:newPin}).ilike("name",u.name).eq("class_code",u.classCode).then(function(){
-          var c=JSON.parse(JSON.stringify(u));c.pin=newPin;p.setAvatar(c);
-          alert("PIN "+(current?"updated":"set")+" successfully!");
-        });
-      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--gold)"}}>
-        {u.pin?"\uD83D\uDD10 Change PIN":"\uD83D\uDD10 Set a PIN"}
-      </button>
-
-      {/* Logout */}
+      {/* Logout — kept on main for quick access */}
       <button className="btn2" onClick={function(){if(confirm("Se d\u00e9connecter ? Vos donn\u00e9es sont sauvegard\u00e9es, vous pourrez les retrouver en vous reconnectant."))p.logout();}}
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
         {"Se d\u00e9connecter"}
-      </button>
-
-      {/* Self-delete account (GDPR Art. 17) */}
-      <button className="btn2" onClick={function(){
-        if(!confirm("Supprimer d\u00e9finitivement votre compte et toutes vos donn\u00e9es ?\n\nCette action est irr\u00e9versible."))return;
-        if(!confirm("Derni\u00e8re confirmation : toutes vos donn\u00e9es (scores, progression, achievements) seront perdues."))return;
-        p.deleteAccount();
-      }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%"}}>
-        {"Supprimer mon compte et mes donn\u00e9es"}
-      </button>
-
-      {/* Teacher reset (legacy) */}
-      <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
-        style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.1)",width:"100%",marginTop:4}}>
-        {"R\u00e9initialiser (formateur)"}
       </button>
 
       {showPrivacy&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
