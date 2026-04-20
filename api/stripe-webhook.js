@@ -74,6 +74,41 @@ async function markProcessed(event) {
 
 // ─── Event handlers ──────────────────────────────────────────────────────────
 
+// Update students.access_level by matching the user_id. If no row matches,
+// fallback to email match (handles cross-device cases where students.id was
+// set from a different anon user than the one currently authenticated).
+async function updateStudentAccess(userId, accessLevel, expiresAtIso) {
+  const payload = { access_level: accessLevel, access_expires_at: expiresAtIso };
+  // Try exact id match first
+  const idRes = await supaAdmin
+    .from("students")
+    .update(payload)
+    .eq("id", userId)
+    .select("id");
+  if (idRes.data && idRes.data.length > 0) return;
+  // Fallback: look up auth user's email, match by students.email
+  try {
+    const { data: userData } = await supaAdmin.auth.admin.getUserById(userId);
+    const email = userData && userData.user && userData.user.email;
+    if (!email) {
+      console.warn("[webhook] no email on auth user " + userId + ", cannot fallback");
+      return;
+    }
+    const emailRes = await supaAdmin
+      .from("students")
+      .update(payload)
+      .eq("email", email)
+      .select("id");
+    if (emailRes.data && emailRes.data.length > 0) {
+      console.log("[webhook] updated students by email fallback: " + email);
+    } else {
+      console.warn("[webhook] no student matched id=" + userId + " or email=" + email);
+    }
+  } catch (e) {
+    console.error("[webhook] email fallback error:", e && e.message);
+  }
+}
+
 async function handleCheckoutCompleted(session) {
   const userId = session.metadata && session.metadata.supabase_user_id;
   const plan = session.metadata && session.metadata.plan;
@@ -98,14 +133,8 @@ async function handleCheckoutCompleted(session) {
     }, { onConflict: "id" });
     if (error) console.error("[webhook] passes insert error:", error.message);
 
-    // Snapshot on students for fast UI lookups
-    await supaAdmin
-      .from("students")
-      .update({
-        access_level: "premium_pass",
-        access_expires_at: expiresAt.toISOString(),
-      })
-      .eq("id", userId);
+    // Snapshot on students (id-first with email fallback for cross-device safety)
+    await updateStudentAccess(userId, "premium_pass", expiresAt.toISOString());
   }
 
   // For subscription mode, the subscription.created event will fire separately with full details.
@@ -140,15 +169,13 @@ async function handleSubscriptionUpsert(subscription) {
   const { error } = await supaAdmin.from("subscriptions").upsert(payload, { onConflict: "id" });
   if (error) console.error("[webhook] subscriptions upsert error:", error.message);
 
-  // Snapshot on students
+  // Snapshot on students (id-first with email fallback for cross-device safety)
   const isActive = subscription.status === "active" || subscription.status === "trialing";
-  await supaAdmin
-    .from("students")
-    .update({
-      access_level: isActive ? "premium_monthly" : "free",
-      access_expires_at: isActive ? payload.current_period_end : null,
-    })
-    .eq("user_id", userId);
+  await updateStudentAccess(
+    userId,
+    isActive ? "premium_monthly" : "free",
+    isActive ? payload.current_period_end : null
+  );
 }
 
 async function handleSubscriptionDeleted(subscription) {
@@ -163,12 +190,9 @@ async function handleSubscriptionDeleted(subscription) {
     })
     .eq("id", subscription.id);
 
-  // Downgrade the student
+  // Downgrade the student (id-first with email fallback)
   if (userId) {
-    await supaAdmin
-      .from("students")
-      .update({ access_level: "free", access_expires_at: null })
-      .eq("id", userId);
+    await updateStudentAccess(userId, "free", null);
   }
 }
 
@@ -190,10 +214,7 @@ async function handleChargeRefunded(charge) {
       .update({ expires_at: new Date().toISOString() })
       .eq("stripe_payment_intent_id", paymentIntentId);
 
-    await supaAdmin
-      .from("students")
-      .update({ access_level: "free", access_expires_at: null })
-      .eq("user_id", pass.user_id);
+    await updateStudentAccess(pass.user_id, "free", null);
   }
 }
 
