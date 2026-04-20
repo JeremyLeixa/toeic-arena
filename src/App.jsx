@@ -338,7 +338,6 @@ function supaToLocal(data){
     tipsShown: data.tips_shown || [],
     dailySeen: data.daily_seen || [],
     gdprConsent: data.gdpr_consent || null,
-    pin: data.pin || null,
     joinedAt: data.joined_at || null,
     tutorialPending: data.tutorial_pending===true,
     email: data.email || null,
@@ -414,7 +413,6 @@ async function save(d){
     tips_shown:d.tipsShown||[],
     daily_seen:d.dailySeen||[],
     gdpr_consent:d.gdprConsent||null,
-    pin:d.pin||null,
     joined_at:d.joinedAt||null,
     tutorial_pending:d.tutorialPending===true,
     email:d.email||null,
@@ -469,7 +467,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,pin:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -980,7 +978,7 @@ var[step,sSt]=useState("name");
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
-  var[pin,setPin]=useState("");var[pendingRecover,setPendingRecover]=useState(null);var[pinError,setPinError]=useState(false);
+  // PIN state removed 2026-04-20 — auth is now handled via Supabase magic link
   var[pendingNav,setPendingNav]=useState(null);var[pushBusy,setPushBusy]=useState(false);
   var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
   function goAfterPushStep(firstNav){
@@ -1124,8 +1122,6 @@ var[step,sSt]=useState("name");
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
           {foundAccounts.map(function(acc){
             return(<button key={acc.class_code} onClick={async function(){
-              var pinRes=await supabase.from("students").select("pin").ilike("name",name.trim()).eq("class_code",acc.class_code).maybeSingle();
-              if(pinRes.data&&pinRes.data.pin){setPendingRecover({name:name.trim(),classCode:acc.class_code});setPin("");setPinError(false);sSt("enterpin");return;}
               var ok=await p.recover(name.trim(),acc.class_code);
               if(!ok){sSt("classcode");}
             }} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:"16px 18px",cursor:"pointer",
@@ -1250,8 +1246,6 @@ var[step,sSt]=useState("name");
         <button className="btn1" onClick={async function(){
           if(!recName.trim())return;
           setRecLoading(true);setRecMsg(null);
-          var pinRes=await supabase.from("students").select("pin").ilike("name",recName.trim()).eq("class_code",recCode.trim()||"visitor").maybeSingle();
-          if(pinRes.data&&pinRes.data.pin){setRecLoading(false);setPendingRecover({name:recName.trim(),classCode:recCode.trim()||"visitor"});setPin("");setPinError(false);sSt("enterpin");return;}
           var ok=await p.recover(recName.trim(),recCode.trim());
           setRecLoading(false);
           if(!ok)setRecMsg("No account found with that name and class code. Check spelling and try again.");
@@ -1296,62 +1290,7 @@ var[step,sSt]=useState("name");
       </div>
     </div>);
 
-  // ─ PIN setup (visitors only) ─
-  if(step==="secure")return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      <div style={{animation:"fadeIn .5s"}}>
-        <div style={{fontSize:48,marginBottom:16}}>{"🔐"}</div>
-        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Protect Your Progress</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.6}}>{"Set a 4-digit PIN to secure your account. You'll need it to log back in."}</p>
-        <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:24}}>
-          {[0,1,2,3].map(function(i){
-            return(<input key={i} type="tel" maxLength={1} inputMode="numeric"
-              value={pin[i]||""}
-              onChange={function(e){
-                var v=e.target.value.replace(/\D/g,"");
-                var np=pin.split("");np[i]=v;setPin(np.join(""));
-                if(v&&i<3){var next=e.target.parentElement.children[i+1];if(next)next.focus();}
-              }}
-              style={{width:48,height:56,textAlign:"center",fontSize:24,fontWeight:800,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>);
-          })}
-        </div>
-        <button className="btn1" onClick={function(){if(pin.length===4){playArenaCall();p.go(name.trim(),"visitor",null,null,null,pin);}}}
-          style={{opacity:pin.length===4?1:.4,pointerEvents:pin.length===4?"auto":"none",fontSize:18,padding:"16px 32px",marginBottom:12}}>Enter the Arena</button>
-        <button onClick={function(){playArenaCall();p.go(name.trim(),"visitor",null,null,null,null);}}
-          style={{background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"Skip — I'll set it later"}</button>
-      </div>
-    </div>);
-
-  // ─ PIN verification on recover ─
-  if(step==="enterpin")return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      <div style={{animation:"fadeIn .5s"}}>
-        <div style={{fontSize:48,marginBottom:16}}>{"🔐"}</div>
-        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>Enter Your PIN</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24}}>This account is protected. Enter your 4-digit PIN.</p>
-        <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:8}}>
-          {[0,1,2,3].map(function(i){
-            return(<input key={i} type="tel" maxLength={1} inputMode="numeric"
-              value={pin[i]||""}
-              onChange={function(e){
-                var v=e.target.value.replace(/\D/g,"");
-                var np=pin.split("");np[i]=v;setPin(np.join(""));
-                if(v&&i<3){var next=e.target.parentElement.children[i+1];if(next)next.focus();}
-              }}
-              style={{width:48,height:56,textAlign:"center",fontSize:24,fontWeight:800,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>);
-          })}
-        </div>
-        {pinError&&<p style={{color:"var(--red)",fontSize:12,marginBottom:8}}>Wrong PIN. Try again.</p>}
-        <button className="btn1" onClick={async function(){
-          if(!pendingRecover||pin.length!==4)return;
-          var res=await supabase.from("students").select("pin").ilike("name",pendingRecover.name).eq("class_code",pendingRecover.classCode).maybeSingle();
-          if(res.data&&res.data.pin===pin){await p.recover(pendingRecover.name,pendingRecover.classCode);}
-          else{setPinError(true);setPin("");}
-        }} style={{opacity:pin.length===4?1:.4,pointerEvents:pin.length===4?"auto":"none",marginTop:12}}>Unlock</button>
-        <button onClick={function(){sSt("name");setPin("");setPinError(false);setPendingRecover(null);}}
-          style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>Back</button>
-      </div>
-    </div>);
+  // (PIN steps removed 2026-04-20 — replaced by magic link auth. See auth.js.)
 
   // ─ Battle Report ─
   if(step==="results"){
@@ -10570,20 +10509,8 @@ function Profile(p){
       }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:u.email?"rgba(74,190,96,.3)":"rgba(var(--cx),.2)",color:u.email?"var(--green)":"var(--cyan)"}}>
         {u.email?("\u2705 Compte s\u00e9curis\u00e9 \u2014 "+u.email):"\uD83D\uDD12 S\u00e9curiser avec un email"}
       </button>
-      <button className="btn2" onClick={function(){
-        var current=u.pin;
-        var msg=current?"Enter a new 4-digit PIN (current PIN will be replaced):":"Set a 4-digit PIN to protect your account:";
-        var newPin=prompt(msg);
-        if(newPin===null)return;
-        newPin=newPin.replace(/\D/g,"");
-        if(newPin.length!==4){alert("PIN must be exactly 4 digits.");return;}
-        supabase.from("students").update({pin:newPin}).ilike("name",u.name).eq("class_code",u.classCode).then(function(){
-          var c=JSON.parse(JSON.stringify(u));c.pin=newPin;p.setAvatar(c);
-          alert("PIN "+(current?"updated":"set")+" successfully!");
-        });
-      }} style={{fontSize:13,width:"100%",marginBottom:20,borderColor:"rgba(var(--cx),.2)",color:"var(--gold)"}}>
-        {u.pin?"\uD83D\uDD10 Change PIN":"\uD83D\uDD10 Set a PIN"}
-      </button>
+      {/* (PIN button removed 2026-04-20 — replaced by email-based auth) */}
+      <div style={{marginBottom:20}}/>
 
       {/* ─── SECTION MES DONNÉES ─── */}
       <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"\uD83D\uDCC2 Mes donn\u00e9es"}</div>
@@ -10782,7 +10709,7 @@ function Profile(p){
         {"🛡️ Politique de confidentialit\u00e9"}
       </button>
 
-      {/* Gestion du compte — groups Email, PIN, Export, Delete, Reset into a sub-page */}
+      {/* Gestion du compte — groups Email, Export, Delete, Reset into a sub-page */}
       <button className="btn2" onClick={function(){setView("account");}}
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px"}}>
         <span>{"\u2699\uFE0F Gestion du compte"}</span>
@@ -11100,7 +11027,6 @@ useEffect(function(){
             tips_shown:d.tipsShown||[],
             daily_seen:d.dailySeen||[],
             gdpr_consent:d.gdprConsent||null,
-            pin:d.pin||null,
           };
           // fetch keepalive with PATCH (=UPDATE) — survives tab close, sends auth headers
           try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/students?name=ilike."+encodeURIComponent(d.name)+"&class_code=eq."+encodeURIComponent(cc),{
@@ -11294,7 +11220,7 @@ var prevLeague=getLeague(c.weeklyXp);
     return m;
   }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
-  async function onboard(name,classCode,bsScores,bsCorrect,firstNav,pinValue){
+  async function onboard(name,classCode,bsScores,bsCorrect,firstNav){
     classCode=classCode||'idrac2026';
     // Check if student already exists (use limit(1) — safe even with duplicates)
     // Check for existing student (accent + case insensitive)
@@ -11319,7 +11245,6 @@ var prevLeague=getLeague(c.weeklyXp);
 
     var u=fresh(name,classCode);
     u.gdprConsent=today();
-    if(pinValue)u.pin=pinValue;
     if(bsScores){
       // Battle Scan is a diagnostic placement test — results live in u.battleScan only.
       // Do NOT populate u.moduleScores with scan answers (would falsely trigger "Explorer"
