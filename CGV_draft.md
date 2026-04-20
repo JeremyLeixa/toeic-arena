@@ -80,10 +80,12 @@ Le Service est accessible via un navigateur web moderne (versions stables récen
 ## Article 6 — Offres commerciales et prix
 
 ### 6.1 Formules proposées
-| Formule | Prix TTC | Engagement |
-|---------|----------|------------|
-| Premium Mensuel | 4,99 € / mois | Sans engagement, reconductible tacitement chaque mois |
-| Premium Annuel | 29,99 € / an | Sans engagement, reconductible tacitement chaque année |
+| Formule | Prix TTC | Modalité | Durée |
+|---------|----------|----------|-------|
+| **Premium Mensuel** | 9,99 € / mois | Abonnement reconductible tacitement chaque mois, résiliable à tout moment | Mensuel, sans engagement |
+| **TOEIC Pass 3 mois** | 22,99 € | Paiement unique, sans reconduction automatique | 3 mois à compter de la souscription |
+
+Le TOEIC Pass 3 mois est un produit à **paiement unique** : aucun prélèvement ultérieur n'intervient. À l'expiration du Pass, l'accès Premium est automatiquement désactivé et le Client retrouve les fonctionnalités Freemium. Le Client peut souscrire un nouveau Pass ou s'abonner au Premium Mensuel à tout moment.
 
 ### 6.2 Devise et TVA
 Les prix sont indiqués en euros. En tant qu'entreprise bénéficiant de la franchise en base de TVA (article 293 B du CGI), **la TVA n'est pas applicable**. Les prix affichés sont des prix nets à payer par le Client.
@@ -107,26 +109,40 @@ Cartes bancaires Visa, Mastercard, American Express, ainsi que tout moyen de pai
 Les données bancaires du Client sont collectées et stockées directement par Stripe, dans le respect du standard PCI-DSS. L'Éditeur **n'a jamais accès** aux numéros de carte bancaire complets du Client.
 
 ### 7.4 Débit et reconduction
-Le premier débit intervient immédiatement lors de la souscription. Les débits suivants interviennent automatiquement à chaque date anniversaire de la souscription (mensuelle ou annuelle), jusqu'à résiliation par le Client conformément à l'article 10.
+
+**Premium Mensuel** : le premier débit intervient immédiatement lors de la souscription. Les débits suivants interviennent automatiquement à chaque date anniversaire mensuelle, jusqu'à résiliation par le Client conformément à l'article 10.
+
+**TOEIC Pass 3 mois** : un unique débit intervient lors de la souscription. **Aucun prélèvement ultérieur n'est effectué.** L'accès Premium est automatiquement désactivé à l'issue des 3 mois, sans intervention du Client ni de l'Éditeur.
 
 ### 7.5 Défaut de paiement
-En cas d'échec du prélèvement, Stripe tentera plusieurs nouvelles présentations au paiement sur une période maximale de 7 jours. Passé ce délai sans régularisation, l'abonnement sera automatiquement suspendu, puis résilié. Le Client conservera l'accès Freemium à son compte.
+En cas d'échec du prélèvement sur la formule **Premium Mensuel**, Stripe tentera plusieurs nouvelles présentations au paiement sur une période maximale de 7 jours. Passé ce délai sans régularisation, l'abonnement sera automatiquement suspendu, puis résilié. Le Client conservera l'accès Freemium à son compte.
+
+Le **TOEIC Pass 3 mois** n'est activé qu'après confirmation du paiement par Stripe. En cas d'échec, aucun accès n'est ouvert et aucune autre tentative n'est effectuée automatiquement.
 
 ### 7.6 Factures
 Une facture électronique est envoyée par email à chaque paiement réussi et demeure accessible depuis l'espace client Stripe (portail client).
 
 ---
 
-## Article 8 — Durée et reconduction tacite
+## Article 8 — Durée, reconduction et expiration
 
-### 8.1 Durée initiale
-L'abonnement est conclu pour une durée d'un (1) mois ou d'un (1) an selon la formule choisie, à compter du jour de la souscription.
+### 8.1 Premium Mensuel — abonnement reconductible
 
-### 8.2 Reconduction tacite
-Conformément à l'article L. 215-1 du Code de la consommation, l'abonnement est reconductible tacitement pour des périodes successives de même durée. Le Client est informé par email, au plus tôt trois (3) mois et au plus tard un (1) mois avant le terme de la période en cours, de son droit de ne pas reconduire l'abonnement.
+**Durée initiale** : un (1) mois à compter du jour de la souscription.
 
-### 8.3 Information pré-reconduction
-Pour les abonnements annuels, un email de rappel est envoyé au Client avant chaque renouvellement.
+**Reconduction tacite** : conformément à l'article L. 215-1 du Code de la consommation, l'abonnement Premium Mensuel est reconductible tacitement pour des périodes successives d'un (1) mois. Chaque renouvellement donne lieu à l'émission d'un reçu par Stripe, envoyé par email au Client, ce qui vaut information du renouvellement.
+
+Le Client peut résilier son abonnement à tout moment conformément à l'article 10, sans devoir attendre une échéance particulière et sans pénalité.
+
+### 8.2 TOEIC Pass 3 mois — paiement unique, expiration automatique
+
+Le TOEIC Pass 3 mois est conclu pour une durée ferme de **trois (3) mois** à compter du jour de la souscription, moyennant un paiement unique.
+
+**Aucune reconduction automatique n'est prévue.** À l'échéance des 3 mois, l'accès Premium est automatiquement désactivé et le Client retrouve les fonctionnalités Freemium. Aucun débit supplémentaire n'est effectué sans consentement exprès du Client.
+
+Un email de courtoisie est envoyé au Client **sept (7) jours avant l'expiration** du Pass, l'invitant à prolonger son accès s'il le souhaite.
+
+Le Client peut, à tout moment avant l'expiration, souscrire à l'abonnement Premium Mensuel ou à un nouveau TOEIC Pass 3 mois. Dans ce cas, la nouvelle formule prend effet à l'expiration du Pass en cours (cumul non facturé).
 
 ---
 
@@ -149,23 +165,31 @@ Si le Client n'a pas expressément renoncé à son droit de rétractation selon 
 
 ---
 
-## Article 10 — Résiliation
+## Article 10 — Résiliation et fin de l'accès Premium
 
-### 10.1 Résiliation par le Client
-Le Client peut résilier son abonnement à tout moment, sans motif ni pénalité, via :
+### 10.1 Premium Mensuel — résiliation par le Client
+
+Le Client peut résilier son abonnement Premium Mensuel à tout moment, sans motif ni pénalité, via :
 - le portail client Stripe (accessible depuis son profil dans l'application, bouton « Gérer mon abonnement »),
 - ou par email adressé à leixa.formation@gmail.com.
 
 La résiliation prend effet à l'**issue de la période de facturation en cours**. Le Client conserve l'accès Premium jusqu'à cette date, sans remboursement au prorata.
 
-### 10.2 Résiliation par l'Éditeur
-L'Éditeur peut résilier l'abonnement du Client de plein droit, sans préavis ni indemnité, en cas de :
+### 10.2 TOEIC Pass 3 mois — pas de résiliation, mais pas de reconduction
+
+Le TOEIC Pass 3 mois étant un produit à paiement unique sans reconduction, il n'existe pas de mécanisme de résiliation. L'accès prend fin automatiquement à l'échéance des 3 mois.
+
+Si le Client souhaite interrompre son usage avant l'échéance, il peut cesser d'utiliser le Service à tout moment. Aucun remboursement n'est dû pour la période non utilisée, sauf dysfonctionnement majeur du Service dûment constaté (auquel cas l'article 14 s'applique).
+
+### 10.3 Résiliation par l'Éditeur
+
+L'Éditeur peut résilier l'abonnement ou révoquer l'accès du Client de plein droit, sans préavis ni indemnité, en cas de :
 - manquement grave du Client à ses obligations (fraude, usage détourné du Service, atteinte à la propriété intellectuelle, partage non autorisé du compte, abus, harcèlement),
-- défaut de paiement non régularisé conformément à l'article 7.5,
+- défaut de paiement non régularisé conformément à l'article 7.5 (Premium Mensuel uniquement),
 - cessation définitive du Service.
 
-### 10.3 Effets de la résiliation
-À l'issue de la résiliation, le Client perd l'accès aux fonctionnalités Premium. Son compte et ses données personnelles sont conservés selon les durées précisées dans la Politique de Confidentialité. Le Client peut à tout moment demander l'export ou la suppression de ses données.
+### 10.4 Effets de la fin d'accès
+À l'issue de la résiliation ou de l'expiration du Pass, le Client perd l'accès aux fonctionnalités Premium. Son compte et ses données personnelles sont conservés selon les durées précisées dans la Politique de Confidentialité. Le Client peut à tout moment demander l'export ou la suppression de ses données.
 
 ---
 
@@ -291,4 +315,5 @@ Pour les litiges avec un Client consommateur, sont compétents, au choix du Clie
 - [ ] Ajouter une case à cocher distincte pour la renonciation au droit de rétractation (article 9.2) sur la page Stripe Checkout ou l'écran d'upgrade
 - [ ] Ajouter un lien « CGV » visible depuis l'écran d'upgrade Premium (obligation pré-contractuelle d'information)
 - [ ] Archiver chaque version des CGV avec date d'entrée en vigueur (en cas de litige, la version applicable est celle en vigueur au moment de la souscription)
-- [ ] Intégrer le portail Stripe Customer Portal pour permettre au Client de résilier en un clic (obligation article L. 215-1-1 CC — « bouton résiliation »)
+- [ ] Intégrer le portail Stripe Customer Portal pour permettre au Client **Premium Mensuel** de résilier en un clic (obligation article L. 215-1-1 CC — « bouton résiliation »). Le TOEIC Pass 3 mois n'étant pas reconductible, il n'est pas concerné par cette obligation.
+- [ ] Envoi d'un email de courtoisie **7 jours avant l'expiration du TOEIC Pass 3 mois** (rappel manuel ou Edge Function Supabase programmée)

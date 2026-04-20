@@ -18,7 +18,7 @@ Session split en deux temps :
 
 **Décisions business verrouillées :**
 - **B2C pur** — pas d'architecture institutionnelle (écoles gérées cas par cas manuellement)
-- **Tarification** : 4,99€/mois ou 29,99€/an, un seul plan
+- **Tarification (révisée 2026-04-20)** : **9,99€/mois** recurring OU **22,99€ TOEIC Pass 3 mois** one-shot (pas d'annuel). Rationale : le TOEIC est un produit d'intention ponctuelle, pas de consommation continue. Le Pass 3 mois matche la durée réelle d'usage.
 - **Pas de période d'essai** — freemium permanent conservé (resserré plus tard en Phase 4)
 - **Cutoff IDRAC 2026-06-28** (date réelle, pas juillet) → étudiants peuvent continuer en souscrivant, leur progression reste sur le même compte
 - **Statut éditeur** : micro-entreprise, franchise TVA art. 293 B CGI

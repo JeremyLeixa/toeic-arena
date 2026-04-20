@@ -33,9 +33,10 @@
 - [ ] 👤 Créer produit `TOEIC Arena Premium`
   - Description courte : « Accès illimité à tous les modules d'entraînement TOEIC »
   - Image produit (logo TOEIC Arena)
-- [ ] 👤 Créer prix mensuel : **4,99 € EUR recurring monthly**
-- [ ] 👤 Créer prix annuel : **29,99 € EUR recurring yearly**
+- [ ] 👤 Créer prix **mensuel (recurring)** : **9,99 € EUR / month**
+- [ ] 👤 Créer prix **TOEIC Pass 3 mois (one-time)** : **22,99 € EUR / one_time** (attention : pas `recurring` 3 mois, mais `one_time` — l'expiration est gérée côté app via `access_expires_at`)
 - [ ] 👤 Récupérer les deux `price_id` (format `price_xxxxx`) et me les fournir pour l'intégration code
+- [ ] 👤 **Important** : dans Stripe > Products > TOEIC Arena Premium, désactiver l'affichage de l'ancien prix 29,99€ si jamais il a été créé en version antérieure
 
 ### 2.3 TVA
 - [ ] 👤 Activer **Stripe Tax** (recommandé même en franchise) — Stripe gère automatiquement la conformité si un jour tu bascules TVA
@@ -44,22 +45,23 @@
 
 ### 2.4 Customer Portal
 - [ ] 👤 Stripe Dashboard → Settings → Billing → Customer portal → activer
-- [ ] 👤 Autoriser : **cancel subscription** (pour respecter le « bouton résiliation » légal)
+- [ ] 👤 Autoriser : **cancel subscription** — s'applique au Premium Mensuel uniquement. Pour respecter le « bouton résiliation » légal (art. L. 215-1-1 CC). Le TOEIC Pass 3 mois étant un paiement unique, il n'apparaît pas comme résiliable dans le portal.
 - [ ] 👤 Autoriser : update payment method
-- [ ] 👤 Autoriser : download invoices
+- [ ] 👤 Autoriser : download invoices (inclut les factures Pass + Monthly)
 - [ ] 👤 Personnaliser le branding (logo, couleurs TOEIC Arena)
-- [ ] 👤 Configurer le **cancellation policy** : « à la fin de la période en cours » (pas d'effet immédiat, évite les demandes de remboursement au prorata)
+- [ ] 👤 Configurer le **cancellation policy Monthly** : « à la fin de la période en cours » (pas d'effet immédiat, évite les demandes de remboursement au prorata)
 
 ### 2.5 Webhooks
 - [ ] 🤖 Créer endpoint Vercel `api/stripe-webhook.js`
 - [ ] 👤 Dans Stripe → Developers → Webhooks → ajouter endpoint avec URL `https://toeic-arena.vercel.app/api/stripe-webhook` (à adapter)
 - [ ] 👤 S'abonner aux events :
-  - `checkout.session.completed`
-  - `customer.subscription.created`
-  - `customer.subscription.updated`
-  - `customer.subscription.deleted`
-  - `invoice.payment_succeeded`
-  - `invoice.payment_failed`
+  - `checkout.session.completed` (couvre Monthly **et** Pass 3m à la création)
+  - `customer.subscription.created` (Monthly uniquement)
+  - `customer.subscription.updated` (Monthly uniquement)
+  - `customer.subscription.deleted` (Monthly uniquement)
+  - `invoice.payment_succeeded` (Monthly renewal)
+  - `invoice.payment_failed` (Monthly renewal failed)
+  - `charge.refunded` (au cas où tu rembourses manuellement un Pass)
 - [ ] 👤 Récupérer le **webhook signing secret** (`whsec_xxxxx`)
 
 ### 2.6 Clés API
@@ -145,9 +147,14 @@
 - [ ] 👤 Configurer **domaine custom pour emails Supabase** (sinon risque spam)
   - Acheter/utiliser sous-domaine `mail.toeic-arena.[tld]`
   - Configurer SPF, DKIM, DMARC (doc Supabase)
-- [ ] 🤖 Migration SQL : ajouter `students.user_id`, `students.email`, `students.access_level`
-- [ ] 🤖 Créer tables : `subscriptions`, `stripe_events`
-- [ ] 🤖 RLS policies sur `subscriptions` (user lit ses propres subs uniquement)
+- [ ] 🤖 Migration SQL : ajouter `students.user_id`, `students.email`, `students.access_level`, `students.access_expires_at timestamptz` (pour le Pass 3 mois)
+- [ ] 🤖 Créer tables :
+  - `subscriptions` (stripe_customer_id, stripe_subscription_id pour Monthly)
+  - `passes` (stripe_customer_id, stripe_payment_intent_id, expires_at pour Pass 3m)
+  - `stripe_events` (dedup webhook)
+- [ ] 🤖 RLS policies : user lit ses propres subs/passes uniquement
+- [ ] 🤖 **Edge Function scheduled** `pass-expiry-reminder` — envoie un email 7 jours avant `access_expires_at` pour inviter à prolonger (obligation art. 8.2 CGV)
+- [ ] 🤖 **Edge Function scheduled** `pass-expiry-downgrade` — passe `access_level` à `free` quand `access_expires_at < now()` (run horaire)
 
 ### 6.2 Vercel — Phase 3
 - [ ] 🤖 Endpoints serverless : `api/stripe-checkout-create.js`, `api/stripe-webhook.js`, `api/stripe-portal-create.js`
@@ -155,11 +162,18 @@
 - [ ] 🤖 Vérifier runtime `nodejs` (pas edge) pour les endpoints Stripe — la lib Stripe Node nécessite Node.js
 
 ### 6.3 App.jsx — Phase 3 & 4
-- [ ] 🤖 Hook `useAccessLevel()` centralisé
-- [ ] 🤖 Écran Upgrade avec toggle Monthly/Annual + CTA Stripe Checkout
-- [ ] 🤖 Écran « Subscription » dans Profile (statut, prochaine échéance, bouton Manage via Stripe portal)
+- [ ] 🤖 Hook `useAccessLevel()` centralisé — retourne `free | premium_monthly | premium_pass | grandfathered`. Prend en compte `access_expires_at` pour le Pass.
+- [ ] 🤖 Écran Upgrade avec 2 cartes comparatives :
+  - **Monthly** 9,99€/mois, flexible, cancel anytime
+  - **TOEIC Pass 3 mois** 22,99€ one-shot, **badge "Best value — save 23%"**, expire auto
+  - Le Pass doit être mis en avant (ancre visuelle prioritaire — c'est le produit d'intention)
+- [ ] 🤖 Écran « Subscription » dans Profile :
+  - Si Monthly actif : statut, next billing date, bouton "Manage via Stripe portal"
+  - Si Pass actif : badge "TOEIC Pass — expire le JJ/MM", bouton "Prolonger" ouvrant checkout Pass
+  - Si Pass expire dans <7j : mise en avant visuelle douce (pas alarmiste)
 - [ ] 🤖 Paywall overlay sur modules premium avec CTA Upgrade
-- [ ] 🤖 Banner « Your subscription renews in X days » pour annuels (via email Stripe suffit, in-app optionnel)
+- [ ] 🤖 Banner in-app "Your pass expires in X days" (quand X ≤ 7) avec CTA Prolonger
+- [ ] 🤖 Checkout Session mode conditionnel : `subscription` pour Monthly, `payment` pour Pass
 
 ---
 
@@ -197,10 +211,13 @@ Scenarios à tester exhaustivement avant passage en live :
 - [ ] Free user teste un module premium → paywall → clic Upgrade
 - [ ] Stripe Checkout test mode (carte `4242 4242 4242 4242`) → retour app → accès premium déverrouillé
 
-### 9.2 Parcours annuel
-- [ ] Souscription annuelle → webhook reçu → `access_level=premium` en DB
+### 9.2 Parcours TOEIC Pass 3 mois
+- [ ] Souscription Pass → webhook `checkout.session.completed` reçu → DB : `passes` row créée + `students.access_level=premium_pass` + `access_expires_at=now+90d`
 - [ ] Email reçu : Stripe receipt
-- [ ] Dans Profile → Subscription : affichage next billing date +1 an
+- [ ] Dans Profile → Subscription : badge "TOEIC Pass — expire le JJ/MM"
+- [ ] Re-souscription avant expiration : `access_expires_at` étendu de +90j, pas de double facturation
+- [ ] Simulation d'expiration (avance artificielle de `access_expires_at`) : Edge Function downgrade exécute → `access_level=free`, modules premium re-lockés
+- [ ] Email de rappel J-7 avant expiration : test de l'Edge Function `pass-expiry-reminder`
 
 ### 9.3 Échec de paiement
 - [ ] Utiliser carte test `4000 0000 0000 0341` (échec paiement récurrent)
@@ -215,9 +232,10 @@ Scenarios à tester exhaustivement avant passage en live :
 - [ ] Accès premium maintenu jusqu'à fin de période
 - [ ] À date d'expiration → webhook `customer.subscription.deleted` → downgrade
 
-### 9.5 Upgrade / Downgrade
-- [ ] User mensuel → switch annuel via portal → prorata calculé par Stripe
-- [ ] Webhook updated → nouveau plan enregistré
+### 9.5 Upgrade / Switch entre formules
+- [ ] User Monthly → annule via portal → souscrit Pass 3m le jour suivant → les deux coexistent côté Stripe (subscription canceled + one-time payment) mais côté app `access_level` = le plus avantageux jusqu'à expiration
+- [ ] User Pass actif → souscrit Monthly avant expiration du Pass → Monthly start date = `access_expires_at` du Pass (pas de chevauchement facturé)
+- [ ] Webhook updated correctement → `access_level` reflète la nouvelle situation
 
 ### 9.6 Rétractation
 - [ ] Si case non cochée : un user qui demande remboursement dans les 14j est remboursé manuellement via Stripe dashboard
@@ -257,11 +275,17 @@ Scenarios à tester exhaustivement avant passage en live :
 ## 11. 📊 Monitoring & analytics post-launch
 
 - [ ] 👤 Dashboard Stripe : activer les alertes (paiement échoué, nouveau client, MRR)
-- [ ] 🤖 Dashboard Teacher : nouvelle section « Monetization » avec MRR, churn, conversions, paid users count
+- [ ] 🤖 Dashboard Teacher : nouvelle section « Monetization » avec :
+  - MRR (Monthly recurring) + Pass revenue (non-MRR mais tracké)
+  - Mix Monthly / Pass (% de chaque formule sur nouveaux clients)
+  - Taux de prolongation Pass (combien de users renouvellent à l'expiration)
+  - Paid users count, conversions
 - [ ] 👤 Vérifier hebdomadairement durant 1 mois :
   - Taux de réussite paiement (>95% attendu)
   - Taux de conversion paywall → checkout (benchmark : 2-5% pour SaaS freemium)
-  - Churn mensuel (acceptable <10%/mois en B2C SaaS)
+  - **Répartition Monthly vs Pass** (hypothèse : 60/40 en faveur du Pass)
+  - Churn Monthly (<10%/mois en B2C SaaS)
+  - Taux de renouvellement Pass à l'expiration (hypothèse : 15-25%)
   - Support tickets liés paiement
 
 ---
@@ -272,7 +296,7 @@ Si problème critique post-launch :
 - [ ] 🤖 **Feature flag `STRIPE_ENABLED`** dans l'app → permet de cacher l'upgrade instantanément sans redeploy
 - [ ] 👤 Pouvoir **mettre en pause les nouveaux abonnements** depuis Stripe (archiver les prix temporairement)
 - [ ] 👤 Avoir un email-type de communication incident prêt
-- [ ] 🤖 Backup quotidien Supabase des tables `students` et `subscriptions` (via pg_dump scheduled)
+- [ ] 🤖 Backup quotidien Supabase des tables `students`, `subscriptions`, `passes` (via pg_dump scheduled)
 
 ---
 
