@@ -156,8 +156,21 @@ function getEffectiveLeague(wxp,ms){
 // ─── FREEMIUM: modules available in visitor/free mode ───
 var FREE_MODULES = ["daily","drill","csess","lisP2","stratquiz","strats","gramref","wfall","tavern"];
 var FREE_FLASHCARD_DOMAINS = ["finance","travel","office"];
-function isModuleLocked(moduleId, gType) {
-  if (gType !== "visitor") return false;
+
+// Returns true if the user has unrestricted access to all premium modules.
+// Reasons: active Stripe subscription, active 3-month pass, or active institutional group.
+function hasFullAccess(u, gType) {
+  if (!u) return false;
+  if (u.accessLevel === "premium_monthly") return true;
+  if (u.accessLevel === "premium_pass" && u.accessExpiresAt && new Date(u.accessExpiresAt) > new Date()) return true;
+  // Institutional (school/pro) users get full access until their group's end_date
+  // (expired groups are handled upstream — user is redirected to the expired screen before reaching module gates)
+  if (gType === "school" || gType === "pro") return true;
+  return false;
+}
+
+function isModuleLocked(moduleId, u, gType) {
+  if (hasFullAccess(u, gType)) return false;
   return FREE_MODULES.indexOf(moduleId) === -1;
 }
 
@@ -2082,9 +2095,11 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
   var mocksSection=sections[2]; // mocks kept for sub-view
 
   // ── Visitor locking ──
-  if(p.groupType==="visitor"){
+  // Phase 4: lock premium modules for any user without full access (free/visitor).
+  // Institutional users (school/pro) bypass this.
+  if(!hasFullAccess(p.u, p.groupType)){
     sections.forEach(function(sec){sec.items.forEach(function(m){
-      if(isModuleLocked(m.id,p.groupType))m.visitorLocked=true;
+      if(isModuleLocked(m.id,p.u,p.groupType))m.visitorLocked=true;
     });});
   }
 
@@ -2334,7 +2349,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 }
 
 // ─── CARDS PAGE ───
-function Cards(p){var isVis=p.groupType==="visitor";var visibleDomains=isVis?VOCAB.filter(function(d){return FREE_FLASHCARD_DOMAINS.indexOf(d.id)!==-1;}):VOCAB;
+function Cards(p){var isFree=!hasFullAccess(p.u, p.groupType);var visibleDomains=VOCAB;
 var all=[];visibleDomains.forEach(function(d){d.cards.forEach(function(c){all.push(c);});});var dc=dueCards(p.u.cardStates,all);var mc=0;Object.keys(p.u.cardStates).forEach(function(k){if(p.u.cardStates[k].interval>=7)mc++;});
 var[srsHelp,setSrsHelp]=useState(function(){return !localStorage.getItem("srsHelpSeen");});
 function closeSrsHelp(){setSrsHelp(false);localStorage.setItem("srsHelpSeen","1");}
@@ -2371,7 +2386,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <Bar value={mc} max={all.length} h={6} color="linear-gradient(90deg,#4abe60,#3a9a70)"/></div>
 {dc.length>0&&<button className="btn1" onClick={function(){p.nav("csess");}} style={{marginBottom:20}}>Review {dc.length} cards</button>}
 <h2 className="out" style={{fontWeight:700,fontSize:15,color:"var(--t2)",marginBottom:12}}>Vocabulary Domains</h2>
-<div style={{display:"flex",flexDirection:"column",gap:10}}>{VOCAB.map(function(dom){var vl=isVis&&FREE_FLASHCARD_DOMAINS.indexOf(dom.id)===-1;var ms=0;dom.cards.forEach(function(c){var s=p.u.cardStates[c.id];if(s&&s.interval>=7)ms++;});
+<div style={{display:"flex",flexDirection:"column",gap:10}}>{VOCAB.map(function(dom){var vl=isFree&&FREE_FLASHCARD_DOMAINS.indexOf(dom.id)===-1;var ms=0;dom.cards.forEach(function(c){var s=p.u.cardStates[c.id];if(s&&s.interval>=7)ms++;});
 return(<div key={dom.id} className="crd" onClick={function(){if(vl){p.onPremium(dom.name+" Flashcards");return;}p.nav("cdom",dom.id);}} style={{display:"flex",alignItems:"center",gap:14,cursor:vl?"default":"pointer",padding:"14px 16px",opacity:vl?.55:1}}>
 <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":dom.col+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{dom.icon}</div>
 <div style={{flex:1,minWidth:0}}><div className="out" style={{fontWeight:600,fontSize:14}}>{dom.name}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t2)"}}>{vl?"Arena Premium":ms+"/"+dom.cards.length+" mastered"}</div></div>
@@ -5553,7 +5568,7 @@ function GamesHub(p){
     <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Arena Games</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Train your reflexes, earn XP</p>
     <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:12}}>
-      {games.map(function(m){var vl=isModuleLocked(m.id,p.groupType);return(
+      {games.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",opacity:vl?.55:1}}>
           <div style={{width:48,height:48,borderRadius:14,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>{m.n}</div>
@@ -9089,7 +9104,7 @@ function ListenHub(p){
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Listening Practice</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train your ear for the TOEIC Listening section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
-      {parts.map(function(m){var vl=isModuleLocked(m.id,p.groupType);return(
+      {parts.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
           <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
@@ -9528,7 +9543,7 @@ function ReadingHub(p){
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Reading Practice</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train for the TOEIC Reading section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
-      {parts.map(function(m){var vl=isModuleLocked(m.id,p.groupType);return(
+      {parts.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
           <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
@@ -11569,12 +11584,26 @@ var prevLeague=getLeague(c.weeklyXp);
       onOpenNow={function(){setActiveChestToast(null);if(chestPending.length>0)setChestModal(chestPending[0]);}}/>}
 
     {premiumPrompt&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={function(){setPremiumPrompt(null);}}>
-      <div style={{background:"var(--bg2)",borderRadius:20,padding:28,maxWidth:340,textAlign:"center",animation:"fadeIn .3s",border:"1px solid var(--bdr)"}} onClick={function(e){e.stopPropagation();}}>
-        <div style={{fontSize:48,marginBottom:12}}>{"🏰"}</div>
-        <h3 className="out" style={{fontWeight:800,fontSize:20,marginBottom:8,color:"var(--gold)"}}>Arena Premium</h3>
-        <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6,marginBottom:16}}><strong style={{color:"var(--t1)"}}>{premiumPrompt}</strong> is available with Arena Premium or through your school.</p>
-        <p style={{color:"var(--t3)",fontSize:12,lineHeight:1.5,marginBottom:20}}>If your teacher gave you a class code, go to Settings to change your group and unlock all modules.</p>
-        <button className="btn1" onClick={function(){setPremiumPrompt(null);}} style={{width:"100%",fontSize:14}}>Got it</button>
+      <div style={{background:"var(--bg2)",borderRadius:20,padding:28,maxWidth:360,textAlign:"center",animation:"fadeIn .3s",border:"1px solid rgba(255,215,0,.25)",boxShadow:"0 0 40px rgba(255,215,0,.15)"}} onClick={function(e){e.stopPropagation();}}>
+        <div style={{fontSize:56,marginBottom:12}}>{"\uD83C\uDFF0"}</div>
+        <h3 className="out" style={{fontWeight:800,fontSize:22,marginBottom:6,color:"var(--gold)"}}>Arena Premium</h3>
+        <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6,marginBottom:18}}>
+          <strong style={{color:"var(--t1)"}}>{premiumPrompt}</strong>{" fait partie des modules Premium."}
+        </p>
+        <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,marginBottom:20,textAlign:"left",background:"rgba(255,215,0,.04)",border:"1px solid rgba(255,215,0,.12)",borderRadius:10,padding:"12px 14px"}}>
+          <div>{"\u2713 Tous les modules Premium d\u00e9bloqu\u00e9s"}</div>
+          <div>{"\u2713 Boss Test + Endless Arena"}</div>
+          <div>{"\u2713 Tests blancs 1, 2, 3"}</div>
+          <div>{"\u2713 390 flashcards m\u00e9tiers"}</div>
+        </div>
+        <button className="btn1" onClick={function(){setPremiumPrompt(null);sSP("upgrade");}}
+          style={{width:"100%",fontSize:14,padding:"13px 20px",marginBottom:8,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700}}>
+          {"\uD83C\uDFAF Voir les offres"}
+        </button>
+        <button className="btn2" onClick={function(){setPremiumPrompt(null);}}
+          style={{width:"100%",fontSize:12,padding:"10px 16px",borderColor:"var(--bdr)",color:"var(--t3)"}}>
+          {"Plus tard"}
+        </button>
       </div>
     </div>}
     <Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);
