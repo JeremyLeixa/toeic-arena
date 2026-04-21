@@ -109,14 +109,22 @@ function speakBrowserTTS(text,rate,cb){
   window.speechSynthesis.speak(u);
 }
 
+// Track the currently-playing listening audio so we can stop it on unmount/Quit.
+// Otherwise audio keeps playing in background after the user exits a listening exercise.
+var _listenAudio=null;
 function playAudioFile(url){
   return new Promise(function(resolve){
+    // Abort any previous audio still playing from this helper
+    if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}
     var audio=new Audio(url);
-    audio.onended=resolve;
-    audio.onerror=function(){console.warn("Audio not found: "+url);resolve();};
-    audio.play().catch(resolve);
+    _listenAudio=audio;
+    function cleanup(){if(_listenAudio===audio)_listenAudio=null;resolve();}
+    audio.onended=cleanup;
+    audio.onerror=function(){console.warn("Audio not found: "+url);cleanup();};
+    audio.play().catch(cleanup);
   });
 }
+function stopListenAudio(){if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}}
 // Preload voices (some browsers need this)
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){_voices=null;getEnVoice();};}
 
@@ -288,7 +296,7 @@ function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.l
 var SK="toeic-arena-v2";
 var BUILD_ID="2026-04-08a";
 import { supabase } from './supabase.js'
-import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal } from './auth.js'
+import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
 
 // ─── Name normalization (accent-insensitive + lowercase) ───
@@ -314,14 +322,14 @@ function saveLocal(d){
   try{
     localStorage.setItem("toeic-arena-profile",JSON.stringify(d));
     localStorage.setItem("toeic-arena-name",d.name);
-    localStorage.setItem("toeic-arena-class",d.classCode||"idrac2026");
+    localStorage.setItem("toeic-arena-class",d.classCode||"visitor");
     _syncDirty=true;
   }catch(e){}
 }
 
 function supaToLocal(data){
   return{
-    name:data.name,classCode:data.class_code||"idrac2026",
+    name:data.name,classCode:data.class_code||"visitor",
     xp:data.xp,weeklyXp:data.weekly_xp,weekId:data.week_id,
     streak:data.streak,lastActive:data.last_active,
     cardStates:data.card_states||{},
@@ -362,7 +370,7 @@ async function load(userId){
       var remote=null;
       // Primary: lookup by (name, class_code) — works cross-device
       if(cn){
-        var res=await supabase.from("students").select("*").ilike("name",cn).eq("class_code",cc||"idrac2026").order("xp",{ascending:false}).limit(1);
+        var res=await supabase.from("students").select("*").ilike("name",cn).eq("class_code",cc||"visitor").order("xp",{ascending:false}).limit(1);
         if(res.error)console.error("[LOAD] SELECT error:",res.error.message);
         if(res.data&&res.data.length>0)remote=res.data[0];
       }
@@ -419,7 +427,7 @@ async function save(d){
     access_level:d.accessLevel||'free',
     access_expires_at:d.accessExpiresAt||null,
   };
-  var cc=d.classCode||"idrac2026";
+  var cc=d.classCode||"visitor";
   try{
     // Step 1: UPDATE by (name, class_code) — cross-device safe, never mutates PK
     var upd=await supabase.from("students").update(payload).ilike("name",d.name).eq("class_code",cc).select("id");
@@ -467,7 +475,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'idrac2026',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -981,6 +989,17 @@ var[step,sSt]=useState("name");
   // PIN state removed 2026-04-20 — auth is now handled via Supabase magic link
   var[pendingNav,setPendingNav]=useState(null);var[pushBusy,setPushBusy]=useState(false);
   var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
+  // Poll for email confirmation while the user is on the emailPrompt step and email was sent.
+  // Catches the mobile case where the magic link was clicked in another browser (Gmail app →
+  // default browser). Without this poll, the current PWA session would never detect the confirmation.
+  useEffect(function(){
+    if(step!=="emailPrompt"||!emailSent)return;
+    var cancel=pollEmailConfirmation(function(){
+      // Email confirmed server-side — advance immediately
+      sSt("langBridge");
+    });
+    return cancel;
+  },[step,emailSent]);
   function goAfterPushStep(firstNav){
     // If browser lacks Push API, skip the opt-in phase entirely
     var hasPush=("serviceWorker" in navigator)&&("PushManager" in window);
@@ -1174,7 +1193,7 @@ var[step,sSt]=useState("name");
         {!visitorConfirm?<button className="btn2" onClick={function(){setVisitorConfirm(true);}}
           style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>{"🌍 Discover for Free"}</button>
         :<div style={{animation:"fadeIn .3s",padding:16,background:"rgba(27,112,207,.08)",border:"1px solid rgba(27,112,207,.2)",borderRadius:14}}>
-          <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>⚠️ Free access includes 8 training modules. All modules are unlocked with a class code from your school.</p>
+          <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>{"\u26A0\uFE0F Free access includes 9 training modules. Unlock everything with a class code from your teacher, or with Arena Premium (9,99\u20AC/mo or 22,99\u20AC Pass 3m)."}</p>
           <div style={{display:"flex",gap:8}}>
             <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>Cancel</button>
             <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);sSt("consent");}}
@@ -1470,7 +1489,8 @@ var[step,sSt]=useState("name");
       try{
         await linkEmailToAnonymous(e);
         setEmailSent(true);
-        setTimeout(function(){sSt("langBridge");},1800);
+        // No auto-advance: the user needs time to check the email and we poll for
+        // confirmation (see useEffect above). An explicit "Continuer" button is shown.
       }catch(err){
         var msg=(err&&err.message)||"Impossible d'envoyer l'email";
         setEmailErr(msg);
@@ -1486,9 +1506,21 @@ var[step,sSt]=useState("name");
         {!emailSent&&<p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
           {"Lie un email pour retrouver ta progression depuis n'importe quel appareil et recevoir tes r\u00e9sultats hebdomadaires."}
         </p>}
-        {emailSent&&<p style={{color:"var(--green)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
-          {"\u2709\uFE0F Lien de confirmation envoy\u00e9 \u00e0 "+emailInput+".\nTu peux continuer, le lien reste valable 24h."}
-        </p>}
+        {emailSent&&<>
+          <p style={{color:"var(--green)",fontSize:14,lineHeight:1.6,marginBottom:12}}>
+            {"\u2709\uFE0F Lien de confirmation envoy\u00e9 \u00e0 "+emailInput+"."}
+          </p>
+          <div className="crd" style={{padding:"12px 14px",marginBottom:14,background:"rgba(255,193,7,.06)",borderColor:"rgba(255,193,7,.2)",textAlign:"left"}}>
+            <div style={{fontSize:12,color:"var(--t1)",lineHeight:1.5}}>
+              <strong>{"\uD83D\uDCF1 Sur mobile :"}</strong>{" ouvre le lien dans le navigateur o\u00f9 tu utilises l'app (m\u00eame navigateur, m\u00eame appareil). Si tu cliques depuis Gmail, le lien peut s'ouvrir ailleurs et la confirmation ne remonte pas ici."}
+            </div>
+          </div>
+          <p style={{color:"var(--t3)",fontSize:11,lineHeight:1.5,marginBottom:14}}>
+            {"Cette page d\u00e9tectera automatiquement la confirmation. Tu peux aussi continuer sans attendre \u2014 tu pourras terminer plus tard."}
+          </p>
+          <button className="btn1" onClick={function(){sSt("langBridge");}}
+            style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10}}>{"Continuer"}</button>
+        </>}
         {!emailSent&&<div className="crd" style={{padding:"14px 16px",marginBottom:14,textAlign:"left",background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
           <div style={{display:"flex",gap:10,marginBottom:8}}>
             <span style={{fontSize:18}}>{"\uD83D\uDD04"}</span>
@@ -1752,7 +1784,8 @@ return(
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert("Adresse email invalide.");return;}
     try{
       await linkEmailToAnonymous(email);
-      alert("\u2709\uFE0F Email envoy\u00e9 \u00e0 "+email+".\n\nClique le lien dans ta bo\u00eete (et checke les spams).");
+      try{sessionStorage.setItem("awaitingEmailConfirm","1");}catch(e){}
+      alert("\u2709\uFE0F Email envoy\u00e9 \u00e0 "+email+".\n\n\uD83D\uDCF1 Sur mobile : ouvre le lien depuis le navigateur o\u00f9 tu utilises l'app (pas depuis l'app Gmail). Si le lien s'ouvre dans un autre navigateur, la confirmation ne sera pas d\u00e9tect\u00e9e ici.\n\nUne fois le lien cliqu\u00e9, reviens dans l'app \u2014 ta s\u00e9curisation sera d\u00e9tect\u00e9e automatiquement.");
       setSecureBannerHidden(true);
     }catch(e){
       alert("Erreur : "+((e&&e.message)||"impossible d'envoyer l'email."));
@@ -4089,6 +4122,7 @@ function BossTest(p){
   var[revMode,setRevMode]=useState(false);
   var[revSec,setRevSec]=useState("p1");
   var[revIdx,setRevIdx]=useState(0);
+  useEffect(function(){return stopListenAudio;},[]);
   var timerRef=useRef(null);
 
   useEffect(function(){
@@ -4686,6 +4720,7 @@ function EndlessArena(p){
 
   function saveSession(a,s,q,sq,tl){try{localStorage.setItem(ENDLESS_STORAGE_KEY,JSON.stringify({date:today(),ans:a,sec:s,qi:q,sqi:sq,timeLeft:tl}));}catch(e){}}
   function clearSession(){try{localStorage.removeItem(ENDLESS_STORAGE_KEY);}catch(e){}}
+  useEffect(function(){return stopListenAudio;},[]);
   var[result,setResult]=useState(null);
   var[aState,setAState]=useState("ready");
   var[curOpt,setCurOpt]=useState(-1);
@@ -5824,7 +5859,9 @@ function AudioBlitz(p){
     var playTimeout=setTimeout(function(){
       setPlayed(1);
       var it=items[ci];
+      if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
       var audio=new Audio(it.audio);
+      _listenAudio=audio;
       var usedTTS=false;
 
       function afterAudio(){
@@ -5854,14 +5891,16 @@ function AudioBlitz(p){
       });
     },500);
 
-    return function(){clearInterval(timerRef.current);clearTimeout(bufferRef.current);clearTimeout(playTimeout);};
+    return function(){clearInterval(timerRef.current);clearTimeout(bufferRef.current);clearTimeout(playTimeout);stopListenAudio();};
   },[ci,ph]);
 
   function replay(){
     if(replays>=1||played<2)return;
     setReplays(1);
     var it=items[ci];
+    if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
     var audio=new Audio(it.audio);
+    _listenAudio=audio;
     audio.onerror=function(){speak(it.text,0.85);};
     audio.playbackRate=0.9;
     audio.play().catch(function(){speak(it.text,0.85);});
@@ -7914,7 +7953,7 @@ function WeeklyReport(p){
   if(recos.length===0)recos.push("Dynamique de classe saine cette semaine. Poursuivre sur cette lancée.");
 
   // ──── RENDER ────
-  var leagueName=p.classCode||"idrac2026";
+  var leagueName=p.classCode||"visitor";
   return(
   <div style={{minHeight:"100vh",background:"#fff",color:"#222",padding:"24px 20px"}} className="weekly-report">
     <style>{"@media print{.no-print{display:none!important}.weekly-report{padding:0!important}body{background:#fff!important}.wr-card{page-break-inside:avoid}.wr-section{page-break-inside:avoid}}.weekly-report h1,.weekly-report h2,.weekly-report h3{font-family:'Cinzel','Outfit',serif;color:#1a1a1a}.weekly-report p,.weekly-report div,.weekly-report span{font-family:'DM Sans',Arial,sans-serif}"}</style>
@@ -9059,6 +9098,7 @@ function ListenP2(p){
   var items=useMemo(function(){return shuffle(LISTENING_P2).slice(0,10);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);
+  useEffect(function(){return stopListenAudio;},[]);
 
   async function playQuestion(){
     if(playing)return;
@@ -9159,6 +9199,7 @@ function ListenP1(p){
   var items=useMemo(function(){return shuffle(LISTENING_P1).slice(0,10);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curOpt,setCurOpt]=useState(-1);
+  useEffect(function(){return stopListenAudio;},[]);
 
   async function playStatements(){
     if(playing)return;
@@ -9268,6 +9309,7 @@ function ListenP3(p){
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curLine,setCurLine]=useState(-1);
+  useEffect(function(){return stopListenAudio;},[]);
 
   var totalQs=useMemo(function(){var c=0;items.forEach(function(it){c+=it.qs.length;});return c;},[]);
 
@@ -9374,6 +9416,7 @@ function ListenP4(p){
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);
+  useEffect(function(){return stopListenAudio;},[]);
 
   var totalQs=useMemo(function(){var c=0;items.forEach(function(it){c+=it.qs.length;});return c;},[]);
 
@@ -9605,7 +9648,7 @@ var[rivals,setRivals]=useState([]);
 var[tab,setTab]=useState("week"); // week | season | overall
 var cw=weekId();
 
-var viewGroup=u.classCode||'idrac2026';
+var viewGroup=u.classCode||'visitor';
 try{var dg=localStorage.getItem('toeic-dash-group');if(dg)viewGroup=dg;}catch(e){}
 var[leagueGroup,setLeagueGroup]=useState(viewGroup);
 var[showAllLeagues,setShowAllLeagues]=useState(false);
@@ -10115,7 +10158,7 @@ function Profile(p){
   var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
 
   useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});biometricAvailable().then(function(v){setBioAvail(v);});},[]);
-  useEffect(function(){if(view==="inventory"||view==="avatar"){setInvLoading(true);getOwnedRewards(u.name,u.classCode||"idrac2026").then(function(rewards){setInvData(rewards);setInvLoading(false);});}},[view]);
+  useEffect(function(){if(view==="inventory"||view==="avatar"){setInvLoading(true);getOwnedRewards(u.name,u.classCode||"visitor").then(function(rewards){setInvData(rewards);setInvLoading(false);});}},[view]);
   useEffect(function(){try{setTipOff(localStorage.getItem("toeic-tip-disabled")==="1");}catch(e){}},[]);
 
   var lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores);
@@ -10504,7 +10547,8 @@ function Profile(p){
         if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert("Adresse email invalide. Format attendu : nom@domaine.tld");return;}
         try{
           await linkEmailToAnonymous(email);
-          alert("\u2709\ufe0f Email de confirmation envoy\u00e9 \u00e0 :\n"+email+"\n\nV\u00e9rifiez votre bo\u00eete de r\u00e9ception (et vos spams). Cliquez sur le lien pour activer la s\u00e9curisation.");
+          try{sessionStorage.setItem("awaitingEmailConfirm","1");}catch(e){}
+          alert("\u2709\ufe0f Email de confirmation envoy\u00e9 \u00e0 :\n"+email+"\n\n\uD83D\uDCF1 Sur mobile : ouvre le lien depuis CE m\u00eame navigateur (pas depuis l'app Gmail). Si le lien s'ouvre ailleurs, la confirmation ne remontera pas ici.\n\nL'app d\u00e9tectera automatiquement la confirmation d\u00e8s que tu reviens.");
         }catch(e){alert("Erreur : "+((e&&e.message)||"impossible d'envoyer l'email."));}
       }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:u.email?"rgba(74,190,96,.3)":"rgba(var(--cx),.2)",color:u.email?"var(--green)":"var(--cyan)"}}>
         {u.email?("\u2705 Compte s\u00e9curis\u00e9 \u2014 "+u.email):"\uD83D\uDD12 S\u00e9curiser avec un email"}
@@ -10648,30 +10692,6 @@ function Profile(p){
 
       {/* (GDPR Export moved to Gestion du compte sub-page) */}
 
-      {/* DEBUG — force refetch Premium from Supabase (safe to keep, hidden when premium) */}
-      {(u.accessLevel||"free")==="free"&&<button className="btn2" onClick={async function(){
-        try{
-          var sess=await supabase.auth.getSession();
-          var uid=sess.data&&sess.data.session?sess.data.session.user.id:null;
-          var res=await supabase.from("students").select("*").ilike("name",u.name).eq("class_code",u.classCode).maybeSingle();
-          if(res.error){alert("Erreur Supabase : "+res.error.message);return;}
-          if(!res.data){alert("Aucune ligne students trouv\u00e9e pour "+u.name+" / "+u.classCode);return;}
-          var dbLvl=res.data.access_level;
-          var dbExp=res.data.access_expires_at;
-          var dbEmail=res.data.email;
-          var dbId=res.data.id;
-          alert("\u27A4 DB snapshot\n\nstudents.id    : "+dbId+"\nemail          : "+(dbEmail||"null")+"\naccess_level   : "+dbLvl+"\nexpires        : "+(dbExp||"null")+"\n\nsession user_id: "+(uid||"null")+"\n\nid match DB: "+(uid===dbId?"\u2705":"\u274C")+"\n\nLocal state (avant refresh): "+(u.accessLevel||"free"));
-          // Force local update from fresh DB values
-          var c=JSON.parse(JSON.stringify(u));
-          c.accessLevel=dbLvl||"free";
-          c.accessExpiresAt=dbExp||null;
-          c.email=dbEmail||null;
-          p.setAvatar(c); // reuses the setAvatar prop which just calls sv() to update state
-        }catch(e){alert("Erreur : "+(e.message||e));}
-      }} style={{fontSize:12,width:"100%",marginBottom:12,borderColor:"rgba(var(--cx),.2)",color:"var(--t2)"}}>
-        {"\uD83D\uDD04 Diagnostiquer + forcer synchro Premium"}
-      </button>}
-
       {/* Subscription section — Phase 3 Session 2 */}
       {(function(){
         var lvl=u.accessLevel||"free";
@@ -10717,9 +10737,9 @@ function Profile(p){
       </button>
 
       {/* Logout — kept on main for quick access */}
-      <button className="btn2" onClick={function(){if(confirm("Se d\u00e9connecter ? Vos donn\u00e9es sont sauvegard\u00e9es, vous pourrez les retrouver en vous reconnectant."))p.logout();}}
+      <button className="btn2" onClick={function(){if(confirm("Changer de profil ? Vos donn\u00e9es restent sauvegard\u00e9es. Tapez votre nom au prochain \u00e9cran pour vous reconnecter."))p.logout();}}
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
-        {"Se d\u00e9connecter"}
+        {"\uD83D\uDD04 Changer de profil"}
       </button>
 
       {showPrivacy&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
@@ -10788,7 +10808,7 @@ useEffect(function(){
                     supabase.from('weekly_snapshots').upsert({
                       user_id:r.data.user.id,
                       student_name:snap.name,
-                      class_code:snap.classCode||'idrac2026',
+                      class_code:snap.classCode||'visitor',
                       week_id:snap.weekId,
                       week_start:ws.toISOString().split('T')[0],
                       xp_this_week:snap.weeklyXp,
@@ -10816,7 +10836,7 @@ useEffect(function(){
 			if(!d.theme)d.theme="dark";
             sU(d);
             // Load pending chests
-            if(d.name)refreshPendingChests(d.name,d.classCode||"idrac2026");
+            if(d.name)refreshPendingChests(d.name,d.classCode||"visitor");
             // Show daily tip if not disabled and not already shown today
             try{
               var tipDisabled=localStorage.getItem("toeic-tip-disabled")==="1";
@@ -10884,7 +10904,7 @@ useEffect(function(){
       supabase.from('students')
         .update({email:newEmail})
         .ilike('name',u.name)
-        .eq('class_code',u.classCode||'idrac2026')
+        .eq('class_code',u.classCode||'visitor')
         .then(function(res){
           if(res.error){console.error('[auth] email sync failed:',res.error.message);return;}
           var c=JSON.parse(JSON.stringify(u));c.email=newEmail;sU(c);
@@ -10905,6 +10925,24 @@ useEffect(function(){
     });
     return function(){try{sub.data.subscription.unsubscribe();}catch(e){}};
   },[u]);
+
+  // ── Phase 1 Magic Link — background poll for mobile magic link confirmation ──
+  // On mobile, clicking the link in Gmail often opens an external browser, not the PWA.
+  // The server confirms the email but this session doesn't know — so we poll refreshSession()
+  // which pulls fresh user data (incl. email_confirmed_at). syncEmailFromSession (above)
+  // then fires via USER_UPDATED and writes students.email. Flag set by the 3 places that
+  // trigger linkEmailToAnonymous: Onboard emailPrompt, Home banner, Profile security button.
+  useEffect(function(){
+    if(!u||u.email)return; // already secured
+    var awaiting=false;
+    try{awaiting=sessionStorage.getItem("awaitingEmailConfirm")==="1";}catch(e){}
+    if(!awaiting)return;
+    var cancel=pollEmailConfirmation(function(){
+      try{sessionStorage.removeItem("awaitingEmailConfirm");}catch(e){}
+      // syncEmailFromSession in the hook above will fire automatically via USER_UPDATED
+    });
+    return cancel;
+  },[u]);
   
   // ── Load active events from Supabase (once + every 5 min) ──
   useEffect(function(){
@@ -10914,11 +10952,11 @@ useEffect(function(){
       supabase.from('events').select('*').eq('active',true).lte('start_at',now).gte('end_at',now)
         .then(function(res){
           var evts=(res.data||[]).filter(function(e){
-            return e.class_code==='all'||e.class_code===(u.classCode||'idrac2026');
+            return e.class_code==='all'||e.class_code===(u.classCode||'visitor');
           });
           setActiveEvents(evts);
         });
-      supabase.from('students').select('xp').eq('class_code',u.classCode||'idrac2026')
+      supabase.from('students').select('xp').eq('class_code',u.classCode||'visitor')
         .then(function(res){
           if(!res.data||res.data.length<3){setClassMedianXp(0);return;}
           var xps=res.data.map(function(s){return s.xp||0;}).sort(function(a,b){return a-b;});
@@ -10934,7 +10972,7 @@ useEffect(function(){
   // ── Check group access (start/end date) ──
   useEffect(function(){
     if(!u||u.name==="Teacher")return;
-    var cc=u.classCode||'idrac2026';
+    var cc=u.classCode||'visitor';
     if(cc==="visitor"){setGroupType("visitor");setGroupAccess({status:"ok"});return;}
     supabase.from('groups').select('start_date,end_date,name,type').eq('code',cc).maybeSingle()
       .then(function(res){
@@ -11010,7 +11048,7 @@ useEffect(function(){
         var raw=localStorage.getItem("toeic-arena-profile");
         if(raw&&_syncDirty){
           var d=JSON.parse(raw);
-          var cc=d.classCode||"idrac2026";
+          var cc=d.classCode||"visitor";
           var payload={
             xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
             streak:d.streak,last_active:d.lastActive,
@@ -11055,7 +11093,7 @@ useEffect(function(){
   }
   function grantChestLocal(trigger,chestType){
     if(!u||!u.name)return;
-    var un=u.name,cc=u.classCode||"idrac2026";
+    var un=u.name,cc=u.classCode||"visitor";
     hasUniqueTrigger(un,cc,trigger).then(function(done){
       if(!done){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
     }).catch(function(e){console.error("[CHEST] uniqueTrigger check error:",e);});
@@ -11063,7 +11101,7 @@ useEffect(function(){
   // Fire-and-forget: grant a weekly chest (7-day cooldown per trigger)
   function grantWeeklyChest(trigger,chestType){
     if(!u||!u.name)return;
-    var un=u.name,cc=u.classCode||"idrac2026";
+    var un=u.name,cc=u.classCode||"visitor";
     isWeeklyCooldown(un,cc,trigger).then(function(onCd){
       if(!onCd){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
     }).catch(function(e){console.error("[CHEST] cooldown check error:",e);});
@@ -11221,7 +11259,7 @@ var prevLeague=getLeague(c.weeklyXp);
   }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
   async function onboard(name,classCode,bsScores,bsCorrect,firstNav){
-    classCode=classCode||'idrac2026';
+    classCode=classCode||'visitor';
     // Check if student already exists (use limit(1) — safe even with duplicates)
     // Check for existing student (accent + case insensitive)
     var norm=normalizeName(name);
@@ -11383,7 +11421,11 @@ var prevLeague=getLeague(c.weeklyXp);
     sv(c);sSP(null);
   }
   async function logout(){
-    try{await supabase.auth.signOut();}catch(e){}
+    // Soft logout: clears local profile identity but KEEPS the Supabase session alive.
+    // Rationale: the anon auth session is what grants RLS access to students lookup;
+    // signing out forces a fresh anon user on next login, which breaks the "Welcome back"
+    // path (lookupName returns empty → user re-goes through full onboarding incl. Battle Scan).
+    // To fully destroy the session use deleteAccount instead.
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     _cachedUserId=null;_syncDirty=false;
     sU(null);sSP(null);sT("home");

@@ -84,6 +84,40 @@ export async function signOutCompletely() {
   } catch (e) {}
 }
 
+// Poll Supabase to detect when a pending email confirmation has completed.
+// Use case: the user clicked the magic link in another browser (common on mobile where
+// Gmail opens links in the system browser, not the PWA). The confirmation landed
+// server-side but this browser's session doesn't know yet. Calling refreshSession()
+// forces the JWT to be refetched, pulling the latest email_confirmed_at.
+// Returns a cancel() function. onConfirmed(email) fires once, then polling stops.
+export function pollEmailConfirmation(onConfirmed, opts) {
+  opts = opts || {};
+  const intervalMs = opts.intervalMs || 8000;
+  const maxMs = opts.maxMs || 180000; // 3 min max
+  let cancelled = false;
+  const started = Date.now();
+  let timer;
+  async function tick() {
+    if (cancelled) return;
+    if (Date.now() - started > maxMs) return;
+    try {
+      const { data } = await supabase.auth.refreshSession();
+      const user = data && data.user;
+      if (user && user.email && user.email_confirmed_at) {
+        cancelled = true;
+        try { onConfirmed(user.email); } catch (e) {}
+        return;
+      }
+    } catch (e) {}
+    timer = setTimeout(tick, intervalMs);
+  }
+  timer = setTimeout(tick, intervalMs);
+  return function cancel() {
+    cancelled = true;
+    if (timer) clearTimeout(timer);
+  };
+}
+
 // Subscribe to auth state changes. Returns an unsubscribe function.
 // Events: 'INITIAL_SESSION' | 'SIGNED_IN' | 'SIGNED_OUT' | 'USER_UPDATED' |
 //         'TOKEN_REFRESHED' | 'PASSWORD_RECOVERY'
