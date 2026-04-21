@@ -368,7 +368,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-21-icrypt";
+var BUILD_ID="2026-04-21-chronomancer";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1030,6 +1030,14 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .gauntlet-btn-grim:active{background:rgba(245,223,170,.22)}
 .icrypt-input:focus{border-color:#c026d3!important;box-shadow:0 0 0 3px rgba(192,38,211,.2)}
 .icrypt-input::placeholder{color:var(--t3);opacity:.5}
+.chrono-marker{display:inline-block;padding:1px 8px;background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(192,38,211,.25));border:1px solid rgba(192,38,211,.5);border-radius:6px;color:#e9d5ff;font-weight:700;margin:0 2px;letter-spacing:.2px}
+.chrono-blank{display:inline-block;min-width:60px;border-bottom:2px solid #c026d3;margin:0 3px;vertical-align:middle;color:transparent;user-select:none}
+.chrono-opt{display:block;width:100%;text-align:left;padding:13px 16px;margin-bottom:9px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;color:var(--t1);font-size:15px;font-weight:600;cursor:pointer;transition:all .15s ease;font-family:inherit}
+.chrono-opt:hover:not(:disabled){border-color:#7c3aed;background:rgba(124,58,237,.08)}
+.chrono-opt:disabled{cursor:default}
+.chrono-opt.correct{border-color:#22c55e;background:rgba(34,197,94,.12);color:#86efac}
+.chrono-opt.wrong{border-color:#ef4444;background:rgba(239,68,68,.1);color:#fca5a5}
+.chrono-opt.faded{opacity:.45}
 
 /* ═══ GRIMOIRE READER ═══ */
 .grim-overlay{position:fixed;inset:0;background:#0a0604;z-index:9000;display:flex;flex-direction:column;animation:grim-fade-in .3s ease}
@@ -1308,6 +1316,156 @@ function IrregularCrypt(p){
   </div>);
 }
 
+// ─── CHRONOMANCER — sub-module 2/4 of Grammar Gauntlet ───
+// Contextual QCM: 15 tense questions, no timer (reflection). Temporal
+// marker highlighted in the sentence when a literal match is found, and
+// shown as a hint pill above the sentence regardless. Manual "Continue"
+// after reveal to encourage reading the explanation.
+function Chronomancer(p){
+  var SESSION_SIZE=15;
+  var [deck,setDeck]=useState(null);
+  var [phase,setPhase]=useState("intro"); // intro | play | reveal | end
+  var [idx,setIdx]=useState(0);
+  var [picked,setPicked]=useState(null);
+  var [results,setResults]=useState([]);
+
+  function startSession(){
+    var shuffled=[].concat(TENSE_CHRONOMANCER).sort(function(){return Math.random()-0.5;});
+    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
+    setDeck(d);setIdx(0);setResults([]);setPicked(null);setPhase("play");
+  }
+  function pickAnswer(optIdx){
+    if(phase!=="play"||!deck)return;
+    var q=deck[idx];
+    var ok=optIdx===q.c;
+    if(ok){try{playCorrect();}catch(e){console.warn("[chrono] sfx:",e&&e.message);}}
+    else{try{playWrong();}catch(e){console.warn("[chrono] sfx:",e&&e.message);}}
+    setPicked(optIdx);
+    setResults(results.concat([{q:q,picked:optIdx,ok:ok}]));
+    setPhase("reveal");
+  }
+  function nextQ(){
+    if(!deck)return;
+    if(idx>=deck.length-1){setPhase("end");}
+    else{setIdx(idx+1);setPicked(null);setPhase("play");}
+  }
+  function finishSession(){
+    var correct=results.filter(function(r){return r.ok;}).length;
+    var baseXp=correct*3+10;
+    if(correct===deck.length)baseXp+=25;
+    p.done(correct,deck.length,baseXp);
+  }
+
+  // Render sentence: highlight marker if literal substring match; replace blank with styled span
+  function renderSentence(s,marker){
+    var cleanMarker=(marker||"").replace(/\s*\([^)]*\)\s*/g,"").trim();
+    var parts=[];
+    var working=s;
+    var highlighted=false;
+    if(cleanMarker){
+      var lower=working.toLowerCase();
+      var pos=lower.indexOf(cleanMarker.toLowerCase());
+      if(pos!==-1){
+        var before=working.substring(0,pos);
+        var match=working.substring(pos,pos+cleanMarker.length);
+        var after=working.substring(pos+cleanMarker.length);
+        parts=[{t:"text",v:before},{t:"marker",v:match},{t:"text",v:after}];
+        highlighted=true;
+      }
+    }
+    if(!highlighted)parts=[{t:"text",v:working}];
+    // Now render each part, replacing _____ (5 underscores) with a styled blank
+    return parts.map(function(part,i){
+      if(part.t==="marker")return(<span key={i} className="chrono-marker">{part.v}</span>);
+      var segs=part.v.split(/_{3,}/);
+      return(<span key={i}>{segs.map(function(seg,j){
+        return(<span key={j}>{seg}{j<segs.length-1&&<span className="chrono-blank">_____</span>}</span>);
+      })}</span>);
+    });
+  }
+
+  if(phase==="intro"){
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,padding:0,marginBottom:12}}>{"\u2190"} Gauntlet Hub</button>
+      <div style={{textAlign:"center",padding:"24px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{"\u231B"}</div>
+        <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Chronomancer</h2>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Ma\u00eetrise la temp\u00eate des temps verbaux. Chaque question cache un marqueur temporel.</p>
+        <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
+          <div>{"\uD83D\uDD2E"} <strong>15 questions</strong>, pas de timer</div>
+          <div>{"\uD83D\uDD8D\uFE0F"} Marqueur temporel en <span style={{color:"#c026d3",fontWeight:700}}>violet</span></div>
+          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne r\u00e9ponse \u00b7 bonus perfect</div>
+        </div>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer"}</button>
+      </div>
+    </div>);
+  }
+
+  if(phase==="end"){
+    var correctCount=results.filter(function(r){return r.ok;}).length;
+    var isPerfect=correctCount===deck.length;
+    var isGood=correctCount>=Math.ceil(deck.length*0.7);
+    var missed=results.filter(function(r){return!r.ok;});
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+      <div style={{textAlign:"center",padding:"20px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u231B"}</div>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"TIME MASTERED":isGood?"Chronomancer r\u00e9ussi":"Session termin\u00e9e"}</h2>
+        <div style={{fontSize:44,fontWeight:800,color:"#c026d3",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes r\u00e9ponses</p>
+        {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
+          {missed.slice(0,8).map(function(r,i){return(
+            <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
+              <div style={{marginBottom:3}}>{renderSentence(r.q.s,r.q.marker)}</div>
+              <div style={{fontSize:11.5,color:"#86efac",marginTop:3}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></div>
+            </div>
+          );})}
+        </div>}
+        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, retour</button>
+      </div>
+    </div>);
+  }
+
+  // phase "play" or "reveal"
+  var q=deck[idx];
+  var pct=(idx+1)/deck.length*100;
+  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:13,padding:0,marginBottom:8}}>{"\u2190"} Abandonner</button>
+    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Question {idx+1} / {deck.length}</div>
+    <div style={{width:"100%",height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:18}}>
+      <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,#7c3aed,#c026d3)",transition:"width .3s ease"}}/>
+    </div>
+    {/* Marker hint badge */}
+    {q.marker&&<div style={{textAlign:"center",marginBottom:14}}>
+      <span style={{display:"inline-block",padding:"4px 12px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(192,38,211,.4)",borderRadius:99,color:"#d8b4fe",fontSize:12,fontWeight:700,letterSpacing:.3}}>{"\uD83D\uDD2E  Marqueur : "}<span style={{color:"#e9d5ff"}}>{q.marker}</span></span>
+    </div>}
+    {/* Sentence */}
+    <div className="crd" style={{padding:"18px 16px",marginBottom:14,fontSize:16.5,lineHeight:1.7,color:"var(--t1)"}}>
+      {renderSentence(q.s,q.marker)}
+    </div>
+    {/* Options */}
+    <div>
+      {q.o.map(function(opt,i){
+        var cls="chrono-opt";
+        if(phase==="reveal"){
+          if(i===q.c)cls+=" correct";
+          else if(i===picked)cls+=" wrong";
+          else cls+=" faded";
+        }
+        return(<button key={i} className={cls} disabled={phase==="reveal"} onClick={function(){pickAnswer(i);}}>
+          <span style={{display:"inline-block",width:22,fontWeight:800,color:phase==="reveal"&&i===q.c?"#22c55e":phase==="reveal"&&i===picked?"#ef4444":"var(--t3)"}}>{String.fromCharCode(65+i)}.</span>{opt}
+        </button>);
+      })}
+    </div>
+    {/* Reveal card */}
+    {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(results[results.length-1]&&results[results.length-1].ok?"#22c55e":"#f59e0b")}}>
+      <div style={{fontSize:11,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{results[results.length-1]&&results[results.length-1].ok?"\u2713 Correct":"Explication"}</div>
+      <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"Voir le r\u00e9sultat":"Question suivante \u2192"}</button>
+    </div>}
+  </div>);
+}
+
 // ─── GAUNTLET HUB — entry point for the 4 sub-modules ───
 // Internal state `subMode` decides whether to render the hub or a sub-module.
 // Passes onModuleDone (from App) the modId when a sub-module completes, so the
@@ -1321,7 +1479,7 @@ function GauntletHub(p){
   var scores=(p.u&&p.u.moduleScores)||{};
   var cards=[
     {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume les verbes irr\u00e9guliers endormis. 15 items par raid, V2 et V3 \u00e0 la main.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_speed",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
-    {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_clue",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:false},
+    {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_clue",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:true},
     {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_build",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:false},
     {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_build",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:false}
   ];
@@ -1343,7 +1501,8 @@ function GauntletHub(p){
   }
   // ── Sub-module rendering ──
   if(subMode==="irregular")return(<IrregularCrypt u={p.u} done={subDone} back={subAbort}/>);
-  // Chronomancer / Passive Forge / Relative Weaver wire up in steps 5-7.
+  if(subMode==="tense")return(<Chronomancer u={p.u} done={subDone} back={subAbort}/>);
+  // Passive Forge / Relative Weaver wire up in steps 6-7.
 
   return(<div className="gauntlet-hub enter">
     <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:12,padding:0}}>{"\u2190"} Grammar &amp; Vocab</button>
