@@ -26,6 +26,8 @@ import { CHEST_TYPES, RARITIES, AVATARS, SKINS, UNIQUE_TRIGGERS, LEGENDARY_ACHIE
 import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
+import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } from "./data/grammarGauntlet.js";
+import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "./data/grammarGauntletGrimoire.js";
 
 
 function today(){return new Date().toISOString().split("T")[0];}
@@ -366,7 +368,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-21-post-crisis";
+var BUILD_ID="2026-04-21-gauntlet-hub";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -722,7 +724,7 @@ function needsMockNudge(u){
 }
 
 // ─── HAPTIC FEEDBACK ───
-var HAPTICS={chest:[100,50,100],chestOpen:[50,30,50,30,150],levelUp:[100,50,200],achieve:[80,40,80,40,80],league:[200,100,300],pb:[100,50,100,50,200],streak:[80,60,120],complete:[150]};
+var HAPTICS={chest:[100,50,100],chestOpen:[50,30,50,30,150],levelUp:[100,50,200],achieve:[80,40,80,40,80],league:[200,100,300],pb:[100,50,100,50,200],streak:[80,60,120],complete:[150],pageturn:[10]};
 function haptic(k){try{if(navigator.vibrate&&HAPTICS[k])navigator.vibrate(HAPTICS[k]);}catch(e){}}
 
 // ─── ENDLESS ARENA HELPERS ───
@@ -1008,7 +1010,203 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .read-text{font-size:15px!important;line-height:2!important}
 .read-opts button{font-size:15px!important;padding:14px 16px!important}
 .q-heading{font-size:19px!important}
-}`;
+}
+
+/* ═══ GRAMMAR GAUNTLET — HUB ═══ */
+.gauntlet-hub{padding:20px 16px 100px;max-width:640px;margin:0 auto}
+.gauntlet-header{text-align:center;margin-bottom:24px}
+.gauntlet-title{font-size:26px;font-weight:800;color:var(--t1);margin-bottom:6px;letter-spacing:1px}
+.gauntlet-sub{color:var(--t3);font-size:13px;font-style:italic}
+.gauntlet-card{position:relative;background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px 16px;margin-bottom:14px;overflow:hidden}
+.gauntlet-card-accent{position:absolute;top:0;left:0;right:0;height:4px}
+.gauntlet-card-head{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.gauntlet-card-icon{font-size:36px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));flex-shrink:0}
+.gauntlet-card-name{font-size:17px;font-weight:800;color:var(--t1);letter-spacing:.3px}
+.gauntlet-card-desc{font-size:13px;color:var(--t3);margin-bottom:10px;line-height:1.5}
+.gauntlet-card-stats{display:flex;gap:10px;font-size:11px;color:var(--t3);margin-bottom:12px;opacity:.85}
+.gauntlet-card-actions{display:flex;gap:8px}
+.gauntlet-btn-enter{flex:1;background:linear-gradient(135deg,#7c3aed,#c026d3);color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;letter-spacing:.3px}
+.gauntlet-btn-grim{background:rgba(245,223,170,.1);color:#f5dfaa;border:1px solid rgba(245,223,170,.25);border-radius:12px;padding:12px 14px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+.gauntlet-btn-grim:active{background:rgba(245,223,170,.22)}
+
+/* ═══ GRIMOIRE READER ═══ */
+.grim-overlay{position:fixed;inset:0;background:#0a0604;z-index:9000;display:flex;flex-direction:column;animation:grim-fade-in .3s ease}
+@keyframes grim-fade-in{from{opacity:0}to{opacity:1}}
+.grim-topbar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(0,0,0,.7);border-bottom:1px solid rgba(245,223,170,.15);flex-shrink:0}
+.grim-title{color:#f5dfaa;font-family:'Georgia','Times New Roman',serif;font-size:14px;font-weight:600;letter-spacing:.4px;flex:1;text-align:center;padding:0 4px;line-height:1.25}
+.grim-btn-close,.grim-btn-toc{background:rgba(245,223,170,.08);color:#f5dfaa;border:1px solid rgba(245,223,170,.2);border-radius:10px;padding:8px 12px;font-size:12px;cursor:pointer;font-weight:700;flex-shrink:0}
+.grim-book{flex:1;perspective:2500px;display:flex;justify-content:center;align-items:stretch;padding:12px;overflow:hidden;position:relative}
+.grim-page-wrap{position:relative;width:100%;max-width:560px;height:100%;transform-style:preserve-3d}
+.grim-page{position:absolute;inset:0;background:radial-gradient(ellipse at center,#f4e8cc 0%,#e8d5a8 92%,#d9c288 100%);border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.65),inset 0 0 50px rgba(139,90,40,.1);padding:26px 22px 40px;overflow-y:auto;filter:sepia(6%);-webkit-overflow-scrolling:touch}
+.grim-page::before{content:"";position:absolute;inset:6px;border:1px solid rgba(139,90,40,.22);border-radius:3px;pointer-events:none}
+.grim-flip-anim{transform-origin:left center;transition:transform 700ms cubic-bezier(.42,0,.2,1);backface-visibility:hidden;box-shadow:0 12px 40px rgba(0,0,0,.65),inset 0 0 50px rgba(139,90,40,.1)}
+.grim-flip-next{animation:grim-flip-next 700ms cubic-bezier(.42,0,.2,1) forwards}
+.grim-flip-prev{animation:grim-flip-prev 700ms cubic-bezier(.42,0,.2,1) forwards;transform-origin:right center}
+@keyframes grim-flip-next{from{transform:rotateY(0);box-shadow:0 12px 40px rgba(0,0,0,.65)}to{transform:rotateY(-170deg);box-shadow:-20px 12px 40px rgba(0,0,0,.75)}}
+@keyframes grim-flip-prev{from{transform:rotateY(0)}to{transform:rotateY(170deg)}}
+/* Typography inside page */
+.grim-page-content{font-family:'Georgia','Times New Roman',serif;color:#3d2817;font-size:15px;line-height:1.65}
+.grim-chapter-title{font-size:21px;font-weight:700;text-align:center;margin-bottom:6px;color:#6b3410;letter-spacing:1.2px;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid rgba(107,52,16,.28)}
+.grim-chapter-intro{font-style:italic;text-align:center;color:#6b4820;margin-bottom:18px;font-size:13.5px;line-height:1.55}
+.grim-heading{font-size:16px;font-weight:700;color:#6b3410;margin:18px 0 8px;letter-spacing:.3px;border-left:3px solid #8b5a28;padding-left:10px}
+.grim-paragraph{margin-bottom:11px}
+.grim-rule{background:rgba(139,90,40,.08);border-left:3px solid #8b5a28;border-radius:4px;padding:9px 13px;margin:11px 0}
+.grim-rule-label{font-weight:800;color:#6b3410;font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.grim-rule-formula{font-family:'Courier New',monospace;font-size:13.5px;color:#3d2817;font-style:italic}
+.grim-example{background:rgba(255,255,255,.38);border-radius:6px;padding:9px 12px;margin:9px 0;border-left:2px solid rgba(139,90,40,.4)}
+.grim-example-en{font-weight:600;color:#2a1a08;font-size:14.5px}
+.grim-example-fr{color:#6b4820;font-size:12.5px;margin-top:3px;font-style:italic}
+.grim-example-note{color:#8b5a28;font-size:11.5px;margin-top:5px;padding-top:5px;border-top:1px dashed rgba(139,90,40,.25);line-height:1.5}
+.grim-trap{background:rgba(200,50,50,.1);border:1px solid rgba(200,50,50,.32);border-radius:6px;padding:10px 13px;margin:12px 0;color:#6b1a1a;font-size:13px;line-height:1.5}
+.grim-trap::before{content:"⚠  ";font-weight:800;color:#b02020;margin-right:2px}
+.grim-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.5px}
+.grim-table th{background:rgba(139,90,40,.18);color:#3d2817;font-weight:800;padding:7px 8px;border:1px solid rgba(139,90,40,.3);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+.grim-table td{padding:6px 8px;border:1px solid rgba(139,90,40,.22);color:#3d2817;background:rgba(255,255,255,.22)}
+.grim-list{margin:6px 0 12px 18px;padding:0}
+.grim-list li{margin-bottom:5px;line-height:1.55}
+.grim-page-num{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-family:'Georgia',serif;font-style:italic;color:#6b4820;font-size:11px;opacity:.65;pointer-events:none;letter-spacing:2px}
+.grim-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:rgba(0,0,0,.7);border-top:1px solid rgba(245,223,170,.15);flex-shrink:0}
+.grim-nav-btn{background:linear-gradient(135deg,#8b5a28,#6b3410);color:#f5dfaa;border:1px solid rgba(245,223,170,.3);border-radius:12px;padding:11px 14px;font-weight:700;font-size:13px;cursor:pointer;min-width:80px;touch-action:manipulation}
+.grim-nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.grim-nav-info{color:#f5dfaa;font-family:'Georgia',serif;font-size:12px;flex:1;text-align:center;letter-spacing:.4px}
+.grim-toc{position:absolute;inset:0;background:rgba(10,6,4,.97);z-index:20;padding:20px 18px;overflow-y:auto;animation:grim-fade-in .2s ease}
+.grim-toc-title{color:#f5dfaa;font-family:'Georgia',serif;font-size:18px;font-weight:700;text-align:center;margin-bottom:16px;letter-spacing:1px}
+.grim-toc-item{display:block;width:100%;background:rgba(245,223,170,.06);color:#f5dfaa;border:1px solid rgba(245,223,170,.15);border-radius:10px;padding:12px 14px;margin-bottom:7px;text-align:left;cursor:pointer;font-family:'Georgia',serif;font-size:14px;line-height:1.35}
+.grim-toc-item.active{background:rgba(245,223,170,.18);border-color:rgba(245,223,170,.45)}
+@media(max-width:480px){
+  .grim-page{padding:22px 18px 38px;border-radius:4px}
+  .grim-chapter-title{font-size:18px;letter-spacing:1px}
+  .grim-heading{font-size:15px}
+  .grim-page-content{font-size:14px;line-height:1.6}
+  .grim-paragraph{margin-bottom:10px}
+  .grim-example-en{font-size:13.5px}
+  .grim-table{font-size:11.5px}
+  .grim-table th,.grim-table td{padding:5px 6px}
+  .gauntlet-card{padding:14px 13px}
+  .gauntlet-card-icon{font-size:32px}
+  .gauntlet-card-name{font-size:15.5px}
+  .grim-nav-btn{padding:10px 12px;font-size:12.5px;min-width:72px}
+  .grim-btn-close,.grim-btn-toc{padding:7px 10px;font-size:11.5px}
+  .grim-title{font-size:13px}
+}
+`;
+
+// ─── GRIMOIRE RENDERER (block-based pedagogical manuscript) ───
+// Consumes blocks from data/grammarGauntletGrimoire.js.
+// Mobile-first: single page, swipe left/right, CSS 3D flip animation.
+function renderGrimoireBlock(b,i){
+  if(b.type==="paragraph")return(<p key={i} className="grim-paragraph">{b.text}</p>);
+  if(b.type==="heading")return(<h4 key={i} className="grim-heading">{b.text}</h4>);
+  if(b.type==="rule")return(<div key={i} className="grim-rule">{b.label&&<div className="grim-rule-label">{b.label}</div>}<div className="grim-rule-formula">{b.formula}</div></div>);
+  if(b.type==="example")return(<div key={i} className="grim-example"><div className="grim-example-en">{b.en}</div>{b.fr&&<div className="grim-example-fr">{b.fr}</div>}{b.note&&<div className="grim-example-note">{b.note}</div>}</div>);
+  if(b.type==="trap")return(<div key={i} className="grim-trap">{b.text}</div>);
+  if(b.type==="table")return(<table key={i} className="grim-table"><thead><tr>{b.headers.map(function(h,j){return(<th key={j}>{h}</th>);})}</tr></thead><tbody>{b.rows.map(function(r,j){return(<tr key={j}>{r.map(function(c,k){return(<td key={k}>{c}</td>);})}</tr>);})}</tbody></table>);
+  if(b.type==="list")return(<ul key={i} className="grim-list">{b.items.map(function(it,j){return(<li key={j}>{it}</li>);})}</ul>);
+  return null;
+}
+
+function GrimoireReader(p){
+  var grim=p.grimoire;
+  var [chIdx,setChIdx]=useState(0);
+  var [flipDir,setFlipDir]=useState(null); // null | "next" | "prev"
+  var [showToc,setShowToc]=useState(false);
+  var touchStart=useRef(0);
+  var ch=grim.chapters[chIdx];
+  var total=grim.chapters.length;
+  var romans=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+  function go(dir){
+    if(flipDir)return;
+    var nxt=dir==="next"?chIdx+1:chIdx-1;
+    if(nxt<0||nxt>=total)return;
+    try{haptic("pageturn");}catch(e){console.warn("[Grim] haptic:",e&&e.message);}
+    setFlipDir(dir);
+    setTimeout(function(){setChIdx(nxt);setFlipDir(null);},680);
+  }
+  function onTouchStart(e){touchStart.current=e.touches[0].clientX;}
+  function onTouchEnd(e){
+    var dx=e.changedTouches[0].clientX-touchStart.current;
+    if(dx<-50)go("next");
+    else if(dx>50)go("prev");
+  }
+  function pickTocItem(i){setChIdx(i);setShowToc(false);}
+  return(<div className="grim-overlay">
+    <div className="grim-topbar">
+      <button className="grim-btn-toc" onClick={function(){setShowToc(true);}}>{"\u2630"} Chapitres</button>
+      <div className="grim-title">{grim.title}</div>
+      <button className="grim-btn-close" onClick={p.back}>{"\u2715"}</button>
+    </div>
+    <div className="grim-book" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div className="grim-page-wrap">
+        <div className={"grim-page"+(flipDir==="next"?" grim-flip-anim grim-flip-next":flipDir==="prev"?" grim-flip-anim grim-flip-prev":"")}>
+          <div className="grim-page-content">
+            <div className="grim-chapter-title">{ch.title}</div>
+            {ch.intro&&<div className="grim-chapter-intro">{ch.intro}</div>}
+            {ch.blocks.map(function(b,i){return renderGrimoireBlock(b,i);})}
+          </div>
+          <div className="grim-page-num">{"\u2014 "+(romans[chIdx]||(chIdx+1))+" \u2014"}</div>
+        </div>
+      </div>
+    </div>
+    <div className="grim-nav">
+      <button className="grim-nav-btn" disabled={chIdx===0||flipDir} onClick={function(){go("prev");}}>{"\u25C0 Prev"}</button>
+      <div className="grim-nav-info">{"Chapitre "+(chIdx+1)+" / "+total}</div>
+      <button className="grim-nav-btn" disabled={chIdx>=total-1||flipDir} onClick={function(){go("next");}}>{"Next \u25B6"}</button>
+    </div>
+    {showToc&&<div className="grim-toc">
+      <div className="grim-toc-title">Table des Chapitres</div>
+      {grim.chapters.map(function(c,i){return(
+        <button key={i} className={"grim-toc-item"+(i===chIdx?" active":"")} onClick={function(){pickTocItem(i);}}>{c.title}</button>
+      );})}
+      <button className="grim-btn-close" style={{display:"block",margin:"18px auto 0",padding:"10px 20px"}} onClick={function(){setShowToc(false);}}>Fermer</button>
+    </div>}
+  </div>);
+}
+
+// ─── GAUNTLET HUB — entry point for the 4 sub-modules ───
+// GUARD: do NOT remove the "Coming soon" alert on Enter before the sub-modules
+// (IrregularCrypt, Chronomancer, PassiveForge, RelativeWeaver) are actually wired.
+// They land in subsequent dev steps (see grammarGauntlet.js prototype data).
+function GauntletHub(p){
+  var [openGrim,setOpenGrim]=useState(null);
+  var scores=(p.u&&p.u.moduleScores&&p.u.moduleScores.gauntlet)||{};
+  var cards=[
+    {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume les verbes irr\u00e9guliers endormis. 15 items par raid, V2 et V3 \u00e0 la main.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",grimoire:null,stats:scores.irregular},
+    {id:"chronomancer",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores.tense},
+    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores.passive},
+    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores.relative}
+  ];
+  function fmtAcc(s){if(!s||!s.total)return"\u2014";return Math.round((s.correct/s.total)*100)+"%";}
+  return(<div className="gauntlet-hub enter">
+    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:12,padding:0}}>{"\u2190"} Grammar &amp; Vocab</button>
+    <div className="gauntlet-header">
+      <div style={{fontSize:46,marginBottom:6,filter:"drop-shadow(0 4px 14px rgba(124,58,237,.45))"}}>{"\uD83D\uDEE1\uFE0F"}</div>
+      <h2 className="gauntlet-title">GRAMMAR GAUNTLET</h2>
+      <div className="gauntlet-sub">Quatre \u00e9preuves. Une seule couronne.</div>
+    </div>
+    {cards.map(function(c){return(
+      <div key={c.id} className="gauntlet-card">
+        <div className="gauntlet-card-accent" style={{background:c.accent}}/>
+        <div className="gauntlet-card-head">
+          <div className="gauntlet-card-icon">{c.icon}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="gauntlet-card-name">{c.name}</div>
+          </div>
+        </div>
+        <div className="gauntlet-card-desc">{c.desc}</div>
+        <div className="gauntlet-card-stats">
+          <span>{(c.stats&&c.stats.sessions)||0} session{c.stats&&c.stats.sessions>1?"s":""}</span>
+          <span>{"\u00b7"}</span>
+          <span>Pr\u00e9cision : {fmtAcc(c.stats)}</span>
+        </div>
+        <div className="gauntlet-card-actions">
+          <button className="gauntlet-btn-enter" onClick={function(){alert("Sous-module en cours de d\u00e9veloppement. Arrivera dans la prochaine \u00e9tape !");}}>{"\u2694\uFE0F Entrer"}</button>
+          {c.grimoire&&<button className="gauntlet-btn-grim" onClick={function(){setOpenGrim(c.grimoire);}}>{"\uD83D\uDCD6 Grimoire"}</button>}
+        </div>
+      </div>
+    );})}
+    {openGrim&&<GrimoireReader grimoire={openGrim} back={function(){setOpenGrim(null);}}/>}
+  </div>);
+}
 
 // ─── SMALL COMPONENTS ───
 function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div className="bar-fill" style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,var(--cx-hex),var(--cx-dark))",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
@@ -2182,7 +2380,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
       {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
-    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"🧩",count:"7 modules",items:[
+    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"🧩",count:"8 modules",items:[
       {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
       {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
       {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
@@ -2190,6 +2388,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
       {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
       {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
+      {id:"gauntlet",n:"Grammar Gauntlet",d:"4 trials · Irregulars, Tenses, Passive, Relatives",i:"🛡️",bg:"linear-gradient(135deg,#7c3aed,#c026d3)"},
     ]},
     {key:"mocks",title:"Mock Exams",sub:"Real conditions",icon:"📜",count:"3 tests",items:(function(){
       var items=[];
@@ -11697,6 +11896,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="traps")return pg(<TrapsQuiz u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"traps");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="falsefr")return pg(<FalseFriends u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"falsefr");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="pvdojo")return pg(<PhrasalDojo u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"pvdojo");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="gauntlet")return pg(<GauntletHub u={u} nav={nav} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="mock1")return pg(<MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
   if(sp==="mock2")return pg(<MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
 
