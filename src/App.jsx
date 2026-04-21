@@ -11039,8 +11039,16 @@ useEffect(function(){
         .update({email:newEmail})
         .ilike('name',u.name)
         .eq('class_code',u.classCode||'visitor')
+        .select('id') // return affected rows so we can check the actual count
         .then(function(res){
           if(res.error){console.error('[auth] email sync failed:',res.error.message);return;}
+          if(!res.data||res.data.length===0){
+            // No students row matched — probably not yet written to DB (onboarding still in progress).
+            // Don't claim "email linked" in local state, otherwise the Profile UI would show
+            // "Compte sécurisé" while the DB has no record of it.
+            console.warn('[auth] email confirmed but no students row to update yet for',u.name,'— waiting for next save');
+            return;
+          }
           var c=JSON.parse(JSON.stringify(u));c.email=newEmail;sU(c);
           console.log('[auth] email linked:',newEmail);
         });
@@ -11463,12 +11471,12 @@ var prevLeague=getLeague(c.weeklyXp);
       userId=authRes.data.user.id;
     }
 
-    // Bind this profile to the current session's user_id
-    // This ensures the next load() by ID returns the correct profile
-    if(d.id!==userId){
-      await supabase.from('students').update({id:userId}).eq('id',d.id);
-      _cachedUserId=userId;
-    }
+    // id rebinding removed: previously we tried to UPDATE students.id = currentAuthUid so
+    // load()'s fallback-by-id would find the row. This caused 409 conflicts on multi-profile
+    // devices (same auth user recovering different students — each UPDATE hit the PK unique
+    // constraint). Since the INSERT policy was relaxed (no more id = auth.uid() requirement)
+    // and primary lookup uses (name, class_code) from localStorage, id rebinding is obsolete.
+    _cachedUserId=userId;
 
     try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     try { localStorage.setItem('toeic-arena-class', classCode); } catch(e) {}
