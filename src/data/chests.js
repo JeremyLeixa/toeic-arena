@@ -101,7 +101,7 @@ export var UNIQUE_TRIGGERS = {
 // league_up_{id} and ach_legendary_{id} are dynamic — handled separately
 
 // Achievements that grant a Légendaire chest when unlocked
-export var LEGENDARY_ACHIEVEMENTS = ["boss_complete","boss_800","legend_league","toeic_master"];
+export var LEGENDARY_ACHIEVEMENTS = ["boss_complete","boss_800","legend_league","toeic_master","gauntlet_champion"];
 
 // ═══ ROLL LOGIC ═══
 export function rollRarity(chestType, pityCount){

@@ -368,7 +368,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-21-relative-weaver";
+var BUILD_ID="2026-04-21-gauntlet-ecosystem";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -8597,6 +8597,10 @@ function getTriggerLabel(trigger){
   if(trigger==="ablitz_70")return"Audio Blitz 70%+";
   if(trigger==="ablitz_90")return"Audio Blitz 90%+";
   if(trigger==="sbuild_90")return"Sentence Builder 90%+";
+  if(trigger==="gauntlet_irregular_perfect")return"Irregular Crypt perfect raid";
+  if(trigger==="gauntlet_tense_perfect")return"Chronomancer mastered";
+  if(trigger==="gauntlet_passive_perfect")return"Passive Forge mastered";
+  if(trigger==="gauntlet_relative_perfect")return"Relative Weaver mastered";
   if(trigger.indexOf("league_up_")===0){
     var lg=trigger.substring(10);
     return"Promoted to "+lg.charAt(0).toUpperCase()+lg.slice(1)+" League";
@@ -11049,7 +11053,10 @@ function estimateTOEICScore(ms){
   var lisParts=[{id:"lisP1",w:0.20},{id:"lisP2",w:0.30},{id:"lisP3",w:0.25},{id:"lisP4",w:0.25}];
   var vocabVals=[acc("wordfam"),acc("connsort"),acc("prepdrill"),acc("gerinf")].filter(function(v){return v!==null;});
   var vocabAvg=vocabVals.length>0?vocabVals.reduce(function(a,b){return a+b;},0)/vocabVals.length:null;
-  var rdParts=[{id:"drill",w:0.35},{id:"p6",w:0.25},{id:"p7",w:0.30},{val:vocabAvg,w:0.10}];
+  // Grammar Gauntlet — average across the 4 sub-modules (morpho-syntaxe verbale deep dive)
+  var gauntletVals=[acc("gauntlet_irregular"),acc("gauntlet_tense"),acc("gauntlet_passive"),acc("gauntlet_relative")].filter(function(v){return v!==null;});
+  var gauntletAvg=gauntletVals.length>0?gauntletVals.reduce(function(a,b){return a+b;},0)/gauntletVals.length:null;
+  var rdParts=[{id:"drill",w:0.30},{id:"p6",w:0.20},{id:"p7",w:0.25},{val:vocabAvg,w:0.10},{val:gauntletAvg,w:0.15}];
   function section(parts){
     var wSum=0,wTot=0,hasData=false;
     parts.forEach(function(p){var v=p.val!==undefined?p.val:acc(p.id);if(v!==null){wSum+=v*p.w;wTot+=p.w;hasData=true;}});
@@ -12536,7 +12543,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="traps")return pg(<TrapsQuiz u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"traps");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="falsefr")return pg(<FalseFriends u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"falsefr");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="pvdojo")return pg(<PhrasalDojo u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"pvdojo");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
-  if(sp==="gauntlet")return pg(<GauntletHub u={u} nav={nav} onModuleDone={function(subId,sc,tot,xp){var fullModId="gauntlet_"+subId;var gxp=applyXpGates(xp,sc,tot,fullModId);gxp=Math.round(gxp*getSpotlightMult(fullModId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,fullModId);recordModule(c,fullModId,sc,tot);checkMission(c,fullModId);sv(c);}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="gauntlet")return pg(<GauntletHub u={u} nav={nav} onModuleDone={function(subId,sc,tot,xp){var fullModId="gauntlet_"+subId;var gxp=applyXpGates(xp,sc,tot,fullModId);gxp=Math.round(gxp*getSpotlightMult(fullModId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,fullModId);recordModule(c,fullModId,sc,tot);checkMission(c,fullModId);if(sc===tot&&tot>0)grantWeeklyChest(fullModId+"_perfect","guerrier");sv(c);}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="mock1")return pg(<MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
   if(sp==="mock2")return pg(<MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
 
