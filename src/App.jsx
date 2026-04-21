@@ -397,13 +397,33 @@ async function load(userId){
 var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync to Supabase
 // A "ghost student" is a registered student (non-visitor) who barely engaged with the app
 function isGhost(s){if(!s)return false;if(s.class_code==="visitor")return false;var tq=(s.stats&&s.stats.totalQ)||0;var cr=(s.stats&&s.stats.cardsRev)||0;return tq<=15&&cr<=10;}
+// Recover an auth session if the current one has been lost (refresh token expired,
+// tab backgrounded too long, etc). Returns a user object or null if recovery failed.
+async function ensureAuthSession(){
+  try{
+    var sess=await supabase.auth.getUser();
+    if(sess.data&&sess.data.user)return sess.data.user;
+  }catch(e){/* session missing — fall through to recovery */}
+  // Try to refresh first (session may exist in storage but JWT expired)
+  try{
+    var refreshed=await supabase.auth.refreshSession();
+    if(refreshed.data&&refreshed.data.user){console.warn("[AUTH] recovered via refreshSession");return refreshed.data.user;}
+  }catch(e){/* refresh failed — need a new session */}
+  // Last resort: new anonymous session. save()'s UPDATE matches by (name, class_code)
+  // not id, so the row stays reachable even though the user_id changed.
+  try{
+    var anon=await supabase.auth.signInAnonymously();
+    if(anon.data&&anon.data.user){console.warn("[AUTH] recovered via new anon session");return anon.data.user;}
+  }catch(e){/* fully stuck */}
+  return null;
+}
+
 async function save(d){
   saveLocal(d);
   if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
   // Teacher now syncs to Supabase (hidden from leaderboards via League/TeacherDash filters)
-  var sess=await supabase.auth.getUser();
-  var user=sess.data?sess.data.user:null;
-  if(!user){console.error("[SAVE] BLOCKED: getUser() returned null — auth session lost?",sess.error?sess.error.message:"no error");return;}
+  var user=await ensureAuthSession();
+  if(!user){console.error("[SAVE] BLOCKED: could not establish auth session");return;}
   _cachedUserId=user.id;
   var payload={
     xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
