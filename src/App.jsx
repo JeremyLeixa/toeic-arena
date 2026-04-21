@@ -368,7 +368,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-21-passive-forge";
+var BUILD_ID="2026-04-21-relative-weaver";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1633,6 +1633,150 @@ function PassiveForge(p){
   </div>);
 }
 
+// ─── RELATIVE WEAVER — sub-module 4/4 of Grammar Gauntlet ───
+// QCM reflection: 15 questions per session, no timer. Mixes defining/
+// non-defining, reduced relatives, possession (whose), place/time.
+// The item `type` is NOT shown during play (would spoil the answer) but
+// shown on the end screen to help the student map weaknesses.
+function RelativeWeaver(p){
+  var SESSION_SIZE=15;
+  var [deck,setDeck]=useState(null);
+  var [phase,setPhase]=useState("intro");
+  var [idx,setIdx]=useState(0);
+  var [picked,setPicked]=useState(null);
+  var [results,setResults]=useState([]);
+
+  function startSession(){
+    var shuffled=[].concat(RELATIVE_WEAVER).sort(function(){return Math.random()-0.5;});
+    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
+    setDeck(d);setIdx(0);setResults([]);setPicked(null);setPhase("play");
+  }
+  function pickAnswer(optIdx){
+    if(phase!=="play"||!deck)return;
+    var q=deck[idx];
+    var ok=optIdx===q.c;
+    if(ok){try{playCorrect();}catch(e){console.warn("[weaver] sfx:",e&&e.message);}}
+    else{try{playWrong();}catch(e){console.warn("[weaver] sfx:",e&&e.message);}}
+    setPicked(optIdx);
+    setResults(results.concat([{q:q,picked:optIdx,ok:ok}]));
+    setPhase("reveal");
+  }
+  function nextQ(){
+    if(!deck)return;
+    if(idx>=deck.length-1){setPhase("end");}
+    else{setIdx(idx+1);setPicked(null);setPhase("play");}
+  }
+  function finishSession(){
+    var correct=results.filter(function(r){return r.ok;}).length;
+    var baseXp=correct*3+10;
+    if(correct===deck.length)baseXp+=25;
+    p.done(correct,deck.length,baseXp);
+  }
+  function renderWithBlank(s){
+    var segs=s.split(/_{3,}/);
+    return segs.map(function(seg,j){
+      return(<span key={j}>{seg}{j<segs.length-1&&<span className="chrono-blank">_____</span>}</span>);
+    });
+  }
+  function typeLabel(t){
+    if(!t)return"";
+    if(t.indexOf("reduced_relative_active")===0)return"Reduced relative (active)";
+    if(t.indexOf("reduced_relative_passive")===0)return"Reduced relative (passive)";
+    if(t.indexOf("reduced_relative")===0)return"Reduced relative";
+    if(t.indexOf("non_defining")===0)return"Non-defining";
+    if(t.indexOf("defining")===0)return"Defining";
+    if(t.indexOf("possession")===0)return"Possession (whose)";
+    if(t==="place")return"Lieu (where)";
+    if(t==="time")return"Temps (when)";
+    if(t==="formal_object_person")return"Formal (whom)";
+    return t.replace(/_/g," ");
+  }
+
+  if(phase==="intro"){
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,padding:0,marginBottom:12}}>{"\u2190"} Gauntlet Hub</button>
+      <div style={{textAlign:"center",padding:"24px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{"\uD83D\uDD78\uFE0F"}</div>
+        <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Relative Weaver</h2>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Tisse les propositions relatives. Attention aux virgules \u2014 elles changent tout.</p>
+        <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
+          <div>{"\uD83D\uDD78\uFE0F"} <strong>15 questions</strong>, pas de timer</div>
+          <div>{"\uD83D\uDD0D"} Defining, non-defining, reduced, whose</div>
+          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne r\u00e9ponse \u00b7 bonus perfect</div>
+        </div>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer"}</button>
+      </div>
+    </div>);
+  }
+
+  if(phase==="end"){
+    var correctCount=results.filter(function(r){return r.ok;}).length;
+    var isPerfect=correctCount===deck.length;
+    var isGood=correctCount>=Math.ceil(deck.length*0.7);
+    var missed=results.filter(function(r){return!r.ok;});
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+      <div style={{textAlign:"center",padding:"20px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83D\uDD78\uFE0F"}</div>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"WEB MASTERED":isGood?"Weaver r\u00e9ussi":"Session termin\u00e9e"}</h2>
+        <div style={{fontSize:44,fontWeight:800,color:"#7c3aed",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes r\u00e9ponses</p>
+        {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
+          {missed.slice(0,8).map(function(r,i){return(
+            <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
+              <div style={{marginBottom:3}}>{renderWithBlank(r.q.s)}</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginTop:4,flexWrap:"wrap"}}>
+                <span style={{fontSize:11.5,color:"#86efac"}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></span>
+                <span style={{fontSize:10,color:"var(--t3)",padding:"2px 7px",background:"rgba(124,58,237,.12)",borderRadius:99,fontWeight:700,letterSpacing:.3}}>{typeLabel(r.q.type)}</span>
+              </div>
+            </div>
+          );})}
+        </div>}
+        <button className="btn1" style={{background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, retour</button>
+      </div>
+    </div>);
+  }
+
+  // play / reveal
+  var q=deck[idx];
+  var progPct=(idx+1)/deck.length*100;
+  var lastResult=results[results.length-1];
+  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:13,padding:0,marginBottom:8}}>{"\u2190"} Abandonner</button>
+    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Question {idx+1} / {deck.length}</div>
+    <div style={{width:"100%",height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:18}}>
+      <div style={{width:progPct+"%",height:"100%",background:"linear-gradient(90deg,#0891b2,#7c3aed)",transition:"width .3s ease"}}/>
+    </div>
+    {/* Sentence */}
+    <div className="crd" style={{padding:"18px 16px",marginBottom:14,fontSize:16.5,lineHeight:1.7,color:"var(--t1)"}}>
+      {renderWithBlank(q.s)}
+    </div>
+    {/* Options */}
+    <div>
+      {q.o.map(function(opt,i){
+        var cls="chrono-opt";
+        if(phase==="reveal"){
+          if(i===q.c)cls+=" correct";
+          else if(i===picked)cls+=" wrong";
+          else cls+=" faded";
+        }
+        return(<button key={i} className={cls} disabled={phase==="reveal"} onClick={function(){pickAnswer(i);}}>
+          <span style={{display:"inline-block",width:22,fontWeight:800,color:phase==="reveal"&&i===q.c?"#22c55e":phase==="reveal"&&i===picked?"#ef4444":"var(--t3)"}}>{String.fromCharCode(65+i)}.</span>{opt}
+        </button>);
+      })}
+    </div>
+    {/* Reveal card */}
+    {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(lastResult&&lastResult.ok?"#22c55e":"#f59e0b")}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+        <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":"Explication"}</span>
+        <span style={{fontSize:10,color:"#d8b4fe",padding:"2px 8px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(124,58,237,.3)",borderRadius:99,fontWeight:700,letterSpacing:.3}}>{typeLabel(q.type)}</span>
+      </div>
+      <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"Voir le r\u00e9sultat":"Question suivante \u2192"}</button>
+    </div>}
+  </div>);
+}
+
 // ─── GAUNTLET HUB — entry point for the 4 sub-modules ───
 // Internal state `subMode` decides whether to render the hub or a sub-module.
 // Passes onModuleDone (from App) the modId when a sub-module completes, so the
@@ -1648,7 +1792,7 @@ function GauntletHub(p){
     {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume les verbes irr\u00e9guliers endormis. 15 items par raid, V2 et V3 \u00e0 la main.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_speed",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
     {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_clue",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:true},
     {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_build",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:true},
-    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_build",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:false}
+    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_build",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:true}
   ];
   function fmtAcc(s){if(!s||!s.total)return"\u2014";return Math.round((s.correct/s.total)*100)+"%";}
   function enterSub(card){
@@ -1670,7 +1814,7 @@ function GauntletHub(p){
   if(subMode==="irregular")return(<IrregularCrypt u={p.u} done={subDone} back={subAbort}/>);
   if(subMode==="tense")return(<Chronomancer u={p.u} done={subDone} back={subAbort}/>);
   if(subMode==="passive")return(<PassiveForge u={p.u} done={subDone} back={subAbort}/>);
-  // Relative Weaver wires up in step 7.
+  if(subMode==="relative")return(<RelativeWeaver u={p.u} done={subDone} back={subAbort}/>);
 
   return(<div className="gauntlet-hub enter">
     <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:12,padding:0}}>{"\u2190"} Grammar &amp; Vocab</button>
