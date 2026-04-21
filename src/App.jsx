@@ -368,7 +368,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-21-chronomancer";
+var BUILD_ID="2026-04-21-passive-forge";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1466,6 +1466,173 @@ function Chronomancer(p){
   </div>);
 }
 
+// ─── PASSIVE FORGE — sub-module 3/4 of Grammar Gauntlet ───
+// QCM 2-modes (transform vs fill-in). 15 questions per session.
+// Timer 30s per question (validated spec): auto-miss on expiry. The timer
+// rewards fluency in passive construction — 30s is enough to mentally
+// conjugate be + V3, but short enough to discourage guessing-then-reading.
+function PassiveForge(p){
+  var SESSION_SIZE=15;
+  var TIME_PER_Q=30;
+  var [deck,setDeck]=useState(null);
+  var [phase,setPhase]=useState("intro"); // intro | play | reveal | end
+  var [idx,setIdx]=useState(0);
+  var [picked,setPicked]=useState(null); // null | number | -1 (timed out)
+  var [results,setResults]=useState([]);
+  var [timeLeft,setTimeLeft]=useState(TIME_PER_Q);
+
+  function startSession(){
+    var shuffled=[].concat(PASSIVE_FORGE).sort(function(){return Math.random()-0.5;});
+    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
+    setDeck(d);setIdx(0);setResults([]);setPicked(null);
+    setTimeLeft(TIME_PER_Q);setPhase("play");
+  }
+  function pickAnswer(optIdx){
+    if(phase!=="play"||!deck)return;
+    var q=deck[idx];
+    var ok=optIdx===q.c;
+    if(ok){try{playCorrect();}catch(e){console.warn("[forge] sfx:",e&&e.message);}}
+    else{try{playWrong();}catch(e){console.warn("[forge] sfx:",e&&e.message);}}
+    setPicked(optIdx);
+    setResults(results.concat([{q:q,picked:optIdx,ok:ok,timedOut:false}]));
+    setPhase("reveal");
+  }
+  function timeoutQ(){
+    if(phase!=="play"||!deck)return;
+    try{playWrong();}catch(e){console.warn("[forge] sfx:",e&&e.message);}
+    var q=deck[idx];
+    setPicked(-1);
+    setResults(results.concat([{q:q,picked:-1,ok:false,timedOut:true}]));
+    setPhase("reveal");
+  }
+  function nextQ(){
+    if(!deck)return;
+    if(idx>=deck.length-1){setPhase("end");}
+    else{setIdx(idx+1);setPicked(null);setPhase("play");}
+  }
+  function finishSession(){
+    var correct=results.filter(function(r){return r.ok;}).length;
+    var baseXp=correct*3+10;
+    if(correct===deck.length)baseXp+=25;
+    p.done(correct,deck.length,baseXp);
+  }
+  // Timer
+  useEffect(function(){
+    if(phase!=="play")return;
+    if(timeLeft<=0){timeoutQ();return;}
+    var t=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
+    return function(){clearTimeout(t);};
+  },[timeLeft,phase]);
+  useEffect(function(){if(phase==="play")setTimeLeft(TIME_PER_Q);},[idx,phase]);
+
+  function renderWithBlank(s){
+    var segs=s.split(/_{3,}/);
+    return segs.map(function(seg,j){
+      return(<span key={j}>{seg}{j<segs.length-1&&<span className="chrono-blank">_____</span>}</span>);
+    });
+  }
+
+  if(phase==="intro"){
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,padding:0,marginBottom:12}}>{"\u2190"} Gauntlet Hub</button>
+      <div style={{textAlign:"center",padding:"24px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{"\u2692\uFE0F"}</div>
+        <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Passive Forge</h2>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Transforme actif en passif. Forge la bonne structure en 30 secondes.</p>
+        <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
+          <div>{"\u2699\uFE0F"} <strong>15 questions</strong>, 2 modes : transform + fill-in</div>
+          <div>{"\u23F1\uFE0F"} <strong>30 secondes</strong> par question</div>
+          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne r\u00e9ponse \u00b7 bonus perfect</div>
+        </div>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer"}</button>
+      </div>
+    </div>);
+  }
+
+  if(phase==="end"){
+    var correctCount=results.filter(function(r){return r.ok;}).length;
+    var isPerfect=correctCount===deck.length;
+    var isGood=correctCount>=Math.ceil(deck.length*0.7);
+    var missed=results.filter(function(r){return!r.ok;});
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+      <div style={{textAlign:"center",padding:"20px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u2692\uFE0F"}</div>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"FORGE MASTERED":isGood?"Forge r\u00e9ussie":"Session termin\u00e9e"}</h2>
+        <div style={{fontSize:44,fontWeight:800,color:"#f59e0b",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes r\u00e9ponses</p>
+        {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
+          {missed.slice(0,8).map(function(r,i){return(
+            <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
+              <div style={{marginBottom:3}}>{renderWithBlank(r.q.prompt)}</div>
+              <div style={{fontSize:11.5,color:"#86efac",marginTop:3}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></div>
+            </div>
+          );})}
+        </div>}
+        <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, retour</button>
+      </div>
+    </div>);
+  }
+
+  // phase "play" or "reveal"
+  var q=deck[idx];
+  var progPct=(idx+1)/deck.length*100;
+  var timePct=timeLeft/TIME_PER_Q*100;
+  var lastResult=results[results.length-1];
+  var isTimedOut=phase==="reveal"&&picked===-1;
+  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:13,padding:0,marginBottom:8}}>{"\u2190"} Abandonner</button>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,color:"var(--t3)",marginBottom:4}}>
+      <span>Question {idx+1} / {deck.length}</span>
+      {phase==="play"&&<span style={{fontWeight:700,color:timeLeft<10?"#ef4444":"#f59e0b"}}>{"\u23F1\uFE0F "+timeLeft+"s"}</span>}
+    </div>
+    {/* progress bar */}
+    <div style={{width:"100%",height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:8}}>
+      <div style={{width:progPct+"%",height:"100%",background:"linear-gradient(90deg,#dc2626,#f59e0b)",transition:"width .3s ease"}}/>
+    </div>
+    {/* timer bar */}
+    {phase==="play"&&<div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:16}}>
+      <div style={{width:timePct+"%",height:"100%",background:timeLeft<10?"#ef4444":"#f59e0b",transition:"width 1s linear"}}/>
+    </div>}
+    {phase==="reveal"&&<div style={{marginBottom:16}}/>}
+    {/* Mode badge */}
+    <div style={{textAlign:"center",marginBottom:12}}>
+      <span style={{display:"inline-block",padding:"3px 11px",background:q.mode==="transform"?"rgba(220,38,38,.15)":"rgba(245,158,11,.15)",border:"1px solid "+(q.mode==="transform"?"rgba(220,38,38,.4)":"rgba(245,158,11,.4)"),borderRadius:99,color:q.mode==="transform"?"#fca5a5":"#fcd34d",fontSize:11,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>{q.mode==="transform"?"\uD83D\uDD04 Transform":"\u270D\uFE0F Fill in the blank"}</span>
+    </div>
+    {/* Active sentence (transform mode only) */}
+    {q.mode==="transform"&&q.active&&<div style={{padding:"12px 14px",marginBottom:8,background:"rgba(255,255,255,.04)",border:"1px dashed var(--bg3)",borderRadius:10,fontSize:14,color:"var(--t3)",lineHeight:1.55}}>
+      <div style={{fontSize:10,color:"var(--t3)",opacity:.7,marginBottom:3,letterSpacing:1,textTransform:"uppercase",fontWeight:700}}>Actif</div>
+      {q.active}
+    </div>}
+    {q.mode==="transform"&&<div style={{textAlign:"center",fontSize:18,color:"var(--t3)",marginBottom:6}}>{"\u2193"}</div>}
+    {/* Prompt */}
+    <div className="crd" style={{padding:"16px",marginBottom:14,fontSize:16,lineHeight:1.7,color:"var(--t1)"}}>
+      {q.mode==="transform"&&<div style={{fontSize:10,color:"var(--t3)",opacity:.7,marginBottom:4,letterSpacing:1,textTransform:"uppercase",fontWeight:700}}>Passif</div>}
+      {renderWithBlank(q.prompt)}
+    </div>
+    {/* Options */}
+    <div>
+      {q.o.map(function(opt,i){
+        var cls="chrono-opt";
+        if(phase==="reveal"){
+          if(i===q.c)cls+=" correct";
+          else if(i===picked&&picked!==-1)cls+=" wrong";
+          else cls+=" faded";
+        }
+        return(<button key={i} className={cls} disabled={phase==="reveal"} onClick={function(){pickAnswer(i);}}>
+          <span style={{display:"inline-block",width:22,fontWeight:800,color:phase==="reveal"&&i===q.c?"#22c55e":phase==="reveal"&&i===picked&&picked!==-1?"#ef4444":"var(--t3)"}}>{String.fromCharCode(65+i)}.</span>{opt}
+        </button>);
+      })}
+    </div>
+    {/* Reveal card */}
+    {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(lastResult&&lastResult.ok?"#22c55e":isTimedOut?"#ef4444":"#f59e0b")}}>
+      <div style={{fontSize:11,color:isTimedOut?"#fca5a5":"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":isTimedOut?"\u23F1 Temps \u00e9coul\u00e9":"Explication"}</div>
+      <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"Voir le r\u00e9sultat":"Question suivante \u2192"}</button>
+    </div>}
+  </div>);
+}
+
 // ─── GAUNTLET HUB — entry point for the 4 sub-modules ───
 // Internal state `subMode` decides whether to render the hub or a sub-module.
 // Passes onModuleDone (from App) the modId when a sub-module completes, so the
@@ -1480,7 +1647,7 @@ function GauntletHub(p){
   var cards=[
     {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume les verbes irr\u00e9guliers endormis. 15 items par raid, V2 et V3 \u00e0 la main.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_speed",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
     {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_clue",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:true},
-    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_build",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:false},
+    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_build",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:true},
     {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_build",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:false}
   ];
   function fmtAcc(s){if(!s||!s.total)return"\u2014";return Math.round((s.correct/s.total)*100)+"%";}
@@ -1502,7 +1669,8 @@ function GauntletHub(p){
   // ── Sub-module rendering ──
   if(subMode==="irregular")return(<IrregularCrypt u={p.u} done={subDone} back={subAbort}/>);
   if(subMode==="tense")return(<Chronomancer u={p.u} done={subDone} back={subAbort}/>);
-  // Passive Forge / Relative Weaver wire up in steps 6-7.
+  if(subMode==="passive")return(<PassiveForge u={p.u} done={subDone} back={subAbort}/>);
+  // Relative Weaver wires up in step 7.
 
   return(<div className="gauntlet-hub enter">
     <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:12,padding:0}}>{"\u2190"} Grammar &amp; Vocab</button>
