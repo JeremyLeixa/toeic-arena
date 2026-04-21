@@ -366,7 +366,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-08a";
+var BUILD_ID="2026-04-21-post-crisis";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -10808,15 +10808,19 @@ function Profile(p){
         </button>
       </div>
 
-      {/* Teacher dashboard */}
-      <button className="btn2" onClick={async function(){
+      {/* Teacher dashboard — only shown for users in a teacher-dedicated class.
+          When the app is deployed on multiple campuses, each teacher gets their own
+          synthetic class (like 'teacher-internal') so the button stays out of view
+          for students/visitors. Access via the onboarding "Teacher access" link is
+          still possible with a valid teacher_code. */}
+      {u.classCode==="teacher-internal"&&<button className="btn2" onClick={async function(){
         // Try biometric first if registered
-        if(bioAvail&&bioRegistered){try{var ok=await bioAuthenticate();if(ok){p.goTeacher();return;}}catch(e){}}
+        if(bioAvail&&bioRegistered){try{var ok=await bioAuthenticate();if(ok){p.goTeacher();return;}}catch(e){console.warn("[teacher] biometric auth failed:",e&&e.message);}}
         // Fall back to password prompt
         var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}p.goTeacher();}else{alert("Code invalide");}});}}
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
         👨‍🏫 Teacher Dashboard
-      </button>
+      </button>}
 
       {/* Settings */}
       <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Settings</div>
@@ -10894,9 +10898,8 @@ function Profile(p){
 
       {/* Gestion du compte — groups Email, Export, Delete, Reset into a sub-page */}
       <button className="btn2" onClick={function(){setView("account");}}
-        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px"}}>
-        <span>{"\u2699\uFE0F Gestion du compte"}</span>
-        <span style={{fontSize:16,color:"var(--t3)"}}>{"\u2192"}</span>
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)",padding:"12px 16px"}}>
+        {"\u2699\uFE0F Gestion du compte"}
       </button>
 
       {/* Logout — kept on main for quick access */}

@@ -204,6 +204,44 @@ prototypes/
 
 ---
 
+## Hardened Rules — post-crisis 2026-04-21
+
+Ces règles s'appliquent à tout changement touchant : auth, sessions, save/load, identity binding, Supabase RLS, Onboarding, routing (sp/tab). Elles ont été durcies après la crise du 20-21 avril 2026 où un typo `setName` (au lieu de `sN`) caché par un `catch(e){}` muet a cassé le flow "Welcome back" pour tous les étudiants pendant 13 jours, suivi de 8 commits correctifs mal orientés. Voir `AUDIT_2026-04-21.md` pour le rapport complet.
+
+### 1. Zéro catch silencieux
+Tous les `catch(e){}` sur un chemin critique DOIVENT logger au minimum un `console.warn("[CTX] caught:", e&&e.message)`. Les catch muets ont caché le bug `setName` 13 jours.
+
+```js
+// NON
+try { risky(); } catch(e) {}
+
+// OUI
+try { risky(); } catch(e) { console.warn("[CTX] caught:", e&&e.message); }
+```
+
+### 2. Audit avant le 1er patch sur sous-système critique
+Avant de modifier un flow auth/sync/identity/routing, lire TOUTES les fonctions impliquées de bout en bout. Ne pas patcher symptôme par symptôme.
+
+### 3. Un commit = un changement logique
+Sur auth/sync/identity, ne jamais batcher plusieurs fixes corrélés. Chaque commit doit être revertable indépendamment. Si le message de commit nécessite plus d'une phrase d'action, splitter.
+
+### 4. Vérifier l'infra avant de théoriser
+Une hypothèse sur une RLS policy, un schema DB, un env var, une config serveur doit être **confirmée** (screenshot/SQL/dashboard) avant d'être utilisée comme base de raisonnement. Ne pas supposer — demander ou aller chercher.
+
+### 5. Setters React — grep d'abord
+Les setters dans `App.jsx` utilisent souvent des raccourcis : `sN` (setName), `sU` (setU), `sT` (setTab), `sSP` (setSp), `sL` (setLoading). Avant d'appeler un setter dans une fonction inline (notamment dans les composants Onboard, Home, Train, etc.), **grep** pour confirmer qu'il existe dans le scope. Les `ReferenceError` runtime sont invisibles à la compilation.
+
+### 6. BUILD_ID synchronisé
+Le `BUILD_ID` hardcodé en haut d'`App.jsx` (ligne ~369) doit refléter la date du dernier changement significatif. S'il est obsolète, les logs console sont trompeurs. À bumper à chaque session de modif critique.
+
+### 7. Logs diagnostiques avant fix mystérieux
+Face à un bug dont le symptôme n'est pas reproductible via la logique visible, **ajouter des logs aux points de décision du flow et dans tous les catch du chemin d'exécution suspect, push, demander à l'utilisateur de reproduire, analyser**. C'est ce qui a débloqué la crise du 21 avril.
+
+### 8. Commentaires de garde sur zones critiques
+Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor, ou INSERT sans id), laisser un commentaire inline qui explique POURQUOI ce choix et ce que le renvoyer en arrière casserait. Pas seulement le WHAT.
+
+---
+
 ## Language Policy
 
 - **Onboarding** (name, classcode, GDPR, Battle Scan, push opt-in): **French** — trust/consent flow, students need native language
