@@ -1149,10 +1149,20 @@ var[step,sSt]=useState("name");
         var authRes=await supabase.auth.signInAnonymously();
         if(!authRes.data.user){setLookingUp(false);sSt("classcode");return;}
       }
-      // Fetch all students, filter by normalized name (accent + case insensitive)
+      // Fetch students and filter by normalized name (accent + case insensitive).
+      // Use ilike('name', n) to minimize RLS surface — broader SELECT without filter
+      // has historically returned 0 rows on some RLS configs for new anon users.
       var norm=normalizeName(n);
-      var res=await supabase.from('students').select('name,class_code,xp');
+      var res=await supabase.from('students').select('name,class_code,xp').ilike('name',n);
+      console.warn("[LOOKUP]",n,"→ rows:",(res.data||[]).length,"error:",res.error?res.error.message:"none");
       var matches=(res.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
+      // Fallback: if the ilike query returned nothing, try a broader select
+      // (may be blocked by RLS but worth a shot before giving up)
+      if(matches.length===0){
+        var res2=await supabase.from('students').select('name,class_code,xp');
+        console.warn("[LOOKUP] fallback broader select → rows:",(res2.data||[]).length);
+        matches=(res2.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
+      }
       if(matches.length>0){
         // Use the DB name (original casing) so recovery works with the exact stored name
         setName(matches[0].name);
@@ -10922,6 +10932,7 @@ useEffect(function(){
     var sub=supabase.auth.onAuthStateChange(function(event,session){
       if(event==="TOKEN_REFRESHED"){return;} // Skip token refresh — state is already in memory
       if(session&&!loaded){
+        loaded=true; // Prevent re-entry on rapid auth events (INITIAL_SESSION + SIGNED_IN + USER_UPDATED firing in sequence caused [LOAD] spam)
         load(session.user.id).then(function(d){
           if(d){
             var td=today(),yd=new Date();yd.setDate(yd.getDate()-1);var ys=yd.toISOString().split("T")[0];
@@ -10947,7 +10958,6 @@ useEffect(function(){
               var tipDate=localStorage.getItem("toeic-tip-date");
               if(!tipDisabled&&tipDate!==today())setShowTip(true);
             }catch(e){}
-            loaded=true;
           }
           sL(false);
         });
