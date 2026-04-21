@@ -1234,11 +1234,11 @@ function IrregularCrypt(p){
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\uD83E\uDEA6"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Irregular Crypt</h2>
-        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Exhume 15 verbes irr\u00e9guliers des t\u00e9n\u00e8bres du pass\u00e9.</p>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Exhume 15 verbes irréguliers des ténèbres du passé.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
           <div>{"\u23F1\uFE0F"} <strong>15 secondes</strong> par verbe</div>
-          <div>{"\u270D\uFE0F"} Saisis <strong>V2</strong> (pr\u00e9t\u00e9rit) et <strong>V3</strong> (participe pass\u00e9)</div>
-          <div>{"\uD83C\uDFC6"} <strong>2 XP</strong> par verbe ma\u00eetris\u00e9 \u00b7 bonus perfect</div>
+          <div>{"\u270D\uFE0F"} Saisis <strong>V2</strong> (prétérit) et <strong>V3</strong> (participe passé)</div>
+          <div>{"\uD83C\uDFC6"} <strong>2 XP</strong> par verbe maîtrisé · bonus perfect</div>
         </div>
         <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer le raid"}</button>
       </div>
@@ -1256,7 +1256,7 @@ function IrregularCrypt(p){
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83E\uDEA6"}</div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"PERFECT RAID":isGood?"Raid r\u00e9ussi":"Raid termin\u00e9"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"#c026d3",margin:"14px 0 2px"}}>{totalFull}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:6}}>verbes ma\u00eetris\u00e9s (V2 + V3)</p>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:6}}>verbes maîtrisés (V2 + V3)</p>
         {totalPartial>0&&<p style={{color:"var(--t3)",fontSize:12,marginBottom:18}}>{totalPartial} partiellement correct{totalPartial>1?"s":""}</p>}
         {missed.length>0&&<div className="crd" style={{maxWidth:380,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
           <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
@@ -1286,9 +1286,9 @@ function IrregularCrypt(p){
     </div>
     {phase==="play"?(
       <div style={{maxWidth:360,margin:"0 auto"}}>
-        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V2 (pr\u00e9t\u00e9rit)</label>
+        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V2 (prétérit)</label>
         <input type="text" value={v2In} onChange={function(e){setV2In(e.target.value);}} autoFocus autoComplete="off" autoCapitalize="none" spellCheck="false" onKeyDown={function(e){if(e.key==="Enter"&&v2In){var n=document.getElementById("icrypt-v3");if(n)n.focus();}}} className="icrypt-input" style={{width:"100%",padding:"12px 14px",fontSize:17,background:"var(--bg2)",border:"2px solid var(--bg3)",borderRadius:10,color:"var(--t1)",marginBottom:14,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
-        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V3 (participe pass\u00e9)</label>
+        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V3 (participe passé)</label>
         <input id="icrypt-v3" type="text" value={v3In} onChange={function(e){setV3In(e.target.value);}} autoComplete="off" autoCapitalize="none" spellCheck="false" onKeyDown={function(e){if(e.key==="Enter")submit();}} className="icrypt-input" style={{width:"100%",padding:"12px 14px",fontSize:17,background:"var(--bg2)",border:"2px solid var(--bg3)",borderRadius:10,color:"var(--t1)",marginBottom:18,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
         <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:15,padding:"13px",fontWeight:800}} onClick={submit}>Valider</button>
       </div>
@@ -1390,11 +1390,11 @@ function Chronomancer(p){
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\u231B"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Chronomancer</h2>
-        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Ma\u00eetrise la temp\u00eate des temps verbaux. Chaque question cache un marqueur temporel.</p>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Maîtrise la tempête des temps verbaux. Chaque question cache un marqueur temporel.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
           <div>{"\uD83D\uDD2E"} <strong>15 questions</strong>, pas de timer</div>
           <div>{"\uD83D\uDD8D\uFE0F"} Marqueur temporel en <span style={{color:"#c026d3",fontWeight:700}}>violet</span></div>
-          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne r\u00e9ponse \u00b7 bonus perfect</div>
+          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne réponse · bonus perfect</div>
         </div>
         <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer"}</button>
       </div>
@@ -1411,7 +1411,7 @@ function Chronomancer(p){
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u231B"}</div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"TIME MASTERED":isGood?"Chronomancer r\u00e9ussi":"Session termin\u00e9e"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"#c026d3",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes r\u00e9ponses</p>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes réponses</p>
         {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
           <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
           {missed.slice(0,8).map(function(r,i){return(
@@ -1542,7 +1542,7 @@ function PassiveForge(p){
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
           <div>{"\u2699\uFE0F"} <strong>15 questions</strong>, 2 modes : transform + fill-in</div>
           <div>{"\u23F1\uFE0F"} <strong>30 secondes</strong> par question</div>
-          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne r\u00e9ponse \u00b7 bonus perfect</div>
+          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne réponse · bonus perfect</div>
         </div>
         <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer"}</button>
       </div>
@@ -1559,7 +1559,7 @@ function PassiveForge(p){
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u2692\uFE0F"}</div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"FORGE MASTERED":isGood?"Forge r\u00e9ussie":"Session termin\u00e9e"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"#f59e0b",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes r\u00e9ponses</p>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes réponses</p>
         {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
           <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
           {missed.slice(0,8).map(function(r,i){return(
@@ -1698,11 +1698,11 @@ function RelativeWeaver(p){
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\uD83D\uDD78\uFE0F"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Relative Weaver</h2>
-        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Tisse les propositions relatives. Attention aux virgules \u2014 elles changent tout.</p>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Tisse les propositions relatives. Attention aux virgules — elles changent tout.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
           <div>{"\uD83D\uDD78\uFE0F"} <strong>15 questions</strong>, pas de timer</div>
           <div>{"\uD83D\uDD0D"} Defining, non-defining, reduced, whose</div>
-          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne r\u00e9ponse \u00b7 bonus perfect</div>
+          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne réponse · bonus perfect</div>
         </div>
         <button className="btn1" style={{background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer"}</button>
       </div>
@@ -1719,7 +1719,7 @@ function RelativeWeaver(p){
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83D\uDD78\uFE0F"}</div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"WEB MASTERED":isGood?"Weaver r\u00e9ussi":"Session termin\u00e9e"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"#7c3aed",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes r\u00e9ponses</p>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes réponses</p>
         {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
           <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
           {missed.slice(0,8).map(function(r,i){return(
@@ -1821,7 +1821,7 @@ function GauntletHub(p){
     <div className="gauntlet-header">
       <div style={{fontSize:46,marginBottom:6,filter:"drop-shadow(0 4px 14px rgba(124,58,237,.45))"}}>{"\uD83D\uDEE1\uFE0F"}</div>
       <h2 className="gauntlet-title">GRAMMAR GAUNTLET</h2>
-      <div className="gauntlet-sub">Quatre \u00e9preuves. Une seule couronne.</div>
+      <div className="gauntlet-sub">Quatre épreuves. Une seule couronne.</div>
     </div>
     {cards.map(function(c){return(
       <div key={c.id} className="gauntlet-card">
@@ -1829,14 +1829,14 @@ function GauntletHub(p){
         <div className="gauntlet-card-head">
           <div className="gauntlet-card-icon">{c.icon}</div>
           <div style={{flex:1,minWidth:0}}>
-            <div className="gauntlet-card-name">{c.name}{!c.ready&&<span style={{fontSize:10,marginLeft:8,padding:"2px 7px",background:"rgba(245,223,170,.12)",color:"#f5dfaa",borderRadius:99,fontWeight:700,letterSpacing:.3,verticalAlign:"middle"}}>bient\u00f4t</span>}</div>
+            <div className="gauntlet-card-name">{c.name}{!c.ready&&<span style={{fontSize:10,marginLeft:8,padding:"2px 7px",background:"rgba(245,223,170,.12)",color:"#f5dfaa",borderRadius:99,fontWeight:700,letterSpacing:.3,verticalAlign:"middle"}}>bientôt</span>}</div>
           </div>
         </div>
         <div className="gauntlet-card-desc">{c.desc}</div>
         <div className="gauntlet-card-stats">
           <span>{(c.stats&&c.stats.sessions)||0} session{c.stats&&c.stats.sessions>1?"s":""}</span>
           <span>{"\u00b7"}</span>
-          <span>Pr\u00e9cision : {fmtAcc(c.stats)}</span>
+          <span>Précision : {fmtAcc(c.stats)}</span>
         </div>
         <div className="gauntlet-card-actions">
           <button className="gauntlet-btn-enter" style={c.ready?{}:{opacity:.55}} onClick={function(){enterSub(c);}}>{"\u2694\uFE0F Entrer"}</button>
