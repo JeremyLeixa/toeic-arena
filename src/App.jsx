@@ -1165,8 +1165,10 @@ var[step,sSt]=useState("name");
       }
       console.warn("[LOOKUP] matches filtered:",matches.length);
       if(matches.length>0){
-        // Use the DB name (original casing) so recovery works with the exact stored name
-        setName(matches[0].name);
+        // Use the DB name (original casing) so recovery works with the exact stored name.
+        // setter is `sN` not setName (this was broken for 13 days and silently killed the
+        // Welcome back path via the outer catch — origin of the "everyone re-onboards" crisis).
+        sN(matches[0].name);
         // Isolated try/catch: groups query failure must NOT kill the Welcome back path.
         // If it throws or errors, we fall through with empty groupMap — cards show raw
         // class_code instead of pretty group names, but the user can still proceed.
