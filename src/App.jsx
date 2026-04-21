@@ -11113,7 +11113,11 @@ useEffect(function(){
 
   // ── Check group access (start/end date) ──
   useEffect(function(){
-    if(!u||u.name==="Teacher")return;
+    if(!u)return;
+    // Teacher: synthetic class 'teacher-internal' not in groups table. Force school access
+    // explicitly so groupType doesn't stay stuck on a previous profile's value (e.g. "visitor"
+    // when switching from a visitor test profile back to Teacher).
+    if(u.name==="Teacher"){setGroupType("school");setGroupAccess({status:"ok"});return;}
     var cc=u.classCode||'visitor';
     if(cc==="visitor"){setGroupType("visitor");setGroupAccess({status:"ok"});return;}
     supabase.from('groups').select('start_date,end_date,name,type').eq('code',cc).maybeSingle()
@@ -11616,7 +11620,33 @@ var prevLeague=getLeague(c.weeklyXp);
   var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
   var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
   var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);sSPA(null);};
-  function pg(content){return(<div className={lc}><style>{CSS}</style><div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);}
+  // Premium prompt overlay — rendered by both pg() sub-pages AND the main tab render path,
+  // otherwise clicking a locked module inside a sub-page (Listen/Read hub, etc.) would set
+  // the state but the popup wouldn't appear until the user navigated away.
+  var premiumOverlay=premiumPrompt&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={function(){setPremiumPrompt(null);}}>
+    <div style={{background:"var(--bg2)",borderRadius:20,padding:28,maxWidth:360,textAlign:"center",animation:"fadeIn .3s",border:"1px solid rgba(255,215,0,.25)",boxShadow:"0 0 40px rgba(255,215,0,.15)"}} onClick={function(e){e.stopPropagation();}}>
+      <div style={{fontSize:56,marginBottom:12}}>{"\uD83C\uDFF0"}</div>
+      <h3 className="out" style={{fontWeight:800,fontSize:22,marginBottom:6,color:"var(--gold)"}}>Arena Premium</h3>
+      <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6,marginBottom:18}}>
+        <strong style={{color:"var(--t1)"}}>{premiumPrompt}</strong>{" fait partie des modules Premium."}
+      </p>
+      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,marginBottom:20,textAlign:"left",background:"rgba(255,215,0,.04)",border:"1px solid rgba(255,215,0,.12)",borderRadius:10,padding:"12px 14px"}}>
+        <div>{"\u2713 Tous les modules Premium d\u00e9bloqu\u00e9s"}</div>
+        <div>{"\u2713 Boss Test + Endless Arena"}</div>
+        <div>{"\u2713 Tests blancs 1, 2, 3"}</div>
+        <div>{"\u2713 390 flashcards m\u00e9tiers"}</div>
+      </div>
+      <button className="btn1" onClick={function(){setPremiumPrompt(null);sSP("upgrade");}}
+        style={{width:"100%",fontSize:14,padding:"13px 20px",marginBottom:8,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700}}>
+        {"\uD83C\uDFAF Voir les offres"}
+      </button>
+      <button className="btn2" onClick={function(){setPremiumPrompt(null);}}
+        style={{width:"100%",fontSize:12,padding:"10px 16px",borderColor:"var(--bdr)",color:"var(--t3)"}}>
+        {"Plus tard"}
+      </button>
+    </div>
+  </div>;
+  function pg(content){return(<div className={lc}><style>{CSS}</style><div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
 
   if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
   if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
@@ -11703,28 +11733,6 @@ var prevLeague=getLeague(c.weeklyXp);
       onDismiss={function(){setActiveChestToast(null);}}
       onOpenNow={function(){setActiveChestToast(null);if(chestPending.length>0)setChestModal(chestPending[0]);}}/>}
 
-    {premiumPrompt&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={function(){setPremiumPrompt(null);}}>
-      <div style={{background:"var(--bg2)",borderRadius:20,padding:28,maxWidth:360,textAlign:"center",animation:"fadeIn .3s",border:"1px solid rgba(255,215,0,.25)",boxShadow:"0 0 40px rgba(255,215,0,.15)"}} onClick={function(e){e.stopPropagation();}}>
-        <div style={{fontSize:56,marginBottom:12}}>{"\uD83C\uDFF0"}</div>
-        <h3 className="out" style={{fontWeight:800,fontSize:22,marginBottom:6,color:"var(--gold)"}}>Arena Premium</h3>
-        <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6,marginBottom:18}}>
-          <strong style={{color:"var(--t1)"}}>{premiumPrompt}</strong>{" fait partie des modules Premium."}
-        </p>
-        <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,marginBottom:20,textAlign:"left",background:"rgba(255,215,0,.04)",border:"1px solid rgba(255,215,0,.12)",borderRadius:10,padding:"12px 14px"}}>
-          <div>{"\u2713 Tous les modules Premium d\u00e9bloqu\u00e9s"}</div>
-          <div>{"\u2713 Boss Test + Endless Arena"}</div>
-          <div>{"\u2713 Tests blancs 1, 2, 3"}</div>
-          <div>{"\u2713 390 flashcards m\u00e9tiers"}</div>
-        </div>
-        <button className="btn1" onClick={function(){setPremiumPrompt(null);sSP("upgrade");}}
-          style={{width:"100%",fontSize:14,padding:"13px 20px",marginBottom:8,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700}}>
-          {"\uD83C\uDFAF Voir les offres"}
-        </button>
-        <button className="btn2" onClick={function(){setPremiumPrompt(null);}}
-          style={{width:"100%",fontSize:12,padding:"10px 16px",borderColor:"var(--bdr)",color:"var(--t3)"}}>
-          {"Plus tard"}
-        </button>
-      </div>
-    </div>}
+    {premiumOverlay}
     <Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);
 }
