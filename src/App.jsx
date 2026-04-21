@@ -368,7 +368,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-21-gauntlet-hub";
+var BUILD_ID="2026-04-21-icrypt";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1028,6 +1028,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .gauntlet-btn-enter{flex:1;background:linear-gradient(135deg,#7c3aed,#c026d3);color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;letter-spacing:.3px}
 .gauntlet-btn-grim{background:rgba(245,223,170,.1);color:#f5dfaa;border:1px solid rgba(245,223,170,.25);border-radius:12px;padding:12px 14px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
 .gauntlet-btn-grim:active{background:rgba(245,223,170,.22)}
+.icrypt-input:focus{border-color:#c026d3!important;box-shadow:0 0 0 3px rgba(192,38,211,.2)}
+.icrypt-input::placeholder{color:var(--t3);opacity:.5}
 
 /* ═══ GRIMOIRE READER ═══ */
 .grim-overlay{position:fixed;inset:0;background:#0a0604;z-index:9000;display:flex;flex-direction:column;animation:grim-fade-in .3s ease}
@@ -1162,20 +1164,187 @@ function GrimoireReader(p){
   </div>);
 }
 
+// ─── IRREGULAR CRYPT — sub-module 1/4 of Grammar Gauntlet ───
+// Speed drill: 15 verbs per session, V2 + V3 text input, 15s per question.
+// Scoring: 1 point per fully correct verb (V2 AND V3). Partial = 0 points
+// but +1 XP bonus. Session completes -> p.done(sc, total, xp).
+function IrregularCrypt(p){
+  var SESSION_SIZE=15;
+  var TIME_PER_Q=15;
+  var [deck,setDeck]=useState(null);
+  var [phase,setPhase]=useState("intro"); // intro | play | reveal | end
+  var [idx,setIdx]=useState(0);
+  var [v2In,setV2In]=useState("");
+  var [v3In,setV3In]=useState("");
+  var [revealData,setRevealData]=useState(null);
+  var [results,setResults]=useState([]);
+  var [timeLeft,setTimeLeft]=useState(TIME_PER_Q);
+
+  function startSession(){
+    var shuffled=[].concat(IRREGULAR_VERBS).sort(function(){return Math.random()-0.5;});
+    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
+    setDeck(d);setIdx(0);setResults([]);setV2In("");setV3In("");
+    setTimeLeft(TIME_PER_Q);setPhase("play");
+  }
+  function normalize(s){return(s||"").toLowerCase().trim();}
+  function submit(){
+    if(phase!=="play"||!deck)return;
+    var verb=deck[idx];
+    var v2Ok=normalize(v2In)===normalize(verb.past);
+    var v3Ok=normalize(v3In)===normalize(verb.pp);
+    if(v2Ok&&v3Ok){try{playCorrect();}catch(e){console.warn("[icrypt] sfx:",e&&e.message);}}
+    else{try{playWrong();}catch(e){console.warn("[icrypt] sfx:",e&&e.message);}}
+    var newResults=results.concat([{v2Ok:v2Ok,v3Ok:v3Ok,verb:verb}]);
+    setRevealData({v2Ok:v2Ok,v3Ok:v3Ok,verb:verb,v2Input:v2In,v3Input:v3In});
+    setResults(newResults);
+    setPhase("reveal");
+    setTimeout(function(){
+      if(idx>=deck.length-1){setPhase("end");}
+      else{setIdx(idx+1);setV2In("");setV3In("");setRevealData(null);setPhase("play");}
+    },3500);
+  }
+  // Timer
+  useEffect(function(){
+    if(phase!=="play")return;
+    if(timeLeft<=0){submit();return;}
+    var t=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
+    return function(){clearTimeout(t);};
+  },[timeLeft,phase]);
+  useEffect(function(){if(phase==="play")setTimeLeft(TIME_PER_Q);},[idx,phase]);
+
+  function finishSession(){
+    var totalFull=results.filter(function(r){return r.v2Ok&&r.v3Ok;}).length;
+    var totalPartial=results.filter(function(r){return(r.v2Ok||r.v3Ok)&&!(r.v2Ok&&r.v3Ok);}).length;
+    var baseXp=totalFull*2+totalPartial+10;
+    if(totalFull===deck.length)baseXp+=20;
+    p.done(totalFull,deck.length,baseXp);
+  }
+
+  if(phase==="intro"){
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,padding:0,marginBottom:12}}>{"\u2190"} Gauntlet Hub</button>
+      <div style={{textAlign:"center",padding:"24px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{"\uD83E\uDEA6"}</div>
+        <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Irregular Crypt</h2>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Exhume 15 verbes irr\u00e9guliers des t\u00e9n\u00e8bres du pass\u00e9.</p>
+        <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
+          <div>{"\u23F1\uFE0F"} <strong>15 secondes</strong> par verbe</div>
+          <div>{"\u270D\uFE0F"} Saisis <strong>V2</strong> (pr\u00e9t\u00e9rit) et <strong>V3</strong> (participe pass\u00e9)</div>
+          <div>{"\uD83C\uDFC6"} <strong>2 XP</strong> par verbe ma\u00eetris\u00e9 \u00b7 bonus perfect</div>
+        </div>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer le raid"}</button>
+      </div>
+    </div>);
+  }
+
+  if(phase==="end"){
+    var totalFull=results.filter(function(r){return r.v2Ok&&r.v3Ok;}).length;
+    var totalPartial=results.filter(function(r){return(r.v2Ok||r.v3Ok)&&!(r.v2Ok&&r.v3Ok);}).length;
+    var isPerfect=totalFull===deck.length;
+    var isGood=totalFull>=Math.ceil(deck.length*0.7);
+    var missed=results.filter(function(r){return!(r.v2Ok&&r.v3Ok);});
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
+      <div style={{textAlign:"center",padding:"20px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83E\uDEA6"}</div>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"PERFECT RAID":isGood?"Raid r\u00e9ussi":"Raid termin\u00e9"}</h2>
+        <div style={{fontSize:44,fontWeight:800,color:"#c026d3",margin:"14px 0 2px"}}>{totalFull}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:6}}>verbes ma\u00eetris\u00e9s (V2 + V3)</p>
+        {totalPartial>0&&<p style={{color:"var(--t3)",fontSize:12,marginBottom:18}}>{totalPartial} partiellement correct{totalPartial>1?"s":""}</p>}
+        {missed.length>0&&<div className="crd" style={{maxWidth:380,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
+          {missed.slice(0,10).map(function(r,i){return(
+            <div key={i} style={{fontSize:13,marginBottom:6,color:"var(--t2)",lineHeight:1.5}}>
+              <strong style={{color:"var(--t1)"}}>{r.verb.base}</strong> {"\u2192"} <span style={{color:"#22c55e"}}>{r.verb.past}</span> / <span style={{color:"#22c55e"}}>{r.verb.pp}</span> <span style={{color:"var(--t3)",fontSize:12,fontStyle:"italic"}}>({r.verb.fr})</span>
+            </div>
+          );})}
+        </div>}
+        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, retour</button>
+      </div>
+    </div>);
+  }
+
+  // phase === "play" or "reveal"
+  var verb=deck[idx];
+  var pct=timeLeft/TIME_PER_Q*100;
+  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:480,margin:"0 auto"}}>
+    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:13,padding:0,marginBottom:8}}>{"\u2190"} Abandonner</button>
+    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Verbe {idx+1} / {deck.length}</div>
+    <div style={{width:"100%",height:6,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:20}}>
+      <div style={{width:pct+"%",height:"100%",background:phase==="play"?(timeLeft<5?"#ef4444":"linear-gradient(90deg,#7c3aed,#c026d3)"):"#6b7280",transition:"width 1s linear"}}/>
+    </div>
+    <div style={{textAlign:"center",padding:"14px 0 22px"}}>
+      <div style={{fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:2,textTransform:"uppercase"}}>Base</div>
+      <div style={{fontSize:38,fontWeight:800,color:"var(--t1)",letterSpacing:.5}}>{verb.base}</div>
+    </div>
+    {phase==="play"?(
+      <div style={{maxWidth:360,margin:"0 auto"}}>
+        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V2 (pr\u00e9t\u00e9rit)</label>
+        <input type="text" value={v2In} onChange={function(e){setV2In(e.target.value);}} autoFocus autoComplete="off" autoCapitalize="none" spellCheck="false" onKeyDown={function(e){if(e.key==="Enter"&&v2In){var n=document.getElementById("icrypt-v3");if(n)n.focus();}}} className="icrypt-input" style={{width:"100%",padding:"12px 14px",fontSize:17,background:"var(--bg2)",border:"2px solid var(--bg3)",borderRadius:10,color:"var(--t1)",marginBottom:14,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V3 (participe pass\u00e9)</label>
+        <input id="icrypt-v3" type="text" value={v3In} onChange={function(e){setV3In(e.target.value);}} autoComplete="off" autoCapitalize="none" spellCheck="false" onKeyDown={function(e){if(e.key==="Enter")submit();}} className="icrypt-input" style={{width:"100%",padding:"12px 14px",fontSize:17,background:"var(--bg2)",border:"2px solid var(--bg3)",borderRadius:10,color:"var(--t1)",marginBottom:18,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+        <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:15,padding:"13px",fontWeight:800}} onClick={submit}>Valider</button>
+      </div>
+    ):(
+      <div style={{maxWidth:360,margin:"0 auto"}}>
+        <div className="crd" style={{padding:14,marginBottom:12}}>
+          <div style={{display:"flex",gap:12,marginBottom:12}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:10,color:"var(--t3)",marginBottom:3,letterSpacing:1,textTransform:"uppercase"}}>V2</div>
+              <div style={{fontSize:16,fontWeight:700,color:revealData.v2Ok?"#22c55e":"#ef4444",wordBreak:"break-word"}}>{revealData.verb.past} {revealData.v2Ok?"\u2713":"\u2717"}</div>
+              {!revealData.v2Ok&&revealData.v2Input&&<div style={{fontSize:12,color:"var(--t3)",textDecoration:"line-through",marginTop:3,wordBreak:"break-word"}}>{revealData.v2Input}</div>}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:10,color:"var(--t3)",marginBottom:3,letterSpacing:1,textTransform:"uppercase"}}>V3</div>
+              <div style={{fontSize:16,fontWeight:700,color:revealData.v3Ok?"#22c55e":"#ef4444",wordBreak:"break-word"}}>{revealData.verb.pp} {revealData.v3Ok?"\u2713":"\u2717"}</div>
+              {!revealData.v3Ok&&revealData.v3Input&&<div style={{fontSize:12,color:"var(--t3)",textDecoration:"line-through",marginTop:3,wordBreak:"break-word"}}>{revealData.v3Input}</div>}
+            </div>
+          </div>
+          <div style={{fontSize:12.5,color:"var(--t2)",fontStyle:"italic",marginBottom:8}}>{revealData.verb.fr}</div>
+          <div style={{fontSize:13,color:"var(--t2)",lineHeight:1.55,borderLeft:"2px solid var(--bg3)",paddingLeft:10}}>{revealData.verb.ex}</div>
+        </div>
+        <div style={{textAlign:"center",fontSize:11,color:"var(--t3)",opacity:.7}}>Suite dans un instant...</div>
+      </div>
+    )}
+  </div>);
+}
+
 // ─── GAUNTLET HUB — entry point for the 4 sub-modules ───
-// GUARD: do NOT remove the "Coming soon" alert on Enter before the sub-modules
-// (IrregularCrypt, Chronomancer, PassiveForge, RelativeWeaver) are actually wired.
-// They land in subsequent dev steps (see grammarGauntlet.js prototype data).
+// Internal state `subMode` decides whether to render the hub or a sub-module.
+// Passes onModuleDone (from App) the modId when a sub-module completes, so the
+// app-level XP/stats recording goes through the standard pipeline
+// (applyXpGates, recordModule, trackModSession).
+// Flat moduleScores keys used: gauntlet_irregular, gauntlet_tense,
+// gauntlet_passive, gauntlet_relative.
 function GauntletHub(p){
   var [openGrim,setOpenGrim]=useState(null);
-  var scores=(p.u&&p.u.moduleScores&&p.u.moduleScores.gauntlet)||{};
+  var [subMode,setSubMode]=useState(null); // null | "irregular" | "tense" | "passive" | "relative"
+  var scores=(p.u&&p.u.moduleScores)||{};
   var cards=[
-    {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume les verbes irr\u00e9guliers endormis. 15 items par raid, V2 et V3 \u00e0 la main.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",grimoire:null,stats:scores.irregular},
-    {id:"chronomancer",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores.tense},
-    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores.passive},
-    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores.relative}
+    {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume les verbes irr\u00e9guliers endormis. 15 items par raid, V2 et V3 \u00e0 la main.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_speed",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
+    {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_clue",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:false},
+    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_build",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:false},
+    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_build",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:false}
   ];
   function fmtAcc(s){if(!s||!s.total)return"\u2014";return Math.round((s.correct/s.total)*100)+"%";}
+  function enterSub(card){
+    if(!card.ready){alert("Sous-module en cours de d\u00e9veloppement. Arrivera dans la prochaine \u00e9tape !");return;}
+    try{playBGM(card.bgm);}catch(e){console.warn("[gauntlet] bgm:",e&&e.message);}
+    setSubMode(card.id);
+  }
+  function subDone(sc,tot,xp){
+    try{stopBGM();}catch(e){console.warn("[gauntlet] bgm stop:",e&&e.message);}
+    try{haptic("complete");}catch(e){console.warn("[gauntlet] haptic:",e&&e.message);}
+    if(p.onModuleDone)p.onModuleDone(subMode,sc,tot,xp);
+    setSubMode(null);
+  }
+  function subAbort(){
+    try{stopBGM();}catch(e){console.warn("[gauntlet] bgm stop:",e&&e.message);}
+    setSubMode(null);
+  }
+  // ── Sub-module rendering ──
+  if(subMode==="irregular")return(<IrregularCrypt u={p.u} done={subDone} back={subAbort}/>);
+  // Chronomancer / Passive Forge / Relative Weaver wire up in steps 5-7.
+
   return(<div className="gauntlet-hub enter">
     <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:12,padding:0}}>{"\u2190"} Grammar &amp; Vocab</button>
     <div className="gauntlet-header">
@@ -1189,7 +1358,7 @@ function GauntletHub(p){
         <div className="gauntlet-card-head">
           <div className="gauntlet-card-icon">{c.icon}</div>
           <div style={{flex:1,minWidth:0}}>
-            <div className="gauntlet-card-name">{c.name}</div>
+            <div className="gauntlet-card-name">{c.name}{!c.ready&&<span style={{fontSize:10,marginLeft:8,padding:"2px 7px",background:"rgba(245,223,170,.12)",color:"#f5dfaa",borderRadius:99,fontWeight:700,letterSpacing:.3,verticalAlign:"middle"}}>bient\u00f4t</span>}</div>
           </div>
         </div>
         <div className="gauntlet-card-desc">{c.desc}</div>
@@ -1199,7 +1368,7 @@ function GauntletHub(p){
           <span>Pr\u00e9cision : {fmtAcc(c.stats)}</span>
         </div>
         <div className="gauntlet-card-actions">
-          <button className="gauntlet-btn-enter" onClick={function(){alert("Sous-module en cours de d\u00e9veloppement. Arrivera dans la prochaine \u00e9tape !");}}>{"\u2694\uFE0F Entrer"}</button>
+          <button className="gauntlet-btn-enter" style={c.ready?{}:{opacity:.55}} onClick={function(){enterSub(c);}}>{"\u2694\uFE0F Entrer"}</button>
           {c.grimoire&&<button className="gauntlet-btn-grim" onClick={function(){setOpenGrim(c.grimoire);}}>{"\uD83D\uDCD6 Grimoire"}</button>}
         </div>
       </div>
@@ -11356,7 +11525,7 @@ useEffect(function(){
     if(ld||!u||!bgmStarted.current)return;
     var AUDIO_ROUTES=["lis","lisP1","lisP2","lisP3","lisP4","ablitz"];
     // Routes that manage their own BGM (do not interfere):
-    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern"];
+    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet"];
     if(sp&&AUDIO_ROUTES.indexOf(sp)!==-1){stopBGM();return;}
     if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
     // No subpage active and on a home-BGM tab → ensure bgm_home is playing
@@ -11896,7 +12065,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="traps")return pg(<TrapsQuiz u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"traps");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="falsefr")return pg(<FalseFriends u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"falsefr");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="pvdojo")return pg(<PhrasalDojo u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"pvdojo");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
-  if(sp==="gauntlet")return pg(<GauntletHub u={u} nav={nav} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="gauntlet")return pg(<GauntletHub u={u} nav={nav} onModuleDone={function(subId,sc,tot,xp){var fullModId="gauntlet_"+subId;var gxp=applyXpGates(xp,sc,tot,fullModId);gxp=Math.round(gxp*getSpotlightMult(fullModId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,fullModId);recordModule(c,fullModId,sc,tot);checkMission(c,fullModId);sv(c);}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="mock1")return pg(<MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
   if(sp==="mock2")return pg(<MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
 
