@@ -35,13 +35,30 @@ var _voices=null;
 function getEnVoice(){
   if(_voices)return _voices;
   var all=window.speechSynthesis?window.speechSynthesis.getVoices():[];
-  var pref=["en-US","en-GB","en-AU","en"];
+  // Safari on macOS/iOS returns lang codes like "en-US", "en_US", "en_us" inconsistently.
+  // Normalize to lowercase and accept both separators.
+  function isEn(v){
+    if(!v||!v.lang)return false;
+    var l=v.lang.toLowerCase().replace(/_/g,"-");
+    return l.indexOf("en")===0&&(l.length===2||l.charAt(2)==="-");
+  }
+  // Prefer high-quality voices on Safari (Enhanced/Premium in voice name).
+  // Then en-US > en-GB > en-AU > any en.
+  var enVoices=all.filter(isEn);
+  if(enVoices.length===0){
+    // NEVER fall back to non-English. Returning null lets the browser pick based on u.lang,
+    // which is safer than explicitly assigning a French voice on a FR-locale device.
+    return null;
+  }
+  var pref=["en-us","en-gb","en-au"];
   for(var p=0;p<pref.length;p++){
-    for(var i=0;i<all.length;i++){
-      if(all[i].lang&&all[i].lang.indexOf(pref[p])===0){_voices=all[i];return _voices;}
+    for(var i=0;i<enVoices.length;i++){
+      var lg=enVoices[i].lang.toLowerCase().replace(/_/g,"-");
+      if(lg===pref[p]){_voices=enVoices[i];return _voices;}
     }
   }
-  return all[0]||null;
+  // Any English voice
+  _voices=enVoices[0];return _voices;
 }
 var _audioCache={};
 var _mp3Failed={};
@@ -72,7 +89,9 @@ async function speak(text,rate,audioPath){
   window.speechSynthesis.cancel();
   var u=new SpeechSynthesisUtterance(text);
   u.rate=rate||0.9;u.pitch=1;u.volume=1;
-  var v=getEnVoice();if(v)u.voice=v;u.lang="en-US";
+  // Set lang BEFORE voice — Safari bug: voice assignment can override/lock language otherwise
+  u.lang="en-US";
+  var v=getEnVoice();if(v)u.voice=v;
   window.speechSynthesis.speak(u);
 }
 function speakAndWait(text,rate,audioPath){
@@ -104,7 +123,9 @@ function speakBrowserTTS(text,rate,cb){
   window.speechSynthesis.cancel();
   var u=new SpeechSynthesisUtterance(text);
   u.rate=rate||0.9;u.pitch=1;u.volume=1;
-  var v=getEnVoice();if(v)u.voice=v;u.lang="en-US";
+  // Set lang BEFORE voice — Safari bug: voice assignment can override/lock language otherwise
+  u.lang="en-US";
+  var v=getEnVoice();if(v)u.voice=v;
   u.onend=cb;u.onerror=cb;
   window.speechSynthesis.speak(u);
 }
@@ -1016,7 +1037,7 @@ var[step,sSt]=useState("name");
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");
   var[scanSec,setScanSec]=useState(0);var[scanScores,setScanScores]=useState({grammar:0,vocab:0,reading:0,listening:0});var[scanPhase,setScanPhase]=useState("intro");var[scanCorrect,setScanCorrect]=useState([]);
   var[ttsPlaying,setTtsPlaying]=useState(false);var ttsUtter=useRef(null);
-  function speakQ(text){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=0.9;u.onstart=function(){setTtsPlaying(true);};u.onend=function(){setTtsPlaying(false);};u.onerror=function(){setTtsPlaying(false);};ttsUtter.current=u;window.speechSynthesis.speak(u);}
+  function speakQ(text){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=0.9;var v=getEnVoice();if(v)u.voice=v;u.onstart=function(){setTtsPlaying(true);};u.onend=function(){setTtsPlaying(false);};u.onerror=function(){setTtsPlaying(false);};ttsUtter.current=u;window.speechSynthesis.speak(u);}
   function stopTts(){if(window.speechSynthesis)window.speechSynthesis.cancel();setTtsPlaying(false);}
   var[showPrivacy,setShowPrivacy]=useState(false);
   var[teacherCode,sTC]=useState("");var[teacherChecking,setTeacherChecking]=useState(false);var[teacherErr,setTeacherErr]=useState(false);
