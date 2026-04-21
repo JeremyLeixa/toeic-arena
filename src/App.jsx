@@ -382,6 +382,25 @@ async function load(userId){
       }
       if(remote){
         console.warn("[LOAD] got remote — xp:",remote.xp,"weekly_xp:",remote.weekly_xp,"streak:",remote.streak);
+        // ── Stale-remote guard ──
+        // Heuristic: if local has strictly more XP than remote AND was active more recently,
+        // the saves were probably failing (e.g. schema mismatch) and local holds the truth.
+        // Use local and mark _syncDirty so the next save() pushes it to Supabase.
+        // XP is monotonic (cumulative, never decreases), so local.xp > remote.xp is a
+        // reliable signal that local has progress that never reached Supabase.
+        var localXp=(local&&local.xp)||0;
+        var remoteXp=remote.xp||0;
+        var localLA=(local&&local.lastActive)||"";
+        var remoteLA=remote.last_active||"";
+        if(local&&localXp>remoteXp&&localLA>=remoteLA){
+          console.warn("[LOAD] local is fresher (xp "+localXp+">"+remoteXp+", lastActive "+localLA+">="+remoteLA+") — using local & pushing to Supabase NOW");
+          _syncDirty=true;
+          // Fire-and-forget: push local to Supabase immediately so device-switching works.
+          // Otherwise, if the user idles after load, switching to another device would still pull stale remote.
+          save(local);
+          // Keep local as-is; don't rewrite localStorage
+          return local;
+        }
         var d=supaToLocal(remote);
         saveLocal(d);
         _syncDirty=false;
