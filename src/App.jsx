@@ -566,8 +566,12 @@ async function save(d){
         console.error("[SAVE] BLOCKED: would create phantom — "+d.name+" already exists in class "+dup.data[0].class_code+" (attempted cc="+cc+")");
         return;
       }
-      // Clean INSERT — student is genuinely new
-      var ins=await supabase.from("students").insert({id:user.id,name:d.name,class_code:cc,...payload});
+      // Clean INSERT — student is genuinely new.
+      // Do NOT set id: user.id — the same auth user may already own another students row
+      // (Teacher/student on same device, multi-profile family accounts, etc.), which would
+      // trigger a PK conflict. Let Postgres auto-generate a fresh UUID; identity is tracked
+      // via the natural key (name, class_code) for UPDATEs and via lookupName for recovery.
+      var ins=await supabase.from("students").insert({name:d.name,class_code:cc,...payload});
       if(ins.error)console.error("[SAVE] INSERT error:",ins.error.message);
       else console.warn("[SAVE] OK —",d.name,cc,"inserted");
     }else{console.warn("[SAVE] OK —",d.name,cc,"updated");}
