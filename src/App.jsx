@@ -7731,6 +7731,7 @@ function TreasureChestSvg(p){
 // ═══════════════════════════════════════════════════════════════
 function getTriggerLabel(trigger){
   if(!trigger)return"Milestone reached";
+  if(trigger==="apology_crisis_2026-04-21")return"A gift from your teacher — thanks for your patience";
   if(trigger==="mock_1")return"Mock Test 1 completed";
   if(trigger==="mock_2")return"Mock Test 2 completed";
   if(trigger==="mock_3")return"Mock Test 3 completed";
