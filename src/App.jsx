@@ -165,6 +165,57 @@ function SpeakBtn(p){
   </button>);
 }
 function weekId(){var d=new Date();var day=d.getDay();var diff=d.getDate()-day+(day===0?-6:1);var mon=new Date(d);mon.setDate(diff);mon.setHours(0,0,0,0);var jan1=new Date(mon.getFullYear(),0,1);var wk=Math.floor((mon-jan1)/(7*864e5))+1;return mon.getFullYear()+"-W"+wk;}
+// Push a weekly_snapshots row for the week that just ended. Fire-and-forget.
+// Called from both load-time and mid-session week transitions so that snapshots
+// are never missed regardless of when the transition is detected.
+function pushWeeklySnapshot(snap){
+  try{
+    supabase.auth.getUser().then(function(r){
+      if(!r.data||!r.data.user)return;
+      var parts=(snap.weekId||"").split('-W');
+      if(parts.length!==2)return;
+      var yr=parseInt(parts[0]),wk=parseInt(parts[1]);
+      var jan1=new Date(yr,0,1);
+      var ws=new Date(jan1.getTime()+(wk-1)*7*86400000);
+      var dy=ws.getDay();ws.setDate(ws.getDate()+(dy===0?-6:1-dy));
+      supabase.from('weekly_snapshots').upsert({
+        user_id:r.data.user.id,
+        student_name:snap.name,
+        class_code:snap.classCode||'visitor',
+        week_id:snap.weekId,
+        week_start:ws.toISOString().split('T')[0],
+        xp_this_week:snap.weeklyXp,
+        xp_cumulative:snap.xp,
+        daily_completions:snap.weeklyDailyCount||0,
+        streak_at_end:snap.streak,
+        stats_snapshot:snap.stats,
+        module_scores_snapshot:snap.moduleScores,
+        mock_results_snapshot:snap.mockResults||{},
+        achievements_count:(snap.unlockedAch||[]).length
+      },{onConflict:'student_name,class_code,week_id'})
+      .then(function(res){if(res.error)console.error('Snapshot error:',res.error.message);});
+    });
+  }catch(e){}
+}
+
+// Applies a week transition if the stored weekId is outdated. Mutates `d` in place
+// and returns true if a transition occurred. Used both at load time and periodically
+// during a session (in case the tab stays open across a week boundary — common on
+// mobile PWAs). Snapshots the weekly_xp to weeklyHistory + Supabase before reset.
+function applyWeekTransition(d){
+  if(!d||!d.weekId)return false;
+  var cw=weekId();
+  if(d.weekId===cw)return false;
+  if(!d.weeklyHistory)d.weeklyHistory=[];
+  if(d.weeklyXp>0){
+    // Push Supabase snapshot BEFORE we reset so the old week's XP is preserved there too
+    pushWeeklySnapshot(d);
+    d.weeklyHistory.push({week:d.weekId,xp:d.weeklyXp});
+    if(d.weeklyHistory.length>20)d.weeklyHistory=d.weeklyHistory.slice(-20);
+  }
+  d.weeklyXp=0;d.weeklyDailyCount=0;d.weekId=cw;
+  return true;
+}
 function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
 function srand(s){var x=Math.sin(s)*10000;return x-Math.floor(x);}
 import { getLevel } from "./data/helpers.js";
@@ -10853,40 +10904,11 @@ useEffect(function(){
           if(d){
             var td=today(),yd=new Date();yd.setDate(yd.getDate()-1);var ys=yd.toISOString().split("T")[0];
             if(d.lastActive!==td&&d.lastActive!==ys)d.streak=0;
-            var cw=weekId();if(d.weekId!==cw){
-              if(!d.weeklyHistory)d.weeklyHistory=[];
-              if(d.weeklyXp>0&&d.weekId){
-                // ── Save weekly snapshot before reset ──
-                (function(snap){
-                  supabase.auth.getUser().then(function(r){
-                    if(!r.data||!r.data.user)return;
-                    var parts=snap.weekId.split('-W');
-                    var yr=parseInt(parts[0]),wk=parseInt(parts[1]);
-                    var jan1=new Date(yr,0,1);
-                    var ws=new Date(jan1.getTime()+(wk-1)*7*86400000);
-                    var dy=ws.getDay();ws.setDate(ws.getDate()+(dy===0?-6:1-dy));
-                    supabase.from('weekly_snapshots').upsert({
-                      user_id:r.data.user.id,
-                      student_name:snap.name,
-                      class_code:snap.classCode||'visitor',
-                      week_id:snap.weekId,
-                      week_start:ws.toISOString().split('T')[0],
-                      xp_this_week:snap.weeklyXp,
-                      xp_cumulative:snap.xp,
-                      daily_completions:snap.weeklyDailyCount||0,
-                      streak_at_end:snap.streak,
-                      stats_snapshot:snap.stats,
-                      module_scores_snapshot:snap.moduleScores,
-                      mock_results_snapshot:snap.mockResults||{},
-                      achievements_count:(snap.unlockedAch||[]).length
-                    },{onConflict:'student_name,class_code,week_id'})
-                    .then(function(res){if(res.error)console.error('Snapshot error:',res.error.message);});
-                  });
-                })(d);
-                d.weeklyHistory.push({week:d.weekId,xp:d.weeklyXp});
-                if(d.weeklyHistory.length>20)d.weeklyHistory=d.weeklyHistory.slice(-20);
-              }
-              d.weeklyXp=0;d.weeklyDailyCount=0;d.weekId=cw;
+            // Week transition (load-time). Same logic as mid-session — delegates to
+            // applyWeekTransition which also pushes the weekly_snapshots row.
+            if(applyWeekTransition(d)){
+              _syncDirty=true;
+              saveLocal(d); // ensure localStorage reflects the transition so keepalive onUnload doesn't push stale data
             }
             if(!d.moduleScores)d.moduleScores={};
             if(!d.mission)d.mission={date:null,actId:null,done:false};
@@ -11077,10 +11099,16 @@ useEffect(function(){
         if(!prev)return prev;
         var c=JSON.parse(JSON.stringify(prev));
         c.totalTime=(c.totalTime||0)+60;
+        // Intra-session week transition: handles tabs kept open across week boundaries
+        // (common on mobile PWAs). Without this, weekly_xp would accumulate across weeks
+        // and week_id would stay stale until next full page load.
+        var weekChanged=applyWeekTransition(c);
+        if(weekChanged){console.warn("[WEEK] transition detected mid-session —",c.weekId);_syncDirty=true;}
         saveLocal(c);
         timeRef.current.ticks+=1;
         // Sync to cloud every 2 min — ONLY if tab is visible (prevents overwriting other devices)
-        if(timeRef.current.ticks%2===0&&document.visibilityState==="visible")syncToCloud(c);
+        // Also sync immediately if the week just changed (so leaderboard reflects it ASAP)
+        if((weekChanged||(timeRef.current.ticks%2===0))&&document.visibilityState==="visible")syncToCloud(c);
         return c;
       });
     },60000);
@@ -11089,9 +11117,11 @@ useEffect(function(){
       if(document.visibilityState==="hidden"){
         sU(function(prev){
           if(!prev)return prev;
-          saveLocal(prev);
-          syncToCloud(prev);
-          return prev;
+          var c=JSON.parse(JSON.stringify(prev));
+          if(applyWeekTransition(c))_syncDirty=true;
+          saveLocal(c);
+          syncToCloud(c);
+          return c;
         });
       }else if(document.visibilityState==="visible"){
         // Tab became visible — reload from Supabase in case another device updated
@@ -11108,6 +11138,9 @@ useEffect(function(){
         var raw=localStorage.getItem("toeic-arena-profile");
         if(raw&&_syncDirty){
           var d=JSON.parse(raw);
+          // Apply week transition in case the tab stayed open past a week boundary and
+          // the 60s loop didn't fire before close. Mutates d in place.
+          applyWeekTransition(d);
           var cc=d.classCode||"visitor";
           var payload={
             xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
