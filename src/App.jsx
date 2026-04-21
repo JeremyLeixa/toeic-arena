@@ -556,10 +556,20 @@ async function save(d){
     var upd=await supabase.from("students").update(payload).ilike("name",d.name).eq("class_code",cc).select("id");
     if(upd.error){console.error("[SAVE] UPDATE error:",upd.error.message);return;}
     if(!upd.data||upd.data.length===0){
-      console.warn("[SAVE] UPDATE matched 0 rows for",d.name,cc,"— RLS may be blocking. Trying INSERT...");
-      // No row yet — first ever save, INSERT with current auth ID
+      console.warn("[SAVE] UPDATE matched 0 rows for",d.name,cc,"— checking for phantom duplicate before INSERT...");
+      // Phantom guard: before creating a new row, check if this student already exists
+      // in ANOTHER class_code. If yes, refuse to INSERT a duplicate (this is how the
+      // visitor phantoms got created — local classCode drifted to "visitor" but the
+      // student had a legit row in idrac2026/famille2026/cesi2026/etc).
+      var dup=await supabase.from("students").select("class_code").ilike("name",d.name).neq("class_code",cc);
+      if(dup.data&&dup.data.length>0){
+        console.error("[SAVE] BLOCKED: would create phantom — "+d.name+" already exists in class "+dup.data[0].class_code+" (attempted cc="+cc+")");
+        return;
+      }
+      // Clean INSERT — student is genuinely new
       var ins=await supabase.from("students").insert({id:user.id,name:d.name,class_code:cc,...payload});
       if(ins.error)console.error("[SAVE] INSERT error:",ins.error.message);
+      else console.warn("[SAVE] OK —",d.name,cc,"inserted");
     }else{console.warn("[SAVE] OK —",d.name,cc,"updated");}
     _syncDirty=false;
   }catch(e){console.warn("[SAVE] Exception:",e);}
