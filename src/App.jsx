@@ -1163,12 +1163,21 @@ var[step,sSt]=useState("name");
         console.warn("[LOOKUP] fallback broader select → rows:",(res2.data||[]).length);
         matches=(res2.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
       }
+      console.warn("[LOOKUP] matches filtered:",matches.length);
       if(matches.length>0){
         // Use the DB name (original casing) so recovery works with the exact stored name
         setName(matches[0].name);
-        var groupRes=await supabase.from('groups').select('code,name,type');
+        // Isolated try/catch: groups query failure must NOT kill the Welcome back path.
+        // If it throws or errors, we fall through with empty groupMap — cards show raw
+        // class_code instead of pretty group names, but the user can still proceed.
         var groupMap={};
-        if(groupRes.data)groupRes.data.forEach(function(g){groupMap[g.code]={name:g.name,type:g.type};});
+        try {
+          var groupRes=await supabase.from('groups').select('code,name,type');
+          if(groupRes.error)console.warn("[LOOKUP] groups query error:",groupRes.error.message);
+          if(groupRes.data)groupRes.data.forEach(function(g){groupMap[g.code]={name:g.name,type:g.type};});
+        } catch(e) {
+          console.warn("[LOOKUP] groups query threw:",e&&e.message);
+        }
         var accounts=matches.map(function(s){
           var g=groupMap[s.class_code];
           return{class_code:s.class_code,xp:s.xp||0,
@@ -1176,13 +1185,18 @@ var[step,sSt]=useState("name");
             groupType:g?g.type:"visitor",
             typeIcon:g?(g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍"):"🌍"};
         });
+        console.warn("[LOOKUP] → recognize step, accounts:",accounts.length);
         setFoundAccounts(accounts);
         sSt("recognize");
       } else {
+        console.warn("[LOOKUP] no match → classcode step");
         setFoundAccounts([]);
         sSt("classcode");
       }
-    }catch(e){sSt("classcode");}
+    }catch(e){
+      console.warn("[LOOKUP] outer catch → classcode, err:",e&&e.message);
+      sSt("classcode");
+    }
     setLookingUp(false);
   }
 
