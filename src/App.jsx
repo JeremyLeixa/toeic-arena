@@ -9812,7 +9812,13 @@ var[tab,setTab]=useState("week"); // week | season | overall
 var cw=weekId();
 
 var viewGroup=u.classCode||'visitor';
-try{var dg=localStorage.getItem('toeic-dash-group');if(dg)viewGroup=dg;}catch(e){}
+// toeic-dash-group is a Teacher Dashboard preference; it must NOT leak to regular
+// users on multi-profile devices (e.g. after switching from Teacher to a test visitor
+// profile, toeic-dash-group='idrac2026' would otherwise make jay_test appear in IDRAC
+// Bronze league instead of visitor league).
+if(u.classCode==="teacher-internal"||u.name==="Teacher"){
+  try{var dg=localStorage.getItem('toeic-dash-group');if(dg)viewGroup=dg;}catch(e){console.warn("[league] toeic-dash-group read failed:",e&&e.message);}
+}
 var[leagueGroup,setLeagueGroup]=useState(viewGroup);
 var[showAllLeagues,setShowAllLeagues]=useState(false);
 var[progressionData,setProgressionData]=useState([]);
