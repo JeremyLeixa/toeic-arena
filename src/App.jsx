@@ -387,7 +387,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-gauntlet-typo-fix";
+var BUILD_ID="2026-04-22-gerinf-quiz-fix";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -3793,11 +3793,9 @@ function GerInf(p){
       <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=25?"var(--green)":sc>=18?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{quizItems.length}</div>
       <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
       <button className="btn1" onClick={function(){resetQuiz();sP("q");}}>Play Again</button>
-      <button className="btn2" onClick={function(){setMode("study");}} style={{marginTop:10,width:"100%"}}>Review Patterns</button>
+      <button className="btn2" onClick={function(){setMode("hub");setOpenGrim(true);}} style={{marginTop:10,width:"100%"}}>📖 Open Grimoire</button>
       <button className="btn2" onClick={function(){setMode("hub");}} style={{marginTop:10,width:"100%"}}>Back</button>
     </div>);}
-
-    var info2=patternInfo[q.pattern];
 
     return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
@@ -3834,7 +3832,7 @@ function GerInf(p){
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{q.verb}</span>
             <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:99,
               background:q.pattern==="ing"?"rgba(255,140,66,.1)":q.pattern==="to"?"rgba(var(--cx),.1)":q.pattern==="both"?"rgba(255,71,87,.1)":"rgba(27,112,207,.1)",
-              color:info2.color}}>{q.pattern==="ing"?"always -ING":q.pattern==="to"?"always TO":q.pattern==="both"?"depends on meaning":"preposition → -ING"}</span>
+              color:q.pattern==="ing"?"var(--orange)":q.pattern==="to"?"var(--cyan)":q.pattern==="both"?"var(--red)":"var(--purple)"}}>{q.pattern==="ing"?"always -ING":q.pattern==="to"?"always TO":q.pattern==="both"?"depends on meaning":"preposition → -ING"}</span>
           </div>
           <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,marginBottom:4}}>{q.tip}</p>
           <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{q.ex}"</p>
