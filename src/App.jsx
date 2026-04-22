@@ -384,7 +384,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-gauntlet-bgm";
+var BUILD_ID="2026-04-22-back-btn-harmonized";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1046,6 +1046,10 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .gauntlet-btn-grim:active{background:rgba(245,223,170,.22)}
 .icrypt-input:focus{border-color:#c026d3!important;box-shadow:0 0 0 3px rgba(192,38,211,.2)}
 .icrypt-input::placeholder{color:var(--t3);opacity:.5}
+/* ═══ BACK BUTTON — standardized top-left navigation across all training modules ═══ */
+.back-btn{background:none;border:none;color:var(--t2);cursor:pointer;font-size:14px;padding:8px 2px;min-height:40px;display:inline-flex;align-items:center;gap:4px;font-weight:600;font-family:inherit;margin-bottom:12px;transition:color .15s;letter-spacing:.2px}
+.back-btn:hover{color:var(--t1)}
+.back-btn:active{opacity:.7}
 .chrono-marker{display:inline-block;padding:1px 8px;background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(192,38,211,.25));border:1px solid rgba(192,38,211,.5);border-radius:6px;color:#e9d5ff;font-weight:700;margin:0 2px;letter-spacing:.2px}
 .chrono-blank{display:inline-block;min-width:60px;border-bottom:2px solid #c026d3;margin:0 3px;vertical-align:middle;color:transparent;user-select:none}
 .chrono-opt{display:block;width:100%;text-align:left;padding:13px 16px;margin-bottom:9px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;color:var(--t1);font-size:15px;font-weight:600;cursor:pointer;transition:all .15s ease;font-family:inherit}
@@ -1246,7 +1250,7 @@ function IrregularCrypt(p){
 
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,padding:0,marginBottom:12}}>{"\u2190"} Gauntlet Hub</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\uD83E\uDEA6"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Irregular Crypt</h2>
@@ -1291,7 +1295,7 @@ function IrregularCrypt(p){
   var verb=deck[idx];
   var pct=timeLeft/TIME_PER_Q*100;
   return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:480,margin:"0 auto"}}>
-    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:13,padding:0,marginBottom:8}}>{"\u2190"} Abandonner</button>
+    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
     <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Verbe {idx+1} / {deck.length}</div>
     <div style={{width:"100%",height:6,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:20}}>
       <div style={{width:pct+"%",height:"100%",background:phase==="play"?(timeLeft<5?"#ef4444":"linear-gradient(90deg,#7c3aed,#c026d3)"):"#6b7280",transition:"width 1s linear"}}/>
@@ -1402,7 +1406,7 @@ function Chronomancer(p){
 
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,padding:0,marginBottom:12}}>{"\u2190"} Gauntlet Hub</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\u231B"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Chronomancer</h2>
@@ -1446,7 +1450,7 @@ function Chronomancer(p){
   var q=deck[idx];
   var pct=(idx+1)/deck.length*100;
   return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:13,padding:0,marginBottom:8}}>{"\u2190"} Abandonner</button>
+    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
     <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Question {idx+1} / {deck.length}</div>
     <div style={{width:"100%",height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:18}}>
       <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,#7c3aed,#c026d3)",transition:"width .3s ease"}}/>
@@ -1550,7 +1554,7 @@ function PassiveForge(p){
 
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,padding:0,marginBottom:12}}>{"\u2190"} Gauntlet Hub</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\u2692\uFE0F"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Passive Forge</h2>
@@ -1597,7 +1601,7 @@ function PassiveForge(p){
   var lastResult=results[results.length-1];
   var isTimedOut=phase==="reveal"&&picked===-1;
   return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:13,padding:0,marginBottom:8}}>{"\u2190"} Abandonner</button>
+    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,color:"var(--t3)",marginBottom:4}}>
       <span>Question {idx+1} / {deck.length}</span>
       {phase==="play"&&<span style={{fontWeight:700,color:timeLeft<10?"#ef4444":"#f59e0b"}}>{"\u23F1\uFE0F "+timeLeft+"s"}</span>}
@@ -1710,7 +1714,7 @@ function RelativeWeaver(p){
 
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,padding:0,marginBottom:12}}>{"\u2190"} Gauntlet Hub</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\uD83D\uDD78\uFE0F"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Relative Weaver</h2>
@@ -1758,7 +1762,7 @@ function RelativeWeaver(p){
   var progPct=(idx+1)/deck.length*100;
   var lastResult=results[results.length-1];
   return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:13,padding:0,marginBottom:8}}>{"\u2190"} Abandonner</button>
+    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
     <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Question {idx+1} / {deck.length}</div>
     <div style={{width:"100%",height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:18}}>
       <div style={{width:progPct+"%",height:"100%",background:"linear-gradient(90deg,#0891b2,#7c3aed)",transition:"width .3s ease"}}/>
@@ -1833,7 +1837,7 @@ function GauntletHub(p){
   if(subMode==="relative")return(<RelativeWeaver u={p.u} done={subDone} back={subAbort}/>);
 
   return(<div className="gauntlet-hub enter">
-    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:12,padding:0}}>{"\u2190"} Grammar &amp; Vocab</button>
+    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
     <div className="gauntlet-header">
       <div style={{fontSize:46,marginBottom:6,filter:"drop-shadow(0 4px 14px rgba(124,58,237,.45))"}}>{"\uD83D\uDEE1\uFE0F"}</div>
       <h2 className="gauntlet-title">GRAMMAR GAUNTLET</h2>
@@ -3010,7 +3014,7 @@ if(ph==="done"){var fx=30+sc*14+(sc===5?20:0);if(p.gate)fx=p.gate(fx,sc,5);retur
 var q=qs[ci],tc=tl>15?"var(--cyan)":tl>5?"var(--orange)":"var(--red)";
 return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-<button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",fontSize:14,cursor:"pointer"}}>Quit</button>
+<button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
 <div style={{display:"flex",gap:6}}>{[0,1,2,3,4].map(function(i){return (<div key={i} style={{width:i===ci?24:8,height:8,borderRadius:4,background:i<ci?"var(--green)":i===ci?"var(--cyan)":"var(--t3)",transition:"all .3s"}}/>);})}</div>
 <div className="out" style={{fontSize:20,fontWeight:800,color:tc,minWidth:32,textAlign:"right"}}>{tl}</div></div>
 <div style={{width:"100%",height:3,background:"var(--bg3)",borderRadius:2,marginBottom:32,overflow:"hidden"}}><div style={{width:(tl/30*100)+"%",height:"100%",background:tc,borderRadius:2,transition:"width 1s linear"}}/></div>
@@ -3406,7 +3410,7 @@ if(card&&!fl&&lastSpoken.current!==ci){lastSpoken.current=ci;setTimeout(function
 
 return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-<button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+<button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
 <div style={{textAlign:"center"}}>
   <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{rev.length}</span>
   {isDomainMode&&<div style={{fontSize:9,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:.5,marginTop:2}} className="out">Study mode</div>}
@@ -3446,7 +3450,7 @@ if(ph==="done"){var fx=20+sc*7;if(p.gate)fx=p.gate(fx,sc,qs.length);return(<div 
 
 var q=qs[ci];return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-<button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+<button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
 <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{qs.length}</span></div>
 <Bar value={ci} max={qs.length} h={4}/>
 <span className="out" style={{fontSize:11,fontWeight:600,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,marginTop:8,display:"block"}}>{q.cat}</span>
@@ -3543,7 +3547,7 @@ function WordFam(p){
   var it=items[ci];var fam=it.family;var isMulti=it.validAnswers.length>1;
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
     <div style={{textAlign:"center",marginTop:32,marginBottom:24}}>
@@ -3598,7 +3602,7 @@ function ConnSort(p){
   var it=items[ci];
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#8b5e83,#c4587a)"/>
     <div style={{textAlign:"center",marginTop:32,marginBottom:28}}>
@@ -3671,7 +3675,7 @@ function PrepDrill(p){
   var it=items[ci];
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#06b6d4,#22c55e)"/>
     <div style={{textAlign:"center",marginTop:32,marginBottom:28}}>
@@ -3754,7 +3758,7 @@ function GerInf(p){
   // ═══ HUB ═══
   if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontWeight:700,fontSize:15}}>Gerund vs Infinitive</span>
       <div style={{width:40}}/>
     </div>
@@ -3854,7 +3858,7 @@ function GerInf(p){
 
     return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <button onClick={function(){setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+        <button className="back-btn" onClick={function(){setMode("hub");}}>{"\u2190"} Back</button>
         <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{quizItems.length}</span></div>
       <Bar value={ci} max={quizItems.length} h={4} color="linear-gradient(90deg,#e11d48,#f59e0b)"/>
 
@@ -3930,7 +3934,7 @@ function TrapsQuiz(p){
   var t=traps[ci];
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Trap {ci+1}/{traps.length}</span></div>
     <Bar value={ci} max={traps.length} h={4} color="linear-gradient(90deg,#e11d48,#f59e0b)"/>
 
@@ -4087,7 +4091,7 @@ function GrammarRef(p){
   var[open,sO]=useState(p.initial||null);
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontWeight:700,fontSize:15}}>Grammar Reference</span>
       <div style={{width:40}}/>
     </div>
@@ -4199,7 +4203,7 @@ function PhrasalDojo(p){
   // ═══ HUB ═══
   if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontWeight:700,fontSize:15}}>Phrasal Verb Dojo</span>
       <div style={{width:40}}/>
     </div>
@@ -4284,7 +4288,7 @@ function PhrasalDojo(p){
 
     return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <button onClick={function(){setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+        <button className="back-btn" onClick={function(){setMode("hub");}}>{"\u2190"} Back</button>
         {streak>=2&&<span className="out" style={{fontSize:12,fontWeight:700,color:"var(--gold)",animation:"pulse .6s infinite"}}>{"🔥"} x{streak}</span>}
         <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{matchQs.length}</span></div>
       <Bar value={ci} max={matchQs.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
@@ -4343,7 +4347,7 @@ function PhrasalDojo(p){
 
     return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <button onClick={function(){clearInterval(timerRef.current);setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+        <button className="back-btn" onClick={function(){clearInterval(timerRef.current);setMode("hub");}}>{"\u2190"} Back</button>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           {streak>=2&&<span className="out" style={{fontSize:12,fontWeight:700,color:"var(--gold)",animation:"pulse .6s infinite"}}>{"🔥"} x{streak}</span>}
           <span className="out" style={{fontSize:16,fontWeight:800,color:timerCol}}>{timer}s</span>
@@ -4406,7 +4410,7 @@ function AboutToeic(p){
     {band:"945-990",cefr:"C1",label:"Advanced",col:"#f0c850"},
   ];
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
-    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"\u2190"} Tips & Strategy</button>
+    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
 
     <div style={{textAlign:"center",marginBottom:24}}>
       <div style={{fontSize:56,marginBottom:8}}>{"\uD83C\uDF93"}</div>
@@ -4526,7 +4530,7 @@ function StratCards(p){
 
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontWeight:700,fontSize:15}}>Strategy Cards</span>
       <div style={{width:40}}/></div>
 
@@ -4609,7 +4613,7 @@ function StratQuizPage(p){
 
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{qs.length}</span></div>
     <Bar value={ci} max={qs.length} h={4} color="linear-gradient(90deg,#b07830,#8b5e83)"/>
 
@@ -4786,7 +4790,7 @@ function TimeSim(p){
   var q=qs[ci];var timeColor=elapsed>TARGET?"var(--red)":elapsed>TARGET*0.8?"var(--orange)":"var(--t2)";
   return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-      <button onClick={function(){clearInterval(timerRef.current);p.back();}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={function(){clearInterval(timerRef.current);p.back();}}>{"\u2190"} Back</button>
       <div className="out" style={{fontSize:18,fontWeight:800,color:timeColor}}>{fmtTime(elapsed)}</div>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/30</span></div>
     <Bar value={ci} max={30} h={4}/>
@@ -4891,7 +4895,7 @@ function Part6Drill(p){
 
   if(ph==="text")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Text {ti+1}/{texts.length}</span></div>
     <div style={{display:"flex",gap:6,marginBottom:12}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(27,112,207,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}</span>
@@ -4905,7 +4909,7 @@ function Part6Drill(p){
   // Question mode
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Blank {totalB+1}/{totalBlanks}</span></div>
     <Bar value={totalB} max={totalBlanks} h={4} color="linear-gradient(90deg,#c4587a,#8b5e83)"/>
     <div style={{marginTop:12,marginBottom:6}}>
@@ -4973,7 +4977,7 @@ function Part7Read(p){
 // Reading view — show passage with question preview toggle
   if(ph==="read")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Passage {pi+1}/{passages.length}</span></div>
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:12}}>
@@ -4989,7 +4993,7 @@ function Part7Read(p){
 // Question mode
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Q {totalQ+1}/{totalQs}</span></div>
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:6}}>
@@ -5050,7 +5054,7 @@ function FalseFriends(p){
 
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#ec4899,#f59e0b)"/>
 
@@ -8070,7 +8074,7 @@ function WordTavern(p){
   var qLabel=q.type==="defToWord"?"Which word matches this definition?":q.type==="wordToDef"?"What does this word mean?":"Fill in the blank:";
   return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{TOTAL}</span>
       <div style={{width:40}}/>
     </div>
@@ -10170,7 +10174,7 @@ function ListenP2(p){
 
   if(ph==="listen")return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
     <div style={{textAlign:"center",marginTop:40}}>
@@ -10203,7 +10207,7 @@ function ListenP2(p){
 
   return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
     <div className="crd" style={{marginTop:16,padding:14,background:"rgba(27,112,207,.05)",borderColor:"rgba(27,112,207,.12)"}}>
@@ -10268,7 +10272,7 @@ function ListenP1(p){
 
   if(ph==="listen")return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
 
@@ -10303,7 +10307,7 @@ function ListenP1(p){
   // Feedback — show image + all statements + explanation
   return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
     <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
 
@@ -10388,7 +10392,7 @@ function ListenP3(p){
   // Listen phase — show questions preview + play button
   if(ph==="listen")return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Conversation {ci+1}/{items.length}</span></div>
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#8b5cf6,#ec4899)"/>
 
@@ -10420,7 +10424,7 @@ function ListenP3(p){
   var curQ=it.qs[qi];
   return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Q {totalQ+1}/{totalQs}</span></div>
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#8b5cf6,#ec4899)"/>
     <div style={{fontSize:10,color:"var(--purple)",marginTop:8,marginBottom:4}} className="out">Conversation {ci+1} — Question {qi+1}/3</div>
@@ -10489,7 +10493,7 @@ function ListenP4(p){
 
   if(ph==="listen")return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Talk {ci+1}/{items.length}</span></div>
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#06b6d4,#3b82f6)"/>
 
@@ -10522,7 +10526,7 @@ function ListenP4(p){
   var curQ=it.qs[qi];
   return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Quit</button>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Q {totalQ+1}/{totalQs}</span></div>
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#06b6d4,#3b82f6)"/>
     <div style={{fontSize:10,color:"var(--cyan)",marginTop:8,marginBottom:4}} className="out">{it.type} — Question {qi+1}/3</div>
@@ -11124,7 +11128,7 @@ function UpgradeScreen(p){
   }
 
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
-    <button onClick={p.back} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"\u2190 Back"}</button>
+    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
 
     <div style={{textAlign:"center",marginBottom:24}}>
       <div style={{fontSize:56,marginBottom:8}}>{"\uD83C\uDFF0"}</div>
