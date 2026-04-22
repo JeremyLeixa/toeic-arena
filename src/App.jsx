@@ -396,7 +396,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-tiles-redesign-v1";
+var BUILD_ID="2026-04-22-tiles-redesign-v2";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -3126,7 +3126,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
             return(
               <div key={m.id} className="crd" onClick={function(){if(!m.lock)p.nav(m.id);}}
                 style={{display:"flex",alignItems:"center",gap:14,cursor:m.lock?"default":"pointer",opacity:m.lock?.4:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
-                <div style={{width:42,height:42,borderRadius:12,background:m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+                <div style={{width:42,height:42,borderRadius:12,background:"transparent",border:"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color="var(--cyan)"/>:m.i}</div>
                 <div style={{flex:1,minWidth:0}}>
                   <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
                   <div style={{fontSize:11,color:"var(--t3)"}}>{m.d}</div>
@@ -3271,7 +3271,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
     <div onClick={function(){setTrainView("mocks");}}
       style={{borderRadius:16,border:"1.5px solid rgba(212,148,58,0.35)",background:"linear-gradient(135deg,#1a1610,#28221a)",padding:16,marginBottom:14,cursor:"pointer"}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
-        <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#8b6020)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}><GIcon name="scroll-unfurled" size={28} color="#fff"/></div>
+        <div style={{width:50,height:50,borderRadius:14,background:"transparent",border:"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}><GIcon name="scroll-unfurled" size={28} color="var(--cyan)"/></div>
         <div style={{flex:1}}>
           <div className="out" style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:16,letterSpacing:1.5,color:"#f0c850"}}>MOCK EXAMS</div>
           <div style={{fontSize:12,color:"#8a7e6a"}}>Real conditions {"·"} full tests</div>
