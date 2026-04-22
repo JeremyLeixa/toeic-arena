@@ -396,7 +396,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-train-games-icons-v1";
+var BUILD_ID="2026-04-22-train-games-icons-v2";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -3047,40 +3047,40 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 
   // ── Section data (unchanged) ──
   var sections=[
-    {key:"exercises",title:"Exercises",sub:"TOEIC Parts training",icon:"⚔️",count:"Parts 1-7",items:[
-      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"⚡",bg:dd?"var(--bg3)":"linear-gradient(135deg,var(--cx-hex),#8b5e83)",lock:dd},
-      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"👂",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
-      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    {key:"exercises",title:"Exercises",sub:"TOEIC Parts training",icon:"crossed-swords",count:"Parts 1-7",items:[
+      {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"sunrise",bg:dd?"var(--bg3)":"linear-gradient(135deg,var(--cx-hex),#8b5e83)",lock:dd},
+      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"ringing-bell",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
+      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"bookmarklet",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
-    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"🧩",count:"8 modules",items:[
-      {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
-      {id:"gauntlet",n:"Grammar Gauntlet",d:"4 trials · Irregulars, Tenses, Passive, Relatives",i:"🛡️",bg:"linear-gradient(135deg,#7c3aed,#c026d3)"},
-      {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
-      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
-      {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
-      {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
-      {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
-      {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
+    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"bookshelf",count:"8 modules",items:[
+      {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"card-joker",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
+      {id:"gauntlet",n:"Grammar Gauntlet",d:"4 trials · Irregulars, Tenses, Passive, Relatives",i:"gauntlet",bg:"linear-gradient(135deg,#7c3aed,#c026d3)"},
+      {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"family-tree",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"duality-mask",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
+      {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"knot",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
+      {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"linked-rings",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
+      {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"scales",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
+      {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"shuriken",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
     ]},
-    {key:"mocks",title:"Mock Exams",sub:"Real conditions",icon:"📜",count:"3 tests",items:(function(){
+    {key:"mocks",title:"Mock Exams",sub:"Real conditions",icon:"scroll-unfurled",count:"3 tests",items:(function(){
       var items=[];
       var u1=canUnlockMock(p.u,1);
-      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"📜",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
+      items.push({id:"mock1",n:"Mock Test 1",d:u1.ok?"Reading Half-Test · 49 Q · 37 min":u1.reasons[0],i:"scroll-quill",bg:u1.ok?"linear-gradient(135deg,#ffd700,#ff8c42)":"var(--bg3)",lock:!u1.ok,mockId:1});
       var u2=canUnlockMock(p.u,2);
-      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"📜",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
+      items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"scroll-quill",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
       var u3=canUnlockMock(p.u,3);
-      items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"📜",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
+      items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"scroll-quill",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
       if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495";items[0].lock=true;items[0].bg="var(--bg3)";}
       if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495";items[1].lock=true;items[1].bg="var(--bg3)";}
       if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495";items[2].lock=true;items[2].bg="var(--bg3)";}
       return items;
     })()},
-    {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"🗺️",count:"5 tools",items:[
-      {id:"abouttoeic",n:"What is the TOEIC?",d:"Format, score, levels — the quick guide",i:"🎓",bg:"linear-gradient(135deg,#8b5e83,#5a7a9a)"},
-      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"🗺️",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
-      {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"🧠",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
-      {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"🪤",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
-      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"📖",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"treasure-map",count:"5 tools",items:[
+      {id:"abouttoeic",n:"What is the TOEIC?",d:"Format, score, levels — the quick guide",i:"info",bg:"linear-gradient(135deg,#8b5e83,#5a7a9a)"},
+      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"card-pick",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
+      {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"brain",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
+      {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"trap-mask",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
+      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"book-aura",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
   ];
 
@@ -3151,9 +3151,9 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
             {!bossCompleted&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 70% 85%,rgba(220,38,38,0.25),transparent 50%)",animation:"final-ember-glow 4.5s ease-in-out infinite 0.8s",pointerEvents:"none"}}/>}
             {!bossCompleted&&<><div className="fx-ember sm" style={{left:"18%",bottom:10,animationDelay:"0s"}}/><div className="fx-ember" style={{left:"28%",bottom:8,animationDelay:"0.7s"}}/><div className="fx-ember lg" style={{left:"40%",bottom:12,animationDelay:"1.4s"}}/><div className="fx-ember sm" style={{left:"52%",bottom:6,animationDelay:"2.1s"}}/><div className="fx-ember" style={{left:"63%",bottom:10,animationDelay:"0.3s"}}/><div className="fx-ember sm" style={{left:"74%",bottom:8,animationDelay:"1.0s"}}/><div className="fx-ember" style={{left:"85%",bottom:12,animationDelay:"1.7s"}}/><div className="fx-ember lg" style={{left:"22%",bottom:14,animationDelay:"2.8s"}}/><div className="fx-ember sm" style={{left:"58%",bottom:6,animationDelay:"3.2s"}}/></>}
             {!bossLocked&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 80% 30%,rgba(245,158,11,.08),transparent 60%),radial-gradient(ellipse at 20% 70%,rgba(220,38,38,.06),transparent 50%)"}}/>}
-            {!bossLocked&&<div style={{position:"absolute",top:-8,right:12,fontSize:48,opacity:.1,transform:"scaleX(-1)"}}>{"🐉"}</div>}
+            {!bossLocked&&<div style={{position:"absolute",top:-8,right:12,opacity:.1,transform:"scaleX(-1)"}}><GIcon name="dragon-spiral" size={54} color="currentColor"/></div>}
             <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
-              <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#dc2626,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:bossLocked?"none":"0 0 20px rgba(220,38,38,.3)"}}>{"🐉"}</div>
+              <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#dc2626,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:bossLocked?"none":"0 0 20px rgba(220,38,38,.3)"}}><GIcon name="dragon-spiral" size={28} color="#fff"/></div>
               <div style={{flex:1}}>
                 <div style={{marginBottom:2}}>
                   <span className="out" style={{fontWeight:900,fontSize:16,background:"linear-gradient(90deg,#ff4444,#ff8c42,#ffd700)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>THE FINAL ARENA</span>
@@ -3271,7 +3271,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
     <div onClick={function(){setTrainView("mocks");}}
       style={{borderRadius:16,border:"1.5px solid rgba(212,148,58,0.35)",background:"linear-gradient(135deg,#1a1610,#28221a)",padding:16,marginBottom:14,cursor:"pointer"}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
-        <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#8b6020)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>{"📜"}</div>
+        <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#d4943a,#8b6020)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}><GIcon name="scroll-unfurled" size={28} color="#fff"/></div>
         <div style={{flex:1}}>
           <div className="out" style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:16,letterSpacing:1.5,color:"#f0c850"}}>MOCK EXAMS</div>
           <div style={{fontSize:12,color:"#8a7e6a"}}>Real conditions {"·"} full tests</div>
@@ -3291,7 +3291,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
       <div style={{height:1,background:"rgba(180,140,80,0.15)",margin:"10px -4px"}}/>
       {/* Event rows: Final Arena + Endless Arena */}
       <div style={{display:"flex",alignItems:"center",gap:11,padding:"7px 4px"}}>
-        <span style={{fontSize:19,width:22,textAlign:"center"}}>{"🐉"}</span>
+        <span style={{width:22,textAlign:"center",display:"inline-flex",justifyContent:"center"}}><GIcon name="dragon-spiral" size={19} color={bossCompleted?"#4abe60":bossLocked?"#8a7e6a":"#e8c88a"}/></span>
         <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:13,fontWeight:700,color:bossCompleted?"#4abe60":bossLocked?"#8a7e6a":"#e8c88a",flex:1}}>Final Arena</span>
         <span style={{fontSize:11,color:bossCompleted?"#4abe60":bossLocked?"#8a7e6a":"#f0c850"}}>{bossCompleted?"conquered \xb7 "+(p.u.mockResults.boss.toeicEstimate||""):bossLocked?"awaiting \xb7 finish mocks":"unlocked \xb7 enter \u2192"}</span>
       </div>
@@ -3308,7 +3308,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
         return(<div key={sec.key} className="crd" onClick={function(){setTrainView(si);}}
           style={{padding:"18px 14px",cursor:"pointer",borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:(si*.06)+"s",animationFillMode:"both"}}>
           <div>
-            <div style={{fontSize:28,marginBottom:8}}>{sec.icon}</div>
+            <div style={{fontSize:28,marginBottom:8}}>{GAME_ICON_PATHS[sec.icon]?<GIcon name={sec.icon} size={32} color="var(--cyan)" block={true}/>:sec.icon}</div>
             <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>{sec.title}</div>
             <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{sec.sub}</div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -6456,12 +6456,12 @@ function GamesHub(p){
   var bestT=p.u.moduleScores&&p.u.moduleScores.tavern?p.u.moduleScores.tavern:null;
   var games=[
     {id:"tavern",n:"Word Tavern",d:"Prove your vocabulary!",i:"beer-stein",bg:"linear-gradient(135deg,#c87a35,#8b5e83)",tag:"NEW",extra:bestT?"Best: "+bestT.correct+"/"+bestT.total:null},
-    {id:"matchE",n:"Speed Match",d:"Match words with definitions!",i:"🎯",bg:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",extra:bestM?"Best: "+bestM.time+"s · "+bestM.moves+" moves":null},
-    {id:"wfall",n:"Word Fall",d:"Catch the falling sentences!",i:"⬇️",bg:"linear-gradient(135deg,#ef4444,#f59e0b)",extra:bestF?"Best: "+bestF.score+" pts · x"+bestF.maxCombo+" combo":null},
-    {id:"sbuild",n:"Sentence Builder",d:"Tap blocks in the right order!",i:"🔀",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
-    {id:"ablitz",n:"Audio Blitz",d:"Listen once, answer fast!",i:"🎵",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
-    {id:"clue",n:"Clue Hunter",d:"Find the clue, fill the blank!",i:"🧭",bg:"linear-gradient(135deg,var(--cx-hex),#4abe60)"},
-    {id:"duel",n:"Vocabulary Arena",d:"Real-time 1v1 — challenge a classmate!",i:"⚔️",bg:"linear-gradient(135deg,#c84040,#8b5e83)",tag:"NEW"},
+    {id:"matchE",n:"Speed Match",d:"Match words with definitions!",i:"chained-arrow-heads",bg:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",extra:bestM?"Best: "+bestM.time+"s · "+bestM.moves+" moves":null},
+    {id:"wfall",n:"Word Fall",d:"Catch the falling sentences!",i:"meteor-impact",bg:"linear-gradient(135deg,#ef4444,#f59e0b)",extra:bestF?"Best: "+bestF.score+" pts · x"+bestF.maxCombo+" combo":null},
+    {id:"sbuild",n:"Sentence Builder",d:"Tap blocks in the right order!",i:"brick-pile",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+    {id:"ablitz",n:"Audio Blitz",d:"Listen once, answer fast!",i:"lyre",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+    {id:"clue",n:"Clue Hunter",d:"Find the clue, fill the blank!",i:"spyglass",bg:"linear-gradient(135deg,var(--cx-hex),#4abe60)"},
+    {id:"duel",n:"Vocabulary Arena",d:"Real-time 1v1 — challenge a classmate!",i:"swords-emblem",bg:"linear-gradient(135deg,#c84040,#8b5e83)",tag:"NEW"},
   ];
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Arena Games</h1>
@@ -6469,7 +6469,7 @@ function GamesHub(p){
     <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:12}}>
       {games.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",opacity:vl?.55:1}}>
-          <div style={{width:48,height:48,borderRadius:14,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{m.i}</div>
+          <div style={{width:48,height:48,borderRadius:14,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={28} color="#fff"/>:m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>{m.n}</div>
             <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
             {!vl&&m.extra&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{m.extra}</div>}
