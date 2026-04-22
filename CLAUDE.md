@@ -62,15 +62,26 @@ src/
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
     placement.js       — 20 Battle Scan questions + tier levels + mission modules
-    achievements.js    — 42 achievements (incl. 4 Word Tavern, 4 Duel, etc.)
+    achievements.js    — 58 achievements (incl. 16 Gauntlet, 4 Word Tavern, 4 Duel)
     leagues.js         — 7 league tiers + bot competitors
     avatarIcons.js     — Iconify SVG paths for game icons
-    chests.js          — CHEST_TYPES, RARITIES, AVATARS, SKINS, trigger logic
+    chests.js          — CHEST_TYPES, RARITIES, AVATARS, SKINS, trigger logic,
+                          NOVICE/EPIC/LEGENDARY_ACHIEVEMENTS lists
     helpers.js         — getLevel(xp) utility
+    grammarGauntlet.js — 270 Gauntlet items across 4 arrays:
+                          IRREGULAR_VERBS (80), TENSE_CHRONOMANCER (70),
+                          PASSIVE_FORGE (60), RELATIVE_WEAVER (60)
+    grammarGauntletGrimoire.js — 4 Gauntlet grimoires (Chronomancer,
+                          Passive Forge, Relative Weaver)
+    gerundGrimoire.js      — GRIMOIRE_GERUND (replaces GerInf Study Mode)
+    phrasalGrimoire.js     — GRIMOIRE_PHRASAL (replaces PhrasalDojo Study Mode)
+    connectorsGrimoire.js  — GRIMOIRE_CONNECTORS (new, ConnSort intro)
 public/
   audio/
     bgm/               — bgm_home, bgm_speed, bgm_wfall, bgm_duel, bgm_clue,
-                          bgm_build, bgm_final, bgm_endless, bgm_tavern
+                          bgm_build, bgm_final, bgm_endless, bgm_tavern,
+                          bgm_crypt, bgm_chrono, bgm_forge, bgm_weaver
+                          (4 Mureka tracks for Gauntlet sub-modules)
     p1/, p2/, p3/, p4/ — Training listening MP3s
     blitz/             — Audio Blitz MP3s
     boss/              — Boss Test MP3s (P1-P4)
@@ -199,8 +210,38 @@ prototypes/
 
 ### BGM Control (centralized)
 - Central useEffect in main App watches `sp` and `tab`. Stops BGM on entry to audio routes (lis, lisP1-P4, ablitz). Restores `bgm_home` on return to home/league/profile without subpage.
-- `SELF_MANAGED` routes that handle their own BGM: boss, endless, matchE, wfall, duel, sbuild, clue, tavern. These are excluded from centralized control.
+- `SELF_MANAGED` routes that handle their own BGM: boss, endless, matchE, wfall, duel, sbuild, clue, tavern, **gauntlet**. These are excluded from centralized control.
 - Auto-start on first user interaction: only triggers `bgm_home` if `tab==="home" && !sp`.
+
+### Grammar Gauntlet 🛡️ (S2 major feature, delivered 2026-04-22)
+- Route `sp==="gauntlet"` → `GauntletHub` component.
+- 4 sub-modules rendered via internal `subMode` state: `"irregular"` (IrregularCrypt), `"tense"` (Chronomancer), `"passive"` (PassiveForge), `"relative"` (RelativeWeaver).
+- `onModuleDone(subId, sc, tot, xp)` prop bubbles completion to App, which runs the standard XP pipeline: `applyXpGates` → `addXp` → `recordModule("gauntlet_"+subId)` → `grantWeeklyChest` if perfect.
+- Each sub-module has its own BGM: `bgm_crypt` / `bgm_chrono` / `bgm_forge` / `bgm_weaver`.
+- Content pool: 270 items total (80/70/60/60). Session size 15 everywhere.
+- TOEIC estimator: reading section has a new `gauntlet` weight of 0.15 (avg accuracy across the 4 sub-modules).
+
+### Grimoire pattern (applies to Gauntlet + G&V grimoires)
+- **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.
+- **Block types** consumed by `<GrimoireReader/>`: `paragraph`, `heading`, `rule` (formula/label), `example` (en/fr/note), `trap` (red warning), `table` (headers+rows), `list`.
+- **One idea per chapter** — mobile-readability rule. Repaginate dense chapters into short ones.
+- **Grimoires stay in FR** (language policy: theory = FR for francophone learners, chrome = EN).
+- **Replacing Study Mode**: when a G&V module has a Study Mode and theoretical content, replace the Study Mode entirely with a grimoire (GerInf + PhrasalDojo pattern). Don't keep both.
+- **Reader component**: shared `<GrimoireReader grimoire={...} back={...}/>` + `renderGrimoireBlock` helpers. Parchment styling, CSS 3D flip animation, TOC drawer, roman numeral page numbers.
+- **Page number placement**: the `.grim-page-num` must live INSIDE `.grim-page-content` with `margin-top:auto` (flex column with `min-height:100%`). Avoid `position:absolute;bottom:X` — it sticks to viewport, not content.
+
+### UX harmonization (back buttons)
+- **Single back button convention**: `.back-btn` CSS class + `← Back` label. Top-left, 40px min-height for mobile tap.
+- Never re-inline back buttons with `style={{background:"none",border:"none"...}}`. Use the class.
+- Centered flex intro screens: wrap with `position:relative` and set the back-btn to `position:absolute;top:16;left:16;marginBottom:0`.
+- The secondary full-width `.btn2` "Back" CTAs at the bottom of intro/done pages remain — they're bottom CTAs paired with primary actions, not nav.
+
+### Audio abort flag (listening modules)
+- Multi-clip async sequences (Listen P1/P2/P3/P4, Boss Test, Endless Arena) MUST use the module-level `_audioAborted` flag to abort in-flight chains on unmount.
+- `playAudioFile(url)` checks `_audioAborted` at entry and resolves immediately if true.
+- `stopListenAudio()` sets the flag + pauses current audio.
+- `resumeAudioSession()` clears the flag. Call it on component mount: `useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);`.
+- Without this pattern, the async sequence keeps creating new Audio objects after the user navigates away (bug fixed 2026-04-22, regression risk).
 
 ---
 

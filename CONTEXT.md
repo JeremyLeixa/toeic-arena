@@ -6,7 +6,41 @@
 
 ---
 
-## Last session: 2026-04-20 (session "intelligent-blackburn" — monetization build-out marathon)
+## Last session: 2026-04-22 (session "loving-merkle" — Grammar Gauntlet build + G&V overhaul)
+
+Session majeure S2 consacrée au **chantier Grammar Gauntlet** (nouveau module morpho-syntaxe) et à l'**harmonisation G&V** (grimoires, back buttons, reorder, i18n). **22 commits**. Tous livrés, buildés, pushés, stables en prod. Teacher Dashboard et Onboarding inchangés. Monetization en pause (bug visitor de la session précédente reste à débugger — voir section archive ci-dessous).
+
+### Gauntlet — livraison finale
+- **4 sous-modules** jouables : Irregular Crypt 🪦 (input V2/V3, 15s timer), Chronomancer ⏳ (QCM tenses, marker hint), Passive Forge ⚒️ (QCM transform+fillin, 30s timer), Relative Weaver 🕸️ (QCM relatives)
+- **270 items** au total (80+70+60+60), session size 15 = pool ratio ≥4x
+- **4 grimoires Gauntlet** (FR, parchemin + CSS 3D flip) : Chronomancer, Passive Forge, Relative Weaver, Champion meta
+- **16 achievements** : 5 Tier 1 Discovery (Novice) + 4 Tier 0 Mastery (Guerrier) + 4 Tier 2 Perfect (Guerrier Epic) + 2 Tier 3 Consistency (Légendaire) + 1 Meta (Légendaire)
+- **4 BGM Mureka** dédiés : bgm_crypt / bgm_chrono / bgm_forge / bgm_weaver
+- **TOEIC estimator rebalancé** : reading weights 0.30/0.20/0.25/0.10/**0.15** (nouveau poids Gauntlet)
+
+### G&V overhaul (au-delà du Gauntlet)
+- **3 grimoires G&V** ajoutés : GerInf (remplace Study Mode), PhrasalDojo (remplace Study Mode), ConnSort (nouveau + intro screen)
+- **Menu G&V reorderé** (pédagogique) : Flashcard → Gauntlet → WordFam → FalseFriends → ConnSort → PrepDrill → GerInf → PhrasalDojo
+- **Back button harmonisé** (~30 boutons refactorés) : classe `.back-btn` + `← Back` label, min-height 40px mobile
+- **PrepDrill + FalseFriends** : back-btn top-left absolute ajouté aux intros centrées
+- **CardSess route split** : csess retourne au G&V menu, cdom garde le back minimal
+
+### Fixes techniques
+- **Audio leak fix** : nouveau flag `_audioAborted` + `resumeAudioSession()` — les séquences async de Listen P1/P2/P3/P4 + Boss Test + Endless Arena ne laissent plus d'audio en fuite après unmount
+- **Grimoire page number** : numéro romain passé de `position:absolute` (viewport-fixed) à `margin-top:auto` (flow-aware) — n'overlap plus le contenu
+- **i18n Gauntlet** : 100% chrome EN (hub, intros, end screens, reveal labels, buttons) ; grimoires restent FR
+- **Encoding** : tous les `\uXXXX` en JSX text converted to real UTF-8 (incluant le fix Daily Quest "Mission complete —")
+
+### Prochaine cible (nouvelle session)
+**Chantier icons identity** — Jérémy a flaggé l'incohérence emoji à la clôture de session :
+- Audit complet des emojis actuels
+- Direction : medieval-fantasy-adventure (cohérent avec Gauntlet/grimoires)
+- Possiblement migration Iconify SVG (pattern déjà existant dans `src/data/avatarIcons.js`)
+- Voir `memory/project_next_chantier_icons.md`
+
+---
+
+## Archive session 2026-04-20 ("intelligent-blackburn" — monetization marathon)
 
 Session démarrée le 17 avril (kickoff monétisation, CGV draft, migration Teacher) et **poursuivie sur le 20 avril** en grosse séance de construction + debug. À la clôture du 20 avril au soir : **Phases 1→4 code-complete**, **Phase 3 validée end-to-end** sur le compte Teacher, **Phase 4 bloquée sur un bug de propagation** détecté en test visitor (jay_test) en fin de session.
 
@@ -84,11 +118,13 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 ## What's shipped (cumulative, current production)
 
 ### Gameplay & Content
+- **Grammar Gauntlet 🛡️** (S2 major) — 4 sub-modules × trials, 270 items, 4 BGM, 16 achievements, 4 grimoires — morpho-syntax pillar complete
 - **Endless Arena** ⏳ — unlocked post-Boss ≥650, random full TOEIC, weakness reco on results
 - **Word Tavern** 🍺 — 15Q vocab quiz, 3 types (def→word, word→def, fill-in-blank), failed words reset in SRS
 - **Flashcards give 0 XP** — memorization tool only, XP earned via Word Tavern
 - **SpeedMatch Hard removed** — one mode only
 - **Content pools expanded**: P3:50, P4:45, P6:30, P7:39
+- **7 grimoires** (4 Gauntlet + GerInf + PhrasalDojo + ConnSort) — parchment reader with CSS 3D page flip, FR theory content, 7 block types
 
 ### Onboarding
 - **Battle Scan placement test** with TOEIC estimate (200-990 mapping) in Battle Report
@@ -115,18 +151,28 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 - **`inactive-reminder`** — Every 3d 17h CET for 7-30d inactive students, excludes expired classes
 
 ### Technical polish
-- **English uniformization** — UI, push messages, chests.js. FR kept only where needed (onboarding prefix, privacy, TeacherDash)
+- **English uniformization** — UI, push messages, chests.js, Gauntlet chrome. FR kept only where needed (onboarding prefix, privacy, TeacherDash, grimoires)
 - **BGM bleed fix** — `bgm_home` no longer continues into Listening exercises
+- **Audio leak fix** (2026-04-22) — listening async sequences (P1-P4, Boss, Endless) properly abort on unmount via `_audioAborted` flag
+- **Back button harmonized** (2026-04-22) — single `.back-btn` class + `← Back` label across all ~30 training module back buttons
 - **Coach tips removed entirely** — onboarding + Mock nudge cover the role
 - **Event pills on Home removed** — redundant with banners
 - **Explorer achievement bug fix** — onboarding no longer pollutes `moduleScores`
 - **Push subscription fix** — explicit `Notification.requestPermission()`
 - **4 new Word Tavern achievements** — Tavern Visitor, Silver Tongue, Wordsmith, Tavern Regular
+- **16 new Grammar Gauntlet achievements** (5 Discovery + 4 Mastery + 4 Perfect + 2 Consistency + 1 Meta) — EPIC_ACHIEVEMENTS + NOVICE_ACHIEVEMENTS lists added to chests.js
 - **Supabase columns added**: `joined_at`, `tutorial_pending`, `inactivity_push_sent`
 
 ---
 
 ## What's next (not started)
+
+### 🎨 Icons identity chantier (requested 2026-04-22 — NEXT SESSION)
+Jérémy a clôturé la session Gauntlet en flaggant l'incohérence emoji :
+- Un éclair ⚡ pour Home n'a pas de sens
+- Certaines icônes sont anachroniques (mégaphone, etc.)
+- Zéro cohérence inter-modules
+Direction : probable medieval-fantasy-adventure (cohérent avec Gauntlet/grimoires). Audit + migration progressive. Infra existante à réutiliser : `src/data/avatarIcons.js` (Iconify SVG paths). Voir `memory/project_next_chantier_icons.md`.
 
 ### ✅ Decisions resolved (2026-04-17)
 - **Reset leaderboard S1→S2** — **reset partiel** (modalités précises à définir)
@@ -179,4 +225,4 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 
 ---
 
-_Last updated: 2026-04-20 soir · session "intelligent-blackburn" (Phases 1-4 monétisation livrées, debug Phase 4 visitor à reprendre)_
+_Last updated: 2026-04-22 · session "loving-merkle" (Grammar Gauntlet complet + 3 grimoires G&V + UX harmonization + audio leak fix). Next: icons identity chantier._
