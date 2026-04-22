@@ -387,7 +387,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-gerinf-quiz-fix";
+var BUILD_ID="2026-04-22-tabbar-icons-v1";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1932,12 +1932,12 @@ function TutorialTour(p){
     </div>);
 }
 
-function Tabs(p){var tabs=[{id:"home",l:"Home",i:"\u26A1"},{id:"train",l:"Train",i:"\uD83C\uDFAF"},{id:"games",l:"Games",i:"\uD83C\uDFB2"},{id:"league",l:"League",i:"\uD83C\uDFC6"},{id:"profile",l:"Profile",i:"\uD83D\uDC64"}];
+function Tabs(p){var tabs=[{id:"home",l:"Home",i:"castle"},{id:"train",l:"Train",i:"bullseye"},{id:"games",l:"Games",i:"coliseum"},{id:"league",l:"League",i:"laurel-crown"},{id:"profile",l:"Profile",i:"visored-helm"}];
 var blocked=p.blocked||[];
 return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(15,12,8,0) 0%,rgba(15,12,8,.95) 20%,#0f0c08 100%)",padding:"8px 12px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-around"}}>
 <div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>TOEIC ARENA</span></div>
-{tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"8px 14px",borderRadius:14,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t3)",transform:a&&!dis?"scale(1.06)":"scale(1)",opacity:dis?.35:1,transition:"all .2s"}}>
-<span style={{fontSize:26,lineHeight:1}}>{t.i}</span><span style={{fontSize:11,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:2}}/>}</button>);})}</div>);}
+{tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"8px 14px",borderRadius:14,color:dis?"var(--bg3)":"var(--cyan)",transform:a&&!dis?"scale(1.06)":"scale(1)",opacity:dis?.35:a?1:.45,transition:"all .2s"}}>
+<svg viewBox="0 0 512 512" width="26" height="26" style={{display:"block",filter:a&&!dis?"drop-shadow(0 0 6px rgba(var(--cx),.55))":"none",transition:"filter .2s"}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS[t.i]||""}}/></svg><span style={{fontSize:11,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:2}}/>}</button>);})}</div>);}
 
 // ─── PRIVACY POLICY ───
 function PrivacyPolicy(p){

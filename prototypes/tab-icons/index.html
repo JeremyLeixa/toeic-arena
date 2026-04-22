@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOEIC Arena — Tab Icon Mockup</title>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d28;
+    --bg3: #242836;
+    --border: #2d3345;
+    --text: #e6e8f0;
+    --text-dim: #8a91a8;
+    --gold: #e3b15a;
+    --gold-soft: #c99842;
+    --accent: #7c5cff;
+    --accent-soft: #5a3fe0;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 40px 20px 120px;
+    background: radial-gradient(ellipse at top, #1a1d28 0%, #0a0c12 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-family: Georgia, serif;
+    font-size: 32px;
+    margin: 0 0 8px;
+    background: linear-gradient(135deg, #e3b15a 0%, #f5d28f 50%, #c99842 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--text-dim);
+    margin: 0 0 48px;
+    font-size: 14px;
+  }
+
+  .tab-section {
+    margin-bottom: 56px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .tab-section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .tab-name {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    color: var(--gold);
+    margin: 0;
+  }
+
+  .tab-current {
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .tab-current .emoji {
+    font-size: 18px;
+    margin: 0 4px;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  .option {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 12px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .option:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(227, 177, 90, 0.15);
+  }
+
+  .option.selected {
+    border-color: var(--gold);
+    background: linear-gradient(180deg, rgba(227, 177, 90, 0.12) 0%, var(--bg3) 100%);
+    box-shadow: 0 0 0 1px var(--gold), 0 4px 16px rgba(227, 177, 90, 0.2);
+  }
+
+  .option.selected::before {
+    content: "✓";
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .option iconify-icon {
+    font-size: 44px;
+    color: var(--text);
+    display: block;
+    margin: 0 auto 10px;
+  }
+
+  .option.selected iconify-icon {
+    color: var(--gold);
+  }
+
+  .option-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: monospace;
+    word-break: break-all;
+    margin-bottom: 4px;
+  }
+
+  .option-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-style: italic;
+    opacity: 0.8;
+  }
+
+  /* ======== MOCKUP TAB BAR ======== */
+  .mockup-wrap {
+    position: sticky;
+    bottom: 0;
+    margin: 60px -20px -120px;
+    padding: 40px 20px 30px;
+    background: linear-gradient(180deg, transparent 0%, rgba(10, 12, 18, 0.95) 30%, var(--bg) 100%);
+    backdrop-filter: blur(8px);
+  }
+
+  .mockup-title {
+    text-align: center;
+    color: var(--gold);
+    font-family: Georgia, serif;
+    font-size: 18px;
+    margin: 0 0 16px;
+  }
+
+  .mockup-sub {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    margin: 0 0 20px;
+  }
+
+  .tabbar {
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 14px 14px;
+    padding: 10px 4px 12px;
+    display: flex;
+    justify-content: space-around;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  .tabbar-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-dim);
+  }
+
+  .tabbar-item.active {
+    color: var(--gold);
+  }
+
+  .tabbar-item.active iconify-icon {
+    filter: drop-shadow(0 0 8px rgba(227, 177, 90, 0.5));
+  }
+
+  .tabbar-item iconify-icon {
+    font-size: 26px;
+    transition: transform 0.2s;
+  }
+
+  .tabbar-item:hover iconify-icon {
+    transform: scale(1.1);
+  }
+
+  .tabbar-item-label {
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* ======== STYLE TOGGLE ======== */
+  .style-controls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 24px;
+    flex-wrap: wrap;
+  }
+
+  .style-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .style-btn.active {
+    background: var(--gold-soft);
+    color: var(--bg);
+    border-color: var(--gold);
+    font-weight: 600;
+  }
+
+  .style-btn:hover:not(.active) {
+    color: var(--text);
+    border-color: var(--gold-soft);
+  }
+
+  /* Outlined style */
+  body.style-outlined .option iconify-icon,
+  body.style-outlined .tabbar-item iconify-icon {
+    stroke: currentColor;
+    stroke-width: 1px;
+  }
+
+  /* Gold accent style */
+  body.style-gold .tabbar-item iconify-icon {
+    color: var(--gold);
+    opacity: 0.45;
+  }
+  body.style-gold .tabbar-item.active iconify-icon {
+    opacity: 1;
+  }
+
+  /* Purple accent style */
+  body.style-purple .tabbar-item.active {
+    color: var(--accent);
+  }
+  body.style-purple .tabbar-item.active iconify-icon {
+    filter: drop-shadow(0 0 10px rgba(124, 92, 255, 0.6));
+  }
+  body.style-purple .option.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(124, 92, 255, 0.25);
+  }
+  body.style-purple .option.selected iconify-icon {
+    color: var(--accent);
+  }
+
+  /* Export section */
+  .export-box {
+    max-width: 480px;
+    margin: 32px auto 0;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text);
+    word-break: break-all;
+  }
+  .export-title {
+    font-family: Georgia, serif;
+    color: var(--gold);
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .export-line { margin: 4px 0; color: var(--text-dim); }
+  .export-line strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>⚔ Tab Icon Mockup ⚔</h1>
+  <p class="subtitle">Click an option to select it for that tab. The sticky mockup at the bottom updates live.</p>
+
+  <div class="style-controls">
+    <button class="style-btn active" data-style="">Default (gold active)</button>
+    <button class="style-btn" data-style="style-purple">Purple accent</button>
+    <button class="style-btn" data-style="style-gold">Gold always (dim inactive)</button>
+  </div>
+
+  <!-- HOME -->
+  <section class="tab-section" data-tab="home">
+    <div class="tab-section-header">
+      <h2 class="tab-name">Home</h2>
+      <span class="tab-current">currently <span class="emoji">🔌</span> (plug icon — semantically broken)</span>
+    </div>
+    <div class="options-grid">
+      <div class="option" data-icon="game-icons:castle" data-tab="home">
+        <iconify-icon icon="game-icons:castle"></iconify-icon>
+        <div class="option-label">castle</div>
+        <div class="option-desc">Your fief / HQ</div>
+      </div>
+      <div class="option selected" data-icon="game-icons:stone-tower" data-tab="home">
+        <iconify-icon icon="game-icons:stone-tower"></iconify-icon>
+        <div class="option-label">stone-tower</div>
+        <div class="option-desc">Watchtower (simpler)</div>
+      </div>
+      <div class="option" data-icon="game-icons:tower-flag" data-tab="home">
+        <iconify-icon icon="game-icons:tower-flag"></iconify-icon>
+        <div class="option-label">tower-flag</div>
+        <div class="option-desc">Keep with banner</div>
+      </div>
+      <div class="option" data-icon="game-icons:castle-flag" data-tab="home">
+        <iconify-icon icon="game-icons:castle-flag"></iconify-icon>
+        <div class="option-label">castle-flag</div>
+        <div class="option-desc">Castle + banner</div>
+      </div>
+      <div class="option" data-icon="game-icons:campfire" data-tab="home">
+        <iconify-icon icon="game-icons:campfire"></iconify-icon>
+        <div class="option-label">campfire</div>
+        <div class="option-desc">Hearth / home fire</div>
+      </div>
+      <div class="option" data-icon="game-icons:throne-king" data-tab="home">
+        <iconify-icon icon="game-icons:throne-king"></iconify-icon>
+        <div class="option-label">throne-king</div>
+        <div class="option-desc">Your throne</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRAIN -->
+  <section class="tab-section" data-tab="train">
+    <div class="tab-section-header">
+      <h2 class="tab-name">Train</h2>
+      <span class="tab-current">currently <span class="emoji">🏄</span> (surfer — total anachronism)</span>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-icon="game-icons:crossed-swords" data-tab="train">
+        <iconify-icon icon="game-icons:crossed-swords"></iconify-icon>
+        <div class="option-label">crossed-swords</div>
+        <div class="option-desc">Training hall / dojo</div>
+      </div>
+      <div class="option" data-icon="game-icons:sword-brandish" data-tab="train">
+        <iconify-icon icon="game-icons:sword-brandish"></iconify-icon>
+        <div class="option-label">sword-brandish</div>
+        <div class="option-desc">Active training</div>
+      </div>
+      <div class="option" data-icon="game-icons:swords-emblem" data-tab="train">
+        <iconify-icon icon="game-icons:swords-emblem"></iconify-icon>
+        <div class="option-label">swords-emblem</div>
+        <div class="option-desc">Formal heraldry</div>
+      </div>
+      <div class="option" data-icon="game-icons:crossed-axes" data-tab="train">
+        <iconify-icon icon="game-icons:crossed-axes"></iconify-icon>
+        <div class="option-label">crossed-axes</div>
+        <div class="option-desc">Axe drills</div>
+      </div>
+      <div class="option" data-icon="game-icons:broadsword" data-tab="train">
+        <iconify-icon icon="game-icons:broadsword"></iconify-icon>
+        <div class="option-label">broadsword</div>
+        <div class="option-desc">Single weapon focus</div>
+      </div>
+      <div class="option" data-icon="game-icons:anvil" data-tab="train">
+        <iconify-icon icon="game-icons:anvil"></iconify-icon>
+        <div class="option-label">anvil</div>
+        <div class="option-desc">Forge / craft skill</div>
+      </div>
+      <div class="option" data-icon="game-icons:book-cover" data-tab="train">
+        <iconify-icon icon="game-icons:book-cover"></iconify-icon>
+        <div class="option-label">book-cover</div>
+        <div class="option-desc">Study / grimoire</div>
+      </div>
+      <div class="option" data-icon="game-icons:bullseye" data-tab="train">
+        <iconify-icon icon="game-icons:bullseye"></iconify-icon>
+        <div class="option-label">bullseye</div>
+        <div class="option-desc">Target practice</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAMES -->
+  <section class="tab-section" data-tab="games">
+    <div class="tab-section-header">
+      <h2 class="tab-name">Games</h2>
+      <span class="tab-current">currently <span class="emoji">🎲</span> (die — generic)</span>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-icon="game-icons:coliseum" data-tab="games">
+        <iconify-icon icon="game-icons:coliseum"></iconify-icon>
+        <div class="option-label">coliseum</div>
+        <div class="option-desc">Gladiator arena</div>
+      </div>
+      <div class="option" data-icon="game-icons:rosa-shield" data-tab="games">
+        <iconify-icon icon="game-icons:rosa-shield"></iconify-icon>
+        <div class="option-label">rosa-shield</div>
+        <div class="option-desc">Tournament shield</div>
+      </div>
+      <div class="option" data-icon="game-icons:jousting" data-tab="games">
+        <iconify-icon icon="game-icons:jousting"></iconify-icon>
+        <div class="option-label">jousting</div>
+        <div class="option-desc">Tourney / joust</div>
+      </div>
+      <div class="option" data-icon="game-icons:dice-six-faces-five" data-tab="games">
+        <iconify-icon icon="game-icons:dice-six-faces-five"></iconify-icon>
+        <div class="option-label">dice-six-faces-five</div>
+        <div class="option-desc">Dice (medieval)</div>
+      </div>
+      <div class="option" data-icon="game-icons:chess-knight" data-tab="games">
+        <iconify-icon icon="game-icons:chess-knight"></iconify-icon>
+        <div class="option-label">chess-knight</div>
+        <div class="option-desc">Strategic game</div>
+      </div>
+      <div class="option" data-icon="game-icons:crossed-sabres" data-tab="games">
+        <iconify-icon icon="game-icons:crossed-sabres"></iconify-icon>
+        <div class="option-label">crossed-sabres</div>
+        <div class="option-desc">Duel playground</div>
+      </div>
+      <div class="option" data-icon="game-icons:meeple-circle" data-tab="games">
+        <iconify-icon icon="game-icons:meeple-circle"></iconify-icon>
+        <div class="option-label">meeple-circle</div>
+        <div class="option-desc">Board-game vibe</div>
+      </div>
+      <div class="option" data-icon="game-icons:cards-hand" data-tab="games">
+        <iconify-icon icon="game-icons:card-random"></iconify-icon>
+        <div class="option-label">card-random</div>
+        <div class="option-desc">Hand of cards</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEAGUE -->
+  <section class="tab-section" data-tab="league">
+    <div class="tab-section-header">
+      <h2 class="tab-name">League</h2>
+      <span class="tab-current">currently <span class="emoji">🏆</span> (ok but generic)</span>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-icon="game-icons:laurels-trophy" data-tab="league">
+        <iconify-icon icon="game-icons:laurels-trophy"></iconify-icon>
+        <div class="option-label">laurels-trophy</div>
+        <div class="option-desc">Trophy + laurels</div>
+      </div>
+      <div class="option" data-icon="game-icons:laurel-crown" data-tab="league">
+        <iconify-icon icon="game-icons:laurel-crown"></iconify-icon>
+        <div class="option-label">laurel-crown</div>
+        <div class="option-desc">Victor's laurels</div>
+      </div>
+      <div class="option" data-icon="game-icons:trophy-cup" data-tab="league">
+        <iconify-icon icon="game-icons:trophy-cup"></iconify-icon>
+        <div class="option-label">trophy-cup</div>
+        <div class="option-desc">Classic trophy</div>
+      </div>
+      <div class="option" data-icon="game-icons:podium-winner" data-tab="league">
+        <iconify-icon icon="game-icons:podium-winner"></iconify-icon>
+        <div class="option-label">podium-winner</div>
+        <div class="option-desc">Podium ranking</div>
+      </div>
+      <div class="option" data-icon="game-icons:emerald-necklace" data-tab="league">
+        <iconify-icon icon="game-icons:emerald-necklace"></iconify-icon>
+        <div class="option-label">emerald-necklace</div>
+        <div class="option-desc">Royal distinction</div>
+      </div>
+      <div class="option" data-icon="game-icons:crown" data-tab="league">
+        <iconify-icon icon="game-icons:crown"></iconify-icon>
+        <div class="option-label">crown</div>
+        <div class="option-desc">Royalty / rank</div>
+      </div>
+      <div class="option" data-icon="game-icons:stars-stack" data-tab="league">
+        <iconify-icon icon="game-icons:stars-stack"></iconify-icon>
+        <div class="option-label">stars-stack</div>
+        <div class="option-desc">Tier progression</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="tab-section" data-tab="profile">
+    <div class="tab-section-header">
+      <h2 class="tab-name">Profile</h2>
+      <span class="tab-current">currently <span class="emoji">👤</span> (neutral silhouette)</span>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-icon="game-icons:visored-helm" data-tab="profile">
+        <iconify-icon icon="game-icons:visored-helm"></iconify-icon>
+        <div class="option-label">visored-helm</div>
+        <div class="option-desc">Knight helmet</div>
+      </div>
+      <div class="option" data-icon="game-icons:barbute" data-tab="profile">
+        <iconify-icon icon="game-icons:barbute"></iconify-icon>
+        <div class="option-label">barbute</div>
+        <div class="option-desc">Italian helm</div>
+      </div>
+      <div class="option" data-icon="game-icons:spartan-helmet" data-tab="profile">
+        <iconify-icon icon="game-icons:spartan-helmet"></iconify-icon>
+        <div class="option-label">spartan-helmet</div>
+        <div class="option-desc">Spartan / plume</div>
+      </div>
+      <div class="option" data-icon="game-icons:warlord-helmet" data-tab="profile">
+        <iconify-icon icon="game-icons:warlord-helmet"></iconify-icon>
+        <div class="option-label">warlord-helmet</div>
+        <div class="option-desc">Horned / imposing</div>
+      </div>
+      <div class="option" data-icon="game-icons:mounted-knight" data-tab="profile">
+        <iconify-icon icon="game-icons:mounted-knight"></iconify-icon>
+        <div class="option-label">mounted-knight</div>
+        <div class="option-desc">Full knight figure</div>
+      </div>
+      <div class="option" data-icon="game-icons:wizard-face" data-tab="profile">
+        <iconify-icon icon="game-icons:wizard-face"></iconify-icon>
+        <div class="option-label">wizard-face</div>
+        <div class="option-desc">Mage / scholar</div>
+      </div>
+      <div class="option" data-icon="game-icons:hooded-figure" data-tab="profile">
+        <iconify-icon icon="game-icons:hooded-figure"></iconify-icon>
+        <div class="option-label">hooded-figure</div>
+        <div class="option-desc">Mysterious adventurer</div>
+      </div>
+      <div class="option" data-icon="game-icons:person" data-tab="profile">
+        <iconify-icon icon="game-icons:person"></iconify-icon>
+        <div class="option-label">person</div>
+        <div class="option-desc">Neutral (game-icons style)</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- STICKY MOCKUP -->
+<div class="mockup-wrap">
+  <h3 class="mockup-title">◆ Live Tab Bar Preview ◆</h3>
+  <p class="mockup-sub">Click tabs to toggle active state · Click options above to swap</p>
+
+  <div class="tabbar">
+    <div class="tabbar-item active" data-preview="home">
+      <iconify-icon icon="game-icons:stone-tower" id="preview-home"></iconify-icon>
+      <span class="tabbar-item-label">Home</span>
+    </div>
+    <div class="tabbar-item" data-preview="train">
+      <iconify-icon icon="game-icons:crossed-swords" id="preview-train"></iconify-icon>
+      <span class="tabbar-item-label">Train</span>
+    </div>
+    <div class="tabbar-item" data-preview="games">
+      <iconify-icon icon="game-icons:coliseum" id="preview-games"></iconify-icon>
+      <span class="tabbar-item-label">Games</span>
+    </div>
+    <div class="tabbar-item" data-preview="league">
+      <iconify-icon icon="game-icons:laurels-trophy" id="preview-league"></iconify-icon>
+      <span class="tabbar-item-label">League</span>
+    </div>
+    <div class="tabbar-item" data-preview="profile">
+      <iconify-icon icon="game-icons:visored-helm" id="preview-profile"></iconify-icon>
+      <span class="tabbar-item-label">Profile</span>
+    </div>
+  </div>
+
+  <div class="export-box">
+    <div class="export-title">Your current selection</div>
+    <div class="export-line"><strong>home:</strong>    <span id="exp-home">game-icons:stone-tower</span></div>
+    <div class="export-line"><strong>train:</strong>   <span id="exp-train">game-icons:crossed-swords</span></div>
+    <div class="export-line"><strong>games:</strong>   <span id="exp-games">game-icons:coliseum</span></div>
+    <div class="export-line"><strong>league:</strong>  <span id="exp-league">game-icons:laurels-trophy</span></div>
+    <div class="export-line"><strong>profile:</strong> <span id="exp-profile">game-icons:visored-helm</span></div>
+  </div>
+</div>
+
+<script>
+  // Option selection
+  document.querySelectorAll('.option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      var tab = opt.dataset.tab;
+      var icon = opt.dataset.icon;
+
+      // Deselect siblings
+      document.querySelectorAll('.option[data-tab="' + tab + '"]').forEach(function(o) {
+        o.classList.remove('selected');
+      });
+      opt.classList.add('selected');
+
+      // Update preview
+      document.getElementById('preview-' + tab).setAttribute('icon', icon);
+      document.getElementById('exp-' + tab).textContent = icon;
+    });
+  });
+
+  // Tab bar active toggle
+  document.querySelectorAll('.tabbar-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      document.querySelectorAll('.tabbar-item').forEach(function(i) {
+        i.classList.remove('active');
+      });
+      item.classList.add('active');
+    });
+  });
+
+  // Style toggle
+  document.querySelectorAll('.style-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.style-btn').forEach(function(b) {
+        b.classList.remove('active');
+      });
+      btn.classList.add('active');
+
+      document.body.classList.remove('style-purple', 'style-gold');
+      var style = btn.dataset.style;
+      if (style) document.body.classList.add(style);
+    });
+  });
+</script>
+
+</body>
+</html>
