@@ -384,7 +384,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-audio-leak-fix";
+var BUILD_ID="2026-04-22-gauntlet-bgm";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1805,10 +1805,10 @@ function GauntletHub(p){
   var [subMode,setSubMode]=useState(null); // null | "irregular" | "tense" | "passive" | "relative"
   var scores=(p.u&&p.u.moduleScores)||{};
   var cards=[
-    {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume les verbes irr\u00e9guliers endormis. 15 items par raid, V2 et V3 \u00e0 la main.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_speed",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
-    {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_clue",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:true},
-    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_build",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:true},
-    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_build",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:true}
+    {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume les verbes irr\u00e9guliers endormis. 15 items par raid, V2 et V3 \u00e0 la main.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_crypt",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
+    {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_chrono",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:true},
+    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_forge",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:true},
+    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_weaver",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:true}
   ];
   function fmtAcc(s){if(!s||!s.total)return"\u2014";return Math.round((s.correct/s.total)*100)+"%";}
   function enterSub(card){
