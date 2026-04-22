@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOEIC Arena — Train & Games Icons</title>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0c08;
+    --bg2: #1a1610;
+    --bg3: #28221a;
+    --bdr: rgba(180,140,80,0.15);
+    --gold: #d4943a;
+    --gold-soft: #c99842;
+    --gold-light: #f0c850;
+    --text: #ede4d4;
+    --text-dim: #8a7e6a;
+    --text-faint: #5a5040;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px 20px 260px;
+    background: radial-gradient(ellipse at top, #1a1610 0%, #0a0806 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  h1 {
+    font-family: Georgia, serif;
+    font-size: 28px;
+    margin: 16px 0 8px;
+    background: linear-gradient(135deg, #d4943a 0%, #f0c850 50%, #c99842 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--text-dim);
+    margin: 0 0 20px;
+    font-size: 13px;
+  }
+
+  .note {
+    background: rgba(180, 140, 80, 0.08);
+    border-left: 3px solid var(--gold);
+    padding: 10px 14px;
+    margin: 0 auto 24px;
+    max-width: 720px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .note code {
+    background: var(--bg3);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--gold-light);
+    font-size: 12px;
+  }
+
+  .nav-jumper {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(15, 12, 8, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--bdr);
+    padding: 10px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: -20px -20px 20px;
+  }
+
+  .nav-jumper a {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--bdr);
+    transition: all 0.15s;
+  }
+
+  .nav-jumper a:hover {
+    color: var(--gold-light);
+    border-color: var(--gold);
+    background: rgba(180, 140, 80, 0.1);
+  }
+
+  .zone {
+    margin-bottom: 48px;
+  }
+
+  .zone-title {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    color: var(--gold-light);
+    margin: 32px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--gold);
+    letter-spacing: 0.5px;
+  }
+
+  .section {
+    margin-bottom: 22px;
+    background: var(--bg2);
+    border: 1px solid var(--bdr);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--bdr);
+    flex-wrap: wrap;
+  }
+
+  .section-name {
+    font-family: Georgia, serif;
+    font-size: 17px;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .section-current {
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+
+  .section-current .emoji {
+    font-size: 16px;
+    margin: 0 3px;
+  }
+
+  .section-hint {
+    color: var(--text-faint);
+    font-size: 11px;
+    font-style: italic;
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+
+  .option {
+    background: var(--bg3);
+    border: 1px solid var(--bdr);
+    border-radius: 8px;
+    padding: 12px 6px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .option:hover {
+    border-color: var(--gold);
+    transform: translateY(-1px);
+  }
+
+  .option.selected {
+    border-color: var(--gold);
+    background: linear-gradient(180deg, rgba(212, 148, 58, 0.12) 0%, var(--bg3) 100%);
+    box-shadow: 0 0 0 1px var(--gold);
+  }
+
+  .option.selected::before {
+    content: "✓";
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    color: var(--gold-light);
+    font-size: 11px;
+    font-weight: bold;
+  }
+
+  .option iconify-icon {
+    font-size: 30px;
+    color: var(--text);
+    display: block;
+    margin: 0 auto 6px;
+  }
+
+  .option.selected iconify-icon {
+    color: var(--gold-light);
+  }
+
+  .option-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    font-family: monospace;
+    word-break: break-all;
+    line-height: 1.2;
+  }
+
+  /* Export fixed bottom */
+  .export-wrap {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(10, 8, 6, 0.97) 20%, var(--bg) 100%);
+    backdrop-filter: blur(8px);
+    padding: 16px;
+    border-top: 1px solid var(--bdr);
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .export-box {
+    max-width: 900px;
+    margin: 0 auto;
+    font-family: monospace;
+    font-size: 11px;
+    column-count: 3;
+    column-gap: 20px;
+  }
+
+  .export-line {
+    color: var(--text-dim);
+    margin: 2px 0;
+    break-inside: avoid;
+  }
+  .export-line strong {
+    color: var(--text);
+    display: inline-block;
+    width: 110px;
+  }
+  .export-line span { color: var(--gold-light); }
+
+  .export-title {
+    text-align: center;
+    color: var(--gold-light);
+    font-family: Georgia, serif;
+    font-size: 12px;
+    margin: 0 0 8px;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 700px) {
+    .export-box { column-count: 1; }
+    .nav-jumper a { font-size: 10px; padding: 4px 7px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="nav-jumper">
+  <a href="#sections">Sections</a>
+  <a href="#exercises">Exercises</a>
+  <a href="#grammar">Grammar&Vocab</a>
+  <a href="#mocks">Mocks</a>
+  <a href="#tips">Tips</a>
+  <a href="#ultimate">Boss/Endless</a>
+  <a href="#games">Games</a>
+</div>
+
+<div class="container">
+  <h1>◆ Train & Games Icons ◆</h1>
+  <p class="subtitle">Click options to select. Export appears at the bottom.</p>
+
+  <div class="note">
+    <strong>Heads-up</strong> — <code>Flashcard Review</code> (🃏) will reuse <code>card-joker</code> (already picked on Home) for consistency — not shown here.
+    The Train tab icon is already <code>bullseye</code>, so I avoid bullseye/target variants below.
+  </div>
+
+  <!-- ========== TRAIN: SECTION HEADERS ========== -->
+  <div class="zone" id="sections">
+  <h2 class="zone-title">Train · Section Headers</h2>
+
+  <div class="section" data-slot="sec-exercises">
+    <div class="section-header">
+      <h3 class="section-name">Exercises (section)</h3>
+      <span class="section-current">currently <span class="emoji">⚔️</span></span>
+      <div class="section-hint">"TOEIC Parts training"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="sec-exercises" data-icon="game-icons:training-dummy"><iconify-icon icon="game-icons:training-dummy"></iconify-icon><div class="option-label">training-dummy</div></div>
+      <div class="option" data-slot="sec-exercises" data-icon="game-icons:sword-brandish"><iconify-icon icon="game-icons:sword-brandish"></iconify-icon><div class="option-label">sword-brandish</div></div>
+      <div class="option" data-slot="sec-exercises" data-icon="game-icons:crossed-swords"><iconify-icon icon="game-icons:crossed-swords"></iconify-icon><div class="option-label">crossed-swords</div></div>
+      <div class="option" data-slot="sec-exercises" data-icon="game-icons:warlord-helmet"><iconify-icon icon="game-icons:warlord-helmet"></iconify-icon><div class="option-label">warlord-helmet</div></div>
+      <div class="option" data-slot="sec-exercises" data-icon="game-icons:battle-gear"><iconify-icon icon="game-icons:battle-gear"></iconify-icon><div class="option-label">battle-gear</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="sec-grammar">
+    <div class="section-header">
+      <h3 class="section-name">Grammar & Vocab (section)</h3>
+      <span class="section-current">currently <span class="emoji">🧩</span></span>
+      <div class="section-hint">"Build your foundations"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="sec-grammar" data-icon="game-icons:spellbook"><iconify-icon icon="game-icons:spellbook"></iconify-icon><div class="option-label">spellbook</div></div>
+      <div class="option" data-slot="sec-grammar" data-icon="game-icons:bookshelf"><iconify-icon icon="game-icons:bookshelf"></iconify-icon><div class="option-label">bookshelf</div></div>
+      <div class="option" data-slot="sec-grammar" data-icon="game-icons:book-aura"><iconify-icon icon="game-icons:book-aura"></iconify-icon><div class="option-label">book-aura</div></div>
+      <div class="option" data-slot="sec-grammar" data-icon="game-icons:stone-wall"><iconify-icon icon="game-icons:stone-wall"></iconify-icon><div class="option-label">stone-wall</div></div>
+      <div class="option" data-slot="sec-grammar" data-icon="game-icons:tower"><iconify-icon icon="game-icons:tower"></iconify-icon><div class="option-label">tower</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="sec-mocks">
+    <div class="section-header">
+      <h3 class="section-name">Mock Exams (section)</h3>
+      <span class="section-current">currently <span class="emoji">📜</span></span>
+      <div class="section-hint">"Real conditions"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="sec-mocks" data-icon="game-icons:scroll-unfurled"><iconify-icon icon="game-icons:scroll-unfurled"></iconify-icon><div class="option-label">scroll-unfurled</div></div>
+      <div class="option" data-slot="sec-mocks" data-icon="game-icons:tied-scroll"><iconify-icon icon="game-icons:tied-scroll"></iconify-icon><div class="option-label">tied-scroll</div></div>
+      <div class="option" data-slot="sec-mocks" data-icon="game-icons:dungeon-gate"><iconify-icon icon="game-icons:dungeon-gate"></iconify-icon><div class="option-label">dungeon-gate</div></div>
+      <div class="option" data-slot="sec-mocks" data-icon="game-icons:stone-tablet"><iconify-icon icon="game-icons:stone-tablet"></iconify-icon><div class="option-label">stone-tablet</div></div>
+      <div class="option" data-slot="sec-mocks" data-icon="game-icons:castle-emblem"><iconify-icon icon="game-icons:castle-emblem"></iconify-icon><div class="option-label">castle-emblem</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="sec-tips">
+    <div class="section-header">
+      <h3 class="section-name">Tips & Strategy (section)</h3>
+      <span class="section-current">currently <span class="emoji">🗺️</span></span>
+      <div class="section-hint">"Master the exam"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="sec-tips" data-icon="game-icons:treasure-map"><iconify-icon icon="game-icons:treasure-map"></iconify-icon><div class="option-label">treasure-map</div></div>
+      <div class="option" data-slot="sec-tips" data-icon="game-icons:compass"><iconify-icon icon="game-icons:compass"></iconify-icon><div class="option-label">compass</div></div>
+      <div class="option" data-slot="sec-tips" data-icon="game-icons:world"><iconify-icon icon="game-icons:world"></iconify-icon><div class="option-label">world</div></div>
+      <div class="option" data-slot="sec-tips" data-icon="game-icons:compass-rose"><iconify-icon icon="game-icons:compass-rose"></iconify-icon><div class="option-label">compass-rose</div></div>
+      <div class="option" data-slot="sec-tips" data-icon="game-icons:path-tile"><iconify-icon icon="game-icons:path-tile"></iconify-icon><div class="option-label">path-tile</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ========== EXERCISES ITEMS ========== -->
+  <div class="zone" id="exercises">
+  <h2 class="zone-title">Train · Exercises Items</h2>
+
+  <div class="section" data-slot="daily">
+    <div class="section-header">
+      <h3 class="section-name">Daily Challenge</h3>
+      <span class="section-current">currently <span class="emoji">⚡</span></span>
+      <div class="section-hint">"5 daily questions, timed"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="daily" data-icon="game-icons:sundial"><iconify-icon icon="game-icons:sundial"></iconify-icon><div class="option-label">sundial</div></div>
+      <div class="option" data-slot="daily" data-icon="game-icons:sunrise"><iconify-icon icon="game-icons:sunrise"></iconify-icon><div class="option-label">sunrise</div></div>
+      <div class="option" data-slot="daily" data-icon="game-icons:lightning-storm"><iconify-icon icon="game-icons:lightning-storm"></iconify-icon><div class="option-label">lightning-storm</div></div>
+      <div class="option" data-slot="daily" data-icon="game-icons:stopwatch"><iconify-icon icon="game-icons:stopwatch"></iconify-icon><div class="option-label">stopwatch</div></div>
+      <div class="option" data-slot="daily" data-icon="game-icons:daily-calendar"><iconify-icon icon="game-icons:daily-calendar"></iconify-icon><div class="option-label">daily-calendar</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="lis">
+    <div class="section-header">
+      <h3 class="section-name">Listening Practice</h3>
+      <span class="section-current">currently <span class="emoji">👂</span></span>
+      <div class="section-hint">"Parts 1-4 with audio"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="lis" data-icon="game-icons:ear-trumpet"><iconify-icon icon="game-icons:ear-trumpet"></iconify-icon><div class="option-label">ear-trumpet</div></div>
+      <div class="option" data-slot="lis" data-icon="game-icons:sound-waves"><iconify-icon icon="game-icons:sound-waves"></iconify-icon><div class="option-label">sound-waves</div></div>
+      <div class="option" data-slot="lis" data-icon="game-icons:ringing-bell"><iconify-icon icon="game-icons:ringing-bell"></iconify-icon><div class="option-label">ringing-bell</div></div>
+      <div class="option" data-slot="lis" data-icon="game-icons:bugle-call"><iconify-icon icon="game-icons:bugle-call"></iconify-icon><div class="option-label">bugle-call</div></div>
+      <div class="option" data-slot="lis" data-icon="game-icons:echo-ripples"><iconify-icon icon="game-icons:echo-ripples"></iconify-icon><div class="option-label">echo-ripples</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="read">
+    <div class="section-header">
+      <h3 class="section-name">Reading Practice</h3>
+      <span class="section-current">currently <span class="emoji">📖</span></span>
+      <div class="section-hint">"Parts 5-7"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="read" data-icon="game-icons:open-book"><iconify-icon icon="game-icons:open-book"></iconify-icon><div class="option-label">open-book</div></div>
+      <div class="option" data-slot="read" data-icon="game-icons:book-cover"><iconify-icon icon="game-icons:book-cover"></iconify-icon><div class="option-label">book-cover</div></div>
+      <div class="option" data-slot="read" data-icon="game-icons:book-aura"><iconify-icon icon="game-icons:book-aura"></iconify-icon><div class="option-label">book-aura</div></div>
+      <div class="option" data-slot="read" data-icon="game-icons:bookmarklet"><iconify-icon icon="game-icons:bookmarklet"></iconify-icon><div class="option-label">bookmarklet</div></div>
+      <div class="option" data-slot="read" data-icon="game-icons:magnifying-glass"><iconify-icon icon="game-icons:magnifying-glass"></iconify-icon><div class="option-label">magnifying-glass</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ========== GRAMMAR & VOCAB ITEMS ========== -->
+  <div class="zone" id="grammar">
+  <h2 class="zone-title">Train · Grammar & Vocab Items</h2>
+
+  <div class="section" data-slot="gauntlet">
+    <div class="section-header">
+      <h3 class="section-name">Grammar Gauntlet</h3>
+      <span class="section-current">currently <span class="emoji">🛡️</span></span>
+      <div class="section-hint">"4 trials · Irregulars, Tenses, Passive, Relatives"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="gauntlet" data-icon="game-icons:gauntlet"><iconify-icon icon="game-icons:gauntlet"></iconify-icon><div class="option-label">gauntlet</div></div>
+      <div class="option" data-slot="gauntlet" data-icon="game-icons:round-shield"><iconify-icon icon="game-icons:round-shield"></iconify-icon><div class="option-label">round-shield</div></div>
+      <div class="option" data-slot="gauntlet" data-icon="game-icons:edged-shield"><iconify-icon icon="game-icons:edged-shield"></iconify-icon><div class="option-label">edged-shield</div></div>
+      <div class="option" data-slot="gauntlet" data-icon="game-icons:spiked-shield"><iconify-icon icon="game-icons:spiked-shield"></iconify-icon><div class="option-label">spiked-shield</div></div>
+      <div class="option" data-slot="gauntlet" data-icon="game-icons:celtic-shield"><iconify-icon icon="game-icons:celtic-shield"></iconify-icon><div class="option-label">celtic-shield</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="wordfam">
+    <div class="section-header">
+      <h3 class="section-name">Word Families</h3>
+      <span class="section-current">currently <span class="emoji">🧩</span></span>
+      <div class="section-hint">"Classify: Noun, Verb, Adj, Adv"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="wordfam" data-icon="game-icons:family-tree"><iconify-icon icon="game-icons:family-tree"></iconify-icon><div class="option-label">family-tree</div></div>
+      <div class="option" data-slot="wordfam" data-icon="game-icons:three-friends"><iconify-icon icon="game-icons:three-friends"></iconify-icon><div class="option-label">three-friends</div></div>
+      <div class="option" data-slot="wordfam" data-icon="game-icons:puzzle"><iconify-icon icon="game-icons:puzzle"></iconify-icon><div class="option-label">puzzle</div></div>
+      <div class="option" data-slot="wordfam" data-icon="game-icons:vortex"><iconify-icon icon="game-icons:vortex"></iconify-icon><div class="option-label">vortex</div></div>
+      <div class="option" data-slot="wordfam" data-icon="game-icons:pentacle"><iconify-icon icon="game-icons:pentacle"></iconify-icon><div class="option-label">pentacle</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="falsefr">
+    <div class="section-header">
+      <h3 class="section-name">False Friends</h3>
+      <span class="section-current">currently <span class="emoji">🎭</span></span>
+      <div class="section-hint">"FR/EN traps: actually ≠ actuellement"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="falsefr" data-icon="game-icons:duality-mask"><iconify-icon icon="game-icons:duality-mask"></iconify-icon><div class="option-label">duality-mask</div></div>
+      <div class="option" data-slot="falsefr" data-icon="game-icons:two-feathers"><iconify-icon icon="game-icons:two-feathers"></iconify-icon><div class="option-label">two-feathers</div></div>
+      <div class="option" data-slot="falsefr" data-icon="game-icons:drama-masks"><iconify-icon icon="game-icons:drama-masks"></iconify-icon><div class="option-label">drama-masks</div></div>
+      <div class="option" data-slot="falsefr" data-icon="game-icons:trickster"><iconify-icon icon="game-icons:trickster"></iconify-icon><div class="option-label">trickster</div></div>
+      <div class="option" data-slot="falsefr" data-icon="game-icons:masquerade"><iconify-icon icon="game-icons:masquerade"></iconify-icon><div class="option-label">masquerade</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="connsort">
+    <div class="section-header">
+      <h3 class="section-name">Connectors Sorting</h3>
+      <span class="section-current">currently <span class="emoji">🔀</span></span>
+      <div class="section-hint">"Clause, Noun, or New sentence?"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="connsort" data-icon="game-icons:chain"><iconify-icon icon="game-icons:chain"></iconify-icon><div class="option-label">chain</div></div>
+      <div class="option" data-slot="connsort" data-icon="game-icons:crossroad"><iconify-icon icon="game-icons:crossroad"></iconify-icon><div class="option-label">crossroad</div></div>
+      <div class="option" data-slot="connsort" data-icon="game-icons:split-cross"><iconify-icon icon="game-icons:split-cross"></iconify-icon><div class="option-label">split-cross</div></div>
+      <div class="option" data-slot="connsort" data-icon="game-icons:knot"><iconify-icon icon="game-icons:knot"></iconify-icon><div class="option-label">knot</div></div>
+      <div class="option" data-slot="connsort" data-icon="game-icons:vortex"><iconify-icon icon="game-icons:vortex"></iconify-icon><div class="option-label">vortex</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="prepdrill">
+    <div class="section-header">
+      <h3 class="section-name">Preposition Collocations</h3>
+      <span class="section-current">currently <span class="emoji">🎯</span> (avoid bullseye — tab bar uses it)</span>
+      <div class="section-hint">"Study + Drill mode"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="prepdrill" data-icon="game-icons:pin"><iconify-icon icon="game-icons:pin"></iconify-icon><div class="option-label">pin</div></div>
+      <div class="option" data-slot="prepdrill" data-icon="game-icons:linked-rings"><iconify-icon icon="game-icons:linked-rings"></iconify-icon><div class="option-label">linked-rings</div></div>
+      <div class="option" data-slot="prepdrill" data-icon="game-icons:anchor"><iconify-icon icon="game-icons:anchor"></iconify-icon><div class="option-label">anchor</div></div>
+      <div class="option" data-slot="prepdrill" data-icon="game-icons:position-marker"><iconify-icon icon="game-icons:position-marker"></iconify-icon><div class="option-label">position-marker</div></div>
+      <div class="option" data-slot="prepdrill" data-icon="game-icons:plug-ring"><iconify-icon icon="game-icons:plug-ring"></iconify-icon><div class="option-label">plug-ring</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="gerinf">
+    <div class="section-header">
+      <h3 class="section-name">Gerund vs Infinitive</h3>
+      <span class="section-current">currently <span class="emoji">⚖️</span></span>
+      <div class="section-hint">"4 patterns · Study + Context Quiz"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="gerinf" data-icon="game-icons:weight-scale"><iconify-icon icon="game-icons:weight-scale"></iconify-icon><div class="option-label">weight-scale</div></div>
+      <div class="option" data-slot="gerinf" data-icon="game-icons:scales"><iconify-icon icon="game-icons:scales"></iconify-icon><div class="option-label">scales</div></div>
+      <div class="option" data-slot="gerinf" data-icon="game-icons:balance"><iconify-icon icon="game-icons:balance"></iconify-icon><div class="option-label">balance</div></div>
+      <div class="option" data-slot="gerinf" data-icon="game-icons:unbalanced"><iconify-icon icon="game-icons:unbalanced"></iconify-icon><div class="option-label">unbalanced</div></div>
+      <div class="option" data-slot="gerinf" data-icon="game-icons:yin-yang"><iconify-icon icon="game-icons:yin-yang"></iconify-icon><div class="option-label">yin-yang</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="pvdojo">
+    <div class="section-header">
+      <h3 class="section-name">Phrasal Verb Dojo</h3>
+      <span class="section-current">currently <span class="emoji">⚔️</span></span>
+      <div class="section-hint">"55 verbs · Study, Match & Speed · dojo = martial arts school"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="pvdojo" data-icon="game-icons:katana"><iconify-icon icon="game-icons:katana"></iconify-icon><div class="option-label">katana</div></div>
+      <div class="option" data-slot="pvdojo" data-icon="game-icons:ninja-heroic-stance"><iconify-icon icon="game-icons:ninja-heroic-stance"></iconify-icon><div class="option-label">ninja-heroic-stance</div></div>
+      <div class="option" data-slot="pvdojo" data-icon="game-icons:sai"><iconify-icon icon="game-icons:sai"></iconify-icon><div class="option-label">sai</div></div>
+      <div class="option" data-slot="pvdojo" data-icon="game-icons:shuriken"><iconify-icon icon="game-icons:shuriken"></iconify-icon><div class="option-label">shuriken</div></div>
+      <div class="option" data-slot="pvdojo" data-icon="game-icons:torii-gate"><iconify-icon icon="game-icons:torii-gate"></iconify-icon><div class="option-label">torii-gate</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ========== MOCKS ========== -->
+  <div class="zone" id="mocks">
+  <h2 class="zone-title">Train · Mock Tests (shared icon)</h2>
+
+  <div class="section" data-slot="mock">
+    <div class="section-header">
+      <h3 class="section-name">Mock Test 1/2/3</h3>
+      <span class="section-current">currently <span class="emoji">📜</span> (same on all 3, differentiated by bg)</span>
+      <div class="section-hint">"Reading Half-Test · 49 Q · 37 min"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="mock" data-icon="game-icons:scroll-unfurled"><iconify-icon icon="game-icons:scroll-unfurled"></iconify-icon><div class="option-label">scroll-unfurled</div></div>
+      <div class="option" data-slot="mock" data-icon="game-icons:tied-scroll"><iconify-icon icon="game-icons:tied-scroll"></iconify-icon><div class="option-label">tied-scroll</div></div>
+      <div class="option" data-slot="mock" data-icon="game-icons:scroll-quill"><iconify-icon icon="game-icons:scroll-quill"></iconify-icon><div class="option-label">scroll-quill</div></div>
+      <div class="option" data-slot="mock" data-icon="game-icons:stone-tablet"><iconify-icon icon="game-icons:stone-tablet"></iconify-icon><div class="option-label">stone-tablet</div></div>
+      <div class="option" data-slot="mock" data-icon="game-icons:chained-heart"><iconify-icon icon="game-icons:chained-heart"></iconify-icon><div class="option-label">chained-heart</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ========== TIPS ITEMS ========== -->
+  <div class="zone" id="tips">
+  <h2 class="zone-title">Train · Tips & Strategy Items</h2>
+
+  <div class="section" data-slot="abouttoeic">
+    <div class="section-header">
+      <h3 class="section-name">What is the TOEIC?</h3>
+      <span class="section-current">currently <span class="emoji">🎓</span></span>
+      <div class="section-hint">"Format, score, levels — the quick guide"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="abouttoeic" data-icon="game-icons:graduate-cap"><iconify-icon icon="game-icons:graduate-cap"></iconify-icon><div class="option-label">graduate-cap</div></div>
+      <div class="option" data-slot="abouttoeic" data-icon="game-icons:wizard-staff"><iconify-icon icon="game-icons:wizard-staff"></iconify-icon><div class="option-label">wizard-staff</div></div>
+      <div class="option" data-slot="abouttoeic" data-icon="game-icons:info"><iconify-icon icon="game-icons:info"></iconify-icon><div class="option-label">info</div></div>
+      <div class="option" data-slot="abouttoeic" data-icon="game-icons:oracle"><iconify-icon icon="game-icons:oracle"></iconify-icon><div class="option-label">oracle</div></div>
+      <div class="option" data-slot="abouttoeic" data-icon="game-icons:scroll-unfurled"><iconify-icon icon="game-icons:scroll-unfurled"></iconify-icon><div class="option-label">scroll-unfurled</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="strats">
+    <div class="section-header">
+      <h3 class="section-name">Strategy Cards</h3>
+      <span class="section-current">currently <span class="emoji">🗺️</span></span>
+      <div class="section-hint">"54 expert tips, all Parts"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="strats" data-icon="game-icons:treasure-map"><iconify-icon icon="game-icons:treasure-map"></iconify-icon><div class="option-label">treasure-map</div></div>
+      <div class="option" data-slot="strats" data-icon="game-icons:folded-map"><iconify-icon icon="game-icons:folded-map"></iconify-icon><div class="option-label">folded-map</div></div>
+      <div class="option" data-slot="strats" data-icon="game-icons:cards-hand"><iconify-icon icon="game-icons:cards-hand"></iconify-icon><div class="option-label">cards-hand</div></div>
+      <div class="option" data-slot="strats" data-icon="game-icons:cardpick"><iconify-icon icon="game-icons:card-pick"></iconify-icon><div class="option-label">card-pick</div></div>
+      <div class="option" data-slot="strats" data-icon="game-icons:stack"><iconify-icon icon="game-icons:stack"></iconify-icon><div class="option-label">stack</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="stratquiz">
+    <div class="section-header">
+      <h3 class="section-name">Strategy Quiz</h3>
+      <span class="section-current">currently <span class="emoji">🧠</span></span>
+      <div class="section-hint">"Test your exam IQ"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="stratquiz" data-icon="game-icons:brain"><iconify-icon icon="game-icons:brain"></iconify-icon><div class="option-label">brain</div></div>
+      <div class="option" data-slot="stratquiz" data-icon="game-icons:brainstorm"><iconify-icon icon="game-icons:brainstorm"></iconify-icon><div class="option-label">brainstorm</div></div>
+      <div class="option" data-slot="stratquiz" data-icon="game-icons:think"><iconify-icon icon="game-icons:think"></iconify-icon><div class="option-label">think</div></div>
+      <div class="option" data-slot="stratquiz" data-icon="game-icons:psychic-waves"><iconify-icon icon="game-icons:psychic-waves"></iconify-icon><div class="option-label">psychic-waves</div></div>
+      <div class="option" data-slot="stratquiz" data-icon="game-icons:crystal-ball"><iconify-icon icon="game-icons:crystal-ball"></iconify-icon><div class="option-label">crystal-ball</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="traps">
+    <div class="section-header">
+      <h3 class="section-name">TOEIC Traps Quiz</h3>
+      <span class="section-current">currently <span class="emoji">🪤</span></span>
+      <div class="section-hint">"Spot the 20 classic traps"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="traps" data-icon="game-icons:bear-trap"><iconify-icon icon="game-icons:bear-trap"></iconify-icon><div class="option-label">bear-trap</div></div>
+      <div class="option" data-slot="traps" data-icon="game-icons:trap-mask"><iconify-icon icon="game-icons:trap-mask"></iconify-icon><div class="option-label">trap-mask</div></div>
+      <div class="option" data-slot="traps" data-icon="game-icons:snake"><iconify-icon icon="game-icons:snake"></iconify-icon><div class="option-label">snake</div></div>
+      <div class="option" data-slot="traps" data-icon="game-icons:foot-trip"><iconify-icon icon="game-icons:foot-trip"></iconify-icon><div class="option-label">foot-trip</div></div>
+      <div class="option" data-slot="traps" data-icon="game-icons:spider-web"><iconify-icon icon="game-icons:spider-web"></iconify-icon><div class="option-label">spider-web</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="gramref">
+    <div class="section-header">
+      <h3 class="section-name">Grammar Reference</h3>
+      <span class="section-current">currently <span class="emoji">📖</span></span>
+      <div class="section-hint">"12 essential grammar sheets"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="gramref" data-icon="game-icons:book-pile"><iconify-icon icon="game-icons:book-pile"></iconify-icon><div class="option-label">book-pile</div></div>
+      <div class="option" data-slot="gramref" data-icon="game-icons:book-aura"><iconify-icon icon="game-icons:book-aura"></iconify-icon><div class="option-label">book-aura</div></div>
+      <div class="option" data-slot="gramref" data-icon="game-icons:spellbook"><iconify-icon icon="game-icons:spellbook"></iconify-icon><div class="option-label">spellbook</div></div>
+      <div class="option" data-slot="gramref" data-icon="game-icons:bookmarklet"><iconify-icon icon="game-icons:bookmarklet"></iconify-icon><div class="option-label">bookmarklet</div></div>
+      <div class="option" data-slot="gramref" data-icon="game-icons:inspiration"><iconify-icon icon="game-icons:inspiration"></iconify-icon><div class="option-label">inspiration</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ========== BOSS / ENDLESS ========== -->
+  <div class="zone" id="ultimate">
+  <h2 class="zone-title">Train · Ultimate Trials</h2>
+
+  <div class="section" data-slot="boss">
+    <div class="section-header">
+      <h3 class="section-name">Boss · The Final Arena</h3>
+      <span class="section-current">currently <span class="emoji">🐉</span> (dragon — already medfan, is a keeper candidate)</span>
+      <div class="section-hint">"Full TOEIC, 202Q"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="boss" data-icon="game-icons:dragon-head"><iconify-icon icon="game-icons:dragon-head"></iconify-icon><div class="option-label">dragon-head</div></div>
+      <div class="option" data-slot="boss" data-icon="game-icons:dragon-spiral"><iconify-icon icon="game-icons:dragon-spiral"></iconify-icon><div class="option-label">dragon-spiral</div></div>
+      <div class="option" data-slot="boss" data-icon="game-icons:fire-breathing"><iconify-icon icon="game-icons:fire-breathing"></iconify-icon><div class="option-label">fire-breathing</div></div>
+      <div class="option" data-slot="boss" data-icon="game-icons:evil-wings"><iconify-icon icon="game-icons:evil-wings"></iconify-icon><div class="option-label">evil-wings</div></div>
+      <div class="option" data-slot="boss" data-icon="game-icons:dragon-breath"><iconify-icon icon="game-icons:dragon-breath"></iconify-icon><div class="option-label">dragon-breath</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="endless">
+    <div class="section-header">
+      <h3 class="section-name">Endless Arena</h3>
+      <span class="section-current">currently <span class="emoji">⏳</span> (hourglass — already medfan, keeper candidate)</span>
+      <div class="section-hint">"24h cooldown · randomized"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="endless" data-icon="game-icons:sands-of-time"><iconify-icon icon="game-icons:sands-of-time"></iconify-icon><div class="option-label">sands-of-time</div></div>
+      <div class="option" data-slot="endless" data-icon="game-icons:hourglass"><iconify-icon icon="game-icons:hourglass"></iconify-icon><div class="option-label">hourglass</div></div>
+      <div class="option" data-slot="endless" data-icon="game-icons:time-trap"><iconify-icon icon="game-icons:time-trap"></iconify-icon><div class="option-label">time-trap</div></div>
+      <div class="option" data-slot="endless" data-icon="game-icons:infinity"><iconify-icon icon="game-icons:infinity"></iconify-icon><div class="option-label">infinity</div></div>
+      <div class="option" data-slot="endless" data-icon="game-icons:eternal-love"><iconify-icon icon="game-icons:eternal-love"></iconify-icon><div class="option-label">eternal-love</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ========== GAMES ========== -->
+  <div class="zone" id="games">
+  <h2 class="zone-title">Games · 7 items</h2>
+
+  <div class="section" data-slot="tavern">
+    <div class="section-header">
+      <h3 class="section-name">Word Tavern</h3>
+      <span class="section-current">currently <span class="emoji">🍺</span></span>
+      <div class="section-hint">"Prove your vocabulary!"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="tavern" data-icon="game-icons:beer-stein"><iconify-icon icon="game-icons:beer-stein"></iconify-icon><div class="option-label">beer-stein</div></div>
+      <div class="option" data-slot="tavern" data-icon="game-icons:drink-me"><iconify-icon icon="game-icons:drink-me"></iconify-icon><div class="option-label">drink-me</div></div>
+      <div class="option" data-slot="tavern" data-icon="game-icons:drinking-horn"><iconify-icon icon="game-icons:drinking-horn"></iconify-icon><div class="option-label">drinking-horn</div></div>
+      <div class="option" data-slot="tavern" data-icon="game-icons:beer-bottle"><iconify-icon icon="game-icons:beer-bottle"></iconify-icon><div class="option-label">beer-bottle</div></div>
+      <div class="option" data-slot="tavern" data-icon="game-icons:wine-bottle"><iconify-icon icon="game-icons:wine-bottle"></iconify-icon><div class="option-label">wine-bottle</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="matchE">
+    <div class="section-header">
+      <h3 class="section-name">Speed Match</h3>
+      <span class="section-current">currently <span class="emoji">🎯</span> (avoid target — tab uses bullseye)</span>
+      <div class="section-hint">"Match words with definitions!"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="matchE" data-icon="game-icons:speedometer"><iconify-icon icon="game-icons:speedometer"></iconify-icon><div class="option-label">speedometer</div></div>
+      <div class="option" data-slot="matchE" data-icon="game-icons:running-shoe"><iconify-icon icon="game-icons:running-shoe"></iconify-icon><div class="option-label">running-shoe</div></div>
+      <div class="option" data-slot="matchE" data-icon="game-icons:running"><iconify-icon icon="game-icons:running"></iconify-icon><div class="option-label">running</div></div>
+      <div class="option" data-slot="matchE" data-icon="game-icons:chained-arrow-heads"><iconify-icon icon="game-icons:chained-arrow-heads"></iconify-icon><div class="option-label">chained-arrow-heads</div></div>
+      <div class="option" data-slot="matchE" data-icon="game-icons:quick-slash"><iconify-icon icon="game-icons:quick-slash"></iconify-icon><div class="option-label">quick-slash</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="wfall">
+    <div class="section-header">
+      <h3 class="section-name">Word Fall</h3>
+      <span class="section-current">currently <span class="emoji">⬇️</span></span>
+      <div class="section-hint">"Catch the falling sentences!"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="wfall" data-icon="game-icons:falling-rocks"><iconify-icon icon="game-icons:falling-rocks"></iconify-icon><div class="option-label">falling-rocks</div></div>
+      <div class="option" data-slot="wfall" data-icon="game-icons:falling-star"><iconify-icon icon="game-icons:falling-star"></iconify-icon><div class="option-label">falling-star</div></div>
+      <div class="option" data-slot="wfall" data-icon="game-icons:falling-leaf"><iconify-icon icon="game-icons:falling-leaf"></iconify-icon><div class="option-label">falling-leaf</div></div>
+      <div class="option" data-slot="wfall" data-icon="game-icons:catch"><iconify-icon icon="game-icons:catch"></iconify-icon><div class="option-label">catch</div></div>
+      <div class="option" data-slot="wfall" data-icon="game-icons:meteor-impact"><iconify-icon icon="game-icons:meteor-impact"></iconify-icon><div class="option-label">meteor-impact</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="sbuild">
+    <div class="section-header">
+      <h3 class="section-name">Sentence Builder</h3>
+      <span class="section-current">currently <span class="emoji">🔀</span></span>
+      <div class="section-hint">"Tap blocks in the right order!"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="sbuild" data-icon="game-icons:brick-pile"><iconify-icon icon="game-icons:brick-pile"></iconify-icon><div class="option-label">brick-pile</div></div>
+      <div class="option" data-slot="sbuild" data-icon="game-icons:brick-wall"><iconify-icon icon="game-icons:brick-wall"></iconify-icon><div class="option-label">brick-wall</div></div>
+      <div class="option" data-slot="sbuild" data-icon="game-icons:hammer-nails"><iconify-icon icon="game-icons:hammer-nails"></iconify-icon><div class="option-label">hammer-nails</div></div>
+      <div class="option" data-slot="sbuild" data-icon="game-icons:wooden-crate"><iconify-icon icon="game-icons:wooden-crate"></iconify-icon><div class="option-label">wooden-crate</div></div>
+      <div class="option" data-slot="sbuild" data-icon="game-icons:stone-block"><iconify-icon icon="game-icons:stone-block"></iconify-icon><div class="option-label">stone-block</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="ablitz">
+    <div class="section-header">
+      <h3 class="section-name">Audio Blitz</h3>
+      <span class="section-current">currently <span class="emoji">🎵</span></span>
+      <div class="section-hint">"Listen once, answer fast!"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="ablitz" data-icon="game-icons:lyre"><iconify-icon icon="game-icons:lyre"></iconify-icon><div class="option-label">lyre</div></div>
+      <div class="option" data-slot="ablitz" data-icon="game-icons:horn-call"><iconify-icon icon="game-icons:horn-call"></iconify-icon><div class="option-label">horn-call</div></div>
+      <div class="option" data-slot="ablitz" data-icon="game-icons:musical-notes"><iconify-icon icon="game-icons:musical-notes"></iconify-icon><div class="option-label">musical-notes</div></div>
+      <div class="option" data-slot="ablitz" data-icon="game-icons:ringing-bell"><iconify-icon icon="game-icons:ringing-bell"></iconify-icon><div class="option-label">ringing-bell</div></div>
+      <div class="option" data-slot="ablitz" data-icon="game-icons:harp"><iconify-icon icon="game-icons:harp"></iconify-icon><div class="option-label">harp</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="clue">
+    <div class="section-header">
+      <h3 class="section-name">Clue Hunter</h3>
+      <span class="section-current">currently <span class="emoji">🧭</span></span>
+      <div class="section-hint">"Find the clue, fill the blank!"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="clue" data-icon="game-icons:magnifying-glass"><iconify-icon icon="game-icons:magnifying-glass"></iconify-icon><div class="option-label">magnifying-glass</div></div>
+      <div class="option" data-slot="clue" data-icon="game-icons:compass"><iconify-icon icon="game-icons:compass"></iconify-icon><div class="option-label">compass</div></div>
+      <div class="option" data-slot="clue" data-icon="game-icons:footprint"><iconify-icon icon="game-icons:footprint"></iconify-icon><div class="option-label">footprint</div></div>
+      <div class="option" data-slot="clue" data-icon="game-icons:spyglass"><iconify-icon icon="game-icons:spyglass"></iconify-icon><div class="option-label">spyglass</div></div>
+      <div class="option" data-slot="clue" data-icon="game-icons:spy"><iconify-icon icon="game-icons:spy"></iconify-icon><div class="option-label">spy</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="duel">
+    <div class="section-header">
+      <h3 class="section-name">Vocabulary Arena (Duel)</h3>
+      <span class="section-current">currently <span class="emoji">⚔️</span></span>
+      <div class="section-hint">"Real-time 1v1 · challenge a classmate!"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="duel" data-icon="game-icons:crossed-swords"><iconify-icon icon="game-icons:crossed-swords"></iconify-icon><div class="option-label">crossed-swords</div></div>
+      <div class="option" data-slot="duel" data-icon="game-icons:dueling"><iconify-icon icon="game-icons:dueling"></iconify-icon><div class="option-label">dueling</div></div>
+      <div class="option" data-slot="duel" data-icon="game-icons:fencer"><iconify-icon icon="game-icons:fencer"></iconify-icon><div class="option-label">fencer</div></div>
+      <div class="option" data-slot="duel" data-icon="game-icons:swords-emblem"><iconify-icon icon="game-icons:swords-emblem"></iconify-icon><div class="option-label">swords-emblem</div></div>
+      <div class="option" data-slot="duel" data-icon="game-icons:battle-axe"><iconify-icon icon="game-icons:battle-axe"></iconify-icon><div class="option-label">battle-axe</div></div>
+    </div>
+  </div>
+  </div>
+
+</div>
+
+<!-- FIXED EXPORT -->
+<div class="export-wrap">
+  <p class="export-title">◆ Your Selection ◆</p>
+  <div class="export-box" id="export-box"></div>
+</div>
+
+<script>
+  var SLOTS = [
+    "sec-exercises","sec-grammar","sec-mocks","sec-tips",
+    "daily","lis","read",
+    "gauntlet","wordfam","falsefr","connsort","prepdrill","gerinf","pvdojo",
+    "mock",
+    "abouttoeic","strats","stratquiz","traps","gramref",
+    "boss","endless",
+    "tavern","matchE","wfall","sbuild","ablitz","clue","duel"
+  ];
+
+  function buildExport() {
+    var box = document.getElementById("export-box");
+    box.innerHTML = SLOTS.map(function(s) {
+      return '<div class="export-line"><strong>'+s+':</strong> <span id="exp-'+s+'">—</span></div>';
+    }).join("");
+    // init
+    SLOTS.forEach(function(s) {
+      var sel = document.querySelector('.option.selected[data-slot="'+s+'"]');
+      if (sel) document.getElementById("exp-"+s).textContent = sel.dataset.icon;
+    });
+  }
+
+  buildExport();
+
+  document.querySelectorAll('.option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      var slot = opt.dataset.slot;
+      var icon = opt.dataset.icon;
+      document.querySelectorAll('.option[data-slot="' + slot + '"]').forEach(function(o) {
+        o.classList.remove('selected');
+      });
+      opt.classList.add('selected');
+      var expEl = document.getElementById("exp-" + slot);
+      if (expEl) expEl.textContent = icon;
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -170,6 +170,15 @@ function resumeAudioSession(){_audioAborted=false;}
 // Preload voices (some browsers need this)
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){_voices=null;getEnVoice();};}
 
+// ─── GAME-ICON SVG HELPER ───
+// Renders an Iconify game-icons SVG by name. Use: <GIcon name="castle" size={26} color="var(--cyan)"/>
+function GIcon(p){
+  var pth=GAME_ICON_PATHS[p.name]||"";
+  var sz=p.size||20;
+  var sty=Object.assign({color:p.color||"currentColor",display:p.block?"block":"inline-block",verticalAlign:"middle",flexShrink:0},p.style||{});
+  return(<svg viewBox="0 0 512 512" width={sz} height={sz} style={sty}><g fill="currentColor" dangerouslySetInnerHTML={{__html:pth}}/></svg>);
+}
+
 // ─── AUDIO BUTTON COMPONENT ───
 function SpeakBtn(p){
   var[playing,sP]=useState(false);
@@ -387,7 +396,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-home-icons-v1";
+var BUILD_ID="2026-04-22-train-games-icons-v1";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -3180,9 +3189,9 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
               <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 75% 20%,rgba(27,112,207,0.35),transparent 55%)",animation:"endless-halo-breathe 5s ease-in-out infinite",pointerEvents:"none"}}/>
               <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 15% 85%,rgba(74,159,224,0.18),transparent 45%)",animation:"endless-halo-breathe 6s ease-in-out infinite 1.5s",pointerEvents:"none"}}/>
               <div className="fx-star" style={{top:"14%",left:"8%",width:2,height:2,background:"#a8d4ff",animationDelay:"0s"}}/><div className="fx-star" style={{top:"22%",left:"18%",width:1.5,height:1.5,background:"#d4943a",animationDelay:"0.5s"}}/><div className="fx-star" style={{top:"10%",left:"32%",width:2.5,height:2.5,background:"#ffffff",animationDelay:"1.2s"}}/><div className="fx-star" style={{top:"28%",left:"45%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"1.8s"}}/><div className="fx-star" style={{top:"18%",left:"58%",width:2,height:2,background:"#a8d4ff",animationDelay:"0.3s"}}/><div className="fx-star" style={{top:"8%",left:"72%",width:2,height:2,background:"#d4943a",animationDelay:"2.2s"}}/><div className="fx-star" style={{top:"24%",left:"85%",width:1.5,height:1.5,background:"#ffffff",animationDelay:"0.9s"}}/><div className="fx-star" style={{top:"35%",left:"28%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"2.5s"}}/><div className="fx-star" style={{top:"40%",left:"62%",width:2,height:2,background:"#d4943a",animationDelay:"1.5s"}}/><div className="fx-star" style={{top:"48%",left:"15%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"0.7s"}}/><div className="fx-star" style={{top:"55%",left:"78%",width:2,height:2,background:"#ffffff",animationDelay:"2.8s"}}/><div className="fx-star" style={{top:"65%",left:"38%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"1.1s"}}/><div className="fx-star" style={{top:"72%",left:"88%",width:2,height:2,background:"#d4943a",animationDelay:"0.4s"}}/><div className="fx-star" style={{top:"80%",left:"22%",width:1.5,height:1.5,background:"#a8d4ff",animationDelay:"2.0s"}}/><div className="fx-star" style={{top:"85%",left:"55%",width:2,height:2,background:"#ffffff",animationDelay:"1.3s"}}/>
-              <div style={{position:"absolute",top:-6,right:14,fontSize:46,opacity:.08}}>{"⏳"}</div>
+              <div style={{position:"absolute",top:-6,right:14,opacity:.08}}><GIcon name="infinity" size={52} color="currentColor"/></div>
               <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
-                <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#1B70CF,#0a3a6e)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px rgba(27,112,207,0.35)"}}>{"⏳"}</div>
+                <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,#1B70CF,#0a3a6e)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px rgba(27,112,207,0.35)"}}><GIcon name="infinity" size={28} color="#fff"/></div>
                 <div style={{flex:1}}>
                   <div style={{marginBottom:2}}>
                     <span className="out" style={{fontWeight:900,fontSize:16,letterSpacing:.5,background:"linear-gradient(90deg,#7fb8e8,#4a9fe0,#d4943a)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>ENDLESS ARENA</span>
@@ -3240,7 +3249,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
             return(
               <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}if(!m.lock)p.nav(m.id);}}
                 style={{display:"flex",alignItems:"center",gap:14,cursor:(m.lock||vl)?"default":"pointer",opacity:m.lock?.4:vl?.55:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
-                <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+                <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color="#fff"/>:m.i}</div>
                 <div style={{flex:1,minWidth:0}}>
                   <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
                   <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
@@ -3287,7 +3296,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
         <span style={{fontSize:11,color:bossCompleted?"#4abe60":bossLocked?"#8a7e6a":"#f0c850"}}>{bossCompleted?"conquered \xb7 "+(p.u.mockResults.boss.toeicEstimate||""):bossLocked?"awaiting \xb7 finish mocks":"unlocked \xb7 enter \u2192"}</span>
       </div>
       {endlessState!=="hidden"&&<div style={{display:"flex",alignItems:"center",gap:11,padding:"8px 4px 6px",background:"rgba(27,112,207,0.08)",borderRadius:8,margin:"2px -4px 0"}}>
-        <span style={{fontSize:19,width:22,textAlign:"center"}}>{"⏳"}</span>
+        <span style={{width:22,textAlign:"center",display:"inline-flex",justifyContent:"center"}}><GIcon name="infinity" size={19} color="#7fb8e8"/></span>
         <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:13,fontWeight:700,color:"#7fb8e8",flex:1}}>Endless Arena</span>
         <span style={{fontSize:11,color:endlessState==="ready"?"#4a9fe0":endlessState==="cooldown"?"#8a7e6a":"#8a7e6a"}}>{endlessState==="locked"?"locked \xb7 requires 650+":endlessState==="ready"?"ready to enter":endlessState==="cooldown"?"ready in "+endlessCooldownH+"h":""}</span>
       </div>}
@@ -3315,7 +3324,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
     <div className="crd" onClick={function(){if(p.tabGo)p.tabGo("cards");}}
       style={{marginTop:10,padding:"18px 14px",cursor:"pointer",borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:".12s",animationFillMode:"both"}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
-        <div style={{fontSize:32,flexShrink:0}}>{"\uD83C\uDCCF"}</div>
+        <div style={{flexShrink:0}}><GIcon name="card-joker" size={34} color="var(--cyan)"/></div>
         <div style={{flex:1}}>
           <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>Flashcards</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>SRS spaced repetition {"\u00B7"} 18 domains</div>
@@ -6446,7 +6455,7 @@ function GamesHub(p){
   var bestF=p.u.gameScores&&p.u.gameScores.wordFall?p.u.gameScores.wordFall:null;
   var bestT=p.u.moduleScores&&p.u.moduleScores.tavern?p.u.moduleScores.tavern:null;
   var games=[
-    {id:"tavern",n:"Word Tavern",d:"Prove your vocabulary!",i:"\uD83C\uDF7A",bg:"linear-gradient(135deg,#c87a35,#8b5e83)",tag:"NEW",extra:bestT?"Best: "+bestT.correct+"/"+bestT.total:null},
+    {id:"tavern",n:"Word Tavern",d:"Prove your vocabulary!",i:"beer-stein",bg:"linear-gradient(135deg,#c87a35,#8b5e83)",tag:"NEW",extra:bestT?"Best: "+bestT.correct+"/"+bestT.total:null},
     {id:"matchE",n:"Speed Match",d:"Match words with definitions!",i:"🎯",bg:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",extra:bestM?"Best: "+bestM.time+"s · "+bestM.moves+" moves":null},
     {id:"wfall",n:"Word Fall",d:"Catch the falling sentences!",i:"⬇️",bg:"linear-gradient(135deg,#ef4444,#f59e0b)",extra:bestF?"Best: "+bestF.score+" pts · x"+bestF.maxCombo+" combo":null},
     {id:"sbuild",n:"Sentence Builder",d:"Tap blocks in the right order!",i:"🔀",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
@@ -10015,7 +10024,7 @@ function ListenHub(p){
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
       {parts.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
-          <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+          <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color="#fff"/>:m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
           {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
         </div>);})}
@@ -10458,7 +10467,7 @@ function ReadingHub(p){
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
       {parts.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
-          <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{m.i}</div>
+          <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color="#fff"/>:m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
           {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
         </div>);})}
