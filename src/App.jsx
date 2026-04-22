@@ -386,7 +386,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-phrasal-grimoire";
+var BUILD_ID="2026-04-22-grimoire-pagenum-fix";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1077,7 +1077,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes grim-flip-next{from{transform:rotateY(0);box-shadow:0 12px 40px rgba(0,0,0,.65)}to{transform:rotateY(-170deg);box-shadow:-20px 12px 40px rgba(0,0,0,.75)}}
 @keyframes grim-flip-prev{from{transform:rotateY(0)}to{transform:rotateY(170deg)}}
 /* Typography inside page */
-.grim-page-content{font-family:'Georgia','Times New Roman',serif;color:#3d2817;font-size:15px;line-height:1.65}
+.grim-page-content{font-family:'Georgia','Times New Roman',serif;color:#3d2817;font-size:15px;line-height:1.65;display:flex;flex-direction:column;min-height:100%;box-sizing:border-box}
 .grim-chapter-title{font-size:21px;font-weight:700;text-align:center;margin-bottom:6px;color:#6b3410;letter-spacing:1.2px;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid rgba(107,52,16,.28)}
 .grim-chapter-intro{font-style:italic;text-align:center;color:#6b4820;margin-bottom:18px;font-size:13.5px;line-height:1.55}
 .grim-heading{font-size:16px;font-weight:700;color:#6b3410;margin:18px 0 8px;letter-spacing:.3px;border-left:3px solid #8b5a28;padding-left:10px}
@@ -1096,7 +1096,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .grim-table td{padding:6px 8px;border:1px solid rgba(139,90,40,.22);color:#3d2817;background:rgba(255,255,255,.22)}
 .grim-list{margin:6px 0 12px 18px;padding:0}
 .grim-list li{margin-bottom:5px;line-height:1.55}
-.grim-page-num{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-family:'Georgia',serif;font-style:italic;color:#6b4820;font-size:11px;opacity:.65;pointer-events:none;letter-spacing:2px}
+.grim-page-num{margin-top:auto;padding-top:24px;text-align:center;font-family:'Georgia',serif;font-style:italic;color:#6b4820;font-size:11px;opacity:.65;letter-spacing:2px;pointer-events:none}
 .grim-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:rgba(0,0,0,.7);border-top:1px solid rgba(245,223,170,.15);flex-shrink:0}
 .grim-nav-btn{background:linear-gradient(135deg,#8b5a28,#6b3410);color:#f5dfaa;border:1px solid rgba(245,223,170,.3);border-radius:12px;padding:11px 14px;font-weight:700;font-size:13px;cursor:pointer;min-width:80px;touch-action:manipulation}
 .grim-nav-btn:disabled{opacity:.3;cursor:not-allowed}
@@ -1174,8 +1174,8 @@ function GrimoireReader(p){
             <div className="grim-chapter-title">{ch.title}</div>
             {ch.intro&&<div className="grim-chapter-intro">{ch.intro}</div>}
             {ch.blocks.map(function(b,i){return renderGrimoireBlock(b,i);})}
+            <div className="grim-page-num">{"\u2014 "+(romans[chIdx]||(chIdx+1))+" \u2014"}</div>
           </div>
-          <div className="grim-page-num">{"\u2014 "+(romans[chIdx]||(chIdx+1))+" \u2014"}</div>
         </div>
       </div>
     </div>
