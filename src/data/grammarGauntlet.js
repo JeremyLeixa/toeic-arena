@@ -26,7 +26,23 @@ export var IRREGULAR_VERBS = [
   {id:"irr12",base:"lead",past:"led",pp:"led",fr:"diriger, mener",freq:"medium",ex:"She has led the team for over a decade."},
   {id:"irr13",base:"rise",past:"rose",pp:"risen",fr:"augmenter, s'élever",freq:"medium",ex:"Sales have risen sharply since the launch."},
   {id:"irr14",base:"pay",past:"paid",pp:"paid",fr:"payer",freq:"high",ex:"The invoice was paid on time."},
-  {id:"irr15",base:"begin",past:"began",pp:"begun",fr:"commencer",freq:"high",ex:"The meeting has just begun."}
+  {id:"irr15",base:"begin",past:"began",pp:"begun",fr:"commencer",freq:"high",ex:"The meeting has just begun."},
+  // ── Batch 1 — V2 = V3 patterns (high-freq business TOEIC) ──
+  {id:"irr16",base:"catch",past:"caught",pp:"caught",fr:"attraper, saisir",freq:"high",ex:"She caught the error before it reached production."},
+  {id:"irr17",base:"teach",past:"taught",pp:"taught",fr:"enseigner",freq:"high",ex:"He has taught economics for twenty years."},
+  {id:"irr18",base:"think",past:"thought",pp:"thought",fr:"penser, réfléchir",freq:"high",ex:"The board thought the deal was too risky."},
+  {id:"irr19",base:"buy",past:"bought",pp:"bought",fr:"acheter",freq:"high",ex:"The company bought new equipment last quarter."},
+  {id:"irr20",base:"seek",past:"sought",pp:"sought",fr:"chercher, rechercher",freq:"medium",ex:"They sought legal advice before signing the NDA."},
+  {id:"irr21",base:"fight",past:"fought",pp:"fought",fr:"combattre, lutter",freq:"medium",ex:"Management fought hard to keep the account."},
+  {id:"irr22",base:"feel",past:"felt",pp:"felt",fr:"sentir, ressentir",freq:"high",ex:"She felt confident about the merger terms."},
+  {id:"irr23",base:"keep",past:"kept",pp:"kept",fr:"garder, conserver, maintenir",freq:"high",ex:"We have kept all client records since 2010."},
+  {id:"irr24",base:"sell",past:"sold",pp:"sold",fr:"vendre",freq:"high",ex:"They sold the Berlin office for two million euros."},
+  {id:"irr25",base:"tell",past:"told",pp:"told",fr:"dire, raconter",freq:"high",ex:"The CEO told us about the restructuring yesterday."},
+  {id:"irr26",base:"meet",past:"met",pp:"met",fr:"rencontrer, respecter (un délai)",freq:"high",ex:"We have met every quarterly target this year."},
+  {id:"irr27",base:"lose",past:"lost",pp:"lost",fr:"perdre",freq:"high",ex:"The firm lost its biggest account last spring."},
+  {id:"irr28",base:"send",past:"sent",pp:"sent",fr:"envoyer",freq:"high",ex:"I sent the signed contract this morning."},
+  {id:"irr29",base:"spend",past:"spent",pp:"spent",fr:"dépenser, passer (du temps)",freq:"high",ex:"We spent three weeks reviewing the proposal."},
+  {id:"irr30",base:"build",past:"built",pp:"built",fr:"construire, bâtir",freq:"medium",ex:"They built a strong brand over the decade."}
 ];
 
 // ───────────────────────────────────────────────────────────
