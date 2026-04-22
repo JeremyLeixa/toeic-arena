@@ -59,7 +59,24 @@ export var IRREGULAR_VERBS = [
   {id:"irr43",base:"dig",past:"dug",pp:"dug",fr:"creuser, fouiller",freq:"medium",ex:"The analysts dug deep into the financial records."},
   {id:"irr44",base:"stick",past:"stuck",pp:"stuck",fr:"coller, rester bloqué",freq:"medium",ex:"The negotiation got stuck on the pricing clause."},
   {id:"irr45",base:"bite",past:"bit",pp:"bitten",fr:"mordre",freq:"low",ex:"The firm has bitten off more than it can chew."},
-  {id:"irr46",base:"wake",past:"woke",pp:"woken",fr:"(se) réveiller",freq:"medium",ex:"The industry was woken by the regulation change."}
+  {id:"irr46",base:"wake",past:"woke",pp:"woken",fr:"(se) réveiller",freq:"medium",ex:"The industry was woken by the regulation change."},
+  // ── Batch 3 — eat/ate/eaten family (vowel + -en pattern) ──
+  {id:"irr47",base:"eat",past:"ate",pp:"eaten",fr:"manger, ronger",freq:"medium",ex:"Inflation has eaten into our profit margins."},
+  {id:"irr48",base:"fall",past:"fell",pp:"fallen",fr:"tomber, chuter",freq:"high",ex:"Sales have fallen sharply this quarter."},
+  {id:"irr49",base:"forget",past:"forgot",pp:"forgotten",fr:"oublier",freq:"high",ex:"I forgot to copy you on that email."},
+  {id:"irr50",base:"get",past:"got",pp:"gotten",fr:"obtenir, recevoir",freq:"high",ex:"We have gotten three bids on the project so far."},
+  {id:"irr51",base:"hide",past:"hid",pp:"hidden",fr:"cacher, dissimuler",freq:"medium",ex:"The bug was hidden in a legacy module."},
+  {id:"irr52",base:"see",past:"saw",pp:"seen",fr:"voir",freq:"high",ex:"Have you seen the revised timeline?"},
+  {id:"irr53",base:"shake",past:"shook",pp:"shaken",fr:"secouer, ébranler",freq:"medium",ex:"The news shook the entire industry."},
+  {id:"irr54",base:"tear",past:"tore",pp:"torn",fr:"déchirer",freq:"low",ex:"The contract was torn up after the scandal."},
+  {id:"irr55",base:"wear",past:"wore",pp:"worn",fr:"porter (vêtement), user",freq:"medium",ex:"The CEO wore a tie for the investor meeting."},
+  {id:"irr56",base:"throw",past:"threw",pp:"thrown",fr:"jeter, lancer",freq:"medium",ex:"The merger threw the team into chaos."},
+  {id:"irr57",base:"grow",past:"grew",pp:"grown",fr:"grandir, croître",freq:"high",ex:"Revenue has grown 15% year over year."},
+  {id:"irr58",base:"show",past:"showed",pp:"shown",fr:"montrer",freq:"high",ex:"She showed us the new interface yesterday."},
+  {id:"irr59",base:"know",past:"knew",pp:"known",fr:"savoir, connaître",freq:"high",ex:"We have known the CEO for over a decade."},
+  {id:"irr60",base:"fly",past:"flew",pp:"flown",fr:"voler (avion)",freq:"high",ex:"The CFO has flown to Tokyo three times this month."},
+  {id:"irr61",base:"draw",past:"drew",pp:"drawn",fr:"dessiner, attirer",freq:"medium",ex:"The keynote drew a large crowd."},
+  {id:"irr62",base:"swear",past:"swore",pp:"sworn",fr:"jurer, prêter serment",freq:"low",ex:"The witness was sworn in before testifying."}
 ];
 
 // ───────────────────────────────────────────────────────────
@@ -113,7 +130,22 @@ export var TENSE_CHRONOMANCER = [
   {id:"td41",s:"They _____ on the proposal for weeks when the deal fell through.",marker:"for weeks when",o:["worked","had worked","had been working","have been working"],c:2,tense:"past_perfect_continuous",x:"Durée d'activité en cours antérieure à un événement passé → past perfect continuous."},
   {id:"td42",s:"The package _____ arrived when we checked the tracker.",marker:"when + discovery",o:["already","had already","has already","is already"],c:1,tense:"past_perfect",x:"'had already arrived' = action antérieure au moment du check → past perfect."},
   {id:"td43",s:"She didn't attend because she _____ the agenda.",marker:"because + explanation",o:["didn't read","hadn't read","hasn't read","wasn't reading"],c:1,tense:"past_perfect",x:"Cause antérieure à l'action passée (didn't attend) → past perfect négatif : hadn't + V3."},
-  {id:"td44",s:"By yesterday evening, all employees _____ the training.",marker:"by yesterday evening",o:["completed","had completed","have completed","complete"],c:1,tense:"past_perfect",x:"'by + moment passé' + action accomplie à ce point → past perfect."}
+  {id:"td44",s:"By yesterday evening, all employees _____ the training.",marker:"by yesterday evening",o:["completed","had completed","have completed","complete"],c:1,tense:"past_perfect",x:"'by + moment passé' + action accomplie à ce point → past perfect."},
+  // ── Batch 3 — Futures (will / going to / present continuous / future perfect / future continuous) ──
+  {id:"td45",s:"The phone's ringing. I _____ it.",marker:"décision spontanée",o:["get","got","will get","am going to get"],c:2,tense:"simple_future_will",x:"Décision prise à l'instant → will + base. 'going to' serait pour une intention préméditée."},
+  {id:"td46",s:"We _____ a new product in June. The plan has been approved.",marker:"intention planifiée",o:["launch","launched","will launch","are going to launch"],c:3,tense:"going_to",x:"Intention planifiée à l'avance + plan confirmé → be going to + base."},
+  {id:"td47",s:"I _____ the CEO at 4 p.m. tomorrow — the meeting is confirmed.",marker:"rendez-vous fixé",o:["meet","will meet","am meeting","have met"],c:2,tense:"present_continuous_future",x:"Rendez-vous arrangé à l'avance → present continuous à valeur future."},
+  {id:"td48",s:"By 2030, the company _____ its carbon footprint by half.",marker:"by 2030",o:["reduces","will reduce","will have reduced","is going to reduce"],c:2,tense:"future_perfect",x:"'by + date future' + action accomplie à ce point → future perfect (will have + V3)."},
+  {id:"td49",s:"This time next week, we _____ the proposal in Tokyo.",marker:"this time next week",o:["present","will present","will be presenting","are presenting"],c:2,tense:"future_continuous",x:"Action en cours à un moment futur précis → future continuous (will be + V-ing)."},
+  {id:"td50",s:"Look at those dark clouds — it _____.",marker:"évidence présente",o:["rains","will rain","is going to rain","is raining"],c:2,tense:"going_to",x:"Prédiction basée sur un indice visible au présent → going to. 'will' pour prédiction neutre."},
+  {id:"td51",s:"What _____ you _____ this weekend?",marker:"question sur arrangements",o:["do / do","will / do","are / doing","have / done"],c:2,tense:"present_continuous_future",x:"Question sur des arrangements déjà pris → present continuous à valeur future."},
+  {id:"td52",s:"When the report _____ ready, I'll send it.",marker:"when (subordonnée)",o:["is","will be","has been","is being"],c:0,tense:"time_clause_present",x:"Dans une subordonnée temporelle, JAMAIS de will → present simple."},
+  {id:"td53",s:"By the time you arrive, we _____ the agenda.",marker:"by the time + futur",o:["prepare","will prepare","will have prepared","have prepared"],c:2,tense:"future_perfect",x:"'by the time + présent' dans la subordonnée + action accomplie à ce point → future perfect dans la principale."},
+  {id:"td54",s:"She _____ to London on Thursday — she's booked her ticket.",marker:"arrangement fixé",o:["flies","will fly","is flying","has flown"],c:2,tense:"present_continuous_future",x:"Arrangement pris (billet réservé) → present continuous à valeur future."},
+  {id:"td55",s:"We need to reduce costs — we _____ outsource production.",marker:"décision basée sur un constat",o:["outsource","will outsource","are going to outsource","outsourced"],c:2,tense:"going_to",x:"Décision prise sur la base d'un constat présent → going to."},
+  {id:"td56",s:"I didn't know you were here. I _____ make some tea.",marker:"décision spontanée",o:["make","will make","am going to make","am making"],c:1,tense:"simple_future_will",x:"Décision prise à l'instant (politesse) → will + base."},
+  {id:"td57",s:"Don't call me between 2 and 4 — I _____ a workshop.",marker:"action en cours à un moment futur",o:["lead","will lead","will be leading","have led"],c:2,tense:"future_continuous",x:"Action en cours sur une plage horaire future → future continuous."},
+  {id:"td58",s:"As soon as the contract _____, we'll celebrate.",marker:"as soon as (subordonnée passive)",o:["signs","is signed","will sign","will be signed"],c:1,tense:"time_clause_passive_present",x:"Subordonnée temporelle + sujet passif → present simple passive : is/are signed."}
 ];
 
 // ───────────────────────────────────────────────────────────
@@ -168,7 +200,23 @@ export var PASSIVE_FORGE = [
   {id:"pf42",mode:"fillin",prompt:"Expense reports _____ through the new portal starting Monday.",o:["must submit","must be submitted","must submitting","must been submitted"],c:1,type:"modal_passive",x:"Modal + passif : must be + V3."},
   {id:"pf43",mode:"fillin",prompt:"The issue _____ before the product launched.",o:["should address","should be addressed","should have addressed","should have been addressed"],c:3,type:"modal_perfect_passive",x:"Regret (action attendue mais non faite) + passif → 'should have been + V3'."},
   {id:"pf44",mode:"transform",active:"You should have signed this form.",prompt:"This form _____.",o:["should have signed","should have been signed","should be signing","should sign"],c:1,type:"modal_perfect_passive",x:"Modal perfect actif → 'should have been + V3' au passif."},
-  {id:"pf45",mode:"fillin",prompt:"Confidential documents _____ in the locked drawer.",o:["must keep","must be kept","must have kept","must been kept"],c:1,type:"modal_passive",x:"'must + be + V3'. Les documents subissent la conservation."}
+  {id:"pf45",mode:"fillin",prompt:"Confidential documents _____ in the locked drawer.",o:["must keep","must be kept","must have kept","must been kept"],c:1,type:"modal_passive",x:"'must + be + V3'. Les documents subissent la conservation."},
+  // ── Batch 3 — Continuous + Infinitive/Gerund Passive (module complete at 60) ──
+  {id:"pf46",mode:"transform",active:"They were examining the accounts all morning.",prompt:"The accounts _____ all morning.",o:["were examining","were examined","were being examined","had been examined"],c:2,type:"past_continuous_passive",x:"Past continuous actif (were examining) → was/were being + V3."},
+  {id:"pf47",mode:"fillin",prompt:"We appreciate _____ in advance about any changes.",o:["to notify","notifying","being notified","to be notified"],c:2,type:"gerund_passive",x:"'appreciate + V-ing'. Sujet subit l'action → being + V3."},
+  {id:"pf48",mode:"fillin",prompt:"She avoids _____ during presentations.",o:["interrupting","to interrupt","being interrupted","interrupted"],c:2,type:"gerund_passive",x:"'avoid + V-ing'. Sujet subit l'action → being + V3."},
+  {id:"pf49",mode:"fillin",prompt:"The device claims _____ tested against drops.",o:["to have tested","to have been tested","to be testing","to have being tested"],c:1,type:"perfect_infinitive_passive",x:"'claim to have + V3' passif → to have been + V3."},
+  {id:"pf50",mode:"fillin",prompt:"This printer needs _____ urgently.",o:["serviced","to service","servicing","to be serviced"],c:3,type:"passive_infinitive",x:"'need to be + V3' (version formelle, équivalent à 'need + V-ing')."},
+  {id:"pf51",mode:"transform",active:"Someone was following her all evening.",prompt:"She _____ all evening.",o:["was following","was being followed","has been followed","had been followed"],c:1,type:"past_continuous_passive",x:"Past continuous actif + agent indéterminé → was/were being + V3."},
+  {id:"pf52",mode:"fillin",prompt:"The proposal deserves _____ seriously.",o:["consider","considering","to be considered","being considered"],c:2,type:"passive_infinitive",x:"'deserve + to be + V3' = mérite d'être V3. La forme active 'deserve considering' existe mais moins fréquente."},
+  {id:"pf53",mode:"fillin",prompt:"He dislikes _____ for his opinion without preparation.",o:["to ask","asking","to be asked","being asked"],c:3,type:"gerund_passive",x:"'dislike + V-ing'. Sujet subit → being + V3."},
+  {id:"pf54",mode:"fillin",prompt:"The deal is expected _____ by Friday.",o:["to complete","to be completed","to have completed","to been completed"],c:1,type:"passive_infinitive",x:"'expect to + V' au passif → expect to be + V3."},
+  {id:"pf55",mode:"fillin",prompt:"Your order _____ right now.",o:["processes","is processing","is being processed","was being processed"],c:2,type:"present_continuous_passive",x:"Action en cours au présent + sujet passif → is/are being + V3."},
+  {id:"pf56",mode:"fillin",prompt:"The office _____ when the fire alarm went off.",o:["evacuated","was evacuating","was being evacuated","had evacuated"],c:2,type:"past_continuous_passive",x:"Action en cours interrompue dans le passé + passif → was being + V3."},
+  {id:"pf57",mode:"fillin",prompt:"He insists on _____ promoted this quarter.",o:["be","being","to be","to been"],c:1,type:"gerund_passive_after_preposition",x:"Après une préposition (on), on utilise V-ing. Au passif → being + V3."},
+  {id:"pf58",mode:"fillin",prompt:"The machine tends _____ twice a year.",o:["service","to service","to be serviced","serviced"],c:2,type:"passive_infinitive",x:"'tend to + V' au passif → tend to be + V3."},
+  {id:"pf59",mode:"fillin",prompt:"We look forward _____ informed of the outcome.",o:["to be","to being","being","to been"],c:1,type:"gerund_passive_after_to_preposition",x:"'look forward TO' : le TO est une PRÉPOSITION, pas un infinitif → V-ing. Au passif → to being + V3. Piège TOEIC n°1."},
+  {id:"pf60",mode:"fillin",prompt:"The interns enjoyed _____ by senior staff.",o:["training","to train","being trained","trained"],c:2,type:"gerund_passive",x:"'enjoy + V-ing'. Sujet subit → being + V3."}
 ];
 
 // ───────────────────────────────────────────────────────────
@@ -224,5 +272,21 @@ export var RELATIVE_WEAVER = [
   {id:"rw42",s:"The main competitor, _____ market share we want to capture, is weakening.",o:["who","which","whose","that"],c:2,type:"possession_thing",x:"Possession en non-defining → whose. 'leur' part de marché."},
   {id:"rw43",s:"The consultant _____ we relied on has retired.",o:["who","whom","whose","which"],c:1,type:"formal_object_person",x:"Personne + objet d'un phrasal verb (rely on) + formel → whom. Version formelle : 'on whom we relied'."},
   {id:"rw44",s:"The partners _____ we consulted provided valuable input.",o:["who","whom","whose","which"],c:1,type:"formal_object_person",x:"Personnes + objet + registre formel TOEIC → whom."},
-  {id:"rw45",s:"Candidates _____ backgrounds include finance tend to excel here.",o:["who","whom","whose","that"],c:2,type:"possession_person",x:"'leurs' parcours (possession plurielle) → whose."}
+  {id:"rw45",s:"Candidates _____ backgrounds include finance tend to excel here.",o:["who","whom","whose","that"],c:2,type:"possession_person",x:"'leurs' parcours (possession plurielle) → whose."},
+  // ── Batch 3 — Reduced + preposition + place/time depth (module complete at 60) ──
+  {id:"rw46",s:"People _____ early often get the best seats.",o:["arriving","who arrive","arrive","arrived"],c:0,type:"reduced_relative_active",x:"Relative réduite active = V-ing. '= People who arrive early'."},
+  {id:"rw47",s:"Documents _____ by legal are binding.",o:["approving","approved","who approved","are approved"],c:1,type:"reduced_relative_passive",x:"Relative réduite passive = V3. '= which are approved by legal'."},
+  {id:"rw48",s:"The consultant with _____ we work is excellent.",o:["who","whom","that","which"],c:1,type:"preposition_formal_person",x:"Après une préposition (with) + personne + formel → whom. 'that' et 'who' interdits après préposition."},
+  {id:"rw49",s:"The software on _____ we rely has been updated.",o:["who","whom","that","which"],c:3,type:"preposition_formal_thing",x:"Après préposition (on) + chose + formel → which. 'that' interdit après préposition."},
+  {id:"rw50",s:"This is the building _____ our HQ is located.",o:["which","that","where","in where"],c:2,type:"place",x:"Lieu (building) sans préposition explicite → where. Alternative formelle : 'in which'."},
+  {id:"rw51",s:"Do you remember the day _____ we signed the deal?",o:["which","that","when","on where"],c:2,type:"time",x:"Référent temporel (day) + circonstance → when."},
+  {id:"rw52",s:"Managers _____ feedback quickly retain top talent.",o:["giving","who gives","give","who giving"],c:0,type:"reduced_relative_active",x:"Relative réduite active = V-ing. '= Managers who give feedback quickly'."},
+  {id:"rw53",s:"Bonuses _____ last month covered Q1 targets.",o:["paying","who paid","paid","were paid"],c:2,type:"reduced_relative_passive",x:"Relative réduite passive = V3. '= which were paid last month'."},
+  {id:"rw54",s:"The proposal _____ during the meeting was accepted.",o:["presenting","who presented","presented","was presented"],c:2,type:"reduced_relative_passive",x:"Relative réduite passive = V3. '= which was presented during the meeting'."},
+  {id:"rw55",s:"The issue _____ we should focus is clarity.",o:["who","which","that","on which"],c:3,type:"preposition_formal_thing",x:"'focus ON' → préposition 'on' + chose + formel → 'on which'. Registre naturel : 'The issue we should focus on is clarity'."},
+  {id:"rw56",s:"The way _____ we work has changed dramatically.",o:["which","how","in which","that"],c:2,type:"preposition_formal",x:"'way' + circonstance → 'in which' en registre formel. 'the way we work' (sans relatif) aussi valide en oral."},
+  {id:"rw57",s:"All _____ attended the seminar received certificates.",o:["who","whom","that","which"],c:2,type:"defining_after_all",x:"Après 'all', 'everything', 'anything' : 'that' est préféré."},
+  {id:"rw58",s:"She's the best consultant _____ we've ever hired.",o:["who","whom","that","which"],c:2,type:"defining_after_superlative",x:"Après un superlatif ('the best'), 'that' est préféré à 'who/whom/which'."},
+  {id:"rw59",s:"All reports _____ by Friday are processed first.",o:["submit","submitting","submitted","who submitted"],c:2,type:"reduced_relative_passive",x:"Relative réduite passive = V3. '= All reports which are submitted by Friday'."},
+  {id:"rw60",s:"The proposal, _____ by the board, will be revised.",o:["rejecting","rejected","which rejected","was rejected"],c:1,type:"reduced_relative_passive_non_defining",x:"Relative réduite passive en non-defining (entre virgules) = V3. '= which was rejected by the board'."}
 ];
