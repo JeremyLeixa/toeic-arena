@@ -76,7 +76,26 @@ export var IRREGULAR_VERBS = [
   {id:"irr59",base:"know",past:"knew",pp:"known",fr:"savoir, connaître",freq:"high",ex:"We have known the CEO for over a decade."},
   {id:"irr60",base:"fly",past:"flew",pp:"flown",fr:"voler (avion)",freq:"high",ex:"The CFO has flown to Tokyo three times this month."},
   {id:"irr61",base:"draw",past:"drew",pp:"drawn",fr:"dessiner, attirer",freq:"medium",ex:"The keynote drew a large crowd."},
-  {id:"irr62",base:"swear",past:"swore",pp:"sworn",fr:"jurer, prêter serment",freq:"low",ex:"The witness was sworn in before testifying."}
+  {id:"irr62",base:"swear",past:"swore",pp:"sworn",fr:"jurer, prêter serment",freq:"low",ex:"The witness was sworn in before testifying."},
+  // ── Batch 4 — Idiosyncratic high-freq verbs (module complete at 80) ──
+  {id:"irr63",base:"go",past:"went",pp:"gone",fr:"aller",freq:"high",ex:"She has gone to three conferences this month."},
+  {id:"irr64",base:"do",past:"did",pp:"done",fr:"faire",freq:"high",ex:"The audit was done by an external firm."},
+  {id:"irr65",base:"have",past:"had",pp:"had",fr:"avoir, posséder",freq:"high",ex:"We have had three successful launches this year."},
+  {id:"irr66",base:"say",past:"said",pp:"said",fr:"dire",freq:"high",ex:"The CEO said the decision was final."},
+  {id:"irr67",base:"leave",past:"left",pp:"left",fr:"partir, laisser",freq:"high",ex:"She left the company last spring."},
+  {id:"irr68",base:"let",past:"let",pp:"let",fr:"laisser, permettre",freq:"high",ex:"The board let him take the lead on the project."},
+  {id:"irr69",base:"put",past:"put",pp:"put",fr:"mettre, placer",freq:"high",ex:"They put the launch on hold until Q3."},
+  {id:"irr70",base:"cost",past:"cost",pp:"cost",fr:"coûter",freq:"high",ex:"The mistake has cost us a major client."},
+  {id:"irr71",base:"cut",past:"cut",pp:"cut",fr:"couper, réduire",freq:"high",ex:"Management cut the budget by 20% last year."},
+  {id:"irr72",base:"hit",past:"hit",pp:"hit",fr:"frapper, atteindre",freq:"medium",ex:"The team has hit every quarterly target."},
+  {id:"irr73",base:"hurt",past:"hurt",pp:"hurt",fr:"blesser, nuire à",freq:"medium",ex:"The scandal hurt the brand's reputation."},
+  {id:"irr74",base:"set",past:"set",pp:"set",fr:"fixer, établir",freq:"high",ex:"The board set ambitious targets for 2026."},
+  {id:"irr75",base:"spread",past:"spread",pp:"spread",fr:"répandre, propager",freq:"medium",ex:"The rumor spread quickly across the trading floor."},
+  {id:"irr76",base:"stand",past:"stood",pp:"stood",fr:"se tenir debout, résister",freq:"medium",ex:"She stood firm on her position during negotiations."},
+  {id:"irr77",base:"sit",past:"sat",pp:"sat",fr:"être assis, siéger",freq:"medium",ex:"He has sat on the board since 2018."},
+  {id:"irr78",base:"read",past:"read",pp:"read",fr:"lire",freq:"high",ex:"Have you read the latest market report?"},
+  {id:"irr79",base:"mean",past:"meant",pp:"meant",fr:"signifier, vouloir dire",freq:"high",ex:"The new policy meant everyone had to relocate."},
+  {id:"irr80",base:"hear",past:"heard",pp:"heard",fr:"entendre",freq:"high",ex:"We have heard good things about the new supplier."}
 ];
 
 // ───────────────────────────────────────────────────────────
@@ -145,7 +164,20 @@ export var TENSE_CHRONOMANCER = [
   {id:"td55",s:"We need to reduce costs — we _____ outsource production.",marker:"décision basée sur un constat",o:["outsource","will outsource","are going to outsource","outsourced"],c:2,tense:"going_to",x:"Décision prise sur la base d'un constat présent → going to."},
   {id:"td56",s:"I didn't know you were here. I _____ make some tea.",marker:"décision spontanée",o:["make","will make","am going to make","am making"],c:1,tense:"simple_future_will",x:"Décision prise à l'instant (politesse) → will + base."},
   {id:"td57",s:"Don't call me between 2 and 4 — I _____ a workshop.",marker:"action en cours à un moment futur",o:["lead","will lead","will be leading","have led"],c:2,tense:"future_continuous",x:"Action en cours sur une plage horaire future → future continuous."},
-  {id:"td58",s:"As soon as the contract _____, we'll celebrate.",marker:"as soon as (subordonnée passive)",o:["signs","is signed","will sign","will be signed"],c:1,tense:"time_clause_passive_present",x:"Subordonnée temporelle + sujet passif → present simple passive : is/are signed."}
+  {id:"td58",s:"As soon as the contract _____, we'll celebrate.",marker:"as soon as (subordonnée passive)",o:["signs","is signed","will sign","will be signed"],c:1,tense:"time_clause_passive_present",x:"Subordonnée temporelle + sujet passif → present simple passive : is/are signed."},
+  // ── Batch 4 — Time clauses + used to / would (module complete at 70) ──
+  {id:"td59",s:"Please sign the receipt when the delivery _____.",marker:"when (subordonnée)",o:["arrives","will arrive","arrived","has arrived"],c:0,tense:"time_clause_present",x:"Subordonnée temporelle → JAMAIS will. Present simple pour sens futur."},
+  {id:"td60",s:"I'll send the report as soon as I _____ it.",marker:"as soon as (subordonnée)",o:["finish","will finish","have finished","am finishing"],c:0,tense:"time_clause_present",x:"Subordonnée temporelle → present simple (jamais will)."},
+  {id:"td61",s:"Until the payment _____, we won't ship.",marker:"until (subordonnée passive)",o:["is received","will be received","has received","had received"],c:0,tense:"time_clause_passive_present",x:"'until' subordonnée + sujet passif → present passive : is received."},
+  {id:"td62",s:"Prepare the welcome kit before the new hire _____.",marker:"before (subordonnée)",o:["arrives","will arrive","arrived","had arrived"],c:0,tense:"time_clause_present",x:"'before' subordonnée → present simple (jamais will)."},
+  {id:"td63",s:"I _____ commute two hours daily before we relocated.",marker:"before + past action",o:["use to","used to","was used to","would have"],c:1,tense:"used_to",x:"Habitude passée qui n'existe plus → 'used to + base'. JAMAIS 'use to' sans 'd'."},
+  {id:"td64",s:"She _____ be shy, but now she leads client meetings.",marker:"contrastive past state",o:["use to","used to","is used to","would be"],c:1,tense:"used_to",x:"État passé (be) qui n'existe plus → 'used to'. 'would' impossible avec un verbe d'état."},
+  {id:"td65",s:"This company _____ be a startup before the IPO.",marker:"past state",o:["use to","used to","would","is used to"],c:1,tense:"used_to",x:"État passé ('be a startup') → seulement 'used to'. 'would + be' n'exprime pas une habitude passée."},
+  {id:"td66",s:"I _____ working late — it's become routine.",marker:"present habit",o:["use to","used to","am used to","would"],c:2,tense:"be_used_to",x:"'be used to + V-ing' = avoir l'habitude de (présent). Sens TOTALEMENT différent de 'used to + base' (passé)."},
+  {id:"td67",s:"As soon as the meeting _____, I'll call you.",marker:"as soon as (subordonnée)",o:["ends","will end","has ended","is ending"],c:0,tense:"time_clause_present",x:"Subordonnée temporelle → present simple, jamais will."},
+  {id:"td68",s:"He _____ be an early riser — now he sleeps in.",marker:"past state contrastive",o:["use to","used to","would be","is used to"],c:1,tense:"used_to",x:"État passé ('be') → used to. 'would be' impossible avec un verbe d'état."},
+  {id:"td69",s:"The contract will be signed as soon as the parties _____ the terms.",marker:"as soon as (subordonnée)",o:["finalize","will finalize","have finalized","are finalizing"],c:0,tense:"time_clause_present",x:"Subordonnée temporelle → present simple. Present perfect accepté aussi mais présent plus naturel ici."},
+  {id:"td70",s:"Every Saturday when I was young, we _____ drive to the lake.",marker:"narrative past habit",o:["use to","went to","would","are used to"],c:2,tense:"would_narrative",x:"'would + base' = habitude passée narrative, typiquement pour évoquer des souvenirs ('every Saturday...')."}
 ];
 
 // ───────────────────────────────────────────────────────────
