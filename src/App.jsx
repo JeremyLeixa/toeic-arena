@@ -201,6 +201,10 @@ function GIcon(p){
 function SpeakBtn(p){
   var[playing,sP]=useState(false);
   function go(){
+    // User-initiated play: reset the abort flag left behind by any prior
+    // Listen/Boss/AudioBlitz unmount. Without this, speak() silently returns
+    // if abort was still set when the user reaches Flashcards/Tavern/SpeakBtn.
+    resumeAudioSession();
     sP(true);
     speak(p.text,p.rate||0.9,p.audio||null);
     setTimeout(function(){sP(false);},Math.max(1000,p.text.length*80));
@@ -414,7 +418,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-parts-intro-icons";
+var BUILD_ID="2026-04-22-gauntlet-intros-tts-fix";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1282,7 +1286,7 @@ function IrregularCrypt(p){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
       <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <div style={{textAlign:"center",padding:"24px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{"\uD83E\uDEA6"}</div>
+        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><GIcon name="tombstone" size={64} color="var(--cyan)"/></div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Irregular Crypt</h2>
         <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Exhume 15 irregular verbs from the tombs of the past.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
@@ -1438,7 +1442,7 @@ function Chronomancer(p){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
       <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <div style={{textAlign:"center",padding:"24px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{"\u231B"}</div>
+        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><GIcon name="clockwork" size={64} color="var(--cyan)"/></div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Chronomancer</h2>
         <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Master the storm of verb tenses. Each question hides a temporal clue.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
@@ -1586,7 +1590,7 @@ function PassiveForge(p){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
       <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <div style={{textAlign:"center",padding:"24px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{"\u2692\uFE0F"}</div>
+        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><GIcon name="anvil-impact" size={64} color="var(--cyan)"/></div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Passive Forge</h2>
         <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Transform active into passive. Forge the right structure in 30 seconds.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
@@ -1746,7 +1750,7 @@ function RelativeWeaver(p){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
       <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <div style={{textAlign:"center",padding:"24px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{"\uD83D\uDD78\uFE0F"}</div>
+        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><GIcon name="spider-web" size={64} color="var(--cyan)"/></div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Relative Weaver</h2>
         <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Weave the relative clauses. Mind the commas — they change everything.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
