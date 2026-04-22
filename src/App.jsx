@@ -384,7 +384,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-back-btn-harmonized";
+var BUILD_ID="2026-04-22-gv-fixes-reorder";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -3042,13 +3042,13 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
     ]},
     {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"🧩",count:"8 modules",items:[
       {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"🃏",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
+      {id:"gauntlet",n:"Grammar Gauntlet",d:"4 trials · Irregulars, Tenses, Passive, Relatives",i:"🛡️",bg:"linear-gradient(135deg,#7c3aed,#c026d3)"},
       {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"🧩",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
       {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"🔀",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
       {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"🎯",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
       {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"⚖️",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
-      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"🎭",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
       {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"⚔️",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
-      {id:"gauntlet",n:"Grammar Gauntlet",d:"4 trials · Irregulars, Tenses, Passive, Relatives",i:"🛡️",bg:"linear-gradient(135deg,#7c3aed,#c026d3)"},
     ]},
     {key:"mocks",title:"Mock Exams",sub:"Real conditions",icon:"📜",count:"3 tests",items:(function(){
       var items=[];
@@ -3644,17 +3644,17 @@ function PrepDrill(p){
   function doAns(pr){sPk(pr);if(pr===items[ci].prep){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
 
-  if(ph==="menu")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="menu")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
+    <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
     <div style={{fontSize:48,marginBottom:16}}>🎯</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Preposition Collocations</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.5}}>Master the prepositions that go with common business words</p>
     <button className="btn1" onClick={function(){sP("q");}} style={{marginBottom:12}}>Start Drill (12 Qs)</button>
-    <button className="btn2" onClick={function(){sP("study");}} style={{width:"100%",marginBottom:12}}>📖 Study Mode</button>
-    <button className="btn2" onClick={p.back} style={{width:"100%"}}>Back</button></div>);
+    <button className="btn2" onClick={function(){sP("study");}} style={{width:"100%"}}>📖 Study Mode</button></div>);
 
   if(ph==="study")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button onClick={function(){sP("menu");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
+      <button className="back-btn" onClick={function(){sP("menu");}}>{"\u2190"} Back</button>
       <span className="out" style={{fontWeight:700,fontSize:15}}>Study Mode</span>
       <div style={{width:40}}/></div>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.5}}>Collocations grouped by preposition. Tap a group to expand.</p>
@@ -5035,13 +5035,13 @@ function FalseFriends(p){
   }
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);sP("q");}else{sP("done");p.done(sc,items.length,20+sc*5);}}
 
-  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
+    <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
     <div style={{fontSize:56,marginBottom:16}}>🎭</div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>False Friends</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>These English words LOOK like French words but mean something completely different!</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Can you avoid the francophone traps?</p>
-    <button className="btn1" onClick={function(){sP("q");}}>Start</button>
-    <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
+    <button className="btn1" onClick={function(){sP("q");}}>Start</button></div>);
 
   if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
@@ -12570,7 +12570,8 @@ var prevLeague=getLeague(c.weeklyXp);
   </div>);
 
   if(sp==="daily")return pg(<Daily u={u} done={dailyDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"daily");}} back={function(){sSP(null);}}/>);
-  if(sp==="csess"||sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
+  if(sp==="csess")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
   if(sp==="drill")return pg(<Drill u={u} done={drillDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"drill");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="wordfam")return pg(<WordFam u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"wordfam");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="connsort")return pg(<ConnSort u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"connsort");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
