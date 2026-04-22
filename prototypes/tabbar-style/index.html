@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tab Bar Style Nuances — Light & Dark</title>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  /* ═══ DARK (default) ═══ */
+  :root {
+    --bg: #0f0c08;
+    --bg2: #1a1610;
+    --bg3: #28221a;
+    --bdr: rgba(180,140,80,0.15);
+    --cx: 212,148,58;
+    --cx-hex: #d4943a;
+    --cyan: #d4943a;
+    --gold: #f0c850;
+    --t1: #ede4d4;
+    --t2: #8a7e6a;
+    --t3: #5a5040;
+    /* bg alpha tokens for gradients */
+    --bg-rgb: 15,12,8;
+    --bg2-rgb: 26,22,16;
+    --bg3-rgb: 40,34,26;
+    /* neutral mid tone for V10 two-tone (between t2 and t1) */
+    --mid-neutral: #9a8d74;
+  }
+  /* ═══ LIGHT mode ═══ */
+  .light {
+    --bg: #f5f0e8;
+    --bg2: #fffcf5;
+    --bg3: #e8e0d2;
+    --bdr: rgba(120,90,50,0.12);
+    --cx: 139,105,20;
+    --cx-hex: #8b6914;
+    --cyan: #8b6914;
+    --gold: #a67c00;
+    --t1: #1a1510;
+    --t2: #5a5040;
+    --t3: #8a7e6a;
+    --bg-rgb: 245,240,232;
+    --bg2-rgb: 255,252,245;
+    --bg3-rgb: 232,224,210;
+    --mid-neutral: #7a6e58;
+  }
+  /* Skin overrides (dark) */
+  .skin-emeraude  { --cx:46,180,100;  --cx-hex:#2eb464; --cyan:#2eb464; }
+  .skin-saphir    { --cx:58,148,220;  --cx-hex:#3a94dc; --cyan:#3a94dc; }
+  .skin-rubis     { --cx:220,58,80;   --cx-hex:#dc3a50; --cyan:#dc3a50; }
+  .skin-amethyste { --cx:160,90,220;  --cx-hex:#a05adc; --cyan:#a05adc; }
+  /* Skin overrides (light — more saturated/darker for contrast) */
+  .light.skin-emeraude  { --cx:18,110,52;  --cx-hex:#126e34; --cyan:#126e34; }
+  .light.skin-saphir    { --cx:20,80,150;  --cx-hex:#145096; --cyan:#145096; }
+  .light.skin-rubis     { --cx:160,20,40;  --cx-hex:#a01428; --cyan:#a01428; }
+  .light.skin-amethyste { --cx:100,40,160; --cx-hex:#6428a0; --cyan:#6428a0; }
+
+  * { box-sizing: border-box; }
+  html, body { transition: background .3s, color .3s; }
+
+  body {
+    margin: 0;
+    padding: 30px 16px 80px;
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--t1);
+    min-height: 100vh;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  h1 {
+    font-family: Georgia, serif;
+    font-size: 26px;
+    margin: 0 0 6px;
+    background: linear-gradient(135deg, var(--cx-hex), var(--gold), var(--cx-hex));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+  .subtitle { text-align: center; color: var(--t2); margin: 0 0 16px; font-size: 13px; }
+
+  .controls {
+    display: flex; justify-content: center; gap: 20px;
+    margin: 16px 0 26px; flex-wrap: wrap; align-items: center;
+  }
+  .toggle-group {
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  }
+  .toggle-label {
+    font-size: 11px; color: var(--t3); margin-right: 4px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .btn {
+    background: var(--bg3); border: 1px solid var(--bdr);
+    color: var(--t2); padding: 7px 14px; border-radius: 8px;
+    cursor: pointer; font-size: 12px; font-family: inherit;
+    transition: all .2s;
+  }
+  .btn.active {
+    color: var(--cx-hex); border-color: var(--cx-hex); font-weight: 700;
+  }
+  .btn:hover:not(.active) { color: var(--t1); }
+
+  /* Mode switch button — bigger */
+  .mode-btn {
+    padding: 9px 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .mode-btn iconify-icon { font-size: 16px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .variant {
+    background: var(--bg2);
+    border: 1px solid var(--bdr);
+    border-radius: 14px;
+    padding: 18px 14px 0;
+    overflow: hidden;
+  }
+  .variant-head { margin-bottom: 8px; }
+  .variant-title {
+    font-family: Georgia, serif; font-size: 15px;
+    color: var(--cx-hex); font-weight: 700;
+  }
+  .variant-desc {
+    font-family: monospace; font-size: 10px;
+    color: var(--t3); margin-top: 4px; line-height: 1.4;
+  }
+
+  /* Mock app-content for contrast reference */
+  .app-body {
+    background: linear-gradient(180deg, var(--bg2), var(--bg));
+    padding: 20px 12px 10px;
+    border-radius: 8px;
+    min-height: 90px;
+    position: relative;
+    margin-bottom: 0;
+  }
+  .app-body .line {
+    height: 10px; background: rgba(var(--cx), 0.07);
+    border-radius: 4px; margin-bottom: 6px;
+  }
+  .app-body .line.s1 { width: 75%; }
+  .app-body .line.s2 { width: 90%; }
+  .app-body .line.s3 { width: 60%; }
+
+  /* ─── Tab bar base ─── */
+  .tabbar {
+    display: flex; justify-content: space-around;
+    padding: 8px 10px 14px;
+    margin: 0 -14px;
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px; padding: 7px 12px; border-radius: 12px;
+    cursor: pointer; transition: all .2s;
+  }
+  .tab iconify-icon { font-size: 24px; }
+  .tab-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+  .tab.active { transform: scale(1.06); }
+
+  /* ═══ VARIANT STYLES ═══ */
+  /* V1: CURRENT — gradient to bg, inactive skin @ .45 */
+  .v1 .tabbar {
+    background: linear-gradient(180deg,
+      rgba(var(--bg-rgb),0) 0%,
+      rgba(var(--bg-rgb),.95) 20%,
+      var(--bg) 100%);
+  }
+  .v1 .tab { color: var(--cyan); opacity: .45; }
+  .v1 .tab.active { opacity: 1; filter: drop-shadow(0 0 6px rgba(var(--cx),.55)); }
+
+  /* V2: same gradient, inactive @ .65 */
+  .v2 .tabbar {
+    background: linear-gradient(180deg,
+      rgba(var(--bg-rgb),0) 0%,
+      rgba(var(--bg-rgb),.95) 20%,
+      var(--bg) 100%);
+  }
+  .v2 .tab { color: var(--cyan); opacity: .65; }
+  .v2 .tab.active { opacity: 1; filter: drop-shadow(0 0 6px rgba(var(--cx),.55)); }
+
+  /* V3: solid bg2 + top border, inactive @ .55 */
+  .v3 .tabbar {
+    background: var(--bg2);
+    border-top: 1px solid var(--bdr);
+  }
+  .v3 .tab { color: var(--cyan); opacity: .55; }
+  .v3 .tab.active { opacity: 1; filter: drop-shadow(0 0 6px rgba(var(--cx),.55)); }
+
+  /* V4: neutral var(--t2) full opacity inactive */
+  .v4 .tabbar {
+    background: linear-gradient(180deg,
+      rgba(var(--bg-rgb),0) 0%,
+      rgba(var(--bg-rgb),.95) 20%,
+      var(--bg) 100%);
+  }
+  .v4 .tab { color: var(--t2); opacity: 1; }
+  .v4 .tab.active { color: var(--cyan); filter: drop-shadow(0 0 6px rgba(var(--cx),.55)); }
+
+  /* V5: fade to bg3 + var(--t1) neutral @ .55 */
+  .v5 .tabbar {
+    background: linear-gradient(180deg,
+      rgba(var(--bg3-rgb),0) 0%,
+      rgba(var(--bg3-rgb),.8) 30%,
+      var(--bg3) 100%);
+    border-top: 1px solid rgba(var(--cx),.15);
+  }
+  .v5 .tab { color: var(--t1); opacity: .55; }
+  .v5 .tab.active { color: var(--cyan); opacity: 1; filter: drop-shadow(0 0 6px rgba(var(--cx),.55)); }
+
+  /* V6: solid bg3 + skin @ .7 */
+  .v6 .tabbar {
+    background: var(--bg3);
+    border-top: 1px solid rgba(var(--cx),.25);
+  }
+  .v6 .tab { color: var(--cyan); opacity: .7; }
+  .v6 .tab.active { opacity: 1; filter: drop-shadow(0 0 8px rgba(var(--cx),.55)); }
+
+  /* V7: glass blur */
+  .v7 .tabbar {
+    background: rgba(var(--bg2-rgb), 0.75);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(var(--cx),.2);
+  }
+  .v7 .tab { color: var(--cyan); opacity: .6; }
+  .v7 .tab.active { opacity: 1; filter: drop-shadow(0 0 6px rgba(var(--cx),.55)); }
+
+  /* V8: skin-tinted gradient + var(--t1) neutral @ .5 */
+  .v8 .tabbar {
+    background: linear-gradient(180deg,
+      rgba(var(--cx),.04) 0%,
+      rgba(var(--bg2-rgb),.95) 40%,
+      var(--bg) 100%);
+    border-top: 1px solid rgba(var(--cx),.18);
+  }
+  .v8 .tab { color: var(--t1); opacity: .5; }
+  .v8 .tab.active { color: var(--cyan); opacity: 1; filter: drop-shadow(0 0 8px rgba(var(--cx),.55)); }
+
+  /* V9: active pill highlight */
+  .v9 .tabbar {
+    background: var(--bg2);
+    border-top: 1px solid var(--bdr);
+  }
+  .v9 .tab { color: var(--cyan); opacity: .55; }
+  .v9 .tab.active {
+    opacity: 1;
+    background: rgba(var(--cx),.12);
+  }
+
+  /* V10: two-tone mid-neutral inactive */
+  .v10 .tabbar {
+    background: var(--bg2);
+    border-top: 1px solid var(--bdr);
+  }
+  .v10 .tab { color: var(--mid-neutral); opacity: 1; }
+  .v10 .tab.active { color: var(--cyan); filter: drop-shadow(0 0 6px rgba(var(--cx),.55)); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>◆ Tab Bar Style ◆</h1>
+  <p class="subtitle">10 combos with light/dark toggle + skin toggle. Click tabs to test active state.</p>
+
+  <div class="controls">
+    <div class="toggle-group">
+      <span class="toggle-label">Mode</span>
+      <button class="btn mode-btn active" data-mode="dark"><iconify-icon icon="game-icons:moon"></iconify-icon>Dark</button>
+      <button class="btn mode-btn" data-mode="light"><iconify-icon icon="game-icons:sunrise"></iconify-icon>Light</button>
+    </div>
+    <div class="toggle-group">
+      <span class="toggle-label">Skin</span>
+      <button class="btn skin-btn active" data-skin="">Gold</button>
+      <button class="btn skin-btn" data-skin="skin-emeraude">Émeraude</button>
+      <button class="btn skin-btn" data-skin="skin-saphir">Saphir</button>
+      <button class="btn skin-btn" data-skin="skin-rubis">Rubis</button>
+      <button class="btn skin-btn" data-skin="skin-amethyste">Améthyste</button>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <div class="variant v1">
+      <div class="variant-head">
+        <div class="variant-title">V1 — Current (baseline)</div>
+        <div class="variant-desc">bg: gradient to --bg · inactive: skin @ 0.45</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+    <div class="variant v2">
+      <div class="variant-head">
+        <div class="variant-title">V2 — Higher opacity</div>
+        <div class="variant-desc">bg: gradient to --bg · inactive: skin @ 0.65</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+    <div class="variant v3">
+      <div class="variant-head">
+        <div class="variant-title">V3 — Warm bg2 + top border</div>
+        <div class="variant-desc">bg: var(--bg2) solid · border-top · inactive: skin @ 0.55</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+    <div class="variant v4">
+      <div class="variant-head">
+        <div class="variant-title">V4 — Neutral t2 inactive</div>
+        <div class="variant-desc">bg: gradient to --bg · inactive: var(--t2) full opacity</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+    <div class="variant v5">
+      <div class="variant-head">
+        <div class="variant-title">V5 — Fade to bg3 + t1 neutral</div>
+        <div class="variant-desc">bg: fade to var(--bg3) · inactive: var(--t1) @ 0.55</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+    <div class="variant v6">
+      <div class="variant-head">
+        <div class="variant-title">V6 — Solid bg3 + skin @ 0.7</div>
+        <div class="variant-desc">bg: var(--bg3) · skin-tinted border · inactive: skin @ 0.7</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+    <div class="variant v7">
+      <div class="variant-head">
+        <div class="variant-title">V7 — Glass (blur)</div>
+        <div class="variant-desc">bg: translucent + backdrop blur · inactive: skin @ 0.6</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+    <div class="variant v8">
+      <div class="variant-head">
+        <div class="variant-title">V8 — Skin-tinted gradient + t1 inactive</div>
+        <div class="variant-desc">bg: skin tint → bg · inactive: var(--t1) @ 0.5</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+    <div class="variant v9">
+      <div class="variant-head">
+        <div class="variant-title">V9 — Active pill highlight</div>
+        <div class="variant-desc">bg: var(--bg2) · active gets filled pill · inactive: skin @ 0.55</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+    <div class="variant v10">
+      <div class="variant-head">
+        <div class="variant-title">V10 — Two-tone (mid neutral ≠ skin)</div>
+        <div class="variant-desc">bg: var(--bg2) · inactive: mid-neutral · active: skin</div>
+      </div>
+      <div class="app-body"><div class="line s1"></div><div class="line s2"></div><div class="line s3"></div></div>
+      <div class="tabbar">
+        <div class="tab active"><iconify-icon icon="game-icons:castle"></iconify-icon><span class="tab-label">Home</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:bullseye"></iconify-icon><span class="tab-label">Train</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:coliseum"></iconify-icon><span class="tab-label">Games</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><span class="tab-label">League</span></div>
+        <div class="tab"><iconify-icon icon="game-icons:visored-helm"></iconify-icon><span class="tab-label">Profile</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Track current mode + skin state
+  var currentMode = 'dark';
+  var currentSkin = '';
+
+  function applyClasses() {
+    document.body.className = '';
+    if (currentMode === 'light') document.body.classList.add('light');
+    if (currentSkin) document.body.classList.add(currentSkin);
+  }
+
+  // Mode toggle
+  document.querySelectorAll('.mode-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.mode-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+      applyClasses();
+    });
+  });
+
+  // Skin toggle
+  document.querySelectorAll('.skin-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.skin-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentSkin = btn.dataset.skin || '';
+      applyClasses();
+    });
+  });
+
+  // Active tab toggle (within each variant)
+  document.querySelectorAll('.variant').forEach(function(v) {
+    v.querySelectorAll('.tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        v.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
