@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOEIC Arena — Home Icons Mockup</title>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0c08;
+    --bg2: #1a1610;
+    --bg3: #28221a;
+    --bdr: rgba(180,140,80,0.15);
+    --gold: #d4943a;
+    --gold-soft: #c99842;
+    --gold-light: #f0c850;
+    --text: #ede4d4;
+    --text-dim: #8a7e6a;
+    --text-faint: #5a5040;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 40px 20px 600px;
+    background: radial-gradient(ellipse at top, #1a1610 0%, #0a0806 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-family: Georgia, serif;
+    font-size: 32px;
+    margin: 0 0 8px;
+    background: linear-gradient(135deg, #d4943a 0%, #f0c850 50%, #c99842 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--text-dim);
+    margin: 0 0 40px;
+    font-size: 14px;
+  }
+
+  .section {
+    margin-bottom: 40px;
+    background: var(--bg2);
+    border: 1px solid var(--bdr);
+    border-radius: 16px;
+    padding: 22px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--bdr);
+    flex-wrap: wrap;
+  }
+
+  .section-name {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    color: var(--gold-light);
+    margin: 0;
+  }
+
+  .section-current {
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .section-current .emoji {
+    font-size: 18px;
+    margin: 0 4px;
+  }
+
+  .section-context {
+    color: var(--text-faint);
+    font-size: 12px;
+    font-style: italic;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .option {
+    background: var(--bg3);
+    border: 1px solid var(--bdr);
+    border-radius: 10px;
+    padding: 16px 8px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .option:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+  }
+
+  .option.selected {
+    border-color: var(--gold);
+    background: linear-gradient(180deg, rgba(212, 148, 58, 0.12) 0%, var(--bg3) 100%);
+    box-shadow: 0 0 0 1px var(--gold), 0 4px 14px rgba(212, 148, 58, 0.18);
+  }
+
+  .option.selected::before {
+    content: "✓";
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    color: var(--gold-light);
+    font-size: 13px;
+    font-weight: bold;
+  }
+
+  .option iconify-icon {
+    font-size: 36px;
+    color: var(--text);
+    display: block;
+    margin: 0 auto 8px;
+  }
+
+  .option.selected iconify-icon {
+    color: var(--gold-light);
+  }
+
+  .option-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: monospace;
+    word-break: break-all;
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+
+  .option-desc {
+    font-size: 10px;
+    color: var(--text-faint);
+    font-style: italic;
+  }
+
+  /* ============ LIVE HOME PREVIEW ============ */
+  .preview-wrap {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background: linear-gradient(180deg, transparent 0%, rgba(10, 8, 6, 0.97) 25%, var(--bg) 100%);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--bdr);
+    max-height: 560px;
+    overflow-y: auto;
+  }
+
+  .preview-inner {
+    max-width: 430px;
+    margin: 0 auto;
+  }
+
+  .preview-title {
+    text-align: center;
+    color: var(--gold-light);
+    font-family: Georgia, serif;
+    font-size: 14px;
+    margin: 0 0 14px;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- Home screen mock --- */
+  .home-mock {
+    background: var(--bg);
+    border: 1px solid var(--bdr);
+    border-radius: 14px;
+    padding: 14px 12px;
+  }
+
+  .home-pill-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .home-pill {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--bdr);
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+
+  .home-pill iconify-icon {
+    font-size: 22px;
+    color: var(--gold);
+    display: block;
+    margin: 0 auto 4px;
+  }
+
+  .home-pill-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: Georgia, serif;
+  }
+
+  .home-pill-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 2px;
+  }
+
+  .home-card {
+    background: var(--bg2);
+    border: 1px solid var(--bdr);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+
+  .home-card iconify-icon.main {
+    font-size: 28px;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .home-card iconify-icon.tip-bulb {
+    font-size: 18px;
+    color: var(--gold-light);
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    opacity: 0.85;
+  }
+
+  .home-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .home-card-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .quick-start-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .quick-card {
+    background: var(--bg2);
+    border: 1px solid var(--bdr);
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .quick-card iconify-icon {
+    font-size: 26px;
+    color: var(--gold);
+    display: block;
+    margin: 0 auto 6px;
+  }
+
+  .quick-card-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .export-box {
+    max-width: 430px;
+    margin: 14px auto 0;
+    background: var(--bg3);
+    border: 1px solid var(--bdr);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: monospace;
+    font-size: 10px;
+  }
+
+  .export-line { margin: 2px 0; color: var(--text-dim); }
+  .export-line strong { color: var(--text); display: inline-block; width: 90px; }
+  .export-line span { color: var(--gold-light); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>◆ Home Icons Mockup ◆</h1>
+  <p class="subtitle">Click an option to select. The Home mockup at the bottom updates live.</p>
+
+  <!-- TOTAL XP -->
+  <section class="section" data-slot="xp">
+    <div class="section-header">
+      <h2 class="section-name">Total XP</h2>
+      <span class="section-current">currently <span class="emoji">⭐</span> (star)</span>
+      <div class="section-context">Stats pill — cumulative XP across all sessions. Medfan: treasure, glory, achievement.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="xp" data-icon="game-icons:star-medal">
+        <iconify-icon icon="game-icons:star-medal"></iconify-icon>
+        <div class="option-label">star-medal</div>
+        <div class="option-desc">Medal with star</div>
+      </div>
+      <div class="option" data-slot="xp" data-icon="game-icons:star-formation">
+        <iconify-icon icon="game-icons:star-formation"></iconify-icon>
+        <div class="option-label">star-formation</div>
+        <div class="option-desc">Pure star</div>
+      </div>
+      <div class="option" data-slot="xp" data-icon="game-icons:glowing-star">
+        <iconify-icon icon="game-icons:glowing-star"></iconify-icon>
+        <div class="option-label">glowing-star</div>
+        <div class="option-desc">Star with glow</div>
+      </div>
+      <div class="option" data-slot="xp" data-icon="game-icons:shining-sun">
+        <iconify-icon icon="game-icons:shining-sun"></iconify-icon>
+        <div class="option-label">shining-sun</div>
+        <div class="option-desc">Sun (glory)</div>
+      </div>
+      <div class="option" data-slot="xp" data-icon="game-icons:gem-chain">
+        <iconify-icon icon="game-icons:gem-chain"></iconify-icon>
+        <div class="option-label">gem-chain</div>
+        <div class="option-desc">Gems (treasure)</div>
+      </div>
+      <div class="option" data-slot="xp" data-icon="game-icons:crystal-shine">
+        <iconify-icon icon="game-icons:crystal-shine"></iconify-icon>
+        <div class="option-label">crystal-shine</div>
+        <div class="option-desc">Crystal gem</div>
+      </div>
+      <div class="option" data-slot="xp" data-icon="game-icons:diamonds">
+        <iconify-icon icon="game-icons:diamonds"></iconify-icon>
+        <div class="option-label">diamonds</div>
+        <div class="option-desc">Diamond pile</div>
+      </div>
+      <div class="option" data-slot="xp" data-icon="game-icons:two-coins">
+        <iconify-icon icon="game-icons:two-coins"></iconify-icon>
+        <div class="option-label">two-coins</div>
+        <div class="option-desc">Gold coins</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THIS WEEK -->
+  <section class="section" data-slot="week">
+    <div class="section-header">
+      <h2 class="section-name">This Week</h2>
+      <span class="section-current">currently <span class="emoji">📈</span> (chart)</span>
+      <div class="section-context">Weekly XP — progression over time. Medfan: growth, rising, banner, weekly proclamation.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="week" data-icon="game-icons:progression">
+        <iconify-icon icon="game-icons:progression"></iconify-icon>
+        <div class="option-label">progression</div>
+        <div class="option-desc">Upward arrow</div>
+      </div>
+      <div class="option" data-slot="week" data-icon="game-icons:rising-mountain">
+        <iconify-icon icon="game-icons:rising-mountain"></iconify-icon>
+        <div class="option-label">rising-mountain</div>
+        <div class="option-desc">Rising peak</div>
+      </div>
+      <div class="option" data-slot="week" data-icon="game-icons:vine-leaf">
+        <iconify-icon icon="game-icons:vine-leaf"></iconify-icon>
+        <div class="option-label">vine-leaf</div>
+        <div class="option-desc">Organic growth</div>
+      </div>
+      <div class="option" data-slot="week" data-icon="game-icons:sprout">
+        <iconify-icon icon="game-icons:sprout"></iconify-icon>
+        <div class="option-label">sprout</div>
+        <div class="option-desc">Sapling growth</div>
+      </div>
+      <div class="option" data-slot="week" data-icon="game-icons:flag">
+        <iconify-icon icon="game-icons:flag"></iconify-icon>
+        <div class="option-label">flag</div>
+        <div class="option-desc">Banner / milestone</div>
+      </div>
+      <div class="option" data-slot="week" data-icon="game-icons:calendar-half-year">
+        <iconify-icon icon="game-icons:calendar-half-year"></iconify-icon>
+        <div class="option-label">calendar-half-year</div>
+        <div class="option-desc">Week tracker</div>
+      </div>
+      <div class="option" data-slot="week" data-icon="game-icons:level-up">
+        <iconify-icon icon="game-icons:level-up"></iconify-icon>
+        <div class="option-label">level-up</div>
+        <div class="option-desc">Rising arrow</div>
+      </div>
+      <div class="option" data-slot="week" data-icon="game-icons:scroll-unfurled">
+        <iconify-icon icon="game-icons:scroll-unfurled"></iconify-icon>
+        <div class="option-label">scroll-unfurled</div>
+        <div class="option-desc">Weekly report scroll</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SESSIONS -->
+  <section class="section" data-slot="sessions">
+    <div class="section-header">
+      <h2 class="section-name">Sessions</h2>
+      <span class="section-current">currently <span class="emoji">🎯</span> (target)</span>
+      <div class="section-context">Session count — how many training runs completed. Note: Train tab already uses "bullseye", so avoid target-based icons here.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="sessions" data-icon="game-icons:abacus">
+        <iconify-icon icon="game-icons:abacus"></iconify-icon>
+        <div class="option-label">abacus</div>
+        <div class="option-desc">Counter / tally</div>
+      </div>
+      <div class="option" data-slot="sessions" data-icon="game-icons:tally">
+        <iconify-icon icon="game-icons:tally"></iconify-icon>
+        <div class="option-label">tally</div>
+        <div class="option-desc">Tally marks</div>
+      </div>
+      <div class="option" data-slot="sessions" data-icon="game-icons:stone-stack">
+        <iconify-icon icon="game-icons:stone-stack"></iconify-icon>
+        <div class="option-label">stone-stack</div>
+        <div class="option-desc">Stacked stones (count)</div>
+      </div>
+      <div class="option" data-slot="sessions" data-icon="game-icons:rolling-dices">
+        <iconify-icon icon="game-icons:rolling-dices"></iconify-icon>
+        <div class="option-label">rolling-dices</div>
+        <div class="option-desc">Attempts / rolls</div>
+      </div>
+      <div class="option" data-slot="sessions" data-icon="game-icons:hourglass">
+        <iconify-icon icon="game-icons:hourglass"></iconify-icon>
+        <div class="option-label">hourglass</div>
+        <div class="option-desc">Time invested</div>
+      </div>
+      <div class="option" data-slot="sessions" data-icon="game-icons:footprint">
+        <iconify-icon icon="game-icons:footprint"></iconify-icon>
+        <div class="option-label">footprint</div>
+        <div class="option-desc">Journey / steps</div>
+      </div>
+      <div class="option" data-slot="sessions" data-icon="game-icons:path-distance">
+        <iconify-icon icon="game-icons:path-distance"></iconify-icon>
+        <div class="option-label">path-distance</div>
+        <div class="option-desc">Path traveled</div>
+      </div>
+      <div class="option" data-slot="sessions" data-icon="game-icons:checkmark">
+        <iconify-icon icon="game-icons:checkmark"></iconify-icon>
+        <div class="option-label">checkmark</div>
+        <div class="option-desc">Completed count</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIP OF THE DAY (LIGHTBULB) -->
+  <section class="section" data-slot="tip">
+    <div class="section-header">
+      <h2 class="section-name">Tip of the Day (lightbulb)</h2>
+      <span class="section-current">currently <span class="emoji">💡</span> (small lightbulb top-right)</span>
+      <div class="section-context">Small indicator on the tip card. Medfan: wisdom, insight, revelation. The main card icon is data-driven per strategy category (handled separately).</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="tip" data-icon="game-icons:light-bulb">
+        <iconify-icon icon="game-icons:light-bulb"></iconify-icon>
+        <div class="option-label">light-bulb</div>
+        <div class="option-desc">Classic bulb</div>
+      </div>
+      <div class="option" data-slot="tip" data-icon="game-icons:crystal-ball">
+        <iconify-icon icon="game-icons:crystal-ball"></iconify-icon>
+        <div class="option-label">crystal-ball</div>
+        <div class="option-desc">Oracle / wisdom</div>
+      </div>
+      <div class="option" data-slot="tip" data-icon="game-icons:candle-flame">
+        <iconify-icon icon="game-icons:candle-flame"></iconify-icon>
+        <div class="option-label">candle-flame</div>
+        <div class="option-desc">Candle of insight</div>
+      </div>
+      <div class="option" data-slot="tip" data-icon="game-icons:magic-lamp">
+        <iconify-icon icon="game-icons:magic-lamp"></iconify-icon>
+        <div class="option-label">magic-lamp</div>
+        <div class="option-desc">Genie lamp</div>
+      </div>
+      <div class="option" data-slot="tip" data-icon="game-icons:torch">
+        <iconify-icon icon="game-icons:torch"></iconify-icon>
+        <div class="option-label">torch</div>
+        <div class="option-desc">Torch of knowledge</div>
+      </div>
+      <div class="option" data-slot="tip" data-icon="game-icons:brain">
+        <iconify-icon icon="game-icons:brain"></iconify-icon>
+        <div class="option-label">brain</div>
+        <div class="option-desc">Insight / idea</div>
+      </div>
+      <div class="option" data-slot="tip" data-icon="game-icons:feather-wound">
+        <iconify-icon icon="game-icons:feather-wound"></iconify-icon>
+        <div class="option-label">feather-wound</div>
+        <div class="option-desc">Quill feather</div>
+      </div>
+      <div class="option" data-slot="tip" data-icon="game-icons:sparkles">
+        <iconify-icon icon="game-icons:sparkles"></iconify-icon>
+        <div class="option-label">sparkles</div>
+        <div class="option-desc">Magical spark</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVIEW CARDS -->
+  <section class="section" data-slot="review">
+    <div class="section-header">
+      <h2 class="section-name">Review Cards</h2>
+      <span class="section-current">currently <span class="emoji">🃏</span> (joker card)</span>
+      <div class="section-context">Quick-start card for flashcard SRS review. Medfan: spellbook of memory, tome, card of knowledge.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="review" data-icon="game-icons:card-random">
+        <iconify-icon icon="game-icons:card-random"></iconify-icon>
+        <div class="option-label">card-random</div>
+        <div class="option-desc">Card with swirl</div>
+      </div>
+      <div class="option" data-slot="review" data-icon="game-icons:card-pick">
+        <iconify-icon icon="game-icons:card-pick"></iconify-icon>
+        <div class="option-label">card-pick</div>
+        <div class="option-desc">Hand picking card</div>
+      </div>
+      <div class="option" data-slot="review" data-icon="game-icons:card-joker">
+        <iconify-icon icon="game-icons:card-joker"></iconify-icon>
+        <div class="option-label">card-joker</div>
+        <div class="option-desc">Joker card</div>
+      </div>
+      <div class="option" data-slot="review" data-icon="game-icons:stack">
+        <iconify-icon icon="game-icons:stack"></iconify-icon>
+        <div class="option-label">stack</div>
+        <div class="option-desc">Card deck</div>
+      </div>
+      <div class="option" data-slot="review" data-icon="game-icons:spellbook">
+        <iconify-icon icon="game-icons:spellbook"></iconify-icon>
+        <div class="option-label">spellbook</div>
+        <div class="option-desc">Memory grimoire</div>
+      </div>
+      <div class="option" data-slot="review" data-icon="game-icons:book-cover">
+        <iconify-icon icon="game-icons:book-cover"></iconify-icon>
+        <div class="option-label">book-cover</div>
+        <div class="option-desc">Closed tome</div>
+      </div>
+      <div class="option" data-slot="review" data-icon="game-icons:open-book">
+        <iconify-icon icon="game-icons:open-book"></iconify-icon>
+        <div class="option-label">open-book</div>
+        <div class="option-desc">Open tome</div>
+      </div>
+      <div class="option" data-slot="review" data-icon="game-icons:bookmarklet">
+        <iconify-icon icon="game-icons:bookmarklet"></iconify-icon>
+        <div class="option-label">bookmarklet</div>
+        <div class="option-desc">Bookmarked page</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GRAMMAR DRILL -->
+  <section class="section" data-slot="drill">
+    <div class="section-header">
+      <h2 class="section-name">Grammar Drill</h2>
+      <span class="section-current">currently <span class="emoji">📝</span> (paper + pencil)</span>
+      <div class="section-context">Quick-start card for Part 5 drills. Medfan: quill, scroll with ink, inscription, manuscript work.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="drill" data-icon="game-icons:quill-ink">
+        <iconify-icon icon="game-icons:quill-ink"></iconify-icon>
+        <div class="option-label">quill-ink</div>
+        <div class="option-desc">Quill + inkwell</div>
+      </div>
+      <div class="option" data-slot="drill" data-icon="game-icons:sharp-quill">
+        <iconify-icon icon="game-icons:sharp-quill"></iconify-icon>
+        <div class="option-label">sharp-quill</div>
+        <div class="option-desc">Sharpened quill</div>
+      </div>
+      <div class="option" data-slot="drill" data-icon="game-icons:scroll-quill">
+        <iconify-icon icon="game-icons:scroll-quill"></iconify-icon>
+        <div class="option-label">scroll-quill</div>
+        <div class="option-desc">Scroll + quill</div>
+      </div>
+      <div class="option" data-slot="drill" data-icon="game-icons:feather-wound">
+        <iconify-icon icon="game-icons:feather-wound"></iconify-icon>
+        <div class="option-label">feather-wound</div>
+        <div class="option-desc">Feather pen</div>
+      </div>
+      <div class="option" data-slot="drill" data-icon="game-icons:ink-swirl">
+        <iconify-icon icon="game-icons:ink-swirl"></iconify-icon>
+        <div class="option-label">ink-swirl</div>
+        <div class="option-desc">Ink swirl</div>
+      </div>
+      <div class="option" data-slot="drill" data-icon="game-icons:scroll-unfurled">
+        <iconify-icon icon="game-icons:scroll-unfurled"></iconify-icon>
+        <div class="option-label">scroll-unfurled</div>
+        <div class="option-desc">Unfurled scroll</div>
+      </div>
+      <div class="option" data-slot="drill" data-icon="game-icons:tied-scroll">
+        <iconify-icon icon="game-icons:tied-scroll"></iconify-icon>
+        <div class="option-label">tied-scroll</div>
+        <div class="option-desc">Rolled scroll</div>
+      </div>
+      <div class="option" data-slot="drill" data-icon="game-icons:stone-tablet">
+        <iconify-icon icon="game-icons:stone-tablet"></iconify-icon>
+        <div class="option-label">stone-tablet</div>
+        <div class="option-desc">Stone tablet</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- LIVE HOME PREVIEW -->
+<div class="preview-wrap">
+  <div class="preview-inner">
+    <p class="preview-title">◆ Live Home Preview ◆</p>
+
+    <div class="home-mock">
+
+      <!-- Stats pills row -->
+      <div class="home-pill-row">
+        <div class="home-pill">
+          <iconify-icon icon="game-icons:star-medal" id="prev-xp"></iconify-icon>
+          <div class="home-pill-value">1,240</div>
+          <div class="home-pill-label">Total XP</div>
+        </div>
+        <div class="home-pill">
+          <iconify-icon icon="game-icons:progression" id="prev-week"></iconify-icon>
+          <div class="home-pill-value">320</div>
+          <div class="home-pill-label">This Week</div>
+        </div>
+        <div class="home-pill">
+          <iconify-icon icon="game-icons:abacus" id="prev-sessions"></iconify-icon>
+          <div class="home-pill-value">47</div>
+          <div class="home-pill-label">Sessions</div>
+        </div>
+      </div>
+
+      <!-- Tip card -->
+      <div class="home-card">
+        <iconify-icon class="main" icon="game-icons:camera"></iconify-icon>
+        <div>
+          <div class="home-card-title">Part 1 · Photo Strategy</div>
+          <div class="home-card-sub">Listen for the general action first...</div>
+        </div>
+        <iconify-icon class="tip-bulb" icon="game-icons:light-bulb" id="prev-tip"></iconify-icon>
+      </div>
+
+      <!-- Quick start row -->
+      <div class="quick-start-row">
+        <div class="quick-card">
+          <iconify-icon icon="game-icons:card-random" id="prev-review"></iconify-icon>
+          <div class="quick-card-label">Review Cards</div>
+        </div>
+        <div class="quick-card">
+          <iconify-icon icon="game-icons:quill-ink" id="prev-drill"></iconify-icon>
+          <div class="quick-card-label">Grammar Drill</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="export-box">
+      <div class="export-line"><strong>xp:</strong>       <span id="exp-xp">game-icons:star-medal</span></div>
+      <div class="export-line"><strong>week:</strong>     <span id="exp-week">game-icons:progression</span></div>
+      <div class="export-line"><strong>sessions:</strong> <span id="exp-sessions">game-icons:abacus</span></div>
+      <div class="export-line"><strong>tip:</strong>      <span id="exp-tip">game-icons:light-bulb</span></div>
+      <div class="export-line"><strong>review:</strong>   <span id="exp-review">game-icons:card-random</span></div>
+      <div class="export-line"><strong>drill:</strong>    <span id="exp-drill">game-icons:quill-ink</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      var slot = opt.dataset.slot;
+      var icon = opt.dataset.icon;
+
+      document.querySelectorAll('.option[data-slot="' + slot + '"]').forEach(function(o) {
+        o.classList.remove('selected');
+      });
+      opt.classList.add('selected');
+
+      document.getElementById('prev-' + slot).setAttribute('icon', icon);
+      document.getElementById('exp-' + slot).textContent = icon;
+    });
+  });
+</script>
+
+</body>
+</html>

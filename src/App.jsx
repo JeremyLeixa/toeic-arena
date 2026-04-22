@@ -387,7 +387,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-tabbar-icons-v1";
+var BUILD_ID="2026-04-22-home-icons-v1";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -2949,13 +2949,13 @@ return(
 }()}
 
 <div className="rg3" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
-{[{l:"Total XP",v:u.xp,i:"⭐",c:"var(--gold)"},{l:"This week",v:u.weeklyXp,i:"📈",c:"var(--cyan)"},{l:"Sessions",v:u.stats.sessions,i:"🎯",c:"var(--purple)"}].map(function(s){return(
-<div key={s.l} className="crd" style={{padding:14,textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{s.i}</div><div className="out" style={{fontSize:20,fontWeight:800,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>{s.l}</div></div>);})}</div>
+{[{l:"Total XP",v:u.xp,i:"star-formation",c:"var(--gold)"},{l:"This week",v:u.weeklyXp,i:"progression",c:"var(--cyan)"},{l:"Sessions",v:u.stats.sessions,i:"path-distance",c:"var(--purple)"}].map(function(s){return(
+<div key={s.l} className="crd" style={{padding:14,textAlign:"center"}}><svg viewBox="0 0 512 512" width="24" height="24" style={{color:s.c,display:"block",margin:"0 auto 4px"}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS[s.i]||""}}/></svg><div className="out" style={{fontSize:20,fontWeight:800,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>{s.l}</div></div>);})}</div>
 
 <h2 className="out" style={{fontWeight:700,fontSize:16,marginBottom:12,color:"var(--t2)"}}>Quick Start</h2>
 <div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-<div className="crd" style={{cursor:"pointer",padding:16}} onClick={function(){p.nav("csess");}}><div style={{fontSize:28,marginBottom:8}}>🃏</div><div className="out" style={{fontWeight:700,fontSize:14}}>Review Cards</div><div style={{fontSize:11,color:"var(--t2)",marginTop:4}}>SRS flashcards</div></div>
-<div className="crd" style={{cursor:"pointer",padding:16}} onClick={function(){p.nav("drill");}}><div style={{fontSize:28,marginBottom:8}}>📝</div><div className="out" style={{fontWeight:700,fontSize:14}}>Grammar Drill</div><div style={{fontSize:11,color:"var(--t2)",marginTop:4}}>Part 5 practice</div></div></div>
+<div className="crd" style={{cursor:"pointer",padding:16}} onClick={function(){p.nav("csess");}}><svg viewBox="0 0 512 512" width="32" height="32" style={{color:"var(--cyan)",display:"block",margin:"0 auto 8px"}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS["card-joker"]||""}}/></svg><div className="out" style={{fontWeight:700,fontSize:14,textAlign:"center"}}>Review Cards</div><div style={{fontSize:11,color:"var(--t2)",marginTop:4,textAlign:"center"}}>SRS flashcards</div></div>
+<div className="crd" style={{cursor:"pointer",padding:16}} onClick={function(){p.nav("drill");}}><svg viewBox="0 0 512 512" width="32" height="32" style={{color:"var(--cyan)",display:"block",margin:"0 auto 8px"}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS["ink-swirl"]||""}}/></svg><div className="out" style={{fontWeight:700,fontSize:14,textAlign:"center"}}>Grammar Drill</div><div style={{fontSize:11,color:"var(--t2)",marginTop:4,textAlign:"center"}}>Part 5 practice</div></div></div>
 
 {/* Strategy Tip of the Day */}
 {function(){
@@ -2970,7 +2970,7 @@ return(
             <span style={{fontSize:16}}>{todayTip.icon}</span>
             <span className="out" style={{fontSize:10,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>Tip of the day — {todayTip.part}</span>
           </div>
-          <span style={{fontSize:10,color:"var(--t3)"}}>💡</span>
+          <svg viewBox="0 0 512 512" width="14" height="14" style={{color:"var(--t3)",display:"inline-block",verticalAlign:"middle"}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS["candle-flame"]||""}}/></svg>
         </div>
         <p className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",lineHeight:1.5,marginBottom:6}}>{todayTip.tip.t}</p>
         <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>{todayTip.tip.d}</p>
