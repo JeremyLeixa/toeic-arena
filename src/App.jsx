@@ -28,6 +28,7 @@ import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, M
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
 import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } from "./data/grammarGauntlet.js";
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "./data/grammarGauntletGrimoire.js";
+import { GRIMOIRE_GERUND } from "./data/gerundGrimoire.js";
 
 
 function today(){return new Date().toISOString().split("T")[0];}
@@ -384,7 +385,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-gv-fixes-reorder";
+var BUILD_ID="2026-04-22-gerund-grimoire";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -3730,30 +3731,17 @@ function StudyGroup(p){
 }
 
 // ─── GERUND VS INFINITIVE BATTLE ───
+// Study Mode has been replaced by the Gerund Grimoire (see data/gerundGrimoire.js).
+// Same pattern as the Gauntlet grimoires — same reader, same look.
 function GerInf(p){
-  var[mode,setMode]=useState("hub"); // hub | study | quiz
+  var[mode,setMode]=useState("hub"); // hub | quiz
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
-  var[studyTab,setStudyTab]=useState("ing");
-
-  // Group by pattern for Study Mode
-  var groups=useMemo(function(){
-    var g={ing:[],to:[],both:[],prep:[]};
-    GERUND_INF.forEach(function(v){if(g[v.pattern])g[v.pattern].push(v);});
-    return g;
-  },[]);
+  var[openGrim,setOpenGrim]=useState(false);
 
   // Quiz items — context sentences, shuffled
   var quizItems=useMemo(function(){return shuffle(GERUND_INF.slice());},[]);
 
   function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");}
-
-  // Pattern labels
-  var patternInfo={
-    ing:{label:"Always -ING",icon:"🔶",color:"var(--orange)",desc:"These verbs ALWAYS take the gerund (-ing form)."},
-    to:{label:"Always TO",icon:"🔷",color:"var(--cyan)",desc:"These verbs ALWAYS take the infinitive (to + verb)."},
-    both:{label:"Both (meaning changes!)",icon:"⚠️",color:"var(--red)",desc:"These verbs take EITHER form — but the meaning changes!"},
-    prep:{label:"After preposition = -ING",icon:"🎯",color:"var(--purple)",desc:"After ANY preposition (to, in, of, for...), ALWAYS use -ING. This is the #1 TOEIC trap."}
-  };
 
   // ═══ HUB ═══
   if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -3767,9 +3755,9 @@ function GerInf(p){
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{GERUND_INF.length} verbs · 4 patterns to master</p>
     </div>
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div className="crd" onClick={function(){setMode("study");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📚"}</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Study the Patterns</div>
+      <div className="crd" onClick={function(){setOpenGrim(true);}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📖"}</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Grimoire</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Learn WHY before you guess</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){resetQuiz();setMode("quiz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
@@ -3778,67 +3766,8 @@ function GerInf(p){
           <div style={{fontSize:11,color:"var(--t3)"}}>TOEIC-style sentences — no more guessing</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
     </div>
+    {openGrim&&<GrimoireReader grimoire={GRIMOIRE_GERUND} back={function(){setOpenGrim(false);}}/>}
   </div>);
-
-  // ═══ STUDY MODE ═══
-  if(mode==="study"){
-    var tabs=[
-      {id:"ing",label:"-ING",col:"var(--orange)"},
-      {id:"to",label:"TO",col:"var(--cyan)"},
-      {id:"both",label:"Both",col:"var(--red)"},
-      {id:"prep",label:"Prep",col:"var(--purple)"}
-    ];
-    var curGroup=groups[studyTab]||[];
-    var info=patternInfo[studyTab];
-
-    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        <button onClick={function(){setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
-        <span className="out" style={{fontWeight:700,fontSize:15}}>Study Patterns</span>
-        <div style={{width:40}}/>
-      </div>
-
-      {/* Pattern tabs */}
-      <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:12,padding:3}}>
-        {tabs.map(function(t){
-          var active=studyTab===t.id;
-          return(<button key={t.id} onClick={function(){setStudyTab(t.id);}}
-            style={{flex:1,padding:"10px 6px",borderRadius:10,border:"none",cursor:"pointer",
-              background:active?"var(--bg3)":"transparent",color:active?t.col:"var(--t3)",
-              fontWeight:active?700:500,fontSize:12,fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}
-            className="out">{t.label}</button>);
-        })}
-      </div>
-
-      {/* Pattern description */}
-      <div style={{padding:"12px 16px",background:info.color+"10",border:"1px solid "+info.color+"25",borderRadius:12,marginBottom:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-          <span style={{fontSize:18}}>{info.icon}</span>
-          <span className="out" style={{fontWeight:700,fontSize:14,color:info.color}}>{info.label}</span>
-          <span style={{fontSize:11,color:"var(--t3)"}}>{curGroup.length} verbs</span>
-        </div>
-        <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>{info.desc}</p>
-      </div>
-
-      {/* Verb list */}
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {curGroup.map(function(v,i){
-          return(<div key={i} className="crd" style={{padding:14}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-              <span className="out" style={{fontWeight:800,fontSize:16,color:info.color}}>{v.verb}</span>
-              <span style={{fontSize:12,color:"var(--t3)",fontWeight:600}}>+ {v.takes==="ing"?"-ING":v.takes==="to"?"TO":"-ING / TO"}</span>
-            </div>
-            <p style={{fontSize:13,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5,marginBottom:6}}>"{v.ex}"</p>
-            <div style={{padding:"8px 12px",background:"rgba(var(--cx),.06)",borderRadius:8,border:"1px solid rgba(var(--cx),.1)"}}>
-              <p style={{fontSize:11,color:"var(--cyan)",lineHeight:1.5}}>{v.tip}</p>
-            </div>
-          </div>);
-        })}
-      </div>
-
-      <button className="btn1" onClick={function(){resetQuiz();setMode("quiz");}} style={{marginTop:20,width:"100%"}}>Ready? Take the Quiz</button>
-    </div>);
-  }
 
   // ═══ CONTEXT QUIZ ═══
   if(mode==="quiz"){
