@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tile Background Nuances — Word Tavern</title>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0c08;
+    --bg2: #1a1610;
+    --bg3: #28221a;
+    --bdr: rgba(180,140,80,0.15);
+    --cx: 212,148,58;            /* primary color rgba (default: gold) */
+    --cx-hex: #d4943a;
+    --cyan: #d4943a;              /* skin-primary alias */
+    --gold: #f0c850;
+    --t1: #ede4d4;
+    --t2: #8a7e6a;
+    --t3: #5a5040;
+  }
+
+  /* Alt skin themes for preview */
+  .skin-emeraude { --cx:46,180,100; --cx-hex:#2eb464; --cyan:#2eb464; }
+  .skin-saphir   { --cx:58,148,220; --cx-hex:#3a94dc; --cyan:#3a94dc; }
+  .skin-rubis    { --cx:220,58,80; --cx-hex:#dc3a50; --cyan:#dc3a50; }
+  .skin-amethyste{ --cx:160,90,220; --cx-hex:#a05adc; --cyan:#a05adc; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 40px 20px;
+    background: radial-gradient(ellipse at top, #1a1610 0%, #0a0806 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--t1);
+    min-height: 100vh;
+  }
+
+  .container { max-width: 1050px; margin: 0 auto; }
+
+  h1 {
+    font-family: Georgia, serif;
+    font-size: 28px;
+    margin: 0 0 8px;
+    background: linear-gradient(135deg, var(--cx-hex) 0%, var(--gold) 50%, var(--cx-hex) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--t2);
+    margin: 0 0 20px;
+    font-size: 13px;
+  }
+
+  .skin-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 20px 0 30px;
+    flex-wrap: wrap;
+  }
+
+  .skin-btn {
+    background: var(--bg3);
+    border: 1px solid var(--bdr);
+    color: var(--t2);
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .skin-btn.active {
+    color: var(--cx-hex);
+    border-color: var(--cx-hex);
+    font-weight: 700;
+  }
+  .skin-btn:hover:not(.active) { color: var(--t1); }
+
+  .variants-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .variant-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--bdr);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .variant-label {
+    font-family: Georgia, serif;
+    font-size: 14px;
+    color: var(--cx-hex);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  .variant-css {
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--t3);
+    margin-bottom: 12px;
+    word-break: break-all;
+    min-height: 24px;
+  }
+
+  /* --- Actual tile card (mimics Games tile render) --- */
+  .card {
+    background: transparent;
+    border: 1px solid var(--bdr);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+  }
+
+  .tile {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    border: 1.5px solid var(--cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background .2s;
+  }
+
+  .tile iconify-icon {
+    font-size: 28px;
+    color: var(--cyan);
+  }
+
+  .card-text { flex: 1; min-width: 0; }
+  .card-title { font-weight: 700; font-size: 15px; color: var(--t1); }
+  .card-sub { font-size: 11px; color: var(--t2); margin-top: 1px; }
+  .card-tag { font-size: 10px; color: var(--cx-hex); font-weight: 600; margin-top: 2px; }
+  .arrow { font-size: 16px; color: var(--cyan); }
+
+  /* --- 12 tile background variants --- */
+  .v1 .tile  { background: transparent; }
+  .v2 .tile  { background: rgba(var(--cx), 0.04); }
+  .v3 .tile  { background: rgba(var(--cx), 0.08); }
+  .v4 .tile  { background: rgba(var(--cx), 0.12); }
+  .v5 .tile  { background: rgba(var(--cx), 0.18); }
+  .v6 .tile  { background: rgba(255, 255, 255, 0.03); }
+  .v7 .tile  { background: rgba(255, 255, 255, 0.06); }
+  .v8 .tile  { background: var(--bg3); }
+  .v9 .tile  { background: linear-gradient(135deg, rgba(var(--cx), 0.15), rgba(var(--cx), 0.02)); }
+  .v10 .tile { background: linear-gradient(135deg, rgba(var(--cx), 0.22), transparent); }
+  .v11 .tile { background: radial-gradient(circle at 35% 35%, rgba(var(--cx), 0.25), rgba(var(--cx), 0.03)); }
+  .v12 .tile { background: rgba(var(--cx), 0.08); box-shadow: inset 0 1px 0 rgba(var(--cx), 0.2), 0 0 8px rgba(var(--cx), 0.08); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>◆ Tile Background Nuances ◆</h1>
+  <p class="subtitle">12 variations on the Word Tavern tile. Toggle skins below to see how each reacts.</p>
+
+  <div class="skin-toggle">
+    <button class="skin-btn active" data-skin="">Default (gold)</button>
+    <button class="skin-btn" data-skin="skin-emeraude">Émeraude</button>
+    <button class="skin-btn" data-skin="skin-saphir">Saphir</button>
+    <button class="skin-btn" data-skin="skin-rubis">Rubis</button>
+    <button class="skin-btn" data-skin="skin-amethyste">Améthyste</button>
+  </div>
+
+  <div class="variants-grid">
+
+    <div class="variant-wrap v1">
+      <div class="variant-label">V1 — Current (transparent)</div>
+      <div class="variant-css">background: transparent</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v2">
+      <div class="variant-label">V2 — Very subtle tint (4%)</div>
+      <div class="variant-css">background: rgba(var(--cx), 0.04)</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v3">
+      <div class="variant-label">V3 — Subtle tint (8%)</div>
+      <div class="variant-css">background: rgba(var(--cx), 0.08)</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v4">
+      <div class="variant-label">V4 — Medium tint (12%)</div>
+      <div class="variant-css">background: rgba(var(--cx), 0.12)</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v5">
+      <div class="variant-label">V5 — Stronger tint (18%)</div>
+      <div class="variant-css">background: rgba(var(--cx), 0.18)</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v6">
+      <div class="variant-label">V6 — Neutral white (3%)</div>
+      <div class="variant-css">background: rgba(255,255,255,0.03)</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v7">
+      <div class="variant-label">V7 — Neutral white (6%)</div>
+      <div class="variant-css">background: rgba(255,255,255,0.06)</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v8">
+      <div class="variant-label">V8 — Solid panel (var(--bg3))</div>
+      <div class="variant-css">background: var(--bg3)</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v9">
+      <div class="variant-label">V9 — Subtle gradient (15% → 2%)</div>
+      <div class="variant-css">linear-gradient(135deg, rgba(cx,.15), rgba(cx,.02))</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v10">
+      <div class="variant-label">V10 — Diagonal fade (22% → 0%)</div>
+      <div class="variant-css">linear-gradient(135deg, rgba(cx,.22), transparent)</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v11">
+      <div class="variant-label">V11 — Radial glow (25% → 3%)</div>
+      <div class="variant-css">radial-gradient(circle at 35% 35%, rgba(cx,.25), rgba(cx,.03))</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+    <div class="variant-wrap v12">
+      <div class="variant-label">V12 — Tint + inner glow (8% + shadow)</div>
+      <div class="variant-css">rgba(cx,.08) + inset highlight + outer halo</div>
+      <div class="card">
+        <div class="tile"><iconify-icon icon="game-icons:beer-stein"></iconify-icon></div>
+        <div class="card-text"><div class="card-title">Word Tavern</div><div class="card-sub">Prove your vocabulary!</div><div class="card-tag">NEW</div></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.skin-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.skin-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.body.className = '';
+      if (btn.dataset.skin) document.body.classList.add(btn.dataset.skin);
+    });
+  });
+</script>
+
+</body>
+</html>
