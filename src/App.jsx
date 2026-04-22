@@ -29,6 +29,7 @@ import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from ".
 import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } from "./data/grammarGauntlet.js";
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "./data/grammarGauntletGrimoire.js";
 import { GRIMOIRE_GERUND } from "./data/gerundGrimoire.js";
+import { GRIMOIRE_PHRASAL } from "./data/phrasalGrimoire.js";
 
 
 function today(){return new Date().toISOString().split("T")[0];}
@@ -385,7 +386,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-gerund-grimoire";
+var BUILD_ID="2026-04-22-phrasal-grimoire";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -4070,19 +4071,14 @@ function GrammarRef(p){
 }
 
 
-// ─── PHRASAL VERB DOJO (3 modes) ───
+// ─── PHRASAL VERB DOJO (2 modes + Grimoire) ───
+// Study Mode has been replaced by the Phrasal Grimoire (data/phrasalGrimoire.js).
 function PhrasalDojo(p){
   var[mode,setMode]=useState("hub");
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[pick,sPk]=useState(-1);var[ph,sP]=useState("q");
   var[timer,setTimer]=useState(0);var[streak,setStreak]=useState(0);var[bestStreak,setBest]=useState(0);
-  var[studyOpen,setStudyOpen]=useState(null);
+  var[openGrim,setOpenGrim]=useState(false);
   var timerRef=useRef(null);
-
-  var grouped=useMemo(function(){
-    var g={};
-    PHRASAL_VERBS.forEach(function(pv){if(!g[pv.v])g[pv.v]=[];g[pv.v].push(pv);});
-    return Object.keys(g).sort().map(function(k){return{verb:k,items:g[k]};});
-  },[]);
 
   var matchQs=useMemo(function(){return shuffle(PHRASAL_VERBS.slice()).slice(0,15);},[]);
   var pickerQs=useMemo(function(){return shuffle(PHRASAL_VERBS.slice()).slice(0,15);},[]);
@@ -4141,10 +4137,10 @@ function PhrasalDojo(p){
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{PHRASAL_VERBS.length} essential business phrasal verbs<br/>3 training modes</p>
     </div>
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div className="crd" onClick={function(){setMode("study");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📚"}</div>
-        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Study Mode</div>
-          <div style={{fontSize:11,color:"var(--t3)"}}>Browse by verb family</div></div>
+      <div className="crd" onClick={function(){setOpenGrim(true);}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📖"}</div>
+        <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Grimoire</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>Particles, separables, top 20 business</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){resetQuiz();setMode("match");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#22c55e,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"🧠"}</div>
@@ -4157,49 +4153,7 @@ function PhrasalDojo(p){
           <div style={{fontSize:11,color:"var(--t3)"}}>Speed round — 8s per question!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
     </div>
-  </div>);
-
-  // ═══ STUDY MODE ═══
-  if(mode==="study")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button onClick={function(){setMode("hub");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>Back</button>
-      <span className="out" style={{fontWeight:700,fontSize:15}}>Study — {PHRASAL_VERBS.length} verbs</span>
-      <div style={{width:40}}/>
-    </div>
-    <p style={{color:"var(--t2)",fontSize:12,marginBottom:16}}>Tap a verb to see all its phrasal forms.</p>
-    <div style={{display:"flex",flexDirection:"column",gap:6}}>
-      {grouped.map(function(grp){
-        var isOpen=studyOpen===grp.verb;
-        return(<div key={grp.verb}>
-          <div className="crd" onClick={function(){setStudyOpen(isOpen?null:grp.verb);}}
-            style={{cursor:"pointer",padding:"12px 16px",borderColor:isOpen?"rgba(var(--cx),.3)":"var(--bdr)",background:isOpen?"rgba(var(--cx),.04)":"var(--bg2)",transition:"all .2s"}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <span className="out" style={{fontWeight:800,fontSize:16,color:"var(--cyan)",textTransform:"uppercase",minWidth:70}}>{grp.verb}</span>
-                <span style={{fontSize:11,color:"var(--t3)"}}>{grp.items.length} form{grp.items.length>1?"s":""}</span>
-              </div>
-              <span style={{fontSize:14,color:"var(--t3)",transition:"transform .2s",transform:isOpen?"rotate(90deg)":"rotate(0)"}}>{"›"}</span>
-            </div>
-          </div>
-          {isOpen&&<div style={{padding:"8px 0",animation:"fadeIn .2s"}}>
-            {grp.items.map(function(pv,j){
-              return(<div key={j} style={{padding:"10px 16px 10px 28px",borderLeft:"3px solid var(--cyan)",marginBottom:6,marginLeft:12}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
-                  <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>{pv.pv}</span>
-                  <SpeakBtn text={pv.pv} size={24} audio={"/audio/phrasal/"+pv.pv.replace(/\s+/g,"_")+".mp3"}/>
-                  <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,padding:"2px 8px",background:"rgba(27,112,207,.1)",borderRadius:99}}>{pv.fr}</span>
-                </div>
-                <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.5,marginBottom:4}}>{pv.m}</p>
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",flex:1}}>"{pv.ex}"</p>
-                  <SpeakBtn text={pv.ex} size={22} rate={0.85} audio={"/audio/phrasal/"+pv.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
-                </div>
-              </div>);
-            })}
-          </div>}
-        </div>);
-      })}
-    </div>
+    {openGrim&&<GrimoireReader grimoire={GRIMOIRE_PHRASAL} back={function(){setOpenGrim(false);}}/>}
   </div>);
 
   // ═══ MEANING MATCH ═══
