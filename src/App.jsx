@@ -68,11 +68,16 @@ function getEnVoice(){
 var _audioCache={};
 var _mp3Failed={};
 async function speak(text,rate,audioPath){
+  // Respect abort flag — if component unmounted, don't start new audio.
+  if(_audioAborted)return;
   // If an explicit MP3 path is given, try it first
   if(audioPath&&!_mp3Failed[audioPath]){
     if(_audioCache[audioPath]){
       var a=_audioCache[audioPath].cloneNode();
       a.playbackRate=rate||0.9;
+      // Track so stopListenAudio can kill it on unmount.
+      if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
+      _listenAudio=a;
       a.play().catch(function(){});
       return;
     }
@@ -83,14 +88,18 @@ async function speak(text,rate,audioPath){
         audio.onerror=reject;
         audio.load();
       });
+      if(_audioAborted)return;
       audio.playbackRate=rate||0.9;
       _audioCache[audioPath]=audio;
+      if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
+      _listenAudio=audio;
       audio.play().catch(function(){});
       return;
     }catch(e){_mp3Failed[audioPath]=true;}
   }
   // Fallback to browser TTS
   if(!window.speechSynthesis)return;
+  if(_audioAborted)return;
   window.speechSynthesis.cancel();
   var u=new SpeechSynthesisUtterance(text);
   u.rate=rate||0.9;u.pitch=1;u.volume=1;
@@ -101,19 +110,25 @@ async function speak(text,rate,audioPath){
 }
 function speakAndWait(text,rate,audioPath){
   return new Promise(function(resolve){
+    if(_audioAborted){resolve();return;}
     if(audioPath&&!_mp3Failed[audioPath]){
       if(_audioCache[audioPath]){
         var a=_audioCache[audioPath].cloneNode();
         a.playbackRate=rate||0.9;
         a.onended=resolve;a.onerror=resolve;
+        if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
+        _listenAudio=a;
         a.play().catch(resolve);
         return;
       }
       var audio=new Audio(audioPath);
       audio.oncanplaythrough=function(){
+        if(_audioAborted){resolve();return;}
         audio.playbackRate=rate||0.9;
         _audioCache[audioPath]=audio;
         audio.onended=resolve;audio.onerror=resolve;
+        if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
+        _listenAudio=audio;
         audio.play().catch(resolve);
       };
       audio.onerror=function(){_mp3Failed[audioPath]=true;speakBrowserTTS(text,rate,resolve);};
@@ -165,6 +180,9 @@ function playAudioFile(url){
 function stopListenAudio(){
   _audioAborted=true;
   if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}
+  // Also cancel any active browser TTS (speechSynthesis) — speak() fallback
+  // uses window.speechSynthesis which has its own queue, distinct from _listenAudio.
+  try{if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){console.warn("[audio] tts cancel:",e&&e.message);}
 }
 function resumeAudioSession(){_audioAborted=false;}
 // Preload voices (some browsers need this)
@@ -396,7 +414,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-tabbar-v5-15";
+var BUILD_ID="2026-04-22-audio-leak-speak-tts";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
