@@ -396,7 +396,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-train-games-icons-v2";
+var BUILD_ID="2026-04-22-tiles-redesign-v1";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -3249,7 +3249,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
             return(
               <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}if(!m.lock)p.nav(m.id);}}
                 style={{display:"flex",alignItems:"center",gap:14,cursor:(m.lock||vl)?"default":"pointer",opacity:m.lock?.4:vl?.55:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
-                <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color="#fff"/>:m.i}</div>
+                <div style={{width:42,height:42,borderRadius:12,background:"transparent",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
                 <div style={{flex:1,minWidth:0}}>
                   <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
                   <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
@@ -3340,7 +3340,7 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
     <div className="crd" onClick={function(){setTrainView(2);}}
       style={{marginTop:10,padding:"18px 14px",cursor:"pointer",borderColor:"rgba(255,255,255,.06)",animation:"fadeIn .4s ease-out",animationDelay:".18s",animationFillMode:"both"}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
-        <div style={{fontSize:32,flexShrink:0}}>{gridSections[2].icon}</div>
+        <div style={{flexShrink:0}}><GIcon name={gridSections[2].icon} size={34} color="var(--cyan)"/></div>
         <div style={{flex:1}}>
           <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:2}}>{gridSections[2].title}</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>{gridSections[2].sub}</div>
@@ -6469,7 +6469,7 @@ function GamesHub(p){
     <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:12}}>
       {games.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",opacity:vl?.55:1}}>
-          <div style={{width:48,height:48,borderRadius:14,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={28} color="#fff"/>:m.i}</div>
+          <div style={{width:48,height:48,borderRadius:14,background:"transparent",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={28} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>{m.n}</div>
             <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
             {!vl&&m.extra&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{m.extra}</div>}
@@ -10024,7 +10024,7 @@ function ListenHub(p){
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
       {parts.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
-          <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color="#fff"/>:m.i}</div>
+          <div style={{width:42,height:42,borderRadius:12,background:"transparent",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
           {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
         </div>);})}
@@ -10467,7 +10467,7 @@ function ReadingHub(p){
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
       {parts.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
-          <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":m.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color="#fff"/>:m.i}</div>
+          <div style={{width:42,height:42,borderRadius:12,background:"transparent",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
           {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
         </div>);})}
