@@ -103,8 +103,9 @@ export var UNIQUE_TRIGGERS = {
 // Achievements that grant a Novice chest when unlocked (Discovery tier — first-time exploration)
 export var NOVICE_ACHIEVEMENTS = ["crypt_first","chrono_first","forge_first","weaver_first","gauntlet_explorer"];
 
-// Achievements that grant a Guerrier chest when unlocked (Epic tier — rare one-time perfect runs)
-export var EPIC_ACHIEVEMENTS = ["crypt_perfect","chrono_perfect","forge_perfect","weaver_perfect"];
+// Achievements that grant a Guerrier chest when unlocked
+// (Epic tier — perfect runs + sustained mastery proof)
+export var EPIC_ACHIEVEMENTS = ["crypt_perfect","chrono_perfect","forge_perfect","weaver_perfect","irregular_master","tense_sage","passive_alchemist","relative_weaver"];
 
 // Achievements that grant a Légendaire chest when unlocked
 export var LEGENDARY_ACHIEVEMENTS = ["boss_complete","boss_800","legend_league","toeic_master","gauntlet_champion","gauntlet_grinder","gauntlet_scholar"];
