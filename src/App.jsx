@@ -30,6 +30,7 @@ import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } f
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "./data/grammarGauntletGrimoire.js";
 import { GRIMOIRE_GERUND } from "./data/gerundGrimoire.js";
 import { GRIMOIRE_PHRASAL } from "./data/phrasalGrimoire.js";
+import { GRIMOIRE_CONNECTORS } from "./data/connectorsGrimoire.js";
 
 
 function today(){return new Date().toISOString().split("T")[0];}
@@ -386,7 +387,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-grimoire-pagenum-fix";
+var BUILD_ID="2026-04-22-connectors-grimoire";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -3589,10 +3590,22 @@ function WordFam(p){
 function ConnSort(p){
   var items=useMemo(function(){return shuffle(CONNECTORS).slice(0,12);},[]);
   var rules=[{id:"clause",label:"+ Clause",desc:"subject + verb",col:"var(--cyan)"},{id:"noun",label:"+ Noun / -ing",desc:"no subject + verb",col:"var(--orange)"},{id:"sentence",label:"New sentence",desc:"after . or ;",col:"var(--purple)"}];
-  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[pick,sPk]=useState(null);var[sk,sSk]=useState(false);
+  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(null);var[sk,sSk]=useState(false);
+  var[openGrim,setOpenGrim]=useState(false);
 
   function doAns(rule){sPk(rule);if(rule===items[ci].rule){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
+
+  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
+    <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
+    <div style={{fontSize:56,marginBottom:16}}>🔀</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Connectors Sorting</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6,maxWidth:360,marginLeft:"auto",marginRight:"auto"}}>For each connector, pick the structure that must follow it: clause, noun/-ing, or new sentence.</p>
+    <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>12 items · 3 categories</p>
+    <button className="btn1" onClick={function(){sP("q");}} style={{marginBottom:12}}>Start Sorting</button>
+    <button className="btn2" onClick={function(){setOpenGrim(true);}} style={{width:"100%"}}>📖 Grimoire</button>
+    {openGrim&&<GrimoireReader grimoire={GRIMOIRE_CONNECTORS} back={function(){setOpenGrim(false);}}/>}
+  </div>);
 
   if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
