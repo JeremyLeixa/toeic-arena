@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Listening & Reading Parts Icons</title>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;
+    --bdr:rgba(180,140,80,0.15);
+    --cx:212,148,58;--cx-hex:#d4943a;--cyan:#d4943a;--gold:#f0c850;
+    --t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;
+  }
+  .light {
+    --bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;
+    --bdr:rgba(120,90,50,0.12);
+    --cx:139,105,20;--cx-hex:#8b6914;--cyan:#8b6914;--gold:#a67c00;
+    --t1:#1a1510;--t2:#5a5040;--t3:#8a7e6a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 30px 16px 320px;
+    background: var(--bg); color: var(--t1);
+    font-family: -apple-system, system-ui, sans-serif;
+    transition: background .3s, color .3s;
+  }
+  .container { max-width: 1050px; margin: 0 auto; }
+  h1 {
+    font-family: Georgia, serif; font-size: 26px; margin: 0 0 6px;
+    background: linear-gradient(135deg, var(--cx-hex), var(--gold), var(--cx-hex));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; text-align: center;
+  }
+  .subtitle { text-align: center; color: var(--t2); margin: 0 0 16px; font-size: 13px; }
+  .controls {
+    display: flex; justify-content: center; gap: 10px;
+    margin: 16px 0 26px; flex-wrap: wrap;
+  }
+  .btn {
+    background: var(--bg3); border: 1px solid var(--bdr);
+    color: var(--t2); padding: 8px 16px; border-radius: 8px;
+    cursor: pointer; font-size: 12px; font-family: inherit;
+  }
+  .btn.active {
+    color: var(--cx-hex); border-color: var(--cx-hex); font-weight: 700;
+  }
+
+  .zone-title {
+    font-family: Georgia, serif; font-size: 20px; color: var(--cx-hex);
+    margin: 30px 0 12px; padding-bottom: 6px;
+    border-bottom: 2px solid var(--cx-hex);
+  }
+  .section {
+    background: var(--bg2); border: 1px solid var(--bdr);
+    border-radius: 12px; padding: 16px; margin-bottom: 16px;
+  }
+  .section-head {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 1px dashed var(--bdr); flex-wrap: wrap;
+  }
+  .section-name { font-family: Georgia, serif; font-size: 16px; color: var(--t1); margin: 0; font-weight: 700; }
+  .section-current { color: var(--t2); font-size: 12px; }
+  .section-current .emoji { font-size: 16px; margin: 0 3px; }
+  .section-hint {
+    color: var(--t3); font-size: 11px; font-style: italic;
+    width: 100%; margin-top: 2px;
+  }
+
+  .options-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .option {
+    background: var(--bg3); border: 1px solid var(--bdr);
+    border-radius: 8px; padding: 12px 6px 8px;
+    text-align: center; cursor: pointer; transition: all .15s;
+    position: relative;
+  }
+  .option:hover { border-color: var(--cyan); transform: translateY(-1px); }
+  .option.selected {
+    border-color: var(--cyan);
+    background: linear-gradient(180deg, rgba(var(--cx), 0.12) 0%, var(--bg3) 100%);
+    box-shadow: 0 0 0 1px var(--cyan);
+  }
+  .option.selected::before {
+    content: "✓"; position: absolute; top: 3px; right: 6px;
+    color: var(--cyan); font-size: 11px; font-weight: bold;
+  }
+  .option iconify-icon {
+    font-size: 30px; color: var(--t1);
+    display: block; margin: 0 auto 6px;
+  }
+  .option.selected iconify-icon { color: var(--cyan); }
+  .option-label { font-size: 9px; color: var(--t2); font-family: monospace; line-height: 1.2; }
+
+  .export-wrap {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, transparent, rgba(15,12,8,.97) 20%, var(--bg));
+    padding: 14px; border-top: 1px solid var(--bdr);
+    max-height: 300px; overflow-y: auto;
+  }
+  .light .export-wrap {
+    background: linear-gradient(180deg, transparent, rgba(245,240,232,.97) 20%, var(--bg));
+  }
+  .export-box {
+    max-width: 900px; margin: 0 auto;
+    font-family: monospace; font-size: 11px;
+    column-count: 2; column-gap: 16px;
+  }
+  .export-line { color: var(--t2); margin: 2px 0; break-inside: avoid; }
+  .export-line strong { color: var(--t1); display: inline-block; width: 90px; }
+  .export-line span { color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Listening &amp; Reading Parts Icons</h1>
+  <p class="subtitle">10 slots (2 hero + 8 parts). Click options to pick.</p>
+
+  <div class="controls">
+    <button class="btn mode-btn active" data-mode="dark">Dark</button>
+    <button class="btn mode-btn" data-mode="light">Light</button>
+  </div>
+
+  <h2 class="zone-title">Hero icons</h2>
+
+  <div class="section" data-slot="lis-hero">
+    <div class="section-head">
+      <h3 class="section-name">Listening Practice &middot; hero</h3>
+      <span class="section-current">currently <span class="emoji">👂</span></span>
+      <div class="section-hint">"Train your ear for the TOEIC Listening section"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="lis-hero" data-icon="game-icons:ringing-bell"><iconify-icon icon="game-icons:ringing-bell"></iconify-icon><div class="option-label">ringing-bell</div></div>
+      <div class="option" data-slot="lis-hero" data-icon="game-icons:ear-trumpet"><iconify-icon icon="game-icons:ear-trumpet"></iconify-icon><div class="option-label">ear-trumpet</div></div>
+      <div class="option" data-slot="lis-hero" data-icon="game-icons:sound-waves"><iconify-icon icon="game-icons:sound-waves"></iconify-icon><div class="option-label">sound-waves</div></div>
+      <div class="option" data-slot="lis-hero" data-icon="game-icons:echo-ripples"><iconify-icon icon="game-icons:echo-ripples"></iconify-icon><div class="option-label">echo-ripples</div></div>
+      <div class="option" data-slot="lis-hero" data-icon="game-icons:horn-call"><iconify-icon icon="game-icons:horn-call"></iconify-icon><div class="option-label">horn-call</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="read-hero">
+    <div class="section-head">
+      <h3 class="section-name">Reading Practice &middot; hero</h3>
+      <span class="section-current">currently <span class="emoji">📖</span></span>
+      <div class="section-hint">"Train for the TOEIC Reading section"</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="read-hero" data-icon="game-icons:bookmarklet"><iconify-icon icon="game-icons:bookmarklet"></iconify-icon><div class="option-label">bookmarklet</div></div>
+      <div class="option" data-slot="read-hero" data-icon="game-icons:open-book"><iconify-icon icon="game-icons:open-book"></iconify-icon><div class="option-label">open-book</div></div>
+      <div class="option" data-slot="read-hero" data-icon="game-icons:book-aura"><iconify-icon icon="game-icons:book-aura"></iconify-icon><div class="option-label">book-aura</div></div>
+      <div class="option" data-slot="read-hero" data-icon="game-icons:spellbook"><iconify-icon icon="game-icons:spellbook"></iconify-icon><div class="option-label">spellbook</div></div>
+      <div class="option" data-slot="read-hero" data-icon="game-icons:book-pile"><iconify-icon icon="game-icons:book-pile"></iconify-icon><div class="option-label">book-pile</div></div>
+    </div>
+  </div>
+
+  <h2 class="zone-title">Listening Parts 1-4</h2>
+
+  <div class="section" data-slot="p1">
+    <div class="section-head">
+      <h3 class="section-name">Part 1 — Photographs</h3>
+      <span class="section-current">currently <span class="emoji">🖼️</span></span>
+      <div class="section-hint">Look at photo · hear 4 statements · pick what matches</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="p1" data-icon="game-icons:eye-target"><iconify-icon icon="game-icons:eye-target"></iconify-icon><div class="option-label">eye-target</div></div>
+      <div class="option" data-slot="p1" data-icon="game-icons:magnifying-glass"><iconify-icon icon="game-icons:magnifying-glass"></iconify-icon><div class="option-label">magnifying-glass</div></div>
+      <div class="option" data-slot="p1" data-icon="game-icons:surveillance-camera"><iconify-icon icon="game-icons:surveillance-camera"></iconify-icon><div class="option-label">surveillance-camera</div></div>
+      <div class="option" data-slot="p1" data-icon="game-icons:picture"><iconify-icon icon="game-icons:picture"></iconify-icon><div class="option-label">picture</div></div>
+      <div class="option" data-slot="p1" data-icon="game-icons:observer-eye"><iconify-icon icon="game-icons:observer-eye"></iconify-icon><div class="option-label">observer-eye</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="p2">
+    <div class="section-head">
+      <h3 class="section-name">Part 2 — Question-Response</h3>
+      <span class="section-current">currently <span class="emoji">❓</span></span>
+      <div class="section-hint">Hear a question + 3 responses · pick the right one</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="p2" data-icon="game-icons:speech-bubble"><iconify-icon icon="game-icons:speech-bubble"></iconify-icon><div class="option-label">speech-bubble</div></div>
+      <div class="option" data-slot="p2" data-icon="game-icons:speak-up"><iconify-icon icon="game-icons:speak-up"></iconify-icon><div class="option-label">speak-up</div></div>
+      <div class="option" data-slot="p2" data-icon="game-icons:chat-bubble"><iconify-icon icon="game-icons:chat-bubble"></iconify-icon><div class="option-label">chat-bubble</div></div>
+      <div class="option" data-slot="p2" data-icon="game-icons:round-silver-shield"><iconify-icon icon="game-icons:round-silver-shield"></iconify-icon><div class="option-label">round-silver-shield</div></div>
+      <div class="option" data-slot="p2" data-icon="game-icons:conversation"><iconify-icon icon="game-icons:conversation"></iconify-icon><div class="option-label">conversation</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="p3">
+    <div class="section-head">
+      <h3 class="section-name">Part 3 — Conversations</h3>
+      <span class="section-current">currently <span class="emoji">👥</span></span>
+      <div class="section-hint">Hear 2-3 speakers · answer 3 questions each</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="p3" data-icon="game-icons:talk"><iconify-icon icon="game-icons:talk"></iconify-icon><div class="option-label">talk</div></div>
+      <div class="option" data-slot="p3" data-icon="game-icons:conversation"><iconify-icon icon="game-icons:conversation"></iconify-icon><div class="option-label">conversation</div></div>
+      <div class="option" data-slot="p3" data-icon="game-icons:double-face-mask"><iconify-icon icon="game-icons:double-face-mask"></iconify-icon><div class="option-label">double-face-mask</div></div>
+      <div class="option" data-slot="p3" data-icon="game-icons:two-shadows"><iconify-icon icon="game-icons:two-shadows"></iconify-icon><div class="option-label">two-shadows</div></div>
+      <div class="option" data-slot="p3" data-icon="game-icons:council-of-war"><iconify-icon icon="game-icons:council-of-war"></iconify-icon><div class="option-label">council-of-war</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="p4">
+    <div class="section-head">
+      <h3 class="section-name">Part 4 — Talks</h3>
+      <span class="section-current">currently <span class="emoji">📜</span></span>
+      <div class="section-hint">Single speaker · announcement, lecture, talk</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="p4" data-icon="game-icons:public-speaker"><iconify-icon icon="game-icons:public-speaker"></iconify-icon><div class="option-label">public-speaker</div></div>
+      <div class="option" data-slot="p4" data-icon="game-icons:megaphone"><iconify-icon icon="game-icons:megaphone"></iconify-icon><div class="option-label">megaphone</div></div>
+      <div class="option" data-slot="p4" data-icon="game-icons:bugle-call"><iconify-icon icon="game-icons:bugle-call"></iconify-icon><div class="option-label">bugle-call</div></div>
+      <div class="option" data-slot="p4" data-icon="game-icons:horn-call"><iconify-icon icon="game-icons:horn-call"></iconify-icon><div class="option-label">horn-call</div></div>
+      <div class="option" data-slot="p4" data-icon="game-icons:oration"><iconify-icon icon="game-icons:oration"></iconify-icon><div class="option-label">oration</div></div>
+    </div>
+  </div>
+
+  <h2 class="zone-title">Reading Parts 5-7</h2>
+
+  <div class="section" data-slot="p5drill">
+    <div class="section-head">
+      <h3 class="section-name">Part 5 — Sentence Completion</h3>
+      <span class="section-current">currently <span class="emoji">📜</span></span>
+      <div class="section-hint">Fill-in-the-blank grammar · 10 random from 100</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="p5drill" data-icon="game-icons:ink-swirl"><iconify-icon icon="game-icons:ink-swirl"></iconify-icon><div class="option-label">ink-swirl</div></div>
+      <div class="option" data-slot="p5drill" data-icon="game-icons:feather-wound"><iconify-icon icon="game-icons:feather-wound"></iconify-icon><div class="option-label">feather-wound</div></div>
+      <div class="option" data-slot="p5drill" data-icon="game-icons:quill-ink"><iconify-icon icon="game-icons:quill-ink"></iconify-icon><div class="option-label">quill-ink</div></div>
+      <div class="option" data-slot="p5drill" data-icon="game-icons:sharp-quill"><iconify-icon icon="game-icons:sharp-quill"></iconify-icon><div class="option-label">sharp-quill</div></div>
+      <div class="option" data-slot="p5drill" data-icon="game-icons:burning-book"><iconify-icon icon="game-icons:burning-book"></iconify-icon><div class="option-label">burning-book</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="p5sim">
+    <div class="section-head">
+      <h3 class="section-name">Part 5 — Exam Simulation</h3>
+      <span class="section-current">currently <span class="emoji">🏁</span></span>
+      <div class="section-hint">30 Qs in 10 min, real exam pace — time pressure</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="p5sim" data-icon="game-icons:stopwatch"><iconify-icon icon="game-icons:stopwatch"></iconify-icon><div class="option-label">stopwatch</div></div>
+      <div class="option" data-slot="p5sim" data-icon="game-icons:sands-of-time"><iconify-icon icon="game-icons:sands-of-time"></iconify-icon><div class="option-label">sands-of-time</div></div>
+      <div class="option" data-slot="p5sim" data-icon="game-icons:hourglass"><iconify-icon icon="game-icons:hourglass"></iconify-icon><div class="option-label">hourglass</div></div>
+      <div class="option" data-slot="p5sim" data-icon="game-icons:finish-line"><iconify-icon icon="game-icons:finish-line"></iconify-icon><div class="option-label">finish-line</div></div>
+      <div class="option" data-slot="p5sim" data-icon="game-icons:lightning-storm"><iconify-icon icon="game-icons:lightning-storm"></iconify-icon><div class="option-label">lightning-storm</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="p6">
+    <div class="section-head">
+      <h3 class="section-name">Part 6 — Text Completion</h3>
+      <span class="section-current">currently <span class="emoji">📜</span></span>
+      <div class="section-hint">Business text with blanks (email, memo) · 4 blanks each</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="p6" data-icon="game-icons:stone-tablet"><iconify-icon icon="game-icons:stone-tablet"></iconify-icon><div class="option-label">stone-tablet</div></div>
+      <div class="option" data-slot="p6" data-icon="game-icons:scroll-unfurled"><iconify-icon icon="game-icons:scroll-unfurled"></iconify-icon><div class="option-label">scroll-unfurled</div></div>
+      <div class="option" data-slot="p6" data-icon="game-icons:tied-scroll"><iconify-icon icon="game-icons:tied-scroll"></iconify-icon><div class="option-label">tied-scroll</div></div>
+      <div class="option" data-slot="p6" data-icon="game-icons:torn-paper"><iconify-icon icon="game-icons:torn-paper"></iconify-icon><div class="option-label">torn-paper</div></div>
+      <div class="option" data-slot="p6" data-icon="game-icons:letter-bomb"><iconify-icon icon="game-icons:letter-bomb"></iconify-icon><div class="option-label">letter-bomb</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="p7">
+    <div class="section-head">
+      <h3 class="section-name">Part 7 — Reading Comprehension</h3>
+      <span class="section-current">currently <span class="emoji">📖</span></span>
+      <div class="section-hint">Long passages + questions (single, double, triple)</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="p7" data-icon="game-icons:book-aura"><iconify-icon icon="game-icons:book-aura"></iconify-icon><div class="option-label">book-aura</div></div>
+      <div class="option" data-slot="p7" data-icon="game-icons:open-book"><iconify-icon icon="game-icons:open-book"></iconify-icon><div class="option-label">open-book</div></div>
+      <div class="option" data-slot="p7" data-icon="game-icons:spellbook"><iconify-icon icon="game-icons:spellbook"></iconify-icon><div class="option-label">spellbook</div></div>
+      <div class="option" data-slot="p7" data-icon="game-icons:book-pile"><iconify-icon icon="game-icons:book-pile"></iconify-icon><div class="option-label">book-pile</div></div>
+      <div class="option" data-slot="p7" data-icon="game-icons:bookmark"><iconify-icon icon="game-icons:bookmark"></iconify-icon><div class="option-label">bookmark</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="export-wrap">
+  <div class="export-box" id="export-box"></div>
+</div>
+
+<script>
+  var SLOTS = ['lis-hero','read-hero','p1','p2','p3','p4','p5drill','p5sim','p6','p7'];
+
+  function buildExport() {
+    var box = document.getElementById('export-box');
+    box.innerHTML = SLOTS.map(function(s) {
+      return '<div class="export-line"><strong>'+s+':</strong> <span id="exp-'+s+'">—</span></div>';
+    }).join('');
+    SLOTS.forEach(function(s) {
+      var sel = document.querySelector('.option.selected[data-slot="'+s+'"]');
+      if (sel) document.getElementById('exp-'+s).textContent = sel.dataset.icon;
+    });
+  }
+  buildExport();
+
+  document.querySelectorAll('.option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      var slot = opt.dataset.slot;
+      var icon = opt.dataset.icon;
+      document.querySelectorAll('.option[data-slot="'+slot+'"]').forEach(function(o){ o.classList.remove('selected'); });
+      opt.classList.add('selected');
+      var el = document.getElementById('exp-'+slot);
+      if (el) el.textContent = icon;
+    });
+  });
+
+  document.querySelectorAll('.mode-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.mode-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      if (btn.dataset.mode === 'light') document.body.classList.add('light');
+      else document.body.classList.remove('light');
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -414,7 +414,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-module-gauntlet-icons";
+var BUILD_ID="2026-04-22-parts-icons";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -10030,13 +10030,13 @@ function TeacherDash(p){
 // ─── LISTENING HUB ───
 function ListenHub(p){
   var parts=[
-    {id:"lisP1",n:"Part 1 — Photographs",d:"10 random / "+LISTENING_P1.length,i:"🖼️",bg:"linear-gradient(135deg,#22c55e,#06b6d4)"},
-    {id:"lisP2",n:"Part 2 — Question-Response",d:"10 random / "+LISTENING_P2.length,i:"❓",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
-    {id:"lisP3",n:"Part 3 — Conversations",d:"10 random / "+LISTENING_P3.length,i:"👥",bg:"linear-gradient(135deg,#8b5cf6,#ec4899)"},
-    {id:"lisP4",n:"Part 4 — Talks",d:"10 random / "+LISTENING_P4.length,i:"📜",bg:"linear-gradient(135deg,#06b6d4,#3b82f6)"},
+    {id:"lisP1",n:"Part 1 — Photographs",d:"10 random / "+LISTENING_P1.length,i:"eye-target",bg:"linear-gradient(135deg,#22c55e,#06b6d4)"},
+    {id:"lisP2",n:"Part 2 — Question-Response",d:"10 random / "+LISTENING_P2.length,i:"conversation",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+    {id:"lisP3",n:"Part 3 — Conversations",d:"10 random / "+LISTENING_P3.length,i:"conversation",bg:"linear-gradient(135deg,#8b5cf6,#ec4899)"},
+    {id:"lisP4",n:"Part 4 — Talks",d:"10 random / "+LISTENING_P4.length,i:"public-speaker",bg:"linear-gradient(135deg,#06b6d4,#3b82f6)"},
   ];
   return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>👂</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="ringing-bell" size={60} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Listening Practice</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train your ear for the TOEIC Listening section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
@@ -10473,13 +10473,13 @@ function ListenP4(p){
 // ─── READING HUB ───
 function ReadingHub(p){
   var parts=[
-    {id:"drill",n:"Part 5 — Sentence Completion",d:"10 random questions from 100",i:"📜",bg:"linear-gradient(135deg,#00e676,#00bfa5)"},
-    {id:"timesim",n:"Part 5 — Exam Simulation",d:"30 Qs in 10 min, real pace",i:"🏁",bg:"linear-gradient(135deg,#8b5cf6,#6366f1)"},
-    {id:"p6",n:"Part 6 — Text Completion",d:"Business texts with blanks",i:"📜",bg:"linear-gradient(135deg,#c4587a,#8b5e83)"},
-    {id:"p7",n:"Part 7 — Reading Comprehension",d:"Passages + questions",i:"📖",bg:"linear-gradient(135deg,#3b82f6,#06b6d4)"},
+    {id:"drill",n:"Part 5 — Sentence Completion",d:"10 random questions from 100",i:"quill-ink",bg:"linear-gradient(135deg,#00e676,#00bfa5)"},
+    {id:"timesim",n:"Part 5 — Exam Simulation",d:"30 Qs in 10 min, real pace",i:"sands-of-time",bg:"linear-gradient(135deg,#8b5cf6,#6366f1)"},
+    {id:"p6",n:"Part 6 — Text Completion",d:"Business texts with blanks",i:"stone-tablet",bg:"linear-gradient(135deg,#c4587a,#8b5e83)"},
+    {id:"p7",n:"Part 7 — Reading Comprehension",d:"Passages + questions",i:"bookmark",bg:"linear-gradient(135deg,#3b82f6,#06b6d4)"},
   ];
   return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>📖</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="bookmarklet" size={60} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Reading Practice</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train for the TOEIC Reading section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
