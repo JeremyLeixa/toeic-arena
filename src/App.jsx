@@ -22,7 +22,7 @@ import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
-import { CHEST_TYPES, RARITIES, AVATARS, SKINS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, rollRarity, pickReward, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, openChestFromPending } from "./data/chests.js";
+import { CHEST_TYPES, RARITIES, AVATARS, SKINS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, pickReward, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, openChestFromPending } from "./data/chests.js";
 import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
@@ -368,7 +368,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-gauntlet-achievements";
+var BUILD_ID="2026-04-22-gauntlet-novice-chests";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -8615,6 +8615,11 @@ function getTriggerLabel(trigger){
     var achE=ACHIEVEMENTS.find(function(a){return a.id===achIdE;});
     return(achE?achE.name:"Epic achievement")+" unlocked";
   }
+  if(trigger.indexOf("ach_novice_")===0){
+    var achIdN=trigger.substring(11);
+    var achN=ACHIEVEMENTS.find(function(a){return a.id===achIdN;});
+    return(achN?achN.name:"Achievement")+" unlocked";
+  }
   return"Milestone reached";
 }
 
@@ -12166,6 +12171,9 @@ function sv(d){
           } else if(EPIC_ACHIEVEMENTS.indexOf(a.id)!==-1){
             // Coffre guerrier pour les perfect runs du Gauntlet (ceremonial, one-time)
             grantChestLocal("ach_epic_"+a.id,"guerrier");
+          } else if(NOVICE_ACHIEVEMENTS.indexOf(a.id)!==-1){
+            // Coffre novice pour les découvertes (première session d'un sous-module)
+            grantChestLocal("ach_novice_"+a.id,"novice");
           }
         }
       });

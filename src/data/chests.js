@@ -100,6 +100,9 @@ export var UNIQUE_TRIGGERS = {
 };
 // league_up_{id} and ach_legendary_{id} are dynamic — handled separately
 
+// Achievements that grant a Novice chest when unlocked (Discovery tier — first-time exploration)
+export var NOVICE_ACHIEVEMENTS = ["crypt_first","chrono_first","forge_first","weaver_first","gauntlet_explorer"];
+
 // Achievements that grant a Guerrier chest when unlocked (Epic tier — rare one-time perfect runs)
 export var EPIC_ACHIEVEMENTS = ["crypt_perfect","chrono_perfect","forge_perfect","weaver_perfect"];
 
