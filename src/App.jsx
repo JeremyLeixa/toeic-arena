@@ -387,7 +387,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-connectors-grimoire";
+var BUILD_ID="2026-04-22-gauntlet-en-i18n";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1257,13 +1257,13 @@ function IrregularCrypt(p){
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\uD83E\uDEA6"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Irregular Crypt</h2>
-        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Exhume 15 verbes irréguliers des ténèbres du passé.</p>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Exhume 15 irregular verbs from the tombs of the past.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
-          <div>{"\u23F1\uFE0F"} <strong>15 secondes</strong> par verbe</div>
-          <div>{"\u270D\uFE0F"} Saisis <strong>V2</strong> (prétérit) et <strong>V3</strong> (participe passé)</div>
-          <div>{"\uD83C\uDFC6"} <strong>2 XP</strong> par verbe maîtrisé · bonus perfect</div>
+          <div>{"\u23F1\uFE0F"} <strong>15 seconds</strong> per verb</div>
+          <div>{"\u270D\uFE0F"} Type <strong>V2</strong> (past) and <strong>V3</strong> (past participle)</div>
+          <div>{"\uD83C\uDFC6"} <strong>2 XP</strong> per mastered verb · perfect bonus</div>
         </div>
-        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer le raid"}</button>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start the raid"}</button>
       </div>
     </div>);
   }
@@ -1277,19 +1277,19 @@ function IrregularCrypt(p){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
       <div style={{textAlign:"center",padding:"20px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83E\uDEA6"}</div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"PERFECT RAID":isGood?"Raid r\u00e9ussi":"Raid termin\u00e9"}</h2>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"PERFECT RAID":isGood?"Raid victorious":"Raid complete"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"#c026d3",margin:"14px 0 2px"}}>{totalFull}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:6}}>verbes maîtrisés (V2 + V3)</p>
-        {totalPartial>0&&<p style={{color:"var(--t3)",fontSize:12,marginBottom:18}}>{totalPartial} partiellement correct{totalPartial>1?"s":""}</p>}
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:6}}>verbs mastered (V2 + V3)</p>
+        {totalPartial>0&&<p style={{color:"var(--t3)",fontSize:12,marginBottom:18}}>{totalPartial} partially correct</p>}
         {missed.length>0&&<div className="crd" style={{maxWidth:380,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
           {missed.slice(0,10).map(function(r,i){return(
             <div key={i} style={{fontSize:13,marginBottom:6,color:"var(--t2)",lineHeight:1.5}}>
               <strong style={{color:"var(--t1)"}}>{r.verb.base}</strong> {"\u2192"} <span style={{color:"#22c55e"}}>{r.verb.past}</span> / <span style={{color:"#22c55e"}}>{r.verb.pp}</span> <span style={{color:"var(--t3)",fontSize:12,fontStyle:"italic"}}>({r.verb.fr})</span>
             </div>
           );})}
         </div>}
-        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, retour</button>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
       </div>
     </div>);
   }
@@ -1299,7 +1299,7 @@ function IrregularCrypt(p){
   var pct=timeLeft/TIME_PER_Q*100;
   return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:480,margin:"0 auto"}}>
     <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Verbe {idx+1} / {deck.length}</div>
+    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Verb {idx+1} / {deck.length}</div>
     <div style={{width:"100%",height:6,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:20}}>
       <div style={{width:pct+"%",height:"100%",background:phase==="play"?(timeLeft<5?"#ef4444":"linear-gradient(90deg,#7c3aed,#c026d3)"):"#6b7280",transition:"width 1s linear"}}/>
     </div>
@@ -1309,11 +1309,11 @@ function IrregularCrypt(p){
     </div>
     {phase==="play"?(
       <div style={{maxWidth:360,margin:"0 auto"}}>
-        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V2 (prétérit)</label>
+        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V2 (past)</label>
         <input type="text" value={v2In} onChange={function(e){setV2In(e.target.value);}} autoFocus autoComplete="off" autoCapitalize="none" spellCheck="false" onKeyDown={function(e){if(e.key==="Enter"&&v2In){var n=document.getElementById("icrypt-v3");if(n)n.focus();}}} className="icrypt-input" style={{width:"100%",padding:"12px 14px",fontSize:17,background:"var(--bg2)",border:"2px solid var(--bg3)",borderRadius:10,color:"var(--t1)",marginBottom:14,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
-        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V3 (participe passé)</label>
+        <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:1.2,textTransform:"uppercase"}}>V3 (past participle)</label>
         <input id="icrypt-v3" type="text" value={v3In} onChange={function(e){setV3In(e.target.value);}} autoComplete="off" autoCapitalize="none" spellCheck="false" onKeyDown={function(e){if(e.key==="Enter")submit();}} className="icrypt-input" style={{width:"100%",padding:"12px 14px",fontSize:17,background:"var(--bg2)",border:"2px solid var(--bg3)",borderRadius:10,color:"var(--t1)",marginBottom:18,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
-        <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:15,padding:"13px",fontWeight:800}} onClick={submit}>Valider</button>
+        <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:15,padding:"13px",fontWeight:800}} onClick={submit}>Submit</button>
       </div>
     ):(
       <div style={{maxWidth:360,margin:"0 auto"}}>
@@ -1333,7 +1333,7 @@ function IrregularCrypt(p){
           <div style={{fontSize:12.5,color:"var(--t2)",fontStyle:"italic",marginBottom:8}}>{revealData.verb.fr}</div>
           <div style={{fontSize:13,color:"var(--t2)",lineHeight:1.55,borderLeft:"2px solid var(--bg3)",paddingLeft:10}}>{revealData.verb.ex}</div>
         </div>
-        <div style={{textAlign:"center",fontSize:11,color:"var(--t3)",opacity:.7}}>Suite dans un instant...</div>
+        <div style={{textAlign:"center",fontSize:11,color:"var(--t3)",opacity:.7}}>Next in a moment...</div>
       </div>
     )}
   </div>);
@@ -1413,13 +1413,13 @@ function Chronomancer(p){
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\u231B"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Chronomancer</h2>
-        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Maîtrise la tempête des temps verbaux. Chaque question cache un marqueur temporel.</p>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Master the storm of verb tenses. Each question hides a temporal clue.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
-          <div>{"\uD83D\uDD2E"} <strong>15 questions</strong>, pas de timer</div>
-          <div>{"\uD83D\uDD8D\uFE0F"} Marqueur temporel en <span style={{color:"#c026d3",fontWeight:700}}>violet</span></div>
-          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne réponse · bonus perfect</div>
+          <div>{"\uD83D\uDD2E"} <strong>15 questions</strong>, no timer</div>
+          <div>{"\uD83D\uDD8D\uFE0F"} Temporal marker in <span style={{color:"#c026d3",fontWeight:700}}>purple</span></div>
+          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> per correct answer · perfect bonus</div>
         </div>
-        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer"}</button>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
       </div>
     </div>);
   }
@@ -1432,11 +1432,11 @@ function Chronomancer(p){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
       <div style={{textAlign:"center",padding:"20px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u231B"}</div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"TIME MASTERED":isGood?"Chronomancer r\u00e9ussi":"Session termin\u00e9e"}</h2>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"TIME MASTERED":isGood?"Chronomancer victorious":"Session complete"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"#c026d3",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes réponses</p>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>correct answers</p>
         {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
           {missed.slice(0,8).map(function(r,i){return(
             <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
               <div style={{marginBottom:3}}>{renderSentence(r.q.s,r.q.marker)}</div>
@@ -1444,7 +1444,7 @@ function Chronomancer(p){
             </div>
           );})}
         </div>}
-        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, retour</button>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
       </div>
     </div>);
   }
@@ -1460,7 +1460,7 @@ function Chronomancer(p){
     </div>
     {/* Marker hint badge */}
     {q.marker&&<div style={{textAlign:"center",marginBottom:14}}>
-      <span style={{display:"inline-block",padding:"4px 12px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(192,38,211,.4)",borderRadius:99,color:"#d8b4fe",fontSize:12,fontWeight:700,letterSpacing:.3}}>{"\uD83D\uDD2E  Marqueur : "}<span style={{color:"#e9d5ff"}}>{q.marker}</span></span>
+      <span style={{display:"inline-block",padding:"4px 12px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(192,38,211,.4)",borderRadius:99,color:"#d8b4fe",fontSize:12,fontWeight:700,letterSpacing:.3}}>{"\uD83D\uDD2E  Clue: "}<span style={{color:"#e9d5ff"}}>{q.marker}</span></span>
     </div>}
     {/* Sentence */}
     <div className="crd" style={{padding:"18px 16px",marginBottom:14,fontSize:16.5,lineHeight:1.7,color:"var(--t1)"}}>
@@ -1482,9 +1482,9 @@ function Chronomancer(p){
     </div>
     {/* Reveal card */}
     {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(results[results.length-1]&&results[results.length-1].ok?"#22c55e":"#f59e0b")}}>
-      <div style={{fontSize:11,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{results[results.length-1]&&results[results.length-1].ok?"\u2713 Correct":"Explication"}</div>
+      <div style={{fontSize:11,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{results[results.length-1]&&results[results.length-1].ok?"\u2713 Correct":"Explanation"}</div>
       <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"Voir le r\u00e9sultat":"Question suivante \u2192"}</button>
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next question \u2192"}</button>
     </div>}
   </div>);
 }
@@ -1561,13 +1561,13 @@ function PassiveForge(p){
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\u2692\uFE0F"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Passive Forge</h2>
-        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Transforme actif en passif. Forge la bonne structure en 30 secondes.</p>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Transform active into passive. Forge the right structure in 30 seconds.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
-          <div>{"\u2699\uFE0F"} <strong>15 questions</strong>, 2 modes : transform + fill-in</div>
-          <div>{"\u23F1\uFE0F"} <strong>30 secondes</strong> par question</div>
-          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne réponse · bonus perfect</div>
+          <div>{"\u2699\uFE0F"} <strong>15 questions</strong>, 2 modes: transform + fill-in</div>
+          <div>{"\u23F1\uFE0F"} <strong>30 seconds</strong> per question</div>
+          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> per correct answer · perfect bonus</div>
         </div>
-        <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer"}</button>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
       </div>
     </div>);
   }
@@ -1580,11 +1580,11 @@ function PassiveForge(p){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
       <div style={{textAlign:"center",padding:"20px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u2692\uFE0F"}</div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"FORGE MASTERED":isGood?"Forge r\u00e9ussie":"Session termin\u00e9e"}</h2>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"FORGE MASTERED":isGood?"Forge victorious":"Session complete"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"#f59e0b",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes réponses</p>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>correct answers</p>
         {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
           {missed.slice(0,8).map(function(r,i){return(
             <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
               <div style={{marginBottom:3}}>{renderWithBlank(r.q.prompt)}</div>
@@ -1592,7 +1592,7 @@ function PassiveForge(p){
             </div>
           );})}
         </div>}
-        <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, retour</button>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
       </div>
     </div>);
   }
@@ -1624,13 +1624,13 @@ function PassiveForge(p){
     </div>
     {/* Active sentence (transform mode only) */}
     {q.mode==="transform"&&q.active&&<div style={{padding:"12px 14px",marginBottom:8,background:"rgba(255,255,255,.04)",border:"1px dashed var(--bg3)",borderRadius:10,fontSize:14,color:"var(--t3)",lineHeight:1.55}}>
-      <div style={{fontSize:10,color:"var(--t3)",opacity:.7,marginBottom:3,letterSpacing:1,textTransform:"uppercase",fontWeight:700}}>Actif</div>
+      <div style={{fontSize:10,color:"var(--t3)",opacity:.7,marginBottom:3,letterSpacing:1,textTransform:"uppercase",fontWeight:700}}>Active</div>
       {q.active}
     </div>}
     {q.mode==="transform"&&<div style={{textAlign:"center",fontSize:18,color:"var(--t3)",marginBottom:6}}>{"\u2193"}</div>}
     {/* Prompt */}
     <div className="crd" style={{padding:"16px",marginBottom:14,fontSize:16,lineHeight:1.7,color:"var(--t1)"}}>
-      {q.mode==="transform"&&<div style={{fontSize:10,color:"var(--t3)",opacity:.7,marginBottom:4,letterSpacing:1,textTransform:"uppercase",fontWeight:700}}>Passif</div>}
+      {q.mode==="transform"&&<div style={{fontSize:10,color:"var(--t3)",opacity:.7,marginBottom:4,letterSpacing:1,textTransform:"uppercase",fontWeight:700}}>Passive</div>}
       {renderWithBlank(q.prompt)}
     </div>
     {/* Options */}
@@ -1649,9 +1649,9 @@ function PassiveForge(p){
     </div>
     {/* Reveal card */}
     {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(lastResult&&lastResult.ok?"#22c55e":isTimedOut?"#ef4444":"#f59e0b")}}>
-      <div style={{fontSize:11,color:isTimedOut?"#fca5a5":"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":isTimedOut?"\u23F1 Temps \u00e9coul\u00e9":"Explication"}</div>
+      <div style={{fontSize:11,color:isTimedOut?"#fca5a5":"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":isTimedOut?"\u23F1 Time's up":"Explanation"}</div>
       <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"Voir le r\u00e9sultat":"Question suivante \u2192"}</button>
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next question \u2192"}</button>
     </div>}
   </div>);
 }
@@ -1709,8 +1709,8 @@ function RelativeWeaver(p){
     if(t.indexOf("non_defining")===0)return"Non-defining";
     if(t.indexOf("defining")===0)return"Defining";
     if(t.indexOf("possession")===0)return"Possession (whose)";
-    if(t==="place")return"Lieu (where)";
-    if(t==="time")return"Temps (when)";
+    if(t==="place")return"Place (where)";
+    if(t==="time")return"Time (when)";
     if(t==="formal_object_person")return"Formal (whom)";
     return t.replace(/_/g," ");
   }
@@ -1721,13 +1721,13 @@ function RelativeWeaver(p){
       <div style={{textAlign:"center",padding:"24px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{"\uD83D\uDD78\uFE0F"}</div>
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>Relative Weaver</h2>
-        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Tisse les propositions relatives. Attention aux virgules — elles changent tout.</p>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Weave the relative clauses. Mind the commas — they change everything.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
-          <div>{"\uD83D\uDD78\uFE0F"} <strong>15 questions</strong>, pas de timer</div>
+          <div>{"\uD83D\uDD78\uFE0F"} <strong>15 questions</strong>, no timer</div>
           <div>{"\uD83D\uDD0D"} Defining, non-defining, reduced, whose</div>
-          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> par bonne réponse · bonus perfect</div>
+          <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> per correct answer · perfect bonus</div>
         </div>
-        <button className="btn1" style={{background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Commencer"}</button>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
       </div>
     </div>);
   }
@@ -1740,11 +1740,11 @@ function RelativeWeaver(p){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
       <div style={{textAlign:"center",padding:"20px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83D\uDD78\uFE0F"}</div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"WEB MASTERED":isGood?"Weaver r\u00e9ussi":"Session termin\u00e9e"}</h2>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"WEB MASTERED":isGood?"Weaver victorious":"Session complete"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"#7c3aed",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>bonnes réponses</p>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>correct answers</p>
         {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"\u00c0 r\u00e9viser"}</div>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
           {missed.slice(0,8).map(function(r,i){return(
             <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
               <div style={{marginBottom:3}}>{renderWithBlank(r.q.s)}</div>
@@ -1755,7 +1755,7 @@ function RelativeWeaver(p){
             </div>
           );})}
         </div>}
-        <button className="btn1" style={{background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, retour</button>
+        <button className="btn1" style={{background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
       </div>
     </div>);
   }
@@ -1791,11 +1791,11 @@ function RelativeWeaver(p){
     {/* Reveal card */}
     {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(lastResult&&lastResult.ok?"#22c55e":"#f59e0b")}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-        <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":"Explication"}</span>
+        <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":"Explanation"}</span>
         <span style={{fontSize:10,color:"#d8b4fe",padding:"2px 8px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(124,58,237,.3)",borderRadius:99,fontWeight:700,letterSpacing:.3}}>{typeLabel(q.type)}</span>
       </div>
       <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"Voir le r\u00e9sultat":"Question suivante \u2192"}</button>
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next question \u2192"}</button>
     </div>}
   </div>);
 }
@@ -1812,14 +1812,14 @@ function GauntletHub(p){
   var [subMode,setSubMode]=useState(null); // null | "irregular" | "tense" | "passive" | "relative"
   var scores=(p.u&&p.u.moduleScores)||{};
   var cards=[
-    {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume les verbes irr\u00e9guliers endormis. 15 items par raid, V2 et V3 \u00e0 la main.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_crypt",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
-    {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Ma\u00eetrise la temp\u00eate des temps verbaux. Marqueurs, contextes, pi\u00e8ges francophones.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_chrono",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:true},
-    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transforme actif en passif. 13 temps couverts, pi\u00e8ges \u00e0 double objet.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_forge",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:true},
-    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Tisse les propositions relatives. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_weaver",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:true}
+    {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume the sleeping irregular verbs. 15 items per raid, type V2 and V3 by hand.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_crypt",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
+    {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Master the storm of verb tenses. Markers, contexts, francophone traps.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_chrono",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:true},
+    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transform active into passive. 13 tenses covered, double-object traps.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_forge",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:true},
+    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Weave relative clauses. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_weaver",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:true}
   ];
   function fmtAcc(s){if(!s||!s.total)return"\u2014";return Math.round((s.correct/s.total)*100)+"%";}
   function enterSub(card){
-    if(!card.ready){alert("Sous-module en cours de d\u00e9veloppement. Arrivera dans la prochaine \u00e9tape !");return;}
+    if(!card.ready){alert("Sub-module under development. Coming in the next step!");return;}
     try{playBGM(card.bgm);}catch(e){console.warn("[gauntlet] bgm:",e&&e.message);}
     setSubMode(card.id);
   }
@@ -1844,7 +1844,7 @@ function GauntletHub(p){
     <div className="gauntlet-header">
       <div style={{fontSize:46,marginBottom:6,filter:"drop-shadow(0 4px 14px rgba(124,58,237,.45))"}}>{"\uD83D\uDEE1\uFE0F"}</div>
       <h2 className="gauntlet-title">GRAMMAR GAUNTLET</h2>
-      <div className="gauntlet-sub">Quatre épreuves. Une seule couronne.</div>
+      <div className="gauntlet-sub">Four trials. One crown.</div>
     </div>
     {cards.map(function(c){return(
       <div key={c.id} className="gauntlet-card">
@@ -1852,14 +1852,14 @@ function GauntletHub(p){
         <div className="gauntlet-card-head">
           <div className="gauntlet-card-icon">{c.icon}</div>
           <div style={{flex:1,minWidth:0}}>
-            <div className="gauntlet-card-name">{c.name}{!c.ready&&<span style={{fontSize:10,marginLeft:8,padding:"2px 7px",background:"rgba(245,223,170,.12)",color:"#f5dfaa",borderRadius:99,fontWeight:700,letterSpacing:.3,verticalAlign:"middle"}}>bientôt</span>}</div>
+            <div className="gauntlet-card-name">{c.name}{!c.ready&&<span style={{fontSize:10,marginLeft:8,padding:"2px 7px",background:"rgba(245,223,170,.12)",color:"#f5dfaa",borderRadius:99,fontWeight:700,letterSpacing:.3,verticalAlign:"middle"}}>soon</span>}</div>
           </div>
         </div>
         <div className="gauntlet-card-desc">{c.desc}</div>
         <div className="gauntlet-card-stats">
           <span>{(c.stats&&c.stats.sessions)||0} session{c.stats&&c.stats.sessions>1?"s":""}</span>
           <span>{"\u00b7"}</span>
-          <span>Précision : {fmtAcc(c.stats)}</span>
+          <span>Accuracy: {fmtAcc(c.stats)}</span>
         </div>
         <div className="gauntlet-card-actions">
           <button className="gauntlet-btn-enter" style={c.ready?{}:{opacity:.55}} onClick={function(){enterSub(c);}}>{"\u2694\uFE0F Entrer"}</button>
@@ -2900,7 +2900,7 @@ return(
               <span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(var(--cx),.15)",color:"var(--cyan)",fontWeight:700}} className="out">+100 XP</span>
             </div>
             <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.4}}>
-              Mission complete \u2014 bonus round unlocked: 5 grammar questions \u00B7 30s each
+              Mission complete — bonus round unlocked: 5 grammar questions · 30s each
             </div>
           </div>
         </div>
