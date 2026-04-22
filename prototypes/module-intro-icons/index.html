@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module Intro Icons — Final Phase</title>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0c08; --bg2: #1a1610; --bg3: #28221a;
+    --bdr: rgba(180,140,80,0.15);
+    --cx: 212,148,58; --cx-hex: #d4943a;
+    --cyan: #d4943a; --gold: #f0c850;
+    --t1: #ede4d4; --t2: #8a7e6a; --t3: #5a5040;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px 16px 260px;
+    background: radial-gradient(ellipse at top, #1a1610, #0a0806);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--t1); min-height: 100vh;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 {
+    font-family: Georgia, serif; font-size: 26px; margin: 16px 0 6px;
+    background: linear-gradient(135deg, var(--cx-hex), var(--gold), var(--cx-hex));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; text-align: center;
+  }
+  .subtitle { text-align: center; color: var(--t2); margin: 0 0 20px; font-size: 13px; }
+
+  .nav-jumper {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(15,12,8,0.95); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--bdr);
+    padding: 10px; display: flex; gap: 6px; flex-wrap: wrap;
+    justify-content: center; margin: -20px -16px 20px;
+  }
+  .nav-jumper a {
+    font-size: 11px; color: var(--t2); text-decoration: none;
+    padding: 5px 10px; border-radius: 6px; border: 1px solid var(--bdr);
+    transition: all 0.15s;
+  }
+  .nav-jumper a:hover { color: var(--gold); border-color: var(--cx-hex); }
+
+  .zone { margin-bottom: 48px; }
+  .zone-title {
+    font-family: Georgia, serif; font-size: 22px;
+    color: var(--gold); margin: 32px 0 16px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--cx-hex);
+    letter-spacing: 0.5px;
+  }
+
+  .section {
+    margin-bottom: 18px; background: var(--bg2);
+    border: 1px solid var(--bdr); border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .section-header {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 10px; padding-bottom: 10px;
+    border-bottom: 1px dashed var(--bdr); flex-wrap: wrap;
+  }
+  .section-name {
+    font-family: Georgia, serif; font-size: 16px;
+    color: var(--t1); margin: 0;
+  }
+  .section-current { color: var(--t2); font-size: 12px; }
+  .section-current .emoji { font-size: 16px; margin: 0 3px; }
+  .section-hint {
+    color: var(--t3); font-size: 11px; font-style: italic;
+    width: 100%; margin-top: 2px;
+  }
+
+  .options-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .option {
+    background: var(--bg3); border: 1px solid var(--bdr);
+    border-radius: 8px; padding: 12px 6px 8px;
+    text-align: center; cursor: pointer;
+    transition: all 0.15s; position: relative;
+  }
+  .option:hover {
+    border-color: var(--cx-hex); transform: translateY(-1px);
+  }
+  .option.selected {
+    border-color: var(--cx-hex);
+    background: linear-gradient(180deg, rgba(212,148,58,0.12) 0%, var(--bg3) 100%);
+    box-shadow: 0 0 0 1px var(--cx-hex);
+  }
+  .option.selected::before {
+    content: "✓"; position: absolute; top: 3px; right: 6px;
+    color: var(--gold); font-size: 11px; font-weight: bold;
+  }
+  .option iconify-icon {
+    font-size: 30px; color: var(--t1);
+    display: block; margin: 0 auto 6px;
+  }
+  .option.selected iconify-icon { color: var(--gold); }
+  .option-label {
+    font-size: 9px; color: var(--t2);
+    font-family: monospace; word-break: break-all; line-height: 1.2;
+  }
+  .reuse-tag {
+    display: inline-block; font-size: 9px; background: rgba(74,190,96,.15);
+    color: #4abe60; padding: 2px 6px; border-radius: 4px; margin-left: 6px;
+    font-family: monospace; vertical-align: middle;
+  }
+
+  /* Sticky export */
+  .export-wrap {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(10,8,6,.97) 20%, var(--bg) 100%);
+    backdrop-filter: blur(8px);
+    padding: 16px; border-top: 1px solid var(--bdr);
+    max-height: 240px; overflow-y: auto;
+  }
+  .export-box {
+    max-width: 900px; margin: 0 auto;
+    font-family: monospace; font-size: 11px;
+    column-count: 3; column-gap: 20px;
+  }
+  .export-line { color: var(--t2); margin: 2px 0; break-inside: avoid; }
+  .export-line strong { color: var(--t1); display: inline-block; width: 130px; }
+  .export-line span { color: var(--gold); }
+  .export-title {
+    text-align: center; color: var(--gold);
+    font-family: Georgia, serif; font-size: 12px;
+    margin: 0 0 8px; letter-spacing: 1px;
+  }
+  @media (max-width: 700px) {
+    .export-box { column-count: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="nav-jumper">
+  <a href="#headers">Module Headers</a>
+  <a href="#modes">Mode Buttons</a>
+  <a href="#gauntlet-sub">Gauntlet Sub-modules</a>
+</div>
+
+<div class="container">
+  <h1>◆ Module Intro Icons — Final Phase ◆</h1>
+  <p class="subtitle">15 items across 3 zones. Green tag = icon already used on the Train tile (reuse for consistency).</p>
+
+  <!-- ═══ ZONE 1: MODULE HEADERS ═══ -->
+  <div class="zone" id="headers">
+  <h2 class="zone-title">Module Intro Headers</h2>
+
+  <div class="section" data-slot="h-prepdrill">
+    <div class="section-header">
+      <h3 class="section-name">Preposition Collocations — header</h3>
+      <span class="section-current">currently <span class="emoji">🎯</span></span>
+      <div class="section-hint">Top of prepdrill intro screen. Train tile uses <code>linked-rings</code>.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="h-prepdrill" data-icon="game-icons:linked-rings"><iconify-icon icon="game-icons:linked-rings"></iconify-icon><div class="option-label">linked-rings <span class="reuse-tag">REUSE</span></div></div>
+      <div class="option" data-slot="h-prepdrill" data-icon="game-icons:anchor"><iconify-icon icon="game-icons:anchor"></iconify-icon><div class="option-label">anchor</div></div>
+      <div class="option" data-slot="h-prepdrill" data-icon="game-icons:knot"><iconify-icon icon="game-icons:knot"></iconify-icon><div class="option-label">knot</div></div>
+      <div class="option" data-slot="h-prepdrill" data-icon="game-icons:chain"><iconify-icon icon="game-icons:chain"></iconify-icon><div class="option-label">chain</div></div>
+      <div class="option" data-slot="h-prepdrill" data-icon="game-icons:pin"><iconify-icon icon="game-icons:pin"></iconify-icon><div class="option-label">pin</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="h-gerinf">
+    <div class="section-header">
+      <h3 class="section-name">Gerund vs Infinitive — header</h3>
+      <span class="section-current">currently <span class="emoji">⚖️</span></span>
+      <div class="section-hint">Top of gerinf hub. Train tile uses <code>scales</code>.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="h-gerinf" data-icon="game-icons:scales"><iconify-icon icon="game-icons:scales"></iconify-icon><div class="option-label">scales <span class="reuse-tag">REUSE</span></div></div>
+      <div class="option" data-slot="h-gerinf" data-icon="game-icons:balance"><iconify-icon icon="game-icons:balance"></iconify-icon><div class="option-label">balance</div></div>
+      <div class="option" data-slot="h-gerinf" data-icon="game-icons:weight-scale"><iconify-icon icon="game-icons:weight-scale"></iconify-icon><div class="option-label">weight-scale</div></div>
+      <div class="option" data-slot="h-gerinf" data-icon="game-icons:yin-yang"><iconify-icon icon="game-icons:yin-yang"></iconify-icon><div class="option-label">yin-yang</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="h-pvdojo">
+    <div class="section-header">
+      <h3 class="section-name">Phrasal Verb Dojo — header</h3>
+      <span class="section-current">currently <span class="emoji">⚔️</span></span>
+      <div class="section-hint">Top of pvdojo hub. Train tile uses <code>shuriken</code>.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="h-pvdojo" data-icon="game-icons:shuriken"><iconify-icon icon="game-icons:shuriken"></iconify-icon><div class="option-label">shuriken <span class="reuse-tag">REUSE</span></div></div>
+      <div class="option" data-slot="h-pvdojo" data-icon="game-icons:katana"><iconify-icon icon="game-icons:katana"></iconify-icon><div class="option-label">katana</div></div>
+      <div class="option" data-slot="h-pvdojo" data-icon="game-icons:torii-gate"><iconify-icon icon="game-icons:torii-gate"></iconify-icon><div class="option-label">torii-gate</div></div>
+      <div class="option" data-slot="h-pvdojo" data-icon="game-icons:ninja-heroic-stance"><iconify-icon icon="game-icons:ninja-heroic-stance"></iconify-icon><div class="option-label">ninja-stance</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="h-gauntlet">
+    <div class="section-header">
+      <h3 class="section-name">Grammar Gauntlet — header</h3>
+      <span class="section-current">currently <span class="emoji">🛡️</span></span>
+      <div class="section-hint">Top of GauntletHub. Train tile uses <code>gauntlet</code>.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="h-gauntlet" data-icon="game-icons:gauntlet"><iconify-icon icon="game-icons:gauntlet"></iconify-icon><div class="option-label">gauntlet <span class="reuse-tag">REUSE</span></div></div>
+      <div class="option" data-slot="h-gauntlet" data-icon="game-icons:round-shield"><iconify-icon icon="game-icons:round-shield"></iconify-icon><div class="option-label">round-shield</div></div>
+      <div class="option" data-slot="h-gauntlet" data-icon="game-icons:edged-shield"><iconify-icon icon="game-icons:edged-shield"></iconify-icon><div class="option-label">edged-shield</div></div>
+      <div class="option" data-slot="h-gauntlet" data-icon="game-icons:spiked-shield"><iconify-icon icon="game-icons:spiked-shield"></iconify-icon><div class="option-label">spiked-shield</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="h-falsefr">
+    <div class="section-header">
+      <h3 class="section-name">False Friends — header</h3>
+      <span class="section-current">currently <span class="emoji">🎭</span></span>
+      <div class="section-hint">Top of falsefr intro. Train tile uses <code>duality-mask</code>.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="h-falsefr" data-icon="game-icons:duality-mask"><iconify-icon icon="game-icons:duality-mask"></iconify-icon><div class="option-label">duality-mask <span class="reuse-tag">REUSE</span></div></div>
+      <div class="option" data-slot="h-falsefr" data-icon="game-icons:drama-masks"><iconify-icon icon="game-icons:drama-masks"></iconify-icon><div class="option-label">drama-masks</div></div>
+      <div class="option" data-slot="h-falsefr" data-icon="game-icons:trickster"><iconify-icon icon="game-icons:trickster"></iconify-icon><div class="option-label">trickster</div></div>
+      <div class="option" data-slot="h-falsefr" data-icon="game-icons:two-feathers"><iconify-icon icon="game-icons:two-feathers"></iconify-icon><div class="option-label">two-feathers</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="h-connsort">
+    <div class="section-header">
+      <h3 class="section-name">Connectors Sorting — header</h3>
+      <span class="section-current">currently <span class="emoji">🔀</span></span>
+      <div class="section-hint">Top of connsort intro. Train tile uses <code>knot</code>.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="h-connsort" data-icon="game-icons:knot"><iconify-icon icon="game-icons:knot"></iconify-icon><div class="option-label">knot <span class="reuse-tag">REUSE</span></div></div>
+      <div class="option" data-slot="h-connsort" data-icon="game-icons:chain"><iconify-icon icon="game-icons:chain"></iconify-icon><div class="option-label">chain</div></div>
+      <div class="option" data-slot="h-connsort" data-icon="game-icons:crossroad"><iconify-icon icon="game-icons:crossroad"></iconify-icon><div class="option-label">crossroad</div></div>
+      <div class="option" data-slot="h-connsort" data-icon="game-icons:vortex"><iconify-icon icon="game-icons:vortex"></iconify-icon><div class="option-label">vortex</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ═══ ZONE 2: MODE BUTTONS ═══ -->
+  <div class="zone" id="modes">
+  <h2 class="zone-title">Mode Buttons (entry points inside hubs)</h2>
+
+  <div class="section" data-slot="m-grimoire">
+    <div class="section-header">
+      <h3 class="section-name">Grimoire / Study Mode</h3>
+      <span class="section-current">currently <span class="emoji">📖</span> (appears on prepdrill, gerinf, pvdojo, connsort)</span>
+      <div class="section-hint">Common "theory / reading material" button — one icon used across multiple modules.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="m-grimoire" data-icon="game-icons:book-aura"><iconify-icon icon="game-icons:book-aura"></iconify-icon><div class="option-label">book-aura</div></div>
+      <div class="option" data-slot="m-grimoire" data-icon="game-icons:spellbook"><iconify-icon icon="game-icons:spellbook"></iconify-icon><div class="option-label">spellbook</div></div>
+      <div class="option" data-slot="m-grimoire" data-icon="game-icons:open-book"><iconify-icon icon="game-icons:open-book"></iconify-icon><div class="option-label">open-book</div></div>
+      <div class="option" data-slot="m-grimoire" data-icon="game-icons:book-cover"><iconify-icon icon="game-icons:book-cover"></iconify-icon><div class="option-label">book-cover</div></div>
+      <div class="option" data-slot="m-grimoire" data-icon="game-icons:bookmarklet"><iconify-icon icon="game-icons:bookmarklet"></iconify-icon><div class="option-label">bookmarklet</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="m-contextquiz">
+    <div class="section-header">
+      <h3 class="section-name">Context Quiz (gerinf)</h3>
+      <span class="section-current">currently <span class="emoji">📝</span></span>
+      <div class="section-hint">Written practice / quiz entry — gerinf hub button.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="m-contextquiz" data-icon="game-icons:quill-ink"><iconify-icon icon="game-icons:quill-ink"></iconify-icon><div class="option-label">quill-ink</div></div>
+      <div class="option" data-slot="m-contextquiz" data-icon="game-icons:scroll-quill"><iconify-icon icon="game-icons:scroll-quill"></iconify-icon><div class="option-label">scroll-quill</div></div>
+      <div class="option" data-slot="m-contextquiz" data-icon="game-icons:ink-swirl"><iconify-icon icon="game-icons:ink-swirl"></iconify-icon><div class="option-label">ink-swirl</div></div>
+      <div class="option" data-slot="m-contextquiz" data-icon="game-icons:sharp-quill"><iconify-icon icon="game-icons:sharp-quill"></iconify-icon><div class="option-label">sharp-quill</div></div>
+      <div class="option" data-slot="m-contextquiz" data-icon="game-icons:feather-wound"><iconify-icon icon="game-icons:feather-wound"></iconify-icon><div class="option-label">feather-wound</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="m-meaningmatch">
+    <div class="section-header">
+      <h3 class="section-name">Meaning Match (pvdojo)</h3>
+      <span class="section-current">currently <span class="emoji">🧠</span></span>
+      <div class="section-hint">Pair-matching mode — pvdojo button.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="m-meaningmatch" data-icon="game-icons:brain"><iconify-icon icon="game-icons:brain"></iconify-icon><div class="option-label">brain</div></div>
+      <div class="option" data-slot="m-meaningmatch" data-icon="game-icons:linked-hearts"><iconify-icon icon="game-icons:linked-hearts"></iconify-icon><div class="option-label">linked-hearts</div></div>
+      <div class="option" data-slot="m-meaningmatch" data-icon="game-icons:puzzle"><iconify-icon icon="game-icons:puzzle"></iconify-icon><div class="option-label">puzzle</div></div>
+      <div class="option" data-slot="m-meaningmatch" data-icon="game-icons:chain-link"><iconify-icon icon="game-icons:chain-link"></iconify-icon><div class="option-label">chain-link</div></div>
+      <div class="option" data-slot="m-meaningmatch" data-icon="game-icons:think"><iconify-icon icon="game-icons:think"></iconify-icon><div class="option-label">think</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="m-particlepick">
+    <div class="section-header">
+      <h3 class="section-name">Particle Picker (pvdojo — speed mode)</h3>
+      <span class="section-current">currently <span class="emoji">⚡</span></span>
+      <div class="section-hint">Speed / reflex mode — pvdojo button. Avoid pure lightning (used in Home sunrise elsewhere).</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="m-particlepick" data-icon="game-icons:lightning-bow"><iconify-icon icon="game-icons:lightning-bow"></iconify-icon><div class="option-label">lightning-bow</div></div>
+      <div class="option" data-slot="m-particlepick" data-icon="game-icons:lightning-storm"><iconify-icon icon="game-icons:lightning-storm"></iconify-icon><div class="option-label">lightning-storm</div></div>
+      <div class="option" data-slot="m-particlepick" data-icon="game-icons:quick-slash"><iconify-icon icon="game-icons:quick-slash"></iconify-icon><div class="option-label">quick-slash</div></div>
+      <div class="option" data-slot="m-particlepick" data-icon="game-icons:feather-winged"><iconify-icon icon="game-icons:feather-wound"></iconify-icon><div class="option-label">feather-wound</div></div>
+      <div class="option" data-slot="m-particlepick" data-icon="game-icons:chained-arrow-heads"><iconify-icon icon="game-icons:chained-arrow-heads"></iconify-icon><div class="option-label">chained-arrows</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="m-enter">
+    <div class="section-header">
+      <h3 class="section-name">"Entrer" button (Gauntlet sub-modules)</h3>
+      <span class="section-current">currently <span class="emoji">⚔️</span></span>
+      <div class="section-hint">Enter-the-battle CTA shown inside each Gauntlet sub-module intro.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="m-enter" data-icon="game-icons:sword-brandish"><iconify-icon icon="game-icons:sword-brandish"></iconify-icon><div class="option-label">sword-brandish</div></div>
+      <div class="option" data-slot="m-enter" data-icon="game-icons:crossed-swords"><iconify-icon icon="game-icons:crossed-swords"></iconify-icon><div class="option-label">crossed-swords</div></div>
+      <div class="option" data-slot="m-enter" data-icon="game-icons:broadsword"><iconify-icon icon="game-icons:broadsword"></iconify-icon><div class="option-label">broadsword</div></div>
+      <div class="option" data-slot="m-enter" data-icon="game-icons:dungeon-gate"><iconify-icon icon="game-icons:dungeon-gate"></iconify-icon><div class="option-label">dungeon-gate</div></div>
+      <div class="option" data-slot="m-enter" data-icon="game-icons:door-watcher"><iconify-icon icon="game-icons:door-watcher"></iconify-icon><div class="option-label">door-watcher</div></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ═══ ZONE 3: GAUNTLET SUB-MODULE ICONS ═══ -->
+  <div class="zone" id="gauntlet-sub">
+  <h2 class="zone-title">Gauntlet Sub-modules (4 trials)</h2>
+  <p style="color:var(--t3);font-size:12px;font-style:italic;margin-bottom:14px;">
+    Current emojis are already medfan-themed. Swap to game-icons for consistency, or keep emojis? Tes choix.
+  </p>
+
+  <div class="section" data-slot="g-irregular">
+    <div class="section-header">
+      <h3 class="section-name">Irregular Crypt (irregular)</h3>
+      <span class="section-current">currently <span class="emoji">🪦</span></span>
+      <div class="section-hint">Tombstone / crypt theme — exhume sleeping irregular verbs.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="g-irregular" data-icon="game-icons:tombstone"><iconify-icon icon="game-icons:tombstone"></iconify-icon><div class="option-label">tombstone</div></div>
+      <div class="option" data-slot="g-irregular" data-icon="game-icons:coffin"><iconify-icon icon="game-icons:coffin"></iconify-icon><div class="option-label">coffin</div></div>
+      <div class="option" data-slot="g-irregular" data-icon="game-icons:dig-dug"><iconify-icon icon="game-icons:dig-dug"></iconify-icon><div class="option-label">dig-dug</div></div>
+      <div class="option" data-slot="g-irregular" data-icon="game-icons:skeleton-inside"><iconify-icon icon="game-icons:skeleton-inside"></iconify-icon><div class="option-label">skeleton-inside</div></div>
+      <div class="option" data-slot="g-irregular" data-icon="game-icons:gravestone"><iconify-icon icon="game-icons:gravestone"></iconify-icon><div class="option-label">gravestone</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="g-tense">
+    <div class="section-header">
+      <h3 class="section-name">Chronomancer (tense)</h3>
+      <span class="section-current">currently <span class="emoji">⏳</span></span>
+      <div class="section-hint">Time / tense mastery — storm of verb tenses.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="g-tense" data-icon="game-icons:sands-of-time"><iconify-icon icon="game-icons:sands-of-time"></iconify-icon><div class="option-label">sands-of-time</div></div>
+      <div class="option" data-slot="g-tense" data-icon="game-icons:hourglass"><iconify-icon icon="game-icons:hourglass"></iconify-icon><div class="option-label">hourglass</div></div>
+      <div class="option" data-slot="g-tense" data-icon="game-icons:time-trap"><iconify-icon icon="game-icons:time-trap"></iconify-icon><div class="option-label">time-trap</div></div>
+      <div class="option" data-slot="g-tense" data-icon="game-icons:pocket-watch"><iconify-icon icon="game-icons:pocket-watch"></iconify-icon><div class="option-label">pocket-watch</div></div>
+      <div class="option" data-slot="g-tense" data-icon="game-icons:clockwork"><iconify-icon icon="game-icons:clockwork"></iconify-icon><div class="option-label">clockwork</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="g-passive">
+    <div class="section-header">
+      <h3 class="section-name">Passive Forge (passive)</h3>
+      <span class="section-current">currently <span class="emoji">⚒️</span></span>
+      <div class="section-hint">Blacksmith / forge — transform active into passive.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="g-passive" data-icon="game-icons:anvil"><iconify-icon icon="game-icons:anvil"></iconify-icon><div class="option-label">anvil</div></div>
+      <div class="option" data-slot="g-passive" data-icon="game-icons:anvil-impact"><iconify-icon icon="game-icons:anvil-impact"></iconify-icon><div class="option-label">anvil-impact</div></div>
+      <div class="option" data-slot="g-passive" data-icon="game-icons:flat-hammer"><iconify-icon icon="game-icons:flat-hammer"></iconify-icon><div class="option-label">flat-hammer</div></div>
+      <div class="option" data-slot="g-passive" data-icon="game-icons:forging"><iconify-icon icon="game-icons:forging"></iconify-icon><div class="option-label">forging</div></div>
+      <div class="option" data-slot="g-passive" data-icon="game-icons:tinker"><iconify-icon icon="game-icons:tinker"></iconify-icon><div class="option-label">tinker</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="g-relative">
+    <div class="section-header">
+      <h3 class="section-name">Relative Weaver (relative)</h3>
+      <span class="section-current">currently <span class="emoji">🕸️</span></span>
+      <div class="section-hint">Web / weaving — weave relative clauses.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="g-relative" data-icon="game-icons:spider-web"><iconify-icon icon="game-icons:spider-web"></iconify-icon><div class="option-label">spider-web</div></div>
+      <div class="option" data-slot="g-relative" data-icon="game-icons:web-spit"><iconify-icon icon="game-icons:web-spit"></iconify-icon><div class="option-label">web-spit</div></div>
+      <div class="option" data-slot="g-relative" data-icon="game-icons:sewing-needle"><iconify-icon icon="game-icons:sewing-needle"></iconify-icon><div class="option-label">sewing-needle</div></div>
+      <div class="option" data-slot="g-relative" data-icon="game-icons:maze"><iconify-icon icon="game-icons:maze"></iconify-icon><div class="option-label">maze</div></div>
+      <div class="option" data-slot="g-relative" data-icon="game-icons:vortex"><iconify-icon icon="game-icons:vortex"></iconify-icon><div class="option-label">vortex</div></div>
+    </div>
+  </div>
+  </div>
+
+</div>
+
+<!-- FIXED EXPORT -->
+<div class="export-wrap">
+  <p class="export-title">◆ Your Selection ◆</p>
+  <div class="export-box" id="export-box"></div>
+</div>
+
+<script>
+  var SLOTS = [
+    "h-prepdrill","h-gerinf","h-pvdojo","h-gauntlet","h-falsefr","h-connsort",
+    "m-grimoire","m-contextquiz","m-meaningmatch","m-particlepick","m-enter",
+    "g-irregular","g-tense","g-passive","g-relative"
+  ];
+
+  var box = document.getElementById("export-box");
+  box.innerHTML = SLOTS.map(function(s) {
+    return '<div class="export-line"><strong>'+s+':</strong> <span id="exp-'+s+'">—</span></div>';
+  }).join("");
+  SLOTS.forEach(function(s) {
+    var sel = document.querySelector('.option.selected[data-slot="'+s+'"]');
+    if (sel) document.getElementById("exp-"+s).textContent = sel.dataset.icon;
+  });
+
+  document.querySelectorAll('.option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      var slot = opt.dataset.slot;
+      var icon = opt.dataset.icon;
+      document.querySelectorAll('.option[data-slot="'+slot+'"]').forEach(function(o) {
+        o.classList.remove('selected');
+      });
+      opt.classList.add('selected');
+      var expEl = document.getElementById("exp-"+slot);
+      if (expEl) expEl.textContent = icon;
+    });
+  });
+</script>
+
+</body>
+</html>

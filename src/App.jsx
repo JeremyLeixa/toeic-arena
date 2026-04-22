@@ -414,7 +414,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-audio-leak-speak-tts";
+var BUILD_ID="2026-04-22-module-gauntlet-icons";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1839,10 +1839,10 @@ function GauntletHub(p){
   var [subMode,setSubMode]=useState(null); // null | "irregular" | "tense" | "passive" | "relative"
   var scores=(p.u&&p.u.moduleScores)||{};
   var cards=[
-    {id:"irregular",name:"Irregular Crypt",icon:"\uD83E\uDEA6",desc:"Exhume the sleeping irregular verbs. 15 items per raid, type V2 and V3 by hand.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_crypt",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
-    {id:"tense",name:"Chronomancer",icon:"\u231B",desc:"Master the storm of verb tenses. Markers, contexts, francophone traps.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_chrono",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:true},
-    {id:"passive",name:"Passive Forge",icon:"\u2692\uFE0F",desc:"Transform active into passive. 13 tenses covered, double-object traps.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_forge",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:true},
-    {id:"relative",name:"Relative Weaver",icon:"\uD83D\uDD78\uFE0F",desc:"Weave relative clauses. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_weaver",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:true}
+    {id:"irregular",name:"Irregular Crypt",icon:"tombstone",desc:"Exhume the sleeping irregular verbs. 15 items per raid, type V2 and V3 by hand.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_crypt",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
+    {id:"tense",name:"Chronomancer",icon:"clockwork",desc:"Master the storm of verb tenses. Markers, contexts, francophone traps.",accent:"linear-gradient(90deg,#7c3aed,#c026d3)",bgm:"bgm_chrono",grimoire:GRIMOIRE_CHRONOMANCER,stats:scores["gauntlet_tense"],ready:true},
+    {id:"passive",name:"Passive Forge",icon:"anvil-impact",desc:"Transform active into passive. 13 tenses covered, double-object traps.",accent:"linear-gradient(90deg,#dc2626,#f59e0b)",bgm:"bgm_forge",grimoire:GRIMOIRE_PASSIVE_FORGE,stats:scores["gauntlet_passive"],ready:true},
+    {id:"relative",name:"Relative Weaver",icon:"spider-web",desc:"Weave relative clauses. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_weaver",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:true}
   ];
   function fmtAcc(s){if(!s||!s.total)return"\u2014";return Math.round((s.correct/s.total)*100)+"%";}
   function enterSub(card){
@@ -1869,7 +1869,7 @@ function GauntletHub(p){
   return(<div className="gauntlet-hub enter">
     <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
     <div className="gauntlet-header">
-      <div style={{fontSize:46,marginBottom:6,filter:"drop-shadow(0 4px 14px rgba(124,58,237,.45))"}}>{"\uD83D\uDEE1\uFE0F"}</div>
+      <div style={{marginBottom:6,filter:"drop-shadow(0 4px 14px rgba(124,58,237,.45))",display:"flex",justifyContent:"center"}}><GIcon name="gauntlet" size={52} color="var(--cyan)"/></div>
       <h2 className="gauntlet-title">GRAMMAR GAUNTLET</h2>
       <div className="gauntlet-sub">Four trials. One crown.</div>
     </div>
@@ -1877,7 +1877,7 @@ function GauntletHub(p){
       <div key={c.id} className="gauntlet-card">
         <div className="gauntlet-card-accent" style={{background:c.accent}}/>
         <div className="gauntlet-card-head">
-          <div className="gauntlet-card-icon">{c.icon}</div>
+          <div className="gauntlet-card-icon">{GAME_ICON_PATHS[c.icon]?<GIcon name={c.icon} size={32} color="currentColor"/>:c.icon}</div>
           <div style={{flex:1,minWidth:0}}>
             <div className="gauntlet-card-name">{c.name}{!c.ready&&<span style={{fontSize:10,marginLeft:8,padding:"2px 7px",background:"rgba(245,223,170,.12)",color:"#f5dfaa",borderRadius:99,fontWeight:700,letterSpacing:.3,verticalAlign:"middle"}}>soon</span>}</div>
           </div>
@@ -1889,8 +1889,8 @@ function GauntletHub(p){
           <span>Accuracy: {fmtAcc(c.stats)}</span>
         </div>
         <div className="gauntlet-card-actions">
-          <button className="gauntlet-btn-enter" style={c.ready?{}:{opacity:.55}} onClick={function(){enterSub(c);}}>{"\u2694\uFE0F Entrer"}</button>
-          {c.grimoire&&<button className="gauntlet-btn-grim" onClick={function(){setOpenGrim(c.grimoire);}}>{"\uD83D\uDCD6 Grimoire"}</button>}
+          <button className="gauntlet-btn-enter" style={c.ready?{}:{opacity:.55}} onClick={function(){enterSub(c);}}><GIcon name="dungeon-gate" size={16} color="currentColor" style={{marginRight:6}}/>Entrer</button>
+          {c.grimoire&&<button className="gauntlet-btn-grim" onClick={function(){setOpenGrim(c.grimoire);}}><GIcon name="bookmarklet" size={16} color="currentColor" style={{marginRight:6}}/>Grimoire</button>}
         </div>
       </div>
     );})}
@@ -3625,12 +3625,12 @@ function ConnSort(p){
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
     <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
-    <div style={{fontSize:56,marginBottom:16}}>🔀</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="knot" size={60} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Connectors Sorting</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6,maxWidth:360,marginLeft:"auto",marginRight:"auto"}}>For each connector, pick the structure that must follow it: clause, noun/-ing, or new sentence.</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>12 items · 3 categories</p>
     <button className="btn1" onClick={function(){sP("q");}} style={{marginBottom:12}}>Start Sorting</button>
-    <button className="btn2" onClick={function(){setOpenGrim(true);}} style={{width:"100%"}}>📖 Grimoire</button>
+    <button className="btn2" onClick={function(){setOpenGrim(true);}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="bookmarklet" size={18} color="currentColor"/>Grimoire</button>
     {openGrim&&<GrimoireReader grimoire={GRIMOIRE_CONNECTORS} back={function(){setOpenGrim(false);}}/>}
   </div>);
 
@@ -3688,11 +3688,11 @@ function PrepDrill(p){
 
   if(ph==="menu")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
     <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
-    <div style={{fontSize:48,marginBottom:16}}>🎯</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="linked-rings" size={54} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Preposition Collocations</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.5}}>Master the prepositions that go with common business words</p>
     <button className="btn1" onClick={function(){sP("q");}} style={{marginBottom:12}}>Start Drill (12 Qs)</button>
-    <button className="btn2" onClick={function(){sP("study");}} style={{width:"100%"}}>📖 Study Mode</button></div>);
+    <button className="btn2" onClick={function(){sP("study");}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="bookmarklet" size={18} color="currentColor"/>Study Mode</button></div>);
 
   if(ph==="study")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -3792,17 +3792,17 @@ function GerInf(p){
       <div style={{width:40}}/>
     </div>
     <div style={{textAlign:"center",marginBottom:24}}>
-      <div style={{fontSize:48,marginBottom:8}}>{"⚖️"}</div>
+      <div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><GIcon name="scales" size={54} color="var(--cyan)"/></div>
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{GERUND_INF.length} verbs · 4 patterns to master</p>
     </div>
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div className="crd" onClick={function(){setOpenGrim(true);}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📖"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"transparent",border:"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name="bookmarklet" size={28} color="var(--cyan)"/></div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Grimoire</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Learn WHY before you guess</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){resetQuiz();setMode("quiz");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#e11d48,#f59e0b)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📝"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"transparent",border:"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name="quill-ink" size={28} color="var(--cyan)"/></div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Context Quiz</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>TOEIC-style sentences — no more guessing</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
@@ -3820,7 +3820,7 @@ function GerInf(p){
       <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=25?"var(--green)":sc>=18?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{quizItems.length}</div>
       <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
       <button className="btn1" onClick={function(){resetQuiz();sP("q");}}>Play Again</button>
-      <button className="btn2" onClick={function(){setMode("hub");setOpenGrim(true);}} style={{marginTop:10,width:"100%"}}>📖 Open Grimoire</button>
+      <button className="btn2" onClick={function(){setMode("hub");setOpenGrim(true);}} style={{marginTop:10,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="bookmarklet" size={18} color="currentColor"/>Open Grimoire</button>
       <button className="btn2" onClick={function(){setMode("hub");}} style={{marginTop:10,width:"100%"}}>Back</button>
     </div>);}
 
@@ -4171,22 +4171,22 @@ function PhrasalDojo(p){
       <div style={{width:40}}/>
     </div>
     <div style={{textAlign:"center",marginBottom:24}}>
-      <div style={{fontSize:48,marginBottom:8}}>{"⚔️"}</div>
+      <div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><GIcon name="shuriken" size={54} color="var(--cyan)"/></div>
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{PHRASAL_VERBS.length} essential business phrasal verbs<br/>3 training modes</p>
     </div>
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div className="crd" onClick={function(){setOpenGrim(true);}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#5a7a9a,#7a5a80)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"📖"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"transparent",border:"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name="bookmarklet" size={28} color="var(--cyan)"/></div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Grimoire</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Particles, separables, top 20 business</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){resetQuiz();setMode("match");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#22c55e,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"🧠"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"transparent",border:"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name="puzzle" size={28} color="var(--cyan)"/></div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Meaning Match</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Phrasal verb → pick the definition</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
       <div className="crd" onClick={function(){resetQuiz();setMode("picker");}} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px"}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#f59e0b,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{"⚡"}</div>
+        <div style={{width:48,height:48,borderRadius:14,background:"transparent",border:"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name="lightning-bow" size={28} color="var(--cyan)"/></div>
         <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:15}}>Particle Picker</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>Speed round — 8s per question!</div></div>
         <span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span></div>
@@ -4958,7 +4958,7 @@ function FalseFriends(p){
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
     <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
-    <div style={{fontSize:56,marginBottom:16}}>🎭</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="duality-mask" size={60} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>False Friends</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>These English words LOOK like French words but mean something completely different!</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Can you avoid the francophone traps?</p>
