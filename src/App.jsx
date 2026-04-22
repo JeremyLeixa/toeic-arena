@@ -134,9 +134,21 @@ function speakBrowserTTS(text,rate,cb){
 
 // Track the currently-playing listening audio so we can stop it on unmount/Quit.
 // Otherwise audio keeps playing in background after the user exits a listening exercise.
+//
+// GUARD: _audioAborted flag is essential to kill in-flight async sequences.
+// Before this fix, stopListenAudio stopped the CURRENT audio but the async
+// playQuestion()/playP1()/etc sequences kept running their await chain and
+// started the NEXT audio clip after the user had already navigated away
+// (Part 2 bug reported 2026-04-22). Each audio-exercise component must call
+// resumeAudioSession() on mount (via useEffect) to reset the flag, and
+// stopListenAudio() on unmount to abort in-flight sequences.
 var _listenAudio=null;
+var _audioAborted=false;
 function playAudioFile(url){
   return new Promise(function(resolve){
+    // Sequence was aborted (component unmounted) — bail out immediately,
+    // don't create a new Audio object for the next clip in the chain.
+    if(_audioAborted){resolve();return;}
     // Abort any previous audio still playing from this helper
     if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}
     var audio=new Audio(url);
@@ -147,7 +159,11 @@ function playAudioFile(url){
     audio.play().catch(cleanup);
   });
 }
-function stopListenAudio(){if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}}
+function stopListenAudio(){
+  _audioAborted=true;
+  if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}
+}
+function resumeAudioSession(){_audioAborted=false;}
 // Preload voices (some browsers need this)
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){_voices=null;getEnVoice();};}
 
@@ -368,7 +384,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-gauntlet-full-chests";
+var BUILD_ID="2026-04-22-audio-leak-fix";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -5124,7 +5140,7 @@ function BossTest(p){
   var[revMode,setRevMode]=useState(false);
   var[revSec,setRevSec]=useState("p1");
   var[revIdx,setRevIdx]=useState(0);
-  useEffect(function(){return stopListenAudio;},[]);
+  useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
   var timerRef=useRef(null);
 
   useEffect(function(){
@@ -5722,7 +5738,7 @@ function EndlessArena(p){
 
   function saveSession(a,s,q,sq,tl){try{localStorage.setItem(ENDLESS_STORAGE_KEY,JSON.stringify({date:today(),ans:a,sec:s,qi:q,sqi:sq,timeLeft:tl}));}catch(e){}}
   function clearSession(){try{localStorage.removeItem(ENDLESS_STORAGE_KEY);}catch(e){}}
-  useEffect(function(){return stopListenAudio;},[]);
+  useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
   var[result,setResult]=useState(null);
   var[aState,setAState]=useState("ready");
   var[curOpt,setCurOpt]=useState(-1);
@@ -10115,7 +10131,7 @@ function ListenP2(p){
   var items=useMemo(function(){return shuffle(LISTENING_P2).slice(0,10);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);
-  useEffect(function(){return stopListenAudio;},[]);
+  useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
 
   async function playQuestion(){
     if(playing)return;
@@ -10216,7 +10232,7 @@ function ListenP1(p){
   var items=useMemo(function(){return shuffle(LISTENING_P1).slice(0,10);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curOpt,setCurOpt]=useState(-1);
-  useEffect(function(){return stopListenAudio;},[]);
+  useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
 
   async function playStatements(){
     if(playing)return;
@@ -10326,7 +10342,7 @@ function ListenP3(p){
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curLine,setCurLine]=useState(-1);
-  useEffect(function(){return stopListenAudio;},[]);
+  useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
 
   var totalQs=useMemo(function(){var c=0;items.forEach(function(it){c+=it.qs.length;});return c;},[]);
 
@@ -10433,7 +10449,7 @@ function ListenP4(p){
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);
-  useEffect(function(){return stopListenAudio;},[]);
+  useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
 
   var totalQs=useMemo(function(){var c=0;items.forEach(function(it){c+=it.qs.length;});return c;},[]);
 
