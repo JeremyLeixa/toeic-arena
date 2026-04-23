@@ -11988,6 +11988,29 @@ export default function App(){
   var[pendingChestCount,setPendingChestCount]=useState(0);var[chestModal,setChestModal]=useState(null);var[chestResult,setChestResult]=useState(null);var[chestPending,setChestPending]=useState([]);
   var[chestToastQueue,setChestToastQueue]=useState([]);var[activeChestToast,setActiveChestToast]=useState(null);var chestToastIdRef=useRef(0);
   var[showTip,setShowTip]=useState(false);
+  // ─── Narrator queue (Aldric narrative moments) ───
+  var[narratorQueue,setNarratorQueue]=useState([]);
+  var currentNarratorMoment=narratorQueue.length>0?NARRATOR_MOMENTS[narratorQueue[0]]:null;
+  // Idempotent push: no-op if unknown id, already-heard, or already queued
+  function pushNarratorMoment(uu,momentId){
+    if(!NARRATOR_MOMENTS[momentId])return;
+    if(hasHeardMoment(uu,momentId))return;
+    setNarratorQueue(function(q){if(q.indexOf(momentId)!==-1)return q;return q.concat([momentId]);});
+  }
+  function dismissNarratorMoment(){
+    setNarratorQueue(function(q){
+      if(q.length===0)return q;
+      var momentId=q[0];
+      // Mutate+save the user profile so Supabase persists the "heard" record.
+      // Use functional setter on u via sU to stay consistent with other mutations.
+      if(u){
+        var u2=JSON.parse(JSON.stringify(u));
+        markMomentHeard(u2,momentId);
+        sU(u2);save(u2);
+      }
+      return q.slice(1);
+    });
+  }
   useEffect(function(){
     if(!xpt||sp)return;
     var t=setTimeout(function(){sXpt(null);},4000);
@@ -12718,7 +12741,7 @@ var prevLeague=getLeague(c.weeklyXp);
       </button>
     </div>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}<div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/><div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
 
   if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
   if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
@@ -12790,6 +12813,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="lisP4")return pg(<ListenP4 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP4");}} back={function(){sSP("lis");}}/>);
 
   return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
+    <NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
