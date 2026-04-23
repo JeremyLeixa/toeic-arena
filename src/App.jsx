@@ -475,6 +475,7 @@ function supaToLocal(data){
     email: data.email || null,
     accessLevel: data.access_level || 'free',
     accessExpiresAt: data.access_expires_at || null,
+    narrator: data.narrator || {heard:[], muted:false},
   };
 }
 
@@ -601,6 +602,7 @@ async function save(d){
     email:d.email||null,
     access_level:d.accessLevel||'free',
     access_expires_at:d.accessExpiresAt||null,
+    narrator:d.narrator||{heard:[],muted:false},
   };
   var cc=d.classCode||"visitor";
   try{
@@ -664,7 +666,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false}};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
