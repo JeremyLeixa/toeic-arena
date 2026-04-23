@@ -418,7 +418,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-xp-toast-pg-fix";
+var BUILD_ID="2026-04-22-gauntlet-xp-rebalance";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1277,8 +1277,11 @@ function IrregularCrypt(p){
   function finishSession(){
     var totalFull=results.filter(function(r){return r.v2Ok&&r.v3Ok;}).length;
     var totalPartial=results.filter(function(r){return(r.v2Ok||r.v3Ok)&&!(r.v2Ok&&r.v3Ok);}).length;
-    var baseXp=totalFull*2+totalPartial+10;
-    if(totalFull===deck.length)baseXp+=20;
+    // Gauntlet XP tier B: base 15 + 5 per full + 2 per partial + 35 perfect bonus.
+    // Aligned with the other 3 Gauntlet sub-modules and the 15 Q tier at large.
+    // Preserves the partial-credit granularity unique to Irregular Crypt.
+    var baseXp=totalFull*5+totalPartial*2+15;
+    if(totalFull===deck.length)baseXp+=35;
     p.done(totalFull,deck.length,baseXp);
   }
 
@@ -1405,8 +1408,11 @@ function Chronomancer(p){
   }
   function finishSession(){
     var correct=results.filter(function(r){return r.ok;}).length;
-    var baseXp=correct*3+10;
-    if(correct===deck.length)baseXp+=25;
+    // Gauntlet XP tier B: base 15 + 5 per correct + 35 perfect bonus.
+    // Aligned with Word Tavern / SentenceBuilder / Phrasal Picker (15 Q tier)
+    // to match the difficulty of the module (typed answers, strict timer).
+    var baseXp=correct*5+15;
+    if(correct===deck.length)baseXp+=35;
     p.done(correct,deck.length,baseXp);
   }
 
@@ -1566,8 +1572,11 @@ function PassiveForge(p){
   }
   function finishSession(){
     var correct=results.filter(function(r){return r.ok;}).length;
-    var baseXp=correct*3+10;
-    if(correct===deck.length)baseXp+=25;
+    // Gauntlet XP tier B: base 15 + 5 per correct + 35 perfect bonus.
+    // Aligned with Word Tavern / SentenceBuilder / Phrasal Picker (15 Q tier)
+    // to match the difficulty of the module (typed answers, strict timer).
+    var baseXp=correct*5+15;
+    if(correct===deck.length)baseXp+=35;
     p.done(correct,deck.length,baseXp);
   }
   // Timer
@@ -1722,8 +1731,11 @@ function RelativeWeaver(p){
   }
   function finishSession(){
     var correct=results.filter(function(r){return r.ok;}).length;
-    var baseXp=correct*3+10;
-    if(correct===deck.length)baseXp+=25;
+    // Gauntlet XP tier B: base 15 + 5 per correct + 35 perfect bonus.
+    // Aligned with Word Tavern / SentenceBuilder / Phrasal Picker (15 Q tier)
+    // to match the difficulty of the module (typed answers, strict timer).
+    var baseXp=correct*5+15;
+    if(correct===deck.length)baseXp+=35;
     p.done(correct,deck.length,baseXp);
   }
   function renderWithBlank(s){
