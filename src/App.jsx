@@ -11032,7 +11032,11 @@ useEffect(function(){
 // Auto-refresh leaderboard every 30s when on League tab
 useEffect(function(){
   var iv=setInterval(function(){
-    supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history').eq('class_code',leagueGroup).limit(50)
+    // IMPORTANT : garder le même SELECT que la fetch initiale (ligne ~11028)
+    // Sinon chaque tick de 3 min écrase `rivals` SANS module_scores ni battle_scan,
+    // ce qui fait retomber tout le monde à baseline 200 / currentToeic 200 dans
+    // l'onglet Progrès. Régression du 2026-04-23.
+    supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan').eq('class_code',leagueGroup).limit(150)
       .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
   },180000);
   return function(){clearInterval(iv);};
@@ -11325,8 +11329,23 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 // a genuinely strong starter will exceed this once real module training
 // bumps their currentToeic up.
 function battleScanToToeic(bs){
-  if(!bs||typeof bs.total!=="number")return 200;
-  var t=Math.max(0,Math.min(20,bs.total));
+  if(!bs)return 200;
+  // Defense: some older Supabase clients return jsonb as a string. Try to
+  // parse before giving up.
+  if(typeof bs==="string"){
+    try{bs=JSON.parse(bs);}catch(e){console.warn("[battleScan] parse failed:",e&&e.message);return 200;}
+  }
+  // Fallback: if total is missing but scores object is there, recompute it.
+  // Older scan payloads in the wild may lack a top-level total.
+  var t=null;
+  if(typeof bs.total==="number")t=bs.total;
+  else if(bs.scores&&typeof bs.scores==="object"){
+    var s=bs.scores;
+    var g=+s.grammar||0,v=+s.vocab||0,r=+s.reading||0,l=+s.listening||0;
+    t=g+v+r+l;
+  }
+  if(t===null||isNaN(t))return 200;
+  t=Math.max(0,Math.min(20,t));
   return Math.round(200+(t/20)*400);
 }
 
