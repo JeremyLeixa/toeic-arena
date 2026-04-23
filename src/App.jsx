@@ -2116,22 +2116,30 @@ function NarratorOverlay(props) {
           fontStyle: "italic", letterSpacing: 1.5, marginBottom: 14
         }}>{"\u2014 " + moment.subtitle + " \u2014"}</div>
 
+        {/* "His words" box — fixed height sized for 3 lines of subtitle at
+            fontSize 14 × lineHeight 1.65 (~69px) + header + padding. Keeps
+            the parchment layout stable across subtitles of varying length.
+            Text is vertically centered via flex so 1-line and 3-line subtitles
+            both sit cleanly in the middle. */}
         <div style={{
           padding: "12px 18px", margin: "0 4px 14px",
-          minHeight: 72,
+          height: 118,
+          display: "flex", flexDirection: "column",
           borderTop: "1px solid rgba(90,58,20,0.25)",
           borderBottom: "1px solid rgba(90,58,20,0.25)"
         }}>
           <div className="out" style={{
             fontSize: 8, letterSpacing: 2.5, color: "#8a6530",
-            textTransform: "uppercase", marginBottom: 6, textAlign: "center", fontWeight: 700
+            textTransform: "uppercase", marginBottom: 6, textAlign: "center", fontWeight: 700,
+            flexShrink: 0
           }}>{"\u25c6 His words \u25c6"}</div>
           <div style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
             fontFamily: "Georgia,serif", fontSize: 14, color: "#3a2410",
             lineHeight: 1.65, fontStyle: "italic", textAlign: "center",
-            minHeight: 40, transition: "opacity 0.3s"
+            overflow: "hidden"
           }} key={activeSub ? activeSub.from : "init"}>
-            {activeSub ? activeSub.text : ""}
+            <span>{activeSub ? activeSub.text : ""}</span>
           </div>
         </div>
 
