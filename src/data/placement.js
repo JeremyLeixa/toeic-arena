@@ -98,7 +98,7 @@ export var MISSION_MODULES=[
   {id:"lisP1",name:"Listening Part 1",icon:"🖼️",reason:"Photo description"},
   {id:"lisP2",name:"Listening Part 2",icon:"🎧",reason:"Q&A listening"},
   {id:"lisP3",name:"Listening Part 3",icon:"💬",reason:"Conversations"},
-  {id:"lisP4",name:"Listening Part 4",icon:"📢",reason:"Monologues"},
+  {id:"lisP4",name:"Listening Part 4",icon:"public-speaker",reason:"Monologues"},
   {id:"sbuild",name:"Sentence Builder",icon:"🔀",reason:"Sentence structure"},
   {id:"ablitz",name:"Audio Blitz",icon:"⚡",reason:"Listening speed"},
   {id:"clue",name:"Clue Hunter",icon:"🔍",reason:"Grammar clue detection"},

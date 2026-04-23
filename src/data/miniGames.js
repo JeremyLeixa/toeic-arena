@@ -534,7 +534,7 @@ export var STRATEGIES = [
       {t:"Wrong objects = eliminate",d:"If an answer mentions something NOT visible in the photo, it's wrong. Simple but effective."},
       {t:"Count the people",d:"Photo shows ONE person? Any answer with 'they' or 'people' is automatically wrong."},
   ]},
-  {part:"Part 2",title:"Question-Response",qs:25,icon:"💬",section:"Listening",
+  {part:"Part 2",title:"Question-Response",qs:25,icon:"chat-bubble",section:"Listening",
     points:"High-value: 25 quick points. Train your ear!",
     tips:[
       {t:"First word is everything",d:"WHO → person. WHEN → time. WHERE → place. WHY → reason. HOW → manner/quantity. If the answer doesn't match the question type, eliminate."},

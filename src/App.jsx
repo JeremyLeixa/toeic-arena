@@ -1079,7 +1079,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .gauntlet-card-desc{font-size:13px;color:var(--t3);margin-bottom:10px;line-height:1.5}
 .gauntlet-card-stats{display:flex;gap:10px;font-size:11px;color:var(--t3);margin-bottom:12px;opacity:.85}
 .gauntlet-card-actions{display:flex;gap:8px}
-.gauntlet-btn-enter{flex:1;background:linear-gradient(135deg,#7c3aed,#c026d3);color:#fff;border:none;border-radius:12px;padding:12px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:14px;cursor:pointer;letter-spacing:.3px}
+.gauntlet-btn-enter{flex:1;background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));color:#0f0c08;border:none;border-radius:12px;padding:12px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:14px;cursor:pointer;letter-spacing:.3px}
 .gauntlet-btn-grim{background:rgba(var(--cx),.1);color:var(--cyan);border:1px solid rgba(var(--cx),.3);border-radius:12px;padding:12px 14px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
 .gauntlet-btn-grim:active{background:rgba(var(--cx),.22)}
 .icrypt-input:focus{border-color:#c026d3!important;box-shadow:0 0 0 3px rgba(192,38,211,.2)}
@@ -1301,7 +1301,7 @@ function IrregularCrypt(p){
           <div>{"\u270D\uFE0F"} Type <strong>V2</strong> (past) and <strong>V3</strong> (past participle)</div>
           <div>{"\uD83C\uDFC6"} <strong>2 XP</strong> per mastered verb · perfect bonus</div>
         </div>
-        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start the raid"}</button>
+        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start the raid"}</button>
       </div>
     </div>);
   }
@@ -1460,7 +1460,7 @@ function Chronomancer(p){
           <div>{"\uD83D\uDD8D\uFE0F"} Temporal marker in <span style={{color:"#c026d3",fontWeight:700}}>purple</span></div>
           <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> per correct answer · perfect bonus</div>
         </div>
-        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
+        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
       </div>
     </div>);
   }
@@ -1611,7 +1611,7 @@ function PassiveForge(p){
           <div>{"\u23F1\uFE0F"} <strong>30 seconds</strong> per question</div>
           <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> per correct answer · perfect bonus</div>
         </div>
-        <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
+        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
       </div>
     </div>);
   }
@@ -1774,7 +1774,7 @@ function RelativeWeaver(p){
           <div>{"\uD83D\uDD0D"} Defining, non-defining, reduced, whose</div>
           <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> per correct answer · perfect bonus</div>
         </div>
-        <button className="btn1" style={{background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
+        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
       </div>
     </div>);
   }
@@ -3203,7 +3203,7 @@ return(
         border:"1px solid rgba(255,215,0,.2)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-          <span style={{fontSize:22}}>{m.icon}</span>
+          <span style={{fontSize:22,width:26,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{GAME_ICON_PATHS[m.icon]?<GIcon name={m.icon} size={22} color="var(--cyan)"/>:m.icon}</span>
           <div style={{minWidth:0,flex:1}}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
               <span className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)"}}>Daily Quest</span>
@@ -3302,7 +3302,7 @@ return(
       <div style={{padding:"16px 18px 14px"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <span style={{fontSize:16}}>{todayTip.icon}</span>
+            <span style={{fontSize:16,display:"inline-flex",alignItems:"center"}}>{GAME_ICON_PATHS[todayTip.icon]?<GIcon name={todayTip.icon} size={18} color="var(--cyan)"/>:todayTip.icon}</span>
             <span className="out" style={{fontSize:10,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>Tip of the day — {todayTip.part}</span>
           </div>
           <svg viewBox="0 0 512 512" width="14" height="14" style={{color:"var(--t3)",display:"inline-block",verticalAlign:"middle"}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS["candle-flame"]||""}}/></svg>
@@ -10099,7 +10099,7 @@ function TeacherDash(p){
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {classModData.slice().sort(function(a,b){return a.accuracy-b.accuracy;}).slice(0,3).map(function(m,i){
             return(<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0"}}>
-              <span style={{fontSize:12,color:"var(--t2)"}}>{MISSION_MODULES.find(function(mm){return mm.id===m.id;})?MISSION_MODULES.find(function(mm){return mm.id===m.id;}).icon:""} {m.fullName}</span>
+              {(function(){var mm=MISSION_MODULES.find(function(x){return x.id===m.id;});var ic=mm&&mm.icon;return(<span style={{fontSize:12,color:"var(--t2)",display:"inline-flex",alignItems:"center",gap:6}}>{ic?(GAME_ICON_PATHS[ic]?<GIcon name={ic} size={14} color="var(--t2)"/>:<span>{ic}</span>):null}{m.fullName}</span>);})()}
               <span className="out" style={{fontWeight:700,fontSize:13,color:m.accuracy>=50?"var(--orange)":"var(--red)"}}>{m.accuracy}%</span>
             </div>);
           })}
