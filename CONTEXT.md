@@ -6,7 +6,69 @@
 
 ---
 
-## Last session: 2026-04-22 (session "loving-merkle" — Grammar Gauntlet build + G&V overhaul)
+## Last session: 2026-04-22 evening (session "focused-chaum" — Icon refactor + XP rebalance)
+
+**21 commits.** Complete cosmetic refactor of the icon system (emojis → SVG game-icons), plus two gameplay fixes surfaced along the way.
+
+### Icon refactor — 60 SVG game-icons migrated from emoji
+
+**Infra**
+- New `<GIcon name size color block style/>` helper in `App.jsx` (line ~174) for inline SVG rendering.
+- `GAME_ICON_PATHS` in `src/data/avatarIcons.js` extended to **60 entries** (from 1 to 60).
+- All game-icons.net SVGs fetched via a Python script (Iconify API), stripped to just the `<path fill="currentColor" d="..."/>`, stored as JS string values.
+
+**Zones migrated**
+- **Tab bar** (5 icons): castle / bullseye / coliseum / laurel-crown / visored-helm. V5 bg style: gradient fade to `var(--bg3)` + skin-tinted top border; inactive icons `var(--t1)` @ .55 opacity for legibility in both light and dark modes.
+- **Home** (6 icons): star-formation · progression · path-distance (stats) · card-joker · ink-swirl (quick start) · candle-flame (tip).
+- **Train sections & items** (~30 icons): crossed-swords / bookshelf / scroll-unfurled / treasure-map (sections) · sunrise / ringing-bell / bookmarklet (exercises) · card-joker / gauntlet / family-tree / duality-mask / knot / linked-rings / scales / shuriken (G&V) · scroll-quill (mocks) · info / card-pick / brain / trap-mask / book-aura (tips).
+- **Boss + Endless**: dragon-spiral + infinity (main cards + decorative bg + nav pills).
+- **Games** (7 icons): beer-stein / chained-arrow-heads / meteor-impact / brick-pile / lyre / spyglass / swords-emblem.
+- **Listening / Reading hubs + intros** (8 icons): ringing-bell / bookmarklet (heroes) · eye-target (P1) · conversation (P2 & P3) · public-speaker (P4) · quill-ink (P5 drill) · sands-of-time (P5 sim) · stone-tablet (P6) · bookmark (P7).
+- **Module intros (G&V)**: knot (ConnSort) · linked-rings (PrepDrill) · scales (GerInf) · shuriken (PhrasalDojo) · duality-mask (FalseFriends) · gauntlet (Gauntlet hub).
+- **Mode tiles**: bookmarklet (Grimoire) · quill-ink (Context Quiz) · puzzle (Meaning Match) · lightning-bow (Particle Picker) · dungeon-gate (Entrer Gauntlet).
+- **Gauntlet sub-module data + intros**: tombstone / clockwork / anvil-impact / spider-web.
+- **Profile tiles** (3 icons): rune-stone (Stats) · trophy-cup (Achievements) · gem-necklace (Collection). Style tile keeps avatar preview.
+
+### Tile design pattern (unified)
+Module-item tiles (Games 48×48, Train sub-view 42×42, Listen/Reading Hub 42×42, Mock sub-view, Mock Exams hero) unified to:
+- `background: linear-gradient(135deg, rgba(var(--cx),.22), transparent)` (V10 diagonal skin tint)
+- `border: 1.5px solid var(--cyan)` (skin-aware)
+- Icon color `var(--cyan)`
+- Visitor-locked state: transparent bg + `var(--bdr)` border + `var(--t3)` icon
+
+**Kept distinctive** (signal value): Boss red, Endless blue, Home stats pills (gold/cyan/purple), Style avatar tile.
+
+### CSS tokens added
+- `--bg-rgb` / `--bg2-rgb` / `--bg3-rgb` in both `:root` and `.light` → lets any `rgba(var(--bgN-rgb), alpha)` gradient follow the mode.
+- `.gauntlet-btn-grim` migrated from hardcoded beige to `rgba(var(--cx),...)` / `var(--cyan)` so Grimoire buttons are readable on light mode.
+
+### Two fixes along the way
+
+**1. XP toast silent on Gauntlet** — `pg()` wrapper (`sp===X` routes) did not render `<XpToast>` / `<AchToast>`. Most modules masked the bug because their done-button navigates to Train (sp=null) where the toast IS rendered. The Gauntlet stays on `sp==="gauntlet"` after a sub-module ends → toast never hits the DOM. **Fix**: render both toasts inside `pg()`.
+
+**2. TTS silent on Flashcards after a Listen session** — regression from 737c780 + 54375c0 audio-leak commits: `speak()` checks `_audioAborted` at entry, and Flashcards / Word Tavern / SpeakBtn don't mount the `resumeAudioSession()` useEffect that resets it. **Fix**: `SpeakBtn.go()` calls `resumeAudioSession()` before `speak()` — user click implies any prior abort chain is done.
+
+### Gauntlet XP rebalance — tier B
+
+Jérémy flagged the feeling that Gauntlet pays less than peers. Verified: Irregular was 4 XP/Q (60 max), the 3 others 5.33 XP/Q (80 max), vs Word Tavern 7.33 (110), SentenceBuilder 6.33 (95), Phrasal Picker 6.67 (100) — all 15 Q peers paid more despite being easier. **New formula** applied to all 4 sub-modules:
+- Chronomancer / Passive Forge / Relative Weaver: `15 + 5×correct` +35 perfect → **max 125**
+- Irregular Crypt: `15 + 5×full + 2×partial` +35 perfect → **max 125** (keeps partial-credit)
+
+Now the Gauntlet is the best-paying 15 Q module (reflects actual difficulty: typed answers, 30s timer, complex transforms).
+
+### Prototypes produced (all in `prototypes/`)
+`tab-icons/` · `home-icons/` · `train-games-icons/` · `module-intro-icons/` · `parts-icons/` · `profile-icons/` · `tile-bg-nuances/` · `tabbar-style/` — standalone HTML with Iconify CDN + skin/mode toggles used to pick each icon set.
+
+### Key learnings
+- **Python string escapes for emoji ≠ JSX source encoding**: the same emoji can appear as literal codepoint (`\U0001F409`), as a surrogate-pair escape inside the JS source (`\\uD83D\\uDC09`), or with / without `\uFE0F` variation selector. First pass of the Train+Games swap silently failed on ~30 patterns for this reason. Solution: regex keyed on structural anchors (`{id:"X"}` / `{key:"X"}`), independent of the emoji bytes.
+- **Always verify via grep after a bulk script reports "OK"** — the script returning "Applied: 36/42" was technically accurate but misleading: most of the 36 were the trivially-matching ones; the real critical patterns didn't match.
+
+### Previous session wrap-up (2026-04-22 afternoon)
+Session "loving-merkle" — see archive section below. Gauntlet build complete (270 items, 4 sub-modules, 16 achievements) + G&V overhaul (3 grimoires, menu reorder, back button unification, audio leak flag).
+
+---
+
+## Earlier session: 2026-04-22 afternoon (session "loving-merkle" — Grammar Gauntlet build + G&V overhaul)
 
 Session majeure S2 consacrée au **chantier Grammar Gauntlet** (nouveau module morpho-syntaxe) et à l'**harmonisation G&V** (grimoires, back buttons, reorder, i18n). **22 commits**. Tous livrés, buildés, pushés, stables en prod. Teacher Dashboard et Onboarding inchangés. Monetization en pause (bug visitor de la session précédente reste à débugger — voir section archive ci-dessous).
 
@@ -167,12 +229,8 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 
 ## What's next (not started)
 
-### 🎨 Icons identity chantier (requested 2026-04-22 — NEXT SESSION)
-Jérémy a clôturé la session Gauntlet en flaggant l'incohérence emoji :
-- Un éclair ⚡ pour Home n'a pas de sens
-- Certaines icônes sont anachroniques (mégaphone, etc.)
-- Zéro cohérence inter-modules
-Direction : probable medieval-fantasy-adventure (cohérent avec Gauntlet/grimoires). Audit + migration progressive. Infra existante à réutiliser : `src/data/avatarIcons.js` (Iconify SVG paths). Voir `memory/project_next_chantier_icons.md`.
+### ✅ Icons identity chantier (COMPLETE 2026-04-22 evening)
+60 SVG game-icons migrated from emoji across the whole app — tab bar, Home, Train, Games, Listening, Reading, Gauntlet, Profile. See latest session section above for details. `<GIcon/>` helper + `GAME_ICON_PATHS` infra is now ready for any future icon addition.
 
 ### ✅ Decisions resolved (2026-04-17)
 - **Reset leaderboard S1→S2** — **reset partiel** (modalités précises à définir)
@@ -225,4 +283,4 @@ Direction : probable medieval-fantasy-adventure (cohérent avec Gauntlet/grimoir
 
 ---
 
-_Last updated: 2026-04-22 · session "loving-merkle" (Grammar Gauntlet complet + 3 grimoires G&V + UX harmonization + audio leak fix). Next: icons identity chantier._
+_Last updated: 2026-04-22 evening · session "focused-chaum" (icon refactor complete — 60 game-icons, tile design unification, tab bar V5 light/dark, Gauntlet XP rebalance tier B, 2 bugs fixed: TTS silent after Listen + XP toast missing on sp routes). Next: open — chantier cosmétique icônes bouclé._

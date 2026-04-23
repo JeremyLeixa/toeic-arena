@@ -239,9 +239,34 @@ prototypes/
 ### Audio abort flag (listening modules)
 - Multi-clip async sequences (Listen P1/P2/P3/P4, Boss Test, Endless Arena) MUST use the module-level `_audioAborted` flag to abort in-flight chains on unmount.
 - `playAudioFile(url)` checks `_audioAborted` at entry and resolves immediately if true.
-- `stopListenAudio()` sets the flag + pauses current audio.
+- `stopListenAudio()` sets the flag + pauses current audio + cancels `speechSynthesis` (audio-leak fix 2026-04-22).
 - `resumeAudioSession()` clears the flag. Call it on component mount: `useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);`.
 - Without this pattern, the async sequence keeps creating new Audio objects after the user navigates away (bug fixed 2026-04-22, regression risk).
+- **User-initiated speak() must call resumeAudioSession() first**: `speak()` / `speakAndWait()` bail out early if `_audioAborted` is true. Components that play audio on click WITHOUT mounting a `resumeAudioSession` useEffect (SpeakBtn, Flashcards, Word Tavern) need to reset the flag themselves at click time — otherwise any prior Listen unmount leaves the flag set and they stay silent. `SpeakBtn.go()` handles this centrally.
+
+### Icon system (2026-04-22)
+- **`<GIcon name size color block style/>`** — inline SVG helper at top of `App.jsx` (~line 174). Renders an Iconify `game-icons:` path from `GAME_ICON_PATHS`. `color` defaults to `currentColor`. Use skin-aware `var(--cyan)` for module content; specific hex for signaling (e.g. gold for achievements).
+- **`GAME_ICON_PATHS`** in `src/data/avatarIcons.js` — 60+ entries, format `"name":"<path fill=\"currentColor\" d=\"...\"/>"`. ViewBox is always `0 0 512 512` (game-icons standard). Add new paths via the Iconify API: `https://api.iconify.design/game-icons/NAME.svg`.
+- **Fallback-friendly render pattern**: `{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} ...\/>:m.i}`. This lets modules migrate incrementally — any item still on emoji renders as emoji. Used everywhere data arrays use `i:` for an icon key.
+- **Unified tile design** (Games 48×48, Train sub-view 42×42, Listen/Reading Hub 42×42, Mock sub-view, Mock Exams hero):
+  - `background: linear-gradient(135deg, rgba(var(--cx),.22), transparent)` (V10 tint — picked in `prototypes/tile-bg-nuances/`)
+  - `border: 1.5px solid var(--cyan)`
+  - Icon `color="var(--cyan)"` (skin-aware)
+  - Visitor-locked: transparent bg + `var(--bdr)` border + `var(--t3)` icon
+  - Featured tiles kept colored for signal: Boss red / Endless blue / Home stats pills.
+- **Mode-aware bg gradients**: `rgba(var(--bg3-rgb), alpha)` works in both dark and light. `--bg-rgb`, `--bg2-rgb`, `--bg3-rgb` are defined in both `:root` and `.light`. Prefer these over hardcoded `rgba(15,12,8,...)`.
+- **Bulk emoji→SVG migration rule** — never use Python string literals with `\uXXXX` escapes to match emojis across the codebase. The source encodes emojis inconsistently (literal codepoint vs surrogate-pair escape `\\uD83D\\uDC09` vs with/without `\uFE0F`). Use regex keyed on **structural anchors** (`{id:"X"}`, `{key:"X"}`, distinctive surrounding text) that are independent of the emoji bytes. And verify via grep AFTER the script reports success — "Applied: 36/42" can be technically true while most of the 36 were trivial and the critical patterns silently missed.
+
+### XP toast rendering in sub-pages
+- `<XpToast>` and `<AchToast>` MUST be rendered inside `pg()` (the wrapper for `sp===X` sub-page routes), not only in the main return.
+- Rationale: if a module earns XP without navigating back to the main return (e.g. Gauntlet sub-module → GauntletHub stays on `sp==="gauntlet"`), the toast is set by `addXp()` but never reaches the DOM until the user manually navigates home, by which time the 4s timer has expired.
+- The fix landed 2026-04-22 alongside the icon refactor.
+
+### Gauntlet XP tier (2026-04-22 rebalance)
+- 15 Q per sub-module, base 15 + 5 × correct + 35 perfect bonus → max 125 XP per run.
+- Irregular Crypt keeps partial-credit granularity: `15 + 5×full + 2×partial` + 35 perfect.
+- The other 3 (Chronomancer / Passive Forge / Relative Weaver): `15 + 5×correct` + 35 perfect.
+- Rationale: old formulas (Irregular 60 max, others 80) under-paid the Gauntlet vs peer 15 Q modules (Word Tavern 110, Phrasal Picker 100, SentenceBuilder 95) despite being harder (typed answers, 30s timer, complex transforms). New tier B puts Gauntlet at the top of the 15 Q bracket.
 
 ---
 
