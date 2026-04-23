@@ -11429,6 +11429,56 @@ function Profile(p){
     </button>);
   }
 
+  // ── SUB-VIEW : CHRONICLES — replay unlocked narrator moments ────────────
+  if(view==="chronicles"){
+    var heard=(u.narrator&&u.narrator.heard)||[];
+    var unlockedOrdered=NARRATOR_ORDER.filter(function(id){return heard.indexOf(id)!==-1;});
+    var romanForOrder=function(n){return["I","II","III","IV","V","VI","VII","VIII"][n-1]||String(n);};
+    return(
+    <div className="enter" style={{padding:"20px 16px 100px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+        <button onClick={function(){setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>{"\u2190"}</button>
+        <h1 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:20,margin:0}}>Chronicles</h1>
+      </div>
+      <p style={{fontSize:12,color:"var(--t2)",marginTop:0,marginBottom:20,lineHeight:1.5}}>
+        {"Revivez les moments-cl\u00e9s narr\u00e9s par Aldric. "+unlockedOrdered.length+"/"+NARRATOR_ORDER.length+" d\u00e9bloqu\u00e9s."}
+      </p>
+      {unlockedOrdered.length===0?(
+        <div className="crd" style={{padding:"24px 18px",textAlign:"center"}}>
+          <div style={{fontSize:32,marginBottom:10,opacity:.5}}>{"\uD83D\uDCDC"}</div>
+          <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:6}}>No chapters yet</div>
+          <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>
+            {"Entra\u00eenez-vous, ouvrez des coffres, gravissez les ligues — Aldric interviendra aux moments-cl\u00e9s."}
+          </div>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {unlockedOrdered.map(function(id){
+            var m=NARRATOR_MOMENTS[id];
+            return(
+              <button key={id} onClick={function(){if(p.replayNarrator)p.replayNarrator(id);}} style={{
+                display:"flex",alignItems:"center",gap:12,
+                padding:"12px 14px",
+                background:"linear-gradient(135deg,rgba(232,212,168,0.06),rgba(138,112,64,0.04))",
+                border:"1px solid rgba(180,150,100,0.25)",
+                borderRadius:10,cursor:"pointer",textAlign:"left",width:"100%"
+              }}>
+                <span className="out" style={{fontSize:11,color:"var(--gold)",fontFamily:"'Cinzel',serif",letterSpacing:1.5,fontWeight:800,minWidth:36,textAlign:"center"}}>
+                  {romanForOrder(m.order)}
+                </span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="out" style={{fontSize:14,fontWeight:700,color:"var(--t1)",fontFamily:"'Cinzel',serif",letterSpacing:.5}}>{m.title}</div>
+                  <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>{m.chapterTitle}</div>
+                </div>
+                <span style={{fontSize:14,color:"var(--gold)",flexShrink:0}}>{"\u25b6"}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>);
+  }
+
   // ── SUB-VIEW : STATS ────────────────────────────────────────────────────
   if(view==="stats")return(
     <div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -11885,6 +11935,25 @@ function Profile(p){
         👨‍🏫 Teacher Dashboard
       </button>}
 
+      {/* Chronicles — entry card (parchment themed) */}
+      {(function(){
+        var heard=(u.narrator&&u.narrator.heard)||[];
+        var cnt=heard.length;
+        return(<button onClick={function(){setView("chronicles");}} className="crd"
+          style={{width:"100%",padding:"14px 16px",marginBottom:20,textAlign:"left",cursor:"pointer",
+            background:"linear-gradient(135deg,rgba(232,212,168,0.08),rgba(138,112,64,0.05))",
+            border:"1px solid rgba(180,150,100,0.3)",display:"flex",alignItems:"center",gap:12}}>
+          <span style={{fontSize:26,flexShrink:0}}>{"\uD83D\uDCDC"}</span>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:15,color:"var(--t1)",letterSpacing:.5}}>Chronicles</div>
+            <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>
+              {cnt===0?"Aucun chapitre d\u00e9bloqu\u00e9 pour l'instant":"Revoir la chronique d'Aldric \u00b7 "+cnt+"/"+NARRATOR_ORDER.length+" chapitres"}
+            </div>
+          </div>
+          <span style={{fontSize:18,color:"var(--gold)",flexShrink:0}}>{"\u203A"}</span>
+        </button>);
+      })()}
+
       {/* Settings */}
       <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Settings</div>
       <div className="crd" style={{padding:0,overflow:"hidden",marginBottom:20}}>
@@ -11902,6 +11971,21 @@ function Profile(p){
           </div>
           {Toggle(soundOn,function(){var cur=isSoundEnabled();setSoundEnabled(!cur);setSoundOn(!cur);if(!cur)try{playCorrect();}catch(e){}if(cur)stopBGM();})}
         </div>
+        {(function(){
+          var narratorMuted=!!(u.narrator&&u.narrator.muted);
+          return(<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:"1px solid var(--bdr)"}}>
+            <div>
+              <div className="out" style={{fontWeight:700,fontSize:14}}>Narrator voice</div>
+              <div style={{fontSize:12,color:"var(--t2)"}}>{narratorMuted?"Sous-titres uniquement":"Voix d'Aldric activ\u00e9e"}</div>
+            </div>
+            {Toggle(!narratorMuted,function(){
+              var c=JSON.parse(JSON.stringify(u));
+              if(!c.narrator)c.narrator={heard:[],muted:false};
+              c.narrator.muted=!c.narrator.muted;
+              p.setAvatar(c);
+            })}
+          </div>);
+        })()}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:("PushManager" in window)?"1px solid var(--bdr)":"none"}}>
           <div>
             <div className="out" style={{fontWeight:700,fontSize:14}}>Conseils TOEIC</div>
@@ -12078,6 +12162,38 @@ useEffect(function(){
 			if(!d.unlockedAch)d.unlockedAch=[];
 			if(!d.avatar)d.avatar="⚔️";
 			if(!d.theme)d.theme="dark";
+            // ─── NARRATOR BOOTSTRAP (one-time, existing students only) ───
+            // Pre-narrator students shouldn't get 5 popups queued on first load.
+            // If they already satisfy trigger conditions, silently mark those
+            // moments as heard so they're accessible via Chronicles without
+            // playing live. Conditions: narrator.heard empty + xp>0 (i.e. the
+            // profile pre-existed this feature). Brand-new users after this
+            // deploy have xp=0 at first load → bootstrap skipped → normal flow.
+            //
+            // For event-driven moments without a state proxy (verdict, first_chest,
+            // legacy) we use best-effort heuristics:
+            //   verdict      → any existing user has already onboarded
+            //   first_chest  → proxy: stats.sessions>0 (played at least one session,
+            //                  very likely opened their first novice chest from
+            //                  achievements like first_blood)
+            //   legacy       → proxy: any mock done OR any LEGENDARY_ACHIEVEMENT
+            //                  unlocked, since both grant champion/legendaire chests
+            if(!d.narrator)d.narrator={heard:[],muted:false};
+            if(!d.narrator.heard)d.narrator.heard=[];
+            if(d.narrator.heard.length===0&&(d.xp||0)>0){
+              var bMr=d.mockResults||{};
+              var bAch=d.unlockedAch||[];
+              var hasLegendaryAch=LEGENDARY_ACHIEVEMENTS.some(function(id){return bAch.indexOf(id)!==-1;});
+              markMomentHeard(d,"verdict");
+              if((d.stats&&d.stats.sessions||0)>0)markMomentHeard(d,"first_chest");
+              if(getLeague(d.weeklyXp||0).id!=="bronze")markMomentHeard(d,"rising_rank");
+              if((d.streak||0)>=7)markMomentHeard(d,"oath_of_fire");
+              if(bMr.mock1||bMr.mock2||bMr.mock3)markMomentHeard(d,"first_combat");
+              if(getLevel(d.xp||0).level>=10)markMomentHeard(d,"dawn_rank");
+              if(bMr.mock1||bMr.mock2||bMr.mock3||hasLegendaryAch)markMomentHeard(d,"legacy");
+              if(bMr.boss)markMomentHeard(d,"dragon");
+              if(d.narrator.heard.length>0){saveLocal(d);save(d);}
+            }
             sU(d);
             // Load pending chests
             if(d.name)refreshPendingChests(d.name,d.classCode||"visitor");
@@ -12854,7 +12970,7 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
     {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&narratorQueue.length===0&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
