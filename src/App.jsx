@@ -10978,77 +10978,54 @@ var hasSeasons=dynSeasons.length>0&&!isVisitor;
 var showGradeBonus=groupData?(groupData.grade_bonus_enabled!==false):true;
 var curSeason=hasSeasons?getCurrentSeason(dynSeasons):null;
 
-// Charge les snapshots pour le tab Progression (lazy — uniquement quand on clique dessus)
+// Calcule le tab Progression.
+// Baseline = TOEIC dérivé du Battle Scan de chaque étudiant (ou 200 par
+// défaut). N'utilise PLUS les weekly_snapshots : un étudiant inscrit en
+// cours de saison (type Anaïs) n'était pas capturé correctement — son
+// premier snapshot arrivait après plusieurs jours d'activité, donc sa
+// baseline reflétait déjà un TOEIC intermédiaire, gommant sa vraie
+// progression depuis l'inscription. Le Battle Scan, lui, est pris au
+// premier pas dans l'appli, c'est le vrai point 0.
+//
+// Garde conservée : si assessedQ < 50 questions hors flashcards, gain=null
+// (on ne classe pas un étudiant dont le currentToeic n'est pas fiable).
 function loadProgressionData(){
-  if(progressionData.length>0)return; // déjà chargé
+  if(progressionData.length>0)return;
   setProgLoading(true);
-  // On a besoin des students courants (module_scores) — déjà dans rivals
-  // On fetch les snapshots pour retrouver le baseline de chaque étudiant
-  supabase.from('weekly_snapshots')
-    .select('student_name,week_start,module_scores_snapshot')
-    .eq('class_code',leagueGroup)
-    .order('week_start',{ascending:true})
-    .limit(500)
-    .then(function(res){
-      setProgLoading(false);
-      if(!res.data||res.data.length===0)return;
-      // Groupe par étudiant
-      var byStudent={};
-      res.data.forEach(function(snap){
-        var n=snap.student_name;
-        if(n==="Teacher")return;
-        if(!byStudent[n])byStudent[n]=[];
-        byStudent[n].push(snap);
-      });
-      // Pour chaque étudiant dans rivals, calcule baseline + progression
-      var rows=[];
-      rivals.forEach(function(r){
-        if(r.name==="Teacher")return;
-        // Score TOEIC actuel
-        var currentMs=r.module_scores||r.moduleScores||{};
-        var currentToeic=estimateTOEICScore(currentMs).total;
-        // Vérif min 50 questions évaluées (hors Flashcards)
-        var assessedQ=0;
-        var EXCLUDED=["csess"];
-        Object.keys(currentMs).forEach(function(k){
-          if(EXCLUDED.indexOf(k)===-1)assessedQ+=(currentMs[k].total||0);
-        });
-        if(assessedQ<50){
-          rows.push({name:r.name,avatar:r.avatar||"⚔️",currentToeic:currentToeic,baseline:null,gain:null,assessedQ:assessedQ,me:r.name===u.name});
-          return;
-        }
-        // Baseline : premier snapshot où TOEIC estimé > 200
-        var snaps=byStudent[r.name]||[];
-        var baseline=null;
-        for(var i=0;i<snaps.length;i++){
-          var ms=snaps[i].module_scores_snapshot||{};
-          var t=estimateTOEICScore(ms).total;
-          if(t>200){baseline=t;break;}
-        }
-        var gain=baseline!==null?(currentToeic-baseline):null;
-        rows.push({name:r.name,avatar:r.avatar||"⚔️",currentToeic:currentToeic,baseline:baseline,gain:gain,assessedQ:assessedQ,me:r.name===u.name});
-      });
-      // Ajoute l'utilisateur courant s'il n'est pas dans rivals
-      if(u.name!=="Teacher"&&!rows.find(function(r){return r.me;})){
-        var currentMs=u.moduleScores||{};
-        var currentToeic=estimateTOEICScore(currentMs).total;
-        var assessedQ=0;
-        Object.keys(currentMs).forEach(function(k){if(["csess"].indexOf(k)===-1)assessedQ+=(currentMs[k].total||0);});
-        rows.push({name:u.name,avatar:u.avatar||"⚔️",currentToeic:currentToeic,baseline:null,gain:null,assessedQ:assessedQ,me:true});
-      }
-      // Tri : d'abord ceux avec un gain (décroissant), puis ceux sans données
-      rows.sort(function(a,b){
-        if(a.gain!==null&&b.gain!==null)return b.gain-a.gain;
-        if(a.gain!==null)return -1;
-        if(b.gain!==null)return 1;
-        return b.currentToeic-a.currentToeic;
-      });
-      setProgressionData(rows);
+  var rows=[];
+  var EXCLUDED=["csess"];
+  function computeRow(src,name,avatar,me){
+    var currentMs=src.module_scores||src.moduleScores||{};
+    var currentToeic=estimateTOEICScore(currentMs).total;
+    var assessedQ=0;
+    Object.keys(currentMs).forEach(function(k){
+      if(EXCLUDED.indexOf(k)===-1)assessedQ+=(currentMs[k].total||0);
     });
+    var baseline=battleScanToToeic(src.battle_scan||src.battleScan);
+    var gain=assessedQ>=50?(currentToeic-baseline):null;
+    return{name:name,avatar:avatar||"⚔️",currentToeic:currentToeic,baseline:baseline,gain:gain,assessedQ:assessedQ,me:!!me};
+  }
+  rivals.forEach(function(r){
+    if(r.name==="Teacher")return;
+    rows.push(computeRow(r,r.name,r.avatar,r.name===u.name));
+  });
+  // Filet de sécurité : le user courant peut être absent de rivals
+  // (teacher-internal, class_code désaligné, etc.)
+  if(u.name!=="Teacher"&&!rows.find(function(r){return r.me;})){
+    rows.push(computeRow(u,u.name,u.avatar,true));
+  }
+  rows.sort(function(a,b){
+    if(a.gain!==null&&b.gain!==null)return b.gain-a.gain;
+    if(a.gain!==null)return -1;
+    if(b.gain!==null)return 1;
+    return b.currentToeic-a.currentToeic;
+  });
+  setProgressionData(rows);
+  setProgLoading(false);
 }
 
 useEffect(function(){
-  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores').eq('class_code',leagueGroup).order('weekly_xp',{ascending:false}).limit(150)
+  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan').eq('class_code',leagueGroup).order('weekly_xp',{ascending:false}).limit(150)
     .then(function(res){if(res.data){setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));setProgressionData([]);}});
 },[u.weeklyXp,leagueGroup]);
 
@@ -11304,9 +11281,8 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {pending.map(function(pl){
-            var reason=pl.assessedQ<50
-              ?("Modules évalués : "+pl.assessedQ+" / 50 questions minimum")
-              :"Pas encore de référence (reviens la semaine prochaine)";
+            // Avec la nouvelle baseline (Battle Scan), le seul cas pending est assessedQ<50.
+            var reason="Modules évalués : "+pl.assessedQ+" / 50 questions minimum";
             return(<div key={pl.name} style={{
               display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
               background:"var(--bg2)",border:"1px solid var(--bdr)",
@@ -11336,6 +11312,24 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 </div>);}
 
 // ─── PROFILE ───
+// ── Battle Scan → TOEIC baseline ──
+// Converts the 20-Q diagnostic Battle Scan into an approximate initial
+// TOEIC score. Used by the League "Progrès" tab to anchor each student's
+// progression baseline to their TRUE starting point (not the first weekly
+// snapshot that happened to fire after onboarding). A student who skipped
+// the scan, or who existed before the scan system, falls back to 200 —
+// same as a brand-new student with empty moduleScores.
+//
+// Linear mapping total(0-20) → TOEIC(200-600). The scan only samples 20
+// items so we cap the high end at 600 to reflect its diagnostic nature:
+// a genuinely strong starter will exceed this once real module training
+// bumps their currentToeic up.
+function battleScanToToeic(bs){
+  if(!bs||typeof bs.total!=="number")return 200;
+  var t=Math.max(0,Math.min(20,bs.total));
+  return Math.round(200+(t/20)*400);
+}
+
 // ── TOEIC Score Estimator (global — used by Profile + TeacherDash) ──
 function estimateTOEICScore(ms){
   function acc(id){var d=ms[id];if(!d||!d.total)return null;return d.correct/d.total;}
