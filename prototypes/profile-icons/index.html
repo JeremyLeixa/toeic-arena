@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile Tiles Icons</title>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;
+    --bdr:rgba(180,140,80,0.15);
+    --cx:212,148,58;--cx-hex:#d4943a;--cyan:#d4943a;--gold:#f0c850;
+    --t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;
+  }
+  .light {
+    --bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;
+    --bdr:rgba(120,90,50,0.12);
+    --cx:139,105,20;--cx-hex:#8b6914;--cyan:#8b6914;--gold:#a67c00;
+    --t1:#1a1510;--t2:#5a5040;--t3:#8a7e6a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 30px 16px 250px;
+    background: var(--bg); color: var(--t1);
+    font-family: -apple-system, system-ui, sans-serif;
+    transition: background .3s, color .3s;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 {
+    font-family: Georgia, serif; font-size: 26px; margin: 0 0 6px;
+    background: linear-gradient(135deg, var(--cx-hex), var(--gold), var(--cx-hex));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; text-align: center;
+  }
+  .subtitle { text-align: center; color: var(--t2); margin: 0 0 16px; font-size: 13px; }
+  .controls { display: flex; justify-content: center; gap: 10px; margin: 16px 0 26px; flex-wrap: wrap; }
+  .btn {
+    background: var(--bg3); border: 1px solid var(--bdr);
+    color: var(--t2); padding: 8px 16px; border-radius: 8px;
+    cursor: pointer; font-size: 12px; font-family: inherit;
+  }
+  .btn.active { color: var(--cx-hex); border-color: var(--cx-hex); font-weight: 700; }
+
+  .zone-title {
+    font-family: Georgia, serif; font-size: 20px; color: var(--cx-hex);
+    margin: 30px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--cx-hex);
+  }
+  .section {
+    background: var(--bg2); border: 1px solid var(--bdr);
+    border-radius: 12px; padding: 16px; margin-bottom: 16px;
+  }
+  .section-head {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 1px dashed var(--bdr); flex-wrap: wrap;
+  }
+  .section-name { font-family: Georgia, serif; font-size: 16px; color: var(--t1); margin: 0; font-weight: 700; }
+  .section-current { color: var(--t2); font-size: 12px; }
+  .section-current .emoji { font-size: 16px; margin: 0 3px; }
+  .section-hint {
+    color: var(--t3); font-size: 11px; font-style: italic;
+    width: 100%; margin-top: 2px;
+  }
+  .options-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px;
+  }
+  .option {
+    background: var(--bg3); border: 1px solid var(--bdr);
+    border-radius: 8px; padding: 12px 6px 8px;
+    text-align: center; cursor: pointer; transition: all .15s;
+    position: relative;
+  }
+  .option:hover { border-color: var(--cyan); transform: translateY(-1px); }
+  .option.selected {
+    border-color: var(--cyan);
+    background: linear-gradient(180deg, rgba(var(--cx), 0.12) 0%, var(--bg3) 100%);
+    box-shadow: 0 0 0 1px var(--cyan);
+  }
+  .option.selected::before {
+    content: "✓"; position: absolute; top: 3px; right: 6px;
+    color: var(--cyan); font-size: 11px; font-weight: bold;
+  }
+  .option iconify-icon {
+    font-size: 30px; color: var(--t1);
+    display: block; margin: 0 auto 6px;
+  }
+  .option.selected iconify-icon { color: var(--cyan); }
+  .option-label { font-size: 9px; color: var(--t2); font-family: monospace; line-height: 1.2; }
+
+  /* ═══ Live Profile Preview ═══ */
+  .preview {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, transparent, rgba(15,12,8,.97) 20%, var(--bg));
+    padding: 16px 14px 20px; border-top: 1px solid var(--bdr);
+    max-height: 230px; overflow-y: auto;
+  }
+  .light .preview {
+    background: linear-gradient(180deg, transparent, rgba(245,240,232,.97) 20%, var(--bg));
+  }
+  .preview-title {
+    text-align: center; color: var(--cx-hex);
+    font-family: Georgia, serif; font-size: 12px; margin: 0 0 10px;
+    letter-spacing: 1px;
+  }
+  .preview-grid {
+    max-width: 380px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+  }
+  .preview-tile {
+    border-radius: 12px; padding: 14px 8px;
+    text-align: center; cursor: pointer;
+    background: rgba(var(--cx), .03);
+    border: 1px solid rgba(var(--cx), .2);
+    transition: all .2s;
+  }
+  .preview-tile.stats, .preview-tile.style { background: rgba(var(--cx), .03); border-color: rgba(var(--cx), .2); }
+  .preview-tile.achievements { background: rgba(255,215,0,.04); border-color: rgba(255,215,0,.18); }
+  .preview-tile.collection { background: rgba(192,96,240,.04); border-color: rgba(192,96,240,.2); }
+  .preview-tile iconify-icon { font-size: 26px; display: block; margin: 0 auto 6px; }
+  .preview-tile.stats iconify-icon, .preview-tile.style iconify-icon { color: var(--cyan); }
+  .preview-tile.achievements iconify-icon { color: var(--gold); }
+  .preview-tile.collection iconify-icon { color: #c060f0; }
+  .light .preview-tile.collection iconify-icon { color: #7a3fb0; }
+  .preview-tile-value { font-weight: 800; font-size: 15px; margin-bottom: 2px; color: var(--t1); }
+  .preview-tile.achievements .preview-tile-value { color: var(--gold); }
+  .preview-tile.collection .preview-tile-value { color: #c060f0; }
+  .light .preview-tile.collection .preview-tile-value { color: #7a3fb0; }
+  .preview-tile-label { font-size: 9px; color: var(--t2); text-transform: uppercase; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>◆ Profile Tiles ◆</h1>
+  <p class="subtitle">3 tiles to swap (Stats, Achievements, Collection). Style keeps the avatar preview.</p>
+
+  <div class="controls">
+    <button class="btn mode-btn active" data-mode="dark">Dark</button>
+    <button class="btn mode-btn" data-mode="light">Light</button>
+  </div>
+
+  <div class="section" data-slot="stats">
+    <div class="section-head">
+      <h3 class="section-name">Stats</h3>
+      <span class="section-current">currently <span class="emoji">📊</span></span>
+      <div class="section-hint">Shows total XP · leads to Mes Stats sub-view (TOEIC estimate, accuracy, progression).</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="stats" data-icon="game-icons:skills"><iconify-icon icon="game-icons:skills"></iconify-icon><div class="option-label">skills</div></div>
+      <div class="option" data-slot="stats" data-icon="game-icons:stats-up"><iconify-icon icon="game-icons:stats-up"></iconify-icon><div class="option-label">stats-up</div></div>
+      <div class="option" data-slot="stats" data-icon="game-icons:bar-chart"><iconify-icon icon="game-icons:bar-chart"></iconify-icon><div class="option-label">bar-chart</div></div>
+      <div class="option" data-slot="stats" data-icon="game-icons:pie-chart"><iconify-icon icon="game-icons:pie-chart"></iconify-icon><div class="option-label">pie-chart</div></div>
+      <div class="option" data-slot="stats" data-icon="game-icons:abacus"><iconify-icon icon="game-icons:abacus"></iconify-icon><div class="option-label">abacus</div></div>
+      <div class="option" data-slot="stats" data-icon="game-icons:muscle-up"><iconify-icon icon="game-icons:muscle-up"></iconify-icon><div class="option-label">muscle-up</div></div>
+      <div class="option" data-slot="stats" data-icon="game-icons:rune-stone"><iconify-icon icon="game-icons:rune-stone"></iconify-icon><div class="option-label">rune-stone</div></div>
+      <div class="option" data-slot="stats" data-icon="game-icons:level-four"><iconify-icon icon="game-icons:level-four"></iconify-icon><div class="option-label">level-four</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="achievements">
+    <div class="section-head">
+      <h3 class="section-name">Achievements</h3>
+      <span class="section-current">currently <span class="emoji">🏆</span></span>
+      <div class="section-hint">Shows earned/total count · leads to trophies grid.</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="achievements" data-icon="game-icons:laurels-trophy"><iconify-icon icon="game-icons:laurels-trophy"></iconify-icon><div class="option-label">laurels-trophy</div></div>
+      <div class="option" data-slot="achievements" data-icon="game-icons:trophy-cup"><iconify-icon icon="game-icons:trophy-cup"></iconify-icon><div class="option-label">trophy-cup</div></div>
+      <div class="option" data-slot="achievements" data-icon="game-icons:laurel-crown"><iconify-icon icon="game-icons:laurel-crown"></iconify-icon><div class="option-label">laurel-crown (league)</div></div>
+      <div class="option" data-slot="achievements" data-icon="game-icons:crown"><iconify-icon icon="game-icons:crown"></iconify-icon><div class="option-label">crown</div></div>
+      <div class="option" data-slot="achievements" data-icon="game-icons:stars-stack"><iconify-icon icon="game-icons:stars-stack"></iconify-icon><div class="option-label">stars-stack</div></div>
+      <div class="option" data-slot="achievements" data-icon="game-icons:rosette"><iconify-icon icon="game-icons:rosette"></iconify-icon><div class="option-label">rosette</div></div>
+      <div class="option" data-slot="achievements" data-icon="game-icons:medal-skull"><iconify-icon icon="game-icons:medal-skull"></iconify-icon><div class="option-label">medal-skull</div></div>
+      <div class="option" data-slot="achievements" data-icon="game-icons:podium-winner"><iconify-icon icon="game-icons:podium-winner"></iconify-icon><div class="option-label">podium-winner</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-slot="collection">
+    <div class="section-head">
+      <h3 class="section-name">Collection</h3>
+      <span class="section-current">currently <span class="emoji">🏰</span></span>
+      <div class="section-hint">Inventory of owned avatars + skins (chest rewards catalogue).</div>
+    </div>
+    <div class="options-grid">
+      <div class="option selected" data-slot="collection" data-icon="game-icons:treasure-chest"><iconify-icon icon="game-icons:treasure-chest"></iconify-icon><div class="option-label">treasure-chest</div></div>
+      <div class="option" data-slot="collection" data-icon="game-icons:open-chest"><iconify-icon icon="game-icons:open-chest"></iconify-icon><div class="option-label">open-chest</div></div>
+      <div class="option" data-slot="collection" data-icon="game-icons:chest"><iconify-icon icon="game-icons:chest"></iconify-icon><div class="option-label">chest</div></div>
+      <div class="option" data-slot="collection" data-icon="game-icons:vault-door"><iconify-icon icon="game-icons:vault-door"></iconify-icon><div class="option-label">vault-door</div></div>
+      <div class="option" data-slot="collection" data-icon="game-icons:gem-necklace"><iconify-icon icon="game-icons:gem-necklace"></iconify-icon><div class="option-label">gem-necklace</div></div>
+      <div class="option" data-slot="collection" data-icon="game-icons:swords-power"><iconify-icon icon="game-icons:swords-power"></iconify-icon><div class="option-label">swords-power</div></div>
+      <div class="option" data-slot="collection" data-icon="game-icons:armor-upgrade"><iconify-icon icon="game-icons:armor-upgrade"></iconify-icon><div class="option-label">armor-upgrade</div></div>
+      <div class="option" data-slot="collection" data-icon="game-icons:cellar-barrels"><iconify-icon icon="game-icons:cellar-barrels"></iconify-icon><div class="option-label">cellar-barrels</div></div>
+      <div class="option" data-slot="collection" data-icon="game-icons:swap-bag"><iconify-icon icon="game-icons:swap-bag"></iconify-icon><div class="option-label">swap-bag</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="preview">
+  <p class="preview-title">◆ Live Profile Preview ◆</p>
+  <div class="preview-grid">
+    <div class="preview-tile stats">
+      <iconify-icon id="prev-stats" icon="game-icons:skills"></iconify-icon>
+      <div class="preview-tile-value">12,450</div>
+      <div class="preview-tile-label">Stats</div>
+    </div>
+    <div class="preview-tile achievements">
+      <iconify-icon id="prev-achievements" icon="game-icons:laurels-trophy"></iconify-icon>
+      <div class="preview-tile-value">18<span style="font-size:10px;color:var(--t3);font-weight:400">/58</span></div>
+      <div class="preview-tile-label">Achievements</div>
+    </div>
+    <div class="preview-tile style">
+      <iconify-icon icon="game-icons:visored-helm"></iconify-icon>
+      <div class="preview-tile-value">Style</div>
+      <div class="preview-tile-label">Apparence</div>
+    </div>
+    <div class="preview-tile collection">
+      <iconify-icon id="prev-collection" icon="game-icons:treasure-chest"></iconify-icon>
+      <div class="preview-tile-value">Collection</div>
+      <div class="preview-tile-label">Catalogue</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var SLOTS = ['stats','achievements','collection'];
+
+  document.querySelectorAll('.option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      var slot = opt.dataset.slot;
+      var icon = opt.dataset.icon;
+      document.querySelectorAll('.option[data-slot="'+slot+'"]').forEach(function(o){ o.classList.remove('selected'); });
+      opt.classList.add('selected');
+      var prev = document.getElementById('prev-'+slot);
+      if (prev) prev.setAttribute('icon', icon);
+    });
+  });
+
+  document.querySelectorAll('.mode-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.mode-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      if (btn.dataset.mode === 'light') document.body.classList.add('light');
+      else document.body.classList.remove('light');
+    });
+  });
+</script>
+
+</body>
+</html>

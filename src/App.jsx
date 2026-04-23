@@ -418,7 +418,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-game-intros-grim-lightfix";
+var BUILD_ID="2026-04-22-profile-icons";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -11590,13 +11590,13 @@ function Profile(p){
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
         <button onClick={function(){setView("stats");}} className="crd"
           style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(var(--cx),.03)",border:"1px solid rgba(var(--cx),.2)",width:"100%"}}>
-          <div style={{fontSize:22,marginBottom:4}}>📊</div>
+          <div style={{marginBottom:4,display:"flex",justifyContent:"center"}}><GIcon name="rune-stone" size={26} color="var(--cyan)"/></div>
           <div style={{fontWeight:800,fontSize:16,color:"var(--t1)"}}>{u.xp}</div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Stats</div>
         </button>
         <button onClick={function(){setView("trophees");}} className="crd"
           style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(255,215,0,.03)",border:"1px solid rgba(255,215,0,.15)",width:"100%"}}>
-          <div style={{fontSize:22,marginBottom:4}}>🏆</div>
+          <div style={{marginBottom:4,display:"flex",justifyContent:"center"}}><GIcon name="trophy-cup" size={26} color="var(--gold)"/></div>
           <div className="out" style={{fontWeight:800,fontSize:16,color:"var(--gold)"}}>{ea.length}<span style={{fontSize:11,color:"var(--t3)",fontWeight:400}}>/{ACHIEVEMENTS.length}</span></div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Achievements</div>
         </button>
@@ -11610,7 +11610,7 @@ function Profile(p){
         </button>
         <button onClick={function(){setView("inventory");}} className="crd"
           style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(192,96,240,.03)",border:"1px solid rgba(192,96,240,.15)",width:"100%"}}>
-          <div style={{fontSize:22,marginBottom:4}}>{"\uD83C\uDFF0"}</div>
+          <div style={{marginBottom:4,display:"flex",justifyContent:"center"}}><GIcon name="gem-necklace" size={26} color="#c060f0"/></div>
           <div style={{fontWeight:800,fontSize:16,color:"#c060f0"}}>Collection</div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Catalogue</div>
         </button>
