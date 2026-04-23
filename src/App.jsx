@@ -1105,15 +1105,14 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .grim-btn-close,.grim-btn-toc{background:rgba(245,223,170,.08);color:#f5dfaa;border:1px solid rgba(245,223,170,.2);border-radius:10px;padding:8px 12px;font-size:12px;cursor:pointer;font-weight:700;flex-shrink:0}
 .grim-book{flex:1;perspective:2500px;display:flex;justify-content:center;align-items:stretch;padding:12px;overflow:hidden;position:relative}
 .grim-page-wrap{position:relative;width:100%;max-width:560px;height:100%;transform-style:preserve-3d}
-.grim-page{position:absolute;inset:0;background:radial-gradient(ellipse at center,#f4e8cc 0%,#e8d5a8 92%,#d9c288 100%);border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.65),inset 0 0 50px rgba(139,90,40,.1);padding:26px 22px 40px;overflow-y:auto;filter:sepia(6%);-webkit-overflow-scrolling:touch}
-.grim-page::before{content:"";position:absolute;inset:6px;border:1px solid rgba(139,90,40,.22);border-radius:3px;pointer-events:none}
+.grim-page{position:absolute;inset:0;background:radial-gradient(ellipse at center,#f4e8cc 0%,#e8d5a8 92%,#d9c288 100%);border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.65),inset 0 0 50px rgba(139,90,40,.1);padding:6px;overflow-y:auto;filter:sepia(6%);-webkit-overflow-scrolling:touch}
 .grim-flip-anim{transform-origin:left center;transition:transform 700ms cubic-bezier(.42,0,.2,1);backface-visibility:hidden;box-shadow:0 12px 40px rgba(0,0,0,.65),inset 0 0 50px rgba(139,90,40,.1)}
 .grim-flip-next{animation:grim-flip-next 700ms cubic-bezier(.42,0,.2,1) forwards}
 .grim-flip-prev{animation:grim-flip-prev 700ms cubic-bezier(.42,0,.2,1) forwards;transform-origin:right center}
 @keyframes grim-flip-next{from{transform:rotateY(0);box-shadow:0 12px 40px rgba(0,0,0,.65)}to{transform:rotateY(-170deg);box-shadow:-20px 12px 40px rgba(0,0,0,.75)}}
 @keyframes grim-flip-prev{from{transform:rotateY(0)}to{transform:rotateY(170deg)}}
 /* Typography inside page */
-.grim-page-content{font-family:'DM Sans',sans-serif;color:#3d2817;font-size:15px;line-height:1.65;display:flex;flex-direction:column;min-height:100%;box-sizing:border-box}
+.grim-page-content{font-family:'DM Sans',sans-serif;color:#3d2817;font-size:15px;line-height:1.65;display:flex;flex-direction:column;min-height:100%;box-sizing:border-box;border:1px solid rgba(139,90,40,.22);border-radius:3px;padding:20px 16px 34px}
 .grim-chapter-title{font-family:'Cinzel','Outfit',serif;font-size:21px;font-weight:700;text-align:center;margin-bottom:6px;color:#6b3410;letter-spacing:1.2px;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid rgba(107,52,16,.28)}
 .grim-chapter-intro{font-style:italic;text-align:center;color:#6b4820;margin-bottom:18px;font-size:13.5px;line-height:1.55}
 .grim-heading{font-family:'Cinzel','Outfit',serif;font-size:16px;font-weight:700;color:#6b3410;margin:18px 0 8px;letter-spacing:.3px;border-left:3px solid #8b5a28;padding-left:10px}
@@ -1142,10 +1141,10 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .grim-toc-item{display:block;width:100%;background:rgba(245,223,170,.06);color:#f5dfaa;border:1px solid rgba(245,223,170,.15);border-radius:10px;padding:12px 14px;margin-bottom:7px;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.35}
 .grim-toc-item.active{background:rgba(245,223,170,.18);border-color:rgba(245,223,170,.45)}
 @media(max-width:480px){
-  .grim-page{padding:22px 18px 38px;border-radius:4px}
+  .grim-page{padding:6px;border-radius:4px}
   .grim-chapter-title{font-size:18px;letter-spacing:1px}
   .grim-heading{font-size:15px}
-  .grim-page-content{font-size:14px;line-height:1.6}
+  .grim-page-content{font-size:14px;line-height:1.6;padding:16px 12px 30px}
   .grim-paragraph{margin-bottom:10px}
   .grim-example-en{font-size:13.5px}
   .grim-table{font-size:11.5px}
