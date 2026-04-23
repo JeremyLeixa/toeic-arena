@@ -978,6 +978,8 @@ var CSS=`
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes narratorFadeFromBlack{from{opacity:1}to{opacity:0}}
+@keyframes narratorFadeToBlack{from{opacity:0}to{opacity:1}}
+@keyframes grim-fade-out{from{opacity:1}to{opacity:0}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 @keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
@@ -1099,6 +1101,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 
 /* ═══ GRIMOIRE READER ═══ */
 .grim-overlay{position:fixed;inset:0;background:#0a0604;z-index:9000;display:flex;flex-direction:column;animation:grim-fade-in .3s ease}
+.grim-overlay.grim-closing{animation:grim-fade-out .3s ease forwards;pointer-events:none}
 @keyframes grim-fade-in{from{opacity:0}to{opacity:1}}
 .grim-topbar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(0,0,0,.7);border-bottom:1px solid rgba(245,223,170,.15);flex-shrink:0}
 .grim-title{color:#f5dfaa;font-family:'Cinzel','Outfit',serif;font-size:14px;font-weight:600;letter-spacing:.4px;flex:1;text-align:center;padding:0 4px;line-height:1.25}
@@ -1177,7 +1180,16 @@ function GrimoireReader(p){
   var [chIdx,setChIdx]=useState(0);
   var [flipDir,setFlipDir]=useState(null); // null | "next" | "prev"
   var [showToc,setShowToc]=useState(false);
+  var [closing,setClosing]=useState(false);
   var touchStart=useRef(0);
+  // Fade-to-black on close: set closing → .grim-closing animates opacity
+  // 1→0 over 300ms, then we actually dismount via p.back(). Mirrors the
+  // grim-fade-in open animation for symmetry.
+  function closeGrim(){
+    if(closing)return;
+    setClosing(true);
+    setTimeout(function(){p.back();},300);
+  }
   var ch=grim.chapters[chIdx];
   var total=grim.chapters.length;
   var romans=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
@@ -1196,11 +1208,11 @@ function GrimoireReader(p){
     else if(dx>50)go("prev");
   }
   function pickTocItem(i){setChIdx(i);setShowToc(false);}
-  return(<div className="grim-overlay">
+  return(<div className={"grim-overlay"+(closing?" grim-closing":"")}>
     <div className="grim-topbar">
       <button className="grim-btn-toc" onClick={function(){setShowToc(true);}}>{"\u2630"} Chapitres</button>
       <div className="grim-title">{grim.title}</div>
-      <button className="grim-btn-close" onClick={p.back}>{"\u2715"}</button>
+      <button className="grim-btn-close" onClick={closeGrim}>{"\u2715"}</button>
     </div>
     <div className="grim-book" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <div className="grim-page-wrap">
@@ -1950,9 +1962,11 @@ function NarratorOverlay(props) {
 
   var audioRef = useRef(null);
   var autoplayTimerRef = useRef(null);
+  var closeTimerRef = useRef(null);
   var [playing, setPlaying] = useState(false);
   var [currentTime, setCurrentTime] = useState(0);
   var [duration, setDuration] = useState(moment ? moment.durationSec : 0);
+  var [closing, setClosing] = useState(false);
 
   // Reset internal timer state whenever the moment changes (replay from Chronicles).
   // Also schedules the 1s autoplay attempt.
@@ -1960,7 +1974,9 @@ function NarratorOverlay(props) {
     setPlaying(false);
     setCurrentTime(0);
     setDuration(moment ? moment.durationSec : 0);
+    setClosing(false);
     if(autoplayTimerRef.current){clearTimeout(autoplayTimerRef.current);autoplayTimerRef.current=null;}
+    if(closeTimerRef.current){clearTimeout(closeTimerRef.current);closeTimerRef.current=null;}
     if(!moment || muted) return;
     // 1s delay lets the fade-from-black complete before the voice kicks in.
     autoplayTimerRef.current = setTimeout(function(){
@@ -2027,9 +2043,14 @@ function NarratorOverlay(props) {
   }
 
   function handleClose() {
+    if (closing) return; // already in progress — ignore double-click
     var audio = audioRef.current;
     if (audio) { try{audio.pause(); audio.currentTime = 0;}catch(e){console.warn("[narrator] close pause caught:", e&&e.message);} }
-    onClose();
+    // Stop the pending autoplay if the user closes before it fires
+    if(autoplayTimerRef.current){clearTimeout(autoplayTimerRef.current);autoplayTimerRef.current=null;}
+    setClosing(true);
+    // Keep animation in sync with the narratorFadeToBlack keyframe duration
+    closeTimerRef.current = setTimeout(function(){ onClose(); }, 500);
   }
 
   if (!moment) return null;
@@ -2204,17 +2225,27 @@ function NarratorOverlay(props) {
 
       </div>
 
-      {/* Fade-from-black layer. Sits on top of everything inside the overlay
-          for ~800ms then becomes pointer-transparent. key={moment.id} so
-          the animation replays on every chapter change (including Chronicles
-          replay of the same chapter after dismiss). */}
-      <div key={"fade-"+(moment.id||"")} style={{
-        position: "absolute", inset: 0,
-        background: "#000",
-        animation: "narratorFadeFromBlack 0.8s ease-out forwards",
-        pointerEvents: "none",
-        zIndex: 10000
-      }}/>
+      {/* Fade layer — fades FROM black on mount (key={moment.id} replays the
+          animation on every chapter change), and fades TO black when the
+          user dismisses (closing=true). pointerEvents remain none so the
+          black layer never swallows clicks during its ~500-800ms animation. */}
+      {closing ? (
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "#000",
+          animation: "narratorFadeToBlack 0.5s ease-in forwards",
+          pointerEvents: "none",
+          zIndex: 10000
+        }}/>
+      ) : (
+        <div key={"fade-"+(moment.id||"")} style={{
+          position: "absolute", inset: 0,
+          background: "#000",
+          animation: "narratorFadeFromBlack 0.8s ease-out forwards",
+          pointerEvents: "none",
+          zIndex: 10000
+        }}/>
+      )}
 
     </div>
   );
