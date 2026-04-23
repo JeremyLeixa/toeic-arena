@@ -5,6 +5,12 @@
 // Chaque moment est déclenché par un trigger spécifique dans App.jsx,
 // puis joué via <NarratorOverlay> (popup parchemin plein écran).
 // Les MP3 sont dans public/audio/narrator/, les JPG dans public/images/narrator/.
+//
+// Policy langue : AUDIO en anglais (voix Old Wizard, immersion TOEIC),
+// SOUS-TITRES en français pour alléger la charge cognitive des étudiants
+// francophones — même logique que les grimoires (théorie = FR, entraînement
+// = EN). Les sous-titres doublent la voix d'Aldric sans la traduire mot-à-mot :
+// l'objectif est le sens et l'émotion, pas la transcription littérale.
 // =============================================================
 
 export var NARRATOR_MOMENTS = {
@@ -21,11 +27,11 @@ export var NARRATOR_MOMENTS = {
     // Sous-titres découpés phrase par phrase avec timing approximatif (secondes)
     // Ces timings sont calibrés sur la voix Old Wizard v3 avec les pauses du texte source
     subtitles: [
-      { from: 0.0,  to: 3.5,  text: "So. You've come to the Arena." },
-      { from: 3.5,  to: 5.5,  text: "Most never do." },
-      { from: 5.5,  to: 11.0, text: "I've watched a thousand squires raise their blade for the first time — some with fire, some with fear." },
-      { from: 11.0, to: 13.5, text: "I see both in you. Good." },
-      { from: 13.5, to: 18.0, text: "The road begins here. Walk it well." }
+      { from: 0.0,  to: 3.5,  text: "Ainsi. Tu es venu jusqu'à l'Arène." },
+      { from: 3.5,  to: 5.5,  text: "Bien peu franchissent ses portes." },
+      { from: 5.5,  to: 11.0, text: "J'ai vu mille écuyers lever leur lame pour la première fois — les uns avec ferveur, les autres avec crainte." },
+      { from: 11.0, to: 13.5, text: "Je vois les deux en toi. C'est bien." },
+      { from: 13.5, to: 18.0, text: "La route commence ici. Marche-la avec honneur." }
     ]
   },
   first_chest: {
@@ -39,10 +45,10 @@ export var NARRATOR_MOMENTS = {
     image: "/images/narrator/02_first_chest.jpg",
     durationSec: 12,
     subtitles: [
-      { from: 0.0, to: 2.5,  text: "Your first trophy." },
-      { from: 2.5, to: 7.0,  text: "Small, maybe. But every chest you'll ever open starts with this one." },
-      { from: 7.0, to: 9.0,  text: "Remember its weight." },
-      { from: 9.0, to: 12.0, text: "The coffers of champions all began as a single, unassuming box." }
+      { from: 0.0, to: 2.5,  text: "Ton premier trophée." },
+      { from: 2.5, to: 7.0,  text: "Modeste, peut-être. Mais chaque coffre que tu ouvriras commence par celui-ci." },
+      { from: 7.0, to: 9.0,  text: "Souviens-toi de son poids." },
+      { from: 9.0, to: 12.0, text: "Tous les trésors des champions débutent par un simple écrin." }
     ]
   },
   rising_rank: {
@@ -56,11 +62,11 @@ export var NARRATOR_MOMENTS = {
     image: "/images/narrator/03_rising_rank.jpg",
     durationSec: 15,
     subtitles: [
-      { from: 0.0,  to: 2.0,  text: "You've climbed." },
-      { from: 2.0,  to: 7.0,  text: "The first step out of Bronze is the hardest — you had to prove you belonged somewhere higher." },
-      { from: 7.0,  to: 8.5,  text: "You've done it." },
-      { from: 8.5,  to: 12.5, text: "But mark this, warrior — every rank above will watch you more closely." },
-      { from: 12.5, to: 15.0, text: "Earn your place again, every week." }
+      { from: 0.0,  to: 2.0,  text: "Tu as gravi." },
+      { from: 2.0,  to: 7.0,  text: "Le premier pas hors du Bronze est le plus rude — tu as dû prouver ta place plus haut." },
+      { from: 7.0,  to: 8.5,  text: "Tu l'as fait." },
+      { from: 8.5,  to: 12.5, text: "Mais retiens ceci, guerrier — chaque rang au-dessus t'observera de plus près." },
+      { from: 12.5, to: 15.0, text: "Mérite ta place à nouveau, chaque semaine." }
     ]
   },
   oath_of_fire: {
@@ -74,11 +80,11 @@ export var NARRATOR_MOMENTS = {
     image: "/images/narrator/04_oath_of_fire.jpg",
     durationSec: 13,
     subtitles: [
-      { from: 0.0,  to: 2.0,  text: "Seven days." },
-      { from: 2.0,  to: 6.0,  text: "Every morning, you chose the Arena over comfort." },
-      { from: 6.0,  to: 7.5,  text: "Most never last three." },
-      { from: 7.5,  to: 11.0, text: "Talent lights the spark, warrior — but discipline is the fire that burns." },
-      { from: 11.0, to: 13.0, text: "You've kindled it. Now, keep it alive." }
+      { from: 0.0,  to: 2.0,  text: "Sept jours." },
+      { from: 2.0,  to: 6.0,  text: "Chaque matin, tu as choisi l'Arène plutôt que le confort." },
+      { from: 6.0,  to: 7.5,  text: "Bien peu tiennent trois jours." },
+      { from: 7.5,  to: 11.0, text: "Le talent allume l'étincelle, guerrier — mais la discipline est le feu qui brûle." },
+      { from: 11.0, to: 13.0, text: "Tu l'as attisé. À présent, garde-le vivant." }
     ]
   },
   first_combat: {
@@ -92,11 +98,11 @@ export var NARRATOR_MOMENTS = {
     image: "/images/narrator/05_first_combat.jpg",
     durationSec: 16,
     subtitles: [
-      { from: 0.0,  to: 2.5,  text: "You faced the beast." },
-      { from: 2.5,  to: 6.5,  text: "Not in legend, not in training — face to face." },
-      { from: 6.5,  to: 10.5, text: "Whatever the score, know this: you now know what it feels like." },
-      { from: 10.5, to: 13.0, text: "That is worth more than the number on your parchment." },
-      { from: 13.0, to: 16.0, text: "Return when you're ready. The beast will be waiting." }
+      { from: 0.0,  to: 2.5,  text: "Tu as affronté la bête." },
+      { from: 2.5,  to: 6.5,  text: "Ni dans la légende, ni à l'entraînement — face à face." },
+      { from: 6.5,  to: 10.5, text: "Quel que soit le score, sache ceci : tu sais désormais ce que l'on ressent." },
+      { from: 10.5, to: 13.0, text: "Cela vaut plus que le chiffre sur ton parchemin." },
+      { from: 13.0, to: 16.0, text: "Reviens quand tu seras prêt. La bête t'attendra." }
     ]
   },
   dawn_rank: {
@@ -110,12 +116,12 @@ export var NARRATOR_MOMENTS = {
     image: "/images/narrator/06_dawn_rank.jpg",
     durationSec: 15,
     subtitles: [
-      { from: 0.0,  to: 2.0,  text: "Ten levels." },
-      { from: 2.0,  to: 5.0,  text: "The number seems small, I know." },
-      { from: 5.0,  to: 9.0,  text: "But look back at the squire who first drew a blade in my Arena." },
-      { from: 9.0,  to: 11.0, text: "That person is gone." },
-      { from: 11.0, to: 13.5, text: "What stands before me now is someone who practices. Someone the Arena recognizes." },
-      { from: 13.5, to: 15.0, text: "Carry that quietly." }
+      { from: 0.0,  to: 2.0,  text: "Dix niveaux." },
+      { from: 2.0,  to: 5.0,  text: "Le chiffre paraît modeste, je sais." },
+      { from: 5.0,  to: 9.0,  text: "Mais regarde l'écuyer qui dégaina pour la première fois dans mon Arène." },
+      { from: 9.0,  to: 11.0, text: "Il n'est plus." },
+      { from: 11.0, to: 13.5, text: "Devant moi se tient quelqu'un qui s'exerce. Que l'Arène reconnaît." },
+      { from: 13.5, to: 15.0, text: "Porte cela en silence." }
     ]
   },
   legacy: {
@@ -129,11 +135,11 @@ export var NARRATOR_MOMENTS = {
     image: "/images/narrator/07_legacy.jpg",
     durationSec: 15,
     subtitles: [
-      { from: 0.0,  to: 3.5,  text: "This chest is not like the others." },
-      { from: 3.5,  to: 8.5,  text: "It was sealed long before you were born, waiting for hands worthy enough to lift its lid." },
-      { from: 8.5,  to: 11.5, text: "Many chests will pass through your life, warrior." },
-      { from: 11.5, to: 13.5, text: "A few, only a few, you will remember." },
-      { from: 13.5, to: 15.0, text: "This is one of them." }
+      { from: 0.0,  to: 3.5,  text: "Ce coffre n'est pas comme les autres." },
+      { from: 3.5,  to: 8.5,  text: "Il fut scellé bien avant ta naissance, en attente de mains dignes d'en soulever le couvercle." },
+      { from: 8.5,  to: 11.5, text: "Bien des coffres traverseront ta vie, guerrier." },
+      { from: 11.5, to: 13.5, text: "Quelques-uns — quelques-uns seulement — resteront en ta mémoire." },
+      { from: 13.5, to: 15.0, text: "Celui-ci en fait partie." }
     ]
   },
   dragon: {
@@ -147,12 +153,12 @@ export var NARRATOR_MOMENTS = {
     image: "/images/narrator/08_dragon.jpg",
     durationSec: 18,
     subtitles: [
-      { from: 0.0,  to: 2.0,  text: "So." },
-      { from: 2.0,  to: 6.0,  text: "You walked into the Final Arena, and you walked out." },
-      { from: 6.0,  to: 7.5,  text: "Few do." },
-      { from: 7.5,  to: 11.0, text: "I will not praise the score — you already know it." },
-      { from: 11.0, to: 15.0, text: "The one who entered that arena is not the one standing before me now." },
-      { from: 15.0, to: 18.0, text: "Rest, champion. The gates remain open. They always will." }
+      { from: 0.0,  to: 2.0,  text: "Ainsi." },
+      { from: 2.0,  to: 6.0,  text: "Tu es entré dans l'Arène finale, et tu en es ressorti." },
+      { from: 6.0,  to: 7.5,  text: "Peu y parviennent." },
+      { from: 7.5,  to: 11.0, text: "Je ne louerai pas ton score — tu le connais déjà." },
+      { from: 11.0, to: 15.0, text: "Celui qui a pénétré cette arène n'est plus celui qui se tient devant moi." },
+      { from: 15.0, to: 18.0, text: "Repose-toi, champion. Les portes demeurent ouvertes. Elles le seront toujours." }
     ]
   }
 };
