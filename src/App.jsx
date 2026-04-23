@@ -10979,49 +10979,87 @@ var showGradeBonus=groupData?(groupData.grade_bonus_enabled!==false):true;
 var curSeason=hasSeasons?getCurrentSeason(dynSeasons):null;
 
 // Calcule le tab Progression.
-// Baseline = TOEIC dérivé du Battle Scan de chaque étudiant (ou 200 par
-// défaut). N'utilise PLUS les weekly_snapshots : un étudiant inscrit en
-// cours de saison (type Anaïs) n'était pas capturé correctement — son
-// premier snapshot arrivait après plusieurs jours d'activité, donc sa
-// baseline reflétait déjà un TOEIC intermédiaire, gommant sa vraie
-// progression depuis l'inscription. Le Battle Scan, lui, est pris au
-// premier pas dans l'appli, c'est le vrai point 0.
-//
+// Hiérarchie baseline (du plus précis au plus grossier) :
+//   1. battle_scan diagnostique  → point de départ individuel fiable
+//                                   (onboarding post-scan, cycles futurs)
+//   2. premier weekly_snapshot avec TOEIC > 200 → V1, imparfait (cf. cas
+//                                   Anaïs : snapshot posé après quelques
+//                                   jours d'activité, gomme le vrai départ)
+//                                   mais préserve les stats historiques
+//                                   du cohort Idrac sans battle_scan.
+//   3. 200 → fallback absolu (visiteur, profil orphelin).
 // Garde conservée : si assessedQ < 50 questions hors flashcards, gain=null
 // (on ne classe pas un étudiant dont le currentToeic n'est pas fiable).
 function loadProgressionData(){
   if(progressionData.length>0)return;
   setProgLoading(true);
-  var rows=[];
   var EXCLUDED=["csess"];
-  function computeRow(src,name,avatar,me){
-    var currentMs=src.module_scores||src.moduleScores||{};
-    var currentToeic=estimateTOEICScore(currentMs).total;
-    var assessedQ=0;
-    Object.keys(currentMs).forEach(function(k){
-      if(EXCLUDED.indexOf(k)===-1)assessedQ+=(currentMs[k].total||0);
+  // Fetch les snapshots pour le fallback — utile tant qu'une partie du
+  // cohort a battle_scan=null (Idrac 2026). Supprimable quand tous les
+  // étudiants auront un scan.
+  supabase.from('weekly_snapshots')
+    .select('student_name,week_start,module_scores_snapshot')
+    .eq('class_code',leagueGroup)
+    .order('week_start',{ascending:true})
+    .limit(500)
+    .then(function(res){
+      var byStudent={};
+      if(res.data){
+        res.data.forEach(function(snap){
+          var n=snap.student_name;
+          if(n==="Teacher")return;
+          if(!byStudent[n])byStudent[n]=[];
+          byStudent[n].push(snap);
+        });
+      }
+      function firstSnapshotToeic(name){
+        var snaps=byStudent[name]||[];
+        for(var i=0;i<snaps.length;i++){
+          var t=estimateTOEICScore(snaps[i].module_scores_snapshot||{}).total;
+          if(t>200)return t;
+        }
+        return null;
+      }
+      function computeRow(src,name,avatar,me){
+        var currentMs=src.module_scores||src.moduleScores||{};
+        var currentToeic=estimateTOEICScore(currentMs).total;
+        var assessedQ=0;
+        Object.keys(currentMs).forEach(function(k){
+          if(EXCLUDED.indexOf(k)===-1)assessedQ+=(currentMs[k].total||0);
+        });
+        // Priorité 1 : Battle Scan (trust it if present, même s'il donne 200
+        // pour un scan total=0 légitime — c'est un vrai signal de beginner).
+        var bs=src.battle_scan||src.battleScan;
+        var baseline;
+        if(bs){
+          baseline=battleScanToToeic(bs);
+        } else {
+          // Priorité 2 : premier snapshot > 200 (fallback V1, cohort Idrac)
+          var snapToeic=firstSnapshotToeic(name);
+          baseline=snapToeic!==null?snapToeic:200;
+        }
+        var gain=assessedQ>=50?(currentToeic-baseline):null;
+        return{name:name,avatar:avatar||"⚔️",currentToeic:currentToeic,baseline:baseline,gain:gain,assessedQ:assessedQ,me:!!me};
+      }
+      var rows=[];
+      rivals.forEach(function(r){
+        if(r.name==="Teacher")return;
+        rows.push(computeRow(r,r.name,r.avatar,r.name===u.name));
+      });
+      // Filet de sécurité : le user courant peut être absent de rivals
+      // (teacher-internal, class_code désaligné, etc.)
+      if(u.name!=="Teacher"&&!rows.find(function(r){return r.me;})){
+        rows.push(computeRow(u,u.name,u.avatar,true));
+      }
+      rows.sort(function(a,b){
+        if(a.gain!==null&&b.gain!==null)return b.gain-a.gain;
+        if(a.gain!==null)return -1;
+        if(b.gain!==null)return 1;
+        return b.currentToeic-a.currentToeic;
+      });
+      setProgressionData(rows);
+      setProgLoading(false);
     });
-    var baseline=battleScanToToeic(src.battle_scan||src.battleScan);
-    var gain=assessedQ>=50?(currentToeic-baseline):null;
-    return{name:name,avatar:avatar||"⚔️",currentToeic:currentToeic,baseline:baseline,gain:gain,assessedQ:assessedQ,me:!!me};
-  }
-  rivals.forEach(function(r){
-    if(r.name==="Teacher")return;
-    rows.push(computeRow(r,r.name,r.avatar,r.name===u.name));
-  });
-  // Filet de sécurité : le user courant peut être absent de rivals
-  // (teacher-internal, class_code désaligné, etc.)
-  if(u.name!=="Teacher"&&!rows.find(function(r){return r.me;})){
-    rows.push(computeRow(u,u.name,u.avatar,true));
-  }
-  rows.sort(function(a,b){
-    if(a.gain!==null&&b.gain!==null)return b.gain-a.gain;
-    if(a.gain!==null)return -1;
-    if(b.gain!==null)return 1;
-    return b.currentToeic-a.currentToeic;
-  });
-  setProgressionData(rows);
-  setProgLoading(false);
 }
 
 useEffect(function(){
