@@ -418,7 +418,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-gauntlet-intros-tts-fix";
+var BUILD_ID="2026-04-22-game-intros-grim-lightfix";
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -1076,8 +1076,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .gauntlet-card-stats{display:flex;gap:10px;font-size:11px;color:var(--t3);margin-bottom:12px;opacity:.85}
 .gauntlet-card-actions{display:flex;gap:8px}
 .gauntlet-btn-enter{flex:1;background:linear-gradient(135deg,#7c3aed,#c026d3);color:#fff;border:none;border-radius:12px;padding:12px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:14px;cursor:pointer;letter-spacing:.3px}
-.gauntlet-btn-grim{background:rgba(245,223,170,.1);color:#f5dfaa;border:1px solid rgba(245,223,170,.25);border-radius:12px;padding:12px 14px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
-.gauntlet-btn-grim:active{background:rgba(245,223,170,.22)}
+.gauntlet-btn-grim{background:rgba(var(--cx),.1);color:var(--cyan);border:1px solid rgba(var(--cx),.3);border-radius:12px;padding:12px 14px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.gauntlet-btn-grim:active{background:rgba(var(--cx),.22)}
 .icrypt-input:focus{border-color:#c026d3!important;box-shadow:0 0 0 3px rgba(192,38,211,.2)}
 .icrypt-input::placeholder{color:var(--t3);opacity:.5}
 /* ═══ BACK BUTTON — standardized top-left navigation across all training modules ═══ */
@@ -6691,7 +6691,7 @@ function SentenceBuilder(p){
 
   // ═══ INTRO ═══
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>{"🔀"}</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="brick-pile" size={60} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Sentence Builder</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>The sentence is scrambled — tap the blocks in the right order!</p>
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>{TOTAL} sentences · {TIMER_SEC}s each</p>
@@ -6870,7 +6870,7 @@ function AudioBlitz(p){
 
   // ═══ INTRO ═══
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>{"🎵"}</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="lyre" size={60} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Audio Blitz</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Listen to a short audio clip, then answer the question.<br/>The audio plays automatically — focus!</p>
     <div style={{display:"flex",justifyContent:"center",gap:16,marginBottom:32}}>
@@ -7271,7 +7271,7 @@ function DuelArena(p){
       <span className="out" style={{fontWeight:700,fontSize:15}}>Vocabulary Arena</span>
     </div>
     <div style={{textAlign:"center",marginBottom:20}}>
-      <div style={{fontSize:56,marginBottom:8}}>{"⚔️"}</div>
+      <div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><GIcon name="swords-emblem" size={60} color="var(--cyan)"/></div>
       <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Vocabulary Arena</h1>
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6}}>{ROUNDS} rounds, {TIMER_SEC}s per question. Fastest wins!</p>
       <div style={{marginTop:8,padding:"6px 16px",display:"inline-block",background:"rgba(var(--cx),.08)",borderRadius:20}}>
@@ -7709,7 +7709,7 @@ function ClueHunter(p){
   if(phase==="intro")return(
     <div className="enter" style={{padding:"32px 24px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center"}}>
       <div style={{textAlign:"center",marginBottom:36}}>
-        <div style={{fontSize:72,marginBottom:16}}>{"🧭"}</div>
+        <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="spyglass" size={76} color="var(--cyan)"/></div>
         <h1 className="out" style={{fontWeight:900,fontSize:32,marginBottom:10}}>Clue Hunter</h1>
         <p style={{color:"var(--t2)",fontSize:15,lineHeight:1.7}}>Spot the grammatical clue in the sentence.<br/>Then fill in the blank.</p>
       </div>
@@ -7969,7 +7969,7 @@ function WordTavern(p){
 
   // ── INTRO ──
   if(phase==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>{"\uD83C\uDF7A"}</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="beer-stein" size={60} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Word Tavern</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>15 questions to test your vocabulary.<br/>Words you miss go back to flashcard review.</p>
     <p style={{color:"var(--t3)",fontSize:11,marginBottom:32}}>Definitions, meanings, and fill-in-the-blank</p>
@@ -8114,7 +8114,7 @@ function SpeedMatch(p){
 
   // ── INTRO ──
   if(phase==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>🎯</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="chained-arrow-heads" size={60} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Speed Match</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8}}>{p.mode==="hard"?"Hard":"Easy"} — {pairCount} pairs to match</p>
     <p style={{color:"var(--t3)",fontSize:12,marginBottom:32,lineHeight:1.6}}>Tap two tiles to reveal them. Match each word with its definition. Fastest time wins!</p>
@@ -8303,7 +8303,7 @@ function animateFall(){
 
   // ── INTRO ──
   if(phase==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:56,marginBottom:16}}>⬇️</div>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="meteor-impact" size={60} color="var(--cyan)"/></div>
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Word Fall</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>Sentences fall from the sky.<br/>Tap the correct answer before they hit the ground!</p>
     <div style={{display:"flex",justifyContent:"center",gap:16,marginBottom:8}}>
