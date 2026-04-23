@@ -977,6 +977,7 @@ var CSS=`
 .light.skin-aurore .btn1{box-shadow:0 4px 20px rgba(20,120,90,.4)!important}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes narratorFadeFromBlack{from{opacity:1}to{opacity:0}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 @keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
@@ -1935,23 +1936,44 @@ function renderAv(avatar,size){
 // ─── NARRATOR OVERLAY — Aldric's 8 narrative moments ───
 // Full-screen parchment popup with voice-over + subtitles + illustration.
 // Triggered via app-level narratorQueue. Dismissable at any time via Continue/Skip.
-// Audio is NEVER autoplay — mobile browsers block it and the user must click Play.
+//
+// Playback flow:
+//   1. On mount, a black layer fades out over ~800ms (cinematic "fade from black").
+//   2. 1s after mount, we attempt audio.play() automatically. On mobile Safari
+//      without a recent user gesture (parcours triggers), the browser may block
+//      playback — the catch() logs a warning and the user can click Play
+//      manually. On desktop/Android/iOS-with-gesture the autoplay succeeds.
+//   3. Muted mode simulates subtitle timing via setInterval so visuals still play.
 function NarratorOverlay(props) {
   var moment = props.moment;
   var onClose = props.onClose;
   var muted = props.muted || false;
 
   var audioRef = useRef(null);
+  var autoplayTimerRef = useRef(null);
   var [playing, setPlaying] = useState(false);
   var [currentTime, setCurrentTime] = useState(0);
   var [duration, setDuration] = useState(moment ? moment.durationSec : 0);
 
-  // Reset internal timer state whenever the moment changes (replay from Chronicles)
+  // Reset internal timer state whenever the moment changes (replay from Chronicles).
+  // Also schedules the 1s autoplay attempt.
   useEffect(function(){
     setPlaying(false);
     setCurrentTime(0);
     setDuration(moment ? moment.durationSec : 0);
-  },[moment && moment.id]);
+    if(autoplayTimerRef.current){clearTimeout(autoplayTimerRef.current);autoplayTimerRef.current=null;}
+    if(!moment || muted) return;
+    // 1s delay lets the fade-from-black complete before the voice kicks in.
+    autoplayTimerRef.current = setTimeout(function(){
+      var audio = audioRef.current;
+      if(!audio) return;
+      audio.play().then(function(){setPlaying(true);})
+        .catch(function(err){console.warn("[narrator] autoplay blocked:", err&&err.message);});
+    }, 1000);
+    return function(){
+      if(autoplayTimerRef.current){clearTimeout(autoplayTimerRef.current);autoplayTimerRef.current=null;}
+    };
+  },[moment && moment.id, muted]);
 
   // Find the active subtitle based on currentTime
   var activeSub = null;
@@ -2063,11 +2085,17 @@ function NarratorOverlay(props) {
           <div style={{ flex: 1, maxWidth: 80, height: 1, background: "linear-gradient(90deg,transparent,#8a6530 50%,transparent)" }}/>
         </div>
 
+        {/* Illustration — rectangular frame fade via dual linear-gradient mask
+            composited with intersect. Each gradient fades one axis, intersected
+            they form a vignette that hugs the 4 rectangular edges instead of
+            the old oval ellipse. */}
         <div style={{
           position: "relative", margin: "0 auto 10px",
           width: "100%", maxWidth: 280, aspectRatio: "1/1",
-          WebkitMaskImage: "radial-gradient(ellipse 70% 75% at 55% 55%, black 35%, rgba(0,0,0,0.9) 50%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.15) 85%, transparent 100%)",
-          maskImage: "radial-gradient(ellipse 70% 75% at 55% 55%, black 35%, rgba(0,0,0,0.9) 50%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.15) 85%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+          maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+          WebkitMaskComposite: "source-in",
+          maskComposite: "intersect",
           overflow: "hidden"
         }}>
           <img src={moment.image} alt={moment.title} style={{
@@ -2168,6 +2196,19 @@ function NarratorOverlay(props) {
         {!muted && <audio ref={audioRef} src={moment.audio} preload="auto"/>}
 
       </div>
+
+      {/* Fade-from-black layer. Sits on top of everything inside the overlay
+          for ~800ms then becomes pointer-transparent. key={moment.id} so
+          the animation replays on every chapter change (including Chronicles
+          replay of the same chapter after dismiss). */}
+      <div key={"fade-"+(moment.id||"")} style={{
+        position: "absolute", inset: 0,
+        background: "#000",
+        animation: "narratorFadeFromBlack 0.8s ease-out forwards",
+        pointerEvents: "none",
+        zIndex: 10000
+      }}/>
+
     </div>
   );
 }
