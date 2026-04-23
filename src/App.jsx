@@ -12011,6 +12011,26 @@ export default function App(){
       return q.slice(1);
     });
   }
+  // ─── NARRATOR STATE OBSERVERS ───
+  // Single effect watching state-derived triggers. pushNarratorMoment is
+  // idempotent (checks hasHeardMoment), so re-firing on every state change
+  // is safe — first time the condition is met is the only time the push lands.
+  // Do NOT add event-only triggers (verdict, first_chest, legacy) here —
+  // those are invoked imperatively at the event site.
+  useEffect(function(){
+    if(!u)return;
+    // rising_rank — first time out of Bronze (weeklyXp >= 200)
+    if(getLeague(u.weeklyXp||0).id!=="bronze")pushNarratorMoment(u,"rising_rank");
+    // oath_of_fire — streak reaches 7
+    if((u.streak||0)>=7)pushNarratorMoment(u,"oath_of_fire");
+    // first_combat — any of the 3 regular mock tests completed
+    var mr=u.mockResults||{};
+    if(mr.mock1||mr.mock2||mr.mock3)pushNarratorMoment(u,"first_combat");
+    // dawn_rank — reach level 10
+    if(getLevel(u.xp||0).level>=10)pushNarratorMoment(u,"dawn_rank");
+    // dragon — Boss Test (Final Arena) completed
+    if(mr.boss)pushNarratorMoment(u,"dragon");
+  },[u&&u.weeklyXp,u&&u.streak,u&&u.xp,u&&u.mockResults&&u.mockResults.mock1,u&&u.mockResults&&u.mockResults.mock2,u&&u.mockResults&&u.mockResults.mock3,u&&u.mockResults&&u.mockResults.boss]);
   useEffect(function(){
     if(!xpt||sp)return;
     var t=setTimeout(function(){sXpt(null);},4000);
@@ -12374,6 +12394,15 @@ useEffect(function(){
     }
     sv(c);
     setChestResult(result);haptic("chestOpen");
+    // Narrator triggers on chest open. Both push to the queue but DON'T render
+    // immediately — the overlay is gated on !chestModal (see main return +
+    // pg()), so it only appears after the student closes the chest reveal.
+    // Push-order matters: first_chest must come before legacy if both fire on
+    // the same chest (unlikely: first chest is rarely champion/legendaire).
+    pushNarratorMoment(c,"first_chest");
+    if(chest.chest_type==="champion"||chest.chest_type==="legendaire"){
+      pushNarratorMoment(c,"legacy");
+    }
     // Refresh pending list
     var remaining=chestPending.slice(1);
     setChestPending(remaining);setPendingChestCount(remaining.length);
@@ -12548,6 +12577,13 @@ var prevLeague=getLeague(c.weeklyXp);
     // Initial sync to create the row in Supabase
     _syncDirty=true;
     syncToCloud(u);
+    // Narrator: "The Verdict" fires once, right after the student clicks
+    // "Enter the Arena" (langBridge). It must appear BEFORE the TutorialTour —
+    // the main return gates the tutorial on narratorQueue.length===0, so the
+    // tutorial waits until the user dismisses the narrator. Do NOT move this
+    // push earlier in the onboarding (e.g. to Battle Report) or the narrator
+    // would fire mid-flow and confuse the consent/scan sequence.
+    pushNarratorMoment(u,"verdict");
     if(firstNav){setTimeout(function(){sSP(firstNav);},300);}
   }
   async function recover(name,classCode){
@@ -12741,7 +12777,7 @@ var prevLeague=getLeague(c.weeklyXp);
       </button>
     </div>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/><div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
 
   if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
   if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
@@ -12813,13 +12849,13 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="lisP4")return pg(<ListenP4 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP4");}} back={function(){sSP("lis");}}/>);
 
   return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
-    <NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>
+    {!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
     {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}}/>}
-    {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
+    {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&narratorQueue.length===0&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
 
