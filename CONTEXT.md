@@ -6,7 +6,58 @@
 
 ---
 
-## Last session: 2026-04-22 evening (session "focused-chaum" — Icon refactor + XP rebalance)
+## Last session: 2026-04-23 → 2026-04-24 (narrator Aldric + League baseline + Stripe hardening + incident cleanup)
+
+**Trois jours de travail condensés. ~25 commits.** Chantier narratif Aldric complet, fix baseline League pour Idrac, onboarding Stripe en conditions de conformité légale FR (CGV v1.0, médiateur MED60239, persistance consentement), test E2E avec découverte de 2 bugs de dédup de profils, et **un incident majeur** (row Teacher/teacher-internal supprimée par accident durant le cleanup — restaurée).
+
+### Narrator / Aldric — chantier complet (2026-04-23→24)
+- 8 moments narratifs, voix off ElevenLabs + illustrations Leonardo
+- Overlay parchemin full-screen, Chronicles replay dans Profile, toggle mute
+- Sous-titres FR timés sur les vrais timestamps audio (ffprobe-mesurés)
+- Fade-from/to-black symétrique ouverture/fermeture
+- Mask rectangulaire pour l'illustration (fade sur 4 bords au lieu d'ellipse)
+- Bootstrap auto pour étudiants existants (pas de spam de popup rétroactif)
+- Integration dans Supabase via colonne `narrator` jsonb ({heard:[], muted:false})
+
+### League Progress — fix baseline TOEIC (2026-04-23→24)
+- **Problème** : étudiants inscrits en cours de saison (cas Anaïs) pénalisés car le système prenait le premier snapshot hebdo > 200 comme baseline au lieu de leur vrai point de départ
+- **Fix** : hiérarchie `battle_scan → first_snapshot>200 → 200`. Nouvelle fonction `battleScanToToeic(bs)` avec mapping linéaire 0-20 → 200-600
+- **Idrac cohort** : conserve le fallback snapshot (la plupart n'ont pas de Battle Scan)
+- **Follow-up post-Idrac noté** : refonte Battle Scan en vrai test de positionnement
+
+### Monétisation / Stripe sandbox (2026-04-24)
+**Livré** :
+- CGV v1.0 finalisée (SIRET 830 200 556 00025, APE 85.59B, entrée en vigueur 24/04/2026)
+- Archivage snapshot `docs/cgv/v1.0-2026-04-24.md`. Règle commentée : chaque bump CGV_VERSION duplique avant modif
+- Médiateur MED60239 (MÉDIATION CONSOMMATION DÉVELOPPEMENT, St-Étienne) — bloc verbatim imposé intégré dans CGV + page `<MediationInfo/>` in-app
+- `<PrivacyPolicy/>` mise à jour avec Stripe sous-traitant + finalités paiement + 10 ans pièces comptables
+- Double checkbox obligatoire UpgradeScreen : CGV (L.221-5) + renonciation rétractation (L.221-28 13°). Boutons désactivés tant que non cochés
+- Persistance `cgvAcceptedAt`, `cgvVersion`, `retractationWaivedAt` côté client (save) + server (webhook via Stripe metadata)
+- Bouton `✕ Résilier` distinct de `🔧 Gérer` pour Premium Mensuel (L.215-1-1)
+- Edge Function `pass3m-expiration-reminder` : rappel J-7 avant expiration du Pass
+- Bouton "🚪 Déconnexion complète" dans Profile → Gestion du compte → Actions critiques (hard logout)
+- Feature flag `PREMIUM_UPGRADE_ENABLED = false` — bouton Premium grisé en attendant validation E2E propre
+
+**Bug dédup + fix structurel** :
+- En sandbox, checkout sur Jaytest2 updatait la row Teacher (legacy id = auth_user_id)
+- **Fix** : `updateStudentAccess` match par clé naturelle `(name, class_code)` en priorité (via Stripe metadata), fallback id, fallback email avec warn
+
+### Incident 2026-04-24 : cleanup trop large → restauration manuelle
+Durant les manips de nettoyage des profils test post-sandbox, mon SQL `DELETE FROM students WHERE email LIKE 'leixa.jeremy+test%'` a emporté la row Teacher / teacher-internal (email `+test25@gmail.com` utilisé comme alias de sécurisation).
+
+**Restauration** : via les weekly_snapshots (W16 du 2026-04-20, xp=24411) + la row idrac2026 legacy (id=baf51c1f) transformée en teacher-internal. UPDATE SQL direct. narrator.heard re-filled manually avec les 8 moments.
+
+**Règle gravée en mémoire** (feedback_no_delete_by_email_pattern.md) : plus jamais de DELETE sur students par pattern d'email. Toujours SELECT d'abord avec verdict par row, DELETE par id IN (...) après validation humaine.
+
+### État actuel (fin de session)
+- Premium flow : feature flag OFF en prod, bouton "Bientôt disponible"
+- Teacher / teacher-internal restauré, premium_pass jusqu'au 2026-07-19, 8 chroniques débloquées
+- Tous les commits sur origin/main (HEAD ≈ 1781b62 + 2e71758 + patches suivants), Vercel deployed
+- **Chantier ouvert reporté next session** : refonte en profondeur du flow Magic Link (sécurité alias email, dédup profils par email, flow "Welcome back" vs hard logout, auth user lifecycle)
+
+---
+
+## Previous session: 2026-04-22 evening (session "focused-chaum" — Icon refactor + XP rebalance)
 
 **21 commits.** Complete cosmetic refactor of the icon system (emojis → SVG game-icons), plus two gameplay fixes surfaced along the way.
 
