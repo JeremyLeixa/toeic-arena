@@ -75,13 +75,17 @@ export async function getSession() {
 
 // Sign the user out of Supabase and clear app-specific localStorage keys.
 // Keeps user preferences (theme, skin) untouched.
+// IMPORTANT: les 3 clés profile/name/class doivent matcher celles utilisées par App.jsx save()
+// et par le soft logout (App.jsx:13210). Avant le fix 2026-04-24, cette fonction effaçait
+// 'toeic-arena-local' (inexistante) et oubliait profile+name, rendant le hard logout partiel.
 export async function signOutCompletely() {
-  try { await supabase.auth.signOut(); } catch (e) {}
+  try { await supabase.auth.signOut(); } catch (e) { console.warn("[auth] signOut caught:", e && e.message); }
   try {
+    localStorage.removeItem('toeic-arena-profile');
+    localStorage.removeItem('toeic-arena-name');
     localStorage.removeItem('toeic-arena-class');
-    localStorage.removeItem('toeic-arena-local');
     localStorage.removeItem('toeic-dash-group');
-  } catch (e) {}
+  } catch (e) { console.warn("[auth] localStorage purge caught:", e && e.message); }
 }
 
 // Poll Supabase to detect when a pending email confirmation has completed.
