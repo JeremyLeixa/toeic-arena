@@ -15,7 +15,7 @@
 // =============================================================
 
 export var CGV_VERSION = "1.0";
-export var CGV_EFFECTIVE_DATE = "2026-05-20";
+export var CGV_EFFECTIVE_DATE = "2026-04-24";
 
 export var CGV_ARTICLES = [
   {
