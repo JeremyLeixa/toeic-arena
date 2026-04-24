@@ -151,6 +151,11 @@ export default async function handler(req, res) {
   const consentVersion = req.body && req.body.cgv_version;
   const consentAcceptedAt = req.body && req.body.cgv_accepted_at;
   const consentRetractWaivedAt = req.body && req.body.retractation_waived_at;
+  // Clé naturelle students (bug 2026-04-24 : legacy auth_id matches sur Teacher
+  // row au lieu de la row student courante). Le webhook prioritise cette clé
+  // pour cibler la row créée localement, plutôt que la row legacy matchée par id.
+  const studentName = req.body && req.body.student_name;
+  const studentClassCode = req.body && req.body.student_class_code;
 
   // Success/cancel URLs — frontend will handle the query params on return
   const origin = req.headers.origin || req.headers.referer || "https://toeic-arena.vercel.app";
@@ -169,6 +174,8 @@ export default async function handler(req, res) {
     if (consentVersion) baseMetadata.cgv_version = consentVersion;
     if (consentAcceptedAt) baseMetadata.cgv_accepted_at = consentAcceptedAt;
     if (consentRetractWaivedAt) baseMetadata.retractation_waived_at = consentRetractWaivedAt;
+    if (studentName) baseMetadata.student_name = studentName;
+    if (studentClassCode) baseMetadata.student_class_code = studentClassCode;
 
     const sessionConfig = {
       mode: planConfig.mode,

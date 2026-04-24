@@ -74,29 +74,63 @@ async function markProcessed(event) {
 
 // ─── Event handlers ──────────────────────────────────────────────────────────
 
-// Update students.access_level by matching the user_id. If no row matches,
-// fallback to email match (handles cross-device cases where students.id was
-// set from a different anon user than the one currently authenticated).
+// Update students.access_level en priorisant la clé naturelle (name, class_code)
+// si disponible dans les metadata — sinon retombe sur id match, puis email.
+//
+// Ordre des stratégies (du plus précis au plus fragile) :
+//   1. (name, class_code) = clé naturelle app utilisée par save() — cible
+//      toujours la row "intended" par l'utilisateur. Ajoutée 2026-04-24 après
+//      le bug Teacher/Jaytest2 (id match legacy atterrissait sur la mauvaise
+//      row parce que Teacher.id == auth_user_id pour raison historique).
+//   2. id = auth.users.id — fonctionne pour les rows créées legacy (pré
+//      2026-04-21) dont students.id = auth_user_id. Fragile pour les nouvelles
+//      rows où id est une UUID auto-générée distincte de auth_user_id.
+//   3. email — dernier recours, match possiblement ambigu si plusieurs rows
+//      partagent un email (profils test avec alias). On loggue un warning
+//      si ça arrive pour investigation.
 //
 // consent (optionnel) : { cgv_version, cgv_accepted_at, retractation_waived_at }
-// Si fourni, persiste la trace de consentement dans la MÊME UPDATE que
-// access_level. Garantit que la trace atterrit sur la bonne row, quel que
-// soit le nombre de doublons de profil (bug sandbox 2026-04-24).
-async function updateStudentAccess(userId, accessLevel, expiresAtIso, consent) {
+// Écrit dans la MÊME UPDATE que access_level (transaction atomique garantit
+// que la trace légale et le statut premium sont toujours cohérents).
+async function updateStudentAccess(userId, accessLevel, expiresAtIso, consent, naturalKey) {
   const payload = { access_level: accessLevel, access_expires_at: expiresAtIso };
   if (consent) {
     if (consent.cgv_version) payload.cgv_version = consent.cgv_version;
     if (consent.cgv_accepted_at) payload.cgv_accepted_at = consent.cgv_accepted_at;
     if (consent.retractation_waived_at) payload.retractation_waived_at = consent.retractation_waived_at;
   }
-  // Try exact id match first
+
+  // ── Stratégie 1 : clé naturelle (name, class_code) ──
+  if (naturalKey && naturalKey.name && naturalKey.class_code) {
+    const nkRes = await supaAdmin
+      .from("students")
+      .update(payload)
+      .ilike("name", naturalKey.name)
+      .eq("class_code", naturalKey.class_code)
+      .select("id");
+    if (nkRes.error) {
+      console.error("[webhook] natural key update error:", nkRes.error.message);
+    } else if (nkRes.data && nkRes.data.length > 0) {
+      console.log("[webhook] updated by natural key (" + naturalKey.name + "," + naturalKey.class_code + ")");
+      return;
+    } else {
+      console.warn("[webhook] no student matched natural key (" + naturalKey.name + "," + naturalKey.class_code + ") — falling back to id");
+    }
+  }
+
+  // ── Stratégie 2 : id match (legacy) ──
   const idRes = await supaAdmin
     .from("students")
     .update(payload)
     .eq("id", userId)
-    .select("id");
-  if (idRes.data && idRes.data.length > 0) return;
-  // Fallback: look up auth user's email, match by students.email
+    .select("id, name, class_code");
+  if (idRes.data && idRes.data.length > 0) {
+    const hit = idRes.data[0];
+    console.log("[webhook] updated by id match: " + hit.name + "/" + hit.class_code + (naturalKey ? " (WARN: natural key preferred but not matched)" : ""));
+    return;
+  }
+
+  // ── Stratégie 3 : email fallback (last resort) ──
   try {
     const { data: userData } = await supaAdmin.auth.admin.getUserById(userId);
     const email = userData && userData.user && userData.user.email;
@@ -108,11 +142,14 @@ async function updateStudentAccess(userId, accessLevel, expiresAtIso, consent) {
       .from("students")
       .update(payload)
       .eq("email", email)
-      .select("id");
+      .select("id, name, class_code");
     if (emailRes.data && emailRes.data.length > 0) {
+      if (emailRes.data.length > 1) {
+        console.warn("[webhook] AMBIGUOUS email match (" + emailRes.data.length + " rows): " + email + " — all rows got updated");
+      }
       console.log("[webhook] updated students by email fallback: " + email);
     } else {
-      console.warn("[webhook] no student matched id=" + userId + " or email=" + email);
+      console.warn("[webhook] no student matched id=" + userId + " or email=" + email + " or naturalKey");
     }
   } catch (e) {
     console.error("[webhook] email fallback error:", e && e.message);
@@ -127,6 +164,15 @@ function extractConsent(metadata) {
   if (metadata.cgv_accepted_at) out.cgv_accepted_at = metadata.cgv_accepted_at;
   if (metadata.retractation_waived_at) out.retractation_waived_at = metadata.retractation_waived_at;
   return Object.keys(out).length > 0 ? out : null;
+}
+
+// Helper : extrait la clé naturelle students depuis les metadata Stripe
+function extractNaturalKey(metadata) {
+  if (!metadata || !metadata.student_name) return null;
+  return {
+    name: metadata.student_name,
+    class_code: metadata.student_class_code || "visitor",
+  };
 }
 
 async function handleCheckoutCompleted(session) {
@@ -163,11 +209,13 @@ async function handleCheckoutCompleted(session) {
       throw res.error;
     }
 
-    // Snapshot on students (id-first with email fallback for cross-device safety)
+    // Snapshot on students — priorité natural key > id > email
     console.log("[webhook] updating student access for " + userId);
     const consent = extractConsent(session.metadata);
+    const naturalKey = extractNaturalKey(session.metadata);
     if (consent) console.log("[webhook] consent trace attached:", Object.keys(consent).join(","));
-    await updateStudentAccess(userId, "premium_pass", expiresAt.toISOString(), consent);
+    if (naturalKey) console.log("[webhook] natural key attached:", naturalKey.name + "/" + naturalKey.class_code);
+    await updateStudentAccess(userId, "premium_pass", expiresAt.toISOString(), consent, naturalKey);
     console.log("[webhook] handleCheckoutCompleted done for pass3m");
   } else if (plan === "monthly") {
     // Subscription flow — the subscription.created event handles DB writes separately
@@ -208,18 +256,23 @@ async function handleSubscriptionUpsert(subscription) {
   const { error } = await supaAdmin.from("subscriptions").upsert(payload, { onConflict: "id" });
   if (error) console.error("[webhook] subscriptions upsert error:", error.message);
 
-  // Snapshot on students (id-first with email fallback for cross-device safety)
+  // Snapshot on students — priorité natural key > id > email
   const isActive = subscription.status === "active" || subscription.status === "trialing";
   // Consent trace uniquement lors de la 1ère souscription (quand isActive).
   // Sur les renouvellements / cancel / suspend, le consentement initial
   // est conservé (on n'écrase pas).
   const consent = isActive ? extractConsent(subscription.metadata) : null;
+  // Natural key est toujours attachée (utile aussi pour cancel/downgrade
+  // : on veut remettre la BONNE row à free).
+  const naturalKey = extractNaturalKey(subscription.metadata);
   if (consent) console.log("[webhook] consent trace attached to subscription:", Object.keys(consent).join(","));
+  if (naturalKey) console.log("[webhook] natural key attached to subscription:", naturalKey.name + "/" + naturalKey.class_code);
   await updateStudentAccess(
     userId,
     isActive ? "premium_monthly" : "free",
     isActive ? payload.current_period_end : null,
-    consent
+    consent,
+    naturalKey
   );
 }
 

@@ -420,7 +420,17 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-22-p2-chat-bubble";
+var BUILD_ID="2026-04-24-premium-hardening";
+
+// ─── PREMIUM FEATURE FLAG ───
+// Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
+// bloqué (affiche juste "Bientôt disponible"). Les utilisateurs déjà Premium
+// (pass ou monthly actif) gardent leur accès — seule la nouvelle souscription
+// est bloquée.
+//
+// À remettre à TRUE dès que le flow E2E est validé end-to-end sans bug
+// d'attribution de row (cf. chantier hardening 2026-04-24).
+var PREMIUM_UPGRADE_ENABLED=false;
 import { supabase } from './supabase.js'
 import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
@@ -11537,6 +11547,9 @@ function UpgradeScreen(p){
         cgvVersion: c.cgvVersion,
         cgvAcceptedAt: c.cgvAcceptedAt,
         retractationWaivedAt: c.retractationWaivedAt,
+        // Clé naturelle pour que le webhook update la BONNE row students.
+        studentName: c.name,
+        studentClassCode: c.classCode||"visitor",
       }); // redirects window.location to Stripe
     }catch(e){
       var msg=(e&&e.message)||"Erreur";
@@ -11544,6 +11557,20 @@ function UpgradeScreen(p){
       else setErr(msg);
       setBusy(null);
     }
+  }
+
+  // Si le flag global est OFF, on bloque l'écran entier — même si quelqu'un
+  // atterrit ici via une URL directe ou un state routing cassé.
+  if(!PREMIUM_UPGRADE_ENABLED){
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:440,margin:"0 auto"}}>
+      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
+      <div style={{textAlign:"center",marginTop:48}}>
+        <div style={{fontSize:56,marginBottom:12,opacity:.6}}>{"\uD83D\uDEE0\uFE0F"}</div>
+        <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:12}}>Premium bient\u00f4t disponible</h1>
+        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:8}}>La souscription Premium est en finalisation technique. Elle sera accessible d\u00e8s que le syst\u00e8me sera valid\u00e9 end-to-end.</p>
+        <p style={{color:"var(--t3)",fontSize:12,lineHeight:1.5}}>En attendant, profite de l'acc\u00e8s Freemium \u2014 toutes les fonctions de base restent ouvertes.</p>
+      </div>
+    </div>);
   }
 
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -12362,6 +12389,15 @@ function Profile(p){
                 {"\uD83D\uDD27 G\u00e9rer"}
               </button>
             </div>}
+          </div>);
+        }
+        if(!PREMIUM_UPGRADE_ENABLED){
+          return(<div className="crd" style={{marginBottom:12,padding:"14px 16px",background:"rgba(var(--cx),.04)",border:"1px dashed var(--bdr)",display:"flex",alignItems:"center",gap:12}}>
+            <span style={{fontSize:22,flexShrink:0,opacity:.6}}>{"\uD83C\uDFF0"}</span>
+            <div style={{flex:1}}>
+              <div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t2)"}}>Arena Premium bient\u00f4t disponible</div>
+              <div style={{fontSize:11,color:"var(--t3)",marginTop:2,lineHeight:1.4}}>Finalisation du paiement en cours. La souscription sera ouverte d\u00e8s que le syst\u00e8me est valid\u00e9.</div>
+            </div>
           </div>);
         }
         return(<button className="btn1" onClick={function(){p.goUpgrade&&p.goUpgrade();}}

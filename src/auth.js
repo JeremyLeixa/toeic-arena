@@ -151,6 +151,13 @@ export async function createCheckout(plan, consent) {
     if (consent.cgvVersion) body.cgv_version = consent.cgvVersion;
     if (consent.cgvAcceptedAt) body.cgv_accepted_at = consent.cgvAcceptedAt;
     if (consent.retractationWaivedAt) body.retractation_waived_at = consent.retractationWaivedAt;
+    // Clé naturelle students (name, class_code) : permet au webhook de cibler
+    // la ROW intended par l'utilisateur plutôt que de matcher par auth.users.id
+    // (qui peut pointer sur une row legacy — cas bug 2026-04-24 : webhook
+    // updatait Teacher au lieu de Jaytest2 parce que les deux partageaient le
+    // même auth session mais étaient des rows students distinctes).
+    if (consent.studentName) body.student_name = consent.studentName;
+    if (consent.studentClassCode) body.student_class_code = consent.studentClassCode;
   }
   const res = await fetch('/api/stripe-checkout-create', {
     method: 'POST',
