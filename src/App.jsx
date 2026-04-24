@@ -12146,8 +12146,34 @@ function Profile(p){
           {"\uD83D\uDDD1\uFE0F Supprimer mon compte et mes donn\u00e9es"}
         </button>
         <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
-          style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.15)",width:"100%"}}>
+          style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.15)",width:"100%",marginBottom:8}}>
           {"\uD83D\uDD04 R\u00e9initialiser (formateur)"}
+        </button>
+        {/* Hard logout — invalide la session Supabase + purge localStorage.
+            Utile pour : créer un profil distinct avec un autre email, tester en
+            sandbox avec plusieurs alias, se débarrasser d'une session cachée
+            qui auto-relogue involontairement. Différent de "Changer de profil"
+            sur l'écran principal qui garde la session Supabase pour le Welcome
+            back. Les données côté Supabase ne sont PAS supprimées. */}
+        <button className="btn2" onClick={async function(){
+          if(!confirm("D\u00e9connexion compl\u00e8te ?\n\nCa vide la session d'authentification (tu devras retaper ton email et cliquer le lien magique pour revenir). Tes donn\u00e9es en base ne sont pas touch\u00e9es.\n\n\u00c0 utiliser si tu veux cr\u00e9er un profil distinct avec un autre email, ou si tu es auto-relogu\u00e9 sur une session pr\u00e9c\u00e9dente sans le vouloir."))return;
+          try{await signOutCompletely();}catch(e){console.warn("[logout] signOut failed:",e&&e.message);}
+          try{
+            // Nettoyage exhaustif des clés app ET Supabase auth côté localStorage.
+            // signOutCompletely() supprime déjà les clés app (toeic-arena-*) + appelle
+            // supabase.auth.signOut qui purge les tokens. Belt-and-suspenders : on
+            // scan tout localStorage pour toute clé contenant "toeic", "supabase",
+            // ou "sb-" (pattern des tokens Supabase auth).
+            for(var i=localStorage.length-1;i>=0;i--){
+              var k=localStorage.key(i);
+              if(k&&(/(toeic|supabase|^sb-)/i).test(k))localStorage.removeItem(k);
+            }
+          }catch(e){console.warn("[logout] storage cleanup failed:",e&&e.message);}
+          // Reload pour forcer un remount propre sans aucun cache React
+          window.location.href="/";
+        }}
+          style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.15)",width:"100%"}}>
+          {"\uD83D\uDEAA D\u00e9connexion compl\u00e8te (vide la session)"}
         </button>
       </div>
     </div>);
