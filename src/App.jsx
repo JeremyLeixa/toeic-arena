@@ -32,6 +32,7 @@ import { GRIMOIRE_GERUND } from "./data/gerundGrimoire.js";
 import { GRIMOIRE_PHRASAL } from "./data/phrasalGrimoire.js";
 import { GRIMOIRE_CONNECTORS } from "./data/connectorsGrimoire.js";
 import { NARRATOR_MOMENTS, NARRATOR_ORDER, hasHeardMoment, markMomentHeard } from "./narrator.js";
+import { CGV_ARTICLES, CGV_VERSION, CGV_EFFECTIVE_DATE } from "./data/cgv.js";
 
 
 function today(){return new Date().toISOString().split("T")[0];}
@@ -2372,6 +2373,27 @@ function MediationInfo(p){
     {extraSections.map(function(s,i){return(<div key={i} style={{marginBottom:18}}>
       <h3 className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)",marginBottom:6}}>{s.t}</h3>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.7,margin:0,whiteSpace:"pre-line"}}>{s.c}</p>
+    </div>);})}
+    {p.onClose&&<button className="btn2" onClick={p.onClose} style={{width:"100%",fontSize:14,marginTop:8,marginBottom:24}}>{"\u2190 Retour"}</button>}
+  </div>);
+}
+
+// ─── CGV — Conditions Générales de Vente ───
+// Rendue in-app au moment du checkout (art. L.221-5 Code de la conso :
+// obligation d'information pré-contractuelle). Contenu dans src/data/cgv.js,
+// source canonique archivée dans CGV_draft.md à la racine du repo.
+function CGVPage(p){
+  return(<div style={{maxWidth:480,margin:"0 auto",padding:"24px 16px",maxHeight:"85vh",overflow:"auto"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+      <h2 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>{"Conditions G\u00e9n\u00e9rales de Vente"}</h2>
+      {p.onClose&&<button onClick={p.onClose} style={{background:"none",border:"none",color:"var(--t3)",fontSize:22,cursor:"pointer",padding:4,lineHeight:1}}>{"\u00d7"}</button>}
+    </div>
+    <div style={{fontSize:11,color:"var(--t3)",marginBottom:20,fontStyle:"italic"}}>
+      {"Version "+CGV_VERSION+" \u00b7 entr\u00e9e en vigueur le "+CGV_EFFECTIVE_DATE}
+    </div>
+    {CGV_ARTICLES.map(function(a,i){return(<div key={a.id} style={{marginBottom:18}}>
+      <h3 className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)",marginBottom:6}}>{a.title}</h3>
+      <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.7,margin:0,whiteSpace:"pre-line"}}>{a.body}</p>
     </div>);})}
     {p.onClose&&<button className="btn2" onClick={p.onClose} style={{width:"100%",fontSize:14,marginTop:8,marginBottom:24}}>{"\u2190 Retour"}</button>}
   </div>);
@@ -11466,9 +11488,20 @@ function UpgradeScreen(p){
   var u=p.u;
   var[busy,setBusy]=useState(null); // null | "monthly" | "pass3m"
   var[err,setErr]=useState("");
+  // Double consentement légal obligatoire avant paiement (art. L.221-5 + L.221-28 13° CC)
+  var[acceptCGV,setAcceptCGV]=useState(false);
+  var[waiveRetract,setWaiveRetract]=useState(false);
+  var[showCGV,setShowCGV]=useState(false);
+  var[showMediation,setShowMediation]=useState(false);
+  var[showPrivacy,setShowPrivacy]=useState(false);
+  var canPay=acceptCGV&&waiveRetract;
 
   async function go(plan){
     if(busy)return;
+    if(!canPay){
+      setErr("Merci de cocher les deux cases l\u00e9gales avant de payer.");
+      return;
+    }
     setBusy(plan);setErr("");
     try{
       if(!u.email){setErr("Ajoute d'abord un email \u00e0 ton compte (Profil \u2192 S\u00e9curiser).");setBusy(null);return;}
@@ -11508,8 +11541,8 @@ function UpgradeScreen(p){
           <div>{"\u2713 \u00C9conomise ~23% vs mensuel"}</div>
           <div>{"\u2713 Parfait avant un examen programm\u00e9"}</div>
         </div>
-        <button className="btn1" disabled={busy==="pass3m"} onClick={function(){go("pass3m");}}
-          style={{width:"100%",fontSize:14,padding:"13px 20px",opacity:busy==="pass3m"?0.6:1,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610"}}>
+        <button className="btn1" disabled={busy==="pass3m"||!canPay} onClick={function(){go("pass3m");}}
+          style={{width:"100%",fontSize:14,padding:"13px 20px",opacity:(busy==="pass3m"||!canPay)?0.45:1,cursor:canPay?"pointer":"not-allowed",background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610"}}>
           {busy==="pass3m"?"\u2026":"Choose Pass 3 mois \u2192"}
         </button>
       </div>
@@ -11530,19 +11563,66 @@ function UpgradeScreen(p){
         <div>{"\u2713 R\u00e9siliable \u00e0 tout moment"}</div>
         <div>{"\u2713 Flexible pour une pr\u00e9pa longue"}</div>
       </div>
-      <button className="btn2" disabled={busy==="monthly"} onClick={function(){go("monthly");}}
-        style={{width:"100%",fontSize:14,padding:"12px 20px",opacity:busy==="monthly"?0.6:1}}>
+      <button className="btn2" disabled={busy==="monthly"||!canPay} onClick={function(){go("monthly");}}
+        style={{width:"100%",fontSize:14,padding:"12px 20px",opacity:(busy==="monthly"||!canPay)?0.45:1,cursor:canPay?"pointer":"not-allowed"}}>
         {busy==="monthly"?"\u2026":"Choose Monthly \u2192"}
       </button>
     </div>
 
     {err&&<div className="crd" style={{marginBottom:14,padding:"10px 14px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.25)",fontSize:12,color:"var(--red)"}}>{err}</div>}
 
-    {/* Fine print */}
-    <div style={{fontSize:10,color:"var(--t3)",lineHeight:1.6,textAlign:"center",marginTop:20}}>
-      {"Paiement s\u00e9curis\u00e9 par Stripe \u00B7 TVA non applicable, art. 293 B du CGI"}<br/>
-      {"En souscrivant, tu acceptes les "}<a href="/cgv.md" target="_blank" rel="noopener" style={{color:"var(--cyan)"}}>CGV</a>{" et renonces \u00e0 ton droit de r\u00e9tractation (acc\u00e8s imm\u00e9diat au service)."}
+    {/* Bloc légal d'information pré-contractuelle (art. L.221-5 CC).
+        Les 3 pages accessibles SANS sortir du parcours de paiement (in-app). */}
+    <div style={{marginTop:22,padding:"14px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12}}>
+      <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1.5,marginBottom:10}}>
+        {"\u00C0 lire avant de payer"}
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
+        <button onClick={function(){setShowCGV(true);}} style={{background:"none",border:"none",padding:"6px 0",fontSize:13,color:"var(--cyan)",textAlign:"left",cursor:"pointer",textDecoration:"underline",fontFamily:"'DM Sans',sans-serif"}}>
+          {"\uD83D\uDCDC Conditions G\u00e9n\u00e9rales de Vente"}
+        </button>
+        <button onClick={function(){setShowPrivacy(true);}} style={{background:"none",border:"none",padding:"6px 0",fontSize:13,color:"var(--cyan)",textAlign:"left",cursor:"pointer",textDecoration:"underline",fontFamily:"'DM Sans',sans-serif"}}>
+          {"\uD83D\uDEE1\uFE0F Politique de confidentialit\u00e9"}
+        </button>
+        <button onClick={function(){setShowMediation(true);}} style={{background:"none",border:"none",padding:"6px 0",fontSize:13,color:"var(--cyan)",textAlign:"left",cursor:"pointer",textDecoration:"underline",fontFamily:"'DM Sans',sans-serif"}}>
+          {"\u2696\uFE0F M\u00e9diation de la consommation"}
+        </button>
+      </div>
+
+      {/* Checkbox 1 — acceptation CGV (obligation L.221-5) */}
+      <label style={{display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer",marginBottom:10,padding:"8px 0"}}>
+        <input type="checkbox" checked={acceptCGV} onChange={function(e){setAcceptCGV(e.target.checked);setErr("");}}
+          style={{marginTop:2,width:18,height:18,flexShrink:0,accentColor:"var(--cx-hex)"}}/>
+        <span style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>
+          {"J'ai lu et j'accepte les "}<button type="button" onClick={function(e){e.preventDefault();setShowCGV(true);}} style={{background:"none",border:"none",padding:0,color:"var(--cyan)",textDecoration:"underline",cursor:"pointer",fontFamily:"inherit",fontSize:"inherit"}}>Conditions G\u00e9n\u00e9rales de Vente</button>{" de TOEIC Arena."}
+        </span>
+      </label>
+
+      {/* Checkbox 2 — renonciation expresse au droit de rétractation (obligation L.221-28 13°) */}
+      <label style={{display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer",padding:"8px 0"}}>
+        <input type="checkbox" checked={waiveRetract} onChange={function(e){setWaiveRetract(e.target.checked);setErr("");}}
+          style={{marginTop:2,width:18,height:18,flexShrink:0,accentColor:"var(--cx-hex)"}}/>
+        <span style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>
+          {"Je demande express\u00e9ment l'ex\u00e9cution imm\u00e9diate du Service d\u00e8s confirmation du paiement et je renonce, en cons\u00e9quence, \u00e0 mon droit de r\u00e9tractation de 14 jours (art. L.221-28 13\u00b0 du Code de la consommation)."}
+        </span>
+      </label>
     </div>
+
+    {/* Fine print */}
+    <div style={{fontSize:10,color:"var(--t3)",lineHeight:1.6,textAlign:"center",marginTop:16}}>
+      {"Paiement s\u00e9curis\u00e9 par Stripe \u00B7 TVA non applicable, art. 293 B du CGI"}
+    </div>
+
+    {/* Overlays in-app — évite de perdre la session en sortant vers une URL externe */}
+    {showCGV&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
+      <CGVPage onClose={function(){setShowCGV(false);}}/>
+    </div>}
+    {showPrivacy&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
+      <PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>
+    </div>}
+    {showMediation&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
+      <MediationInfo onClose={function(){setShowMediation(false);}}/>
+    </div>}
   </div>);
 }
 
