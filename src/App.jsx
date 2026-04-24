@@ -2336,25 +2336,23 @@ function PrivacyPolicy(p){
 // ─── MÉDIATION DE LA CONSOMMATION ───
 // Obligation légale (art. L616-1 Code de la consommation) : communiquer au
 // consommateur les coordonnées du médiateur + procédure de saisine. Convention
-// signée avec MÉDIATION CONSOMMATION DÉVELOPPEMENT (Saint-Étienne), référencée
-// CECMC, durée 3 ans à compter de la signature.
+// signée avec MÉDIATION CONSOMMATION DÉVELOPPEMENT (Saint-Étienne), numéro
+// d'adhérent MED60239, référencée CECMC, durée 3 ans à compter de la signature
+// (20/04/2026).
+//
+// Le bloc d'information principal (mandatoryText + mandatoryPostalBlock)
+// est imposé verbatim par MCD — ne pas reformuler, ne pas fragmenter.
+// Les sections complémentaires (plateforme RLL, infos légales) restent
+// paramétrables côté app.
 function MediationInfo(p){
-  var sections=[
-    {t:"1. Qu'est-ce que la m\u00e9diation de la consommation\u00a0?",
-      c:"La m\u00e9diation de la consommation est un dispositif pr\u00e9vu par le Code de la consommation (articles L.611-1 et suivants) qui permet \u00e0 tout consommateur de trouver une solution amiable \u00e0 un litige avec un professionnel, sans passer par la justice. La d\u00e9marche est gratuite pour le consommateur et entra\u00eene la suspension des d\u00e9lais de prescription pendant la dur\u00e9e de la m\u00e9diation."},
-    {t:"2. Quand puis-je saisir le m\u00e9diateur\u00a0?",
-      c:"Apr\u00e8s avoir adress\u00e9 une r\u00e9clamation \u00e9crite au service client de TOEIC Arena (leixa.formation@gmail.com) et en l'absence de r\u00e9ponse satisfaisante dans un d\u00e9lai de 60 jours, vous pouvez saisir gratuitement le m\u00e9diateur. La saisine doit intervenir dans l'ann\u00e9e suivant votre r\u00e9clamation initiale."},
-    {t:"3. Coordonn\u00e9es du m\u00e9diateur",
-      c:"M\u00c9DIATION CONSOMMATION D\u00c9VELOPPEMENT\nSAS au capital de 10\u00a0000\u00a0\u20ac \u2014 RCS Saint-\u00c9tienne 852\u00a0787\u00a0472\n\nCentre d'Affaires St\u00e9phanois \u2014 Immeuble L'Horizon\n3 rue J. Constant Milleret\n42000 Saint-\u00c9tienne\n\nSite\u00a0: www.medconsodev.eu\nEmail\u00a0: contact-admin@medconsodev.eu"},
-    {t:"4. Comment saisir le m\u00e9diateur\u00a0?",
-      c:"Deux options\u00a0:\n\u2022 En ligne, directement depuis la plateforme du m\u00e9diateur\u00a0: www.medconsodev.eu\n\u2022 Par courrier postal \u00e0 l'adresse ci-dessus.\n\nJoignez \u00e0 votre demande\u00a0: la copie de votre r\u00e9clamation initiale, la r\u00e9ponse re\u00e7ue (ou l'absence de r\u00e9ponse), et toute pi\u00e8ce utile."},
-    {t:"5. D\u00e9roulement et d\u00e9lais",
-      c:"\u2022 Le m\u00e9diateur examine la recevabilit\u00e9 de votre demande dans un d\u00e9lai de 3 semaines.\n\u2022 S'il accepte la saisine, il conduit la m\u00e9diation dans un d\u00e9lai maximum de 90 jours, prorogeable en cas de litige complexe avec information pr\u00e9alable des parties.\n\u2022 La m\u00e9diation peut se d\u00e9rouler par \u00e9crit (plateforme, email, courrier), par vid\u00e9oconf\u00e9rence ou en pr\u00e9sentiel, selon la forme d\u00e9cid\u00e9e par le m\u00e9diateur en accord avec les parties.\n\u2022 \u00c0 l'issue, le m\u00e9diateur constate l'accord amiable ou propose une solution. Vous disposez de 15 jours pour l'accepter ou la refuser. Le silence vaut refus."},
-    {t:"6. Caract\u00e9ristiques cl\u00e9s",
-      c:"\u2022 Gratuit\u00e9\u00a0: la m\u00e9diation est enti\u00e8rement gratuite pour le consommateur (les frais sont pris en charge par le professionnel).\n\u2022 Confidentialit\u00e9 absolue\u00a0: les \u00e9changes ne peuvent pas \u00eatre utilis\u00e9s en justice (art. 21-3 loi n\u00b0 95-125).\n\u2022 Ind\u00e9pendance\u00a0: le m\u00e9diateur est une personne physique r\u00e9f\u00e9renc\u00e9e par la CECMC (Commission d'\u00e9valuation et de contr\u00f4le de la m\u00e9diation de la consommation).\n\u2022 Libert\u00e9 de retrait\u00a0: vous pouvez quitter la proc\u00e9dure \u00e0 tout moment, sans cons\u00e9quence."},
-    {t:"7. Plateforme europ\u00e9enne (RLL)",
+  var mandatoryText="Si vous n'\u00eates pas parvenu \u00e0 r\u00e9soudre votre litige apr\u00e8s nous avoir adress\u00e9 une r\u00e9clamation \u00e9crite (courrier ou courriel), dat\u00e9e, rappelant les circonstances qui ont donn\u00e9 lieu au diff\u00e9rend et ce que vous r\u00e9clamez, vous pourrez saisir le m\u00e9diateur de la consommation, d\u00e9sign\u00e9 ci-dessous, si vous avez re\u00e7u une r\u00e9ponse \u00e9crite n\u00e9gative de notre part ou pas de r\u00e9ponse deux mois apr\u00e8s l'envoi de votre r\u00e9clamation.\n\nConform\u00e9ment aux articles L.616-1 et R.616-1 du code de la consommation, notre soci\u00e9t\u00e9 a mis en place un dispositif de m\u00e9diation de la consommation. L'entit\u00e9 de m\u00e9diation retenue est\u00a0: SAS M\u00c9DIATION CONSOMMATION D\u00c9VELOPPEMENT. En cas de litige, tout consommateur pourra d\u00e9poser sa r\u00e9clamation sur le site\u00a0:";
+  var mandatoryPostalBlock="ou par voie postale en \u00e9crivant \u00e0\u00a0:\n\nM\u00c9DIATION CONSOMMATION D\u00c9VELOPPEMENT\nC/O Centre d'Affaires St\u00e9phanois SAS - Immeuble l'Horizon - Esplanade de France - 3 rue J. Constant Milleret - 42000 SAINT-ETIENNE";
+  var extraSections=[
+    {t:"Informations compl\u00e9mentaires",
+      c:"\u2022 Num\u00e9ro d'adh\u00e9rent\u00a0: MED60239\n\u2022 Convention sign\u00e9e le 20 avril 2026 pour une dur\u00e9e de trois ans, enregistr\u00e9e aupr\u00e8s de la CECMC (Commission d'\u00c9valuation et de Contr\u00f4le de la M\u00e9diation de la Consommation).\n\u2022 Gratuit\u00e9\u00a0: la proc\u00e9dure est enti\u00e8rement gratuite pour vous, les frais sont pris en charge par TOEIC Arena.\n\u2022 D\u00e9lai\u00a0: le m\u00e9diateur rend son avis dans un d\u00e9lai maximum de 90 jours \u00e0 compter de sa saisine, prorogeable en cas de litige complexe.\n\u2022 Confidentialit\u00e9\u00a0: les \u00e9changes en m\u00e9diation sont soumis \u00e0 une obligation de confidentialit\u00e9 absolue (art. 21-3 loi n\u00b0 95-125 du 8 f\u00e9vrier 1995).\n\u2022 D\u00e9lai de saisine\u00a0: votre demande doit intervenir dans un d\u00e9lai d'un an \u00e0 compter de votre r\u00e9clamation initiale aupr\u00e8s de notre service client (leixa.formation@gmail.com)."},
+    {t:"Plateforme europ\u00e9enne (RLL)",
       c:"Si vous r\u00e9sidez dans un autre \u00c9tat membre de l'Union europ\u00e9enne, vous pouvez \u00e9galement recourir \u00e0 la plateforme europ\u00e9enne de R\u00e8glement en Ligne des Litiges mise en place par la Commission europ\u00e9enne\u00a0:\nhttps://ec.europa.eu/consumers/odr/\n\nCette plateforme permet de rechercher un organisme de r\u00e8glement extrajudiciaire comp\u00e9tent et de d\u00e9poser une demande en ligne."},
-    {t:"8. Information l\u00e9gale",
+    {t:"Information l\u00e9gale",
       c:"Professionnel\u00a0: J\u00e9r\u00e9my LEIXA \u2014 SIRET 830 200 556 00025 \u2014 Code APE 85.59B (Formation continue d'adultes).\n\nConform\u00e9ment aux articles L.616-1 et R.616-1 du Code de la consommation."}
   ];
   return(<div style={{maxWidth:480,margin:"0 auto",padding:"24px 16px",maxHeight:"85vh",overflow:"auto"}}>
@@ -2362,10 +2360,16 @@ function MediationInfo(p){
       <h2 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>{"M\u00e9diation de la consommation"}</h2>
       {p.onClose&&<button onClick={p.onClose} style={{background:"none",border:"none",color:"var(--t3)",fontSize:22,cursor:"pointer",padding:4,lineHeight:1}}>{"\u00d7"}</button>}
     </div>
-    <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:18,padding:"12px 14px",background:"rgba(var(--cx),.06)",borderLeft:"3px solid var(--cyan)",borderRadius:"0 8px 8px 0"}}>
-      {"En tant que consommateur, vous b\u00e9n\u00e9ficiez d'un droit \u00e0 une r\u00e9solution amiable et gratuite en cas de litige avec TOEIC Arena."}
-    </p>
-    {sections.map(function(s,i){return(<div key={i} style={{marginBottom:18}}>
+    {/* Bloc imposé verbatim par l'entité de médiation — ne pas reformuler. */}
+    <div style={{marginBottom:22}}>
+      <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.7,margin:"0 0 14px",whiteSpace:"pre-line"}}>{mandatoryText}</p>
+      <p style={{fontSize:14,fontWeight:700,margin:"0 0 14px",textAlign:"center"}}>
+        <a href="https://www.medconsodev.eu" target="_blank" rel="noopener noreferrer" style={{color:"var(--cyan)",wordBreak:"break-all"}}>https://www.medconsodev.eu</a>
+      </p>
+      <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.7,margin:0,whiteSpace:"pre-line"}}>{mandatoryPostalBlock}</p>
+    </div>
+    <div style={{height:1,background:"var(--bdr)",margin:"22px 0"}}/>
+    {extraSections.map(function(s,i){return(<div key={i} style={{marginBottom:18}}>
       <h3 className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)",marginBottom:6}}>{s.t}</h3>
       <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.7,margin:0,whiteSpace:"pre-line"}}>{s.c}</p>
     </div>);})}
