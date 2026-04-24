@@ -332,9 +332,9 @@ Pour les litiges avec un Client consommateur, sont compétents, au choix du Clie
 - [ ] Faire relire par un juriste ou avocat spécialisé
 - [x] Adhérer à un médiateur de la consommation agréé (obligation légale) — **MÉDIATION CONSOMMATION DÉVELOPPEMENT**, convention signée le 20/04/2026, numéro d'adhérent **MED60239**, tarifs verrouillés confirmés (60 € TTC adhésion annuelle + 87 € TTC par médiation pour un litige ≤ 250 €)
 - [x] Intégrer le bloc de texte imposé par MCD tel quel dans l'Article 17 (effectué le 24/04/2026)
-- [ ] Mettre à jour la Politique de Confidentialité (ajouter Stripe comme sous-traitant + finalité paiement)
+- [x] Mettre à jour la Politique de Confidentialité (ajouter Stripe comme sous-traitant + finalité paiement) — commit 704e056, sections 1/2/3/4/5/6/7/8/10/12 mises à jour.
 - [x] Ajouter une case à cocher distincte pour la renonciation au droit de rétractation (article 9.2) sur l'écran d'upgrade — checkbox dédiée non pré-cochée, commit c699658
 - [x] Ajouter un lien « CGV » visible depuis l'écran d'upgrade Premium (obligation pré-contractuelle d'information) — bloc 3 liens (CGV, Privacy, Médiation) in-app, commit c699658
 - [x] Archiver chaque version des CGV avec date d'entrée en vigueur — dossier `docs/cgv/`, snapshot v1.0-2026-04-24.md. Règle future : à chaque changement qui modifie CGV_VERSION ou CGV_EFFECTIVE_DATE, dupliquer ce fichier en `docs/cgv/vX.Y-YYYY-MM-DD.md` avant de modifier `CGV_draft.md`.
-- [ ] Intégrer le portail Stripe Customer Portal pour permettre au Client **Premium Mensuel** de résilier en un clic (obligation article L. 215-1-1 CC — « bouton résiliation »). Le TOEIC Pass 3 mois n'étant pas reconductible, il n'est pas concerné par cette obligation.
-- [ ] Envoi d'un email de courtoisie **7 jours avant l'expiration du TOEIC Pass 3 mois** (rappel manuel ou Edge Function Supabase programmée)
+- [x] Intégrer le portail Stripe Customer Portal pour permettre au Client **Premium Mensuel** de résilier en un clic (obligation article L. 215-1-1 CC — « bouton résiliation »). Le TOEIC Pass 3 mois n'étant pas reconductible, il n'est pas concerné par cette obligation. — commit 5cb9619, CTA "✕ Résilier" rouge distinct + "Gérer" secondaire.
+- [x] Envoi d'un rappel de courtoisie **7 jours avant l'expiration du TOEIC Pass 3 mois** — Edge Function Supabase `pass3m-expiration-reminder`, à déployer et programmer en cron daily 09h CET. Implémentée en push (même canal que les autres edge functions). Migration vers email possible plus tard sans changer la structure.
