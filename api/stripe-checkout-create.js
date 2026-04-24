@@ -140,6 +140,18 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Server misconfiguration: price ID missing" });
   }
 
+  // ── Consent trace (CGV + renonciation rétractation) ──
+  // Transmises depuis le client à l'ouverture du checkout (non trust-able
+  // à 100% mais représentatif du moment du clic). Le webhook lira ces
+  // metadata puis écrira les 3 champs dans students après confirmation du
+  // paiement. Sans ce passage, la trace resterait sur la row locale au
+  // moment du save() et pouvait atterrir sur une row différente de celle
+  // que le webhook met à jour (cas de doublons de profil — bug détecté
+  // sandbox 2026-04-24).
+  const consentVersion = req.body && req.body.cgv_version;
+  const consentAcceptedAt = req.body && req.body.cgv_accepted_at;
+  const consentRetractWaivedAt = req.body && req.body.retractation_waived_at;
+
   // Success/cancel URLs — frontend will handle the query params on return
   const origin = req.headers.origin || req.headers.referer || "https://toeic-arena.vercel.app";
   const successUrl = origin.replace(/\/$/, "") + planConfig.successSuffix;
@@ -148,6 +160,16 @@ export default async function handler(req, res) {
   try {
     const customerId = await findOrCreateCustomer(user);
 
+    // Metadata enrichies avec le consent trace si le client les a envoyées.
+    // Stripe limite à 50 clés / 500 chars/valeur — largement suffisant ici.
+    const baseMetadata = {
+      supabase_user_id: user.id,
+      plan: plan,
+    };
+    if (consentVersion) baseMetadata.cgv_version = consentVersion;
+    if (consentAcceptedAt) baseMetadata.cgv_accepted_at = consentAcceptedAt;
+    if (consentRetractWaivedAt) baseMetadata.retractation_waived_at = consentRetractWaivedAt;
+
     const sessionConfig = {
       mode: planConfig.mode,
       customer: customerId,
@@ -155,10 +177,7 @@ export default async function handler(req, res) {
       success_url: successUrl,
       cancel_url: cancelUrl,
       locale: "fr",
-      metadata: {
-        supabase_user_id: user.id,
-        plan: plan,
-      },
+      metadata: baseMetadata,
     };
 
     // Opt-in features (disabled by default — require Stripe account setup)
@@ -175,20 +194,14 @@ export default async function handler(req, res) {
     // For subscriptions, also set subscription_data metadata so webhooks can match
     if (planConfig.mode === "subscription") {
       sessionConfig.subscription_data = {
-        metadata: {
-          supabase_user_id: user.id,
-          plan: plan,
-        },
+        metadata: { ...baseMetadata },
       };
     }
 
     // For one-time (pass3m), attach payment_intent metadata for the same reason
     if (planConfig.mode === "payment") {
       sessionConfig.payment_intent_data = {
-        metadata: {
-          supabase_user_id: user.id,
-          plan: plan,
-        },
+        metadata: { ...baseMetadata },
       };
     }
 

@@ -11516,16 +11516,28 @@ function UpgradeScreen(p){
       // des CGV acceptées et la date de la renonciation à la rétractation.
       // On conserve la 1ère date d'acceptation si déjà présente (ne pas
       // écraser un consentement antérieur à une version plus ancienne).
+      //
+      // Stratégie double :
+      //   1. save() local+Supabase immédiat : trace côté localStorage et
+      //      (tentative de) persistance dans la row students actuelle.
+      //   2. Metadata passées à createCheckout → Stripe → webhook :
+      //      le webhook écrit dans la MÊME row que access_level après
+      //      confirmation du paiement. Garantit que la trace atterrit
+      //      sur la bonne row même en cas de dédup/profil ambigu.
       var nowIso=new Date().toISOString();
       var c=JSON.parse(JSON.stringify(u));
       if(!c.cgvAcceptedAt)c.cgvAcceptedAt=nowIso;
       c.cgvVersion=CGV_VERSION;
       if(!c.retractationWaivedAt)c.retractationWaivedAt=nowIso;
-      // save() = localStorage + Supabase UPDATE. On attend qu'il termine
-      // pour maximiser la garantie que le trace est en base avant
-      // la redirection Stripe (qui quitte l'app).
       try{await save(c);}catch(saveErr){console.warn("[checkout] save consent failed:",saveErr&&saveErr.message);}
-      await createCheckout(plan); // redirects window.location to Stripe
+      // Remap vers l'API du backend en passant les valeurs du state local
+      // (pas celles re-calculées, pour garder cohérent avec ce qu'on a
+      // écrit en localStorage).
+      await createCheckout(plan, {
+        cgvVersion: c.cgvVersion,
+        cgvAcceptedAt: c.cgvAcceptedAt,
+        retractationWaivedAt: c.retractationWaivedAt,
+      }); // redirects window.location to Stripe
     }catch(e){
       var msg=(e&&e.message)||"Erreur";
       if(msg==="email_required"){setErr("Ajoute d'abord un email \u00e0 ton compte (Profil \u2192 S\u00e9curiser).");}

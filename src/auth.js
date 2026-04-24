@@ -134,11 +134,23 @@ export function onAuthChange(cb) {
 
 // Create a Checkout Session via our serverless endpoint and redirect to Stripe.
 // plan: "monthly" | "pass3m"
+// consent (optional): { cgvVersion, cgvAcceptedAt, retractationWaivedAt }
+//   → envoyé en metadata Stripe puis persisté server-side par le webhook,
+//   pour garantir que la trace légale atterrit sur la MÊME row students
+//   que le access_level (évite les race conditions cross-row).
 // Throws on error; on success, navigates the browser away.
-export async function createCheckout(plan) {
+export async function createCheckout(plan, consent) {
   const session = await getSession();
   if (!session || !session.access_token) {
     throw new Error('Tu dois être connecté pour souscrire.');
+  }
+  const body = { plan };
+  if (consent) {
+    // Toutes les clés en snake_case pour que le webhook les écrive
+    // directement en colonnes Supabase sans transformation.
+    if (consent.cgvVersion) body.cgv_version = consent.cgvVersion;
+    if (consent.cgvAcceptedAt) body.cgv_accepted_at = consent.cgvAcceptedAt;
+    if (consent.retractationWaivedAt) body.retractation_waived_at = consent.retractationWaivedAt;
   }
   const res = await fetch('/api/stripe-checkout-create', {
     method: 'POST',
@@ -146,7 +158,7 @@ export async function createCheckout(plan) {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + session.access_token,
     },
-    body: JSON.stringify({ plan }),
+    body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

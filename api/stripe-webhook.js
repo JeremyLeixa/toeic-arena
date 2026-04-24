@@ -77,8 +77,18 @@ async function markProcessed(event) {
 // Update students.access_level by matching the user_id. If no row matches,
 // fallback to email match (handles cross-device cases where students.id was
 // set from a different anon user than the one currently authenticated).
-async function updateStudentAccess(userId, accessLevel, expiresAtIso) {
+//
+// consent (optionnel) : { cgv_version, cgv_accepted_at, retractation_waived_at }
+// Si fourni, persiste la trace de consentement dans la MÊME UPDATE que
+// access_level. Garantit que la trace atterrit sur la bonne row, quel que
+// soit le nombre de doublons de profil (bug sandbox 2026-04-24).
+async function updateStudentAccess(userId, accessLevel, expiresAtIso, consent) {
   const payload = { access_level: accessLevel, access_expires_at: expiresAtIso };
+  if (consent) {
+    if (consent.cgv_version) payload.cgv_version = consent.cgv_version;
+    if (consent.cgv_accepted_at) payload.cgv_accepted_at = consent.cgv_accepted_at;
+    if (consent.retractation_waived_at) payload.retractation_waived_at = consent.retractation_waived_at;
+  }
   // Try exact id match first
   const idRes = await supaAdmin
     .from("students")
@@ -107,6 +117,16 @@ async function updateStudentAccess(userId, accessLevel, expiresAtIso) {
   } catch (e) {
     console.error("[webhook] email fallback error:", e && e.message);
   }
+}
+
+// Helper : extrait le consent trace des metadata Stripe
+function extractConsent(metadata) {
+  if (!metadata) return null;
+  const out = {};
+  if (metadata.cgv_version) out.cgv_version = metadata.cgv_version;
+  if (metadata.cgv_accepted_at) out.cgv_accepted_at = metadata.cgv_accepted_at;
+  if (metadata.retractation_waived_at) out.retractation_waived_at = metadata.retractation_waived_at;
+  return Object.keys(out).length > 0 ? out : null;
 }
 
 async function handleCheckoutCompleted(session) {
@@ -145,7 +165,9 @@ async function handleCheckoutCompleted(session) {
 
     // Snapshot on students (id-first with email fallback for cross-device safety)
     console.log("[webhook] updating student access for " + userId);
-    await updateStudentAccess(userId, "premium_pass", expiresAt.toISOString());
+    const consent = extractConsent(session.metadata);
+    if (consent) console.log("[webhook] consent trace attached:", Object.keys(consent).join(","));
+    await updateStudentAccess(userId, "premium_pass", expiresAt.toISOString(), consent);
     console.log("[webhook] handleCheckoutCompleted done for pass3m");
   } else if (plan === "monthly") {
     // Subscription flow — the subscription.created event handles DB writes separately
@@ -188,10 +210,16 @@ async function handleSubscriptionUpsert(subscription) {
 
   // Snapshot on students (id-first with email fallback for cross-device safety)
   const isActive = subscription.status === "active" || subscription.status === "trialing";
+  // Consent trace uniquement lors de la 1ère souscription (quand isActive).
+  // Sur les renouvellements / cancel / suspend, le consentement initial
+  // est conservé (on n'écrase pas).
+  const consent = isActive ? extractConsent(subscription.metadata) : null;
+  if (consent) console.log("[webhook] consent trace attached to subscription:", Object.keys(consent).join(","));
   await updateStudentAccess(
     userId,
     isActive ? "premium_monthly" : "free",
-    isActive ? payload.current_period_end : null
+    isActive ? payload.current_period_end : null,
+    consent
   );
 }
 
