@@ -478,6 +478,9 @@ function supaToLocal(data){
     accessLevel: data.access_level || 'free',
     accessExpiresAt: data.access_expires_at || null,
     narrator: data.narrator || {heard:[], muted:false},
+    cgvAcceptedAt: data.cgv_accepted_at || null,
+    cgvVersion: data.cgv_version || null,
+    retractationWaivedAt: data.retractation_waived_at || null,
   };
 }
 
@@ -605,6 +608,9 @@ async function save(d){
     access_level:d.accessLevel||'free',
     access_expires_at:d.accessExpiresAt||null,
     narrator:d.narrator||{heard:[],muted:false},
+    cgv_accepted_at:d.cgvAcceptedAt||null,
+    cgv_version:d.cgvVersion||null,
+    retractation_waived_at:d.retractationWaivedAt||null,
   };
   var cc=d.classCode||"visitor";
   try{
@@ -668,7 +674,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false}};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -11505,6 +11511,20 @@ function UpgradeScreen(p){
     setBusy(plan);setErr("");
     try{
       if(!u.email){setErr("Ajoute d'abord un email \u00e0 ton compte (Profil \u2192 S\u00e9curiser).");setBusy(null);return;}
+      // Persist consent trace BEFORE redirecting to Stripe. Legal utility :
+      // en cas de litige ou demande CNIL, on peut prouver la date + version
+      // des CGV acceptées et la date de la renonciation à la rétractation.
+      // On conserve la 1ère date d'acceptation si déjà présente (ne pas
+      // écraser un consentement antérieur à une version plus ancienne).
+      var nowIso=new Date().toISOString();
+      var c=JSON.parse(JSON.stringify(u));
+      if(!c.cgvAcceptedAt)c.cgvAcceptedAt=nowIso;
+      c.cgvVersion=CGV_VERSION;
+      if(!c.retractationWaivedAt)c.retractationWaivedAt=nowIso;
+      // save() = localStorage + Supabase UPDATE. On attend qu'il termine
+      // pour maximiser la garantie que le trace est en base avant
+      // la redirection Stripe (qui quitte l'app).
+      try{await save(c);}catch(saveErr){console.warn("[checkout] save consent failed:",saveErr&&saveErr.message);}
       await createCheckout(plan); // redirects window.location to Stripe
     }catch(e){
       var msg=(e&&e.message)||"Erreur";
