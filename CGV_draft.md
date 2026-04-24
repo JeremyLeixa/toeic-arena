@@ -1,6 +1,6 @@
 # Conditions Générales de Vente — TOEIC Arena
 
-**Version 1.0 — Date d'entrée en vigueur : [À COMPLÉTER — ex: 2026-05-20]**
+**Version 1.0 — Date d'entrée en vigueur : 24 avril 2026**
 
 > ⚠️ **DRAFT NON JURIDIQUEMENT VALIDÉ.** Ce document est une base technique rédigée pour couvrir les obligations légales françaises B2C d'un service SaaS avec abonnement. Il doit être **relu par un juriste ou un avocat** spécialisé en droit de la consommation et droit du numérique avant mise en ligne, notamment pour :
 > - Vérifier la conformité avec les évolutions récentes (Directive Omnibus, loi REEN, DSA...)
@@ -23,13 +23,13 @@ En cas de contradiction, les CGV prévalent pour les aspects contractuels et tar
 ## Article 2 — Mentions légales / Identification de l'Éditeur
 
 - **Nom commercial** : TOEIC Arena
-- **Éditeur** : Jérémy Leixa
+- **Éditeur** : Jérémy LEIXA
 - **Statut juridique** : Entrepreneur Individuel — régime de la micro-entreprise
-- **SIRET** : [À COMPLÉTER]
-- **Code APE/NAF** : [À COMPLÉTER — probablement 85.59A (Formation continue d'adultes) ou 62.01Z (Programmation informatique)]
-- **Adresse du siège** : [À COMPLÉTER]
+- **SIRET** : 830 200 556 00025
+- **Code APE/NAF** : 85.59B (Formation continue d'adultes)
+- **Adresse du siège** : 33 route de la Daleure, 38590 Saint-Étienne-de-Saint-Geoirs
 - **Email de contact** : leixa.formation@gmail.com
-- **Directeur de la publication** : Jérémy Leixa
+- **Directeur de la publication** : Jérémy LEIXA
 - **Régime TVA** : TVA non applicable, art. 293 B du CGI (franchise en base)
 
 **Hébergement** :
@@ -264,15 +264,35 @@ En cas de réclamation écrite, l'Éditeur s'engage à accuser réception dans l
 
 ## Article 17 — Médiation de la consommation
 
-Conformément aux articles L. 616-1 et R. 616-1 du Code de la consommation, l'Éditeur adhère au dispositif de médiation de la consommation suivant :
+Si vous n'êtes pas parvenu à résoudre votre litige après nous avoir adressé une réclamation écrite (courrier ou courriel), datée, rappelant les circonstances qui ont donné lieu au différend et ce que vous réclamez, vous pourrez saisir le médiateur de la consommation, désigné ci-dessous, si vous avez reçu une réponse écrite négative de notre part ou pas de réponse deux mois après l'envoi de votre réclamation.
 
-- **Médiateur** : [À COMPLÉTER — ex: SAS Médiation Solution / CNPM Médiation Consommation / Médicys]
-- **Adresse** : [À COMPLÉTER]
-- **Site web** : [À COMPLÉTER]
+Conformément aux articles L.616-1 et R.616-1 du code de la consommation, notre société a mis en place un dispositif de médiation de la consommation. L'entité de médiation retenue est : SAS MÉDIATION CONSOMMATION DÉVELOPPEMENT. En cas de litige, tout consommateur pourra déposer sa réclamation sur le site :
 
-Après démarche préalable écrite auprès du service client restée infructueuse pendant plus de 60 jours, le Client peut saisir gratuitement le médiateur.
+https://www.medconsodev.eu
 
-Le Client peut également recourir à la plateforme européenne de règlement en ligne des litiges (RLL) : https://ec.europa.eu/consumers/odr/
+ou par voie postale en écrivant à :
+
+MÉDIATION CONSOMMATION DÉVELOPPEMENT
+
+C/O Centre d'Affaires Stéphanois SAS - Immeuble l'Horizon - Esplanade de France - 3 rue J. Constant Milleret - 42000 SAINT-ETIENNE
+
+---
+
+**Informations complémentaires**
+
+- **Numéro d'adhérent** : MED60239
+- **Convention** signée le 20 avril 2026 pour une durée de trois ans, enregistrée auprès de la CECMC (Commission d'Évaluation et de Contrôle de la Médiation de la Consommation).
+- **Gratuité** : la procédure est entièrement gratuite pour le Client, les frais étant pris en charge par l'Éditeur.
+- **Délai** : le médiateur rend son avis dans un délai maximum de 90 jours à compter de sa saisine, prorogeable en cas de litige complexe avec information préalable des parties.
+- **Indépendance** : le médiateur désigné est une personne physique référencée par la CECMC, intervenant en toute impartialité.
+- **Confidentialité** : les échanges en médiation sont soumis à une obligation de confidentialité absolue (art. 21-3 loi n° 95-125 du 8 février 1995).
+- **Délai de saisine** : la saisine doit intervenir dans un délai d'un an à compter de votre réclamation initiale auprès du service client (`leixa.formation@gmail.com`).
+
+### Plateforme européenne de règlement des litiges
+
+Conformément à l'article 14.1 du règlement (UE) n°524/2013, le Client domicilié dans l'Union européenne peut également recourir à la plateforme de règlement en ligne des litiges (RLL) mise en place par la Commission européenne : [https://ec.europa.eu/consumers/odr/](https://ec.europa.eu/consumers/odr/)
+
+Cette plateforme permet de rechercher un organisme de règlement extrajudiciaire des litiges compétent.
 
 ---
 
@@ -308,12 +328,13 @@ Pour les litiges avec un Client consommateur, sont compétents, au choix du Clie
 
 ## 📝 Checklist avant mise en ligne
 
-- [ ] Compléter les `[À COMPLÉTER]` (identification, SIRET, statut, TVA, médiateur)
+- [x] Compléter les `[À COMPLÉTER]` (identification, SIRET, statut, TVA, médiateur) — tous remplis au 24/04/2026
 - [ ] Faire relire par un juriste ou avocat spécialisé
-- [ ] Adhérer à un médiateur de la consommation agréé (obligation légale)
+- [x] Adhérer à un médiateur de la consommation agréé (obligation légale) — **MÉDIATION CONSOMMATION DÉVELOPPEMENT**, convention signée le 20/04/2026, numéro d'adhérent **MED60239**, tarifs verrouillés confirmés (60 € TTC adhésion annuelle + 87 € TTC par médiation pour un litige ≤ 250 €)
+- [x] Intégrer le bloc de texte imposé par MCD tel quel dans l'Article 17 (effectué le 24/04/2026)
 - [ ] Mettre à jour la Politique de Confidentialité (ajouter Stripe comme sous-traitant + finalité paiement)
-- [ ] Ajouter une case à cocher distincte pour la renonciation au droit de rétractation (article 9.2) sur la page Stripe Checkout ou l'écran d'upgrade
-- [ ] Ajouter un lien « CGV » visible depuis l'écran d'upgrade Premium (obligation pré-contractuelle d'information)
-- [ ] Archiver chaque version des CGV avec date d'entrée en vigueur (en cas de litige, la version applicable est celle en vigueur au moment de la souscription)
+- [x] Ajouter une case à cocher distincte pour la renonciation au droit de rétractation (article 9.2) sur l'écran d'upgrade — checkbox dédiée non pré-cochée, commit c699658
+- [x] Ajouter un lien « CGV » visible depuis l'écran d'upgrade Premium (obligation pré-contractuelle d'information) — bloc 3 liens (CGV, Privacy, Médiation) in-app, commit c699658
+- [x] Archiver chaque version des CGV avec date d'entrée en vigueur — dossier `docs/cgv/`, snapshot v1.0-2026-04-24.md. Règle future : à chaque changement qui modifie CGV_VERSION ou CGV_EFFECTIVE_DATE, dupliquer ce fichier en `docs/cgv/vX.Y-YYYY-MM-DD.md` avant de modifier `CGV_draft.md`.
 - [ ] Intégrer le portail Stripe Customer Portal pour permettre au Client **Premium Mensuel** de résilier en un clic (obligation article L. 215-1-1 CC — « bouton résiliation »). Le TOEIC Pass 3 mois n'étant pas reconductible, il n'est pas concerné par cette obligation.
 - [ ] Envoi d'un email de courtoisie **7 jours avant l'expiration du TOEIC Pass 3 mois** (rappel manuel ou Edge Function Supabase programmée)
