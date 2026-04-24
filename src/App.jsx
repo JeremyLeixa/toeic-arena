@@ -2333,6 +2333,46 @@ function PrivacyPolicy(p){
   </div>);
 }
 
+// ─── MÉDIATION DE LA CONSOMMATION ───
+// Obligation légale (art. L616-1 Code de la consommation) : communiquer au
+// consommateur les coordonnées du médiateur + procédure de saisine. Convention
+// signée avec MÉDIATION CONSOMMATION DÉVELOPPEMENT (Saint-Étienne), référencée
+// CECMC, durée 3 ans à compter de la signature.
+function MediationInfo(p){
+  var sections=[
+    {t:"1. Qu'est-ce que la m\u00e9diation de la consommation\u00a0?",
+      c:"La m\u00e9diation de la consommation est un dispositif pr\u00e9vu par le Code de la consommation (articles L.611-1 et suivants) qui permet \u00e0 tout consommateur de trouver une solution amiable \u00e0 un litige avec un professionnel, sans passer par la justice. La d\u00e9marche est gratuite pour le consommateur et entra\u00eene la suspension des d\u00e9lais de prescription pendant la dur\u00e9e de la m\u00e9diation."},
+    {t:"2. Quand puis-je saisir le m\u00e9diateur\u00a0?",
+      c:"Apr\u00e8s avoir adress\u00e9 une r\u00e9clamation \u00e9crite au service client de TOEIC Arena (leixa.formation@gmail.com) et en l'absence de r\u00e9ponse satisfaisante dans un d\u00e9lai de 60 jours, vous pouvez saisir gratuitement le m\u00e9diateur. La saisine doit intervenir dans l'ann\u00e9e suivant votre r\u00e9clamation initiale."},
+    {t:"3. Coordonn\u00e9es du m\u00e9diateur",
+      c:"M\u00c9DIATION CONSOMMATION D\u00c9VELOPPEMENT\nSAS au capital de 10\u00a0000\u00a0\u20ac \u2014 RCS Saint-\u00c9tienne 852\u00a0787\u00a0472\n\nCentre d'Affaires St\u00e9phanois \u2014 Immeuble L'Horizon\n3 rue J. Constant Milleret\n42000 Saint-\u00c9tienne\n\nSite\u00a0: www.medconsodev.eu\nEmail\u00a0: contact-admin@medconsodev.eu"},
+    {t:"4. Comment saisir le m\u00e9diateur\u00a0?",
+      c:"Deux options\u00a0:\n\u2022 En ligne, directement depuis la plateforme du m\u00e9diateur\u00a0: www.medconsodev.eu\n\u2022 Par courrier postal \u00e0 l'adresse ci-dessus.\n\nJoignez \u00e0 votre demande\u00a0: la copie de votre r\u00e9clamation initiale, la r\u00e9ponse re\u00e7ue (ou l'absence de r\u00e9ponse), et toute pi\u00e8ce utile."},
+    {t:"5. D\u00e9roulement et d\u00e9lais",
+      c:"\u2022 Le m\u00e9diateur examine la recevabilit\u00e9 de votre demande dans un d\u00e9lai de 3 semaines.\n\u2022 S'il accepte la saisine, il conduit la m\u00e9diation dans un d\u00e9lai maximum de 90 jours, prorogeable en cas de litige complexe avec information pr\u00e9alable des parties.\n\u2022 La m\u00e9diation peut se d\u00e9rouler par \u00e9crit (plateforme, email, courrier), par vid\u00e9oconf\u00e9rence ou en pr\u00e9sentiel, selon la forme d\u00e9cid\u00e9e par le m\u00e9diateur en accord avec les parties.\n\u2022 \u00c0 l'issue, le m\u00e9diateur constate l'accord amiable ou propose une solution. Vous disposez de 15 jours pour l'accepter ou la refuser. Le silence vaut refus."},
+    {t:"6. Caract\u00e9ristiques cl\u00e9s",
+      c:"\u2022 Gratuit\u00e9\u00a0: la m\u00e9diation est enti\u00e8rement gratuite pour le consommateur (les frais sont pris en charge par le professionnel).\n\u2022 Confidentialit\u00e9 absolue\u00a0: les \u00e9changes ne peuvent pas \u00eatre utilis\u00e9s en justice (art. 21-3 loi n\u00b0 95-125).\n\u2022 Ind\u00e9pendance\u00a0: le m\u00e9diateur est une personne physique r\u00e9f\u00e9renc\u00e9e par la CECMC (Commission d'\u00e9valuation et de contr\u00f4le de la m\u00e9diation de la consommation).\n\u2022 Libert\u00e9 de retrait\u00a0: vous pouvez quitter la proc\u00e9dure \u00e0 tout moment, sans cons\u00e9quence."},
+    {t:"7. Plateforme europ\u00e9enne (RLL)",
+      c:"Si vous r\u00e9sidez dans un autre \u00c9tat membre de l'Union europ\u00e9enne, vous pouvez \u00e9galement recourir \u00e0 la plateforme europ\u00e9enne de R\u00e8glement en Ligne des Litiges mise en place par la Commission europ\u00e9enne\u00a0:\nhttps://ec.europa.eu/consumers/odr/\n\nCette plateforme permet de rechercher un organisme de r\u00e8glement extrajudiciaire comp\u00e9tent et de d\u00e9poser une demande en ligne."},
+    {t:"8. Information l\u00e9gale",
+      c:"Professionnel\u00a0: J\u00e9r\u00e9my LEIXA \u2014 SIRET 830 200 556 00025 \u2014 Code APE 85.59B (Formation continue d'adultes).\n\nConform\u00e9ment aux articles L.616-1 et R.616-1 du Code de la consommation."}
+  ];
+  return(<div style={{maxWidth:480,margin:"0 auto",padding:"24px 16px",maxHeight:"85vh",overflow:"auto"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+      <h2 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>{"M\u00e9diation de la consommation"}</h2>
+      {p.onClose&&<button onClick={p.onClose} style={{background:"none",border:"none",color:"var(--t3)",fontSize:22,cursor:"pointer",padding:4,lineHeight:1}}>{"\u00d7"}</button>}
+    </div>
+    <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:18,padding:"12px 14px",background:"rgba(var(--cx),.06)",borderLeft:"3px solid var(--cyan)",borderRadius:"0 8px 8px 0"}}>
+      {"En tant que consommateur, vous b\u00e9n\u00e9ficiez d'un droit \u00e0 une r\u00e9solution amiable et gratuite en cas de litige avec TOEIC Arena."}
+    </p>
+    {sections.map(function(s,i){return(<div key={i} style={{marginBottom:18}}>
+      <h3 className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)",marginBottom:6}}>{s.t}</h3>
+      <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.7,margin:0,whiteSpace:"pre-line"}}>{s.c}</p>
+    </div>);})}
+    {p.onClose&&<button className="btn2" onClick={p.onClose} style={{width:"100%",fontSize:14,marginTop:8,marginBottom:24}}>{"\u2190 Retour"}</button>}
+  </div>);
+}
+
 // ─── ONBOARDING ───
 function Onboard(p){
 var[step,sSt]=useState("name");
@@ -11509,6 +11549,7 @@ function Profile(p){
   var[soundOn,setSoundOn]=useState(isSoundEnabled());
   var[tipOff,setTipOff]=useState(false);
   var[showPrivacy,setShowPrivacy]=useState(false);
+  var[showMediation,setShowMediation]=useState(false);
   var fileRef=useRef(null);
   var[bioAvail,setBioAvail]=useState(false);var[bioRegistered,setBioRegistered]=useState(!!getBioCredId());
   var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
@@ -12167,10 +12208,15 @@ function Profile(p){
         </button>);
       })()}
 
-      {/* Privacy policy — placed after subscription block per UX request */}
+      {/* Legal info (privacy + mediation) — accessible separately, obligations
+          art. 13 RGPD et L616-1 Code de la conso */}
       <button className="btn2" onClick={function(){setShowPrivacy(true);}}
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
         {"🛡️ Politique de confidentialit\u00e9"}
+      </button>
+      <button className="btn2" onClick={function(){setShowMediation(true);}}
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
+        {"\u2696\uFE0F M\u00e9diation de la consommation"}
       </button>
 
       {/* Gestion du compte — groups Email, Export, Delete, Reset into a sub-page */}
@@ -12187,6 +12233,9 @@ function Profile(p){
 
       {showPrivacy&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
         <PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>
+      </div>}
+      {showMediation&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
+        <MediationInfo onClose={function(){setShowMediation(false);}}/>
       </div>}
     </div>
   );
