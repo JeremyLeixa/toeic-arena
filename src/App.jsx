@@ -12293,17 +12293,37 @@ function Profile(p){
           var tagline=lvl==="premium_monthly"
             ?(expStr?"Prochain pr\u00e9l\u00e8vement le "+expStr:"Actif")
             :(expStr?"Expire le "+expStr:"Actif");
-          return(<div className="crd" style={{marginBottom:12,padding:"12px 14px",background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.06))",border:"1px solid rgba(255,215,0,.2)",display:"flex",alignItems:"center",gap:12}}>
-            <span style={{fontSize:22,flexShrink:0}}>{icon}</span>
-            <div style={{flex:1,minWidth:0}}>
-              <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--gold)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{label}</div>
-              <div style={{fontSize:10,color:"var(--t2)",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{tagline}</div>
+          var isMonthly=lvl==="premium_monthly";
+          async function openPortal(){
+            try{await openCustomerPortal();}catch(e){alert("Erreur : "+((e&&e.message)||"impossible d'ouvrir le portail."));}
+          }
+          // Bloc résiliation/gestion.
+          // - Premium Mensuel : obligation L.215-1-1 Code conso (loi "bouton
+          //   résiliation") → CTA "Résilier" direct et visible. Le portail
+          //   Stripe héberge la fonction de cancel, mais le parcours depuis
+          //   TOEIC Arena doit être direct.
+          // - TOEIC Pass 3 mois : pas concerné par L.215-1-1 (paiement
+          //   unique sans reconduction). Un seul bouton "Gérer" (pour les
+          //   factures).
+          return(<div className="crd" style={{marginBottom:12,padding:"12px 14px",background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.06))",border:"1px solid rgba(255,215,0,.2)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:isMonthly?10:0}}>
+              <span style={{fontSize:22,flexShrink:0}}>{icon}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--gold)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{label}</div>
+                <div style={{fontSize:10,color:"var(--t2)",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{tagline}</div>
+              </div>
+              {!isMonthly&&<button className="btn2" onClick={openPortal} style={{flexShrink:0,fontSize:12,padding:"8px 12px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
+                {"\uD83D\uDD27 G\u00e9rer"}
+              </button>}
             </div>
-            <button className="btn2" onClick={async function(){
-              try{await openCustomerPortal();}catch(e){alert("Erreur : "+((e&&e.message)||"impossible d'ouvrir le portail."));}
-            }} style={{flexShrink:0,fontSize:12,padding:"8px 12px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
-              {"\uD83D\uDD27 G\u00e9rer"}
-            </button>
+            {isMonthly&&<div style={{display:"flex",gap:8}}>
+              <button onClick={openPortal} style={{flex:1,fontSize:12,padding:"10px 12px",background:"rgba(224,82,82,.08)",border:"1px solid rgba(224,82,82,.3)",borderRadius:10,color:"var(--red)",fontFamily:"'DM Sans',sans-serif",fontWeight:600,cursor:"pointer"}}>
+                {"\u2715 R\u00e9silier"}
+              </button>
+              <button className="btn2" onClick={openPortal} style={{flex:1,fontSize:12,padding:"10px 12px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
+                {"\uD83D\uDD27 G\u00e9rer"}
+              </button>
+            </div>}
           </div>);
         }
         return(<button className="btn1" onClick={function(){p.goUpgrade&&p.goUpgrade();}}
