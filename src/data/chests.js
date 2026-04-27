@@ -454,15 +454,15 @@ var PREMIUM_TOKENS=["mock_reset","boss_reset","endless_resurrect"];
 // Failure modes : <3 dups (ok:false), all token types capped (returns XP gem instead).
 export async function convertCosmeticDups(userName, classCode, rewardType, rewardId, ownedTokens){
   try{
-    // Fetch 3 rows for this exact reward. No ORDER BY — the timestamp column name
-    // is uncertain across V1/V2 schemas and the rows are interchangeable anyway
-    // (same reward_id, same rarity), so picking any 3 is correct.
+    // Fetch up to 4 rows so we can verify count >= 4 (3 duplicates + 1 original kept).
+    // The plan's "3 duplicates" wording implies 3 EXTRAS beyond the original copy ;
+    // converting at count=3 would erase the user's only instance of that cosmetic.
     var sel=await supabase.from("player_rewards").select("id")
       .ilike("user_name",userName).eq("class_code",classCode)
       .eq("reward_type",rewardType).eq("reward_id",rewardId)
-      .limit(3);
+      .limit(4);
     if(sel.error)return{ok:false,error:sel.error.message};
-    if(!sel.data||sel.data.length<3)return{ok:false,error:"not_enough_duplicates"};
+    if(!sel.data||sel.data.length<4)return{ok:false,error:"not_enough_duplicates"};
 
     // Pick a non-capped non-premium token to grant
     var owned=ownedTokens||{};
@@ -472,8 +472,9 @@ export async function convertCosmeticDups(userName, classCode, rewardType, rewar
       return qty<cap;
     });
     if(candidates.length===0){
-      // All non-premium tokens capped → DELETE the 3 dups + grant a 100 XP fallback (caller handles)
-      var ids=sel.data.map(function(r){return r.id;});
+      // All non-premium tokens capped → DELETE 3 dups + grant a 100 XP fallback (caller handles).
+      // Same "keep the 4th" invariant as the happy path.
+      var ids=sel.data.slice(0,3).map(function(r){return r.id;});
       var del0=await supabase.from("player_rewards").delete().in("id",ids);
       if(del0.error)return{ok:false,error:del0.error.message};
       return{ok:true,xpFallback:100};
@@ -481,8 +482,8 @@ export async function convertCosmeticDups(userName, classCode, rewardType, rewar
     var pick=candidates[Math.floor(Math.random()*candidates.length)];
     var cap=TOKEN_TYPES[pick].cap||1;
 
-    // DELETE first (so the user can't double-spend on a transient network error)
-    var ids2=sel.data.map(function(r){return r.id;});
+    // DELETE only 3 rows (the duplicates) — keep the 4th as the user's original copy.
+    var ids2=sel.data.slice(0,3).map(function(r){return r.id;});
     var del=await supabase.from("player_rewards").delete().in("id",ids2);
     if(del.error)return{ok:false,error:del.error.message};
 

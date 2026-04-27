@@ -11781,7 +11781,10 @@ function ConversionsView(p){
       counts[k]=(counts[k]||0)+1;
     });
     Object.keys(counts).forEach(function(k){
-      if(counts[k]<3)return;
+      // Need 4+ instances to convert : 3 dups consumed + 1 original kept. The plan's
+      // "3 doublons" means 3 EXTRAS beyond the original — without this guard, converting
+      // at count=3 would wipe out the user's only copy.
+      if(counts[k]<4)return;
       var parts=k.split(":");
       var type=parts[0], id=parts.slice(1).join(":");
       // Only allow trade-in for cosmetics (avatar/skin/frame/title) — cheat sheets stay rare
@@ -11851,10 +11854,11 @@ function ConversionsView(p){
 
     {!loading&&<>
       {/* ── 3 dups → 1 token ── */}
-      <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Cosmétiques en double · 3 → 1 token</div>
+      <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Cosmétiques en double · 3 doublons → 1 token</div>
+      <div style={{fontSize:11,color:"var(--t3)",marginBottom:14,lineHeight:1.5}}>Tu gardes toujours au moins 1 exemplaire. Apparaît seulement quand tu as ≥ 4 copies du même item.</div>
       {dupGroups.length===0?(
         <div className="crd" style={{padding:16,textAlign:"center",marginBottom:32}}>
-          <p style={{color:"var(--t3)",fontSize:12,margin:0,lineHeight:1.5}}>Aucun doublon. Continue d'ouvrir des coffres après avoir complété ta collection !</p>
+          <p style={{color:"var(--t3)",fontSize:12,margin:0,lineHeight:1.5}}>Aucun doublon échangeable pour le moment.</p>
         </div>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:32}}>
@@ -11869,7 +11873,7 @@ function ConversionsView(p){
               <div style={{flexShrink:0,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center"}}>{visual}</div>
               <div style={{flex:1,minWidth:0,overflow:"hidden"}}>
                 <div style={{fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</div>
-                <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1}}>{g.type} · ×{g.count}</div>
+                <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1}}>{g.type} · ×{g.count} → ×{g.count-3}</div>
               </div>
               <button onClick={function(){doConvertCosmetic(g);}} disabled={busy} className="btn2"
                 style={{fontSize:11,padding:"7px 12px",flexShrink:0,whiteSpace:"nowrap"}}>
