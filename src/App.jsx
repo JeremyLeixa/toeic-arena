@@ -13000,6 +13000,22 @@ function sv(d){
     saveLocal(d);
     save(d);
   }
+  // Phase 2 brainstorm 2026-04-27 — Diminishing returns × event multipliers fix.
+  // Sans ce relèvement de cap, un event "XP×3 sur drill 2 jours" devient inutile dès la
+  // 4e session du jour (gate = 0% → 0×3 = 0 XP). Quand un event boost le module :
+  //  - sessionCount est divisé par 2 (Math.floor) pour le calcul du diminishing
+  //  - effet : chaque palier dure 2 sessions au lieu d'1, donc cap effectif × 2
+  // L'event multiplier (×2/×3) reste appliqué après, comme avant. Pas de bypass de
+  // l'accuracy gate (anti-farm de mauvaises sessions toujours actif).
+  function isModuleBoosted(modId){
+    if(!activeEvents||!activeEvents.length)return false;
+    return activeEvents.some(function(ev){
+      if(ev.type==="spotlight"&&ev.config&&ev.config.module===modId)return true;
+      if(ev.type==="flash_hour")return true; // boost global
+      if(ev.type==="underdog")return true;   // boost conditionnel — on relève le cap pour tous, le multiplier reste sélectif
+      return false;
+    });
+  }
   function applyXpGates(baseXp,sc,tot,modId){
     // ── PILIER 1 : seuil d'accuracy ──
     var gatedXp=baseXp;
@@ -13009,21 +13025,23 @@ function sv(d){
       else if(acc<0.50)gatedXp=Math.round(baseXp*0.50);
       // ≥50% : formule normale, pas de pénalité
     }
-    // ── PILIER 2 : diminishing returns anti-farming ──
+    // ── PILIER 2 : diminishing returns anti-farming (cap × 2 pendant un event) ──
     if(modId){
       var dms=u.dailyModSessions||{};
       var key=modId+"_"+today();
       var sessionCount=dms[key]||0;
+      var boosted=isModuleBoosted(modId);
+      var effectiveCount=boosted?Math.floor(sessionCount/2):sessionCount;
       // Flashcards : 100% / 60% / 30% / 0%
       // Mock Tests  : 100% / 40% / 0%
       // Autres      : 100% / 50% / 15% / 0%
       var farmMult;
       if(modId==="csess"){
-        farmMult=sessionCount===0?1:sessionCount===1?0.60:sessionCount===2?0.30:0;
+        farmMult=effectiveCount===0?1:effectiveCount===1?0.60:effectiveCount===2?0.30:0;
       } else if(modId==="mock1"||modId==="mock2"||modId==="mock3"){
-        farmMult=sessionCount===0?1:sessionCount===1?0.40:0;
+        farmMult=effectiveCount===0?1:effectiveCount===1?0.40:0;
       } else {
-        farmMult=sessionCount===0?1:sessionCount===1?0.5:sessionCount===2?0.15:0;
+        farmMult=effectiveCount===0?1:effectiveCount===1?0.5:effectiveCount===2?0.15:0;
       }
       gatedXp=Math.round(gatedXp*farmMult);
     }
