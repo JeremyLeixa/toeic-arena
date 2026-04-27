@@ -13107,15 +13107,28 @@ useEffect(function(){
   },[u&&u.mission&&u.mission.streak]);
 
   // Module Mastery watcher — fires when any tracked module crosses 80% accuracy on 50+ Q.
-  // Trigger per module → unique per module, granted once. Iterates moduleScores
-  // each time it changes, but hasUniqueTrigger prevents re-grants.
+  // Trigger per module → unique per module, granted once across the whole DB.
+  //
+  // CRITICAL : `u && u.moduleScores` changes its identity on every sv() (because the
+  // user object is JSON-cloned). Without an in-memory dedup ref, this useEffect re-fires
+  // on every chest opening / xp update, which races hasUniqueTrigger across N parallel
+  // grant_chest calls and inserts duplicate pending_chests rows. The ref below ensures
+  // each module is only attempted ONCE per session ; hasUniqueTrigger handles cross-session.
+  //
+  // Modules excluded from Mastery : mock1/2/3/boss already have dedicated Champion triggers
+  // (mock_1, etc.), and "daily" / "csess" are not real practice modules.
+  var masteryRef=useRef({});
+  var MASTERY_BLACKLIST={mock1:1,mock2:1,mock3:1,boss:1,daily:1,csess:1};
   useEffect(function(){
     if(!u||!u.moduleScores)return;
     if(u.classCode==="visitor")return;
     Object.keys(u.moduleScores).forEach(function(modId){
+      if(MASTERY_BLACKLIST[modId])return;
+      if(masteryRef.current[modId])return; // session dedup — anti boucle
       var m=u.moduleScores[modId];
       if(!m||!m.total)return;
       if(m.total>=50&&(m.correct/m.total)>=0.8){
+        masteryRef.current[modId]=true;
         grantChestLocal("mastery_"+modId,"champion");
       }
     });
