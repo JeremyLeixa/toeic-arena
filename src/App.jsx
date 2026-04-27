@@ -3200,14 +3200,6 @@ var[step,sSt]=useState("name");
 // ─── HOME ───
 function Home(p){
 var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily&&u.daily.date===today()&&u.daily.done;
-// ── Secure email banner dismissal state (Phase 1 Session 2) ──
-// Visible if u has no email and is not a visitor. Dismissible for 7 days via localStorage.
-var[secureBannerHidden,setSecureBannerHidden]=useState(function(){
-  try{
-    var dismissedAt=parseInt(localStorage.getItem("secureEmailDismissedAt")||"0",10);
-    return Date.now()-dismissedAt<7*86400000;
-  }catch(e){return false;}
-});
 // ── Single-pulse priority (UX focus): chest > mock > daily > event ──
 // Only ONE CTA animates at a time so the eye isn't pulled in multiple directions.
 var _missionHome=getDailyMission(u);
@@ -3276,45 +3268,6 @@ return(
   </div>);
 })}
 
-{/* Secure email banner — Phase 1 Session 2 */}
-{!u.email&&u.classCode!=="visitor"&&!secureBannerHidden&&(function(){
-  var isIDRAC=u.classCode==="idrac2026";
-  async function secureNow(){
-    var email=prompt("Entre ton email pour s\u00e9curiser ton compte.\n\nTu recevras un lien de confirmation. Une fois cliqu\u00e9, ta progression sera li\u00e9e \u00e0 cet email et retrouvable sur tous tes appareils.");
-    if(email===null)return;
-    email=email.trim().toLowerCase();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert("Adresse email invalide.");return;}
-    try{
-      await linkEmailToAnonymous(email);
-      try{sessionStorage.setItem("awaitingEmailConfirm","1");}catch(e){}
-      alert("\u2709\uFE0F Email envoy\u00e9 \u00e0 "+email+".\n\n\uD83D\uDCF1 Sur mobile : ouvre le lien depuis le navigateur o\u00f9 tu utilises l'app (pas depuis l'app Gmail). Si le lien s'ouvre dans un autre navigateur, la confirmation ne sera pas d\u00e9tect\u00e9e ici.\n\nUne fois le lien cliqu\u00e9, reviens dans l'app \u2014 ta s\u00e9curisation sera d\u00e9tect\u00e9e automatiquement.");
-      setSecureBannerHidden(true);
-    }catch(e){
-      alert("Erreur : "+((e&&e.message)||"impossible d'envoyer l'email."));
-    }
-  }
-  function dismiss(){
-    try{localStorage.setItem("secureEmailDismissedAt",Date.now().toString());}catch(e){}
-    setSecureBannerHidden(true);
-  }
-  return(<div className="crd" style={{marginBottom:14,padding:"14px 16px",background:"linear-gradient(135deg,rgba(var(--cx),.10),rgba(27,112,207,.08))",border:"1px solid rgba(var(--cx),.25)"}}>
-    <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:10}}>
-      <span style={{fontSize:22,flexShrink:0}}>{"\uD83D\uDD12"}</span>
-      <div style={{flex:1,minWidth:0}}>
-        <div className="out" style={{fontWeight:800,fontSize:14,color:"var(--cx-hex)",marginBottom:3}}>Secure your account</div>
-        <div style={{fontSize:11,color:"var(--t2)",lineHeight:1.5}}>
-          {isIDRAC
-            ?"Link an email before the course ends on 2026-06-28 to keep your progress and continue training afterwards."
-            :"Link an email to sync your progress across devices and unlock Premium features later."}
-        </div>
-      </div>
-    </div>
-    <div style={{display:"flex",gap:8}}>
-      <button className="btn1" style={{flex:1,fontSize:12,padding:"9px 12px"}} onClick={secureNow}>Secure now</button>
-      <button className="btn2" style={{flex:"0 0 auto",fontSize:12,padding:"9px 16px"}} onClick={dismiss}>Later</button>
-    </div>
-  </div>);
-})()}
 
 <div className="crd glo" style={{marginBottom:16}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -12808,24 +12761,6 @@ useEffect(function(){
     return function(){try{sub.data.subscription.unsubscribe();}catch(e){}};
   },[u]);
 
-  // ── Phase 1 Magic Link — background poll for mobile magic link confirmation ──
-  // On mobile, clicking the link in Gmail often opens an external browser, not the PWA.
-  // The server confirms the email but this session doesn't know — so we poll refreshSession()
-  // which pulls fresh user data (incl. email_confirmed_at). syncEmailFromSession (above)
-  // then fires via USER_UPDATED and writes students.email. Flag set by the 3 places that
-  // trigger linkEmailToAnonymous: Onboard emailPrompt, Home banner, Profile security button.
-  useEffect(function(){
-    if(!u||u.email)return; // already secured
-    var awaiting=false;
-    try{awaiting=sessionStorage.getItem("awaitingEmailConfirm")==="1";}catch(e){}
-    if(!awaiting)return;
-    var cancel=pollEmailConfirmation(function(){
-      try{sessionStorage.removeItem("awaitingEmailConfirm");}catch(e){}
-      // syncEmailFromSession in the hook above will fire automatically via USER_UPDATED
-    });
-    return cancel;
-  },[u]);
-  
   // ── Load active events from Supabase (once + every 5 min) ──
   useEffect(function(){
     if(!u)return;
