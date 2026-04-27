@@ -109,6 +109,7 @@ export var TITLES = {
 
 // ═══ TOKENS (V2 — tactiques stackables, nouvelle table player_tokens) ═══
 // premium = drop seulement sur coffre Légendaire (et conversions)
+// meta = consommable spécial (Insight Token, généré rare sur Légendaire)
 export var TOKEN_TYPES = {
   diminishing_bypass:{name:"Bypass Token",      icon:"🔓", cap:5, premium:false, desc:"Skip diminishing returns on next session"},
   streak_shield:     {name:"Streak Shield",     icon:"🛡️",  cap:3, premium:false, desc:"Auto-protects streak on missed day"},
@@ -116,6 +117,7 @@ export var TOKEN_TYPES = {
   mock_reset:        {name:"Mock Reset",        icon:"📜", cap:2, premium:true,  desc:"Bypass 24h cooldown on Mock Test"},
   boss_reset:        {name:"Boss Reset",        icon:"🐲", cap:1, premium:true,  desc:"Bypass 24h cooldown on Boss Test"},
   endless_resurrect: {name:"Endless Resurrect", icon:"💎", cap:2, premium:true,  desc:"Continue Endless after 1 fatal mistake"},
+  insight_token:     {name:"Insight Token",     icon:"🔮", cap:3, premium:true,  desc:"Generates a personalized weakness insight (consume to reveal)"},
 };
 
 // ═══ CHEAT SHEETS (V2 — méta codex, garantie sur Légendaire) ═══
@@ -182,16 +184,21 @@ export var DROP_TABLES = {
   ],
   champion:[
     {kind:"xp",min:500,max:800},
-    {kind:"cosmetic",oneOf:["avatar","skin"],minRarity:"rare"},
-    {kind:"token",pool:["diminishing_bypass","streak_shield","daily_reroll","mock_reset","endless_resurrect"],count:3},
-    {kind:"cheat_sheet",chance:0.25},
+    // V2 spec : Champion drop la 4 cosmetic types (avatar/skin/frame/title) min rare.
+    {kind:"cosmetic",oneOf:["avatar","skin","frame","title"],minRarity:"rare"},
+    // V2 spec : streak_shield reservé Novice/Guerrier, retiré du pool Champion.
+    {kind:"token",pool:["diminishing_bypass","daily_reroll","mock_reset","endless_resurrect"],count:3},
   ],
   legendaire:[
     {kind:"xp",min:1000,max:1500},
-    {kind:"cosmetic",oneOf:["skin"],minRarity:"legend"},
+    // V2 spec : Légendaire drop avatar OR skin legend rarity (avatar inclus, conforme matrice)
+    {kind:"cosmetic",oneOf:["avatar","skin"],minRarity:"legend"},
     {kind:"cosmetic",oneOf:["frame","title"],minRarity:"epic"},
-    {kind:"token",pool:["mock_reset","boss_reset","endless_resurrect"],count:3},
+    // V2 spec : Légendaire inclut Bypass + Daily Reroll en plus des premium tokens.
+    {kind:"token",pool:["diminishing_bypass","daily_reroll","mock_reset","boss_reset","endless_resurrect"],count:3},
     {kind:"cheat_sheet",chance:1.0},
+    // V2 spec : Insight Token sort du parking. Drop rare (~30%) sur Légendaire seulement.
+    {kind:"token",pool:["insight_token"],count:1,chance:0.3},
   ],
 };
 
@@ -255,6 +262,9 @@ export function pickRewards(chestType, owned){
       return;
     }
     if(slot.kind==="token"){
+      // V2 — optional chance for rare tokens (Insight Token on Legendary). Roll once
+      // up-front and skip the whole slot if it fails — no XP fallback for skipped chance.
+      if(slot.chance!==undefined&&Math.random()>slot.chance)return;
       // tire `count` tokens du pool, respecte cap. Si tout cap atteint → fallback XP.
       var pool=slot.pool.filter(function(tt){
         var qty=tokens[tt]||0;
