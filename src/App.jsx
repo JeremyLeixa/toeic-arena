@@ -22,7 +22,7 @@ import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
-import { CHEST_TYPES, RARITIES, AVATARS, SKINS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, pickReward, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, openChestFromPending } from "./data/chests.js";
+import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending } from "./data/chests.js";
 import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
@@ -9056,14 +9056,72 @@ function ChestEarnedToast(p){
 // CHEST OPEN MODAL V2 — Boss Loot cinematic animation
 // Phases: zoom (0.6s) → trembor (1s) → explode/beam (0.6s) → reveal
 // ═══════════════════════════════════════════════════════════════
+// Per-reward render helper used inside ChestOpenModal during sequential reveal.
+// Picks the right visual + label for each reward.type (xp/avatar/skin/frame/title/cheat_sheet/token).
+function ChestRewardCard(p){
+  var r=p.reward, color=p.rarityColor;
+  // Resolve visual + label per type
+  var visual=null, name="???", caption="", itemRarity=r.rarity||null;
+  if(r.type==="xp"){
+    visual=<span style={{fontSize:72}}>{"💎"}</span>;
+    name="+"+(r.xp||0)+" XP";
+    caption=r.fallback?"XP gem (collection complete)":"XP gem — bonus added!";
+  }else if(r.type==="avatar"&&AVATARS[r.id]){
+    visual=<AvatarMedal avatarId={r.id} size={96}/>;
+    name=AVATARS[r.id].name;caption="New avatar unlocked";
+  }else if(r.type==="skin"&&SKINS[r.id]){
+    var sk=SKINS[r.id];
+    visual=<div style={{width:96,height:96,borderRadius:20,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+color,boxShadow:"0 0 24px "+sk.hex+"88"}}/>;
+    name=sk.name;caption="New skin unlocked";
+  }else if(r.type==="frame"&&FRAMES[r.id]){
+    var fr=FRAMES[r.id];
+    visual=<div style={{width:96,height:96,borderRadius:20,background:"linear-gradient(135deg,#3a2818,#1a1208)",...parseInlineStyle(fr.style)}}/>;
+    name=fr.name;caption="New avatar frame unlocked";
+  }else if(r.type==="title"&&TITLES[r.id]){
+    var ti=TITLES[r.id];
+    visual=<div style={{padding:"18px 20px",borderRadius:14,border:"2px solid "+ti.color,background:"linear-gradient(180deg,#1a1208,#0a0604)"}}><div style={{fontSize:22,fontWeight:900,color:ti.color,letterSpacing:2,textTransform:"uppercase"}}>{ti.name}</div></div>;
+    name=ti.name;caption="New title unlocked";
+  }else if(r.type==="cheat_sheet"&&CHEAT_SHEETS[r.id]){
+    var cs=CHEAT_SHEETS[r.id];
+    visual=<span style={{fontSize:72}}>{cs.icon||"📜"}</span>;
+    name=cs.name;caption="Cheat Sheet — Profile → Collection";
+  }else if(r.type==="token"&&TOKEN_TYPES[r.id]){
+    var tk=TOKEN_TYPES[r.id];
+    visual=<span style={{fontSize:72}}>{tk.icon}</span>;
+    name=tk.name;caption=tk.desc;
+  }
+  return(<>
+    <div style={{margin:"10px 0",filter:"drop-shadow(0 0 18px "+color+")",animation:"chestV2IconFloat 2s ease-in-out 1.5s infinite",display:"flex",justifyContent:"center"}}>{visual}</div>
+    <div className="out" style={{fontSize:22,fontWeight:900,color:"#ede4d4",marginBottom:4,letterSpacing:1}}>{name}</div>
+    <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:1}}>{caption}</div>
+  </>);
+}
+// Convert "k:v;k:v" inline CSS string to a React style object
+function parseInlineStyle(s){
+  var out={};if(!s)return out;
+  s.split(";").forEach(function(part){
+    var ix=part.indexOf(":");if(ix<0)return;
+    var k=part.slice(0,ix).trim(), v=part.slice(ix+1).trim();
+    if(!k)return;
+    var jsKey=k.replace(/-([a-z])/g,function(_,c){return c.toUpperCase();});
+    out[jsKey]=v;
+  });
+  return out;
+}
+
 function ChestOpenModal(p){
   var[phase,setPhase]=useState("build"); // build → explode → reveal
+  var[revealIdx,setRevealIdx]=useState(0);
   var chest=p.chest;var result=p.result;
   var ct=CHEST_TYPES[chest.chest_type]||CHEST_TYPES.novice;
   // Rarity color derived from chest type (fallback until result arrives)
   var defaultColor=chest.chest_type==="legendaire"?"#ffc020":chest.chest_type==="champion"?"#d4943a":chest.chest_type==="guerrier"?"#3a8ee0":"#909090";
   var rarityColor=(result&&result.rarityColor)||defaultColor;
   var rarityLabel=(result&&result.rarityLabel)||ct.label;
+  var rewardsList=(result&&result.rewards)||[];
+  var totalRewards=rewardsList.length;
+  var currentReward=phase==="reveal"?rewardsList[revealIdx]:null;
+  var isLastReward=phase==="reveal"&&revealIdx>=totalRewards-1;
 
   useEffect(function(){
     if(phase==="build"){
@@ -9076,6 +9134,12 @@ function ChestOpenModal(p){
       return function(){clearTimeout(t2);};
     }
   },[phase]);
+
+  function nextOrCollect(){
+    if(isLastReward){p.onClose();return;}
+    setRevealIdx(function(i){return i+1;});
+    haptic("chestOpen");
+  }
 
   // Build shard angles once
   var woodShards=[];for(var i=0;i<8;i++){var a=(i/8)*360+22;woodShards.push({angle:a,dist:120+Math.random()*60});}
@@ -9115,31 +9179,17 @@ function ChestOpenModal(p){
         <div style={{position:"fixed",top:"50%",left:"50%",width:80,height:0,background:"linear-gradient(to top,transparent 0%,"+rarityColor+" 30%,rgba(255,255,255,.9) 70%,transparent 100%)",transform:"translate(-50%,-50%)",opacity:0,animation:"chestV2BeamGrow .5s ease-out .2s forwards, chestV2BeamShrink .5s ease-in 1.2s forwards",zIndex:2,filter:"blur(1px)",pointerEvents:"none"}}/>
       </>}
 
-      {/* Reveal phase */}
-      {phase==="reveal"&&result&&<>
+      {/* Reveal phase — V2 sequential : 1 card per reward */}
+      {phase==="reveal"&&result&&currentReward&&<>
         {/* Speed lines during fall */}
-        {speedLines.map(function(sl,i){return(<div key={i} style={{position:"absolute",width:2,height:80,background:"linear-gradient(to bottom,transparent,"+rarityColor+",transparent)",left:sl.left,top:"15%",opacity:0,animation:"chestV2SpeedLine .8s ease-out "+sl.delay}}/>);})}
+        {speedLines.map(function(sl,i){return(<div key={"sl"+revealIdx+"_"+i} style={{position:"absolute",width:2,height:80,background:"linear-gradient(to bottom,transparent,"+rarityColor+",transparent)",left:sl.left,top:"15%",opacity:0,animation:"chestV2SpeedLine .8s ease-out "+sl.delay}}/>);})}
         {/* Impact ring */}
-        <div style={{position:"absolute",top:"65%",left:"50%",width:200,height:40,borderRadius:"50%",border:"2px solid "+rarityColor,transform:"translate(-50%,-50%) scaleY(.4)",opacity:0,animation:"chestV2ImpactRing .8s ease-out .8s forwards",filter:"blur(1px)",zIndex:4}}/>
-        {/* Reward card */}
-        <div style={{position:"absolute",width:220,padding:"22px 18px",borderRadius:14,background:"linear-gradient(180deg,#2a1e14 0%,#1a1208 100%)",border:"2px solid "+rarityColor,boxShadow:"0 0 60px "+rarityColor+", 0 0 120px "+rarityColor+"66, inset 0 0 30px rgba(0,0,0,.6)",textAlign:"center",opacity:0,transform:"translateY(-220px) scale(.6) rotate(-8deg)",animation:"chestV2RewardFall .8s cubic-bezier(.3,.1,.4,1.4) 0s forwards, chestV2RewardSettle .4s ease-out .8s forwards",zIndex:5}}>
+        <div key={"ring"+revealIdx} style={{position:"absolute",top:"65%",left:"50%",width:200,height:40,borderRadius:"50%",border:"2px solid "+rarityColor,transform:"translate(-50%,-50%) scaleY(.4)",opacity:0,animation:"chestV2ImpactRing .8s ease-out .3s forwards",filter:"blur(1px)",zIndex:4}}/>
+        {/* Reward card — keyed on revealIdx so React remounts and replays animation */}
+        <div key={"card"+revealIdx} style={{position:"absolute",width:240,padding:"22px 18px",borderRadius:14,background:"linear-gradient(180deg,#2a1e14 0%,#1a1208 100%)",border:"2px solid "+rarityColor,boxShadow:"0 0 60px "+rarityColor+", 0 0 120px "+rarityColor+"66, inset 0 0 30px rgba(0,0,0,.6)",textAlign:"center",opacity:0,transform:"translateY(-220px) scale(.6) rotate(-8deg)",animation:"chestV2RewardFall .6s cubic-bezier(.3,.1,.4,1.4) 0s forwards, chestV2RewardSettle .35s ease-out .6s forwards",zIndex:5}}>
           <div className="out" style={{fontSize:11,fontWeight:900,color:rarityColor,letterSpacing:3,textTransform:"uppercase",marginBottom:10,padding:"4px 10px",display:"inline-block",border:"1px solid "+rarityColor,borderRadius:4}}>{rarityLabel}</div>
-          <div style={{margin:"10px 0",filter:"drop-shadow(0 0 18px "+rarityColor+")",animation:"chestV2IconFloat 2s ease-in-out 1.5s infinite",display:"flex",justifyContent:"center"}}>
-            {result.reward.type==="xp"?<span style={{fontSize:72}}>{"\uD83D\uDC8E"}</span>:
-             result.reward.type==="avatar"?<AvatarMedal avatarId={result.reward.id} size={96}/>:
-             result.reward.type==="skin"&&SKINS[result.reward.id]?<div style={{width:96,height:96,borderRadius:20,background:"linear-gradient(135deg,"+SKINS[result.reward.id].hex+","+SKINS[result.reward.id].dark+")",border:"2px solid "+rarityColor,boxShadow:"0 0 24px "+SKINS[result.reward.id].hex+"88"}}/>:
-             <span style={{fontSize:72}}>{"\uD83C\uDFA8"}</span>}
-          </div>
-          <div className="out" style={{fontSize:22,fontWeight:900,color:"#ede4d4",marginBottom:4,letterSpacing:1}}>
-            {result.reward.type==="xp"?"+"+result.xpAmount+" XP":
-             result.reward.type==="avatar"?(AVATARS[result.reward.id]?AVATARS[result.reward.id].name:result.reward.id):
-             result.reward.type==="skin"?(SKINS[result.reward.id]?SKINS[result.reward.id].name:result.reward.id):"???"}
-          </div>
-          <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:1}}>
-            {result.reward.type==="xp"?"XP Gem — bonus added!":
-             result.reward.type==="avatar"?"New avatar unlocked":
-             "New skin unlocked"}
-          </div>
+          <ChestRewardCard reward={currentReward} rarityColor={rarityColor}/>
+          {totalRewards>1&&<div style={{marginTop:14,fontSize:10,color:"#8a7e6a",letterSpacing:2,textTransform:"uppercase"}}>{(revealIdx+1)+" / "+totalRewards}</div>}
         </div>
       </>}
 
@@ -9151,7 +9201,7 @@ function ChestOpenModal(p){
     </div>
 
     {/* Collect button (only in reveal phase) */}
-    {phase==="reveal"&&result&&<button className="btn1" onClick={p.onClose} style={{marginTop:20,width:240,maxWidth:"100%",fontSize:15,zIndex:20,background:"linear-gradient(135deg,"+rarityColor+","+rarityColor+"99)"}}>Collect</button>}
+    {phase==="reveal"&&result&&currentReward&&<button className="btn1" onClick={nextOrCollect} style={{marginTop:20,width:240,maxWidth:"100%",fontSize:15,zIndex:20,background:"linear-gradient(135deg,"+rarityColor+","+rarityColor+"99)"}}>{isLastReward?"Collect":"Next"}</button>}
   </div>);
 }
 
@@ -13066,19 +13116,24 @@ useEffect(function(){
   async function doOpenChest(){
     if(chestPending.length===0)return;
     var chest=chestPending[0];
-    var rewards=await getOwnedRewards(chest.user_name,chest.class_code);
-    var ownA=rewards.filter(function(r){return r.reward_type==="avatar";}).map(function(r){return r.reward_id;});
-    var ownS=rewards.filter(function(r){return r.reward_type==="skin";}).map(function(r){return r.reward_id;});
+    // V2 — fetch all owned reward types + tokens in parallel
+    var rewardsRows=await getOwnedRewards(chest.user_name,chest.class_code);
+    var tokensMap=await getOwnedTokens(chest.user_name,chest.class_code);
+    var owned={
+      avatars:rewardsRows.filter(function(r){return r.reward_type==="avatar";}).map(function(r){return r.reward_id;}),
+      skins:rewardsRows.filter(function(r){return r.reward_type==="skin";}).map(function(r){return r.reward_id;}),
+      frames:rewardsRows.filter(function(r){return r.reward_type==="frame";}).map(function(r){return r.reward_id;}),
+      titles:rewardsRows.filter(function(r){return r.reward_type==="title";}).map(function(r){return r.reward_id;}),
+      cheatSheets:rewardsRows.filter(function(r){return r.reward_type==="cheat_sheet";}).map(function(r){return r.reward_id;}),
+      tokens:tokensMap,
+    };
     var pity=(u&&u.gameScores?u.gameScores.pityCount:0)||0;
-    var result=await openChestFromPending(chest,pity,ownA,ownS);
-    // Update pity in user profile
+    var result=await openChestFromPending(chest,pity,owned);
+    // Update pity + aggregate XP from all reward slots
     var c=JSON.parse(JSON.stringify(u));
     if(!c.gameScores)c.gameScores={};
     c.gameScores.pityCount=result.newPityCount;
-    // If XP reward, add it (bypasses gates — it's a reward, not a module)
-    if(result.reward.type==="xp"&&result.xpAmount>0){
-      c.xp+=result.xpAmount;c.weeklyXp+=result.xpAmount;
-    }
+    if(result.totalXp>0){c.xp+=result.totalXp;c.weeklyXp+=result.totalXp;}
     sv(c);
     setChestResult(result);haptic("chestOpen");
     // Narrator triggers on chest open. Both push to the queue but DON'T render

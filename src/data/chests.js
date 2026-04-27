@@ -406,7 +406,7 @@ export async function getPendingChests(userName, classCode){
   }catch(e){console.error("[CHEST] getPendingChests error:",e);return[];}
 }
 
-// Get owned rewards
+// Get owned rewards (avatars + skins + frames + titles + cheat_sheets — all stored in player_rewards)
 export async function getOwnedRewards(userName, classCode){
   try{
     var res=await supabase.from("player_rewards").select("*").ilike("user_name",userName).eq("class_code",classCode);
@@ -414,46 +414,93 @@ export async function getOwnedRewards(userName, classCode){
   }catch(e){console.error("[CHEST] getOwnedRewards error:",e);return[];}
 }
 
-// Open a chest: roll, pick, log, delete pending, return result
-export async function openChestFromPending(pendingChest, pityCount, ownedAvatars, ownedSkins){
-  var tier=rollRarity(pendingChest.chest_type, pityCount);
-  var reward=pickReward(tier, ownedAvatars, ownedSkins);
+// V2 — get owned tokens, returns {token_type: quantity, ...}
+export async function getOwnedTokens(userName, classCode){
+  try{
+    var res=await supabase.from("player_tokens").select("token_type,quantity").ilike("user_name",userName).eq("class_code",classCode);
+    var map={};
+    if(res.data)res.data.forEach(function(r){map[r.token_type]=r.quantity||0;});
+    return map;
+  }catch(e){console.warn("[CHEST] getOwnedTokens error (table may not exist yet):",e&&e.message);return{};}
+}
+
+// V2 — grant a token via the SQL helper (cap-aware UPSERT)
+async function grantTokenRPC(userName, classCode, tokenType, amount, cap){
+  try{
+    var res=await supabase.rpc("grant_token",{
+      p_user_name:userName, p_class_code:classCode,
+      p_token_type:tokenType, p_amount:amount, p_cap:cap,
+    });
+    if(res.error)console.warn("[CHEST] grant_token RPC error:",res.error.message);
+    return res.data;
+  }catch(e){console.warn("[CHEST] grant_token exception:",e&&e.message);return null;}
+}
+
+// V2 — Open a chest: roll multi-rewards, persist them, log, delete pending, return aggregate.
+// `owned` = {avatars, skins, frames, titles, cheatSheets, tokens:{type:qty}}
+export async function openChestFromPending(pendingChest, pityCount, owned){
+  // Rarity is now derived from chest_type itself (drop tables segmented per chest tier).
+  // pityCount kept for backward signature compat — no longer used to roll rarity, but
+  // forwarded back to the caller to preserve the reset-on-rare invariant.
+  var rewards=pickRewards(pendingChest.chest_type, owned||{});
+  var ct=pendingChest.chest_type;
+  // Map chest type to a representative rarity tier for UI color/label fallback
+  var tierByChest={novice:0,guerrier:2,champion:3,legendaire:4};
+  var tier=tierByChest[ct]!==undefined?tierByChest[ct]:0;
   var rarityId=RARITIES[tier].id;
-  var newPity=(tier<2)?(pityCount+1):0;
+  // Pity reset on Champion/Légendaire chests (any non-novice/guerrier roll)
+  var newPity=(ct==="novice"||ct==="guerrier")?(pityCount+1):0;
+  var totalXp=0;
+  var un=pendingChest.user_name, cc=pendingChest.class_code;
 
   try{
-    // Insert into player_rewards (skip for XP — no inventory entry needed)
-    if(reward.type!=="xp"){
+    // Persist each reward to the right table
+    for(var i=0;i<rewards.length;i++){
+      var r=rewards[i];
+      if(r.type==="xp"){
+        totalXp+=r.xp||0;
+        continue;
+      }
+      if(r.type==="token"){
+        var tt=TOKEN_TYPES[r.id];
+        if(tt){
+          await grantTokenRPC(un,cc,r.id,1,tt.cap||1);
+        }
+        continue;
+      }
+      // avatar / skin / frame / title / cheat_sheet → player_rewards
+      var rRarity=r.rarity||rarityId;
       var rw=await supabase.from("player_rewards").insert({
-        user_name:pendingChest.user_name, class_code:pendingChest.class_code,
-        reward_type:reward.type, reward_id:reward.id, rarity:rarityId,
+        user_name:un, class_code:cc,
+        reward_type:r.type, reward_id:r.id, rarity:rRarity,
       });
-      if(rw.error)console.error("[CHEST] player_rewards insert error:",rw.error.message);
+      if(rw.error)console.warn("[CHEST] player_rewards insert error:",rw.error.message);
     }
 
-    // Log (must succeed before deleting pending — audit trail)
+    // Single chest_log row per chest (multi-reward summary). Per-item history lives in
+    // player_rewards / player_tokens. Keeps log compact and avoids a schema migration.
     var lg=await supabase.from("chest_log").insert({
-      user_name:pendingChest.user_name, class_code:pendingChest.class_code,
-      chest_type:pendingChest.chest_type, trigger_source:pendingChest.trigger_source,
-      rarity_obtained:rarityId, reward_type:reward.type, reward_id:reward.id,
-      xp_amount:reward.type==="xp"?REWARD_POOL[tier].xp:null,
+      user_name:un, class_code:cc,
+      chest_type:ct, trigger_source:pendingChest.trigger_source,
+      rarity_obtained:rarityId, reward_type:"multi", reward_id:"v2",
+      xp_amount:totalXp||null,
     });
-    if(lg.error)console.error("[CHEST] chest_log insert error:",lg.error.message);
+    if(lg.error)console.warn("[CHEST] chest_log insert error:",lg.error.message);
 
     // Remove from pending (only after log succeeded)
     var dl=await supabase.from("pending_chests").delete().eq("id",pendingChest.id);
-    if(dl.error)console.error("[CHEST] pending delete error:",dl.error.message);
-  }catch(e){console.error("[CHEST] openChest exception:",e);}
+    if(dl.error)console.warn("[CHEST] pending delete error:",dl.error.message);
+  }catch(e){console.warn("[CHEST] openChest exception:",e&&e.message);}
 
   return{
-    chestType:pendingChest.chest_type,
+    chestType:ct,
     triggerSource:pendingChest.trigger_source,
     rarityTier:tier,
     rarityId:rarityId,
     rarityColor:RARITIES[tier].color,
     rarityLabel:RARITIES[tier].label,
-    reward:reward,
-    xpAmount:reward.type==="xp"?REWARD_POOL[tier].xp:0,
+    rewards:rewards,
+    totalXp:totalXp,
     newPityCount:newPity,
   };
 }
