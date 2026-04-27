@@ -22,7 +22,7 @@ import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
-import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending } from "./data/chests.js";
+import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, convertCosmeticDups, convertTokensToPremium } from "./data/chests.js";
 import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
@@ -11749,6 +11749,161 @@ function UpgradeScreen(p){
   </div>);
 }
 
+// V2 step 5 — Conversions sub-view : trade duplicate cosmetics for tokens, or 5 non-premium
+// tokens for 1 premium. Mounted from Profile when view==="conversions".
+function ConversionsView(p){
+  var u=p.u;
+  var [rewardsRows,setRewardsRows]=useState(null);
+  var [tokens,setTokens]=useState(null);
+  var [busy,setBusy]=useState(false);
+  var [toast,setToast]=useState(null);
+
+  function refresh(){
+    setRewardsRows(null);setTokens(null);
+    Promise.all([
+      getOwnedRewards(u.name,u.classCode||"visitor"),
+      getOwnedTokens(u.name,u.classCode||"visitor"),
+    ]).then(function(arr){
+      setRewardsRows(arr[0]||[]);
+      setTokens(arr[1]||{});
+    });
+  }
+  useEffect(function(){refresh();},[]);
+
+  function showToast(t){setToast(t);setTimeout(function(){setToast(null);},2400);}
+
+  // Group dups : map "type:id" → count
+  var dupGroups=[];
+  if(rewardsRows){
+    var counts={};
+    rewardsRows.forEach(function(r){
+      var k=r.reward_type+":"+r.reward_id;
+      counts[k]=(counts[k]||0)+1;
+    });
+    Object.keys(counts).forEach(function(k){
+      if(counts[k]<3)return;
+      var parts=k.split(":");
+      var type=parts[0], id=parts.slice(1).join(":");
+      // Only allow trade-in for cosmetics (avatar/skin/frame/title) — cheat sheets stay rare
+      if(["avatar","skin","frame","title"].indexOf(type)===-1)return;
+      var name="";
+      if(type==="avatar"&&AVATARS[id])name=AVATARS[id].name;
+      else if(type==="skin"&&SKINS[id])name=SKINS[id].name;
+      else if(type==="frame"&&FRAMES[id])name=FRAMES[id].name;
+      else if(type==="title"&&TITLES[id])name=TITLES[id].name;
+      else name=id;
+      dupGroups.push({type:type,id:id,name:name,count:counts[k]});
+    });
+    dupGroups.sort(function(a,b){return b.count-a.count;});
+  }
+
+  // Premium-eligible non-premium tokens (qty >= 5)
+  var convertibleTokens=[];
+  if(tokens){
+    Object.keys(TOKEN_TYPES).forEach(function(tt){
+      if(TOKEN_TYPES[tt].premium)return;
+      var qty=tokens[tt]||0;
+      if(qty>=5)convertibleTokens.push({type:tt,qty:qty,info:TOKEN_TYPES[tt]});
+    });
+  }
+
+  async function doConvertCosmetic(group){
+    if(busy)return;
+    setBusy(true);
+    var res=await convertCosmeticDups(u.name,u.classCode||"visitor",group.type,group.id,tokens||{});
+    setBusy(false);
+    if(!res.ok){showToast({err:true,msg:"Échec : "+(res.error||"unknown")});return;}
+    if(res.xpFallback){
+      // All tokens capped → grant XP to user profile directly
+      var c=JSON.parse(JSON.stringify(u));c.xp+=res.xpFallback;c.weeklyXp+=res.xpFallback;p.setAvatar(c);
+      showToast({err:false,msg:"+"+res.xpFallback+" XP (tokens au max)"});
+    }else{
+      var ti=TOKEN_TYPES[res.token];
+      showToast({err:false,msg:"+1 "+(ti?ti.name:res.token)});
+    }
+    refresh();
+  }
+  async function doConvertTokens(item){
+    if(busy)return;
+    setBusy(true);
+    var res=await convertTokensToPremium(u.name,u.classCode||"visitor",item.type,tokens||{});
+    setBusy(false);
+    if(!res.ok){
+      var msgMap={all_premium_capped:"Tous tes tokens premium sont au max",not_enough_tokens:"Pas assez de tokens"};
+      showToast({err:true,msg:msgMap[res.error]||"Échec : "+res.error});return;
+    }
+    var ti=TOKEN_TYPES[res.token];
+    showToast({err:false,msg:"+1 "+(ti?ti.name:res.token)+" (premium)"});
+    refresh();
+  }
+
+  var loading=rewardsRows===null||tokens===null;
+  return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
+      <button onClick={function(){p.setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>{"←"}</button>
+      <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Conversions</h1>
+    </div>
+    <p style={{fontSize:12,color:"var(--t2)",marginTop:0,marginBottom:24,lineHeight:1.5}}>
+      Anti-frustration : transforme tes doublons en tokens utiles, ou 5 tokens en un token premium.
+    </p>
+
+    {loading&&<p style={{color:"var(--t3)",textAlign:"center",padding:40}}>Loading...</p>}
+
+    {!loading&&<>
+      {/* ── 3 dups → 1 token ── */}
+      <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Cosmétiques en double · 3 → 1 token</div>
+      {dupGroups.length===0?(
+        <div className="crd" style={{padding:16,textAlign:"center",marginBottom:24}}>
+          <p style={{color:"var(--t3)",fontSize:12,margin:0}}>Aucun doublon. Continue d'ouvrir des coffres après avoir complété ta collection !</p>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24}}>
+          {dupGroups.map(function(g){
+            return(<div key={g.type+g.id} className="crd" style={{padding:12,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:2}}>{g.name}</div>
+                <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1}}>{g.type} · {g.count} owned</div>
+              </div>
+              <button onClick={function(){doConvertCosmetic(g);}} disabled={busy} className="btn1"
+                style={{fontSize:11,padding:"8px 14px",flexShrink:0}}>
+                Échanger 3
+              </button>
+            </div>);
+          })}
+        </div>
+      )}
+
+      {/* ── 5 tokens → 1 premium ── */}
+      <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Tokens non-premium · 5 → 1 premium</div>
+      {convertibleTokens.length===0?(
+        <div className="crd" style={{padding:16,textAlign:"center"}}>
+          <p style={{color:"var(--t3)",fontSize:12,margin:0}}>Pas assez de tokens. Empile au moins 5 du même type pour les convertir.</p>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {convertibleTokens.map(function(item){
+            return(<div key={item.type} className="crd" style={{padding:12,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+                <span style={{fontSize:24}}>{item.info.icon}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:2}}>{item.info.name}</div>
+                  <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1}}>{item.qty} owned</div>
+                </div>
+              </div>
+              <button onClick={function(){doConvertTokens(item);}} disabled={busy} className="btn1"
+                style={{fontSize:11,padding:"8px 14px",flexShrink:0}}>
+                Échanger 5
+              </button>
+            </div>);
+          })}
+        </div>
+      )}
+    </>}
+
+    {toast&&<div style={{position:"fixed",bottom:80,left:"50%",transform:"translateX(-50%)",padding:"12px 18px",borderRadius:10,background:toast.err?"rgba(220,58,80,.15)":"rgba(46,180,100,.15)",border:"1px solid "+(toast.err?"var(--red)":"var(--green)"),color:toast.err?"var(--red)":"var(--green)",fontSize:13,fontWeight:700,zIndex:1000}}>{toast.msg}</div>}
+  </div>);
+}
+
 function Profile(p){
   var u=p.u;
   var[view,setView]=useState(null);
@@ -12313,6 +12468,11 @@ function Profile(p){
     </div>);
   }
 
+  // ═══ V2 STEP 5 — CONVERSIONS SUB-VIEW ═══
+  if(view==="conversions"){
+    return(<ConversionsView u={u} setView={setView} setAvatar={p.setAvatar}/>);
+  }
+
   // ── SOUS-PAGE GESTION DU COMPTE ─────────────────────────────────────────
   if(view==="account"){
     return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -12488,6 +12648,19 @@ function Profile(p){
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Catalogue</div>
         </button>
       </div>
+
+      {/* V2 step 5 — Conversions entry (full-width below the Style/Collection grid) */}
+      <button onClick={function(){setView("conversions");}} className="crd"
+        style={{width:"100%",padding:"12px 16px",marginBottom:14,textAlign:"left",cursor:"pointer",
+          background:"linear-gradient(135deg,rgba(255,192,32,.08),rgba(220,58,80,.05))",
+          border:"1px solid rgba(255,192,32,.25)",display:"flex",alignItems:"center",gap:12}}>
+        <span style={{fontSize:24,flexShrink:0}}>{"⚖️"}</span>
+        <div style={{flex:1,minWidth:0}}>
+          <div className="out" style={{fontWeight:800,fontSize:14,color:"#ffc020"}}>Conversions</div>
+          <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>Doublons → tokens · 5 tokens → premium</div>
+        </div>
+        <span style={{fontSize:18,color:"var(--t3)"}}>{"›"}</span>
+      </button>
 
       {/* Teacher dashboard — only shown for users in a teacher-dedicated class.
           When the app is deployed on multiple campuses, each teacher gets their own

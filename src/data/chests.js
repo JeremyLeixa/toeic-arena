@@ -239,9 +239,18 @@ export function pickRewards(chestType, owned){
       if(picked){
         rewards.push({type:subType,id:picked,rarity:map[picked].rarity});
       }else{
-        // fallback : XP gem proportionnel à la rareté min
-        var fbXp=slot.minRarity==="legend"?500:slot.minRarity==="epic"?250:100;
-        rewards.push({type:"xp",id:null,xp:fbXp,fallback:"all_owned"});
+        // V2 step 5 — all owned : drop a duplicate (convertible later in Profile→Conversions)
+        // instead of XP fallback. Anti-frustration : the user advanced enough to complete the
+        // collection gets a usable currency rather than dead XP.
+        var allKeys=_filterByMinRarity(map,slot.minRarity);
+        if(allKeys.length>0){
+          var dupId=allKeys[Math.floor(Math.random()*allKeys.length)];
+          rewards.push({type:subType,id:dupId,rarity:map[dupId].rarity,duplicate:true});
+        }else{
+          // pool empty (shouldn't happen with current constants) — fallback XP
+          var fbXp=slot.minRarity==="legend"?500:slot.minRarity==="epic"?250:100;
+          rewards.push({type:"xp",id:null,xp:fbXp,fallback:"empty_pool"});
+        }
       }
       return;
     }
@@ -434,6 +443,83 @@ async function grantTokenRPC(userName, classCode, tokenType, amount, cap){
     if(res.error)console.warn("[CHEST] grant_token RPC error:",res.error.message);
     return res.data;
   }catch(e){console.warn("[CHEST] grant_token exception:",e&&e.message);return null;}
+}
+
+// V2 step 5 — pool of token types eligible as conversion outputs
+var NON_PREMIUM_TOKENS=["diminishing_bypass","streak_shield","daily_reroll"];
+var PREMIUM_TOKENS=["mock_reset","boss_reset","endless_resurrect"];
+
+// Convert 3 duplicate cosmetics → 1 random non-premium token.
+// Returns {ok, token?, error?}. Atomic enough for V1 : DELETE 3 rows then grant 1 token.
+// Failure modes : <3 dups (ok:false), all token types capped (returns XP gem instead).
+export async function convertCosmeticDups(userName, classCode, rewardType, rewardId, ownedTokens){
+  try{
+    // Fetch 3 oldest rows for this exact reward
+    var sel=await supabase.from("player_rewards").select("id")
+      .ilike("user_name",userName).eq("class_code",classCode)
+      .eq("reward_type",rewardType).eq("reward_id",rewardId)
+      .order("earned_at",{ascending:true}).limit(3);
+    if(sel.error)return{ok:false,error:sel.error.message};
+    if(!sel.data||sel.data.length<3)return{ok:false,error:"not_enough_duplicates"};
+
+    // Pick a non-capped non-premium token to grant
+    var owned=ownedTokens||{};
+    var candidates=NON_PREMIUM_TOKENS.filter(function(tt){
+      var qty=owned[tt]||0;
+      var cap=(TOKEN_TYPES[tt]&&TOKEN_TYPES[tt].cap)||1;
+      return qty<cap;
+    });
+    if(candidates.length===0){
+      // All non-premium tokens capped → DELETE the 3 dups + grant a 100 XP fallback (caller handles)
+      var ids=sel.data.map(function(r){return r.id;});
+      var del0=await supabase.from("player_rewards").delete().in("id",ids);
+      if(del0.error)return{ok:false,error:del0.error.message};
+      return{ok:true,xpFallback:100};
+    }
+    var pick=candidates[Math.floor(Math.random()*candidates.length)];
+    var cap=TOKEN_TYPES[pick].cap||1;
+
+    // DELETE first (so the user can't double-spend on a transient network error)
+    var ids2=sel.data.map(function(r){return r.id;});
+    var del=await supabase.from("player_rewards").delete().in("id",ids2);
+    if(del.error)return{ok:false,error:del.error.message};
+
+    // Grant the token (cap-aware via SQL helper)
+    await grantTokenRPC(userName,classCode,pick,1,cap);
+    return{ok:true,token:pick};
+  }catch(e){return{ok:false,error:e&&e.message};}
+}
+
+// Convert 5 of a non-premium token → 1 random premium token.
+// Returns {ok, token?, error?}. Uses consume_token RPC × 5 (atomic per call).
+export async function convertTokensToPremium(userName, classCode, sourceType, ownedTokens){
+  try{
+    if(NON_PREMIUM_TOKENS.indexOf(sourceType)===-1)return{ok:false,error:"source_not_non_premium"};
+    var owned=ownedTokens||{};
+    if((owned[sourceType]||0)<5)return{ok:false,error:"not_enough_tokens"};
+
+    // Pick a non-capped premium token target
+    var candidates=PREMIUM_TOKENS.filter(function(tt){
+      var qty=owned[tt]||0;
+      var cap=(TOKEN_TYPES[tt]&&TOKEN_TYPES[tt].cap)||1;
+      return qty<cap;
+    });
+    if(candidates.length===0)return{ok:false,error:"all_premium_capped"};
+    var pick=candidates[Math.floor(Math.random()*candidates.length)];
+    var cap=TOKEN_TYPES[pick].cap||1;
+
+    // Consume 5 source tokens via the SQL helper
+    var consumeRes=await supabase.rpc("consume_token",{
+      p_user_name:userName, p_class_code:classCode,
+      p_token_type:sourceType, p_amount:5,
+    });
+    if(consumeRes.error)return{ok:false,error:consumeRes.error.message};
+    if(consumeRes.data===false)return{ok:false,error:"consume_returned_false"};
+
+    // Grant the premium token
+    await grantTokenRPC(userName,classCode,pick,1,cap);
+    return{ok:true,token:pick};
+  }catch(e){return{ok:false,error:e&&e.message};}
 }
 
 // V2 — Open a chest: roll multi-rewards, persist them, log, delete pending, return aggregate.
