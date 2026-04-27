@@ -432,7 +432,7 @@ var BUILD_ID="2026-04-24-premium-hardening";
 // d'attribution de row (cf. chantier hardening 2026-04-24).
 var PREMIUM_UPGRADE_ENABLED=false;
 import { supabase } from './supabase.js'
-import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation, confirmPasswordReset, signUpWithPassword } from './auth.js'
+import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
 
 // ─── Name normalization (accent-insensitive + lowercase) ───
@@ -2643,13 +2643,34 @@ var[step,sSt]=useState("name");
 
   // ─ Email login (cross-device) ─ Phase 1 Session 3 ─
   if(step==="emailLogin"){
+    // Phase 2 commit 2 (2026-04-27) : refonte magic link → email + password.
+    // Le bouton "Déjà un compte ? Me connecter" du step name envoie ici.
+    // 2 actions : (1) login email+password → recoverByEmail → Home, (2) reset mdp.
+    // emailSent réutilisé pour signaler "mail de reset envoyé" (pas magic link).
     async function doLogin(){
       if(emailBusy)return;
       var e=(emailInput||"").trim().toLowerCase();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){setEmailErr("Adresse email invalide");return;}
+      if((pwd1||"").length<1){setEmailErr("Mot de passe requis");return;}
       setEmailErr("");setEmailBusy(true);
       try{
-        await requestMagicLink(e);
+        await signInWithPassword(e,pwd1);
+        var ok=await p.recoverByEmail(e);
+        if(!ok){
+          setEmailErr("Connexion OK mais aucun profil trouvé pour cet email. Contacte ton enseignant.");
+          return;
+        }
+      }catch(err){
+        setEmailErr((err&&err.message)||"Erreur");
+      }finally{setEmailBusy(false);}
+    }
+    async function doForgotPassword(){
+      if(emailBusy)return;
+      var e=(emailInput||"").trim().toLowerCase();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){setEmailErr("Saisis d'abord ton email ci-dessus");return;}
+      setEmailErr("");setEmailBusy(true);
+      try{
+        await requestPasswordReset(e);
         setEmailSent(true);
       }catch(err){
         setEmailErr((err&&err.message)||"Erreur");
@@ -2658,30 +2679,37 @@ var[step,sSt]=useState("name");
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:56,marginBottom:16}}>{emailSent?"\u2709\uFE0F":"\uD83D\uDD11"}</div>
+        <div style={{fontSize:56,marginBottom:16}}>{emailSent?"✉️":"🏰"}</div>
         <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:24,color:"var(--t1)",marginBottom:10}}>
-          {emailSent?"V\u00e9rifie ta bo\u00eete":"Me connecter avec mon email"}
+          {emailSent?"Mail envoyé":"Bon retour !"}
         </h2>
-        {!emailSent&&<p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
-          {"Entre l'email que tu avais li\u00e9 \u00e0 ton compte. On t'envoie un lien magique pour te reconnecter sur ce device."}
-        </p>}
-        {emailSent&&<p style={{color:"var(--green)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
-          {"\u2709\uFE0F Lien envoy\u00e9 \u00e0 "+emailInput+".\n\nClique le lien dans ta bo\u00eete (check aussi les spams). Ta session sera restaur\u00e9e sur ce device. Tu peux fermer cet onglet ou attendre ici."}
-        </p>}
-        {!emailSent&&<>
+        {emailSent?<>
+          <p style={{color:"var(--green)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
+            {"Lien de réinitialisation envoyé à "+emailInput+". Vérifie ta boîte (et le spam) puis clique le lien pour choisir un nouveau mot de passe."}
+          </p>
+          <button className="btn2" onClick={function(){setEmailSent(false);setEmailErr("");}}
+            style={{fontSize:13,padding:"12px 28px",width:"100%"}}>{"Réessayer la connexion"}</button>
+          <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer"}}>{"← Retour"}</button>
+        </>:<>
+          <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
+            {"Saisis ton email et ton mot de passe pour retrouver ton profil."}
+          </p>
           <input type="email" value={emailInput} onChange={function(ev){setEmailInput(ev.target.value);setEmailErr("");}} placeholder="ton@email.com" autoComplete="email" disabled={emailBusy}
-            style={{width:"100%",padding:"12px 14px",fontSize:14,borderRadius:10,border:"1.5px solid "+(emailErr?"var(--red)":"rgba(var(--cx),.25)"),background:"var(--bg2)",color:"var(--t1)",marginBottom:emailErr?4:14,textAlign:"center",fontFamily:"'DM Sans',sans-serif"}}/>
+            style={{width:"100%",padding:"12px 14px",fontSize:14,borderRadius:10,border:"1.5px solid "+(emailErr?"var(--red)":"rgba(var(--cx),.25)"),background:"var(--bg2)",color:"var(--t1)",marginBottom:10,textAlign:"left",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box"}}/>
+          <input type="password" value={pwd1} onChange={function(ev){setPwd1(ev.target.value);setEmailErr("");}} placeholder="Mot de passe" autoComplete="current-password" disabled={emailBusy}
+            style={{width:"100%",padding:"12px 14px",fontSize:14,borderRadius:10,border:"1.5px solid "+(emailErr?"var(--red)":"rgba(var(--cx),.25)"),background:"var(--bg2)",color:"var(--t1)",marginBottom:emailErr?4:14,textAlign:"left",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box"}}/>
           {emailErr&&<div style={{fontSize:11,color:"var(--red)",marginBottom:10,textAlign:"left"}}>{emailErr}</div>}
-          <button className="btn1" onClick={doLogin} disabled={emailBusy||!emailInput}
-            style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10,opacity:(emailBusy||!emailInput)?0.5:1}}>
-            {emailBusy?"\u2026":"Recevoir le lien magique"}</button>
-          <button className="btn2" onClick={function(){sSt("name");}} disabled={emailBusy}
-            style={{fontSize:13,padding:"12px 28px",width:"100%"}}>{"\u2190 Retour"}</button>
-          <p style={{color:"var(--t3)",fontSize:10,marginTop:16,lineHeight:1.5}}>{"Pas encore de compte ? Retourne en arri\u00e8re et cr\u00e9e-en un avec ton nom."}</p>
+          <button className="btn1" onClick={doLogin} disabled={emailBusy||!emailInput||!pwd1}
+            style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10,opacity:(emailBusy||!emailInput||!pwd1)?0.5:1}}>
+            {emailBusy?"…":"Se connecter"}</button>
+          <button onClick={doForgotPassword} disabled={emailBusy}
+            style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",marginBottom:14}}>{"Mot de passe oublié ?"}</button>
+          <button className="btn2" onClick={function(){sSt("name");setEmailErr("");}} disabled={emailBusy}
+            style={{fontSize:13,padding:"12px 28px",width:"100%"}}>{"← Retour"}</button>
         </>}
       </div>
     </div>);
-  }
+    }
 
   // ─ Account recognition ─
   if(step==="recognize")return(
@@ -13271,7 +13299,32 @@ var prevLeague=getLeague(c.weeklyXp);
     saveLocal(u);
     return true;
   }
- 
+
+  // Welcome back via email+password (Phase 2 — refonte 2026-04-27).
+  // Pré-condition : signInWithPassword(email, password) déjà appelé avec succès,
+  // donc la session Supabase est active sur le bon auth user.
+  // Lookup students par email — pattern aligné avec recover() mais sur la clé email.
+  async function recoverByEmail(email){
+    var e=(email||"").trim().toLowerCase();
+    if(!e)return false;
+    var rAll=await supabase.from('students').select('*').ilike('email',e);
+    var rMatches=(rAll.data||[]).filter(function(s){return (s.email||"").toLowerCase()===e;});
+    rMatches.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
+    if(rMatches.length===0){console.warn("[recoverByEmail] no students row for",e);return false;}
+    var d=rMatches[0];
+    // La session est censée être active grâce à signInWithPassword
+    var sess=await supabase.auth.getSession();
+    var userId=sess.data.session?sess.data.session.user.id:null;
+    if(!userId){console.warn("[recoverByEmail] no session post signin");return false;}
+    _cachedUserId=userId;
+    try{localStorage.setItem('toeic-arena-name',d.name);}catch(e){}
+    try{localStorage.setItem('toeic-arena-class',d.class_code);}catch(e){}
+    var u=supaToLocal(d);
+    sU(u);
+    saveLocal(u);
+    return true;
+  }
+
   function goTeacher(){setTeacher(true);}
 
   function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
@@ -13427,7 +13480,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(resetToken)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><ResetPasswordView token={resetToken}/></div>);
   if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
   if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
-  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover}/></div>);
+  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></div>);
 
   // ── Group access control ──
   if(groupAccess&&groupAccess.status==="not_started")return(<div className={lc}><style>{CSS}</style>
