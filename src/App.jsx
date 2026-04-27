@@ -432,7 +432,7 @@ var BUILD_ID="2026-04-24-premium-hardening";
 // d'attribution de row (cf. chantier hardening 2026-04-24).
 var PREMIUM_UPGRADE_ENABLED=false;
 import { supabase } from './supabase.js'
-import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation, confirmPasswordReset } from './auth.js'
+import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation, confirmPasswordReset, signUpWithPassword } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
 
 // ─── Name normalization (accent-insensitive + lowercase) ───
@@ -2434,6 +2434,13 @@ var[step,sSt]=useState("name");
   // PIN state removed 2026-04-20 — auth is now handled via Supabase magic link
   var[pendingNav,setPendingNav]=useState(null);var[pushBusy,setPushBusy]=useState(false);
   var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
+  // ── Phase 2 — email+password signup state (cohabite avec emailLogin/emailPrompt magic link) ──
+  // pwd1/pwd2 : nouveau mot de passe + confirmation
+  // pwdBusy/pwdErr : état appel signUpWithPassword
+  // pwdSetupDone : true après signup OK → finishOnb() skip l'écran emailPrompt magic link
+  // pwdEmailDup : true si Supabase refuse l'email (déjà pris) → affiche bouton "Me connecter"
+  var[pwd1,setPwd1]=useState("");var[pwd2,setPwd2]=useState("");var[pwdBusy,setPwdBusy]=useState(false);var[pwdErr,setPwdErr]=useState("");
+  var[pwdSetupDone,setPwdSetupDone]=useState(false);var[pwdEmailDup,setPwdEmailDup]=useState(false);
   // Poll for email confirmation while the user is on the emailPrompt step and email was sent.
   // Catches the mobile case where the magic link was clicked in another browser (Gmail app →
   // default browser). Without this poll, the current PWA session would never detect the confirmation.
@@ -2503,13 +2510,15 @@ var[step,sSt]=useState("name");
         setFoundAccounts(accounts);
         sSt("recognize");
       } else {
-        console.warn("[LOOKUP] no match → classcode step");
+        // Phase 2 (2026-04-27) : nouveaux users → écran emailPassword au lieu de classcode direct.
+        // Le step emailPassword propose signUp OU "Continuer sans compte" (visitor).
+        console.warn("[LOOKUP] no match → emailPassword step");
         setFoundAccounts([]);
-        sSt("classcode");
+        sSt("emailPassword");
       }
     }catch(e){
-      console.warn("[LOOKUP] outer catch → classcode, err:",e&&e.message);
-      sSt("classcode");
+      console.warn("[LOOKUP] outer catch → emailPassword, err:",e&&e.message);
+      sSt("emailPassword");
     }
     setLookingUp(false);
   }
@@ -2559,6 +2568,78 @@ var[step,sSt]=useState("name");
         </div>
       </div>
     </div>);
+
+  // ─ Email + Password signup (Phase 2 — refonte 2026-04-27) ─
+  // Vient APRÈS l'écran name pour les users non reconnus (lookupName → 0 match).
+  // Propose 2 chemins : signup avec email+password, ou "Continuer sans compte" (visitor).
+  // Cohabite avec emailLogin/emailPrompt pendant la transition (Phase 4 cleanup).
+  if(step==="emailPassword"){
+    async function doSignUp(){
+      if(pwdBusy)return;
+      var e=(emailInput||"").trim().toLowerCase();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){setPwdErr("Adresse email invalide");return;}
+      if((pwd1||"").length<8){setPwdErr("Mot de passe trop court (8 caractères minimum)");return;}
+      if(pwd1!==pwd2){setPwdErr("Les deux mots de passe ne correspondent pas");return;}
+      setPwdErr("");setPwdEmailDup(false);setPwdBusy(true);
+      try{
+        await signUpWithPassword(e,pwd1,{name:name.trim()});
+        setPwdSetupDone(true);
+        // Email saisi reste dans emailInput au cas où d'autres branches le lisent.
+        sSt("classcode");
+      }catch(err){
+        var msg=((err&&err.message)||"").toLowerCase();
+        if(msg.includes("already")||msg.includes("registered")||msg.includes("exists")||msg.includes("duplicate")){
+          setPwdErr("Cet email est déjà utilisé.");
+          setPwdEmailDup(true);
+        }else{
+          setPwdErr((err&&err.message)||"Erreur");
+        }
+      }finally{setPwdBusy(false);}
+    }
+    function continueAsVisitor(){
+      // Skip email+password : mode visitor pur, pas de compte cross-device.
+      // Va direct à consent (pas classcode) puisque le choix est déjà fait.
+      setClassCode("visitor");
+      setPwdErr("");setPwdEmailDup(false);
+      sSt("consent");
+    }
+    return(
+    <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
+      <button className="back-btn" onClick={function(){sSt("name");setPwdErr("");setPwdEmailDup(false);}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"←"} Back</button>
+      <div style={{maxWidth:420,margin:"60px auto 0"}}>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{fontSize:48,marginBottom:12}}>{"🏰"}</div>
+          <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{"Crée ton compte"}</h1>
+          <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Email et mot de passe pour sauvegarder ton avancée et te reconnecter sur tous tes appareils."}</p>
+        </div>
+        <input type="email" value={emailInput} onChange={function(e){setEmailInput(e.target.value);setPwdEmailDup(false);setPwdErr("");}}
+          placeholder="ton@email.com" autoComplete="email" autoCapitalize="off" autoCorrect="off"
+          style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:10,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
+        <input type="password" value={pwd1} onChange={function(e){setPwd1(e.target.value);}}
+          placeholder="Mot de passe (8 caractères min.)" autoComplete="new-password"
+          style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:10,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
+        <input type="password" value={pwd2} onChange={function(e){setPwd2(e.target.value);}}
+          placeholder="Confirme le mot de passe" autoComplete="new-password"
+          style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
+        {pwdErr&&<div style={{color:"var(--red)",fontSize:13,marginBottom:12,textAlign:"center"}}>{pwdErr}</div>}
+        {pwdEmailDup&&<button className="btn2" onClick={function(){sSt("emailLogin");setEmailErr("");setEmailSent(false);setPwdErr("");setPwdEmailDup(false);}}
+          style={{width:"100%",fontSize:13,padding:"11px 16px",marginBottom:10,borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
+          {"Me connecter avec cet email"}
+        </button>}
+        <button className="btn1" onClick={doSignUp} disabled={pwdBusy}
+          style={{width:"100%",fontSize:14,padding:"13px 20px",background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700,opacity:pwdBusy?.6:1}}>
+          {pwdBusy?"Création...":"Continuer"}
+        </button>
+        <div style={{marginTop:24,paddingTop:16,borderTop:"1px solid var(--bdr)",textAlign:"center"}}>
+          <p style={{color:"var(--t3)",fontSize:11,marginBottom:10,lineHeight:1.4}}>{"Tu veux juste essayer ? Tes stats resteront sur cet appareil."}</p>
+          <button className="btn2" onClick={continueAsVisitor}
+            style={{width:"100%",fontSize:13,padding:"11px 16px",borderColor:"var(--bdr)",color:"var(--t3)"}}>
+            {"Continuer sans compte"}
+          </button>
+        </div>
+      </div>
+    </div>);
+  }
 
   // ─ Email login (cross-device) ─ Phase 1 Session 3 ─
   if(step==="emailLogin"){
@@ -2895,7 +2976,13 @@ var[step,sSt]=useState("name");
 
   // ─ Push notification opt-in ─
   if(step==="pushPrompt"){
-    function finishOnb(){sSt("emailPrompt");}
+    // Phase 2 (2026-04-27) : skip l'écran emailPrompt magic link si :
+    //  - le signup password a déjà posé un email (pwdSetupDone)
+    //  - OU l'utilisateur est en mode visitor (pas de compte = pas d'email)
+    function finishOnb(){
+      if(pwdSetupDone||classCode==="visitor"){sSt("langBridge");return;}
+      sSt("emailPrompt");
+    }
     async function enableAndGo(){
       if(pushBusy)return;
       setPushBusy(true);
