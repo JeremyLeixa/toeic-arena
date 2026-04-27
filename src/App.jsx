@@ -11566,9 +11566,8 @@ function UpgradeScreen(p){
       <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
       <div style={{textAlign:"center",marginTop:48}}>
         <div style={{fontSize:56,marginBottom:12,opacity:.6}}>{"\uD83D\uDEE0\uFE0F"}</div>
-        <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:12}}>Premium bient\u00f4t disponible</h1>
-        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:8}}>La souscription Premium est en finalisation technique. Elle sera accessible d\u00e8s que le syst\u00e8me sera valid\u00e9 end-to-end.</p>
-        <p style={{color:"var(--t3)",fontSize:12,lineHeight:1.5}}>En attendant, profite de l'acc\u00e8s Freemium \u2014 toutes les fonctions de base restent ouvertes.</p>
+        <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:12}}>{"Arena Premium"}</h1>
+        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:8}}>{"Fonctionnalit\u00e9 \u00e0 venir."}</p>
       </div>
     </div>);
   }
@@ -12395,8 +12394,8 @@ function Profile(p){
           return(<div className="crd" style={{marginBottom:12,padding:"14px 16px",background:"rgba(var(--cx),.04)",border:"1px dashed var(--bdr)",display:"flex",alignItems:"center",gap:12}}>
             <span style={{fontSize:22,flexShrink:0,opacity:.6}}>{"\uD83C\uDFF0"}</span>
             <div style={{flex:1}}>
-              <div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t2)"}}>Arena Premium bient\u00f4t disponible</div>
-              <div style={{fontSize:11,color:"var(--t3)",marginTop:2,lineHeight:1.4}}>Finalisation du paiement en cours. La souscription sera ouverte d\u00e8s que le syst\u00e8me est valid\u00e9.</div>
+              <div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t2)"}}>{"Arena Premium"}</div>
+              <div style={{fontSize:11,color:"var(--t3)",marginTop:2,lineHeight:1.4}}>{"Fonctionnalit\u00e9 \u00e0 venir."}</div>
             </div>
           </div>);
         }
@@ -13250,23 +13249,14 @@ var prevLeague=getLeague(c.weeklyXp);
   var premiumOverlay=premiumPrompt&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={function(){setPremiumPrompt(null);}}>
     <div style={{background:"var(--bg2)",borderRadius:20,padding:28,maxWidth:360,textAlign:"center",animation:"fadeIn .3s",border:"1px solid rgba(255,215,0,.25)",boxShadow:"0 0 40px rgba(255,215,0,.15)"}} onClick={function(e){e.stopPropagation();}}>
       <div style={{fontSize:56,marginBottom:12}}>{"\uD83C\uDFF0"}</div>
-      <h3 className="out" style={{fontWeight:800,fontSize:22,marginBottom:6,color:"var(--gold)"}}>Arena Premium</h3>
+      <h3 className="out" style={{fontWeight:800,fontSize:22,marginBottom:6,color:"var(--gold)"}}>{"Accès réservé"}</h3>
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6,marginBottom:18}}>
-        <strong style={{color:"var(--t1)"}}>{premiumPrompt}</strong>{" fait partie des modules Premium."}
+        {"Réservé aux abonnés Premium."}<br/>
+        <span style={{color:"var(--t3)",fontSize:12}}>{"Fonctionnalité à venir."}</span>
       </p>
-      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,marginBottom:20,textAlign:"left",background:"rgba(255,215,0,.04)",border:"1px solid rgba(255,215,0,.12)",borderRadius:10,padding:"12px 14px"}}>
-        <div>{"\u2713 Tous les modules Premium d\u00e9bloqu\u00e9s"}</div>
-        <div>{"\u2713 Boss Test + Endless Arena"}</div>
-        <div>{"\u2713 Tests blancs 1, 2, 3"}</div>
-        <div>{"\u2713 390 flashcards m\u00e9tiers"}</div>
-      </div>
-      <button className="btn1" onClick={function(){setPremiumPrompt(null);sSP("upgrade");}}
-        style={{width:"100%",fontSize:14,padding:"13px 20px",marginBottom:8,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700}}>
-        {"\uD83C\uDFAF Voir les offres"}
-      </button>
       <button className="btn2" onClick={function(){setPremiumPrompt(null);}}
-        style={{width:"100%",fontSize:12,padding:"10px 16px",borderColor:"var(--bdr)",color:"var(--t3)"}}>
-        {"Plus tard"}
+        style={{width:"100%",fontSize:13,padding:"11px 16px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
+        OK
       </button>
     </div>
   </div>;
