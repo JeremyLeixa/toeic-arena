@@ -432,7 +432,7 @@ var BUILD_ID="2026-04-24-premium-hardening";
 // d'attribution de row (cf. chantier hardening 2026-04-24).
 var PREMIUM_UPGRADE_ENABLED=false;
 import { supabase } from './supabase.js'
-import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset } from './auth.js'
+import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
 
 // ─── Name normalization (accent-insensitive + lowercase) ───
@@ -11726,6 +11726,11 @@ function Profile(p){
   var fileRef=useRef(null);
   var[bioAvail,setBioAvail]=useState(false);var[bioRegistered,setBioRegistered]=useState(!!getBioCredId());
   var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
+  // Phase 2 commit 4 (2026-04-27) : change password sub-form dans la section Sécurité
+  var[pwdChangeShow,setPwdChangeShow]=useState(false);
+  var[pwdChange1,setPwdChange1]=useState("");var[pwdChange2,setPwdChange2]=useState("");
+  var[pwdChangeBusy,setPwdChangeBusy]=useState(false);var[pwdChangeErr,setPwdChangeErr]=useState("");
+  var[pwdChangeOK,setPwdChangeOK]=useState(false);
 
   useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});biometricAvailable().then(function(v){setBioAvail(v);});},[]);
   useEffect(function(){if(view==="inventory"||view==="avatar"){setInvLoading(true);getOwnedRewards(u.name,u.classCode||"visitor").then(function(rewards){setInvData(rewards);setInvLoading(false);});}},[view]);
@@ -12154,26 +12159,57 @@ function Profile(p){
       <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:4}}>{"Gestion du compte"}</h1>
       <p style={{color:"var(--t3)",fontSize:12,marginBottom:24}}>{"S\u00e9curit\u00e9, donn\u00e9es, actions critiques"}</p>
 
-      {/* ─── SECTION SÉCURITÉ ─── */}
-      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"\uD83D\uDD12 S\u00e9curit\u00e9"}</div>
-      <button className="btn2" onClick={async function(){
-        if(u.email){
-          alert("Votre compte est d\u00e9j\u00e0 s\u00e9curis\u00e9 avec l'email :\n"+u.email+"\n\nVous recevrez les notifications importantes \u00e0 cette adresse.");
-          return;
-        }
-        var email=prompt("Entrez votre email pour s\u00e9curiser votre compte.\n\nVous recevrez un lien de confirmation par email.\nUne fois confirm\u00e9, votre progression sera li\u00e9e \u00e0 cet email et retrouvable depuis n'importe quel appareil.");
-        if(email===null)return;
-        email=email.trim().toLowerCase();
-        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert("Adresse email invalide. Format attendu : nom@domaine.tld");return;}
-        try{
-          await linkEmailToAnonymous(email);
-          try{sessionStorage.setItem("awaitingEmailConfirm","1");}catch(e){}
-          alert("\u2709\ufe0f Email de confirmation envoy\u00e9 \u00e0 :\n"+email+"\n\n\uD83D\uDCF1 Sur mobile : ouvre le lien depuis CE m\u00eame navigateur (pas depuis l'app Gmail). Si le lien s'ouvre ailleurs, la confirmation ne remontera pas ici.\n\nL'app d\u00e9tectera automatiquement la confirmation d\u00e8s que tu reviens.");
-        }catch(e){alert("Erreur : "+((e&&e.message)||"impossible d'envoyer l'email."));}
-      }} style={{fontSize:13,width:"100%",marginBottom:8,borderColor:u.email?"rgba(74,190,96,.3)":"rgba(var(--cx),.2)",color:u.email?"var(--green)":"var(--cyan)"}}>
-        {u.email?("\u2705 Compte s\u00e9curis\u00e9 \u2014 "+u.email):"\uD83D\uDD12 S\u00e9curiser avec un email"}
-      </button>
-      {/* (PIN button removed 2026-04-20 — replaced by email-based auth) */}
+      {/* ─── SECTION SÉCURITÉ (Phase 2 commit 4 — refonte 2026-04-27) ─── */}
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"🔒 Sécurité"}</div>
+      {u.email
+        ?<div className="crd" style={{padding:"12px 14px",marginBottom:8,background:"rgba(var(--cx),.04)",border:"1px solid rgba(var(--cx),.15)"}}>
+          <div style={{color:"var(--t3)",fontSize:10,marginBottom:3,textTransform:"uppercase",letterSpacing:1}}>{"Email"}</div>
+          <div style={{color:"var(--t1)",fontSize:13,wordBreak:"break-all"}}>{u.email}</div>
+        </div>
+        :<div className="crd" style={{padding:"12px 14px",marginBottom:8,background:"transparent",border:"1px dashed var(--bdr)",fontSize:12,color:"var(--t3)",lineHeight:1.5}}>
+          {"Aucun email lié à ton compte. Ta progression ne peut pas être récupérée si tu changes d'appareil."}
+        </div>}
+      {u.email&&!pwdChangeShow&&<button className="btn2" onClick={function(){setPwdChangeShow(true);setPwdChangeErr("");setPwdChangeOK(false);}}
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
+        {"🔑 Changer mon mot de passe"}
+      </button>}
+      {u.email&&pwdChangeShow&&<div className="crd" style={{padding:14,marginBottom:8,border:"1px solid rgba(var(--cx),.2)",background:"var(--bg2)"}}>
+        {pwdChangeOK
+          ?<>
+            <div style={{color:"var(--green)",fontSize:13,marginBottom:10,textAlign:"center"}}>{"✅ Mot de passe mis à jour"}</div>
+            <button className="btn2" onClick={function(){setPwdChangeShow(false);setPwdChange1("");setPwdChange2("");setPwdChangeOK(false);}}
+              style={{fontSize:12,padding:"8px 14px",width:"100%"}}>{"Fermer"}</button>
+          </>
+          :<>
+            <input type="password" value={pwdChange1} onChange={function(ev){setPwdChange1(ev.target.value);setPwdChangeErr("");}}
+              placeholder="Nouveau mot de passe (8 car. min.)" autoComplete="new-password" disabled={pwdChangeBusy}
+              style={{width:"100%",padding:"10px 12px",fontSize:13,marginBottom:8,background:"var(--bg)",border:"1px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box"}}/>
+            <input type="password" value={pwdChange2} onChange={function(ev){setPwdChange2(ev.target.value);setPwdChangeErr("");}}
+              placeholder="Confirme le mot de passe" autoComplete="new-password" disabled={pwdChangeBusy}
+              style={{width:"100%",padding:"10px 12px",fontSize:13,marginBottom:10,background:"var(--bg)",border:"1px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box"}}/>
+            {pwdChangeErr&&<div style={{color:"var(--red)",fontSize:12,marginBottom:8}}>{pwdChangeErr}</div>}
+            <div style={{display:"flex",gap:8}}>
+              <button className="btn2" onClick={function(){setPwdChangeShow(false);setPwdChange1("");setPwdChange2("");setPwdChangeErr("");}} disabled={pwdChangeBusy}
+                style={{flex:1,fontSize:12,padding:"9px 12px"}}>{"Annuler"}</button>
+              <button className="btn1" onClick={async function(){
+                setPwdChangeErr("");
+                if((pwdChange1||"").length<8){setPwdChangeErr("Mot de passe trop court (8 caractères minimum)");return;}
+                if(pwdChange1!==pwdChange2){setPwdChangeErr("Les deux mots de passe ne correspondent pas");return;}
+                setPwdChangeBusy(true);
+                try{
+                  await updatePassword(pwdChange1);
+                  setPwdChangeOK(true);
+                  setPwdChange1("");setPwdChange2("");
+                }catch(err){
+                  setPwdChangeErr((err&&err.message)||"Erreur");
+                }finally{setPwdChangeBusy(false);}
+              }} disabled={pwdChangeBusy}
+                style={{flex:1,fontSize:12,padding:"9px 12px",background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700,opacity:pwdChangeBusy?.6:1}}>
+                {pwdChangeBusy?"...":"Enregistrer"}
+              </button>
+            </div>
+          </>}
+      </div>}
       <div style={{marginBottom:20}}/>
 
       {/* ─── SECTION MES DONNÉES ─── */}
