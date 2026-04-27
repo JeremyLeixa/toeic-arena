@@ -454,11 +454,13 @@ var PREMIUM_TOKENS=["mock_reset","boss_reset","endless_resurrect"];
 // Failure modes : <3 dups (ok:false), all token types capped (returns XP gem instead).
 export async function convertCosmeticDups(userName, classCode, rewardType, rewardId, ownedTokens){
   try{
-    // Fetch 3 oldest rows for this exact reward
+    // Fetch 3 rows for this exact reward. No ORDER BY — the timestamp column name
+    // is uncertain across V1/V2 schemas and the rows are interchangeable anyway
+    // (same reward_id, same rarity), so picking any 3 is correct.
     var sel=await supabase.from("player_rewards").select("id")
       .ilike("user_name",userName).eq("class_code",classCode)
       .eq("reward_type",rewardType).eq("reward_id",rewardId)
-      .order("earned_at",{ascending:true}).limit(3);
+      .limit(3);
     if(sel.error)return{ok:false,error:sel.error.message};
     if(!sel.data||sel.data.length<3)return{ok:false,error:"not_enough_duplicates"};
 

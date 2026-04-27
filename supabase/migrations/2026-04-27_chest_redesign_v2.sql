@@ -107,6 +107,15 @@ ALTER TABLE public.chest_log
   ADD  CONSTRAINT chest_log_reward_type_check
   CHECK (reward_type IN ('xp', 'avatar', 'skin', 'frame', 'title', 'cheat_sheet', 'token', 'multi'));
 
+-- ═══ player_rewards.reward_type — relax CHECK to allow V2 cosmetic types ═══
+-- V1 only allowed ('xp','avatar','skin'). V2 inserts 'frame', 'title', 'cheat_sheet'.
+-- Tokens go to player_tokens, not here.
+ALTER TABLE public.player_rewards
+  DROP CONSTRAINT IF EXISTS player_rewards_reward_type_check;
+ALTER TABLE public.player_rewards
+  ADD  CONSTRAINT player_rewards_reward_type_check
+  CHECK (reward_type IN ('xp', 'avatar', 'skin', 'frame', 'title', 'cheat_sheet'));
+
 -- ═══ Notes (no SQL action required) ═══
 -- 1. player_rewards.reward_type already accepts new values ("frame","title","cheat_sheet")
 --    without schema change — column is TEXT non-constrained.
