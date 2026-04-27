@@ -787,7 +787,8 @@ function canUnlockBoss(u){
   if(!u.mockResults||!u.mockResults.mock1)reasons.push("Complete Mock Test 1 first");
   if(!u.mockResults||!u.mockResults.mock2)reasons.push("Complete Mock Test 2 first");
   if(!u.mockResults||!u.mockResults.mock3)reasons.push("Complete Mock Test 3 first");
-  if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()){
+  // V2 — Boss Reset token bypasses the 24h cooldown when armed.
+  if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()&&!u.bossResetArmed){
     reasons.push("24h cooldown — come back tomorrow");
   }
   return{ok:reasons.length===0,reasons:reasons};
@@ -814,7 +815,8 @@ function getEndlessState(u){
   if(!u.mockResults||!u.mockResults.boss)return"hidden";
   if((u.mockResults.boss.toeicEstimate||0)<650)return"locked";
   var last=u.mockResults.endless&&u.mockResults.endless.lastAttempt;
-  if(last&&(Date.now()-last)<24*60*60*1000)return"cooldown";
+  // V2 — Endless Resurrect token bypasses the 24h cooldown when armed.
+  if(last&&(Date.now()-last)<24*60*60*1000&&!u.endlessResetArmed)return"cooldown";
   return"ready";
 }
 
@@ -3481,6 +3483,72 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s ease-out"}}><div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
 <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next Question":"See Results"}</button></div>}</div>);}
 
+// V2 — Generic in-context token CTA. Self-fetches the token quantity, exposes a
+// confirm modal, calls consumeToken on confirm, and arms a custom flag on the user.
+// Used by Boss Reset (under Train Boss card) and Endless Resurrect (under Endless card).
+function TokenContextCTA(p){
+  // p : tokenType, armField, ctaLabel, modalTitle, modalDesc, accentColor, headline
+  var [qty,setQty]=useState(null);
+  var [asking,setAsking]=useState(false);
+  var [busy,setBusy]=useState(false);
+  var [toast,setToast]=useState(null);
+  useEffect(function(){
+    getOwnedTokens(p.u.name,p.u.classCode||"visitor").then(function(t){setQty((t&&t[p.tokenType])||0);});
+  },[]);
+  if(qty===null||qty===0)return null;
+  var info=TOKEN_TYPES[p.tokenType]||{};
+  var icon=info.icon||"🎟️";
+  var cap=info.cap||1;
+  var color=p.accentColor||"var(--gold)";
+  function doUse(){
+    if(busy)return;
+    setBusy(true);
+    consumeToken(p.u.name,p.u.classCode||"visitor",p.tokenType,1).then(function(res){
+      setBusy(false);setAsking(false);
+      if(!res.ok){setToast({err:true,msg:"Échec : "+(res.error||"unknown")});setTimeout(function(){setToast(null);},2400);return;}
+      var c=JSON.parse(JSON.stringify(p.u));c[p.armField]=true;
+      p.setUser(c);
+      setQty(qty-1);
+      setToast({err:false,msg:icon+" "+(p.armedMsg||"Token armé")});
+      setTimeout(function(){setToast(null);},2400);
+    });
+  }
+  return(<div style={{padding:"12px 14px",marginBottom:10,borderRadius:12,background:"rgba(255,192,32,.06)",border:"1px solid rgba(255,192,32,.25)",display:"flex",alignItems:"center",gap:10}}>
+    <span style={{fontSize:24,flexShrink:0}}>{icon}</span>
+    <div style={{flex:1,minWidth:0}}>
+      <div style={{fontSize:12,fontWeight:700,color:color}}>{p.headline} (×{qty})</div>
+      <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>{p.cardDesc}</div>
+    </div>
+    <button onClick={function(){setAsking(true);}} className="btn2" style={{fontSize:11,padding:"7px 12px",flexShrink:0,whiteSpace:"nowrap"}}>Use</button>
+    {asking&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)setAsking(false);}}>
+      <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
+        <div style={{fontSize:48,marginBottom:12}}>{icon}</div>
+        <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>{p.modalTitle}</h2>
+        <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>{p.modalDesc}</p>
+        <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:color}}>{Math.max(0,qty-1)} / {cap}</strong> après usage.</p>
+        <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+          <button onClick={function(){setAsking(false);}} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Annuler</button>
+          <button onClick={doUse} disabled={busy} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>{busy?"...":"Utiliser"}</button>
+        </div>
+      </div>
+    </div>}
+    {toast&&<div style={{position:"fixed",bottom:80,left:"50%",transform:"translateX(-50%)",padding:"12px 18px",borderRadius:10,background:toast.err?"rgba(220,58,80,.15)":"rgba(46,180,100,.15)",border:"1px solid "+(toast.err?"var(--red)":"var(--green)"),color:toast.err?"var(--red)":"var(--green)",fontSize:13,fontWeight:700,zIndex:10000}}>{toast.msg}</div>}
+  </div>);
+}
+// Wrappers that fix the per-token copy.
+function BossResetCTA(p){
+  return(<TokenContextCTA u={p.u} setUser={p.setUser} tokenType="boss_reset" armField="bossResetArmed"
+    headline="Boss Reset disponible" cardDesc="Bypasse le cooldown 24h pour ré-attaquer le boss maintenant."
+    modalTitle="Utiliser Boss Reset ?" modalDesc="Bypasse le cooldown 24h sur le Boss Test."
+    armedMsg="Boss Reset armé — l'arène est ouverte"/>);
+}
+function EndlessResetCTA(p){
+  return(<TokenContextCTA u={p.u} setUser={p.setUser} tokenType="endless_resurrect" armField="endlessResetArmed"
+    headline="Endless Resurrect disponible" cardDesc="Bypasse le cooldown 24h pour relancer un Endless run."
+    modalTitle="Utiliser Endless Resurrect ?" modalDesc="Bypasse le cooldown 24h sur l'Endless Arena."
+    armedMsg="Endless Resurrect armé — relance ton run"/>);
+}
+
 // ─── TRAIN PAGE ───
   function Train(p){
   var[trainView,setTrainView]=useState(p.initialView!=null?p.initialView:null);
@@ -3616,6 +3684,10 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
           </div>
         </div>
 
+        {/* V2 — Boss Reset token CTA (only when locked specifically by 24h cooldown) */}
+        {bossLocked&&uBoss.reasons[0]&&uBoss.reasons[0].indexOf("24h cooldown")===0&&
+          <BossResetCTA u={p.u} setUser={p.setUser}/>}
+
         {/* ── Hero Endless Arena (if visible) ── */}
         {endlessState!=="hidden"&&(function(){
           var isLocked=endlessState==="locked";
@@ -3672,6 +3744,9 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
             </div>
           </div>);
         })()}
+
+        {/* V2 — Endless Resurrect CTA (only when in cooldown) */}
+        {endlessState==="cooldown"&&<EndlessResetCTA u={p.u} setUser={p.setUser}/>}
       </div>);
     }
 
@@ -13891,7 +13966,7 @@ var prevLeague=getLeague(c.weeklyXp);
 
   function goTeacher(){setTeacher(true);}
 
-  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
+  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.bossResetArmed)c.bossResetArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
   function endlessDone(result,xp,meta){
     var c=addXp(xp);
     c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;
@@ -13907,6 +13982,7 @@ var prevLeague=getLeague(c.weeklyXp);
       history:meta.history.slice(-50)
     };
     trackModSession(c,"endless");recordModule(c,"endless",result.score,result.total);
+    if(c.endlessResetArmed)c.endlessResetArmed=false; // V2 — consume after the run
     try{if(result.toeicEstimate>=800)playJingleMock();else playJingleMockOk();}catch(e){}haptic("complete");
     sv(c);sSP(null);sT("train");
   }
@@ -14117,7 +14193,7 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
     {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&narratorQueue.length===0&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
