@@ -475,6 +475,8 @@ function supaToLocal(data){
     gameScores:data.game_scores||{pityCount:0},mission:data.mission||{date:null,actId:null,done:false,streak:0,lastDoneDate:null},
     unlockedAch:data.unlocked_ach||[],avatar:data.avatar||"⚔️",theme:data.theme||"dark",
     equippedSkin:data.skin_id||null,
+    equippedFrame:data.frame_id||null,
+    equippedTitle:data.title_id||null,
     totalTime:data.total_time||0,weeklyHistory: data.weekly_history || [],
     dailyModSessions: data.daily_mod_sessions || {},
     weeklyDailyCount: data.weekly_daily_count || 0,
@@ -604,6 +606,8 @@ async function save(d){
     mock_results:d.mockResults,game_scores:d.gameScores,
     mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
     skin_id:d.equippedSkin||null,
+    frame_id:d.equippedFrame||null,
+    title_id:d.equippedTitle||null,
     unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
     weekly_history:d.weeklyHistory||[],
     daily_mod_sessions:d.dailyModSessions||{},
@@ -684,7 +688,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -1957,16 +1961,23 @@ function GauntletHub(p){
 // ─── SMALL COMPONENTS ───
 function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div className="bar-fill" style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,var(--cx-hex),var(--cx-dark))",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
 // ─── Avatar renderer — handles both emoji and base64 photo ───
-function renderAv(avatar,size){
+function renderAv(avatar,size,frameId){
   var s=size||32;
+  var inner;
   if(avatar&&avatar.startsWith&&avatar.startsWith("data:")){
-    return(<img src={avatar} style={{width:s,height:s,borderRadius:"50%",objectFit:"cover",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
+    inner=(<img src={avatar} style={{width:s,height:s,borderRadius:"50%",objectFit:"cover",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
+  }else if(avatar&&AVATARS[avatar]){
+    inner=(<AvatarMedal avatarId={avatar} size={s}/>);
+  }else{
+    inner=(<span style={{fontSize:s*0.6,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,flexShrink:0}}>{avatar||"⚔️"}</span>);
   }
-  // Check if avatar is a chest system avatar ID
-  if(avatar&&AVATARS[avatar]){
-    return(<AvatarMedal avatarId={avatar} size={s}/>);
+  // V2 — wrap with frame only if explicitly requested (caller passes user's equippedFrame)
+  if(frameId&&FRAMES[frameId]){
+    var fst=parseInlineStyle(FRAMES[frameId].style);
+    var pad=Math.max(2,Math.round(s*0.06));
+    return(<span style={Object.assign({display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",verticalAlign:"middle"},fst)}>{inner}</span>);
   }
-  return(<span style={{fontSize:s*0.6,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,flexShrink:0}}>{avatar||"⚔️"}</span>);
+  return inner;
 }
 
 // ─── NARRATOR OVERLAY — Aldric's 8 narrative moments ───
@@ -3219,7 +3230,7 @@ var pulseSlot=p.pendingChests>0?"chest":needsMockNudge(u)?"mock":_dailyQuestActi
 return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28)}</h1></div>
+<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28,u.equippedFrame)}</h1>{u.equippedTitle&&TITLES[u.equippedTitle]&&<div className="out" style={{fontSize:10,fontWeight:800,color:TITLES[u.equippedTitle].color,letterSpacing:2,textTransform:"uppercase",marginTop:2}}>{TITLES[u.equippedTitle].name}</div>}</div>
 <div style={{textAlign:"center"}}><span className="fl" style={{fontSize:28}}>{u.streak>0?"🔥":"❄️"}</span><div className="out" style={{fontSize:13,fontWeight:700,color:u.streak>0?"var(--orange)":"var(--t3)"}}>{u.streak}</div></div></div>
 
 {/* Active bonus indicators */}
@@ -11749,6 +11760,7 @@ function Profile(p){
   var fileRef=useRef(null);
   var[bioAvail,setBioAvail]=useState(false);var[bioRegistered,setBioRegistered]=useState(!!getBioCredId());
   var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
+  var[csOpen,setCsOpen]=useState(null); // V2 — currently open cheat sheet id (renders GrimoireReader overlay)
   // Phase 2 commit 4 (2026-04-27) : change password sub-form dans la section Sécurité
   var[pwdChangeShow,setPwdChangeShow]=useState(false);
   var[pwdChange1,setPwdChange1]=useState("");var[pwdChange2,setPwdChange2]=useState("");
@@ -11769,9 +11781,17 @@ function Profile(p){
   var toeicCol=toeic.total>=750?"var(--green)":toeic.total>=500?"var(--orange)":toeic.total>200?"var(--red)":"var(--t3)";
 
   function renderAvatar(size,fs){
-    if(isPhoto)return(<img src={u.avatar} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",display:"block"}}/>);
-    if(u.avatar&&AVATARS[u.avatar])return(<AvatarMedal avatarId={u.avatar} size={size}/>);
-    return(<div style={{width:size,height:size,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs||(size*0.5)}}>{u.avatar||"⚔️"}</div>);
+    var inner;
+    if(isPhoto)inner=(<img src={u.avatar} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",display:"block"}}/>);
+    else if(u.avatar&&AVATARS[u.avatar])inner=(<AvatarMedal avatarId={u.avatar} size={size}/>);
+    else inner=(<div style={{width:size,height:size,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs||(size*0.5)}}>{u.avatar||"⚔️"}</div>);
+    // V2 — wrap with frame if equipped (CSS string parsed inline)
+    if(u.equippedFrame&&FRAMES[u.equippedFrame]){
+      var frStyle=parseInlineStyle(FRAMES[u.equippedFrame].style);
+      var pad=Math.max(4,Math.round(size*0.06));
+      return(<div style={Object.assign({display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box"},frStyle)}>{inner}</div>);
+    }
+    return inner;
   }
 
   function handlePhotoUpload(e){
@@ -12025,7 +12045,11 @@ function Profile(p){
   if(view==="inventory"){
     var ownedAvatars=invData?invData.filter(function(r){return r.reward_type==="avatar";}):[];
     var ownedSkins=invData?invData.filter(function(r){return r.reward_type==="skin";}):[];
-    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    // V2 — overlay : tap a cheat sheet card → open as a single-chapter grimoire
+    var csNow=csOpen&&CHEAT_SHEETS[csOpen];
+    return(<>
+    {csNow&&<GrimoireReader grimoire={{title:csNow.name,subtitle:"Cheat Sheet",icon:csNow.icon||"📜",chapters:[{id:"main",title:csNow.name,intro:"",blocks:csNow.blocks||[]}]}} back={function(){setCsOpen(null);}}/>}
+    <div className="enter" style={{padding:"20px 16px 100px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
         <button onClick={function(){setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>{"\u2190"}</button>
         <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Collection</h1>
@@ -12065,8 +12089,65 @@ function Profile(p){
             })}
           </div>
         </div>
+
+        {/* V2 — Frames */}
+        {(function(){
+          var ownedFrames=invData?invData.filter(function(r){return r.reward_type==="frame";}):[];
+          return(<div style={{marginTop:28}}>
+            <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Frames ({ownedFrames.length}/{Object.keys(FRAMES).length})</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:10}}>
+              {Object.keys(FRAMES).map(function(fid){
+                var fr=FRAMES[fid];var owned=ownedFrames.some(function(r){return r.reward_id===fid;});
+                var rarity=RARITIES.find(function(rt){return rt.id===fr.rarity;})||RARITIES[0];
+                var preview=owned?Object.assign({width:48,height:48,borderRadius:"50%",boxSizing:"content-box",padding:4,background:"linear-gradient(135deg,#3a2818,#1a1208)"},parseInlineStyle(fr.style)):{width:56,height:56,borderRadius:"50%",border:"2px dashed var(--bdr)"};
+                return(<div key={fid} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:8,borderRadius:12,opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
+                  <div style={preview}/>
+                  <div style={{fontSize:9,fontWeight:600,color:owned?rarity.color:"var(--t3)",textAlign:"center"}}>{fr.name}</div>
+                </div>);
+              })}
+            </div>
+          </div>);
+        })()}
+
+        {/* V2 — Titles */}
+        {(function(){
+          var ownedTitles=invData?invData.filter(function(r){return r.reward_type==="title";}):[];
+          return(<div style={{marginTop:28}}>
+            <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Titles ({ownedTitles.length}/{Object.keys(TITLES).length})</div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {Object.keys(TITLES).map(function(tid){
+                var ti=TITLES[tid];var owned=ownedTitles.some(function(r){return r.reward_id===tid;});
+                var rarity=RARITIES.find(function(rt){return rt.id===ti.rarity;})||RARITIES[0];
+                return(<div key={tid} style={{padding:"10px 14px",borderRadius:10,opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)",border:"1px solid "+(owned?ti.color:"var(--bdr)"),display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <span style={{fontSize:14,fontWeight:800,color:owned?ti.color:"var(--t3)",letterSpacing:1,textTransform:"uppercase"}}>{ti.name}</span>
+                  <span style={{fontSize:9,fontWeight:600,color:rarity.color,letterSpacing:1,textTransform:"uppercase"}}>{rarity.label}</span>
+                </div>);
+              })}
+            </div>
+          </div>);
+        })()}
+
+        {/* V2 — Cheat Sheets (clickable to open via GrimoireReader) */}
+        {(function(){
+          var ownedCS=invData?invData.filter(function(r){return r.reward_type==="cheat_sheet";}):[];
+          return(<div style={{marginTop:28}}>
+            <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Cheat Sheets ({ownedCS.length}/{Object.keys(CHEAT_SHEETS).length})</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10}}>
+              {Object.keys(CHEAT_SHEETS).map(function(csid){
+                var cs=CHEAT_SHEETS[csid];var owned=ownedCS.some(function(r){return r.reward_id===csid;});
+                var rarity=RARITIES.find(function(rt){return rt.id===cs.rarity;})||RARITIES[0];
+                return(<button key={csid} disabled={!owned} onClick={function(){if(owned)setCsOpen(csid);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:14,borderRadius:12,cursor:owned?"pointer":"default",opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)",border:"1px solid "+(owned?rarity.color:"var(--bdr)")}}>
+                  <div style={{fontSize:32}}>{cs.icon||"📜"}</div>
+                  <div style={{fontSize:11,fontWeight:700,color:owned?"var(--t1)":"var(--t3)",textAlign:"center",lineHeight:1.3}}>{cs.name}</div>
+                  {owned&&<div style={{fontSize:8,color:rarity.color,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Tap to read</div>}
+                </button>);
+              })}
+            </div>
+          </div>);
+        })()}
       </>}
-    </div>);
+    </div>
+    </>);
   }
 
   if(view==="avatar"){
@@ -12163,6 +12244,63 @@ function Profile(p){
       </div>}
       {u.equippedSkin&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedSkin=null;p.setAvatar(c);}}
         style={{width:"100%",marginBottom:20,fontSize:12}}>Retirer le skin actuel</button>}
+
+      {/* ── FRAME (V2) ── */}
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Frame</div>
+      {(function(){
+        var styleFrames=invData?invData.filter(function(r){return r.reward_type==="frame";}):[];
+        if(invLoading)return(<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>);
+        if(styleFrames.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>Aucun frame. Ouvre des coffres Guerrier+ pour en trouver !</p></div>);
+        return(<>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:10,marginBottom:12}}>
+            {styleFrames.map(function(r){
+              var fr=FRAMES[r.reward_id];if(!fr)return null;
+              var rarity=RARITIES.find(function(rt){return rt.id===fr.rarity;})||RARITIES[0];
+              var isEquipped=u.equippedFrame===r.reward_id;
+              var frPreview=Object.assign({width:44,height:44,borderRadius:"50%",boxSizing:"content-box",padding:4,background:"linear-gradient(135deg,#3a2818,#1a1208)"},parseInlineStyle(fr.style));
+              return(<button key={r.id} onClick={function(){
+                var c=JSON.parse(JSON.stringify(u));c.equippedFrame=isEquipped?null:r.reward_id;p.setAvatar(c);
+              }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:10,borderRadius:14,cursor:"pointer",
+                background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
+                border:isEquipped?"2px solid var(--cyan)":"1px solid var(--bdr)",
+                fontFamily:"'DM Sans',sans-serif"}}>
+                <div style={frPreview}/>
+                <div style={{fontSize:10,fontWeight:700,color:rarity.color,textAlign:"center"}}>{fr.name}</div>
+                {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+              </button>);
+            })}
+          </div>
+          {u.equippedFrame&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedFrame=null;p.setAvatar(c);}}
+            style={{width:"100%",marginBottom:20,fontSize:12}}>Retirer le frame actuel</button>}
+        </>);
+      })()}
+
+      {/* ── TITLE (V2) ── */}
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Title</div>
+      {(function(){
+        var styleTitles=invData?invData.filter(function(r){return r.reward_type==="title";}):[];
+        if(invLoading)return(<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>);
+        if(styleTitles.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>Aucun titre. Ouvre des coffres Guerrier+ pour en débloquer !</p></div>);
+        return(<>
+          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+            {styleTitles.map(function(r){
+              var ti=TITLES[r.reward_id];if(!ti)return null;
+              var isEquipped=u.equippedTitle===r.reward_id;
+              return(<button key={r.id} onClick={function(){
+                var c=JSON.parse(JSON.stringify(u));c.equippedTitle=isEquipped?null:r.reward_id;p.setAvatar(c);
+              }} style={{padding:"10px 14px",borderRadius:10,cursor:"pointer",textAlign:"left",
+                background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
+                border:isEquipped?"2px solid "+ti.color:"1px solid var(--bdr)",
+                fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <span style={{fontSize:14,fontWeight:800,color:ti.color,letterSpacing:1,textTransform:"uppercase"}}>{ti.name}</span>
+                {isEquipped&&<span style={{fontSize:8,color:"var(--cyan)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Equipped</span>}
+              </button>);
+            })}
+          </div>
+          {u.equippedTitle&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedTitle=null;p.setAvatar(c);}}
+            style={{width:"100%",marginBottom:20,fontSize:12}}>Retirer le titre actuel</button>}
+        </>);
+      })()}
 
       {/* ── THEME ── */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0"}}>
@@ -12308,8 +12446,9 @@ function Profile(p){
             background:"var(--cyan)",border:"2px solid var(--bg)",display:"flex",alignItems:"center",
             justifyContent:"center",fontSize:12}}>✎</div>
         </button>
-        <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{u.name}</h1>
-        <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
+        <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:4}}>{u.name}</h1>
+        {u.equippedTitle&&TITLES[u.equippedTitle]&&<div className="out" style={{fontSize:11,fontWeight:800,color:TITLES[u.equippedTitle].color,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{TITLES[u.equippedTitle].name}</div>}
+        <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap",marginTop:4}}>
           <span style={{fontSize:12,background:"rgba(var(--cx),.1)",color:"var(--orange)",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(var(--cx),.2)"}}>Lv. {lv.level}</span>
           <span style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"1px solid rgba(27,112,207,.2)",background:"rgba(27,112,207,.1)",color:lg.color}}>
   {lg.icon} {lg.name}

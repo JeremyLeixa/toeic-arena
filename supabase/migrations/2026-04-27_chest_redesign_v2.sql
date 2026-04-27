@@ -89,6 +89,13 @@ BEGIN
 END;
 $$;
 
+-- ═══ Step 4 — students profile : equipped frame & title ═══
+-- Mirrors the existing skin_id pattern. New cosmetic types from V2 chests
+-- (frames, titles) need a single active selection per student.
+ALTER TABLE public.students
+  ADD COLUMN IF NOT EXISTS frame_id TEXT,
+  ADD COLUMN IF NOT EXISTS title_id TEXT;
+
 -- ═══ Notes (no SQL action required) ═══
 -- 1. player_rewards.reward_type already accepts new values ("frame","title","cheat_sheet")
 --    without schema change — column is TEXT non-constrained.
