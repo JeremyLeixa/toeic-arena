@@ -432,7 +432,7 @@ var BUILD_ID="2026-04-24-premium-hardening";
 // d'attribution de row (cf. chantier hardening 2026-04-24).
 var PREMIUM_UPGRADE_ENABLED=false;
 import { supabase } from './supabase.js'
-import { requestMagicLink, linkEmailToAnonymous, getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, pollEmailConfirmation, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword } from './auth.js'
+import { getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
 
 // ─── Name normalization (accent-insensitive + lowercase) ───
