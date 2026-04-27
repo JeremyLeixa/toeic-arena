@@ -472,7 +472,7 @@ function supaToLocal(data){
     daily:data.daily_challenge||{date:null,done:false,score:0,xpE:0},
     stats:data.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
     moduleScores:data.module_scores||{},mockResults:data.mock_results||{},
-    gameScores:data.game_scores||{pityCount:0},mission:data.mission||{date:null,actId:null,done:false},
+    gameScores:data.game_scores||{pityCount:0},mission:data.mission||{date:null,actId:null,done:false,streak:0,lastDoneDate:null},
     unlockedAch:data.unlocked_ach||[],avatar:data.avatar||"⚔️",theme:data.theme||"dark",
     equippedSkin:data.skin_id||null,
     totalTime:data.total_time||0,weeklyHistory: data.weekly_history || [],
@@ -684,7 +684,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
@@ -701,6 +701,14 @@ function checkMission(u,modId){
   if(u.mission.date===today()&&u.mission.actId===modId&&!u.mission.done){
     u.mission.done=true;
     u.xp+=15;u.weeklyXp+=15; // Mission bonus
+    // V2 chest redesign — track consecutive-days streak (drives Mission Streak 7 chest).
+    // We store the streak in the existing mission jsonb to avoid a Supabase migration.
+    var prev=u.mission.lastDoneDate||null;
+    var ydDate=new Date();ydDate.setDate(ydDate.getDate()-1);
+    var ysIso=ydDate.toISOString().split("T")[0];
+    if(prev===ysIso)u.mission.streak=(u.mission.streak||0)+1;
+    else if(prev!==today())u.mission.streak=1; // gap or first time → restart at 1
+    u.mission.lastDoneDate=today();
   }
   return u;
 }
@@ -8950,6 +8958,18 @@ function getTriggerLabel(trigger){
     var lg=trigger.substring(10);
     return"Promoted to "+lg.charAt(0).toUpperCase()+lg.slice(1)+" League";
   }
+  // V2 chest redesign — 5 recurring sources
+  if(trigger.indexOf("daily_login_")===0)return"Daily login reward";
+  if(trigger.indexOf("weekly_toeic_")===0)return"+25 TOEIC pts this week";
+  if(trigger.indexOf("podium_")===0)return"League podium — top 3";
+  if(trigger.indexOf("mission_streak_")===0){
+    var ms=trigger.substring(15);
+    return ms+"-day mission streak";
+  }
+  if(trigger.indexOf("mastery_")===0){
+    var modIdT=trigger.substring(8);
+    return"Module mastery: "+modIdT;
+  }
   if(trigger.indexOf("ach_legendary_")===0){
     var achId=trigger.substring(14);
     var ach=ACHIEVEMENTS.find(function(a){return a.id===achId;});
@@ -12625,7 +12645,10 @@ useEffect(function(){
               saveLocal(d); // ensure localStorage reflects the transition so keepalive onUnload doesn't push stale data
             }
             if(!d.moduleScores)d.moduleScores={};
-            if(!d.mission)d.mission={date:null,actId:null,done:false};
+            if(!d.mission)d.mission={date:null,actId:null,done:false,streak:0,lastDoneDate:null};
+            // V2 chest redesign — reset mission streak if user missed a day
+            // (lastDoneDate strictly before yesterday means the chain is broken).
+            if(d.mission.lastDoneDate&&d.mission.lastDoneDate<ys)d.mission.streak=0;
             if(!d.dailyModSessions)d.dailyModSessions={};
 			if(!d.unlockedAch)d.unlockedAch=[];
 			if(!d.avatar)d.avatar="⚔️";
@@ -12682,6 +12705,104 @@ useEffect(function(){
     var fallback=setTimeout(function(){sL(false);},3000);
     return function(){sub.data.subscription.unsubscribe();clearTimeout(fallback);};
   },[]);
+
+  // ═══ V2 chest redesign — 5 recurring sources (step 2) ═══
+  // Fires on first u-load + weekId change + when streak crosses a threshold.
+  // Uses unique trigger IDs that include date/weekId/module → hasUniqueTrigger
+  // is the natural anti-double-grant guard, no new Supabase column needed.
+  // Visitor accounts are skipped (no progression context, no class peers).
+  var v2ChestRef=useRef({lastDate:null,lastWeekChecked:null});
+  useEffect(function(){
+    if(!u||!u.name)return;
+    if(u.classCode==="visitor")return;
+    var td=today(),wkId=weekId();
+    var ref=v2ChestRef.current;
+    // Daily Login (1×/day, requires active streak)
+    if(ref.lastDate!==td){
+      ref.lastDate=td;
+      if((u.streak||0)>=1){
+        grantChestLocal("daily_login_"+td,"novice");
+      }
+    }
+    // Weekly TOEIC Progression + League Podium (1×/week, both check previous week)
+    if(ref.lastWeekChecked!==wkId){
+      ref.lastWeekChecked=wkId;
+      checkWeeklyToeicChest(u,wkId);
+      checkLeaguePodiumChest(u);
+    }
+  },[u&&u.name,u&&u.weekId,u&&u.streak]);
+
+  // Mission Streak 7 watcher — fires whenever mission.streak crosses a multiple of 7.
+  // Trigger includes the streak count → unique per milestone (mission_streak_7,
+  // mission_streak_14, ...), grant happens once per palier even if streak retreats.
+  useEffect(function(){
+    if(!u||!u.mission)return;
+    if(u.classCode==="visitor")return;
+    var s=u.mission.streak||0;
+    if(s>0&&s%7===0){
+      grantChestLocal("mission_streak_"+s,"guerrier");
+    }
+  },[u&&u.mission&&u.mission.streak]);
+
+  // Module Mastery watcher — fires when any tracked module crosses 80% accuracy on 50+ Q.
+  // Trigger per module → unique per module, granted once. Iterates moduleScores
+  // each time it changes, but hasUniqueTrigger prevents re-grants.
+  useEffect(function(){
+    if(!u||!u.moduleScores)return;
+    if(u.classCode==="visitor")return;
+    Object.keys(u.moduleScores).forEach(function(modId){
+      var m=u.moduleScores[modId];
+      if(!m||!m.total)return;
+      if(m.total>=50&&(m.correct/m.total)>=0.8){
+        grantChestLocal("mastery_"+modId,"champion");
+      }
+    });
+  },[u&&u.moduleScores]);
+
+  // V2 helper — Weekly TOEIC Progression (+25 pts vs last weekly_snapshot)
+  async function checkWeeklyToeicChest(uu,wkId){
+    try{
+      var res=await supabase.from("weekly_snapshots")
+        .select("module_scores_snapshot")
+        .ilike("student_name",uu.name)
+        .eq("class_code",uu.classCode||"visitor")
+        .neq("week_id",wkId)
+        .order("week_start",{ascending:false})
+        .limit(1);
+      if(!res.data||res.data.length===0)return; // no baseline yet
+      var prevMs=res.data[0].module_scores_snapshot||{};
+      var prevToeic=estimateTOEICScore(prevMs).total;
+      var currentToeic=estimateTOEICScore(uu.moduleScores||{}).total;
+      if(currentToeic-prevToeic>=25){
+        grantChestLocal("weekly_toeic_"+wkId,"guerrier");
+      }
+    }catch(e){console.warn("[CHEST V2] weekly TOEIC check error:",e&&e.message);}
+  }
+
+  // V2 helper — League Podium (top 3 of class_code on the just-finished week)
+  async function checkLeaguePodiumChest(uu){
+    try{
+      // Use the most recent entry in weeklyHistory as the "last finished week".
+      // This is reliable: applyWeekTransition pushes to it before resetting weeklyXp.
+      var prevWk=uu.weeklyHistory&&uu.weeklyHistory.length>0
+        ?uu.weeklyHistory[uu.weeklyHistory.length-1].week:null;
+      if(!prevWk)return;
+      var res=await supabase.from("weekly_snapshots")
+        .select("student_name,xp_this_week")
+        .eq("class_code",uu.classCode||"visitor")
+        .eq("week_id",prevWk)
+        .neq("student_name",GHOST_NAME)
+        .order("xp_this_week",{ascending:false})
+        .limit(3);
+      if(!res.data||res.data.length===0)return;
+      var inTop3=res.data.some(function(s){
+        return s.student_name&&s.student_name.toLowerCase()===uu.name.toLowerCase();
+      });
+      if(inTop3){
+        grantChestLocal("podium_"+prevWk,"guerrier");
+      }
+    }catch(e){console.warn("[CHEST V2] podium check error:",e&&e.message);}
+  }
 
   // ── Phase 3 — Stripe checkout return handling ──
   // Catches ?checkout=success / ?checkout=cancel / ?portal=return URL params
