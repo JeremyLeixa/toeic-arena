@@ -11853,20 +11853,27 @@ function ConversionsView(p){
       {/* ── 3 dups → 1 token ── */}
       <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Cosmétiques en double · 3 → 1 token</div>
       {dupGroups.length===0?(
-        <div className="crd" style={{padding:16,textAlign:"center",marginBottom:24}}>
-          <p style={{color:"var(--t3)",fontSize:12,margin:0}}>Aucun doublon. Continue d'ouvrir des coffres après avoir complété ta collection !</p>
+        <div className="crd" style={{padding:16,textAlign:"center",marginBottom:32}}>
+          <p style={{color:"var(--t3)",fontSize:12,margin:0,lineHeight:1.5}}>Aucun doublon. Continue d'ouvrir des coffres après avoir complété ta collection !</p>
         </div>
       ):(
-        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24}}>
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:32}}>
           {dupGroups.map(function(g){
-            return(<div key={g.type+g.id} className="crd" style={{padding:12,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:2}}>{g.name}</div>
-                <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1}}>{g.type} · {g.count} owned</div>
+            // Per-type visual mini-preview
+            var visual=null;
+            if(g.type==="avatar"&&AVATARS[g.id])visual=<AvatarMedal avatarId={g.id} size={32}/>;
+            else if(g.type==="skin"&&SKINS[g.id])visual=<div style={{width:32,height:32,borderRadius:8,background:"linear-gradient(135deg,"+SKINS[g.id].hex+","+SKINS[g.id].dark+")"}}/>;
+            else if(g.type==="frame"&&FRAMES[g.id])visual=<div style={Object.assign({width:24,height:24,borderRadius:"50%",boxSizing:"content-box",padding:3,background:"linear-gradient(135deg,#3a2818,#1a1208)"},parseInlineStyle(FRAMES[g.id].style))}/>;
+            else if(g.type==="title"&&TITLES[g.id])visual=<span style={{fontSize:18,color:TITLES[g.id].color}}>{"✦"}</span>;
+            return(<div key={g.type+g.id} className="crd" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{flexShrink:0,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center"}}>{visual}</div>
+              <div style={{flex:1,minWidth:0,overflow:"hidden"}}>
+                <div style={{fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</div>
+                <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1}}>{g.type} · ×{g.count}</div>
               </div>
-              <button onClick={function(){doConvertCosmetic(g);}} disabled={busy} className="btn1"
-                style={{fontSize:11,padding:"8px 14px",flexShrink:0}}>
-                Échanger 3
+              <button onClick={function(){doConvertCosmetic(g);}} disabled={busy} className="btn2"
+                style={{fontSize:11,padding:"7px 12px",flexShrink:0,whiteSpace:"nowrap"}}>
+                {busy?"...":"−3 → token"}
               </button>
             </div>);
           })}
@@ -11877,22 +11884,20 @@ function ConversionsView(p){
       <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Tokens non-premium · 5 → 1 premium</div>
       {convertibleTokens.length===0?(
         <div className="crd" style={{padding:16,textAlign:"center"}}>
-          <p style={{color:"var(--t3)",fontSize:12,margin:0}}>Pas assez de tokens. Empile au moins 5 du même type pour les convertir.</p>
+          <p style={{color:"var(--t3)",fontSize:12,margin:0,lineHeight:1.5}}>Pas assez de tokens. Empile au moins 5 du même type pour les convertir.</p>
         </div>
       ):(
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {convertibleTokens.map(function(item){
-            return(<div key={item.type} className="crd" style={{padding:12,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-                <span style={{fontSize:24}}>{item.info.icon}</span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:2}}>{item.info.name}</div>
-                  <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1}}>{item.qty} owned</div>
-                </div>
+            return(<div key={item.type} className="crd" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
+              <span style={{fontSize:26,flexShrink:0,width:36,textAlign:"center"}}>{item.info.icon}</span>
+              <div style={{flex:1,minWidth:0,overflow:"hidden"}}>
+                <div style={{fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.info.name}</div>
+                <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1}}>{"×"+item.qty}</div>
               </div>
-              <button onClick={function(){doConvertTokens(item);}} disabled={busy} className="btn1"
-                style={{fontSize:11,padding:"8px 14px",flexShrink:0}}>
-                Échanger 5
+              <button onClick={function(){doConvertTokens(item);}} disabled={busy} className="btn2"
+                style={{fontSize:11,padding:"7px 12px",flexShrink:0,whiteSpace:"nowrap"}}>
+                {busy?"...":"−5 → premium"}
               </button>
             </div>);
           })}
@@ -12218,12 +12223,13 @@ function Profile(p){
           <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Avatars ({ownedAvatars.length}/{Object.keys(AVATARS).length})</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(60px,1fr))",gap:6}}>
             {Object.keys(AVATARS).map(function(aid){
-              var av=AVATARS[aid];var owned=ownedAvatars.some(function(r){return r.reward_id===aid;});
+              var av=AVATARS[aid];var dupCount=ownedAvatars.filter(function(r){return r.reward_id===aid;}).length;var owned=dupCount>0;
               var rarity=RARITIES.find(function(rt){return rt.id===av.rarity;})||RARITIES[0];
-              return(<div key={aid} style={{display:"flex",flexDirection:"column",alignItems:"center",padding:6,borderRadius:10,
+              return(<div key={aid} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",padding:6,borderRadius:10,
                 opacity:owned?1:0.25,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
                 <AvatarMedal avatarId={aid} size={36}/>
                 <div style={{fontSize:8,marginTop:2,color:owned?rarity.color:"var(--t3)",fontWeight:600}}>{av.name}</div>
+                {dupCount>1&&<span style={{position:"absolute",top:2,right:2,fontSize:8,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"1px 4px",borderRadius:6}}>{"×"+dupCount}</span>}
               </div>);
             })}
           </div>
@@ -12234,12 +12240,13 @@ function Profile(p){
           <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Skins ({ownedSkins.length}/{Object.keys(SKINS).length})</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:8}}>
             {Object.keys(SKINS).map(function(sid){
-              var sk=SKINS[sid];var owned=ownedSkins.some(function(r){return r.reward_id===sid;});
+              var sk=SKINS[sid];var dupCount=ownedSkins.filter(function(r){return r.reward_id===sid;}).length;var owned=dupCount>0;
               var rarity=RARITIES.find(function(rt){return rt.id===sk.rarity;})||RARITIES[0];
-              return(<div key={sid} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,
+              return(<div key={sid} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,
                 opacity:owned?1:0.25,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
                 <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+(owned?rarity.color:"var(--bg3)")}}/>
                 <div style={{fontSize:9,fontWeight:600,color:owned?rarity.color:"var(--t3)"}}>{sk.name}</div>
+                {dupCount>1&&<span style={{position:"absolute",top:2,right:2,fontSize:8,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"1px 4px",borderRadius:6}}>{"×"+dupCount}</span>}
               </div>);
             })}
           </div>
@@ -12252,12 +12259,13 @@ function Profile(p){
             <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Frames ({ownedFrames.length}/{Object.keys(FRAMES).length})</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:10}}>
               {Object.keys(FRAMES).map(function(fid){
-                var fr=FRAMES[fid];var owned=ownedFrames.some(function(r){return r.reward_id===fid;});
+                var fr=FRAMES[fid];var dupCount=ownedFrames.filter(function(r){return r.reward_id===fid;}).length;var owned=dupCount>0;
                 var rarity=RARITIES.find(function(rt){return rt.id===fr.rarity;})||RARITIES[0];
                 var preview=owned?Object.assign({width:48,height:48,borderRadius:"50%",boxSizing:"content-box",padding:4,background:"linear-gradient(135deg,#3a2818,#1a1208)"},parseInlineStyle(fr.style)):{width:56,height:56,borderRadius:"50%",border:"2px dashed var(--bdr)"};
-                return(<div key={fid} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:8,borderRadius:12,opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
+                return(<div key={fid} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:8,borderRadius:12,opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
                   <div style={preview}/>
                   <div style={{fontSize:9,fontWeight:600,color:owned?rarity.color:"var(--t3)",textAlign:"center"}}>{fr.name}</div>
+                  {dupCount>1&&<span style={{position:"absolute",top:2,right:2,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"1px 5px",borderRadius:6}}>{"×"+dupCount}</span>}
                 </div>);
               })}
             </div>
@@ -12271,11 +12279,14 @@ function Profile(p){
             <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Titles ({ownedTitles.length}/{Object.keys(TITLES).length})</div>
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
               {Object.keys(TITLES).map(function(tid){
-                var ti=TITLES[tid];var owned=ownedTitles.some(function(r){return r.reward_id===tid;});
+                var ti=TITLES[tid];var dupCount=ownedTitles.filter(function(r){return r.reward_id===tid;}).length;var owned=dupCount>0;
                 var rarity=RARITIES.find(function(rt){return rt.id===ti.rarity;})||RARITIES[0];
-                return(<div key={tid} style={{padding:"10px 14px",borderRadius:10,opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)",border:"1px solid "+(owned?ti.color:"var(--bdr)"),display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <span style={{fontSize:14,fontWeight:800,color:owned?ti.color:"var(--t3)",letterSpacing:1,textTransform:"uppercase"}}>{ti.name}</span>
-                  <span style={{fontSize:9,fontWeight:600,color:rarity.color,letterSpacing:1,textTransform:"uppercase"}}>{rarity.label}</span>
+                return(<div key={tid} style={{padding:"10px 14px",borderRadius:10,opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)",border:"1px solid "+(owned?ti.color:"var(--bdr)"),display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                  <span style={{fontSize:14,fontWeight:800,color:owned?ti.color:"var(--t3)",letterSpacing:1,textTransform:"uppercase",flex:1,minWidth:0}}>{ti.name}</span>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                    {dupCount>1&&<span style={{fontSize:10,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.5)",padding:"2px 6px",borderRadius:8}}>{"×"+dupCount}</span>}
+                    <span style={{fontSize:9,fontWeight:600,color:rarity.color,letterSpacing:1,textTransform:"uppercase"}}>{rarity.label}</span>
+                  </div>
                 </div>);
               })}
             </div>
@@ -12354,23 +12365,24 @@ function Profile(p){
       </div>
       {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:16,fontStyle:"italic"}}>🗝️ Game Master — avatar exclusif</div>}
 
-      {/* Chest avatars */}
+      {/* Chest avatars — deduped by reward_id, ×N badge when duplicate */}
       {!invLoading&&styleAvatars.length>0&&<>
         <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Avatars coffres</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(72px,1fr))",gap:8,marginBottom:20}}>
-          {styleAvatars.map(function(r){
-            var av=AVATARS[r.reward_id];if(!av)return null;
+          {(function(){var d={};styleAvatars.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
+            var r=grp.row;var av=AVATARS[r.reward_id];if(!av)return null;
             var rarity=RARITIES.find(function(rt){return rt.id===r.rarity;})||RARITIES[0];
             var isEquipped=u.avatar===r.reward_id;
-            return(<button key={r.id} onClick={function(){
+            return(<button key={r.reward_id} onClick={function(){
               var c=JSON.parse(JSON.stringify(u));c.avatar=r.reward_id;p.setAvatar(c);
-            }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,cursor:"pointer",
+            }} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,cursor:"pointer",
               background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
               border:isEquipped?"2px solid var(--cx-hex)":"1px solid var(--bdr)",
               fontFamily:"'DM Sans',sans-serif"}}>
               <AvatarMedal avatarId={r.reward_id} size={40}/>
               <div style={{fontSize:9,fontWeight:700,color:rarity.color,textAlign:"center"}}>{av.name}</div>
               {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+              {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
             </button>);
           })}
         </div>
@@ -12381,19 +12393,20 @@ function Profile(p){
       {invLoading&&<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>}
       {!invLoading&&styleSkins.length===0&&<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>Aucun skin. Ouvre des coffres Rare+ pour en trouver !</p></div>}
       {!invLoading&&styleSkins.length>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:8,marginBottom:12}}>
-        {styleSkins.map(function(r){
-          var sk=SKINS[r.reward_id];if(!sk)return null;
+        {(function(){var d={};styleSkins.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
+          var r=grp.row;var sk=SKINS[r.reward_id];if(!sk)return null;
           var rarity=RARITIES.find(function(rt){return rt.id===sk.rarity;})||RARITIES[0];
           var isEquipped=u.equippedSkin===r.reward_id;
-          return(<button key={r.id} onClick={function(){
+          return(<button key={r.reward_id} onClick={function(){
             var c=JSON.parse(JSON.stringify(u));c.equippedSkin=isEquipped?null:r.reward_id;p.setAvatar(c);
-          }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:10,borderRadius:14,cursor:"pointer",
+          }} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:10,borderRadius:14,cursor:"pointer",
             background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
             border:isEquipped?"2px solid "+sk.hex:"1px solid var(--bdr)",
             fontFamily:"'DM Sans',sans-serif"}}>
             <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+rarity.color}}/>
             <div style={{fontSize:10,fontWeight:700,color:rarity.color}}>{sk.name}</div>
             {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+            {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
           </button>);
         })}
       </div>}
@@ -12408,20 +12421,21 @@ function Profile(p){
         if(styleFrames.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>Aucun frame. Ouvre des coffres Guerrier+ pour en trouver !</p></div>);
         return(<>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:10,marginBottom:12}}>
-            {styleFrames.map(function(r){
-              var fr=FRAMES[r.reward_id];if(!fr)return null;
+            {(function(){var d={};styleFrames.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
+              var r=grp.row;var fr=FRAMES[r.reward_id];if(!fr)return null;
               var rarity=RARITIES.find(function(rt){return rt.id===fr.rarity;})||RARITIES[0];
               var isEquipped=u.equippedFrame===r.reward_id;
               var frPreview=Object.assign({width:44,height:44,borderRadius:"50%",boxSizing:"content-box",padding:4,background:"linear-gradient(135deg,#3a2818,#1a1208)"},parseInlineStyle(fr.style));
-              return(<button key={r.id} onClick={function(){
+              return(<button key={r.reward_id} onClick={function(){
                 var c=JSON.parse(JSON.stringify(u));c.equippedFrame=isEquipped?null:r.reward_id;p.setAvatar(c);
-              }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:10,borderRadius:14,cursor:"pointer",
+              }} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:10,borderRadius:14,cursor:"pointer",
                 background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
                 border:isEquipped?"2px solid var(--cyan)":"1px solid var(--bdr)",
                 fontFamily:"'DM Sans',sans-serif"}}>
                 <div style={frPreview}/>
                 <div style={{fontSize:10,fontWeight:700,color:rarity.color,textAlign:"center"}}>{fr.name}</div>
                 {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+                {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
               </button>);
             })}
           </div>
@@ -12438,17 +12452,20 @@ function Profile(p){
         if(styleTitles.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>Aucun titre. Ouvre des coffres Guerrier+ pour en débloquer !</p></div>);
         return(<>
           <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
-            {styleTitles.map(function(r){
-              var ti=TITLES[r.reward_id];if(!ti)return null;
+            {(function(){var d={};styleTitles.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
+              var r=grp.row;var ti=TITLES[r.reward_id];if(!ti)return null;
               var isEquipped=u.equippedTitle===r.reward_id;
-              return(<button key={r.id} onClick={function(){
+              return(<button key={r.reward_id} onClick={function(){
                 var c=JSON.parse(JSON.stringify(u));c.equippedTitle=isEquipped?null:r.reward_id;p.setAvatar(c);
               }} style={{padding:"10px 14px",borderRadius:10,cursor:"pointer",textAlign:"left",
                 background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
                 border:isEquipped?"2px solid "+ti.color:"1px solid var(--bdr)",
-                fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <span style={{fontSize:14,fontWeight:800,color:ti.color,letterSpacing:1,textTransform:"uppercase"}}>{ti.name}</span>
-                {isEquipped&&<span style={{fontSize:8,color:"var(--cyan)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Equipped</span>}
+                fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                <span style={{fontSize:14,fontWeight:800,color:ti.color,letterSpacing:1,textTransform:"uppercase",flex:1,minWidth:0}}>{ti.name}</span>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                  {grp.count>1&&<span style={{fontSize:10,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.5)",padding:"2px 6px",borderRadius:8}}>{"×"+grp.count}</span>}
+                  {isEquipped&&<span style={{fontSize:8,color:"var(--cyan)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Equipped</span>}
+                </div>
               </button>);
             })}
           </div>
