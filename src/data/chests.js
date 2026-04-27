@@ -571,11 +571,17 @@ export async function openChestFromPending(pendingChest, pityCount, owned){
       rarity_obtained:rarityId, reward_type:"multi", reward_id:"v2",
       xp_amount:totalXp||null,
     });
-    if(lg.error)console.warn("[CHEST] chest_log insert error:",lg.error.message);
-
-    // Remove from pending (only after log succeeded)
-    var dl=await supabase.from("pending_chests").delete().eq("id",pendingChest.id);
-    if(dl.error)console.warn("[CHEST] pending delete error:",dl.error.message);
+    if(lg.error){
+      // CRITICAL : if the audit log INSERT fails, do NOT delete the pending row.
+      // hasUniqueTrigger relies on chest_log to dedupe future grants — losing the
+      // log entry while consuming the pending leaves the trigger source untraceable
+      // and re-grantable. Better to let the user see a stuck pending until the
+      // schema is fixed than silently corrupt the audit trail.
+      console.warn("[CHEST] chest_log insert error (pending kept):",lg.error.message);
+    }else{
+      var dl=await supabase.from("pending_chests").delete().eq("id",pendingChest.id);
+      if(dl.error)console.warn("[CHEST] pending delete error:",dl.error.message);
+    }
   }catch(e){console.warn("[CHEST] openChest exception:",e&&e.message);}
 
   return{

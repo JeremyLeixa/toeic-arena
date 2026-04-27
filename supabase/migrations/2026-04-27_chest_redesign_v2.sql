@@ -96,6 +96,17 @@ ALTER TABLE public.students
   ADD COLUMN IF NOT EXISTS frame_id TEXT,
   ADD COLUMN IF NOT EXISTS title_id TEXT;
 
+-- ═══ chest_log.reward_type — relax CHECK to allow V2 values ═══
+-- The V1 constraint only allowed ('xp','avatar','skin'). V2 step 3 uses 'multi'
+-- as the chest_log reward_type (per-item history lives in player_rewards / player_tokens).
+-- Without this update, every V2 chest open fails silently on the chest_log INSERT
+-- and breaks the audit trail.
+ALTER TABLE public.chest_log
+  DROP CONSTRAINT IF EXISTS chest_log_reward_type_check;
+ALTER TABLE public.chest_log
+  ADD  CONSTRAINT chest_log_reward_type_check
+  CHECK (reward_type IN ('xp', 'avatar', 'skin', 'frame', 'title', 'cheat_sheet', 'token', 'multi'));
+
 -- ═══ Notes (no SQL action required) ═══
 -- 1. player_rewards.reward_type already accepts new values ("frame","title","cheat_sheet")
 --    without schema change — column is TEXT non-constrained.
