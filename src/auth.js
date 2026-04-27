@@ -183,6 +183,152 @@ export async function createCheckout(plan, consent) {
   window.location.href = data.url;
 }
 
+// ─── PASSWORD AUTH (Phase 1 — refonte 2026-04-24) ───
+// Ces helpers cohabitent avec les fonctions magic link ci-dessus pendant la
+// transition. Ils seront le seul flow d'auth après suppression du magic link
+// (Phase 4). Ne PAS supprimer les fonctions magic link tant que la migration
+// (Phase 3) n'est pas terminée pour TOUS les profils existants.
+
+// Crée un nouveau compte avec email + password. Utilisé à l'onboarding nouveau user.
+// L'email doit être unique global (Supabase Auth refuse si déjà pris).
+// metadata (optionnel) : { name, classCode } — stocké dans user_metadata, utile
+// pour les triggers Supabase ou le debug. La row students est créée séparément
+// par App.jsx save() avec la natural key.
+export async function signUpWithPassword(email, password, metadata) {
+  const e = normEmail(email);
+  if (!e || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+    throw new Error('Adresse email invalide');
+  }
+  if (!password || password.length < 8) {
+    throw new Error('Mot de passe trop court (8 caractères minimum)');
+  }
+  const { data, error } = await supabase.auth.signUp({
+    email: e,
+    password: password,
+    options: {
+      data: metadata || {},
+      // Pas de emailRedirectTo : on n'utilise PAS le flow de confirmation email
+      // de Supabase. L'email est juste un garde-fou pour reset password (custom
+      // flow via Edge Function). User est immédiatement loggé après signUp.
+    },
+  });
+  if (error) throw error;
+  return data;
+}
+
+// Connexion avec email + password. Utilisé au "Welcome back".
+// Throws si credentials invalides.
+export async function signInWithPassword(email, password) {
+  const e = normEmail(email);
+  if (!e) throw new Error('Email requis');
+  if (!password) throw new Error('Mot de passe requis');
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: e,
+    password: password,
+  });
+  if (error) {
+    // Mappe les codes Supabase en messages FR pour l'UI
+    if (error.message && error.message.toLowerCase().includes('invalid')) {
+      throw new Error('Email ou mot de passe incorrect');
+    }
+    throw error;
+  }
+  return data;
+}
+
+// Change le password de l'auth user courant. Nécessite une session active.
+// Utilisé : (1) au setup forcé Phase 3 quand password_set_at est NULL,
+// (2) depuis Profile → "Changer mon mot de passe".
+export async function updatePassword(newPassword) {
+  if (!newPassword || newPassword.length < 8) {
+    throw new Error('Mot de passe trop court (8 caractères minimum)');
+  }
+  const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
+  return data;
+}
+
+// Demande un reset password : envoie un mail avec lien magique vers /?reset=<token>.
+// Custom flow (Edge Function + Resend) — PAS le built-in Supabase
+// (resetPasswordForEmail) car Jérémy veut un mail brandé TOEIC Arena.
+// Toujours return success (même si email inexistant) pour éviter user
+// enumeration — l'Edge Function décide silencieusement de envoyer ou pas.
+export async function requestPasswordReset(email) {
+  const e = normEmail(email);
+  if (!e || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+    throw new Error('Adresse email invalide');
+  }
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const res = await fetch(supabaseUrl + '/functions/v1/password-reset-request', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + anonKey,
+    },
+    body: JSON.stringify({ email: e }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(function () { return {}; });
+    throw new Error((data && (data.error || data.message)) || 'Impossible d\'envoyer le mail de réinitialisation.');
+  }
+  return true;
+}
+
+// Vérifie le token reçu par mail + applique le nouveau password.
+// Backend (Edge Function) trouve le user par email associé au token, valide
+// expires_at + used=false, puis update password via supabase.auth.admin.
+export async function confirmPasswordReset(token, newPassword) {
+  if (!token) throw new Error('Lien de réinitialisation invalide');
+  if (!newPassword || newPassword.length < 8) {
+    throw new Error('Mot de passe trop court (8 caractères minimum)');
+  }
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const res = await fetch(supabaseUrl + '/functions/v1/password-reset-confirm', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + anonKey,
+    },
+    body: JSON.stringify({ token: token, new_password: newPassword }),
+  });
+  const data = await res.json().catch(function () { return {}; });
+  if (!res.ok) {
+    throw new Error((data && (data.error || data.message)) || 'Lien invalide ou expiré.');
+  }
+  return data;
+}
+
+// Garantit qu'une session anonyme existe — création paresseuse, idempotente.
+// REMPLACE les 6 appels directs à signInAnonymously() dispersés dans App.jsx
+// (lignes 514, 1149, 11405, 11441 etc.) qui créaient à chaque fois un NEW
+// auth user, polluant auth.users de centaines d'orphelins.
+//
+// Logique : si une session existe déjà (anon OU email-based), on la garde.
+// Sinon seulement, on en crée une nouvelle anonyme. Pas de side-effect si
+// déjà connecté.
+//
+// Cas d'usage : visitor mode, fallback save() si JWT expiré, init load().
+export async function ensureAnonSession() {
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData && sessionData.session && sessionData.session.user) {
+      return sessionData.session.user;
+    }
+  } catch (e) {
+    console.warn('[auth] ensureAnonSession getSession caught:', e && e.message);
+  }
+  const { data, error } = await supabase.auth.signInAnonymously();
+  if (error) {
+    console.warn('[auth] ensureAnonSession signInAnonymously failed:', error.message);
+    throw error;
+  }
+  return data.user;
+}
+
+// ─── STRIPE HELPERS (Phase 3 monétisation) ───
+
 // Open the Stripe Customer Portal in a new tab (or same tab, defaults to same)
 export async function openCustomerPortal() {
   const session = await getSession();
