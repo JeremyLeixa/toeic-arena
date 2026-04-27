@@ -443,6 +443,20 @@ export async function getOwnedTokens(userName, classCode){
   }catch(e){console.warn("[CHEST] getOwnedTokens error (table may not exist yet):",e&&e.message);return{};}
 }
 
+// V2 — consume a token via the SQL helper. Returns {ok, error?}.
+// Used by Streak Shield (passive), Daily Reroll, Mock/Boss Reset, Endless Resurrect, etc.
+export async function consumeToken(userName, classCode, tokenType, amount){
+  try{
+    var res=await supabase.rpc("consume_token",{
+      p_user_name:userName, p_class_code:classCode,
+      p_token_type:tokenType, p_amount:amount||1,
+    });
+    if(res.error)return{ok:false,error:res.error.message};
+    if(res.data===false)return{ok:false,error:"insufficient_quantity"};
+    return{ok:true};
+  }catch(e){return{ok:false,error:e&&e.message};}
+}
+
 // V2 — grant a token via the SQL helper (cap-aware UPSERT)
 async function grantTokenRPC(userName, classCode, tokenType, amount, cap){
   try{

@@ -22,7 +22,7 @@ import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
-import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, convertCosmeticDups, convertTokensToPremium } from "./data/chests.js";
+import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, convertCosmeticDups, convertTokensToPremium, consumeToken } from "./data/chests.js";
 import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
@@ -11926,6 +11926,8 @@ function Profile(p){
   var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
   var[invTokens,setInvTokens]=useState({}); // V2 — owned token quantities for the Consommables section
   var[csOpen,setCsOpen]=useState(null); // V2 — currently open cheat sheet id (renders GrimoireReader overlay)
+  var[useTokenAsk,setUseTokenAsk]=useState(null); // V2 — token type the user is about to consume (confirm modal)
+  var[tokenToast,setTokenToast]=useState(null); // V2 — feedback after consume
   // Phase 2 commit 4 (2026-04-27) : change password sub-form dans la section Sécurité
   var[pwdChangeShow,setPwdChangeShow]=useState(false);
   var[pwdChange1,setPwdChange1]=useState("");var[pwdChange2,setPwdChange2]=useState("");
@@ -12304,14 +12306,24 @@ function Profile(p){
           var totalOwned=Object.keys(TOKEN_TYPES).reduce(function(s,tt){return s+(invTokens[tt]||0);},0);
           var nonPremium=Object.keys(TOKEN_TYPES).filter(function(tt){return!TOKEN_TYPES[tt].premium;});
           var premium=Object.keys(TOKEN_TYPES).filter(function(tt){return TOKEN_TYPES[tt].premium;});
+          // V2 — which tokens are usable from the Collection (others are in-context or passive)
+          var COLLECTION_ACTIONABLE={daily_reroll:true};
+          var IN_CONTEXT_HINT={
+            mock_reset:"S'utilise sur l'écran Mock Test verrouillé",
+            boss_reset:"S'utilise sur l'écran Boss Test verrouillé",
+            endless_resurrect:"S'utilise pendant l'Endless Arena",
+            streak_shield:"Automatique — protège ton streak en cas d'absence d'1 jour",
+          };
           function tokenCard(tt,isPremium){
             var info=TOKEN_TYPES[tt];var qty=invTokens[tt]||0;var cap=info.cap||1;var pct=Math.min(100,Math.round(qty/cap*100));
             var owned=qty>0;
+            var clickable=owned&&COLLECTION_ACTIONABLE[tt];
+            var hint=IN_CONTEXT_HINT[tt]||info.desc;
             var bg=owned?(isPremium?"rgba(255,192,32,.05)":"rgba(var(--cx),.04)"):(isPremium?"rgba(255,192,32,.02)":"var(--bg3)");
             var bdr=owned?(isPremium?"rgba(255,192,32,.25)":"var(--bdr)"):(isPremium?"rgba(255,192,32,.1)":"var(--bdr)");
             var fill=isPremium?"#ffc020":"var(--cyan)";
             var qtyCol=!owned?"var(--t3)":(isPremium?"#ffc020":"var(--cyan)");
-            return(<div key={tt} style={{position:"relative",display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:12,border:"1px solid "+bdr,background:bg,opacity:owned?1:0.45}}>
+            return(<div key={tt} onClick={clickable?function(){setUseTokenAsk(tt);}:undefined} style={{position:"relative",display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:12,border:"1px solid "+bdr,background:bg,opacity:owned?1:0.45,cursor:clickable?"pointer":"default"}}>
               <div style={{fontSize:24,flexShrink:0,width:32,textAlign:"center"}}>{info.icon}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:12,fontWeight:700,color:owned?"var(--t1)":"var(--t3)",marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.name}</div>
@@ -12322,7 +12334,8 @@ function Profile(p){
                   <span>Stack</span>
                   <span><span style={{color:qtyCol}}>{qty}</span> / {cap}</span>
                 </div>
-                <div style={{fontSize:10,color:"var(--t3)",marginTop:6,lineHeight:1.4,borderTop:"1px dashed var(--bdr)",paddingTop:6}}>{info.desc}</div>
+                <div style={{fontSize:10,color:"var(--t3)",marginTop:6,lineHeight:1.4,borderTop:"1px dashed var(--bdr)",paddingTop:6}}>{hint}</div>
+                {clickable&&<div style={{fontSize:9,fontWeight:700,color:fill,marginTop:6,letterSpacing:1,textTransform:"uppercase"}}>Tap to use →</div>}
               </div>
             </div>);
           }
@@ -12365,6 +12378,46 @@ function Profile(p){
         })()}
       </>}
     </div>
+    {/* V2 — Confirm modal for actionable tokens (Daily Reroll for now) */}
+    {useTokenAsk&&TOKEN_TYPES[useTokenAsk]&&(function(){
+      var info=TOKEN_TYPES[useTokenAsk];var qty=invTokens[useTokenAsk]||0;
+      function doUse(){
+        var tt=useTokenAsk;setUseTokenAsk(null);
+        consumeToken(u.name,u.classCode||"visitor",tt,1).then(function(res){
+          if(!res.ok){
+            setTokenToast({err:true,msg:"Échec : "+(res.error||"unknown")});
+            setTimeout(function(){setTokenToast(null);},2400);
+            return;
+          }
+          // Apply effect by token type
+          var c=JSON.parse(JSON.stringify(u));
+          var effectMsg="Token utilisé";
+          if(tt==="daily_reroll"){
+            // Reset today's mission so getDailyMission() picks a new one
+            c.mission=Object.assign({},c.mission||{},{date:null,actId:null,done:false});
+            effectMsg="🎲 Mission rerolled !";
+          }
+          p.setAvatar(c);
+          // Refresh local token quantities
+          setInvTokens(Object.assign({},invTokens,{[tt]:Math.max(0,(invTokens[tt]||0)-1)}));
+          setTokenToast({err:false,msg:effectMsg});
+          setTimeout(function(){setTokenToast(null);},2400);
+        });
+      }
+      return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)setUseTokenAsk(null);}}>
+        <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
+          <div style={{fontSize:48,marginBottom:12}}>{info.icon}</div>
+          <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Utiliser {info.name} ?</h2>
+          <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>{info.desc}</p>
+          <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> après usage.</p>
+          <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+            <button onClick={function(){setUseTokenAsk(null);}} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Annuler</button>
+            <button onClick={doUse} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Utiliser</button>
+          </div>
+        </div>
+      </div>);
+    })()}
+    {tokenToast&&<div style={{position:"fixed",bottom:80,left:"50%",transform:"translateX(-50%)",padding:"12px 18px",borderRadius:10,background:tokenToast.err?"rgba(220,58,80,.15)":"rgba(46,180,100,.15)",border:"1px solid "+(tokenToast.err?"var(--red)":"var(--green)"),color:tokenToast.err?"var(--red)":"var(--green)",fontSize:13,fontWeight:700,zIndex:1000}}>{tokenToast.msg}</div>}
     </>);
   }
 
@@ -13068,7 +13121,16 @@ useEffect(function(){
         load(session.user.id).then(function(d){
           if(d){
             var td=today(),yd=new Date();yd.setDate(yd.getDate()-1);var ys=yd.toISOString().split("T")[0];
-            if(d.lastActive!==td&&d.lastActive!==ys)d.streak=0;
+            // V2 — track if streak would reset, so we can offer the Streak Shield post-load
+            var streakAboutToBreak=(d.lastActive!==td&&d.lastActive!==ys&&(d.streak||0)>0);
+            var dayBeforeYd=new Date();dayBeforeYd.setDate(dayBeforeYd.getDate()-2);
+            var dbStr=dayBeforeYd.toISOString().split("T")[0];
+            // Shield only protects a 1-day gap (lastActive===day-before-yesterday) ; longer gaps reset.
+            var shieldEligible=streakAboutToBreak&&d.lastActive===dbStr;
+            if(streakAboutToBreak&&!shieldEligible){d.streak=0;}
+            // If shield-eligible, defer reset — the post-load effect will try to consume a Streak Shield.
+            // Stash a flag so the effect knows what to do.
+            if(shieldEligible){d._shieldPending=true;}
             // Week transition (load-time). Same logic as mid-session — delegates to
             // applyWeekTransition which also pushes the weekly_snapshots row.
             if(applyWeekTransition(d)){
@@ -13247,6 +13309,33 @@ useEffect(function(){
       }
     }catch(e){console.warn("[CHEST V2] podium check error:",e&&e.message);}
   }
+
+  // V2 — Streak Shield passive consume.
+  // Triggered when the load hook flagged d._shieldPending (1-day gap, streak>0).
+  // Tries to consume 1 Streak Shield ; if successful, restores lastActive to yesterday
+  // and shows a toast. If not (no shield), resets the streak as the V1 logic did.
+  var shieldRanRef=useRef(false);
+  useEffect(function(){
+    if(!u||!u._shieldPending)return;
+    if(shieldRanRef.current)return;
+    shieldRanRef.current=true;
+    var un=u.name, cc=u.classCode||"visitor";
+    consumeToken(un,cc,"streak_shield",1).then(function(res){
+      var c=JSON.parse(JSON.stringify(u));delete c._shieldPending;
+      if(res.ok){
+        // Shield consumed — pretend the user was active yesterday so the streak survives
+        var ydDate=new Date();ydDate.setDate(ydDate.getDate()-1);
+        c.lastActive=ydDate.toISOString().split("T")[0];
+        sv(c);
+        haptic("streak");
+        sXpt({total:0,base:0,bonuses:[{label:"🛡️ Streak Shield consumed — streak preserved",val:0}]});
+      }else{
+        // No shield — apply the deferred reset
+        c.streak=0;
+        sv(c);
+      }
+    });
+  },[u&&u._shieldPending]);
 
   // ── Phase 3 — Stripe checkout return handling ──
   // Catches ?checkout=success / ?checkout=cancel / ?portal=return URL params
