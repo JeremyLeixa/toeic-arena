@@ -11924,6 +11924,7 @@ function Profile(p){
   var fileRef=useRef(null);
   var[bioAvail,setBioAvail]=useState(false);var[bioRegistered,setBioRegistered]=useState(!!getBioCredId());
   var[invData,setInvData]=useState(null);var[invLoading,setInvLoading]=useState(true);
+  var[invTokens,setInvTokens]=useState({}); // V2 — owned token quantities for the Consommables section
   var[csOpen,setCsOpen]=useState(null); // V2 — currently open cheat sheet id (renders GrimoireReader overlay)
   // Phase 2 commit 4 (2026-04-27) : change password sub-form dans la section Sécurité
   var[pwdChangeShow,setPwdChangeShow]=useState(false);
@@ -11932,7 +11933,7 @@ function Profile(p){
   var[pwdChangeOK,setPwdChangeOK]=useState(false);
 
   useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});biometricAvailable().then(function(v){setBioAvail(v);});},[]);
-  useEffect(function(){if(view==="inventory"||view==="avatar"){setInvLoading(true);getOwnedRewards(u.name,u.classCode||"visitor").then(function(rewards){setInvData(rewards);setInvLoading(false);});}},[view]);
+  useEffect(function(){if(view==="inventory"||view==="avatar"){setInvLoading(true);Promise.all([getOwnedRewards(u.name,u.classCode||"visitor"),getOwnedTokens(u.name,u.classCode||"visitor")]).then(function(arr){setInvData(arr[0]);setInvTokens(arr[1]||{});setInvLoading(false);});}},[view]);
   useEffect(function(){try{setTipOff(localStorage.getItem("toeic-tip-disabled")==="1");}catch(e){}},[]);
 
   var lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores);
@@ -12293,6 +12294,53 @@ function Profile(p){
                   </div>
                 </div>);
               })}
+            </div>
+          </div>);
+        })()}
+
+        {/* V2 — Consommables (tokens stackables, fetched from player_tokens) */}
+        {(function(){
+          var totalCap=Object.keys(TOKEN_TYPES).reduce(function(s,tt){return s+(TOKEN_TYPES[tt].cap||0);},0);
+          var totalOwned=Object.keys(TOKEN_TYPES).reduce(function(s,tt){return s+(invTokens[tt]||0);},0);
+          var nonPremium=Object.keys(TOKEN_TYPES).filter(function(tt){return!TOKEN_TYPES[tt].premium;});
+          var premium=Object.keys(TOKEN_TYPES).filter(function(tt){return TOKEN_TYPES[tt].premium;});
+          function tokenCard(tt,isPremium){
+            var info=TOKEN_TYPES[tt];var qty=invTokens[tt]||0;var cap=info.cap||1;var pct=Math.min(100,Math.round(qty/cap*100));
+            var owned=qty>0;
+            var bg=owned?(isPremium?"rgba(255,192,32,.05)":"rgba(var(--cx),.04)"):(isPremium?"rgba(255,192,32,.02)":"var(--bg3)");
+            var bdr=owned?(isPremium?"rgba(255,192,32,.25)":"var(--bdr)"):(isPremium?"rgba(255,192,32,.1)":"var(--bdr)");
+            var fill=isPremium?"#ffc020":"var(--cyan)";
+            var qtyCol=!owned?"var(--t3)":(isPremium?"#ffc020":"var(--cyan)");
+            return(<div key={tt} style={{position:"relative",display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:12,border:"1px solid "+bdr,background:bg,opacity:owned?1:0.45}}>
+              <div style={{fontSize:24,flexShrink:0,width:32,textAlign:"center"}}>{info.icon}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:owned?"var(--t1)":"var(--t3)",marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.name}</div>
+                <div style={{height:4,background:"var(--bg3)",borderRadius:2,overflow:"hidden",marginBottom:4}}>
+                  <div style={{height:"100%",background:fill,borderRadius:2,width:pct+"%"}}/>
+                </div>
+                <div style={{fontSize:10,fontWeight:700,color:"var(--t2)",display:"flex",justifyContent:"space-between"}}>
+                  <span>Stack</span>
+                  <span><span style={{color:qtyCol}}>{qty}</span> / {cap}</span>
+                </div>
+                <div style={{fontSize:10,color:"var(--t3)",marginTop:6,lineHeight:1.4,borderTop:"1px dashed var(--bdr)",paddingTop:6}}>{info.desc}</div>
+              </div>
+            </div>);
+          }
+          return(<div style={{marginTop:28}}>
+            <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Consommables ({totalOwned} / {totalCap} max)</div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+              <span style={{fontSize:10,color:"var(--t3)",fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Tactiques</span>
+              <span style={{flex:1,height:1,background:"var(--bdr)"}}/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10,marginBottom:18}}>
+              {nonPremium.map(function(tt){return tokenCard(tt,false);})}
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+              <span style={{fontSize:10,color:"#ffc020",fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Premium</span>
+              <span style={{flex:1,height:1,background:"var(--bdr)"}}/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
+              {premium.map(function(tt){return tokenCard(tt,true);})}
             </div>
           </div>);
         })()}
