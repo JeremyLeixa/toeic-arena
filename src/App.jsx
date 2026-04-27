@@ -2441,17 +2441,8 @@ var[step,sSt]=useState("name");
   // pwdEmailDup : true si Supabase refuse l'email (déjà pris) → affiche bouton "Me connecter"
   var[pwd1,setPwd1]=useState("");var[pwd2,setPwd2]=useState("");var[pwdBusy,setPwdBusy]=useState(false);var[pwdErr,setPwdErr]=useState("");
   var[pwdSetupDone,setPwdSetupDone]=useState(false);var[pwdEmailDup,setPwdEmailDup]=useState(false);
-  // Poll for email confirmation while the user is on the emailPrompt step and email was sent.
-  // Catches the mobile case where the magic link was clicked in another browser (Gmail app →
-  // default browser). Without this poll, the current PWA session would never detect the confirmation.
-  useEffect(function(){
-    if(step!=="emailPrompt"||!emailSent)return;
-    var cancel=pollEmailConfirmation(function(){
-      // Email confirmed server-side — advance immediately
-      sSt("langBridge");
-    });
-    return cancel;
-  },[step,emailSent]);
+  // Phase 2 commit 3 (2026-04-27) : useEffect pollEmailConfirmation supprimé avec
+  // le step emailPrompt. Plus de magic link post-onboarding → plus de poll nécessaire.
   function goAfterPushStep(firstNav){
     // If browser lacks Push API, skip the opt-in phase entirely
     var hasPush=("serviceWorker" in navigator)&&("PushManager" in window);
@@ -3004,13 +2995,10 @@ var[step,sSt]=useState("name");
 
   // ─ Push notification opt-in ─
   if(step==="pushPrompt"){
-    // Phase 2 (2026-04-27) : skip l'écran emailPrompt magic link si :
-    //  - le signup password a déjà posé un email (pwdSetupDone)
-    //  - OU l'utilisateur est en mode visitor (pas de compte = pas d'email)
-    function finishOnb(){
-      if(pwdSetupDone||classCode==="visitor"){sSt("langBridge");return;}
-      sSt("emailPrompt");
-    }
+    // Phase 2 commit 3 (2026-04-27) : l'ancien step emailPrompt magic link est dropped.
+    // L'email est posé soit au signup (signUpWithPassword crée auth user + email),
+    // soit pas du tout pour les visiteurs. Pas de "sécurisation post-onboarding".
+    function finishOnb(){sSt("langBridge");}
     async function enableAndGo(){
       if(pushBusy)return;
       setPushBusy(true);
@@ -3063,78 +3051,6 @@ var[step,sSt]=useState("name");
         <p style={{color:"var(--t3)",fontSize:10,marginTop:12,lineHeight:1.5}}>{"Tu peux changer d'avis à tout moment depuis ton Profil."}</p>
       </div>
     </div>);}
-
-  // ─ Email security (Phase 1 Session 2): optional step to link an email ─
-  if(step==="emailPrompt"){
-    function skipEmail(){sSt("langBridge");}
-    async function submitEmail(){
-      if(emailBusy)return;
-      var e=(emailInput||"").trim().toLowerCase();
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){setEmailErr("Adresse email invalide");return;}
-      setEmailErr("");setEmailBusy(true);
-      try{
-        await linkEmailToAnonymous(e);
-        setEmailSent(true);
-        // No auto-advance: the user needs time to check the email and we poll for
-        // confirmation (see useEffect above). An explicit "Continuer" button is shown.
-      }catch(err){
-        var msg=(err&&err.message)||"Impossible d'envoyer l'email";
-        setEmailErr(msg);
-      }finally{setEmailBusy(false);}
-    }
-    return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
-      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:56,marginBottom:16}}>{emailSent?"\u2709\uFE0F":"\uD83D\uDD12"}</div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:24,color:"var(--t1)",marginBottom:10}}>
-          {emailSent?"V\u00e9rifie ta bo\u00eete":"S\u00e9curise ton compte"}
-        </h2>
-        {!emailSent&&<p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:20}}>
-          {"Lie un email pour retrouver ta progression depuis n'importe quel appareil et recevoir tes r\u00e9sultats hebdomadaires."}
-        </p>}
-        {emailSent&&<>
-          <p style={{color:"var(--green)",fontSize:14,lineHeight:1.6,marginBottom:12}}>
-            {"\u2709\uFE0F Lien de confirmation envoy\u00e9 \u00e0 "+emailInput+"."}
-          </p>
-          <div className="crd" style={{padding:"12px 14px",marginBottom:14,background:"rgba(255,193,7,.06)",borderColor:"rgba(255,193,7,.2)",textAlign:"left"}}>
-            <div style={{fontSize:12,color:"var(--t1)",lineHeight:1.5}}>
-              <strong>{"\uD83D\uDCF1 Sur mobile :"}</strong>{" ouvre le lien dans le navigateur o\u00f9 tu utilises l'app (m\u00eame navigateur, m\u00eame appareil). Si tu cliques depuis Gmail, le lien peut s'ouvrir ailleurs et la confirmation ne remonte pas ici."}
-            </div>
-          </div>
-          <p style={{color:"var(--t3)",fontSize:11,lineHeight:1.5,marginBottom:14}}>
-            {"Cette page d\u00e9tectera automatiquement la confirmation. Tu peux aussi continuer sans attendre \u2014 tu pourras terminer plus tard."}
-          </p>
-          <button className="btn1" onClick={function(){sSt("langBridge");}}
-            style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10}}>{"Continuer"}</button>
-        </>}
-        {!emailSent&&<div className="crd" style={{padding:"14px 16px",marginBottom:14,textAlign:"left",background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
-          <div style={{display:"flex",gap:10,marginBottom:8}}>
-            <span style={{fontSize:18}}>{"\uD83D\uDD04"}</span>
-            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Sync multi-appareils</div><div style={{fontSize:11,color:"var(--t2)"}}>{"Retrouve ta progression sur ton t\u00e9l\u00e9phone et ton PC"}</div></div>
-          </div>
-          <div style={{display:"flex",gap:10,marginBottom:8}}>
-            <span style={{fontSize:18}}>{"\uD83D\uDCCA"}</span>
-            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>{"R\u00e9sultats hebdo"}</div><div style={{fontSize:11,color:"var(--t2)"}}>{"Ton classement chaque lundi matin par email"}</div></div>
-          </div>
-          <div style={{display:"flex",gap:10}}>
-            <span style={{fontSize:18}}>{"\uD83D\uDD10"}</span>
-            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Ton compte t'appartient</div><div style={{fontSize:11,color:"var(--t2)"}}>{"N\u00e9cessaire pour souscrire Premium plus tard"}</div></div>
-          </div>
-        </div>}
-        {!emailSent&&<>
-          <input type="email" value={emailInput} onChange={function(ev){setEmailInput(ev.target.value);setEmailErr("");}} placeholder="ton@email.com" autoComplete="email" disabled={emailBusy}
-            style={{width:"100%",padding:"12px 14px",fontSize:14,borderRadius:10,border:"1.5px solid "+(emailErr?"var(--red)":"rgba(var(--cx),.25)"),background:"var(--bg2)",color:"var(--t1)",marginBottom:emailErr?4:14,textAlign:"center",fontFamily:"'DM Sans',sans-serif"}}/>
-          {emailErr&&<div style={{fontSize:11,color:"var(--red)",marginBottom:10,textAlign:"left"}}>{emailErr}</div>}
-          <button className="btn1" onClick={submitEmail} disabled={emailBusy||!emailInput}
-            style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10,opacity:(emailBusy||!emailInput)?0.5:1}}>
-            {emailBusy?"\u2026":"Recevoir le lien magique"}</button>
-          <button className="btn2" onClick={skipEmail} disabled={emailBusy}
-            style={{fontSize:13,padding:"12px 28px",width:"100%"}}>Plus tard</button>
-          <p style={{color:"var(--t3)",fontSize:10,marginTop:12,lineHeight:1.5}}>{"Tu pourras l'ajouter quand tu veux depuis ton Profil."}</p>
-        </>}
-      </div>
-    </div>);
-  }
 
   // ─ Language bridge: transition to English ─
   if(step==="langBridge"){
