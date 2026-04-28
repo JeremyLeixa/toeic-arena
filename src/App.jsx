@@ -783,14 +783,10 @@ function canUnlockMock(u,mockId){
   if(!u.moduleScores||!u.moduleScores.drill)reasons.push("Complete at least 1 Part 5 Drill");
   if(mockId===2&&(!u.mockResults||!u.mockResults.mock1))reasons.push("Complete Mock Test 1 first");
   if(mockId===3&&(!u.mockResults||!u.mockResults.mock2))reasons.push("Complete Mock Test 2 first");
-  // V2 — 24h cooldown on Mocks, bypassable via Mock Reset token (mirrors Boss flow)
-  if(reasons.length===0){
-    var key="mock"+mockId;
-    var prev=u.mockResults&&u.mockResults[key];
-    if(prev&&prev.date===today()&&!u.mockResetArmed){
-      reasons.push("24h cooldown — come back tomorrow");
-    }
-  }
+  // V2 — Note : Mocks lock permanently AFTER completion (see Train.mocksSection
+  // override at line ~3601), not via canUnlockMock. Mock Reset token bypasses
+  // that override directly. We don't add a 24h cooldown reason here because the
+  // override would re-lock anyway.
   return{ok:reasons.length===0,reasons:reasons};
 }
 
@@ -3598,9 +3594,12 @@ function MockResetCTA(p){
       items.push({id:"mock2",n:"Mock Test 2",d:u2.ok?"Reading Half-Test · 49 Q · 37 min":u2.reasons[0],i:"scroll-quill",bg:u2.ok?"linear-gradient(135deg,#8b5e83,#c4587a)":"var(--bg3)",lock:!u2.ok,mockId:2});
       var u3=canUnlockMock(p.u,3);
       items.push({id:"mock3",n:"Mock Test 3",d:u3.ok?"Reading Half-Test · 48 Q · 37 min":u3.reasons[0],i:"scroll-quill",bg:u3.ok?"linear-gradient(135deg,#22c55e,#06b6d4)":"var(--bg3)",lock:!u3.ok,mockId:3});
-      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495";items[0].lock=true;items[0].bg="var(--bg3)";}
-      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495";items[1].lock=true;items[1].bg="var(--bg3)";}
-      if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495";items[2].lock=true;items[2].bg="var(--bg3)";}
+      // V2 — Mocks lock permanently after completion, UNLESS Mock Reset is armed.
+      // The token bypasses the lock for any of the 3 mocks ; mockDone clears the flag
+      // after the run so a single token = one replay.
+      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armé":"");if(!p.u.mockResetArmed){items[0].lock=true;items[0].bg="var(--bg3)";}}
+      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armé":"");if(!p.u.mockResetArmed){items[1].lock=true;items[1].bg="var(--bg3)";}}
+      if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armé":"");if(!p.u.mockResetArmed){items[2].lock=true;items[2].bg="var(--bg3)";}}
       return items;
     })()},
     {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"treasure-map",count:"5 tools",items:[
@@ -3664,10 +3663,11 @@ function MockResetCTA(p){
           })}
         </div>
 
-        {/* V2 — Mock Reset CTA (when at least one Mock is in 24h cooldown) */}
+        {/* V2 — Mock Reset CTA shown when at least one Mock has been completed
+            (Mocks lock permanently after completion, the token unlocks one replay). */}
         {(function(){
-          var anyMockCooldown=[canUnlockMock(p.u,1),canUnlockMock(p.u,2),canUnlockMock(p.u,3)].some(function(uu){return uu.reasons[0]&&uu.reasons[0].indexOf("24h cooldown")===0;});
-          return anyMockCooldown?<MockResetCTA u={p.u} setUser={p.setUser}/>:null;
+          var anyCompleted=p.u.mockResults&&(p.u.mockResults.mock1||p.u.mockResults.mock2||p.u.mockResults.mock3);
+          return anyCompleted?<MockResetCTA u={p.u} setUser={p.setUser}/>:null;
         })()}
 
         {/* ── ULTIMATE TRIALS separator ── */}
