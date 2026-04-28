@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Collection V2 — proto</title>
+<style>
+:root {
+  --bg: #0f0c08;
+  --bg2: #1a1410;
+  --bg3: #251c14;
+  --bdr: rgba(255,255,255,0.06);
+  --t1: #ede4d4;
+  --t2: #b0a692;
+  --t3: #6b6354;
+  --cyan: #4cc9d4;
+  --cx: 76,201,212;
+  --cx-hex: #4cc9d4;
+  --orange: #ff9e3d;
+  --green: #2eb464;
+  --red: #dc3a50;
+  --gold: #ffc020;
+  --grey: #909090;
+  --uncommon: #3ecc78;
+  --rare: #3a8ee0;
+  --epic: #c060f0;
+  --legend: #ffc020;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+body { background: var(--bg); color: var(--t1); padding: 24px 16px 80px; max-width: 720px; margin: 0 auto; }
+.crd { background: var(--bg2); border-radius: 14px; }
+
+/* Header */
+.hd { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.hd .back { background: none; border: none; color: var(--cyan); font-size: 22px; cursor: pointer; }
+.hd h1 { font-weight: 800; font-size: 20px; letter-spacing: .5px; }
+
+/* Section header */
+.sh { font-size: 11px; color: var(--t2); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.section { margin-bottom: 32px; }
+
+/* Avatars grid */
+.avatars { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; }
+.av-item { position: relative; display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border-radius: 10px; }
+.av-item.owned { background: rgba(76,201,212,0.04); }
+.av-item.locked { background: var(--bg3); opacity: 0.25; }
+.av-shield {
+  width: 40px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 70%, 50% 100%, 0% 70%, 0% 25%);
+  position: relative;
+}
+.av-shield::before {
+  content: ''; position: absolute; inset: 2px;
+  background: var(--bg2);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 70%, 50% 100%, 0% 70%, 0% 25%);
+}
+.av-shield svg { position: relative; z-index: 1; width: 24px; height: 24px; }
+.av-name { font-size: 8px; margin-top: 4px; font-weight: 600; text-align: center; line-height: 1.2; }
+.locked .av-name { color: var(--t3); }
+
+/* Rarity color borders for shields */
+.rar-common { color: var(--grey); }
+.rar-uncommon { color: var(--uncommon); }
+.rar-rare { color: var(--rare); }
+.rar-epic { color: var(--epic); }
+.rar-legend { color: var(--legend); }
+
+/* Count badge */
+.badge {
+  position: absolute; top: 2px; right: 2px;
+  font-size: 9px; font-weight: 800;
+  color: var(--gold);
+  background: rgba(0,0,0,0.75);
+  padding: 1px 5px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+}
+
+/* Skins grid */
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+.sk-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border-radius: 12px; }
+.sk-item.owned { background: rgba(76,201,212,0.04); }
+.sk-item.locked { background: var(--bg3); opacity: 0.25; }
+.sk-chip { width: 40px; height: 40px; border-radius: 10px; }
+.sk-chip.b { border: 2px solid; }
+.sk-name { font-size: 9px; font-weight: 600; }
+
+/* Frames grid */
+.frames { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; }
+.fr-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px; border-radius: 12px; }
+.fr-item.owned { background: rgba(76,201,212,0.04); }
+.fr-item.locked { background: var(--bg3); opacity: 0.3; }
+.fr-disc {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  box-sizing: content-box;
+  padding: 4px;
+  background: linear-gradient(135deg, #3a2818, #1a1208);
+  position: relative;
+}
+.fr-disc::before {
+  content: ''; position: absolute; inset: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--bg3), var(--bg));
+}
+.fr-disc.locked-preview {
+  width: 56px; height: 56px;
+  border: 2px dashed var(--bdr);
+  background: transparent;
+  padding: 0;
+}
+.fr-disc.locked-preview::before { display: none; }
+.fr-name { font-size: 9px; font-weight: 600; text-align: center; }
+.fr-disc.gold-neon { border: 3px solid var(--gold); box-shadow: 0 0 16px var(--gold), inset 0 0 12px rgba(255,192,32,0.5); }
+.fr-disc.emerald-glow { border: 3px solid #2eb464; box-shadow: 0 0 16px #2eb464, inset 0 0 12px rgba(46,180,100,0.5); }
+.fr-disc.ice-crystal { border: 3px solid #58a8e8; box-shadow: 0 0 16px #58a8e8, inset 0 0 12px rgba(88,168,232,0.5); }
+.fr-disc.fire-forged { border: 3px solid #ff6020; box-shadow: 0 0 18px #ff6020, inset 0 0 14px rgba(255,96,32,0.6); }
+.fr-disc.ruby-aura { border: 3px solid var(--red); box-shadow: 0 0 20px var(--red), inset 0 0 14px rgba(220,58,80,0.6); }
+.fr-disc.amethyst-veil { border: 3px solid #a05adc; box-shadow: 0 0 20px #a05adc, inset 0 0 14px rgba(160,90,220,0.6); }
+.fr-disc.cosmic { border: 3px solid #a05adc; box-shadow: 0 0 24px rgba(160,90,220,0.7); background-image: linear-gradient(135deg, #ff40c0, #40c0ff, #ffc040); }
+.fr-disc.dragonbone { border: 3px solid #ffd060; box-shadow: 0 0 28px var(--red), inset 0 0 16px rgba(255,64,32,0.7); }
+
+/* Titles list */
+.titles { display: flex; flex-direction: column; gap: 6px; }
+.ti-row {
+  padding: 10px 14px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  border: 1px solid;
+}
+.ti-row.owned { background: rgba(76,201,212,0.04); }
+.ti-row.locked { background: var(--bg3); opacity: 0.3; border-color: var(--bdr); }
+.ti-name { font-size: 14px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; flex: 1; min-width: 0; }
+.ti-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ti-rar { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.ti-cnt { font-size: 10px; font-weight: 800; color: var(--gold); background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 8px; }
+
+/* Tokens (consommables) */
+.tk-sub { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tk-sub-line { flex: 1; height: 1px; background: var(--bdr); }
+.tk-sub-label { font-size: 10px; color: var(--t3); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
+.tk-sub-label.premium { color: var(--gold); }
+.tk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.tk-card {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid;
+}
+.tk-card.owned { background: rgba(76,201,212,0.04); border-color: var(--bdr); }
+.tk-card.empty { background: var(--bg3); border-color: var(--bdr); opacity: 0.45; }
+.tk-card.premium.owned { background: rgba(255,192,32,0.05); border-color: rgba(255,192,32,0.25); }
+.tk-card.premium.empty { background: rgba(255,192,32,0.02); border-color: rgba(255,192,32,0.1); opacity: 0.45; }
+.tk-icon { font-size: 26px; flex-shrink: 0; width: 32px; text-align: center; }
+.tk-body { flex: 1; min-width: 0; }
+.tk-name { font-size: 12px; font-weight: 700; color: var(--t1); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk-card.empty .tk-name { color: var(--t3); }
+.tk-bar {
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.tk-bar-fill {
+  height: 100%;
+  background: var(--cyan);
+  border-radius: 2px;
+}
+.tk-card.premium .tk-bar-fill { background: var(--gold); }
+.tk-qty {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--t2);
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+.tk-qty .v { color: var(--cyan); }
+.tk-card.premium .tk-qty .v { color: var(--gold); }
+.tk-card.empty .tk-qty .v { color: var(--t3); }
+.tk-desc {
+  font-size: 10px;
+  color: var(--t3);
+  margin-top: 6px;
+  line-height: 1.4;
+  border-top: 1px dashed var(--bdr);
+  padding-top: 6px;
+}
+
+/* Cheat sheets grid */
+.cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.cs-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 12px; border-radius: 12px;
+  border: 1px solid;
+  cursor: pointer;
+}
+.cs-card.owned { background: rgba(76,201,212,0.04); }
+.cs-card.locked { background: var(--bg3); opacity: 0.3; cursor: default; border-color: var(--bdr); }
+.cs-icon { font-size: 32px; }
+.cs-name { font-size: 11px; font-weight: 700; text-align: center; line-height: 1.3; color: var(--t1); }
+.cs-card.locked .cs-name { color: var(--t3); }
+.cs-tap { font-size: 8px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+
+/* Note bandeau pédagogique */
+.help-note {
+  background: linear-gradient(135deg, rgba(255,192,32,0.06), rgba(220,58,80,0.04));
+  border: 1px solid rgba(255,192,32,0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--t2);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.help-note strong { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <button class="back">&larr;</button>
+  <h1>Collection</h1>
+</div>
+
+<div class="help-note">
+  Tous les items déblocables apparaissent ici. <strong>Grisés</strong> = pas encore obtenus. <strong>Badge ×N en coin</strong> = tu en as plusieurs copies (échangeables dans <em>Conversions</em> dès ×4).
+</div>
+
+<!-- ═══════════════ AVATARS ═══════════════ -->
+<div class="section">
+  <div class="sh">Avatars (8 / 32)</div>
+  <div class="avatars">
+    <!-- Common (10) — 4 owned -->
+    <div class="av-item owned"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="9" r="3"/><path d="M6 22 q0-6 6-6 t6 6 z"/></svg></div><div class="av-name rar-common">Peasant</div><span class="badge">×2</span></div>
+    <div class="av-item owned"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 15 l7-12 7 12 z M5 17 h14 v3 H5z"/></svg></div><div class="av-name rar-common">Squire</div></div>
+    <div class="av-item owned"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4h14v3H5z M5 9h14v11H5z"/></svg></div><div class="av-name rar-common">Apprentice</div><span class="badge">×3</span></div>
+    <div class="av-item locked"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 12 q7-5 14 0 q-7 5-14 0"/></svg></div><div class="av-name">Archer</div></div>
+    <div class="av-item locked"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="14" width="12" height="6" rx="1"/><path d="M9 14 v-3 h6 v3"/></svg></div><div class="av-name">Blacksmith</div></div>
+    <div class="av-item owned"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="6" width="10" height="14" rx="1"/><path d="M9 4 h6 v2 h-6z"/></svg></div><div class="av-name rar-common">Innkeeper</div><span class="badge">×4</span></div>
+    <div class="av-item locked"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="9" r="3"/><circle cx="15" cy="9" r="3"/><path d="M6 18 q6-4 12 0z"/></svg></div><div class="av-name">Herbalist</div></div>
+    <div class="av-item locked"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 4 l4 8 l4-8 l-2 12 h-4z"/></svg></div><div class="av-name">Bard</div></div>
+    <div class="av-item locked"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="8" width="3" height="12"/><rect x="15" y="8" width="3" height="12"/></svg></div><div class="av-name">Sentinel</div></div>
+    <div class="av-item locked"><div class="av-shield rar-common"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><div class="av-name">Merchant</div></div>
+
+    <!-- Uncommon (8) — 2 owned -->
+    <div class="av-item owned"><div class="av-shield rar-uncommon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 l3 6 l-3 12 l-3-12 z"/></svg></div><div class="av-name rar-uncommon">Knight</div></div>
+    <div class="av-item owned"><div class="av-shield rar-uncommon"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M5 22 q0-7 7-7 t7 7"/></svg></div><div class="av-name rar-uncommon">Rogue</div><span class="badge">×2</span></div>
+    <div class="av-item locked"><div class="av-shield rar-uncommon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 v18 M3 12 h18"/></svg></div><div class="av-name">Warlock</div></div>
+    <div class="av-item locked"><div class="av-shield rar-uncommon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 19 l7-14 l7 14z"/></svg></div><div class="av-name">Ranger</div></div>
+    <div class="av-item locked"><div class="av-shield rar-uncommon"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg></div><div class="av-name">Cleric</div></div>
+    <div class="av-item locked"><div class="av-shield rar-uncommon"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="14" r="4"/><path d="M9 6 h6 v6 H9z"/></svg></div><div class="av-name">Alchemist</div></div>
+    <div class="av-item locked"><div class="av-shield rar-uncommon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 6 h14 v3 H5z M5 14 h14 v6 H5z"/></svg></div><div class="av-name">Mercenary</div></div>
+    <div class="av-item locked"><div class="av-shield rar-uncommon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="12" height="16" rx="1"/></svg></div><div class="av-name">Scholar</div></div>
+
+    <!-- Rare (7) — 1 owned -->
+    <div class="av-item locked"><div class="av-shield rar-rare"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 l3 6 l-3 12 l-3-12 z"/></svg></div><div class="av-name">Paladin</div></div>
+    <div class="av-item locked"><div class="av-shield rar-rare"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 v18"/></svg></div><div class="av-name">Archmage</div></div>
+    <div class="av-item locked"><div class="av-shield rar-rare"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5 l14 14 M19 5 l-14 14"/></svg></div><div class="av-name">Assassin</div></div>
+    <div class="av-item locked"><div class="av-shield rar-rare"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg></div><div class="av-name">Druid</div></div>
+    <div class="av-item locked"><div class="av-shield rar-rare"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 l4 9 l-4 9 l-4-9 z"/></svg></div><div class="av-name">War Mage</div></div>
+    <div class="av-item locked"><div class="av-shield rar-rare"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18 v-8 q6-4 12 0 v8z"/></svg></div><div class="av-name">Lord</div></div>
+    <div class="av-item owned"><div class="av-shield rar-rare"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 11 l7-7 l7 7 v9 H5z"/></svg></div><div class="av-name rar-rare">Valkyrie</div><span class="badge">×6</span></div>
+
+    <!-- Epic (5) — 1 owned -->
+    <div class="av-item locked"><div class="av-shield rar-epic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 8 q7-5 14 0 v8 H5z"/></svg></div><div class="av-name">Dragon Hunter</div></div>
+    <div class="av-item owned"><div class="av-shield rar-epic"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2" fill="var(--bg)"/></svg></div><div class="av-name rar-epic">Necromancer</div><span class="badge">×2</span></div>
+    <div class="av-item locked"><div class="av-shield rar-epic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 l3 6 l-3 12 l-3-12 z"/></svg></div><div class="av-name">Sacred Archer</div></div>
+    <div class="av-item locked"><div class="av-shield rar-epic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6 l12 12 M18 6 l-12 12"/></svg></div><div class="av-name">Storm Lord</div></div>
+    <div class="av-item locked"><div class="av-shield rar-epic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5 l14 14 M19 5 l-14 14"/></svg></div><div class="av-name">Inquisitor</div></div>
+
+    <!-- Legend (2) — 1 owned -->
+    <div class="av-item owned"><div class="av-shield rar-legend"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 12 l7-9 l7 9 l-7 9z"/></svg></div><div class="av-name rar-legend">Slayer</div></div>
+    <div class="av-item locked"><div class="av-shield rar-legend"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 18 q7-7 14 0 q-7 5-14 0"/></svg></div><div class="av-name">Champion</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SKINS ═══════════════ -->
+<div class="section">
+  <div class="sh">Skins (3 / 9)</div>
+  <div class="skins">
+    <!-- Rare -->
+    <div class="sk-item owned">
+      <div class="sk-chip b" style="background:linear-gradient(135deg,#b4b4c8,#888898);border-color:var(--rare);"></div>
+      <div class="sk-name rar-rare">Silver</div>
+    </div>
+    <div class="sk-item owned">
+      <div class="sk-chip b" style="background:linear-gradient(135deg,#2eb464,#1a8a46);border-color:var(--rare);"></div>
+      <div class="sk-name rar-rare">Emerald</div>
+      <span class="badge">×2</span>
+    </div>
+    <div class="sk-item locked">
+      <div class="sk-chip" style="background:linear-gradient(135deg,#3a94dc,#1a6aaa);"></div>
+      <div class="sk-name">Sapphire</div>
+    </div>
+    <!-- Epic -->
+    <div class="sk-item owned">
+      <div class="sk-chip b" style="background:linear-gradient(135deg,#dc3a50,#c01830);border-color:var(--epic);"></div>
+      <div class="sk-name rar-epic">Ruby</div>
+      <span class="badge">×5</span>
+    </div>
+    <div class="sk-item locked">
+      <div class="sk-chip" style="background:linear-gradient(135deg,#a05adc,#7030aa);"></div>
+      <div class="sk-name">Amethyst</div>
+    </div>
+    <div class="sk-item locked">
+      <div class="sk-chip" style="background:linear-gradient(135deg,#dc6432,#c03018);"></div>
+      <div class="sk-name">Coral</div>
+    </div>
+    <div class="sk-item locked">
+      <div class="sk-chip" style="background:linear-gradient(135deg,#14b4aa,#0a8880);"></div>
+      <div class="sk-name">Jade</div>
+    </div>
+    <!-- Legendary -->
+    <div class="sk-item locked">
+      <div class="sk-chip" style="background:linear-gradient(135deg,#b090f0,#8060c0);"></div>
+      <div class="sk-name">Obsidian</div>
+    </div>
+    <div class="sk-item locked">
+      <div class="sk-chip" style="background:linear-gradient(135deg,#40d0c0,#3a9870);"></div>
+      <div class="sk-name">Aurora</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ FRAMES ═══════════════ -->
+<div class="section">
+  <div class="sh">Frames (3 / 8)</div>
+  <div class="frames">
+    <div class="fr-item owned"><div class="fr-disc gold-neon"></div><div class="fr-name rar-rare">Gold Neon</div></div>
+    <div class="fr-item owned"><div class="fr-disc emerald-glow"></div><div class="fr-name rar-rare">Emerald Glow</div><span class="badge">×3</span></div>
+    <div class="fr-item locked"><div class="fr-disc locked-preview"></div><div class="fr-name">Ice Crystal</div></div>
+    <div class="fr-item locked"><div class="fr-disc locked-preview"></div><div class="fr-name">Fire Forged</div></div>
+    <div class="fr-item owned"><div class="fr-disc ruby-aura"></div><div class="fr-name rar-epic">Ruby Aura</div></div>
+    <div class="fr-item locked"><div class="fr-disc locked-preview"></div><div class="fr-name">Amethyst Veil</div></div>
+    <div class="fr-item locked"><div class="fr-disc locked-preview"></div><div class="fr-name">Cosmic</div></div>
+    <div class="fr-item locked"><div class="fr-disc locked-preview"></div><div class="fr-name">Dragonbone</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ TITLES ═══════════════ -->
+<div class="section">
+  <div class="sh">Titles (4 / 12)</div>
+  <div class="titles">
+    <div class="ti-row owned" style="border-color:var(--rare);">
+      <span class="ti-name" style="color:var(--rare);">The Apprentice</span>
+      <div class="ti-right"><span class="ti-rar rar-rare">Rare</span></div>
+    </div>
+    <div class="ti-row owned" style="border-color:var(--rare);">
+      <span class="ti-name" style="color:var(--rare);">Tavern Regular</span>
+      <div class="ti-right"><span class="ti-cnt">×4</span><span class="ti-rar rar-rare">Rare</span></div>
+    </div>
+    <div class="ti-row locked"><span class="ti-name">The Squire</span><div class="ti-right"><span class="ti-rar rar-rare">Rare</span></div></div>
+    <div class="ti-row locked"><span class="ti-name">The Scribe</span><div class="ti-right"><span class="ti-rar rar-rare">Rare</span></div></div>
+    <div class="ti-row owned" style="border-color:var(--epic);">
+      <span class="ti-name" style="color:var(--epic);">The Wordsmith</span>
+      <div class="ti-right"><span class="ti-rar rar-epic">Epic</span></div>
+    </div>
+    <div class="ti-row locked"><span class="ti-name">Tense Sage</span><div class="ti-right"><span class="ti-rar rar-epic">Epic</span></div></div>
+    <div class="ti-row locked"><span class="ti-name">Drillmaster</span><div class="ti-right"><span class="ti-rar rar-epic">Epic</span></div></div>
+    <div class="ti-row locked"><span class="ti-name">Word Forger</span><div class="ti-right"><span class="ti-rar rar-epic">Epic</span></div></div>
+    <div class="ti-row locked"><span class="ti-name">Arena Veteran</span><div class="ti-right"><span class="ti-rar rar-epic">Epic</span></div></div>
+    <div class="ti-row owned" style="border-color:var(--legend);">
+      <span class="ti-name" style="color:var(--legend);">Dragon Slayer</span>
+      <div class="ti-right"><span class="ti-rar rar-legend">Legendary</span></div>
+    </div>
+    <div class="ti-row locked"><span class="ti-name">Arena Conqueror</span><div class="ti-right"><span class="ti-rar rar-legend">Legendary</span></div></div>
+    <div class="ti-row locked"><span class="ti-name">Legend</span><div class="ti-right"><span class="ti-rar rar-legend">Legendary</span></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ CONSOMMABLES ═══════════════ -->
+<div class="section">
+  <div class="sh">Consommables (8 / 17 max)</div>
+
+  <!-- Tactiques (non-premium) -->
+  <div class="tk-sub">
+    <span class="tk-sub-label">Tactiques</span>
+    <span class="tk-sub-line"></span>
+  </div>
+  <div class="tk-grid">
+    <div class="tk-card owned">
+      <div class="tk-icon">🔓</div>
+      <div class="tk-body">
+        <div class="tk-name">Bypass Token</div>
+        <div class="tk-bar"><div class="tk-bar-fill" style="width:60%"></div></div>
+        <div class="tk-qty"><span>Stack</span><span><span class="v">3</span> / 5</span></div>
+        <div class="tk-desc">Skip diminishing returns next session</div>
+      </div>
+    </div>
+    <div class="tk-card owned">
+      <div class="tk-icon">🛡️</div>
+      <div class="tk-body">
+        <div class="tk-name">Streak Shield</div>
+        <div class="tk-bar"><div class="tk-bar-fill" style="width:33%"></div></div>
+        <div class="tk-qty"><span>Stack</span><span><span class="v">1</span> / 3</span></div>
+        <div class="tk-desc">Auto-protects streak on missed day</div>
+      </div>
+    </div>
+    <div class="tk-card empty">
+      <div class="tk-icon">🎲</div>
+      <div class="tk-body">
+        <div class="tk-name">Daily Reroll</div>
+        <div class="tk-bar"><div class="tk-bar-fill" style="width:0%"></div></div>
+        <div class="tk-qty"><span>Stack</span><span><span class="v">0</span> / 1</span></div>
+        <div class="tk-desc">Re-roll today's mission</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Premium -->
+  <div class="tk-sub">
+    <span class="tk-sub-label premium">Premium</span>
+    <span class="tk-sub-line"></span>
+  </div>
+  <div class="tk-grid">
+    <div class="tk-card premium owned">
+      <div class="tk-icon">📜</div>
+      <div class="tk-body">
+        <div class="tk-name">Mock Reset</div>
+        <div class="tk-bar"><div class="tk-bar-fill" style="width:100%"></div></div>
+        <div class="tk-qty"><span>Stack</span><span><span class="v">2</span> / 2</span></div>
+        <div class="tk-desc">Bypass 24h cooldown on Mock Test</div>
+      </div>
+    </div>
+    <div class="tk-card premium owned">
+      <div class="tk-icon">🐲</div>
+      <div class="tk-body">
+        <div class="tk-name">Boss Reset</div>
+        <div class="tk-bar"><div class="tk-bar-fill" style="width:100%"></div></div>
+        <div class="tk-qty"><span>Stack</span><span><span class="v">1</span> / 1</span></div>
+        <div class="tk-desc">Bypass 24h cooldown on Boss Test</div>
+      </div>
+    </div>
+    <div class="tk-card premium owned">
+      <div class="tk-icon">💎</div>
+      <div class="tk-body">
+        <div class="tk-name">Endless Resurrect</div>
+        <div class="tk-bar"><div class="tk-bar-fill" style="width:50%"></div></div>
+        <div class="tk-qty"><span>Stack</span><span><span class="v">1</span> / 2</span></div>
+        <div class="tk-desc">Continue Endless after 1 fatal mistake</div>
+      </div>
+    </div>
+    <div class="tk-card premium empty">
+      <div class="tk-icon">🔮</div>
+      <div class="tk-body">
+        <div class="tk-name">Insight Token</div>
+        <div class="tk-bar"><div class="tk-bar-fill" style="width:0%"></div></div>
+        <div class="tk-qty"><span>Stack</span><span><span class="v">0</span> / 3</span></div>
+        <div class="tk-desc">Generates a personalized weakness insight</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CHEAT SHEETS ═══════════════ -->
+<div class="section">
+  <div class="sh">Cheat Sheets (2 / 3)</div>
+  <div class="cs-grid">
+    <div class="cs-card owned" style="border-color:var(--epic);">
+      <div class="cs-icon">📜</div>
+      <div class="cs-name">Part 5 — Conjunction Traps</div>
+      <div class="cs-tap rar-epic">Tap to read</div>
+    </div>
+    <div class="cs-card owned" style="border-color:var(--epic);">
+      <div class="cs-icon">🎯</div>
+      <div class="cs-name">Part 3 — Negation Patterns</div>
+      <div class="cs-tap rar-epic">Tap to read</div>
+    </div>
+    <div class="cs-card locked">
+      <div class="cs-icon">🔍</div>
+      <div class="cs-name">Part 7 — Skim & Scan</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

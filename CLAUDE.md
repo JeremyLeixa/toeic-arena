@@ -166,11 +166,47 @@ prototypes/
 
 ### Chest System
 - **`ChestEarnedToast`** at grant moment (bottom-center, above tab bar). Queue (FIFO) + anti-interruption during tests (boss/endless/mock) + queue dispatcher useEffect.
-- **`ChestOpenModal` V2** = Boss Loot cinematic: build (2s) → explode (1.4s, screen flash, lid flies, body collapses, wood+metal+magic shards) → reveal (reward card falls from top + impact ring).
+- **`ChestOpenModal` V2 sequential** (since 2026-04-27 step 3) — chests now drop **2-5 items** instead of 1. Phase reveal cycles through `result.rewards` via `revealIdx` ; each card remounts (key on revealIdx) so the fall+settle anim replays. Bottom button toggles "Next" → "Collect" on the last item, with a "n / total" indicator. New `ChestRewardCard` helper centralizes per-type rendering (xp/avatar/skin/frame/title/cheat_sheet/token).
 - **`TreasureChestSvg`** = reusable inline SVG wooden chest with gold lock. Scales from 54px (toast) to 180px (modal).
-- **`getTriggerLabel(trigger)`** converts trigger IDs to human FR/EN labels (e.g. `mock_1` → "Mock Test 1 completed").
+- **`getTriggerLabel(trigger)`** converts trigger IDs to human FR/EN labels (e.g. `mock_1` → "Mock Test 1 completed", `daily_login_2026-04-27` → "Daily login reward", `mastery_drill` → "Module mastery: drill").
 - **Legendary differentiation**: 400ms gold radial flash before toast + shimmer sweep on toast + 12s display.
 - **Teacher account CAN receive chests** (GHOST_NAME filter is only for TeacherDash student list — NOT for chest grants, despite older CLAUDE.md wording).
+
+#### V2 reward types (since 2026-04-27)
+- **Avatars / Skins** : V1 cosmetics (player_rewards table, equipped via `students.skin_id` / `u.avatar`)
+- **Frames** : avatar borders/glow CSS (player_rewards `reward_type='frame'`, equipped via `students.frame_id` / `u.equippedFrame`). 8 entries in FRAMES.
+- **Titles** : text label under name (player_rewards `reward_type='title'`, equipped via `students.title_id` / `u.equippedTitle`). 12 entries in TITLES.
+- **Cheat Sheets** : codex pages rendered via GrimoireReader wrapping (player_rewards `reward_type='cheat_sheet'`). 3 stubs in CHEAT_SHEETS V1, more content authoring deferred.
+- **Tokens** (stackable consumables) : 7 types in TOKEN_TYPES, stored in dedicated `player_tokens` table (composite PK user×class×type, qty, cap-aware via `grant_token` / `consume_token` SQL helpers). `diminishing_bypass` (cap 5), `streak_shield` (cap 3, **passive auto-consume** at load if 1-day gap detected), `daily_reroll` (cap 1, clickable from Collection → resets `u.mission`), `mock_reset` (cap 2 — semantic deferred), `boss_reset` (cap 1, in-context CTA on Train Mocks → arms `u.bossResetArmed` → bypasses canUnlockBoss 24h cooldown), `endless_resurrect` (cap 2, in-context CTA → arms `u.endlessResetArmed` → bypasses getEndlessState cooldown), `insight_token` (cap 3, parking slot — drops 30% on Légendaire only, no consumption logic yet).
+
+#### V2 segmented drop tables (DROP_TABLES in chests.js)
+- **Novice** : 50-150 XP + 1 token (Bypass/Shield/Reroll)
+- **Guerrier** : 200-400 XP + 1 cosmetic (frame OR title) + 2 tokens (non-premium)
+- **Champion** : 500-800 XP + 1 cosmetic (avatar/skin/frame/title min rare) + 3 tokens (Bypass/Reroll/Mock/Endless)
+- **Légendaire** : 1000-1500 XP + 1 cosmetic legend (avatar OR skin) + 1 cosmetic epic+ (frame OR title) + 3 tokens (Bypass/Reroll/Mock/Boss/Endless) + Cheat Sheet guaranteed + 30% Insight Token
+
+#### V2 anti-frustration system (Conversions)
+- When the user owns the full pool of a cosmetic type, `pickRewards` drops a **duplicate** instead of the XP fallback (`{type, id, rarity, duplicate:true}`).
+- Profile → **Conversions** sub-view exposes : "3 doublons → 1 token" (requires count ≥ 4 and only deletes 3 rows so the original is **always preserved** — see `feedback_destructive_action_safety.md`) and "5 tokens non-premium → 1 token premium". Helpers : `convertCosmeticDups`, `convertTokensToPremium`.
+
+#### V2 recurring chest sources (5 triggers added 2026-04-27 step 2)
+- `daily_login_<today>` (Novice) — streak ≥ 1, anti-spam via unique trigger (date in id)
+- `weekly_toeic_<wkId>` (Guerrier) — +25 pts TOEIC vs last weekly_snapshot (recomputed via `estimateTOEICScore`)
+- `podium_<prevWk>` (Guerrier) — top 3 of class_code on the just-finished week (from `weekly_snapshots.xp_this_week`)
+- `mission_streak_<n>` (Guerrier) — when `u.mission.streak` (in jsonb) crosses a multiple of 7. Reset on missed day at load.
+- `mastery_<modId>` (Champion) — once per module at total ≥ 50 Q && correct/total ≥ 0.8. **Blacklist** : `mock1/2/3, boss, daily, csess` (already covered by other triggers or non-progressive activities).
+
+#### V2 useEffect anti-loop pattern (CRITICAL — see `feedback_useeffect_dep_by_ref.md`)
+The Module Mastery watcher used `[u && u.moduleScores]` as deps, which changes reference on every `sv()` (because `u` is JSON-cloned each save). Each chest opening triggered `sv` → re-fire → 10+ parallel `grantChestLocal` calls → race against `hasUniqueTrigger` before `chest_log` writes were visible → duplicate `pending_chests` rows, runaway loop, +37k phantom XP. **Fix** : per-modId `useRef` guard so each module is attempted at most once per mount. Apply this pattern to any V2 watcher that depends on a JSON-cloned object.
+
+#### V2 schema migrations
+SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.sql` :
+- New table `player_tokens` (composite UNIQUE on user×class×type, RLS off in line with siblings)
+- `grant_token(user, class, type, amount, cap)` SQL function : cap-aware UPSERT
+- `consume_token(user, class, type, amount)` SQL function : decrement with sufficiency check
+- `students.frame_id`, `students.title_id` columns (mirror skin_id pattern)
+- `chest_log.reward_type CHECK` relaxed to allow `multi/frame/title/cheat_sheet/token`
+- `player_rewards.reward_type CHECK` relaxed to allow `frame/title/cheat_sheet`
 
 ### Teacher Account
 - The `Teacher` account syncs to Supabase but is **hidden from all leaderboards** (League, TeacherDash student list).

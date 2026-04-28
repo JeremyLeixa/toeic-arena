@@ -6,7 +6,66 @@
 
 ---
 
-## Last session: 2026-04-23 → 2026-04-24 (narrator Aldric + League baseline + Stripe hardening + incident cleanup)
+## Last session: 2026-04-27 → 2026-04-28 (Chest redesign V2 — full sprint, ~30 commits)
+
+**Le plus gros sprint mono-chantier de S2.** Refonte complète du système de coffres + token actions + cosmétiques cohérents avec la DA shield + League extension + 5 cheat sheets pédagogiques inédites + 3 mémoires post-mortem capturées.
+
+### Chest redesign V2 — chantier complet
+Plan validé en pause créative 2026-04-27 (mémoire `project_chest_redesign.md`), puis exécuté en 5 steps + extensions.
+
+- **Step 1 — Data foundation** (`ff7fdf8`) : 8 nouveaux types d'items (FRAMES×8, TITLES×12, TOKEN_TYPES×7, CHEAT_SHEETS×3 puis ×8), DROP_TABLES segmentées par tier de coffre, `pickRewards()` parallèle. SQL migration `2026-04-27_chest_redesign_v2.sql` : table `player_tokens` + helpers `grant_token` / `consume_token`.
+- **Step 2 — 5 recurring chest sources** (`17ebcbb`) : daily login (refondu en `streak_login` palier %3), weekly TOEIC progression (+25 pts), league podium (top 3 weekly_snapshots), mission streak 7, module mastery (≥50Q ≥80%). Triggers ID embed date/wkId/modId pour unicité native via `hasUniqueTrigger`.
+- **Step 3 — Sequential chest opening** (`f2e7483`) : `ChestOpenModal` cycle reveal multi-items via `revealIdx`, Next/Collect button. `openChestFromPending` refondu pour persister chaque reward dans la bonne table (player_rewards / player_tokens).
+- **Step 4 — Profile Collection / Style refonte** (`4ad28a7` + Consommables `cade637`) : sub-views étendues avec Frames, Titles, Cheat Sheets (cliquable → GrimoireReader inline), Consommables (8 tokens avec progress bars). SQL : `students.frame_id`, `students.title_id`. Collection en bannières dépliables (commit `5809777`).
+- **Step 5 — Conversions doublons** (`bfb92c7` puis floor `9d15a16`) : 3 dups → 1 token (seuil ≥4 pour préserver l'original — voir bug ci-dessous), 5 tokens non-premium → 1 premium. Sub-view dédiée Profile.
+
+### Token actions A/B/C — 2026-04-28
+- **A** (`e96966f`) — Streak Shield (passif, auto-consume sur gap 1 jour) + Daily Reroll (clic Collection, modal confirm + reset u.mission + bumprerollCount pour shifter le seed déterministe).
+- **B** (`04ee2ea`) — Boss Reset / Endless Resurrect en in-context CTAs sous cards locked. Arment des flags (`bossResetArmed`, `endlessResetArmed`) consommés dans `bossDone` / `endlessDone`. Mock Reset livré séparément (`86a3b34` + fix override `d1c8170` — les Mocks sont locked permanently post-completion, pas en cooldown 24h).
+- **C** (`5141e6e`) — Bypass Token ciblé module (Option B : sélecteur top-3 sessions today, applyXpGates skip si match) + Insight Token (heuristique `generateInsight`, modal gold/violet, sauvegarde `u.insights[]`).
+
+### Bug en cascade et 3 fixes critiques
+Pendant le sprint, 3 bugs successifs ont mis à mal Teacher account (et 8 students) avant d'être stabilisés. Chacun a généré une mémoire post-mortem :
+
+1. **Module Mastery loop** (`f419f97`) — useEffect avec dep `[u && u.moduleScores]` re-firait à chaque `sv()` (JSON.parse change la référence) → 10+ `grantChestLocal` parallèles → race contre `hasUniqueTrigger` async → +37k XP fantômes pour Teacher en quelques minutes (cleanup SQL UPDATE pour ramener au bon montant). **Mémoire :** `feedback_useeffect_dep_by_ref.md`.
+2. **CHECK constraints silencieuses** (`97bf21b` + `b918f2f`) — V1 avait `CHECK (reward_type IN ('xp','avatar','skin'))` sur chest_log et player_rewards. V2 introduit `multi`, `frame`, `title`, `cheat_sheet`, `token` sans relâcher les CHECK → INSERT silencieusement bloqués → audit trail cassé → re-grants en chaîne. **Mémoire :** `feedback_supabase_check_constraints.md`.
+3. **Conversions destructive sans floor** (`9d15a16`) — `convertCosmeticDups` consommait 3 rows quand `count >= 3`, ce qui wipait l'original quand l'user avait pile 3 instances. Teacher a perdu ~25 avatars/skins avant fix (SQL restore appliqué). Seuil corrigé à `>= 4` pour préserver 1 minimum. **Mémoire :** `feedback_destructive_action_safety.md`.
+
+### Cosmétiques V2.4 — 2026-04-28
+- **5 nouvelles cheat sheets pédagogiques inédites** (Part 5 word pairs, Listening reductions, Part 5 modals, business false cognates, Part 7 inference) — angles non couverts par STRATEGIES, en français per grimoire policy.
+- **Frames refondus comme outer-shield outline** (`00efaec` + `70d5bbc`) : abandon du wrap CSS cercle, AvatarMedal SVG accepte un `frameId` et dessine un 2e shield path autour de l'avatar shield. Stroke 3-4px + drop-shadow simple + animation CSS `frame-cosmic` / `frame-dragon` pour Legendaires.
+- **Aldric's Chosen** (`7282a24`) : titre exclusif Teacher only (`exclusive:true` flag dans TITLES, jamais dropé en chest, granted via SQL).
+- **League rankings** (`9f76941`) : RankRow rend frame + titre des rivals (Week / Season / Overall tabs). Bots fictifs sans frame/title = rendu standard, pas de glitch.
+- **Strategy Cards icons** (`9f9c166`) : 8 emojis section migrés vers game-icons SVG (spyglass / chat-bubble / conversation / public-speaker / scroll-quill / stone-tablet / spell-book / swords-emblem) cohérents avec la tab bar archetype. Filter tabs Listening/Reading idem.
+- **i18n EN cohérente** (`e7f3072`) : Profile/Collection/Style/Conversions/Tokens/CTAs en anglais. Cheat Sheets restent FR (grimoire policy). Auth security flow Profile→Account reste FR (trust policy).
+
+### Profile reorder + Conversions migration UX (`be1b277`)
+- Chronicles card AU-DESSUS de Teacher Dashboard (étudiant-facing avant teacher-tool)
+- Conversions card retirée de Profile home, déplacée DANS la Collection sub-view (en bas après les bannières) — destination naturelle après les badges ×N
+
+### 3-day streak login chest (`3a5825e`)
+- Daily login chest (1×/jour si streak ≥1) → trop généreux côté étudiants
+- Refondu en `streak_login_<date>` Novice à streak=3,6,9,12... (palier %3). Si streak break, on recommence (la date du trigger ID change). Pas de double-counting avec streak_7/30/100 qui restent séparés.
+
+### État final (fin de session)
+- 30+ commits sur main, Vercel deployed
+- Teacher account restauré (XP rollback manuel -37k + SQL restore avatars/skins/frames/titles + Aldric's Chosen attribué)
+- Tous les pending_chests dupliqués nettoyés via DISTINCT ON
+- Chest log audit trail intègre, `hasUniqueTrigger` opérationnel
+- 5 cheat sheets en production (3 stubs initiaux + 5 inédites)
+- 3 mémoires post-mortem capturées pour ne pas refaire les mêmes erreurs
+
+### Pour la prochaine session
+Backlog S2 simplifié à 3 items ouverts (cf. `project_todo_s2_progress.md`) :
+- 🔴 Re-engagement event S2 (cible septembre 2026 — Season 2 Chest + XP×2 semaine 1 + reset partiel + welcome push)
+- 🟠 Magic Link Phase 3 (interception migration des 113 students existants — Phases 0+1+2 déjà DONE)
+- 🟠 Stripe Checkout full flow (sandbox + CGV DONE, validation E2E à finir avant cutoff IDRAC 2026-06-28)
+
+Duel Arena bilan + Multi-campus retirés du backlog 2026-04-28.
+
+---
+
+## Previous session: 2026-04-23 → 2026-04-24 (narrator Aldric + League baseline + Stripe hardening + incident cleanup)
 
 **Trois jours de travail condensés. ~25 commits.** Chantier narratif Aldric complet, fix baseline League pour Idrac, onboarding Stripe en conditions de conformité légale FR (CGV v1.0, médiateur MED60239, persistance consentement), test E2E avec découverte de 2 bugs de dédup de profils, et **un incident majeur** (row Teacher/teacher-internal supprimée par accident durant le cleanup — restaurée).
 

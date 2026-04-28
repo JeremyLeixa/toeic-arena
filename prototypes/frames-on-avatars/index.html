@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Frames × Shield avatars — proto V3</title>
+<style>
+:root {
+  --bg: #0f0c08;
+  --bg2: #1a1410;
+  --bg3: #251c14;
+  --bdr: rgba(255,255,255,0.06);
+  --t1: #ede4d4;
+  --t2: #b0a692;
+  --t3: #6b6354;
+  --gold: #ffc020;
+  --rare: #3a8ee0;
+  --epic: #c060f0;
+  --legend: #ffc020;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+body { background: var(--bg); color: var(--t1); padding: 24px 16px 80px; max-width: 920px; margin: 0 auto; }
+
+.hd h1 { font-weight: 800; font-size: 22px; margin-bottom: 6px; }
+.hd p { font-size: 13px; color: var(--t2); margin-bottom: 24px; line-height: 1.5; }
+
+.section { margin-bottom: 36px; }
+.sh { font-size: 11px; color: var(--t2); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.sh-line { flex: 1; height: 1px; background: var(--bdr); }
+
+.row { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; }
+.cell { display: flex; flex-direction: column; align-items: center; padding: 16px 8px; background: var(--bg2); border-radius: 12px; border: 1px solid var(--bdr); }
+.cell-name { font-size: 11px; font-weight: 700; margin-top: 12px; text-align: center; }
+.cell-rar { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
+.rar-rare    { color: var(--rare); }
+.rar-epic    { color: var(--epic); }
+.rar-legend  { color: var(--legend); }
+
+@keyframes cosmic-pulse {
+  0%,100% { filter: drop-shadow(0 0 6px #ff40c0) drop-shadow(0 0 12px #40c0ff); }
+  50%     { filter: drop-shadow(0 0 10px #ffc040) drop-shadow(0 0 16px #ff40c0); }
+}
+@keyframes dragon-pulse {
+  0%,100% { filter: drop-shadow(0 0 8px #ff4020) drop-shadow(0 0 14px #ffd060); }
+  50%     { filter: drop-shadow(0 0 14px #ff4020) drop-shadow(0 0 22px #ffd060); }
+}
+
+/* Profile-style mock */
+.prof-mock {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 16px; background: var(--bg2); border-radius: 14px;
+  border: 1px solid var(--bdr); margin-bottom: 24px;
+}
+.prof-name { font-weight: 800; font-size: 22px; margin-top: 14px; }
+.prof-title { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; color: #e8d4a8; }
+.prof-stats { display: flex; gap: 10px; margin-top: 12px; }
+.prof-chip { font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+.prof-chip-lvl { background: rgba(76,201,212,.1); color: #ff9e3d; border: 1px solid rgba(76,201,212,.2); }
+.prof-chip-lg { background: rgba(255,192,32,.1); color: var(--gold); border: 1px solid rgba(255,192,32,.2); }
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <h1>Frames × Shield avatars — V3</h1>
+  <p>Approche refondue : le frame est un <strong>second shield outline plus grand</strong> dessiné autour du shield avatar, avec sa couleur de bord et un drop-shadow filter pour le glow. Cohérent avec le rendu blason existant. Pour les Légendaires : animation pulse subtile.</p>
+</div>
+
+<!-- SVG defs : couleurs & filtres réutilisables -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="glow-gold-neon" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-emerald" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-ice" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-fire" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-ruby" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-amethyst" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="cosmic-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff40c0"/><stop offset="50%" stop-color="#40c0ff"/><stop offset="100%" stop-color="#ffc040"/>
+    </linearGradient>
+    <linearGradient id="dragonbone-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffd060"/><stop offset="100%" stop-color="#ff8020"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- Mock Profile : Champion avatar + Cosmic frame + Aldric's Chosen title -->
+<div class="prof-mock">
+  <svg viewBox="0 -3 100 110" width="96" height="106" style="overflow:visible;animation:cosmic-pulse 2.5s ease-in-out infinite">
+    <!-- Frame outer shield (slightly larger, gradient stroke) -->
+    <path d="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z"
+          fill="none" stroke="url(#cosmic-gradient)" stroke-width="2.5"/>
+    <!-- Inner shield (avatar with rarity bg) -->
+    <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z"
+          fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+    <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z"
+          fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+    <!-- Avatar icon (Champion = laurel-crown, simplified) -->
+    <g transform="translate(28,28)" fill="#ffc020">
+      <path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/>
+    </g>
+  </svg>
+  <div class="prof-name">Teacher</div>
+  <div class="prof-title">Aldric's Chosen</div>
+  <div class="prof-stats">
+    <span class="prof-chip prof-chip-lvl">Lv. 38</span>
+    <span class="prof-chip prof-chip-lg">🏆 Diamond</span>
+  </div>
+</div>
+
+<!-- ═══════════════ SANS FRAME (référence) ═══════════════ -->
+<div class="section">
+  <div class="sh"><span>Référence — sans frame</span><span class="sh-line"></span></div>
+  <div class="row">
+    <div class="cell">
+      <svg viewBox="0 0 100 100" width="72" height="72" style="overflow:visible">
+        <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+        <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+        <g transform="translate(28,28)" fill="#ffc020"><path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/></g>
+      </svg>
+      <div class="cell-name">Champion (legendary)</div>
+      <div class="cell-rar rar-legend">No frame</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ FRAMES RARES (3) ═══════════════ -->
+<div class="section">
+  <div class="sh"><span style="color:var(--rare)">Rare frames · drop Warrior+</span><span class="sh-line"></span></div>
+  <div class="row">
+
+    <div class="cell">
+      <svg viewBox="0 -3 100 110" width="80" height="88" style="overflow:visible;filter:drop-shadow(0 0 6px #ffc020)">
+        <path d="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z" fill="none" stroke="#ffc020" stroke-width="2.5"/>
+        <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+        <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+        <g transform="translate(28,28)" fill="#ffc020"><path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/></g>
+      </svg>
+      <div class="cell-name">Gold Neon</div>
+      <div class="cell-rar rar-rare">Rare</div>
+    </div>
+
+    <div class="cell">
+      <svg viewBox="0 -3 100 110" width="80" height="88" style="overflow:visible;filter:drop-shadow(0 0 6px #2eb464)">
+        <path d="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z" fill="none" stroke="#2eb464" stroke-width="2.5"/>
+        <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+        <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+        <g transform="translate(28,28)" fill="#ffc020"><path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/></g>
+      </svg>
+      <div class="cell-name">Emerald Glow</div>
+      <div class="cell-rar rar-rare">Rare</div>
+    </div>
+
+    <div class="cell">
+      <svg viewBox="0 -3 100 110" width="80" height="88" style="overflow:visible;filter:drop-shadow(0 0 6px #58a8e8)">
+        <path d="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z" fill="none" stroke="#58a8e8" stroke-width="2.5"/>
+        <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+        <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+        <g transform="translate(28,28)" fill="#ffc020"><path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/></g>
+      </svg>
+      <div class="cell-name">Ice Crystal</div>
+      <div class="cell-rar rar-rare">Rare</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ FRAMES EPIC (3) ═══════════════ -->
+<div class="section">
+  <div class="sh"><span style="color:var(--epic)">Epic frames · drop Champion+</span><span class="sh-line"></span></div>
+  <div class="row">
+
+    <div class="cell">
+      <svg viewBox="0 -3 100 110" width="80" height="88" style="overflow:visible;filter:drop-shadow(0 0 8px #ff6020)">
+        <path d="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z" fill="none" stroke="#ff6020" stroke-width="3"/>
+        <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+        <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+        <g transform="translate(28,28)" fill="#ffc020"><path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/></g>
+      </svg>
+      <div class="cell-name">Fire Forged</div>
+      <div class="cell-rar rar-epic">Epic</div>
+    </div>
+
+    <div class="cell">
+      <svg viewBox="0 -3 100 110" width="80" height="88" style="overflow:visible;filter:drop-shadow(0 0 8px #dc3a50)">
+        <path d="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z" fill="none" stroke="#dc3a50" stroke-width="3"/>
+        <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+        <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+        <g transform="translate(28,28)" fill="#ffc020"><path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/></g>
+      </svg>
+      <div class="cell-name">Ruby Aura</div>
+      <div class="cell-rar rar-epic">Epic</div>
+    </div>
+
+    <div class="cell">
+      <svg viewBox="0 -3 100 110" width="80" height="88" style="overflow:visible;filter:drop-shadow(0 0 8px #a05adc)">
+        <path d="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z" fill="none" stroke="#a05adc" stroke-width="3"/>
+        <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+        <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+        <g transform="translate(28,28)" fill="#ffc020"><path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/></g>
+      </svg>
+      <div class="cell-name">Amethyst Veil</div>
+      <div class="cell-rar rar-epic">Epic</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ FRAMES LEGENDARY (2) — animated ═══════════════ -->
+<div class="section">
+  <div class="sh"><span style="color:var(--legend)">Legendary frames · animated · drop Légendaire only</span><span class="sh-line"></span></div>
+  <div class="row">
+
+    <div class="cell">
+      <svg viewBox="0 -3 100 110" width="80" height="88" style="overflow:visible;animation:cosmic-pulse 2.5s ease-in-out infinite">
+        <path d="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z" fill="none" stroke="url(#cosmic-gradient)" stroke-width="3"/>
+        <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+        <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+        <g transform="translate(28,28)" fill="#ffc020"><path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/></g>
+      </svg>
+      <div class="cell-name">Cosmic</div>
+      <div class="cell-rar rar-legend">Legendary</div>
+    </div>
+
+    <div class="cell">
+      <svg viewBox="0 -3 100 110" width="80" height="88" style="overflow:visible;animation:dragon-pulse 2.5s ease-in-out infinite">
+        <path d="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z" fill="none" stroke="url(#dragonbone-gradient)" stroke-width="3"/>
+        <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill="rgba(255,200,80,0.08)" stroke="#ffc020" stroke-width="1.5"/>
+        <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke="#ffc020" stroke-width="0.7" opacity="0.35"/>
+        <g transform="translate(28,28)" fill="#ffc020"><path d="M 22,4 L 28,16 L 38,16 L 30,24 L 34,36 L 22,28 L 10,36 L 14,24 L 6,16 L 16,16 Z"/></g>
+      </svg>
+      <div class="cell-name">Dragonbone</div>
+      <div class="cell-rar rar-legend">Legendary</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
