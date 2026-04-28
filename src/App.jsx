@@ -12581,9 +12581,10 @@ function Profile(p){
                 {modList.map(function(item){
                   var mult=Math.round(item.nextMult*100);
                   var hot=item.cnt>=1;
+                  var ico=item.m.icon;
                   return(<button key={item.m.id} onClick={function(){setBypassPick(item.m.id);}}
                     style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",textAlign:"left",border:"1px solid "+(hot?"rgba(255,158,61,.3)":"var(--bdr)"),background:hot?"rgba(255,158,61,.06)":"var(--bg2)",display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{fontSize:18}}>{item.m.icon}</span>
+                    <span style={{width:22,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{GAME_ICON_PATHS[ico]?<GIcon name={ico} size={20} color="var(--cyan)"/>:ico}</span>
                     <span style={{flex:1,fontSize:13,fontWeight:700,color:"var(--t1)"}}>{item.m.name}</span>
                     <span style={{fontSize:10,color:hot?"var(--orange)":"var(--t3)",fontWeight:700}}>{item.cnt} aujd · prochain {mult}%</span>
                   </button>);
@@ -12605,7 +12606,7 @@ function Profile(p){
         }
         return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
           <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
-            <div style={{fontSize:48,marginBottom:8}}>{pickedMod.icon}</div>
+            <div style={{marginBottom:8,height:48,display:"flex",alignItems:"center",justifyContent:"center",fontSize:40}}>{GAME_ICON_PATHS[pickedMod.icon]?<GIcon name={pickedMod.icon} size={44} color="var(--cyan)"/>:pickedMod.icon}</div>
             <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Armer Bypass sur <span style={{color:"var(--cyan)"}}>{pickedMod.name}</span> ?</h2>
             <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>Ta prochaine session de {pickedMod.name} ignorera le diminishing returns. L'effet se consomme automatiquement à la fin du round.</p>
             <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> Bypass après usage.</p>
