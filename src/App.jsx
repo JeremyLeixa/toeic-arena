@@ -751,8 +751,10 @@ function getDailyMission(u){
   }
   // Sort by priority descending, pick top
   candidates.sort(function(a,b){return b.priority-a.priority;});
-  // Add some variety: pick from top 3 using day seed
+  // Add some variety: pick from top 3 using day seed + reroll counter (so Daily Reroll
+  // tokens actually change the pick instead of re-selecting the same deterministic slot).
   var seed=0;var d=today();for(var j=0;j<d.length;j++)seed+=d.charCodeAt(j);
+  seed+=(u.mission&&u.mission.rerollCount)||0;
   var pick=candidates[seed%Math.min(3,candidates.length)];
   return{status:"new",actId:pick.mod.id,mod:pick.mod,reason:pick.reason};
 }
@@ -12468,8 +12470,13 @@ function Profile(p){
           var c=JSON.parse(JSON.stringify(u));
           var effectMsg="Token utilisé";
           if(tt==="daily_reroll"){
-            // Reset today's mission so getDailyMission() picks a new one
-            c.mission=Object.assign({},c.mission||{},{date:null,actId:null,done:false});
+            // Reset today's mission AND bump rerollCount so getDailyMission's seed shifts
+            // (otherwise the deterministic today-only seed re-picks the same module).
+            var prevMission=c.mission||{};
+            c.mission=Object.assign({},prevMission,{
+              date:null,actId:null,done:false,
+              rerollCount:((prevMission.rerollCount)||0)+1,
+            });
             effectMsg="🎲 Mission rerolled !";
           }
           p.setAvatar(c);
