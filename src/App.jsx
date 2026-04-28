@@ -3514,11 +3514,11 @@ function TokenContextCTA(p){
     setBusy(true);
     consumeToken(p.u.name,p.u.classCode||"visitor",p.tokenType,1).then(function(res){
       setBusy(false);setAsking(false);
-      if(!res.ok){setToast({err:true,msg:"Échec : "+(res.error||"unknown")});setTimeout(function(){setToast(null);},2400);return;}
+      if(!res.ok){setToast({err:true,msg:"Failed: "+(res.error||"unknown")});setTimeout(function(){setToast(null);},2400);return;}
       var c=JSON.parse(JSON.stringify(p.u));c[p.armField]=true;
       p.setUser(c);
       setQty(qty-1);
-      setToast({err:false,msg:icon+" "+(p.armedMsg||"Token armé")});
+      setToast({err:false,msg:icon+" "+(p.armedMsg||"Token armed")});
       setTimeout(function(){setToast(null);},2400);
     });
   }
@@ -3534,10 +3534,10 @@ function TokenContextCTA(p){
         <div style={{fontSize:48,marginBottom:12}}>{icon}</div>
         <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>{p.modalTitle}</h2>
         <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>{p.modalDesc}</p>
-        <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:color}}>{Math.max(0,qty-1)} / {cap}</strong> après usage.</p>
+        <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}><strong style={{color:color}}>{Math.max(0,qty-1)} / {cap}</strong> will remain after use.</p>
         <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-          <button onClick={function(){setAsking(false);}} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Annuler</button>
-          <button onClick={doUse} disabled={busy} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>{busy?"...":"Utiliser"}</button>
+          <button onClick={function(){setAsking(false);}} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Cancel</button>
+          <button onClick={doUse} disabled={busy} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>{busy?"...":"Use"}</button>
         </div>
       </div>
     </div>}
@@ -3547,21 +3547,21 @@ function TokenContextCTA(p){
 // Wrappers that fix the per-token copy.
 function BossResetCTA(p){
   return(<TokenContextCTA u={p.u} setUser={p.setUser} tokenType="boss_reset" armField="bossResetArmed"
-    headline="Boss Reset disponible" cardDesc="Bypasse le cooldown 24h pour ré-attaquer le boss maintenant."
-    modalTitle="Utiliser Boss Reset ?" modalDesc="Bypasse le cooldown 24h sur le Boss Test."
-    armedMsg="Boss Reset armé — l'arène est ouverte"/>);
+    headline="Boss Reset available" cardDesc="Bypass the 24h cooldown to re-enter the boss now."
+    modalTitle="Use Boss Reset?" modalDesc="Bypass the 24h cooldown on the Boss Test."
+    armedMsg="Boss Reset armed — arena is open"/>);
 }
 function EndlessResetCTA(p){
   return(<TokenContextCTA u={p.u} setUser={p.setUser} tokenType="endless_resurrect" armField="endlessResetArmed"
-    headline="Endless Resurrect disponible" cardDesc="Bypasse le cooldown 24h pour relancer un Endless run."
-    modalTitle="Utiliser Endless Resurrect ?" modalDesc="Bypasse le cooldown 24h sur l'Endless Arena."
-    armedMsg="Endless Resurrect armé — relance ton run"/>);
+    headline="Endless Resurrect available" cardDesc="Bypass the 24h cooldown to replay an Endless run."
+    modalTitle="Use Endless Resurrect?" modalDesc="Bypass the 24h cooldown on the Endless Arena."
+    armedMsg="Endless Resurrect armed — replay your run"/>);
 }
 function MockResetCTA(p){
   return(<TokenContextCTA u={p.u} setUser={p.setUser} tokenType="mock_reset" armField="mockResetArmed"
-    headline="Mock Reset disponible" cardDesc="Bypasse le cooldown 24h pour rejouer un Mock Test maintenant."
-    modalTitle="Utiliser Mock Reset ?" modalDesc="Bypasse le cooldown 24h sur le prochain Mock Test joué (n'importe lequel des 3)."
-    armedMsg="Mock Reset armé — choisis ton Mock"/>);
+    headline="Mock Reset available" cardDesc="Bypass the lock to replay a completed Mock Test now."
+    modalTitle="Use Mock Reset?" modalDesc="Unlocks the next Mock Test you play (any of the 3)."
+    armedMsg="Mock Reset armed — pick your Mock"/>);
 }
 
 // ─── TRAIN PAGE ───
@@ -3597,9 +3597,9 @@ function MockResetCTA(p){
       // V2 — Mocks lock permanently after completion, UNLESS Mock Reset is armed.
       // The token bypasses the lock for any of the 3 mocks ; mockDone clears the flag
       // after the run so a single token = one replay.
-      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armé":"");if(!p.u.mockResetArmed){items[0].lock=true;items[0].bg="var(--bg3)";}}
-      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armé":"");if(!p.u.mockResetArmed){items[1].lock=true;items[1].bg="var(--bg3)";}}
-      if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armé":"");if(!p.u.mockResetArmed){items[2].lock=true;items[2].bg="var(--bg3)";}}
+      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armed":"");if(!p.u.mockResetArmed){items[0].lock=true;items[0].bg="var(--bg3)";}}
+      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armed":"");if(!p.u.mockResetArmed){items[1].lock=true;items[1].bg="var(--bg3)";}}
+      if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armed":"");if(!p.u.mockResetArmed){items[2].lock=true;items[2].bg="var(--bg3)";}}
       return items;
     })()},
     {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"treasure-map",count:"5 tools",items:[
@@ -11857,7 +11857,7 @@ function UpgradeScreen(p){
 // to filter noise) and returns a personalized weakness paragraph. Used by the Insight
 // Token consume flow ; the result is persisted to u.insights for later review.
 function generateInsight(u){
-  if(!u||!u.moduleScores)return"Pas assez de données. Continue à t'entraîner et reviens plus tard.";
+  if(!u||!u.moduleScores)return"Not enough data yet. Keep training and come back later.";
   var weak=null,weakAcc=1.01;
   Object.keys(u.moduleScores).forEach(function(modId){
     var m=u.moduleScores[modId];
@@ -11866,17 +11866,17 @@ function generateInsight(u){
     if(acc<weakAcc){weakAcc=acc;weak={modId:modId,acc:acc,total:m.total,sessions:m.sessions||0};}
   });
   if(!weak){
-    return"Tu n'as pas encore assez de questions sur un module pour identifier un point faible (minimum 20 Q par module). Continue à varier les exercices et reviens utiliser ce token plus tard.";
+    return"Not enough questions on any single module yet to pinpoint a weak spot (need at least 20 Q per module). Keep mixing exercises and come back to spend this token later.";
   }
   var modMeta=MISSION_MODULES.find(function(m){return m.id===weak.modId;});
   var label=modMeta?modMeta.name:weak.modId;
   var pct=Math.round(weak.acc*100);
   var advice;
-  if(pct<40)advice="C'est ta zone la plus faible — vise 2-3 sessions ciblées cette semaine pour rattraper le retard.";
-  else if(pct<60)advice="Tu progresses, mais ce module garde de la marge. Une session par jour en focus pendant 3 jours et tu sentiras la différence.";
-  else if(pct<75)advice="Tu maîtrises la base, il reste à grappiller sur les pièges. Re-lit l'explication après chaque erreur.";
-  else advice="Tu n'as pas vraiment de gros point faible mesurable. Bascule sur des Mock Tests pour challenger un format plus dur.";
-  return"Ton point le plus faible : "+label+" — "+pct+"% de précision sur "+weak.total+" questions ("+weak.sessions+" sessions). "+advice;
+  if(pct<40)advice="This is your weakest area — aim for 2-3 targeted sessions this week to close the gap.";
+  else if(pct<60)advice="You're improving, but this module still has room. One focused session a day for 3 days and you'll feel the difference.";
+  else if(pct<75)advice="You know the basics, the leftovers are pure traps. Re-read the explanation after every miss.";
+  else advice="No real measurable weakness here. Move to Mock Tests for a harder format challenge.";
+  return"Weakest spot: "+label+" — "+pct+"% accuracy on "+weak.total+" questions ("+weak.sessions+" sessions). "+advice;
 }
 
 // V2 step 5 — Conversions sub-view : trade duplicate cosmetics for tokens, or 5 non-premium
@@ -11901,6 +11901,8 @@ function ConversionsView(p){
   useEffect(function(){refresh();},[]);
 
   function showToast(t){setToast(t);setTimeout(function(){setToast(null);},2400);}
+  // i18n hint : Conversions UI in EN per app policy ; rarity/info labels delegated
+  // to TOKEN_TYPES.name and the rest are short imperatives.
 
   // Group dups : map "type:id" → count
   var dupGroups=[];
@@ -11945,11 +11947,11 @@ function ConversionsView(p){
     setBusy(true);
     var res=await convertCosmeticDups(u.name,u.classCode||"visitor",group.type,group.id,tokens||{});
     setBusy(false);
-    if(!res.ok){showToast({err:true,msg:"Échec : "+(res.error||"unknown")});return;}
+    if(!res.ok){showToast({err:true,msg:"Failed: "+(res.error||"unknown")});return;}
     if(res.xpFallback){
       // All tokens capped → grant XP to user profile directly
       var c=JSON.parse(JSON.stringify(u));c.xp+=res.xpFallback;c.weeklyXp+=res.xpFallback;p.setAvatar(c);
-      showToast({err:false,msg:"+"+res.xpFallback+" XP (tokens au max)"});
+      showToast({err:false,msg:"+"+res.xpFallback+" XP (tokens maxed)"});
     }else{
       var ti=TOKEN_TYPES[res.token];
       showToast({err:false,msg:"+1 "+(ti?ti.name:res.token)});
@@ -11962,8 +11964,8 @@ function ConversionsView(p){
     var res=await convertTokensToPremium(u.name,u.classCode||"visitor",item.type,tokens||{});
     setBusy(false);
     if(!res.ok){
-      var msgMap={all_premium_capped:"Tous tes tokens premium sont au max",not_enough_tokens:"Pas assez de tokens"};
-      showToast({err:true,msg:msgMap[res.error]||"Échec : "+res.error});return;
+      var msgMap={all_premium_capped:"All premium tokens maxed",not_enough_tokens:"Not enough tokens"};
+      showToast({err:true,msg:msgMap[res.error]||"Failed: "+res.error});return;
     }
     var ti=TOKEN_TYPES[res.token];
     showToast({err:false,msg:"+1 "+(ti?ti.name:res.token)+" (premium)"});
@@ -11977,18 +11979,18 @@ function ConversionsView(p){
       <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Conversions</h1>
     </div>
     <p style={{fontSize:12,color:"var(--t2)",marginTop:0,marginBottom:24,lineHeight:1.5}}>
-      Anti-frustration : transforme tes doublons en tokens utiles, ou 5 tokens en un token premium.
+      Anti-frustration : trade your duplicates for useful tokens, or 5 tokens for a premium one.
     </p>
 
     {loading&&<p style={{color:"var(--t3)",textAlign:"center",padding:40}}>Loading...</p>}
 
     {!loading&&<>
       {/* ── 3 dups → 1 token ── */}
-      <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Cosmétiques en double · 3 doublons → 1 token</div>
-      <div style={{fontSize:11,color:"var(--t3)",marginBottom:14,lineHeight:1.5}}>Tu gardes toujours au moins 1 exemplaire. Apparaît seulement quand tu as ≥ 4 copies du même item.</div>
+      <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Duplicate cosmetics · 3 dups → 1 token</div>
+      <div style={{fontSize:11,color:"var(--t3)",marginBottom:14,lineHeight:1.5}}>You always keep at least 1 copy. Shown only when you have ≥ 4 copies of the same item.</div>
       {dupGroups.length===0?(
         <div className="crd" style={{padding:16,textAlign:"center",marginBottom:32}}>
-          <p style={{color:"var(--t3)",fontSize:12,margin:0,lineHeight:1.5}}>Aucun doublon échangeable pour le moment.</p>
+          <p style={{color:"var(--t3)",fontSize:12,margin:0,lineHeight:1.5}}>No tradeable duplicates yet.</p>
         </div>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:32}}>
@@ -12015,10 +12017,10 @@ function ConversionsView(p){
       )}
 
       {/* ── 5 tokens → 1 premium ── */}
-      <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Tokens non-premium · 5 → 1 premium</div>
+      <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Non-premium tokens · 5 → 1 premium</div>
       {convertibleTokens.length===0?(
         <div className="crd" style={{padding:16,textAlign:"center"}}>
-          <p style={{color:"var(--t3)",fontSize:12,margin:0,lineHeight:1.5}}>Pas assez de tokens. Empile au moins 5 du même type pour les convertir.</p>
+          <p style={{color:"var(--t3)",fontSize:12,margin:0,lineHeight:1.5}}>Not enough tokens yet. Stack at least 5 of the same type to convert.</p>
         </div>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -12455,10 +12457,10 @@ function Profile(p){
           // V2 — which tokens are usable from the Collection (others are in-context or passive)
           var COLLECTION_ACTIONABLE={daily_reroll:true,diminishing_bypass:true,insight_token:true};
           var IN_CONTEXT_HINT={
-            mock_reset:"S'utilise sur l'écran Mock Test verrouillé",
-            boss_reset:"S'utilise sur l'écran Boss Test verrouillé",
-            endless_resurrect:"S'utilise pendant l'Endless Arena",
-            streak_shield:"Automatique — protège ton streak en cas d'absence d'1 jour",
+            mock_reset:"Used on the locked Mock Test screen",
+            boss_reset:"Used on the locked Boss Test screen",
+            endless_resurrect:"Used during the Endless Arena",
+            streak_shield:"Automatic — protects your streak on a 1-day miss",
           };
           function tokenCard(tt,isPremium){
             var info=TOKEN_TYPES[tt];var qty=invTokens[tt]||0;var cap=info.cap||1;var pct=Math.min(100,Math.round(qty/cap*100));
@@ -12468,11 +12470,11 @@ function Profile(p){
             // V2 — surface armed flags on each token's card so the user remembers what's queued
             if(tt==="diminishing_bypass"&&u.bypassArmedModule){
               var armedMod=MISSION_MODULES.find(function(m){return m.id===u.bypassArmedModule;});
-              hint="🔓 Armé sur "+(armedMod?armedMod.name:u.bypassArmedModule)+" — utilisé au prochain round";
+              hint="🔓 Armed on "+(armedMod?armedMod.name:u.bypassArmedModule)+" — burns next round";
             }
-            else if(tt==="mock_reset"&&u.mockResetArmed){hint="🎟️ Armé — bypass cooldown au prochain Mock joué";}
-            else if(tt==="boss_reset"&&u.bossResetArmed){hint="🐲 Armé — entre dans l'arène Boss";}
-            else if(tt==="endless_resurrect"&&u.endlessResetArmed){hint="💎 Armé — relance Endless";}
+            else if(tt==="mock_reset"&&u.mockResetArmed){hint="🎟️ Armed — bypass on next Mock played";}
+            else if(tt==="boss_reset"&&u.bossResetArmed){hint="🐲 Armed — enter the Boss arena";}
+            else if(tt==="endless_resurrect"&&u.endlessResetArmed){hint="💎 Armed — replay Endless";}
             var bg=owned?(isPremium?"rgba(255,192,32,.05)":"rgba(var(--cx),.04)"):(isPremium?"rgba(255,192,32,.02)":"var(--bg3)");
             var bdr=owned?(isPremium?"rgba(255,192,32,.25)":"var(--bdr)"):(isPremium?"rgba(255,192,32,.1)":"var(--bdr)");
             var fill=isPremium?"#ffc020":"var(--cyan)";
@@ -12493,10 +12495,10 @@ function Profile(p){
               </div>
             </div>);
           }
-          return secBanner("tokens","Consommables",totalOwned,totalCap,
+          return secBanner("tokens","Consumables",totalOwned,totalCap,
             <>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                <span style={{fontSize:10,color:"var(--t3)",fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Tactiques</span>
+                <span style={{fontSize:10,color:"var(--t3)",fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Tactical</span>
                 <span style={{flex:1,height:1,background:"var(--bdr)"}}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10,marginBottom:18}}>
@@ -12541,7 +12543,7 @@ function Profile(p){
           <span style={{fontSize:24,flexShrink:0}}>{"⚖️"}</span>
           <div style={{flex:1,minWidth:0}}>
             <div className="out" style={{fontWeight:800,fontSize:14,color:"#ffc020"}}>Conversions</div>
-            <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>Doublons → tokens · 5 tokens → premium</div>
+            <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>Dups → tokens · 5 tokens → premium</div>
           </div>
           <span style={{fontSize:18,color:"var(--t3)"}}>{"›"}</span>
         </button>
@@ -12554,7 +12556,7 @@ function Profile(p){
       function applyConsume(tt,onSuccess){
         consumeToken(u.name,u.classCode||"visitor",tt,1).then(function(res){
           if(!res.ok){
-            setTokenToast({err:true,msg:"Échec : "+(res.error||"unknown")});
+            setTokenToast({err:true,msg:"Failed: "+(res.error||"unknown")});
             setTimeout(function(){setTokenToast(null);},2400);
             closeAll();return;
           }
@@ -12570,19 +12572,19 @@ function Profile(p){
             var prevMission=c.mission||{};
             c.mission=Object.assign({},prevMission,{date:null,actId:null,done:false,rerollCount:((prevMission.rerollCount)||0)+1});
             p.setAvatar(c);
-            setTokenToast({err:false,msg:"🎲 Mission rerolled !"});setTimeout(function(){setTokenToast(null);},2400);
+            setTokenToast({err:false,msg:"🎲 Mission rerolled!"});setTimeout(function(){setTokenToast(null);},2400);
             closeAll();
           });
         }
         return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
           <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
             <div style={{fontSize:48,marginBottom:12}}>{info.icon}</div>
-            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Utiliser {info.name} ?</h2>
+            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Use {info.name}?</h2>
             <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>{info.desc}</p>
-            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> après usage.</p>
+            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}><strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> will remain after use.</p>
             <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-              <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Annuler</button>
-              <button onClick={doDailyReroll} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Utiliser</button>
+              <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Cancel</button>
+              <button onClick={doDailyReroll} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Use</button>
             </div>
           </div>
         </div>);
@@ -12601,8 +12603,8 @@ function Profile(p){
             <div className="crd" style={{maxWidth:380,maxHeight:"80vh",overflowY:"auto",padding:20,border:"1px solid var(--bdr)"}}>
               <div style={{textAlign:"center",marginBottom:12}}>
                 <div style={{fontSize:48,marginBottom:8}}>{info.icon}</div>
-                <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:6}}>Bypass Token — choisis un module</h2>
-                <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>Le module choisi récupérera <strong style={{color:"var(--cyan)"}}>100% de l'XP</strong> à sa prochaine session, indépendamment du diminishing.</p>
+                <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:6}}>Bypass Token — pick a module</h2>
+                <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>The chosen module will earn <strong style={{color:"var(--cyan)"}}>100% XP</strong> on its next session, ignoring diminishing returns.</p>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
                 {modList.map(function(item){
@@ -12613,11 +12615,11 @@ function Profile(p){
                     style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",textAlign:"left",border:"1px solid "+(hot?"rgba(255,158,61,.3)":"var(--bdr)"),background:hot?"rgba(255,158,61,.06)":"var(--bg2)",display:"flex",alignItems:"center",gap:10}}>
                     <span style={{width:22,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{GAME_ICON_PATHS[ico]?<GIcon name={ico} size={20} color="var(--cyan)"/>:ico}</span>
                     <span style={{flex:1,fontSize:13,fontWeight:700,color:"var(--t1)"}}>{item.m.name}</span>
-                    <span style={{fontSize:10,color:hot?"var(--orange)":"var(--t3)",fontWeight:700}}>{item.cnt} aujd · prochain {mult}%</span>
+                    <span style={{fontSize:10,color:hot?"var(--orange)":"var(--t3)",fontWeight:700}}>{item.cnt} today · next {mult}%</span>
                   </button>);
                 })}
               </div>
-              <button onClick={closeAll} className="btn2" style={{width:"100%",fontSize:13,padding:"10px 16px"}}>Annuler</button>
+              <button onClick={closeAll} className="btn2" style={{width:"100%",fontSize:13,padding:"10px 16px"}}>Cancel</button>
             </div>
           </div>);
         }
@@ -12627,19 +12629,19 @@ function Profile(p){
           applyConsume("diminishing_bypass",function(){
             var c=JSON.parse(JSON.stringify(u));c.bypassArmedModule=bypassPick;
             p.setAvatar(c);
-            setTokenToast({err:false,msg:"🔓 Bypass armé sur "+pickedMod.name});setTimeout(function(){setTokenToast(null);},2800);
+            setTokenToast({err:false,msg:"🔓 Bypass armed on "+pickedMod.name});setTimeout(function(){setTokenToast(null);},2800);
             closeAll();
           });
         }
         return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
           <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
             <div style={{marginBottom:8,height:48,display:"flex",alignItems:"center",justifyContent:"center",fontSize:40}}>{GAME_ICON_PATHS[pickedMod.icon]?<GIcon name={pickedMod.icon} size={44} color="var(--cyan)"/>:pickedMod.icon}</div>
-            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Armer Bypass sur <span style={{color:"var(--cyan)"}}>{pickedMod.name}</span> ?</h2>
-            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>Ta prochaine session de {pickedMod.name} ignorera le diminishing returns. L'effet se consomme automatiquement à la fin du round.</p>
-            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> Bypass après usage.</p>
+            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Arm Bypass on <span style={{color:"var(--cyan)"}}>{pickedMod.name}</span>?</h2>
+            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>Your next {pickedMod.name} session will ignore diminishing returns. Burns automatically at the end of the round.</p>
+            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}><strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> Bypass tokens will remain after use.</p>
             <div style={{display:"flex",gap:10,justifyContent:"center"}}>
               <button onClick={function(){setBypassPick(null);}} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>{"← Module"}</button>
-              <button onClick={doBypassArm} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Armer</button>
+              <button onClick={doBypassArm} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Arm</button>
             </div>
           </div>
         </div>);
@@ -12651,9 +12653,9 @@ function Profile(p){
           return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
             <div className="crd" style={{maxWidth:380,padding:24,border:"1px solid rgba(255,192,32,.3)",background:"linear-gradient(135deg,rgba(255,192,32,.06),rgba(160,90,220,.04))"}}>
               <div style={{fontSize:48,marginBottom:12,textAlign:"center"}}>{"🔮"}</div>
-              <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:14,textAlign:"center",color:"var(--gold)"}}>Insight personnalisé</h2>
+              <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:14,textAlign:"center",color:"var(--gold)"}}>Personal Insight</h2>
               <p style={{fontSize:13,color:"var(--t1)",marginBottom:20,lineHeight:1.7}}>{insightResult}</p>
-              <button onClick={closeAll} className="btn1" style={{width:"100%",fontSize:13,padding:"10px 16px"}}>Compris</button>
+              <button onClick={closeAll} className="btn1" style={{width:"100%",fontSize:13,padding:"10px 16px"}}>Got it</button>
             </div>
           </div>);
         }
@@ -12673,12 +12675,12 @@ function Profile(p){
         return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
           <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
             <div style={{fontSize:48,marginBottom:12}}>{info.icon}</div>
-            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Utiliser {info.name} ?</h2>
+            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Use {info.name}?</h2>
             <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>{info.desc}</p>
-            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:"var(--gold)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> après usage.</p>
+            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}><strong style={{color:"var(--gold)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> will remain after use.</p>
             <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-              <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Annuler</button>
-              <button onClick={doInsight} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Révéler</button>
+              <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Cancel</button>
+              <button onClick={doInsight} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Reveal</button>
             </div>
           </div>
         </div>);
@@ -12709,13 +12711,13 @@ function Profile(p){
         </div>
         <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:8}}>
           <button onClick={function(){fileRef.current.click();}} className="btn1"
-            style={{fontSize:12,padding:"8px 18px"}}>📷 Importer une photo</button>
+            style={{fontSize:12,padding:"8px 18px"}}>📷 Import a photo</button>
           {isPhoto&&<button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar="⚔️";p.setAvatar(c);}}
-            className="btn2" style={{fontSize:12,padding:"8px 18px",color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>✕ Supprimer</button>}
+            className="btn2" style={{fontSize:12,padding:"8px 18px",color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>✕ Remove</button>}
         </div>
         <div style={{fontSize:11,color:"var(--t3)"}}>Photo resized · stored locally</div>
       </div>
-      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>ou choisis un emoji</div>
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>or pick an emoji</div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
         {["⚔️","🧙","🦊","🐉","🎯","🏆","🦅","💎","🔥","🌟","🎭","🐺","🦁","🎪","👤","🧠","🎲","🦉","🐲","🗡️","🏴‍☠️","⚡","🦈","🌀","🎸"].map(function(av){
           var sel=!isPhoto&&av===(u.avatar||"⚔️");
@@ -12736,11 +12738,11 @@ function Profile(p){
             {"🗝️"}</button>);
         })()}
       </div>
-      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:16,fontStyle:"italic"}}>🗝️ Game Master — avatar exclusif</div>}
+      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:16,fontStyle:"italic"}}>🗝️ Game Master — exclusive avatar</div>}
 
       {/* Chest avatars — deduped by reward_id, ×N badge when duplicate */}
       {!invLoading&&styleAvatars.length>0&&<>
-        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Avatars coffres</div>
+        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Chest avatars</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(72px,1fr))",gap:8,marginBottom:20}}>
           {(function(){var d={};styleAvatars.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
             var r=grp.row;var av=AVATARS[r.reward_id];if(!av)return null;
@@ -12764,7 +12766,7 @@ function Profile(p){
       {/* ── SKINS ── */}
       <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Skin</div>
       {invLoading&&<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>}
-      {!invLoading&&styleSkins.length===0&&<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>Aucun skin. Ouvre des coffres Rare+ pour en trouver !</p></div>}
+      {!invLoading&&styleSkins.length===0&&<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>No skin yet. Open Rare+ chests to find some!</p></div>}
       {!invLoading&&styleSkins.length>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:8,marginBottom:12}}>
         {(function(){var d={};styleSkins.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
           var r=grp.row;var sk=SKINS[r.reward_id];if(!sk)return null;
@@ -12784,14 +12786,14 @@ function Profile(p){
         })}
       </div>}
       {u.equippedSkin&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedSkin=null;p.setAvatar(c);}}
-        style={{width:"100%",marginBottom:20,fontSize:12}}>Retirer le skin actuel</button>}
+        style={{width:"100%",marginBottom:20,fontSize:12}}>Remove current skin</button>}
 
       {/* ── FRAME (V2) ── */}
       <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Frame</div>
       {(function(){
         var styleFrames=invData?invData.filter(function(r){return r.reward_type==="frame";}):[];
         if(invLoading)return(<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>);
-        if(styleFrames.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>Aucun frame. Ouvre des coffres Guerrier+ pour en trouver !</p></div>);
+        if(styleFrames.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>No frame yet. Open Warrior+ chests to find some!</p></div>);
         return(<>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:10,marginBottom:12}}>
             {(function(){var d={};styleFrames.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
@@ -12813,7 +12815,7 @@ function Profile(p){
             })}
           </div>
           {u.equippedFrame&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedFrame=null;p.setAvatar(c);}}
-            style={{width:"100%",marginBottom:20,fontSize:12}}>Retirer le frame actuel</button>}
+            style={{width:"100%",marginBottom:20,fontSize:12}}>Remove current frame</button>}
         </>);
       })()}
 
@@ -12822,7 +12824,7 @@ function Profile(p){
       {(function(){
         var styleTitles=invData?invData.filter(function(r){return r.reward_type==="title";}):[];
         if(invLoading)return(<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>);
-        if(styleTitles.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>Aucun titre. Ouvre des coffres Guerrier+ pour en débloquer !</p></div>);
+        if(styleTitles.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>No title yet. Open Warrior+ chests to unlock some!</p></div>);
         return(<>
           <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
             {(function(){var d={};styleTitles.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
@@ -12843,7 +12845,7 @@ function Profile(p){
             })}
           </div>
           {u.equippedTitle&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedTitle=null;p.setAvatar(c);}}
-            style={{width:"100%",marginBottom:20,fontSize:12}}>Retirer le titre actuel</button>}
+            style={{width:"100%",marginBottom:20,fontSize:12}}>Remove current title</button>}
         </>);
       })()}
 
@@ -12851,7 +12853,7 @@ function Profile(p){
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0"}}>
         <div>
           <div className="out" style={{fontWeight:700,fontSize:13}}>Mode</div>
-          <div style={{fontSize:11,color:"var(--t2)"}}>{u.theme==="light"?"Clair":"Sombre"}</div>
+          <div style={{fontSize:11,color:"var(--t2)"}}>{u.theme==="light"?"Light":"Dark"}</div>
         </div>
         {Toggle(u.theme==="light",function(){var c=JSON.parse(JSON.stringify(u));c.theme=c.theme==="light"?"dark":"light";p.setAvatar(c);})}
       </div>
