@@ -4976,7 +4976,7 @@ function StratCards(p){
         var tipCount=s.tips.length;
         return(<div key={idx} className="crd" style={{padding:0,overflow:"hidden",borderColor:isOpen?"var(--cyan)44":"var(--bdr)",transition:"all .3s"}}>
           <button onClick={function(){sO(isOpen?null:idx);}} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
-            <div style={{fontSize:26,flexShrink:0}}>{s.icon}</div>
+            <div style={{flexShrink:0,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{GAME_ICON_PATHS[s.icon]?<GIcon name={s.icon} size={28} color={s.section==="Listening"?"#7fb8e8":s.section==="Reading"?"#c4587a":"var(--cyan)"}/>:s.icon}</div>
             <div style={{flex:1}}>
               <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)"}}>{s.part} {"—"} {s.title}</div>
               <div style={{display:"flex",gap:8,marginTop:3}}>
