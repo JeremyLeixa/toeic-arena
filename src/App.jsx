@@ -9073,7 +9073,8 @@ function getTriggerLabel(trigger){
     return"Promoted to "+lg.charAt(0).toUpperCase()+lg.slice(1)+" League";
   }
   // V2 chest redesign — 5 recurring sources
-  if(trigger.indexOf("daily_login_")===0)return"Daily login reward";
+  if(trigger.indexOf("daily_login_")===0)return"Daily login reward"; // legacy V2 step 2, kept for old chest_log rows
+  if(trigger.indexOf("streak_login_")===0)return"3-day streak login";
   if(trigger.indexOf("weekly_toeic_")===0)return"+25 TOEIC pts this week";
   if(trigger.indexOf("podium_")===0)return"League podium — top 3";
   if(trigger.indexOf("mission_streak_")===0){
@@ -13464,11 +13465,15 @@ useEffect(function(){
     if(u.classCode==="visitor")return;
     var td=today(),wkId=weekId();
     var ref=v2ChestRef.current;
-    // Daily Login (1×/day, requires active streak)
+    // 3-day streak Login (palier tous les 3 jours, reset si streak break).
+    // Trigger ID inclut today() → si l'user atteint à nouveau un palier multiple de 3
+    // après un break, c'est un nouveau row chest_log (date différente, donc unique).
+    // Le palier classique streak_7 / streak_30 / streak_100 reste séparé.
     if(ref.lastDate!==td){
       ref.lastDate=td;
-      if((u.streak||0)>=1){
-        grantChestLocal("daily_login_"+td,"novice");
+      var s=u.streak||0;
+      if(s>=3&&s%3===0){
+        grantChestLocal("streak_login_"+td,"novice");
       }
     }
     // Weekly TOEIC Progression + League Podium (1×/week, both check previous week)
