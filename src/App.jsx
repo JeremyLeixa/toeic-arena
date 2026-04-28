@@ -11212,10 +11212,11 @@ function computeRankings(students,cw,weeks){
     });
   });
 
-  // Convert to sorted array
+  // Convert to sorted array — preserve frame_id / title_id so the League rows can
+  // render the rival's equipped cosmetics (V2.4 chest redesign).
   var result=Object.keys(pointsMap).map(function(name){
     var s=students.find(function(st){return st.name===name;});
-    return{name:name,pts:pointsMap[name],avatar:s?s.avatar||"⚔️":"⚔️"};
+    return{name:name,pts:pointsMap[name],avatar:s?s.avatar||"⚔️":"⚔️",frameId:s?s.frame_id||null:null,titleId:s?s.title_id||null:null};
   });
   result.sort(function(a,b){return b.pts-a.pts;});
   return result;
@@ -11345,26 +11346,26 @@ function loadProgressionData(){
 }
 
 useEffect(function(){
-  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan').eq('class_code',leagueGroup).order('weekly_xp',{ascending:false}).limit(150)
+  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan,frame_id,title_id').eq('class_code',leagueGroup).order('weekly_xp',{ascending:false}).limit(150)
     .then(function(res){if(res.data){setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));setProgressionData([]);}});
 },[u.weeklyXp,leagueGroup]);
 
-// Auto-refresh leaderboard every 30s when on League tab
+// Auto-refresh leaderboard every 3 min when on League tab
 useEffect(function(){
   var iv=setInterval(function(){
     // IMPORTANT : garder le même SELECT que la fetch initiale (ligne ~11028)
-    // Sinon chaque tick de 3 min écrase `rivals` SANS module_scores ni battle_scan,
-    // ce qui fait retomber tout le monde à baseline 200 / currentToeic 200 dans
-    // l'onglet Progrès. Régression du 2026-04-23.
-    supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan').eq('class_code',leagueGroup).limit(150)
+    // Sinon chaque tick écrase `rivals` SANS module_scores ni battle_scan, ce qui
+    // fait retomber tout le monde à baseline 200 / currentToeic 200 dans l'onglet
+    // Progrès. Régression du 2026-04-23. frame_id/title_id ajoutés 2026-04-28.
+    supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan,frame_id,title_id').eq('class_code',leagueGroup).limit(150)
       .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
   },180000);
   return function(){clearInterval(iv);};
 },[leagueGroup]);
 
 // ── WEEK VIEW data ──
-var weekAll=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name,avatar:r.avatar||"⚔️",xp:(r.weekly_xp||0),inactive:r.week_id!==cw,me:r.name===u.name};});
-if(u.name!=="Teacher"&&!weekAll.find(function(a){return a.me;}))weekAll.push({name:u.name,avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true});
+var weekAll=rivals.map(function(r){var xp=r.week_id===cw?(r.weekly_xp||0):0;return{name:r.name,avatar:r.avatar||"⚔️",xp:(r.weekly_xp||0),inactive:r.week_id!==cw,me:r.name===u.name,frameId:r.frame_id||null,titleId:r.title_id||null};});
+if(u.name!=="Teacher"&&!weekAll.find(function(a){return a.me;}))weekAll.push({name:u.name,avatar:u.avatar||"⚔️",xp:u.weeklyXp,me:true,frameId:u.equippedFrame||null,titleId:u.equippedTitle||null});
 
 weekAll.sort(function(a,b){
   if(a.inactive!==b.inactive)return a.inactive?1:-1; // actifs d'abord
@@ -11394,14 +11395,19 @@ var countdown=curSeason?getSeasonEndCountdown(curSeason):"";
 
 // ── Render helpers ──
 function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=props.unit||"XP",bonus=props.bonus||null,bonusColor=props.bonusColor||"var(--gold)";
+  // V2.4 — render rival's equipped frame around the avatar + title under the name.
+  // Bots (LEAGUES competitors) and pre-V2 students simply lack frameId/titleId so
+  // renderAv falls back to plain avatar and the title line is skipped.
+  var titleData=pl.titleId&&TITLES[pl.titleId];
   return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(var(--cx),.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12}}>
     <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?(rank===1?"🥇":rank===2?"🥈":"🥉"):rank}</div>
-    <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
-    <div style={{flex:1}}>
-      <div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)"}}>{isMe?pl.name+" (Toi)":pl.name}</div>
+    <div style={{width:32,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,28,pl.frameId)}</div>
+    <div style={{flex:1,minWidth:0}}>
+      <div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{isMe?pl.name+" (Toi)":pl.name}</div>
+      {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
       {bonus&&<div style={{fontSize:10,color:bonusColor,fontWeight:700,marginTop:2}}>{bonus}</div>}
     </div>
-    <div className="out" style={{fontWeight:700,fontSize:14,color:isMe?"var(--cyan)":"var(--t2)"}}>{pl.pts!==undefined?pl.pts:pl.xp} {unit}</div>
+    <div className="out" style={{fontWeight:700,fontSize:14,color:isMe?"var(--cyan)":"var(--t2)",flexShrink:0}}>{pl.pts!==undefined?pl.pts:pl.xp} {unit}</div>
   </div>);
 }
 
