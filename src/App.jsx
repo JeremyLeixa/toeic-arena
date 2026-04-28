@@ -4963,11 +4963,14 @@ function StratCards(p){
       <span style={{fontSize:13,color:"var(--t2)",marginLeft:6}}>expert strategies across all TOEIC Parts</span></div>
 
     <div style={{display:"flex",gap:8,marginBottom:16}}>
-      {[{id:"all",l:"All"},{id:"Listening",l:"👂 Listening"},{id:"Reading",l:"📖 Reading"}].map(function(f){
-        var act=filter===f.id;return(
+      {[{id:"all",l:"All",i:null},{id:"Listening",l:"Listening",i:"ringing-bell"},{id:"Reading",l:"Reading",i:"book-aura"}].map(function(f){
+        var act=filter===f.id;
+        var col=act?"var(--cyan)":"var(--t3)";
+        return(
         <button key={f.id} onClick={function(){sF(f.id);sO(null);}}
-          style={{flex:1,padding:"8px 4px",borderRadius:10,border:act?"1px solid var(--cyan)":"1px solid var(--bdr)",background:act?"rgba(var(--cx),.1)":"var(--bg2)",cursor:"pointer"}}>
-          <span className="out" style={{fontSize:12,fontWeight:act?700:500,color:act?"var(--cyan)":"var(--t3)"}}>{f.l}</span></button>);})}
+          style={{flex:1,padding:"8px 4px",borderRadius:10,border:act?"1px solid var(--cyan)":"1px solid var(--bdr)",background:act?"rgba(var(--cx),.1)":"var(--bg2)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          {f.i&&GAME_ICON_PATHS[f.i]&&<GIcon name={f.i} size={14} color={col}/>}
+          <span className="out" style={{fontSize:12,fontWeight:act?700:500,color:col}}>{f.l}</span></button>);})}
     </div>
 
     <div style={{display:"flex",flexDirection:"column",gap:10}}>

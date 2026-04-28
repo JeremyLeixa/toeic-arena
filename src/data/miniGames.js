@@ -523,7 +523,7 @@ export var FALSE_FRIENDS = [
 
 // ─── STRATEGY CARDS DATA (54 strategies) ───
 export var STRATEGIES = [
-  {part:"Part 1",title:"Photographs",qs:6,icon:"eye-target",section:"Listening",
+  {part:"Part 1",title:"Photographs",qs:6,icon:"spyglass",section:"Listening",
     points:"Easy 6 points — don't lose them!",
     tips:[
       {t:"Scan before you listen",d:"During instructions, identify WHO is in the photo, WHERE they are, and WHAT they're doing. Formulate a simple sentence mentally."},
@@ -568,7 +568,7 @@ export var STRATEGIES = [
       {t:"Note numbers, dates, times mentally",d:"'The event starts at 3, not 2 as originally planned.' Correct = 3, trap = 2. The TOEIC loves changed details."},
       {t:"Paraphrases, not exact words",d:"'What is mentioned about...?' The correct answer REPHRASES the info. The exact words from the audio are usually in the wrong answer."},
   ]},
-  {part:"Part 5",title:"Incomplete Sentences",qs:30,icon:"quill-ink",section:"Reading",
+  {part:"Part 5",title:"Incomplete Sentences",qs:30,icon:"scroll-quill",section:"Reading",
     points:"30 points — 10 min max. Fast pattern recognition.",
     tips:[
       {t:"Look at OPTIONS first, not the sentence",d:"4 words from same family → Word Form. 4 different words → Vocabulary. 4 grammar words → Grammar. This determines your approach."},
@@ -578,7 +578,7 @@ export var STRATEGIES = [
       {t:"Circle time markers mentally",d:"Since, for, ago, last, next, already, yet, by, every, currently, right now — they dictate the tense."},
       {t:"Connector grammar check",d:"Blank + noun → preposition (despite, due to). Blank + clause → conjunction (although, because). New sentence → adverb (however, therefore)."},
   ]},
-  {part:"Part 6",title:"Text Completion",qs:16,icon:"scroll-unfurled",section:"Reading",
+  {part:"Part 6",title:"Text Completion",qs:16,icon:"stone-tablet",section:"Reading",
     points:"16 points — bridge between grammar and reading.",
     tips:[
       {t:"Read the ENTIRE text first",d:"Unlike Part 5, context is crucial. Spend 60 seconds reading the full text, THEN answer the 4 questions."},
@@ -588,7 +588,7 @@ export var STRATEGIES = [
       {t:"Verb tense: stay consistent",d:"If the text is in past tense (report), blanks will be past. Announcement about future → blanks in future."},
       {t:"Check pronoun referents",d:"For sentence insertion: does 'this' or 'it' in the inserted sentence have a clear antecedent in the previous sentence?"},
   ]},
-  {part:"Part 7",title:"Reading Comprehension",qs:54,icon:"bookmarklet",section:"Reading",
+  {part:"Part 7",title:"Reading Comprehension",qs:54,icon:"spell-book",section:"Reading",
     points:"54 points — the biggest section. Time > perfect understanding.",
     tips:[
       {t:"Questions FIRST, then scan",d:"Read questions before the text. You're searching for specific info, not reading a novel."},
@@ -601,7 +601,7 @@ export var STRATEGIES = [
       {t:"Time management is ruthless",d:"Stuck on a hard text? Answer the easy Qs (purpose, detail), guess the inference Qs. 3/5 beats 0/5."},
       {t:"Singles first, triples last",d:"Single passages = fastest points/minute ratio. Triples take longer for the same number of points."},
   ]},
-  {part:"General",title:"Cross-Part Tips",qs:0,icon:"crossed-swords",section:"Both",
+  {part:"General",title:"Cross-Part Tips",qs:0,icon:"swords-emblem",section:"Both",
     points:"These apply to EVERY section of the TOEIC.",
     tips:[
       {t:"Never leave a blank",d:"No penalty for wrong answers. Random guess = 25% chance. Blank = 0%. Always fill something in."},
