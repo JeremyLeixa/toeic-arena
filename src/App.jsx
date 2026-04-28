@@ -12467,6 +12467,21 @@ function Profile(p){
             </div>
           );
         })()}
+
+        {/* V2 step 5 — Conversions entry, moved into the Collection (was on Profile home).
+            Placed after all banners so it sits "at the end of the catalog" — natural
+            destination once the user has spotted dups via the ×N badges above. */}
+        <button onClick={function(){setView("conversions");}} className="crd"
+          style={{width:"100%",padding:"12px 16px",marginTop:14,textAlign:"left",cursor:"pointer",
+            background:"linear-gradient(135deg,rgba(255,192,32,.08),rgba(220,58,80,.05))",
+            border:"1px solid rgba(255,192,32,.25)",display:"flex",alignItems:"center",gap:12}}>
+          <span style={{fontSize:24,flexShrink:0}}>{"⚖️"}</span>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="out" style={{fontWeight:800,fontSize:14,color:"#ffc020"}}>Conversions</div>
+            <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>Doublons → tokens · 5 tokens → premium</div>
+          </div>
+          <span style={{fontSize:18,color:"var(--t3)"}}>{"›"}</span>
+        </button>
       </>}
     </div>
     {/* V2 — Confirm modal for actionable tokens (Daily Reroll for now) */}
@@ -12867,18 +12882,24 @@ function Profile(p){
         </button>
       </div>
 
-      {/* V2 step 5 — Conversions entry (full-width below the Style/Collection grid) */}
-      <button onClick={function(){setView("conversions");}} className="crd"
-        style={{width:"100%",padding:"12px 16px",marginBottom:14,textAlign:"left",cursor:"pointer",
-          background:"linear-gradient(135deg,rgba(255,192,32,.08),rgba(220,58,80,.05))",
-          border:"1px solid rgba(255,192,32,.25)",display:"flex",alignItems:"center",gap:12}}>
-        <span style={{fontSize:24,flexShrink:0}}>{"⚖️"}</span>
-        <div style={{flex:1,minWidth:0}}>
-          <div className="out" style={{fontWeight:800,fontSize:14,color:"#ffc020"}}>Conversions</div>
-          <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>Doublons → tokens · 5 tokens → premium</div>
-        </div>
-        <span style={{fontSize:18,color:"var(--t3)"}}>{"›"}</span>
-      </button>
+      {/* Chronicles — entry card (parchment themed) */}
+      {(function(){
+        var heard=(u.narrator&&u.narrator.heard)||[];
+        var cnt=heard.length;
+        return(<button onClick={function(){setView("chronicles");}} className="crd"
+          style={{width:"100%",padding:"14px 16px",marginBottom:14,textAlign:"left",cursor:"pointer",
+            background:"linear-gradient(135deg,rgba(232,212,168,0.08),rgba(138,112,64,0.05))",
+            border:"1px solid rgba(180,150,100,0.3)",display:"flex",alignItems:"center",gap:12}}>
+          <span style={{fontSize:26,flexShrink:0}}>{"\uD83D\uDCDC"}</span>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:15,color:"var(--t1)",letterSpacing:.5}}>Chronicles</div>
+            <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>
+              {cnt===0?"Aucun chapitre d\u00e9bloqu\u00e9 pour l'instant":"Revoir la chronique d'Aldric \u00b7 "+cnt+"/"+NARRATOR_ORDER.length+" chapitres"}
+            </div>
+          </div>
+          <span style={{fontSize:18,color:"var(--gold)",flexShrink:0}}>{"\u203A"}</span>
+        </button>);
+      })()}
 
       {/* Teacher dashboard — only shown for users in a teacher-dedicated class.
           When the app is deployed on multiple campuses, each teacher gets their own
@@ -12893,25 +12914,6 @@ function Profile(p){
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
         👨‍🏫 Teacher Dashboard
       </button>}
-
-      {/* Chronicles — entry card (parchment themed) */}
-      {(function(){
-        var heard=(u.narrator&&u.narrator.heard)||[];
-        var cnt=heard.length;
-        return(<button onClick={function(){setView("chronicles");}} className="crd"
-          style={{width:"100%",padding:"14px 16px",marginBottom:20,textAlign:"left",cursor:"pointer",
-            background:"linear-gradient(135deg,rgba(232,212,168,0.08),rgba(138,112,64,0.05))",
-            border:"1px solid rgba(180,150,100,0.3)",display:"flex",alignItems:"center",gap:12}}>
-          <span style={{fontSize:26,flexShrink:0}}>{"\uD83D\uDCDC"}</span>
-          <div style={{flex:1,minWidth:0}}>
-            <div className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:15,color:"var(--t1)",letterSpacing:.5}}>Chronicles</div>
-            <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>
-              {cnt===0?"Aucun chapitre d\u00e9bloqu\u00e9 pour l'instant":"Revoir la chronique d'Aldric \u00b7 "+cnt+"/"+NARRATOR_ORDER.length+" chapitres"}
-            </div>
-          </div>
-          <span style={{fontSize:18,color:"var(--gold)",flexShrink:0}}>{"\u203A"}</span>
-        </button>);
-      })()}
 
       {/* Settings */}
       <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Settings</div>
