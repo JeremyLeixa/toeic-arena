@@ -1063,6 +1063,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes chestV2BeamShrink{to{opacity:0}}
 @keyframes chestV2RewardFall{0%{opacity:0;transform:translateY(-220px) scale(.6) rotate(-8deg)}30%{opacity:1}100%{transform:translateY(0) scale(1) rotate(0deg);opacity:1}}
 @keyframes chestV2RewardSettle{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-10px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
+@keyframes frame-cosmic{0%,100%{filter:drop-shadow(0 0 14px #ff40c0) drop-shadow(0 0 22px #40c0ff)}50%{filter:drop-shadow(0 0 20px #ffc040) drop-shadow(0 0 28px #ff40c0)}}
+@keyframes frame-dragon{0%,100%{filter:drop-shadow(0 0 14px #ff4020) drop-shadow(0 0 22px #ffd060)}50%{filter:drop-shadow(0 0 22px #ff4020) drop-shadow(0 0 30px #ffd060)}}
 @keyframes chestV2ImpactRing{0%{opacity:1;transform:translate(-50%,-50%) scaleY(.4) scaleX(.3)}100%{opacity:0;transform:translate(-50%,-50%) scaleY(.4) scaleX(2.5)}}
 @keyframes chestV2SpeedLine{0%{opacity:0;transform:translateY(-100px)}30%{opacity:1}100%{opacity:0;transform:translateY(200px)}}
 @keyframes chestV2IconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -1974,19 +1976,26 @@ function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div st
 // ─── Avatar renderer — handles both emoji and base64 photo ───
 function renderAv(avatar,size,frameId){
   var s=size||32;
+  // V2 — chest avatars get the frame baked into the SVG shield (cohérent with AvatarMedal).
+  if(avatar&&AVATARS[avatar]){
+    return(<AvatarMedal avatarId={avatar} size={s} frameId={frameId||null}/>);
+  }
   var inner;
   if(avatar&&avatar.startsWith&&avatar.startsWith("data:")){
     inner=(<img src={avatar} style={{width:s,height:s,borderRadius:"50%",objectFit:"cover",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
-  }else if(avatar&&AVATARS[avatar]){
-    inner=(<AvatarMedal avatarId={avatar} size={s}/>);
   }else{
     inner=(<span style={{fontSize:s*0.6,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,flexShrink:0}}>{avatar||"⚔️"}</span>);
   }
-  // V2 — wrap with frame only if explicitly requested (caller passes user's equippedFrame)
+  // V2 fallback for non-shield avatars : CSS circle glow.
   if(frameId&&FRAMES[frameId]){
-    var fst=parseInlineStyle(FRAMES[frameId].style);
+    var fr=FRAMES[frameId];
+    var glowColor=fr.gradient?fr.gradient[0]:fr.color;
     var pad=Math.max(2,Math.round(s*0.06));
-    return(<span style={Object.assign({display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",verticalAlign:"middle"},fst)}>{inner}</span>);
+    var bgGrad=fr.gradient?"linear-gradient(var(--bg2),var(--bg2)),linear-gradient(135deg,"+fr.gradient.join(",")+")":null;
+    var wrap={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",verticalAlign:"middle",border:(fr.strokeWidth||2.5)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||10)+"px "+glowColor+", 0 0 "+((fr.glow||10)*0.6)+"px "+glowColor};
+    if(bgGrad){wrap.backgroundImage=bgGrad;wrap.backgroundOrigin="border-box";wrap.backgroundClip="padding-box,border-box";}
+    if(fr.anim)wrap.animation="frame-"+fr.anim+" 2.5s ease-in-out infinite";
+    return(<span style={wrap}>{inner}</span>);
   }
   return inner;
 }
@@ -8959,15 +8968,35 @@ var RARITY_STYLES={
   legend:{bg:"#0a0608",stroke:"#ffc020",icon:"#ffe080",glow:"drop-shadow(0 0 6px #ffc020aa) drop-shadow(0 0 14px #ffc02055)",anim:"legendGlow 2s ease-in-out infinite"},
 };
 function AvatarMedal(p){
-  var avatarId=p.avatarId;var size=p.size||48;
+  var avatarId=p.avatarId;var size=p.size||48;var frameId=p.frameId;
   var av=AVATARS[avatarId];
   if(!av)return(<div style={{width:size,height:size,borderRadius:size*.35,background:"var(--bg3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.5}}>{"?"}</div>);
   var rs=RARITY_STYLES[av.rarity]||RARITY_STYLES.common;
   var iconPath=GAME_ICON_PATHS[av.icon]||"";
+  var frame=frameId&&FRAMES[frameId];
   var svgStyle={overflow:"visible",flexShrink:0,display:"inline-block",verticalAlign:"middle"};
-  if(rs.anim)svgStyle.animation=rs.anim;
-  else if(rs.glow)svgStyle.filter=rs.glow;
-  return(<svg viewBox="0 0 100 100" width={size} height={size} style={svgStyle}>
+  // V2 — Frame styling (drop-shadow glow + optional pulse animation) takes precedence
+  // over the rarity glow, since the user-equipped frame is the explicit cosmetic choice.
+  if(frame){
+    var glowColor=frame.gradient?frame.gradient[0]:frame.color;
+    svgStyle.filter="drop-shadow(0 0 "+frame.glow+"px "+glowColor+") drop-shadow(0 0 "+(frame.glow*0.6)+"px "+glowColor+")";
+    if(frame.anim)svgStyle.animation="frame-"+frame.anim+" 2.5s ease-in-out infinite";
+  }else if(rs.anim){
+    svgStyle.animation=rs.anim;
+  }else if(rs.glow){
+    svgStyle.filter=rs.glow;
+  }
+  // Outer shield path for frames — slightly larger than the avatar shield (5px halo).
+  var FRAME_PATH="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z";
+  // Unique gradient id per render to avoid clashes across multiple AvatarMedal instances.
+  var gradId=frame&&frame.gradient?("frmg-"+(frameId||"x")+"-"+Math.floor(Math.random()*1e6)):null;
+  return(<svg viewBox="0 -3 100 110" width={size} height={size*1.10} style={svgStyle}>
+    {frame&&frame.gradient&&<defs>
+      <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+        {frame.gradient.map(function(c,i){return(<stop key={i} offset={(i/Math.max(1,frame.gradient.length-1)*100)+"%"} stopColor={c}/>);})}
+      </linearGradient>
+    </defs>}
+    {frame&&<path d={FRAME_PATH} fill="none" stroke={frame.gradient?("url(#"+gradId+")"):frame.color} strokeWidth={frame.strokeWidth||2.5} strokeLinejoin="round"/>}
     <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill={rs.bg} stroke={rs.stroke} strokeWidth="1.5"/>
     <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke={rs.stroke} strokeWidth="0.7" opacity="0.35"/>
     <svg x="16" y="18" width="68" height="65" viewBox="0 0 512 512" style={{color:rs.icon}}>
@@ -9190,7 +9219,7 @@ function ChestRewardCard(p){
     name=sk.name;caption="New skin unlocked";
   }else if(r.type==="frame"&&FRAMES[r.id]){
     var fr=FRAMES[r.id];
-    visual=<div style={{width:96,height:96,borderRadius:20,background:"linear-gradient(135deg,#3a2818,#1a1208)",...parseInlineStyle(fr.style)}}/>;
+    visual=<AvatarMedal avatarId="champion" size={88} frameId={r.id}/>;
     name=fr.name;caption="New avatar frame unlocked";
   }else if(r.type==="title"&&TITLES[r.id]){
     var ti=TITLES[r.id];
@@ -11999,7 +12028,7 @@ function ConversionsView(p){
             var visual=null;
             if(g.type==="avatar"&&AVATARS[g.id])visual=<AvatarMedal avatarId={g.id} size={32}/>;
             else if(g.type==="skin"&&SKINS[g.id])visual=<div style={{width:32,height:32,borderRadius:8,background:"linear-gradient(135deg,"+SKINS[g.id].hex+","+SKINS[g.id].dark+")"}}/>;
-            else if(g.type==="frame"&&FRAMES[g.id])visual=<div style={Object.assign({width:24,height:24,borderRadius:"50%",boxSizing:"content-box",padding:3,background:"linear-gradient(135deg,#3a2818,#1a1208)"},parseInlineStyle(FRAMES[g.id].style))}/>;
+            else if(g.type==="frame"&&FRAMES[g.id])visual=<AvatarMedal avatarId="champion" size={28} frameId={g.id}/>;
             else if(g.type==="title"&&TITLES[g.id])visual=<span style={{fontSize:18,color:TITLES[g.id].color}}>{"✦"}</span>;
             return(<div key={g.type+g.id} className="crd" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{flexShrink:0,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center"}}>{visual}</div>
@@ -12085,15 +12114,24 @@ function Profile(p){
   var toeicCol=toeic.total>=750?"var(--green)":toeic.total>=500?"var(--orange)":toeic.total>200?"var(--red)":"var(--t3)";
 
   function renderAvatar(size,fs){
+    // V2 — for chest avatars (shield SVG), the frame is rendered inside AvatarMedal as
+    // an outer shield outline. For photo / emoji avatars, fall back to a CSS circle wrap.
+    if(u.avatar&&AVATARS[u.avatar]){
+      return(<AvatarMedal avatarId={u.avatar} size={size} frameId={u.equippedFrame||null}/>);
+    }
     var inner;
     if(isPhoto)inner=(<img src={u.avatar} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",display:"block"}}/>);
-    else if(u.avatar&&AVATARS[u.avatar])inner=(<AvatarMedal avatarId={u.avatar} size={size}/>);
     else inner=(<div style={{width:size,height:size,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs||(size*0.5)}}>{u.avatar||"⚔️"}</div>);
-    // V2 — wrap with frame if equipped (CSS string parsed inline)
+    // V2 fallback for non-shield avatars : CSS circle glow proportional to the equipped frame.
     if(u.equippedFrame&&FRAMES[u.equippedFrame]){
-      var frStyle=parseInlineStyle(FRAMES[u.equippedFrame].style);
-      var pad=Math.max(4,Math.round(size*0.06));
-      return(<div style={Object.assign({display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box"},frStyle)}>{inner}</div>);
+      var fr=FRAMES[u.equippedFrame];
+      var glowColor=fr.gradient?fr.gradient[0]:fr.color;
+      var pad=Math.max(3,Math.round(size*0.06));
+      var bgGrad=fr.gradient?"linear-gradient(var(--bg2),var(--bg2)),linear-gradient(135deg,"+fr.gradient.join(",")+")":null;
+      var wrapStyle={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",border:(fr.strokeWidth||2.5)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||10)+"px "+glowColor+", 0 0 "+((fr.glow||10)*0.6)+"px "+glowColor};
+      if(bgGrad){wrapStyle.backgroundImage=bgGrad;wrapStyle.backgroundOrigin="border-box";wrapStyle.backgroundClip="padding-box,border-box";}
+      if(fr.anim)wrapStyle.animation="frame-"+fr.anim+" 2.5s ease-in-out infinite";
+      return(<div style={wrapStyle}>{inner}</div>);
     }
     return inner;
   }
@@ -12417,9 +12455,8 @@ function Profile(p){
               {Object.keys(FRAMES).map(function(fid){
                 var fr=FRAMES[fid];var dupCount=ownedFrames.filter(function(r){return r.reward_id===fid;}).length;var owned=dupCount>0;
                 var rarity=RARITIES.find(function(rt){return rt.id===fr.rarity;})||RARITIES[0];
-                var preview=owned?Object.assign({width:48,height:48,borderRadius:"50%",boxSizing:"content-box",padding:4,background:"linear-gradient(135deg,#3a2818,#1a1208)"},parseInlineStyle(fr.style)):{width:56,height:56,borderRadius:"50%",border:"2px dashed var(--bdr)"};
                 return(<div key={fid} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:8,borderRadius:12,opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
-                  <div style={preview}/>
+                  {owned?<AvatarMedal avatarId="champion" size={52} frameId={fid}/>:<div style={{width:56,height:56,borderRadius:"50%",border:"2px dashed var(--bdr)"}}/>}
                   <div style={{fontSize:9,fontWeight:600,color:owned?rarity.color:"var(--t3)",textAlign:"center"}}>{fr.name}</div>
                   {dupCount>1&&<span style={{position:"absolute",top:2,right:2,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"1px 5px",borderRadius:6}}>{"×"+dupCount}</span>}
                 </div>);
@@ -12800,14 +12837,13 @@ function Profile(p){
               var r=grp.row;var fr=FRAMES[r.reward_id];if(!fr)return null;
               var rarity=RARITIES.find(function(rt){return rt.id===fr.rarity;})||RARITIES[0];
               var isEquipped=u.equippedFrame===r.reward_id;
-              var frPreview=Object.assign({width:44,height:44,borderRadius:"50%",boxSizing:"content-box",padding:4,background:"linear-gradient(135deg,#3a2818,#1a1208)"},parseInlineStyle(fr.style));
               return(<button key={r.reward_id} onClick={function(){
                 var c=JSON.parse(JSON.stringify(u));c.equippedFrame=isEquipped?null:r.reward_id;p.setAvatar(c);
               }} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:10,borderRadius:14,cursor:"pointer",
                 background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
                 border:isEquipped?"2px solid var(--cyan)":"1px solid var(--bdr)",
                 fontFamily:"'DM Sans',sans-serif"}}>
-                <div style={frPreview}/>
+                <AvatarMedal avatarId="champion" size={48} frameId={r.reward_id}/>
                 <div style={{fontSize:10,fontWeight:700,color:rarity.color,textAlign:"center"}}>{fr.name}</div>
                 {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
                 {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}

@@ -72,20 +72,22 @@ export var SKINS = {
   aurore:    {name:"Aurora Borealis", rarity:"legend",    cx:"64,208,192",  hex:"#40d0c0", dark:"#3a9870"},
 };
 
-// ═══ FRAMES (V2 — cosmétique non-stackable, glow autour de l'avatar) ═══
-// style = CSS appliqué sur le wrapper de l'avatar (Profile + classements + tab bar)
+// ═══ FRAMES (V2 — cosmétique non-stackable, second shield outline glow) ═══
+// Each frame describes how to draw an outer shield outline around the AvatarMedal :
+// { color | gradient } for the stroke, glow (drop-shadow blur in px), strokeWidth,
+// and optionally an anim name (CSS keyframes "frame-<anim>" defined in App.jsx CSS).
 export var FRAMES = {
-  // Rare (3)
-  gold_neon: {name:"Gold Neon",   rarity:"rare",  style:"border:3px solid #ffc020;box-shadow:0 0 16px #ffc020,inset 0 0 12px rgba(255,192,32,.5)"},
-  emerald_glow:{name:"Emerald Glow",rarity:"rare",style:"border:3px solid #2eb464;box-shadow:0 0 16px #2eb464,inset 0 0 12px rgba(46,180,100,.5)"},
-  ice_crystal:{name:"Ice Crystal",rarity:"rare",  style:"border:3px solid #58a8e8;box-shadow:0 0 16px #58a8e8,inset 0 0 12px rgba(88,168,232,.5)"},
-  // Epic (3)
-  fire_forged:{name:"Fire Forged",rarity:"epic",  style:"border:3px solid #ff6020;box-shadow:0 0 18px #ff6020,inset 0 0 14px rgba(255,96,32,.6)"},
-  ruby_aura: {name:"Ruby Aura",   rarity:"epic",  style:"border:3px solid #dc3a50;box-shadow:0 0 20px #dc3a50,inset 0 0 14px rgba(220,58,80,.6)"},
-  amethyst_veil:{name:"Amethyst Veil",rarity:"epic",style:"border:3px solid #a05adc;box-shadow:0 0 20px #a05adc,inset 0 0 14px rgba(160,90,220,.6)"},
-  // Legendary (2)
-  cosmic:    {name:"Cosmic",      rarity:"legend",style:"border:3px solid transparent;background-image:linear-gradient(var(--bg2),var(--bg2)),linear-gradient(135deg,#ff40c0,#40c0ff,#ffc040);background-origin:border-box;background-clip:padding-box,border-box;box-shadow:0 0 24px rgba(160,90,220,.7)"},
-  dragonbone:{name:"Dragonbone",  rarity:"legend",style:"border:3px solid #ffd060;box-shadow:0 0 28px #ff4020,inset 0 0 16px rgba(255,64,32,.7)"},
+  // Rare (3) — solid stroke + medium glow
+  gold_neon:    {name:"Gold Neon",    rarity:"rare", color:"#ffc020", glow:10, strokeWidth:2.5},
+  emerald_glow: {name:"Emerald Glow", rarity:"rare", color:"#2eb464", glow:10, strokeWidth:2.5},
+  ice_crystal:  {name:"Ice Crystal",  rarity:"rare", color:"#58a8e8", glow:10, strokeWidth:2.5},
+  // Epic (3) — thicker stroke + bigger glow
+  fire_forged:  {name:"Fire Forged",   rarity:"epic", color:"#ff6020", glow:14, strokeWidth:3},
+  ruby_aura:    {name:"Ruby Aura",     rarity:"epic", color:"#dc3a50", glow:14, strokeWidth:3},
+  amethyst_veil:{name:"Amethyst Veil", rarity:"epic", color:"#a05adc", glow:14, strokeWidth:3},
+  // Legendary (2) — gradient stroke + animated pulse
+  cosmic:    {name:"Cosmic",     rarity:"legend", gradient:["#ff40c0","#40c0ff","#ffc040"], glow:18, strokeWidth:3, anim:"cosmic"},
+  dragonbone:{name:"Dragonbone", rarity:"legend", gradient:["#ffd060","#ff8020"],            glow:18, strokeWidth:3, anim:"dragon"},
 };
 
 // ═══ TITLES (V2 — texte affiché sous le nom partout dans l'app) ═══
