@@ -698,6 +698,9 @@ function recordModule(u,modId,sc,tot){
   hist.push({date:today(),correct:sc,total:tot});
   if(hist.length>100)hist=hist.slice(-100);
   u.moduleScores[modId]={correct:prev.correct+sc,total:prev.total+tot,sessions:prev.sessions+1,lastDate:today(),history:hist};
+  // V2 — Bypass Token consumed once a round of the armed module lands. Clearing here
+  // (rather than in each Done handler) keeps the contract central and consistent.
+  if(u.bypassArmedModule===modId)u.bypassArmedModule=null;
   return u;
 }
 function checkMission(u,modId){
@@ -11826,6 +11829,32 @@ function UpgradeScreen(p){
   </div>);
 }
 
+// V2 — Insight Token heuristic. Picks the module with the lowest accuracy (≥ 20 Q
+// to filter noise) and returns a personalized weakness paragraph. Used by the Insight
+// Token consume flow ; the result is persisted to u.insights for later review.
+function generateInsight(u){
+  if(!u||!u.moduleScores)return"Pas assez de données. Continue à t'entraîner et reviens plus tard.";
+  var weak=null,weakAcc=1.01;
+  Object.keys(u.moduleScores).forEach(function(modId){
+    var m=u.moduleScores[modId];
+    if(!m||(m.total||0)<20)return; // need a meaningful sample
+    var acc=m.correct/m.total;
+    if(acc<weakAcc){weakAcc=acc;weak={modId:modId,acc:acc,total:m.total,sessions:m.sessions||0};}
+  });
+  if(!weak){
+    return"Tu n'as pas encore assez de questions sur un module pour identifier un point faible (minimum 20 Q par module). Continue à varier les exercices et reviens utiliser ce token plus tard.";
+  }
+  var modMeta=MISSION_MODULES.find(function(m){return m.id===weak.modId;});
+  var label=modMeta?modMeta.name:weak.modId;
+  var pct=Math.round(weak.acc*100);
+  var advice;
+  if(pct<40)advice="C'est ta zone la plus faible — vise 2-3 sessions ciblées cette semaine pour rattraper le retard.";
+  else if(pct<60)advice="Tu progresses, mais ce module garde de la marge. Une session par jour en focus pendant 3 jours et tu sentiras la différence.";
+  else if(pct<75)advice="Tu maîtrises la base, il reste à grappiller sur les pièges. Re-lit l'explication après chaque erreur.";
+  else advice="Tu n'as pas vraiment de gros point faible mesurable. Bascule sur des Mock Tests pour challenger un format plus dur.";
+  return"Ton point le plus faible : "+label+" — "+pct+"% de précision sur "+weak.total+" questions ("+weak.sessions+" sessions). "+advice;
+}
+
 // V2 step 5 — Conversions sub-view : trade duplicate cosmetics for tokens, or 5 non-premium
 // tokens for 1 premium. Mounted from Profile when view==="conversions".
 function ConversionsView(p){
@@ -12005,6 +12034,8 @@ function Profile(p){
   var[csOpen,setCsOpen]=useState(null); // V2 — currently open cheat sheet id (renders GrimoireReader overlay)
   var[useTokenAsk,setUseTokenAsk]=useState(null); // V2 — token type the user is about to consume (confirm modal)
   var[tokenToast,setTokenToast]=useState(null); // V2 — feedback after consume
+  var[bypassPick,setBypassPick]=useState(null); // V2 — selected module to arm Bypass on (string modId)
+  var[insightResult,setInsightResult]=useState(null); // V2 — generated weakness insight text to display
   // V2 — Collection sections collapsed state. Avatars open by default (most visual),
   // everything else collapsed so the Collection feels lighter as content grows.
   var[collOpen,setCollOpen]=useState({avatars:true,skins:false,frames:false,titles:false,tokens:false,cheatSheets:false});
@@ -12398,7 +12429,7 @@ function Profile(p){
           var nonPremium=Object.keys(TOKEN_TYPES).filter(function(tt){return!TOKEN_TYPES[tt].premium;});
           var premium=Object.keys(TOKEN_TYPES).filter(function(tt){return TOKEN_TYPES[tt].premium;});
           // V2 — which tokens are usable from the Collection (others are in-context or passive)
-          var COLLECTION_ACTIONABLE={daily_reroll:true};
+          var COLLECTION_ACTIONABLE={daily_reroll:true,diminishing_bypass:true,insight_token:true};
           var IN_CONTEXT_HINT={
             mock_reset:"S'utilise sur l'écran Mock Test verrouillé",
             boss_reset:"S'utilise sur l'écran Boss Test verrouillé",
@@ -12410,6 +12441,11 @@ function Profile(p){
             var owned=qty>0;
             var clickable=owned&&COLLECTION_ACTIONABLE[tt];
             var hint=IN_CONTEXT_HINT[tt]||info.desc;
+            // V2 — surface armed Bypass module on its card so the user remembers what's queued
+            if(tt==="diminishing_bypass"&&u.bypassArmedModule){
+              var armedMod=MISSION_MODULES.find(function(m){return m.id===u.bypassArmedModule;});
+              hint="🔓 Armé sur "+(armedMod?armedMod.name:u.bypassArmedModule)+" — utilisé au prochain round";
+            }
             var bg=owned?(isPremium?"rgba(255,192,32,.05)":"rgba(var(--cx),.04)"):(isPremium?"rgba(255,192,32,.02)":"var(--bg3)");
             var bdr=owned?(isPremium?"rgba(255,192,32,.25)":"var(--bdr)"):(isPremium?"rgba(255,192,32,.1)":"var(--bdr)");
             var fill=isPremium?"#ffc020":"var(--cyan)";
@@ -12484,49 +12520,142 @@ function Profile(p){
         </button>
       </>}
     </div>
-    {/* V2 — Confirm modal for actionable tokens (Daily Reroll for now) */}
+    {/* V2 — Multi-flow confirm modal for actionable tokens (Daily Reroll / Bypass / Insight) */}
     {useTokenAsk&&TOKEN_TYPES[useTokenAsk]&&(function(){
       var info=TOKEN_TYPES[useTokenAsk];var qty=invTokens[useTokenAsk]||0;
-      function doUse(){
-        var tt=useTokenAsk;setUseTokenAsk(null);
+      function closeAll(){setUseTokenAsk(null);setBypassPick(null);setInsightResult(null);}
+      function applyConsume(tt,onSuccess){
         consumeToken(u.name,u.classCode||"visitor",tt,1).then(function(res){
           if(!res.ok){
             setTokenToast({err:true,msg:"Échec : "+(res.error||"unknown")});
             setTimeout(function(){setTokenToast(null);},2400);
-            return;
+            closeAll();return;
           }
-          // Apply effect by token type
-          var c=JSON.parse(JSON.stringify(u));
-          var effectMsg="Token utilisé";
-          if(tt==="daily_reroll"){
-            // Reset today's mission AND bump rerollCount so getDailyMission's seed shifts
-            // (otherwise the deterministic today-only seed re-picks the same module).
-            var prevMission=c.mission||{};
-            c.mission=Object.assign({},prevMission,{
-              date:null,actId:null,done:false,
-              rerollCount:((prevMission.rerollCount)||0)+1,
-            });
-            effectMsg="🎲 Mission rerolled !";
-          }
-          p.setAvatar(c);
-          // Refresh local token quantities
           setInvTokens(Object.assign({},invTokens,{[tt]:Math.max(0,(invTokens[tt]||0)-1)}));
-          setTokenToast({err:false,msg:effectMsg});
-          setTimeout(function(){setTokenToast(null);},2400);
+          onSuccess();
         });
       }
-      return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)setUseTokenAsk(null);}}>
-        <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
-          <div style={{fontSize:48,marginBottom:12}}>{info.icon}</div>
-          <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Utiliser {info.name} ?</h2>
-          <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>{info.desc}</p>
-          <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> après usage.</p>
-          <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-            <button onClick={function(){setUseTokenAsk(null);}} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Annuler</button>
-            <button onClick={doUse} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Utiliser</button>
+      // ── Flow 1 : Daily Reroll ──
+      if(useTokenAsk==="daily_reroll"){
+        function doDailyReroll(){
+          applyConsume("daily_reroll",function(){
+            var c=JSON.parse(JSON.stringify(u));
+            var prevMission=c.mission||{};
+            c.mission=Object.assign({},prevMission,{date:null,actId:null,done:false,rerollCount:((prevMission.rerollCount)||0)+1});
+            p.setAvatar(c);
+            setTokenToast({err:false,msg:"🎲 Mission rerolled !"});setTimeout(function(){setTokenToast(null);},2400);
+            closeAll();
+          });
+        }
+        return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
+          <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
+            <div style={{fontSize:48,marginBottom:12}}>{info.icon}</div>
+            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Utiliser {info.name} ?</h2>
+            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>{info.desc}</p>
+            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> après usage.</p>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Annuler</button>
+              <button onClick={doDailyReroll} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Utiliser</button>
+            </div>
           </div>
-        </div>
-      </div>);
+        </div>);
+      }
+      // ── Flow 2 : Bypass Token ──
+      if(useTokenAsk==="diminishing_bypass"){
+        var dms=u.dailyModSessions||{};var td=today();
+        // Step 1 : module selector. List MISSION_MODULES, sorted by today's session count (most farmed first).
+        var modList=MISSION_MODULES.slice().map(function(m){
+          var key=m.id+"_"+td;var cnt=dms[key]||0;
+          var nextMult=cnt===0?1:cnt===1?0.5:cnt===2?0.15:0;
+          return{m:m,cnt:cnt,nextMult:nextMult};
+        }).sort(function(a,b){return b.cnt-a.cnt;});
+        if(!bypassPick){
+          return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
+            <div className="crd" style={{maxWidth:380,maxHeight:"80vh",overflowY:"auto",padding:20,border:"1px solid var(--bdr)"}}>
+              <div style={{textAlign:"center",marginBottom:12}}>
+                <div style={{fontSize:48,marginBottom:8}}>{info.icon}</div>
+                <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:6}}>Bypass Token — choisis un module</h2>
+                <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>Le module choisi récupérera <strong style={{color:"var(--cyan)"}}>100% de l'XP</strong> à sa prochaine session, indépendamment du diminishing.</p>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
+                {modList.map(function(item){
+                  var mult=Math.round(item.nextMult*100);
+                  var hot=item.cnt>=1;
+                  return(<button key={item.m.id} onClick={function(){setBypassPick(item.m.id);}}
+                    style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",textAlign:"left",border:"1px solid "+(hot?"rgba(255,158,61,.3)":"var(--bdr)"),background:hot?"rgba(255,158,61,.06)":"var(--bg2)",display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:18}}>{item.m.icon}</span>
+                    <span style={{flex:1,fontSize:13,fontWeight:700,color:"var(--t1)"}}>{item.m.name}</span>
+                    <span style={{fontSize:10,color:hot?"var(--orange)":"var(--t3)",fontWeight:700}}>{item.cnt} aujd · prochain {mult}%</span>
+                  </button>);
+                })}
+              </div>
+              <button onClick={closeAll} className="btn2" style={{width:"100%",fontSize:13,padding:"10px 16px"}}>Annuler</button>
+            </div>
+          </div>);
+        }
+        // Step 2 : confirm
+        var pickedMod=MISSION_MODULES.find(function(m){return m.id===bypassPick;})||{name:bypassPick,icon:"🎯"};
+        function doBypassArm(){
+          applyConsume("diminishing_bypass",function(){
+            var c=JSON.parse(JSON.stringify(u));c.bypassArmedModule=bypassPick;
+            p.setAvatar(c);
+            setTokenToast({err:false,msg:"🔓 Bypass armé sur "+pickedMod.name});setTimeout(function(){setTokenToast(null);},2800);
+            closeAll();
+          });
+        }
+        return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
+          <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
+            <div style={{fontSize:48,marginBottom:8}}>{pickedMod.icon}</div>
+            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Armer Bypass sur <span style={{color:"var(--cyan)"}}>{pickedMod.name}</span> ?</h2>
+            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>Ta prochaine session de {pickedMod.name} ignorera le diminishing returns. L'effet se consomme automatiquement à la fin du round.</p>
+            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> Bypass après usage.</p>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={function(){setBypassPick(null);}} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>{"← Module"}</button>
+              <button onClick={doBypassArm} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Armer</button>
+            </div>
+          </div>
+        </div>);
+      }
+      // ── Flow 3 : Insight Token ──
+      if(useTokenAsk==="insight_token"){
+        if(insightResult){
+          // Display the generated insight
+          return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
+            <div className="crd" style={{maxWidth:380,padding:24,border:"1px solid rgba(255,192,32,.3)",background:"linear-gradient(135deg,rgba(255,192,32,.06),rgba(160,90,220,.04))"}}>
+              <div style={{fontSize:48,marginBottom:12,textAlign:"center"}}>{"🔮"}</div>
+              <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:14,textAlign:"center",color:"var(--gold)"}}>Insight personnalisé</h2>
+              <p style={{fontSize:13,color:"var(--t1)",marginBottom:20,lineHeight:1.7}}>{insightResult}</p>
+              <button onClick={closeAll} className="btn1" style={{width:"100%",fontSize:13,padding:"10px 16px"}}>Compris</button>
+            </div>
+          </div>);
+        }
+        // Step 1 : confirm consume
+        function doInsight(){
+          applyConsume("insight_token",function(){
+            // Generate the insight (heuristic on moduleScores)
+            var insight=generateInsight(u);
+            // Persist insight history on the profile so the user can reread later (V2.1 viewer)
+            var c=JSON.parse(JSON.stringify(u));
+            c.insights=(c.insights||[]).concat([{date:today(),text:insight}]);
+            if(c.insights.length>20)c.insights=c.insights.slice(-20);
+            p.setAvatar(c);
+            setInsightResult(insight);
+          });
+        }
+        return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
+          <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
+            <div style={{fontSize:48,marginBottom:12}}>{info.icon}</div>
+            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Utiliser {info.name} ?</h2>
+            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>{info.desc}</p>
+            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}>Il te restera <strong style={{color:"var(--gold)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> après usage.</p>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Annuler</button>
+              <button onClick={doInsight} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Révéler</button>
+            </div>
+          </div>
+        </div>);
+      }
+      return null;
     })()}
     {tokenToast&&<div style={{position:"fixed",bottom:80,left:"50%",transform:"translateX(-50%)",padding:"12px 18px",borderRadius:10,background:tokenToast.err?"rgba(220,58,80,.15)":"rgba(46,180,100,.15)",border:"1px solid "+(tokenToast.err?"var(--red)":"var(--green)"),color:tokenToast.err?"var(--red)":"var(--green)",fontSize:13,fontWeight:700,zIndex:1000}}>{tokenToast.msg}</div>}
     </>);
@@ -13784,6 +13913,12 @@ function sv(d){
     }
     // ── PILIER 2 : diminishing returns anti-farming (cap × 2 pendant un event) ──
     if(modId){
+      // V2 — Bypass Token : if armed for THIS module, skip the diminishing curve entirely.
+      // The flag is cleared in recordModule(u, modId) after the round so consumption is
+      // tied to module completion (not just XP application).
+      if(u&&u.bypassArmedModule===modId){
+        return Math.max(0,gatedXp);
+      }
       var dms=u.dailyModSessions||{};
       var key=modId+"_"+today();
       var sessionCount=dms[key]||0;
