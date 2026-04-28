@@ -783,6 +783,14 @@ function canUnlockMock(u,mockId){
   if(!u.moduleScores||!u.moduleScores.drill)reasons.push("Complete at least 1 Part 5 Drill");
   if(mockId===2&&(!u.mockResults||!u.mockResults.mock1))reasons.push("Complete Mock Test 1 first");
   if(mockId===3&&(!u.mockResults||!u.mockResults.mock2))reasons.push("Complete Mock Test 2 first");
+  // V2 — 24h cooldown on Mocks, bypassable via Mock Reset token (mirrors Boss flow)
+  if(reasons.length===0){
+    var key="mock"+mockId;
+    var prev=u.mockResults&&u.mockResults[key];
+    if(prev&&prev.date===today()&&!u.mockResetArmed){
+      reasons.push("24h cooldown — come back tomorrow");
+    }
+  }
   return{ok:reasons.length===0,reasons:reasons};
 }
 
@@ -3553,6 +3561,12 @@ function EndlessResetCTA(p){
     modalTitle="Utiliser Endless Resurrect ?" modalDesc="Bypasse le cooldown 24h sur l'Endless Arena."
     armedMsg="Endless Resurrect armé — relance ton run"/>);
 }
+function MockResetCTA(p){
+  return(<TokenContextCTA u={p.u} setUser={p.setUser} tokenType="mock_reset" armField="mockResetArmed"
+    headline="Mock Reset disponible" cardDesc="Bypasse le cooldown 24h pour rejouer un Mock Test maintenant."
+    modalTitle="Utiliser Mock Reset ?" modalDesc="Bypasse le cooldown 24h sur le prochain Mock Test joué (n'importe lequel des 3)."
+    armedMsg="Mock Reset armé — choisis ton Mock"/>);
+}
 
 // ─── TRAIN PAGE ───
   function Train(p){
@@ -3649,6 +3663,12 @@ function EndlessResetCTA(p){
               </div>);
           })}
         </div>
+
+        {/* V2 — Mock Reset CTA (when at least one Mock is in 24h cooldown) */}
+        {(function(){
+          var anyMockCooldown=[canUnlockMock(p.u,1),canUnlockMock(p.u,2),canUnlockMock(p.u,3)].some(function(uu){return uu.reasons[0]&&uu.reasons[0].indexOf("24h cooldown")===0;});
+          return anyMockCooldown?<MockResetCTA u={p.u} setUser={p.setUser}/>:null;
+        })()}
 
         {/* ── ULTIMATE TRIALS separator ── */}
         <div style={{display:"flex",alignItems:"center",gap:10,margin:"18px 0 12px"}}>
@@ -14158,6 +14178,7 @@ var prevLeague=getLeague(c.weeklyXp);
     c.mockResults["mock"+result.mockId]=result;
     trackModSession(c,modId);
     recordModule(c,modId,result.score,result.total);
+    if(c.mockResetArmed)c.mockResetArmed=false; // V2 — consume Mock Reset flag after run
     try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}haptic("complete");
     // Coffres : Mock Tests + Boss Test
     if(result.mockId==="1"||result.mockId===1)grantChestLocal("mock_1","champion");
