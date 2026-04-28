@@ -78,16 +78,16 @@ export var SKINS = {
 // and optionally an anim name (CSS keyframes "frame-<anim>" defined in App.jsx CSS).
 export var FRAMES = {
   // Rare (3) — solid stroke + medium glow
-  gold_neon:    {name:"Gold Neon",    rarity:"rare", color:"#ffc020", glow:10, strokeWidth:2.5},
-  emerald_glow: {name:"Emerald Glow", rarity:"rare", color:"#2eb464", glow:10, strokeWidth:2.5},
-  ice_crystal:  {name:"Ice Crystal",  rarity:"rare", color:"#58a8e8", glow:10, strokeWidth:2.5},
+  gold_neon:    {name:"Gold Neon",    rarity:"rare", color:"#ffc020", glow:12, strokeWidth:3},
+  emerald_glow: {name:"Emerald Glow", rarity:"rare", color:"#2eb464", glow:12, strokeWidth:3},
+  ice_crystal:  {name:"Ice Crystal",  rarity:"rare", color:"#58a8e8", glow:12, strokeWidth:3},
   // Epic (3) — thicker stroke + bigger glow
-  fire_forged:  {name:"Fire Forged",   rarity:"epic", color:"#ff6020", glow:14, strokeWidth:3},
-  ruby_aura:    {name:"Ruby Aura",     rarity:"epic", color:"#dc3a50", glow:14, strokeWidth:3},
-  amethyst_veil:{name:"Amethyst Veil", rarity:"epic", color:"#a05adc", glow:14, strokeWidth:3},
+  fire_forged:  {name:"Fire Forged",   rarity:"epic", color:"#ff6020", glow:16, strokeWidth:4},
+  ruby_aura:    {name:"Ruby Aura",     rarity:"epic", color:"#dc3a50", glow:16, strokeWidth:4},
+  amethyst_veil:{name:"Amethyst Veil", rarity:"epic", color:"#a05adc", glow:16, strokeWidth:4},
   // Legendary (2) — gradient stroke + animated pulse
-  cosmic:    {name:"Cosmic",     rarity:"legend", gradient:["#ff40c0","#40c0ff","#ffc040"], glow:18, strokeWidth:3, anim:"cosmic"},
-  dragonbone:{name:"Dragonbone", rarity:"legend", gradient:["#ffd060","#ff8020"],            glow:18, strokeWidth:3, anim:"dragon"},
+  cosmic:    {name:"Cosmic",     rarity:"legend", gradient:["#ff40c0","#40c0ff","#ffc040"], glow:20, strokeWidth:4, anim:"cosmic"},
+  dragonbone:{name:"Dragonbone", rarity:"legend", gradient:["#ffd060","#ff8020"],            glow:20, strokeWidth:4, anim:"dragon"},
 };
 
 // ═══ TITLES (V2 — texte affiché sous le nom partout dans l'app) ═══

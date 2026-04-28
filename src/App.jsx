@@ -1992,7 +1992,7 @@ function renderAv(avatar,size,frameId){
     var glowColor=fr.gradient?fr.gradient[0]:fr.color;
     var pad=Math.max(2,Math.round(s*0.06));
     var bgGrad=fr.gradient?"linear-gradient(var(--bg2),var(--bg2)),linear-gradient(135deg,"+fr.gradient.join(",")+")":null;
-    var wrap={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",verticalAlign:"middle",border:(fr.strokeWidth||2.5)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||10)+"px "+glowColor+", 0 0 "+((fr.glow||10)*0.6)+"px "+glowColor};
+    var wrap={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",verticalAlign:"middle",border:(fr.strokeWidth||3)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||12)+"px "+glowColor};
     if(bgGrad){wrap.backgroundImage=bgGrad;wrap.backgroundOrigin="border-box";wrap.backgroundClip="padding-box,border-box";}
     if(fr.anim)wrap.animation="frame-"+fr.anim+" 2.5s ease-in-out infinite";
     return(<span style={wrap}>{inner}</span>);
@@ -8979,7 +8979,9 @@ function AvatarMedal(p){
   // over the rarity glow, since the user-equipped frame is the explicit cosmetic choice.
   if(frame){
     var glowColor=frame.gradient?frame.gradient[0]:frame.color;
-    svgStyle.filter="drop-shadow(0 0 "+frame.glow+"px "+glowColor+") drop-shadow(0 0 "+(frame.glow*0.6)+"px "+glowColor+")";
+    // Single drop-shadow keeps the outer-shield outline crisp ; double-stacking
+    // softened the path into a halo that masked the shape.
+    svgStyle.filter="drop-shadow(0 0 "+frame.glow+"px "+glowColor+")";
     if(frame.anim)svgStyle.animation="frame-"+frame.anim+" 2.5s ease-in-out infinite";
   }else if(rs.anim){
     svgStyle.animation=rs.anim;
@@ -12128,7 +12130,7 @@ function Profile(p){
       var glowColor=fr.gradient?fr.gradient[0]:fr.color;
       var pad=Math.max(3,Math.round(size*0.06));
       var bgGrad=fr.gradient?"linear-gradient(var(--bg2),var(--bg2)),linear-gradient(135deg,"+fr.gradient.join(",")+")":null;
-      var wrapStyle={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",border:(fr.strokeWidth||2.5)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||10)+"px "+glowColor+", 0 0 "+((fr.glow||10)*0.6)+"px "+glowColor};
+      var wrapStyle={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",border:(fr.strokeWidth||3)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||12)+"px "+glowColor};
       if(bgGrad){wrapStyle.backgroundImage=bgGrad;wrapStyle.backgroundOrigin="border-box";wrapStyle.backgroundClip="padding-box,border-box";}
       if(fr.anim)wrapStyle.animation="frame-"+fr.anim+" 2.5s ease-in-out infinite";
       return(<div style={wrapStyle}>{inner}</div>);
