@@ -12005,6 +12005,9 @@ function Profile(p){
   var[csOpen,setCsOpen]=useState(null); // V2 — currently open cheat sheet id (renders GrimoireReader overlay)
   var[useTokenAsk,setUseTokenAsk]=useState(null); // V2 — token type the user is about to consume (confirm modal)
   var[tokenToast,setTokenToast]=useState(null); // V2 — feedback after consume
+  // V2 — Collection sections collapsed state. Avatars open by default (most visual),
+  // everything else collapsed so the Collection feels lighter as content grows.
+  var[collOpen,setCollOpen]=useState({avatars:true,skins:false,frames:false,titles:false,tokens:false,cheatSheets:false});
   // Phase 2 commit 4 (2026-04-27) : change password sub-form dans la section Sécurité
   var[pwdChangeShow,setPwdChangeShow]=useState(false);
   var[pwdChange1,setPwdChange1]=useState("");var[pwdChange2,setPwdChange2]=useState("");
@@ -12291,6 +12294,21 @@ function Profile(p){
     var ownedSkins=invData?invData.filter(function(r){return r.reward_type==="skin";}):[];
     // V2 — overlay : tap a cheat sheet card → open as a single-chapter grimoire
     var csNow=csOpen&&CHEAT_SHEETS[csOpen];
+    // V2 — collapsible banner helper : each Collection section is a tappable header
+    // ("Avatars 8/32  ▾") that reveals its content on toggle. Lighter UI as content grows.
+    function secBanner(key,title,count,total,content){
+      var open=collOpen[key];
+      return(<div key={key} style={{marginBottom:10,borderRadius:12,border:"1px solid var(--bdr)",overflow:"hidden",background:"var(--bg2)"}}>
+        <button onClick={function(){var nv={};nv[key]=!open;setCollOpen(Object.assign({},collOpen,nv));}}
+          style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",background:"transparent",border:"none",cursor:"pointer",color:"var(--t1)",fontFamily:"inherit"}}>
+          <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,color:"var(--t2)"}}>
+            {title} <span style={{color:"var(--t3)",marginLeft:4,fontWeight:600}}>{count}/{total}</span>
+          </span>
+          <span style={{fontSize:14,color:"var(--cyan)",display:"inline-block",transform:open?"rotate(0deg)":"rotate(-90deg)",transition:"transform .2s"}}>{"▾"}</span>
+        </button>
+        {open&&<div style={{padding:"4px 14px 16px",borderTop:"1px solid var(--bdr)"}}>{content}</div>}
+      </div>);
+    }
     return(<>
     {csNow&&<GrimoireReader grimoire={{title:csNow.name,subtitle:"Cheat Sheet",icon:csNow.icon||"📜",chapters:[{id:"main",title:csNow.name,intro:"",blocks:csNow.blocks||[]}]}} back={function(){setCsOpen(null);}}/>}
     <div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -12302,9 +12320,8 @@ function Profile(p){
       {invLoading&&<p style={{color:"var(--t3)",textAlign:"center",padding:40}}>Loading...</p>}
 
       {!invLoading&&<>
-        {/* All avatars (locked ones grayed out) */}
-        <div style={{marginBottom:28}}>
-          <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Avatars ({ownedAvatars.length}/{Object.keys(AVATARS).length})</div>
+        {/* V2 — Avatars (collapsible banner) */}
+        {secBanner("avatars","Avatars",ownedAvatars.length,Object.keys(AVATARS).length,
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(60px,1fr))",gap:6}}>
             {Object.keys(AVATARS).map(function(aid){
               var av=AVATARS[aid];var dupCount=ownedAvatars.filter(function(r){return r.reward_id===aid;}).length;var owned=dupCount>0;
@@ -12317,11 +12334,10 @@ function Profile(p){
               </div>);
             })}
           </div>
-        </div>
+        )}
 
-        {/* All skins (locked ones grayed out) */}
-        <div>
-          <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Skins ({ownedSkins.length}/{Object.keys(SKINS).length})</div>
+        {/* V2 — Skins (collapsible banner) */}
+        {secBanner("skins","Skins",ownedSkins.length,Object.keys(SKINS).length,
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:8}}>
             {Object.keys(SKINS).map(function(sid){
               var sk=SKINS[sid];var dupCount=ownedSkins.filter(function(r){return r.reward_id===sid;}).length;var owned=dupCount>0;
@@ -12334,13 +12350,12 @@ function Profile(p){
               </div>);
             })}
           </div>
-        </div>
+        )}
 
-        {/* V2 — Frames */}
+        {/* V2 — Frames (collapsible banner) */}
         {(function(){
           var ownedFrames=invData?invData.filter(function(r){return r.reward_type==="frame";}):[];
-          return(<div style={{marginTop:28}}>
-            <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Frames ({ownedFrames.length}/{Object.keys(FRAMES).length})</div>
+          return secBanner("frames","Frames",ownedFrames.length,Object.keys(FRAMES).length,
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:10}}>
               {Object.keys(FRAMES).map(function(fid){
                 var fr=FRAMES[fid];var dupCount=ownedFrames.filter(function(r){return r.reward_id===fid;}).length;var owned=dupCount>0;
@@ -12353,14 +12368,13 @@ function Profile(p){
                 </div>);
               })}
             </div>
-          </div>);
+          );
         })()}
 
-        {/* V2 — Titles */}
+        {/* V2 — Titles (collapsible banner) */}
         {(function(){
           var ownedTitles=invData?invData.filter(function(r){return r.reward_type==="title";}):[];
-          return(<div style={{marginTop:28}}>
-            <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Titles ({ownedTitles.length}/{Object.keys(TITLES).length})</div>
+          return secBanner("titles","Titles",ownedTitles.length,Object.keys(TITLES).length,
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
               {Object.keys(TITLES).map(function(tid){
                 var ti=TITLES[tid];var dupCount=ownedTitles.filter(function(r){return r.reward_id===tid;}).length;var owned=dupCount>0;
@@ -12374,7 +12388,7 @@ function Profile(p){
                 </div>);
               })}
             </div>
-          </div>);
+          );
         })()}
 
         {/* V2 — Consommables (tokens stackables, fetched from player_tokens) */}
@@ -12416,30 +12430,30 @@ function Profile(p){
               </div>
             </div>);
           }
-          return(<div style={{marginTop:28}}>
-            <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Consommables ({totalOwned} / {totalCap} max)</div>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-              <span style={{fontSize:10,color:"var(--t3)",fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Tactiques</span>
-              <span style={{flex:1,height:1,background:"var(--bdr)"}}/>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10,marginBottom:18}}>
-              {nonPremium.map(function(tt){return tokenCard(tt,false);})}
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-              <span style={{fontSize:10,color:"#ffc020",fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Premium</span>
-              <span style={{flex:1,height:1,background:"var(--bdr)"}}/>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
-              {premium.map(function(tt){return tokenCard(tt,true);})}
-            </div>
-          </div>);
+          return secBanner("tokens","Consommables",totalOwned,totalCap,
+            <>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <span style={{fontSize:10,color:"var(--t3)",fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Tactiques</span>
+                <span style={{flex:1,height:1,background:"var(--bdr)"}}/>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10,marginBottom:18}}>
+                {nonPremium.map(function(tt){return tokenCard(tt,false);})}
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <span style={{fontSize:10,color:"#ffc020",fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Premium</span>
+                <span style={{flex:1,height:1,background:"var(--bdr)"}}/>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
+                {premium.map(function(tt){return tokenCard(tt,true);})}
+              </div>
+            </>
+          );
         })()}
 
-        {/* V2 — Cheat Sheets (clickable to open via GrimoireReader) */}
+        {/* V2 — Cheat Sheets (collapsible banner, clickable card opens GrimoireReader) */}
         {(function(){
           var ownedCS=invData?invData.filter(function(r){return r.reward_type==="cheat_sheet";}):[];
-          return(<div style={{marginTop:28}}>
-            <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Cheat Sheets ({ownedCS.length}/{Object.keys(CHEAT_SHEETS).length})</div>
+          return secBanner("cheatSheets","Cheat Sheets",ownedCS.length,Object.keys(CHEAT_SHEETS).length,
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10}}>
               {Object.keys(CHEAT_SHEETS).map(function(csid){
                 var cs=CHEAT_SHEETS[csid];var owned=ownedCS.some(function(r){return r.reward_id===csid;});
@@ -12451,7 +12465,7 @@ function Profile(p){
                 </button>);
               })}
             </div>
-          </div>);
+          );
         })()}
       </>}
     </div>
