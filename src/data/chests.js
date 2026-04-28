@@ -105,6 +105,8 @@ export var TITLES = {
   dragon_slayer: {name:"Dragon Slayer",      rarity:"legend",color:"#ffc020"},
   arena_conqueror:{name:"Arena Conqueror",   rarity:"legend",color:"#ffc020"},
   legend:        {name:"Legend",             rarity:"legend",color:"#ffc020"},
+  // Exclusive (never drops via chests — granted via SQL only).
+  aldric_chosen: {name:"Aldric's Chosen",    rarity:"legend",color:"#e8d4a8",exclusive:true},
 };
 
 // ═══ TOKENS (V2 — tactiques stackables, nouvelle table player_tokens) ═══
@@ -330,9 +332,12 @@ export var DROP_TABLES = {
 // Helpers internes pour pickRewards
 function _rarityTier(rid){var i=0;for(;i<RARITIES.length;i++){if(RARITIES[i].id===rid)return i;}return 0;}
 function _filterByMinRarity(map,minRarity){
-  if(!minRarity)return Object.keys(map);
+  // V2 — items flagged `exclusive:true` are NEVER part of any drop pool ; they
+  // are granted via SQL only (Teacher reward, special events, etc).
+  var keys=Object.keys(map).filter(function(k){return!map[k].exclusive;});
+  if(!minRarity)return keys;
   var minTier=_rarityTier(minRarity);
-  return Object.keys(map).filter(function(k){return _rarityTier(map[k].rarity)>=minTier;});
+  return keys.filter(function(k){return _rarityTier(map[k].rarity)>=minTier;});
 }
 function _pickFromPool(map,owned,minRarity){
   var keys=_filterByMinRarity(map,minRarity).filter(function(k){return owned.indexOf(k)===-1;});
