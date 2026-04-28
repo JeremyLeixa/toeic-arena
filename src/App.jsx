@@ -12464,11 +12464,14 @@ function Profile(p){
             var owned=qty>0;
             var clickable=owned&&COLLECTION_ACTIONABLE[tt];
             var hint=IN_CONTEXT_HINT[tt]||info.desc;
-            // V2 — surface armed Bypass module on its card so the user remembers what's queued
+            // V2 — surface armed flags on each token's card so the user remembers what's queued
             if(tt==="diminishing_bypass"&&u.bypassArmedModule){
               var armedMod=MISSION_MODULES.find(function(m){return m.id===u.bypassArmedModule;});
               hint="🔓 Armé sur "+(armedMod?armedMod.name:u.bypassArmedModule)+" — utilisé au prochain round";
             }
+            else if(tt==="mock_reset"&&u.mockResetArmed){hint="🎟️ Armé — bypass cooldown au prochain Mock joué";}
+            else if(tt==="boss_reset"&&u.bossResetArmed){hint="🐲 Armé — entre dans l'arène Boss";}
+            else if(tt==="endless_resurrect"&&u.endlessResetArmed){hint="💎 Armé — relance Endless";}
             var bg=owned?(isPremium?"rgba(255,192,32,.05)":"rgba(var(--cx),.04)"):(isPremium?"rgba(255,192,32,.02)":"var(--bg3)");
             var bdr=owned?(isPremium?"rgba(255,192,32,.25)":"var(--bdr)"):(isPremium?"rgba(255,192,32,.1)":"var(--bdr)");
             var fill=isPremium?"#ffc020":"var(--cyan)";
