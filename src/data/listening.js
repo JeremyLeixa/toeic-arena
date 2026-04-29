@@ -181,7 +181,7 @@ export var LISTENING_P1 = [
     x:"A single suitcase traveling on the baggage carousel conveyor belt. (A) is wrong: no one is picking it up. (C) is wrong: on the carousel, not being loaded onto a plane. (D) is wrong number: one suitcase, not rows."},
 ];
 
-// ─── PART 2 — Question-Response (50 questions) ───
+// ─── PART 2 — Question-Response (125 questions) ───
 // Audio: public/audio/p2/{id}_q.mp3 + {id}_{0-2}.mp3
 
 export var LISTENING_P2 = [
@@ -490,6 +490,208 @@ export var LISTENING_P2 = [
   {id:"p2_75",q:"You're going to the industry expo next week, aren't you?",
     opts:["Actually, I've decided to send my assistant instead.","The expo features over two hundred exhibitors.","I went to the expo last year in Chicago."],
     c:0,x:"Tag question expecting confirmation. A gives an unexpected but natural answer (not going personally). B describes the expo and C talks about a past one."},
+
+  // ─── Batch 3 (p2_76 → p2_125) — 2 new accents/voices ───
+
+  {id:"p2_76",q:"How long has the marketing team been preparing this campaign?",
+    opts:["The campaign targets young professionals.","For about three months now.","The team has fifteen members."],
+    c:1,x:"'How long' asks duration. B gives a time period. A describes the audience and C the team size."},
+
+  {id:"p2_77",q:"You haven't sent the contract to the legal department yet, have you?",
+    opts:["The contract is forty pages long.","No, but I'll do it before lunch.","The legal department is on the fourth floor."],
+    c:1,x:"Negative tag question about an unfinished task. B confirms 'not yet' and commits to a time. A describes the contract and C gives a location."},
+
+  {id:"p2_78",q:"Would you rather take the morning flight or the afternoon one?",
+    opts:["I usually fly with the same airline.","The flight was delayed by an hour.","The afternoon would give me more time to prepare."],
+    c:2,x:"Choice question (A or B). C picks one option with a reason. B reports a delay and A talks about airline preference."},
+
+  {id:"p2_79",q:"Did the new intern start this Monday or last Monday?",
+    opts:["She started just this past Monday.","The internship lasts six months.","Yes, she's very enthusiastic."],
+    c:0,x:"Choice between two times. A specifies which one. B gives the duration and C is a yes/no answer to a non yes/no question."},
+
+  {id:"p2_80",q:"Why was the staff meeting moved to Friday?",
+    opts:["Because the director is traveling on Wednesday.","The meeting room has fifty seats.","Yes, it's been confirmed."],
+    c:0,x:"'Why' asks for a reason — A gives a 'because' clause. B describes the room and C is a yes/no answer."},
+
+  {id:"p2_81",q:"Where can I find the latest sales figures?",
+    opts:["The sales were higher than expected.","I sold the car last week.","They're on the shared drive under Q1 reports."],
+    c:2,x:"'Where' asks for a location. C points to a digital location. A comments on results and B plays on 'sales/sold' similarity."},
+
+  {id:"p2_82",q:"When are we expecting the audit team to arrive?",
+    opts:["Yes, the team is very experienced.","The audit will cover three departments.","Their plane lands at 8 AM on Tuesday."],
+    c:2,x:"'When' asks for a time. C gives a specific arrival time. B describes the audit scope and A is a yes/no answer to a non yes/no question."},
+
+  {id:"p2_83",q:"This printer keeps jamming every time I use it.",
+    opts:["I can call IT support for you.","I printed fifty copies yesterday.","The printer was installed last year."],
+    c:0,x:"Statement implying a need for help. A offers to call support. B and C give unrelated info about printing."},
+
+  {id:"p2_84",q:"Do you know if the exhibition is still open this Saturday?",
+    opts:["I went to the exhibition last week.","Yes, until 6 PM I believe.","The exhibition features modern art."],
+    c:1,x:"Indirect yes/no question. B confirms with a closing time. A talks about a past visit and C describes content."},
+
+  {id:"p2_85",q:"Who's responsible for ordering the office supplies?",
+    opts:["We need more printer paper.","The supplies arrived this morning.","That would be Marcus in admin."],
+    c:2,x:"'Who' asks for a person. C names someone with their role. A and B describe supplies and timing."},
+
+  {id:"p2_86",q:"What kind of training does the new software require?",
+    opts:["I trained at the head office.","The software cost ten thousand dollars.","Just a two-hour online tutorial."],
+    c:2,x:"'What kind' asks for a type. C describes the training format. B gives a cost and A uses 'trained' but talks about a place."},
+
+  {id:"p2_87",q:"The board approved our proposal, didn't they?",
+    opts:["Yes, but with some minor revisions.","The board has twelve members.","I'll prepare another proposal."],
+    c:0,x:"Tag question expecting confirmation. A confirms with a nuance. B describes the board and C talks about a future proposal."},
+
+  {id:"p2_88",q:"How often does the cleaning crew come to our floor?",
+    opts:["The crew has six people.","Cleaning supplies are in the closet.","Twice a week, on Tuesdays and Fridays."],
+    c:2,x:"'How often' asks for frequency. C gives a frequency with days. A describes the crew size and B the supply location."},
+
+  {id:"p2_89",q:"Aren't you supposed to be at the client lunch right now?",
+    opts:["The client rescheduled for tomorrow.","I had a sandwich at my desk.","Yes, our biggest client."],
+    c:0,x:"Negative question challenging current behavior. A explains why the lunch isn't happening. B and C describe lunch and client."},
+
+  {id:"p2_90",q:"Why don't we discuss this over coffee tomorrow morning?",
+    opts:["The coffee shop opens at seven.","I prefer tea, actually.","Sounds good — let's say nine o'clock."],
+    c:2,x:"Suggestion ('Why don't we'). C accepts and proposes a time. B is a literal but off-target answer about coffee/tea. A describes the shop."},
+
+  {id:"p2_91",q:"Should I send the invoice by email or by mail?",
+    opts:["The invoice was paid yesterday.","Send it to the accounting office.","Email is faster, so let's go with that."],
+    c:2,x:"Choice question. C picks one option with a reason. A talks about payment and B gives a destination, not a method."},
+
+  {id:"p2_92",q:"Whose laptop is sitting in the conference room?",
+    opts:["I think it belongs to the consultant.","The conference is on innovation.","It's a brand new model."],
+    c:0,x:"'Whose' asks for an owner. A names the likely owner. B describes the conference theme and C the laptop itself."},
+
+  {id:"p2_93",q:"How much was the catering bill for the launch event?",
+    opts:["The food was excellent.","Just over two thousand dollars.","About sixty guests attended."],
+    c:1,x:"'How much' asks for a cost. B gives an amount. A comments on quality and C on attendance."},
+
+  {id:"p2_94",q:"Where did you put the keys to the storage room?",
+    opts:["I locked the door before leaving.","The storage room is full.","I left them on your desk this morning."],
+    c:2,x:"'Where' asks for a location. C specifies where the keys were placed. B describes the room and A an action with a door."},
+
+  {id:"p2_95",q:"Could you forward me the agenda before the call?",
+    opts:["The call lasted forty minutes.","Sure, I'll send it right after this meeting.","I forwarded the email yesterday."],
+    c:1,x:"Polite request. B agrees and commits to a time. A describes a past call and C uses 'forwarded' but for an unrelated email."},
+
+  {id:"p2_96",q:"Did anyone follow up with the supplier about the late shipment?",
+    opts:["The shipment was supposed to arrive Monday.","Yes, Priya called them this morning.","We have several reliable suppliers."],
+    c:1,x:"Yes/no question. B confirms with the person who acted. A describes the original timing and C is a general comment."},
+
+  {id:"p2_97",q:"I thought the office was closing early today for the holiday.",
+    opts:["You're right — we close at three this afternoon.","The holiday is on Monday.","The office has been redecorated."],
+    c:0,x:"Statement seeking confirmation. A confirms and adds the time. B and C give unrelated info about the holiday and office."},
+
+  {id:"p2_98",q:"How many candidates are we interviewing tomorrow?",
+    opts:["Five, all shortlisted from over a hundred applications.","The interviews start at nine.","The position requires a master's degree."],
+    c:0,x:"'How many' asks for a number. A gives the count with context. B gives a time and C describes requirements."},
+
+  {id:"p2_99",q:"Could you tell me where the nearest bank branch is located?",
+    opts:["The bank charges low fees.","I opened my account last year.","There's one just two blocks east of here."],
+    c:2,x:"Indirect 'where' question. C gives a location. A describes fees and B talks about an account."},
+
+  {id:"p2_100",q:"You'll be presenting at the conference, won't you?",
+    opts:["The conference is in Singapore.","Yes, on Thursday afternoon.","The presentation went well."],
+    c:1,x:"Tag question expecting confirmation. B confirms with a time. A gives a location and C uses past tense (the talk hasn't happened yet)."},
+
+  {id:"p2_101",q:"Why don't you take the company car for your client visit?",
+    opts:["The client is thirty miles away.","That's a great idea — I'll book it now.","I drive a Honda."],
+    c:1,x:"Suggestion. B accepts. A gives distance and C is unrelated personal info."},
+
+  {id:"p2_102",q:"When is the deadline for the budget submission?",
+    opts:["The budget covers next quarter.","Friday at end of business.","The submission was approved."],
+    c:1,x:"'When' asks for a time. B gives a deadline. A describes scope and C uses past tense."},
+
+  {id:"p2_103",q:"The catering for tomorrow's lunch hasn't been confirmed yet.",
+    opts:["The lunch is for twenty people.","I'll call the restaurant right now.","The food yesterday was great."],
+    c:1,x:"Statement implying action needed. B offers to fix it. A gives a number and C uses past tense unrelated."},
+
+  {id:"p2_104",q:"What time does the express train to Boston leave?",
+    opts:["The train was crowded.","I bought my ticket online.","Every hour on the half hour."],
+    c:2,x:"'What time' asks for a schedule. C gives the frequency. A is past observation and B is about ticket purchase."},
+
+  {id:"p2_105",q:"Wasn't the network supposed to be back online by noon?",
+    opts:["The IT team is still working on it.","Yes, the new network is faster.","Online sales increased this quarter."],
+    c:0,x:"Negative question implying delay. A explains the delay. B and C use 'network/online' but in unrelated contexts."},
+
+  {id:"p2_106",q:"Do you want to drive separately or carpool with the team?",
+    opts:["I'd prefer to carpool to save on gas.","The drive takes about two hours.","The team is meeting at three."],
+    c:0,x:"Choice question. A picks one with a reason. B and C describe the trip and meeting time."},
+
+  {id:"p2_107",q:"How is the renovation of the lobby progressing?",
+    opts:["The lobby is on the ground floor.","The renovation cost a lot.","It should be finished by next Wednesday."],
+    c:2,x:"'How' asks about progress. C gives a completion estimate. A gives location and B cost."},
+
+  {id:"p2_108",q:"Has the maintenance crew finished servicing the elevators?",
+    opts:["The elevators are very fast.","Yes, both are running normally now.","Maintenance comes every month."],
+    c:1,x:"Yes/no question. B confirms completion. A describes elevators and C frequency."},
+
+  {id:"p2_109",q:"Which department handles employee benefits inquiries?",
+    opts:["I joined the company last year.","The benefits package is very generous.","Human Resources — extension 240."],
+    c:2,x:"'Which' asks for a specific department. C names it with extension. B describes the benefits and A is personal history."},
+
+  {id:"p2_110",q:"Mr. Tanaka is joining our weekly meetings now, isn't he?",
+    opts:["Mr. Tanaka transferred from Tokyo.","Yes, starting from next Monday.","The meetings are held in conference room A."],
+    c:1,x:"Tag question. B confirms with a start date. A gives background on Mr. Tanaka and C the location."},
+
+  {id:"p2_111",q:"I can't seem to log into the new accounting system.",
+    opts:["Did you receive your reset password yet?","The system is very user-friendly.","Accounting is on the third floor."],
+    c:0,x:"Statement implying a problem. A diagnoses with a question. B and C give unrelated info about the system and location."},
+
+  {id:"p2_112",q:"How long will the keynote speech last?",
+    opts:["The speaker is from Berlin.","Around forty-five minutes including Q and A.","The keynote was inspiring."],
+    c:1,x:"'How long' asks for duration. B gives the length. A describes the speaker and C uses past tense (the speech hasn't happened)."},
+
+  {id:"p2_113",q:"Where should we hold the year-end celebration?",
+    opts:["The celebration is on December 18th.","Around eighty people will attend.","Maybe the rooftop venue we used last year."],
+    c:2,x:"'Where' asks for a place. C suggests a venue. A gives the date and B the headcount."},
+
+  {id:"p2_114",q:"Why is the parking garage closed today?",
+    opts:["I usually park on Level 2.","They're repainting the lines.","The garage has three hundred spaces."],
+    c:1,x:"'Why' asks for a reason. B explains the closure. A is personal habit and C is a fact about size."},
+
+  {id:"p2_115",q:"Could you let me know who's covering Anna's shift this week?",
+    opts:["Anna is on maternity leave.","Yusuf agreed to cover Tuesday and Thursday.","Her shifts are usually quiet."],
+    c:1,x:"Polite request for information about a person. B names the cover and days. A explains the absence and C describes shifts."},
+
+  {id:"p2_116",q:"The translators are coming in at nine, aren't they?",
+    opts:["Actually, they arrive at ten now.","The translation was excellent.","We hired three translators."],
+    c:0,x:"Tag question for confirmation. A corrects the assumption. B comments on quality and C on hiring."},
+
+  {id:"p2_117",q:"Should we wait for Mei before starting the presentation?",
+    opts:["Mei is our project manager.","The presentation has thirty slides.","She just texted that she's two minutes away."],
+    c:2,x:"Yes/no suggestion. C justifies waiting (she's almost here). B describes the slides and A states Mei's role."},
+
+  {id:"p2_118",q:"This new procedure seems much more efficient than the old one.",
+    opts:["I agree — it's saved us at least two hours per week.","The procedure manual is online.","Efficiency is one of our core values."],
+    c:0,x:"Opinion statement seeking agreement. A agrees with quantified support. B and C are tangential facts."},
+
+  {id:"p2_119",q:"What's holding up the approval for the new hire?",
+    opts:["Legal is still reviewing the contract.","She has five years of experience.","The approval was unanimous."],
+    c:0,x:"'What' asks for a cause of delay. A names the bottleneck. B is candidate background and C uses 'approval' but past tense."},
+
+  {id:"p2_120",q:"Would you prefer the slides in color or in black and white?",
+    opts:["The slides are very informative.","There are forty slides total.","Color would look more professional."],
+    c:2,x:"Choice question. C picks one with a reason. A and B give general info about the slides."},
+
+  {id:"p2_121",q:"You wouldn't happen to have a spare charger, would you?",
+    opts:["The charger broke last week.","Sorry, I left mine at home today.","My phone has a long battery life."],
+    c:1,x:"Polite indirect request. B apologizes and explains. A is past info and C is unrelated phone fact."},
+
+  {id:"p2_122",q:"How did the negotiations with the vendor go this morning?",
+    opts:["Better than expected — we got a ten percent discount.","The vendor is based in Munich.","I'll meet them at noon."],
+    c:0,x:"'How did it go' asks for an outcome. A gives a positive result with detail. B is location and C is future tense."},
+
+  {id:"p2_123",q:"Are we still planning to launch the product next month?",
+    opts:["The product has many new features.","Yes, on the fifteenth as scheduled.","The launch event was successful."],
+    c:1,x:"Yes/no confirmation. B confirms with the date. A describes the product and C uses past tense."},
+
+  {id:"p2_124",q:"I noticed the order from Tomas Industries hasn't shipped yet.",
+    opts:["Their warehouse is having a system issue — it ships tomorrow.","Tomas Industries is a longtime client.","The order was for fifty units."],
+    c:0,x:"Statement implying concern. A explains the cause and gives an ETA. B and C give general info about the client and order size."},
+
+  {id:"p2_125",q:"Which conference room has the video equipment set up?",
+    opts:["The equipment was upgraded last year.","The video lasted ten minutes.","Room C on the second floor."],
+    c:2,x:"'Which' asks for a specific room. C names it with floor. A is past upgrade info and B is unrelated past time."},
 ];
 
 // ─── PART 3 — Conversations (20 conversations, 60 questions) ───
