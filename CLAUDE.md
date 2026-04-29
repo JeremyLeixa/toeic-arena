@@ -49,9 +49,9 @@ src/
   chests.js            — Loot/reward system (imported from src/data/chests.js)
   supabase.js          — Supabase client init
   data/
-    vocab.js           — 390 flashcards, 18 domains
-    grammar.js         — 523 Part 5 drill questions
-    listening.js       — P1 (43), P2 (75), P3 (50 convos), P4 (45 talks)
+    vocab.js           — 870 flashcards, 18 domains
+    grammar.js         — 410 Part 5 drill questions
+    listening.js       — P1 (43), P2 (125), P3 (30 convos), P4 (31 talks)
     part6.js           — 30 texts, 120 blanks
     part7.js           — 39 passages
     mockTests.js       — Mock Tests 1-3

@@ -47,13 +47,13 @@ All content is imported at build time. No dynamic fetching. Files use `export va
 { id: "finance", name: "💰 Finance", icon: "💰", col: "#hex",
   cards: [{ id: "f1", w: "word", d: "definition", e: "example sentence" }] }
 ```
-390 cards, 18 domains. No audio. SRS self-evaluation (not right/wrong).
+870 cards, 18 domains (16 × 50 cards + preps:30 + phrasal:40). No audio. SRS self-evaluation (not right/wrong).
 
 ### grammar.js — `QUESTIONS`
 ```js
 { id: "g1", s: "The report _____ yesterday.", o: ["was submitted","submitted","submitting","submit"], c: 0, x: "Passive voice...", cat: "Passive Voice" }
 ```
-523 questions, 14 categories.
+410 questions, 14 categories.
 
 ### listening.js — `LISTENING_P1`, `LISTENING_P2`, `LISTENING_P3`, `LISTENING_P4`
 ```js
@@ -73,14 +73,14 @@ All content is imported at build time. No dynamic fetching. Files use `export va
     { text: "___", blank: true, options: [...4], correct: 0, x: "..." }
   ] }
 ```
-20 texts. Types: Email, Memo, Notice, Letter, Instructions.
+30 texts (120 blanks total). Types: Email, Memo, Notice, Letter, Instructions.
 
 ### part7.js — `PART7_PASSAGES`
 ```js
 { id: "p7p1", type: "Email", text: "full passage...",
   questions: [{ q: "What is implied?", options: [...4], correct: 0, x: "..." }] }
 ```
-24 passages (single or double). Double passages use `--- DOCUMENT 1/2 ---` separator.
+39 passages (single or double, ~139 questions total). Double passages use `--- DOCUMENT 1/2 ---` separator.
 
 ### audioBlitz.js — `AUDIO_BLITZ`
 ```js
@@ -112,7 +112,7 @@ All content is imported at build time. No dynamic fetching. Files use `export va
 ```js
 { id: "first_blood", name: "First Blood", desc: "...", icon: "⚔️", check: (s) => s.xp > 0 }
 ```
-38 achievements. `check` is a predicate function on student profile.
+58 achievements (incl. 16 Gauntlet, 4 Word Tavern, 4 Duel). `check` is a predicate function on student profile.
 
 ### leagues.js — `LEAGUES`, `COMPETITORS`
 ```js
