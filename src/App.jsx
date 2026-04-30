@@ -2230,7 +2230,7 @@ function ModalMatch(p){
       <button className="btn2" style={{width:"100%",fontSize:13,padding:"10px"}} onClick={undoLast}>{"↶"} Undo last pair</button>
     )}
     {phase==="reveal"&&(
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,var(--cyan),#7c3aed)",fontSize:15,padding:"13px",fontWeight:800}} onClick={nextBoard}>{boardIdx>=BOARDS_PER_SESSION-1?"See result":"Next board →"}</button>
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:15,padding:"13px",fontWeight:800}} onClick={nextBoard}>{boardIdx>=BOARDS_PER_SESSION-1?"See result":"Next board →"}</button>
     )}
   </div>);
 }
@@ -2336,7 +2336,7 @@ function ModalSort(p){
     <button className="back-btn" onClick={p.back}>{"←"} Back</button>
     <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:6}}>Sentence {idx+1} / {deck.length}</div>
     <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:18}}>
-      <div style={{width:((idx+(phase==="reveal"?1:0))/deck.length*100)+"%",height:"100%",background:"linear-gradient(90deg,var(--cyan),#7c3aed)",transition:"width .4s ease"}}/>
+      <div style={{width:((idx+(phase==="reveal"?1:0))/deck.length*100)+"%",height:"100%",background:"linear-gradient(90deg,#f59e0b,#dc2626)",transition:"width .4s ease"}}/>
     </div>
 
     <div className="crd" style={{padding:"22px 18px",marginBottom:18,fontSize:17,fontWeight:600,color:"var(--t1)",lineHeight:1.5,textAlign:"center"}}>
@@ -2369,7 +2369,7 @@ function ModalSort(p){
     </div>)}
 
     {phase==="reveal"&&(
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,var(--cyan),#7c3aed)",fontSize:14,padding:"12px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next sentence →"}</button>
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#f59e0b,#dc2626)",fontSize:14,padding:"12px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next sentence →"}</button>
     )}
   </div>);
 }
