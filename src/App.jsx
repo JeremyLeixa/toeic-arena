@@ -1319,17 +1319,20 @@ function IrregularCrypt(p){
     setPhase("reveal");
     setTimeout(function(){
       if(idx>=deck.length-1){setPhase("end");}
-      else{setIdx(idx+1);setV2In("");setV3In("");setRevealData(null);setPhase("play");}
+      else{setIdx(idx+1);setV2In("");setV3In("");setRevealData(null);setTimeLeft(TIME_PER_Q);setPhase("play");}
     },3500);
   }
-  // Timer
+  // Timer — reset is handled in startSession + the next-question setTimeout above.
+  // Do NOT add a useEffect that resets timeLeft on [idx,phase] : if the previous
+  // question ended on a 0-timer auto-submit, timeLeft stays at 0 across the reveal,
+  // and on the next "play" commit Effect 1 fires before the reset effect → submit()
+  // is called immediately on Q N+1 (timer "drops to 0 d'un coup" bug, 2026-04-30).
   useEffect(function(){
     if(phase!=="play")return;
     if(timeLeft<=0){submit();return;}
     var t=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
     return function(){clearTimeout(t);};
   },[timeLeft,phase]);
-  useEffect(function(){if(phase==="play")setTimeLeft(TIME_PER_Q);},[idx,phase]);
 
   function finishSession(){
     var totalFull=results.filter(function(r){return r.v2Ok&&r.v3Ok;}).length;
@@ -1625,7 +1628,7 @@ function PassiveForge(p){
   function nextQ(){
     if(!deck)return;
     if(idx>=deck.length-1){setPhase("end");}
-    else{setIdx(idx+1);setPicked(null);setPhase("play");}
+    else{setIdx(idx+1);setPicked(null);setTimeLeft(TIME_PER_Q);setPhase("play");}
   }
   function finishSession(){
     var correct=results.filter(function(r){return r.ok;}).length;
@@ -1636,14 +1639,17 @@ function PassiveForge(p){
     if(correct===deck.length)baseXp+=35;
     p.done(correct,deck.length,baseXp);
   }
-  // Timer
+  // Timer — reset is handled in startSession + nextQ (above). Do NOT add a
+  // useEffect that resets timeLeft on [idx,phase] : if the previous question
+  // ended on a 0-timer auto-timeout, timeLeft stays at 0 across the reveal,
+  // and on the next "play" commit Effect 1 fires before the reset effect →
+  // timeoutQ() called immediately on Q N+1 (timer "drops to 0" bug, 2026-04-30).
   useEffect(function(){
     if(phase!=="play")return;
     if(timeLeft<=0){timeoutQ();return;}
     var t=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
     return function(){clearTimeout(t);};
   },[timeLeft,phase]);
-  useEffect(function(){if(phase==="play")setTimeLeft(TIME_PER_Q);},[idx,phase]);
 
   function renderWithBlank(s){
     var segs=s.split(/_{3,}/);
@@ -7689,6 +7695,7 @@ function DuelArena(p){
       setQuestions(msg.payload.questions);
       setExpectedPlayers(msg.payload.playerCount);expectedRef.current=msg.payload.playerCount;
       setQi(0);setMyScore(0);setRoundResults([]);setAnsweredCount(0);
+      setTimer(TIMER_SEC);
       setPhase("countdown");
     });
 
@@ -7722,6 +7729,11 @@ function DuelArena(p){
       allAnswersRef.current={};
       setMyPick(-1);setAnsweredCount(0);
       setQi(msg.payload.qi);qiRef.current=msg.payload.qi;
+      // Reset timer in the SAME batch as setPhase("play") to avoid a 1-frame
+      // render with stale timer=0 from previous round's auto-timeout (which
+      // would visually flash the progress bar to 0% before the play effect's
+      // own setTimer commits). Timer "drop to 0 d'un coup" bug, 2026-04-30.
+      setTimer(TIMER_SEC);
       setPhase("play");
     });
 
@@ -7790,6 +7802,8 @@ function DuelArena(p){
       if(channelRef.current)channelRef.current.send({type:"broadcast",event:"next_round",payload:{qi:next,pid:myIdRef.current}});
       setMyPick(-1);setAnsweredCount(0);
       setQi(next);qiRef.current=next;
+      // Same-batch timer reset (see "next_round" broadcast handler comment).
+      setTimer(TIMER_SEC);
       setPhase("play");
     }
   }
@@ -7922,6 +7936,7 @@ function DuelArena(p){
         channelRef.current.send({type:"broadcast",event:"game_start",payload:{questions:qs,wager:wager,playerCount:pc,pid:myIdRef.current}});
         setQi(0);setMyScore(0);setRoundResults([]);setAnsweredCount(0);
         allAnswersRef.current={};
+        setTimer(TIMER_SEC);
         setPhase("countdown");
       }}>{"⚔️"} Start Arena! ({playerCount} players)</button>
     </div>):(<div>
