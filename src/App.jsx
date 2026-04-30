@@ -2384,8 +2384,8 @@ function ModalCouncilHub(p){
   var [subMode,setSubMode]=useState(null); // null | "match" | "sort"
   var scores=(p.u&&p.u.moduleScores)||{};
   var cards=[
-    {id:"match",name:"The Oracle",icon:"spell-book",desc:"Pair situations with the right modal response. 3 boards × 5 pairs per session.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_chrono",stats:scores["modals_match"],ready:true},
-    {id:"sort",name:"The Verdict",icon:"stone-tablet",desc:"Classify modal sentences into 4 functions: Obligation, Advice, Possibility, Deduction.",accent:"linear-gradient(90deg,#f59e0b,#dc2626)",bgm:"bgm_chrono",stats:scores["modals_sort"],ready:true}
+    {id:"match",name:"The Oracle",icon:"spell-book",desc:"Pair situations with the right modal response. 3 boards × 5 pairs per session.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_oracle",stats:scores["modals_match"],ready:true},
+    {id:"sort",name:"The Verdict",icon:"stone-tablet",desc:"Classify modal sentences into 4 functions: Obligation, Advice, Possibility, Deduction.",accent:"linear-gradient(90deg,#f59e0b,#dc2626)",bgm:"bgm_verdict",stats:scores["modals_sort"],ready:true}
   ];
   function fmtAcc(s){if(!s||!s.total)return"—";return Math.round((s.correct/s.total)*100)+"%";}
   function enterSub(card){
