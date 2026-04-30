@@ -293,6 +293,72 @@ function getEffectiveLeague(wxp,ms){
 var FREE_MODULES = ["daily","drill","csess","lisP2","stratquiz","strats","gramref","wfall","tavern"];
 var FREE_FLASHCARD_DOMAINS = ["finance","travel","office"];
 
+// ─── FEEDBACK FORM: catalog of modules grouped by category ───
+// Used by the in-app feedback form (Profile → Send feedback) and by the
+// TeacherDash Feedback tab. Each entry has a stable `id` (stored in DB,
+// matches existing module keys when relevant) and a human-readable `label`.
+var FEEDBACK_MODULES = [
+  {group:"Listening",items:[
+    {id:"daily",label:"Daily Challenge"},
+    {id:"lis_p1",label:"Listening — Part 1 (Photos)"},
+    {id:"lis_p2",label:"Listening — Part 2 (Q&A)"},
+    {id:"lis_p3",label:"Listening — Part 3 (Conversations)"},
+    {id:"lis_p4",label:"Listening — Part 4 (Talks)"},
+    {id:"ablitz",label:"Audio Blitz"}
+  ]},
+  {group:"Reading",items:[
+    {id:"drill",label:"Reading Drill (Part 5)"},
+    {id:"p6",label:"Part 6 (Text Completion)"},
+    {id:"p7",label:"Part 7 (Reading Comprehension)"},
+    {id:"clue",label:"Clue Hunter"}
+  ]},
+  {group:"Grammar",items:[
+    {id:"gauntlet_irregular",label:"Grammar Gauntlet — Irregular Crypt"},
+    {id:"gauntlet_tense",label:"Grammar Gauntlet — Chronomancer"},
+    {id:"gauntlet_passive",label:"Grammar Gauntlet — Passive Forge"},
+    {id:"gauntlet_relative",label:"Grammar Gauntlet — Relative Weaver"},
+    {id:"modals_match",label:"Modal Council — The Oracle"},
+    {id:"modals_sort",label:"Modal Council — The Verdict"},
+    {id:"wordfam",label:"Word Families"},
+    {id:"connsort",label:"Connectors Sorting"},
+    {id:"prepdrill",label:"Preposition Collocations"},
+    {id:"gerinf",label:"Gerund vs Infinitive"},
+    {id:"pvdojo",label:"Phrasal Verb Dojo"},
+    {id:"falsefr",label:"False Friends"},
+    {id:"traps",label:"Traps Quiz"}
+  ]},
+  {group:"Vocabulary",items:[
+    {id:"csess",label:"Flashcard Review"},
+    {id:"tavern",label:"Word Tavern"},
+    {id:"sbuild",label:"Sentence Builder"}
+  ]},
+  {group:"Games",items:[
+    {id:"duel",label:"Vocabulary Arena (Duel)"},
+    {id:"wfall",label:"Word Fall"},
+    {id:"matchE",label:"Speed Match"}
+  ]},
+  {group:"Mocks",items:[
+    {id:"mock1",label:"Mock Test 1"},
+    {id:"mock2",label:"Mock Test 2"},
+    {id:"mock3",label:"Mock Test 3"},
+    {id:"boss",label:"Boss Test (The Final Arena)"},
+    {id:"endless",label:"Endless Arena"}
+  ]},
+  {group:"Profile / Account",items:[
+    {id:"profile",label:"Profile"},
+    {id:"onboarding",label:"Onboarding"},
+    {id:"push",label:"Push notifications"},
+    {id:"auth",label:"Login / Signup / Password"},
+    {id:"league",label:"League / Rankings"},
+    {id:"chest",label:"Chests / Rewards"}
+  ]},
+  {group:"Other",items:[
+    {id:"general",label:"General app issue (UI / Performance)"},
+    {id:"other",label:"Other"}
+  ]}
+];
+function findModuleLabel(id){for(var i=0;i<FEEDBACK_MODULES.length;i++){var g=FEEDBACK_MODULES[i].items;for(var j=0;j<g.length;j++){if(g[j].id===id)return g[j].label;}}return id;}
+
 // Returns true if the user has unrestricted access to all premium modules.
 // Reasons: active Stripe subscription, active 3-month pass, or active institutional group.
 function hasFullAccess(u, gType) {
@@ -10143,6 +10209,40 @@ function TeacherDash(p){
   var[cgForm,setCgForm]=useState({name:"",code:"",teacherCode:"",type:"school",startDate:"",endDate:""});
   var[cgCodeErr,setCgCodeErr]=useState("");var[cgSaving,setCgSaving]=useState(false);
   var[dashEvents,setDashEvents]=useState([]);var[evForm,setEvForm]=useState({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:"all"});var[evSaving,setEvSaving]=useState(false);var[evPushResult,setEvPushResult]=useState(null);
+  // ── Feedback tab state ──
+  var[fbList,setFbList]=useState([]);var[fbLoading,setFbLoading]=useState(false);
+  var[fbFilter,setFbFilter]=useState("open"); // "all" | "open" | "resolved"
+  var[fbDetailId,setFbDetailId]=useState(null);
+  var[fbResNote,setFbResNote]=useState("");var[fbResBusy,setFbResBusy]=useState(false);
+  var[fbToast,setFbToast]=useState(null);
+
+  function loadFeedback(){
+    setFbLoading(true);
+    supabase.from('feedback_reports').select('*').order('created_at',{ascending:false}).limit(200)
+      .then(function(res){if(res.data)setFbList(res.data);setFbLoading(false);})
+      .catch(function(){setFbLoading(false);});
+  }
+  function resolveFeedback(report){
+    if(fbResBusy)return;
+    var note=fbResNote.trim();
+    setFbResBusy(true);
+    supabase.from('feedback_reports').update({status:'resolved',resolved_at:new Date().toISOString(),resolution_note:note||null}).eq('id',report.id)
+      .then(function(res){
+        if(res.error){console.warn("[fb] update failed:",res.error.message);setFbResBusy(false);setFbToast({err:"Échec de la mise à jour."});setTimeout(function(){setFbToast(null);},3500);return;}
+        // Best-effort push notif to the student (existing /api/push-send pipeline)
+        var pushBody=note?("Ton report sur "+report.module_label+" a été traité : "+note):("Ton report sur "+report.module_label+" a été traité.");
+        supabase.from('push_subscriptions').select('subscription').eq('student_name',report.user_name).eq('class_code',report.class_code).then(function(r2){
+          var subs=(r2.data||[]).map(function(x){return x.subscription;}).filter(Boolean);
+          if(subs.length===0){setFbToast({ok:"Marqué résolu (pas de push subscriber pour cet élève)."});}
+          else{
+            fetch('/api/push-send',{method:'POST',headers:{'Content-Type':'application/json','x-push-secret':PUSH_SECRET},body:JSON.stringify({subscriptions:subs,title:"📬 Feedback traité",body:pushBody,tag:'fb-'+report.id,url:"/"})}).catch(function(){});
+            setFbToast({ok:"Marqué résolu + push envoyé."});
+          }
+          setTimeout(function(){setFbToast(null);},3500);
+        });
+        setFbDetailId(null);setFbResNote("");setFbResBusy(false);loadFeedback();
+      });
+  }
 
   function loadEvents(){
     supabase.from('events').select('*').order('start_at',{ascending:false}).limit(20)
@@ -10174,6 +10274,7 @@ function TeacherDash(p){
       .then(function(res){if(res.data)setGroups(res.data);});
   }
   useEffect(function(){loadGroups();loadEvents();},[]);
+  useEffect(function(){if(dashTab==="feedback")loadFeedback();},[dashTab]);
 
   function loadStudents(){
     supabase.from('students').select('*').eq('class_code',classCode).order('xp',{ascending:false}).limit(200)
@@ -10669,7 +10770,7 @@ function TeacherDash(p){
 
     {/* ── Tab switcher ── */}
     <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:12,padding:3}}>
-      {[{id:"overview",label:"👥 Students"},{id:"analytics",label:"📊 Analytics"},{id:"events",label:"🎪 Events"}].map(function(t){
+      {[{id:"overview",label:"👥 Students"},{id:"analytics",label:"📊 Analytics"},{id:"events",label:"🎪 Events"},{id:"feedback",label:"📬 Feedback"}].map(function(t){
         var active=dashTab===t.id;
         return(<button key={t.id} onClick={function(){setDashTab(t.id);}} style={{
           flex:1,padding:"10px 8px",borderRadius:10,border:"none",cursor:"pointer",
@@ -11056,6 +11157,63 @@ function TeacherDash(p){
           </div>);
         })}
       </div>
+    </div>)}
+
+    {/* ═══ FEEDBACK TAB ═══ */}
+    {dashTab==="feedback"&&(<div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,gap:8}}>
+        <h3 className="out" style={{fontWeight:700,fontSize:14,margin:0,color:"var(--t2)"}}>{"📬 Student feedback"}</h3>
+        <button onClick={loadFeedback} style={{background:"none",border:"1px solid var(--bdr)",color:"var(--t3)",fontSize:11,padding:"6px 10px",borderRadius:8,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{fbLoading?"…":"Refresh"}</button>
+      </div>
+
+      {/* Filter pills */}
+      <div style={{display:"flex",gap:6,marginBottom:14}}>
+        {[{id:"open",l:"Open"},{id:"resolved",l:"Resolved"},{id:"all",l:"All"}].map(function(f){
+          var active=fbFilter===f.id;
+          var count=fbList.filter(function(r){return f.id==="all"?true:r.status===f.id;}).length;
+          return(<button key={f.id} onClick={function(){setFbFilter(f.id);}} style={{flex:1,padding:"8px 6px",background:active?"var(--bg3)":"var(--bg2)",border:"1px solid "+(active?"var(--cyan)":"var(--bdr)"),borderRadius:10,color:active?"var(--cyan)":"var(--t3)",fontSize:12,fontWeight:active?700:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{f.l} ({count})</button>);
+        })}
+      </div>
+
+      {fbToast&&<div style={{padding:"10px 12px",marginBottom:12,background:fbToast.err?"rgba(239,68,68,.1)":"rgba(34,197,94,.1)",border:"1px solid "+(fbToast.err?"rgba(239,68,68,.3)":"rgba(34,197,94,.3)"),borderRadius:10,color:fbToast.err?"#ef4444":"#22c55e",fontSize:12.5}}>{fbToast.err||fbToast.ok}</div>}
+
+      {fbLoading?(<div style={{textAlign:"center",padding:30,color:"var(--t3)",fontSize:13}}>Chargement…</div>):(
+        function(){
+          var filtered=fbList.filter(function(r){return fbFilter==="all"?true:r.status===fbFilter;});
+          if(filtered.length===0)return(<div className="crd" style={{padding:24,textAlign:"center",color:"var(--t3)",fontSize:13}}>{fbFilter==="open"?"Aucun feedback ouvert pour le moment. 🎉":fbFilter==="resolved"?"Aucun feedback résolu encore.":"Aucun feedback dans la base."}</div>);
+          var TYPE_META={bug:{l:"🐞 Bug",c:"#dc2626"},suggestion:{l:"💡 Suggestion",c:"#0891b2"},question:{l:"❓ Question",c:"#7c3aed"}};
+          return(<div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {filtered.map(function(r){
+              var open=fbDetailId===r.id;
+              var meta=TYPE_META[r.feedback_type]||{l:r.feedback_type,c:"var(--t3)"};
+              var d=new Date(r.created_at);var when=d.toLocaleDateString("fr-FR",{day:"2-digit",month:"short"})+" "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+              return(<div key={r.id} className="crd" style={{padding:0,overflow:"hidden",borderColor:r.status==="resolved"?"rgba(34,197,94,.2)":"var(--bdr)"}}>
+                <button onClick={function(){if(open){setFbDetailId(null);setFbResNote("");}else{setFbDetailId(r.id);setFbResNote(r.resolution_note||"");}}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:"none",border:"none",width:"100%",textAlign:"left",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                  <span style={{fontSize:11,fontWeight:700,color:meta.c,padding:"3px 8px",background:"rgba(0,0,0,.18)",border:"1px solid "+meta.c,borderRadius:99,whiteSpace:"nowrap",flexShrink:0}}>{meta.l}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"var(--t1)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.user_name} <span style={{color:"var(--t3)",fontWeight:400,fontSize:11}}>· {r.module_label}</span></div>
+                    <div style={{fontSize:11,color:"var(--t3)",marginTop:1}}>{when} · {r.class_code}{r.status==="resolved"?" · ✓ résolu":""}</div>
+                  </div>
+                  <span style={{color:"var(--t3)",fontSize:14,flexShrink:0}}>{open?"▾":"▸"}</span>
+                </button>
+                {open&&<div style={{padding:"12px 14px 14px",borderTop:"1px solid var(--bdr)",background:"var(--bg2)"}}>
+                  <div style={{fontSize:10,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Message</div>
+                  <div style={{fontSize:13.5,color:"var(--t1)",lineHeight:1.6,whiteSpace:"pre-wrap",marginBottom:14}}>{r.message}</div>
+                  {r.status==="resolved"?(<div>
+                    <div style={{fontSize:10,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Note de résolution</div>
+                    <div style={{fontSize:13,color:"var(--t2)",fontStyle:r.resolution_note?"normal":"italic"}}>{r.resolution_note||"(aucune note)"}</div>
+                    <div style={{fontSize:11,color:"var(--t3)",marginTop:8}}>Résolu le {new Date(r.resolved_at).toLocaleString("fr-FR")}</div>
+                  </div>):(<div>
+                    <div style={{fontSize:10,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Note de résolution (optionnelle, envoyée à l'élève)</div>
+                    <textarea value={fbResNote} onChange={function(e){setFbResNote(e.target.value.slice(0,500));}} rows={3} placeholder="Ex: Bug confirmé et corrigé en v2026-04-30. Merci pour le report !" style={{width:"100%",padding:"10px 12px",fontSize:13,background:"var(--bg)",border:"1.5px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none",lineHeight:1.5,resize:"vertical",marginBottom:10}}/>
+                    <button className="btn1" disabled={fbResBusy} style={{width:"100%",fontSize:13,padding:"10px",fontWeight:800,opacity:fbResBusy?.6:1}} onClick={function(){resolveFeedback(r);}}>{fbResBusy?"Envoi…":"✓ Marquer résolu + push à l'élève"}</button>
+                  </div>)}
+                </div>}
+              </div>);
+            })}
+          </div>);
+        }()
+      )}
     </div>)}
 
   </div>);
@@ -12634,6 +12792,14 @@ function Profile(p){
     </div>);
   }
 
+  // ── SUB-VIEW : FEEDBACK ────────────────────────────────────────────────
+  // POSTs to /api/feedback-send which inserts in feedback_reports + emails
+  // leixa.formation@gmail.com (Resend). The form is intentionally minimal:
+  // type / module / message. Pseudo is auto-filled from u.name (editable).
+  if(view==="feedback"){
+    return(<FeedbackForm u={u} back={function(){setView(null);}}/>);
+  }
+
   // ── SUB-VIEW : STATS ────────────────────────────────────────────────────
   if(view==="stats")return(
     <div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -13517,6 +13683,21 @@ function Profile(p){
         </button>);
       })()}
 
+      {/* Send feedback — bug / suggestion / question pédagogique.
+          Visible to all signed-in users (not visitors — class_code is required).
+          Routes to the FeedbackForm sub-view. */}
+      {u.classCode&&u.classCode!=="visitor"&&<button onClick={function(){setView("feedback");}} className="crd"
+        style={{width:"100%",padding:"14px 16px",marginBottom:14,textAlign:"left",cursor:"pointer",
+          background:"linear-gradient(135deg,rgba(8,145,178,0.06),rgba(124,58,237,0.04))",
+          border:"1px solid rgba(8,145,178,0.25)",display:"flex",alignItems:"center",gap:12}}>
+        <span style={{fontSize:24,flexShrink:0}}>{"📬"}</span>
+        <div style={{flex:1,minWidth:0}}>
+          <div className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)",letterSpacing:.3}}>Send feedback</div>
+          <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>Bug, suggestion ou question pédagogique → Jérémy</div>
+        </div>
+        <span style={{fontSize:18,color:"var(--cyan)",flexShrink:0}}>{"›"}</span>
+      </button>}
+
       {/* Teacher dashboard — only shown for users in a teacher-dedicated class.
           When the app is deployed on multiple campuses, each teacher gets their own
           synthetic class (like 'teacher-internal') so the button stays out of view
@@ -13677,6 +13858,104 @@ function Profile(p){
 }
 
 // ═══════════════════════════════════════════
+
+// ═══════════════════════════════════════════
+// FEEDBACK FORM — student bug/suggestion/question form
+// Lives in Profile (view==="feedback"). Submits via /api/feedback-send
+// which inserts in feedback_reports + emails leixa.formation@gmail.com.
+// ═══════════════════════════════════════════
+function FeedbackForm(p){
+  var u=p.u;
+  var [name,setName]=useState(u.name||"");
+  var [type,setType]=useState("bug");
+  var [moduleId,setModuleId]=useState("");
+  var [message,setMessage]=useState("");
+  var [busy,setBusy]=useState(false);
+  var [done,setDone]=useState(false);
+  var [err,setErr]=useState("");
+
+  function submit(){
+    setErr("");
+    if(!name.trim()){setErr("Pseudo requis.");return;}
+    if(!moduleId){setErr("Sélectionne un module.");return;}
+    if(message.trim().length<10){setErr("Message trop court (10 caractères minimum).");return;}
+    setBusy(true);
+    var label=findModuleLabel(moduleId);
+    fetch("/api/feedback-send",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        user_name:name.trim(),
+        class_code:u.classCode||"visitor",
+        feedback_type:type,
+        module_id:moduleId,
+        module_label:label,
+        message:message.trim()
+      })
+    }).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(res){
+        if(!res.ok){setErr((res.j&&res.j.error)||"Erreur inconnue.");setBusy(false);return;}
+        setDone(true);setBusy(false);
+        try{haptic("complete");}catch(e){console.warn("[feedback] haptic:",e&&e.message);}
+      })
+      .catch(function(e){setErr("Connexion impossible. Réessaie dans un instant.");setBusy(false);console.warn("[feedback] fetch:",e&&e.message);});
+  }
+
+  if(done){
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
+      <div style={{textAlign:"center",padding:"40px 16px"}}>
+        <div style={{fontSize:60,marginBottom:18}}>{"📬"}</div>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:10}}>Message envoyé !</h2>
+        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:24}}>Merci pour ton retour. Jérémy a été notifié et reviendra vers toi si nécessaire.</p>
+        <button className="btn1" style={{fontSize:15,padding:"13px 28px"}} onClick={p.back}>Retour au profil</button>
+      </div>
+    </div>);
+  }
+
+  return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
+      <button onClick={p.back} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>{"←"}</button>
+      <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Send feedback</h1>
+    </div>
+    <p style={{fontSize:13,color:"var(--t2)",marginBottom:18,lineHeight:1.5}}>Bug, suggestion ou question pédagogique ? Décris ce que tu as constaté, ça arrive directement chez Jérémy.</p>
+
+    <div style={{marginBottom:14}}>
+      <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Pseudo</label>
+      <input type="text" value={name} onChange={function(e){setName(e.target.value);}} maxLength={60} style={{width:"100%",padding:"11px 13px",fontSize:14,background:"var(--bg2)",border:"1.5px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
+    </div>
+
+    <div style={{marginBottom:14}}>
+      <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Type</label>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+        {[{id:"bug",label:"🐞 Bug",col:"#dc2626"},{id:"suggestion",label:"💡 Suggestion",col:"#0891b2"},{id:"question",label:"❓ Question",col:"#7c3aed"}].map(function(t){
+          var active=type===t.id;
+          return(<button key={t.id} onClick={function(){setType(t.id);}} style={{padding:"10px 6px",background:active?"rgba(0,0,0,.18)":"var(--bg2)",border:"1.5px solid "+(active?t.col:"var(--bdr)"),borderRadius:10,color:active?t.col:"var(--t2)",fontSize:13,fontWeight:active?800:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>{t.label}</button>);
+        })}
+      </div>
+    </div>
+
+    <div style={{marginBottom:14}}>
+      <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Module concerné</label>
+      <select value={moduleId} onChange={function(e){setModuleId(e.target.value);}} style={{width:"100%",padding:"11px 13px",fontSize:14,background:"var(--bg2)",border:"1.5px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none",appearance:"none",cursor:"pointer"}}>
+        <option value="">— Sélectionner un module —</option>
+        {FEEDBACK_MODULES.map(function(g){
+          return(<optgroup key={g.group} label={g.group}>
+            {g.items.map(function(it){return(<option key={it.id} value={it.id}>{it.label}</option>);})}
+          </optgroup>);
+        })}
+      </select>
+    </div>
+
+    <div style={{marginBottom:18}}>
+      <label style={{display:"block",fontSize:11,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Message <span style={{color:"var(--t3)",fontWeight:400,textTransform:"none",letterSpacing:0}}>· {message.length}/4000</span></label>
+      <textarea value={message} onChange={function(e){setMessage(e.target.value.slice(0,4000));}} rows={6} placeholder="Décris ce que tu as constaté : ce que tu faisais, ce qui devait se passer, ce qui s'est passé. Plus c'est précis, plus c'est facile à corriger." style={{width:"100%",padding:"12px 13px",fontSize:14,background:"var(--bg2)",border:"1.5px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none",lineHeight:1.5,resize:"vertical",minHeight:120}}/>
+    </div>
+
+    {err&&<div style={{padding:"10px 12px",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:10,color:"#ef4444",fontSize:13,marginBottom:14}}>{err}</div>}
+
+    <button className="btn1" disabled={busy} style={{width:"100%",fontSize:15,padding:"14px",fontWeight:800,opacity:busy?.65:1}} onClick={submit}>{busy?"Envoi…":"Envoyer le feedback"}</button>
+  </div>);
+}
 
 // ═══════════════════════════════════════════
 // RESET PASSWORD VIEW (Phase 1 — refonte 2026-04-24)
