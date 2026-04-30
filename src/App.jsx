@@ -28,6 +28,8 @@ import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, M
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
 import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } from "./data/grammarGauntlet.js";
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "./data/grammarGauntletGrimoire.js";
+import { MODAL_MATCH_BOARDS, MODAL_SORT_ITEMS } from "./data/modals.js";
+import { GRIMOIRE_MODALS } from "./data/modalsGrimoire.js";
 import { GRIMOIRE_GERUND } from "./data/gerundGrimoire.js";
 import { GRIMOIRE_PHRASAL } from "./data/phrasalGrimoire.js";
 import { GRIMOIRE_CONNECTORS } from "./data/connectorsGrimoire.js";
@@ -1977,6 +1979,401 @@ function GauntletHub(p){
   </div>);
 }
 
+// ═══════════════════════════════════════════════════════════
+// MODAL COUNCIL — global module mirroring Grammar Gauntlet
+// ═══════════════════════════════════════════════════════════
+// Two sub-modules (Modal Match + Modal Sort) + complete grimoire.
+// Module score keys: modals_match, modals_sort.
+// Tier B XP (15 + 5×correct + 35 perfect = 125 max), aligned with Gauntlet.
+// Tap-to-pair / tap-to-bucket UX (mobile-first, no native HTML5 drag).
+
+// ─── MODAL MATCH — sub-module 1/2 of Modal Council ───
+// 3 boards × 5 pairs per session = 15 scored items.
+// Tap a situation (left), then tap a modal (right) → pairs them with a
+// numbered badge. Auto-checks when 5 pairs are placed; reveals correct
+// mapping; manual "Next board" cycles to the next of 3.
+function ModalMatch(p){
+  var BOARDS_PER_SESSION=3;
+  var PAIRS_PER_BOARD=5;
+  var [phase,setPhase]=useState("intro"); // intro | play | reveal | end
+  var [boards,setBoards]=useState(null);
+  var [boardIdx,setBoardIdx]=useState(0);
+  var [selSit,setSelSit]=useState(null); // currently-selected situation index
+  var [pairs,setPairs]=useState([]); // [{sitIdx, modalIdx}]
+  var [allResults,setAllResults]=useState([]); // [{boardId, correct, total}]
+
+  function startSession(){
+    var picked=shuffle(MODAL_MATCH_BOARDS.slice()).slice(0,BOARDS_PER_SESSION);
+    var prepared=picked.map(function(b){
+      // Shuffle modals so they're not in the same vertical order as situations.
+      var modalsShuf=shuffle(b.pairs.map(function(pp,i){return{text:pp.modal,originalIdx:i};}));
+      return{
+        id:b.id,theme:b.theme,
+        situations:b.pairs.map(function(pp){return pp.situation;}),
+        modals:modalsShuf
+      };
+    });
+    setBoards(prepared);setBoardIdx(0);setPairs([]);setSelSit(null);setAllResults([]);setPhase("play");
+  }
+
+  function tapSituation(i){
+    if(phase!=="play")return;
+    if(pairs.some(function(pp){return pp.sitIdx===i;}))return;
+    setSelSit(i);
+  }
+
+  function tapModal(i){
+    if(phase!=="play")return;
+    if(selSit===null)return;
+    if(pairs.some(function(pp){return pp.modalIdx===i;}))return;
+    var newPairs=pairs.concat([{sitIdx:selSit,modalIdx:i}]);
+    setPairs(newPairs);setSelSit(null);
+    if(newPairs.length===PAIRS_PER_BOARD){
+      var board=boards[boardIdx];var correct=0;
+      newPairs.forEach(function(pp){if(board.modals[pp.modalIdx].originalIdx===pp.sitIdx)correct++;});
+      if(correct===PAIRS_PER_BOARD){try{playCorrect();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
+      else{try{playWrong();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
+      setAllResults(allResults.concat([{boardId:board.id,correct:correct,total:PAIRS_PER_BOARD}]));
+      setPhase("reveal");
+    }
+  }
+
+  function undoLast(){
+    if(phase!=="play"||pairs.length===0)return;
+    setPairs(pairs.slice(0,-1));setSelSit(null);
+  }
+
+  function nextBoard(){
+    if(boardIdx>=BOARDS_PER_SESSION-1){setPhase("end");return;}
+    setBoardIdx(boardIdx+1);setPairs([]);setSelSit(null);setPhase("play");
+  }
+
+  function finishSession(){
+    var totalCorrect=allResults.reduce(function(s,r){return s+r.correct;},0);
+    var totalQ=BOARDS_PER_SESSION*PAIRS_PER_BOARD;
+    var baseXp=15+totalCorrect*5;
+    if(totalCorrect===totalQ)baseXp+=35;
+    p.done(totalCorrect,totalQ,baseXp);
+  }
+
+  if(phase==="intro"){
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
+      <button className="back-btn" onClick={p.back}>{"←"} Back</button>
+      <div style={{textAlign:"center",padding:"24px 16px"}}>
+        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><GIcon name="spell-book" size={64} color="var(--cyan)"/></div>
+        <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>The Oracle</h2>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Pair each situation with the right modal response. Three boards of five pairs each.</p>
+        <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
+          <div>{"✋"} <strong>Tap</strong> a situation, then <strong>tap</strong> a modal to pair them</div>
+          <div>{"🔢"} <strong>3 boards</strong> of 5 pairs · 15 items total</div>
+          <div>{"🏆"} <strong>5 XP</strong> per correct pair · perfect bonus</div>
+        </div>
+        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"⚖️ Consult the Oracle"}</button>
+      </div>
+    </div>);
+  }
+
+  if(phase==="end"){
+    var totalCorrect=allResults.reduce(function(s,r){return s+r.correct;},0);
+    var totalQ=BOARDS_PER_SESSION*PAIRS_PER_BOARD;
+    var isPerfect=totalCorrect===totalQ;
+    var isGood=totalCorrect>=Math.ceil(totalQ*0.7);
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
+      <div style={{textAlign:"center",padding:"20px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"👑":isGood?"🏆":"📜"}</div>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"PERFECT ORACLE":isGood?"Oracle answers":"Audience adjourned"}</h2>
+        <div style={{fontSize:44,fontWeight:800,color:"var(--cyan)",margin:"14px 0 2px"}}>{totalCorrect}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {totalQ}</span></div>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>pairs correctly matched</p>
+        <div className="crd" style={{maxWidth:340,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:8,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Boards</div>
+          {allResults.map(function(r,i){return(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:4,color:"var(--t2)"}}>
+              <span>Board {i+1}</span>
+              <strong style={{color:r.correct===r.total?"#22c55e":r.correct>=3?"#f59e0b":"#ef4444"}}>{r.correct} / {r.total}</strong>
+            </div>
+          );})}
+        </div>
+        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
+      </div>
+    </div>);
+  }
+
+  // phase === "play" or "reveal"
+  var board=boards[boardIdx];
+  function pairNumberForSit(i){var idx=pairs.findIndex(function(pp){return pp.sitIdx===i;});return idx>=0?idx+1:null;}
+  function pairNumberForModal(i){var idx=pairs.findIndex(function(pp){return pp.modalIdx===i;});return idx>=0?idx+1:null;}
+  function isSitCorrect(i){
+    if(phase!=="reveal")return null;
+    var pp=pairs.find(function(x){return x.sitIdx===i;});
+    if(!pp)return null;
+    return board.modals[pp.modalIdx].originalIdx===i;
+  }
+  function isModalCorrect(i){
+    if(phase!=="reveal")return null;
+    var pp=pairs.find(function(x){return x.modalIdx===i;});
+    if(!pp)return null;
+    return board.modals[i].originalIdx===pp.sitIdx;
+  }
+
+  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+    <button className="back-btn" onClick={p.back}>{"←"} Back</button>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,marginTop:4}}>
+      <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>Board {boardIdx+1} / {BOARDS_PER_SESSION}</span>
+      <span style={{fontSize:11,color:"var(--cyan)",fontWeight:700,letterSpacing:.8}}>{pairs.length} / {PAIRS_PER_BOARD} paired</span>
+    </div>
+    <div style={{textAlign:"center",fontSize:13,color:"var(--t2)",fontStyle:"italic",marginBottom:14}}>{board.theme}</div>
+
+    <div style={{fontSize:10,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Situation</div>
+    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18}}>
+      {board.situations.map(function(sit,i){
+        var pairNum=pairNumberForSit(i);
+        var isSel=selSit===i;
+        var revealOk=isSitCorrect(i);
+        var bdr="var(--bdr)";var bg="var(--bg2)";
+        if(phase==="reveal"){
+          if(revealOk===true){bdr="#22c55e";bg="rgba(34,197,94,.08)";}
+          else if(revealOk===false){bdr="#ef4444";bg="rgba(239,68,68,.08)";}
+        } else if(isSel){bdr="var(--cyan)";bg="rgba(var(--cx),.10)";}
+        else if(pairNum){bdr="var(--cyan)";bg="rgba(var(--cx),.05)";}
+        return(<button key={i} disabled={phase==="reveal"||(pairNum&&phase==="play")} onClick={function(){tapSituation(i);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"11px 12px",background:bg,border:"1.5px solid "+bdr,borderRadius:10,textAlign:"left",fontSize:13,lineHeight:1.4,color:"var(--t1)",cursor:phase==="play"?"pointer":"default",fontFamily:"'DM Sans',sans-serif",opacity:phase==="reveal"&&pairNum===null?.5:1}}>
+          <span style={{flexShrink:0,width:24,height:24,borderRadius:"50%",background:pairNum?(phase==="reveal"?(revealOk?"#22c55e":"#ef4444"):"var(--cyan)"):"var(--bg3)",color:pairNum?"#0f0c08":"var(--t3)",fontWeight:800,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{pairNum||(i+1)}</span>
+          <span style={{flex:1}}>{sit}</span>
+        </button>);
+      })}
+    </div>
+
+    <div style={{fontSize:10,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Response</div>
+    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+      {board.modals.map(function(m,i){
+        var pairNum=pairNumberForModal(i);
+        var revealOk=isModalCorrect(i);
+        var bdr="var(--bdr)";var bg="var(--bg2)";
+        if(phase==="reveal"){
+          if(revealOk===true){bdr="#22c55e";bg="rgba(34,197,94,.08)";}
+          else if(revealOk===false){bdr="#ef4444";bg="rgba(239,68,68,.08)";}
+        } else if(pairNum){bdr="var(--cyan)";bg="rgba(var(--cx),.05)";}
+        var disabled=phase==="reveal"||(pairNum&&phase==="play")||(phase==="play"&&selSit===null&&!pairNum);
+        return(<button key={i} disabled={disabled} onClick={function(){tapModal(i);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"11px 12px",background:bg,border:"1.5px solid "+bdr,borderRadius:10,textAlign:"left",fontSize:13,lineHeight:1.4,color:"var(--t1)",cursor:disabled?"default":"pointer",fontFamily:"'DM Sans',sans-serif",opacity:disabled&&!pairNum?.55:1}}>
+          <span style={{flexShrink:0,width:24,height:24,borderRadius:"50%",background:pairNum?(phase==="reveal"?(revealOk?"#22c55e":"#ef4444"):"var(--cyan)"):"var(--bg3)",color:pairNum?"#0f0c08":"var(--t3)",fontWeight:800,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{pairNum||String.fromCharCode(65+i)}</span>
+          <span style={{flex:1}}>{m.text}</span>
+        </button>);
+      })}
+    </div>
+
+    {phase==="play"&&pairs.length>0&&pairs.length<PAIRS_PER_BOARD&&(
+      <button className="btn2" style={{width:"100%",fontSize:13,padding:"10px"}} onClick={undoLast}>{"↶"} Undo last pair</button>
+    )}
+    {phase==="reveal"&&(
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,var(--cyan),#7c3aed)",fontSize:15,padding:"13px",fontWeight:800}} onClick={nextBoard}>{boardIdx>=BOARDS_PER_SESSION-1?"See result":"Next board →"}</button>
+    )}
+  </div>);
+}
+
+// ─── MODAL SORT — sub-module 2/2 of Modal Council ───
+// 15 phrases drawn from MODAL_SORT_ITEMS. For each, the student taps one
+// of 4 buckets (Obligation / Advice / Possibility / Deduction). Reveal
+// shows the correct bucket + a short FR explanation. Manual nextQ.
+function ModalSort(p){
+  var SESSION_SIZE=15;
+  var BUCKETS=[
+    {id:"obligation",label:"Obligation",icon:"templar-shield",color:"#dc2626"},
+    {id:"advice",label:"Advice",icon:"quill-ink",color:"#0891b2"},
+    {id:"possibility",label:"Possibility",icon:"ink-swirl",color:"#7c3aed"},
+    {id:"deduction",label:"Deduction",icon:"spyglass",color:"#f59e0b"}
+  ];
+  var [deck,setDeck]=useState(null);
+  var [phase,setPhase]=useState("intro");
+  var [idx,setIdx]=useState(0);
+  var [picked,setPicked]=useState(null);
+  var [results,setResults]=useState([]);
+
+  function startSession(){
+    var shuffled=shuffle(MODAL_SORT_ITEMS.slice()).slice(0,SESSION_SIZE);
+    setDeck(shuffled);setIdx(0);setResults([]);setPicked(null);setPhase("play");
+  }
+
+  function pickBucket(bid){
+    if(phase!=="play"||!deck)return;
+    var item=deck[idx];var ok=bid===item.bucket;
+    if(ok){try{playCorrect();}catch(e){console.warn("[msort] sfx:",e&&e.message);}}
+    else{try{playWrong();}catch(e){console.warn("[msort] sfx:",e&&e.message);}}
+    setPicked(bid);
+    setResults(results.concat([{item:item,picked:bid,ok:ok}]));
+    setPhase("reveal");
+  }
+
+  function nextQ(){
+    if(!deck)return;
+    if(idx>=deck.length-1){setPhase("end");}
+    else{setIdx(idx+1);setPicked(null);setPhase("play");}
+  }
+
+  function finishSession(){
+    var correct=results.filter(function(r){return r.ok;}).length;
+    var baseXp=15+correct*5;
+    if(correct===deck.length)baseXp+=35;
+    p.done(correct,deck.length,baseXp);
+  }
+
+  if(phase==="intro"){
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+      <button className="back-btn" onClick={p.back}>{"←"} Back</button>
+      <div style={{textAlign:"center",padding:"24px 16px"}}>
+        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><GIcon name="stone-tablet" size={64} color="var(--cyan)"/></div>
+        <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>The Verdict</h2>
+        <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Classify each modal sentence into one of four functions. Speed matters — but accuracy more.</p>
+        <div className="crd" style={{maxWidth:380,margin:"0 auto 16px",padding:14,textAlign:"left",fontSize:13,color:"var(--t2)",lineHeight:1.7}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="templar-shield" size={18} color="#dc2626"/><strong style={{color:"#dc2626"}}>Obligation</strong> · must, have to, need to</div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="quill-ink" size={18} color="#0891b2"/><strong style={{color:"#0891b2"}}>Advice</strong> · should, ought to, had better</div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="ink-swirl" size={18} color="#7c3aed"/><strong style={{color:"#7c3aed"}}>Possibility</strong> · can, could, may, might</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}><GIcon name="spyglass" size={18} color="#f59e0b"/><strong style={{color:"#f59e0b"}}>Deduction</strong> · must be, can't be, must have V3</div>
+        </div>
+        <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:14,textAlign:"left",fontSize:13,color:"var(--t2)",lineHeight:1.7}}>
+          <div>{"📜"} <strong>15 sentences</strong> per session</div>
+          <div>{"🏆"} <strong>5 XP</strong> per correct verdict · perfect bonus</div>
+        </div>
+        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"⚖️ Take the bench"}</button>
+      </div>
+    </div>);
+  }
+
+  if(phase==="end"){
+    var correct=results.filter(function(r){return r.ok;}).length;
+    var isPerfect=correct===deck.length;
+    var isGood=correct>=Math.ceil(deck.length*0.7);
+    var missed=results.filter(function(r){return!r.ok;});
+    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
+      <div style={{textAlign:"center",padding:"20px 16px"}}>
+        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"👑":isGood?"🏆":"⚖️"}</div>
+        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"FLAWLESS VERDICT":isGood?"Verdict delivered":"Bench adjourned"}</h2>
+        <div style={{fontSize:44,fontWeight:800,color:"var(--cyan)",margin:"14px 0 2px"}}>{correct}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
+        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>verdicts upheld</p>
+        {missed.length>0&&<div className="crd" style={{maxWidth:380,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>To review</div>
+          {missed.slice(0,8).map(function(r,i){
+            var correctBucket=BUCKETS.find(function(b){return b.id===r.item.bucket;});
+            return(<div key={i} style={{fontSize:12.5,marginBottom:8,color:"var(--t2)",lineHeight:1.5}}>
+              <div style={{color:"var(--t1)"}}>{r.item.s}</div>
+              <div style={{fontSize:11,color:correctBucket.color,marginTop:2}}>{"→ "}{correctBucket.label}</div>
+            </div>);
+          })}
+        </div>}
+        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
+      </div>
+    </div>);
+  }
+
+  // phase === "play" or "reveal"
+  var item=deck[idx];
+  var correctBucket=BUCKETS.find(function(b){return b.id===item.bucket;});
+  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
+    <button className="back-btn" onClick={p.back}>{"←"} Back</button>
+    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:6}}>Sentence {idx+1} / {deck.length}</div>
+    <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:18}}>
+      <div style={{width:((idx+(phase==="reveal"?1:0))/deck.length*100)+"%",height:"100%",background:"linear-gradient(90deg,var(--cyan),#7c3aed)",transition:"width .4s ease"}}/>
+    </div>
+
+    <div className="crd" style={{padding:"22px 18px",marginBottom:18,fontSize:17,fontWeight:600,color:"var(--t1)",lineHeight:1.5,textAlign:"center"}}>
+      "{item.s}"
+    </div>
+
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+      {BUCKETS.map(function(b){
+        var isPicked=picked===b.id;var isCorrect=b.id===item.bucket;
+        var bdr=b.color;var bg="rgba(var(--bg2-rgb),1)";var col=b.color;
+        if(phase==="reveal"){
+          if(isCorrect){bg="rgba(34,197,94,.12)";bdr="#22c55e";col="#22c55e";}
+          else if(isPicked){bg="rgba(239,68,68,.12)";bdr="#ef4444";col="#ef4444";}
+          else{bg="var(--bg2)";bdr="var(--bdr)";col="var(--t3)";}
+        }
+        return(<button key={b.id} disabled={phase==="reveal"} onClick={function(){pickBucket(b.id);}} style={{padding:"14px 10px",background:bg,border:"2px solid "+bdr,borderRadius:14,cursor:phase==="play"?"pointer":"default",display:"flex",flexDirection:"column",alignItems:"center",gap:6,fontFamily:"'DM Sans',sans-serif",color:col,opacity:phase==="reveal"&&!isCorrect&&!isPicked?.5:1,transition:"all .2s"}}>
+          <GIcon name={b.icon} size={26} color={col}/>
+          <span style={{fontSize:13,fontWeight:800,letterSpacing:.3}}>{b.label}</span>
+        </button>);
+      })}
+    </div>
+
+    {phase==="reveal"&&(<div className="crd enter" style={{padding:14,marginBottom:12,borderLeft:"3px solid "+correctBucket.color}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8,flexWrap:"wrap"}}>
+        <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{results[results.length-1].ok?"✓ Correct verdict":"Explanation"}</span>
+        <span style={{fontSize:10,color:correctBucket.color,padding:"2px 8px",background:"rgba(0,0,0,.18)",border:"1px solid "+correctBucket.color,borderRadius:99,fontWeight:700,letterSpacing:.3}}>{correctBucket.label}</span>
+      </div>
+      <div style={{fontSize:12.5,color:"var(--t3)",fontStyle:"italic",marginBottom:6}}>Modal: <strong style={{color:"var(--t1)",fontStyle:"normal"}}>{item.modal}</strong></div>
+      <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6}}>{item.x}</div>
+    </div>)}
+
+    {phase==="reveal"&&(
+      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,var(--cyan),#7c3aed)",fontSize:14,padding:"12px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next sentence →"}</button>
+    )}
+  </div>);
+}
+
+// ─── MODAL COUNCIL HUB — entry point for the 2 sub-modules ───
+// Mirror of GauntletHub. Internal state `subMode` switches between hub
+// and sub-module. Single grimoire (GRIMOIRE_MODALS) accessible from both
+// cards (no per-card grimoire — there's only one for the whole module).
+// Module score keys: modals_match, modals_sort.
+function ModalCouncilHub(p){
+  var [openGrim,setOpenGrim]=useState(null);
+  var [subMode,setSubMode]=useState(null); // null | "match" | "sort"
+  var scores=(p.u&&p.u.moduleScores)||{};
+  var cards=[
+    {id:"match",name:"The Oracle",icon:"spell-book",desc:"Pair situations with the right modal response. 3 boards × 5 pairs per session.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_chrono",stats:scores["modals_match"],ready:true},
+    {id:"sort",name:"The Verdict",icon:"stone-tablet",desc:"Classify modal sentences into 4 functions: Obligation, Advice, Possibility, Deduction.",accent:"linear-gradient(90deg,#f59e0b,#dc2626)",bgm:"bgm_chrono",stats:scores["modals_sort"],ready:true}
+  ];
+  function fmtAcc(s){if(!s||!s.total)return"—";return Math.round((s.correct/s.total)*100)+"%";}
+  function enterSub(card){
+    if(!card.ready){alert("Sub-module under development.");return;}
+    try{playBGM(card.bgm);}catch(e){console.warn("[council] bgm:",e&&e.message);}
+    setSubMode(card.id);
+  }
+  function subDone(sc,tot,xp){
+    try{stopBGM();}catch(e){console.warn("[council] bgm stop:",e&&e.message);}
+    try{haptic("complete");}catch(e){console.warn("[council] haptic:",e&&e.message);}
+    if(p.onModuleDone)p.onModuleDone(subMode,sc,tot,xp);
+    setSubMode(null);
+  }
+  function subAbort(){
+    try{stopBGM();}catch(e){console.warn("[council] bgm stop:",e&&e.message);}
+    setSubMode(null);
+  }
+  if(subMode==="match")return(<ModalMatch u={p.u} done={subDone} back={subAbort}/>);
+  if(subMode==="sort")return(<ModalSort u={p.u} done={subDone} back={subAbort}/>);
+
+  return(<div className="gauntlet-hub enter">
+    <button className="back-btn" onClick={p.back}>{"←"} Back</button>
+    <div className="gauntlet-header">
+      <div style={{marginBottom:6,filter:"drop-shadow(0 4px 14px rgba(8,145,178,.45))",display:"flex",justifyContent:"center"}}><GIcon name="throne-king" size={52} color="var(--cyan)"/></div>
+      <h2 className="gauntlet-title">MODAL COUNCIL</h2>
+      <div className="gauntlet-sub">Two trials. One verdict.</div>
+    </div>
+    <div style={{display:"flex",justifyContent:"center",marginBottom:18}}>
+      <button className="gauntlet-btn-grim" style={{padding:"10px 18px"}} onClick={function(){setOpenGrim(GRIMOIRE_MODALS);}}><GIcon name="bookmarklet" size={16} color="currentColor" style={{marginRight:6}}/>Open the Grimoire</button>
+    </div>
+    {cards.map(function(c){return(
+      <div key={c.id} className="gauntlet-card">
+        <div className="gauntlet-card-accent" style={{background:c.accent}}/>
+        <div className="gauntlet-card-head">
+          <div className="gauntlet-card-icon">{GAME_ICON_PATHS[c.icon]?<GIcon name={c.icon} size={32} color="currentColor"/>:c.icon}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="gauntlet-card-name">{c.name}</div>
+          </div>
+        </div>
+        <div className="gauntlet-card-desc">{c.desc}</div>
+        <div className="gauntlet-card-stats">
+          <span>{(c.stats&&c.stats.sessions)||0} session{c.stats&&c.stats.sessions>1?"s":""}</span>
+          <span>{"·"}</span>
+          <span>Accuracy: {fmtAcc(c.stats)}</span>
+        </div>
+        <div className="gauntlet-card-actions">
+          <button className="gauntlet-btn-enter" onClick={function(){enterSub(c);}}><GIcon name="dungeon-gate" size={16} color="currentColor" style={{marginRight:6}}/>Entrer</button>
+        </div>
+      </div>
+    );})}
+    {openGrim&&<GrimoireReader grimoire={openGrim} back={function(){setOpenGrim(null);}}/>}
+  </div>);
+}
+
 // ─── SMALL COMPONENTS ───
 function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div className="bar-fill" style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,var(--cx-hex),var(--cx-dark))",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
 // ─── Avatar renderer — handles both emoji and base64 photo ───
@@ -3591,9 +3988,10 @@ function MockResetCTA(p){
       {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"ringing-bell",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
       {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"bookmarklet",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
-    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"bookshelf",count:"8 modules",items:[
+    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"bookshelf",count:"9 modules",items:[
       {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"card-joker",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
       {id:"gauntlet",n:"Grammar Gauntlet",d:"4 trials · Irregulars, Tenses, Passive, Relatives",i:"gauntlet",bg:"linear-gradient(135deg,#7c3aed,#c026d3)"},
+      {id:"modals",n:"Modal Council",d:"2 trials · Pair situations, classify verdicts",i:"throne-king",bg:"linear-gradient(135deg,#0891b2,#7c3aed)"},
       {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"family-tree",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
       {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"duality-mask",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
       {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"knot",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
@@ -13796,7 +14194,7 @@ useEffect(function(){
     if(ld||!u||!bgmStarted.current)return;
     var AUDIO_ROUTES=["lis","lisP1","lisP2","lisP3","lisP4","ablitz"];
     // Routes that manage their own BGM (do not interfere):
-    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet"];
+    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet","modals"];
     if(sp&&AUDIO_ROUTES.indexOf(sp)!==-1){stopBGM();return;}
     if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
     // No subpage active and on a home-BGM tab → ensure bgm_home is playing
@@ -14411,6 +14809,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="falsefr")return pg(<FalseFriends u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"falsefr");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="pvdojo")return pg(<PhrasalDojo u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"pvdojo");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="gauntlet")return pg(<GauntletHub u={u} nav={nav} onModuleDone={function(subId,sc,tot,xp){var fullModId="gauntlet_"+subId;var gxp=applyXpGates(xp,sc,tot,fullModId);gxp=Math.round(gxp*getSpotlightMult(fullModId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,fullModId);recordModule(c,fullModId,sc,tot);checkMission(c,fullModId);if(sc===tot&&tot>0)grantWeeklyChest(fullModId+"_perfect","guerrier");sv(c);}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="modals")return pg(<ModalCouncilHub u={u} nav={nav} onModuleDone={function(subId,sc,tot,xp){var fullModId="modals_"+subId;var gxp=applyXpGates(xp,sc,tot,fullModId);gxp=Math.round(gxp*getSpotlightMult(fullModId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,fullModId);recordModule(c,fullModId,sc,tot);checkMission(c,fullModId);if(sc===tot&&tot>0)grantWeeklyChest(fullModId+"_perfect","guerrier");sv(c);}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="mock1")return pg(<MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
   if(sp==="mock2")return pg(<MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
 

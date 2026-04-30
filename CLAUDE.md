@@ -4,7 +4,7 @@
 
 TOEIC Arena is a gamified TOEIC exam preparation web application built by Jérémy Leixa, English trainer at IDRAC Business School (Lyon/Grenoble). Used by ~66 Bachelor 3 students (class code: `idrac2026`) and planned for deployment at other institutions (CESI, professional learners).
 
-The app is a **monolithic React application** — all UI logic lives in `src/App.jsx` (~10,700 lines as of 2026-04-17). Jérémy is the sole developer; Claude is the technical partner.
+The app is a **monolithic React application** — all UI logic lives in `src/App.jsx` (~14,860 lines as of 2026-04-30). Jérémy is the sole developer; Claude is the technical partner.
 
 **Live URL:** Deployed on Vercel
 **Supabase project ref:** `huklmklwvwwhhrrcyytq`
@@ -76,6 +76,9 @@ src/
     gerundGrimoire.js      — GRIMOIRE_GERUND (replaces GerInf Study Mode)
     phrasalGrimoire.js     — GRIMOIRE_PHRASAL (replaces PhrasalDojo Study Mode)
     connectorsGrimoire.js  — GRIMOIRE_CONNECTORS (new, ConnSort intro)
+    modals.js              — MODAL_MATCH_BOARDS (15 boards × 5 pairs) +
+                          MODAL_SORT_ITEMS (50 sentences, 4 buckets)
+    modalsGrimoire.js      — GRIMOIRE_MODALS (7 chapters FR)
 public/
   audio/
     bgm/               — bgm_home, bgm_speed, bgm_wfall, bgm_duel, bgm_clue,
@@ -256,6 +259,17 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - Each sub-module has its own BGM: `bgm_crypt` / `bgm_chrono` / `bgm_forge` / `bgm_weaver`.
 - Content pool: 270 items total (80/70/60/60). Session size 15 everywhere.
 - TOEIC estimator: reading section has a new `gauntlet` weight of 0.15 (avg accuracy across the 4 sub-modules).
+
+### Modal Council ⚖️ (S2 module, delivered 2026-04-30)
+- Route `sp==="modals"` → `ModalCouncilHub` component.
+- 2 sub-modules : `"match"` (ModalMatch — tap-to-pair, 3 boards × 5 pairs = 15 items) + `"sort"` (ModalSort — tap-to-bucket among 4 functions: Obligation / Advice / Possibility / Deduction).
+- Same `onModuleDone(subId, sc, tot, xp)` pipeline as Gauntlet → `recordModule("modals_"+subId)`.
+- **First app-wide use of the tap-to-pair UX pattern** (precedent for future drag/drop-style activities without HTML5 DnD lib — mobile-first, zero dependency).
+- BGM **placeholder**: both sub-modules currently wired to `bgm_chrono`. Generate 2 dedicated Mureka tracks and replace in `ModalCouncilHub` `cards` config.
+- Content pool: 15 boards × 5 pairs (75 Match items) + 50 Sort items in `src/data/modals.js`. Session: 15 items everywhere (Tier B XP).
+- Single grimoire (`GRIMOIRE_MODALS`, 7 chapters FR) accessed from the hub.
+- 4 achievements added (council_initiate / oracle_voice / verdict_sworn / council_crowned).
+- TOEIC estimator: NOT wired in yet (deliberate — no rebalance until next pass).
 
 ### Grimoire pattern (applies to Gauntlet + G&V grimoires)
 - **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.
