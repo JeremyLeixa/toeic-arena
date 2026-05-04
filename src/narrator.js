@@ -27,13 +27,24 @@ export var NARRATOR_MOMENTS = {
     subtitle: "Aldric speaks",
     audio: "/audio/narrator/01_verdict.mp3",
     image: "/images/narrator/01_verdict.jpg",
-    durationSec: 21.71,
+    // Étendu 2026-05-03 : le Verdict absorbe la fonction du TutorialTour (supprimé).
+    // Aldric présente lui-même les 3 piliers de l'app après son speech d'entrée :
+    // Daily Quest ("cinq lames rapides") → Salle d'Entraînement → Ligue.
+    // Timings calés sur silencedetect (-30dB, d=0.35) du MP3 régénéré 2026-05-03.
+    durationSec: 58.12,
     subtitles: [
-      { from: 0.0,  to: 3.0,   text: "Ainsi. Tu es venu jusqu'à l'Arène." },
-      { from: 3.0,  to: 6.0,   text: "Bien peu franchissent ses portes." },
-      { from: 6.0,  to: 13.0,  text: "J'ai vu mille écuyers lever leur lame pour la première fois — les uns avec ferveur, les autres avec crainte." },
-      { from: 13.0, to: 18.0,  text: "Je vois les deux en toi. C'est bien." },
-      { from: 18.0, to: 21.71, text: "La route commence ici. Marche-la avec honneur." }
+      { from: 0.00,  to: 4.02,  text: "Ainsi. Tu es venu jusqu'à l'Arène." },
+      { from: 4.02,  to: 5.99,  text: "Bien peu franchissent ses portes." },
+      { from: 5.99,  to: 13.63, text: "J'ai vu mille écuyers lever leur lame pour la première fois — les uns avec ferveur, les autres avec crainte." },
+      { from: 13.63, to: 17.32, text: "Je vois les deux en toi. C'est bien." },
+      { from: 17.32, to: 22.19, text: "La route commence ici. Marche-la avec honneur." },
+      { from: 22.19, to: 28.03, text: "Chaque aube, l'Arène te lancera une épreuve — cinq lames rapides." },
+      { from: 28.03, to: 33.03, text: "Honore-la chaque jour ; les braises de ta discipline en dépendent." },
+      { from: 33.03, to: 35.71, text: "Au-delà s'ouvre la Salle d'Entraînement." },
+      { from: 35.71, to: 43.21, text: "Chaque lame, chaque parchemin à maîtriser — avant les Batailles d'Épreuve, puis l'Arène Finale." },
+      { from: 43.21, to: 47.87, text: "Et sache ceci — tu ne gravis pas seul." },
+      { from: 47.87, to: 53.89, text: "Chaque semaine, la Ligue désignera ceux qui se sont élevés… et ceux qui ont dormi." },
+      { from: 53.89, to: 58.12, text: "À présent, va, écuyer. Ta première aube t'attend." }
     ]
   },
   first_chest: {

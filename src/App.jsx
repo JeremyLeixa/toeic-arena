@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-04-29-p2-batch3-multi-accent";
+var BUILD_ID="2026-05-03-verdict-extended-tutorial-merged";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -2796,31 +2796,13 @@ function XpToast(p){if(!p.v)return null;
     </div>}
   </div>);}
 
-// ─── TUTORIAL TOUR (shown once on first Home visit for new students) ───
-var TUTORIAL_STEPS=[
-  {icon:"\u26A1",title:"Daily Challenge",body:"Your daily reflex: 5 questions a day, 30 seconds each. Short, fast, and it keeps your streak alive. Start here every single day.",pos:"top"},
-  {icon:"\uD83C\uDFC6",title:"Progress & League",body:"Your level and class rank show up right here. Every XP brings you closer to the next level. The League tab reveals who's leading the race this week.",pos:"middle"},
-  {icon:"\u2694\uFE0F",title:"Train tab",body:"All your TOEIC modules live in the Train tab below: Part 1 to 7, Mock Tests, Boss Arena, Word Tavern... Your first Mock Test is due within 7 days.",pos:"bottom"}
-];
-function TutorialTour(p){
-  var[i,setI]=useState(0);
-  var step=TUTORIAL_STEPS[i];
-  var isLast=i===TUTORIAL_STEPS.length-1;
-  function next(){if(isLast)p.onDone();else setI(i+1);}
-  return(
-    <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,.7)",backdropFilter:"blur(3px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px",animation:"fadeIn .3s"}}>
-      <div style={{background:"var(--bg2)",border:"1.5px solid rgba(var(--cx),.3)",borderRadius:18,padding:"22px 20px",maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.5)",textAlign:"center"}}>
-        <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:18}}>
-          {TUTORIAL_STEPS.map(function(_,idx){return(<div key={idx} style={{width:idx===i?24:8,height:6,borderRadius:99,background:idx<=i?"var(--cx-hex)":"var(--bg3)",transition:"all .3s"}}/>);})}
-        </div>
-        <div style={{fontSize:48,marginBottom:10,animation:"fadeIn .4s"}} key={i}>{step.icon}</div>
-        <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:20,color:"var(--t1)",marginBottom:10}}>{step.title}</h3>
-        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:20}}>{step.body}</p>
-        <button className="btn1" onClick={next} style={{width:"100%",padding:"12px 20px",fontSize:14}}>{isLast?"Let's go \u2694\uFE0F":"Got it \u2192"}</button>
-        {!isLast&&<button onClick={p.onDone} style={{background:"none",border:"none",color:"var(--t3)",fontSize:11,cursor:"pointer",marginTop:10,padding:4,fontFamily:"'DM Sans',sans-serif"}}>Skip tour</button>}
-      </div>
-    </div>);
-}
+// ─── TUTORIAL TOUR — supprimé 2026-05-03 (absorbé par Verdict d'Aldric) ───
+// Le tour 3 popups (Daily / Progress & League / Train) a été absorbé dans le
+// Verdict d'Aldric (cf. NARRATOR_MOMENTS.verdict dans src/narrator.js, qui
+// présente désormais "cinq lames rapides" → "Salle d'Entraînement" → "Ligue").
+// Le booléen u.tutorialPending et la colonne Supabase students.tutorial_pending
+// restent en place, lecture/écriture inertes dans supaToLocal/save/fresh, pour
+// éviter une migration BDD destructive. Nettoyage différé si le concept ne ressort pas.
 
 function Tabs(p){var tabs=[{id:"home",l:"Home",i:"castle"},{id:"train",l:"Train",i:"bullseye"},{id:"games",l:"Games",i:"coliseum"},{id:"league",l:"League",i:"laurel-crown"},{id:"profile",l:"Profile",i:"visored-helm"}];
 var blocked=p.blocked||[];
@@ -14824,11 +14806,11 @@ var prevLeague=getLeague(c.weeklyXp);
     _syncDirty=true;
     syncToCloud(u);
     // Narrator: "The Verdict" fires once, right after the student clicks
-    // "Enter the Arena" (langBridge). It must appear BEFORE the TutorialTour —
-    // the main return gates the tutorial on narratorQueue.length===0, so the
-    // tutorial waits until the user dismisses the narrator. Do NOT move this
-    // push earlier in the onboarding (e.g. to Battle Report) or the narrator
-    // would fire mid-flow and confuse the consent/scan sequence.
+    // "Enter the Arena" (langBridge). Depuis 2026-05-03, ce moment intègre
+    // aussi la présentation des 3 piliers de l'app (Daily Quest, Salle
+    // d'Entraînement, Ligue) — le TutorialTour séparé a été supprimé.
+    // Do NOT move this push earlier in the onboarding (e.g. to Battle Report)
+    // or the narrator would fire mid-flow and confuse the consent/scan sequence.
     pushNarratorMoment(u,"verdict");
     if(firstNav){setTimeout(function(){sSP(firstNav);},300);}
   }
@@ -15124,7 +15106,7 @@ var prevLeague=getLeague(c.weeklyXp);
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
     {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
-    {u&&u.tutorialPending===true&&tab==="home"&&!sp&&!isExpiredGroup&&narratorQueue.length===0&&<TutorialTour onDone={function(){var c=JSON.parse(JSON.stringify(u));c.tutorialPending=false;sv(c);}}/>}
+    {/* TutorialTour supprimé 2026-05-03 — absorbé dans le Verdict d'Aldric (cf. narrator.js). */}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
 
