@@ -1184,7 +1184,213 @@ export var LISTENING_P3 = [
   qs:[
     {q:"What is included in the day pass?",opts:["Only desk access","Desk, coffee, limited printing, and a phone booth","Meals and drinks","Overnight stays"],c:1},
     {q:"What does the man need for his video call?",opts:["Privacy","A laptop","A meeting room","Headphones"],c:0},
-    {q:"How are larger meeting rooms reserved?",opts:["At the front desk","First-come-first-served","They aren't available","Via an app"],c:3}]}
+    {q:"How are larger meeting rooms reserved?",opts:["At the front desk","First-come-first-served","They aren't available","Via an app"],c:3}]},
+
+// ═══════════════════════════════════════════════════════════
+// P3 BATCH 4 — p3_51 → p3_70 (20 new conversations, 2026-05-04)
+// Voice mix: rotation by id mod 4 across 4 accent combos (US/US, US/UK, CA/US, CA/UK).
+// Generation script: scripts/generate-audio-p3-batch4.mjs
+// ═══════════════════════════════════════════════════════════
+
+  {id:"p3_51",lines:[
+    {s:"W",t:"Hi, I'm calling from Bridgewater Solutions. I understand you're interested in seeing a demo of our project management platform."},
+    {s:"M",t:"That's right. We're evaluating three different vendors and would like to set something up for next week if possible."},
+    {s:"W",t:"I have openings on Tuesday at ten or Thursday at two. Both demos run about forty-five minutes including questions."},
+    {s:"M",t:"Thursday afternoon works better for our team. Could you also send the comparison sheet you mentioned in your email?"}],
+  qs:[
+    {q:"Why is the woman calling?",opts:["To complain about service","To schedule a product demo","To request a refund","To apply for a job"],c:1},
+    {q:"What is the man currently doing?",opts:["Hiring new staff","Comparing multiple vendors","Selling a platform","Cancelling a contract"],c:1},
+    {q:"What does the man request at the end?",opts:["A signed contract","A pricing discount","A comparison document","A different time slot"],c:2}]},
+
+  {id:"p3_52",lines:[
+    {s:"M",t:"I'd like to discuss the repayment schedule on my small business loan. I've come into some additional funds and want to pay it down faster."},
+    {s:"W",t:"That's wonderful news. Let me pull up your account. I see you have about eighteen months remaining on a fifty-thousand-dollar balance."},
+    {s:"M",t:"Right. If I make a lump-sum payment of fifteen thousand now, can I keep the same monthly amount and just shorten the term?"},
+    {s:"W",t:"Yes, we can structure it that way. There's no early repayment penalty, and you'd save approximately three thousand in interest."}],
+  qs:[
+    {q:"Why is the man at the bank?",opts:["To open a new account","To pay off his loan early","To request a larger loan","To dispute a charge"],c:1},
+    {q:"How much is the remaining loan balance?",opts:["Fifteen thousand","Thirty thousand","Fifty thousand","Eighteen thousand"],c:2},
+    {q:"What is the main benefit of the man's plan?",opts:["No monthly payments","Significant interest savings","A new credit card","A higher credit score"],c:1}]},
+
+  {id:"p3_53",lines:[
+    {s:"W",t:"Hello, am I speaking with David? My name is Hannah Kim from Talent Bridge, a recruiting firm specializing in software engineering roles."},
+    {s:"M",t:"Yes, this is David. How did you get my contact information?"},
+    {s:"W",t:"Your professional profile came up in my search for senior backend developers. I have a confidential opening at a fast-growing fintech startup."},
+    {s:"M",t:"I'm not actively looking, but I'm always open to interesting conversations. Can you send me more details by email so I can review when I have a moment?"}],
+  qs:[
+    {q:"What is the woman's profession?",opts:["Software engineer","Banker","Recruiter","HR manager"],c:2},
+    {q:"What kind of role is being offered?",opts:["Junior frontend developer","Senior backend developer","Project manager","CFO"],c:1},
+    {q:"How does the man respond to the offer?",opts:["He immediately accepts","He refuses outright","He requests written details","He asks for a higher salary"],c:2}]},
+
+  {id:"p3_54",lines:[
+    {s:"M",t:"I'd like to check out, please. The name is Carter, room 412."},
+    {s:"W",t:"Of course, Mr. Carter. I have your final bill here. The total comes to four hundred and twenty pounds."},
+    {s:"M",t:"I'm sorry, that doesn't look right. I was quoted three hundred sixty when I booked, and I haven't used the minibar or any room service."},
+    {s:"W",t:"Let me investigate this immediately. It seems a daily resort fee was applied that shouldn't have been included on your corporate rate. I'll remove that now."}],
+  qs:[
+    {q:"Why is the man disputing the bill?",opts:["He didn't stay all nights","It's higher than the quoted price","He paid in advance","Tax was wrong"],c:1},
+    {q:"What did the man NOT use?",opts:["The room safe","The minibar or room service","The pool","The internet"],c:1},
+    {q:"What charge was incorrectly added?",opts:["A late checkout fee","A breakfast charge","A daily resort fee","A parking fee"],c:2}]},
+
+  {id:"p3_55",lines:[
+    {s:"W",t:"Thanks for joining me, Marcus. Let's go over your annual review. Overall, you've had a very strong year."},
+    {s:"M",t:"Thank you. I was particularly proud of leading the redesign project — it came in two weeks ahead of schedule."},
+    {s:"W",t:"That stood out in your feedback as well. One area I'd like us to focus on is delegating more so you don't burn out."},
+    {s:"M",t:"That's fair. I tend to take on too much. I'd appreciate any guidance on which tasks I should be passing to junior team members."}],
+  qs:[
+    {q:"What is the purpose of the meeting?",opts:["A salary negotiation","An annual performance review","A project kickoff","A disciplinary meeting"],c:1},
+    {q:"What achievement is highlighted?",opts:["Hiring new staff","Closing a major sale","Finishing a project ahead of schedule","Winning an industry award"],c:2},
+    {q:"What concern does the woman raise?",opts:["He works too few hours","He takes on too much himself","He misses deadlines","He needs technical training"],c:1}]},
+
+  {id:"p3_56",lines:[
+    {s:"M",t:"Hi, I'm calling for a quote on a translation project. We have a forty-page user manual that needs to be translated from English into German and Japanese."},
+    {s:"W",t:"I can certainly help with that. For technical documents of that length, our standard turnaround is two weeks per language. Pricing is sixteen pence per word."},
+    {s:"M",t:"What if we need it in ten days? We have a product launch deadline we have to hit."},
+    {s:"W",t:"Rush jobs add a thirty percent surcharge, but it's absolutely doable. I'll need final source files by tomorrow to start immediately."}],
+  qs:[
+    {q:"How long is the document?",opts:["Twenty pages","Forty pages","Sixty pages","One hundred pages"],c:1},
+    {q:"Into which languages will it be translated?",opts:["French and Spanish","German and Japanese","Mandarin and Korean","Italian and Portuguese"],c:1},
+    {q:"What is required to meet the rush deadline?",opts:["A signed contract today","Source files by tomorrow","Payment in advance","A second translator"],c:1}]},
+
+  {id:"p3_57",lines:[
+    {s:"W",t:"Customer service, this is Aisha. How can I help you today?"},
+    {s:"M",t:"Hi, I received my office chair order this morning, but two of the boxes were crushed and the chairs inside are visibly damaged."},
+    {s:"W",t:"I'm so sorry to hear that. I can dispatch replacements with overnight shipping at no charge. Can you send me photos of the damage for our claim records?"},
+    {s:"M",t:"Sure, I'll email them right after we hang up. Should I keep the damaged chairs or do you want them returned?"}],
+  qs:[
+    {q:"What did the man order?",opts:["Office desks","Office chairs","Filing cabinets","Computer monitors"],c:1},
+    {q:"What is the problem with the order?",opts:["It arrived late","Two items are damaged","Wrong items shipped","The invoice is incorrect"],c:1},
+    {q:"What does the woman ask for?",opts:["The original receipt","Photos of the damage","A signed return form","His credit card details"],c:1}]},
+
+  {id:"p3_58",lines:[
+    {s:"M",t:"Riverside Hall, this is Oliver speaking."},
+    {s:"W",t:"Hi, I'm planning a charity gala for about two hundred guests in October. Do you still have any Saturday evenings available?"},
+    {s:"M",t:"We have two Saturdays open in October — the eleventh and the twenty-fifth. Both fit two hundred people comfortably with a sit-down dinner setup."},
+    {s:"W",t:"Could we visit the venue this Friday? I'd also like to discuss catering options and whether we can bring our own decorators."}],
+  qs:[
+    {q:"What kind of event is being planned?",opts:["A wedding","A charity gala","A product launch","A concert"],c:1},
+    {q:"How many guests will attend?",opts:["One hundred","One hundred fifty","Two hundred","Three hundred"],c:2},
+    {q:"What does the woman want to do this Friday?",opts:["Sign the contract","Tour the venue","Pay a deposit","Meet the chef"],c:1}]},
+
+  {id:"p3_59",lines:[
+    {s:"W",t:"Hi Pedro, I saw your post on the company forum about looking for carpool partners. Are you still interested?"},
+    {s:"M",t:"Definitely. I live near the Maple Avenue exit and drive in every day. Where are you coming from?"},
+    {s:"W",t:"I'm just two blocks off Maple, on Birchwood. We could split fuel costs and use the high-occupancy lane. It would save me at least twenty minutes each way."},
+    {s:"M",t:"Sounds great. The company also gives a fifty-dollar monthly credit for verified carpoolers. We just need to register through HR."}],
+  qs:[
+    {q:"How did the woman find out about the carpool?",opts:["From a colleague","From a company forum post","From an HR email","From a flyer"],c:1},
+    {q:"What is one benefit of carpooling for the woman?",opts:["A higher salary","A faster commute","A new car","Free parking"],c:1},
+    {q:"What additional incentive is mentioned?",opts:["A bonus vacation day","A monthly carpool credit","A health insurance discount","A stock option"],c:1}]},
+
+  {id:"p3_60",lines:[
+    {s:"M",t:"I need to rent equipment for a three-day conference next month. We'll need projectors, microphones, and a sound system for the main hall."},
+    {s:"W",t:"Excellent. The main hall — how large is it, and how many delegates are expected? That helps me size the speaker system properly."},
+    {s:"M",t:"It seats four hundred. We're also running breakout rooms with around fifty people each, so we'll need smaller setups for those."},
+    {s:"W",t:"I'd recommend our premium package for the main hall and our standard portable kits for the breakouts. I can email a full quote within the hour."}],
+  qs:[
+    {q:"How long is the conference?",opts:["One day","Two days","Three days","One week"],c:2},
+    {q:"How many people will be in the main hall?",opts:["Fifty","Two hundred","Four hundred","One thousand"],c:2},
+    {q:"What will the woman do next?",opts:["Visit the venue","Send a written quote","Sign a contract","Refund a deposit"],c:1}]},
+
+  {id:"p3_61",lines:[
+    {s:"W",t:"I'm a third-year engineering student and I read about your summer internship program online. Are applications still open?"},
+    {s:"M",t:"Yes, we're accepting applications until the end of the month. We typically take eight to ten interns across our research and product teams."},
+    {s:"W",t:"What does the application require? I have my résumé and a transcript ready, but I wasn't sure about references."},
+    {s:"M",t:"We need two academic references, your transcript, and a one-page essay about a technical problem you've solved. The essay weighs heavily in our selection."}],
+  qs:[
+    {q:"What is the woman applying for?",opts:["A full-time job","A summer internship","A research grant","A scholarship"],c:1},
+    {q:"How many interns are typically hired?",opts:["Two to three","Four to five","Eight to ten","Fifteen to twenty"],c:2},
+    {q:"What component is most heavily weighted?",opts:["The transcript","The interview","A one-page essay","The references"],c:2}]},
+
+  {id:"p3_62",lines:[
+    {s:"M",t:"Hello, I'm calling to book a session for corporate headshots. We have about fifteen executives who need updated photos for our website."},
+    {s:"W",t:"Lovely. We can do the entire team in a single day with our mobile setup, or you can come to our studio across multiple sessions."},
+    {s:"M",t:"On-site would be much more convenient. How long do you need per person, and what does the day rate run?"},
+    {s:"W",t:"Approximately ten minutes per person plus setup. The full-day on-site fee is one thousand two hundred pounds, including digital delivery and basic retouching."}],
+  qs:[
+    {q:"What is the man booking?",opts:["Family portraits","Corporate headshot photography","A wedding shoot","Product photos"],c:1},
+    {q:"How many people need photos?",opts:["Five","Ten","Fifteen","Twenty"],c:2},
+    {q:"Which option does the man prefer?",opts:["Studio sessions","On-site shooting","Outdoor session","Self-portraits"],c:1}]},
+
+  {id:"p3_63",lines:[
+    {s:"W",t:"I registered for the marketing summit next week, but I have to cancel due to a family emergency. Is a refund possible?"},
+    {s:"M",t:"I'm sorry to hear that. Our standard policy allows full refunds up to ten days before the event. We're inside that window now, so a partial refund of fifty percent applies."},
+    {s:"W",t:"I understand. Could you instead apply the full amount as a credit toward your fall conference?"},
+    {s:"M",t:"Yes, we can do that. The credit will be valid for twelve months and is fully transferable if you can't attend yourself."}],
+  qs:[
+    {q:"Why is the woman cancelling?",opts:["A scheduling conflict","A family emergency","A change of employer","Travel restrictions"],c:1},
+    {q:"What is the standard refund window?",opts:["Three days before","Seven days before","Ten days before","Thirty days before"],c:2},
+    {q:"What alternative does the man offer?",opts:["A future credit, transferable","A free workshop","A paid speaker slot","A dinner voucher"],c:0}]},
+
+  {id:"p3_64",lines:[
+    {s:"M",t:"I'd like to place an order for branded notebooks and pens for our trade show booth. We're thinking five hundred of each."},
+    {s:"W",t:"Brilliant. Our most popular notebook is the soft-cover A5 with a foiled logo, and we offer a wide range of pen styles to match."},
+    {s:"M",t:"Could you send samples? I want to feel the paper quality before we commit. Also, what's the lead time for that quantity?"},
+    {s:"W",t:"Samples will go out today. Standard production time is two weeks, but if you need it in ten days, we can prioritize for a small rush fee."}],
+  qs:[
+    {q:"What is the order for?",opts:["Office supplies","Branded items for a trade show","Promotional t-shirts","Catering"],c:1},
+    {q:"What does the man want before placing the order?",opts:["A discount","Physical samples","A bank guarantee","A signed contract"],c:1},
+    {q:"What is the standard lead time?",opts:["Three days","One week","Two weeks","One month"],c:2}]},
+
+  {id:"p3_65",lines:[
+    {s:"W",t:"Hi, I need to report a workplace injury. One of our warehouse staff sprained an ankle yesterday while loading pallets."},
+    {s:"M",t:"I'm sorry to hear that. First, has she received medical attention, and is she currently off work?"},
+    {s:"W",t:"Yes, she went to urgent care immediately and was given a one-week leave. The doctor prescribed physical therapy for the next month."},
+    {s:"M",t:"I'll send the incident report form to your email. Once it's filled out and the medical reports are attached, the claim is usually processed within five business days."}],
+  qs:[
+    {q:"What kind of injury occurred?",opts:["A back injury","A sprained ankle","A cut hand","A burn"],c:1},
+    {q:"How long is the employee on leave?",opts:["Two days","One week","Two weeks","One month"],c:1},
+    {q:"How long does claim processing usually take?",opts:["One business day","Three business days","Five business days","Two weeks"],c:2}]},
+
+  {id:"p3_66",lines:[
+    {s:"M",t:"Hi, I wanted to discuss renewing our office cleaning contract. It expires at the end of the month."},
+    {s:"W",t:"Of course. We've enjoyed serving you. Would you like the same scope, or are there any adjustments you'd like to make this time?"},
+    {s:"M",t:"We've added a second floor since signing the original contract, so we'll need that included. Also, can we increase the deep-clean frequency from quarterly to monthly?"},
+    {s:"W",t:"Both are absolutely possible. Adding the second floor and the monthly deep clean will increase your monthly fee by about fifteen percent."}],
+  qs:[
+    {q:"Why is the man calling?",opts:["To cancel a contract","To file a complaint","To renew a contract","To request a refund"],c:2},
+    {q:"What has changed in the man's office?",opts:["A second floor was added","Staff moved out","The address changed","The opening hours changed"],c:0},
+    {q:"What is the impact on the price?",opts:["Stays the same","About fifteen percent more","Doubles","Decreases slightly"],c:1}]},
+
+  {id:"p3_67",lines:[
+    {s:"W",t:"I wanted to talk about our payment terms. Currently we're at net thirty, but our cash flow has improved and we'd be open to discussing changes."},
+    {s:"M",t:"Interesting. If you could move to net fifteen, we'd be willing to offer a two percent volume discount on your monthly orders."},
+    {s:"W",t:"Net fifteen is doable. What about an even shorter window — say net seven — for an additional discount?"},
+    {s:"M",t:"Net seven is more aggressive than we usually go, but for a long-term partner like yourself, I could push for three and a half percent total."}],
+  qs:[
+    {q:"What is the current payment term?",opts:["Net seven","Net fifteen","Net thirty","Net sixty"],c:2},
+    {q:"What discount is offered for net fifteen?",opts:["One percent","Two percent","Three and a half percent","Five percent"],c:1},
+    {q:"What does the man imply at the end?",opts:["He must check internally","He cannot offer more","The deal is final","He needs payment now"],c:0}]},
+
+  {id:"p3_68",lines:[
+    {s:"M",t:"Hi Sophia, it's James following up on the candidates we discussed for the operations director role. Any updates from your shortlist?"},
+    {s:"W",t:"Two of the three are available for in-person interviews next week. The third unfortunately accepted another offer this morning."},
+    {s:"M",t:"That's a shame. Was the third candidate the one with the manufacturing background? She looked particularly strong on paper."},
+    {s:"W",t:"Yes, that was her. The good news is we have another strong candidate I just sourced. Would you like me to add her to next week's interview slots?"}],
+  qs:[
+    {q:"What position is being discussed?",opts:["HR director","Operations director","Marketing manager","Sales lead"],c:1},
+    {q:"What happened to one candidate?",opts:["She withdrew her application","She accepted another offer","She failed a test","She is on holiday"],c:1},
+    {q:"What does the woman propose?",opts:["Cancelling the search","Lowering the salary","Adding a new candidate","Reposting the role"],c:2}]},
+
+  {id:"p3_69",lines:[
+    {s:"W",t:"Hi, I'm enquiring about exhibit floor space for the technology expo in March. We had a corner booth last year and would like the same again."},
+    {s:"M",t:"Let me check the floor plan. Yes, your previous corner location is still available, but it's been resized — it's now eighteen square meters instead of twenty."},
+    {s:"W",t:"That's a noticeable reduction. Can you offer any compensation, or could we get the larger booth two rows down?"},
+    {s:"M",t:"I can offer either a ten percent discount on your previous rate, or upgrade you to the larger booth which is currently unsold but more centrally located."}],
+  qs:[
+    {q:"When is the trade expo?",opts:["January","March","June","October"],c:1},
+    {q:"What has changed about the corner booth?",opts:["It is no longer available","It is more expensive","It is smaller than before","It moved to a different hall"],c:2},
+    {q:"What two options does the man offer?",opts:["Refund or cancellation","Discount or a different larger booth","Free advertising or signage","Catering or coffee service"],c:1}]},
+
+  {id:"p3_70",lines:[
+    {s:"M",t:"We're planning to refresh our open-plan office and would like your team to handle the design and project management."},
+    {s:"W",t:"Wonderful. Could you tell me more about the goals — are you focused on aesthetics, productivity improvements, or expanding capacity?"},
+    {s:"M",t:"Mostly productivity. Our staff has grown forty percent and we need better acoustics, more meeting pods, and brighter natural lighting throughout the space."},
+    {s:"W",t:"Those are great targets. Our usual approach is a discovery workshop with key staff, then concept designs within three weeks. After approval, the build typically takes two to three months."}],
+  qs:[
+    {q:"What kind of project is being planned?",opts:["A new office building","A residential redesign","An office redesign","A restaurant renovation"],c:2},
+    {q:"What is the main priority?",opts:["A more luxurious look","Better productivity","Higher rent yield","Smaller floor space"],c:1},
+    {q:"How long does the build phase typically take?",opts:["Two to three weeks","Two to three months","Six months","One year"],c:1}]}
 ];
 
 // ─── PART 4 — Talks (20 talks, 60 questions) ───
