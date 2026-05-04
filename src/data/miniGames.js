@@ -661,4 +661,126 @@ export var STRAT_QUIZ = [
   {id:"sq16",scenario:"Part 3: You hear 'Look at the graphic' in the question. What should you do?",
     options:["Ignore the graphic and focus on the audio","Match what you hear in the audio to the information in the graphic","Read the graphic after the audio ends","Only look at the graphic for the last question"],
     correct:1,part:"Part 3",explain:"Scan the graphic BEFORE the audio plays (during pre-reading). Then listen for the specific detail that connects the audio to one item in the graphic."},
+
+  // ─── BATCH 2 — sq17 → sq46 (added 2026-05-04, rebalance per part) ───
+
+  {id:"sq17",scenario:"Part 1: The photo shows a man with his hand on a doorknob, the door slightly ajar. You hear: 'A man is opening a door.' Verdict?",
+    options:["Reject — the door is already open","Accept — 'is opening' captures an action in progress, matching the photo","Reject — you can't tell from one image","Accept — any door action works for this kind of photo"],
+    correct:1,part:"Part 1",explain:"'Is + Ving' (present continuous) describes an action happening at the moment shown. The photo captures a frozen instant of an ongoing action — perfect match. Train your ear for this verb form on partial-action photos."},
+
+  {id:"sq18",scenario:"Part 1: The photo shows only a stack of files on an empty desk — no people visible. Which answer can you eliminate immediately?",
+    options:["'Files have been arranged on a desk.'","'A worker is organizing the files.'","'Documents are stacked neatly.'","'The desk holds several papers.'"],
+    correct:1,part:"Part 1",explain:"If the photo has no people, any answer with 'a worker', 'a man', 'someone', 'they' is automatically wrong. Always count the people first during the 3-second prep window."},
+
+  {id:"sq19",scenario:"Part 1: A photo shows people seated around a meeting table. Which verb pattern is most likely correct?",
+    options:["'Are running' or 'are jumping'","'Are sitting' or 'are gathered'","'Have left' or 'will arrive'","'Were standing' or 'are walking'"],
+    correct:1,part:"Part 1",explain:"Match the verb to what you actually SEE. Static actions (sitting, holding, looking, gathered) usually beat active verbs (running, leaving) for posed scenes — the camera caught a still moment, not motion."},
+
+  {id:"sq20",scenario:"Part 2: 'How long will the meeting last?' Which answer style is most likely correct?",
+    options:["'The meeting room is on the third floor'","'About forty-five minutes'","'The meeting will be very long'","'I missed the last meeting'"],
+    correct:1,part:"Part 2",explain:"Direct factual questions (How long, How much, When) get direct factual answers. Note that the correct one almost never repeats words from the question. 'How long' → 'forty-five minutes' (different words, exact answer)."},
+
+  {id:"sq21",scenario:"Part 2: 'Where did Maria put the contract?' What audio cue should you listen for?",
+    options:["Time prepositions like 'at' or 'in the morning'","Place prepositions like 'on the desk', 'in the drawer', 'next to'","Conjunctions like 'because' or 'although'","Comparative phrases like 'taller than'"],
+    correct:1,part:"Part 2",explain:"'Where' questions are answered with location markers: ON the desk, IN the drawer, NEXT TO the printer, BEHIND the cabinet. Train your ear for spatial prepositions specifically."},
+
+  {id:"sq22",scenario:"Part 2: 'You haven't sent the report yet, have you?' What kind of answer is correct?",
+    options:["Always 'yes' for a tag question","Always 'no' for a tag question","Either yes or no — but the substance must match the actual situation","Tag questions never appear on the TOEIC"],
+    correct:2,part:"Part 2",explain:"Tag questions ('have you', 'isn't it', 'didn't they') just confirm. Answer based on the FACT: 'Yes, I sent it this morning' OR 'No, I'll do it now.' Don't get tripped up by the tag — focus on the actual situation."},
+
+  {id:"sq23",scenario:"Part 2: The speaker asks in a friendly tone: 'Have you tried the new café?' What kind of answer is most likely correct?",
+    options:["A formal business reply","A short conversational reply about the café","A complaint about the speaker","A topic change to something unrelated"],
+    correct:1,part:"Part 2",explain:"Tone matters in P2. Friendly social question → friendly social answer. The correct answer keeps the conversational register set by the speaker. Mismatched tone = trap."},
+
+  {id:"sq24",scenario:"Part 3: A new conversation starts. What should you do in the first 5 seconds?",
+    options:["Memorize every word","Identify who is speaking and their roles (customer/staff, boss/employee)","Wait until the questions appear on screen","Skip ahead to the next conversation"],
+    correct:1,part:"Part 3",explain:"Speaker roles drive the answer. 'Customer + clerk' = service interaction. 'Boss + employee' = workplace task. Lock in the relationship within 5 seconds — it shapes how you interpret every later line."},
+
+  {id:"sq25",scenario:"Part 3: You see 3 questions for one conversation. Where in the audio will each answer appear?",
+    options:["All 3 are spread randomly throughout","All 3 are at the end of the audio","Q1 = first third, Q2 = middle, Q3 = end","All 3 are at the very beginning"],
+    correct:2,part:"Part 3",explain:"P3/P4 questions follow the chronological order of the audio. Q1 = early info, Q2 = middle, Q3 = end. This lets you focus your listening for each question in real time, not after the fact."},
+
+  {id:"sq26",scenario:"Part 3: 'How does the woman feel about the proposal?' Where do you focus your attention?",
+    options:["On her exact words ('I think...')","On her tone of voice — hesitation, enthusiasm, frustration","On the man's reaction","On the topic title or context"],
+    correct:1,part:"Part 3",explain:"Feeling/attitude questions live in TONE more than vocabulary. Listen for hesitation, enthusiasm, sighs, sarcasm — these reveal feelings even when the literal words stay neutral."},
+
+  {id:"sq27",scenario:"Part 4: A talk begins: 'Attention all passengers, gate B12 is now boarding...' What type of talk is this?",
+    options:["A voicemail","An advertisement","An airport or transit announcement","A meeting introduction"],
+    correct:2,part:"Part 4",explain:"Talk type = context. Recognize it in the first 3 seconds: 'Attention passengers' = transit announcement, 'Welcome to' = tour/event, 'Hi, this is X' = voicemail, 'Are you tired of...' = ad. Context locks in the answer style."},
+
+  {id:"sq28",scenario:"Part 4: The third question asks 'What does the speaker ask listeners to do?' Where in the talk is the answer?",
+    options:["The opening line","The middle section","The final 1-2 sentences","Anywhere in the talk"],
+    correct:2,part:"Part 4",explain:"'What should listeners do?' / 'What does the speaker request?' = ALWAYS in the closing CTA. 'Please call us at...' / 'Visit our website...' / 'See you at 3 PM' is the answer location, every time."},
+
+  {id:"sq29",scenario:"Part 4: A talk mentions multiple numbers (prices, times, percentages). What's your tactic?",
+    options:["Memorize every number in your head","Note them down quickly with a one-word context tag","Ignore numbers — they rarely matter","Wait until the questions to start listening for numbers"],
+    correct:1,part:"Part 4",explain:"Numbers in P4 are gold for fact questions. Jot them as you hear with one-word context: '$45 entry', '8pm start', '20% off'. The questions almost always test these specifics."},
+
+  {id:"sq30",scenario:"Part 4: 'What is the purpose of this talk?' Where does the answer come from?",
+    options:["The very first sentence","The last sentence","The longest paragraph","Random throughout"],
+    correct:0,part:"Part 4",explain:"Purpose questions = opening sentence. 'I'm calling to confirm...' / 'I'd like to introduce...' / 'Today's announcement is about...' Listen sharply to sentence #1 — that's where the speaker tells you why they're talking."},
+
+  {id:"sq31",scenario:"Part 5: 'If we _____ the contract today, the deal is done.' Best answer?",
+    options:["'will sign'","'sign'","'signed'","'would sign'"],
+    correct:1,part:"Part 5",explain:"Type 1 conditional (real future): IF + present, future. 'If we sign today, the deal IS done.' Never use 'will' inside the IF clause for a Type 1 conditional — only in the result clause."},
+
+  {id:"sq32",scenario:"Part 5: 'Of the three candidates, Maria is the _____.' What form is needed?",
+    options:["'more qualified'","'most qualified'","'qualified'","'as qualified'"],
+    correct:1,part:"Part 5",explain:"Comparing 3 or more items = SUPERLATIVE (most, best, fastest, the X-est). Comparing exactly 2 = COMPARATIVE (more, better, faster). 'Of the three' is your trigger — it always points to the superlative."},
+
+  {id:"sq33",scenario:"Part 5: 'She enjoys _____ to classical music.' Correct verb form?",
+    options:["'to listen'","'listen'","'listening'","'listened'"],
+    correct:2,part:"Part 5",explain:"Memorize verb patterns: ENJOY, AVOID, SUGGEST, FINISH, MIND, CONSIDER + Ving (gerund). WANT, DECIDE, AGREE, OFFER, REFUSE + to-inf. There's no logic — just learn the lists. 'Enjoy listening' is fixed."},
+
+  {id:"sq34",scenario:"Part 5: 'There isn't _____ time left before the deadline.' Which quantifier fits?",
+    options:["'many'","'much'","'few'","'a number of'"],
+    correct:1,part:"Part 5",explain:"TIME is uncountable → MUCH (not many). Countable nouns: many, few, a number of, several. Uncountable nouns: much, little, a lot of, a great deal of. Memorize this divide — TOEIC tests it constantly."},
+
+  {id:"sq35",scenario:"Part 6: A blank in sentence 3 must refer back to a noun in sentence 1. What's your move?",
+    options:["Pick the most common pronoun (it/they)","Match number (singular vs plural) and gender to the original noun","Skip and come back later","Choose the longest option"],
+    correct:1,part:"Part 6",explain:"Pronouns must agree with their referent: 'the proposals' (plural) → 'they/them'. 'Ms. Chen' (singular feminine) → 'she/her'. Always trace back to the original noun before picking the pronoun."},
+
+  {id:"sq36",scenario:"Part 6: Sentence A says 'sales dropped'. Sentence B says 'we will increase the marketing budget'. What transition fits the blank between them?",
+    options:["'For example,'","'Therefore,'","'However,'","'Similarly,'"],
+    correct:1,part:"Part 6",explain:"Map the logic between sentences: cause → effect = THEREFORE/SO. Contrast = HOWEVER/BUT. Addition = MOREOVER/ALSO. Example = FOR INSTANCE. The transition labels the relationship — find that relationship first."},
+
+  {id:"sq37",scenario:"Part 6: The text is in past tense throughout. What tense should the blank verb be?",
+    options:["Present simple, regardless of context","Future tense for variety","Past tense to match the surrounding narrative","Present perfect by default"],
+    correct:2,part:"Part 6",explain:"Within a single text, tenses stay consistent unless the meaning genuinely shifts (e.g., a flashforward). A past-tense narrative keeps past-tense verbs. Read 1-2 sentences before AND after the blank before deciding."},
+
+  {id:"sq38",scenario:"Part 7: 'What is implied about the company's future plans?' How do you answer an 'implied' question?",
+    options:["Find a sentence that directly states the future plans","Read between the lines — implied = not stated directly, but logically deducible","Pick the option with the most positive tone","Pick the option that sounds the most uncertain"],
+    correct:1,part:"Part 7",explain:"'Implied' / 'Suggested' / 'Likely' = the answer is NOT word-for-word in the text. It's the logical conclusion you draw from what IS stated. Eliminate options that have NO supporting clue anywhere in the passage."},
+
+  {id:"sq39",scenario:"Part 7: A double passage has 5 questions. Which questions typically require integrating information from BOTH documents?",
+    options:["All 5 questions need both documents","Usually questions 3-5 connect information from both","Only the first question needs both","None — each question is from one document only"],
+    correct:1,part:"Part 7",explain:"In double passages, the first 1-2 Qs are usually answered from doc 1 alone. Questions 3-5 typically integrate both docs (e.g., schedule in doc 1 + price change in doc 2 = 'how much would Mr. X actually pay?'). Plan your reading accordingly."},
+
+  {id:"sq40",scenario:"Part 7: 'In paragraph 2, line 5, the word \"address\" is closest in meaning to:' Best approach?",
+    options:["Pick the most common dictionary meaning","Re-read the surrounding sentence to see how the word is used in context","Pick the longest option","Pick a synonym you already know for the word"],
+    correct:1,part:"Part 7",explain:"Polysemic words ('address' = location OR speak to OR deal with) shift meaning by context. ALWAYS re-read the host sentence first. The most common dictionary meaning is rarely the contextual answer — that's the trap."},
+
+  {id:"sq41",scenario:"Part 7: A passage shows a conference schedule. Question: 'What time does the keynote start?' Best move?",
+    options:["Read the entire passage word by word","Scan the schedule visually for 'keynote' — find it directly","Read the introduction paragraph carefully","Read the conclusion"],
+    correct:1,part:"Part 7",explain:"Schedules, tables, itineraries are SCAN documents. Don't read linearly. Scan visually for the keyword (keynote) and grab the time next to it. Saves 30+ seconds per question — and you'll need every second on P7."},
+
+  {id:"sq42",scenario:"You have 75 minutes for the entire Reading section (Parts 5-7, 100 questions). How should you split your time?",
+    options:["25 min P5, 25 min P6, 25 min P7","10-12 min P5, 8-10 min P6, 50-55 min P7","30 min P5, 5 min P6, 40 min P7","All 75 min on P7"],
+    correct:1,part:"General",explain:"P7 has 54 questions and is the most time-hungry. P5 and P6 must be FAST (~30s/Q, ~15-20 min total). Leave 50+ min for P7. Most candidates run out of time on P7 because they over-spent on grammar."},
+
+  {id:"sq43",scenario:"You finished early and have 5 minutes left. You're re-checking and feel unsure about question 38. Should you change it?",
+    options:["Always change it — second instincts are usually better","Only change if you find clear evidence in the text that contradicts your first choice","Always keep your first answer no matter what","Pick a random new option"],
+    correct:1,part:"General",explain:"Statistically, your first instinct is right ~70% of the time. Only change if you can POINT to a specific sentence that proves your new answer. Vague doubt = keep the original — second-guessing destroys good answers more than it saves bad ones."},
+
+  {id:"sq44",scenario:"In the paper-based TOEIC, you've answered 30 questions in your booklet but bubbled none on the answer sheet yet. What's the risk?",
+    options:["No risk — you can bubble at the end","High risk — running out of time means leaving them blank or rushed bubbling errors","You'll automatically lose points","Bubbling is optional"],
+    correct:1,part:"General",explain:"Bubble in batches of 5-10 max — NEVER save it all for the end. Many candidates lose 10+ points when the timer cuts them mid-bubbling. Synchronize bubbling with your reading rhythm, not as an afterthought."},
+
+  {id:"sq45",scenario:"You're 90 minutes into the test. Your concentration is dropping. What's the best response?",
+    options:["Push through harder, ignore the fatigue","Take a 10-second pause, slow breath, refocus your eyes — then continue","Skip 10 questions to rest","Give up on the remaining questions"],
+    correct:1,part:"General",explain:"Micro-resets work. 10 seconds with eyes closed + 2 deep breaths re-oxygenates the brain and resets focus. Don't fight the fatigue — manage it. The TOEIC is a 2-hour endurance test as much as a language test."},
+
+  {id:"sq46",scenario:"What time should you arrive at the test center for a 9 AM TOEIC?",
+    options:["Exactly at 9 AM","8:55 AM (5 min early)","8:15-8:30 AM (45 min early)","8:00 AM (1 hour early)"],
+    correct:2,part:"General",explain:"Arrive ~45 min early. You need time for ID check, room assignment, settling in, and a calm mental warm-up. Cutting it close means stress, missed instructions, and starting flustered. Treat day-of logistics as part of the test."}
 ];
