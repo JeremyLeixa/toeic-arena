@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-03-verdict-extended-tutorial-merged";
+var BUILD_ID="2026-05-04-home-declutter-stats-trio";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -1170,7 +1170,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .btn1{width:auto;padding:14px 36px}
 .btn2{padding:12px 28px}
 .rg2{grid-template-columns:1fr 1fr 1fr!important}
-.rg3{grid-template-columns:repeat(4,1fr)!important}
+/* .rg3 — supprimé 2026-05-04 (trio de stats Home retiré) */
 .rg-games{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
 .p1-photo,.p1-photo-sm{max-height:500px!important}
 .read-text{font-size:15px!important;line-height:2!important}
@@ -3763,7 +3763,7 @@ return(
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
 <div style={{display:"flex",alignItems:"center",gap:10}}>
 <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),var(--cx-dark))",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:16}} className="out">{lv.level}</div>
-<div><div className="out" style={{fontSize:13,fontWeight:700}}>Level {lv.level}</div><div style={{fontSize:11,color:"var(--t2)"}}>{lv.cur} / {lv.next} XP</div></div></div>
+<div><div className="out" style={{fontSize:13,fontWeight:700}}>Level {lv.level}</div><div style={{fontSize:11,color:"var(--t2)"}}>{lv.cur} / {lv.next} XP{u.weeklyXp>0?" · "+u.weeklyXp+" this week":""}</div></div></div>
 <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"var(--bg3)",borderRadius:99}}>
 <span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
@@ -3869,9 +3869,8 @@ return(
   </div>);
 }()}
 
-<div className="rg3" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
-{[{l:"Total XP",v:u.xp,i:"star-formation",c:"var(--gold)"},{l:"This week",v:u.weeklyXp,i:"progression",c:"var(--cyan)"},{l:"Sessions",v:u.stats.sessions,i:"path-distance",c:"var(--purple)"}].map(function(s){return(
-<div key={s.l} className="crd" style={{padding:14,textAlign:"center"}}><svg viewBox="0 0 512 512" width="24" height="24" style={{color:s.c,display:"block",margin:"0 auto 4px"}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS[s.i]||""}}/></svg><div className="out" style={{fontSize:20,fontWeight:800,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>{s.l}</div></div>);})}</div>
+{/* Stats trio (Total XP / This Week / Sessions) supprimé 2026-05-04 — duplicaté par Profile + League. */}
+{/* "This week" plié en ligne secondaire dans la carte Level+League ci-dessus pour conserver le signal hebdo. */}
 
 <h2 className="out" style={{fontWeight:700,fontSize:16,marginBottom:12,color:"var(--t2)"}}>Quick Start</h2>
 <div className="rg2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
