@@ -692,6 +692,212 @@ export var LISTENING_P2 = [
   {id:"p2_125",q:"Which conference room has the video equipment set up?",
     opts:["The equipment was upgraded last year.","The video lasted ten minutes.","Room C on the second floor."],
     c:2,x:"'Which' asks for a specific room. C names it with floor. A is past upgrade info and B is unrelated past time."},
+
+  // ═══════════════════════════════════════════════════════════
+  // P2 BATCH 4 — p2_126 → p2_175 (50 items, added 2026-05-04)
+  // Voice rotation: 6 voices cycle by id mod 6 (Sarah/Adam/Canadian/British/VoiceA/VoiceB)
+  // Generation script: scripts/generate-audio-p2-batch4.mjs (A./B./C. prefix included from start)
+  // ═══════════════════════════════════════════════════════════
+
+  {id:"p2_126",q:"When did the new packaging design get approved?",
+    opts:["The marketing team designed it.","The packaging looks great in green.","About two weeks ago, I think."],
+    c:2,x:"'When' asks for time. C gives a past timeframe. A and B describe the design but not when."},
+
+  {id:"p2_127",q:"Where can I find the latest pricing sheet?",
+    opts:["Prices went up last quarter.","It's in the shared folder under Sales.","I haven't sold anything this week."],
+    c:1,x:"'Where' asks for a location. B gives the exact path. A and C are about prices/sales but not the file location."},
+
+  {id:"p2_128",q:"Who designed the new website layout?",
+    opts:["The website launched last Friday.","About thirty pages in total.","A freelance designer named Amir."],
+    c:2,x:"'Who' asks for a person. C names them. A and B describe the website itself."},
+
+  {id:"p2_129",q:"What's the agenda for tomorrow's call?",
+    opts:["I'll send it to you this evening.","The call lasted forty minutes.","It's an internal meeting."],
+    c:0,x:"Direct request hidden in a question. A commits to action. B is past tense (wrong context). C describes the type but not the agenda."},
+
+  {id:"p2_130",q:"Why did the supplier cancel the shipment?",
+    opts:["The shipment was supposed to arrive Tuesday.","They had a production issue at the factory.","I'll find another supplier soon."],
+    c:1,x:"'Why' asks for a reason. B gives one. A is the original schedule, C is a future plan."},
+
+  {id:"p2_131",q:"How long will the renovation take?",
+    opts:["The renovation cost a lot.","We hired a great contractor.","About six weeks if there are no delays."],
+    c:2,x:"'How long' asks for a duration. C gives one with a caveat. A talks cost, B talks contractor."},
+
+  {id:"p2_132",q:"Could you forward me the budget spreadsheet?",
+    opts:["Sure, I'll send it right away.","The budget was approved.","Spreadsheets are easy to make."],
+    c:0,x:"Polite request. A confirms with action. B is unrelated past info. C is a generic comment."},
+
+  {id:"p2_133",q:"Have you spoken to the legal team about the contract?",
+    opts:["The contract is twenty pages long.","Legal is on the third floor.","I'll do it after lunch."],
+    c:2,x:"Y/N question. C answers indirectly with a future commitment. A and B describe the contract/location."},
+
+  {id:"p2_134",q:"The training session is on Wednesday, isn't it?",
+    opts:["Actually, it was moved to Thursday.","The trainer is excellent.","I attended the last one."],
+    c:0,x:"Tag question. A corrects the day (natural indirect answer). B and C are tangential."},
+
+  {id:"p2_135",q:"Haven't you received the updated invoice yet?",
+    opts:["The invoice was for fifteen hundred dollars.","No, I'll check my spam folder.","Yes, the invoices are colorful."],
+    c:1,x:"Negative Y/N. B gives a natural answer + action. A and C are off-topic."},
+
+  {id:"p2_136",q:"Should we hold the meeting in person or by video call?",
+    opts:["The meeting room has a projector.","Video call would save everyone time.","The meeting was very productive."],
+    c:1,x:"Choice question. B picks an option with reasoning. A talks equipment, C is past tense."},
+
+  {id:"p2_137",q:"Where is the staff parking located?",
+    opts:["Parking is free for employees.","I usually take the bus.","Behind the main building, near gate B."],
+    c:2,x:"'Where' asks for a location. C gives precise directions. A talks cost, B talks personal commute."},
+
+  {id:"p2_138",q:"When is your team's deadline for the report?",
+    opts:["Friday afternoon at the latest.","The report has fifty pages.","We finished early last time."],
+    c:0,x:"'When' asks for time. A gives a deadline. B describes the report, C is past tense."},
+
+  {id:"p2_139",q:"The conference room projector isn't working again.",
+    opts:["The projector was new last year.","The conference is on Tuesday.","I'll call IT support right now."],
+    c:2,x:"Statement of a problem. C offers a solution (most helpful response). A and B are tangential facts."},
+
+  {id:"p2_140",q:"Who handles invoice approvals at your firm?",
+    opts:["The invoices are paid online.","Mr. Lambert in finance signs them.","We process about a hundred a month."],
+    c:1,x:"'Who' asks for a person. B names them with role. A and C describe the process volume."},
+
+  {id:"p2_141",q:"Why don't we try the new Italian restaurant for the team lunch?",
+    opts:["The team has twelve people now.","I had Italian food yesterday.","That's a great idea, I'll book a table."],
+    c:2,x:"Suggestion. C accepts and acts. A and B are tangential."},
+
+  {id:"p2_142",q:"What time does the airport shuttle leave the hotel?",
+    opts:["Every thirty minutes from 5 AM to midnight.","The hotel is very comfortable.","I always travel light."],
+    c:0,x:"'What time' asks for schedule. A gives frequency + range. B and C are unrelated."},
+
+  {id:"p2_143",q:"Was the parking permit included in your application?",
+    opts:["I parked on Level 2 this morning.","Yes, it was attached as a PDF.","The permit costs fifty dollars."],
+    c:1,x:"Y/N question. B confirms + adds detail. A talks personal parking, C is the cost."},
+
+  {id:"p2_144",q:"How many candidates passed the technical assessment?",
+    opts:["The assessment lasted three hours.","Technology is changing fast these days.","Six out of fifteen made it through."],
+    c:2,x:"'How many' asks for a number. C gives the ratio. A talks duration, B is generic."},
+
+  {id:"p2_145",q:"You're presenting at the kickoff next week, aren't you?",
+    opts:["Yes, on Monday morning.","The presentation has thirty slides.","Kickoffs are always exciting."],
+    c:0,x:"Tag question. A confirms with timing. B and C are tangential."},
+
+  {id:"p2_146",q:"Why is the office so quiet today?",
+    opts:["The office has good acoustics.","Quiet helps me focus better.","Most of the team is on a client visit."],
+    c:2,x:"'Why' asks for a reason. C explains the absence. A and B are unrelated personal observations."},
+
+  {id:"p2_147",q:"When will the new hire start?",
+    opts:["We hired him just last week.","The first Monday of next month.","New hires get a welcome kit."],
+    c:1,x:"'When' asks for the start date. B gives a precise date. A is the hiring date, C is a process detail."},
+
+  {id:"p2_148",q:"Did you reserve the conference room for tomorrow?",
+    opts:["The conference is in Brussels next year.","I prefer smaller meeting rooms.","Yes, from 9 to 11 AM."],
+    c:2,x:"Y/N question. C confirms with the slot. A and B are unrelated."},
+
+  {id:"p2_149",q:"Would you rather work from the office or from home on Mondays?",
+    opts:["Home, if it's possible.","Mondays are usually quiet.","I work fifty hours a week."],
+    c:0,x:"Choice question. A picks an option. B and C are unrelated."},
+
+  {id:"p2_150",q:"The printer on the second floor keeps running out of toner.",
+    opts:["I'll order more cartridges today.","The printer was installed in March.","Second floor has the best view."],
+    c:0,x:"Statement of recurring problem. A offers a fix. B and C are tangential."},
+
+  {id:"p2_151",q:"Where should I send the signed agreement?",
+    opts:["The agreement covers two years.","I signed it this morning.","Email it to contracts@ourfirm.com."],
+    c:2,x:"'Where' asks for a destination. C gives the email. A talks duration, B talks signing."},
+
+  {id:"p2_152",q:"Who's organizing the year-end party this year?",
+    opts:["The party was great last year.","The HR committee is in charge.","I'll bring some cookies."],
+    c:1,x:"'Who' asks for organizers. B names them. A is past, C is a personal contribution."},
+
+  {id:"p2_153",q:"How did the client feel about the proposal?",
+    opts:["The client is based in Lyon.","They were enthusiastic about the timeline.","Proposals always take time to write."],
+    c:1,x:"'How' asks about reaction. B reports it. A is location, C is a generic remark."},
+
+  {id:"p2_154",q:"Could you let me know when the package arrives?",
+    opts:["The package weighs three kilos.","I love unboxing packages.","Of course, I'll text you straight away."],
+    c:2,x:"Polite request. C confirms with the channel. A and B are unrelated."},
+
+  {id:"p2_155",q:"Mr. Okafor leaves the office at six every day, doesn't he?",
+    opts:["Usually, but he stayed late yesterday.","He's a senior manager.","Six is a good time to leave."],
+    c:0,x:"Tag question. A nuances the assumption. B and C are off-topic."},
+
+  {id:"p2_156",q:"Aren't you going to the workshop next week?",
+    opts:["The workshop covers leadership skills.","I have a client meeting that day.","Workshops are usually informative."],
+    c:1,x:"Negative Y/N. B explains absence indirectly. A and C are generic facts."},
+
+  {id:"p2_157",q:"What's the best way to reach the IT helpdesk after hours?",
+    opts:["IT is on the fourth floor.","They were very helpful yesterday.","There's an emergency phone line on the intranet."],
+    c:2,x:"'What's the best way' asks for a method. C gives the channel. A and B are unrelated."},
+
+  {id:"p2_158",q:"When did the office relocate to this building?",
+    opts:["About eighteen months ago.","We're now on the seventh floor.","The building has fast elevators."],
+    c:0,x:"'When' asks for the move date. A gives an approximate timeframe. B and C describe the building."},
+
+  {id:"p2_159",q:"I'd like to schedule a meeting with the regional director.",
+    opts:["The director is from Madrid.","I can check her calendar for Thursday.","Meetings can be tiring sometimes."],
+    c:1,x:"Request. B offers a concrete next step. A and C are unrelated."},
+
+  {id:"p2_160",q:"Would you prefer a window seat or an aisle seat for the flight?",
+    opts:["The flight is six hours long.","I usually fly economy class.","An aisle seat, so I can stretch."],
+    c:2,x:"Choice question. C picks with reasoning. A and B are tangential."},
+
+  {id:"p2_161",q:"How was the supplier audit yesterday?",
+    opts:["Better than expected, only minor issues.","The audit took three full hours.","We have several reliable suppliers."],
+    c:0,x:"'How was' asks for the outcome. A gives an evaluation. B is duration, C is generic."},
+
+  {id:"p2_162",q:"Why was the launch event postponed again?",
+    opts:["The event was held downtown last time.","The keynote speaker had a conflict.","Launches are always exciting moments."],
+    c:1,x:"'Why' asks for a reason. B explains. A is past location, C is generic."},
+
+  {id:"p2_163",q:"Has the design team finalized the brand guidelines?",
+    opts:["The design team has eight people.","Brands need to evolve over time.","They sent the final version yesterday."],
+    c:2,x:"Y/N question. C confirms with timing. A and B are tangential."},
+
+  {id:"p2_164",q:"You completed the compliance training, didn't you?",
+    opts:["Yes, last Thursday afternoon.","Compliance training is mandatory.","The training was three hours long."],
+    c:0,x:"Tag question. A confirms with timing. B and C are generic facts about training."},
+
+  {id:"p2_165",q:"Where do we keep the company's spare laptops?",
+    opts:["We have about ten spare ones.","In the locked cabinet in the IT office.","Laptops should be charged daily."],
+    c:1,x:"'Where' asks for a location. B gives it precisely. A is quantity, C is generic advice."},
+
+  {id:"p2_166",q:"What kind of feedback did the survey reveal?",
+    opts:["The survey went out last month.","Surveys are useful management tools.","Mostly positive, with concerns about workload."],
+    c:2,x:"'What kind' asks for the type/content. C summarizes. A is timing, B is generic."},
+
+  {id:"p2_167",q:"These quarterly numbers look really promising.",
+    opts:["Numbers can sometimes be misleading.","I agree, especially the European market.","Quarters move very quickly these days."],
+    c:1,x:"Statement of opinion. B agrees + adds specifics. A and C are tangential."},
+
+  {id:"p2_168",q:"How often does the cleaning crew come in?",
+    opts:["Twice a week, on Tuesdays and Fridays.","The crew has six members.","Cleaning supplies are in the closet."],
+    c:0,x:"'How often' asks for frequency. A gives both frequency and days. B and C are tangential."},
+
+  {id:"p2_169",q:"Wasn't the deadline supposed to be Friday?",
+    opts:["Friday is a holiday this week.","I usually meet my deadlines.","It got extended to next Tuesday."],
+    c:2,x:"Negative Y/N. C corrects with new info. A is partial info, B is generic."},
+
+  {id:"p2_170",q:"Who's covering the front desk during Mei's vacation?",
+    opts:["Mei is going to Japan for ten days.","Sarah will handle it for the two weeks.","The front desk is busy on Mondays."],
+    c:1,x:"'Who' asks for a person. B names them with duration. A is about Mei, C is unrelated."},
+
+  {id:"p2_171",q:"Would you mind keeping the volume down a bit?",
+    opts:["Sorry, I'll use my headphones.","The volume is at level seven.","The music is really great."],
+    c:0,x:"Polite request (mind = is it OK if). A apologizes + acts. B and C are tangential."},
+
+  {id:"p2_172",q:"When can we expect the survey results?",
+    opts:["The survey had thirty questions.","Surveys are completely anonymous.","The analysis should be ready by Wednesday."],
+    c:2,x:"'When' asks for timing. C gives a deadline. A and B describe the survey itself."},
+
+  {id:"p2_173",q:"Should I bring printed copies or send the slides digitally?",
+    opts:["The slides have great visuals.","Digital is better, less paper waste.","I designed them last night."],
+    c:1,x:"Choice question. B picks with reasoning. A and C are tangential."},
+
+  {id:"p2_174",q:"The Wi-Fi keeps disconnecting in the back conference room.",
+    opts:["IT is upgrading the router this weekend.","Wi-Fi is usually reliable in our building.","The conference room seats twenty people."],
+    c:0,x:"Statement of recurring problem. A reports an upcoming fix. B and C are tangential."},
+
+  {id:"p2_175",q:"How about we postpone the staff briefing to next Monday?",
+    opts:["The briefing covers Q2 goals.","Mondays are tough days for everyone.","That works, I'll update everyone now."],
+    c:2,x:"Suggestion. C agrees + commits to action. A and B are tangential."}
 ];
 
 // ─── PART 3 — Conversations (20 conversations, 60 questions) ───
