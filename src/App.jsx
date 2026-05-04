@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-04-home-glow-clickable-level";
+var BUILD_ID="2026-05-04-p3p4-toeic-faithful-spoken-questions";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -6686,8 +6686,11 @@ function EndlessArena(p){
   // ── Audio — dynamic paths based on item origin ──
   async function playP1(){if(aState!=="ready")return;setAState("playing");var it=LP1[qi];for(var i=0;i<it.opts.length;i++){setCurOpt(i);if(isBoss(it.id)){await playAudioFile("/audio/boss/p1_"+String(bossIdx(it.id)).padStart(2,"0")+"_"+i+".mp3");}else{await playAudioFile("/audio/p1/"+it.id+"_"+i+".mp3");}await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
   async function playP2(){if(aState!=="ready")return;setAState("playing");var it=LP2[qi];if(isBoss(it.id)){var bid=String(bossIdx(it.id)).padStart(2,"0");await playAudioFile("/audio/boss/p2_"+bid+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+bid+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,300);});};}else{await playAudioFile("/audio/p2/"+it.id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i2=0;i2<3;i2++){setCurOpt(i2);await playAudioFile("/audio/p2/"+it.id+"_"+i2+".mp3");await new Promise(function(r){setTimeout(r,300);});}}setCurOpt(-1);setAState("done");}
-  async function playP3(){if(aState!=="ready")return;setAState("playing");var it=LP3[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p3_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p3/"+it.id+".mp3");}setAState("done");}
-  async function playP4(){if(aState!=="ready")return;setAState("playing");var it=LP4[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p4_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p4/"+it.id+".mp3");}setAState("done");}
+  // P3/P4 Train mode (2026-05-04) : TOEIC-faithful playback = talk + 1s pause + spoken
+  // questions ({id}_questions.mp3, narrator Sarah US-F). Boss mode reste talk-only pour
+  // l'instant — TODO : régénérer les questions speakees Boss en session dédiée.
+  async function playP3(){if(aState!=="ready")return;setAState("playing");var it=LP3[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p3_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p3/"+it.id+".mp3");await new Promise(function(r){setTimeout(r,1000);});await playAudioFile("/audio/p3/"+it.id+"_questions.mp3");}setAState("done");}
+  async function playP4(){if(aState!=="ready")return;setAState("playing");var it=LP4[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p4_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p4/"+it.id+".mp3");await new Promise(function(r){setTimeout(r,1000);});await playAudioFile("/audio/p4/"+it.id+"_questions.mp3");}setAState("done");}
 
   // ── Answer & Navigate ──
   function pick(val){
