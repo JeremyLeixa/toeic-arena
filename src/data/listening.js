@@ -1908,5 +1908,117 @@ export var LISTENING_P4 = [
   qs:[
     {q:"What service does the company offer?",opts:["Interior design","Roofing","Landscaping and outdoor construction","House cleaning"],c:2},
     {q:"How long has the company been in business?",opts:["Over twenty-five years","Over ten years","Over fifty years","Five years"],c:0},
-    {q:"What is the current promotion?",opts:["A free gift","Free delivery","A free design consultation and a discount","Lifetime warranty"],c:2}]}  
+    {q:"What is the current promotion?",opts:["A free gift","Free delivery","A free design consultation and a discount","Lifetime warranty"],c:2}]},
+
+  // ═══════════════════════════════════════════════════════════
+  // P4 BATCH 4 — p4_46 → p4_60 (15 new talks, added 2026-05-04)
+  // Voice rotation 4 voices by id mod 4: Sarah(W) / Adam(M) / Canadian(W) / British(M)
+  // VOICE_A/B excluded — sex unconfirmed.
+  // Generation script: scripts/generate-audio-p4-batch4.mjs
+  // ═══════════════════════════════════════════════════════════
+
+  {id:"p4_46",type:"Voicemail",voice:"W",
+    text:"Hello, this is Greenfield Pharmacy calling for Mr. Lecomte. I wanted to let you know that your prescription refill is ready for pickup. Our hours today are nine to seven. If you can't make it before closing, the prescription will be held for forty-eight hours before being returned to inventory. If you'd like home delivery, we offer that service for a small fee — just call us back. Have a great day.",
+    qs:[
+      {q:"Why is the speaker calling?",opts:["To confirm a doctor's appointment","To inform that a prescription is ready","To request payment","To reschedule a delivery"],c:1},
+      {q:"How long will the prescription be held?",opts:["Twelve hours","Twenty-four hours","Forty-eight hours","One week"],c:2},
+      {q:"What additional service is mentioned?",opts:["Home delivery","Free consultation","Insurance billing","A loyalty program"],c:0}]},
+
+  {id:"p4_47",type:"Announcement",voice:"M",
+    text:"Attention passengers on platform seven. The 4:25 express service to Brussels has been canceled this evening due to a signaling issue on the line. Passengers holding tickets for this train can use them on the next available service at 5:10, which will make all stops. Refunds for this evening's cancellation are available at the customer service desk on the main concourse. We apologize for the inconvenience.",
+    qs:[
+      {q:"Where is the announcement most likely being made?",opts:["At an airport","In a shopping mall","At a train station","On a city bus"],c:2},
+      {q:"Why was the service canceled?",opts:["Bad weather","A signaling problem","Staff shortage","A scheduling change"],c:1},
+      {q:"What can passengers do with their original tickets?",opts:["Use them on the 5:10 service","Exchange them at any station","Get a full refund automatically","Nothing — they are invalid"],c:0}]},
+
+  {id:"p4_48",type:"Voicemail",voice:"W",
+    text:"Hi Marcus, this is Aisha from Bridgewater HR. I'm following up on your application for the senior analyst position. We'd like to invite you to an in-person interview next Thursday. The interview is scheduled to last about ninety minutes and will include a short technical exercise. Please confirm your availability by replying to my email or calling me back at extension 437. Looking forward to meeting you.",
+    qs:[
+      {q:"What is the speaker's profession?",opts:["A recruiter or HR representative","An IT manager","A senior analyst","A business consultant"],c:0},
+      {q:"How long will the interview last?",opts:["Thirty minutes","Sixty minutes","Ninety minutes","Two hours"],c:2},
+      {q:"What is one component of the interview?",opts:["A panel discussion","A technical exercise","A lunch with the team","A written essay"],c:1}]},
+
+  {id:"p4_49",type:"Advertisement",voice:"M",
+    text:"Are you tired of crowded gyms with broken equipment? At Pulse Cycling Studio, we offer indoor cycling classes designed for every fitness level. Our brand-new facility on Camden Road features forty bikes, full shower facilities, and certified instructors who tailor each session to your goals. Sign up online by the end of this month and your first two weeks are completely free. Visit pulsecycling.co.uk to claim your trial.",
+    qs:[
+      {q:"What kind of business is being advertised?",opts:["A sports equipment store","A personal training app","An indoor cycling studio","A weight loss clinic"],c:2},
+      {q:"How many bikes does the facility offer?",opts:["Twenty","Thirty","Forty","Fifty"],c:2},
+      {q:"What promotion is mentioned?",opts:["Two free weeks for new sign-ups","A discount for couples","A free fitness consultation","A monthly membership at half price"],c:0}]},
+
+  {id:"p4_50",type:"Recorded message",voice:"W",
+    text:"Thank you for calling Sterling Community Bank. Our offices are currently closed for the weekend. Our normal business hours are Monday through Friday, eight thirty to five. To report a lost or stolen card, please press one and you will be connected to our 24-hour security team. To check your account balance, press two and have your card number ready. For all other inquiries, please call back during business hours or visit sterlingcb.com.",
+    qs:[
+      {q:"What kind of business is the caller reaching?",opts:["A credit card issuer","A bank","An insurance company","A government office"],c:1},
+      {q:"What should callers do to report a lost card?",opts:["Press one","Press two","Visit the website","Call back later"],c:0},
+      {q:"When are the offices open?",opts:["24 hours every day","Weekends only","Monday to Friday, 8:30 to 5","Monday to Saturday morning"],c:2}]},
+
+  {id:"p4_51",type:"Training session",voice:"M",
+    text:"Good morning everyone. Today we're going to walk through our updated fire evacuation procedure. When the alarm sounds, leave your workstation immediately, take only essentials, and proceed to the nearest stairwell — never use the elevators. Floor wardens, identifiable by their orange vests, will guide you to the assembly point in the parking lot at section B. Once there, your team leader will perform a roll call. Do not return to the building until cleared by the safety officer.",
+    qs:[
+      {q:"What is the topic of this training?",opts:["First aid response","Fire evacuation procedure","Active shooter drill","Building security"],c:1},
+      {q:"How can floor wardens be identified?",opts:["By a special badge","By a clipboard","By their orange vests","By their position at the door"],c:2},
+      {q:"When can people return to the building?",opts:["When the safety officer clears it","After fifteen minutes","When the alarm stops","When the team leader signals"],c:0}]},
+
+  {id:"p4_52",type:"Tour guide",voice:"W",
+    text:"Welcome to the Westbrook Botanical Gardens. Today's guided tour will take about an hour and a quarter and will cover three of our seven themed sections — the tropical greenhouse, the Japanese garden, and the medicinal herb collection. Photography is welcome throughout, except inside the orchid pavilion where flash damages the petals. Restrooms and a small café are available near the main entrance. Please stay together, and don't hesitate to ask questions.",
+    qs:[
+      {q:"How long will the tour last?",opts:["Forty-five minutes","One hour","About seventy-five minutes","Two hours"],c:2},
+      {q:"How many sections will the tour cover?",opts:["Three","Five","Seven","All sections"],c:0},
+      {q:"Where is photography restricted?",opts:["In the Japanese garden","In the orchid pavilion","Near the main entrance","Throughout the gardens"],c:1}]},
+
+  {id:"p4_53",type:"News report",voice:"M",
+    text:"In economic news, the Office for National Statistics released figures today showing that retail sales in the city centre rose by four point two percent over the past quarter. Analysts attribute the growth to two factors: increased footfall from the new tram extension that opened in March, and a strong tourist season. Independent shops report the largest gains, with food and beverage outlets leading at nearly seven percent growth.",
+    qs:[
+      {q:"What is the main subject of the report?",opts:["Tourism statistics","Quarterly retail sales growth","A new tram line","Independent shop closures"],c:1},
+      {q:"What is one cited reason for the growth?",opts:["Lower taxes","Increased advertising","A new tram extension","Government subsidies"],c:2},
+      {q:"Which sector grew the most?",opts:["Food and beverage","Clothing and accessories","Electronics","Home goods"],c:0}]},
+
+  {id:"p4_54",type:"Voicemail",voice:"W",
+    text:"Hi, this is Daniel from QuickShip Couriers. I have a package addressed to your office, but the building is locked and there's no answer at the main entrance. I'll wait for another fifteen minutes before returning the package to our depot. If you'd like me to leave it with a neighboring business, please call me back at this number within that window. Otherwise, you can reschedule delivery for tomorrow through our website.",
+    qs:[
+      {q:"Why can't the courier complete the delivery?",opts:["The address is wrong","The package is damaged","The building is locked","The recipient refused it"],c:2},
+      {q:"How long will the courier wait?",opts:["Fifteen minutes","Thirty minutes","One hour","Until the end of the day"],c:0},
+      {q:"What is the alternative if no one calls back?",opts:["The package will be destroyed","Reschedule delivery online","The courier will leave it on the doorstep","Pay an additional fee"],c:1}]},
+
+  {id:"p4_55",type:"Meeting introduction",voice:"M",
+    text:"Good morning everyone, and thank you for joining today's quarterly review. Before we start, I want to acknowledge two things. First, congratulations to the customer success team — your retention numbers this quarter were the highest we've seen in three years. Second, our new VP of Engineering, Rosa Diaz, joined us last Monday from her previous role at Hexagram Tech. Please welcome her warmly. Now let's get into the agenda.",
+    qs:[
+      {q:"What kind of meeting is this?",opts:["A quarterly review","A product launch","A customer event","A training session"],c:0},
+      {q:"What achievement is highlighted?",opts:["Record-breaking sales","Highest customer retention in 3 years","A successful product launch","A new partnership"],c:1},
+      {q:"Who is being introduced?",opts:["A new customer","A guest speaker","A new VP of Engineering","A consultant"],c:2}]},
+
+  {id:"p4_56",type:"Announcement",voice:"W",
+    text:"Attention shoppers. Westwood Department Store will be closing two hours earlier than usual tonight, at six PM, for our annual inventory count. We apologize for any inconvenience this may cause. The full store will reopen tomorrow at our normal time of nine AM. As a thank you for your understanding, all customers shopping today will receive a fifteen percent discount voucher valid on their next visit. Please proceed to checkout by five forty-five.",
+    qs:[
+      {q:"What time will the store close tonight?",opts:["Five PM","Five forty-five","Six PM","Eight PM"],c:2},
+      {q:"Why is the store closing early?",opts:["For an inventory count","For staff training","Due to a power outage","For a holiday"],c:0},
+      {q:"What is offered to customers today?",opts:["A free gift","A 15% discount voucher for next visit","Free shipping","A loyalty card upgrade"],c:1}]},
+
+  {id:"p4_57",type:"Advertisement",voice:"M",
+    text:"Struggling to find time for your language learning? With LinguaFlow, fifteen minutes a day is all you need. Our adaptive lessons adjust to your pace, focusing on the words and grammar you actually need. Choose from twenty-three languages, including business English, Mandarin, and French. New users receive a fourteen-day free trial — no credit card required. Try LinguaFlow today at linguaflow.com and join over two million learners worldwide.",
+    qs:[
+      {q:"What is being advertised?",opts:["A bookstore","A language learning platform","A translation agency","A study-abroad program"],c:1},
+      {q:"How many languages are offered?",opts:["Twenty-three","Thirty","Fourteen","Two million"],c:0},
+      {q:"What is required for the free trial?",opts:["A subscription fee","A referral code","Nothing — no credit card needed","An email confirmation only"],c:2}]},
+
+  {id:"p4_58",type:"Instructions",voice:"W",
+    text:"Welcome to today's professional development workshop. Please make sure you've signed in at the front desk and collected your name badge before we begin. The workbook materials are on the table to your left — feel free to grab them now. We'll have a fifteen-minute coffee break at ten thirty and a one-hour lunch at noon. Lunch is provided in the cafeteria upstairs. If you have any dietary restrictions you haven't shared, please let me know in the next five minutes.",
+    qs:[
+      {q:"What is the speaker explaining?",opts:["Workshop logistics and schedule","The training content","Emergency procedures","Networking opportunities"],c:0},
+      {q:"When is the coffee break?",opts:["At nine thirty","At noon","At ten thirty","After lunch"],c:2},
+      {q:"What should attendees do about dietary restrictions?",opts:["Email HR","Inform the speaker within five minutes","Skip the lunch","Bring their own food"],c:1}]},
+
+  {id:"p4_59",type:"Tour guide",voice:"M",
+    text:"Welcome to the Greenwood Textile Mill, one of the best-preserved Victorian factories in the region. Built in 1847, this site employed over two thousand workers at its peak in the 1890s. Today's guided tour lasts approximately ninety minutes and covers the original spinning floor, the steam engine room, and a special exhibit on workers' daily lives. Please be aware that some sections involve narrow staircases, which may be challenging for visitors with mobility needs.",
+    qs:[
+      {q:"What kind of site is being toured?",opts:["A modern factory","An art museum","A historic textile factory","A train station"],c:2},
+      {q:"When was the factory built?",opts:["In 1747","In 1847","In 1947","Date unspecified"],c:1},
+      {q:"What might be challenging for some visitors?",opts:["Narrow staircases","Loud machinery","Outdoor terrain","Long walking distances"],c:0}]},
+
+  {id:"p4_60",type:"Company update",voice:"W",
+    text:"I'm pleased to announce the launch of our new employee wellness program, starting on the first of next month. All full-time staff will be eligible for a monthly fitness allowance of fifty dollars, free access to mental health counseling sessions, and one paid wellness day per quarter. To enroll, log in to the HR portal and complete the short questionnaire by next Friday. Don't hesitate to reach out to HR if you have questions about the program details.",
+    qs:[
+      {q:"What is being announced?",opts:["A bonus program","A wellness program","A new health insurance plan","A staff retreat"],c:1},
+      {q:"How much is the monthly fitness allowance?",opts:["Twenty-five dollars","Forty dollars","Fifty dollars","One hundred dollars"],c:2},
+      {q:"What is the deadline to enroll?",opts:["Next Friday","End of the month","First of next month","No deadline mentioned"],c:0}]}
 ];
