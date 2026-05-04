@@ -122,6 +122,28 @@ export var PREP_COLLOCATIONS = [
   {base:"in accordance",prep:"with",type:"expr",ex:"All work must be done in accordance with safety standards."},
   {base:"with regard",prep:"to",type:"expr",ex:"With regard to your inquiry, we have updated the policy."},
   {base:"in response",prep:"to",type:"expr",ex:"In response to customer feedback, we redesigned the interface."},
+
+  // ── Batch 3 (added 2026-05-04) — adj+prep, verb+prep, expressions ──
+  {base:"dependent",prep:"on",type:"adj",ex:"The launch date is dependent on regulatory approval."},
+  {base:"proud",prep:"of",type:"adj",ex:"Management is proud of the team's quarterly performance."},
+  {base:"afraid",prep:"of",type:"adj",ex:"Some clients are afraid of switching to the new platform."},
+  {base:"essential",prep:"to",type:"adj",ex:"Clear documentation is essential to onboarding new staff."},
+  {base:"accustomed",prep:"to",type:"adj",ex:"Senior consultants are accustomed to international travel."},
+  {base:"opposed",prep:"to",type:"adj",ex:"Several board members are opposed to the merger."},
+  {base:"attached",prep:"to",type:"adj",ex:"Please find the invoice attached to this email."},
+  {base:"compatible",prep:"with",type:"adj",ex:"The new printer is compatible with all our laptops."},
+  {base:"rely",prep:"on",type:"verb",ex:"We rely on local suppliers to keep costs down."},
+  {base:"concentrate",prep:"on",type:"verb",ex:"The team needs to concentrate on the Q4 deadline."},
+  {base:"apologize",prep:"for",type:"verb",ex:"We apologize for the delay in shipping your order."},
+  {base:"arrange",prep:"for",type:"verb",ex:"Could you arrange for a courier to pick up the package?"},
+  {base:"compete",prep:"with",type:"verb",ex:"Smaller firms struggle to compete with global brands."},
+  {base:"cope",prep:"with",type:"verb",ex:"The IT team is coping with a major server outage."},
+  {base:"graduate",prep:"from",type:"verb",ex:"Most of our analysts graduated from top business schools."},
+  {base:"recover",prep:"from",type:"verb",ex:"The market is slowly recovering from last year's downturn."},
+  {base:"by means",prep:"of",type:"expr",ex:"Payment can be settled by means of bank transfer."},
+  {base:"in spite",prep:"of",type:"expr",ex:"In spite of the rain, the outdoor event went ahead."},
+  {base:"in favor",prep:"of",type:"expr",ex:"The committee voted in favor of the new policy."},
+  {base:"at the expense",prep:"of",type:"expr",ex:"Speed should never come at the expense of quality."},
 ];
 
 // ─── GERUND / INFINITIVE DATA (30 verbs, grouped by pattern) ───
@@ -359,6 +381,108 @@ export var TOEIC_TRAPS = [
     scenario:"The man says the deadline is Friday. The woman says she needs more time.\n'What does the woman imply?'",
     options:["The deadline is Friday.","She agrees with the deadline.","She may not finish on time.","She finished early."],correct:2,
     tip:"Track speakers carefully. Underline 'man' or 'woman' in the question BEFORE you listen. Know who you're tracking."},
+
+  // ── Batch 3 — id:41 → id:60 (added 2026-05-04, rebalance to ~4 sessions) ──
+
+  {id:41,name:"Affect vs Effect",part:"Reading",trap:"'Affect' is a verb (to influence). 'Effect' is a noun (the result). French speakers swap them constantly.",
+    scenario:"'The new policy will _____ all departments.'",
+    options:["effect","affect","effects","affects"],correct:1,
+    tip:"AFFECT (verb) = to influence: 'X affects Y.' EFFECT (noun) = the result: 'the effect of X.' If you can put 'the' or 'an' before it, it's EFFECT."},
+
+  {id:42,name:"Lay vs Lie (transitive vs intransitive)",part:"Reading",trap:"'Lay' needs an object (lay something down). 'Lie' doesn't (lie down to rest). Native speakers misuse them too.",
+    scenario:"'The instructions clearly state that you should _____ the package on a flat surface.'",
+    options:["lie","lay","laying","lied"],correct:1,
+    tip:"LAY = put down (needs object): 'lay the box on the table.' LIE = recline (no object): 'lie down on the bed.' If there's an object after the verb → LAY."},
+
+  {id:43,name:"Lend vs Borrow",part:"Reading",trap:"Both translate to 'prêter/emprunter' in French. LEND = give temporarily. BORROW = take temporarily.",
+    scenario:"'Could I _____ your stapler for a moment?'",
+    options:["lend","borrow","give","take"],correct:1,
+    tip:"LEND TO someone (you give): 'I lend you my pen.' BORROW FROM someone (you take): 'May I borrow your pen?' Whoever asks 'Could I...?' is BORROWING."},
+
+  {id:44,name:"Past simple vs Present perfect",part:"Reading",trap:"'Last week, I have visited Tokyo' is wrong. Specific past time = past simple. Unspecified or 'since/for' = present perfect.",
+    scenario:"'I _____ the Tokyo office last March.'",
+    options:["have visited","visit","visited","had visited"],correct:2,
+    tip:"Specific past time marker (last X, in 2019, yesterday) → PAST SIMPLE. No time marker, or 'since/for/already/yet/ever' → PRESENT PERFECT."},
+
+  {id:45,name:"Gerund after every preposition",part:"Reading",trap:"After ANY preposition (in, on, of, for, by, after, before, without...) → always -ING. Students put 'to + verb' instead.",
+    scenario:"'Thank you for _____ me about the meeting change.'",
+    options:["informing","to inform","inform","informed"],correct:0,
+    tip:"ANY preposition + verb = -ING. 'For informing', 'after leaving', 'without saying'. The 'to' in 'look forward to', 'used to', 'object to' = preposition, so still -ING."},
+
+  {id:46,name:"Used to vs Be used to",part:"Reading",trap:"'I used to work late' = past habit (no longer true). 'I am used to working late' = accustomed (current state). Same words, opposite meaning.",
+    scenario:"'After six months in Tokyo, she is used to _____ in Japanese every day.'",
+    options:["work","to work","working","worked"],correct:2,
+    tip:"USED TO + base verb = past habit ('I used to smoke'). BE/GET USED TO + -ING = accustomed ('I'm used to working late'). The 'to' in BE used to is a preposition → -ING follows."},
+
+  {id:47,name:"Embedded questions word order",part:"Reading",trap:"'Could you tell me where IS the meeting?' is wrong. Embedded questions use STATEMENT word order, not question word order.",
+    scenario:"Which sentence is correct?",
+    options:["Could you tell me when does the meeting start?","Could you tell me when the meeting starts?","Could you tell me when starts the meeting?","Could you tell me does the meeting start?"],correct:1,
+    tip:"Direct: 'When does the meeting start?' Embedded: 'Could you tell me WHEN THE MEETING STARTS.' (statement order, no auxiliary do/does/did)."},
+
+  {id:48,name:"Reported speech tense backshift",part:"Reading",trap:"When the reporting verb is past tense, the reported clause shifts back one tense. Students forget to backshift.",
+    scenario:"Direct: 'I am attending the conference.' Reported: 'She said that she _____ the conference.'",
+    options:["is attending","was attending","will attend","has attended"],correct:1,
+    tip:"Past reporting verb (said, told) → backshift one tense: present → past, past → past perfect, will → would, can → could. 'Am attending' becomes 'was attending'."},
+
+  {id:49,name:"Either/Neither + verb agreement",part:"Reading",trap:"'Either of the candidates ARE qualified' is wrong. EITHER / NEITHER take a SINGULAR verb, even when followed by a plural noun.",
+    scenario:"'Neither of the proposals _____ acceptable to the committee.'",
+    options:["are","is","were","have been"],correct:1,
+    tip:"EITHER / NEITHER (singular pronouns) + plural noun + SINGULAR verb. 'Either is fine.' 'Neither is acceptable.' Don't be fooled by the plural noun in between."},
+
+  {id:50,name:"Uncountable nouns: no plural, no 'a'",part:"Reading",trap:"'I have an information' or 'two advices' is wrong. INFORMATION, ADVICE, NEWS, EQUIPMENT, FURNITURE are uncountable in English.",
+    scenario:"'The consultant gave us _____ on improving productivity.'",
+    options:["an advice","advices","advice","many advices"],correct:2,
+    tip:"Uncountable: information, advice, news, equipment, furniture, software, research, knowledge, progress. NO 'a/an', NO plural. Count via 'a piece of advice', 'two pieces of equipment'."},
+
+  {id:51,name:"A few (positive) vs Few (negative)",part:"Reading",trap:"'A few' = some, positive. 'Few' = almost none, negative. One tiny word, opposite meaning.",
+    scenario:"'_____ employees attended the optional training.' (= almost nobody came)",
+    options:["A few","Few","Little","A little"],correct:1,
+    tip:"A FEW = some (positive: 'a few people came'). FEW = almost none (negative: 'few people came'). Same logic with A LITTLE / LITTLE for uncountable."},
+
+  {id:52,name:"Hardly/Scarcely already negative",part:"Reading",trap:"'Hardly' looks positive but means 'almost not'. Don't add another 'not' — that's a double negative.",
+    scenario:"'The CEO had _____ finished his speech when the alarm went off.'",
+    options:["hardly not","hardly","not hardly","no hardly"],correct:1,
+    tip:"HARDLY / SCARCELY / BARELY are already negative. Never combine with 'not'. 'I hardly knew him' = 'I almost didn't know him'."},
+
+  {id:53,name:"So vs Such",part:"Reading",trap:"SO + adjective/adverb. SUCH + (a/an) + adjective + noun. 'So a good idea' is wrong; 'such a good idea' is right.",
+    scenario:"'The proposal was _____ a good idea that the board approved it immediately.'",
+    options:["so","such","very","too"],correct:1,
+    tip:"SO + adj/adv: 'so good', 'so quickly'. SUCH + (a) + adj + noun: 'such a good idea', 'such talented staff'. Look at what comes AFTER."},
+
+  {id:54,name:"Enough placement",part:"Reading",trap:"ENOUGH goes AFTER adjectives/adverbs but BEFORE nouns. 'Enough fast' is wrong; 'fast enough' is right.",
+    scenario:"Which sentence is correct?",
+    options:["She is enough qualified for the role.","She is qualified enough for the role.","She has experience enough for the role.","Enough she is qualified for the role."],correct:1,
+    tip:"After adj/adv: 'qualified ENOUGH', 'fast ENOUGH'. Before noun: 'ENOUGH time', 'ENOUGH money'. Adjective FIRST, noun SECOND."},
+
+  {id:55,name:"Conditional Type 2 vs Type 3",part:"Reading",trap:"Type 2 (present unreal): IF + past, would + base. Type 3 (past unreal): IF + past perfect, would have + past participle. Mixing them changes the meaning entirely.",
+    scenario:"'If we _____ the contract last week, we would have saved 10%.'",
+    options:["sign","signed","had signed","would sign"],correct:2,
+    tip:"Type 3 (past regret): IF + HAD + past participle, WOULD HAVE + past participle. 'If we had signed... we would have saved.' The trigger 'last week' is past → Type 3."},
+
+  {id:56,name:"P1: only describe what's visible",part:"Listening",trap:"Part 1 only describes what you SEE. Avoid answers that DEDUCE relationships, intentions, or future actions — they go beyond the photo.",
+    scenario:"A photo shows two men shaking hands at an office. Which answer is most likely correct?",
+    options:["They are celebrating a promotion.","Two men are greeting each other.","The men just signed a new contract.","They will start a project together."],correct:1,
+    tip:"Part 1 = LITERAL description of what's visible. 'Greeting each other' = exactly what you see. 'Celebrating', 'just signed', 'will start' all DEDUCE — TOEIC eliminates these."},
+
+  {id:57,name:"P2: repeated auxiliary + wrong tense marker",part:"Listening",trap:"Question: 'Has the report been sent?' Trap: 'Yes, it has been sent yesterday.' Sounds right, but 'has been + yesterday' is grammatically impossible.",
+    scenario:"Question: 'Has the report been sent?' Which is the trap?",
+    options:["Yes, this morning.","Yes, it has been sent yesterday.","I'll send it now.","Sarah handled it."],correct:1,
+    tip:"Repeated auxiliary + a CONFLICTING time marker = classic trap. 'Has been + yesterday' breaks tense agreement. The correct answer often gives info without re-using the auxiliary."},
+
+  {id:58,name:"P3: keyword in 3 of 4 options = trap",part:"Listening",trap:"If 3 out of 4 options recycle a word from the audio, the ONE that doesn't is often the right answer (paraphrase).",
+    scenario:"The audio mentions 'budget meeting'. Question is about timing. Which option is most suspicious?",
+    options:["The budget meeting is at 3 PM.","Friday afternoon.","The budget review starts soon.","The budget will be discussed."],correct:1,
+    tip:"When 3 options repeat a keyword from the audio and 1 doesn't, the lonely one is often correct. TOEIC paraphrases — the answer reformulates instead of repeating."},
+
+  {id:59,name:"P4: tag every number with context",part:"Listening",trap:"Talks bury several numbers in one passage (price + time + percentage + room). Questions ask for ONE specific number — confusion if you don't track them.",
+    scenario:"A talk mentions: 'open until 9 PM, room 312, 25% off, 50 attendees.' Best note-taking strategy?",
+    options:["Memorize all numbers in order","Write each number with a one-word tag (9p close, r312, 25% off, 50ppl)","Only listen for the first number","Skip number questions"],correct:1,
+    tip:"Tag each number with its CONTEXT in 1-2 letters as you hear: 9p (close), r312 (room), 25% (discount), 50p (people). When the question hits, you find the right one instantly."},
+
+  {id:60,name:"Must have vs Should have (modal perfect)",part:"Reading",trap:"'He must have left' = certain past deduction. 'He should have left' = he didn't but it was advisable. Same structure, opposite meaning.",
+    scenario:"'The report isn't here. Sarah _____ taken it home with her.'",
+    options:["should have","must have","would have","could not have"],correct:1,
+    tip:"MUST HAVE + past participle = certain past deduction ('she definitely did'). SHOULD HAVE + past participle = past advice/regret ('she didn't but should have'). Context decides."}
 ];
 
 // ─── FALSE FRIENDS DATA (32 items) ───
