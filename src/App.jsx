@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-04-home-declutter-stats-trio";
+var BUILD_ID="2026-05-04-home-glow-clickable-level";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -3759,13 +3759,15 @@ return(
 })}
 
 
-<div className="crd glo" style={{marginBottom:16}}>
+<div className="crd glo" onClick={function(){p.tabGo("league");}} style={{marginBottom:16,cursor:"pointer"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
 <div style={{display:"flex",alignItems:"center",gap:10}}>
 <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),var(--cx-dark))",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:16}} className="out">{lv.level}</div>
 <div><div className="out" style={{fontSize:13,fontWeight:700}}>Level {lv.level}</div><div style={{fontSize:11,color:"var(--t2)"}}>{lv.cur} / {lv.next} XP{u.weeklyXp>0?" · "+u.weeklyXp+" this week":""}</div></div></div>
+<div style={{display:"flex",alignItems:"center",gap:8}}>
 <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"var(--bg3)",borderRadius:99}}>
-<span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div></div>
+<span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div>
+<span style={{fontSize:18,color:"var(--t3)",lineHeight:1}}>{"›"}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
 {/* ═══ Smart Daily Quest — sequential reveal: Mission → Bonus Challenge → Rest ═══ */}
@@ -3786,7 +3788,8 @@ return(
     return(<div className="crd" onClick={function(){p.nav(mission.actId);}}
       style={{marginBottom:16,cursor:"pointer",padding:"14px 16px",
         background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.08))",
-        border:"1px solid rgba(255,215,0,.2)"}}>
+        border:"1px solid rgba(255,215,0,.2)",
+        boxShadow:"0 0 20px rgba(255,215,0,.14)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
           <span style={{fontSize:22,width:26,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{GAME_ICON_PATHS[m.icon]?<GIcon name={m.icon} size={22} color="var(--cyan)"/>:m.icon}</span>
@@ -3810,7 +3813,8 @@ return(
     return(<div className="crd" onClick={function(){p.nav("daily");}}
       style={{marginBottom:16,cursor:"pointer",padding:"14px 16px",
         background:"linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))",
-        border:"1px solid rgba(var(--cx),.25)"}}>
+        border:"1px solid rgba(var(--cx),.25)",
+        boxShadow:"0 0 20px rgba(var(--cx),.18)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
           <span style={{fontSize:22}}>{"\u26A1"}</span>
@@ -3850,7 +3854,8 @@ return(
   return(<div className="crd" onClick={function(){if(!dd)p.nav("daily");}}
     style={{marginBottom:16,cursor:dd?"default":"pointer",padding:"14px 16px",
       background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))",
-      border:dd?"1px solid var(--bdr)":"1px solid rgba(var(--cx),.2)"}}>
+      border:dd?"1px solid var(--bdr)":"1px solid rgba(var(--cx),.2)",
+      boxShadow:dd?"none":"0 0 20px rgba(var(--cx),.18)"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
         <span style={{fontSize:22}}>{dd?"\u2705":"\u26A1"}</span>
@@ -15104,7 +15109,7 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
     {/* TutorialTour supprimé 2026-05-03 — absorbé dans le Verdict d'Aldric (cf. narrator.js). */}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
