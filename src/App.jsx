@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-mentor-map-iter1";
+var BUILD_ID="2026-05-05-mentor-map-desktop-fix";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -1166,7 +1166,11 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .app.onboard-shell{max-width:480px;margin:0 auto;padding:0 16px}
 .tab-bar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;transform:none!important;width:200px!important;max-width:200px!important;height:100vh!important;flex-direction:column!important;justify-content:flex-start!important;padding:24px 12px!important;background:var(--bg2)!important;border-right:1px solid var(--bdr)!important;gap:4px!important}
 .light .tab-bar{background:var(--bg2)!important}
-.tab-bar button{flex-direction:row!important;gap:10px!important;padding:12px 14px!important;border-radius:10px!important;justify-content:flex-start!important;width:100%!important}
+.tab-bar button{flex-direction:row!important;gap:10px!important;padding:12px 14px!important;border-radius:10px!important;justify-content:flex-start!important;width:100%!important;flex:0 0 auto!important}
+/* Mentor map wrapper — capped on desktop so it doesn't blow up to full
+   column width (which would force a 2.5x viewport-tall image). On mobile
+   the wrapper stays width:100% via the inline default. */
+.mentor-map-wrap{max-width:420px!important;margin:0 auto 14px!important}
 .sidebar-brand{display:flex!important;align-items:center;gap:10px;padding:8px 14px 20px;margin-bottom:8px;border-bottom:1px solid var(--bdr)}
 .tab-bar button span:first-child{font-size:18px!important}
 .tab-bar button span:nth-child(2){font-size:13px!important;font-weight:600!important}
@@ -3939,7 +3943,7 @@ function MentorMap(p){
      tone:"active"}
   ];
 
-  return(<div style={{position:"relative",width:"100%",aspectRatio:"2/3",marginBottom:14,borderRadius:14,overflow:"hidden",background:"#0a0805",boxShadow:"0 0 30px rgba(0,0,0,.35)"}}>
+  return(<div className="mentor-map-wrap" style={{position:"relative",width:"100%",aspectRatio:"2/3",marginBottom:14,borderRadius:14,overflow:"hidden",background:"#0a0805",boxShadow:"0 0 30px rgba(0,0,0,.35)"}}>
     <img src="/images/mentor/map.jpg" alt="The Mentor's Map"
       style={{width:"100%",height:"100%",objectFit:"cover",display:"block",filter:"contrast(1.05)"}}
       onError={function(e){e.target.style.display="none";}}/>
