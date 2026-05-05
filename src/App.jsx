@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-mentor-map-desktop-fix";
+var BUILD_ID="2026-05-05-mentor-map-responsive";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -1167,10 +1167,12 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .tab-bar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;transform:none!important;width:200px!important;max-width:200px!important;height:100vh!important;flex-direction:column!important;justify-content:flex-start!important;padding:24px 12px!important;background:var(--bg2)!important;border-right:1px solid var(--bdr)!important;gap:4px!important}
 .light .tab-bar{background:var(--bg2)!important}
 .tab-bar button{flex-direction:row!important;gap:10px!important;padding:12px 14px!important;border-radius:10px!important;justify-content:flex-start!important;width:100%!important;flex:0 0 auto!important}
-/* Mentor map wrapper — capped on desktop so it doesn't blow up to full
-   column width (which would force a 2.5x viewport-tall image). On mobile
-   the wrapper stays width:100% via the inline default. */
-.mentor-map-wrap{max-width:420px!important;margin:0 auto 14px!important}
+/* Mentor map wrapper — capped on mobile (portrait 2:3 image) by the inline
+   width:100% which fills phone width. On desktop, the landscape 3:2 image
+   takes the full column width but is also capped via max-width to prevent
+   stretching too wide on ultra-wide monitors. */
+.mentor-map-wrap{margin:0 auto 14px!important}
+@media(min-width:768px){.mentor-map-wrap{max-width:1100px!important}}
 .sidebar-brand{display:flex!important;align-items:center;gap:10px;padding:8px 14px 20px;margin-bottom:8px;border-bottom:1px solid var(--bdr)}
 .tab-bar button span:first-child{font-size:18px!important}
 .tab-bar button span:nth-child(2){font-size:13px!important;font-weight:600!important}
@@ -3924,7 +3926,43 @@ function MentorMap(p){
   var missionDone=missionReady&&(mission.status==="completed"||mission.done);
   var daysLeft=hasGoal?Math.round((new Date(u.targetDate).getTime()-Date.now())/86400000):null;
 
-  var hotspots=[
+  // Desktop / mobile swap : different illustration, different hotspot coords.
+  // Listens to viewport width (matchMedia 768px breakpoint, same as the
+  // existing .tab-bar sidebar trigger). Re-renders on resize.
+  var[isDesktop,setIsDesktop]=useState(typeof window!=="undefined"&&window.matchMedia&&window.matchMedia("(min-width:768px)").matches);
+  useEffect(function(){
+    if(typeof window==="undefined"||!window.matchMedia)return;
+    var mq=window.matchMedia("(min-width:768px)");
+    function onChange(e){setIsDesktop(e.matches);}
+    if(mq.addEventListener)mq.addEventListener("change",onChange);
+    else mq.addListener(onChange); // legacy Safari
+    return function(){
+      if(mq.removeEventListener)mq.removeEventListener("change",onChange);
+      else mq.removeListener(onChange);
+    };
+  },[]);
+
+  // Hotspots : coords differ per layout. Portrait map (mobile) is 2:3, peak top
+  // and camp bottom-right. Landscape map (desktop) is 3:2, peak top-left,
+  // standing stone center-right, camp bottom-left, Aldric far right.
+  var hotspots=isDesktop?[
+    {id:"goal", x:23, y:22, side:"left",
+     label:hasGoal?"The Distant Peak":"Set destination",
+     value:hasGoal?(u.targetToeic+" · "+(daysLeft>=0?daysLeft+"d":"past")):"?",
+     tone:hasGoal?"active":"muted"},
+    {id:"mission", x:45, y:45, side:"right",
+     label:"Today's Path",
+     value:!missionReady?"Train more":missionDone?"Complete ✓":"+15 XP",
+     tone:!missionReady?"muted":missionDone?"done":"active"},
+    {id:"focus", x:58, y:48, side:"left",
+     label:"The Crossroads",
+     value:focus?focus.label.replace(/ — .*/,"")+" · +25%":calibrated?"All steady":"Train more",
+     tone:focus?"active":"muted"},
+    {id:"camp", x:22, y:75, side:"left",
+     label:"Your Camp",
+     value:current+" TOEIC",
+     tone:"active"}
+  ]:[
     {id:"goal", x:50, y:14, side:"left",
      label:hasGoal?"The Distant Peak":"Set destination",
      value:hasGoal?(u.targetToeic+" · "+(daysLeft>=0?daysLeft+"d":"past")):"?",
@@ -3943,23 +3981,29 @@ function MentorMap(p){
      tone:"active"}
   ];
 
-  return(<div className="mentor-map-wrap" style={{position:"relative",width:"100%",aspectRatio:"2/3",marginBottom:14,borderRadius:14,overflow:"hidden",background:"#0a0805",boxShadow:"0 0 30px rgba(0,0,0,.35)"}}>
-    <img src="/images/mentor/map.jpg" alt="The Mentor's Map"
+  // Aldric position differs per layout too
+  var aldricCoords=isDesktop?{x:85,y:72,w:48,h:120,side:"right"}:{x:38,y:85,w:64,h:120,side:"left"};
+  var imgSrc=isDesktop?"/images/mentor/map_desktop.jpg":"/images/mentor/map.jpg";
+  var aspectRatio=isDesktop?"1338/860":"2/3";
+
+  var aldricBadgePos=aldricCoords.side==="left"?{left:"calc(100% + 8px)"}:{right:"calc(100% + 8px)"};
+  return(<div className="mentor-map-wrap" style={{position:"relative",width:"100%",aspectRatio:aspectRatio,marginBottom:14,borderRadius:14,overflow:"hidden",background:"#0a0805",boxShadow:"0 0 30px rgba(0,0,0,.35)"}}>
+    <img src={imgSrc} alt="The Mentor's Map"
       style={{width:"100%",height:"100%",objectFit:"cover",display:"block",filter:"contrast(1.05)"}}
       onError={function(e){e.target.style.display="none";}}/>
     <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center, transparent 55%, rgba(10,8,5,.45) 100%)",pointerEvents:"none"}}/>
-    {/* Aldric figure — clickable to replay his Side Chronicle. Sized to match the
-        on-image silhouette ; the badge floats to its right with a discrete label. */}
+    {/* Aldric figure — clickable to replay his Side Chronicle. Position + badge
+        side adapt to the active map layout. */}
     {p.onAldricTap&&hasHeardMoment(u,"mentor_intro")&&<button onClick={p.onAldricTap}
-      style={{position:"absolute",left:"38%",top:"85%",transform:"translate(-50%,-50%)",
-        width:64,height:120,background:"transparent",border:"none",cursor:"pointer",padding:0,
+      style={{position:"absolute",left:aldricCoords.x+"%",top:aldricCoords.y+"%",transform:"translate(-50%,-50%)",
+        width:aldricCoords.w,height:aldricCoords.h,background:"transparent",border:"none",cursor:"pointer",padding:0,
         borderRadius:8}} aria-label="Replay Aldric's introduction">
-      <span style={{position:"absolute",top:"50%",left:"calc(100% + 8px)",transform:"translateY(-50%)",
+      <span style={Object.assign({position:"absolute",top:"50%",transform:"translateY(-50%)",
         background:"linear-gradient(135deg,rgba(245,235,205,.92),rgba(228,212,170,.88))",
         color:"#3d2814",border:"1px solid rgba(90,58,20,.35)",borderRadius:6,
         padding:"4px 8px",whiteSpace:"nowrap",
         fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:.5,fontWeight:700,textTransform:"uppercase",
-        boxShadow:"0 2px 8px rgba(0,0,0,.4)",pointerEvents:"none"}}>
+        boxShadow:"0 2px 8px rgba(0,0,0,.4)",pointerEvents:"none"},aldricBadgePos)}>
         {"Aldric speaks"}
       </span>
     </button>}
