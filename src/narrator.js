@@ -183,21 +183,20 @@ export var NARRATOR_MOMENTS = {
     chapterTitle: "The Mentor's Compass",
     title: "The Compass",
     subtitle: "Aldric speaks",
-    // Personalization Phase 1 (2026-05-05) — text-only V1, no audio yet.
-    // Audio + illustration to be regenerated in a follow-up session via
-    // ElevenLabs (Old Wizard) + Leonardo. Until then, NarratorOverlay
-    // detects textOnly and runs the muted-style synthetic timer.
-    textOnly: true,
-    audio: null,
-    image: null,
-    durationSec: 30,
+    // Personalization Phase 1 (2026-05-05 PM) — audio + image livrés.
+    // Voix Old Wizard (EN) ; sous-titres FR alignés sur les pauses réelles
+    // mesurées via silencedetect (-30dB, d=0.35) sur le MP3 régénéré.
+    audio: "/audio/narrator/09_mentor_intro.mp3",
+    image: "/images/narrator/09_mentor_intro.jpg",
+    durationSec: 21.47,
     subtitles: [
-      { from: 0.0,  to: 4.0,  text: "Écuyer." },
-      { from: 4.0,  to: 9.0,  text: "Nul ne triomphe sans un guide." },
-      { from: 9.0,  to: 12.0, text: "Je serai le tien." },
-      { from: 12.0, to: 18.0, text: "Là où d'autres se battent à l'aveugle, tu sauras où porter ta lame." },
-      { from: 18.0, to: 24.0, text: "Cet endroit révèle ton point faible — et te désigne le chemin." },
-      { from: 24.0, to: 30.0, text: "Va. Et que ta course soit moins longue." }
+      { from: 0.00,  to: 1.79,  text: "Écuyer." },
+      { from: 1.79,  to: 4.93,  text: "Nul ne triomphe sans un guide." },
+      { from: 4.93,  to: 6.99,  text: "Je serai le tien." },
+      { from: 6.99,  to: 12.24, text: "Là où d'autres frappent à l'aveugle, tu sauras où porter ta lame." },
+      { from: 12.24, to: 17.73, text: "Cet endroit révèle ton point faible — et te désigne le chemin." },
+      { from: 17.73, to: 18.96, text: "Va." },
+      { from: 18.96, to: 21.47, text: "Que ta route soit plus courte que ne fut la mienne." }
     ]
   }
 };
