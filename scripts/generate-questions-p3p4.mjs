@@ -1,21 +1,24 @@
 // ═══════════════════════════════════════════════════════════
-// generate-questions-p3p4.mjs
-// Génère les fichiers {id}_questions.mp3 pour TOUS les items P3 + P4.
-// Format TOEIC-fidèle : "Question 1: [q]. [pause 2s]. Question 2: [q]. [pause 2s]. Question 3: [q]."
+// generate-questions-p3p4.mjs (V2 — per-question files, 2026-05-05)
+// Génère 3 fichiers par item P3 + P4 : {id}_q1.mp3, {id}_q2.mp3, {id}_q3.mp3.
+// Format par fichier : "Question N. [text]." (préfixe court TOEIC-faithful).
 // Voix narrateur unique : Sarah US-F (la plus neutre, déjà familière).
 //
-// Pauses entre questions via SSML <break time="2.0s" /> supporté par
-// ElevenLabs Multilingual v2.
+// Permet la lecture per-question en Train mode (1 clic = 1 question lue) et
+// le chaînage avec pauses en Endless / Boss mode (à câbler séparément).
 //
 // Modes :
-//   --mockup : génère uniquement p3_01_questions.mp3 et p4_01_questions.mp3 (~300 credits)
-//   (sans flag) : génère TOUS les items manquants P3 (70) + P4 (60), resume-safe
+//   --mockup : génère uniquement p3_01_q{1,2,3}.mp3 et p4_01_q{1,2,3}.mp3 (~6 fichiers, ~600 credits)
+//   (sans flag) : génère TOUS les fichiers manquants P3 (70×3=210) + P4 (60×3=180), resume-safe
 //
-// Coût bulk estimé : ~19 500 credits (130 fichiers × ~150 chars).
+// Coût bulk estimé : ~25 000 credits (390 fichiers × ~70 chars).
 //
 // Output :
-//   public/audio/p3/{id}_questions.mp3
-//   public/audio/p4/{id}_questions.mp3
+//   public/audio/p3/{id}_q{1,2,3}.mp3
+//   public/audio/p4/{id}_q{1,2,3}.mp3
+//
+// Les anciens fichiers stitchés {id}_questions.mp3 deviennent obsolètes
+// (Train mode ne les utilise plus). À supprimer manuellement après validation.
 //
 // Usage (PowerShell) :
 //   $env:ELEVENLABS_API_KEY="sk_xxx"
@@ -47,9 +50,9 @@ const DELAY_MS = 600;
 const P3_DIR = path.join(__dirname, "..", "public", "audio", "p3");
 const P4_DIR = path.join(__dirname, "..", "public", "audio", "p4");
 
-// Format SSML : "Question 1: [q1]. <break time='2.0s' /> Question 2: [q2]. <break time='2.0s' /> Question 3: [q3]."
-function buildQuestionsText(qs) {
-  return qs.map((q, idx) => `Question ${idx + 1}: ${q.q}`).join(' <break time="2.0s" /> ');
+// Format per-question : "Question N. [text]."
+function buildQuestionText(q, idx) {
+  return `Question ${idx + 1}. ${q.q}`;
 }
 
 async function generateAudio(text, outputPath) {
@@ -102,24 +105,26 @@ async function processItems(items, outDir, label) {
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    const text = buildQuestionsText(item.qs);
-    const oFile = `${item.id}_questions.mp3`;
-    const oPath = path.join(outDir, oFile);
-
     console.log(`[${label} ${i + 1}/${items.length}] ${item.id}`);
 
-    try {
-      const result = await tryGenerate(text, oPath);
-      if (result === "skip") {
-        skipped++;
-        console.log(`   ⏭️  ${oFile} (exists)`);
-      } else {
-        done++;
-        console.log(`   ✅ ${oFile} — ${(result / 1024).toFixed(1)}KB`);
+    for (let qIdx = 0; qIdx < item.qs.length; qIdx++) {
+      const text = buildQuestionText(item.qs[qIdx], qIdx);
+      const oFile = `${item.id}_q${qIdx + 1}.mp3`;
+      const oPath = path.join(outDir, oFile);
+
+      try {
+        const result = await tryGenerate(text, oPath);
+        if (result === "skip") {
+          skipped++;
+          console.log(`   ⏭️  ${oFile} (exists)`);
+        } else {
+          done++;
+          console.log(`   ✅ ${oFile} — ${(result / 1024).toFixed(1)}KB`);
+        }
+      } catch (e) {
+        errors++;
+        console.error(`   ❌ ${oFile} — ${e.message}`);
       }
-    } catch (e) {
-      errors++;
-      console.error(`   ❌ ${oFile} — ${e.message}`);
     }
   }
 
@@ -138,8 +143,10 @@ async function main() {
     ? LISTENING_P4.filter(it => it.id === "p4_01")
     : LISTENING_P4;
 
-  console.log(`P3 targets: ${p3Targets.length} | P4 targets: ${p4Targets.length}`);
-  console.log(`Total files: ${p3Targets.length + p4Targets.length}\n`);
+  const p3Files = p3Targets.reduce((s, it) => s + it.qs.length, 0);
+  const p4Files = p4Targets.reduce((s, it) => s + it.qs.length, 0);
+  console.log(`P3 targets: ${p3Targets.length} items (${p3Files} files) | P4 targets: ${p4Targets.length} items (${p4Files} files)`);
+  console.log(`Total files: ${p3Files + p4Files}\n`);
 
   const p3Stats = await processItems(p3Targets, P3_DIR, "P3");
   console.log("");

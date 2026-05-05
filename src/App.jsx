@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-04-p3p4-toeic-faithful-spoken-questions";
+var BUILD_ID="2026-05-05-p3p4-per-question-spoken-train";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -6686,11 +6686,14 @@ function EndlessArena(p){
   // ── Audio — dynamic paths based on item origin ──
   async function playP1(){if(aState!=="ready")return;setAState("playing");var it=LP1[qi];for(var i=0;i<it.opts.length;i++){setCurOpt(i);if(isBoss(it.id)){await playAudioFile("/audio/boss/p1_"+String(bossIdx(it.id)).padStart(2,"0")+"_"+i+".mp3");}else{await playAudioFile("/audio/p1/"+it.id+"_"+i+".mp3");}await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
   async function playP2(){if(aState!=="ready")return;setAState("playing");var it=LP2[qi];if(isBoss(it.id)){var bid=String(bossIdx(it.id)).padStart(2,"0");await playAudioFile("/audio/boss/p2_"+bid+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+bid+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,300);});};}else{await playAudioFile("/audio/p2/"+it.id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i2=0;i2<3;i2++){setCurOpt(i2);await playAudioFile("/audio/p2/"+it.id+"_"+i2+".mp3");await new Promise(function(r){setTimeout(r,300);});}}setCurOpt(-1);setAState("done");}
-  // P3/P4 Train mode (2026-05-04) : TOEIC-faithful playback = talk + 1s pause + spoken
-  // questions ({id}_questions.mp3, narrator Sarah US-F). Boss mode reste talk-only pour
-  // l'instant — TODO : régénérer les questions speakees Boss en session dédiée.
-  async function playP3(){if(aState!=="ready")return;setAState("playing");var it=LP3[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p3_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p3/"+it.id+".mp3");await new Promise(function(r){setTimeout(r,1000);});await playAudioFile("/audio/p3/"+it.id+"_questions.mp3");}setAState("done");}
-  async function playP4(){if(aState!=="ready")return;setAState("playing");var it=LP4[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p4_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p4/"+it.id+".mp3");await new Promise(function(r){setTimeout(r,1000);});await playAudioFile("/audio/p4/"+it.id+"_questions.mp3");}setAState("done");}
+  // P3/P4 Endless mode (2026-05-05 V2) : TOEIC-faithful per-question playback.
+  // Talk plays once → 800ms pause → q1 audio → done state (q1 options revealed).
+  // Subsequent qN audio fired by nxt() when sqi increments. Boss-origin items
+  // (isBoss) keep talk-only playback — no per-question files in /audio/boss/* yet.
+  async function playQ3(idx){var it=LP3[qi];if(isBoss(it.id))return;try{await playAudioFile("/audio/p3/"+it.id+"_q"+(idx+1)+".mp3");}catch(e){console.warn("[Endless P3] q audio failed:",e&&e.message);}}
+  async function playQ4(idx){var it=LP4[qi];if(isBoss(it.id))return;try{await playAudioFile("/audio/p4/"+it.id+"_q"+(idx+1)+".mp3");}catch(e){console.warn("[Endless P4] q audio failed:",e&&e.message);}}
+  async function playP3(){if(aState!=="ready")return;setAState("playing");var it=LP3[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p3_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p3/"+it.id+".mp3");await new Promise(function(r){setTimeout(r,800);});await playQ3(0);}setAState("done");}
+  async function playP4(){if(aState!=="ready")return;setAState("playing");var it=LP4[qi];if(isBoss(it.id)){await playAudioFile("/audio/boss/p4_"+String(bossIdx(it.id)).padStart(2,"0")+".mp3");}else{await playAudioFile("/audio/p4/"+it.id+".mp3");await new Promise(function(r){setTimeout(r,800);});await playQ4(0);}setAState("done");}
 
   // ── Answer & Navigate ──
   function pick(val){
@@ -6707,8 +6710,8 @@ function EndlessArena(p){
   function nxt(){
     if(sec==="p1"){if(qi<LP1.length-1){setQi(qi+1);setAState("ready");setCurOpt(-1);}else{setSec("p2");setQi(0);setSqi(0);setAState("ready");setCurOpt(-1);}}
     else if(sec==="p2"){if(qi<LP2.length-1){setQi(qi+1);setAState("ready");setCurOpt(-1);}else{setSec("p3");setQi(0);setSqi(0);setAState("ready");}}
-    else if(sec==="p3"){if(sqi<LP3[qi].qs.length-1)setSqi(sqi+1);else if(qi<LP3.length-1){setQi(qi+1);setSqi(0);setAState("ready");}else{setSec("p4");setQi(0);setSqi(0);setAState("ready");}}
-    else if(sec==="p4"){if(sqi<LP4[qi].qs.length-1)setSqi(sqi+1);else if(qi<LP4.length-1){setQi(qi+1);setSqi(0);setAState("ready");}else{setSec("p5");setQi(0);setSqi(0);}}
+    else if(sec==="p3"){if(sqi<LP3[qi].qs.length-1){var ns3=sqi+1;setSqi(ns3);playQ3(ns3);}else if(qi<LP3.length-1){setQi(qi+1);setSqi(0);setAState("ready");}else{setSec("p4");setQi(0);setSqi(0);setAState("ready");}}
+    else if(sec==="p4"){if(sqi<LP4[qi].qs.length-1){var ns4=sqi+1;setSqi(ns4);playQ4(ns4);}else if(qi<LP4.length-1){setQi(qi+1);setSqi(0);setAState("ready");}else{setSec("p5");setQi(0);setSqi(0);}}
     else if(sec==="p5"){if(qi<RP5.length-1)setQi(qi+1);else{setSec("p6");setQi(0);setSqi(0);}}
     else if(sec==="p6"){var bN=ans.p6[qi].length;if(sqi<bN-1)setSqi(sqi+1);else if(qi<RP6.length-1){setQi(qi+1);setSqi(0);}else{setSec("p7");setQi(0);setSqi(0);}}
     else if(sec==="p7"){if(sqi<RP7[qi].questions.length-1)setSqi(sqi+1);else if(qi<RP7.length-1){setQi(qi+1);setSqi(0);}else doSubmit();}
@@ -11466,13 +11469,16 @@ function ListenP3(p){
     }
     setCurLine(-1);setPlaying(false);setPlayed(true);
   }
+  // Play a single spoken question on demand (TOEIC-faithful per-question playback).
+  // Files: {id}_q1.mp3 / _q2.mp3 / _q3.mp3 generated by scripts/generate-questions-p3p4.mjs.
+  async function playQuestion(idx){try{await playAudioFile("/audio/p3/"+items[ci].id+"_q"+(idx+1)+".mp3");}catch(e){console.warn("[P3] question audio failed:",e&&e.message);}}
 
   function doAns(i){
     sPk(i);if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
   }
   function nxt(){
     sPk(-1);
-    if(qi<items[ci].qs.length-1){sQi(qi+1);sP("q");}
+    if(qi<items[ci].qs.length-1){var ni=qi+1;sQi(ni);sP("q");playQuestion(ni);}
     else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);setCurLine(-1);sP("listen");}
     else{sP("done");p.done(sc,totalQ+1,30+sc*5);}
   }
@@ -11520,7 +11526,7 @@ function ListenP3(p){
     </div>
     :<div style={{textAlign:"center",animation:"fadeIn .3s"}}>
       <p className="out" style={{color:"var(--green)",fontSize:14,fontWeight:600,marginBottom:12}}>Conversation complete</p>
-      <button className="btn1" onClick={function(){sP("q");}}>Answer Questions</button>
+      <button className="btn1" onClick={function(){sP("q");playQuestion(0);}}>Answer Questions</button>
       <button onClick={function(){setPlayed(false);setCurLine(-1);}} className="btn2" style={{marginTop:8,width:"100%",fontSize:12}}>🔄 Replay conversation</button>
     </div>}
   </div>);
@@ -11568,13 +11574,16 @@ function ListenP4(p){
     await playAudioFile("/audio/p4/"+items[ci].id+".mp3");
     setPlaying(false);setPlayed(true);
   }
+  // Play a single spoken question on demand (TOEIC-faithful per-question playback).
+  // Files: {id}_q1.mp3 / _q2.mp3 / _q3.mp3 generated by scripts/generate-questions-p3p4.mjs.
+  async function playQuestion(idx){try{await playAudioFile("/audio/p4/"+items[ci].id+"_q"+(idx+1)+".mp3");}catch(e){console.warn("[P4] question audio failed:",e&&e.message);}}
 
   function doAns(i){
     sPk(i);if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
   }
   function nxt(){
     sPk(-1);
-    if(qi<items[ci].qs.length-1){sQi(qi+1);sP("q");}
+    if(qi<items[ci].qs.length-1){var ni=qi+1;sQi(ni);sP("q");playQuestion(ni);}
     else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);sP("listen");}
     else{sP("done");p.done(sc,totalQ+1,30+sc*5);}
   }
@@ -11623,7 +11632,7 @@ function ListenP4(p){
     </div>
     :<div style={{textAlign:"center",animation:"fadeIn .3s"}}>
       <p className="out" style={{color:"var(--green)",fontSize:14,fontWeight:600,marginBottom:12}}>Talk complete</p>
-      <button className="btn1" onClick={function(){sP("q");}}>Answer Questions</button>
+      <button className="btn1" onClick={function(){sP("q");playQuestion(0);}}>Answer Questions</button>
       <button onClick={function(){setPlayed(false);}} className="btn2" style={{marginTop:8,width:"100%",fontSize:12}}>🔄 Replay talk</button>
     </div>}
   </div>);
