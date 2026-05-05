@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-mentor-silent";
+var BUILD_ID="2026-05-05-mentor-map-v1";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -1095,6 +1095,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes narratorFadeToBlack{from{opacity:0}to{opacity:1}}
 @keyframes grim-fade-out{from{opacity:1}to{opacity:0}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 @keyframes flame{0%,100%{transform:scale(1) rotate(-2deg)}25%{transform:scale(1.1) rotate(2deg)}50%{transform:scale(1.05) rotate(-1deg)}75%{transform:scale(1.12) rotate(1deg)}}
@@ -3893,6 +3894,98 @@ function MentorGoalCard(p){
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+// MentorMap — illustrated map UX for the Mentor tab (2026-05-05 PM).
+// Replaces the vertical tile stack with an immersive Doré-style B&W map.
+// 4 hotspots overlay the image at fixed %-coords :
+//   - Peak  → Your Goal
+//   - Trail → Today's Daily Mission
+//   - Stone → Today's Focus
+//   - Camp  → Where You Stand
+// Tap → bottom sheet (~70vh) slides up while the map stays visible above.
+// Each sheet renders the existing component (MentorGoalCard, MentorDailyMission,
+// TodayFocusBanner, the per-part list) so logic stays single-sourced.
+// Cold states : faded sigil + "?" / "Train more" hint when data is absent.
+// ═══════════════════════════════════════════════════════════════════════
+function MentorMap(p){
+  var u=p.u;
+  var hasGoal=!!u.targetToeic&&!!u.targetDate;
+  var current=estimateTOEICScore(u.moduleScores||{}).total;
+  var totalQ=(u.stats&&u.stats.totalQ)||0;
+  var calibrated=totalQ>=20;
+  var focus=calibrated?computeTodayFocus(u):null;
+  var mission=getDailyMission(u);
+  var missionReady=mission&&mission.status!=="calibrating"&&mission.mod;
+  var missionDone=missionReady&&(mission.status==="completed"||mission.done);
+  var daysLeft=hasGoal?Math.round((new Date(u.targetDate).getTime()-Date.now())/86400000):null;
+
+  var hotspots=[
+    {id:"goal", x:50, y:14, side:"left",
+     label:hasGoal?"The Distant Peak":"Set destination",
+     value:hasGoal?(u.targetToeic+" · "+(daysLeft>=0?daysLeft+"d":"past")):"?",
+     tone:hasGoal?"active":"muted"},
+    {id:"mission", x:48, y:43, side:"right",
+     label:"Today's Path",
+     value:!missionReady?"Train more":missionDone?"Complete ✓":"+15 XP",
+     tone:!missionReady?"muted":missionDone?"done":"active"},
+    {id:"focus", x:55, y:58, side:"left",
+     label:"The Crossroads",
+     value:focus?focus.label.replace(/ — .*/,"")+" · +25%":calibrated?"All steady":"Train more",
+     tone:focus?"active":"muted"},
+    {id:"camp", x:72, y:75, side:"left",
+     label:"Your Camp",
+     value:current+" TOEIC",
+     tone:"active"}
+  ];
+
+  return(<div style={{position:"relative",width:"100%",aspectRatio:"2/3",marginBottom:14,borderRadius:14,overflow:"hidden",background:"#0a0805",boxShadow:"0 0 30px rgba(0,0,0,.35)"}}>
+    <img src="/images/mentor/map.jpg" alt="The Mentor's Map"
+      style={{width:"100%",height:"100%",objectFit:"cover",display:"block",filter:"contrast(1.05)"}}
+      onError={function(e){e.target.style.display="none";}}/>
+    <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center, transparent 55%, rgba(10,8,5,.45) 100%)",pointerEvents:"none"}}/>
+    {hotspots.map(function(h){
+      var sigilColor=h.tone==="active"?"#f0c850":h.tone==="done"?"#4abe60":"#8a7e6a";
+      var sigilBg=h.tone==="active"?"rgba(240,200,80,.18)":h.tone==="done"?"rgba(74,190,96,.18)":"rgba(138,126,106,.15)";
+      var badgeStyle={position:"absolute",top:"50%",transform:"translateY(-50%)",
+        background:"linear-gradient(135deg,rgba(245,235,205,.95),rgba(228,212,170,.92))",
+        color:"#3d2814",border:"1px solid rgba(90,58,20,.4)",borderRadius:6,
+        padding:"4px 8px",minWidth:80,maxWidth:140,whiteSpace:"nowrap",
+        fontFamily:"'DM Sans',sans-serif",fontSize:10,fontWeight:600,lineHeight:1.3,
+        boxShadow:"0 2px 8px rgba(0,0,0,.4)",pointerEvents:"none",textAlign:"left"};
+      if(h.side==="left")badgeStyle.left="calc(100% + 10px)";
+      else badgeStyle.right="calc(100% + 10px)";
+      return(<button key={h.id} onClick={function(){p.onHotspotTap&&p.onHotspotTap(h.id);}}
+        style={{position:"absolute",left:h.x+"%",top:h.y+"%",transform:"translate(-50%,-50%)",
+          width:36,height:36,borderRadius:"50%",border:"2px solid "+sigilColor,
+          background:sigilBg,cursor:"pointer",
+          display:"flex",alignItems:"center",justifyContent:"center",
+          padding:0,boxShadow:"0 0 14px "+sigilColor+"66",
+          animation:h.tone==="active"?"pulse 2.4s infinite":"none"}}>
+        <span style={{width:8,height:8,borderRadius:"50%",background:sigilColor,boxShadow:"0 0 4px "+sigilColor}}/>
+        <span style={badgeStyle}>
+          <span style={{display:"block",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:.5,color:"#5a3a1a",fontWeight:700,textTransform:"uppercase",overflow:"hidden",textOverflow:"ellipsis"}}>{h.label}</span>
+          <span style={{display:"block",fontWeight:700,marginTop:1,overflow:"hidden",textOverflow:"ellipsis"}}>{h.value}</span>
+        </span>
+      </button>);
+    })}
+  </div>);
+}
+
+// Generic bottom sheet — slides up, backdrop dim, dismiss on backdrop tap.
+function MentorSheet(p){
+  if(!p.open)return null;
+  return(<div onClick={p.onClose} style={{position:"fixed",inset:0,background:"rgba(10,8,5,.62)",zIndex:9000,display:"flex",alignItems:"flex-end",animation:"fadeIn .25s"}}>
+    <div onClick={function(e){e.stopPropagation();}} style={{position:"relative",width:"100%",maxWidth:430,margin:"0 auto",background:"var(--bg)",borderRadius:"18px 18px 0 0",borderTop:"1px solid rgba(var(--cx),.18)",padding:"22px 16px 26px",maxHeight:"82vh",overflowY:"auto",animation:"slideUp .3s cubic-bezier(.2,.7,.3,1)"}}>
+      <span style={{position:"absolute",top:8,left:"50%",transform:"translateX(-50%)",width:36,height:4,borderRadius:2,background:"var(--bdr)"}}/>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <h2 className="out" style={{fontWeight:800,fontSize:16,color:"var(--t1)"}}>{p.title}</h2>
+        <button onClick={p.onClose} style={{background:"none",border:"none",color:"var(--t2)",fontSize:22,cursor:"pointer",padding:4,lineHeight:1}}>{"×"}</button>
+      </div>
+      {p.children}
+    </div>
+  </div>);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // MentorDailyMission — adaptive daily mission relocated from Home (2026-05-05 PM).
 // Daily Challenge (5 random Q) stays on Home as a generic "warm-up reflex" ;
 // the personalized adaptive Mission lives here in Mentor where the
@@ -3973,13 +4066,12 @@ function MentorDailyMission(p){
 // ═══════════════════════════════════════════════════════════════════════
 function Mentor(p){
   var u=p.u;
-  // Compute focus + weakness map for the body. computeTodayFocus drives the banner;
-  // partAccuracies feeds the per-part list below.
+  var[sheet,setSheet]=useState(null); // null | "goal" | "mission" | "focus" | "camp"
+  // Per-part data — used for the Camp sheet ("Where you stand" breakdown).
   var focus=computeTodayFocus(u);
   var pa=partAccuracies(u.moduleScores||{});
   var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
   var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
-  // Build sorted parts list : weakest first, then unmeasured.
   var measured=[],unmeasured=[];
   Object.keys(pa).forEach(function(k){
     var d=pa[k];
@@ -3993,22 +4085,36 @@ function Mentor(p){
       <GIcon name="wizard-staff" size={28} color="var(--cyan)"/>
       <h1 className="out" style={{fontWeight:900,fontSize:24}}>Mentor</h1>
     </div>
-    <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.5}}>{"Aldric guides your TOEIC quest. Set your goal, find your weakest area, and follow the path."}</p>
+    <p style={{color:"var(--t2)",fontSize:12,marginBottom:14,lineHeight:1.5,fontStyle:"italic"}}>{"Tap a sigil on the map to act on it."}</p>
 
-    {/* Goal card — clickable to edit, all states inline (no Profile detour) */}
-    <MentorGoalCard u={u} setUser={p.setUser}/>
+    {/* The illustrated map with 4 hotspots. */}
+    <MentorMap u={u} onHotspotTap={function(id){setSheet(id);}}/>
 
-    {/* Daily Mission — relocated from Home, fits the "where I'm headed" mode */}
-    <MentorDailyMission u={u} nav={p.nav}/>
+    {/* Aldric chronicle replay — quick access if user wants to hear the intro again */}
+    {hasHeardMoment(u,"mentor_intro")&&p.replayNarrator&&<button className="btn2" onClick={function(){p.replayNarrator("mentor_intro");}}
+      style={{width:"100%",fontSize:12,padding:"10px 14px",borderColor:"rgba(139,92,246,.25)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+      <GIcon name="scroll-quill" size={14} color="var(--purple)"/>{"Replay Aldric's introduction"}
+    </button>}
 
-    {/* Today's Focus banner */}
-    <TodayFocusBanner u={u} nav={p.nav}/>
+    {/* ── Bottom sheets per hotspot ─────────────────────────────────────── */}
+    <MentorSheet open={sheet==="goal"} onClose={function(){setSheet(null);}} title="The Distant Peak — your goal">
+      <MentorGoalCard u={u} setUser={p.setUser}/>
+    </MentorSheet>
 
-    {/* Per-part weakness list (full radar substitute for V1 — Phase 2 will turn this into a real radar chart) */}
-    <div className="crd" style={{marginBottom:14,padding:"14px 16px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-        <GIcon name="progression" size={18} color="var(--purple)"/>
-        <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{"Where you stand"}</div>
+    <MentorSheet open={sheet==="mission"} onClose={function(){setSheet(null);}} title="Today's Path — your daily mission">
+      <MentorDailyMission u={u} nav={function(modId){setSheet(null);if(p.nav)p.nav(modId);}}/>
+    </MentorSheet>
+
+    <MentorSheet open={sheet==="focus"} onClose={function(){setSheet(null);}} title="The Crossroads — today's focus">
+      {focus
+        ?<TodayFocusBanner u={u} nav={function(modId){setSheet(null);if(p.nav)p.nav(modId);}}/>
+        :<p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5,padding:"4px 2px"}}>{measured.length===0?"Train at least 20 questions to unlock today's focus.":"All your areas look steady — no clear weak spot to surface today. Keep training !"}</p>}
+    </MentorSheet>
+
+    <MentorSheet open={sheet==="camp"} onClose={function(){setSheet(null);}} title="Your Camp — where you stand">
+      <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:14}}>
+        <div className="out" style={{fontSize:30,fontWeight:900,color:"var(--cyan)"}}>{estimateTOEICScore(u.moduleScores||{}).total}</div>
+        <div style={{fontSize:11,color:"var(--t2)"}}>{"estimated TOEIC"}</div>
       </div>
       {measured.length===0
         ?<p style={{color:"var(--t2)",fontSize:12,lineHeight:1.5}}>{"Train a few sessions to unlock the Mentor's diagnosis. We need at least 10 questions per area."}</p>
@@ -4016,7 +4122,7 @@ function Mentor(p){
           var pct=Math.round(it.acc*100);
           var col=pct>=85?"var(--green)":pct>=70?"var(--cyan)":pct>=50?"var(--orange)":"var(--red)";
           var isFocus=focus&&focus.partId===it.k;
-          return(<button key={it.k} onClick={function(){if(p.nav)p.nav(reco[it.k]);}}
+          return(<button key={it.k} onClick={function(){setSheet(null);if(p.nav)p.nav(reco[it.k]);}}
             style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:6,width:"100%",background:isFocus?"rgba(245,158,11,.08)":"var(--bg2)",border:"1px solid "+(isFocus?"rgba(245,158,11,.35)":"var(--bdr)"),borderRadius:10,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
             <div style={{flex:1,minWidth:0}}>
               <div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>{labels[it.k]}{isFocus&&<span style={{marginLeft:6,fontSize:10,color:"var(--orange)"}}>{"· focus"}</span>}</div>
@@ -4032,13 +4138,7 @@ function Mentor(p){
         })
       }
       {unmeasured.length>0&&measured.length>0&&<div style={{fontSize:11,color:"var(--t3)",marginTop:8,fontStyle:"italic"}}>{unmeasured.length+" area"+(unmeasured.length>1?"s":"")+" not yet measured — train them to unlock their score."}</div>}
-    </div>
-
-    {/* Aldric chronicle replay — quick access if user wants to hear the intro again */}
-    {hasHeardMoment(u,"mentor_intro")&&p.replayNarrator&&<button className="btn2" onClick={function(){p.replayNarrator("mentor_intro");}}
-      style={{width:"100%",fontSize:12,padding:"10px 14px",borderColor:"rgba(139,92,246,.25)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-      <GIcon name="scroll-quill" size={14} color="var(--purple)"/>{"Replay Aldric's introduction"}
-    </button>}
+    </MentorSheet>
   </div>);
 }
 
