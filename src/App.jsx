@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-mentor-map-v1";
+var BUILD_ID="2026-05-05-mentor-map-iter1";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -2821,10 +2821,12 @@ function XpToast(p){if(!p.v)return null;
 
 function Tabs(p){var tabs=[{id:"home",l:"Home",i:"castle"},{id:"train",l:"Train",i:"bullseye"},{id:"games",l:"Games",i:"coliseum"},{id:"mentor",l:"Mentor",i:"wizard-staff"},{id:"league",l:"League",i:"laurel-crown"},{id:"profile",l:"Profile",i:"visored-helm"}];
 var blocked=p.blocked||[];
-return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(var(--bg3-rgb),0) 0%,rgba(var(--bg3-rgb),.8) 15%,var(--bg3) 100%)",borderTop:"1px solid rgba(var(--cx),.15)",padding:"8px 12px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-around"}}>
+// 6 tabs : tighter container padding + per-button padding so "Profile" doesn't truncate
+// on narrow screens (≤375px). Icon stays 24px, label drops 11→10px.
+return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(var(--bg3-rgb),0) 0%,rgba(var(--bg3-rgb),.8) 15%,var(--bg3) 100%)",borderTop:"1px solid rgba(var(--cx),.15)",padding:"8px 4px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-between"}}>
 <div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>TOEIC ARENA</span></div>
-{tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"8px 14px",borderRadius:14,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t1)",transform:a&&!dis?"scale(1.06)":"scale(1)",opacity:dis?.35:a?1:.55,transition:"all .2s"}}>
-<svg viewBox="0 0 512 512" width="26" height="26" style={{display:"block",filter:a&&!dis?"drop-shadow(0 0 6px rgba(var(--cx),.55))":"none",transition:"filter .2s"}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS[t.i]||""}}/></svg><span style={{fontSize:11,fontWeight:a?700:500,letterSpacing:.5}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:2}}/>}</button>);})}</div>);}
+{tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 4px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t1)",transform:a&&!dis?"scale(1.06)":"scale(1)",opacity:dis?.35:a?1:.55,transition:"all .2s",flex:1,minWidth:0}}>
+<svg viewBox="0 0 512 512" width="24" height="24" style={{display:"block",filter:a&&!dis?"drop-shadow(0 0 6px rgba(var(--cx),.55))":"none",transition:"filter .2s",flexShrink:0}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS[t.i]||""}}/></svg><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.3,whiteSpace:"nowrap"}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:2}}/>}</button>);})}</div>);}
 
 // ─── PRIVACY POLICY ───
 function PrivacyPolicy(p){
@@ -3931,7 +3933,7 @@ function MentorMap(p){
      label:"The Crossroads",
      value:focus?focus.label.replace(/ — .*/,"")+" · +25%":calibrated?"All steady":"Train more",
      tone:focus?"active":"muted"},
-    {id:"camp", x:72, y:75, side:"left",
+    {id:"camp", x:72, y:75, side:"right",
      label:"Your Camp",
      value:current+" TOEIC",
      tone:"active"}
@@ -3942,6 +3944,21 @@ function MentorMap(p){
       style={{width:"100%",height:"100%",objectFit:"cover",display:"block",filter:"contrast(1.05)"}}
       onError={function(e){e.target.style.display="none";}}/>
     <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center, transparent 55%, rgba(10,8,5,.45) 100%)",pointerEvents:"none"}}/>
+    {/* Aldric figure — clickable to replay his Side Chronicle. Sized to match the
+        on-image silhouette ; the badge floats to its right with a discrete label. */}
+    {p.onAldricTap&&hasHeardMoment(u,"mentor_intro")&&<button onClick={p.onAldricTap}
+      style={{position:"absolute",left:"38%",top:"85%",transform:"translate(-50%,-50%)",
+        width:64,height:120,background:"transparent",border:"none",cursor:"pointer",padding:0,
+        borderRadius:8}} aria-label="Replay Aldric's introduction">
+      <span style={{position:"absolute",top:"50%",left:"calc(100% + 8px)",transform:"translateY(-50%)",
+        background:"linear-gradient(135deg,rgba(245,235,205,.92),rgba(228,212,170,.88))",
+        color:"#3d2814",border:"1px solid rgba(90,58,20,.35)",borderRadius:6,
+        padding:"4px 8px",whiteSpace:"nowrap",
+        fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:.5,fontWeight:700,textTransform:"uppercase",
+        boxShadow:"0 2px 8px rgba(0,0,0,.4)",pointerEvents:"none"}}>
+        {"Aldric speaks"}
+      </span>
+    </button>}
     {hotspots.map(function(h){
       var sigilColor=h.tone==="active"?"#f0c850":h.tone==="done"?"#4abe60":"#8a7e6a";
       var sigilBg=h.tone==="active"?"rgba(240,200,80,.18)":h.tone==="done"?"rgba(74,190,96,.18)":"rgba(138,126,106,.15)";
@@ -4087,14 +4104,12 @@ function Mentor(p){
     </div>
     <p style={{color:"var(--t2)",fontSize:12,marginBottom:14,lineHeight:1.5,fontStyle:"italic"}}>{"Tap a sigil on the map to act on it."}</p>
 
-    {/* The illustrated map with 4 hotspots. */}
-    <MentorMap u={u} onHotspotTap={function(id){setSheet(id);}}/>
-
-    {/* Aldric chronicle replay — quick access if user wants to hear the intro again */}
-    {hasHeardMoment(u,"mentor_intro")&&p.replayNarrator&&<button className="btn2" onClick={function(){p.replayNarrator("mentor_intro");}}
-      style={{width:"100%",fontSize:12,padding:"10px 14px",borderColor:"rgba(139,92,246,.25)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-      <GIcon name="scroll-quill" size={14} color="var(--purple)"/>{"Replay Aldric's introduction"}
-    </button>}
+    {/* The illustrated map with 4 hotspots + Aldric (clickable replay).
+        The bottom replay button was dropped : Aldric on the map IS the replay
+        affordance, no need for a duplicate CTA below the tab bar. */}
+    <MentorMap u={u}
+      onHotspotTap={function(id){setSheet(id);}}
+      onAldricTap={p.replayNarrator?function(){p.replayNarrator("mentor_intro");}:null}/>
 
     {/* ── Bottom sheets per hotspot ─────────────────────────────────────── */}
     <MentorSheet open={sheet==="goal"} onClose={function(){setSheet(null);}} title="The Distant Peak — your goal">
