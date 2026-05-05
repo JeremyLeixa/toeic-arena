@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-mentor-tab-preview";
+var BUILD_ID="2026-05-05-mentor-iter-2";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -3752,19 +3752,24 @@ function computeTodayFocus(u){
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// GoalProgressCard — Personalization Phase 1 commit 3 (2026-05-05)
-// Renders on Home between the League/Level card and the Daily Quest.
-// 2 states :
-//   1. No goal set → CTA card linking to Profile editor.
-//   2. Goal set → progress bar + pace + ETA.
-// ETA computed from weekly_snapshots (last 6) : avg TOEIC delta per week
-// applied linearly to remaining gap (no log curve per Jérémy's call).
-// Falls back to "ETA available after 2 weeks of training" if <2 snapshots.
+// MentorGoalCard — Personalization Phase 1 (refactored 2026-05-05 PM)
+// Single component handling all 3 goal states inline on the Mentor tab :
+//   1. No goal set → editor card with slider + date picker (CTA)
+//   2. Goal set, view mode → progress + pace + ETA, the WHOLE card
+//      is clickable to enter edit mode (per Jérémy's UX feedback)
+//   3. Goal set, edit mode → editor card with Update / Cancel / Supprimer
+// Replaces both the old <GoalProgressCard/> (Home view-only) and the
+// goal section in Profile (now removed). Mentor becomes the single home
+// for goal management.
+// Iconography : path-distance instead of 🎯 emoji to match the GIcon DA.
 // ═══════════════════════════════════════════════════════════════════════
-function GoalProgressCard(p){
+function MentorGoalCard(p){
   var u=p.u;
   var hasGoal=!!u.targetToeic&&!!u.targetDate;
   var[snaps,setSnaps]=useState(null);
+  var[editing,setEditing]=useState(!hasGoal);
+  var[score,setScore]=useState(u.targetToeic||700);
+  var[date,setDate]=useState(u.targetDate||(function(){var d=new Date();d.setDate(d.getDate()+90);return d.toISOString().split("T")[0];})());
   useEffect(function(){
     if(!hasGoal){setSnaps([]);return;}
     var cn=u.name,cc=u.classCode||"visitor";
@@ -3773,36 +3778,74 @@ function GoalProgressCard(p){
       .ilike("student_name",cn).eq("class_code",cc)
       .order("week_start",{ascending:false}).limit(6)
       .then(function(r){
-        if(r.error){console.warn("[GoalCard] snaps fetch failed:",r.error.message);setSnaps([]);return;}
+        if(r.error){console.warn("[MentorGoalCard] snaps fetch failed:",r.error.message);setSnaps([]);return;}
         setSnaps(r.data||[]);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[hasGoal,u.name,u.classCode,u.targetToeic,u.targetDate]);
 
-  if(!hasGoal){
-    return(<div className="crd" onClick={function(){p.tabGo&&p.tabGo("profile");}}
-      style={{marginBottom:16,padding:"14px 16px",background:"rgba(139,92,246,.06)",border:"1px dashed rgba(139,92,246,.35)",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
-      <span style={{fontSize:24}}>{"🎯"}</span>
-      <div style={{flex:1}}>
-        <div className="out" style={{fontWeight:800,fontSize:14,color:"var(--purple)"}}>{"Define your TOEIC goal"}</div>
-        <div style={{fontSize:11,color:"var(--t2)",marginTop:2,lineHeight:1.4}}>{"Set a target score + date in Profile to unlock your progress tracker."}</div>
+  var minDateStr=(function(){var d=new Date();d.setDate(d.getDate()+30);return d.toISOString().split("T")[0];})();
+  function saveGoal(){
+    if(!score||score<200||score>990)return;
+    if(!date||date<minDateStr)return;
+    var c=JSON.parse(JSON.stringify(u));
+    c.targetToeic=Math.round(score/10)*10;
+    c.targetDate=date;
+    if(p.setUser)p.setUser(c);
+    setEditing(false);
+  }
+  function clearGoal(){
+    var c=JSON.parse(JSON.stringify(u));
+    c.targetToeic=null;c.targetDate=null;
+    if(p.setUser)p.setUser(c);
+    setScore(700);
+    var d=new Date();d.setDate(d.getDate()+90);setDate(d.toISOString().split("T")[0]);
+    setEditing(true);
+  }
+  function cancelEdit(){
+    setScore(u.targetToeic||700);
+    setDate(u.targetDate||(function(){var d=new Date();d.setDate(d.getDate()+90);return d.toISOString().split("T")[0];})());
+    setEditing(false);
+  }
+
+  // ── Edit mode (also covers "no goal yet" state) ──
+  if(editing){
+    return(<div className="crd" style={{marginBottom:16,padding:"14px 16px",background:"rgba(139,92,246,.06)",border:"1px solid rgba(139,92,246,.25)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+        <GIcon name="path-distance" size={20} color="var(--purple)"/>
+        <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{hasGoal?"Adjust your goal":"Set your TOEIC goal"}</div>
       </div>
-      <span style={{fontSize:18,color:"var(--purple)"}}>{"›"}</span>
+      <div style={{fontSize:12,color:"var(--t2)",marginBottom:12,lineHeight:1.5}}>{"A target score + date = a clear cap for your training. Your progress bar and ETA will appear on this hub once it's set."}</div>
+      <label style={{display:"block",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--t2)",marginBottom:4}}>
+          <span>{"Target score"}</span>
+          <span className="out" style={{color:"var(--purple)",fontWeight:700}}>{score+" / 990"}</span>
+        </div>
+        <input type="range" min="200" max="990" step="10" value={score} onChange={function(e){setScore(parseInt(e.target.value,10));}}
+          style={{width:"100%",accentColor:"#8b5cf6"}}/>
+      </label>
+      <label style={{display:"block",marginBottom:12}}>
+        <div style={{fontSize:11,color:"var(--t2)",marginBottom:4}}>{"Target date (min. 30 days)"}</div>
+        <input type="date" min={minDateStr} value={date} onChange={function(e){setDate(e.target.value);}}
+          style={{width:"100%",padding:"8px 10px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",fontSize:13}}/>
+      </label>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={saveGoal} className="btn1" style={{flex:1,fontSize:13,padding:"10px 14px",background:"linear-gradient(135deg,#8b5cf6,#7c3aed)"}}>{hasGoal?"Update":"Define"}</button>
+        {hasGoal&&<button onClick={cancelEdit} className="btn2" style={{fontSize:12,padding:"10px 12px"}}>{"Cancel"}</button>}
+        {hasGoal&&<button onClick={clearGoal} className="btn2" style={{fontSize:12,padding:"10px 12px",borderColor:"rgba(224,82,82,.25)",color:"var(--red)"}}>{"Remove"}</button>}
+      </div>
     </div>);
   }
 
+  // ── View mode : progress + ETA. Whole card is clickable → enter edit. ──
   var current=estimateTOEICScore(u.moduleScores||{}).total;
   var target=u.targetToeic;
-  // Oldest-first toeic series (so deltas are positive when learner improves)
-  var series=(snaps||[]).slice().reverse().map(function(s){
-    return{toeic:estimateTOEICScore(s.module_scores_snapshot||{}).total};
-  });
+  var series=(snaps||[]).slice().reverse().map(function(s){return{toeic:estimateTOEICScore(s.module_scores_snapshot||{}).total};});
   var avgDeltaPerWeek=null;
   if(series.length>=2){
     var first=series[0].toeic,last=series[series.length-1].toeic;
     avgDeltaPerWeek=(last-first)/(series.length-1);
   }
-  // Progress bar baseline : first snapshot if available, else min(current, 200)
   var baseline=series.length>0?series[0].toeic:Math.min(current,200);
   if(baseline>current)baseline=Math.min(current,200);
   var pct=target>baseline?Math.max(0,Math.min(100,(current-baseline)/(target-baseline)*100)):100;
@@ -3811,7 +3854,7 @@ function GoalProgressCard(p){
   var todayD=new Date();var targetD=new Date(u.targetDate);
   var daysLeft=Math.round((targetD.getTime()-todayD.getTime())/86400000);
   var etaText,etaColor;
-  if(done){etaText="Goal reached 🏆";etaColor="var(--green)";}
+  if(done){etaText="Goal reached";etaColor="var(--green)";}
   else if(snaps===null){etaText="Loading pace…";etaColor="var(--t2)";}
   else if(series.length<2||avgDeltaPerWeek===null){etaText="ETA available after 2 weeks of training";etaColor="var(--t2)";}
   else if(avgDeltaPerWeek<=0){etaText="Pace stalled — push training to make progress";etaColor="var(--orange)";}
@@ -3819,7 +3862,7 @@ function GoalProgressCard(p){
     var weeksNeeded=(target-current)/avgDeltaPerWeek;
     var etaDate=new Date(todayD.getTime()+weeksNeeded*7*86400000);
     var fmtFR=etaDate.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});
-    if(etaDate<=targetD){etaText="ETA "+fmtFR+" · on track ✓";etaColor="var(--green)";}
+    if(etaDate<=targetD){etaText="ETA "+fmtFR+" · on track";etaColor="var(--green)";}
     else{var daysLate=Math.round((etaDate.getTime()-targetD.getTime())/86400000);etaText="ETA "+fmtFR+" · "+daysLate+"d behind";etaColor="var(--orange)";}
   }
   var paceText=avgDeltaPerWeek!==null?((avgDeltaPerWeek>=0?"+":"")+Math.round(avgDeltaPerWeek)+" pts/week"):null;
@@ -3827,10 +3870,11 @@ function GoalProgressCard(p){
   var daysLabel=daysLeft>0?daysLeft+"d left":daysLeft===0?"target day":Math.abs(daysLeft)+"d past";
   var daysCol=daysLeft>=14?"var(--t2)":daysLeft>=0?"var(--orange)":"var(--red)";
 
-  return(<div className="crd" style={{marginBottom:16,padding:"14px 16px",background:"linear-gradient(135deg,rgba(139,92,246,.08),rgba(var(--cx),.04))",border:"1px solid rgba(139,92,246,.25)"}}>
+  return(<div className="crd" onClick={function(){setEditing(true);}}
+    style={{marginBottom:16,padding:"14px 16px",background:"linear-gradient(135deg,rgba(139,92,246,.08),rgba(var(--cx),.04))",border:"1px solid rgba(139,92,246,.25)",cursor:"pointer"}}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <span style={{fontSize:18}}>{"🎯"}</span>
+        <GIcon name="path-distance" size={18} color="var(--purple)"/>
         <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{"Goal: "+target+" TOEIC"}</div>
       </div>
       <div className="out" style={{fontSize:11,fontWeight:700,color:daysCol}}>{daysLabel}</div>
@@ -3841,7 +3885,80 @@ function GoalProgressCard(p){
       {paceText&&<div className="out" style={{marginLeft:"auto",fontSize:11,fontWeight:700,color:paceColor}}>{paceText}</div>}
     </div>
     <Bar value={Math.round(pct)} max={100} h={6} color={done?"linear-gradient(90deg,#0e8e57,#1ed27a)":"linear-gradient(90deg,#8b5cf6,#06b6d4)"}/>
-    <div style={{fontSize:11,color:etaColor,marginTop:8,fontWeight:600}}>{etaText}</div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:8}}>
+      <div style={{fontSize:11,color:etaColor,fontWeight:600}}>{etaText}</div>
+      <div style={{fontSize:10,color:"var(--t3)",fontStyle:"italic"}}>{"tap to edit"}</div>
+    </div>
+  </div>);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MentorDailyMission — adaptive daily mission relocated from Home (2026-05-05 PM).
+// Daily Challenge (5 random Q) stays on Home as a generic "warm-up reflex" ;
+// the personalized adaptive Mission lives here in Mentor where the
+// "where I'm headed" mode lives. No bonus link to Daily Challenge anymore —
+// the two are now autonomous.
+// ═══════════════════════════════════════════════════════════════════════
+function MentorDailyMission(p){
+  var u=p.u;
+  var mission=getDailyMission(u);
+  var ready=mission&&mission.status!=="calibrating"&&mission.mod;
+  var done=ready&&(mission.status==="completed"||mission.done);
+
+  // Initialize mission record on first display so the rest of the app sees it
+  if(ready&&mission.status==="new"&&(!u.mission||u.mission.date!==today())){
+    u.mission={date:today(),actId:mission.actId,done:false};
+    save(u);
+  }
+
+  // Calibrating user : friendly hint, no CTA
+  if(mission&&mission.status==="calibrating"){
+    return(<div className="crd" style={{marginBottom:14,padding:"12px 14px",background:"var(--bg2)",border:"1px solid var(--bdr)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <GIcon name="sands-of-time" size={20} color="var(--t2)"/>
+        <div style={{flex:1}}>
+          <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--t2)"}}>{"Daily Mission"}</div>
+          <div style={{fontSize:11,color:"var(--t3)",marginTop:2,lineHeight:1.4}}>{"Train "+(mission.remaining||"a few")+" more sessions to unlock adaptive missions."}</div>
+        </div>
+      </div>
+    </div>);
+  }
+
+  if(!ready)return null;
+
+  if(done){
+    return(<div className="crd" style={{marginBottom:14,padding:"12px 14px",background:"var(--bg2)",border:"1px solid var(--bdr)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <GIcon name="trophy-cup" size={20} color="var(--green)"/>
+        <div style={{flex:1}}>
+          <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--green)"}}>{"Daily Mission complete"}</div>
+          <div style={{fontSize:11,color:"var(--green)",marginTop:2,lineHeight:1.4}}>{"See you tomorrow for the next mission."}</div>
+        </div>
+      </div>
+    </div>);
+  }
+
+  var m=mission.mod;
+  return(<div className="crd" onClick={function(){if(p.nav)p.nav(mission.actId);}}
+    style={{marginBottom:14,cursor:"pointer",padding:"14px 16px",
+      background:"linear-gradient(135deg,rgba(255,215,0,.10),rgba(139,92,246,.08))",
+      border:"1px solid rgba(255,215,0,.25)",
+      boxShadow:"0 0 18px rgba(255,215,0,.12)"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+        <span style={{width:26,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{GAME_ICON_PATHS[m.icon]?<GIcon name={m.icon} size={22} color="var(--gold)"/>:<span style={{fontSize:22}}>{m.icon}</span>}</span>
+        <div style={{minWidth:0,flex:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+            <span className="out" style={{fontWeight:800,fontSize:14,color:"var(--t1)"}}>{"Daily Mission"}</span>
+            <span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(255,215,0,.15)",color:"var(--gold)",fontWeight:700}} className="out">{"+15 XP"}</span>
+          </div>
+          <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis"}}>
+            {m.name+" — "+mission.reason}
+          </div>
+        </div>
+      </div>
+      <span style={{fontSize:18,color:"var(--gold)",marginLeft:8}}>{"›"}</span>
+    </div>
   </div>);
 }
 
@@ -3878,8 +3995,11 @@ function Mentor(p){
     </div>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.5}}>{"Aldric guides your TOEIC quest. Set your goal, find your weakest area, and follow the path."}</p>
 
-    {/* Goal progress card — same component as before, just relocated */}
-    <GoalProgressCard u={u} tabGo={p.tabGo}/>
+    {/* Goal card — clickable to edit, all states inline (no Profile detour) */}
+    <MentorGoalCard u={u} setUser={p.setUser}/>
+
+    {/* Daily Mission — relocated from Home, fits the "where I'm headed" mode */}
+    <MentorDailyMission u={u} nav={p.nav}/>
 
     {/* Today's Focus banner */}
     <TodayFocusBanner u={u} nav={p.nav}/>
@@ -3887,7 +4007,7 @@ function Mentor(p){
     {/* Per-part weakness list (full radar substitute for V1 — Phase 2 will turn this into a real radar chart) */}
     <div className="crd" style={{marginBottom:14,padding:"14px 16px"}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-        <GIcon name="eye-target" size={18} color="var(--purple)"/>
+        <GIcon name="progression" size={18} color="var(--purple)"/>
         <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{"Where you stand"}</div>
       </div>
       {measured.length===0
@@ -3916,8 +4036,8 @@ function Mentor(p){
 
     {/* Aldric chronicle replay — quick access if user wants to hear the intro again */}
     {hasHeardMoment(u,"mentor_intro")&&p.replayNarrator&&<button className="btn2" onClick={function(){p.replayNarrator("mentor_intro");}}
-      style={{width:"100%",fontSize:12,padding:"10px 14px",borderColor:"rgba(139,92,246,.25)",color:"var(--purple)"}}>
-      {"📜 Replay Aldric's introduction"}
+      style={{width:"100%",fontSize:12,padding:"10px 14px",borderColor:"rgba(139,92,246,.25)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+      <GIcon name="scroll-quill" size={14} color="var(--purple)"/>{"Replay Aldric's introduction"}
     </button>}
   </div>);
 }
@@ -3934,7 +4054,7 @@ function TodayFocusBanner(p){
   var accPct=Math.round(focus.acc*100);
   return(<button onClick={function(){p.nav&&p.nav(focus.recoModId);}}
     style={{width:"100%",marginBottom:14,padding:"12px 16px",background:"linear-gradient(135deg,rgba(245,158,11,.12),rgba(139,92,246,.08))",border:"1px solid rgba(245,158,11,.3)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:"'DM Sans',sans-serif",textAlign:"left"}}>
-    <span style={{fontSize:24,flexShrink:0}}>{"🎯"}</span>
+    <GIcon name="eye-target" size={24} color="var(--orange)"/>
     <div style={{flex:1,minWidth:0}}>
       <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--orange)"}}>{"Today's focus: "+focus.label}</div>
       <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>{"Your weakest area ("+accPct+"%) — train it now for "}<span className="out" style={{color:"var(--gold)",fontWeight:700}}>{"+25% XP"}</span></div>
@@ -3967,7 +4087,7 @@ function NextStepReco(p){
   var accPct=Math.round(pickFrom.acc*100);
   return(<button onClick={function(){if(nav)nav(reco[pickFrom.partId]);}}
     style={{width:"100%",marginTop:12,padding:"12px 14px",background:"rgba(139,92,246,.06)",border:"1px solid rgba(139,92,246,.25)",borderRadius:12,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:"'DM Sans',sans-serif",textAlign:"left"}}>
-    <span style={{fontSize:20,flexShrink:0}}>{"➡️"}</span>
+    <GIcon name="path-distance" size={18} color="var(--purple)"/>
     <div style={{flex:1,minWidth:0}}>
       <div className="out" style={{fontWeight:700,fontSize:12,color:"var(--purple)"}}>{"Next: "+labels[pickFrom.partId]}</div>
       <div style={{fontSize:10,color:"var(--t2)",marginTop:1}}>{"Your weakest remaining area ("+accPct+"%)"}</div>
@@ -4062,109 +4182,33 @@ return(
     focused on "playing-now" : daily quest, chests, events. The Mentor hub
     hosts goal progress + Today's Focus + per-part weakness list. */}
 
-{/* ═══ Smart Daily Quest — sequential reveal: Mission → Bonus Challenge → Rest ═══ */}
-{function(){
-  var mission=getDailyMission(u);
-  var missionReady=mission&&mission.status!=="calibrating"&&mission.mod;
-  var isMissionDone=missionReady&&(mission.status==="completed"||mission.done);
-
-  // Initialize mission in userData if new
-  if(missionReady&&mission.status==="new"&&(!u.mission||u.mission.date!==today())){
-    u.mission={date:today(),actId:mission.actId,done:false};
-    save(u);
-  }
-
-  // ROUTE A — Calibrated user, Mission pending: show adaptive Daily Mission
-  if(missionReady&&!isMissionDone){
-    var m=mission.mod;
-    return(<div className="crd" onClick={function(){p.nav(mission.actId);}}
-      style={{marginBottom:16,cursor:"pointer",padding:"14px 16px",
-        background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.08))",
-        border:"1px solid rgba(255,215,0,.2)",
-        boxShadow:"0 0 20px rgba(255,215,0,.14)"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-          <span style={{fontSize:22,width:26,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{GAME_ICON_PATHS[m.icon]?<GIcon name={m.icon} size={22} color="var(--cyan)"/>:m.icon}</span>
-          <div style={{minWidth:0,flex:1}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-              <span className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)"}}>Daily Quest</span>
-              <span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(255,215,0,.15)",color:"var(--gold)",fontWeight:700}} className="out">+15 XP</span>
-            </div>
-            <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis"}}>
-              {m.name+" \u2014 "+mission.reason}
-            </div>
-          </div>
+{/* ═══ Daily Challenge — generic 5-question warm-up. Adaptive Daily Mission
+     was relocated to the Mentor tab (2026-05-05 PM). The two are now
+     autonomous : Challenge = playing-now reflex, Mission = personalized
+     where-I'm-headed (lives on Mentor). No bonus link between them. ═══ */}
+<div className="crd" onClick={function(){if(!dd)p.nav("daily");}}
+  style={{marginBottom:16,cursor:dd?"default":"pointer",padding:"14px 16px",
+    background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))",
+    border:dd?"1px solid var(--bdr)":"1px solid rgba(var(--cx),.2)",
+    boxShadow:dd?"none":"0 0 20px rgba(var(--cx),.18)"}}>
+  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+    <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+      {dd
+        ?<GIcon name="trophy-cup" size={22} color="var(--green)"/>
+        :<GIcon name="lightning-bow" size={22} color="var(--cyan)"/>}
+      <div style={{minWidth:0,flex:1}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+          <span className="out" style={{fontWeight:800,fontSize:15,color:dd?"var(--green)":"var(--t1)"}}>{"Daily Challenge"}</span>
+          {!dd&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(var(--cx),.15)",color:"var(--cyan)",fontWeight:700}} className="out">{"+100 XP"}</span>}
         </div>
-        <span style={{fontSize:20,color:"var(--gold)",marginLeft:8}}>{"\u2192"}</span>
-      </div>
-    </div>);
-  }
-
-  // ROUTE B — Calibrated user, Mission DONE but Daily Challenge still pending: BONUS QUEST unlocked
-  if(missionReady&&isMissionDone&&!dd){
-    return(<div className="crd" onClick={function(){p.nav("daily");}}
-      style={{marginBottom:16,cursor:"pointer",padding:"14px 16px",
-        background:"linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))",
-        border:"1px solid rgba(var(--cx),.25)",
-        boxShadow:"0 0 20px rgba(var(--cx),.18)"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-          <span style={{fontSize:22}}>{"\u26A1"}</span>
-          <div style={{minWidth:0,flex:1}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2,flexWrap:"wrap"}}>
-              <span className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)"}}>Daily Quest</span>
-              <span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(255,215,0,.18)",color:"var(--gold)",fontWeight:700,letterSpacing:.5}} className="out">BONUS</span>
-              <span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(var(--cx),.15)",color:"var(--cyan)",fontWeight:700}} className="out">+100 XP</span>
-            </div>
-            <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.4}}>
-              Mission complete — bonus round unlocked: 5 grammar questions · 30s each
-            </div>
-          </div>
-        </div>
-        <span style={{fontSize:20,color:"var(--cyan)",marginLeft:8}}>{"\u2192"}</span>
-      </div>
-    </div>);
-  }
-
-  // ROUTE C — Calibrated user, BOTH done: visual rest state
-  if(missionReady&&isMissionDone&&dd){
-    return(<div className="crd" style={{marginBottom:16,padding:"14px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:22}}>{"\u2705"}</span>
-        <div style={{flex:1}}>
-          <div className="out" style={{fontWeight:800,fontSize:15,color:"var(--green)",marginBottom:2}}>Daily Quest</div>
-          <div style={{fontSize:12,color:"var(--green)",lineHeight:1.4}}>
-            All daily quests complete. See you tomorrow!
-          </div>
+        <div style={{fontSize:12,color:dd?"var(--green)":"var(--t2)",lineHeight:1.4}}>
+          {dd?"Challenge complete! +"+u.daily.xpE+" XP earned":"5 grammar questions · 30s each"}
         </div>
       </div>
-    </div>);
-  }
-
-  // ROUTE D — Uncalibrated / no mission: show Daily Challenge with optional calibration hint
-  var remaining=mission&&mission.status==="calibrating"?mission.remaining:null;
-  return(<div className="crd" onClick={function(){if(!dd)p.nav("daily");}}
-    style={{marginBottom:16,cursor:dd?"default":"pointer",padding:"14px 16px",
-      background:dd?"var(--bg2)":"linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))",
-      border:dd?"1px solid var(--bdr)":"1px solid rgba(var(--cx),.2)",
-      boxShadow:dd?"none":"0 0 20px rgba(var(--cx),.18)"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-        <span style={{fontSize:22}}>{dd?"\u2705":"\u26A1"}</span>
-        <div style={{minWidth:0,flex:1}}>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-            <span className="out" style={{fontWeight:800,fontSize:15,color:dd?"var(--green)":"var(--t1)"}}>Daily Quest</span>
-            {!dd&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(var(--cx),.15)",color:"var(--cyan)",fontWeight:700}} className="out">+100 XP</span>}
-          </div>
-          <div style={{fontSize:12,color:dd?"var(--green)":"var(--t2)",lineHeight:1.4}}>
-            {dd?"Quest complete! +"+u.daily.xpE+" XP earned":"5 grammar questions \u00B7 30s each"+(remaining?" \u00B7 "+remaining+" sessions to unlock adaptive missions":"")}
-          </div>
-        </div>
-      </div>
-      {!dd&&<span style={{fontSize:20,color:"var(--cyan)",marginLeft:8}}>{"\u2192"}</span>}
     </div>
-  </div>);
-}()}
+    {!dd&&<span style={{fontSize:18,color:"var(--cyan)",marginLeft:8}}>{"›"}</span>}
+  </div>
+</div>
 
 {/* Stats trio (Total XP / This Week / Sessions) supprimé 2026-05-04 — duplicaté par Profile + League. */}
 {/* "This week" plié en ligne secondaire dans la carte Level+League ci-dessus pour conserver le signal hebdo. */}
@@ -12975,11 +13019,9 @@ function Profile(p){
   var[pwdChange1,setPwdChange1]=useState("");var[pwdChange2,setPwdChange2]=useState("");
   var[pwdChangeBusy,setPwdChangeBusy]=useState(false);var[pwdChangeErr,setPwdChangeErr]=useState("");
   var[pwdChangeOK,setPwdChangeOK]=useState(false);
-  // Personalization Phase 1 commit 2 (2026-05-05) : goal editor (target TOEIC + date)
-  // Edit mode auto-active when no goal set yet, so the card looks like a CTA.
-  var[goalEditing,setGoalEditing]=useState(!u.targetToeic);
-  var[goalScore,setGoalScore]=useState(u.targetToeic||700);
-  var[goalDate,setGoalDate]=useState(u.targetDate||(function(){var d=new Date();d.setDate(d.getDate()+90);return d.toISOString().split("T")[0];})());
+  // Note (2026-05-05 PM) : goal-setting moved out of Profile — it now lives
+  // as <MentorGoalCard/> inside the dedicated Mentor tab. Single source of
+  // truth for goal management.
 
   useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});biometricAvailable().then(function(v){setBioAvail(v);});},[]);
   useEffect(function(){if(view==="inventory"||view==="avatar"){setInvLoading(true);Promise.all([getOwnedRewards(u.name,u.classCode||"visitor"),getOwnedTokens(u.name,u.classCode||"visitor")]).then(function(arr){setInvData(arr[0]);setInvTokens(arr[1]||{});setInvLoading(false);});}},[view]);
@@ -14065,71 +14107,6 @@ function Profile(p){
       </div>
 
       {/* (GDPR Export moved to Gestion du compte sub-page) */}
-
-      {/* Goal editor — Personalization Phase 1 (2026-05-05).
-         Optional opt-in goal-setting. NULL by default ; this card prompts the
-         user to set a target TOEIC + date, used by Home progress bar + ETA
-         (commit 3) and as the meta-quest reference for Today's Focus +
-         NextStepReco (commit 4). Lives above Subscription = personal-before-legal. */}
-      {(function(){
-        var hasGoal=!!u.targetToeic&&!!u.targetDate;
-        var minDateStr=(function(){var d=new Date();d.setDate(d.getDate()+30);return d.toISOString().split("T")[0];})();
-        function saveGoal(){
-          if(!goalScore||goalScore<200||goalScore>990)return;
-          if(!goalDate||goalDate<minDateStr)return;
-          var c=JSON.parse(JSON.stringify(u));
-          c.targetToeic=Math.round(goalScore/10)*10;
-          c.targetDate=goalDate;
-          p.setAvatar(c);
-          setGoalEditing(false);
-        }
-        function clearGoal(){
-          var c=JSON.parse(JSON.stringify(u));
-          c.targetToeic=null;c.targetDate=null;
-          p.setAvatar(c);
-          setGoalScore(700);
-          var d=new Date();d.setDate(d.getDate()+90);setGoalDate(d.toISOString().split("T")[0]);
-          setGoalEditing(true);
-        }
-        var fmtFR=function(iso){try{return new Date(iso).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});}catch(e){return iso;}};
-        if(!goalEditing&&hasGoal){
-          return(<div className="crd" style={{marginBottom:12,padding:"12px 14px",background:"linear-gradient(135deg,rgba(139,92,246,.08),rgba(var(--cx),.06))",border:"1px solid rgba(139,92,246,.25)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <span style={{fontSize:22,flexShrink:0}}>{"🎯"}</span>
-              <div style={{flex:1,minWidth:0}}>
-                <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{"Objectif : "+u.targetToeic+" TOEIC"}</div>
-                <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>{"D'ici le "+fmtFR(u.targetDate)}</div>
-              </div>
-              <button className="btn2" onClick={function(){setGoalEditing(true);}} style={{flexShrink:0,fontSize:12,padding:"8px 12px",borderColor:"rgba(139,92,246,.25)",color:"var(--purple)"}}>{"Modifier"}</button>
-            </div>
-          </div>);
-        }
-        return(<div className="crd" style={{marginBottom:12,padding:"14px 16px",background:"rgba(139,92,246,.04)",border:"1px solid rgba(139,92,246,.2)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-            <span style={{fontSize:20}}>{"🎯"}</span>
-            <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{hasGoal?"Modifier mon objectif":"Définis ton objectif TOEIC"}</div>
-          </div>
-          <div style={{fontSize:12,color:"var(--t2)",marginBottom:12,lineHeight:1.5}}>{"Un score visé + une date à atteindre = un cap clair pour t'entraîner. La barre de progression et l'ETA s'affichent ensuite sur l'accueil."}</div>
-          <label style={{display:"block",marginBottom:10}}>
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--t2)",marginBottom:4}}>
-              <span>{"Score visé"}</span>
-              <span className="out" style={{color:"var(--purple)",fontWeight:700}}>{goalScore+" / 990"}</span>
-            </div>
-            <input type="range" min="200" max="990" step="10" value={goalScore} onChange={function(e){setGoalScore(parseInt(e.target.value,10));}}
-              style={{width:"100%",accentColor:"#8b5cf6"}}/>
-          </label>
-          <label style={{display:"block",marginBottom:12}}>
-            <div style={{fontSize:11,color:"var(--t2)",marginBottom:4}}>{"Date cible (min. 30 jours)"}</div>
-            <input type="date" min={minDateStr} value={goalDate} onChange={function(e){setGoalDate(e.target.value);}}
-              style={{width:"100%",padding:"8px 10px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",fontSize:13}}/>
-          </label>
-          <div style={{display:"flex",gap:8}}>
-            <button onClick={saveGoal} className="btn1" style={{flex:1,fontSize:13,padding:"10px 14px",background:"linear-gradient(135deg,#8b5cf6,#7c3aed)"}}>{hasGoal?"Mettre à jour":"Définir"}</button>
-            {hasGoal&&<button onClick={function(){setGoalScore(u.targetToeic);setGoalDate(u.targetDate);setGoalEditing(false);}} className="btn2" style={{fontSize:12,padding:"10px 12px"}}>{"Annuler"}</button>}
-            {hasGoal&&<button onClick={clearGoal} className="btn2" style={{fontSize:12,padding:"10px 12px",borderColor:"rgba(224,82,82,.25)",color:"var(--red)"}}>{"Supprimer"}</button>}
-          </div>
-        </div>);
-      })()}
 
       {/* Subscription section — Phase 3 Session 2 */}
       {(function(){
