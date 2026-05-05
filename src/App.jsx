@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-mentor-bgm-ducking";
+var BUILD_ID="2026-05-06-phase2-adaptive-picker";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -765,17 +765,77 @@ async function bioAuthenticate(){
 function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null,targetToeic:null,targetDate:null};}
 
 // ─── MODULE SCORE TRACKING ───
-function recordModule(u,modId,sc,tot){
+function recordModule(u,modId,sc,tot,catStats){
   if(!u.moduleScores)u.moduleScores={};
-  var prev=u.moduleScores[modId]||{correct:0,total:0,sessions:0,lastDate:null,history:[]};
+  var prev=u.moduleScores[modId]||{correct:0,total:0,sessions:0,lastDate:null,history:[],catStats:{}};
   var hist=prev.history||[];
   hist.push({date:today(),correct:sc,total:tot});
   if(hist.length>100)hist=hist.slice(-100);
-  u.moduleScores[modId]={correct:prev.correct+sc,total:prev.total+tot,sessions:prev.sessions+1,lastDate:today(),history:hist};
+  // Personalization Phase 2 (2026-05-06) — merge per-category stats when provided.
+  // Used by the adaptive picker (pickAdaptive) to weight question selection toward
+  // the user's weakest sub-topics. Backward compatible : catStats arg is optional.
+  var mergedCats=Object.assign({},prev.catStats||{});
+  if(catStats){
+    Object.keys(catStats).forEach(function(c){
+      var p=mergedCats[c]||{correct:0,total:0};
+      mergedCats[c]={correct:p.correct+(catStats[c].correct||0),total:p.total+(catStats[c].total||0)};
+    });
+  }
+  u.moduleScores[modId]={correct:prev.correct+sc,total:prev.total+tot,sessions:prev.sessions+1,lastDate:today(),history:hist,catStats:mergedCats};
   // V2 — Bypass Token consumed once a round of the armed module lands. Clearing here
   // (rather than in each Done handler) keeps the contract central and consistent.
   if(u.bypassArmedModule===modId)u.bypassArmedModule=null;
   return u;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// pickAdaptive — Personalization Phase 2 (2026-05-06)
+// Weighted question selection driven by per-category accuracy stored in
+// u.moduleScores[modId].catStats. Hybrid 60/40 formula (validated by
+// Jérémy) : 60% picks weighted by category weakness, 40% pure random.
+// Cold start (no cat with ≥5 samples) falls back to pure shuffle so new
+// users aren't penalized by a biased pool.
+// ═══════════════════════════════════════════════════════════════════════
+function pickAdaptive(u,all,modId,target){
+  if(!target)target=10;
+  var cs=(u&&u.moduleScores&&u.moduleScores[modId]&&u.moduleScores[modId].catStats)||{};
+  var hasData=Object.keys(cs).some(function(k){return cs[k]&&cs[k].total>=5;});
+  if(!hasData)return shuffle(all).slice(0,target);
+
+  // Bucket items by cat (fall back to "Other" if missing)
+  var byCat={};
+  all.forEach(function(q){var c=q.cat||"Other";if(!byCat[c])byCat[c]=[];byCat[c].push(q);});
+
+  // Weight per cat : weakness = 1 - accuracy, floor 0.1 to keep some chance of being picked
+  // even for mastered topics. Cats with insufficient data get a neutral 0.5 weight.
+  var weights={};
+  Object.keys(byCat).forEach(function(c){
+    var s=cs[c];
+    if(!s||s.total<5)weights[c]=0.5;
+    else weights[c]=Math.max(0.1,1-(s.correct/s.total));
+  });
+
+  // 60% weighted picks : sample a cat by weights, then a random item in that cat.
+  // Each picked item is removed from the pool so we don't repeat.
+  var weightedN=Math.round(target*0.6);
+  var randomN=target-weightedN;
+  var available=JSON.parse(JSON.stringify(byCat));
+  var picked=[],pickedIds={};
+  for(var i=0;i<weightedN;i++){
+    var cats=Object.keys(available).filter(function(c){return available[c].length>0;});
+    if(cats.length===0)break;
+    var totalW=0;cats.forEach(function(c){totalW+=weights[c];});
+    var r=Math.random()*totalW,sumW=0,chosenCat=cats[0];
+    for(var j=0;j<cats.length;j++){sumW+=weights[cats[j]];if(r<=sumW){chosenCat=cats[j];break;}}
+    var pool=available[chosenCat];
+    var idx=Math.floor(Math.random()*pool.length);
+    var q=pool.splice(idx,1)[0];
+    picked.push(q);pickedIds[q.id]=true;
+  }
+  // 40% random picks from remaining items
+  var remaining=all.filter(function(q){return !pickedIds[q.id];});
+  var randomPicks=shuffle(remaining).slice(0,randomN);
+  return shuffle(picked.concat(randomPicks));
 }
 function checkMission(u,modId){
   if(!u.mission)return u;
@@ -4208,6 +4268,58 @@ function Mentor(p){
         })
       }
       {unmeasured.length>0&&measured.length>0&&<div style={{fontSize:11,color:"var(--t3)",marginTop:8,fontStyle:"italic"}}>{unmeasured.length+" area"+(unmeasured.length>1?"s":"")+" not yet measured — train them to unlock their score."}</div>}
+
+      {/* ─── Grammar deep dive — Personalization Phase 2 (2026-05-06) ───
+         Aggregates the 12 P5 sub-cats into 4 macros (Verbs / Linking / Forms /
+         Reference). Sorted weakest-first. Each row taps to launch Drill where
+         pickAdaptive will weight the question selection toward that macro. */}
+      {(function(){
+        var ds=u.moduleScores&&u.moduleScores.drill;
+        var cs=(ds&&ds.catStats)||{};
+        var hasGrammar=Object.keys(cs).some(function(k){return cs[k]&&cs[k].total>=5;});
+        if(!hasGrammar)return null;
+        var macros=[
+          {key:"Verbs",icon:"crossed-swords",subcats:["Tenses","Gerunds vs Infinitives","Passive Voice","Conditionals","Subject-Verb Agreement"]},
+          {key:"Linking",icon:"linked-rings",subcats:["Connectors","Prepositions","Collocations"]},
+          {key:"Forms",icon:"quill-ink",subcats:["Word Families","Comparatives","Articles"]},
+          {key:"Reference",icon:"family-tree",subcats:["Relative Pronouns"]}
+        ];
+        var macroData=macros.map(function(m){
+          var sumC=0,sumT=0;
+          var subs=m.subcats.map(function(c){var s=cs[c];if(!s||s.total<1)return{cat:c,acc:null,n:0};sumC+=s.correct;sumT+=s.total;return{cat:c,acc:s.correct/s.total,n:s.total};});
+          if(sumT===0)return null;
+          var weakest=subs.filter(function(s){return s.acc!==null&&s.n>=3;}).sort(function(a,b){return a.acc-b.acc;})[0];
+          return{key:m.key,icon:m.icon,acc:sumC/sumT,n:sumT,weakest:weakest};
+        }).filter(Boolean).sort(function(a,b){return a.acc-b.acc;});
+        if(macroData.length===0)return null;
+        return(<div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--bdr)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+            <GIcon name="scroll-quill" size={16} color="var(--purple)"/>
+            <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{"Grammar deep dive"}</div>
+          </div>
+          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,lineHeight:1.5}}>{"Tap a topic to drill it. The picker weights toward your weaknesses."}</div>
+          {macroData.map(function(m){
+            var pct=Math.round(m.acc*100);
+            var col=pct>=85?"var(--green)":pct>=70?"var(--cyan)":pct>=50?"var(--orange)":"var(--red)";
+            return(<button key={m.key} onClick={function(){setSheet(null);if(p.nav)p.nav("drill");}}
+              style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:6,width:"100%",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+              <GIcon name={m.icon} size={18} color={col}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>{m.key}</span>
+                  <span className="out" style={{fontSize:11,fontWeight:700,color:col}}>{pct+"%"}</span>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
+                  <div style={{flex:1,height:4,borderRadius:2,background:"rgba(0,0,0,.15)",overflow:"hidden"}}>
+                    <div style={{width:Math.min(100,pct)+"%",height:"100%",background:col,transition:"width .3s"}}/>
+                  </div>
+                </div>
+                {m.weakest&&<div style={{fontSize:10,color:"var(--t3)",marginTop:3}}>{"weakest : "+m.weakest.cat+" ("+Math.round(m.weakest.acc*100)+"%)"}</div>}
+              </div>
+            </button>);
+          })}
+        </div>);
+      })()}
     </MentorSheet>
   </div>);
 }
@@ -4963,9 +5075,24 @@ return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
 return(<button key={b.r} onClick={function(e){e.stopPropagation();rate(b.r);}} style={{padding:"12px 8px",background:b.b,border:"1px solid "+b.c+"33",borderRadius:12,cursor:"pointer",color:b.c,fontWeight:700,fontSize:13}} className="out">{b.l}</button>);})}</div>}</div>);}
 
 // ─── DRILL SESSION ───
-function Drill(p){var qs=useMemo(function(){return shuffle(QUESTIONS).slice(0,10);},[]);var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[sk,sSk]=useState(false);
-function doAns(i){sS(i);if(i===qs[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},500);}sP("fb");}
-function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sP("done");p.done(sc,qs.length,20+sc*7);}}
+function Drill(p){
+// Personalization Phase 2 (2026-05-06) : adaptive picker driven by u.moduleScores.drill.catStats.
+// Cold start (no cat ≥5 samples) falls back to pure shuffle inside pickAdaptive.
+var qs=useMemo(function(){return pickAdaptive(p.u,QUESTIONS,"drill",10);},[]);
+var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[sk,sSk]=useState(false);
+// Per-cat counter populated through the round, persisted via p.done → drillDone → recordModule.
+var catStatsRef=useRef({});
+function doAns(i){
+  sS(i);
+  var q=qs[ci];var cat=q.cat||"Other";
+  var prev=catStatsRef.current[cat]||{correct:0,total:0};
+  var correct=i===q.c;
+  catStatsRef.current[cat]={correct:prev.correct+(correct?1:0),total:prev.total+1};
+  if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}
+  else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},500);}
+  sP("fb");
+}
+function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sP("done");p.done(sc,qs.length,20+sc*7,catStatsRef.current);}}
 
 if(ph==="done"){var fx=20+sc*7;if(p.gate)fx=p.gate(fx,sc,qs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
 <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Drill Complete</h1>
@@ -6293,7 +6420,9 @@ function Part6Drill(p){
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 6 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalBlanks*0.8?"var(--green)":sc>=totalBlanks*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalBlanks}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+    <button className="btn1" onClick={p.back}>Back to Training</button>
+    <NextStepReco u={p.u} fromMod="p6" nav={p.nav}/>
+    </div>);}
 
   // Build text display with blanks highlighted
   function renderText(){
@@ -6392,7 +6521,9 @@ function Part7Read(p){
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Reading Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+    <button className="btn1" onClick={p.back}>Back to Training</button>
+    <NextStepReco u={p.u} fromMod="p7" nav={p.nav}/>
+    </div>);}
 
 // Reading view — show passage with question preview toggle
   if(ph==="read")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -12005,7 +12136,9 @@ function ListenP3(p){
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 3 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button></div>);}
+    <button className="btn1" onClick={p.back}>Back</button>
+    <NextStepReco u={p.u} fromMod="lisP3" nav={p.nav}/>
+    </div>);}
 
   var it=items[ci];
 
@@ -12110,7 +12243,9 @@ function ListenP4(p){
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 4 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button></div>);}
+    <button className="btn1" onClick={p.back}>Back</button>
+    <NextStepReco u={p.u} fromMod="lisP4" nav={p.nav}/>
+    </div>);}
 
   var it=items[ci];
 
@@ -15524,7 +15659,7 @@ var prevLeague=getLeague(c.weeklyXp);
     var pruneDate=new Date();pruneDate.setDate(pruneDate.getDate()-45);var pruneStr=pruneDate.toISOString().slice(0,10);
     c.dailySeen=c.dailySeen.filter(function(entry){return entry.date>=pruneStr;});
     sv(c);}
-  function drillDone(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"drill");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot);checkMission(c,"drill");sv(c);}
+  function drillDone(sc,tot,xp,catStats){var gxp=applyXpGates(xp,sc,tot,"drill");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);checkMission(c,"drill");sv(c);}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);gxp=Math.round(gxp*getSpotlightMult(modId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
   function cardsDone(xp,ok,tot){
@@ -15672,14 +15807,14 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="stratquiz")return pg(<StratQuizPage u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"stratquiz");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="timesim")return pg(<TimeSim u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"timesim");}} nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
-  if(sp==="p6")return pg(<Part6Drill u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"p6");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
-  if(sp==="p7")return pg(<Part7Read u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"p7");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="p6")return pg(<Part6Drill u={u} nav={nav} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"p6");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="p7")return pg(<Part7Read u={u} nav={nav} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"p7");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="lis")return pg(<ListenHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="lisP1")return pg(<ListenP1 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP1");}} back={function(){sSP("lis");}}/>);
   if(sp==="read")return pg(<ReadingHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="lisP2")return pg(<ListenP2 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP2");}} back={function(){sSP("lis");}}/>);
-  if(sp==="lisP3")return pg(<ListenP3 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP3");}} back={function(){sSP("lis");}}/>);
-  if(sp==="lisP4")return pg(<ListenP4 u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP4");}} back={function(){sSP("lis");}}/>);
+  if(sp==="lisP3")return pg(<ListenP3 u={u} nav={nav} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP3");}} back={function(){sSP("lis");}}/>);
+  if(sp==="lisP4")return pg(<ListenP4 u={u} nav={nav} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP4");}} back={function(){sSP("lis");}}/>);
 
   return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
     {!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}
