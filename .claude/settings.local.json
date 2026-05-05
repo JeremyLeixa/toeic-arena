@@ -31,7 +31,9 @@
       "Bash(awk 'NR>=9111 && NR<=9270' src/App.jsx)",
       "Bash(git checkout *)",
       "Bash(sed -i '4212,4314d' src/App.jsx)",
-      "Bash(sed -n '4208,4218p' src/App.jsx)"
+      "Bash(sed -n '4208,4218p' src/App.jsx)",
+      "Bash(sed -i '14207,14296d' src/App.jsx)",
+      "Bash(sed -n '14200,14215p' src/App.jsx)"
     ]
   }
 }

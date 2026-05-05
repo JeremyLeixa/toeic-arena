@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-mentor-iter-2";
+var BUILD_ID="2026-05-05-profile-settings-consolidation";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -13832,6 +13832,103 @@ function Profile(p){
     return(<ConversionsView u={u} setView={setView} setAvatar={p.setAvatar}/>);
   }
 
+  // ── SOUS-PAGE COMPTE & PARAMÈTRES ───────────────────────────────────────
+  // Consolide 5 anciens CTAs du Profile principal (abonnement, confidentialité,
+  // médiation, gestion du compte, changer de profil) en une seule entrée
+  // "⚙️ Compte & paramètres" pour alléger la page d'accueil du Profile.
+  // Les sous-blocs juridiques (Privacy, Mediation) restent en overlay
+  // plein-écran, "Gestion du compte" pointe vers le sous-view "account"
+  // existant (sécurité, exports, suppression).
+  if(view==="settings"){
+    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+      <button onClick={function(){setView("home");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"← Back"}</button>
+      <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:4}}>{"Compte & paramètres"}</h1>
+      <p style={{color:"var(--t3)",fontSize:12,marginBottom:20}}>{"Abonnement, mentions légales, gestion du compte"}</p>
+
+      {/* ─── ABONNEMENT ─── */}
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"Abonnement"}</div>
+      {(function(){
+        var lvl=u.accessLevel||"free";
+        var isPremium=lvl==="premium_monthly"||lvl==="premium_pass";
+        var expiresAt=u.accessExpiresAt?new Date(u.accessExpiresAt):null;
+        var expStr=expiresAt?expiresAt.toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"}):null;
+        if(isPremium){
+          var label=lvl==="premium_monthly"?"Premium Mensuel":"TOEIC Pass 3 mois";
+          var icon=lvl==="premium_monthly"?"🔁":"🎟️";
+          var tagline=lvl==="premium_monthly"
+            ?(expStr?"Prochain prélèvement le "+expStr:"Actif")
+            :(expStr?"Expire le "+expStr:"Actif");
+          var isMonthly=lvl==="premium_monthly";
+          async function openPortal(){
+            try{await openCustomerPortal();}catch(e){alert("Erreur : "+((e&&e.message)||"impossible d'ouvrir le portail."));}
+          }
+          return(<div className="crd" style={{marginBottom:16,padding:"12px 14px",background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.06))",border:"1px solid rgba(255,215,0,.2)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:isMonthly?10:0}}>
+              <span style={{fontSize:22,flexShrink:0}}>{icon}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--gold)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{label}</div>
+                <div style={{fontSize:10,color:"var(--t2)",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{tagline}</div>
+              </div>
+              {!isMonthly&&<button className="btn2" onClick={openPortal} style={{flexShrink:0,fontSize:12,padding:"8px 12px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
+                {"🔧 Gérer"}
+              </button>}
+            </div>
+            {isMonthly&&<div style={{display:"flex",gap:8}}>
+              <button onClick={openPortal} style={{flex:1,fontSize:12,padding:"10px 12px",background:"rgba(224,82,82,.08)",border:"1px solid rgba(224,82,82,.3)",borderRadius:10,color:"var(--red)",fontFamily:"'DM Sans',sans-serif",fontWeight:600,cursor:"pointer"}}>
+                {"✕ Résilier"}
+              </button>
+              <button className="btn2" onClick={openPortal} style={{flex:1,fontSize:12,padding:"10px 12px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
+                {"🔧 Gérer"}
+              </button>
+            </div>}
+          </div>);
+        }
+        if(!PREMIUM_UPGRADE_ENABLED){
+          return(<div className="crd" style={{marginBottom:16,padding:"14px 16px",background:"rgba(var(--cx),.04)",border:"1px dashed var(--bdr)",display:"flex",alignItems:"center",gap:12}}>
+            <span style={{fontSize:22,flexShrink:0,opacity:.6}}>{"🏰"}</span>
+            <div style={{flex:1}}>
+              <div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t2)"}}>{"Arena Premium"}</div>
+              <div style={{fontSize:11,color:"var(--t3)",marginTop:2,lineHeight:1.4}}>{"Fonctionnalité à venir."}</div>
+            </div>
+          </div>);
+        }
+        return(<button className="btn1" onClick={function(){p.goUpgrade&&p.goUpgrade();}}
+          style={{width:"100%",fontSize:14,padding:"13px 20px",marginBottom:16,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700}}>
+          {"🏰 Passer à Arena Premium"}
+        </button>);
+      })()}
+
+      {/* ─── INFOS LÉGALES ─── */}
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"Mentions légales"}</div>
+      <button className="btn2" onClick={function(){setShowPrivacy(true);}}
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
+        {"🛡️ Politique de confidentialité"}
+      </button>
+      <button className="btn2" onClick={function(){setShowMediation(true);}}
+        style={{fontSize:13,width:"100%",marginBottom:16,borderColor:"var(--bdr)",color:"var(--t2)"}}>
+        {"⚖️ Médiation de la consommation"}
+      </button>
+
+      {/* ─── COMPTE ─── */}
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"Compte"}</div>
+      <button className="btn2" onClick={function(){setView("account");}}
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)",padding:"12px 16px"}}>
+        {"⚙️ Gestion du compte"}
+      </button>
+      <button className="btn2" onClick={function(){if(confirm("Changer de profil ? Vos données restent sauvegardées. Tapez votre nom au prochain écran pour vous reconnecter."))p.logout();}}
+        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
+        {"🔄 Changer de profil"}
+      </button>
+
+      {showPrivacy&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
+        <PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>
+      </div>}
+      {showMediation&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
+        <MediationInfo onClose={function(){setShowMediation(false);}}/>
+      </div>}
+    </div>);
+  }
+
   // ── SOUS-PAGE GESTION DU COMPTE ─────────────────────────────────────────
   if(view==="account"){
     return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -14108,95 +14205,14 @@ function Profile(p){
 
       {/* (GDPR Export moved to Gestion du compte sub-page) */}
 
-      {/* Subscription section — Phase 3 Session 2 */}
-      {(function(){
-        var lvl=u.accessLevel||"free";
-        var isPremium=lvl==="premium_monthly"||lvl==="premium_pass";
-        var expiresAt=u.accessExpiresAt?new Date(u.accessExpiresAt):null;
-        var expStr=expiresAt?expiresAt.toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"}):null;
-        if(isPremium){
-          var label=lvl==="premium_monthly"?"Premium Mensuel":"TOEIC Pass 3 mois";
-          var icon=lvl==="premium_monthly"?"\uD83D\uDD01":"\uD83C\uDF9F\uFE0F";
-          var tagline=lvl==="premium_monthly"
-            ?(expStr?"Prochain pr\u00e9l\u00e8vement le "+expStr:"Actif")
-            :(expStr?"Expire le "+expStr:"Actif");
-          var isMonthly=lvl==="premium_monthly";
-          async function openPortal(){
-            try{await openCustomerPortal();}catch(e){alert("Erreur : "+((e&&e.message)||"impossible d'ouvrir le portail."));}
-          }
-          // Bloc résiliation/gestion.
-          // - Premium Mensuel : obligation L.215-1-1 Code conso (loi "bouton
-          //   résiliation") → CTA "Résilier" direct et visible. Le portail
-          //   Stripe héberge la fonction de cancel, mais le parcours depuis
-          //   TOEIC Arena doit être direct.
-          // - TOEIC Pass 3 mois : pas concerné par L.215-1-1 (paiement
-          //   unique sans reconduction). Un seul bouton "Gérer" (pour les
-          //   factures).
-          return(<div className="crd" style={{marginBottom:12,padding:"12px 14px",background:"linear-gradient(135deg,rgba(255,215,0,.08),rgba(var(--cx),.06))",border:"1px solid rgba(255,215,0,.2)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:isMonthly?10:0}}>
-              <span style={{fontSize:22,flexShrink:0}}>{icon}</span>
-              <div style={{flex:1,minWidth:0}}>
-                <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--gold)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{label}</div>
-                <div style={{fontSize:10,color:"var(--t2)",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{tagline}</div>
-              </div>
-              {!isMonthly&&<button className="btn2" onClick={openPortal} style={{flexShrink:0,fontSize:12,padding:"8px 12px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
-                {"\uD83D\uDD27 G\u00e9rer"}
-              </button>}
-            </div>
-            {isMonthly&&<div style={{display:"flex",gap:8}}>
-              <button onClick={openPortal} style={{flex:1,fontSize:12,padding:"10px 12px",background:"rgba(224,82,82,.08)",border:"1px solid rgba(224,82,82,.3)",borderRadius:10,color:"var(--red)",fontFamily:"'DM Sans',sans-serif",fontWeight:600,cursor:"pointer"}}>
-                {"\u2715 R\u00e9silier"}
-              </button>
-              <button className="btn2" onClick={openPortal} style={{flex:1,fontSize:12,padding:"10px 12px",borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
-                {"\uD83D\uDD27 G\u00e9rer"}
-              </button>
-            </div>}
-          </div>);
-        }
-        if(!PREMIUM_UPGRADE_ENABLED){
-          return(<div className="crd" style={{marginBottom:12,padding:"14px 16px",background:"rgba(var(--cx),.04)",border:"1px dashed var(--bdr)",display:"flex",alignItems:"center",gap:12}}>
-            <span style={{fontSize:22,flexShrink:0,opacity:.6}}>{"\uD83C\uDFF0"}</span>
-            <div style={{flex:1}}>
-              <div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t2)"}}>{"Arena Premium"}</div>
-              <div style={{fontSize:11,color:"var(--t3)",marginTop:2,lineHeight:1.4}}>{"Fonctionnalit\u00e9 \u00e0 venir."}</div>
-            </div>
-          </div>);
-        }
-        return(<button className="btn1" onClick={function(){p.goUpgrade&&p.goUpgrade();}}
-          style={{width:"100%",fontSize:14,padding:"13px 20px",marginBottom:12,background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700}}>
-          {"\uD83C\uDFF0 Passer \u00e0 Arena Premium"}
-        </button>);
-      })()}
-
-      {/* Legal info (privacy + mediation) — accessible separately, obligations
-          art. 13 RGPD et L616-1 Code de la conso */}
-      <button className="btn2" onClick={function(){setShowPrivacy(true);}}
-        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
-        {"🛡️ Politique de confidentialit\u00e9"}
+      {/* Compte & paramètres — single CTA replacing the old stack of 5 buttons
+         (Subscription / Privacy / Mediation / Gestion / Logout). The full bloc
+         lives in setView("settings") sub-page (2026-05-05 PM consolidation). */}
+      <button className="btn2" onClick={function(){setView("settings");}}
+        style={{fontSize:13,width:"100%",marginTop:16,marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)",padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <span>{"⚙️ Compte & paramètres"}</span>
+        <span style={{color:"var(--t3)"}}>{"›"}</span>
       </button>
-      <button className="btn2" onClick={function(){setShowMediation(true);}}
-        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"var(--bdr)",color:"var(--t2)"}}>
-        {"\u2696\uFE0F M\u00e9diation de la consommation"}
-      </button>
-
-      {/* Gestion du compte — groups Email, Export, Delete, Reset into a sub-page */}
-      <button className="btn2" onClick={function(){setView("account");}}
-        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)",padding:"12px 16px"}}>
-        {"\u2699\uFE0F Gestion du compte"}
-      </button>
-
-      {/* Logout — kept on main for quick access */}
-      <button className="btn2" onClick={function(){if(confirm("Changer de profil ? Vos donn\u00e9es restent sauvegard\u00e9es. Tapez votre nom au prochain \u00e9cran pour vous reconnecter."))p.logout();}}
-        style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
-        {"\uD83D\uDD04 Changer de profil"}
-      </button>
-
-      {showPrivacy&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
-        <PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>
-      </div>}
-      {showMediation&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
-        <MediationInfo onClose={function(){setShowMediation(false);}}/>
-      </div>}
     </div>
   );
 }
