@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-mentor-map-responsive";
+var BUILD_ID="2026-05-05-mentor-tab-2nd-fade";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -2825,7 +2825,7 @@ function XpToast(p){if(!p.v)return null;
 // restent en place, lecture/écriture inertes dans supaToLocal/save/fresh, pour
 // éviter une migration BDD destructive. Nettoyage différé si le concept ne ressort pas.
 
-function Tabs(p){var tabs=[{id:"home",l:"Home",i:"castle"},{id:"train",l:"Train",i:"bullseye"},{id:"games",l:"Games",i:"coliseum"},{id:"mentor",l:"Mentor",i:"wizard-staff"},{id:"league",l:"League",i:"laurel-crown"},{id:"profile",l:"Profile",i:"visored-helm"}];
+function Tabs(p){var tabs=[{id:"home",l:"Home",i:"castle"},{id:"mentor",l:"Mentor",i:"wizard-staff"},{id:"train",l:"Train",i:"bullseye"},{id:"games",l:"Games",i:"coliseum"},{id:"league",l:"League",i:"laurel-crown"},{id:"profile",l:"Profile",i:"visored-helm"}];
 var blocked=p.blocked||[];
 // 6 tabs : tighter container padding + per-button padding so "Profile" doesn't truncate
 // on narrow screens (≤375px). Icon stays 24px, label drops 11→10px.
@@ -3987,11 +3987,14 @@ function MentorMap(p){
   var aspectRatio=isDesktop?"1338/860":"2/3";
 
   var aldricBadgePos=aldricCoords.side==="left"?{left:"calc(100% + 8px)"}:{right:"calc(100% + 8px)"};
-  return(<div className="mentor-map-wrap" style={{position:"relative",width:"100%",aspectRatio:aspectRatio,marginBottom:14,borderRadius:14,overflow:"hidden",background:"#0a0805",boxShadow:"0 0 30px rgba(0,0,0,.35)"}}>
+  return(<div className="mentor-map-wrap" style={{position:"relative",width:"100%",aspectRatio:aspectRatio,marginBottom:14}}>
     <img src={imgSrc} alt="The Mentor's Map"
       style={{width:"100%",height:"100%",objectFit:"cover",display:"block",filter:"contrast(1.05)"}}
       onError={function(e){e.target.style.display="none";}}/>
-    <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center, transparent 55%, rgba(10,8,5,.45) 100%)",pointerEvents:"none"}}/>
+    {/* Soft 4-edge fade to the page bg — blends the map seamlessly into the
+        Mentor screen without a hard rectangular border. Stronger on edges,
+        clear in the center where the hotspots live. */}
+    <div style={{position:"absolute",inset:0,background:"linear-gradient(to right, var(--bg) 0%, transparent 8%, transparent 92%, var(--bg) 100%), linear-gradient(to bottom, var(--bg) 0%, transparent 8%, transparent 92%, var(--bg) 100%)",pointerEvents:"none"}}/>
     {/* Aldric figure — clickable to replay his Side Chronicle. Position + badge
         side adapt to the active map layout. */}
     {p.onAldricTap&&hasHeardMoment(u,"mentor_intro")&&<button onClick={p.onAldricTap}
