@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-perso-phase1-c2-goal-editor";
+var BUILD_ID="2026-05-05-perso-phase1-c3-home-progress";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -3694,6 +3694,100 @@ var[step,sSt]=useState("name");
     </div>);
 }
 // ─── HOME ───
+// ═══════════════════════════════════════════════════════════════════════
+// GoalProgressCard — Personalization Phase 1 commit 3 (2026-05-05)
+// Renders on Home between the League/Level card and the Daily Quest.
+// 2 states :
+//   1. No goal set → CTA card linking to Profile editor.
+//   2. Goal set → progress bar + pace + ETA.
+// ETA computed from weekly_snapshots (last 6) : avg TOEIC delta per week
+// applied linearly to remaining gap (no log curve per Jérémy's call).
+// Falls back to "ETA available after 2 weeks of training" if <2 snapshots.
+// ═══════════════════════════════════════════════════════════════════════
+function GoalProgressCard(p){
+  var u=p.u;
+  var hasGoal=!!u.targetToeic&&!!u.targetDate;
+  var[snaps,setSnaps]=useState(null);
+  useEffect(function(){
+    if(!hasGoal){setSnaps([]);return;}
+    var cn=u.name,cc=u.classCode||"visitor";
+    supabase.from("weekly_snapshots")
+      .select("week_id,week_start,module_scores_snapshot")
+      .ilike("student_name",cn).eq("class_code",cc)
+      .order("week_start",{ascending:false}).limit(6)
+      .then(function(r){
+        if(r.error){console.warn("[GoalCard] snaps fetch failed:",r.error.message);setSnaps([]);return;}
+        setSnaps(r.data||[]);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[hasGoal,u.name,u.classCode,u.targetToeic,u.targetDate]);
+
+  if(!hasGoal){
+    return(<div className="crd" onClick={function(){p.tabGo&&p.tabGo("profile");}}
+      style={{marginBottom:16,padding:"14px 16px",background:"rgba(139,92,246,.06)",border:"1px dashed rgba(139,92,246,.35)",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+      <span style={{fontSize:24}}>{"🎯"}</span>
+      <div style={{flex:1}}>
+        <div className="out" style={{fontWeight:800,fontSize:14,color:"var(--purple)"}}>{"Define your TOEIC goal"}</div>
+        <div style={{fontSize:11,color:"var(--t2)",marginTop:2,lineHeight:1.4}}>{"Set a target score + date in Profile to unlock your progress tracker."}</div>
+      </div>
+      <span style={{fontSize:18,color:"var(--purple)"}}>{"›"}</span>
+    </div>);
+  }
+
+  var current=estimateTOEICScore(u.moduleScores||{}).total;
+  var target=u.targetToeic;
+  // Oldest-first toeic series (so deltas are positive when learner improves)
+  var series=(snaps||[]).slice().reverse().map(function(s){
+    return{toeic:estimateTOEICScore(s.module_scores_snapshot||{}).total};
+  });
+  var avgDeltaPerWeek=null;
+  if(series.length>=2){
+    var first=series[0].toeic,last=series[series.length-1].toeic;
+    avgDeltaPerWeek=(last-first)/(series.length-1);
+  }
+  // Progress bar baseline : first snapshot if available, else min(current, 200)
+  var baseline=series.length>0?series[0].toeic:Math.min(current,200);
+  if(baseline>current)baseline=Math.min(current,200);
+  var pct=target>baseline?Math.max(0,Math.min(100,(current-baseline)/(target-baseline)*100)):100;
+  var done=current>=target;
+
+  var todayD=new Date();var targetD=new Date(u.targetDate);
+  var daysLeft=Math.round((targetD.getTime()-todayD.getTime())/86400000);
+  var etaText,etaColor;
+  if(done){etaText="Goal reached 🏆";etaColor="var(--green)";}
+  else if(snaps===null){etaText="Loading pace…";etaColor="var(--t2)";}
+  else if(series.length<2||avgDeltaPerWeek===null){etaText="ETA available after 2 weeks of training";etaColor="var(--t2)";}
+  else if(avgDeltaPerWeek<=0){etaText="Pace stalled — push training to make progress";etaColor="var(--orange)";}
+  else{
+    var weeksNeeded=(target-current)/avgDeltaPerWeek;
+    var etaDate=new Date(todayD.getTime()+weeksNeeded*7*86400000);
+    var fmtFR=etaDate.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});
+    if(etaDate<=targetD){etaText="ETA "+fmtFR+" · on track ✓";etaColor="var(--green)";}
+    else{var daysLate=Math.round((etaDate.getTime()-targetD.getTime())/86400000);etaText="ETA "+fmtFR+" · "+daysLate+"d behind";etaColor="var(--orange)";}
+  }
+  var paceText=avgDeltaPerWeek!==null?((avgDeltaPerWeek>=0?"+":"")+Math.round(avgDeltaPerWeek)+" pts/week"):null;
+  var paceColor=avgDeltaPerWeek===null?"var(--t2)":(avgDeltaPerWeek>=5?"var(--green)":avgDeltaPerWeek>=0?"var(--cyan)":"var(--orange)");
+  var daysLabel=daysLeft>0?daysLeft+"d left":daysLeft===0?"target day":Math.abs(daysLeft)+"d past";
+  var daysCol=daysLeft>=14?"var(--t2)":daysLeft>=0?"var(--orange)":"var(--red)";
+
+  return(<div className="crd" style={{marginBottom:16,padding:"14px 16px",background:"linear-gradient(135deg,rgba(139,92,246,.08),rgba(var(--cx),.04))",border:"1px solid rgba(139,92,246,.25)"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <span style={{fontSize:18}}>{"🎯"}</span>
+        <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{"Goal: "+target+" TOEIC"}</div>
+      </div>
+      <div className="out" style={{fontSize:11,fontWeight:700,color:daysCol}}>{daysLabel}</div>
+    </div>
+    <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:6}}>
+      <div className="out" style={{fontSize:24,fontWeight:900,color:done?"var(--green)":"var(--cyan)"}}>{current}</div>
+      <div style={{fontSize:11,color:"var(--t2)"}}>{"/ "+target}</div>
+      {paceText&&<div className="out" style={{marginLeft:"auto",fontSize:11,fontWeight:700,color:paceColor}}>{paceText}</div>}
+    </div>
+    <Bar value={Math.round(pct)} max={100} h={6} color={done?"linear-gradient(90deg,#0e8e57,#1ed27a)":"linear-gradient(90deg,#8b5cf6,#06b6d4)"}/>
+    <div style={{fontSize:11,color:etaColor,marginTop:8,fontWeight:600}}>{etaText}</div>
+  </div>);
+}
+
 function Home(p){
 var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily&&u.daily.date===today()&&u.daily.done;
 // ── Single-pulse priority (UX focus): chest > mock > daily > event ──
@@ -3775,6 +3869,9 @@ return(
 <span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div>
 <span style={{fontSize:18,color:"var(--t3)",lineHeight:1}}>{"›"}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
+
+{/* Goal progress — Personalization Phase 1 commit 3 */}
+<GoalProgressCard u={u} tabGo={p.tabGo}/>
 
 {/* ═══ Smart Daily Quest — sequential reveal: Mission → Bonus Challenge → Rest ═══ */}
 {function(){
