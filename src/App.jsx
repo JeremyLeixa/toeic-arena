@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-p3p4-per-question-spoken-train";
+var BUILD_ID="2026-05-05-perso-phase1-c1-data-model";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -561,6 +561,9 @@ function supaToLocal(data){
     cgvAcceptedAt: data.cgv_accepted_at || null,
     cgvVersion: data.cgv_version || null,
     retractationWaivedAt: data.retractation_waived_at || null,
+    // Personalization Phase 1 (2026-05-05) — opt-in goal-setting (Profile editor)
+    targetToeic: data.target_toeic || null,
+    targetDate: data.target_date || null,
   };
 }
 
@@ -693,6 +696,9 @@ async function save(d){
     cgv_accepted_at:d.cgvAcceptedAt||null,
     cgv_version:d.cgvVersion||null,
     retractation_waived_at:d.retractationWaivedAt||null,
+    // Personalization Phase 1 (2026-05-05) — opt-in goal-setting
+    target_toeic:d.targetToeic||null,
+    target_date:d.targetDate||null,
   };
   var cc=d.classCode||"visitor";
   try{
@@ -756,7 +762,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null,targetToeic:null,targetDate:null};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot){
