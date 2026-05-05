@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-perso-phase1-c3-home-progress";
+var BUILD_ID="2026-05-05-perso-phase1-c4-todays-focus";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -3695,6 +3695,55 @@ var[step,sSt]=useState("name");
 }
 // ─── HOME ───
 // ═══════════════════════════════════════════════════════════════════════
+// Personalization Phase 1 commit 4 (2026-05-05) — Today's Focus + reco
+// Maps a module id to a "part bucket" (p1-p7 + vocab), used by:
+//   - computeTodayFocus(u) → finds the user's weakest part with enough data.
+//   - applyXpGates → applies a +25% XP boost when modId maps to focus part.
+//   - <NextStepReco/> → suggests the next module on done screens.
+// Modules that don't fit a single part (mocks, boss, daily, games) are not
+// mapped and therefore not boosted — those have their own incentive layers.
+// ═══════════════════════════════════════════════════════════════════════
+function partOfModule(modId){
+  if(!modId)return null;
+  if(modId==="lisP1")return"p1";
+  if(modId==="lisP2")return"p2";
+  if(modId==="lisP3")return"p3";
+  if(modId==="lisP4")return"p4";
+  if(modId==="p6")return"p6";
+  if(modId==="p7")return"p7";
+  if(modId==="tavern"||modId==="csess"||modId==="cdom"||modId==="phrasalpicker"||modId==="phrasaldojo")return"vocab";
+  if(modId==="drill"||modId==="wordfam"||modId==="connsort"||modId==="prepdrill"||modId==="gerinf"||modId==="falsefriends"||modId==="sbuild"||modId.indexOf("gauntlet_")===0||modId.indexOf("modals_")===0)return"p5";
+  return null;
+}
+// Per-part accuracy + sample size from u.moduleScores. Returns object keyed by part.
+function partAccuracies(ms){
+  function get(id){var d=ms&&ms[id];return d&&d.total?{acc:d.correct/d.total,n:d.total}:null;}
+  function avg(arr){var f=arr.filter(function(x){return x!==null;});if(f.length===0)return null;var sa=0,sn=0;f.forEach(function(x){sa+=x.acc*x.n;sn+=x.n;});return{acc:sa/sn,n:sn};}
+  var p5Mods=["drill","wordfam","connsort","prepdrill","gerinf","falsefriends","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","modals_match","modals_sort"];
+  var vocabMods=["tavern","csess","cdom","phrasalpicker"];
+  return{
+    p1:get("lisP1"),p2:get("lisP2"),p3:get("lisP3"),p4:get("lisP4"),
+    p5:avg(p5Mods.map(get)),p6:get("p6"),p7:get("p7"),vocab:avg(vocabMods.map(get))
+  };
+}
+// Find the weakest part with enough data. Returns {partId, acc, n, recoModId, label} or null.
+function computeTodayFocus(u){
+  if(!u||!u.moduleScores)return null;
+  var totalQ=(u.stats&&u.stats.totalQ)||0;
+  if(totalQ<20)return null; // need a baseline before personalizing
+  var pa=partAccuracies(u.moduleScores);
+  var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
+  var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
+  var weakest=null;
+  Object.keys(pa).forEach(function(k){
+    var d=pa[k];if(!d||d.n<10)return;
+    if(!weakest||d.acc<weakest.acc)weakest={partId:k,acc:d.acc,n:d.n};
+  });
+  if(!weakest||weakest.acc>=0.85)return null; // already strong → no banner
+  return Object.assign(weakest,{recoModId:reco[weakest.partId],label:labels[weakest.partId]});
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // GoalProgressCard — Personalization Phase 1 commit 3 (2026-05-05)
 // Renders on Home between the League/Level card and the Daily Quest.
 // 2 states :
@@ -3788,6 +3837,60 @@ function GoalProgressCard(p){
   </div>);
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// TodayFocusBanner — Home banner that surfaces the user's weakest part with
+// a CTA + a +25% XP today badge. Hidden if no focus available (cold start
+// or already strong everywhere).
+// ═══════════════════════════════════════════════════════════════════════
+function TodayFocusBanner(p){
+  var u=p.u;
+  var focus=computeTodayFocus(u);
+  if(!focus)return null;
+  var accPct=Math.round(focus.acc*100);
+  return(<button onClick={function(){p.nav&&p.nav(focus.recoModId);}}
+    style={{width:"100%",marginBottom:14,padding:"12px 16px",background:"linear-gradient(135deg,rgba(245,158,11,.12),rgba(139,92,246,.08))",border:"1px solid rgba(245,158,11,.3)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:"'DM Sans',sans-serif",textAlign:"left"}}>
+    <span style={{fontSize:24,flexShrink:0}}>{"🎯"}</span>
+    <div style={{flex:1,minWidth:0}}>
+      <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--orange)"}}>{"Today's focus: "+focus.label}</div>
+      <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>{"Your weakest area ("+accPct+"%) — train it now for "}<span className="out" style={{color:"var(--gold)",fontWeight:700}}>{"+25% XP"}</span></div>
+    </div>
+    <span style={{fontSize:18,color:"var(--orange)"}}>{"›"}</span>
+  </button>);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// NextStepReco — drop-in card for module done screens. Suggests the part
+// where the user is currently weakest (excluding the one they just did).
+// Used in Drill/Tavern/Listening done screens for V1, expandable later.
+// ═══════════════════════════════════════════════════════════════════════
+function NextStepReco(p){
+  var u=p.u,fromMod=p.fromMod,nav=p.nav;
+  if(!u||!u.moduleScores)return null;
+  var totalQ=(u.stats&&u.stats.totalQ)||0;
+  if(totalQ<20)return null;
+  var pa=partAccuracies(u.moduleScores);
+  var fromPart=partOfModule(fromMod);
+  var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
+  var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
+  var pickFrom=null;
+  Object.keys(pa).forEach(function(k){
+    if(k===fromPart)return; // suggest something different than what they just did
+    var d=pa[k];if(!d||d.n<10)return;
+    if(!pickFrom||d.acc<pickFrom.acc)pickFrom={partId:k,acc:d.acc};
+  });
+  if(!pickFrom||pickFrom.acc>=0.85)return null;
+  var accPct=Math.round(pickFrom.acc*100);
+  return(<button onClick={function(){if(nav)nav(reco[pickFrom.partId]);}}
+    style={{width:"100%",marginTop:12,padding:"12px 14px",background:"rgba(139,92,246,.06)",border:"1px solid rgba(139,92,246,.25)",borderRadius:12,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:"'DM Sans',sans-serif",textAlign:"left"}}>
+    <span style={{fontSize:20,flexShrink:0}}>{"➡️"}</span>
+    <div style={{flex:1,minWidth:0}}>
+      <div className="out" style={{fontWeight:700,fontSize:12,color:"var(--purple)"}}>{"Next: "+labels[pickFrom.partId]}</div>
+      <div style={{fontSize:10,color:"var(--t2)",marginTop:1}}>{"Your weakest remaining area ("+accPct+"%)"}</div>
+    </div>
+    <span style={{fontSize:14,color:"var(--purple)"}}>{"›"}</span>
+  </button>);
+}
+
 function Home(p){
 var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily&&u.daily.date===today()&&u.daily.done;
 // ── Single-pulse priority (UX focus): chest > mock > daily > event ──
@@ -3872,6 +3975,9 @@ return(
 
 {/* Goal progress — Personalization Phase 1 commit 3 */}
 <GoalProgressCard u={u} tabGo={p.tabGo}/>
+
+{/* Today's Focus — Personalization Phase 1 commit 4 */}
+<TodayFocusBanner u={u} nav={p.nav}/>
 
 {/* ═══ Smart Daily Quest — sequential reveal: Mission → Bonus Challenge → Rest ═══ */}
 {function(){
@@ -4567,7 +4673,9 @@ function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sP("done");p.don
 if(ph==="done"){var fx=20+sc*7;if(p.gate)fx=p.gate(fx,sc,qs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
 <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Drill Complete</h1>
 <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{qs.length}</div>
-<div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{fx} XP</div><button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+<div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{fx} XP</div><button className="btn1" onClick={p.back}>Back to Training</button>
+<NextStepReco u={p.u} fromMod="drill" nav={p.nav}/>
+</div>);}
 
 var q=qs[ci];return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -9100,6 +9208,7 @@ function WordTavern(p){
       <p className="out" style={{color:"var(--gold)",fontWeight:700,fontSize:20,marginBottom:16}}>+{gxp} XP</p>
       {missedCount>0&&<p style={{fontSize:12,color:"var(--red)",marginBottom:16}}>{missedCount} word{missedCount>1?"s":""} sent back to flashcard review</p>}
       <button className="btn1" onClick={p.back} style={{marginTop:8}}>Back to Games</button>
+      <NextStepReco u={p.u} fromMod="tavern" nav={p.nav}/>
     </div>);
   }
 
@@ -14882,6 +14991,19 @@ function sv(d){
       }
       gatedXp=Math.round(gatedXp*farmMult);
     }
+    // ── PILIER 3 : Today's Focus boost (Personalization Phase 1, 2026-05-05) ──
+    // +25% XP when the module the user just finished maps to their weakest part
+    // (computed live via computeTodayFocus). Soft incentive to follow the daily
+    // recommendation. Anti-farming layered ON TOP : if the user grinds the focus
+    // module 4× in a day, the diminishing returns above already cap their gain.
+    if(modId&&u){
+      try{
+        var focus=computeTodayFocus(u);
+        if(focus&&partOfModule(modId)===focus.partId){
+          gatedXp=Math.round(gatedXp*1.25);
+        }
+      }catch(e){console.warn("[focus-boost] computation failed:",e&&e.message);}
+    }
     return Math.max(0,gatedXp);
   }
   function addXp(baseAmt){if(baseAmt>0)try{playXP();}catch(e){}
@@ -15254,7 +15376,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="daily")return pg(<Daily u={u} done={dailyDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"daily");}} back={function(){sSP(null);}}/>);
   if(sp==="csess")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
-  if(sp==="drill")return pg(<Drill u={u} done={drillDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"drill");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="drill")return pg(<Drill u={u} nav={nav} done={drillDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"drill");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="wordfam")return pg(<WordFam u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"wordfam");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="connsort")return pg(<ConnSort u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"connsort");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="prepdrill")return pg(<PrepDrill u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"prepdrill");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
@@ -15270,7 +15392,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="boss"){playBGM("bgm_final");return pg(<BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sSPA("mocks");sT("train");}}/>);}
   if(sp==="endless"){playBGM("bgm_endless");return pg(<EndlessArena u={u} nav={nav} done={function(r,xp,meta){stopBGM();endlessDone(r,xp,meta);}} back={function(){stopBGM();sSP(null);sSPA("mocks");sT("train");}}/>);}
   if(sp==="mock3")return pg(<MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
-  if(sp==="tavern"){playBGM("bgm_tavern");return pg(<WordTavern u={u} done={function(sc,tot,xp){stopBGM();miniDone(sc,tot,xp);}} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"tavern");}} resetCard={function(c){sv(c);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="tavern"){playBGM("bgm_tavern");return pg(<WordTavern u={u} nav={nav} done={function(sc,tot,xp){stopBGM();miniDone(sc,tot,xp);}} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"tavern");}} resetCard={function(c){sv(c);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="matchE"){playBGM("bgm_speed");return pg(<SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="wfall"){playBGM("bgm_wfall");return pg(<WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="duel"){playBGM("bgm_duel");return pg(<DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
