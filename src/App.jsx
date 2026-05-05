@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-mentor-setuser-wired";
+var BUILD_ID="2026-05-05-mentor-bgm-ducking";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -2518,13 +2518,17 @@ function NarratorOverlay(props) {
     if(autoplayTimerRef.current){clearTimeout(autoplayTimerRef.current);autoplayTimerRef.current=null;}
     if(closeTimerRef.current){clearTimeout(closeTimerRef.current);closeTimerRef.current=null;}
     if(!moment || muted) return;
-    // 1s delay lets the fade-from-black complete before the voice kicks in.
+    // 2s delay lets the parchment fade-in AND the BGM fade-out complete
+    // before the voice kicks in. The narrator-bgm useEffect in main App
+    // calls stopBGM() (~600ms fade) the moment this overlay mounts, so by
+    // T+2s we have full silence under the voice. (was 1s pre-2026-05-05
+    // when BGM ducking wasn't wired — bumped for cleaner audio mix.)
     autoplayTimerRef.current = setTimeout(function(){
       var audio = audioRef.current;
       if(!audio) return;
       audio.play().then(function(){setPlaying(true);})
         .catch(function(err){console.warn("[narrator] autoplay blocked:", err&&err.message);});
-    }, 1000);
+    }, 2000);
     return function(){
       if(autoplayTimerRef.current){clearTimeout(autoplayTimerRef.current);autoplayTimerRef.current=null;}
     };
@@ -14586,6 +14590,19 @@ export default function App(){
       return q.slice(1);
     });
   }
+  // ─── NARRATOR BGM DUCKING ───
+  // When a chronicle becomes active : fade out the current BGM (stopBGM has
+  // a 600ms built-in fade). When it dismisses : restore bgm_home if we're on
+  // a tab that plays it. Combined with the 2s autoplay delay inside
+  // NarratorOverlay, this gives "click → fade out → silence → voice" flow.
+  useEffect(function(){
+    if(currentNarratorMoment){
+      try{stopBGM();}catch(e){console.warn("[narrator-bgm] stop:",e&&e.message);}
+    }else if(!sp&&(tab==="home"||tab==="mentor"||tab==="league"||tab==="profile")){
+      try{playBGM("bgm_home");}catch(e){console.warn("[narrator-bgm] resume:",e&&e.message);}
+    }
+  },[currentNarratorMoment,tab,sp]);
+
   // ─── NARRATOR STATE OBSERVERS ───
   // Single effect watching state-derived triggers. pushNarratorMoment is
   // idempotent (checks hasHeardMoment), so re-firing on every state change
@@ -15003,7 +15020,7 @@ useEffect(function(){
     if(sp&&AUDIO_ROUTES.indexOf(sp)!==-1){stopBGM();return;}
     if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
     // No subpage active and on a home-BGM tab → ensure bgm_home is playing
-    if(!sp&&(tab==="home"||tab==="league"||tab==="profile"))playBGM("bgm_home");
+    if(!sp&&(tab==="home"||tab==="mentor"||tab==="league"||tab==="profile"))playBGM("bgm_home");
   },[sp,tab]);
 
   // ── Time tracking (60s) + Cloud sync (every 2 min) + beforeunload ──
@@ -15563,9 +15580,10 @@ var prevLeague=getLeague(c.weeklyXp);
   var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
   var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
   var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);
-    // Mentor explicitly excluded from bgm_home — silence highlights Aldric's
-    // intro the first time, and keeps the "where I'm headed" mode contemplative.
-    if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();
+    // Mentor shares bgm_home with Home/League/Profile. The narrator-watcher
+    // useEffect below will fade it out automatically when Aldric speaks
+    // (first-open or replay) and restore it when the chronicle closes.
+    if(t==="home"||t==="mentor"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();
     sT(t);sSP(null);sSPA(null);
     // First-time Mentor open : fire Aldric's "Compass" Side Chronicle. Idempotent
     // (pushNarratorMoment checks hasHeardMoment), so navigating back doesn't replay.
