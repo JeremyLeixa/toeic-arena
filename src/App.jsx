@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-perso-phase1-c1-data-model";
+var BUILD_ID="2026-05-05-perso-phase1-c2-goal-editor";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -12686,6 +12686,11 @@ function Profile(p){
   var[pwdChange1,setPwdChange1]=useState("");var[pwdChange2,setPwdChange2]=useState("");
   var[pwdChangeBusy,setPwdChangeBusy]=useState(false);var[pwdChangeErr,setPwdChangeErr]=useState("");
   var[pwdChangeOK,setPwdChangeOK]=useState(false);
+  // Personalization Phase 1 commit 2 (2026-05-05) : goal editor (target TOEIC + date)
+  // Edit mode auto-active when no goal set yet, so the card looks like a CTA.
+  var[goalEditing,setGoalEditing]=useState(!u.targetToeic);
+  var[goalScore,setGoalScore]=useState(u.targetToeic||700);
+  var[goalDate,setGoalDate]=useState(u.targetDate||(function(){var d=new Date();d.setDate(d.getDate()+90);return d.toISOString().split("T")[0];})());
 
   useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});biometricAvailable().then(function(v){setBioAvail(v);});},[]);
   useEffect(function(){if(view==="inventory"||view==="avatar"){setInvLoading(true);Promise.all([getOwnedRewards(u.name,u.classCode||"visitor"),getOwnedTokens(u.name,u.classCode||"visitor")]).then(function(arr){setInvData(arr[0]);setInvTokens(arr[1]||{});setInvLoading(false);});}},[view]);
@@ -13771,6 +13776,71 @@ function Profile(p){
       </div>
 
       {/* (GDPR Export moved to Gestion du compte sub-page) */}
+
+      {/* Goal editor — Personalization Phase 1 (2026-05-05).
+         Optional opt-in goal-setting. NULL by default ; this card prompts the
+         user to set a target TOEIC + date, used by Home progress bar + ETA
+         (commit 3) and as the meta-quest reference for Today's Focus +
+         NextStepReco (commit 4). Lives above Subscription = personal-before-legal. */}
+      {(function(){
+        var hasGoal=!!u.targetToeic&&!!u.targetDate;
+        var minDateStr=(function(){var d=new Date();d.setDate(d.getDate()+30);return d.toISOString().split("T")[0];})();
+        function saveGoal(){
+          if(!goalScore||goalScore<200||goalScore>990)return;
+          if(!goalDate||goalDate<minDateStr)return;
+          var c=JSON.parse(JSON.stringify(u));
+          c.targetToeic=Math.round(goalScore/10)*10;
+          c.targetDate=goalDate;
+          p.setAvatar(c);
+          setGoalEditing(false);
+        }
+        function clearGoal(){
+          var c=JSON.parse(JSON.stringify(u));
+          c.targetToeic=null;c.targetDate=null;
+          p.setAvatar(c);
+          setGoalScore(700);
+          var d=new Date();d.setDate(d.getDate()+90);setGoalDate(d.toISOString().split("T")[0]);
+          setGoalEditing(true);
+        }
+        var fmtFR=function(iso){try{return new Date(iso).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});}catch(e){return iso;}};
+        if(!goalEditing&&hasGoal){
+          return(<div className="crd" style={{marginBottom:12,padding:"12px 14px",background:"linear-gradient(135deg,rgba(139,92,246,.08),rgba(var(--cx),.06))",border:"1px solid rgba(139,92,246,.25)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <span style={{fontSize:22,flexShrink:0}}>{"🎯"}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{"Objectif : "+u.targetToeic+" TOEIC"}</div>
+                <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>{"D'ici le "+fmtFR(u.targetDate)}</div>
+              </div>
+              <button className="btn2" onClick={function(){setGoalEditing(true);}} style={{flexShrink:0,fontSize:12,padding:"8px 12px",borderColor:"rgba(139,92,246,.25)",color:"var(--purple)"}}>{"Modifier"}</button>
+            </div>
+          </div>);
+        }
+        return(<div className="crd" style={{marginBottom:12,padding:"14px 16px",background:"rgba(139,92,246,.04)",border:"1px solid rgba(139,92,246,.2)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+            <span style={{fontSize:20}}>{"🎯"}</span>
+            <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{hasGoal?"Modifier mon objectif":"Définis ton objectif TOEIC"}</div>
+          </div>
+          <div style={{fontSize:12,color:"var(--t2)",marginBottom:12,lineHeight:1.5}}>{"Un score visé + une date à atteindre = un cap clair pour t'entraîner. La barre de progression et l'ETA s'affichent ensuite sur l'accueil."}</div>
+          <label style={{display:"block",marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--t2)",marginBottom:4}}>
+              <span>{"Score visé"}</span>
+              <span className="out" style={{color:"var(--purple)",fontWeight:700}}>{goalScore+" / 990"}</span>
+            </div>
+            <input type="range" min="200" max="990" step="10" value={goalScore} onChange={function(e){setGoalScore(parseInt(e.target.value,10));}}
+              style={{width:"100%",accentColor:"#8b5cf6"}}/>
+          </label>
+          <label style={{display:"block",marginBottom:12}}>
+            <div style={{fontSize:11,color:"var(--t2)",marginBottom:4}}>{"Date cible (min. 30 jours)"}</div>
+            <input type="date" min={minDateStr} value={goalDate} onChange={function(e){setGoalDate(e.target.value);}}
+              style={{width:"100%",padding:"8px 10px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",fontSize:13}}/>
+          </label>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={saveGoal} className="btn1" style={{flex:1,fontSize:13,padding:"10px 14px",background:"linear-gradient(135deg,#8b5cf6,#7c3aed)"}}>{hasGoal?"Mettre à jour":"Définir"}</button>
+            {hasGoal&&<button onClick={function(){setGoalScore(u.targetToeic);setGoalDate(u.targetDate);setGoalEditing(false);}} className="btn2" style={{fontSize:12,padding:"10px 12px"}}>{"Annuler"}</button>}
+            {hasGoal&&<button onClick={clearGoal} className="btn2" style={{fontSize:12,padding:"10px 12px",borderColor:"rgba(224,82,82,.25)",color:"var(--red)"}}>{"Supprimer"}</button>}
+          </div>
+        </div>);
+      })()}
 
       {/* Subscription section — Phase 3 Session 2 */}
       {(function(){
