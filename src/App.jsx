@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-05-perso-phase1-c4-todays-focus";
+var BUILD_ID="2026-05-05-mentor-tab-preview";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -2489,7 +2489,9 @@ function renderAv(avatar,size,frameId){
 function NarratorOverlay(props) {
   var moment = props.moment;
   var onClose = props.onClose;
-  var muted = props.muted || false;
+  // textOnly moments (no audio/image generated yet) reuse the muted timer path :
+  // synthetic currentTime advance drives the subtitle reveal without any <audio>.
+  var muted = props.muted || (moment && moment.textOnly) || false;
 
   var audioRef = useRef(null);
   var autoplayTimerRef = useRef(null);
@@ -2639,23 +2641,29 @@ function NarratorOverlay(props) {
         {/* Illustration — rectangular frame fade via dual linear-gradient mask
             composited with intersect. Each gradient fades one axis, intersected
             they form a vignette that hugs the 4 rectangular edges instead of
-            the old oval ellipse. */}
-        <div style={{
-          position: "relative", margin: "0 auto 10px",
-          width: "100%", maxWidth: 280, aspectRatio: "1/1",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 22%, black 78%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%)",
-          maskImage: "linear-gradient(to right, transparent 0%, black 22%, black 78%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%)",
-          WebkitMaskComposite: "source-in",
-          maskComposite: "intersect",
-          overflow: "hidden"
-        }}>
-          <img src={moment.image} alt={moment.title} style={{
-            width: "100%", height: "100%", objectFit: "cover",
-            mixBlendMode: "multiply",
-            filter: "contrast(1.1) brightness(1.02)",
-            display: "block"
-          }}/>
-        </div>
+            the old oval ellipse.
+            For textOnly moments (no Leonardo image generated yet) we fall back
+            to a centred wizard-staff SVG sigil — preserves the parchment frame. */}
+        {moment.image
+          ?<div style={{
+              position: "relative", margin: "0 auto 10px",
+              width: "100%", maxWidth: 280, aspectRatio: "1/1",
+              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 22%, black 78%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%)",
+              maskImage: "linear-gradient(to right, transparent 0%, black 22%, black 78%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%)",
+              WebkitMaskComposite: "source-in",
+              maskComposite: "intersect",
+              overflow: "hidden"
+            }}>
+              <img src={moment.image} alt={moment.title} style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                mixBlendMode: "multiply",
+                filter: "contrast(1.1) brightness(1.02)",
+                display: "block"
+              }}/>
+            </div>
+          :<div style={{margin:"0 auto 10px",width:"100%",maxWidth:280,aspectRatio:"1/1",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <GIcon name="wizard-staff" size={120} color="#5a3a1a"/>
+            </div>}
 
         <h2 className="out" style={{
           fontFamily: "'Cinzel',serif", fontWeight: 700, fontSize: 22,
@@ -2810,7 +2818,7 @@ function XpToast(p){if(!p.v)return null;
 // restent en place, lecture/écriture inertes dans supaToLocal/save/fresh, pour
 // éviter une migration BDD destructive. Nettoyage différé si le concept ne ressort pas.
 
-function Tabs(p){var tabs=[{id:"home",l:"Home",i:"castle"},{id:"train",l:"Train",i:"bullseye"},{id:"games",l:"Games",i:"coliseum"},{id:"league",l:"League",i:"laurel-crown"},{id:"profile",l:"Profile",i:"visored-helm"}];
+function Tabs(p){var tabs=[{id:"home",l:"Home",i:"castle"},{id:"train",l:"Train",i:"bullseye"},{id:"games",l:"Games",i:"coliseum"},{id:"mentor",l:"Mentor",i:"wizard-staff"},{id:"league",l:"League",i:"laurel-crown"},{id:"profile",l:"Profile",i:"visored-helm"}];
 var blocked=p.blocked||[];
 return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(var(--bg3-rgb),0) 0%,rgba(var(--bg3-rgb),.8) 15%,var(--bg3) 100%)",borderTop:"1px solid rgba(var(--cx),.15)",padding:"8px 12px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-around"}}>
 <div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>TOEIC ARENA</span></div>
@@ -3838,7 +3846,84 @@ function GoalProgressCard(p){
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// TodayFocusBanner — Home banner that surfaces the user's weakest part with
+// Mentor tab — Personalization Phase 1 hub (2026-05-05)
+// Dedicated space for everything personalized : goal progress, today's
+// focus, weakness next-step. Removes the "headed-where" cards from Home so
+// Home stays focused on "playing-now". Phase 2 will add a per-topic radar
+// chart, smart review module, and weekly insight history into this hub.
+// First-open trigger fires the Aldric "mentor_intro" narrator moment via
+// the parent App's narratorQueue (passed as prop).
+// ═══════════════════════════════════════════════════════════════════════
+function Mentor(p){
+  var u=p.u;
+  // Compute focus + weakness map for the body. computeTodayFocus drives the banner;
+  // partAccuracies feeds the per-part list below.
+  var focus=computeTodayFocus(u);
+  var pa=partAccuracies(u.moduleScores||{});
+  var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
+  var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
+  // Build sorted parts list : weakest first, then unmeasured.
+  var measured=[],unmeasured=[];
+  Object.keys(pa).forEach(function(k){
+    var d=pa[k];
+    if(d&&d.n>=10)measured.push({k:k,acc:d.acc,n:d.n});
+    else unmeasured.push({k:k,n:(d&&d.n)||0});
+  });
+  measured.sort(function(a,b){return a.acc-b.acc;});
+
+  return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+      <GIcon name="wizard-staff" size={28} color="var(--cyan)"/>
+      <h1 className="out" style={{fontWeight:900,fontSize:24}}>Mentor</h1>
+    </div>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.5}}>{"Aldric guides your TOEIC quest. Set your goal, find your weakest area, and follow the path."}</p>
+
+    {/* Goal progress card — same component as before, just relocated */}
+    <GoalProgressCard u={u} tabGo={p.tabGo}/>
+
+    {/* Today's Focus banner */}
+    <TodayFocusBanner u={u} nav={p.nav}/>
+
+    {/* Per-part weakness list (full radar substitute for V1 — Phase 2 will turn this into a real radar chart) */}
+    <div className="crd" style={{marginBottom:14,padding:"14px 16px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+        <GIcon name="eye-target" size={18} color="var(--purple)"/>
+        <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{"Where you stand"}</div>
+      </div>
+      {measured.length===0
+        ?<p style={{color:"var(--t2)",fontSize:12,lineHeight:1.5}}>{"Train a few sessions to unlock the Mentor's diagnosis. We need at least 10 questions per area."}</p>
+        :measured.map(function(it){
+          var pct=Math.round(it.acc*100);
+          var col=pct>=85?"var(--green)":pct>=70?"var(--cyan)":pct>=50?"var(--orange)":"var(--red)";
+          var isFocus=focus&&focus.partId===it.k;
+          return(<button key={it.k} onClick={function(){if(p.nav)p.nav(reco[it.k]);}}
+            style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:6,width:"100%",background:isFocus?"rgba(245,158,11,.08)":"var(--bg2)",border:"1px solid "+(isFocus?"rgba(245,158,11,.35)":"var(--bdr)"),borderRadius:10,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>{labels[it.k]}{isFocus&&<span style={{marginLeft:6,fontSize:10,color:"var(--orange)"}}>{"· focus"}</span>}</div>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
+                <div style={{flex:1,height:4,borderRadius:2,background:"rgba(0,0,0,.15)",overflow:"hidden"}}>
+                  <div style={{width:Math.min(100,pct)+"%",height:"100%",background:col,transition:"width .3s"}}/>
+                </div>
+                <span className="out" style={{fontSize:11,fontWeight:700,color:col,minWidth:30,textAlign:"right"}}>{pct+"%"}</span>
+              </div>
+            </div>
+            <span style={{fontSize:14,color:"var(--t3)"}}>{"›"}</span>
+          </button>);
+        })
+      }
+      {unmeasured.length>0&&measured.length>0&&<div style={{fontSize:11,color:"var(--t3)",marginTop:8,fontStyle:"italic"}}>{unmeasured.length+" area"+(unmeasured.length>1?"s":"")+" not yet measured — train them to unlock their score."}</div>}
+    </div>
+
+    {/* Aldric chronicle replay — quick access if user wants to hear the intro again */}
+    {hasHeardMoment(u,"mentor_intro")&&p.replayNarrator&&<button className="btn2" onClick={function(){p.replayNarrator("mentor_intro");}}
+      style={{width:"100%",fontSize:12,padding:"10px 14px",borderColor:"rgba(139,92,246,.25)",color:"var(--purple)"}}>
+      {"📜 Replay Aldric's introduction"}
+    </button>}
+  </div>);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TodayFocusBanner — Mentor banner that surfaces the user's weakest part with
 // a CTA + a +25% XP today badge. Hidden if no focus available (cold start
 // or already strong everywhere).
 // ═══════════════════════════════════════════════════════════════════════
@@ -3973,11 +4058,9 @@ return(
 <span style={{fontSize:18,color:"var(--t3)",lineHeight:1}}>{"›"}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
-{/* Goal progress — Personalization Phase 1 commit 3 */}
-<GoalProgressCard u={u} tabGo={p.tabGo}/>
-
-{/* Today's Focus — Personalization Phase 1 commit 4 */}
-<TodayFocusBanner u={u} nav={p.nav}/>
+{/* Personalization moved to its own Mentor tab (2026-05-05). Home stays
+    focused on "playing-now" : daily quest, chests, events. The Mentor hub
+    hosts goal progress + Today's Focus + per-part weakness list. */}
 
 {/* ═══ Smart Daily Quest — sequential reveal: Mission → Bonus Challenge → Rest ═══ */}
 {function(){
@@ -14761,7 +14844,7 @@ useEffect(function(){
     if(sp&&AUDIO_ROUTES.indexOf(sp)!==-1){stopBGM();return;}
     if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
     // No subpage active and on a home-BGM tab → ensure bgm_home is playing
-    if(!sp&&(tab==="home"||tab==="league"||tab==="profile"))playBGM("bgm_home");
+    if(!sp&&(tab==="home"||tab==="league"||tab==="profile"||tab==="mentor"))playBGM("bgm_home");
   },[sp,tab]);
 
   // ── Time tracking (60s) + Cloud sync (every 2 min) + beforeunload ──
@@ -15320,7 +15403,10 @@ var prevLeague=getLeague(c.weeklyXp);
   var lc="app"+(u&&u.theme==="light"?" light":"")+(u&&u.equippedSkin?" skin-"+u.equippedSkin:"");
   var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
   var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
-  var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);if(t==="home"||t==="league"||t==="profile")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);sSPA(null);};
+  var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);if(t==="home"||t==="league"||t==="profile"||t==="mentor")playBGM("bgm_home");else stopBGM();sT(t);sSP(null);sSPA(null);
+    // First-time Mentor open : fire Aldric's "Compass" Side Chronicle. Idempotent
+    // (pushNarratorMoment checks hasHeardMoment), so navigating back doesn't replay.
+    if(t==="mentor"&&u)pushNarratorMoment(u,"mentor_intro");};
   // Premium prompt overlay — rendered by both pg() sub-pages AND the main tab render path,
   // otherwise clicking a locked module inside a sub-page (Listen/Read hub, etc.) would set
   // the state but the popup wouldn't appear until the user navigated away.
@@ -15420,7 +15506,7 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} replayNarrator={function(id){setNarratorQueue([id]);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
     {/* TutorialTour supprimé 2026-05-03 — absorbé dans le Verdict d'Aldric (cf. narrator.js). */}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}

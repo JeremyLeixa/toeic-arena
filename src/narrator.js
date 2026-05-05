@@ -175,10 +175,36 @@ export var NARRATOR_MOMENTS = {
       { from: 13.0, to: 18.0,  text: "Celui qui a pénétré cette arène n'est plus celui qui se tient devant moi." },
       { from: 18.0, to: 24.11, text: "Repose-toi, champion. Les portes demeurent ouvertes. Elles le seront toujours." }
     ]
+  },
+  mentor_intro: {
+    id: "mentor_intro",
+    order: 99,           // hors canon : "Side Chronicle", n'apparaît pas dans NARRATOR_ORDER
+    chapter: "Aside",
+    chapterTitle: "The Mentor's Compass",
+    title: "The Compass",
+    subtitle: "Aldric speaks",
+    // Personalization Phase 1 (2026-05-05) — text-only V1, no audio yet.
+    // Audio + illustration to be regenerated in a follow-up session via
+    // ElevenLabs (Old Wizard) + Leonardo. Until then, NarratorOverlay
+    // detects textOnly and runs the muted-style synthetic timer.
+    textOnly: true,
+    audio: null,
+    image: null,
+    durationSec: 30,
+    subtitles: [
+      { from: 0.0,  to: 4.0,  text: "Écuyer." },
+      { from: 4.0,  to: 9.0,  text: "Nul ne triomphe sans un guide." },
+      { from: 9.0,  to: 12.0, text: "Je serai le tien." },
+      { from: 12.0, to: 18.0, text: "Là où d'autres se battent à l'aveugle, tu sauras où porter ta lame." },
+      { from: 18.0, to: 24.0, text: "Cet endroit révèle ton point faible — et te désigne le chemin." },
+      { from: 24.0, to: 30.0, text: "Va. Et que ta course soit moins longue." }
+    ]
   }
 };
 
 // Ordre canonique (utile pour la section Chronicles dans le profil)
+// mentor_intro est volontairement EXCLU : c'est un Side Chronicle, pas
+// un chapitre de l'arc principal Awakening → Dragon.
 export var NARRATOR_ORDER = [
   "verdict", "first_chest", "rising_rank", "oath_of_fire",
   "first_combat", "dawn_rank", "legacy", "dragon"

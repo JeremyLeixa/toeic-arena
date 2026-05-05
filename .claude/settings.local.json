@@ -28,7 +28,8 @@
       "Bash(pip3 install:*)",
       "Bash(awk -F: '$1 > 3384 {print; exit}')",
       "Bash(git rm *)",
-      "Bash(awk 'NR>=9111 && NR<=9270' src/App.jsx)"
+      "Bash(awk 'NR>=9111 && NR<=9270' src/App.jsx)",
+      "Bash(git checkout *)"
     ]
   }
 }
