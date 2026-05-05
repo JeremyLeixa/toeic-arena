@@ -7800,11 +7800,15 @@ function AudioBlitz(p){
       var audio=new Audio(it.audio);
       _listenAudio=audio;
       var usedTTS=false;
+      var afterCalled=false;
 
       function afterAudio(){
-        // 2-second buffer after audio ends before showing options + starting timer
+        if(afterCalled)return;
+        afterCalled=true;
+        clearInterval(timerRef.current);
         bufferRef.current=setTimeout(function(){
           setPlayed(2);
+          clearInterval(timerRef.current);
           timerRef.current=setInterval(function(){
             setTimer(function(t){
               if(t<=1){
@@ -7819,12 +7823,12 @@ function AudioBlitz(p){
       }
 
       audio.onerror=function(){
-        if(!usedTTS){usedTTS=true;speak(it.text,0.85);setTimeout(afterAudio,3000);}
+        if(!usedTTS&&!afterCalled){usedTTS=true;speak(it.text,0.85);setTimeout(afterAudio,3000);}
       };
       audio.onended=function(){afterAudio();};
       audio.playbackRate=0.9;
       audio.play().catch(function(){
-        if(!usedTTS){usedTTS=true;speak(it.text,0.85);setTimeout(afterAudio,3000);}
+        if(!usedTTS&&!afterCalled){usedTTS=true;speak(it.text,0.85);setTimeout(afterAudio,3000);}
       });
     },500);
 
