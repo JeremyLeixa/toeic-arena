@@ -17,7 +17,7 @@ import { CONNECTORS, PREP_COLLOCATIONS, GERUND_INF, TOEIC_TRAPS, FALSE_FRIENDS, 
 import { PART6_TEXTS } from "./data/part6.js";
 import { PART7_PASSAGES } from "./data/part7.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "./data/listening.js";
-import { BATTLE_SCAN, SCAN_STATS, FIRST_MISSIONS, MISSION_MODULES, BATTLE_SCAN_V2, SCAN_GRAMMAR_MACROS, SCAN_SECTION_ORDER } from "./data/placement.js";
+import { MISSION_MODULES, BATTLE_SCAN_V2, SCAN_SECTION_ORDER } from "./data/placement.js";
 import { createCatController, computeScanResult } from "./scanEngine.js";
 import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
@@ -2998,7 +2998,7 @@ function Onboard(p){
 var[step,sSt]=useState("name");
   var[name,sN]=useState("");
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");
-  var[scanSec,setScanSec]=useState(0);var[scanScores,setScanScores]=useState({grammar:0,vocab:0,reading:0,listening:0});var[scanPhase,setScanPhase]=useState("intro");var[scanCorrect,setScanCorrect]=useState([]);
+  var[scanSec,setScanSec]=useState(0);var[scanScores,setScanScores]=useState({grammar:0,vocab:0,reading:0,listening:0});var[scanPhase,setScanPhase]=useState("intro");
   // ─── Battle Scan V2 — CAT-light state ───
   var[currentQ,setCurrentQ]=useState(null);            // {item, lvl, sectionId, ...sectionMeta} from controller.next()
   var[sectionResults,setSectionResults]=useState({}); // {grammar:{acc, byMacro,...}, vocab:{...}, ...} from .score()
@@ -3032,7 +3032,7 @@ var[step,sSt]=useState("name");
   function goAfterPushStep(firstNav){
     // If browser lacks Push API, skip the opt-in phase entirely
     var hasPush=("serviceWorker" in navigator)&&("PushManager" in window);
-    if(!hasPush){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,firstNav,sectionResults);return;}
+    if(!hasPush){p.go(name.trim(),classCode||"visitor",scanScores,firstNav,sectionResults);return;}
     setPendingNav(firstNav||null);sSt("pushPrompt");
   }
 
@@ -3118,7 +3118,6 @@ var[step,sSt]=useState("name");
     setScanPhase("intro");
     setCurrentQ(null);
     sS(-1);
-    setScanCorrect([]);
     ctrlRef.current=createCatController(SCAN_SECTION_ORDER[0]);
   }
   // Listening audio dispatcher — called from "Listen" button or auto on phase enter.
@@ -3170,7 +3169,6 @@ var[step,sSt]=useState("name");
     sS(pickIdx);
     var correct=isCorrectFor(curQ,pickIdx);
     if(correct){try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}
-    setScanCorrect(function(prev){return prev.concat([correct]);});
     var ctrl=ctrlRef.current;if(ctrl)ctrl.record(correct);
     setScanPhase("fb");
   }
@@ -3812,7 +3810,7 @@ var[step,sSt]=useState("name");
 
   // ─ Language bridge: transition to English ─
   if(step==="langBridge"){
-    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,pendingNav||undefined,sectionResults);}
+    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,pendingNav||undefined,sectionResults);}
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
@@ -15792,7 +15790,7 @@ var prevLeague=getLeague(c.weeklyXp);
     return m;
   }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
-  async function onboard(name,classCode,bsScores,bsCorrect,firstNav,bsV2Results){
+  async function onboard(name,classCode,bsScores,firstNav,bsV2Results){
     classCode=classCode||'visitor';
     // Check if student already exists (use limit(1) — safe even with duplicates)
     // Check for existing student (accent + case insensitive)
