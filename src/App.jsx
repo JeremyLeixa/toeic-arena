@@ -3552,41 +3552,92 @@ var[step,sSt]=useState("name");
 
   // (PIN steps removed 2026-04-20 — replaced by magic link auth. See auth.js.)
 
-  // ─ Battle Report ─
+  // ─ Battle Report (V2 — scan-v2 phase E) ─
   if(step==="results"){
-    var cx=150,cy=150,rad=110;
+    // Build the V2 result from sectionResults via scanEngine.computeScanResult().
+    // Falls back to V1 scanScores integers if sectionResults is empty (defensive).
+    var hasV2=sectionResults&&sectionResults.grammar&&sectionResults.vocab&&sectionResults.reading&&sectionResults.listening;
+    var rep=hasV2?computeScanResult(sectionResults):null;
+    var toeicEst=rep?rep.toeic:Math.round((200+((scanScores.grammar+scanScores.vocab+scanScores.reading+scanScores.listening)/20)*790)/5)*5;
+    var tierLabel=rep?rep.tier:"Recruit";
+    var sec={grammar:rep?rep.sections.grammar:scanScores.grammar*20,vocab:rep?rep.sections.vocab:scanScores.vocab*20,reading:rep?rep.sections.reading:scanScores.reading*20,listening:rep?rep.sections.listening:scanScores.listening*20};
+    var grammarMacros=(rep&&rep.grammarMacros)||{};
+    var listeningByPart=(rep&&rep.listeningByPart)||{};
+    var readingByPart=(rep&&rep.readingByPart)||{};
+
+    // Pick weakest section
     var statOrder=["grammar","vocab","reading","listening"];
-    var statMeta={grammar:{icon:"\u2694\uFE0F",label:"Grammar",arena:"Blade Precision",color:"var(--cx-hex)"},vocab:{icon:"\uD83D\uDCDA",label:"Vocabulary",arena:"Arcane Lore",color:"#8b5cf6"},reading:{icon:"\uD83D\uDD0D",label:"Reading",arena:"Tactical Sight",color:"#22c55e"},listening:{icon:"\uD83D\uDC42",label:"Listening",arena:"Battle Sense",color:"#3b82f6"}};
+    var statMeta={
+      grammar:{icon:"crossed-swords",arena:"Blade Precision",color:"#d4943a"},
+      vocab:{icon:"spell-book",arena:"Arcane Lore",color:"#8b5cf6"},
+      reading:{icon:"eye-target",arena:"Tactical Sight",color:"#22c55e"},
+      listening:{icon:"public-speaker",arena:"Battle Sense",color:"#3b82f6"}
+    };
+    var weakestSec=statOrder.reduce(function(a,b){return sec[a]<=sec[b]?a:b;});
+
+    // First Quest: pick a sensible module from the weakest section.
+    // For grammar, pick the weakest macro and aim Drill (which uses pickAdaptive on macros).
+    // For listening, pick the weakest part. For reading, prefer P7 (broader). For vocab, tavern.
+    function pickFirstQuest(){
+      if(weakestSec==="grammar"){
+        var macroLabel={verbs:"Verbs",linking:"Linking",forms:"Word Forms",reference:"References"};
+        var weakMacro=null,minAcc=2;
+        Object.keys(grammarMacros).forEach(function(k){if(grammarMacros[k]<minAcc){minAcc=grammarMacros[k];weakMacro=k;}});
+        return{mod:"drill",icon:"crossed-swords",label:"Part 5 Drill"+(weakMacro?" — "+macroLabel[weakMacro]:""),msg:"Your grammar foundations need sharpening. Drill weights toward your weakest macro automatically."};
+      }
+      if(weakestSec==="vocab"){
+        return{mod:"tavern",icon:"spell-book",label:"Word Tavern",msg:"Your business lexicon needs expansion. Word Tavern teaches and tests new vocabulary in context."};
+      }
+      if(weakestSec==="reading"){
+        var pickP=(typeof readingByPart.p6==="number"&&typeof readingByPart.p7==="number"&&readingByPart.p6<readingByPart.p7)?"p6":"p7";
+        return{mod:pickP,icon:pickP==="p6"?"scroll-quill":"eye-target",label:pickP==="p6"?"Part 6 — Cloze":"Part 7 — Reading",msg:"Reading comprehension is your weak spot. "+(pickP==="p6"?"Part 6 trains contextual cloze.":"Part 7 trains inference and detail.")};
+      }
+      // listening
+      var weakPart=null,minPa=2;
+      ["p1","p2","p3","p4"].forEach(function(p){if(typeof listeningByPart[p]==="number"&&listeningByPart[p]<minPa){minPa=listeningByPart[p];weakPart=p;}});
+      var modMap={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4"};
+      var labelMap={p1:"Listening Part 1 — Photos",p2:"Listening Part 2 — Q&R",p3:"Listening Part 3 — Conversations",p4:"Listening Part 4 — Talks"};
+      var icoMap={p1:"public-speaker",p2:"public-speaker",p3:"public-speaker",p4:"public-speaker"};
+      if(!weakPart)weakPart="p2";
+      return{mod:modMap[weakPart],icon:icoMap[weakPart],label:labelMap[weakPart],msg:"Your ear needs training. "+labelMap[weakPart]+" exercises real TOEIC audio."};
+    }
+    var quest=pickFirstQuest();
+
+    // Main radar geometry (4-axis diamond, % values)
+    var cx=150,cy=150,rad=110;
     var dxArr=[0,1,0,-1],dyArr=[-1,0,1,0];
     function gridDiam(s){return cx+","+(cy-rad*s)+" "+(cx+rad*s)+","+cy+" "+cx+","+(cy+rad*s)+" "+(cx-rad*s)+","+cy;}
-    var playerPts=statOrder.map(function(st,i){var v=Math.max(scanScores[st],0.15)/5;return(cx+dxArr[i]*rad*v)+","+(cy+dyArr[i]*rad*v);}).join(" ");
-    var totalSc=scanScores.grammar+scanScores.vocab+scanScores.reading+scanScores.listening;
-    var weakest=statOrder.reduce(function(a,b){return scanScores[a]<=scanScores[b]?a:b;});
-    var mission=FIRST_MISSIONS.find(function(m){return m.stat===weakest;});
-    var tierLabel=totalSc>=16?"Battle-Ready":totalSc>=12?"Skilled Fighter":totalSc>=8?"Apprentice":"Recruit";
-    var tierIcon=totalSc>=16?"\uD83C\uDFC6":totalSc>=12?"\u2694\uFE0F":totalSc>=8?"\uD83D\uDEE1\uFE0F":"\uD83D\uDCDA";
-    // Map Battle Scan score (0-20) to estimated TOEIC score (200-990, rounded to 5)
-    var toeicEst=Math.round((200+(totalSc/20)*790)/5)*5;
-    var toeicColor=toeicEst>=750?"var(--green)":toeicEst>=500?"var(--gold)":"var(--orange)";
+    var playerPts=statOrder.map(function(st,i){var v=Math.max(sec[st]/100,0.10);return(cx+dxArr[i]*rad*v)+","+(cy+dyArr[i]*rad*v);}).join(" ");
+
+    // Mini grammar radar geometry (smaller diamond, 4 macros)
+    var macroOrder=["verbs","linking","forms","reference"];
+    var macroLabels={verbs:"Verbs",linking:"Linking",forms:"Forms",reference:"Refs"};
+    var mcx=80,mcy=80,mrad=60;
+    var mdx=[0,1,0,-1],mdy=[-1,0,1,0];
+    function mGrid(s){return mcx+","+(mcy-mrad*s)+" "+(mcx+mrad*s)+","+mcy+" "+mcx+","+(mcy+mrad*s)+" "+(mcx-mrad*s)+","+mcy;}
+    var hasGrammarMacros=macroOrder.some(function(k){return typeof grammarMacros[k]==="number";});
+    var macroPts=macroOrder.map(function(k,i){var v=Math.max(grammarMacros[k]||0,0.10);return(mcx+mdx[i]*mrad*v)+","+(mcy+mdy[i]*mrad*v);}).join(" ");
+
+    var toeicColor=toeicEst>=750?"var(--green)":toeicEst>=600?"var(--gold)":toeicEst>=450?"var(--orange)":"var(--red)";
+
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center",overflow:"auto"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:3,marginBottom:8}} className="out">Battle Report</div>
+        <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:3,marginBottom:8}}>Battle Report</div>
         <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>Warrior Assessment</h2>
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 14px",borderRadius:99,background:"rgba(var(--cx),.1)",border:"1px solid rgba(var(--cx),.2)",marginBottom:20}}>
-          <span style={{fontSize:16}}>{tierIcon}</span>
+        <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:99,background:"rgba(var(--cx),.1)",border:"1px solid rgba(var(--cx),.2)",marginBottom:20}}>
+          <GIcon name="laurel-crown" size={14} color="var(--cyan)"/>
           <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{tierLabel}</span>
-          <span style={{fontSize:12,color:"var(--t3)"}}>{totalSc}/20</span>
         </div>
 
-        {/* ── TOEIC ESTIMATE ── */}
+        {/* TOEIC ESTIMATE */}
         <div className="crd" style={{padding:"14px 16px",marginBottom:20,background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(240,200,80,.06))",border:"1px solid rgba(240,200,80,.2)"}}>
-          <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>{"\uD83C\uDFAF"} Estimated TOEIC</div>
+          <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><GIcon name="bullseye" size={12} color="var(--t3)"/> Estimated TOEIC</div>
           <div className="out" style={{fontFamily:"'Cinzel',serif",fontSize:32,fontWeight:900,color:toeicColor,lineHeight:1}}>{toeicEst}<span style={{fontSize:14,color:"var(--t3)",fontWeight:400,marginLeft:6}}>{"/ 990"}</span></div>
-          <p style={{fontSize:11,color:"var(--t2)",lineHeight:1.5,margin:"8px 0 0",textAlign:"left"}}>Real TOEIC is 50% <b style={{color:"#3b82f6"}}>Listening</b> + 50% <b style={{color:"#22c55e"}}>Reading</b>. Train both to make progress.</p>
+          <p style={{fontSize:11,color:"var(--t2)",lineHeight:1.5,margin:"8px 0 0",textAlign:"left"}}>Adaptive baseline — refines as you train. Real TOEIC = 50% <b style={{color:"#3b82f6"}}>Listening</b> + 50% <b style={{color:"#22c55e"}}>Reading</b>.</p>
         </div>
 
-        {/* ── RADAR SVG ── */}
+        {/* MAIN RADAR — 4 sections */}
         <div style={{position:"relative",width:280,height:280,margin:"0 auto 8px"}}>
           <svg viewBox="0 0 300 300" width="280" height="280" style={{display:"block"}}>
             <defs>
@@ -3599,36 +3650,35 @@ var[step,sSt]=useState("name");
             {[0.2,0.4,0.6,0.8,1.0].map(function(s,i){return(<polygon key={i} points={gridDiam(s)} fill="none" stroke={"rgba(180,140,80,"+(s===1?0.25:0.1)+")"} strokeWidth={s===1?"1.5":"0.7"}/>);})}
             {statOrder.map(function(st,i){return(<line key={st} x1={cx} y1={cy} x2={cx+dxArr[i]*rad} y2={cy+dyArr[i]*rad} stroke="rgba(180,140,80,0.15)" strokeWidth="1"/>);})}
             <polygon points={playerPts} fill="rgba(var(--cx),0.18)" stroke="var(--cx-hex)" strokeWidth="2.5" strokeLinejoin="round" style={{filter:"drop-shadow(0 0 10px rgba(var(--cx),0.3))",animation:"fadeIn .8s"}}/>
-            {statOrder.map(function(st,i){var v=Math.max(scanScores[st],0.15)/5;return(<circle key={st} cx={cx+dxArr[i]*rad*v} cy={cy+dyArr[i]*rad*v} r="5" fill={statMeta[st].color} stroke="var(--bg)" strokeWidth="2" style={{animation:"fadeIn 1s"}}/>);})}
+            {statOrder.map(function(st,i){var v=Math.max(sec[st]/100,0.10);return(<circle key={st} cx={cx+dxArr[i]*rad*v} cy={cy+dyArr[i]*rad*v} r="5" fill={statMeta[st].color} stroke="var(--bg)" strokeWidth="2" style={{animation:"fadeIn 1s"}}/>);})}
           </svg>
-          {/* Axis labels positioned around the radar */}
           <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%) translateY(-4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.grammar.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.grammar.color}}>{scanScores.grammar}/5</div>
+            <GIcon name={statMeta.grammar.icon} size={16} color={statMeta.grammar.color}/>
+            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.grammar.color}}>{sec.grammar+"%"}</div>
           </div>
           <div style={{position:"absolute",top:"50%",right:0,transform:"translateY(-50%) translateX(4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.vocab.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.vocab.color}}>{scanScores.vocab}/5</div>
+            <GIcon name={statMeta.vocab.icon} size={16} color={statMeta.vocab.color}/>
+            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.vocab.color}}>{sec.vocab+"%"}</div>
           </div>
           <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%) translateY(4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.reading.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.reading.color}}>{scanScores.reading}/5</div>
+            <GIcon name={statMeta.reading.icon} size={16} color={statMeta.reading.color}/>
+            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.reading.color}}>{sec.reading+"%"}</div>
           </div>
           <div style={{position:"absolute",top:"50%",left:0,transform:"translateY(-50%) translateX(-4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.listening.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.listening.color}}>{scanScores.listening}/5</div>
+            <GIcon name={statMeta.listening.icon} size={16} color={statMeta.listening.color}/>
+            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.listening.color}}>{sec.listening+"%"}</div>
           </div>
         </div>
 
-        {/* ── STAT BARS ── */}
-        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24,textAlign:"left"}}>
-          {statOrder.map(function(st){var m=statMeta[st];var pct=scanScores[st]/5*100;return(
+        {/* STAT BARS */}
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20,textAlign:"left"}}>
+          {statOrder.map(function(st){var m=statMeta[st];var pct=sec[st];return(
             <div key={st} style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:18,width:28,textAlign:"center"}}>{m.icon}</span>
+              <span style={{width:28,textAlign:"center"}}><GIcon name={m.icon} size={18} color={m.color}/></span>
               <div style={{flex:1}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
                   <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--t1)"}}>{m.arena}</span>
-                  <span className="out" style={{fontSize:11,fontWeight:700,color:m.color}}>{scanScores[st]}/5</span>
+                  <span className="out" style={{fontSize:11,fontWeight:700,color:m.color}}>{pct+"%"}</span>
                 </div>
                 <div style={{height:6,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}>
                   <div style={{width:pct+"%",height:"100%",background:m.color,borderRadius:99,transition:"width 1s cubic-bezier(.4,0,.2,1)"}}/>
@@ -3638,28 +3688,66 @@ var[step,sSt]=useState("name");
           })}
         </div>
 
-        {/* ── FIRST MISSION ── */}
-        {mission&&<div className="crd" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
-          style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16,marginBottom:24,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
+        {/* MINI GRAMMAR RADAR — 4 macros */}
+        {hasGrammarMacros&&<div className="crd" style={{padding:"14px 16px",marginBottom:20,background:"rgba(212,148,58,.05)",border:"1px solid rgba(212,148,58,.2)",textAlign:"left"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <GIcon name="scroll-quill" size={14} color="#d4943a"/>
+            <span className="out" style={{fontSize:11,fontWeight:700,color:"#d4943a",textTransform:"uppercase",letterSpacing:1}}>Grammar — 4 macros</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:14}}>
+            <div style={{position:"relative",width:160,height:160,flexShrink:0}}>
+              <svg viewBox="0 0 160 160" width="160" height="160">
+                {[0.25,0.5,0.75,1.0].map(function(s,i){return(<polygon key={i} points={mGrid(s)} fill="none" stroke={"rgba(180,140,80,"+(s===1?0.25:0.08)+")"} strokeWidth={s===1?"1":"0.6"}/>);})}
+                {macroOrder.map(function(k,i){return(<line key={k} x1={mcx} y1={mcy} x2={mcx+mdx[i]*mrad} y2={mcy+mdy[i]*mrad} stroke="rgba(180,140,80,0.15)" strokeWidth="0.7"/>);})}
+                <polygon points={macroPts} fill="rgba(212,148,58,0.20)" stroke="#d4943a" strokeWidth="1.8" strokeLinejoin="round"/>
+                {macroOrder.map(function(k,i){var v=Math.max(grammarMacros[k]||0,0.10);return(<circle key={k} cx={mcx+mdx[i]*mrad*v} cy={mcy+mdy[i]*mrad*v} r="3" fill="#d4943a"/>);})}
+              </svg>
+            </div>
+            <div style={{flex:1,fontSize:11,lineHeight:1.6,color:"var(--t2)"}}>
+              {macroOrder.map(function(k){
+                var v=grammarMacros[k];
+                if(typeof v!=="number")return null;
+                var pct=Math.round(v*100);
+                var col=pct>=75?"var(--green)":pct>=50?"var(--cyan)":"var(--orange)";
+                return(<div key={k} style={{display:"flex",justifyContent:"space-between",gap:8}}>
+                  <span style={{color:"var(--t2)"}}>{macroLabels[k]}</span>
+                  <span className="out" style={{fontWeight:700,color:col}}>{pct+"%"}</span>
+                </div>);
+              })}
+            </div>
+          </div>
+          <p style={{fontSize:10,color:"var(--t3)",margin:"10px 0 0",lineHeight:1.5,fontStyle:"italic"}}>Your Mentor uses these 4 axes to weight your Drill picks. Train Drill to refine each.</p>
+        </div>}
+
+        {/* FIRST QUEST */}
+        <div className="crd" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(quest.mod);}}
+          style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16,marginBottom:14,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-            <span style={{fontSize:20}}>📜</span>
+            <GIcon name="rolled-cloth" size={16} color="var(--cyan)"/>
             <span className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:14,color:"var(--cyan)"}}>First Quest</span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:28}}>{mission.icon}</span>
+            <span style={{flexShrink:0}}><GIcon name={quest.icon} size={28} color="var(--cyan)"/></span>
             <div>
-              <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:2}}>{mission.label}</div>
-              <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0}}>{mission.msg}</p>
+              <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:2}}>{quest.label}</div>
+              <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0}}>{quest.msg}</p>
             </div>
           </div>
-        </div>}
+        </div>
 
-        {mission&&<button className="btn1" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
+        <button className="btn1" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(quest.mod);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
-          Start Your Quest — {mission.label}</button>}
-        <button className="btn2" onClick={function(){stopTts();playArenaCall();goAfterPushStep(null);}}
-          style={{fontSize:14,padding:"12px 28px",width:"100%"}}>Enter the Arena</button>
-        <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your stats will evolve as you train. This is just the beginning.</p>
+          Start Your Quest
+        </button>
+
+        {/* MENTOR CTA — the continuity bridge */}
+        <button className="btn2" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep("mentor");}}
+          style={{fontSize:14,padding:"12px 28px",width:"100%",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          <GIcon name="wizard-staff" size={16} color="currentColor"/> Open your Mentor
+        </button>
+        <button className="btn2" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(null);}}
+          style={{fontSize:13,padding:"10px 28px",width:"100%",opacity:0.85}}>Enter the Arena</button>
+        <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your radar will refine as you train. The Mentor uses these scores to personalize your path from day one.</p>
       </div>
     </div>);}
 
@@ -15749,7 +15837,13 @@ var prevLeague=getLeague(c.weeklyXp);
     // Do NOT move this push earlier in the onboarding (e.g. to Battle Report)
     // or the narrator would fire mid-flow and confuse the consent/scan sequence.
     pushNarratorMoment(u,"verdict");
-    if(firstNav){setTimeout(function(){sSP(firstNav);},300);}
+    if(firstNav){setTimeout(function(){
+      // firstNav may be a tab id ("home"|"games"|"train"|"league"|"profile"|"mentor")
+      // or a sub-page id ("drill"|"tavern"|"lisP1"...). Phase E (scan-v2) added tab routing
+      // so the Battle Report can hand off to the Mentor tab directly.
+      var KNOWN_TABS=["home","games","train","league","profile","mentor"];
+      if(KNOWN_TABS.indexOf(firstNav)>=0){sT(firstNav);}else{sSP(firstNav);}
+    },300);}
   }
   async function recover(name,classCode){
     // Find the best row (highest XP) for this student
