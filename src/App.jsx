@@ -17,7 +17,8 @@ import { CONNECTORS, PREP_COLLOCATIONS, GERUND_INF, TOEIC_TRAPS, FALSE_FRIENDS, 
 import { PART6_TEXTS } from "./data/part6.js";
 import { PART7_PASSAGES } from "./data/part7.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "./data/listening.js";
-import { BATTLE_SCAN, SCAN_STATS, FIRST_MISSIONS, MISSION_MODULES } from "./data/placement.js";
+import { BATTLE_SCAN, SCAN_STATS, FIRST_MISSIONS, MISSION_MODULES, BATTLE_SCAN_V2, SCAN_GRAMMAR_MACROS, SCAN_SECTION_ORDER } from "./data/placement.js";
+import { createCatController, computeScanResult } from "./scanEngine.js";
 import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
@@ -2998,6 +2999,14 @@ var[step,sSt]=useState("name");
   var[name,sN]=useState("");
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");
   var[scanSec,setScanSec]=useState(0);var[scanScores,setScanScores]=useState({grammar:0,vocab:0,reading:0,listening:0});var[scanPhase,setScanPhase]=useState("intro");var[scanCorrect,setScanCorrect]=useState([]);
+  // ─── Battle Scan V2 — CAT-light state ───
+  var[currentQ,setCurrentQ]=useState(null);            // {item, lvl, sectionId, ...sectionMeta} from controller.next()
+  var[sectionResults,setSectionResults]=useState({}); // {grammar:{acc, byMacro,...}, vocab:{...}, ...} from .score()
+  var[audioBusy,setAudioBusy]=useState(false);        // listening play button enable/disable
+  var[audioStep,setAudioStep]=useState(-1);            // P1 statement index currently playing (0-3) or -1
+  var ctrlRef=useRef(null);                            // active section controller (mutable, no rerenders)
+  // Mount listening audio session lifecycle
+  useEffect(function(){resumeAudioSession();return function(){stopListenAudio();};},[]);
   var[ttsPlaying,setTtsPlaying]=useState(false);var ttsUtter=useRef(null);
   function speakQ(text){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=0.9;var v=getEnVoice();if(v)u.voice=v;u.onstart=function(){setTtsPlaying(true);};u.onend=function(){setTtsPlaying(false);};u.onerror=function(){setTtsPlaying(false);};ttsUtter.current=u;window.speechSynthesis.speak(u);}
   function stopTts(){if(window.speechSynthesis)window.speechSynthesis.cancel();setTtsPlaying(false);}
@@ -3100,21 +3109,105 @@ var[step,sSt]=useState("name");
     setClassChecking(false);
   }
 
-  function startTest(){sSt("scan");setScanSec(0);setScanScores({grammar:0,vocab:0,reading:0,listening:0});setScanPhase("intro");sC(0);sS(-1);setScanCorrect([]);}
-  function doScanAns(i){
-    sS(i);var sec=BATTLE_SCAN[scanSec];var q=sec.questions[ci];var correct=i===q.c;
-    if(correct){var ns=Object.assign({},scanScores);ns[sec.id]=(ns[sec.id]||0)+1;setScanScores(ns);try{playCorrect();}catch(e){}}
-    else{try{playWrong();}catch(e){}}
+  // ─── Battle Scan V2 helpers (CAT-light) ───
+  function startTestV2(){
+    sSt("scan");
+    setScanSec(0);
+    setScanScores({grammar:0,vocab:0,reading:0,listening:0});
+    setSectionResults({});
+    setScanPhase("intro");
+    setCurrentQ(null);
+    sS(-1);
+    setScanCorrect([]);
+    ctrlRef.current=createCatController(SCAN_SECTION_ORDER[0]);
+  }
+  // Listening audio dispatcher — called from "Listen" button or auto on phase enter.
+  // P1: plays 4 statements sequentially. P2: plays only the question audio.
+  // P3/P4: plays the full conversation/talk in one file.
+  async function playListeningClip(curQ){
+    if(!curQ||curQ.sectionId!=="listening")return;
+    setAudioBusy(true);
+    try{
+      var part=curQ.part;var refId=curQ.refId;
+      if(part==="p1"){
+        for(var i=0;i<4;i++){
+          setAudioStep(i);
+          await playAudioFile("/audio/p1/"+refId+"_"+i+".mp3");
+          if(_audioAborted)break;
+        }
+        setAudioStep(-1);
+      }else if(part==="p2"){
+        await playAudioFile("/audio/p2/"+refId+"_q.mp3");
+      }else if(part==="p3"){
+        await playAudioFile("/audio/p3/"+refId+".mp3");
+      }else if(part==="p4"){
+        await playAudioFile("/audio/p4/"+refId+".mp3");
+      }
+    }catch(e){console.warn("[scan-v2] audio:",e&&e.message);}
+    setAudioBusy(false);
+  }
+  function beginSectionV2(){
+    var ctrl=ctrlRef.current;if(!ctrl)return;
+    var q=ctrl.next();
+    setCurrentQ(q);
+    setScanPhase("q");
+    sS(-1);
+    if(q&&q.sectionId==="listening"){setTimeout(function(){playListeningClip(q);},400);}
+  }
+  // Resolve: did the user pick the correct answer for the current Q?
+  function isCorrectFor(curQ,pickIdx){
+    if(!curQ)return false;
+    if(curQ.sectionId==="listening"){
+      var src=curQ.item;
+      if(curQ.part==="p1"||curQ.part==="p2"){return pickIdx===src.c;}
+      if(curQ.part==="p3"||curQ.part==="p4"){return pickIdx===src.qs[curQ.qIdx].c;}
+      return false;
+    }
+    return pickIdx===curQ.item.c;
+  }
+  function answerScanQ(pickIdx){
+    var curQ=currentQ;if(!curQ)return;
+    sS(pickIdx);
+    var correct=isCorrectFor(curQ,pickIdx);
+    if(correct){try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}
     setScanCorrect(function(prev){return prev.concat([correct]);});
+    var ctrl=ctrlRef.current;if(ctrl)ctrl.record(correct);
     setScanPhase("fb");
   }
-  function nxtScan(){
-    stopTts();var sec=BATTLE_SCAN[scanSec];
-    if(ci<sec.questions.length-1){var ni=ci+1;sC(ni);sS(-1);setScanPhase("q");if(sec.id==="listening"&&sec.questions[ni])setTimeout(function(){speakQ(sec.questions[ni].s);},400);}
-    else if(scanSec<BATTLE_SCAN.length-1){setScanPhase("done");}
-    else{sSt("results");}
+  function advanceScanV2(){
+    stopListenAudio();stopTts();
+    var ctrl=ctrlRef.current;if(!ctrl)return;
+    var nq=ctrl.next();
+    if(nq){
+      setCurrentQ(nq);
+      sS(-1);
+      setScanPhase("q");
+      if(nq.sectionId==="listening"){setTimeout(function(){resumeAudioSession();playListeningClip(nq);},400);}
+      return;
+    }
+    // Section finished — collect score, fold into legacy scanScores, advance.
+    var secId=SCAN_SECTION_ORDER[scanSec];
+    var res=ctrl.score();
+    var nextResults=Object.assign({},sectionResults);nextResults[secId]=res;
+    setSectionResults(nextResults);
+    var nextScores=Object.assign({},scanScores);nextScores[secId]=Math.round(res.acc*5);setScanScores(nextScores);
+    setScanPhase("done");
   }
-  function nxtSection(){stopTts();setScanSec(scanSec+1);sC(0);sS(-1);setScanPhase("intro");}
+  function nextSectionV2(){
+    stopListenAudio();stopTts();
+    var nextIdx=scanSec+1;
+    if(nextIdx>=SCAN_SECTION_ORDER.length){
+      // All sections done — switch to results.
+      sSt("results");
+      return;
+    }
+    setScanSec(nextIdx);
+    ctrlRef.current=createCatController(SCAN_SECTION_ORDER[nextIdx]);
+    setCurrentQ(null);
+    sS(-1);
+    setScanPhase("intro");
+    resumeAudioSession();
+  }
 
   // ─ Name entry ─
   if(step==="name")return(
@@ -3384,7 +3477,7 @@ var[step,sSt]=useState("name");
             </div>
           </div>
         </div>
-        <button className="btn1" onClick={function(){startTest();}}
+        <button className="btn1" onClick={function(){startTestV2();}}
           style={{fontSize:16,padding:"14px 28px",width:"100%",marginBottom:10}}>{"J\u2019accepte \u2014 Continuer"}</button>
         <button onClick={function(){setShowPrivacy(true);}}
           style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",marginBottom:10}}>{"Lire la politique de confidentialit\u00e9 compl\u00e8te"}</button>
@@ -3648,131 +3741,214 @@ var[step,sSt]=useState("name");
       </div>
     </div>);}
 
-  // ─ Battle Scan ─
-  var sec=BATTLE_SCAN[scanSec]||BATTLE_SCAN[0];
-  var scanQs=sec.questions;
-  var scanQ=scanQs[ci]||scanQs[0];
+  // ═══════════════════════════════════════════════════════════════════════
+  // Battle Scan V2 — CAT-light render
+  // ═══════════════════════════════════════════════════════════════════════
+  var secId=SCAN_SECTION_ORDER[scanSec]||SCAN_SECTION_ORDER[0];
+  var secMeta=BATTLE_SCAN_V2[secId];
 
-  // Section Intro
+  function getOpts(curQ){
+    if(!curQ)return[];
+    if(curQ.sectionId==="listening"){
+      if(curQ.part==="p1"||curQ.part==="p2")return curQ.item.opts||[];
+      if(curQ.part==="p3"||curQ.part==="p4"){var sub=curQ.item.qs&&curQ.item.qs[curQ.qIdx];return sub?(sub.opts||[]):[];}
+      return[];
+    }
+    return curQ.item.o||[];
+  }
+  function getCorrect(curQ){
+    if(!curQ)return-1;
+    if(curQ.sectionId==="listening"){
+      if(curQ.part==="p1"||curQ.part==="p2")return curQ.item.c;
+      if(curQ.part==="p3"||curQ.part==="p4"){var sub=curQ.item.qs&&curQ.item.qs[curQ.qIdx];return sub?sub.c:-1;}
+      return-1;
+    }
+    return curQ.item.c;
+  }
+  function getExplain(curQ){
+    if(!curQ)return"";
+    if(curQ.sectionId==="listening"){
+      if(curQ.part==="p1"||curQ.part==="p2")return curQ.item.x||"";
+      if(curQ.part==="p3"||curQ.part==="p4"){var sub=curQ.item.qs&&curQ.item.qs[curQ.qIdx];return(sub&&sub.x)||"Listen again to catch the relevant detail.";}
+      return"";
+    }
+    return curQ.item.x||"";
+  }
+  function lvlBadgeColors(l){
+    if(l==="hard")return{bg:"rgba(239,68,68,.15)",fg:"#ef4444"};
+    if(l==="easy")return{bg:"rgba(34,197,94,.15)",fg:"#22c55e"};
+    return{bg:"rgba(245,158,11,.15)",fg:"#f59e0b"};
+  }
+  function partLabelV2(p){return{p1:"Part 1 — Photo",p2:"Part 2 — Q&R",p3:"Part 3 — Conversation",p4:"Part 4 — Talk"}[p]||p;}
+
+  // Section Intro (V2)
   if(scanPhase==="intro")return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
         <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:24}}>
-          {BATTLE_SCAN.map(function(s,i){return(
+          {SCAN_SECTION_ORDER.map(function(sid,i){var sm=BATTLE_SCAN_V2[sid];return(
             <div key={i} style={{display:"flex",alignItems:"center",gap:4}}>
-              <div style={{width:i===scanSec?32:10,height:10,borderRadius:5,background:i<scanSec?s.color:i===scanSec?s.color:"var(--bg3)",opacity:i<=scanSec?1:.4,transition:"all .4s"}}/>
+              <div style={{width:i===scanSec?32:10,height:10,borderRadius:5,background:i<=scanSec?sm.color:"var(--bg3)",opacity:i<=scanSec?1:.4,transition:"all .4s"}}/>
             </div>);})}
         </div>
-        <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:2,marginBottom:16}}>Section {scanSec+1} of 4</div>
-        <div style={{fontSize:72,marginBottom:12,animation:"countUp .6s"}}>{sec.icon}</div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:28,color:sec.color,marginBottom:4}}>{sec.name}</h2>
-        <p className="out" style={{color:"var(--t2)",fontSize:14,fontWeight:500,marginBottom:8}}>{sec.subtitle}</p>
-        <p style={{color:"var(--t3)",fontSize:13,lineHeight:1.6,marginBottom:8,maxWidth:300,margin:"0 auto 24px"}}>{sec.desc}</p>
-        {sec.note&&<p style={{color:"var(--t3)",fontSize:11,fontStyle:"italic",marginBottom:16,lineHeight:1.5}}>{sec.note}</p>}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:24}}>
-          <span style={{fontSize:13,color:"var(--t2)"}}>5 questions</span>
-          <span style={{color:"var(--t3)"}}>·</span>
-          <span style={{fontSize:13,color:"var(--t2)"}}>{"\u223C"}2 min</span>
+        <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:2,marginBottom:16}}>Section {scanSec+1} of {SCAN_SECTION_ORDER.length}</div>
+        <div style={{marginBottom:16,animation:"countUp .6s"}}><GIcon name={secMeta.icon} size={64} color={secMeta.color}/></div>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:28,color:secMeta.color,marginBottom:4}}>{secMeta.name}</h2>
+        <p className="out" style={{color:"var(--t2)",fontSize:14,fontWeight:500,marginBottom:8}}>{secMeta.subtitle}</p>
+        <p style={{color:"var(--t3)",fontSize:13,lineHeight:1.6,marginBottom:8,maxWidth:320,margin:"0 auto 16px"}}>{secMeta.desc}</p>
+        <div className="crd" style={{padding:"10px 14px",marginBottom:20,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",fontSize:11,color:"var(--t2)",lineHeight:1.5}}>
+          {"Adaptive — questions get harder if you nail them, easier if you struggle. No timer, no pressure."}
         </div>
-        <button className="btn1" onClick={function(){setScanPhase("q");sC(0);sS(-1);var s=BATTLE_SCAN[scanSec];if(s.id==="listening"&&s.questions[0])setTimeout(function(){speakQ(s.questions[0].s);},400);}} style={{fontSize:16,padding:"14px 32px"}}>Begin</button>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:24}}>
+          <span style={{fontSize:13,color:"var(--t2)"}}>{secMeta.targetCount} questions</span>
+        </div>
+        <button className="btn1" onClick={beginSectionV2} style={{fontSize:16,padding:"14px 32px"}}>Begin</button>
       </div>
     </div>);
 
-  // Section Done
-  if(scanPhase==="done")return(
+  // Section Done (V2)
+  if(scanPhase==="done"){
+    var doneRes=sectionResults[secId];
+    var donePct=doneRes?Math.round(doneRes.acc*100):0;
+    return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
-        <div style={{fontSize:56,marginBottom:12,animation:"countUp .5s"}}>{sec.icon}</div>
-        <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:22,color:sec.color,marginBottom:4}}>{sec.name}</h3>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>{sec.subtitle} — Complete</p>
+        <div style={{marginBottom:12,animation:"countUp .5s"}}><GIcon name={secMeta.icon} size={56} color={secMeta.color}/></div>
+        <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:22,color:secMeta.color,marginBottom:4}}>{secMeta.name}</h3>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>{secMeta.subtitle+" — Complete"}</p>
         <div style={{display:"inline-block",padding:"12px 28px",borderRadius:16,background:"rgba(var(--cx),.08)",border:"1px solid rgba(var(--cx),.15)",marginBottom:24}}>
-          <div className="out" style={{fontSize:42,fontWeight:900,color:sec.color,animation:"countUp .6s"}}>{scanScores[sec.id]}<span style={{fontSize:20,color:"var(--t3)"}}>/5</span></div>
+          <div className="out" style={{fontSize:42,fontWeight:900,color:secMeta.color,animation:"countUp .6s"}}>{donePct}<span style={{fontSize:20,color:"var(--t3)"}}>%</span></div>
         </div>
-        <div style={{display:"flex",gap:4,justifyContent:"center",marginBottom:32}}>
-          {[0,1,2,3,4].map(function(i){return(
-            <div key={i} style={{width:36,height:8,borderRadius:4,background:i<scanScores[sec.id]?sec.color:"var(--bg3)",transition:"background .3s "+(i*0.1)+"s"}}/>);})}
-        </div>
-        {scanSec<BATTLE_SCAN.length-1?
-          <button className="btn1" onClick={nxtSection} style={{fontSize:16,padding:"14px 32px"}}>Next Section</button>
-          :<button className="btn1" onClick={function(){sSt("results");}} style={{fontSize:16,padding:"14px 32px",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>See Your Battle Report</button>}
+        {doneRes&&<div style={{fontSize:11,color:"var(--t3)",marginBottom:24}}>{doneRes.raw+" / "+doneRes.total+" correct (weighted by difficulty)"}</div>}
+        {scanSec<SCAN_SECTION_ORDER.length-1?
+          <button className="btn1" onClick={nextSectionV2} style={{fontSize:16,padding:"14px 32px"}}>Next Section</button>
+          :<button className="btn1" onClick={function(){stopListenAudio();stopTts();sSt("results");}} style={{fontSize:16,padding:"14px 32px",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>See Your Battle Report</button>}
       </div>
     </div>);
+  }
 
-  // Questions
-  var isReading=sec.id==="reading"&&sec.passage;
+  // Question phase (V2)
+  if(!currentQ){
+    return(<div className="app onboard-shell" style={{padding:"20px 16px",minHeight:"100vh"}}>
+      <p style={{color:"var(--t2)",textAlign:"center",marginTop:40}}>Loading next question...</p>
+    </div>);
+  }
+
+  var ctrl=ctrlRef.current;
+  var qNum=ctrl?(ctrl.score().total+(scanPhase==="q"?1:0)):1;
+  var qTotal=secMeta.targetCount;
+  var lvlCols=lvlBadgeColors(currentQ.lvl);
+  var opts=getOpts(currentQ);
+  var corrIdx=getCorrect(currentQ);
+
   return(
     <div className="app onboard-shell" style={{padding:"20px 16px",minHeight:"100vh"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <div>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:18}}>{sec.icon}</span>
-            <p className="out" style={{fontWeight:700,fontSize:14,color:sec.color}}>{sec.name}</p>
+          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+            <GIcon name={secMeta.icon} size={18} color={secMeta.color}/>
+            <p className="out" style={{fontWeight:700,fontSize:14,color:secMeta.color,margin:0}}>{secMeta.name}</p>
+            {currentQ.lvl&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:lvlCols.bg,color:lvlCols.fg,fontWeight:800,textTransform:"uppercase",letterSpacing:1}}>{currentQ.lvl}</span>}
+            {currentQ.sectionId==="listening"&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(59,130,246,.12)",color:"#3b82f6",fontWeight:700,letterSpacing:0.5}}>{partLabelV2(currentQ.part)}</span>}
+            {currentQ.sectionId==="grammar"&&currentQ.macroId&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(212,148,58,.12)",color:secMeta.color,fontWeight:700,letterSpacing:0.5,textTransform:"capitalize"}}>{currentQ.macroId}</span>}
+            {currentQ.sectionId==="reading"&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(34,197,94,.12)",color:"#22c55e",fontWeight:700,letterSpacing:0.5}}>{currentQ.format==="p6"?"Part 6 — Cloze":"Part 7 — Reading"}</span>}
           </div>
-          <p style={{fontSize:11,color:"var(--t3)"}}>Question {ci+1} of {scanQs.length}</p>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:3}}>
-          {scanQs.map(function(q,i){
-            var col=i<ci?sec.color:i===ci?"var(--cyan)":"var(--t3)";
-            return(<div key={i} style={{width:i===ci?16:8,height:5,borderRadius:3,background:col,transition:"all .3s"}}/>);})}
+          <p style={{fontSize:11,color:"var(--t3)",marginTop:2}}>Question {qNum} of {qTotal}</p>
         </div>
       </div>
-      <Bar value={ci+1} max={scanQs.length} h={4} color={sec.color}/>
+      <Bar value={qNum} max={qTotal} h={4} color={secMeta.color}/>
 
-      {/* Reading passage */}
-      {isReading&&ci===0&&<div className="crd" style={{marginTop:16,padding:14,maxHeight:200,overflowY:"auto",fontSize:13,lineHeight:1.7,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
-        <div className="out" style={{fontWeight:700,fontSize:12,color:sec.color,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>{sec.passage.title}</div>
-        {sec.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"6px 0 0",fontWeight:line.match(/^(TO|FROM|DATE|RE):/)?600:400,color:line.match(/^(TO|FROM|DATE|RE):/)?sec.color:"var(--t2)"}}>{line}</p>);})}
-      </div>}
-      {isReading&&ci>0&&<details style={{marginTop:12,marginBottom:4}}>
-        <summary style={{fontSize:12,color:"var(--t3)",cursor:"pointer",marginBottom:4}}>Show passage</summary>
-        <div className="crd" style={{padding:12,maxHeight:160,overflowY:"auto",fontSize:12,lineHeight:1.6,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
-          {sec.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"4px 0 0"}}>{line}</p>);})}
+      {(currentQ.sectionId==="grammar"||currentQ.sectionId==="vocab")&&(
+        <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginBottom:20,marginTop:18}}>{currentQ.item.s}</h2>
+      )}
+
+      {currentQ.sectionId==="reading"&&currentQ.format==="p6"&&(function(){
+        var passage=currentQ.passage;
+        var blankCount=0;
+        return(
+        <div className="crd" style={{marginTop:14,padding:14,fontSize:14,lineHeight:1.8,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
+          {passage.title&&<div className="out" style={{fontWeight:700,fontSize:11,color:"#22c55e",marginBottom:10,textTransform:"uppercase",letterSpacing:1}}>{passage.title+" · "+passage.type}</div>}
+          {passage.intro&&<div style={{fontSize:11,color:"var(--t3)",marginBottom:10,whiteSpace:"pre-line",fontStyle:"italic"}}>{passage.intro}</div>}
+          <div>
+            {passage.parts.map(function(p,i){
+              if(p.blank){
+                var thisIdx=blankCount;blankCount++;
+                var isCurrent=thisIdx===currentQ.blankIndex;
+                return(<span key={i} style={{display:"inline-block",margin:"0 2px",padding:"2px 10px",borderRadius:6,background:isCurrent?"rgba(34,197,94,.18)":"transparent",border:"1.5px solid "+(isCurrent?"#22c55e":"var(--bdr)"),color:isCurrent?"#22c55e":"var(--t3)",fontWeight:isCurrent?800:600,fontSize:13,letterSpacing:1}}>{isCurrent?"███":"___"}</span>);
+              }
+              return(<span key={i}>{p.text}</span>);
+            })}
+          </div>
+        </div>);
+      })()}
+
+      {currentQ.sectionId==="reading"&&currentQ.format==="p7"&&currentQ.isFirstQ&&(
+        <div className="crd" style={{marginTop:14,padding:14,maxHeight:240,overflowY:"auto",fontSize:13,lineHeight:1.7,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
+          <div className="out" style={{fontWeight:700,fontSize:11,color:"#22c55e",marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>{currentQ.passage.title+" · "+currentQ.passage.type}</div>
+          {currentQ.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"6px 0 0"}}>{line}</p>);})}
         </div>
-      </details>}
+      )}
+      {currentQ.sectionId==="reading"&&currentQ.format==="p7"&&!currentQ.isFirstQ&&(
+        <details style={{marginTop:12,marginBottom:4}}>
+          <summary style={{fontSize:12,color:"var(--t3)",cursor:"pointer",marginBottom:4}}>Show passage</summary>
+          <div className="crd" style={{padding:12,maxHeight:200,overflowY:"auto",fontSize:12,lineHeight:1.6,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
+            {currentQ.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"4px 0 0"}}>{line}</p>);})}
+          </div>
+        </details>
+      )}
 
-      {/* Prompt for listening */}
-      {scanQ.prompt&&<p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",marginTop:12,marginBottom:4}}>{scanQ.prompt}</p>}
+      {currentQ.sectionId==="reading"&&currentQ.format==="p7"&&(
+        <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:16}}>{currentQ.item.q}</h2>
+      )}
 
-      {sec.id==="listening"&&<div style={{display:"flex",alignItems:"center",gap:8,marginTop:12,marginBottom:8}}>
-        <button onClick={function(){speakQ(scanQ.s);}} disabled={ttsPlaying}
-          style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",background:ttsPlaying?"rgba(59,130,246,.15)":"var(--bg2)",border:"1px solid "+(ttsPlaying?"rgba(59,130,246,.3)":"var(--bdr)"),borderRadius:10,cursor:ttsPlaying?"default":"pointer",fontSize:13,fontWeight:600,color:ttsPlaying?"#3b82f6":"var(--t2)",fontFamily:"'DM Sans',sans-serif",transition:"all .3s"}}>
-          <span style={{fontSize:18}}>{ttsPlaying?"\uD83D\uDD0A":"\uD83D\uDD09"}</span>{ttsPlaying?"Playing...":"Listen again"}
-        </button>
-      </div>}
-
-      {sec.id==="listening"&&scanPhase==="q"?(
-        <div style={{textAlign:"center",padding:"24px 0",marginTop:12,marginBottom:20}}>
-          <div style={{fontSize:48,marginBottom:12,animation:ttsPlaying?"pulse 1.5s infinite":"none"}}>{ttsPlaying?"\uD83D\uDD0A":"\uD83D\uDD09"}</div>
-          <p className="out" style={{fontSize:14,fontWeight:600,color:ttsPlaying?"#3b82f6":"var(--t3)",transition:"color .3s"}}>{ttsPlaying?"Listen carefully...":"Press play to listen"}</p>
+      {currentQ.sectionId==="listening"&&currentQ.part==="p1"&&currentQ.item.img&&(
+        <div style={{marginTop:14,marginBottom:14,borderRadius:12,overflow:"hidden",border:"1px solid var(--bdr)",background:"#000"}}>
+          <img src={currentQ.item.img} alt="" style={{width:"100%",display:"block",maxHeight:280,objectFit:"contain"}}/>
         </div>
-      ):sec.id==="listening"&&scanPhase==="fb"?(
-        <div style={{marginTop:12,marginBottom:20}}>
-          <p style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>You heard:</p>
-          <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,color:"var(--t2)"}}>{scanQ.s}</h2>
+      )}
+
+      {currentQ.sectionId==="listening"&&(
+        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:12,marginBottom:12}}>
+          <button onClick={function(){resumeAudioSession();playListeningClip(currentQ);}} disabled={audioBusy}
+            style={{display:"flex",alignItems:"center",gap:8,padding:"10px 18px",background:audioBusy?"rgba(59,130,246,.15)":"var(--bg2)",border:"1px solid "+(audioBusy?"rgba(59,130,246,.3)":"var(--bdr)"),borderRadius:10,cursor:audioBusy?"default":"pointer",fontSize:13,fontWeight:600,color:audioBusy?"#3b82f6":"var(--t2)",fontFamily:"'DM Sans',sans-serif",transition:"all .3s"}}>
+            <GIcon name="public-speaker" size={16} color={audioBusy?"#3b82f6":"var(--t2)"}/>
+            {audioBusy?(currentQ.part==="p1"&&audioStep>=0?"Statement "+(audioStep+1)+" / 4":"Playing..."):(scanPhase==="fb"?"Listen again":"Listen")}
+          </button>
+          {scanPhase==="q"&&!audioBusy&&<span style={{fontSize:11,color:"var(--t3)",fontStyle:"italic"}}>Tap when ready</span>}
         </div>
-      ):(
-        <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginBottom:20,marginTop:isReading?12:16}}>{scanQ.s}</h2>
+      )}
+
+      {currentQ.sectionId==="listening"&&(currentQ.part==="p3"||currentQ.part==="p4")&&currentQ.item.qs&&currentQ.item.qs[currentQ.qIdx]&&(
+        <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:16,marginTop:8}}>{currentQ.item.qs[currentQ.qIdx].q}</h2>
+      )}
+
+      {currentQ.sectionId==="listening"&&(currentQ.part==="p1"||currentQ.part==="p2")&&(
+        <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",marginTop:8,marginBottom:12}}>
+          {currentQ.part==="p1"?"Pick the statement that best describes the photo.":"Pick the best response to the question you heard."}
+        </p>
       )}
 
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {scanQ.o.map(function(opt,i){
-          var isCor=i===scanQ.c;var isPick=sel===i;var show=scanPhase==="fb";
+        {opts.map(function(opt,i){
+          var isCor=i===corrIdx;var isPick=sel===i;var show=scanPhase==="fb";
           var bg="var(--bg2)";var bd="var(--bdr)";
           if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-          return(<button key={i} onClick={function(){if(scanPhase==="q")doScanAns(i);}} disabled={show}
+          return(<button key={i} onClick={function(){if(scanPhase==="q")answerScanQ(i);}} disabled={show||scanPhase!=="q"}
             style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:scanPhase==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
             <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(show&&isCor?"var(--green)":show&&isPick?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:show&&isCor?"var(--green)":show&&isPick&&!isCor?"var(--red)":"transparent",color:show&&(isCor||isPick)?"#fff":"var(--t3)"}}>
-              {show&&isCor?"\u2713":show&&isPick?"\u2717":String.fromCharCode(65+i)}</div>
+              {show&&isCor?"✓":show&&isPick?"✗":String.fromCharCode(65+i)}</div>
             <span>{opt}</span></button>);})}
       </div>
 
       {scanPhase==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
-          <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{scanQ.x}</p></div>
-        <button className="btn1" onClick={nxtScan} style={{marginTop:14}}>{ci<scanQs.length-1?"Next":(scanSec<BATTLE_SCAN.length-1?"Section Complete":"See Your Battle Report")}</button>
+        {getExplain(currentQ)&&<div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
+          <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,margin:0}}>{getExplain(currentQ)}</p>
+        </div>}
+        <button className="btn1" onClick={advanceScanV2} style={{marginTop:14}}>Next</button>
       </div>}
     </div>);
+
 }
 // ─── HOME ───
 // ═══════════════════════════════════════════════════════════════════════
