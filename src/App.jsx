@@ -17,7 +17,8 @@ import { CONNECTORS, PREP_COLLOCATIONS, GERUND_INF, TOEIC_TRAPS, FALSE_FRIENDS, 
 import { PART6_TEXTS } from "./data/part6.js";
 import { PART7_PASSAGES } from "./data/part7.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "./data/listening.js";
-import { BATTLE_SCAN, SCAN_STATS, FIRST_MISSIONS, MISSION_MODULES } from "./data/placement.js";
+import { MISSION_MODULES, BATTLE_SCAN_V2, SCAN_SECTION_ORDER } from "./data/placement.js";
+import { createCatController, computeScanResult } from "./scanEngine.js";
 import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
@@ -2997,7 +2998,15 @@ function Onboard(p){
 var[step,sSt]=useState("name");
   var[name,sN]=useState("");
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");
-  var[scanSec,setScanSec]=useState(0);var[scanScores,setScanScores]=useState({grammar:0,vocab:0,reading:0,listening:0});var[scanPhase,setScanPhase]=useState("intro");var[scanCorrect,setScanCorrect]=useState([]);
+  var[scanSec,setScanSec]=useState(0);var[scanScores,setScanScores]=useState({grammar:0,vocab:0,reading:0,listening:0});var[scanPhase,setScanPhase]=useState("intro");
+  // ─── Battle Scan V2 — CAT-light state ───
+  var[currentQ,setCurrentQ]=useState(null);            // {item, lvl, sectionId, ...sectionMeta} from controller.next()
+  var[sectionResults,setSectionResults]=useState({}); // {grammar:{acc, byMacro,...}, vocab:{...}, ...} from .score()
+  var[audioBusy,setAudioBusy]=useState(false);        // listening play button enable/disable
+  var[audioStep,setAudioStep]=useState(-1);            // P1 statement index currently playing (0-3) or -1
+  var ctrlRef=useRef(null);                            // active section controller (mutable, no rerenders)
+  // Mount listening audio session lifecycle
+  useEffect(function(){resumeAudioSession();return function(){stopListenAudio();};},[]);
   var[ttsPlaying,setTtsPlaying]=useState(false);var ttsUtter=useRef(null);
   function speakQ(text){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=0.9;var v=getEnVoice();if(v)u.voice=v;u.onstart=function(){setTtsPlaying(true);};u.onend=function(){setTtsPlaying(false);};u.onerror=function(){setTtsPlaying(false);};ttsUtter.current=u;window.speechSynthesis.speak(u);}
   function stopTts(){if(window.speechSynthesis)window.speechSynthesis.cancel();setTtsPlaying(false);}
@@ -3023,7 +3032,7 @@ var[step,sSt]=useState("name");
   function goAfterPushStep(firstNav){
     // If browser lacks Push API, skip the opt-in phase entirely
     var hasPush=("serviceWorker" in navigator)&&("PushManager" in window);
-    if(!hasPush){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,firstNav);return;}
+    if(!hasPush){p.go(name.trim(),classCode||"visitor",scanScores,firstNav,sectionResults);return;}
     setPendingNav(firstNav||null);sSt("pushPrompt");
   }
 
@@ -3100,21 +3109,103 @@ var[step,sSt]=useState("name");
     setClassChecking(false);
   }
 
-  function startTest(){sSt("scan");setScanSec(0);setScanScores({grammar:0,vocab:0,reading:0,listening:0});setScanPhase("intro");sC(0);sS(-1);setScanCorrect([]);}
-  function doScanAns(i){
-    sS(i);var sec=BATTLE_SCAN[scanSec];var q=sec.questions[ci];var correct=i===q.c;
-    if(correct){var ns=Object.assign({},scanScores);ns[sec.id]=(ns[sec.id]||0)+1;setScanScores(ns);try{playCorrect();}catch(e){}}
-    else{try{playWrong();}catch(e){}}
-    setScanCorrect(function(prev){return prev.concat([correct]);});
+  // ─── Battle Scan V2 helpers (CAT-light) ───
+  function startTestV2(){
+    sSt("scan");
+    setScanSec(0);
+    setScanScores({grammar:0,vocab:0,reading:0,listening:0});
+    setSectionResults({});
+    setScanPhase("intro");
+    setCurrentQ(null);
+    sS(-1);
+    ctrlRef.current=createCatController(SCAN_SECTION_ORDER[0]);
+  }
+  // Listening audio dispatcher — called from "Listen" button or auto on phase enter.
+  // P1: plays 4 statements sequentially. P2: plays only the question audio.
+  // P3/P4: plays the full conversation/talk in one file.
+  async function playListeningClip(curQ){
+    if(!curQ||curQ.sectionId!=="listening")return;
+    setAudioBusy(true);
+    try{
+      var part=curQ.part;var refId=curQ.refId;
+      if(part==="p1"){
+        for(var i=0;i<4;i++){
+          setAudioStep(i);
+          await playAudioFile("/audio/p1/"+refId+"_"+i+".mp3");
+          if(_audioAborted)break;
+        }
+        setAudioStep(-1);
+      }else if(part==="p2"){
+        await playAudioFile("/audio/p2/"+refId+"_q.mp3");
+      }else if(part==="p3"){
+        await playAudioFile("/audio/p3/"+refId+".mp3");
+      }else if(part==="p4"){
+        await playAudioFile("/audio/p4/"+refId+".mp3");
+      }
+    }catch(e){console.warn("[scan-v2] audio:",e&&e.message);}
+    setAudioBusy(false);
+  }
+  function beginSectionV2(){
+    var ctrl=ctrlRef.current;if(!ctrl)return;
+    var q=ctrl.next();
+    setCurrentQ(q);
+    setScanPhase("q");
+    sS(-1);
+    if(q&&q.sectionId==="listening"){setTimeout(function(){playListeningClip(q);},400);}
+  }
+  // Resolve: did the user pick the correct answer for the current Q?
+  function isCorrectFor(curQ,pickIdx){
+    if(!curQ)return false;
+    if(curQ.sectionId==="listening"){
+      var src=curQ.item;
+      if(curQ.part==="p1"||curQ.part==="p2"){return pickIdx===src.c;}
+      if(curQ.part==="p3"||curQ.part==="p4"){return pickIdx===src.qs[curQ.qIdx].c;}
+      return false;
+    }
+    return pickIdx===curQ.item.c;
+  }
+  function answerScanQ(pickIdx){
+    var curQ=currentQ;if(!curQ)return;
+    sS(pickIdx);
+    var correct=isCorrectFor(curQ,pickIdx);
+    if(correct){try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}
+    var ctrl=ctrlRef.current;if(ctrl)ctrl.record(correct);
     setScanPhase("fb");
   }
-  function nxtScan(){
-    stopTts();var sec=BATTLE_SCAN[scanSec];
-    if(ci<sec.questions.length-1){var ni=ci+1;sC(ni);sS(-1);setScanPhase("q");if(sec.id==="listening"&&sec.questions[ni])setTimeout(function(){speakQ(sec.questions[ni].s);},400);}
-    else if(scanSec<BATTLE_SCAN.length-1){setScanPhase("done");}
-    else{sSt("results");}
+  function advanceScanV2(){
+    stopListenAudio();stopTts();
+    var ctrl=ctrlRef.current;if(!ctrl)return;
+    var nq=ctrl.next();
+    if(nq){
+      setCurrentQ(nq);
+      sS(-1);
+      setScanPhase("q");
+      if(nq.sectionId==="listening"){setTimeout(function(){resumeAudioSession();playListeningClip(nq);},400);}
+      return;
+    }
+    // Section finished — collect score, fold into legacy scanScores, advance.
+    var secId=SCAN_SECTION_ORDER[scanSec];
+    var res=ctrl.score();
+    var nextResults=Object.assign({},sectionResults);nextResults[secId]=res;
+    setSectionResults(nextResults);
+    var nextScores=Object.assign({},scanScores);nextScores[secId]=Math.round(res.acc*5);setScanScores(nextScores);
+    setScanPhase("done");
   }
-  function nxtSection(){stopTts();setScanSec(scanSec+1);sC(0);sS(-1);setScanPhase("intro");}
+  function nextSectionV2(){
+    stopListenAudio();stopTts();
+    var nextIdx=scanSec+1;
+    if(nextIdx>=SCAN_SECTION_ORDER.length){
+      // All sections done — switch to results.
+      sSt("results");
+      return;
+    }
+    setScanSec(nextIdx);
+    ctrlRef.current=createCatController(SCAN_SECTION_ORDER[nextIdx]);
+    setCurrentQ(null);
+    sS(-1);
+    setScanPhase("intro");
+    resumeAudioSession();
+  }
 
   // ─ Name entry ─
   if(step==="name")return(
@@ -3384,7 +3475,7 @@ var[step,sSt]=useState("name");
             </div>
           </div>
         </div>
-        <button className="btn1" onClick={function(){startTest();}}
+        <button className="btn1" onClick={function(){startTestV2();}}
           style={{fontSize:16,padding:"14px 28px",width:"100%",marginBottom:10}}>{"J\u2019accepte \u2014 Continuer"}</button>
         <button onClick={function(){setShowPrivacy(true);}}
           style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",marginBottom:10}}>{"Lire la politique de confidentialit\u00e9 compl\u00e8te"}</button>
@@ -3459,41 +3550,92 @@ var[step,sSt]=useState("name");
 
   // (PIN steps removed 2026-04-20 — replaced by magic link auth. See auth.js.)
 
-  // ─ Battle Report ─
+  // ─ Battle Report (V2 — scan-v2 phase E) ─
   if(step==="results"){
-    var cx=150,cy=150,rad=110;
+    // Build the V2 result from sectionResults via scanEngine.computeScanResult().
+    // Falls back to V1 scanScores integers if sectionResults is empty (defensive).
+    var hasV2=sectionResults&&sectionResults.grammar&&sectionResults.vocab&&sectionResults.reading&&sectionResults.listening;
+    var rep=hasV2?computeScanResult(sectionResults):null;
+    var toeicEst=rep?rep.toeic:Math.round((200+((scanScores.grammar+scanScores.vocab+scanScores.reading+scanScores.listening)/20)*790)/5)*5;
+    var tierLabel=rep?rep.tier:"Recruit";
+    var sec={grammar:rep?rep.sections.grammar:scanScores.grammar*20,vocab:rep?rep.sections.vocab:scanScores.vocab*20,reading:rep?rep.sections.reading:scanScores.reading*20,listening:rep?rep.sections.listening:scanScores.listening*20};
+    var grammarMacros=(rep&&rep.grammarMacros)||{};
+    var listeningByPart=(rep&&rep.listeningByPart)||{};
+    var readingByPart=(rep&&rep.readingByPart)||{};
+
+    // Pick weakest section
     var statOrder=["grammar","vocab","reading","listening"];
-    var statMeta={grammar:{icon:"\u2694\uFE0F",label:"Grammar",arena:"Blade Precision",color:"var(--cx-hex)"},vocab:{icon:"\uD83D\uDCDA",label:"Vocabulary",arena:"Arcane Lore",color:"#8b5cf6"},reading:{icon:"\uD83D\uDD0D",label:"Reading",arena:"Tactical Sight",color:"#22c55e"},listening:{icon:"\uD83D\uDC42",label:"Listening",arena:"Battle Sense",color:"#3b82f6"}};
+    var statMeta={
+      grammar:{icon:"crossed-swords",arena:"Blade Precision",color:"#d4943a"},
+      vocab:{icon:"spell-book",arena:"Arcane Lore",color:"#8b5cf6"},
+      reading:{icon:"eye-target",arena:"Tactical Sight",color:"#22c55e"},
+      listening:{icon:"public-speaker",arena:"Battle Sense",color:"#3b82f6"}
+    };
+    var weakestSec=statOrder.reduce(function(a,b){return sec[a]<=sec[b]?a:b;});
+
+    // First Quest: pick a sensible module from the weakest section.
+    // For grammar, pick the weakest macro and aim Drill (which uses pickAdaptive on macros).
+    // For listening, pick the weakest part. For reading, prefer P7 (broader). For vocab, tavern.
+    function pickFirstQuest(){
+      if(weakestSec==="grammar"){
+        var macroLabel={verbs:"Verbs",linking:"Linking",forms:"Word Forms",reference:"References"};
+        var weakMacro=null,minAcc=2;
+        Object.keys(grammarMacros).forEach(function(k){if(grammarMacros[k]<minAcc){minAcc=grammarMacros[k];weakMacro=k;}});
+        return{mod:"drill",icon:"crossed-swords",label:"Part 5 Drill"+(weakMacro?" — "+macroLabel[weakMacro]:""),msg:"Your grammar foundations need sharpening. Drill weights toward your weakest macro automatically."};
+      }
+      if(weakestSec==="vocab"){
+        return{mod:"tavern",icon:"spell-book",label:"Word Tavern",msg:"Your business lexicon needs expansion. Word Tavern teaches and tests new vocabulary in context."};
+      }
+      if(weakestSec==="reading"){
+        var pickP=(typeof readingByPart.p6==="number"&&typeof readingByPart.p7==="number"&&readingByPart.p6<readingByPart.p7)?"p6":"p7";
+        return{mod:pickP,icon:pickP==="p6"?"scroll-quill":"eye-target",label:pickP==="p6"?"Part 6 — Cloze":"Part 7 — Reading",msg:"Reading comprehension is your weak spot. "+(pickP==="p6"?"Part 6 trains contextual cloze.":"Part 7 trains inference and detail.")};
+      }
+      // listening
+      var weakPart=null,minPa=2;
+      ["p1","p2","p3","p4"].forEach(function(p){if(typeof listeningByPart[p]==="number"&&listeningByPart[p]<minPa){minPa=listeningByPart[p];weakPart=p;}});
+      var modMap={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4"};
+      var labelMap={p1:"Listening Part 1 — Photos",p2:"Listening Part 2 — Q&R",p3:"Listening Part 3 — Conversations",p4:"Listening Part 4 — Talks"};
+      var icoMap={p1:"public-speaker",p2:"public-speaker",p3:"public-speaker",p4:"public-speaker"};
+      if(!weakPart)weakPart="p2";
+      return{mod:modMap[weakPart],icon:icoMap[weakPart],label:labelMap[weakPart],msg:"Your ear needs training. "+labelMap[weakPart]+" exercises real TOEIC audio."};
+    }
+    var quest=pickFirstQuest();
+
+    // Main radar geometry (4-axis diamond, % values)
+    var cx=150,cy=150,rad=110;
     var dxArr=[0,1,0,-1],dyArr=[-1,0,1,0];
     function gridDiam(s){return cx+","+(cy-rad*s)+" "+(cx+rad*s)+","+cy+" "+cx+","+(cy+rad*s)+" "+(cx-rad*s)+","+cy;}
-    var playerPts=statOrder.map(function(st,i){var v=Math.max(scanScores[st],0.15)/5;return(cx+dxArr[i]*rad*v)+","+(cy+dyArr[i]*rad*v);}).join(" ");
-    var totalSc=scanScores.grammar+scanScores.vocab+scanScores.reading+scanScores.listening;
-    var weakest=statOrder.reduce(function(a,b){return scanScores[a]<=scanScores[b]?a:b;});
-    var mission=FIRST_MISSIONS.find(function(m){return m.stat===weakest;});
-    var tierLabel=totalSc>=16?"Battle-Ready":totalSc>=12?"Skilled Fighter":totalSc>=8?"Apprentice":"Recruit";
-    var tierIcon=totalSc>=16?"\uD83C\uDFC6":totalSc>=12?"\u2694\uFE0F":totalSc>=8?"\uD83D\uDEE1\uFE0F":"\uD83D\uDCDA";
-    // Map Battle Scan score (0-20) to estimated TOEIC score (200-990, rounded to 5)
-    var toeicEst=Math.round((200+(totalSc/20)*790)/5)*5;
-    var toeicColor=toeicEst>=750?"var(--green)":toeicEst>=500?"var(--gold)":"var(--orange)";
+    var playerPts=statOrder.map(function(st,i){var v=Math.max(sec[st]/100,0.10);return(cx+dxArr[i]*rad*v)+","+(cy+dyArr[i]*rad*v);}).join(" ");
+
+    // Mini grammar radar geometry (smaller diamond, 4 macros)
+    var macroOrder=["verbs","linking","forms","reference"];
+    var macroLabels={verbs:"Verbs",linking:"Linking",forms:"Forms",reference:"Refs"};
+    var mcx=80,mcy=80,mrad=60;
+    var mdx=[0,1,0,-1],mdy=[-1,0,1,0];
+    function mGrid(s){return mcx+","+(mcy-mrad*s)+" "+(mcx+mrad*s)+","+mcy+" "+mcx+","+(mcy+mrad*s)+" "+(mcx-mrad*s)+","+mcy;}
+    var hasGrammarMacros=macroOrder.some(function(k){return typeof grammarMacros[k]==="number";});
+    var macroPts=macroOrder.map(function(k,i){var v=Math.max(grammarMacros[k]||0,0.10);return(mcx+mdx[i]*mrad*v)+","+(mcy+mdy[i]*mrad*v);}).join(" ");
+
+    var toeicColor=toeicEst>=750?"var(--green)":toeicEst>=600?"var(--gold)":toeicEst>=450?"var(--orange)":"var(--red)";
+
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center",overflow:"auto"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:3,marginBottom:8}} className="out">Battle Report</div>
+        <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:3,marginBottom:8}}>Battle Report</div>
         <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>Warrior Assessment</h2>
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 14px",borderRadius:99,background:"rgba(var(--cx),.1)",border:"1px solid rgba(var(--cx),.2)",marginBottom:20}}>
-          <span style={{fontSize:16}}>{tierIcon}</span>
+        <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:99,background:"rgba(var(--cx),.1)",border:"1px solid rgba(var(--cx),.2)",marginBottom:20}}>
+          <GIcon name="laurel-crown" size={14} color="var(--cyan)"/>
           <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{tierLabel}</span>
-          <span style={{fontSize:12,color:"var(--t3)"}}>{totalSc}/20</span>
         </div>
 
-        {/* ── TOEIC ESTIMATE ── */}
+        {/* TOEIC ESTIMATE */}
         <div className="crd" style={{padding:"14px 16px",marginBottom:20,background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(240,200,80,.06))",border:"1px solid rgba(240,200,80,.2)"}}>
-          <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>{"\uD83C\uDFAF"} Estimated TOEIC</div>
+          <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><GIcon name="bullseye" size={12} color="var(--t3)"/> Estimated TOEIC</div>
           <div className="out" style={{fontFamily:"'Cinzel',serif",fontSize:32,fontWeight:900,color:toeicColor,lineHeight:1}}>{toeicEst}<span style={{fontSize:14,color:"var(--t3)",fontWeight:400,marginLeft:6}}>{"/ 990"}</span></div>
-          <p style={{fontSize:11,color:"var(--t2)",lineHeight:1.5,margin:"8px 0 0",textAlign:"left"}}>Real TOEIC is 50% <b style={{color:"#3b82f6"}}>Listening</b> + 50% <b style={{color:"#22c55e"}}>Reading</b>. Train both to make progress.</p>
+          <p style={{fontSize:11,color:"var(--t2)",lineHeight:1.5,margin:"8px 0 0",textAlign:"left"}}>Adaptive baseline — refines as you train. Real TOEIC = 50% <b style={{color:"#3b82f6"}}>Listening</b> + 50% <b style={{color:"#22c55e"}}>Reading</b>.</p>
         </div>
 
-        {/* ── RADAR SVG ── */}
+        {/* MAIN RADAR — 4 sections */}
         <div style={{position:"relative",width:280,height:280,margin:"0 auto 8px"}}>
           <svg viewBox="0 0 300 300" width="280" height="280" style={{display:"block"}}>
             <defs>
@@ -3506,36 +3648,35 @@ var[step,sSt]=useState("name");
             {[0.2,0.4,0.6,0.8,1.0].map(function(s,i){return(<polygon key={i} points={gridDiam(s)} fill="none" stroke={"rgba(180,140,80,"+(s===1?0.25:0.1)+")"} strokeWidth={s===1?"1.5":"0.7"}/>);})}
             {statOrder.map(function(st,i){return(<line key={st} x1={cx} y1={cy} x2={cx+dxArr[i]*rad} y2={cy+dyArr[i]*rad} stroke="rgba(180,140,80,0.15)" strokeWidth="1"/>);})}
             <polygon points={playerPts} fill="rgba(var(--cx),0.18)" stroke="var(--cx-hex)" strokeWidth="2.5" strokeLinejoin="round" style={{filter:"drop-shadow(0 0 10px rgba(var(--cx),0.3))",animation:"fadeIn .8s"}}/>
-            {statOrder.map(function(st,i){var v=Math.max(scanScores[st],0.15)/5;return(<circle key={st} cx={cx+dxArr[i]*rad*v} cy={cy+dyArr[i]*rad*v} r="5" fill={statMeta[st].color} stroke="var(--bg)" strokeWidth="2" style={{animation:"fadeIn 1s"}}/>);})}
+            {statOrder.map(function(st,i){var v=Math.max(sec[st]/100,0.10);return(<circle key={st} cx={cx+dxArr[i]*rad*v} cy={cy+dyArr[i]*rad*v} r="5" fill={statMeta[st].color} stroke="var(--bg)" strokeWidth="2" style={{animation:"fadeIn 1s"}}/>);})}
           </svg>
-          {/* Axis labels positioned around the radar */}
           <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%) translateY(-4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.grammar.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.grammar.color}}>{scanScores.grammar}/5</div>
+            <GIcon name={statMeta.grammar.icon} size={16} color={statMeta.grammar.color}/>
+            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.grammar.color}}>{sec.grammar+"%"}</div>
           </div>
           <div style={{position:"absolute",top:"50%",right:0,transform:"translateY(-50%) translateX(4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.vocab.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.vocab.color}}>{scanScores.vocab}/5</div>
+            <GIcon name={statMeta.vocab.icon} size={16} color={statMeta.vocab.color}/>
+            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.vocab.color}}>{sec.vocab+"%"}</div>
           </div>
           <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%) translateY(4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.reading.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.reading.color}}>{scanScores.reading}/5</div>
+            <GIcon name={statMeta.reading.icon} size={16} color={statMeta.reading.color}/>
+            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.reading.color}}>{sec.reading+"%"}</div>
           </div>
           <div style={{position:"absolute",top:"50%",left:0,transform:"translateY(-50%) translateX(-4px)",textAlign:"center"}}>
-            <div style={{fontSize:16}}>{statMeta.listening.icon}</div>
-            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.listening.color}}>{scanScores.listening}/5</div>
+            <GIcon name={statMeta.listening.icon} size={16} color={statMeta.listening.color}/>
+            <div className="out" style={{fontSize:10,fontWeight:700,color:statMeta.listening.color}}>{sec.listening+"%"}</div>
           </div>
         </div>
 
-        {/* ── STAT BARS ── */}
-        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24,textAlign:"left"}}>
-          {statOrder.map(function(st){var m=statMeta[st];var pct=scanScores[st]/5*100;return(
+        {/* STAT BARS */}
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20,textAlign:"left"}}>
+          {statOrder.map(function(st){var m=statMeta[st];var pct=sec[st];return(
             <div key={st} style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:18,width:28,textAlign:"center"}}>{m.icon}</span>
+              <span style={{width:28,textAlign:"center"}}><GIcon name={m.icon} size={18} color={m.color}/></span>
               <div style={{flex:1}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
                   <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--t1)"}}>{m.arena}</span>
-                  <span className="out" style={{fontSize:11,fontWeight:700,color:m.color}}>{scanScores[st]}/5</span>
+                  <span className="out" style={{fontSize:11,fontWeight:700,color:m.color}}>{pct+"%"}</span>
                 </div>
                 <div style={{height:6,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}>
                   <div style={{width:pct+"%",height:"100%",background:m.color,borderRadius:99,transition:"width 1s cubic-bezier(.4,0,.2,1)"}}/>
@@ -3545,28 +3686,66 @@ var[step,sSt]=useState("name");
           })}
         </div>
 
-        {/* ── FIRST MISSION ── */}
-        {mission&&<div className="crd" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
-          style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16,marginBottom:24,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
+        {/* MINI GRAMMAR RADAR — 4 macros */}
+        {hasGrammarMacros&&<div className="crd" style={{padding:"14px 16px",marginBottom:20,background:"rgba(212,148,58,.05)",border:"1px solid rgba(212,148,58,.2)",textAlign:"left"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <GIcon name="scroll-quill" size={14} color="#d4943a"/>
+            <span className="out" style={{fontSize:11,fontWeight:700,color:"#d4943a",textTransform:"uppercase",letterSpacing:1}}>Grammar — 4 macros</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:14}}>
+            <div style={{position:"relative",width:160,height:160,flexShrink:0}}>
+              <svg viewBox="0 0 160 160" width="160" height="160">
+                {[0.25,0.5,0.75,1.0].map(function(s,i){return(<polygon key={i} points={mGrid(s)} fill="none" stroke={"rgba(180,140,80,"+(s===1?0.25:0.08)+")"} strokeWidth={s===1?"1":"0.6"}/>);})}
+                {macroOrder.map(function(k,i){return(<line key={k} x1={mcx} y1={mcy} x2={mcx+mdx[i]*mrad} y2={mcy+mdy[i]*mrad} stroke="rgba(180,140,80,0.15)" strokeWidth="0.7"/>);})}
+                <polygon points={macroPts} fill="rgba(212,148,58,0.20)" stroke="#d4943a" strokeWidth="1.8" strokeLinejoin="round"/>
+                {macroOrder.map(function(k,i){var v=Math.max(grammarMacros[k]||0,0.10);return(<circle key={k} cx={mcx+mdx[i]*mrad*v} cy={mcy+mdy[i]*mrad*v} r="3" fill="#d4943a"/>);})}
+              </svg>
+            </div>
+            <div style={{flex:1,fontSize:11,lineHeight:1.6,color:"var(--t2)"}}>
+              {macroOrder.map(function(k){
+                var v=grammarMacros[k];
+                if(typeof v!=="number")return null;
+                var pct=Math.round(v*100);
+                var col=pct>=75?"var(--green)":pct>=50?"var(--cyan)":"var(--orange)";
+                return(<div key={k} style={{display:"flex",justifyContent:"space-between",gap:8}}>
+                  <span style={{color:"var(--t2)"}}>{macroLabels[k]}</span>
+                  <span className="out" style={{fontWeight:700,color:col}}>{pct+"%"}</span>
+                </div>);
+              })}
+            </div>
+          </div>
+          <p style={{fontSize:10,color:"var(--t3)",margin:"10px 0 0",lineHeight:1.5,fontStyle:"italic"}}>Your Mentor uses these 4 axes to weight your Drill picks. Train Drill to refine each.</p>
+        </div>}
+
+        {/* FIRST QUEST */}
+        <div className="crd" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(quest.mod);}}
+          style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16,marginBottom:14,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-            <span style={{fontSize:20}}>📜</span>
+            <GIcon name="rolled-cloth" size={16} color="var(--cyan)"/>
             <span className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:14,color:"var(--cyan)"}}>First Quest</span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:28}}>{mission.icon}</span>
+            <span style={{flexShrink:0}}><GIcon name={quest.icon} size={28} color="var(--cyan)"/></span>
             <div>
-              <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:2}}>{mission.label}</div>
-              <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0}}>{mission.msg}</p>
+              <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:2}}>{quest.label}</div>
+              <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0}}>{quest.msg}</p>
             </div>
           </div>
-        </div>}
+        </div>
 
-        {mission&&<button className="btn1" onClick={function(){stopTts();playArenaCall();var navTarget=mission.modules&&mission.modules[0]||"drill";goAfterPushStep(navTarget);}}
+        <button className="btn1" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(quest.mod);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
-          Start Your Quest — {mission.label}</button>}
-        <button className="btn2" onClick={function(){stopTts();playArenaCall();goAfterPushStep(null);}}
-          style={{fontSize:14,padding:"12px 28px",width:"100%"}}>Enter the Arena</button>
-        <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your stats will evolve as you train. This is just the beginning.</p>
+          Start Your Quest
+        </button>
+
+        {/* MENTOR CTA — the continuity bridge */}
+        <button className="btn2" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep("mentor");}}
+          style={{fontSize:14,padding:"12px 28px",width:"100%",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          <GIcon name="wizard-staff" size={16} color="currentColor"/> Open your Mentor
+        </button>
+        <button className="btn2" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(null);}}
+          style={{fontSize:13,padding:"10px 28px",width:"100%",opacity:0.85}}>Enter the Arena</button>
+        <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your radar will refine as you train. The Mentor uses these scores to personalize your path from day one.</p>
       </div>
     </div>);}
 
@@ -3631,7 +3810,7 @@ var[step,sSt]=useState("name");
 
   // ─ Language bridge: transition to English ─
   if(step==="langBridge"){
-    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,pendingNav||undefined);}
+    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,pendingNav||undefined,sectionResults);}
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
@@ -3648,131 +3827,214 @@ var[step,sSt]=useState("name");
       </div>
     </div>);}
 
-  // ─ Battle Scan ─
-  var sec=BATTLE_SCAN[scanSec]||BATTLE_SCAN[0];
-  var scanQs=sec.questions;
-  var scanQ=scanQs[ci]||scanQs[0];
+  // ═══════════════════════════════════════════════════════════════════════
+  // Battle Scan V2 — CAT-light render
+  // ═══════════════════════════════════════════════════════════════════════
+  var secId=SCAN_SECTION_ORDER[scanSec]||SCAN_SECTION_ORDER[0];
+  var secMeta=BATTLE_SCAN_V2[secId];
 
-  // Section Intro
+  function getOpts(curQ){
+    if(!curQ)return[];
+    if(curQ.sectionId==="listening"){
+      if(curQ.part==="p1"||curQ.part==="p2")return curQ.item.opts||[];
+      if(curQ.part==="p3"||curQ.part==="p4"){var sub=curQ.item.qs&&curQ.item.qs[curQ.qIdx];return sub?(sub.opts||[]):[];}
+      return[];
+    }
+    return curQ.item.o||[];
+  }
+  function getCorrect(curQ){
+    if(!curQ)return-1;
+    if(curQ.sectionId==="listening"){
+      if(curQ.part==="p1"||curQ.part==="p2")return curQ.item.c;
+      if(curQ.part==="p3"||curQ.part==="p4"){var sub=curQ.item.qs&&curQ.item.qs[curQ.qIdx];return sub?sub.c:-1;}
+      return-1;
+    }
+    return curQ.item.c;
+  }
+  function getExplain(curQ){
+    if(!curQ)return"";
+    if(curQ.sectionId==="listening"){
+      if(curQ.part==="p1"||curQ.part==="p2")return curQ.item.x||"";
+      if(curQ.part==="p3"||curQ.part==="p4"){var sub=curQ.item.qs&&curQ.item.qs[curQ.qIdx];return(sub&&sub.x)||"Listen again to catch the relevant detail.";}
+      return"";
+    }
+    return curQ.item.x||"";
+  }
+  function lvlBadgeColors(l){
+    if(l==="hard")return{bg:"rgba(239,68,68,.15)",fg:"#ef4444"};
+    if(l==="easy")return{bg:"rgba(34,197,94,.15)",fg:"#22c55e"};
+    return{bg:"rgba(245,158,11,.15)",fg:"#f59e0b"};
+  }
+  function partLabelV2(p){return{p1:"Part 1 — Photo",p2:"Part 2 — Q&R",p3:"Part 3 — Conversation",p4:"Part 4 — Talk"}[p]||p;}
+
+  // Section Intro (V2)
   if(scanPhase==="intro")return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
         <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:24}}>
-          {BATTLE_SCAN.map(function(s,i){return(
+          {SCAN_SECTION_ORDER.map(function(sid,i){var sm=BATTLE_SCAN_V2[sid];return(
             <div key={i} style={{display:"flex",alignItems:"center",gap:4}}>
-              <div style={{width:i===scanSec?32:10,height:10,borderRadius:5,background:i<scanSec?s.color:i===scanSec?s.color:"var(--bg3)",opacity:i<=scanSec?1:.4,transition:"all .4s"}}/>
+              <div style={{width:i===scanSec?32:10,height:10,borderRadius:5,background:i<=scanSec?sm.color:"var(--bg3)",opacity:i<=scanSec?1:.4,transition:"all .4s"}}/>
             </div>);})}
         </div>
-        <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:2,marginBottom:16}}>Section {scanSec+1} of 4</div>
-        <div style={{fontSize:72,marginBottom:12,animation:"countUp .6s"}}>{sec.icon}</div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:28,color:sec.color,marginBottom:4}}>{sec.name}</h2>
-        <p className="out" style={{color:"var(--t2)",fontSize:14,fontWeight:500,marginBottom:8}}>{sec.subtitle}</p>
-        <p style={{color:"var(--t3)",fontSize:13,lineHeight:1.6,marginBottom:8,maxWidth:300,margin:"0 auto 24px"}}>{sec.desc}</p>
-        {sec.note&&<p style={{color:"var(--t3)",fontSize:11,fontStyle:"italic",marginBottom:16,lineHeight:1.5}}>{sec.note}</p>}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:24}}>
-          <span style={{fontSize:13,color:"var(--t2)"}}>5 questions</span>
-          <span style={{color:"var(--t3)"}}>·</span>
-          <span style={{fontSize:13,color:"var(--t2)"}}>{"\u223C"}2 min</span>
+        <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:2,marginBottom:16}}>Section {scanSec+1} of {SCAN_SECTION_ORDER.length}</div>
+        <div style={{marginBottom:16,animation:"countUp .6s"}}><GIcon name={secMeta.icon} size={64} color={secMeta.color}/></div>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:28,color:secMeta.color,marginBottom:4}}>{secMeta.name}</h2>
+        <p className="out" style={{color:"var(--t2)",fontSize:14,fontWeight:500,marginBottom:8}}>{secMeta.subtitle}</p>
+        <p style={{color:"var(--t3)",fontSize:13,lineHeight:1.6,marginBottom:8,maxWidth:320,margin:"0 auto 16px"}}>{secMeta.desc}</p>
+        <div className="crd" style={{padding:"10px 14px",marginBottom:20,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",fontSize:11,color:"var(--t2)",lineHeight:1.5}}>
+          {"Adaptive — questions get harder if you nail them, easier if you struggle. No timer, no pressure."}
         </div>
-        <button className="btn1" onClick={function(){setScanPhase("q");sC(0);sS(-1);var s=BATTLE_SCAN[scanSec];if(s.id==="listening"&&s.questions[0])setTimeout(function(){speakQ(s.questions[0].s);},400);}} style={{fontSize:16,padding:"14px 32px"}}>Begin</button>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:24}}>
+          <span style={{fontSize:13,color:"var(--t2)"}}>{secMeta.targetCount} questions</span>
+        </div>
+        <button className="btn1" onClick={beginSectionV2} style={{fontSize:16,padding:"14px 32px"}}>Begin</button>
       </div>
     </div>);
 
-  // Section Done
-  if(scanPhase==="done")return(
+  // Section Done (V2)
+  if(scanPhase==="done"){
+    var doneRes=sectionResults[secId];
+    var donePct=doneRes?Math.round(doneRes.acc*100):0;
+    return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
-        <div style={{fontSize:56,marginBottom:12,animation:"countUp .5s"}}>{sec.icon}</div>
-        <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:22,color:sec.color,marginBottom:4}}>{sec.name}</h3>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>{sec.subtitle} — Complete</p>
+        <div style={{marginBottom:12,animation:"countUp .5s"}}><GIcon name={secMeta.icon} size={56} color={secMeta.color}/></div>
+        <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:22,color:secMeta.color,marginBottom:4}}>{secMeta.name}</h3>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>{secMeta.subtitle+" — Complete"}</p>
         <div style={{display:"inline-block",padding:"12px 28px",borderRadius:16,background:"rgba(var(--cx),.08)",border:"1px solid rgba(var(--cx),.15)",marginBottom:24}}>
-          <div className="out" style={{fontSize:42,fontWeight:900,color:sec.color,animation:"countUp .6s"}}>{scanScores[sec.id]}<span style={{fontSize:20,color:"var(--t3)"}}>/5</span></div>
+          <div className="out" style={{fontSize:42,fontWeight:900,color:secMeta.color,animation:"countUp .6s"}}>{donePct}<span style={{fontSize:20,color:"var(--t3)"}}>%</span></div>
         </div>
-        <div style={{display:"flex",gap:4,justifyContent:"center",marginBottom:32}}>
-          {[0,1,2,3,4].map(function(i){return(
-            <div key={i} style={{width:36,height:8,borderRadius:4,background:i<scanScores[sec.id]?sec.color:"var(--bg3)",transition:"background .3s "+(i*0.1)+"s"}}/>);})}
-        </div>
-        {scanSec<BATTLE_SCAN.length-1?
-          <button className="btn1" onClick={nxtSection} style={{fontSize:16,padding:"14px 32px"}}>Next Section</button>
-          :<button className="btn1" onClick={function(){sSt("results");}} style={{fontSize:16,padding:"14px 32px",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>See Your Battle Report</button>}
+        {doneRes&&<div style={{fontSize:11,color:"var(--t3)",marginBottom:24}}>{doneRes.raw+" / "+doneRes.total+" correct (weighted by difficulty)"}</div>}
+        {scanSec<SCAN_SECTION_ORDER.length-1?
+          <button className="btn1" onClick={nextSectionV2} style={{fontSize:16,padding:"14px 32px"}}>Next Section</button>
+          :<button className="btn1" onClick={function(){stopListenAudio();stopTts();sSt("results");}} style={{fontSize:16,padding:"14px 32px",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>See Your Battle Report</button>}
       </div>
     </div>);
+  }
 
-  // Questions
-  var isReading=sec.id==="reading"&&sec.passage;
+  // Question phase (V2)
+  if(!currentQ){
+    return(<div className="app onboard-shell" style={{padding:"20px 16px",minHeight:"100vh"}}>
+      <p style={{color:"var(--t2)",textAlign:"center",marginTop:40}}>Loading next question...</p>
+    </div>);
+  }
+
+  var ctrl=ctrlRef.current;
+  var qNum=ctrl?(ctrl.score().total+(scanPhase==="q"?1:0)):1;
+  var qTotal=secMeta.targetCount;
+  var lvlCols=lvlBadgeColors(currentQ.lvl);
+  var opts=getOpts(currentQ);
+  var corrIdx=getCorrect(currentQ);
+
   return(
     <div className="app onboard-shell" style={{padding:"20px 16px",minHeight:"100vh"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <div>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:18}}>{sec.icon}</span>
-            <p className="out" style={{fontWeight:700,fontSize:14,color:sec.color}}>{sec.name}</p>
+          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+            <GIcon name={secMeta.icon} size={18} color={secMeta.color}/>
+            <p className="out" style={{fontWeight:700,fontSize:14,color:secMeta.color,margin:0}}>{secMeta.name}</p>
+            {currentQ.lvl&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:lvlCols.bg,color:lvlCols.fg,fontWeight:800,textTransform:"uppercase",letterSpacing:1}}>{currentQ.lvl}</span>}
+            {currentQ.sectionId==="listening"&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(59,130,246,.12)",color:"#3b82f6",fontWeight:700,letterSpacing:0.5}}>{partLabelV2(currentQ.part)}</span>}
+            {currentQ.sectionId==="grammar"&&currentQ.macroId&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(212,148,58,.12)",color:secMeta.color,fontWeight:700,letterSpacing:0.5,textTransform:"capitalize"}}>{currentQ.macroId}</span>}
+            {currentQ.sectionId==="reading"&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(34,197,94,.12)",color:"#22c55e",fontWeight:700,letterSpacing:0.5}}>{currentQ.format==="p6"?"Part 6 — Cloze":"Part 7 — Reading"}</span>}
           </div>
-          <p style={{fontSize:11,color:"var(--t3)"}}>Question {ci+1} of {scanQs.length}</p>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:3}}>
-          {scanQs.map(function(q,i){
-            var col=i<ci?sec.color:i===ci?"var(--cyan)":"var(--t3)";
-            return(<div key={i} style={{width:i===ci?16:8,height:5,borderRadius:3,background:col,transition:"all .3s"}}/>);})}
+          <p style={{fontSize:11,color:"var(--t3)",marginTop:2}}>Question {qNum} of {qTotal}</p>
         </div>
       </div>
-      <Bar value={ci+1} max={scanQs.length} h={4} color={sec.color}/>
+      <Bar value={qNum} max={qTotal} h={4} color={secMeta.color}/>
 
-      {/* Reading passage */}
-      {isReading&&ci===0&&<div className="crd" style={{marginTop:16,padding:14,maxHeight:200,overflowY:"auto",fontSize:13,lineHeight:1.7,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
-        <div className="out" style={{fontWeight:700,fontSize:12,color:sec.color,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>{sec.passage.title}</div>
-        {sec.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"6px 0 0",fontWeight:line.match(/^(TO|FROM|DATE|RE):/)?600:400,color:line.match(/^(TO|FROM|DATE|RE):/)?sec.color:"var(--t2)"}}>{line}</p>);})}
-      </div>}
-      {isReading&&ci>0&&<details style={{marginTop:12,marginBottom:4}}>
-        <summary style={{fontSize:12,color:"var(--t3)",cursor:"pointer",marginBottom:4}}>Show passage</summary>
-        <div className="crd" style={{padding:12,maxHeight:160,overflowY:"auto",fontSize:12,lineHeight:1.6,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
-          {sec.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"4px 0 0"}}>{line}</p>);})}
+      {(currentQ.sectionId==="grammar"||currentQ.sectionId==="vocab")&&(
+        <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginBottom:20,marginTop:18}}>{currentQ.item.s}</h2>
+      )}
+
+      {currentQ.sectionId==="reading"&&currentQ.format==="p6"&&(function(){
+        var passage=currentQ.passage;
+        var blankCount=0;
+        return(
+        <div className="crd" style={{marginTop:14,padding:14,fontSize:14,lineHeight:1.8,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
+          {passage.title&&<div className="out" style={{fontWeight:700,fontSize:11,color:"#22c55e",marginBottom:10,textTransform:"uppercase",letterSpacing:1}}>{passage.title+" · "+passage.type}</div>}
+          {passage.intro&&<div style={{fontSize:11,color:"var(--t3)",marginBottom:10,whiteSpace:"pre-line",fontStyle:"italic"}}>{passage.intro}</div>}
+          <div>
+            {passage.parts.map(function(p,i){
+              if(p.blank){
+                var thisIdx=blankCount;blankCount++;
+                var isCurrent=thisIdx===currentQ.blankIndex;
+                return(<span key={i} style={{display:"inline-block",margin:"0 2px",padding:"2px 10px",borderRadius:6,background:isCurrent?"rgba(34,197,94,.18)":"transparent",border:"1.5px solid "+(isCurrent?"#22c55e":"var(--bdr)"),color:isCurrent?"#22c55e":"var(--t3)",fontWeight:isCurrent?800:600,fontSize:13,letterSpacing:1}}>{isCurrent?"███":"___"}</span>);
+              }
+              return(<span key={i}>{p.text}</span>);
+            })}
+          </div>
+        </div>);
+      })()}
+
+      {currentQ.sectionId==="reading"&&currentQ.format==="p7"&&currentQ.isFirstQ&&(
+        <div className="crd" style={{marginTop:14,padding:14,maxHeight:240,overflowY:"auto",fontSize:13,lineHeight:1.7,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
+          <div className="out" style={{fontWeight:700,fontSize:11,color:"#22c55e",marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>{currentQ.passage.title+" · "+currentQ.passage.type}</div>
+          {currentQ.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"6px 0 0"}}>{line}</p>);})}
         </div>
-      </details>}
+      )}
+      {currentQ.sectionId==="reading"&&currentQ.format==="p7"&&!currentQ.isFirstQ&&(
+        <details style={{marginTop:12,marginBottom:4}}>
+          <summary style={{fontSize:12,color:"var(--t3)",cursor:"pointer",marginBottom:4}}>Show passage</summary>
+          <div className="crd" style={{padding:12,maxHeight:200,overflowY:"auto",fontSize:12,lineHeight:1.6,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
+            {currentQ.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"4px 0 0"}}>{line}</p>);})}
+          </div>
+        </details>
+      )}
 
-      {/* Prompt for listening */}
-      {scanQ.prompt&&<p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",marginTop:12,marginBottom:4}}>{scanQ.prompt}</p>}
+      {currentQ.sectionId==="reading"&&currentQ.format==="p7"&&(
+        <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:16}}>{currentQ.item.q}</h2>
+      )}
 
-      {sec.id==="listening"&&<div style={{display:"flex",alignItems:"center",gap:8,marginTop:12,marginBottom:8}}>
-        <button onClick={function(){speakQ(scanQ.s);}} disabled={ttsPlaying}
-          style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",background:ttsPlaying?"rgba(59,130,246,.15)":"var(--bg2)",border:"1px solid "+(ttsPlaying?"rgba(59,130,246,.3)":"var(--bdr)"),borderRadius:10,cursor:ttsPlaying?"default":"pointer",fontSize:13,fontWeight:600,color:ttsPlaying?"#3b82f6":"var(--t2)",fontFamily:"'DM Sans',sans-serif",transition:"all .3s"}}>
-          <span style={{fontSize:18}}>{ttsPlaying?"\uD83D\uDD0A":"\uD83D\uDD09"}</span>{ttsPlaying?"Playing...":"Listen again"}
-        </button>
-      </div>}
-
-      {sec.id==="listening"&&scanPhase==="q"?(
-        <div style={{textAlign:"center",padding:"24px 0",marginTop:12,marginBottom:20}}>
-          <div style={{fontSize:48,marginBottom:12,animation:ttsPlaying?"pulse 1.5s infinite":"none"}}>{ttsPlaying?"\uD83D\uDD0A":"\uD83D\uDD09"}</div>
-          <p className="out" style={{fontSize:14,fontWeight:600,color:ttsPlaying?"#3b82f6":"var(--t3)",transition:"color .3s"}}>{ttsPlaying?"Listen carefully...":"Press play to listen"}</p>
+      {currentQ.sectionId==="listening"&&currentQ.part==="p1"&&currentQ.item.img&&(
+        <div style={{marginTop:14,marginBottom:14,borderRadius:12,overflow:"hidden",border:"1px solid var(--bdr)",background:"#000"}}>
+          <img src={currentQ.item.img} alt="" style={{width:"100%",display:"block",maxHeight:280,objectFit:"contain"}}/>
         </div>
-      ):sec.id==="listening"&&scanPhase==="fb"?(
-        <div style={{marginTop:12,marginBottom:20}}>
-          <p style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>You heard:</p>
-          <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,color:"var(--t2)"}}>{scanQ.s}</h2>
+      )}
+
+      {currentQ.sectionId==="listening"&&(
+        <div style={{display:"flex",alignItems:"center",gap:8,marginTop:12,marginBottom:12}}>
+          <button onClick={function(){resumeAudioSession();playListeningClip(currentQ);}} disabled={audioBusy}
+            style={{display:"flex",alignItems:"center",gap:8,padding:"10px 18px",background:audioBusy?"rgba(59,130,246,.15)":"var(--bg2)",border:"1px solid "+(audioBusy?"rgba(59,130,246,.3)":"var(--bdr)"),borderRadius:10,cursor:audioBusy?"default":"pointer",fontSize:13,fontWeight:600,color:audioBusy?"#3b82f6":"var(--t2)",fontFamily:"'DM Sans',sans-serif",transition:"all .3s"}}>
+            <GIcon name="public-speaker" size={16} color={audioBusy?"#3b82f6":"var(--t2)"}/>
+            {audioBusy?(currentQ.part==="p1"&&audioStep>=0?"Statement "+(audioStep+1)+" / 4":"Playing..."):(scanPhase==="fb"?"Listen again":"Listen")}
+          </button>
+          {scanPhase==="q"&&!audioBusy&&<span style={{fontSize:11,color:"var(--t3)",fontStyle:"italic"}}>Tap when ready</span>}
         </div>
-      ):(
-        <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginBottom:20,marginTop:isReading?12:16}}>{scanQ.s}</h2>
+      )}
+
+      {currentQ.sectionId==="listening"&&(currentQ.part==="p3"||currentQ.part==="p4")&&currentQ.item.qs&&currentQ.item.qs[currentQ.qIdx]&&(
+        <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:16,marginTop:8}}>{currentQ.item.qs[currentQ.qIdx].q}</h2>
+      )}
+
+      {currentQ.sectionId==="listening"&&(currentQ.part==="p1"||currentQ.part==="p2")&&(
+        <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",marginTop:8,marginBottom:12}}>
+          {currentQ.part==="p1"?"Pick the statement that best describes the photo.":"Pick the best response to the question you heard."}
+        </p>
       )}
 
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {scanQ.o.map(function(opt,i){
-          var isCor=i===scanQ.c;var isPick=sel===i;var show=scanPhase==="fb";
+        {opts.map(function(opt,i){
+          var isCor=i===corrIdx;var isPick=sel===i;var show=scanPhase==="fb";
           var bg="var(--bg2)";var bd="var(--bdr)";
           if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-          return(<button key={i} onClick={function(){if(scanPhase==="q")doScanAns(i);}} disabled={show}
+          return(<button key={i} onClick={function(){if(scanPhase==="q")answerScanQ(i);}} disabled={show||scanPhase!=="q"}
             style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:scanPhase==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
             <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(show&&isCor?"var(--green)":show&&isPick?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:show&&isCor?"var(--green)":show&&isPick&&!isCor?"var(--red)":"transparent",color:show&&(isCor||isPick)?"#fff":"var(--t3)"}}>
-              {show&&isCor?"\u2713":show&&isPick?"\u2717":String.fromCharCode(65+i)}</div>
+              {show&&isCor?"✓":show&&isPick?"✗":String.fromCharCode(65+i)}</div>
             <span>{opt}</span></button>);})}
       </div>
 
       {scanPhase==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
-          <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{scanQ.x}</p></div>
-        <button className="btn1" onClick={nxtScan} style={{marginTop:14}}>{ci<scanQs.length-1?"Next":(scanSec<BATTLE_SCAN.length-1?"Section Complete":"See Your Battle Report")}</button>
+        {getExplain(currentQ)&&<div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
+          <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,margin:0}}>{getExplain(currentQ)}</p>
+        </div>}
+        <button className="btn1" onClick={advanceScanV2} style={{marginTop:14}}>Next</button>
       </div>}
     </div>);
+
 }
 // ─── HOME ───
 // ═══════════════════════════════════════════════════════════════════════
@@ -3797,30 +4059,45 @@ function partOfModule(modId){
   return null;
 }
 // Per-part accuracy + sample size from u.moduleScores. Returns object keyed by part.
-function partAccuracies(ms){
-  function get(id){var d=ms&&ms[id];return d&&d.total?{acc:d.correct/d.total,n:d.total}:null;}
+// Phase D (scan-v2): when a part has no real moduleScores data and bsParts has a Battle Scan
+// baseline for it, fall back to the scan accuracy with synthetic n=5 + source:"scan" so callers
+// can distinguish baseline-from-scan vs measured. This bootstraps Mentor / TodayFocus / NextStepReco
+// from day 1 of the post-onboarding journey.
+function partAccuracies(ms,bsParts){
+  function get(id){var d=ms&&ms[id];return d&&d.total?{acc:d.correct/d.total,n:d.total,source:"trained"}:null;}
+  function fallback(partId){if(!bsParts||typeof bsParts[partId]!=="number")return null;return{acc:bsParts[partId],n:5,source:"scan"};}
+  function getOrFallback(modId,partId){return get(modId)||fallback(partId);}
   function avg(arr){var f=arr.filter(function(x){return x!==null;});if(f.length===0)return null;var sa=0,sn=0;f.forEach(function(x){sa+=x.acc*x.n;sn+=x.n;});return{acc:sa/sn,n:sn};}
   var p5Mods=["drill","wordfam","connsort","prepdrill","gerinf","falsefriends","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","modals_match","modals_sort"];
   var vocabMods=["tavern","csess","cdom","phrasalpicker"];
   return{
-    p1:get("lisP1"),p2:get("lisP2"),p3:get("lisP3"),p4:get("lisP4"),
-    p5:avg(p5Mods.map(get)),p6:get("p6"),p7:get("p7"),vocab:avg(vocabMods.map(get))
+    p1:getOrFallback("lisP1","p1"),p2:getOrFallback("lisP2","p2"),p3:getOrFallback("lisP3","p3"),p4:getOrFallback("lisP4","p4"),
+    p5:avg(p5Mods.map(get)),p6:getOrFallback("p6","p6"),p7:getOrFallback("p7","p7"),vocab:avg(vocabMods.map(get))
   };
 }
+// Helper: get the scan parts baseline from a user. Returns null if no scan ran.
+function bsScanParts(u){return u&&u.battleScan&&u.battleScan.subScores&&u.battleScan.subScores.parts||null;}
 // Find the weakest part with enough data. Returns {partId, acc, n, recoModId, label} or null.
+// Phase D (scan-v2): the gate is now totalQ>=20 OR a Battle Scan baseline exists. The scan
+// provides a per-part baseline (n=5, source:"scan") that lets the banner light up from day 1
+// of the post-onboarding journey. Once real training data accumulates, it overrides the scan.
 function computeTodayFocus(u){
   if(!u||!u.moduleScores)return null;
   var totalQ=(u.stats&&u.stats.totalQ)||0;
-  if(totalQ<20)return null; // need a baseline before personalizing
-  var pa=partAccuracies(u.moduleScores);
+  var hasScan=!!bsScanParts(u);
+  if(totalQ<20&&!hasScan)return null;
+  var pa=partAccuracies(u.moduleScores,bsScanParts(u));
   var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
   var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
   var weakest=null;
+  // Min sample size: 10 if trained, 5 if scan-derived.
   Object.keys(pa).forEach(function(k){
-    var d=pa[k];if(!d||d.n<10)return;
-    if(!weakest||d.acc<weakest.acc)weakest={partId:k,acc:d.acc,n:d.n};
+    var d=pa[k];if(!d)return;
+    var minN=d.source==="scan"?5:10;
+    if(d.n<minN)return;
+    if(!weakest||d.acc<weakest.acc)weakest={partId:k,acc:d.acc,n:d.n,source:d.source};
   });
-  if(!weakest||weakest.acc>=0.85)return null; // already strong → no banner
+  if(!weakest||weakest.acc>=0.85)return null;
   return Object.assign(weakest,{recoModId:reco[weakest.partId],label:labels[weakest.partId]});
 }
 
@@ -4203,7 +4480,7 @@ function Mentor(p){
   var[sheet,setSheet]=useState(null); // null | "goal" | "mission" | "focus" | "camp"
   // Per-part data — used for the Camp sheet ("Where you stand" breakdown).
   var focus=computeTodayFocus(u);
-  var pa=partAccuracies(u.moduleScores||{});
+  var pa=partAccuracies(u.moduleScores||{},bsScanParts(u));
   var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
   var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
   var measured=[],unmeasured=[];
@@ -4279,19 +4556,28 @@ function Mentor(p){
         var ds=u.moduleScores&&u.moduleScores.drill;
         var cs=(ds&&ds.catStats)||{};
         var hasGrammar=Object.keys(cs).some(function(k){return cs[k]&&cs[k].total>=5;});
-        if(!hasGrammar)return null;
+        // Phase D (scan-v2): fall back to Battle Scan grammar macros when no drill data exists.
+        // Maps macro key (capitalized) to scan macroId (lowercase), populated from u.battleScan.subScores.grammarMacros.
+        var scanMacros=u.battleScan&&u.battleScan.subScores&&u.battleScan.subScores.grammarMacros;
+        if(!hasGrammar&&!scanMacros)return null;
         var macros=[
-          {key:"Verbs",icon:"crossed-swords",subcats:["Tenses","Gerunds vs Infinitives","Passive Voice","Conditionals","Subject-Verb Agreement"]},
-          {key:"Linking",icon:"linked-rings",subcats:["Connectors","Prepositions","Collocations"]},
-          {key:"Forms",icon:"quill-ink",subcats:["Word Families","Comparatives","Articles"]},
-          {key:"Reference",icon:"family-tree",subcats:["Relative Pronouns"]}
+          {key:"Verbs",icon:"crossed-swords",scanId:"verbs",subcats:["Tenses","Gerunds vs Infinitives","Passive Voice","Conditionals","Subject-Verb Agreement"]},
+          {key:"Linking",icon:"linked-rings",scanId:"linking",subcats:["Connectors","Prepositions","Collocations"]},
+          {key:"Forms",icon:"quill-ink",scanId:"forms",subcats:["Word Families","Comparatives","Articles"]},
+          {key:"Reference",icon:"family-tree",scanId:"reference",subcats:["Relative Pronouns"]}
         ];
         var macroData=macros.map(function(m){
           var sumC=0,sumT=0;
           var subs=m.subcats.map(function(c){var s=cs[c];if(!s||s.total<1)return{cat:c,acc:null,n:0};sumC+=s.correct;sumT+=s.total;return{cat:c,acc:s.correct/s.total,n:s.total};});
-          if(sumT===0)return null;
+          if(sumT===0){
+            // Trained data missing for this macro — fall back to scan baseline if present.
+            if(scanMacros&&typeof scanMacros[m.scanId]==="number"){
+              return{key:m.key,icon:m.icon,acc:scanMacros[m.scanId],n:2,weakest:null,source:"scan"};
+            }
+            return null;
+          }
           var weakest=subs.filter(function(s){return s.acc!==null&&s.n>=3;}).sort(function(a,b){return a.acc-b.acc;})[0];
-          return{key:m.key,icon:m.icon,acc:sumC/sumT,n:sumT,weakest:weakest};
+          return{key:m.key,icon:m.icon,acc:sumC/sumT,n:sumT,weakest:weakest,source:"trained"};
         }).filter(Boolean).sort(function(a,b){return a.acc-b.acc;});
         if(macroData.length===0)return null;
         return(<div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--bdr)"}}>
@@ -4317,6 +4603,7 @@ function Mentor(p){
                   </div>
                 </div>
                 {m.weakest&&<div style={{fontSize:10,color:"var(--t3)",marginTop:3}}>{"weakest : "+m.weakest.cat+" ("+Math.round(m.weakest.acc*100)+"%)"}</div>}
+                {m.source==="scan"&&<div style={{fontSize:10,color:"var(--t3)",marginTop:3,fontStyle:"italic"}}>{"from your Battle Scan — train Drill to refine"}</div>}
               </div>
             </button>);
           })}
@@ -4356,15 +4643,18 @@ function NextStepReco(p){
   var u=p.u,fromMod=p.fromMod,nav=p.nav;
   if(!u||!u.moduleScores)return null;
   var totalQ=(u.stats&&u.stats.totalQ)||0;
-  if(totalQ<20)return null;
-  var pa=partAccuracies(u.moduleScores);
+  var hasScan=!!bsScanParts(u);
+  if(totalQ<20&&!hasScan)return null;
+  var pa=partAccuracies(u.moduleScores,bsScanParts(u));
   var fromPart=partOfModule(fromMod);
   var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
   var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
   var pickFrom=null;
   Object.keys(pa).forEach(function(k){
     if(k===fromPart)return; // suggest something different than what they just did
-    var d=pa[k];if(!d||d.n<10)return;
+    var d=pa[k];if(!d)return;
+    var minN=d.source==="scan"?5:10;
+    if(d.n<minN)return;
     if(!pickFrom||d.acc<pickFrom.acc)pickFrom={partId:k,acc:d.acc};
   });
   if(!pickFrom||pickFrom.acc>=0.85)return null;
@@ -13537,6 +13827,28 @@ function Profile(p){
                 </div>);})}
             </div>
           </div>
+          {/* Re-scan CTA — Phase F (scan-v2). Unlocked at J+30 from u.battleScan.date.
+              The actual re-scan UI ships in a follow-up iteration; for now the button
+              acknowledges the gate and explains what's coming. */}
+          {(function(){
+            var scanDate=bs.date;
+            if(!scanDate)return null;
+            // Compute days since (cheap; today() is "YYYY-MM-DD")
+            var d1=new Date(scanDate),d2=new Date(today());
+            var daysSince=Math.floor((d2-d1)/(86400000));
+            var unlocked=daysSince>=30;
+            var daysLeft=Math.max(0,30-daysSince);
+            var hist=bs.history&&bs.history.length?bs.history.length:0;
+            return(<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid var(--bdr)"}}>
+              {hist>0&&<div style={{fontSize:10,color:"var(--t3)",marginBottom:8}}>{hist+" previous scan"+(hist>1?"s":"")+" in history"}</div>}
+              <button disabled={!unlocked}
+                onClick={function(){if(unlocked){alert("Re-scan flow ships in the next iteration. Your data model is ready (u.battleScan.history will hold previous scans).");}}}
+                style={{width:"100%",padding:"10px 14px",background:unlocked?"rgba(var(--cx),.10)":"var(--bg3)",border:"1px solid "+(unlocked?"rgba(var(--cx),.30)":"var(--bdr)"),borderRadius:10,cursor:unlocked?"pointer":"not-allowed",fontSize:12,fontWeight:700,color:unlocked?"var(--cyan)":"var(--t3)",fontFamily:"'DM Sans',sans-serif"}}>
+                {unlocked?"Re-scan now (coming soon)":"Re-scan available in "+daysLeft+" day"+(daysLeft>1?"s":"")}
+              </button>
+              <p style={{fontSize:10,color:"var(--t3)",margin:"8px 0 0",lineHeight:1.5,fontStyle:"italic"}}>{"A re-scan saves your current radar to history so you can see your progression over time."}</p>
+            </div>);
+          })()}
         </div>);
       }()}
 
@@ -15478,7 +15790,7 @@ var prevLeague=getLeague(c.weeklyXp);
     return m;
   }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
-  async function onboard(name,classCode,bsScores,bsCorrect,firstNav){
+  async function onboard(name,classCode,bsScores,firstNav,bsV2Results){
     classCode=classCode||'visitor';
     // Check if student already exists (use limit(1) — safe even with duplicates)
     // Check for existing student (accent + case insensitive)
@@ -15510,6 +15822,28 @@ var prevLeague=getLeague(c.weeklyXp);
       var totalSc=bsScores.grammar+bsScores.vocab+bsScores.reading+bsScores.listening;
       var tierLabel=totalSc>=16?"Battle-Ready":totalSc>=12?"Skilled Fighter":totalSc>=8?"Apprentice":"Recruit";
       u.battleScan={date:today(),scores:bsScores,total:totalSc,tier:tierLabel};
+      // V2 enrichment: macro-grammar + per-part scan accuracies for Mentor radar / TodayFocus / NextStepReco
+      // bootstrap. The scan thus becomes the cold-start signal for personalization, instead of dead-ending.
+      // u.battleScan.subScores.grammarMacros: {verbs:0..1, linking:0..1, forms:0..1, reference:0..1}
+      // u.battleScan.subScores.parts: {p1, p2, p3, p4, p6, p7} accuracies 0..1 (only those probed)
+      if(bsV2Results){
+        var sub={grammarMacros:{},parts:{}};
+        if(bsV2Results.grammar&&bsV2Results.grammar.byMacro)sub.grammarMacros=bsV2Results.grammar.byMacro;
+        if(bsV2Results.reading&&bsV2Results.reading.byPart){
+          if(typeof bsV2Results.reading.byPart.p6==="number")sub.parts.p6=bsV2Results.reading.byPart.p6;
+          if(typeof bsV2Results.reading.byPart.p7==="number")sub.parts.p7=bsV2Results.reading.byPart.p7;
+        }
+        if(bsV2Results.listening&&bsV2Results.listening.byPart){
+          ["p1","p2","p3","p4"].forEach(function(p){if(typeof bsV2Results.listening.byPart[p]==="number")sub.parts[p]=bsV2Results.listening.byPart[p];});
+        }
+        u.battleScan.subScores=sub;
+        u.battleScan.sectionAcc={
+          grammar:bsV2Results.grammar?bsV2Results.grammar.acc:null,
+          vocab:bsV2Results.vocab?bsV2Results.vocab.acc:null,
+          reading:bsV2Results.reading?bsV2Results.reading.acc:null,
+          listening:bsV2Results.listening?bsV2Results.listening.acc:null
+        };
+      }
     }
     sU(u);
     saveLocal(u);
@@ -15523,7 +15857,13 @@ var prevLeague=getLeague(c.weeklyXp);
     // Do NOT move this push earlier in the onboarding (e.g. to Battle Report)
     // or the narrator would fire mid-flow and confuse the consent/scan sequence.
     pushNarratorMoment(u,"verdict");
-    if(firstNav){setTimeout(function(){sSP(firstNav);},300);}
+    if(firstNav){setTimeout(function(){
+      // firstNav may be a tab id ("home"|"games"|"train"|"league"|"profile"|"mentor")
+      // or a sub-page id ("drill"|"tavern"|"lisP1"...). Phase E (scan-v2) added tab routing
+      // so the Battle Report can hand off to the Mentor tab directly.
+      var KNOWN_TABS=["home","games","train","league","profile","mentor"];
+      if(KNOWN_TABS.indexOf(firstNav)>=0){sT(firstNav);}else{sSP(firstNav);}
+    },300);}
   }
   async function recover(name,classCode){
     // Find the best row (highest XP) for this student
