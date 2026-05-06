@@ -37,7 +37,9 @@
       "Bash(ffmpeg -i public/images/mentor/map.jpg -vf \"scale=900:-1\" -q:v 4 public/images/mentor/map_opt.jpg)",
       "Bash(ffmpeg -i public/images/mentor/map_desktop.jpg -vf \"scale=1200:-1\" -q:v 4 public/images/mentor/_opt.jpg)",
       "Bash(awk 'NR>=15176 && /sU\\\\\\(|save\\\\\\(|^  }/ {print NR\": \"$0}' src/App.jsx)",
-      "Bash(awk 'NR>=6370 && NR<=6600 && /Complete|p\\\\.back|onClick.*p\\\\.back/' src/App.jsx)"
+      "Bash(awk 'NR>=6370 && NR<=6600 && /Complete|p\\\\.back|onClick.*p\\\\.back/' src/App.jsx)",
+      "Bash(ffmpeg -y -i public/images/mentor/map.jpg -vf \"scale=900:-1\" -q:v 4 public/images/mentor/_m.jpg)",
+      "Bash(ffmpeg -y -i public/images/mentor/map_desktop.jpg -vf \"scale=1200:-1\" -q:v 4 public/images/mentor/_d.jpg)"
     ]
   }
 }

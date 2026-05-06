@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-06-phase2-adaptive-picker";
+var BUILD_ID="2026-05-06-mentor-arena-at-peak";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -4006,47 +4006,49 @@ function MentorMap(p){
     };
   },[]);
 
-  // Hotspots : coords differ per layout. Portrait map (mobile) is 2:3, peak top
-  // and camp bottom-right. Landscape map (desktop) is 3:2, peak top-left,
-  // standing stone center-right, camp bottom-left, Aldric far right.
+  // Hotspots — coords aligned to the 2026-05-06 PM "arena-at-peak" map regen.
+  // Mobile (portrait 2:3) : peak top-center, arena carved into mountain side mid,
+  // standing stone left, camp right, Aldric center foreground.
+  // Desktop (landscape 3:2) : peak top-left, arena left, mid-trail center, standing
+  // stone right, camp center-right, Aldric center foreground.
   var hotspots=isDesktop?[
-    {id:"goal", x:23, y:22, side:"left",
+    {id:"goal", x:30, y:30, side:"left",
      label:hasGoal?"The Distant Peak":"Set destination",
      value:hasGoal?(u.targetToeic+" · "+(daysLeft>=0?daysLeft+"d":"past")):"?",
      tone:hasGoal?"active":"muted"},
-    {id:"mission", x:45, y:45, side:"right",
+    {id:"mission", x:48, y:55, side:"right",
      label:"Today's Path",
      value:!missionReady?"Train more":missionDone?"Complete ✓":"+15 XP",
      tone:!missionReady?"muted":missionDone?"done":"active"},
-    {id:"focus", x:58, y:48, side:"left",
+    {id:"focus", x:84, y:60, side:"right",
      label:"The Crossroads",
      value:focus?focus.label.replace(/ — .*/,"")+" · +25%":calibrated?"All steady":"Train more",
      tone:focus?"active":"muted"},
-    {id:"camp", x:22, y:75, side:"left",
+    {id:"camp", x:67, y:75, side:"right",
      label:"Your Camp",
      value:current+" TOEIC",
      tone:"active"}
   ]:[
-    {id:"goal", x:50, y:14, side:"left",
+    {id:"goal", x:48, y:38, side:"left",
      label:hasGoal?"The Distant Peak":"Set destination",
      value:hasGoal?(u.targetToeic+" · "+(daysLeft>=0?daysLeft+"d":"past")):"?",
      tone:hasGoal?"active":"muted"},
-    {id:"mission", x:48, y:43, side:"right",
+    {id:"mission", x:46, y:67, side:"left",
      label:"Today's Path",
      value:!missionReady?"Train more":missionDone?"Complete ✓":"+15 XP",
      tone:!missionReady?"muted":missionDone?"done":"active"},
-    {id:"focus", x:55, y:58, side:"left",
+    {id:"focus", x:14, y:60, side:"left",
      label:"The Crossroads",
      value:focus?focus.label.replace(/ — .*/,"")+" · +25%":calibrated?"All steady":"Train more",
      tone:focus?"active":"muted"},
-    {id:"camp", x:72, y:75, side:"right",
+    {id:"camp", x:83, y:75, side:"right",
      label:"Your Camp",
      value:current+" TOEIC",
      tone:"active"}
   ];
 
-  // Aldric position differs per layout too
-  var aldricCoords=isDesktop?{x:85,y:72,w:48,h:120,side:"right"}:{x:38,y:85,w:64,h:120,side:"left"};
+  // Aldric position differs per layout — both new images put him center-foreground.
+  var aldricCoords=isDesktop?{x:48,y:85,w:48,h:120,side:"left"}:{x:52,y:88,w:64,h:120,side:"left"};
   var imgSrc=isDesktop?"/images/mentor/map_desktop.jpg":"/images/mentor/map.jpg";
   var aspectRatio=isDesktop?"1338/860":"2/3";
 
