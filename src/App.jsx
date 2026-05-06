@@ -3032,7 +3032,7 @@ var[step,sSt]=useState("name");
   function goAfterPushStep(firstNav){
     // If browser lacks Push API, skip the opt-in phase entirely
     var hasPush=("serviceWorker" in navigator)&&("PushManager" in window);
-    if(!hasPush){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,firstNav);return;}
+    if(!hasPush){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,firstNav,sectionResults);return;}
     setPendingNav(firstNav||null);sSt("pushPrompt");
   }
 
@@ -3724,7 +3724,7 @@ var[step,sSt]=useState("name");
 
   // ─ Language bridge: transition to English ─
   if(step==="langBridge"){
-    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,pendingNav||undefined);}
+    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,scanCorrect,pendingNav||undefined,sectionResults);}
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
@@ -3973,30 +3973,45 @@ function partOfModule(modId){
   return null;
 }
 // Per-part accuracy + sample size from u.moduleScores. Returns object keyed by part.
-function partAccuracies(ms){
-  function get(id){var d=ms&&ms[id];return d&&d.total?{acc:d.correct/d.total,n:d.total}:null;}
+// Phase D (scan-v2): when a part has no real moduleScores data and bsParts has a Battle Scan
+// baseline for it, fall back to the scan accuracy with synthetic n=5 + source:"scan" so callers
+// can distinguish baseline-from-scan vs measured. This bootstraps Mentor / TodayFocus / NextStepReco
+// from day 1 of the post-onboarding journey.
+function partAccuracies(ms,bsParts){
+  function get(id){var d=ms&&ms[id];return d&&d.total?{acc:d.correct/d.total,n:d.total,source:"trained"}:null;}
+  function fallback(partId){if(!bsParts||typeof bsParts[partId]!=="number")return null;return{acc:bsParts[partId],n:5,source:"scan"};}
+  function getOrFallback(modId,partId){return get(modId)||fallback(partId);}
   function avg(arr){var f=arr.filter(function(x){return x!==null;});if(f.length===0)return null;var sa=0,sn=0;f.forEach(function(x){sa+=x.acc*x.n;sn+=x.n;});return{acc:sa/sn,n:sn};}
   var p5Mods=["drill","wordfam","connsort","prepdrill","gerinf","falsefriends","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","modals_match","modals_sort"];
   var vocabMods=["tavern","csess","cdom","phrasalpicker"];
   return{
-    p1:get("lisP1"),p2:get("lisP2"),p3:get("lisP3"),p4:get("lisP4"),
-    p5:avg(p5Mods.map(get)),p6:get("p6"),p7:get("p7"),vocab:avg(vocabMods.map(get))
+    p1:getOrFallback("lisP1","p1"),p2:getOrFallback("lisP2","p2"),p3:getOrFallback("lisP3","p3"),p4:getOrFallback("lisP4","p4"),
+    p5:avg(p5Mods.map(get)),p6:getOrFallback("p6","p6"),p7:getOrFallback("p7","p7"),vocab:avg(vocabMods.map(get))
   };
 }
+// Helper: get the scan parts baseline from a user. Returns null if no scan ran.
+function bsScanParts(u){return u&&u.battleScan&&u.battleScan.subScores&&u.battleScan.subScores.parts||null;}
 // Find the weakest part with enough data. Returns {partId, acc, n, recoModId, label} or null.
+// Phase D (scan-v2): the gate is now totalQ>=20 OR a Battle Scan baseline exists. The scan
+// provides a per-part baseline (n=5, source:"scan") that lets the banner light up from day 1
+// of the post-onboarding journey. Once real training data accumulates, it overrides the scan.
 function computeTodayFocus(u){
   if(!u||!u.moduleScores)return null;
   var totalQ=(u.stats&&u.stats.totalQ)||0;
-  if(totalQ<20)return null; // need a baseline before personalizing
-  var pa=partAccuracies(u.moduleScores);
+  var hasScan=!!bsScanParts(u);
+  if(totalQ<20&&!hasScan)return null;
+  var pa=partAccuracies(u.moduleScores,bsScanParts(u));
   var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
   var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
   var weakest=null;
+  // Min sample size: 10 if trained, 5 if scan-derived.
   Object.keys(pa).forEach(function(k){
-    var d=pa[k];if(!d||d.n<10)return;
-    if(!weakest||d.acc<weakest.acc)weakest={partId:k,acc:d.acc,n:d.n};
+    var d=pa[k];if(!d)return;
+    var minN=d.source==="scan"?5:10;
+    if(d.n<minN)return;
+    if(!weakest||d.acc<weakest.acc)weakest={partId:k,acc:d.acc,n:d.n,source:d.source};
   });
-  if(!weakest||weakest.acc>=0.85)return null; // already strong → no banner
+  if(!weakest||weakest.acc>=0.85)return null;
   return Object.assign(weakest,{recoModId:reco[weakest.partId],label:labels[weakest.partId]});
 }
 
@@ -4379,7 +4394,7 @@ function Mentor(p){
   var[sheet,setSheet]=useState(null); // null | "goal" | "mission" | "focus" | "camp"
   // Per-part data — used for the Camp sheet ("Where you stand" breakdown).
   var focus=computeTodayFocus(u);
-  var pa=partAccuracies(u.moduleScores||{});
+  var pa=partAccuracies(u.moduleScores||{},bsScanParts(u));
   var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
   var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
   var measured=[],unmeasured=[];
@@ -4455,19 +4470,28 @@ function Mentor(p){
         var ds=u.moduleScores&&u.moduleScores.drill;
         var cs=(ds&&ds.catStats)||{};
         var hasGrammar=Object.keys(cs).some(function(k){return cs[k]&&cs[k].total>=5;});
-        if(!hasGrammar)return null;
+        // Phase D (scan-v2): fall back to Battle Scan grammar macros when no drill data exists.
+        // Maps macro key (capitalized) to scan macroId (lowercase), populated from u.battleScan.subScores.grammarMacros.
+        var scanMacros=u.battleScan&&u.battleScan.subScores&&u.battleScan.subScores.grammarMacros;
+        if(!hasGrammar&&!scanMacros)return null;
         var macros=[
-          {key:"Verbs",icon:"crossed-swords",subcats:["Tenses","Gerunds vs Infinitives","Passive Voice","Conditionals","Subject-Verb Agreement"]},
-          {key:"Linking",icon:"linked-rings",subcats:["Connectors","Prepositions","Collocations"]},
-          {key:"Forms",icon:"quill-ink",subcats:["Word Families","Comparatives","Articles"]},
-          {key:"Reference",icon:"family-tree",subcats:["Relative Pronouns"]}
+          {key:"Verbs",icon:"crossed-swords",scanId:"verbs",subcats:["Tenses","Gerunds vs Infinitives","Passive Voice","Conditionals","Subject-Verb Agreement"]},
+          {key:"Linking",icon:"linked-rings",scanId:"linking",subcats:["Connectors","Prepositions","Collocations"]},
+          {key:"Forms",icon:"quill-ink",scanId:"forms",subcats:["Word Families","Comparatives","Articles"]},
+          {key:"Reference",icon:"family-tree",scanId:"reference",subcats:["Relative Pronouns"]}
         ];
         var macroData=macros.map(function(m){
           var sumC=0,sumT=0;
           var subs=m.subcats.map(function(c){var s=cs[c];if(!s||s.total<1)return{cat:c,acc:null,n:0};sumC+=s.correct;sumT+=s.total;return{cat:c,acc:s.correct/s.total,n:s.total};});
-          if(sumT===0)return null;
+          if(sumT===0){
+            // Trained data missing for this macro — fall back to scan baseline if present.
+            if(scanMacros&&typeof scanMacros[m.scanId]==="number"){
+              return{key:m.key,icon:m.icon,acc:scanMacros[m.scanId],n:2,weakest:null,source:"scan"};
+            }
+            return null;
+          }
           var weakest=subs.filter(function(s){return s.acc!==null&&s.n>=3;}).sort(function(a,b){return a.acc-b.acc;})[0];
-          return{key:m.key,icon:m.icon,acc:sumC/sumT,n:sumT,weakest:weakest};
+          return{key:m.key,icon:m.icon,acc:sumC/sumT,n:sumT,weakest:weakest,source:"trained"};
         }).filter(Boolean).sort(function(a,b){return a.acc-b.acc;});
         if(macroData.length===0)return null;
         return(<div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--bdr)"}}>
@@ -4493,6 +4517,7 @@ function Mentor(p){
                   </div>
                 </div>
                 {m.weakest&&<div style={{fontSize:10,color:"var(--t3)",marginTop:3}}>{"weakest : "+m.weakest.cat+" ("+Math.round(m.weakest.acc*100)+"%)"}</div>}
+                {m.source==="scan"&&<div style={{fontSize:10,color:"var(--t3)",marginTop:3,fontStyle:"italic"}}>{"from your Battle Scan — train Drill to refine"}</div>}
               </div>
             </button>);
           })}
@@ -4532,15 +4557,18 @@ function NextStepReco(p){
   var u=p.u,fromMod=p.fromMod,nav=p.nav;
   if(!u||!u.moduleScores)return null;
   var totalQ=(u.stats&&u.stats.totalQ)||0;
-  if(totalQ<20)return null;
-  var pa=partAccuracies(u.moduleScores);
+  var hasScan=!!bsScanParts(u);
+  if(totalQ<20&&!hasScan)return null;
+  var pa=partAccuracies(u.moduleScores,bsScanParts(u));
   var fromPart=partOfModule(fromMod);
   var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
   var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
   var pickFrom=null;
   Object.keys(pa).forEach(function(k){
     if(k===fromPart)return; // suggest something different than what they just did
-    var d=pa[k];if(!d||d.n<10)return;
+    var d=pa[k];if(!d)return;
+    var minN=d.source==="scan"?5:10;
+    if(d.n<minN)return;
     if(!pickFrom||d.acc<pickFrom.acc)pickFrom={partId:k,acc:d.acc};
   });
   if(!pickFrom||pickFrom.acc>=0.85)return null;
@@ -15654,7 +15682,7 @@ var prevLeague=getLeague(c.weeklyXp);
     return m;
   }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
-  async function onboard(name,classCode,bsScores,bsCorrect,firstNav){
+  async function onboard(name,classCode,bsScores,bsCorrect,firstNav,bsV2Results){
     classCode=classCode||'visitor';
     // Check if student already exists (use limit(1) — safe even with duplicates)
     // Check for existing student (accent + case insensitive)
@@ -15686,6 +15714,28 @@ var prevLeague=getLeague(c.weeklyXp);
       var totalSc=bsScores.grammar+bsScores.vocab+bsScores.reading+bsScores.listening;
       var tierLabel=totalSc>=16?"Battle-Ready":totalSc>=12?"Skilled Fighter":totalSc>=8?"Apprentice":"Recruit";
       u.battleScan={date:today(),scores:bsScores,total:totalSc,tier:tierLabel};
+      // V2 enrichment: macro-grammar + per-part scan accuracies for Mentor radar / TodayFocus / NextStepReco
+      // bootstrap. The scan thus becomes the cold-start signal for personalization, instead of dead-ending.
+      // u.battleScan.subScores.grammarMacros: {verbs:0..1, linking:0..1, forms:0..1, reference:0..1}
+      // u.battleScan.subScores.parts: {p1, p2, p3, p4, p6, p7} accuracies 0..1 (only those probed)
+      if(bsV2Results){
+        var sub={grammarMacros:{},parts:{}};
+        if(bsV2Results.grammar&&bsV2Results.grammar.byMacro)sub.grammarMacros=bsV2Results.grammar.byMacro;
+        if(bsV2Results.reading&&bsV2Results.reading.byPart){
+          if(typeof bsV2Results.reading.byPart.p6==="number")sub.parts.p6=bsV2Results.reading.byPart.p6;
+          if(typeof bsV2Results.reading.byPart.p7==="number")sub.parts.p7=bsV2Results.reading.byPart.p7;
+        }
+        if(bsV2Results.listening&&bsV2Results.listening.byPart){
+          ["p1","p2","p3","p4"].forEach(function(p){if(typeof bsV2Results.listening.byPart[p]==="number")sub.parts[p]=bsV2Results.listening.byPart[p];});
+        }
+        u.battleScan.subScores=sub;
+        u.battleScan.sectionAcc={
+          grammar:bsV2Results.grammar?bsV2Results.grammar.acc:null,
+          vocab:bsV2Results.vocab?bsV2Results.vocab.acc:null,
+          reading:bsV2Results.reading?bsV2Results.reading.acc:null,
+          listening:bsV2Results.listening?bsV2Results.listening.acc:null
+        };
+      }
     }
     sU(u);
     saveLocal(u);
