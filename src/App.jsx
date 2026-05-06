@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-06-mentor-hotspot-tweaks";
+var BUILD_ID="2026-05-06-mentor-hitbox-extend";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -4041,7 +4041,7 @@ function MentorMap(p){
      label:"The Crossroads",
      value:focus?focus.label.replace(/ — .*/,"")+" · +25%":calibrated?"All steady":"Train more",
      tone:focus?"active":"muted"},
-    {id:"camp", x:83, y:75, side:"right",
+    {id:"camp", x:83, y:68, side:"right",
      label:"Your Camp",
      value:current+" TOEIC",
      tone:"active"}
@@ -4072,7 +4072,7 @@ function MentorMap(p){
         color:"#3d2814",border:"1px solid rgba(90,58,20,.35)",borderRadius:6,
         padding:"4px 8px",whiteSpace:"nowrap",
         fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:.5,fontWeight:700,textTransform:"uppercase",
-        boxShadow:"0 2px 8px rgba(0,0,0,.4)",pointerEvents:"none"},aldricBadgePos)}>
+        boxShadow:"0 2px 8px rgba(0,0,0,.4)"},aldricBadgePos)}>
         {"Aldric speaks"}
       </span>
     </button>}
@@ -4084,7 +4084,7 @@ function MentorMap(p){
         color:"#3d2814",border:"1px solid rgba(90,58,20,.4)",borderRadius:6,
         padding:"4px 8px",minWidth:80,maxWidth:140,whiteSpace:"nowrap",
         fontFamily:"'DM Sans',sans-serif",fontSize:10,fontWeight:600,lineHeight:1.3,
-        boxShadow:"0 2px 8px rgba(0,0,0,.4)",pointerEvents:"none",textAlign:"left"};
+        boxShadow:"0 2px 8px rgba(0,0,0,.4)",textAlign:"left"};
       if(h.side==="left")badgeStyle.left="calc(100% + 10px)";
       else badgeStyle.right="calc(100% + 10px)";
       return(<button key={h.id} onClick={function(){p.onHotspotTap&&p.onHotspotTap(h.id);}}
