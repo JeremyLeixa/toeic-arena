@@ -13829,6 +13829,28 @@ function Profile(p){
                 </div>);})}
             </div>
           </div>
+          {/* Re-scan CTA — Phase F (scan-v2). Unlocked at J+30 from u.battleScan.date.
+              The actual re-scan UI ships in a follow-up iteration; for now the button
+              acknowledges the gate and explains what's coming. */}
+          {(function(){
+            var scanDate=bs.date;
+            if(!scanDate)return null;
+            // Compute days since (cheap; today() is "YYYY-MM-DD")
+            var d1=new Date(scanDate),d2=new Date(today());
+            var daysSince=Math.floor((d2-d1)/(86400000));
+            var unlocked=daysSince>=30;
+            var daysLeft=Math.max(0,30-daysSince);
+            var hist=bs.history&&bs.history.length?bs.history.length:0;
+            return(<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid var(--bdr)"}}>
+              {hist>0&&<div style={{fontSize:10,color:"var(--t3)",marginBottom:8}}>{hist+" previous scan"+(hist>1?"s":"")+" in history"}</div>}
+              <button disabled={!unlocked}
+                onClick={function(){if(unlocked){alert("Re-scan flow ships in the next iteration. Your data model is ready (u.battleScan.history will hold previous scans).");}}}
+                style={{width:"100%",padding:"10px 14px",background:unlocked?"rgba(var(--cx),.10)":"var(--bg3)",border:"1px solid "+(unlocked?"rgba(var(--cx),.30)":"var(--bdr)"),borderRadius:10,cursor:unlocked?"pointer":"not-allowed",fontSize:12,fontWeight:700,color:unlocked?"var(--cyan)":"var(--t3)",fontFamily:"'DM Sans',sans-serif"}}>
+                {unlocked?"Re-scan now (coming soon)":"Re-scan available in "+daysLeft+" day"+(daysLeft>1?"s":"")}
+              </button>
+              <p style={{fontSize:10,color:"var(--t3)",margin:"8px 0 0",lineHeight:1.5,fontStyle:"italic"}}>{"A re-scan saves your current radar to history so you can see your progression over time."}</p>
+            </div>);
+          })()}
         </div>);
       }()}
 
