@@ -488,7 +488,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-06-mentor-arena-at-peak";
+var BUILD_ID="2026-05-06-mentor-hotspot-tweaks";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -4016,7 +4016,7 @@ function MentorMap(p){
      label:hasGoal?"The Distant Peak":"Set destination",
      value:hasGoal?(u.targetToeic+" · "+(daysLeft>=0?daysLeft+"d":"past")):"?",
      tone:hasGoal?"active":"muted"},
-    {id:"mission", x:48, y:55, side:"right",
+    {id:"mission", x:43, y:55, side:"right",
      label:"Today's Path",
      value:!missionReady?"Train more":missionDone?"Complete ✓":"+15 XP",
      tone:!missionReady?"muted":missionDone?"done":"active"},
@@ -4033,7 +4033,7 @@ function MentorMap(p){
      label:hasGoal?"The Distant Peak":"Set destination",
      value:hasGoal?(u.targetToeic+" · "+(daysLeft>=0?daysLeft+"d":"past")):"?",
      tone:hasGoal?"active":"muted"},
-    {id:"mission", x:46, y:67, side:"left",
+    {id:"mission", x:50, y:50, side:"right",
      label:"Today's Path",
      value:!missionReady?"Train more":missionDone?"Complete ✓":"+15 XP",
      tone:!missionReady?"muted":missionDone?"done":"active"},
