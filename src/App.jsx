@@ -1349,6 +1349,38 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 // ─── GRIMOIRE RENDERER (block-based pedagogical manuscript) ───
 // Consumes blocks from data/grammarGauntletGrimoire.js.
 // Mobile-first: single page, swipe left/right, CSS 3D flip animation.
+// ─── DOWNLOADABLE GRIMOIRE ───
+// Open a new window with the full grimoire rendered as a self-contained HTML
+// document. Screen view uses the Arena palette (gold/cream, serif titles).
+// @media print switches to B&W professional layout (no backgrounds, page-break
+// per chapter, A4-friendly margins) so the user can Ctrl/Cmd+P → Save as PDF
+// without bleeding ink on chest decorations. Triggered from GrimoireReader topbar.
+function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function renderGrimoireBlockHtml(b){
+  if(b.type==="paragraph")return"<p class=\"g-p\">"+escHtml(b.text)+"</p>";
+  if(b.type==="heading")return"<h3 class=\"g-h\">"+escHtml(b.text)+"</h3>";
+  if(b.type==="rule"){var lbl=b.label?"<div class=\"g-rule-lbl\">"+escHtml(b.label)+"</div>":"";return"<div class=\"g-rule\">"+lbl+"<div class=\"g-rule-f\">"+escHtml(b.formula)+"</div></div>";}
+  if(b.type==="example"){var en="<div class=\"g-ex-en\">"+escHtml(b.en)+"</div>";var fr=b.fr?"<div class=\"g-ex-fr\">"+escHtml(b.fr)+"</div>":"";var note=b.note?"<div class=\"g-ex-note\">"+escHtml(b.note)+"</div>":"";return"<div class=\"g-ex\">"+en+fr+note+"</div>";}
+  if(b.type==="trap")return"<div class=\"g-trap\"><span class=\"g-trap-tag\">Piège</span> "+escHtml(b.text)+"</div>";
+  if(b.type==="table"){var hd=b.headers.map(function(h){return"<th>"+escHtml(h)+"</th>";}).join("");var rw=b.rows.map(function(r){return"<tr>"+r.map(function(c){return"<td>"+escHtml(c)+"</td>";}).join("")+"</tr>";}).join("");return"<table class=\"g-table\"><thead><tr>"+hd+"</tr></thead><tbody>"+rw+"</tbody></table>";}
+  if(b.type==="list")return"<ul class=\"g-list\">"+b.items.map(function(it){return"<li>"+escHtml(it)+"</li>";}).join("")+"</ul>";
+  return"";
+}
+function downloadGrimoire(grim){
+  var romans=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+  var chapters=grim.chapters.map(function(ch,i){
+    var blocks=ch.blocks.map(renderGrimoireBlockHtml).join("\n");
+    var intro=ch.intro?"<p class=\"g-intro\">"+escHtml(ch.intro)+"</p>":"";
+    var num=romans[i]||(i+1);
+    return"<section class=\"g-chapter\"><div class=\"g-chap-num\">Chapitre "+num+"</div><h2 class=\"g-chap-title\">"+escHtml(ch.title)+"</h2>"+intro+blocks+"</section>";
+  }).join("\n");
+  var css="*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:Georgia,'Times New Roman',serif;background:#fbf5e8;color:#2a2118;line-height:1.6;padding:24px}.g-toolbar{position:sticky;top:0;background:#fbf5e8;padding:12px 0;margin-bottom:24px;border-bottom:2px solid #d4943a;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}.g-print-btn{background:#d4943a;color:#fff;border:none;padding:10px 18px;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;font-family:inherit}.g-print-btn:hover{background:#b87a26}.g-hint{font-size:12px;color:#6a5a3a;font-style:italic}.g-header{text-align:center;padding:32px 16px 24px;border-bottom:1px solid #c4a868;margin-bottom:32px}.g-title{font-family:'Cinzel',Georgia,serif;font-size:28px;font-weight:900;color:#8b5a1f;margin:0 0 8px;letter-spacing:1px}.g-subtitle{font-size:14px;color:#6a5a3a;font-style:italic;margin:0 0 12px}.g-meta{font-size:12px;color:#8a7a5a}.g-chapter{margin-bottom:48px}.g-chap-num{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#b87a26;font-weight:700;margin-bottom:6px}.g-chap-title{font-family:'Cinzel',Georgia,serif;font-size:22px;font-weight:800;color:#3a2a18;margin:0 0 16px;border-bottom:2px solid #d4943a;padding-bottom:8px}.g-intro{font-style:italic;color:#5a4a32;background:rgba(212,148,58,.08);border-left:3px solid #d4943a;padding:12px 14px;margin:0 0 18px;border-radius:4px}.g-p{margin:0 0 12px;color:#2a2118}.g-h{font-size:16px;font-weight:700;color:#5a3a18;margin:20px 0 10px}.g-rule{background:rgba(6,182,212,.08);border-left:3px solid #06b6d4;padding:12px 14px;margin:0 0 14px;border-radius:4px}.g-rule-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#0891b2;font-weight:700;margin-bottom:4px}.g-rule-f{font-weight:600;color:#1a3a48}.g-ex{background:rgba(255,255,255,.5);border:1px solid #d4c8a8;padding:10px 14px;margin:0 0 12px;border-radius:4px}.g-ex-en{font-style:italic;color:#3a2a18;font-weight:500}.g-ex-fr{color:#5a4a32;margin-top:4px;font-size:14px}.g-ex-note{font-size:12px;color:#7a6a4a;margin-top:6px;border-top:1px dashed #c4a868;padding-top:6px}.g-trap{background:rgba(224,82,82,.08);border-left:3px solid #c84040;padding:10px 14px;margin:0 0 14px;border-radius:4px;color:#5a1a18}.g-trap-tag{display:inline-block;background:#c84040;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:3px;margin-right:6px}.g-table{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:13px}.g-table th{background:#d4943a;color:#fff;padding:8px 10px;text-align:left;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px}.g-table td{padding:8px 10px;border-bottom:1px solid #d4c8a8;color:#2a2118}.g-table tbody tr:nth-child(even){background:rgba(212,148,58,.05)}.g-list{padding-left:20px;margin:0 0 14px}.g-list li{margin-bottom:6px;color:#2a2118}.g-footer{text-align:center;margin-top:48px;padding-top:24px;border-top:1px solid #c4a868;font-size:11px;color:#8a7a5a;font-style:italic}@media print{body{background:#fff;color:#000;padding:0;font-size:11pt;line-height:1.5}.g-toolbar{display:none}.g-header{padding:0 0 16px;border-bottom:2px solid #000;margin-bottom:24px;page-break-after:avoid}.g-title{color:#000;font-size:22pt}.g-subtitle,.g-meta{color:#000}.g-chapter{page-break-before:always;margin-bottom:24px}.g-chapter:first-of-type{page-break-before:auto}.g-chap-num{color:#000;font-weight:700}.g-chap-title{color:#000;font-size:16pt;border-bottom:1px solid #000;page-break-after:avoid}.g-intro{background:transparent;border-left:2px solid #000;color:#000;page-break-inside:avoid}.g-p,.g-h{color:#000}.g-h{color:#000;font-size:13pt}.g-rule{background:transparent;border:1px solid #000;border-left:3px solid #000;page-break-inside:avoid}.g-rule-lbl{color:#000}.g-rule-f{color:#000}.g-ex{background:transparent;border:1px solid #000;page-break-inside:avoid}.g-ex-en,.g-ex-fr,.g-ex-note{color:#000}.g-ex-note{border-top:1px dashed #000}.g-trap{background:transparent;border:1px solid #000;border-left:3px solid #000;color:#000;page-break-inside:avoid}.g-trap-tag{background:#000;color:#fff}.g-table{page-break-inside:avoid}.g-table th{background:#000;color:#fff;border:1px solid #000}.g-table td{border:1px solid #000;color:#000}.g-table tbody tr:nth-child(even){background:#f0f0f0}.g-footer{color:#000;border-top:1px solid #000}@page{margin:18mm 16mm}}";
+  var html="<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"utf-8\"><title>"+escHtml(grim.title)+"</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>"+css+"</style></head><body><div class=\"g-toolbar\"><button class=\"g-print-btn\" onclick=\"window.print()\">"+"🖨️ Imprimer / Enregistrer en PDF</button><div class=\"g-hint\">Astuce : choisir « Enregistrer en PDF » comme destination</div></div><div class=\"g-header\"><h1 class=\"g-title\">"+escHtml(grim.title)+"</h1>"+(grim.subtitle?"<div class=\"g-subtitle\">"+escHtml(grim.subtitle)+"</div>":"")+"<div class=\"g-meta\">"+(grim.readingTime?"Lecture : "+escHtml(grim.readingTime)+" · ":"")+grim.chapters.length+" chapitres</div></div>"+chapters+"<div class=\"g-footer\">TOEIC Arena · Grimoire exporté pour étude personnelle</div></body></html>";
+  var w=window.open("","_blank");
+  if(!w){alert("La fenêtre d'export a été bloquée. Autorise les pop-ups pour ce site et réessaie.");return;}
+  w.document.open();w.document.write(html);w.document.close();
+}
+
 function renderGrimoireBlock(b,i){
   if(b.type==="paragraph")return(<p key={i} className="grim-paragraph">{b.text}</p>);
   if(b.type==="heading")return(<h4 key={i} className="grim-heading">{b.text}</h4>);
@@ -1397,7 +1429,10 @@ function GrimoireReader(p){
     <div className="grim-topbar">
       <button className="grim-btn-toc" onClick={function(){setShowToc(true);}}>{"\u2630"} Chapitres</button>
       <div className="grim-title">{grim.title}</div>
-      <button className="grim-btn-close" onClick={closeGrim}>{"\u2715"}</button>
+      <div style={{display:"flex",gap:6,alignItems:"center"}}>
+        <button className="grim-btn-toc" onClick={function(){downloadGrimoire(grim);}} title="T\u00e9l\u00e9charger / Imprimer">{"\u2913"}</button>
+        <button className="grim-btn-close" onClick={closeGrim}>{"\u2715"}</button>
+      </div>
     </div>
     <div className="grim-book" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <div className="grim-page-wrap">
