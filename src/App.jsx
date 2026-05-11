@@ -34,6 +34,7 @@ import { GRIMOIRE_MODALS } from "./data/modalsGrimoire.js";
 import { GRIMOIRE_GERUND } from "./data/gerundGrimoire.js";
 import { GRIMOIRE_PHRASAL } from "./data/phrasalGrimoire.js";
 import { GRIMOIRE_CONNECTORS } from "./data/connectorsGrimoire.js";
+import { LINKING_BRIDGE } from "./data/linkingBridge.js";
 import { NARRATOR_MOMENTS, NARRATOR_ORDER, hasHeardMoment, markMomentHeard } from "./narrator.js";
 import { CGV_ARTICLES, CGV_VERSION, CGV_EFFECTIVE_DATE } from "./data/cgv.js";
 
@@ -489,7 +490,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-06-mentor-peak-up";
+var BUILD_ID="2026-05-11-linking-bridge";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -3581,6 +3582,8 @@ var[step,sSt]=useState("name");
         var macroLabel={verbs:"Verbs",linking:"Linking",forms:"Word Forms",reference:"References"};
         var weakMacro=null,minAcc=2;
         Object.keys(grammarMacros).forEach(function(k){if(grammarMacros[k]<minAcc){minAcc=grammarMacros[k];weakMacro=k;}});
+        // Linking macro has a dedicated module (Bridge Forge) — route there specifically.
+        if(weakMacro==="linking")return{mod:"bforge",icon:"stone-bridge",label:"Linking Bridge",msg:"Your logical links need sharpening. Bridge Forge tests connector choice in real TOEIC contexts."};
         return{mod:"drill",icon:"crossed-swords",label:"Part 5 Drill"+(weakMacro?" — "+macroLabel[weakMacro]:""),msg:"Your grammar foundations need sharpening. Drill weights toward your weakest macro automatically."};
       }
       if(weakestSec==="vocab"){
@@ -4055,7 +4058,7 @@ function partOfModule(modId){
   if(modId==="p6")return"p6";
   if(modId==="p7")return"p7";
   if(modId==="tavern"||modId==="csess"||modId==="cdom"||modId==="phrasalpicker"||modId==="phrasaldojo")return"vocab";
-  if(modId==="drill"||modId==="wordfam"||modId==="connsort"||modId==="prepdrill"||modId==="gerinf"||modId==="falsefriends"||modId==="sbuild"||modId.indexOf("gauntlet_")===0||modId.indexOf("modals_")===0)return"p5";
+  if(modId==="drill"||modId==="wordfam"||modId==="connsort"||modId==="bforge"||modId==="prepdrill"||modId==="gerinf"||modId==="falsefriends"||modId==="sbuild"||modId.indexOf("gauntlet_")===0||modId.indexOf("modals_")===0)return"p5";
   return null;
 }
 // Per-part accuracy + sample size from u.moduleScores. Returns object keyed by part.
@@ -4068,7 +4071,7 @@ function partAccuracies(ms,bsParts){
   function fallback(partId){if(!bsParts||typeof bsParts[partId]!=="number")return null;return{acc:bsParts[partId],n:5,source:"scan"};}
   function getOrFallback(modId,partId){return get(modId)||fallback(partId);}
   function avg(arr){var f=arr.filter(function(x){return x!==null;});if(f.length===0)return null;var sa=0,sn=0;f.forEach(function(x){sa+=x.acc*x.n;sn+=x.n;});return{acc:sa/sn,n:sn};}
-  var p5Mods=["drill","wordfam","connsort","prepdrill","gerinf","falsefriends","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","modals_match","modals_sort"];
+  var p5Mods=["drill","wordfam","connsort","bforge","prepdrill","gerinf","falsefriends","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","modals_match","modals_sort"];
   var vocabMods=["tavern","csess","cdom","phrasalpicker"];
   return{
     p1:getOrFallback("lisP1","p1"),p2:getOrFallback("lisP2","p2"),p3:getOrFallback("lisP3","p3"),p4:getOrFallback("lisP4","p4"),
@@ -4950,13 +4953,14 @@ function MockResetCTA(p){
       {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"ringing-bell",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
       {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"bookmarklet",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     ]},
-    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"bookshelf",count:"9 modules",items:[
+    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"bookshelf",count:"10 modules",items:[
       {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"card-joker",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
       {id:"gauntlet",n:"Grammar Gauntlet",d:"4 trials · Irregulars, Tenses, Passive, Relatives",i:"gauntlet",bg:"linear-gradient(135deg,#7c3aed,#c026d3)"},
       {id:"modals",n:"Modal Council",d:"2 trials · Pair situations, classify verdicts",i:"throne-king",bg:"linear-gradient(135deg,#0891b2,#7c3aed)"},
       {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"family-tree",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
       {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"duality-mask",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
       {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"knot",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
+      {id:"bforge",n:"Linking Bridge",d:"Pick the connector that fits the logic & grammar",i:"stone-bridge",bg:"linear-gradient(135deg,#8b5e83,#06b6d4)",tag:"NEW"},
       {id:"prepdrill",n:"Preposition Collocations",d:"Study + Drill mode",i:"linked-rings",bg:"linear-gradient(135deg,#06b6d4,#22c55e)"},
       {id:"gerinf",n:"Gerund vs Infinitive",d:"4 patterns · Study + Context Quiz",i:"scales",bg:"linear-gradient(135deg,#e11d48,#f59e0b)"},
       {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"shuriken",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
@@ -5582,6 +5586,92 @@ function ConnSort(p){
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.tip}</p>
         <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",marginTop:8}}>"{it.ex}"</p></div>
       <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button></div>}
+  </div>);
+}
+
+// ─── LINKING BRIDGE ───
+// Contextual connector picker: blank-fill sentence, 4 options with FR translation
+// shown in feedback. Tier B XP (15 + 5×correct + 35 perfect = 125 max).
+// Same Grimoire as ConnSort (extended in 2026-05-11 with nuances + glossary).
+function LinkingBridge(p){
+  var items=useMemo(function(){return shuffle(LINKING_BRIDGE).slice(0,15);},[]);
+  var[ci,sC]=useState(0);
+  var[sc,sSc]=useState(0);
+  var[ph,sP]=useState("intro");
+  var[pickIdx,sPk]=useState(-1);
+  var[sk,sSk]=useState(false);
+  var[openGrim,setOpenGrim]=useState(false);
+
+  function doAns(idx){
+    if(pickIdx!==-1)return;
+    sPk(idx);
+    var correctOpt=items[ci].opts[idx];
+    if(correctOpt.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
+    else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
+    sP("fb");
+  }
+  function nxt(){
+    if(ci<items.length-1){sC(ci+1);sPk(-1);sP("q");}
+    else{
+      var xp=15+sc*5+(sc===items.length?35:0);
+      if(p.gate)xp=p.gate(xp,sc,items.length);
+      sP("done");
+      p.done(sc,items.length,xp);
+    }
+  }
+
+  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
+    <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"←"} Back</button>
+    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="stone-bridge" size={60} color="var(--cyan)"/></div>
+    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Linking Bridge</h1>
+    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6,maxWidth:360,marginLeft:"auto",marginRight:"auto"}}>Read each sentence and pick the connector that fits both the logic and the grammar.</p>
+    <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>15 items · French translation shown in feedback</p>
+    <button className="btn1" onClick={function(){sP("q");}} style={{marginBottom:12}}>Start Crossing</button>
+    <button className="btn2" onClick={function(){setOpenGrim(true);}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="bookmarklet" size={18} color="currentColor"/>Grimoire</button>
+    {openGrim&&<GrimoireReader grimoire={GRIMOIRE_CONNECTORS} back={function(){setOpenGrim(false);}}/>}
+  </div>);
+
+  if(ph==="done"){var xp=15+sc*5+(sc===items.length?35:0);if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=13?"🏆":sc>=9?"⚔️":"🛡️"}</div>
+    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Bridge Complete</h1>
+    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=13?"var(--green)":sc>=9?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
+    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
+    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+
+  var it=items[ci];
+  var showFb=ph==="fb";
+  var correctIdx=it.opts.findIndex(function(o){return o.correct;});
+  var picked=pickIdx!==-1?it.opts[pickIdx]:null;
+  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+      <button className="back-btn" onClick={p.back}>{"←"} Back</button>
+      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span>
+      <div style={{width:40}}/>
+    </div>
+    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#8b5e83,#06b6d4)"/>
+    <div style={{marginTop:32,marginBottom:24}}>
+      <div className="out" style={{fontSize:11,color:"var(--cx-hex)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12,textAlign:"center"}}>PICK THE CONNECTOR THAT FITS</div>
+      <div className="crd" style={{padding:20,fontSize:16,lineHeight:1.6,textAlign:"center"}}>{it.prompt}</div>
+    </div>
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      {it.opts.map(function(opt,oi){
+        var isPicked=pickIdx===oi;
+        var isCor=opt.correct;
+        var bg="var(--bg2)";var bd="var(--bdr)";var col="var(--t1)";
+        if(showFb&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";col="var(--green)";}
+        else if(showFb&&isPicked&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";col="var(--red)";}
+        return(<button key={oi} onClick={function(){doAns(oi);}} disabled={showFb}
+          style={{padding:"14px 16px",background:bg,border:"1.5px solid "+bd,borderRadius:12,cursor:showFb?"default":"pointer",textAlign:"left",fontSize:14,color:col,lineHeight:1.4,fontFamily:"'DM Sans',sans-serif",fontWeight:600}}>{opt.w}</button>);
+      })}
+    </div>
+    {showFb&&<div style={{marginTop:18,animation:"fadeIn .3s"}}>
+      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
+        {picked&&<p style={{fontSize:13,fontWeight:700,color:picked.correct?"var(--green)":"var(--red)",marginBottom:6}}>{picked.correct?"✓ ":"✗ "}<span style={{fontWeight:800}}>{picked.w}</span> {"— "}{picked.fr}</p>}
+        {picked&&!picked.correct&&correctIdx>=0&&<p style={{fontSize:12,color:"var(--green)",marginBottom:8}}>{"→ Correct: "}<strong>{it.opts[correctIdx].w}</strong> {"— "}{it.opts[correctIdx].fr}</p>}
+        <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,marginTop:4}}>{it.exp}</p>
+      </div>
+      <button className="btn1" onClick={nxt} style={{marginTop:14,width:"100%"}}>{ci<items.length-1?"Next →":"See Results"}</button>
+    </div>}
   </div>);
 }
 
@@ -10891,7 +10981,7 @@ function WeeklyReport(p){
   var ghosts=(p.students||[]).filter(isGhost);
 
   // Module engagement this week (based on module_scores delta)
-  var MODULE_LABELS={drill:"Part 5 Drill",csess:"Flashcards",tavern:"Word Tavern",lisP1:"Listening P1",lisP2:"Listening P2",lisP3:"Listening P3",lisP4:"Listening P4",p6:"Part 6",p7:"Part 7",ablitz:"Audio Blitz",clue:"Clue Hunter",sbuild:"Sentence Builder",wfall:"Word Fall",matchEasy:"Speed Match",pvdojo:"Phrasal Verbs",stratquiz:"Strategy Quiz",timesim:"Time Sim",mock1:"Mock Test 1",mock2:"Mock Test 2",mock3:"Mock Test 3"};
+  var MODULE_LABELS={drill:"Part 5 Drill",csess:"Flashcards",tavern:"Word Tavern",lisP1:"Listening P1",lisP2:"Listening P2",lisP3:"Listening P3",lisP4:"Listening P4",p6:"Part 6",p7:"Part 7",ablitz:"Audio Blitz",clue:"Clue Hunter",sbuild:"Sentence Builder",wfall:"Word Fall",matchEasy:"Speed Match",pvdojo:"Phrasal Verbs",stratquiz:"Strategy Quiz",timesim:"Time Sim",mock1:"Mock Test 1",mock2:"Mock Test 2",mock3:"Mock Test 3",bforge:"Linking Bridge"};
   var modEngagement={}; // modId → count of students who practiced
   thisWeek.forEach(function(s){
     var p=prevByName[s.student_name];
@@ -16176,6 +16266,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="drill")return pg(<Drill u={u} nav={nav} done={drillDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"drill");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="wordfam")return pg(<WordFam u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"wordfam");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="connsort")return pg(<ConnSort u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"connsort");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="bforge")return pg(<LinkingBridge u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"bforge");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="prepdrill")return pg(<PrepDrill u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"prepdrill");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="gerinf")return pg(<GerInf u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"gerinf");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="traps")return pg(<TrapsQuiz u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"traps");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
