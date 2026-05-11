@@ -7,8 +7,8 @@
 export var GRIMOIRE_CONNECTORS = {
   id: "connectors",
   title: "Connectors — Manuscrit des Liens Logiques",
-  subtitle: "Trois structures, un seul choix possible par contexte",
-  readingTime: "9 min",
+  subtitle: "Trois structures, des nuances précises, un glossaire de référence",
+  readingTime: "14 min",
   icon: "🔀",
   chapters: [
     {
@@ -129,6 +129,165 @@ export var GRIMOIRE_CONNECTORS = {
 
         {type:"heading",text:"5. Due to vs Because of"},
         {type:"paragraph",text:"Historiquement, 'due to' était réservé aux adjectifs ('the delay was due to...'). Aujourd'hui, les deux sont acceptés partout en anglais business. Aucune différence pratique pour le TOEIC."}
+      ]
+    },
+    {
+      id: "ch7_nuances",
+      title: "VII. Nuances entre synonymes proches",
+      intro: "Plusieurs connecteurs partagent la même fonction mais diffèrent par l'intensité, le registre ou la position. Les confondre n'est pas une faute, mais le TOEIC 700+ teste ces subtilités.",
+      blocks: [
+        {type:"heading",text:"1. Contraste — however / nevertheless / nonetheless"},
+        {type:"table",headers:["Connecteur","Intensité","Registre"],rows:[
+          ["however","neutre","standard, business courant"],
+          ["nevertheless","forte","formel"],
+          ["nonetheless","forte","formel écrit, recherché"]
+        ]},
+        {type:"example",en:"The plan is risky. However, the potential reward is huge.",fr:"Le plan est risqué. Cependant, le gain potentiel est énorme.",note:"however = neutre, le choix par défaut."},
+        {type:"example",en:"Sales fell sharply. Nevertheless, the company maintained its dividend.",fr:"Les ventes ont chuté. Néanmoins, l'entreprise a maintenu son dividende.",note:"nevertheless = malgré tout, ton plus solennel."},
+        {type:"trap",text:"En contexte TOEIC, however est presque toujours acceptable. Nevertheless/nonetheless sonnent recherché — ne les utilise pas si however suffit."},
+
+        {type:"heading",text:"2. Conséquence — therefore / consequently / thus / hence"},
+        {type:"table",headers:["Connecteur","Registre","Nuance"],rows:[
+          ["therefore","standard","résultat logique direct"],
+          ["consequently","formel","effet en cascade ou dans le temps"],
+          ["thus","formel écrit","résultat conclusif, démonstratif"],
+          ["hence","très formel","résultat + explication implicite"]
+        ]},
+        {type:"example",en:"Demand surged. Therefore, we hired more staff.",fr:"La demande a explosé. Par conséquent, nous avons embauché.",note:"therefore = lien direct cause→effet."},
+        {type:"example",en:"The factory closed. Consequently, 200 workers lost their jobs.",fr:"L'usine a fermé. En conséquence, 200 ouvriers ont perdu leur emploi.",note:"consequently = effet plus large, en cascade."},
+
+        {type:"heading",text:"3. Addition — moreover / furthermore / in addition / besides"},
+        {type:"table",headers:["Connecteur","Force","Usage"],rows:[
+          ["moreover","forte","ajoute un argument décisif"],
+          ["furthermore","forte","ajoute et creuse l'idée"],
+          ["in addition","neutre","simple liste"],
+          ["besides","familier","plutôt oral / écrit informel"]
+        ]},
+        {type:"example",en:"The product is cheap. Moreover, it outperforms the premium version.",fr:"Le produit est bon marché. De plus, il surpasse la version premium.",note:"moreover = argument décisif qui renforce."},
+        {type:"trap",text:"« besides » est familier (« d'ailleurs »). À éviter en business writing — préférer moreover ou furthermore."}
+      ]
+    },
+    {
+      id: "ch8_inversion",
+      title: "VIII. Inversion — niveau avancé (TOEIC 800+)",
+      intro: "Certains connecteurs négatifs ou restrictifs placés en TÊTE de phrase déclenchent une inversion sujet/auxiliaire (comme dans une question). Construction formelle, fréquente en TOEIC Reading haut niveau.",
+      blocks: [
+        {type:"rule",label:"La règle",formula:"Adverbe négatif/restrictif en tête → inversion sujet/auxiliaire"},
+        {type:"heading",text:"Connecteurs qui déclenchent l'inversion"},
+        {type:"table",headers:["Connecteur","Sens","Construction"],rows:[
+          ["rarely / seldom","rarement","+ aux + sujet + V"],
+          ["hardly ever / scarcely","presque jamais","+ aux + sujet + V"],
+          ["never / not until","jamais / pas avant","+ aux + sujet + V"],
+          ["no sooner... than","à peine... que","+ had + sujet + V-en"],
+          ["hardly... when","à peine... que","+ had + sujet + V-en"],
+          ["not only... but also","non seulement... mais aussi","+ aux + sujet + V"],
+          ["under no circumstances","en aucun cas","+ aux + sujet + V"]
+        ]},
+        {type:"example",en:"Rarely have we seen such a strong response.",fr:"Rarement avons-nous vu une réponse aussi forte.",note:"Rarely + have we seen (inversion). PAS « Rarely we have seen »."},
+        {type:"example",en:"No sooner had I sent the email than I noticed the typo.",fr:"À peine avais-je envoyé l'email que j'ai remarqué la coquille.",note:"No sooner + had I sent (inversion past perfect)."},
+        {type:"example",en:"Not only did sales rise, but profits doubled.",fr:"Non seulement les ventes ont augmenté, mais les profits ont doublé.",note:"Not only + did + sujet (inversion avec « do » auxiliaire au présent/prétérit)."},
+        {type:"trap",text:"En français, on traduit sans inverser : « rarement nous avons vu ». En anglais formel, l'inversion est OBLIGATOIRE. C'est ce qui signe le registre 800+."},
+        {type:"trap",text:"L'inversion fonctionne UNIQUEMENT quand l'adverbe est en tête. « We have rarely seen... » (au milieu) ne nécessite PAS d'inversion."}
+      ]
+    },
+    {
+      id: "ch9_glossary",
+      title: "IX. Glossaire bilingue — référence",
+      intro: "Table de correspondances FR ↔ EN par fonction sémantique. À consulter avant un Mock Test ou en cas de doute sur la traduction d'un terme.",
+      blocks: [
+        {type:"heading",text:"Contraste"},
+        {type:"table",headers:["Anglais","Français","Catégorie"],rows:[
+          ["although / even though","bien que","+ Clause"],
+          ["though","bien que (familier)","+ Clause"],
+          ["whereas / while","alors que / tandis que","+ Clause"],
+          ["despite / in spite of","malgré","+ Nom / V-ing"],
+          ["regardless of","peu importe","+ Nom"],
+          ["however","cependant / toutefois","Nouvelle phrase"],
+          ["nevertheless","néanmoins","Nouvelle phrase"],
+          ["nonetheless","néanmoins (formel)","Nouvelle phrase"],
+          ["on the other hand","d'un autre côté","Nouvelle phrase"]
+        ]},
+
+        {type:"heading",text:"Cause"},
+        {type:"table",headers:["Anglais","Français","Catégorie"],rows:[
+          ["because","parce que","+ Clause"],
+          ["as / since","puisque / comme","+ Clause"],
+          ["now that","maintenant que","+ Clause"],
+          ["because of","à cause de","+ Nom"],
+          ["due to","en raison de","+ Nom"],
+          ["owing to","en raison de (formel)","+ Nom"]
+        ]},
+
+        {type:"heading",text:"Conséquence / résultat"},
+        {type:"table",headers:["Anglais","Français","Catégorie"],rows:[
+          ["so that","afin que / pour que","+ Clause"],
+          ["therefore","donc / par conséquent","Nouvelle phrase"],
+          ["consequently","en conséquence","Nouvelle phrase"],
+          ["as a result","de ce fait","Nouvelle phrase"],
+          ["thus","ainsi","Nouvelle phrase"],
+          ["hence","d'où","Nouvelle phrase"]
+        ]},
+
+        {type:"heading",text:"Addition"},
+        {type:"table",headers:["Anglais","Français","Catégorie"],rows:[
+          ["in addition to","en plus de","+ Nom"],
+          ["apart from","outre / en dehors de","+ Nom"],
+          ["moreover","de plus","Nouvelle phrase"],
+          ["furthermore","en outre","Nouvelle phrase"],
+          ["in addition","de plus","Nouvelle phrase"],
+          ["besides","d'ailleurs (familier)","Nouvelle phrase"]
+        ]},
+
+        {type:"heading",text:"Condition"},
+        {type:"table",headers:["Anglais","Français","Catégorie"],rows:[
+          ["if","si","+ Clause"],
+          ["unless","à moins que","+ Clause"],
+          ["provided that","à condition que","+ Clause"],
+          ["as long as","tant que / à condition que","+ Clause"],
+          ["in case","au cas où","+ Clause"]
+        ]},
+
+        {type:"heading",text:"Temps"},
+        {type:"table",headers:["Anglais","Français","Catégorie"],rows:[
+          ["when","quand","+ Clause"],
+          ["while","pendant que","+ Clause"],
+          ["before / after","avant / après","+ Clause"],
+          ["as soon as","dès que","+ Clause"],
+          ["until / till","jusqu'à ce que","+ Clause"],
+          ["since","depuis que (temporel)","+ Clause"]
+        ]},
+
+        {type:"heading",text:"But / objectif"},
+        {type:"table",headers:["Anglais","Français","Construction"],rows:[
+          ["so that","afin que","+ Clause"],
+          ["in order to","afin de","+ V base"],
+          ["to + V","pour (+ verbe)","+ V base"]
+        ]},
+
+        {type:"heading",text:"Exemple / illustration"},
+        {type:"table",headers:["Anglais","Français","Position"],rows:[
+          ["for example / for instance","par exemple","Nouvelle phrase ou milieu"],
+          ["such as","tel que","+ Nom"],
+          ["namely","à savoir","Nouvelle phrase"],
+          ["that is (i.e.)","c'est-à-dire","Nouvelle phrase"]
+        ]},
+
+        {type:"heading",text:"Conclusion / résumé"},
+        {type:"table",headers:["Anglais","Français","Position"],rows:[
+          ["in conclusion","en conclusion","Nouvelle phrase"],
+          ["to sum up","pour résumer","Nouvelle phrase"],
+          ["overall","dans l'ensemble","Nouvelle phrase"],
+          ["in short","en bref","Nouvelle phrase"]
+        ]},
+
+        {type:"heading",text:"Inversion (niveau 800+)"},
+        {type:"table",headers:["Anglais","Français","Construction"],rows:[
+          ["rarely / seldom","rarement","+ aux + sujet"],
+          ["no sooner... than","à peine... que","+ aux + sujet"],
+          ["hardly... when","à peine... que","+ aux + sujet"],
+          ["not only... but also","non seulement... mais aussi","+ aux + sujet"],
+          ["under no circumstances","en aucun cas","+ aux + sujet"]
+        ]}
       ]
     }
   ]
