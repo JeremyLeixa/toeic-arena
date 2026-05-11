@@ -9892,16 +9892,18 @@ function WordTavern(p){
         p.resetCard(c);
       }
     }
-    setTimeout(function(){
-      if(ci<qs.length-1){sC(ci+1);sSel(-1);}
-      else{
-        var finalSc=sc+(correct?1:0);
-        var baseXp=20+finalSc*6;
-        var gxp=p.gate?p.gate(baseXp,finalSc,TOTAL):baseXp;
-        sP("done");
-        p.done(finalSc,TOTAL,gxp);
-      }
-    },1200);
+  }
+
+  function nextQ(){
+    if(sel===-1)return;
+    if(ci<qs.length-1){sC(ci+1);sSel(-1);}
+    else{
+      var finalSc=sc;
+      var baseXp=20+finalSc*6;
+      var gxp=p.gate?p.gate(baseXp,finalSc,TOTAL):baseXp;
+      sP("done");
+      p.done(finalSc,TOTAL,gxp);
+    }
   }
 
   // ── INTRO ──
@@ -9962,6 +9964,7 @@ function WordTavern(p){
     {sel!==-1&&<div style={{marginTop:16,padding:"12px 16px",background:"var(--bg3)",borderRadius:10}}>
       <div style={{fontSize:12,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5}}>{"\u201C"}{q.example}{"\u201D"}</div>
     </div>}
+    {sel!==-1&&<button className="btn1" onClick={nextQ} style={{marginTop:16,width:"100%"}}>{ci<qs.length-1?"Next \u2192":"Finish"}</button>}
   </div>);
 }
 
