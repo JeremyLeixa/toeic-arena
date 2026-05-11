@@ -15463,16 +15463,19 @@ useEffect(function(){
     return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
   },[ld]);
 
-  // ── Centralized BGM control: silence audio routes, restore home BGM on return ──
+  // ── Centralized BGM control: silence on ANY sub-page (exercise/content), restore home BGM on return ──
+  // Defensive rule (post-feedback 2026-05-11): any sp ≠ null with no self-managed BGM = exercise → stopBGM.
+  // Previously only lis/lisP1-P4/ablitz were silenced, leaving Mock Tests (Listening sections), Flashcards,
+  // Phrasal Dojo, Daily, etc. relying solely on nav() calling stopBGM — a single missed path left BGM running
+  // over the listening audio.
   useEffect(function(){
     if(ld||!u||!bgmStarted.current)return;
-    var AUDIO_ROUTES=["lis","lisP1","lisP2","lisP3","lisP4","ablitz"];
     // Routes that manage their own BGM (do not interfere):
     var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet","modals"];
-    if(sp&&AUDIO_ROUTES.indexOf(sp)!==-1){stopBGM();return;}
     if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
+    if(sp){stopBGM();return;}
     // No subpage active and on a home-BGM tab → ensure bgm_home is playing
-    if(!sp&&(tab==="home"||tab==="mentor"||tab==="league"||tab==="profile"))playBGM("bgm_home");
+    if(tab==="home"||tab==="mentor"||tab==="league"||tab==="profile")playBGM("bgm_home");
   },[sp,tab]);
 
   // ── Time tracking (60s) + Cloud sync (every 2 min) + beforeunload ──
