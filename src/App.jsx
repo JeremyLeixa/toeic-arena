@@ -2566,10 +2566,17 @@ function renderAv(avatar,size,frameId){
   if(avatar&&AVATARS[avatar]){
     return(<AvatarMedal avatarId={avatar} size={s} frameId={frameId||null}/>);
   }
-  var isPixel=!!(avatar&&avatar.startsWith&&(avatar.startsWith("data:")||avatar.startsWith("/av/")));
+  // /av/* paths = curated pixel art (image-rendering: pixelated).
+  // data: URIs = user-uploaded photos (kept smooth, NO pixelated rendering — fix
+  // 2026-05-12 after a student photo was mangled by the default pixel treatment).
+  var hasUriPrefix=!!(avatar&&avatar.startsWith);
+  var isPixelArt=hasUriPrefix&&avatar.startsWith("/av/");
+  var isImage=hasUriPrefix&&(isPixelArt||avatar.startsWith("data:"));
   var inner;
-  if(isPixel){
-    inner=(<img src={avatar} style={{width:s,height:s,borderRadius:"50%",objectFit:"cover",objectPosition:"center top",imageRendering:"pixelated",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
+  if(isImage){
+    var imgStyle={width:s,height:s,borderRadius:"50%",objectFit:"cover",objectPosition:"center top",display:"inline-block",verticalAlign:"middle",flexShrink:0};
+    if(isPixelArt)imgStyle.imageRendering="pixelated";
+    inner=(<img src={avatar} style={imgStyle}/>);
   }else{
     inner=(<span style={{fontSize:s*0.55,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,borderRadius:"50%",background:"linear-gradient(135deg,rgba(var(--cx),.18),rgba(var(--cx),.06))",border:"1px solid var(--bdr)",boxSizing:"border-box",flexShrink:0}}>{avatar||"⚔️"}</span>);
   }

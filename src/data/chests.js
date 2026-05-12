@@ -62,7 +62,7 @@ export var AVATARS = {
   // src is a path under public/av/<creator>/<id>.png. AvatarMedal delegates to
   // renderAv on type==="pixel" so chest modals, inventory tiles, etc. all
   // render coherently. creator is shown as a credit line in Collection.
-  warrior_queen_anais:{name:"Warrior Queen",rarity:"exclusive",type:"pixel",src:"/av/anais/warrior_queen.png",creator:"Anaïs"},
+  warrior_queen_anais:{name:"Warrior Queen",rarity:"legend",type:"pixel",src:"/av/anais/warrior_queen.png",creator:"Anaïs"},
 };
 
 // ═══ SKINS ═══
