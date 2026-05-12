@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Avatar pixel art — proto test</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{
+  --bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;
+  --bdr:rgba(180,140,80,0.08);
+  --cyan:#d4943a;--gold:#f0c850;
+  --t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;
+  --cx:212,148,58;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#1a1a1a;color:var(--t1);font-family:-apple-system,'DM Sans',sans-serif}
+body{padding:24px 16px 64px}
+.wrap{max-width:1300px;margin:0 auto}
+
+h1{font-weight:800;font-size:22px;margin:0 0 6px;color:var(--t1)}
+.sub{color:var(--t2);font-size:13px;margin-bottom:20px;line-height:1.6}
+.sub code{background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--cyan)}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:14px 18px;background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:28px}
+.toolbar label{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);cursor:pointer;user-select:none}
+.toolbar input[type="checkbox"]{accent-color:var(--cyan)}
+.toolbar input[type="file"]{font-size:12px;color:var(--t1);max-width:280px}
+.toolbar .divider{width:1px;height:24px;background:var(--bdr)}
+.toolbar .note{font-size:11px;color:var(--t3);font-style:italic;margin-left:auto}
+
+.drop-zone{margin-bottom:24px;padding:18px;background:var(--bg2);border:1.5px dashed var(--bdr);border-radius:12px;text-align:center;font-size:12px;color:var(--t2);transition:all .2s}
+.drop-zone.dragging{border-color:var(--cyan);background:rgba(var(--cx),.08)}
+.drop-zone strong{color:var(--t1)}
+
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:36px}
+.col-h{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--cyan);text-align:center;margin-bottom:8px}
+.col-d{font-size:10px;color:var(--t3);text-align:center;margin-bottom:14px;line-height:1.4}
+
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:28px;padding:18px 16px;border-radius:12px}
+.row.dark-row{background:#0a0a0a;border:1px solid var(--bdr)}
+.row.light-row{background:#f5f0e8;border:1px solid rgba(120,90,50,0.15)}
+.row.light-row .row-label{color:#5a4a32}
+.row-label{grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--t2);margin-bottom:6px}
+
+.cell{display:flex;flex-direction:column;align-items:center;gap:8px}
+.cell .img-wrap{display:flex;align-items:center;justify-content:center}
+.cell .lbl{font-size:10px;color:var(--t3);text-align:center;font-family:monospace}
+.dark-row .lbl{color:var(--t2)}
+.light-row .lbl{color:#7a6a4a}
+
+/* Avatar containers */
+.av{display:block;overflow:hidden;background:rgba(var(--cx),.06)}
+.av.circle{border-radius:50%}
+.av.square{border-radius:8px}
+.av img{display:block;width:100%;height:100%;object-fit:cover;object-position:center top}
+.av.pixelated img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:crisp-edges}
+.av.full-fit img{object-fit:contain;background:transparent}
+
+/* Specific sizes */
+.av.s36{width:36px;height:36px;border:1px solid var(--bdr)}
+.av.s56{width:56px;height:56px;border:1.5px solid var(--bdr)}
+.av.s120{width:120px;height:120px;border:2px solid var(--bdr)}
+.av.s200{width:200px;height:200px;border:2px solid var(--bdr)}
+
+.light-row .av{background:rgba(120,90,50,0.06);border-color:rgba(120,90,50,0.18)}
+
+/* Mock contexts */
+.mock-section{margin-top:48px;padding-top:24px;border-top:1px solid var(--bdr)}
+.mock-section h2{font-size:14px;font-weight:700;color:var(--t1);margin:0 0 4px;text-transform:uppercase;letter-spacing:1.5px}
+.mock-section .mock-d{font-size:12px;color:var(--t2);margin-bottom:18px}
+
+.mock-leaderboard{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:12px;max-width:480px}
+.mock-row{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:8px}
+.mock-row:nth-child(even){background:rgba(var(--cx),.04)}
+.mock-row .rank{font-weight:800;color:var(--gold);font-size:13px;min-width:24px;text-align:center}
+.mock-row .name{flex:1;font-size:13px;font-weight:600}
+.mock-row .xp{font-size:12px;color:var(--t2);font-family:monospace}
+
+.mock-profile{display:flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:18px;max-width:380px}
+.mock-profile .name{font-weight:700;font-size:18px}
+.mock-profile .league{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1}
+.mock-profile .xp-bar{margin-top:6px;font-size:11px;color:var(--t2);font-family:monospace}
+
+.notes{margin-top:36px;padding:18px 22px;background:rgba(var(--cx),.04);border:1px solid rgba(var(--cx),.15);border-radius:14px;font-size:13px;line-height:1.7;color:var(--t2)}
+.notes b{color:var(--cyan)}
+.notes ul{margin:8px 0 0;padding-left:22px}
+.notes li{margin-bottom:6px}
+
+.placeholder{display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--t3);text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Avatar pixel art — test rendu multi-tailles</h1>
+  <p class="sub">Drop ton avatar PNG (transparent, ~1024×1024) ou enregistre-le sous <code>prototypes/avatar-pixel-art-test/avatar.png</code> pour qu'il se charge automatiquement.</p>
+
+  <div class="toolbar">
+    <input type="file" id="picker" accept="image/png,image/*">
+    <div class="divider"></div>
+    <label><input type="checkbox" id="pix" checked> <span>image-rendering: pixelated</span></label>
+    <label><input type="checkbox" id="contain"> <span>object-fit: contain (montre l'image entière, pas de crop)</span></label>
+    <span class="note">Coche pour comparer le crop vs l'image complète</span>
+  </div>
+
+  <div class="drop-zone" id="drop">
+    <strong>📂 Dépose une image PNG ici</strong> — ou pick au-dessus. Le rendu se met à jour partout en même temps.
+  </div>
+
+  <!-- DARK MODE -->
+  <h2 style="font-size:14px;font-weight:700;margin:24px 0 4px;color:var(--t1);text-transform:uppercase;letter-spacing:1.5px">Dark mode (Arena par défaut)</h2>
+  <p class="mock-d" style="font-size:12px;color:var(--t2);margin-bottom:14px">Crop carré et crop circulaire, 4 tailles cibles.</p>
+
+  <div class="row dark-row">
+    <div class="row-label">— Cercle (avatar usual)</div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av circle s36 pixelated"><img id="img-c-36" alt="" src=""></div></div>
+      <div class="lbl">36 px<br>(leaderboard row)</div>
+    </div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av circle s56 pixelated"><img id="img-c-56" alt="" src=""></div></div>
+      <div class="lbl">56 px<br>(mini-profil, home)</div>
+    </div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av circle s120 pixelated"><img id="img-c-120" alt="" src=""></div></div>
+      <div class="lbl">120 px<br>(profil principal)</div>
+    </div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av circle s200 pixelated"><img id="img-c-200" alt="" src=""></div></div>
+      <div class="lbl">200 px<br>(modal, preview)</div>
+    </div>
+  </div>
+
+  <div class="row dark-row">
+    <div class="row-label">— Carré arrondi (tile-style)</div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av square s36 pixelated"><img id="img-s-36" alt="" src=""></div></div>
+      <div class="lbl">36 px</div>
+    </div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av square s56 pixelated"><img id="img-s-56" alt="" src=""></div></div>
+      <div class="lbl">56 px</div>
+    </div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av square s120 pixelated"><img id="img-s-120" alt="" src=""></div></div>
+      <div class="lbl">120 px</div>
+    </div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av square s200 pixelated"><img id="img-s-200" alt="" src=""></div></div>
+      <div class="lbl">200 px</div>
+    </div>
+  </div>
+
+  <!-- LIGHT MODE -->
+  <h2 style="font-size:14px;font-weight:700;margin:24px 0 4px;color:var(--t1);text-transform:uppercase;letter-spacing:1.5px">Light mode</h2>
+  <p class="mock-d" style="font-size:12px;color:var(--t2);margin-bottom:14px">Vérifier la lisibilité sur fond clair (zones jaunes/dorées risquent de se diluer).</p>
+
+  <div class="row light-row">
+    <div class="row-label">— Cercle</div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av circle s36 pixelated"><img id="img-cl-36" alt="" src=""></div></div>
+      <div class="lbl">36 px</div>
+    </div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av circle s56 pixelated"><img id="img-cl-56" alt="" src=""></div></div>
+      <div class="lbl">56 px</div>
+    </div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av circle s120 pixelated"><img id="img-cl-120" alt="" src=""></div></div>
+      <div class="lbl">120 px</div>
+    </div>
+    <div class="cell">
+      <div class="img-wrap"><div class="av circle s200 pixelated"><img id="img-cl-200" alt="" src=""></div></div>
+      <div class="lbl">200 px</div>
+    </div>
+  </div>
+
+  <!-- MOCK LEADERBOARD CONTEXT -->
+  <div class="mock-section">
+    <h2>Mock leaderboard (taille réelle)</h2>
+    <p class="mock-d">Comment ça rendrait au milieu des autres étudiants. Crop circulaire 36 px par défaut.</p>
+    <div class="mock-leaderboard">
+      <div class="mock-row">
+        <div class="rank">1</div>
+        <div class="av circle s36 pixelated"><img id="img-lb-1" alt="" src=""></div>
+        <div class="name">Anaïs</div>
+        <div class="xp">191 636 XP</div>
+      </div>
+      <div class="mock-row">
+        <div class="rank">2</div>
+        <div class="av circle s36" style="background:linear-gradient(135deg,#7c3aed,#c026d3);display:flex;align-items:center;justify-content:center;font-size:18px">🐉</div>
+        <div class="name">Kamel</div>
+        <div class="xp">88 272 XP</div>
+      </div>
+      <div class="mock-row">
+        <div class="rank">3</div>
+        <div class="av circle s36" style="background:linear-gradient(135deg,#22c55e,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:18px">⚔️</div>
+        <div class="name">ariba</div>
+        <div class="xp">109 139 XP</div>
+      </div>
+      <div class="mock-row">
+        <div class="rank">4</div>
+        <div class="av circle s36" style="background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:18px">🦊</div>
+        <div class="name">Fanny</div>
+        <div class="xp">51 295 XP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOCK PROFILE CONTEXT -->
+  <div class="mock-section">
+    <h2>Mock profil (taille principale)</h2>
+    <p class="mock-d">Cercle 120 px à côté du nom, ligue et progression XP. Vérifier la balance visuelle avec le texte.</p>
+    <div class="mock-profile">
+      <div class="av circle s120 pixelated"><img id="img-pr" alt="" src=""></div>
+      <div>
+        <div class="name">Anaïs</div>
+        <div class="league">★ Légende — TOEIC 990</div>
+        <div class="xp-bar">XP 191636 · Streak 8 · Niveau 109</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <b>Décisions à valider en regardant ce rendu :</b>
+    <ul>
+      <li><b>Lisibilité à 36 px (leaderboard)</b> : la silhouette est-elle reconnaissable parmi les autres avatars ? Si oui → OK. Si trop floue → exiger plus de contraste sur la signature (cape/couronne plus saturée).</li>
+      <li><b>Crop circle vs square</b> : laquelle préserve mieux l'identité de l'avatar ? Le carré arrondi garde plus de surface, le cercle est plus "moderne".</li>
+      <li><b>Pixelated vs anti-aliased</b> : décoche la case pour voir le rendu flouté. Le pixel art DOIT rester pixelisé sinon il devient une bouillie.</li>
+      <li><b>L'épée à droite</b> : avec object-fit:cover (par défaut), elle est coupée. Coche "object-fit:contain" pour voir l'image entière dans le carré — visuellement moins bon mais préserve le concept warrior.</li>
+      <li><b>Light mode</b> : les tons dorés/jaunes se diluent-ils sur fond clair ? Si oui, prévoir un contour/halo sur l'avatar OU une bordure plus marquée.</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var IDS=["img-c-36","img-c-56","img-c-120","img-c-200","img-s-36","img-s-56","img-s-120","img-s-200","img-cl-36","img-cl-56","img-cl-120","img-cl-200","img-lb-1","img-pr"];
+  function applySrc(src){IDS.forEach(function(id){var el=document.getElementById(id);if(el)el.src=src;});}
+  function applyPix(on){document.querySelectorAll(".av").forEach(function(el){if(on)el.classList.add("pixelated");else el.classList.remove("pixelated");});}
+  function applyContain(on){document.querySelectorAll(".av").forEach(function(el){if(on)el.classList.add("full-fit");else el.classList.remove("full-fit");});}
+
+  // Try default avatar.png in same dir
+  var defaultSrc="avatar.png";
+  var test=new Image();
+  test.onload=function(){applySrc(defaultSrc);};
+  test.onerror=function(){applySrc("data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23333"/><text x="50" y="55" text-anchor="middle" font-family="monospace" font-size="10" fill="%23888">no avatar</text></svg>'));};
+  test.src=defaultSrc;
+
+  // File picker
+  document.getElementById("picker").addEventListener("change",function(e){
+    var f=e.target.files&&e.target.files[0];if(!f)return;
+    var r=new FileReader();r.onload=function(){applySrc(r.result);};r.readAsDataURL(f);
+  });
+
+  // Drag and drop
+  var drop=document.getElementById("drop");
+  ["dragenter","dragover"].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.add("dragging");});});
+  ["dragleave","drop"].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.remove("dragging");});});
+  drop.addEventListener("drop",function(e){
+    var f=e.dataTransfer.files&&e.dataTransfer.files[0];if(!f)return;
+    var r=new FileReader();r.onload=function(){applySrc(r.result);};r.readAsDataURL(f);
+  });
+
+  // Toggles
+  document.getElementById("pix").addEventListener("change",function(e){applyPix(e.target.checked);});
+  document.getElementById("contain").addEventListener("change",function(e){applyContain(e.target.checked);});
+})();
+</script>
+</body>
+</html>

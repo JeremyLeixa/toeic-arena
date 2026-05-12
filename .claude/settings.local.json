@@ -39,7 +39,10 @@
       "Bash(awk 'NR>=15176 && /sU\\\\\\(|save\\\\\\(|^  }/ {print NR\": \"$0}' src/App.jsx)",
       "Bash(awk 'NR>=6370 && NR<=6600 && /Complete|p\\\\.back|onClick.*p\\\\.back/' src/App.jsx)",
       "Bash(ffmpeg -y -i public/images/mentor/map.jpg -vf \"scale=900:-1\" -q:v 4 public/images/mentor/_m.jpg)",
-      "Bash(ffmpeg -y -i public/images/mentor/map_desktop.jpg -vf \"scale=1200:-1\" -q:v 4 public/images/mentor/_d.jpg)"
+      "Bash(ffmpeg -y -i public/images/mentor/map_desktop.jpg -vf \"scale=1200:-1\" -q:v 4 public/images/mentor/_d.jpg)",
+      "Bash(git -C C:/Users/leixa/Documents/SynologyDrive/FORMATION/toeic-arena/.claude/worktrees/__TRACKED_VAR__ status --short)",
+      "Bash(git worktree *)",
+      "Bash(git -C \"C:/Users/leixa/Documents/SynologyDrive/FORMATION/toeic-arena\" pull)"
     ]
   }
 }

@@ -2555,23 +2555,34 @@ function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div st
 // ─── Avatar renderer — handles both emoji and base64 photo ───
 function renderAv(avatar,size,frameId){
   var s=size||32;
-  // V2 — chest avatars get the frame baked into the SVG shield (cohérent with AvatarMedal).
+  // ── 3 visual tiers (validated 2026-05-12) ──────────────────────────────────────
+  //   Tier 1 — AVATARS chest unlocks → blason (SVG shield), frame as SVG outline.
+  //            Handled entirely by <AvatarMedal>.
+  //   Tier 2 — Pixel art exclusives (data: or asset URI starting with /av/) → circle
+  //            crop with image-rendering: pixelated. Frame = circle outline + glow.
+  //   Tier 3 — Emoji defaults → square rounded with subtle skin-tinted background.
+  //            Frame = square rounded outline + glow.
+  // Frame shape adapts automatically to the avatar tier so the visual identity
+  // stays coherent across the entire UI (leaderboard, profile, modals, mentor…).
   if(avatar&&AVATARS[avatar]){
     return(<AvatarMedal avatarId={avatar} size={s} frameId={frameId||null}/>);
   }
+  var isPixel=!!(avatar&&avatar.startsWith&&(avatar.startsWith("data:")||avatar.startsWith("/av/")));
+  var radiusCss=isPixel?"50%":Math.round(s*0.25)+"px";
   var inner;
-  if(avatar&&avatar.startsWith&&avatar.startsWith("data:")){
-    inner=(<img src={avatar} style={{width:s,height:s,borderRadius:"50%",objectFit:"cover",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
+  if(isPixel){
+    inner=(<img src={avatar} style={{width:s,height:s,borderRadius:radiusCss,objectFit:"cover",objectPosition:"center top",imageRendering:"pixelated",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
   }else{
-    inner=(<span style={{fontSize:s*0.6,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,flexShrink:0}}>{avatar||"⚔️"}</span>);
+    inner=(<span style={{fontSize:s*0.55,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,borderRadius:radiusCss,background:"linear-gradient(135deg,rgba(var(--cx),.18),rgba(var(--cx),.06))",border:"1px solid var(--bdr)",boxSizing:"border-box",flexShrink:0}}>{avatar||"⚔️"}</span>);
   }
-  // V2 fallback for non-shield avatars : CSS circle glow.
+  // ── Frame application (shape-aware) ─────────────────────────────────────────
   if(frameId&&FRAMES[frameId]){
     var fr=FRAMES[frameId];
     var glowColor=fr.gradient?fr.gradient[0]:fr.color;
     var pad=Math.max(2,Math.round(s*0.06));
     var bgGrad=fr.gradient?"linear-gradient(var(--bg2),var(--bg2)),linear-gradient(135deg,"+fr.gradient.join(",")+")":null;
-    var wrap={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",verticalAlign:"middle",border:(fr.strokeWidth||3)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||12)+"px "+glowColor};
+    var wrapRadius=isPixel?"50%":Math.round((s+pad*2)*0.22)+"px";
+    var wrap={display:"inline-block",borderRadius:wrapRadius,padding:pad,boxSizing:"content-box",verticalAlign:"middle",border:(fr.strokeWidth||3)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||12)+"px "+glowColor};
     if(bgGrad){wrap.backgroundImage=bgGrad;wrap.backgroundOrigin="border-box";wrap.backgroundClip="padding-box,border-box";}
     if(fr.anim)wrap.animation="frame-"+fr.anim+" 2.5s ease-in-out infinite";
     return(<span style={wrap}>{inner}</span>);
