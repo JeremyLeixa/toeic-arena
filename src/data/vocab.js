@@ -1,10 +1,10 @@
 export var VOCAB = [
   { id:"finance",name:"Finance & Banking",icon:"💰",col:"#22c55e",cards:[
-    {id:"f1",w:"revenue",d:"Income generated from business operations",e:"The company's annual revenue exceeded $2 million."},
-    {id:"f2",w:"expenditure",d:"Money spent on something; an expense",e:"Capital expenditures were higher than expected."},
-    {id:"f3",w:"quarterly",d:"Happening every three months",e:"The quarterly report shows a 15% increase in profits."},
-    {id:"f4",w:"dividend",d:"A payment made to shareholders from profits",e:"Shareholders will receive a dividend of $0.50 per share."},
-    {id:"f5",w:"invoice",d:"A document requesting payment for goods/services",e:"Please send the invoice to our accounting department."},
+    {id:"f1",w:"revenue",d:"Income generated from business operations",e:"The company's annual revenue exceeded $2 million.",fr:"chiffre d'affaires / revenu"},
+    {id:"f2",w:"expenditure",d:"Money spent on something; an expense",e:"Capital expenditures were higher than expected.",fr:"dépense (souvent au pluriel : dépenses)"},
+    {id:"f3",w:"quarterly",d:"Happening every three months",e:"The quarterly report shows a 15% increase in profits.",fr:"trimestriel(le)"},
+    {id:"f4",w:"dividend",d:"A payment made to shareholders from profits",e:"Shareholders will receive a dividend of $0.50 per share.",fr:"dividende"},
+    {id:"f5",w:"invoice",d:"A document requesting payment for goods/services",e:"Please send the invoice to our accounting department.",fr:"facture"},
     {id:"f6",w:"audit",d:"An official examination of financial records",e:"The annual audit revealed no irregularities."},
     {id:"f7",w:"liability",d:"A financial obligation or debt",e:"The company reduced its liabilities by 20% this year."},
     {id:"f8",w:"asset",d:"Something of value owned by a company",e:"Real estate is the firm's most valuable asset."},
