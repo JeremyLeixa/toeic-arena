@@ -15863,7 +15863,12 @@ function sv(d){
       else if(acc<0.50)gatedXp=Math.round(baseXp*0.50);
       // ≥50% : formule normale, pas de pénalité
     }
-    // ── PILIER 2 : diminishing returns anti-farming (cap × 2 pendant un event) ──
+    // ── PILIER 2 : diminishing returns anti-farming ──
+    // Skipped entirely when (a) the user has armed a Bypass Token for THIS module,
+    // OR (b) an active event boosts this module — events are explicit invitations
+    // to farm, students should never hit the ceiling during a Spotlight / Flash Hour
+    // / Underdog window. Changed 2026-05-12 after student feedback (previous behavior
+    // doubled the cap via floor(sessionCount/2) — not full disable as intended).
     if(modId){
       // V2 — Bypass Token : if armed for THIS module, skip the diminishing curve entirely.
       // The flag is cleared in recordModule(u, modId) after the round so consumption is
@@ -15871,23 +15876,24 @@ function sv(d){
       if(u&&u.bypassArmedModule===modId){
         return Math.max(0,gatedXp);
       }
-      var dms=u.dailyModSessions||{};
-      var key=modId+"_"+today();
-      var sessionCount=dms[key]||0;
       var boosted=isModuleBoosted(modId);
-      var effectiveCount=boosted?Math.floor(sessionCount/2):sessionCount;
-      // Flashcards : 100% / 60% / 30% / 0%
-      // Mock Tests  : 100% / 40% / 0%
-      // Autres      : 100% / 50% / 15% / 0%
-      var farmMult;
-      if(modId==="csess"){
-        farmMult=effectiveCount===0?1:effectiveCount===1?0.60:effectiveCount===2?0.30:0;
-      } else if(modId==="mock1"||modId==="mock2"||modId==="mock3"){
-        farmMult=effectiveCount===0?1:effectiveCount===1?0.40:0;
-      } else {
-        farmMult=effectiveCount===0?1:effectiveCount===1?0.5:effectiveCount===2?0.15:0;
+      if(!boosted){
+        var dms=u.dailyModSessions||{};
+        var key=modId+"_"+today();
+        var sessionCount=dms[key]||0;
+        // Flashcards : 100% / 60% / 30% / 0%
+        // Mock Tests  : 100% / 40% / 0%
+        // Autres      : 100% / 50% / 15% / 0%
+        var farmMult;
+        if(modId==="csess"){
+          farmMult=sessionCount===0?1:sessionCount===1?0.60:sessionCount===2?0.30:0;
+        } else if(modId==="mock1"||modId==="mock2"||modId==="mock3"){
+          farmMult=sessionCount===0?1:sessionCount===1?0.40:0;
+        } else {
+          farmMult=sessionCount===0?1:sessionCount===1?0.5:sessionCount===2?0.15:0;
+        }
+        gatedXp=Math.round(gatedXp*farmMult);
       }
-      gatedXp=Math.round(gatedXp*farmMult);
     }
     // ── PILIER 3 : Today's Focus boost (Personalization Phase 1, 2026-05-05) ──
     // +25% XP when the module the user just finished maps to their weakest part
