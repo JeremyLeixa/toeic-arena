@@ -57,6 +57,12 @@ export var AVATARS = {
   // Legendary (2)
   pourfendeur:{name:"Slayer",rarity:"legend",icon:"broadsword"},
   champion:{name:"Champion",rarity:"legend",icon:"laurel-crown"},
+  // Exclusive — pixel art commissioned avatars (V3, 2026-05-12)
+  // type:"pixel" → renderAv routes to circle crop + image-rendering:pixelated.
+  // src is a path under public/av/<creator>/<id>.png. AvatarMedal delegates to
+  // renderAv on type==="pixel" so chest modals, inventory tiles, etc. all
+  // render coherently. creator is shown as a credit line in Collection.
+  warrior_queen_anais:{name:"Warrior Queen",rarity:"exclusive",type:"pixel",src:"/av/anais/warrior_queen.png",creator:"Anaïs"},
 };
 
 // ═══ SKINS ═══

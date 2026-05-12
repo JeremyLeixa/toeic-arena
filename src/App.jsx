@@ -10581,6 +10581,11 @@ function AvatarMedal(p){
   var avatarId=p.avatarId;var size=p.size||48;var frameId=p.frameId;
   var av=AVATARS[avatarId];
   if(!av)return(<div style={{width:size,height:size,borderRadius:size*.35,background:"var(--bg3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.5}}>{"?"}</div>);
+  // V3 — pixel art exclusives: delegate to renderAv() which knows how to render
+  // circle crop + image-rendering: pixelated + circle frame. Keeps a single source
+  // of truth for pixel rendering across all surfaces (leaderboard, profile,
+  // chest reveal modal, inventory tiles, reward cards).
+  if(av.type==="pixel"&&av.src)return renderAv(av.src,size,frameId);
   var rs=RARITY_STYLES[av.rarity]||RARITY_STYLES.common;
   var iconPath=GAME_ICON_PATHS[av.icon]||"";
   var frame=frameId&&FRAMES[frameId];
