@@ -657,6 +657,8 @@ export var STRATEGIES = [
       {t:"Passive voice matters",d:"'The table is being set' (in progress) vs 'The table has been set' (done). Check the photo: is the action ongoing or finished?"},
       {t:"Wrong objects = eliminate",d:"If an answer mentions something NOT visible in the photo, it's wrong. Simple but effective."},
       {t:"Count the people",d:"Photo shows ONE person? Any answer with 'they' or 'people' is automatically wrong."},
+      {t:"Right object, wrong action",d:"Photo shows a woman STANDING near a desk. Answer says 'sitting at a desk' — 'desk' is correct but 'sitting' is wrong. Verify EVERY part of the description, not just keywords."},
+      {t:"Don't guess the unseen",d:"'They are discussing the budget' / 'She is ordering lunch' describe what MIGHT be happening — not what's visible. Choose only objective descriptions of what you can actually see in the frame."},
   ]},
   {part:"Part 2",title:"Question-Response",qs:25,icon:"chat-bubble",section:"Listening",
     points:"High-value: 25 quick points. Train your ear!",
@@ -669,6 +671,7 @@ export var STRATEGIES = [
       {t:"Suggestions have specific patterns",d:"'Why don't we...' / 'How about...' / 'Shall I...' → answer is acceptance or polite refusal, not a factual response."},
       {t:"'Or' questions: no Yes/No",d:"'Tea or coffee?' → 'Tea, please.' NOT 'Yes.' Choice questions need a choice, not confirmation."},
       {t:"Tense must match",d:"Past question → past answer. Future question → future answer. A tense mismatch = probable trap."},
+      {t:"'Or' can be refused",d:"'Should we take the train or fly?' → 'Let's just drive, it's not far.' A third option (neither / something else entirely) is a valid TOEIC answer. Don't reject a choice because it doesn't match A or B."},
   ]},
   {part:"Part 3",title:"Conversations",qs:39,icon:"conversation",section:"Listening",
     points:"39 points — conversations between 2-3 speakers.",
@@ -681,6 +684,8 @@ export var STRATEGIES = [
       {t:"Graphic questions: scan first",d:"'Look at the graphic' → identify what it shows (schedule, prices, floor plan) BEFORE the audio plays."},
       {t:"'What will X do next?' = last line",d:"Always in the final sentence. 'I'll check with the manager' → He will talk to the manager."},
       {t:"3-speaker convos: track who says what",d:"The TOEIC tests if you can attribute info to the right speaker. Mentally note: Man 1 = ..., Woman = ..., Man 2 = ..."},
+      {t:"Paraphrases everywhere",d:"Speaker says 'finish this report by Friday' → correct answer says 'complete the document before the weekend'. Stop hunting exact words; hunt meaning. Identical wording in an answer choice is usually the trap."},
+      {t:"Last info wins",d:"'Let's meet at 2.' / 'Actually, can we push it to 3?' → answer is 3pm. After 'actually', 'but', 'on second thought', the new info OVERRIDES the previous. Always lock in the FINAL statement, not the first one."},
   ]},
   {part:"Part 4",title:"Talks",qs:30,icon:"public-speaker",section:"Listening",
     points:"30 points — monologues: voicemails, announcements, speeches.",
@@ -691,6 +696,7 @@ export var STRATEGIES = [
       {t:"'What are listeners asked to do?' = END",d:"Instructions to the audience come last. 'Please submit your forms by Friday.'"},
       {t:"Note numbers, dates, times mentally",d:"'The event starts at 3, not 2 as originally planned.' Correct = 3, trap = 2. The TOEIC loves changed details."},
       {t:"Paraphrases, not exact words",d:"'What is mentioned about...?' The correct answer REPHRASES the info. The exact words from the audio are usually in the wrong answer."},
+      {t:"Lock Q1 immediately",d:"Q1 answers almost always live in the opening lines. Tick your choice the MOMENT you hear it — don't wait until the talk ends. By then your memory of the first 20 seconds will have faded and you'll second-guess yourself."},
   ]},
   {part:"Part 5",title:"Incomplete Sentences",qs:30,icon:"scroll-quill",section:"Reading",
     points:"30 points — 10 min max. Fast pattern recognition.",
@@ -701,6 +707,8 @@ export var STRATEGIES = [
       {t:"'Sounds right' for collocations",d:"'Make a decision' sounds correct, 'do a decision' doesn't. Trust your ear for fixed expressions."},
       {t:"Circle time markers mentally",d:"Since, for, ago, last, next, already, yet, by, every, currently, right now — they dictate the tense."},
       {t:"Connector grammar check",d:"Blank + noun → preposition (despite, due to). Blank + clause → conjunction (although, because). New sentence → adverb (however, therefore)."},
+      {t:"Find the TRUE subject",d:"'The results of the annual survey conducted across all regional offices ___ available.' Subject = 'results' (plural), NOT 'offices'. Mentally strip prepositional phrases and relative clauses before choosing is/are."},
+      {t:"Tiny time prepositions, big traps",d:"IN time = before deadline. ON time = exact moment. BY Friday = up to / before. AT the end = location/moment. IN the end = finally. These don't translate cleanly from French — learn each pair."},
   ]},
   {part:"Part 6",title:"Text Completion",qs:16,icon:"stone-tablet",section:"Reading",
     points:"16 points — bridge between grammar and reading.",
@@ -724,6 +732,7 @@ export var STRATEGIES = [
       {t:"'Best fit' sentence: test all positions",d:"Read the paragraph with the sentence at each position. Only one creates a logical flow."},
       {t:"Time management is ruthless",d:"Stuck on a hard text? Answer the easy Qs (purpose, detail), guess the inference Qs. 3/5 beats 0/5."},
       {t:"Singles first, triples last",d:"Single passages = fastest points/minute ratio. Triples take longer for the same number of points."},
+      {t:"Verbatim = warning",d:"If an answer reuses an entire phrase word-for-word from the text, it's often a distractor. Correct answers paraphrase. The exact quote is bait for rushed candidates — verify the meaning, not the wording."},
   ]},
   {part:"General",title:"Cross-Part Tips",qs:0,icon:"swords-emblem",section:"Both",
     points:"These apply to EVERY section of the TOEIC.",
@@ -906,5 +915,27 @@ export var STRAT_QUIZ = [
 
   {id:"sq46",scenario:"What time should you arrive at the test center for a 9 AM TOEIC?",
     options:["Exactly at 9 AM","8:55 AM (5 min early)","8:15-8:30 AM (45 min early)","8:00 AM (1 hour early)"],
-    correct:2,part:"General",explain:"Arrive ~45 min early. You need time for ID check, room assignment, settling in, and a calm mental warm-up. Cutting it close means stress, missed instructions, and starting flustered. Treat day-of logistics as part of the test."}
+    correct:2,part:"General",explain:"Arrive ~45 min early. You need time for ID check, room assignment, settling in, and a calm mental warm-up. Cutting it close means stress, missed instructions, and starting flustered. Treat day-of logistics as part of the test."},
+
+  // ─── BATCH 3 — sq47 → sq51 (added 2026-05-12, fill 5 priority strategy gaps) ───
+
+  {id:"sq47",scenario:"Part 1: The photo shows a woman in a kitchen holding a phone, smiling. You hear: 'She is ordering pizza for delivery.' Verdict?",
+    options:["Accept — she's clearly on the phone","Reject — you can't see WHO she is calling or WHY","Accept — kitchen + phone suggests food","Reject — phone calls aren't testable on Part 1"],
+    correct:1,part:"Part 1",explain:"Suppositions are a P1 trap. The photo shows her holding a phone — you cannot see what she is saying or ordering. Choose only answers describing what is OBJECTIVELY visible in the frame, never what 'might' be happening."},
+
+  {id:"sq48",scenario:"Part 3: A speaker says 'I need to finish this proposal by Friday.' Which answer is most likely correct?",
+    options:["'He needs to finish the proposal by Friday'","'He must complete the document before the weekend'","'The proposal is due Friday'","'He dislikes writing proposals'"],
+    correct:1,part:"Part 3",explain:"Paraphrases dominate Parts 3 and 4. 'Finish' → 'complete'; 'proposal' → 'document'; 'by Friday' → 'before the weekend'. Answer choices that reuse exact words from the audio are usually the distractor — chase meaning, not wording."},
+
+  {id:"sq49",scenario:"Part 3: Woman: 'Let's meet at 2 pm.' Man: 'Actually, can we push it to 3?' Woman: 'Sure.' What time will the meeting take place?",
+    options:["2 pm — the woman's first proposal","3 pm — the final agreed time","Both 2 pm and 3 pm","Unknown without more info"],
+    correct:1,part:"Part 3",explain:"After 'actually', 'but', 'on second thought', the new info OVERRIDES the previous one. Lock in the FINAL statement. 2 pm is bait for candidates who pick the first time they hear without tracking the conversation to the end."},
+
+  {id:"sq50",scenario:"Part 4: Q1 asks the speaker's purpose. You clearly hear the answer in the first 10 seconds. What should you do?",
+    options:["Wait until the talk ends to confirm","Mark your Q1 answer immediately, then focus on Q2/Q3","Mentally rehearse what you heard","Skip Q1 and answer Q2/Q3 first"],
+    correct:1,part:"Part 4",explain:"Lock Q1 as soon as you hear it. The talk is 30-45 seconds — by the end, your memory of the opening will be faded and you will second-guess yourself. Immediate marking frees your full attention for Q2/Q3, which live further in the audio."},
+
+  {id:"sq51",scenario:"Part 5: 'The results of the annual survey conducted across all regional offices ___ available online.' Choose between 'is' and 'are'.",
+    options:["'is' — because 'survey' is singular","'is' — because 'offices' could be read as singular","'are' — because 'results' (the true subject) is plural","'are' — because the sentence is long"],
+    correct:2,part:"Part 5",explain:"The TRUE subject is 'results' (plural). Everything between 'results' and the blank ('of the annual survey conducted across all regional offices') is just modifiers. Mentally strip prepositional phrases and relative clauses to find what the verb actually agrees with."}
 ];

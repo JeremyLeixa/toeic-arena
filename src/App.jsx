@@ -4858,7 +4858,7 @@ return(
       </div>
       <button onClick={function(){p.nav("strats");}}
         style={{width:"100%",padding:"10px 18px",background:"rgba(180,140,80,.06)",borderTop:"1px solid rgba(180,140,80,.08)",border:"none",borderTop:"1px solid rgba(180,140,80,.08)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-        <span style={{fontSize:12,color:"var(--cyan)",fontWeight:600}} className="out">All 54 strategies</span>
+        <span style={{fontSize:12,color:"var(--cyan)",fontWeight:600}} className="out">All 63 strategies</span>
         <span style={{fontSize:12,color:"var(--cyan)"}}>{"→"}</span>
       </button>
     </div>
@@ -5026,7 +5026,7 @@ function MockResetCTA(p){
     })()},
     {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"treasure-map",count:"5 tools",items:[
       {id:"abouttoeic",n:"What is the TOEIC?",d:"Format, score, levels — the quick guide",i:"info",bg:"linear-gradient(135deg,#8b5e83,#5a7a9a)"},
-      {id:"strats",n:"Strategy Cards",d:"54 expert tips, all Parts",i:"card-pick",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
+      {id:"strats",n:"Strategy Cards",d:"63 expert tips, all Parts",i:"card-pick",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
       {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"brain",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
       {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"trap-mask",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
       {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"book-aura",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
