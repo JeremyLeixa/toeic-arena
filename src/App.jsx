@@ -15655,7 +15655,7 @@ useEffect(function(){
   useEffect(function(){
     if(ld||!u||!bgmStarted.current)return;
     // Routes that manage their own BGM (do not interfere):
-    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet","modals"];
+    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet","modals","bforge"];
     if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
     if(sp){stopBGM();return;}
     // No subpage active and on a home-BGM tab → ensure bgm_home is playing
@@ -16313,7 +16313,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="drill")return pg(<Drill u={u} nav={nav} done={drillDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"drill");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="wordfam")return pg(<WordFam u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"wordfam");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="connsort")return pg(<ConnSort u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"connsort");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
-  if(sp==="bforge")return pg(<LinkingBridge u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"bforge");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="bforge"){playBGM("bgm_bridge");return pg(<LinkingBridge u={u} done={function(sc,tot,xp){stopBGM();miniDone(sc,tot,xp);}} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"bforge");}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);}
   if(sp==="prepdrill")return pg(<PrepDrill u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"prepdrill");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="gerinf")return pg(<GerInf u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"gerinf");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="traps")return pg(<TrapsQuiz u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"traps");}} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
