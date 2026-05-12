@@ -4765,7 +4765,12 @@ return(
   var col=ev.type==="spotlight"?"var(--cyan)":ev.type==="flash_hour"?"var(--gold)":"var(--green)";
   var isUnderdog=ev.type==="underdog";
   var qualifies=!isUnderdog||p.u.xp<(p.medianXp||0);
-  return(<div key={ei} className="crd" style={{marginBottom:12,padding:14,background:bg,border:"1px solid "+bd,animation:(pulseSlot==="event"&&ei===0)?"pulse 3s infinite":"none"}}>
+  // Clickable shortcut: Spotlight events target a specific module → tap the banner to jump
+  // straight there (validated 2026-05-12). Flash Hour and Underdog are global, no obvious
+  // single target, so they stay non-clickable.
+  var targetModule=ev.type==="spotlight"&&cfg.module?cfg.module:null;
+  var clickable=!!targetModule&&!!p.nav;
+  return(<div key={ei} className="crd" onClick={clickable?function(){p.nav(targetModule);}:undefined} style={{marginBottom:12,padding:14,background:bg,border:"1px solid "+bd,cursor:clickable?"pointer":"default",animation:(pulseSlot==="event"&&ei===0)?"pulse 3s infinite":"none"}}>
     <div style={{display:"flex",alignItems:"center",gap:10}}>
       <span style={{fontSize:24}}>{icon}</span>
       <div style={{flex:1}}>
@@ -4773,7 +4778,10 @@ return(
         <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>{ev.description||(ev.type==="spotlight"?"x"+m+" XP on "+cfg.module:ev.type==="flash_hour"?"x"+m+" XP on everything":"x"+m+" XP if below class median")}</div>
         {isUnderdog&&!qualifies&&<div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>You are above the median</div>}
       </div>
-      <div style={{textAlign:"right"}}><div className="out" style={{fontSize:12,fontWeight:700,color:col}}>{timeLabel}</div></div>
+      <div style={{textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
+        <div className="out" style={{fontSize:12,fontWeight:700,color:col}}>{timeLabel}</div>
+        {clickable&&<div style={{fontSize:14,color:col,fontWeight:700,opacity:.75,lineHeight:1}}>{"→"}</div>}
+      </div>
     </div>
   </div>);
 })}
