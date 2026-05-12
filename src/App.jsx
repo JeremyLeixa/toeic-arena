@@ -2555,34 +2555,31 @@ function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div st
 // ─── Avatar renderer — handles both emoji and base64 photo ───
 function renderAv(avatar,size,frameId){
   var s=size||32;
-  // ── 3 visual tiers (validated 2026-05-12) ──────────────────────────────────────
-  //   Tier 1 — AVATARS chest unlocks → blason (SVG shield), frame as SVG outline.
-  //            Handled entirely by <AvatarMedal>.
-  //   Tier 2 — Pixel art exclusives (data: or asset URI starting with /av/) → circle
-  //            crop with image-rendering: pixelated. Frame = circle outline + glow.
-  //   Tier 3 — Emoji defaults → square rounded with subtle skin-tinted background.
-  //            Frame = square rounded outline + glow.
-  // Frame shape adapts automatically to the avatar tier so the visual identity
-  // stays coherent across the entire UI (leaderboard, profile, modals, mentor…).
+  // ── 2 visual tiers (revised 2026-05-12) ────────────────────────────────────────
+  //   Blason — AVATARS chest unlocks → SVG shield via <AvatarMedal>, SVG frame.
+  //   Circle — everything else (emoji defaults + pixel art exclusives via data:/
+  //            /av/* URIs) → circular crop. Emojis get a subtle skin-tinted
+  //            background, pixel art gets image-rendering: pixelated. Frame =
+  //            circle outline + glow, with optional gradient/animation.
+  // Earlier square-rounded experiment for emojis (commit 21f90a3) was rejected
+  // — the rounded square didn't sit well next to the blason in dense lists.
   if(avatar&&AVATARS[avatar]){
     return(<AvatarMedal avatarId={avatar} size={s} frameId={frameId||null}/>);
   }
   var isPixel=!!(avatar&&avatar.startsWith&&(avatar.startsWith("data:")||avatar.startsWith("/av/")));
-  var radiusCss=isPixel?"50%":Math.round(s*0.25)+"px";
   var inner;
   if(isPixel){
-    inner=(<img src={avatar} style={{width:s,height:s,borderRadius:radiusCss,objectFit:"cover",objectPosition:"center top",imageRendering:"pixelated",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
+    inner=(<img src={avatar} style={{width:s,height:s,borderRadius:"50%",objectFit:"cover",objectPosition:"center top",imageRendering:"pixelated",display:"inline-block",verticalAlign:"middle",flexShrink:0}}/>);
   }else{
-    inner=(<span style={{fontSize:s*0.55,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,borderRadius:radiusCss,background:"linear-gradient(135deg,rgba(var(--cx),.18),rgba(var(--cx),.06))",border:"1px solid var(--bdr)",boxSizing:"border-box",flexShrink:0}}>{avatar||"⚔️"}</span>);
+    inner=(<span style={{fontSize:s*0.55,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,borderRadius:"50%",background:"linear-gradient(135deg,rgba(var(--cx),.18),rgba(var(--cx),.06))",border:"1px solid var(--bdr)",boxSizing:"border-box",flexShrink:0}}>{avatar||"⚔️"}</span>);
   }
-  // ── Frame application (shape-aware) ─────────────────────────────────────────
+  // ── Frame application (circle) ──────────────────────────────────────────────
   if(frameId&&FRAMES[frameId]){
     var fr=FRAMES[frameId];
     var glowColor=fr.gradient?fr.gradient[0]:fr.color;
     var pad=Math.max(2,Math.round(s*0.06));
     var bgGrad=fr.gradient?"linear-gradient(var(--bg2),var(--bg2)),linear-gradient(135deg,"+fr.gradient.join(",")+")":null;
-    var wrapRadius=isPixel?"50%":Math.round((s+pad*2)*0.22)+"px";
-    var wrap={display:"inline-block",borderRadius:wrapRadius,padding:pad,boxSizing:"content-box",verticalAlign:"middle",border:(fr.strokeWidth||3)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||12)+"px "+glowColor};
+    var wrap={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",verticalAlign:"middle",border:(fr.strokeWidth||3)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||12)+"px "+glowColor};
     if(bgGrad){wrap.backgroundImage=bgGrad;wrap.backgroundOrigin="border-box";wrap.backgroundClip="padding-box,border-box";}
     if(fr.anim)wrap.animation="frame-"+fr.anim+" 2.5s ease-in-out infinite";
     return(<span style={wrap}>{inner}</span>);
@@ -13018,7 +13015,7 @@ function loadProgressionData(){
         }
         return null;
       }
-      function computeRow(src,name,avatar,me){
+      function computeRow(src,name,avatar,me,frameId,titleId){
         var currentMs=src.module_scores||src.moduleScores||{};
         var currentToeic=estimateTOEICScore(currentMs).total;
         var assessedQ=0;
@@ -13037,17 +13034,17 @@ function loadProgressionData(){
           baseline=snapToeic!==null?snapToeic:200;
         }
         var gain=assessedQ>=50?(currentToeic-baseline):null;
-        return{name:name,avatar:avatar||"⚔️",currentToeic:currentToeic,baseline:baseline,gain:gain,assessedQ:assessedQ,me:!!me};
+        return{name:name,avatar:avatar||"⚔️",frameId:frameId||null,titleId:titleId||null,currentToeic:currentToeic,baseline:baseline,gain:gain,assessedQ:assessedQ,me:!!me};
       }
       var rows=[];
       rivals.forEach(function(r){
         if(r.name==="Teacher")return;
-        rows.push(computeRow(r,r.name,r.avatar,r.name===u.name));
+        rows.push(computeRow(r,r.name,r.avatar,r.name===u.name,r.frame_id,r.title_id));
       });
       // Filet de sécurité : le user courant peut être absent de rivals
       // (teacher-internal, class_code désaligné, etc.)
       if(u.name!=="Teacher"&&!rows.find(function(r){return r.me;})){
-        rows.push(computeRow(u,u.name,u.avatar,true));
+        rows.push(computeRow(u,u.name,u.avatar,true,u.equippedFrame,u.equippedTitle));
       }
       rows.sort(function(a,b){
         if(a.gain!==null&&b.gain!==null)return b.gain-a.gain;
@@ -13113,10 +13110,12 @@ function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=pro
   // V2.4 — render rival's equipped frame around the avatar + title under the name.
   // Bots (LEAGUES competitors) and pre-V2 students simply lack frameId/titleId so
   // renderAv falls back to plain avatar and the title line is skipped.
+  // Tile size bumped 2026-05-12 (avatar 28→34, vertical padding 12→16) for breathing
+  // room and to let titles + frames have visual room on every tab.
   var titleData=pl.titleId&&TITLES[pl.titleId];
-  return(<div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:isMe?"rgba(var(--cx),.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12}}>
+  return(<div style={{display:"flex",alignItems:"center",gap:14,padding:"16px 14px",background:isMe?"rgba(var(--cx),.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12}}>
     <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?(rank===1?"🥇":rank===2?"🥈":"🥉"):rank}</div>
-    <div style={{width:32,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,28,pl.frameId)}</div>
+    <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
     <div style={{flex:1,minWidth:0}}>
       <div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{isMe?pl.name+" (Toi)":pl.name}</div>
       {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
@@ -13189,15 +13188,17 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
         {displayed.map(function(pl,i){
           var plLg=getLeague(pl.xp);
-          return(<div key={pl.name} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:pl.me?"rgba(var(--cx),.08)":pl.inactive?"var(--bg1)":"var(--bg2)",border:pl.me?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12,opacity:pl.inactive?0.55:1}}>
+          var titleData=pl.titleId&&TITLES[pl.titleId];
+          return(<div key={pl.name} style={{display:"flex",alignItems:"center",gap:14,padding:"16px 14px",background:pl.me?"rgba(var(--cx),.08)":pl.inactive?"var(--bg1)":"var(--bg2)",border:pl.me?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12,opacity:pl.inactive?0.55:1}}>
             <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:(!pl.inactive&&i<3)?"var(--gold)":"var(--t3)"}}>{pl.inactive?"—":i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</div>
-            <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
-            <div style={{flex:1}}>
-              <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t1)"}}>{pl.me?pl.name+" (Toi)":pl.name}</div>
-              {pl.inactive&&<div style={{fontSize:10,color:"var(--t3)",fontWeight:500}}>{"⏸ Inactif(ve) cette semaine"}</div>}
-              {!pl.inactive&&isTeacher&&<div style={{fontSize:10,color:plLg.color,fontWeight:600}}>{plLg.icon} {plLg.name}</div>}
+            <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{pl.me?pl.name+" (Toi)":pl.name}</div>
+              {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
+              {pl.inactive&&<div style={{fontSize:10,color:"var(--t3)",fontWeight:500,marginTop:2}}>{"⏸ Inactif(ve) cette semaine"}</div>}
+              {!pl.inactive&&isTeacher&&<div style={{fontSize:10,color:plLg.color,fontWeight:600,marginTop:2}}>{plLg.icon} {plLg.name}</div>}
             </div>
-            <div className="out" style={{fontWeight:700,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t2)"}}>{pl.inactive?"—":pl.xp+" XP"}</div>
+            <div className="out" style={{fontWeight:700,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t2)",flexShrink:0}}>{pl.inactive?"—":pl.xp+" XP"}</div>
           </div>);
         })}
         {displayed.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>Personne en ligue {lg.name} pour l'instant 🚀</p></div>}
@@ -13292,8 +13293,9 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
             var gainCol=pl.gain>100?"var(--green)":pl.gain>0?"var(--orange)":"var(--red)";
             var gainSign=pl.gain>0?"+":"";
             var bonusLabel=(showGradeBonus&&pl.gain>0)?(isTop3?"🏆 +2pts":isTop10?"⭐ +1pt":""):"";
+            var titleData=pl.titleId&&TITLES[pl.titleId];
             return(<div key={pl.name} style={{
-              display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
+              display:"flex",alignItems:"center",gap:14,padding:"16px 14px",
               background:pl.me?"rgba(var(--cx),.08)":"var(--bg2)",
               border:pl.me?"1.5px solid rgba(var(--cx),.25)":isTop3?"1px solid rgba(74,190,96,.25)":"1px solid var(--bdr)",
               borderRadius:12}}>
@@ -13301,13 +13303,14 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
                 color:rank===1?"var(--gold)":rank===2?"#c0c0c0":rank===3?"#cd7f32":"var(--t3)"}}>
                 {rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":rank}
               </div>
-              <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
-              <div style={{flex:1}}>
+              <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
+              <div style={{flex:1,minWidth:0}}>
                 <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,
-                  color:pl.me?"var(--cyan)":"var(--t1)"}}>
+                  color:pl.me?"var(--cyan)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                   {pl.me?pl.name+" (Toi)":pl.name}
                 </div>
-                <div style={{fontSize:10,color:"var(--t3)",marginTop:1}}>
+                {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
+                <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>
                   {pl.baseline} → {pl.currentToeic} pts TOEIC
                   {bonusLabel&&<span style={{marginLeft:6,color:"var(--gold)",fontWeight:700}}>{bonusLabel}</span>}
                 </div>
@@ -13328,18 +13331,20 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
           {pending.map(function(pl){
             // Avec la nouvelle baseline (Battle Scan), le seul cas pending est assessedQ<50.
             var reason="Modules évalués : "+pl.assessedQ+" / 50 questions minimum";
+            var titleData=pl.titleId&&TITLES[pl.titleId];
             return(<div key={pl.name} style={{
-              display:"flex",alignItems:"center",gap:12,padding:"12px 14px",
+              display:"flex",alignItems:"center",gap:14,padding:"16px 14px",
               background:"var(--bg2)",border:"1px solid var(--bdr)",
               borderRadius:12,opacity:0.5}}>
               <div style={{width:28,textAlign:"center",fontSize:14,color:"var(--t3)"}}>—</div>
-              <div style={{width:28,display:"flex",justifyContent:"center"}}>{renderAv(pl.avatar,28)}</div>
-              <div style={{flex:1}}>
+              <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
+              <div style={{flex:1,minWidth:0}}>
                 <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,
-                  color:pl.me?"var(--cyan)":"var(--t1)"}}>
+                  color:pl.me?"var(--cyan)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                   {pl.me?pl.name+" (Toi)":pl.name}
                 </div>
-                <div style={{fontSize:10,color:"var(--t3)",marginTop:1}}>{reason}</div>
+                {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
+                <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>{reason}</div>
               </div>
               <div style={{fontSize:12,color:"var(--t3)"}}>⏳</div>
             </div>);
