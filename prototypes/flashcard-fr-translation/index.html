@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Flashcard FR translation — proto</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{
+  --bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;
+  --bdr:rgba(180,140,80,0.08);
+  --cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;
+  --green:#4abe60;--red:#e05252;
+  --t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;
+  --cx:212,148,58;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--t1);font-family:'DM Sans',-apple-system,sans-serif}
+body{padding:32px 16px;min-height:100vh}
+.lab{max-width:1280px;margin:0 auto}
+h1{font-weight:800;font-size:22px;margin:0 0 8px;color:var(--t1);letter-spacing:.5px}
+.sub{color:var(--t2);font-size:13px;margin-bottom:32px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;margin-bottom:48px}
+.col{background:var(--bg2);border-radius:18px;padding:18px;border:1px solid var(--bdr)}
+.col-h{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:14px}
+.col-d{font-size:12px;color:var(--t2);margin-bottom:18px;line-height:1.5}
+
+/* CARD — mimics the real app */
+.card{
+  background:var(--bg2);
+  border:1px solid var(--bdr);
+  border-radius:16px;
+  padding:28px 24px;
+  min-height:280px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  position:relative;
+  box-shadow:0 0 20px rgba(var(--cx),.08);
+}
+.card-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px}
+.card-w{font-weight:700;font-size:20px;color:var(--cyan);letter-spacing:.3px}
+.spk{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--cyan);display:inline-flex;align-items:center;justify-content:center;color:var(--cyan);font-size:14px;background:rgba(var(--cx),.06)}
+.card-d{font-size:16px;line-height:1.6;margin-bottom:16px;color:var(--t1)}
+.card-ex{
+  font-size:13px;color:var(--t2);font-style:italic;line-height:1.5;
+  padding:12px 16px;background:var(--bg3);border-radius:10px;
+  display:flex;align-items:flex-start;gap:8px;
+}
+.card-ex .spk{width:26px;height:26px;font-size:12px;flex-shrink:0;border-color:var(--cyan)}
+.card-ex span{flex:1}
+
+/* NEW: French translation toggle */
+.fr-toggle{
+  margin-top:14px;
+  background:transparent;
+  border:1px solid var(--bdr);
+  color:var(--t2);
+  font-family:inherit;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  padding:8px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  transition:all .15s;
+  align-self:flex-start;
+}
+.fr-toggle:hover{border-color:rgba(var(--cx),.4);color:var(--cyan)}
+.fr-toggle .flag{font-size:13px}
+.fr-toggle .chev{font-size:9px;opacity:.6;transition:transform .2s}
+.fr-toggle.open .chev{transform:rotate(180deg)}
+
+.fr-box{
+  margin-top:10px;
+  padding:10px 14px;
+  background:rgba(74,190,96,.05);
+  border:1px solid rgba(74,190,96,.18);
+  border-left:3px solid var(--green);
+  border-radius:8px;
+  font-size:13px;
+  line-height:1.5;
+  color:var(--t1);
+  animation:slideDown .25s ease-out;
+}
+.fr-box .fr-tag{
+  display:inline-block;
+  background:rgba(74,190,96,.18);
+  color:var(--green);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:2px 6px;
+  border-radius:3px;
+  margin-right:8px;
+  vertical-align:1px;
+}
+.fr-box .fr-w{font-weight:700;color:var(--green)}
+.fr-box .fr-def{color:var(--t2);font-size:12px;margin-top:4px}
+
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* SRS rating row (4 buttons) */
+.srs{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:22px}
+.srs button{
+  padding:12px 8px;border-radius:12px;
+  background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.33);
+  color:var(--red);font-weight:700;font-size:13px;letter-spacing:.5px;
+  font-family:inherit;cursor:pointer;
+}
+.srs button.hard{background:rgba(255,140,66,.12);border-color:rgba(255,140,66,.33);color:var(--orange)}
+.srs button.good{background:rgba(0,230,118,.12);border-color:rgba(0,230,118,.33);color:var(--green)}
+.srs button.easy{background:rgba(var(--cx),.12);border-color:rgba(var(--cx),.33);color:var(--cyan)}
+
+/* Front-of-card variant */
+.card.front{align-items:center;justify-content:center;text-align:center}
+.front-eyebrow{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:18px}
+.front-w{font-weight:800;font-size:32px;color:var(--t1);margin-bottom:18px}
+.front-hint{font-size:13px;color:var(--t3)}
+
+.notes{margin-top:32px;padding:18px 22px;background:rgba(var(--cx),.04);border:1px solid rgba(var(--cx),.15);border-radius:14px;font-size:13px;line-height:1.7;color:var(--t2)}
+.notes b{color:var(--cyan)}
+.notes ul{margin:8px 0 0;padding-left:22px}
+.notes li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="lab">
+  <h1>Flashcard — proto révélation FR</h1>
+  <p class="sub">3 états à comparer. Le bouton « Voir la traduction » apparaît seulement quand la carte est retournée (mode review).</p>
+
+  <div class="grid">
+
+    <!-- STATE A: card front -->
+    <div class="col">
+      <div class="col-h">A · Recto (inchangé)</div>
+      <div class="col-d">État initial : mot anglais seul, à mémoriser. Aucune trad visible. Tap sur la carte pour retourner.</div>
+      <div class="card front">
+        <div class="front-eyebrow">What does this mean?</div>
+        <div class="card-row" style="margin-bottom:18px">
+          <div class="front-w">leverage</div>
+          <div class="spk">▸</div>
+        </div>
+        <div class="front-hint">Tap to reveal</div>
+      </div>
+    </div>
+
+    <!-- STATE B: card back, trad hidden (default) -->
+    <div class="col">
+      <div class="col-h">B · Verso, trad cachée (par défaut)</div>
+      <div class="col-d">Mot + def EN + exemple EN. Le bouton « Voir la traduction » est discret, en bas à gauche, sous l'exemple. L'immersion reste l'expérience par défaut.</div>
+      <div class="card">
+        <div class="card-row">
+          <div class="card-w">leverage</div>
+          <div class="spk">▸</div>
+        </div>
+        <div class="card-d">The use of borrowed capital to increase the potential return on investment.</div>
+        <div class="card-ex">
+          <span>"Banks use financial leverage to amplify their trading positions."</span>
+          <div class="spk">▸</div>
+        </div>
+        <button class="fr-toggle">
+          <span class="flag">🇫🇷</span>
+          <span>Voir la traduction</span>
+          <span class="chev">▼</span>
+        </button>
+        <div class="srs">
+          <button>Again</button>
+          <button class="hard">Hard</button>
+          <button class="good">Good</button>
+          <button class="easy">Easy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE C: card back, trad revealed -->
+    <div class="col">
+      <div class="col-h">C · Verso, trad révélée (après tap)</div>
+      <div class="col-d">Encadré FR vert (couleur "validation / aide"), tag « FR », mot + def courte. Discret mais clair. Re-tap referme.</div>
+      <div class="card">
+        <div class="card-row">
+          <div class="card-w">leverage</div>
+          <div class="spk">▸</div>
+        </div>
+        <div class="card-d">The use of borrowed capital to increase the potential return on investment.</div>
+        <div class="card-ex">
+          <span>"Banks use financial leverage to amplify their trading positions."</span>
+          <div class="spk">▸</div>
+        </div>
+        <button class="fr-toggle open">
+          <span class="flag">🇫🇷</span>
+          <span>Masquer la traduction</span>
+          <span class="chev">▼</span>
+        </button>
+        <div class="fr-box">
+          <span class="fr-tag">FR</span><span class="fr-w">effet de levier</span>
+          <div class="fr-def">Utilisation de capitaux empruntés pour augmenter le rendement potentiel d'un investissement.</div>
+        </div>
+        <div class="srs">
+          <button>Again</button>
+          <button class="hard">Hard</button>
+          <button class="good">Good</button>
+          <button class="easy">Easy</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Second row: variant examples -->
+  <h1 style="margin-top:24px">Exemples de domaines variés</h1>
+  <p class="sub">Trois cartes verso, trad révélée, pour valider le rendu sur jargon dense vs vocabulaire courant.</p>
+
+  <div class="grid">
+
+    <!-- Finance jargon -->
+    <div class="col">
+      <div class="col-h">Finance — jargon dense</div>
+      <div class="card">
+        <div class="card-row">
+          <div class="card-w">accrue</div>
+          <div class="spk">▸</div>
+        </div>
+        <div class="card-d">To accumulate gradually over time, especially interest or benefits.</div>
+        <div class="card-ex">
+          <span>"Interest accrues daily on the outstanding balance."</span>
+          <div class="spk">▸</div>
+        </div>
+        <button class="fr-toggle open">
+          <span class="flag">🇫🇷</span><span>Masquer la traduction</span><span class="chev">▼</span>
+        </button>
+        <div class="fr-box">
+          <span class="fr-tag">FR</span><span class="fr-w">s'accumuler / courir (intérêts)</span>
+          <div class="fr-def">S'accumuler progressivement dans le temps, notamment des intérêts ou des avantages.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- General travel -->
+    <div class="col">
+      <div class="col-h">Travel — vocab courant</div>
+      <div class="card">
+        <div class="card-row">
+          <div class="card-w">layover</div>
+          <div class="spk">▸</div>
+        </div>
+        <div class="card-d">A short stop between flights when traveling.</div>
+        <div class="card-ex">
+          <span>"We have a four-hour layover in Dubai before our connecting flight."</span>
+          <div class="spk">▸</div>
+        </div>
+        <button class="fr-toggle open">
+          <span class="flag">🇫🇷</span><span>Masquer la traduction</span><span class="chev">▼</span>
+        </button>
+        <div class="fr-box">
+          <span class="fr-tag">FR</span><span class="fr-w">escale</span>
+          <div class="fr-def">Courte halte entre deux vols lors d'un voyage.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- False friend trap -->
+    <div class="col">
+      <div class="col-h">Faux-ami — alerte utile</div>
+      <div class="card">
+        <div class="card-row">
+          <div class="card-w">eventually</div>
+          <div class="spk">▸</div>
+        </div>
+        <div class="card-d">After some time, in the end; not "perhaps".</div>
+        <div class="card-ex">
+          <span>"The merger will eventually create a stronger company."</span>
+          <div class="spk">▸</div>
+        </div>
+        <button class="fr-toggle open">
+          <span class="flag">🇫🇷</span><span>Masquer la traduction</span><span class="chev">▼</span>
+        </button>
+        <div class="fr-box">
+          <span class="fr-tag">FR</span><span class="fr-w">finalement / à terme</span>
+          <div class="fr-def">Au bout d'un certain temps. ⚠ Faux-ami : <b>ne se traduit PAS</b> par « éventuellement ».</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <b>Décisions de design à valider :</b>
+    <ul>
+      <li><b>Position du bouton :</b> sous l'exemple, avant les boutons SRS. Visible mais sans concurrencer le contenu principal.</li>
+      <li><b>Couleur de l'encadré FR :</b> vert sourd (rappel « validation/aide »). Différent du gold/cyan principal — visuel « aide secondaire ».</li>
+      <li><b>Tag "FR" :</b> petit chip vert pour signaler clairement le changement de langue, comme dans les grimoires.</li>
+      <li><b>Mémoire du choix ?</b> Si l'étudiant ouvre la trad sur la carte 1, faut-il l'auto-ouvrir sur les suivantes de la session ? <b>Mon avis : non</b> — chaque carte est un nouveau test, on garde la friction « est-ce que je sais sans trad ? ».</li>
+      <li><b>Faux-amis :</b> on pourrait ajouter un marqueur ⚠ dans le champ <code>fr</code> pour les faux-amis connus (eventually, actually, library, sensible…). À discuter si c'est généralisable.</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
