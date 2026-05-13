@@ -6,7 +6,7 @@ export var SENTENCES = [
   // ── Tenses ──
   {s:"The company has expanded into three new markets since January.",chunks:["The company","has expanded","into three new markets","since January."],cat:"Tenses"},
   {s:"Sales figures will be released at the end of the quarter.",chunks:["Sales figures","will be released","at the end","of the quarter."],cat:"Tenses"},
-  {s:"The manager had already left when the client called.",chunks:["The manager","had already left","when the client","called."],cat:"Tenses"},
+  {s:"The manager had already announced his resignation.",chunks:["The manager","had already","announced","his resignation."],cat:"Tenses"},
   {s:"We have been negotiating the contract for several weeks.",chunks:["We have been","negotiating the contract","for several","weeks."],cat:"Tenses"},
   {s:"By next month, the team will have completed the audit.",chunks:["By next month,","the team","will have completed","the audit."],cat:"Tenses"},
 
@@ -14,11 +14,11 @@ export var SENTENCES = [
   {s:"The proposal was approved by the board of directors.",chunks:["The proposal","was approved","by the board","of directors."],cat:"Passive Voice"},
   {s:"All employees are required to attend the safety training.",chunks:["All employees","are required","to attend","the safety training."],cat:"Passive Voice"},
   {s:"The new policy will be implemented starting next Monday.",chunks:["The new policy","will be implemented","starting","next Monday."],cat:"Passive Voice"},
-  {s:"The results were announced during the annual conference.",chunks:["The results","were announced","during the annual","conference."],cat:"Passive Voice"},
+  {s:"The annual results were publicly announced by the CEO.",chunks:["The annual results","were publicly","announced","by the CEO."],cat:"Passive Voice"},
   {s:"Applications must be submitted before the deadline.",chunks:["Applications","must be submitted","before","the deadline."],cat:"Passive Voice"},
 
   // ── Subject-Verb Agreement ──
-  {s:"The number of complaints has decreased significantly this year.",chunks:["The number of complaints","has decreased","significantly","this year."],cat:"Subject-Verb Agreement"},
+  {s:"The number of customer complaints has significantly affected our ratings.",chunks:["The number","of customer complaints","has significantly","affected our ratings."],cat:"Subject-Verb Agreement"},
   {s:"Each of the managers is responsible for their department.",chunks:["Each of the managers","is responsible","for their","department."],cat:"Subject-Verb Agreement"},
   {s:"The staff in both offices have received the new guidelines.",chunks:["The staff","in both offices","have received","the new guidelines."],cat:"Subject-Verb Agreement"},
 
@@ -26,7 +26,7 @@ export var SENTENCES = [
   {s:"The recently hired marketing director presented a detailed report.",chunks:["The recently hired","marketing director","presented","a detailed report."],cat:"Word Order"},
   {s:"We urgently need to find a more cost-effective solution.",chunks:["We urgently need","to find","a more cost-effective","solution."],cat:"Word Order"},
   {s:"The highly anticipated product launch was postponed indefinitely.",chunks:["The highly anticipated","product launch","was postponed","indefinitely."],cat:"Word Order"},
-  {s:"She carefully reviewed all the financial documents before signing.",chunks:["She carefully reviewed","all the financial documents","before","signing."],cat:"Word Order"},
+  {s:"She methodically reviewed every page of the report.",chunks:["She methodically","reviewed","every page","of the report."],cat:"Word Order"},
   {s:"An extremely competitive salary package is being offered to candidates.",chunks:["An extremely competitive","salary package","is being offered","to candidates."],cat:"Word Order"},
 
   // ── Connectors ──
@@ -38,9 +38,9 @@ export var SENTENCES = [
 
   // ── Prepositions ──
   {s:"The manager is responsible for overseeing the entire department.",chunks:["The manager","is responsible for","overseeing","the entire department."],cat:"Prepositions"},
-  {s:"Please respond to this email prior to the end of the week.",chunks:["Please respond","to this email","prior to","the end of the week."],cat:"Prepositions"},
+  {s:"Please respond to the urgent message from the legal team.",chunks:["Please respond","to the urgent message","from the legal","team."],cat:"Prepositions"},
   {s:"The company specializes in providing customized software solutions.",chunks:["The company","specializes in","providing customized","software solutions."],cat:"Prepositions"},
-  {s:"All participants must comply with the safety regulations at all times.",chunks:["All participants","must comply with","the safety regulations","at all times."],cat:"Prepositions"},
+  {s:"All participants must comply with the strict safety regulations of the facility.",chunks:["All participants","must comply with","the strict safety regulations","of the facility."],cat:"Prepositions"},
 
   // ── Relative Clauses ──
   {s:"The consultant who was hired last month has already resigned.",chunks:["The consultant","who was hired last month","has already","resigned."],cat:"Relative Clauses"},
@@ -55,7 +55,7 @@ export var SENTENCES = [
   // ── Gerund / Infinitive ──
   {s:"The board decided to postpone approving the new budget proposal.",chunks:["The board decided","to postpone","approving","the new budget proposal."],cat:"Gerund/Infinitive"},
   {s:"We look forward to receiving your feedback on the proposal.",chunks:["We look forward to","receiving your feedback","on the","proposal."],cat:"Gerund/Infinitive"},
-  {s:"The company avoided losing market share by investing in innovation.",chunks:["The company avoided","losing market share","by investing","in innovation."],cat:"Gerund/Infinitive"},
+  {s:"The company is considering acquiring a smaller tech startup.",chunks:["The company","is considering","acquiring","a smaller tech startup."],cat:"Gerund/Infinitive"},
 
   // ── Comparatives / Superlatives ──
   {s:"This year's revenue is significantly higher than last year's.",chunks:["This year's revenue","is significantly higher","than","last year's."],cat:"Comparatives"},
@@ -63,7 +63,7 @@ export var SENTENCES = [
   {s:"The earlier you submit the application, the sooner it will be processed.",chunks:["The earlier you submit","the application,","the sooner it will","be processed."],cat:"Comparatives"},
 
   // ── Articles / Determiners ──
-  {s:"An announcement regarding the merger will be made on Monday.",chunks:["An announcement","regarding the merger","will be made","on Monday."],cat:"Articles"},
+  {s:"The committee approved a new initiative for community engagement.",chunks:["The committee","approved","a new initiative","for community engagement."],cat:"Articles"},
   {s:"The information provided in the brochure is no longer accurate.",chunks:["The information","provided in the brochure","is no longer","accurate."],cat:"Articles"},
 
   // ── Complex Business Sentences ──
@@ -74,6 +74,6 @@ export var SENTENCES = [
   {s:"Customers who purchased the item before March are eligible for a refund.",chunks:["Customers who purchased","the item before March","are eligible","for a refund."],cat:"Complex"},
   {s:"The report submitted by the finance team contained several inaccuracies.",chunks:["The report","submitted by the finance team","contained","several inaccuracies."],cat:"Complex"},
   {s:"Despite the challenging market conditions, profits exceeded expectations.",chunks:["Despite","the challenging market conditions,","profits exceeded","expectations."],cat:"Complex"},
-  {s:"Ms. Chen was appointed as the new regional director effective immediately.",chunks:["Ms. Chen was appointed","as the new","regional director","effective immediately."],cat:"Complex"},
+  {s:"Ms. Chen was appointed as the new regional director of the Asia branch.",chunks:["Ms. Chen was appointed","as the new","regional director","of the Asia branch."],cat:"Complex"},
   {s:"All attendees are kindly requested to switch off their mobile devices.",chunks:["All attendees","are kindly requested","to switch off","their mobile devices."],cat:"Complex"},
 ];
