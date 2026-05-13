@@ -500,7 +500,7 @@ var BUILD_ID="2026-05-11-linking-bridge";
 //
 // À remettre à TRUE dès que le flow E2E est validé end-to-end sans bug
 // d'attribution de row (cf. chantier hardening 2026-04-24).
-var PREMIUM_UPGRADE_ENABLED=false;
+var PREMIUM_UPGRADE_ENABLED=true;
 import { supabase } from './supabase.js'
 import { getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword } from './auth.js'
 console.warn("[TOEIC ARENA] Build:",BUILD_ID);
