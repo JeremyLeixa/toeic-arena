@@ -2581,12 +2581,16 @@ function renderAv(avatar,size,frameId){
     inner=(<span style={{fontSize:s*0.55,lineHeight:1,display:"inline-flex",alignItems:"center",justifyContent:"center",width:s,height:s,borderRadius:"50%",background:"linear-gradient(135deg,rgba(var(--cx),.18),rgba(var(--cx),.06))",border:"1px solid var(--bdr)",boxSizing:"border-box",flexShrink:0}}>{avatar||"⚔️"}</span>);
   }
   // ── Frame application (circle) ──────────────────────────────────────────────
+  // Use filter: drop-shadow (NOT box-shadow) so the glow intensity matches the
+  // AvatarMedal blason rendering, which also uses drop-shadow. With box-shadow,
+  // the same numeric glow value produced a much more saturated halo, making
+  // circle frames feel artificially stronger than blason ones (fix 2026-05-13).
   if(frameId&&FRAMES[frameId]){
     var fr=FRAMES[frameId];
     var glowColor=fr.gradient?fr.gradient[0]:fr.color;
     var pad=Math.max(2,Math.round(s*0.06));
     var bgGrad=fr.gradient?"linear-gradient(var(--bg2),var(--bg2)),linear-gradient(135deg,"+fr.gradient.join(",")+")":null;
-    var wrap={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",verticalAlign:"middle",border:(fr.strokeWidth||3)+"px solid "+(fr.gradient?"transparent":fr.color),boxShadow:"0 0 "+(fr.glow||12)+"px "+glowColor};
+    var wrap={display:"inline-block",borderRadius:"50%",padding:pad,boxSizing:"content-box",verticalAlign:"middle",border:(fr.strokeWidth||3)+"px solid "+(fr.gradient?"transparent":fr.color),filter:"drop-shadow(0 0 "+(fr.glow||12)+"px "+glowColor+")"};
     if(bgGrad){wrap.backgroundImage=bgGrad;wrap.backgroundOrigin="border-box";wrap.backgroundClip="padding-box,border-box";}
     if(fr.anim)wrap.animation="frame-"+fr.anim+" 2.5s ease-in-out infinite";
     return(<span style={wrap}>{inner}</span>);
