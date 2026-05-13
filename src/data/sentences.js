@@ -4,18 +4,18 @@
 
 export var SENTENCES = [
   // ── Tenses ──
-  {s:"The company has expanded into three new markets since January.",chunks:["The company","has expanded","into three new markets","since January."],cat:"Tenses"},
-  {s:"Sales figures will be released at the end of the quarter.",chunks:["Sales figures","will be released","at the end","of the quarter."],cat:"Tenses"},
+  {s:"The company has aggressively expanded into three new emerging markets.",chunks:["The company","has aggressively","expanded into","three new emerging markets."],cat:"Tenses"},
+  {s:"The quarterly sales figures will be made publicly available.",chunks:["The quarterly","sales figures","will be made","publicly available."],cat:"Tenses"},
   {s:"The manager had already announced his resignation.",chunks:["The manager","had already","announced","his resignation."],cat:"Tenses"},
-  {s:"We have been negotiating the contract for several weeks.",chunks:["We have been","negotiating the contract","for several","weeks."],cat:"Tenses"},
+  {s:"We have been carefully reviewing the legal documents.",chunks:["We have been","carefully reviewing","the legal","documents."],cat:"Tenses"},
   {s:"By next month, the team will have completed the audit.",chunks:["By next month,","the team","will have completed","the audit."],cat:"Tenses"},
 
   // ── Passive Voice ──
   {s:"The proposal was approved by the board of directors.",chunks:["The proposal","was approved","by the board","of directors."],cat:"Passive Voice"},
   {s:"All employees are required to attend the safety training.",chunks:["All employees","are required","to attend","the safety training."],cat:"Passive Voice"},
-  {s:"The new policy will be implemented starting next Monday.",chunks:["The new policy","will be implemented","starting","next Monday."],cat:"Passive Voice"},
+  {s:"The new corporate policy will be officially ratified by the board.",chunks:["The new corporate policy","will be officially","ratified","by the board."],cat:"Passive Voice"},
   {s:"The annual results were publicly announced by the CEO.",chunks:["The annual results","were publicly","announced","by the CEO."],cat:"Passive Voice"},
-  {s:"Applications must be submitted before the deadline.",chunks:["Applications","must be submitted","before","the deadline."],cat:"Passive Voice"},
+  {s:"All applications must be reviewed by the hiring committee.",chunks:["All applications","must be reviewed","by the","hiring committee."],cat:"Passive Voice"},
 
   // ── Subject-Verb Agreement ──
   {s:"The number of customer complaints has significantly affected our ratings.",chunks:["The number","of customer complaints","has significantly","affected our ratings."],cat:"Subject-Verb Agreement"},
