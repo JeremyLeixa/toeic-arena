@@ -5664,7 +5664,10 @@ function ConnSort(p){
 // shown in feedback. Tier B XP (15 + 5×correct + 35 perfect = 125 max).
 // Same Grimoire as ConnSort (extended in 2026-05-11 with nuances + glossary).
 function LinkingBridge(p){
-  var items=useMemo(function(){return shuffle(LINKING_BRIDGE).slice(0,15);},[]);
+  // Per-item opts shuffle is mandatory — the data file authors all 40 items with
+  // the correct answer at index 0 for readability. Without this, every correct
+  // answer is in position A. Fix 2026-05-13 (Jérémy spotted it on first run).
+  var items=useMemo(function(){return shuffle(LINKING_BRIDGE).slice(0,15).map(function(it){return Object.assign({},it,{opts:shuffle(it.opts.slice())});});},[]);
   var[ci,sC]=useState(0);
   var[sc,sSc]=useState(0);
   var[ph,sP]=useState("intro");
