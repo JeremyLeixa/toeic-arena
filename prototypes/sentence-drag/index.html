@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+<title>Sentence Builder — drag and snap proto</title>
+<style>
+:root{
+  --bg:#0f0c08;--bg2:#1a160f;--bg3:#262019;--bdr:#3a3024;
+  --t1:#ece2c8;--t2:#bfb39a;--t3:#7a7160;
+  --cyan:#22d3ee;--cx:34,211,238;
+  --gold:#f59e0b;--red:#ef4444;--green:#22c55e;--purple:#a78bfa;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--t1);font-family:system-ui,-apple-system,'DM Sans',Segoe UI,sans-serif;overscroll-behavior:none}
+body{min-height:100vh;min-height:100dvh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);display:flex;flex-direction:column;align-items:center}
+
+.wrap{width:100%;max-width:680px;padding:14px 14px 16px;display:flex;flex-direction:column;gap:0}
+@media (max-width:480px){.wrap{padding:12px 10px 14px}}
+
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+header h1{font-size:17px;font-weight:800;letter-spacing:.3px;margin:0;color:var(--t1)}
+@media (max-width:480px){header h1{font-size:15px}}
+header .meta{font-size:11px;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;font-weight:700}
+
+.cat{font-size:11px;color:var(--purple);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin:2px 0 14px}
+
+.col-head{font-size:10px;color:var(--t3);font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+
+.answer{
+  min-height:120px;padding:14px 12px;background:var(--bg2);
+  border:2px dashed var(--bdr);border-radius:14px;
+  display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;align-items:center;
+  transition:border-color .18s,background .18s;
+  position:relative;
+}
+.answer.active{border-color:var(--cyan);background:rgba(var(--cx),.04)}
+.answer.feedback-ok{border-color:var(--green);background:rgba(34,197,94,.06);border-style:solid}
+.answer.feedback-bad{border-color:var(--red);background:rgba(239,68,68,.06);border-style:solid}
+
+.answer .empty-hint{color:var(--t3);font-size:13px;font-style:italic;width:100%;text-align:center}
+
+.bank{
+  min-height:60px;padding:12px;background:var(--bg2);
+  border:1.5px solid var(--bdr);border-radius:14px;
+  display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;
+  transition:border-color .18s,background .18s;
+}
+.bank.active{border-color:var(--cyan);background:rgba(var(--cx),.04)}
+
+.chunk{
+  display:inline-flex;align-items:center;
+  padding:9px 14px;border-radius:10px;
+  font-size:14px;font-weight:600;line-height:1.2;
+  cursor:grab;touch-action:none;user-select:none;
+  transition:transform .12s,opacity .15s,background .18s,border-color .18s;
+  font-family:inherit;
+}
+.chunk.bank-c{background:var(--bg3);border:1px solid var(--bdr);color:var(--t1)}
+.chunk.placed-c{background:rgba(var(--cx),.1);border:1px solid rgba(var(--cx),.35);color:var(--cyan)}
+.chunk.placed-c.correct{background:rgba(34,197,94,.15);border-color:var(--green);color:var(--green)}
+.chunk.placed-c.wrong{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red)}
+.chunk:active{cursor:grabbing}
+@media (hover:hover){
+  .chunk.bank-c:hover{border-color:var(--cyan);background:rgba(var(--cx),.06)}
+}
+
+.indicator{
+  display:inline-block;width:3px;align-self:stretch;min-height:30px;
+  background:var(--cyan);border-radius:2px;
+  box-shadow:0 0 0 3px rgba(var(--cx),.20);
+  animation:pulse 1s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}
+
+.ghost{
+  position:fixed;top:0;left:0;z-index:1000;
+  pointer-events:none;
+  padding:9px 14px;border-radius:10px;
+  font-size:14px;font-weight:600;line-height:1.2;
+  background:rgba(var(--cx),.18);border:1px solid var(--cyan);color:var(--cyan);
+  box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 0 4px rgba(var(--cx),.15);
+  transform-origin:center;
+  transform:scale(1.06);
+  white-space:nowrap;
+}
+
+.controls{display:flex;gap:8px;margin-top:14px}
+.controls .grow{flex:1 1 auto}
+button.b{font-family:inherit;font-size:13.5px;font-weight:800;padding:11px 14px;border-radius:10px;border:1.5px solid var(--bdr);background:var(--bg2);color:var(--t1);cursor:pointer;letter-spacing:.3px;transition:transform .12s,filter .15s,opacity .15s}
+button.b.primary{background:linear-gradient(135deg,#0891b2,#7c3aed);border-color:transparent;color:#fff}
+button.b.primary:disabled{opacity:.4;cursor:not-allowed}
+button.b:active{transform:scale(.97)}
+
+.feedback{margin-top:14px;animation:fadeIn .25s ease-out}
+.feedback .fb-card{padding:14px;border-radius:12px;border:1.5px solid;background:var(--bg2)}
+.feedback .fb-card.ok{border-color:var(--green);background:rgba(34,197,94,.06)}
+.feedback .fb-card.bad{border-color:var(--red);background:rgba(239,68,68,.06)}
+.feedback .fb-card strong{display:block;font-size:13px;margin-bottom:6px;letter-spacing:.5px}
+.feedback .fb-card.ok strong{color:var(--green)}
+.feedback .fb-card.bad strong{color:var(--red)}
+.feedback .fb-card p{margin:0 0 12px;font-size:14px;color:var(--t1);line-height:1.5}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+.hint{margin-top:10px;font-size:11px;color:var(--t3);text-align:center;line-height:1.5}
+.hint code{background:var(--bg2);padding:1px 5px;border-radius:4px;color:var(--t2);font-size:10.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Sentence Builder — drag &amp; snap</h1>
+    <span class="meta" id="sentMeta">Sentence 1 / 4</span>
+  </header>
+  <div class="cat" id="cat">Tenses</div>
+
+  <div class="col-head">Build the sentence</div>
+  <div class="answer" id="answer"></div>
+
+  <div class="col-head" style="margin-top:14px">Available blocks</div>
+  <div class="bank" id="bank"></div>
+
+  <div class="controls">
+    <button class="b" id="btnReset">Reset</button>
+    <button class="b primary grow" id="btnCheck" disabled>Check</button>
+  </div>
+
+  <div class="feedback" id="feedback" style="display:none"></div>
+
+  <div class="hint">
+    <strong>Drag</strong> a block from the bank or from the answer zone — release to drop.<br/>
+    <strong>Tap</strong> a bank block to push it to the end.
+  </div>
+</div>
+
+<div class="ghost" id="ghost" style="display:none"></div>
+
+<script>
+// ─── MOCK DATA ──────────────────────────────────────────────────────
+const SENTENCES = [
+  { s: "The manager has approved the budget.", chunks: ["The manager","has approved","the budget."], cat: "Tenses" },
+  { s: "Could you please send the document by Friday?", chunks: ["Could you","please send","the document","by Friday?"], cat: "Modals · Requests" },
+  { s: "Despite the delay, we managed to finish on time.", chunks: ["Despite the delay,","we managed","to finish","on time."], cat: "Connectors" },
+  { s: "I would have called you if I had known.", chunks: ["I would","have called you","if I","had known."], cat: "Conditionals — Type 3" }
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────
+let sentIdx = 0;
+let placed = [];   // [{idx, text}]
+let bank = [];     // [{idx, text}]
+let drag = null;   // null or {chunk, source, startX, startY, x, y, insertIdx, zone, started, originalIdx}
+let phase = "play"; // play | feedback
+
+const $ = id => document.getElementById(id);
+
+// ─── SETUP ──────────────────────────────────────────────────────────
+function setupSentence(){
+  const s = SENTENCES[sentIdx];
+  const chunks = s.chunks.map((c, i) => {
+    let t = c;
+    if (i === 0) t = t.charAt(0).toLowerCase() + t.slice(1);
+    if (i === s.chunks.length - 1) t = t.replace(/[.?!]+$/, "");
+    return { idx: i, text: t };
+  });
+  bank = shuffle(chunks);
+  placed = [];
+  drag = null;
+  phase = "play";
+  $("sentMeta").textContent = `Sentence ${sentIdx+1} / ${SENTENCES.length}`;
+  $("cat").textContent = s.cat;
+  $("feedback").style.display = "none";
+  render();
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function esc(s){
+  return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+}
+
+// ─── RENDER ─────────────────────────────────────────────────────────
+function render(){
+  const ans = $("answer");
+  const bk = $("bank");
+
+  // Answer zone
+  let ansClasses = "answer";
+  if (drag && drag.started && drag.zone === "answer") ansClasses += " active";
+  if (phase === "feedback") {
+    const allOk = placed.every((c, i) => c.idx === i);
+    ansClasses += allOk ? " feedback-ok" : " feedback-bad";
+  }
+  ans.className = ansClasses;
+
+  if (placed.length === 0 && !(drag && drag.started && drag.zone === "answer")) {
+    ans.innerHTML = `<span class="empty-hint">Drag or tap blocks below in order...</span>`;
+  } else {
+    let html = "";
+    placed.forEach((c, i) => {
+      if (drag && drag.started && drag.zone === "answer" && drag.insertIdx === i) {
+        html += `<span class="indicator"></span>`;
+      }
+      let cls = "chunk placed-c";
+      if (phase === "feedback") cls += c.idx === i ? " correct" : " wrong";
+      html += `<span class="${cls}" data-source="placed" data-idx="${c.idx}">${esc(c.text)}</span>`;
+    });
+    if (drag && drag.started && drag.zone === "answer" && drag.insertIdx === placed.length) {
+      html += `<span class="indicator"></span>`;
+    }
+    ans.innerHTML = html;
+  }
+
+  // Bank zone
+  let bkClasses = "bank";
+  if (drag && drag.started && drag.zone === "bank") bkClasses += " active";
+  bk.className = bkClasses;
+  bk.innerHTML = bank.map(c => `<span class="chunk bank-c" data-source="bank" data-idx="${c.idx}">${esc(c.text)}</span>`).join("");
+
+  // Check button
+  const btnCheck = $("btnCheck");
+  const total = placed.length + bank.length;
+  btnCheck.textContent = `Check (${placed.length}/${total})`;
+  btnCheck.disabled = bank.length > 0 || phase === "feedback" || placed.length === 0;
+}
+
+// ─── INSERTION INDEX (flex-wrap aware) ──────────────────────────────
+function computeInsertIdx(clientX, clientY){
+  const chunks = document.querySelectorAll('#answer .chunk');
+  if (chunks.length === 0) return 0;
+
+  let bestIdx = chunks.length;
+  for (let i = 0; i < chunks.length; i++){
+    const r = chunks[i].getBoundingClientRect();
+    if (clientY < r.top - 6){
+      // Pointer is above this chunk's row — insert before it
+      return i;
+    }
+    if (clientY >= r.top - 6 && clientY <= r.bottom + 6){
+      // Same row as this chunk
+      const centerX = r.left + r.width/2;
+      if (clientX < centerX) return i;
+      bestIdx = i + 1;
+    }
+    // else: pointer is below this chunk, keep scanning
+  }
+  return bestIdx;
+}
+
+// ─── DRAG HANDLERS ─────────────────────────────────────────────────
+function onPointerDown(evt){
+  if (phase !== "play") return;
+  const chunkEl = evt.target.closest(".chunk");
+  if (!chunkEl) return;
+  const source = chunkEl.dataset.source;
+  const idx = parseInt(chunkEl.dataset.idx, 10);
+  const arr = source === "bank" ? bank : placed;
+  const chunk = arr.find(c => c.idx === idx);
+  if (!chunk) return;
+
+  drag = {
+    chunk, source,
+    startX: evt.clientX, startY: evt.clientY,
+    x: evt.clientX, y: evt.clientY,
+    insertIdx: null, zone: null,
+    started: false,
+    originalIdx: source === "placed" ? placed.findIndex(c => c.idx === idx) : null
+  };
+  evt.preventDefault();
+}
+
+function onPointerMove(evt){
+  if (!drag) return;
+  drag.x = evt.clientX; drag.y = evt.clientY;
+  const dx = drag.x - drag.startX;
+  const dy = drag.y - drag.startY;
+
+  if (!drag.started && Math.hypot(dx, dy) > 5){
+    drag.started = true;
+    // Remove from source array now
+    if (drag.source === "bank"){
+      bank = bank.filter(c => c.idx !== drag.chunk.idx);
+    } else {
+      placed = placed.filter(c => c.idx !== drag.chunk.idx);
+    }
+  }
+
+  if (drag.started){
+    // Update ghost
+    const ghost = $("ghost");
+    ghost.textContent = drag.chunk.text;
+    ghost.style.display = "block";
+    // center the ghost on the pointer
+    ghost.style.transform = `translate(${drag.x - ghost.offsetWidth/2}px, ${drag.y - ghost.offsetHeight/2}px) scale(1.06)`;
+
+    // Determine zone
+    const ansRect = $("answer").getBoundingClientRect();
+    const bankRect = $("bank").getBoundingClientRect();
+    if (drag.x >= ansRect.left && drag.x <= ansRect.right && drag.y >= ansRect.top - 6 && drag.y <= ansRect.bottom + 6){
+      drag.zone = "answer";
+      drag.insertIdx = computeInsertIdx(drag.x, drag.y);
+    } else if (drag.x >= bankRect.left && drag.x <= bankRect.right && drag.y >= bankRect.top - 6 && drag.y <= bankRect.bottom + 6){
+      drag.zone = "bank";
+      drag.insertIdx = null;
+    } else {
+      drag.zone = "outside";
+      drag.insertIdx = null;
+    }
+    render();
+    evt.preventDefault();
+  }
+}
+
+function onPointerUp(evt){
+  if (!drag) return;
+  $("ghost").style.display = "none";
+
+  if (!drag.started){
+    // Pure tap (no drag) → tap-to-place from bank only
+    if (drag.source === "bank"){
+      bank = bank.filter(c => c.idx !== drag.chunk.idx);
+      placed = placed.concat([drag.chunk]);
+    }
+    // tap on placed chunk = no-op (matches current app behavior)
+  } else {
+    if (drag.zone === "answer" && drag.insertIdx !== null){
+      placed = placed.slice(0, drag.insertIdx).concat([drag.chunk], placed.slice(drag.insertIdx));
+    } else if (drag.zone === "bank"){
+      bank = bank.concat([drag.chunk]);
+    } else {
+      // outside both → return to source at original spot if possible
+      if (drag.source === "bank"){
+        bank = bank.concat([drag.chunk]);
+      } else {
+        const i = Math.min(drag.originalIdx, placed.length);
+        placed = placed.slice(0, i).concat([drag.chunk], placed.slice(i));
+      }
+    }
+  }
+  drag = null;
+  render();
+}
+
+function onPointerCancel(){
+  if (!drag) return;
+  $("ghost").style.display = "none";
+  if (drag.started){
+    if (drag.source === "bank") bank = bank.concat([drag.chunk]);
+    else {
+      const i = Math.min(drag.originalIdx, placed.length);
+      placed = placed.slice(0, i).concat([drag.chunk], placed.slice(i));
+    }
+  }
+  drag = null;
+  render();
+}
+
+// ─── FEEDBACK / NEXT ────────────────────────────────────────────────
+function check(){
+  if (bank.length > 0 || placed.length === 0) return;
+  phase = "feedback";
+  const correct = placed.every((c, i) => c.idx === i);
+  const fb = $("feedback");
+  fb.style.display = "block";
+  fb.innerHTML = `
+    <div class="fb-card ${correct ? 'ok' : 'bad'}">
+      <strong>${correct ? '✓ Perfect order' : '✗ Not quite — correct order:'}</strong>
+      <p>${esc(SENTENCES[sentIdx].s)}</p>
+      <button class="b primary" onclick="nextSentence()" style="width:100%">${sentIdx < SENTENCES.length - 1 ? 'Next sentence →' : 'Replay set'}</button>
+    </div>
+  `;
+  render();
+}
+
+function nextSentence(){
+  sentIdx = (sentIdx + 1) % SENTENCES.length;
+  setupSentence();
+}
+
+function reset(){
+  if (phase === "feedback") return;
+  setupSentence();
+}
+
+// ─── WIRING ─────────────────────────────────────────────────────────
+document.body.addEventListener("pointerdown", onPointerDown);
+document.addEventListener("pointermove", onPointerMove);
+document.addEventListener("pointerup", onPointerUp);
+document.addEventListener("pointercancel", onPointerCancel);
+$("btnReset").addEventListener("click", reset);
+$("btnCheck").addEventListener("click", check);
+
+setupSentence();
+</script>
+</body>
+</html>
