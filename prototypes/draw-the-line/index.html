@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+<title>Draw-the-line proto — The Oracle</title>
+<style>
+:root{
+  --bg:#0f0c08;--bg2:#1a160f;--bg3:#262019;--bdr:#3a3024;
+  --t1:#ece2c8;--t2:#bfb39a;--t3:#7a7160;
+  --cyan:#22d3ee;--cx:34,211,238;
+  --gold:#f59e0b;--red:#ef4444;--green:#22c55e;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--t1);font-family:system-ui,-apple-system,'DM Sans',Segoe UI,sans-serif;overscroll-behavior:none}
+body{min-height:100vh;min-height:100dvh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);display:flex;flex-direction:column;align-items:center}
+
+.wrap{width:100%;max-width:720px;padding:12px 12px 20px;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+@media (max-width:480px){.wrap{padding:10px 8px 14px}}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-shrink:0}
+header h1{font-size:17px;font-weight:800;letter-spacing:.3px;margin:0;color:var(--t1)}
+@media (max-width:480px){header h1{font-size:15px}}
+header .meta{font-size:11px;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;font-weight:700}
+
+.theme{text-align:center;font-size:13px;color:var(--t2);font-style:italic;margin:2px 0 8px;flex-shrink:0}
+@media (max-width:480px){.theme{margin:2px 0 6px;font-size:12.5px}}
+
+.col-heads-row{flex-shrink:0}
+
+.board{position:relative;display:grid;grid-template-columns:1fr 90px 1fr;grid-template-rows:repeat(5,1fr);row-gap:10px;column-gap:0;align-items:stretch;touch-action:pan-y;flex:1 1 auto;min-height:0}
+@media (max-width:480px){.board{grid-template-columns:1fr 64px 1fr;row-gap:8px}}
+
+/* Decorative central gutter — dashed vertical line behind SVG, signals "the gap to bridge" */
+.board::before{content:"";position:absolute;top:8px;bottom:8px;left:50%;width:0;border-left:1.5px dashed var(--bdr);transform:translateX(-1px);z-index:1;opacity:.7;pointer-events:none}
+.board::after{content:"";position:absolute;top:0;bottom:0;left:calc(50% - 45px);width:90px;background:linear-gradient(90deg,transparent,rgba(var(--cx),.025) 20%,rgba(var(--cx),.04) 50%,rgba(var(--cx),.025) 80%,transparent);z-index:0;pointer-events:none;border-radius:4px}
+@media (max-width:480px){.board::after{left:calc(50% - 32px);width:64px}}
+
+/* col wrappers are transparent in layout — cards become direct grid children */
+.col{display:contents}
+
+.card{position:relative;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:11px;padding:11px 13px;font-size:13px;line-height:1.4;color:var(--t1);min-height:60px;display:flex;align-items:center;transition:border-color .18s,background .18s,opacity .25s,transform .18s;z-index:2}
+.card.situation{grid-column:1;padding-right:18px}
+.card.modal{grid-column:3;padding-left:18px}
+@media (max-width:480px){
+  .card{padding:10px 12px;font-size:12.5px;line-height:1.38;min-height:56px;border-radius:10px}
+  .card.situation{padding-right:14px}
+  .card.modal{padding-left:14px}
+}
+.card.paired{border-color:var(--cyan);background:rgba(var(--cx),.06)}
+.card.ok{border-color:var(--green);background:rgba(34,197,94,.10)}
+.card.bad{border-color:var(--red);background:rgba(239,68,68,.10)}
+.card.dimmed{opacity:.5}
+
+.anchor{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:22px;height:22px;border-radius:50%;
+  background:var(--bg3);border:2px solid var(--bdr);
+  cursor:grab;touch-action:none;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,border-color .15s,transform .15s,box-shadow .15s;
+  z-index:3;
+}
+.col-left .anchor{right:-11px}
+.col-right .anchor{left:-11px}
+.anchor::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--t3);transition:background .15s,transform .15s}
+.anchor:hover{border-color:var(--cyan)}
+.anchor:hover::after{background:var(--cyan)}
+.anchor.busy{border-color:var(--cyan);background:rgba(var(--cx),.18)}
+.anchor.busy::after{background:var(--cyan);transform:scale(1.4)}
+.anchor.dragging{cursor:grabbing;transform:translateY(-50%) scale(1.25);box-shadow:0 0 0 4px rgba(var(--cx),.20);border-color:var(--cyan);background:var(--bg3)}
+.anchor.snap{transform:translateY(-50%) scale(1.35);box-shadow:0 0 0 6px rgba(var(--cx),.28);border-color:var(--cyan)}
+.anchor.ok{border-color:var(--green);background:rgba(34,197,94,.18)}
+.anchor.ok::after{background:var(--green)}
+.anchor.bad{border-color:var(--red);background:rgba(239,68,68,.18)}
+.anchor.bad::after{background:var(--red)}
+
+/* SVG overlay sits on top of board; paths interactive via pointer-events:stroke */
+.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;overflow:visible}
+.lines path{fill:none;stroke-width:3;stroke-linecap:round;cursor:pointer;pointer-events:stroke;transition:opacity .2s}
+.lines path.draft{pointer-events:none;opacity:.7;stroke-dasharray:6 5}
+.lines path.locked{stroke-dasharray:none}
+.lines path.locked:hover{stroke-width:4}
+.lines .check{font-size:14px;fill:#0f0c08;text-anchor:middle;dominant-baseline:central;font-weight:800;pointer-events:none;font-family:system-ui,sans-serif}
+.lines .badge{pointer-events:none}
+
+/* anim: draw-on */
+@keyframes drawOn{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+.lines path.locked.justlocked{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:drawOn .28s ease-out forwards}
+
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.lines path.bad{animation:shake .25s ease-in-out 2}
+
+.col-heads{display:grid;grid-template-columns:1fr 90px 1fr;margin-bottom:2px;flex-shrink:0}
+@media (max-width:480px){.col-heads{grid-template-columns:1fr 64px 1fr}}
+.col-head{font-size:10px;color:var(--t3);font-weight:800;letter-spacing:1.2px;text-transform:uppercase;height:14px;display:flex;align-items:center}
+
+.controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;flex-shrink:0}
+.controls .grow{flex:1 1 auto}
+button.b{font-family:inherit;font-size:13.5px;font-weight:800;padding:11px 14px;border-radius:10px;border:1.5px solid var(--bdr);background:var(--bg2);color:var(--t1);cursor:pointer;letter-spacing:.3px;transition:transform .12s,filter .15s}
+button.b.primary{background:linear-gradient(135deg,#0891b2,#7c3aed);border-color:transparent;color:#fff}
+button.b.primary:disabled{opacity:.4;cursor:not-allowed}
+button.b:active{transform:scale(.97)}
+
+.score{margin-top:10px;text-align:center;font-size:13px;color:var(--t2);flex-shrink:0;min-height:18px}
+.score b{color:var(--cyan);font-size:22px;display:inline-block;margin:0 4px}
+
+.hint{margin-top:8px;font-size:11px;color:var(--t3);text-align:center;line-height:1.5;flex-shrink:0}
+.hint code{background:var(--bg2);padding:1px 5px;border-radius:4px;color:var(--t2);font-size:10.5px}
+
+.boards-nav{display:flex;justify-content:center;gap:6px;margin-top:10px;flex-shrink:0}
+.boards-nav .dot{width:8px;height:8px;border-radius:50%;background:var(--bg3);border:1px solid var(--bdr)}
+.boards-nav .dot.cur{background:var(--cyan);border-color:var(--cyan)}
+.boards-nav .dot.done{background:var(--green);border-color:var(--green)}
+
+.debug{position:fixed;bottom:6px;right:6px;background:rgba(0,0,0,.6);color:#0ff;font:11px monospace;padding:4px 7px;border-radius:5px;z-index:99;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>The Oracle — draw the line</h1>
+    <span class="meta" id="boardMeta">Board 1 / 3</span>
+  </header>
+  <div class="theme" id="theme"></div>
+
+  <div class="col-heads">
+    <div class="col-head" style="padding-left:2px">Situation</div>
+    <div></div>
+    <div class="col-head" style="padding-right:2px;justify-content:flex-end">Response</div>
+  </div>
+
+  <div class="board" id="board">
+    <div class="col col-left" id="colL"></div>
+    <div></div>
+    <div class="col col-right" id="colR"></div>
+    <svg class="lines" id="lines" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <div class="boards-nav" id="boardsNav"></div>
+
+  <div class="controls">
+    <button class="b" id="btnReset">Reset board</button>
+    <button class="b primary grow" id="btnAction">Lock answers</button>
+  </div>
+
+  <div class="score" id="score"></div>
+
+  <div class="hint">
+    Press an anchor on the left, drag to an anchor on the right, release.<br/>
+    Tap a locked line to delete it. <code>Reset</code> clears the board.
+  </div>
+</div>
+
+<div class="debug" id="debug"></div>
+
+<script>
+// ─── MOCK DATA — 3 boards from src/data/modals.js ────────────────────
+const BOARDS = [
+  { id:"mb_01", theme:"Office decisions", pairs:[
+    {situation:"Your colleague asked for help with the printer.", modal:"I can help you in five minutes."},
+    {situation:"The deadline is in two hours and you haven't started.", modal:"I must finish this report immediately."},
+    {situation:"The office heater is broken and your hands are freezing.", modal:"We should call maintenance about it."},
+    {situation:"Your boss hasn't replied to your email from yesterday.", modal:"She might be in a meeting all day."},
+    {situation:"You're not sure if you're allowed to leave early today.", modal:"May I leave at four, please?"}
+  ]},
+  { id:"mb_02", theme:"Health & doctor's office", pairs:[
+    {situation:"The patient has had a high fever for three days.", modal:"He must see a doctor today."},
+    {situation:"You feel exhausted after every workout this week.", modal:"You should rest more between sessions."},
+    {situation:"The pharmacist hasn't approved the prescription yet.", modal:"I can't pick up the medication without it."},
+    {situation:"The doctor said your blood pressure is borderline high.", modal:"You'd better cut down on salt."},
+    {situation:"You're hesitating between two over-the-counter remedies.", modal:"Either could work for a mild headache."}
+  ]},
+  { id:"mb_03", theme:"Travel planning", pairs:[
+    {situation:"Check-in closes in 45 minutes and you're stuck in traffic.", modal:"We might miss the flight."},
+    {situation:"The hotel asked if you wanted breakfast included.", modal:"I'd rather have it included."},
+    {situation:"The visa application website is down again.", modal:"I'll have to try again tomorrow."},
+    {situation:"Your friend has never been to Tokyo before.", modal:"She must visit Shibuya at night."},
+    {situation:"You realize you forgot to charge your power bank.", modal:"I should have done it last night."}
+  ]}
+];
+
+const LINE_COLORS = ["#22d3ee","#a78bfa","#f59e0b","#ec4899","#84cc16"];
+
+// ─── STATE ──────────────────────────────────────────────────────────
+let boardIdx = 0;
+let phase = "play"; // "play" | "reveal"
+let situations = []; // [{idx, text}]
+let modals = [];     // [{idx, text, originalIdx}]
+let pairs = [];      // [{sId, mId, color}]   sId = "s0"..  mId = "m0"..
+let boardResults = []; // [{correct, total}] per board
+let draftPath = null;  // {from:"s2", x,y, color}
+
+const $ = id => document.getElementById(id);
+const board = $("board");
+const colL = $("colL");
+const colR = $("colR");
+const svg  = $("lines");
+const dbg  = $("debug");
+
+function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+// ─── BOARD SETUP ────────────────────────────────────────────────────
+function setupBoard(){
+  const b = BOARDS[boardIdx];
+  situations = b.pairs.map((p,i)=>({idx:i, text:p.situation}));
+  const modalsRaw = b.pairs.map((p,i)=>({text:p.modal, originalIdx:i}));
+  modals = shuffle(modalsRaw).map((m,i)=>({...m, idx:i}));
+  pairs = [];
+  phase = "play";
+  $("theme").textContent = b.theme;
+  $("boardMeta").textContent = `Board ${boardIdx+1} / ${BOARDS.length}`;
+  renderCards();
+  renderLines();
+  renderControls();
+  renderNav();
+}
+
+function renderCards(){
+  colL.innerHTML = situations.map((s,i)=>`
+    <div class="card situation" data-side="s" data-idx="${i}" style="grid-row:${i+1}">
+      <span class="text">${esc(s.text)}</span>
+      <div class="anchor" data-side="s" data-idx="${i}"></div>
+    </div>`).join("");
+  colR.innerHTML = modals.map((m,i)=>`
+    <div class="card modal" data-side="m" data-idx="${i}" style="grid-row:${i+1}">
+      <div class="anchor" data-side="m" data-idx="${i}"></div>
+      <span class="text">${esc(m.text)}</span>
+    </div>`).join("");
+  updateCardStates();
+}
+
+function esc(s){return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c])}
+
+function updateCardStates(){
+  // play : highlight paired cards in cyan tint
+  // reveal: highlight correct (green) / incorrect (red), dim unpaired
+  document.querySelectorAll(".card").forEach(c=>{
+    c.classList.remove("paired","ok","bad","dimmed");
+    const side = c.dataset.side, idx = +c.dataset.idx;
+    const pair = pairs.find(p => (side==="s"?p.sId:p.mId)===`${side}${idx}`);
+    if(phase==="play"){
+      if(pair) c.classList.add("paired");
+    } else {
+      // reveal
+      if(!pair){ c.classList.add("dimmed"); return; }
+      const mIdx = +pair.mId.slice(1);
+      const sIdx = +pair.sId.slice(1);
+      const okPair = modals[mIdx].originalIdx === sIdx;
+      c.classList.add(okPair?"ok":"bad");
+    }
+  });
+  // anchors busy
+  document.querySelectorAll(".anchor").forEach(a=>{
+    a.classList.remove("busy","ok","bad");
+    const id = `${a.dataset.side}${a.dataset.idx}`;
+    const pair = pairs.find(p => p.sId===id || p.mId===id);
+    if(pair){
+      if(phase==="play") a.classList.add("busy");
+      else {
+        const mIdx = +pair.mId.slice(1), sIdx = +pair.sId.slice(1);
+        const okPair = modals[mIdx].originalIdx === sIdx;
+        a.classList.add(okPair?"ok":"bad");
+      }
+    }
+  });
+}
+
+// ─── LINES (SVG) ────────────────────────────────────────────────────
+function anchorCenter(side, idx){
+  const el = document.querySelector(`.anchor[data-side="${side}"][data-idx="${idx}"]`);
+  if(!el) return null;
+  const r = el.getBoundingClientRect();
+  const br = board.getBoundingClientRect();
+  return { x: r.left - br.left + r.width/2, y: r.top - br.top + r.height/2 };
+}
+
+function pathD(p1, p2){
+  // quadratic bezier with control point near the middle of the gap (offsets stronger horizontal)
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const cx = p1.x + dx/2;
+  const cy = p1.y + dy/2;
+  // add slight curve up/down based on dy
+  const sag = Math.min(28, Math.abs(dy)*0.15);
+  const ctrl1x = p1.x + dx*0.45;
+  const ctrl1y = p1.y + dy*0.05 + (dy>=0?-sag:sag);
+  const ctrl2x = p1.x + dx*0.55;
+  const ctrl2y = p2.y - dy*0.05 + (dy>=0?-sag:sag);
+  return `M ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} C ${ctrl1x.toFixed(1)} ${ctrl1y.toFixed(1)}, ${ctrl2x.toFixed(1)} ${ctrl2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+}
+
+function renderLines(){
+  // Locked pairs + draft
+  const parts = [];
+  pairs.forEach((p,i)=>{
+    const sIdx = +p.sId.slice(1);
+    const mIdx = +p.mId.slice(1);
+    const a = anchorCenter("s", sIdx);
+    const b = anchorCenter("m", mIdx);
+    if(!a||!b) return;
+    let color = p.color;
+    let cls = "locked";
+    let badge = "";
+    if(phase==="reveal"){
+      const okPair = modals[mIdx].originalIdx === sIdx;
+      color = okPair ? "#22c55e" : "#ef4444";
+      if(!okPair) cls += " bad";
+      // badge
+      const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
+      badge = `<g class="badge"><circle cx="${mx}" cy="${my}" r="10" fill="${color}"/><text class="check" x="${mx}" y="${my}">${okPair?"✓":"✗"}</text></g>`;
+    } else if(p.justLocked){
+      cls += " justlocked";
+    }
+    const d = pathD(a,b);
+    // length estimate: linear distance + curve bonus
+    const len = Math.hypot(b.x-a.x, b.y-a.y) * 1.15;
+    parts.push(`<path data-pidx="${i}" class="${cls}" d="${d}" stroke="${color}" style="--len:${len.toFixed(0)}"/>${badge}`);
+  });
+  if(draftPath){
+    const a = anchorCenter("s", +draftPath.from.slice(1));
+    if(a){
+      const d = pathD(a, {x:draftPath.x, y:draftPath.y});
+      parts.push(`<path class="draft" d="${d}" stroke="${draftPath.color}"/>`);
+    }
+  }
+  svg.innerHTML = parts.join("");
+
+  // remove justLocked flag after anim
+  if(pairs.some(p=>p.justLocked)){
+    setTimeout(()=>{ pairs.forEach(p=>delete p.justLocked); renderLines(); }, 350);
+  }
+
+  // click handler on locked lines (to delete)
+  svg.querySelectorAll("path.locked").forEach(pathEl=>{
+    pathEl.addEventListener("click", e=>{
+      if(phase!=="play") return;
+      const idx = +pathEl.dataset.pidx;
+      pairs.splice(idx,1);
+      renderLines();
+      updateCardStates();
+      renderControls();
+    });
+  });
+}
+
+// ─── DRAG LOGIC (pointer events) ────────────────────────────────────
+let activeAnchor = null;
+let activePtr = null;
+
+function onPointerDown(e){
+  if(phase!=="play") return;
+  const a = e.target.closest(".anchor");
+  if(!a) return;
+  if(a.dataset.side!=="s") return; // start only from left anchors
+  const sIdx = +a.dataset.idx;
+  // if already paired, release that pair first (allow redraw)
+  const existing = pairs.findIndex(p=>p.sId===`s${sIdx}`);
+  if(existing>=0) pairs.splice(existing,1);
+
+  activeAnchor = a;
+  activePtr = e.pointerId;
+  a.classList.add("dragging");
+  const color = LINE_COLORS[pairs.length % LINE_COLORS.length];
+  const c = anchorCenter("s", sIdx);
+  draftPath = { from:`s${sIdx}`, x: c?c.x:0, y: c?c.y:0, color };
+  renderLines();
+  updateCardStates();
+  e.preventDefault();
+}
+
+function onPointerMove(e){
+  if(!draftPath || e.pointerId!==activePtr) return;
+  const br = board.getBoundingClientRect();
+  draftPath.x = e.clientX - br.left;
+  draftPath.y = e.clientY - br.top;
+  // snap preview
+  const hit = hitTestModal(e.clientX, e.clientY);
+  document.querySelectorAll(".anchor[data-side='m']").forEach(a=>a.classList.remove("snap"));
+  if(hit!==null){
+    const a = document.querySelector(`.anchor[data-side="m"][data-idx="${hit}"]`);
+    if(a) a.classList.add("snap");
+    const c = anchorCenter("m", hit);
+    if(c){ draftPath.x = c.x; draftPath.y = c.y; }
+  }
+  renderLines();
+  e.preventDefault();
+}
+
+function onPointerUp(e){
+  if(!draftPath || e.pointerId!==activePtr) return;
+  if(activeAnchor) activeAnchor.classList.remove("dragging");
+  document.querySelectorAll(".anchor[data-side='m']").forEach(x=>x.classList.remove("snap"));
+  const sId = draftPath.from;
+  const hit = hitTestModal(e.clientX, e.clientY);
+  draftPath = null;
+  activeAnchor = null;
+  activePtr = null;
+  if(hit===null){
+    renderLines();
+    return;
+  }
+  // replace existing pair using same modal anchor (if any)
+  const occMod = pairs.findIndex(p=>p.mId===`m${hit}`);
+  if(occMod>=0) pairs.splice(occMod,1);
+  const color = LINE_COLORS[pairs.length % LINE_COLORS.length];
+  pairs.push({sId, mId:`m${hit}`, color, justLocked:true});
+  renderLines();
+  updateCardStates();
+  renderControls();
+}
+
+function onPointerCancel(e){
+  if(!draftPath) return;
+  if(activeAnchor) activeAnchor.classList.remove("dragging");
+  document.querySelectorAll(".anchor.snap").forEach(x=>x.classList.remove("snap"));
+  draftPath = null;
+  activeAnchor = null;
+  activePtr = null;
+  renderLines();
+}
+
+function hitTestModal(clientX, clientY){
+  const slop = 24; // generous hit area for fat fingers
+  const anchors = document.querySelectorAll(".anchor[data-side='m']");
+  let best = null, bestDist = Infinity;
+  anchors.forEach(a=>{
+    const r = a.getBoundingClientRect();
+    const cx = r.left+r.width/2, cy = r.top+r.height/2;
+    const dx = clientX-cx, dy = clientY-cy;
+    const dist = Math.hypot(dx,dy);
+    // accept if within rect + slop OR within radius slop+10
+    const inRect = clientX>=r.left-slop && clientX<=r.right+slop && clientY>=r.top-slop && clientY<=r.bottom+slop;
+    if(inRect && dist<bestDist){ bestDist = dist; best = +a.dataset.idx; }
+  });
+  return best;
+}
+
+// ─── CONTROLS ───────────────────────────────────────────────────────
+function renderControls(){
+  const btn = $("btnAction");
+  if(phase==="play"){
+    btn.textContent = pairs.length===5 ? "Lock answers" : `Lock answers (${pairs.length}/5)`;
+    btn.disabled = pairs.length<5;
+    $("score").textContent = "";
+  } else {
+    btn.textContent = boardIdx>=BOARDS.length-1 ? "See result" : "Next board →";
+    btn.disabled = false;
+    const correct = pairs.filter(p=>{
+      const sIdx=+p.sId.slice(1), mIdx=+p.mId.slice(1);
+      return modals[mIdx].originalIdx===sIdx;
+    }).length;
+    $("score").innerHTML = `<b>${correct}</b> / 5 correct on this board`;
+  }
+}
+
+function renderNav(){
+  $("boardsNav").innerHTML = BOARDS.map((_,i)=>{
+    let cls = "dot";
+    if(i===boardIdx) cls += " cur";
+    else if(boardResults[i]) cls += " done";
+    return `<div class="${cls}"></div>`;
+  }).join("");
+}
+
+function actionClick(){
+  if(phase==="play"){
+    if(pairs.length<5) return;
+    phase = "reveal";
+    const correct = pairs.filter(p=>{
+      const sIdx=+p.sId.slice(1), mIdx=+p.mId.slice(1);
+      return modals[mIdx].originalIdx===sIdx;
+    }).length;
+    boardResults[boardIdx] = {correct, total:5};
+    renderLines();
+    updateCardStates();
+    renderControls();
+    renderNav();
+  } else {
+    if(boardIdx>=BOARDS.length-1){
+      // show end summary in score area
+      const tot = boardResults.reduce((s,r)=>s+r.correct,0);
+      const max = BOARDS.length*5;
+      $("score").innerHTML = `<b>${tot}</b> / ${max} pairs total <br/><span style="font-size:11px;color:var(--t3)">Session complete</span>`;
+      $("btnAction").textContent = "Replay";
+      $("btnAction").onclick = ()=>{ boardIdx=0; boardResults=[]; setupBoard(); $("btnAction").onclick = actionClick; };
+      return;
+    }
+    boardIdx++;
+    setupBoard();
+  }
+}
+
+function resetBoard(){
+  if(phase==="reveal") return;
+  pairs = [];
+  draftPath = null;
+  renderLines();
+  updateCardStates();
+  renderControls();
+}
+
+// ─── WIRING ─────────────────────────────────────────────────────────
+function wire(){
+  document.body.addEventListener("pointerdown", onPointerDown);
+  document.body.addEventListener("pointermove", onPointerMove);
+  document.body.addEventListener("pointerup", onPointerUp);
+  document.body.addEventListener("pointercancel", onPointerCancel);
+
+  $("btnReset").addEventListener("click", resetBoard);
+  $("btnAction").addEventListener("click", actionClick);
+
+  // recompute lines on resize / orientation
+  window.addEventListener("resize", ()=>renderLines());
+}
+
+setupBoard();
+wire();
+</script>
+</body>
+</html>

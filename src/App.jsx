@@ -2168,60 +2168,62 @@ function GauntletHub(p){
 // Tap a situation (left), then tap a modal (right) → pairs them with a
 // numbered badge. Auto-checks when 5 pairs are placed; reveals correct
 // mapping; manual "Next board" cycles to the next of 3.
+// ─── DRAW-THE-LINE styles (injected once for ModalMatch) ───
+// Anchors, SVG paths, gutter decor, animations. Class prefix .dtl- (draw-the-line)
+// to avoid collisions with the rest of App.jsx.
+var DTL_CSS = `
+@keyframes dtl-drawon { from{stroke-dashoffset:var(--len)} to{stroke-dashoffset:0} }
+@keyframes dtl-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 75%{transform:translateX(3px)} }
+.dtl-board{position:relative}
+.dtl-board::before{content:"";position:absolute;top:8px;bottom:8px;left:50%;width:0;border-left:1.5px dashed var(--bdr);transform:translateX(-1px);z-index:1;opacity:.7;pointer-events:none}
+.dtl-board::after{content:"";position:absolute;top:0;bottom:0;left:calc(50% - 40px);width:80px;background:linear-gradient(90deg,transparent,rgba(var(--cx),.025) 20%,rgba(var(--cx),.04) 50%,rgba(var(--cx),.025) 80%,transparent);z-index:0;pointer-events:none;border-radius:4px}
+@media (max-width:480px){.dtl-board::after{left:calc(50% - 32px);width:64px}}
+.dtl-anchor{position:absolute;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--bg3);border:2px solid var(--bdr);cursor:grab;touch-action:none;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s,transform .15s,box-shadow .15s;z-index:3}
+.dtl-anchor::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--t3);transition:background .15s,transform .15s}
+.dtl-card-s .dtl-anchor{right:-11px}
+.dtl-card-m .dtl-anchor{left:-11px}
+.dtl-anchor.busy{border-color:var(--cyan);background:rgba(var(--cx),.18)}
+.dtl-anchor.busy::after{background:var(--cyan);transform:scale(1.4)}
+.dtl-anchor.dragging{cursor:grabbing;transform:translateY(-50%) scale(1.25);box-shadow:0 0 0 4px rgba(var(--cx),.20);border-color:var(--cyan)}
+.dtl-anchor.snap{transform:translateY(-50%) scale(1.35);box-shadow:0 0 0 6px rgba(var(--cx),.28);border-color:var(--cyan)}
+.dtl-anchor.ok{border-color:#22c55e;background:rgba(34,197,94,.18)}
+.dtl-anchor.ok::after{background:#22c55e}
+.dtl-anchor.bad{border-color:#ef4444;background:rgba(239,68,68,.18)}
+.dtl-anchor.bad::after{background:#ef4444}
+.dtl-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;overflow:visible}
+.dtl-lines path.dtl-stroke{fill:none;stroke-width:3;stroke-linecap:round;pointer-events:none;transition:opacity .2s}
+.dtl-lines path.dtl-hit{fill:none;stroke-width:16;stroke:transparent;cursor:pointer;pointer-events:stroke}
+.dtl-lines path.dtl-draft{stroke-dasharray:6 5;opacity:.7}
+.dtl-lines path.dtl-justlocked{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:dtl-drawon .28s ease-out forwards}
+.dtl-lines path.dtl-bad{animation:dtl-shake .25s ease-in-out 2}
+`;
+
 function ModalMatch(p){
   var BOARDS_PER_SESSION=3;
   var PAIRS_PER_BOARD=5;
+  var LINE_COLORS=["#22d3ee","#a78bfa","#f59e0b","#ec4899","#84cc16"];
   var [phase,setPhase]=useState("intro"); // intro | play | reveal | end
   var [boards,setBoards]=useState(null);
   var [boardIdx,setBoardIdx]=useState(0);
-  var [selSit,setSelSit]=useState(null); // currently-selected situation index
-  var [pairs,setPairs]=useState([]); // [{sitIdx, modalIdx}]
+  var [pairs,setPairs]=useState([]); // [{sIdx,mIdx,color,justLocked?}]
   var [allResults,setAllResults]=useState([]); // [{boardId, correct, total}]
+  var [tick,setTick]=useState(0); // bump on draftRef mutations + resize
+  var draftRef=useRef(null); // {sIdx, x, y, color, hit}
+  var boardRef=useRef(null);
+  var activeAnchorRef=useRef(null);
 
   function startSession(){
     var picked=shuffle(MODAL_MATCH_BOARDS.slice()).slice(0,BOARDS_PER_SESSION);
     var prepared=picked.map(function(b){
-      // Shuffle modals so they're not in the same vertical order as situations.
       var modalsShuf=shuffle(b.pairs.map(function(pp,i){return{text:pp.modal,originalIdx:i};}));
-      return{
-        id:b.id,theme:b.theme,
-        situations:b.pairs.map(function(pp){return pp.situation;}),
-        modals:modalsShuf
-      };
+      return{id:b.id,theme:b.theme,situations:b.pairs.map(function(pp){return pp.situation;}),modals:modalsShuf};
     });
-    setBoards(prepared);setBoardIdx(0);setPairs([]);setSelSit(null);setAllResults([]);setPhase("play");
-  }
-
-  function tapSituation(i){
-    if(phase!=="play")return;
-    if(pairs.some(function(pp){return pp.sitIdx===i;}))return;
-    setSelSit(i);
-  }
-
-  function tapModal(i){
-    if(phase!=="play")return;
-    if(selSit===null)return;
-    if(pairs.some(function(pp){return pp.modalIdx===i;}))return;
-    var newPairs=pairs.concat([{sitIdx:selSit,modalIdx:i}]);
-    setPairs(newPairs);setSelSit(null);
-    if(newPairs.length===PAIRS_PER_BOARD){
-      var board=boards[boardIdx];var correct=0;
-      newPairs.forEach(function(pp){if(board.modals[pp.modalIdx].originalIdx===pp.sitIdx)correct++;});
-      if(correct===PAIRS_PER_BOARD){try{playCorrect();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
-      else{try{playWrong();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
-      setAllResults(allResults.concat([{boardId:board.id,correct:correct,total:PAIRS_PER_BOARD}]));
-      setPhase("reveal");
-    }
-  }
-
-  function undoLast(){
-    if(phase!=="play"||pairs.length===0)return;
-    setPairs(pairs.slice(0,-1));setSelSit(null);
+    setBoards(prepared);setBoardIdx(0);setPairs([]);setAllResults([]);setPhase("play");
   }
 
   function nextBoard(){
     if(boardIdx>=BOARDS_PER_SESSION-1){setPhase("end");return;}
-    setBoardIdx(boardIdx+1);setPairs([]);setSelSit(null);setPhase("play");
+    setBoardIdx(boardIdx+1);setPairs([]);setPhase("play");
   }
 
   function finishSession(){
@@ -2232,6 +2234,126 @@ function ModalMatch(p){
     p.done(totalCorrect,totalQ,baseXp);
   }
 
+  function commitLock(){
+    if(pairs.length!==PAIRS_PER_BOARD)return;
+    var board=boards[boardIdx];var correct=0;
+    pairs.forEach(function(pp){if(board.modals[pp.mIdx].originalIdx===pp.sIdx)correct++;});
+    if(correct===PAIRS_PER_BOARD){try{playCorrect();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
+    else{try{playWrong();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
+    setAllResults(allResults.concat([{boardId:board.id,correct:correct,total:PAIRS_PER_BOARD}]));
+    setPhase("reveal");
+  }
+
+  // Anchor center in board-local coordinates (queried fresh each call — handles resize/scroll).
+  function anchorCenter(side,idx){
+    if(!boardRef.current)return null;
+    var el=boardRef.current.querySelector('.dtl-anchor[data-side="'+side+'"][data-idx="'+idx+'"]');
+    if(!el)return null;
+    var r=el.getBoundingClientRect();
+    var br=boardRef.current.getBoundingClientRect();
+    return{x:r.left-br.left+r.width/2,y:r.top-br.top+r.height/2};
+  }
+
+  function pathD(p1,p2){
+    var dx=p2.x-p1.x,dy=p2.y-p1.y;
+    var sag=Math.min(28,Math.abs(dy)*0.15);
+    var c1x=p1.x+dx*0.45,c1y=p1.y+dy*0.05+(dy>=0?-sag:sag);
+    var c2x=p1.x+dx*0.55,c2y=p2.y-dy*0.05+(dy>=0?-sag:sag);
+    return"M "+p1.x.toFixed(1)+" "+p1.y.toFixed(1)+" C "+c1x.toFixed(1)+" "+c1y.toFixed(1)+", "+c2x.toFixed(1)+" "+c2y.toFixed(1)+", "+p2.x.toFixed(1)+" "+p2.y.toFixed(1);
+  }
+
+  function hitTestModal(clientX,clientY){
+    if(!boardRef.current)return null;
+    var slop=24;
+    var anchors=boardRef.current.querySelectorAll('.dtl-anchor[data-side="m"]');
+    var best=null,bestDist=Infinity;
+    anchors.forEach(function(a){
+      var r=a.getBoundingClientRect();
+      var cx=r.left+r.width/2,cy=r.top+r.height/2;
+      var dist=Math.hypot(clientX-cx,clientY-cy);
+      var inRect=clientX>=r.left-slop&&clientX<=r.right+slop&&clientY>=r.top-slop&&clientY<=r.bottom+slop;
+      if(inRect&&dist<bestDist){bestDist=dist;best=parseInt(a.dataset.idx,10);}
+    });
+    return best;
+  }
+
+  function startDrag(sIdx,e){
+    if(phase!=="play")return;
+    // Release any existing pair on this situation (re-draw scenario).
+    var existing=pairs.findIndex(function(pp){return pp.sIdx===sIdx;});
+    var basePairs=pairs;
+    if(existing>=0){
+      basePairs=pairs.slice();basePairs.splice(existing,1);
+      setPairs(basePairs);
+    }
+    var c=anchorCenter("s",sIdx);
+    if(!c)return;
+    var anchor=e.currentTarget;
+    activeAnchorRef.current=anchor;
+    anchor.classList.add("dragging");
+    draftRef.current={sIdx:sIdx,x:c.x,y:c.y,color:LINE_COLORS[basePairs.length%LINE_COLORS.length],hit:null};
+    setTick(function(t){return t+1;});
+
+    function onMove(ev){
+      if(!draftRef.current)return;
+      var br=boardRef.current&&boardRef.current.getBoundingClientRect();
+      if(!br)return;
+      var x=ev.clientX-br.left,y=ev.clientY-br.top;
+      var hit=hitTestModal(ev.clientX,ev.clientY);
+      if(hit!==null){
+        var ac=anchorCenter("m",hit);
+        if(ac){x=ac.x;y=ac.y;}
+      }
+      draftRef.current.x=x;draftRef.current.y=y;draftRef.current.hit=hit;
+      setTick(function(t){return t+1;});
+      ev.preventDefault();
+    }
+    function cleanup(){
+      document.removeEventListener("pointermove",onMove);
+      document.removeEventListener("pointerup",onUp);
+      document.removeEventListener("pointercancel",onCancel);
+      if(activeAnchorRef.current){activeAnchorRef.current.classList.remove("dragging");activeAnchorRef.current=null;}
+    }
+    function onUp(ev){
+      var hit=hitTestModal(ev.clientX,ev.clientY);
+      var dr=draftRef.current;
+      draftRef.current=null;
+      cleanup();
+      setTick(function(t){return t+1;});
+      if(hit===null||!dr)return;
+      // Commit pair, evicting any conflicting one on either side.
+      setPairs(function(prev){
+        var filtered=prev.filter(function(pp){return pp.mIdx!==hit&&pp.sIdx!==dr.sIdx;});
+        return filtered.concat([{sIdx:dr.sIdx,mIdx:hit,color:LINE_COLORS[filtered.length%LINE_COLORS.length],justLocked:true}]);
+      });
+      setTimeout(function(){
+        setPairs(function(prev){return prev.map(function(pp){return pp.justLocked?Object.assign({},pp,{justLocked:false}):pp;});});
+      },360);
+    }
+    function onCancel(){
+      draftRef.current=null;
+      cleanup();
+      setTick(function(t){return t+1;});
+    }
+    document.addEventListener("pointermove",onMove);
+    document.addEventListener("pointerup",onUp);
+    document.addEventListener("pointercancel",onCancel);
+    e.preventDefault();
+  }
+
+  function removePair(i){
+    if(phase!=="play")return;
+    var np=pairs.slice();np.splice(i,1);setPairs(np);
+  }
+
+  // Re-render lines on viewport resize (anchor positions shift).
+  useEffect(function(){
+    function onResize(){setTick(function(t){return t+1;});}
+    window.addEventListener("resize",onResize);
+    return function(){window.removeEventListener("resize",onResize);};
+  },[]);
+
+  // ── INTRO ──────────────────────────────────────────────────────────
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
       <button className="back-btn" onClick={p.back}>{"←"} Back</button>
@@ -2240,7 +2362,8 @@ function ModalMatch(p){
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>The Oracle</h2>
         <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Pair each situation with the right modal response. Three boards of five pairs each.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
-          <div>{"✋"} <strong>Tap</strong> a situation, then <strong>tap</strong> a modal to pair them</div>
+          <div>{"✋"} <strong>Drag</strong> from a situation anchor to a response anchor</div>
+          <div>{"↩️"} <strong>Tap</strong> a line to delete it</div>
           <div>{"🔢"} <strong>3 boards</strong> of 5 pairs · 15 items total</div>
           <div>{"🏆"} <strong>5 XP</strong> per correct pair · perfect bonus</div>
         </div>
@@ -2249,6 +2372,7 @@ function ModalMatch(p){
     </div>);
   }
 
+  // ── END ────────────────────────────────────────────────────────────
   if(phase==="end"){
     var totalCorrect=allResults.reduce(function(s,r){return s+r.correct;},0);
     var totalQ=BOARDS_PER_SESSION*PAIRS_PER_BOARD;
@@ -2274,74 +2398,104 @@ function ModalMatch(p){
     </div>);
   }
 
-  // phase === "play" or "reveal"
+  // ── PLAY / REVEAL ─────────────────────────────────────────────────
   var board=boards[boardIdx];
-  function pairNumberForSit(i){var idx=pairs.findIndex(function(pp){return pp.sitIdx===i;});return idx>=0?idx+1:null;}
-  function pairNumberForModal(i){var idx=pairs.findIndex(function(pp){return pp.modalIdx===i;});return idx>=0?idx+1:null;}
-  function isSitCorrect(i){
-    if(phase!=="reveal")return null;
-    var pp=pairs.find(function(x){return x.sitIdx===i;});
-    if(!pp)return null;
-    return board.modals[pp.modalIdx].originalIdx===i;
-  }
-  function isModalCorrect(i){
-    if(phase!=="reveal")return null;
-    var pp=pairs.find(function(x){return x.modalIdx===i;});
-    if(!pp)return null;
-    return board.modals[i].originalIdx===pp.sitIdx;
-  }
+  var draft=draftRef.current;
+  function isCorrectPair(pp){return board.modals[pp.mIdx].originalIdx===pp.sIdx;}
+  function findPairForSit(i){return pairs.find(function(pp){return pp.sIdx===i;});}
+  function findPairForModal(i){return pairs.find(function(pp){return pp.mIdx===i;});}
 
-  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-    <button className="back-btn" onClick={p.back}>{"←"} Back</button>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,marginTop:4}}>
+  return(<div className="enter" style={{padding:"12px 12px 14px",maxWidth:720,margin:"0 auto",display:"flex",flexDirection:"column",minHeight:"calc(100dvh - 50px)"}}>
+    <style>{DTL_CSS}</style>
+    <button className="back-btn" onClick={p.back} style={{flexShrink:0}}>{"←"} Back</button>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"4px 0",flexShrink:0}}>
       <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>Board {boardIdx+1} / {BOARDS_PER_SESSION}</span>
       <span style={{fontSize:11,color:"var(--cyan)",fontWeight:700,letterSpacing:.8}}>{pairs.length} / {PAIRS_PER_BOARD} paired</span>
     </div>
-    <div style={{textAlign:"center",fontSize:13,color:"var(--t2)",fontStyle:"italic",marginBottom:14}}>{board.theme}</div>
+    <div style={{textAlign:"center",fontSize:13,color:"var(--t2)",fontStyle:"italic",margin:"2px 0 8px",flexShrink:0}}>{board.theme}</div>
 
-    <div style={{fontSize:10,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Situation</div>
-    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18}}>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 80px 1fr",marginBottom:2,flexShrink:0}}>
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",paddingLeft:2}}>Situation</div>
+      <div></div>
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",paddingRight:2,textAlign:"right"}}>Response</div>
+    </div>
+
+    <div ref={boardRef} className="dtl-board" style={{display:"grid",gridTemplateColumns:"1fr 80px 1fr",gridTemplateRows:"repeat(5,1fr)",rowGap:10,columnGap:0,alignItems:"stretch",touchAction:"pan-y",flex:"1 1 auto",minHeight:0}}>
       {board.situations.map(function(sit,i){
-        var pairNum=pairNumberForSit(i);
-        var isSel=selSit===i;
-        var revealOk=isSitCorrect(i);
+        var pair=findPairForSit(i);
+        var pairOk=phase==="reveal"&&pair?isCorrectPair(pair):null;
         var bdr="var(--bdr)";var bg="var(--bg2)";
         if(phase==="reveal"){
-          if(revealOk===true){bdr="#22c55e";bg="rgba(34,197,94,.08)";}
-          else if(revealOk===false){bdr="#ef4444";bg="rgba(239,68,68,.08)";}
-        } else if(isSel){bdr="var(--cyan)";bg="rgba(var(--cx),.10)";}
-        else if(pairNum){bdr="var(--cyan)";bg="rgba(var(--cx),.05)";}
-        return(<button key={i} disabled={phase==="reveal"||(pairNum&&phase==="play")} onClick={function(){tapSituation(i);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"11px 12px",background:bg,border:"1.5px solid "+bdr,borderRadius:10,textAlign:"left",fontSize:13,lineHeight:1.4,color:"var(--t1)",cursor:phase==="play"?"pointer":"default",fontFamily:"'DM Sans',sans-serif",opacity:phase==="reveal"&&pairNum===null?.5:1}}>
-          <span style={{flexShrink:0,width:24,height:24,borderRadius:"50%",background:pairNum?(phase==="reveal"?(revealOk?"#22c55e":"#ef4444"):"var(--cyan)"):"var(--bg3)",color:pairNum?"#0f0c08":"var(--t3)",fontWeight:800,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{pairNum||(i+1)}</span>
+          if(pairOk===true){bdr="#22c55e";bg="rgba(34,197,94,.10)";}
+          else if(pairOk===false){bdr="#ef4444";bg="rgba(239,68,68,.10)";}
+        } else if(pair){bdr="var(--cyan)";bg="rgba(var(--cx),.06)";}
+        var anchorCls="dtl-anchor";
+        if(phase==="reveal"&&pair){anchorCls+=pairOk?" ok":" bad";}
+        else if(pair){anchorCls+=" busy";}
+        return(<div key={i} className="dtl-card-s" style={{gridColumn:1,gridRow:i+1,position:"relative",background:bg,border:"1.5px solid "+bdr,borderRadius:11,padding:"11px 18px 11px 13px",fontSize:13,lineHeight:1.4,color:"var(--t1)",minHeight:60,display:"flex",alignItems:"center",transition:"border-color .18s,background .18s,opacity .25s",zIndex:2,opacity:phase==="reveal"&&!pair?.5:1}}>
           <span style={{flex:1}}>{sit}</span>
-        </button>);
+          <div className={anchorCls} data-side="s" data-idx={i} onPointerDown={function(e){startDrag(i,e);}}></div>
+        </div>);
       })}
-    </div>
-
-    <div style={{fontSize:10,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Response</div>
-    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
       {board.modals.map(function(m,i){
-        var pairNum=pairNumberForModal(i);
-        var revealOk=isModalCorrect(i);
+        var pair=findPairForModal(i);
+        var pairOk=phase==="reveal"&&pair?isCorrectPair(pair):null;
         var bdr="var(--bdr)";var bg="var(--bg2)";
         if(phase==="reveal"){
-          if(revealOk===true){bdr="#22c55e";bg="rgba(34,197,94,.08)";}
-          else if(revealOk===false){bdr="#ef4444";bg="rgba(239,68,68,.08)";}
-        } else if(pairNum){bdr="var(--cyan)";bg="rgba(var(--cx),.05)";}
-        var disabled=phase==="reveal"||(pairNum&&phase==="play")||(phase==="play"&&selSit===null&&!pairNum);
-        return(<button key={i} disabled={disabled} onClick={function(){tapModal(i);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"11px 12px",background:bg,border:"1.5px solid "+bdr,borderRadius:10,textAlign:"left",fontSize:13,lineHeight:1.4,color:"var(--t1)",cursor:disabled?"default":"pointer",fontFamily:"'DM Sans',sans-serif",opacity:disabled&&!pairNum?.55:1}}>
-          <span style={{flexShrink:0,width:24,height:24,borderRadius:"50%",background:pairNum?(phase==="reveal"?(revealOk?"#22c55e":"#ef4444"):"var(--cyan)"):"var(--bg3)",color:pairNum?"#0f0c08":"var(--t3)",fontWeight:800,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{pairNum||String.fromCharCode(65+i)}</span>
+          if(pairOk===true){bdr="#22c55e";bg="rgba(34,197,94,.10)";}
+          else if(pairOk===false){bdr="#ef4444";bg="rgba(239,68,68,.10)";}
+        } else if(pair){bdr="var(--cyan)";bg="rgba(var(--cx),.06)";}
+        var isSnap=draft&&draft.hit===i;
+        var anchorCls="dtl-anchor";
+        if(phase==="reveal"&&pair){anchorCls+=pairOk?" ok":" bad";}
+        else if(pair){anchorCls+=" busy";}
+        if(isSnap)anchorCls+=" snap";
+        return(<div key={i} className="dtl-card-m" style={{gridColumn:3,gridRow:i+1,position:"relative",background:bg,border:"1.5px solid "+bdr,borderRadius:11,padding:"11px 13px 11px 18px",fontSize:13,lineHeight:1.4,color:"var(--t1)",minHeight:60,display:"flex",alignItems:"center",transition:"border-color .18s,background .18s,opacity .25s",zIndex:2,opacity:phase==="reveal"&&!pair?.5:1}}>
+          <div className={anchorCls} data-side="m" data-idx={i}></div>
           <span style={{flex:1}}>{m.text}</span>
-        </button>);
+        </div>);
       })}
+      <svg className="dtl-lines" xmlns="http://www.w3.org/2000/svg">
+        {pairs.map(function(pp,i){
+          var a=anchorCenter("s",pp.sIdx);
+          var b=anchorCenter("m",pp.mIdx);
+          if(!a||!b)return null;
+          var color=pp.color;var strokeCls="dtl-stroke";
+          if(phase==="reveal"){
+            var ok=isCorrectPair(pp);
+            color=ok?"#22c55e":"#ef4444";
+            if(!ok)strokeCls+=" dtl-bad";
+          } else if(pp.justLocked) strokeCls+=" dtl-justlocked";
+          var len=Math.hypot(b.x-a.x,b.y-a.y)*1.15;
+          var d=pathD(a,b);
+          var mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+          return(<g key={i}>
+            <path d={d} className="dtl-hit" onClick={function(){removePair(i);}} style={{pointerEvents:phase==="play"?"stroke":"none"}}/>
+            <path d={d} className={strokeCls} stroke={color} style={{"--len":len.toFixed(0)}}/>
+            {phase==="reveal"&&(<g pointerEvents="none">
+              <circle cx={mx} cy={my} r="10" fill={color}/>
+              <text x={mx} y={my} textAnchor="middle" dominantBaseline="central" fontSize="13" fontWeight="800" fill="#0f0c08">{isCorrectPair(pp)?"✓":"✗"}</text>
+            </g>)}
+          </g>);
+        })}
+        {draft&&(function(){
+          var a=anchorCenter("s",draft.sIdx);
+          if(!a)return null;
+          return(<path d={pathD(a,{x:draft.x,y:draft.y})} className="dtl-stroke dtl-draft" stroke={draft.color}/>);
+        })()}
+      </svg>
     </div>
 
-    {phase==="play"&&pairs.length>0&&pairs.length<PAIRS_PER_BOARD&&(
-      <button className="btn2" style={{width:"100%",fontSize:13,padding:"10px"}} onClick={undoLast}>{"↶"} Undo last pair</button>
-    )}
-    {phase==="reveal"&&(
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:15,padding:"13px",fontWeight:800}} onClick={nextBoard}>{boardIdx>=BOARDS_PER_SESSION-1?"See result":"Next board →"}</button>
-    )}
+    <div style={{marginTop:10,flexShrink:0}}>
+      {phase==="play"&&(
+        <button className="btn1" disabled={pairs.length<PAIRS_PER_BOARD} style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:15,padding:"13px",fontWeight:800,opacity:pairs.length===PAIRS_PER_BOARD?1:.5,cursor:pairs.length===PAIRS_PER_BOARD?"pointer":"not-allowed"}} onClick={commitLock}>
+          {pairs.length===PAIRS_PER_BOARD?"Lock answers":"Lock answers ("+pairs.length+"/"+PAIRS_PER_BOARD+")"}
+        </button>
+      )}
+      {phase==="reveal"&&(
+        <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:15,padding:"13px",fontWeight:800}} onClick={nextBoard}>{boardIdx>=BOARDS_PER_SESSION-1?"See result":"Next board →"}</button>
+      )}
+    </div>
   </div>);
 }
 
