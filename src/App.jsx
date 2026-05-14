@@ -15923,6 +15923,18 @@ useEffect(function(){
     }catch(e){console.warn("[upgrade-deeplink] u-watch caught:",e&&e.message);}
   },[u]);
 
+  // Verdict chronicle deferred trigger : fire à la 1ère arrivée sur Home si
+  // pas encore entendu. Couvre les users arrivés via deep link landing
+  // (?upgrade=...) où le push direct dans finish() est skip pour ne pas
+  // recouvrir l'UpgradeScreen avec l'overlay narrator.
+  useEffect(function(){
+    if(!u||tab!=="home"||sp)return;
+    try{
+      if(hasHeardMoment(u,"verdict"))return;
+      pushNarratorMoment(u,"verdict");
+    }catch(e){console.warn("[verdict-defer] caught:",e&&e.message);}
+  },[u,tab,sp]);
+
   // ── Phase 1 Magic Link — email sync on USER_UPDATED confirmation ──
   // Syncs students.email when Supabase confirms the email (email_confirmed_at set).
   // Runs on mount AND on future auth events to handle the magic link callback timing:
@@ -16431,7 +16443,16 @@ var prevLeague=getLeague(c.weeklyXp);
     // d'Entraînement, Ligue) — le TutorialTour séparé a été supprimé.
     // Do NOT move this push earlier in the onboarding (e.g. to Battle Report)
     // or the narrator would fire mid-flow and confuse the consent/scan sequence.
-    pushNarratorMoment(u,"verdict");
+    //
+    // Si l'user arrive via deep link landing (?upgrade=...), on diffère le
+    // verdict : il jouerait par-dessus l'UpgradeScreen, ce qui casse le flow.
+    // Un useEffect watch tab==="home" et déclenche le verdict à la 1ère
+    // arrivée Home (post-paiement, ou si l'user navigue manuellement).
+    var pendingUpgrade=null;
+    try{pendingUpgrade=sessionStorage.getItem("toeic-arena-pending-upgrade");}catch(e){}
+    if(!pendingUpgrade){
+      pushNarratorMoment(u,"verdict");
+    }
     if(firstNav){setTimeout(function(){
       // firstNav may be a tab id ("home"|"games"|"train"|"league"|"profile"|"mentor")
       // or a sub-page id ("drill"|"tavern"|"lisP1"...). Phase E (scan-v2) added tab routing
