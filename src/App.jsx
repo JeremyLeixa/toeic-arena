@@ -15883,6 +15883,46 @@ useEffect(function(){
     }catch(e){console.warn("[stripe] return handling error:",e);}
   },[]);
 
+  // ── Landing CTA deep link → in-app upgrade flow ──
+  // Le landing Hostinger envoie les CTAs "Acheter le Pass" / "S'abonner" vers
+  // ?upgrade=pass3m ou ?upgrade=monthly. On stocke l'intention en sessionStorage
+  // (survit a l'onboarding) puis on route vers UpgradeScreen des que u est pret.
+  // Pourquoi pas Stripe Payment Link direct : webhook ne recoit pas de
+  // supabase_user_id donc l'access_level ne se propage pas. Le deep link
+  // reutilise le flow checkout in-app valide 2026-05-13 (natural-key match).
+  useEffect(function(){
+    try{
+      var params=new URLSearchParams(window.location.search);
+      var upgrade=params.get("upgrade");
+      if(upgrade==="monthly"||upgrade==="pass3m"){
+        sessionStorage.setItem("toeic-arena-pending-upgrade",upgrade);
+        var url=new URL(window.location.href);
+        url.searchParams.delete("upgrade");
+        window.history.replaceState({},"",url.toString());
+      }
+    }catch(e){console.warn("[upgrade-deeplink] caught:",e&&e.message);}
+  },[]);
+
+  // Watch u being ready + pending upgrade intent -> navigate to UpgradeScreen.
+  // Si user deja premium, on route vers Profile (pas re-paiement). Fire 1x via
+  // sessionStorage clear avant navigation. Note : on n'auto-selectionne pas le
+  // plan dans UpgradeScreen V1 (les 2 cards sont visibles, l'user re-clique).
+  useEffect(function(){
+    if(!u)return;
+    try{
+      var pending=sessionStorage.getItem("toeic-arena-pending-upgrade");
+      if(!pending)return;
+      sessionStorage.removeItem("toeic-arena-pending-upgrade");
+      var alreadyPremium=u.accessLevel==="premium_monthly"||(u.accessLevel==="premium_pass"&&u.accessExpiresAt&&new Date(u.accessExpiresAt)>new Date());
+      if(alreadyPremium){
+        sT("profile");
+        return;
+      }
+      sT("profile");
+      sSP("upgrade");
+    }catch(e){console.warn("[upgrade-deeplink] u-watch caught:",e&&e.message);}
+  },[u]);
+
   // ── Phase 1 Magic Link — email sync on USER_UPDATED confirmation ──
   // Syncs students.email when Supabase confirms the email (email_confirmed_at set).
   // Runs on mount AND on future auth events to handle the magic link callback timing:
