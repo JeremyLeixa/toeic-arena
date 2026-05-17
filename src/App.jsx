@@ -490,7 +490,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-11-linking-bridge";
+var BUILD_ID="2026-05-17-mock-autosave";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -8359,6 +8359,7 @@ function MockTest(p){
   var[ans,setAns]=useState({p5:p5Qs.map(function(){return -1;}),p6:p6Texts.map(function(t){var n=0;t.parts.forEach(function(pt){if(pt.blank)n++;});return Array(n).fill(-1);}),p7:p7Passages.map(function(ps){return ps.questions.map(function(){return -1;});})});
   var[timeLeft,setTimeLeft]=useState(TOTAL_TIME);
   var[result,setResult]=useState(null);
+  var[xpGrant,setXpGrant]=useState(null); // {gxp,mult,timeGateOk} figés au submit
   var[reviewMode,setReviewMode]=useState(false);
   var[reviewSection,setReviewSection]=useState("p5");
   var[reviewIdx,setReviewIdx]=useState(0);
@@ -8389,8 +8390,21 @@ function MockTest(p){
     var totalScore=p5Score+p6Score+p7Score;
     var toeic=estimateToeic(totalScore,totalQ);
     var timeUsed=TOTAL_TIME-timeLeft;
-    var res={date:today(),score:totalScore,total:totalQ,p5:{score:p5Score,total:p5Qs.length},p6:{score:p6Score,total:p6BlankCount},p7:{score:p7Score,total:p7QCount},toeicEstimate:toeic,timeUsed:timeUsed};
+    var res={date:today(),score:totalScore,total:totalQ,p5:{score:p5Score,total:p5Qs.length},p6:{score:p6Score,total:p6BlankCount},p7:{score:p7Score,total:p7QCount},toeicEstimate:toeic,timeUsed:timeUsed,mockId:mockId};
     setResult(res);setPhase("done");
+    // GARDE : persister IMMÉDIATEMENT le résultat, pas au clic "Save & Exit".
+    // Avant ce fix, un élève qui consultait la révision puis fermait l'app
+    // perdait tout son Mock Test (bug Yannou esgi2527, 2026-05-17).
+    var pctV=totalQ>0?Math.round(totalScore/totalQ*100):0;
+    var resXp=50+totalScore*5+(pctV>=80?50:0);
+    // Fige les valeurs XP d'affichage AVANT la persistance : p.done incrémente
+    // dailyModSessions, donc lire ce compteur après fausserait l'affichage.
+    var tgOk=timeUsed>=300;
+    var dms0=p.u.dailyModSessions||{};
+    var sc0=dms0["mock"+mockId+"_"+today()]||0;
+    var mult0=sc0===0?1:sc0===1?0.40:0;
+    setXpGrant({gxp:tgOk?Math.round(resXp*mult0):0,mult:mult0,timeGateOk:tgOk});
+    try{p.done(res,resXp);}catch(e){console.warn("[MockTest] persist failed:",e&&e.message);}
   }
 
   // ── Navigation ──
@@ -8553,7 +8567,6 @@ function MockTest(p){
     var grade=pct>=80?"Excellent!":pct>=65?"Good job!":pct>=50?"Keep going!":"More training needed";
     var gradeIcon=pct>=80?"👑":pct>=65?"⚔️":pct>=50?"🛡️":"📖";
     var gradeCol=pct>=80?"var(--gold)":pct>=65?"var(--green)":pct>=50?"var(--orange)":"var(--red)";
-    var xp=50+result.score*5+(pct>=80?50:0);
 
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",textAlign:"center"}}>
       <div style={{fontSize:56,marginBottom:12,animation:"countUp .6s"}}>{gradeIcon}</div>
@@ -8587,12 +8600,9 @@ function MockTest(p){
       </div>
 
       {(function(){
-        var timeGateOk=(result.timeUsed||0)>=300;
-        var modId2="mock"+mockId;
-        var dms=p.u.dailyModSessions||{};
-        var sessCount=dms[modId2+"_"+today()]||0;
-        var mult=sessCount===0?1:sessCount===1?0.40:0;
-        var gxp=timeGateOk?Math.round(xp*mult):0;
+        var timeGateOk=xpGrant?xpGrant.timeGateOk:(result.timeUsed||0)>=300;
+        var mult=xpGrant?xpGrant.mult:1;
+        var gxp=xpGrant?xpGrant.gxp:0;
         if(!timeGateOk)return(<div style={{marginBottom:20}}>
           <div className="out" style={{fontSize:16,fontWeight:700,color:"var(--t3)"}}>+0 XP</div>
           <div style={{fontSize:11,color:"var(--red)",marginTop:2}}>Completed in under 5 min — XP not counted</div>
@@ -8611,7 +8621,7 @@ function MockTest(p){
       })()}
 
       <button className="btn1" onClick={function(){setReviewMode(true);setReviewSection("p5");setReviewIdx(0);}}>📖 Review Answers</button>
-      <button className="btn2" onClick={function(){result.mockId=mockId;p.done(result,xp);}} style={{marginTop:10,width:"100%"}}>Save & Exit</button>
+      <button className="btn2" onClick={p.back} style={{marginTop:10,width:"100%"}}>Exit</button>
     </div>);
   }
 
@@ -16560,7 +16570,10 @@ var prevLeague=getLeague(c.weeklyXp);
     if(result.mockId==="2"||result.mockId===2)grantChestLocal("mock_2","champion");
     if(result.mockId==="3"||result.mockId===3)grantChestLocal("mock_3","champion");
     if(result.mockId==="boss")grantChestLocal("boss_test","legendaire");
-    sv(c);sSP(null);sT("train");
+    // Pas de navigation ici : mockDone est appelé depuis submitTest() pendant
+    // que l'écran de résultats reste affiché. La navigation se fait via le
+    // bouton "Exit" / la révision (voir GARDE dans MockTest.submitTest).
+    sv(c);
   }
   function gameDone(modeKey,result,xp){
     // Score-based games (WordFall, SpeedMatch, Duel) have no meaningful accuracy
