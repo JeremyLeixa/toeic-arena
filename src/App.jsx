@@ -293,7 +293,7 @@ function getEffectiveLeague(wxp,ms){
 }
 // ─── FREEMIUM: modules available in visitor/free mode ───
 var FREE_MODULES = ["daily","drill","csess","lisP2","stratquiz","strats","gramref","wfall","tavern"];
-var FREE_FLASHCARD_DOMAINS = ["finance","travel","office"];
+var FREE_FLASHCARD_DOMAINS = ["finance","travel","office","linking"];
 
 // ─── FEEDBACK FORM: catalog of modules grouped by category ───
 // Used by the in-app feedback form (Profile → Send feedback) and by the
