@@ -308,16 +308,23 @@ export var CHEAT_SHEETS = {
 //   kind="cheat_sheet":{chance} → 0..1, pick un sheet non-owned
 //   kind="duo"       : {types:[...]} → ouvre N slots cosmetic en série (utilisé Légendaire : skin + frame/title)
 export var DROP_TABLES = {
+  // Arena Shop P1 (2026-05-29) — Daric slot is the first reveal of every chest.
+  // GUARANTEED, never a fallback : every chest opening accrues Darics, which is
+  // what unlocks Shop access from day 1 instead of waiting on duplicate farming.
+  // Amounts ladder 30/90/250/700 — see project_shop_design.md for the calibration.
   novice:[
+    {kind:"daric",amount:30},
     {kind:"xp",min:50,max:150},
     {kind:"token",pool:["diminishing_bypass","streak_shield","daily_reroll"],count:1},
   ],
   guerrier:[
+    {kind:"daric",amount:90},
     {kind:"xp",min:200,max:400},
     {kind:"cosmetic",oneOf:["frame","title"]},
     {kind:"token",pool:["diminishing_bypass","streak_shield","daily_reroll"],count:2},
   ],
   champion:[
+    {kind:"daric",amount:250},
     {kind:"xp",min:500,max:800},
     // V2 spec : Champion drop la 4 cosmetic types (avatar/skin/frame/title) min rare.
     {kind:"cosmetic",oneOf:["avatar","skin","frame","title"],minRarity:"rare"},
@@ -325,6 +332,7 @@ export var DROP_TABLES = {
     {kind:"token",pool:["diminishing_bypass","daily_reroll","mock_reset","endless_resurrect"],count:3},
   ],
   legendaire:[
+    {kind:"daric",amount:700},
     {kind:"xp",min:1000,max:1500},
     // V2 spec : Légendaire drop avatar OR skin legend rarity (avatar inclus, conforme matrice)
     {kind:"cosmetic",oneOf:["avatar","skin"],minRarity:"legend"},
@@ -366,6 +374,12 @@ export function pickRewards(chestType, owned){
   var ownedSheets=owned.cheatSheets||[], tokens=owned.tokens||{};
 
   table.forEach(function(slot){
+    if(slot.kind==="daric"){
+      // Arena Shop P1 — flat amount per slot, no RNG. The grant itself happens
+      // in doOpenChest via grantMarks() after openChestFromPending sums totalDarics.
+      rewards.push({type:"daric",amount:slot.amount||0});
+      return;
+    }
     if(slot.kind==="xp"){
       var xp=slot.min+Math.floor(Math.random()*(slot.max-slot.min+1));
       rewards.push({type:"xp",id:null,xp:xp});
@@ -702,6 +716,7 @@ export async function openChestFromPending(pendingChest, pityCount, owned){
   // Pity reset on Champion/Légendaire chests (any non-novice/guerrier roll)
   var newPity=(ct==="novice"||ct==="guerrier")?(pityCount+1):0;
   var totalXp=0;
+  var totalDarics=0; // Arena Shop P1 — aggregated from {type:"daric"} reward slots
   var un=pendingChest.user_name, cc=pendingChest.class_code;
 
   try{
@@ -710,6 +725,12 @@ export async function openChestFromPending(pendingChest, pityCount, owned){
       var r=rewards[i];
       if(r.type==="xp"){
         totalXp+=r.xp||0;
+        continue;
+      }
+      if(r.type==="daric"){
+        // Aggregated here, granted server-side by doOpenChest via grantMarks RPC
+        // (atomic increment + marks_log entry). Source is "chest" + trigger_source.
+        totalDarics+=r.amount||0;
         continue;
       }
       if(r.type==="token"){
@@ -758,6 +779,7 @@ export async function openChestFromPending(pendingChest, pityCount, owned){
     rarityLabel:RARITIES[tier].label,
     rewards:rewards,
     totalXp:totalXp,
+    totalDarics:totalDarics,
     newPityCount:newPity,
   };
 }

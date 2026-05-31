@@ -490,7 +490,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-17-mock-autosave";
+var BUILD_ID="2026-05-29-arena-marks-p1";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -566,6 +566,10 @@ function supaToLocal(data){
     // Personalization Phase 1 (2026-05-05) — opt-in goal-setting (Profile editor)
     targetToeic: data.target_toeic || null,
     targetDate: data.target_date || null,
+    // Arena Shop P1 (2026-05-29) — Daric currency. READ-ONLY mirror of the
+    // server-authoritative students.arena_marks column. Mutated ONLY by the
+    // grant_marks / spend_marks RPCs, never by save() (see guard in save()).
+    arenaMarks: data.arena_marks || 0,
   };
 }
 
@@ -701,6 +705,12 @@ async function save(d){
     // Personalization Phase 1 (2026-05-05) — opt-in goal-setting
     target_toeic:d.targetToeic||null,
     target_date:d.targetDate||null,
+    // Arena Shop P1 (2026-05-29) — DELIBERATELY NO arena_marks HERE.
+    // The currency is server-authoritative: only grant_marks/spend_marks RPCs
+    // mutate students.arena_marks via atomic increments. save() does a full-row
+    // UPDATE — including arena_marks would CLOBBER any RPC increment that landed
+    // between a client read and the next save() (classic lost-update). Reverting
+    // this (adding arena_marks to the payload) silently erases earned Darics.
   };
   var cc=d.classCode||"visitor";
   try{
@@ -764,7 +774,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null,targetToeic:null,targetDate:null};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null,targetToeic:null,targetDate:null,arenaMarks:0};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot,catStats){
@@ -3080,6 +3090,20 @@ function AchToast(p){if(!p.v)return null;
       <div style={{fontSize:12,color:"var(--t2)"}}>{p.v.desc}</div>
     </div>
   </div>);}
+
+// Arena Shop P1 (2026-05-29) — Daric grant toast. Sits below XpToast (top:118)
+// so both can coexist when a chest open or focus completion fires alongside XP.
+function MarksToast(p){if(!p.v)return null;
+  return(<div style={{position:"fixed",top:118,left:"50%",transform:"translateX(-50%)",zIndex:200,animation:"xpPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
+    <div style={{background:"linear-gradient(135deg,#e8c45a,#a8801f)",color:"#1a1208",padding:"8px 20px",borderRadius:99,fontWeight:800,fontSize:18,boxShadow:"0 4px 20px rgba(232,196,90,.4)",display:"inline-flex",alignItems:"center",gap:7}} className="out"><GIcon name="daric" size={18} color="#1a1208"/> +{p.v} Darics</div>
+  </div>);}
+
+// Arena Shop P1 (2026-05-29) — Daric wallet pill. Reusable in Profil hero now,
+// Shop sticky-header in P2. Gold palette, NOT skin-aware (currency is a fixed
+// brand element, like the XP gold, independent of equipped skin).
+function DaricPill(p){
+  return(<span style={{fontSize:12,display:"inline-flex",alignItems:"center",gap:5,background:"rgba(232,196,90,.1)",color:"#c9a23a",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(232,196,90,.25)",fontWeight:700}}><GIcon name="daric" size={13} color="#c9a23a"/> {p.marks||0}</span>);
+}
 
 function XpToast(p){if(!p.v)return null;
   var info=typeof p.v==="object"?p.v:{total:p.v,base:p.v,bonuses:[]};
@@ -5919,7 +5943,7 @@ function PrepDrill(p){
   },[]);
   var prepLabels={for:"Responsibility, eligibility, purpose",in:"Involvement, interest, results",with:"Compliance, familiarity, association",on:"Dependence, reliance",of:"Composition, charge, capability",to:"Relation, addition, attribution"};
 
-  function doAns(pr){sPk(pr);if(pr===items[ci].prep){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function doAns(pr){sPk(pr);var it=items[ci];var ok=pr===it.prep||(it.alts&&it.alts.indexOf(pr)>=0);if(ok){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
 
   if(ph==="menu")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
@@ -5964,7 +5988,7 @@ function PrepDrill(p){
       <div style={{fontSize:12,color:"var(--t3)",marginTop:6}}>({it.type==="verb"?"verb":it.type==="adj"?"adjective":"expression"} + preposition)</div></div>
     <div style={{display:"grid",gridTemplateColumns:"repeat("+Math.min(allPreps.length,4)+", 1fr)",gap:8}}>
       {allPreps.map(function(pr){
-        var isCor=pr===it.prep;var isPick=pick===pr;var show=ph==="fb";
+        var isCor=pr===it.prep||(it.alts&&it.alts.indexOf(pr)>=0);var isPick=pick===pr;var show=ph==="fb";
         var bg="var(--bg2)";var bd="var(--bdr)";var col="var(--t1)";
         if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";col="var(--green)";}
         else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";col="var(--red)";}
@@ -5974,8 +5998,8 @@ function PrepDrill(p){
     </div>
     {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
       <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-          <p style={{fontSize:14,color:"var(--t1)"}}><strong>{it.base} {it.prep}</strong></p>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+          <p style={{fontSize:14,color:"var(--t1)"}}><strong>{it.base} {it.prep}</strong>{it.alts&&it.alts.length?<span style={{color:"var(--t2)",fontWeight:500}}>{" / "}<strong style={{color:"var(--t1)"}}>{it.base} {it.alts.join(" / ")}</strong>{" (both accepted)"}</span>:null}</p>
           <SpeakBtn text={it.base+" "+it.prep} size={26}/></div>
         <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
           <p style={{fontSize:13,color:"var(--t2)",fontStyle:"italic",flex:1}}>"{it.ex}"</p>
@@ -6981,7 +7005,7 @@ function TimeSim(p){
 
 // ─── PART 6 TEXT COMPLETION ───
 function Part6Drill(p){
-  var texts=useMemo(function(){return shuffle(PART6_TEXTS).slice(0,6);},[]);
+  var texts=useMemo(function(){return shuffle(PART6_TEXTS).slice(0,4);},[]);
   var[ti,sTi]=useState(0);var[bi,sBi]=useState(0);var[sc,sSc]=useState(0);var[totalB,sTB]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
@@ -7098,7 +7122,7 @@ function Part6Drill(p){
 
 // ─── PART 7 READING COMPREHENSION ───
 function Part7Read(p){
-  var passages=useMemo(function(){return shuffle(PART7_PASSAGES).filter(function(p){return p&&p.questions&&p.questions.length>0;}).slice(0,7);},[]);
+  var passages=useMemo(function(){return shuffle(PART7_PASSAGES).filter(function(p){return p&&p.questions&&p.questions.length>0;}).slice(0,4);},[]);
   var[pi,sPi]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
   var[showQPreview,setShowQPreview]=useState(false);var[showText,setShowText]=useState(false);
@@ -8741,6 +8765,22 @@ function GamesHub(p){
       .neq("name",GHOST_NAME)
       .then(function(res){
         if(res.error||!res.data){console.warn("[games-leaderboard]",res.error&&res.error.message);return;}
+        // Race-proofing 2026-05-26 : the fetch on mount can race the save() triggered
+        // by gameDone() (sv() awaits sU but save() is fire-and-forget). Result : the
+        // student's own row in res.data may be stale by a few hundred ms. Substitute
+        // the current user's row with the in-memory state so the leaderboard reflects
+        // their latest record immediately on hub return.
+        var myName=p.u&&p.u.name;
+        var rows=res.data;
+        if(myName){
+          rows=res.data.map(function(r){
+            if(r.name!==myName)return r;
+            return Object.assign({},r,{
+              game_scores:(p.u.gameScores&&Object.keys(p.u.gameScores).length)?p.u.gameScores:r.game_scores,
+              module_scores:(p.u.moduleScores&&Object.keys(p.u.moduleScores).length)?p.u.moduleScores:r.module_scores,
+            });
+          });
+        }
         function bestSessionFromHistory(ms,modId){
           var m=ms&&ms[modId];if(!m||!m.history||!m.history.length)return null;
           var best=null;
@@ -8756,23 +8796,23 @@ function GamesHub(p){
           return winner&&winVal!=null?{name:winner.name,val:winVal}:null;
         }
         var bests={};
-        var tav=pick(res.data,function(r){var b=bestSessionFromHistory(r.module_scores,"tavern");return b?b.correct:null;},"max");
-        var tavTot=null;if(tav){res.data.forEach(function(r){if(r.name===tav.name){var b=bestSessionFromHistory(r.module_scores,"tavern");if(b)tavTot=b.total;}});}
+        var tav=pick(rows,function(r){var b=bestSessionFromHistory(r.module_scores,"tavern");return b?b.correct:null;},"max");
+        var tavTot=null;if(tav){rows.forEach(function(r){if(r.name===tav.name){var b=bestSessionFromHistory(r.module_scores,"tavern");if(b)tavTot=b.total;}});}
         if(tav)bests.tavern={name:tav.name,label:tav.val+"/"+(tavTot||15)};
-        var sm=pick(res.data,function(r){return r.game_scores&&r.game_scores.matchEasy?r.game_scores.matchEasy.time:null;},"min");
+        var sm=pick(rows,function(r){return r.game_scores&&r.game_scores.matchEasy?r.game_scores.matchEasy.time:null;},"min");
         if(sm)bests.matchE={name:sm.name,label:sm.val+"s"};
-        var wf=pick(res.data,function(r){return r.game_scores&&r.game_scores.wordFall?r.game_scores.wordFall.score:null;},"max");
+        var wf=pick(rows,function(r){return r.game_scores&&r.game_scores.wordFall?r.game_scores.wordFall.score:null;},"max");
         if(wf)bests.wfall={name:wf.name,label:wf.val+" pts"};
-        var sb=pick(res.data,function(r){var b=bestSessionFromHistory(r.module_scores,"sbuild");return b?b.correct:null;},"max");
-        var sbTot=null;if(sb){res.data.forEach(function(r){if(r.name===sb.name){var b=bestSessionFromHistory(r.module_scores,"sbuild");if(b)sbTot=b.total;}});}
+        var sb=pick(rows,function(r){var b=bestSessionFromHistory(r.module_scores,"sbuild");return b?b.correct:null;},"max");
+        var sbTot=null;if(sb){rows.forEach(function(r){if(r.name===sb.name){var b=bestSessionFromHistory(r.module_scores,"sbuild");if(b)sbTot=b.total;}});}
         if(sb)bests.sbuild={name:sb.name,label:sb.val+"/"+(sbTot||10)};
-        var ab=pick(res.data,function(r){var b=bestSessionFromHistory(r.module_scores,"ablitz");return b?b.correct:null;},"max");
-        var abTot=null;if(ab){res.data.forEach(function(r){if(r.name===ab.name){var b=bestSessionFromHistory(r.module_scores,"ablitz");if(b)abTot=b.total;}});}
+        var ab=pick(rows,function(r){var b=bestSessionFromHistory(r.module_scores,"ablitz");return b?b.correct:null;},"max");
+        var abTot=null;if(ab){rows.forEach(function(r){if(r.name===ab.name){var b=bestSessionFromHistory(r.module_scores,"ablitz");if(b)abTot=b.total;}});}
         if(ab)bests.ablitz={name:ab.name,label:ab.val+"/"+(abTot||10)};
-        var cl=pick(res.data,function(r){var b=bestSessionFromHistory(r.module_scores,"clue");return b?b.correct:null;},"max");
-        var clTot=null;if(cl){res.data.forEach(function(r){if(r.name===cl.name){var b=bestSessionFromHistory(r.module_scores,"clue");if(b)clTot=b.total;}});}
+        var cl=pick(rows,function(r){var b=bestSessionFromHistory(r.module_scores,"clue");return b?b.correct:null;},"max");
+        var clTot=null;if(cl){rows.forEach(function(r){if(r.name===cl.name){var b=bestSessionFromHistory(r.module_scores,"clue");if(b)clTot=b.total;}});}
         if(cl)bests.clue={name:cl.name,label:cl.val+"/"+(clTot||10)};
-        var du=pick(res.data,function(r){return r.game_scores&&r.game_scores.duel?r.game_scores.duel.wins:null;},"max");
+        var du=pick(rows,function(r){return r.game_scores&&r.game_scores.duel?r.game_scores.duel.wins:null;},"max");
         if(du&&du.val>0)bests.duel={name:du.name,label:du.val+" win"+(du.val>1?"s":"")};
         setClassBests(bests);
       });
@@ -9164,11 +9204,11 @@ function SentenceBuilder(p){
 
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
     <style>{SBD_CSS}</style>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-      {ph==="q"&&<span className="out" style={{fontSize:20,fontWeight:800,color:timerCol}}>{timer}s</span>}
-      <div/>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+      <button className="back-btn" onClick={function(){clearInterval(timerRef.current);p.back();}}>{"←"} Back</button>
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{TOTAL}</span>
     </div>
+    {ph==="q"&&<div style={{textAlign:"left",marginBottom:8}}><span className="out" style={{fontSize:20,fontWeight:800,color:timerCol}}>{timer}s</span></div>}
     <Bar value={ci} max={TOTAL} h={4} color="linear-gradient(90deg,#3b82f6,#8b5cf6)"/>
 
     {ph==="q"&&<div style={{height:4,background:"var(--bg3)",borderRadius:2,marginTop:8,marginBottom:20,overflow:"hidden"}}>
@@ -9222,7 +9262,6 @@ function SentenceBuilder(p){
       </div>
       <button className="btn1" onClick={next} style={{marginTop:12}}>{ci<items.length-1?"Next":"See Results"}</button>
     </div>}
-    <button className="btn2" onClick={function(){clearInterval(timerRef.current);p.back();}} style={{marginTop:12,width:"100%"}}>Back</button>
   </div>);
 }
 
@@ -11147,6 +11186,12 @@ function ChestRewardCard(p){
     visual=<span style={{fontSize:72}}>{"💎"}</span>;
     name="+"+(r.xp||0)+" XP";
     caption=r.fallback?"XP gem (collection complete)":"XP gem — bonus added!";
+  }else if(r.type==="daric"){
+    // Arena Shop P1 — Daric reward card. Same visual treatment as a token/gem,
+    // gold palette to differentiate from XP cyan/orange. Grant is server-side.
+    visual=<div style={{width:96,height:96,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%,#fce8a8,#e8c45a 50%,#8a6818)",border:"3px solid #6b4f10",boxShadow:"0 0 28px rgba(232,196,90,.55), inset 0 -8px 16px rgba(0,0,0,.35)",display:"flex",alignItems:"center",justifyContent:"center"}}><GIcon name="daric" size={56} color="#3a2a08"/></div>;
+    name="+"+(r.amount||0)+" Darics";
+    caption="Arena currency — spend in the Shop";
   }else if(r.type==="avatar"&&AVATARS[r.id]){
     visual=<AvatarMedal avatarId={r.id} size={96}/>;
     name=AVATARS[r.id].name;caption="New avatar unlocked";
@@ -12679,8 +12724,8 @@ function ListenHub(p){
   var parts=[
     {id:"lisP1",n:"Part 1 — Photographs",d:"10 random / "+LISTENING_P1.length,i:"eye-target",bg:"linear-gradient(135deg,#22c55e,#06b6d4)"},
     {id:"lisP2",n:"Part 2 — Question-Response",d:"10 random / "+LISTENING_P2.length,i:"chat-bubble",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
-    {id:"lisP3",n:"Part 3 — Conversations",d:"10 random / "+LISTENING_P3.length,i:"conversation",bg:"linear-gradient(135deg,#8b5cf6,#ec4899)"},
-    {id:"lisP4",n:"Part 4 — Talks",d:"10 random / "+LISTENING_P4.length,i:"public-speaker",bg:"linear-gradient(135deg,#06b6d4,#3b82f6)"},
+    {id:"lisP3",n:"Part 3 — Conversations",d:"6 random / "+LISTENING_P3.length,i:"conversation",bg:"linear-gradient(135deg,#8b5cf6,#ec4899)"},
+    {id:"lisP4",n:"Part 4 — Talks",d:"6 random / "+LISTENING_P4.length,i:"public-speaker",bg:"linear-gradient(135deg,#06b6d4,#3b82f6)"},
   ];
   return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="ringing-bell" size={60} color="var(--cyan)"/></div>
@@ -12910,7 +12955,7 @@ function ListenP1(p){
 
 // ─── PART 3 CONVERSATIONS ───
 function ListenP3(p){
-  var items=useMemo(function(){return shuffle(LISTENING_P3).slice(0,10);},[]);
+  var items=useMemo(function(){return shuffle(LISTENING_P3).slice(0,6);},[]);
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curLine,setCurLine]=useState(-1);
@@ -13022,7 +13067,7 @@ function ListenP3(p){
 
 // ─── PART 4 TALKS ───
 function ListenP4(p){
-  var items=useMemo(function(){return shuffle(LISTENING_P4).slice(0,10);},[]);
+  var items=useMemo(function(){return shuffle(LISTENING_P4).slice(0,6);},[]);
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);
@@ -15227,6 +15272,7 @@ function Profile(p){
 </span>
 {lg.locked&&<span style={{fontSize:11,color:"var(--t3)",padding:"3px 10px",borderRadius:20,background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.15)"}}>Legend tier: reach TOEIC {lg.lockedScore}</span>}
           <span style={{fontSize:12,background:"rgba(255,100,0,.1)",color:"#ff6428",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(255,100,0,.2)"}}>🔥 {u.streak}</span>
+          <DaricPill marks={u.arenaMarks}/>
         </div>
       </div>
 
@@ -15548,7 +15594,7 @@ export default function App(){
       return t&&t.length>=32?t:null;
     }catch(e){return null;}
   });
-  var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);
+  var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);var[marksToast,setMarksToast]=useState(null);
   var[pendingChestCount,setPendingChestCount]=useState(0);var[chestModal,setChestModal]=useState(null);var[chestResult,setChestResult]=useState(null);var[chestPending,setChestPending]=useState([]);
   var[chestToastQueue,setChestToastQueue]=useState([]);var[activeChestToast,setActiveChestToast]=useState(null);var chestToastIdRef=useRef(0);
   var[showTip,setShowTip]=useState(false);
@@ -15738,6 +15784,10 @@ useEffect(function(){
     if(ref.lastDate!==td){
       ref.lastDate=td;
       var s=u.streak||0;
+      // Arena Shop P1 — 5 Darics per day, streak >= 1. Server-idempotent per
+      // calendar day via source_detail="login_"+td. Reload on the same day
+      // hits the dedup in grant_marks and is a silent no-op.
+      if(s>=1)grantMarks(5,"login","login_"+td,true);
       if(s>=3&&s%3===0){
         grantChestLocal("streak_login_"+td,"novice");
       }
@@ -15786,6 +15836,8 @@ useEffect(function(){
       if(m.total>=50&&(m.correct/m.total)>=0.8){
         masteryRef.current[modId]=true;
         grantChestLocal("mastery_"+modId,"champion");
+        // Arena Shop P1 — 50 Darics, one-shot per module ever.
+        grantMarks(50,"mastery","mastery_marks_"+modId,true);
       }
     });
   },[u&&u.moduleScores]);
@@ -15806,6 +15858,8 @@ useEffect(function(){
       var currentToeic=estimateTOEICScore(uu.moduleScores||{}).total;
       if(currentToeic-prevToeic>=25){
         grantChestLocal("weekly_toeic_"+wkId,"guerrier");
+        // Arena Shop P1 — 50 Darics on +25 TOEIC week-over-week, 1×/week.
+        grantMarks(50,"toeic_weekly","weekly_toeic_marks_"+wkId,true);
       }
     }catch(e){console.warn("[CHEST V2] weekly TOEIC check error:",e&&e.message);}
   }
@@ -15826,11 +15880,16 @@ useEffect(function(){
         .order("xp_this_week",{ascending:false})
         .limit(3);
       if(!res.data||res.data.length===0)return;
-      var inTop3=res.data.some(function(s){
-        return s.student_name&&s.student_name.toLowerCase()===uu.name.toLowerCase();
+      // Arena Shop P1 — find exact rank (0/1/2) to graduate Daric reward 150/100/60.
+      // The existing chest grant stays unchanged (any top-3 position triggers it).
+      var rank=-1;
+      res.data.forEach(function(s,i){
+        if(s.student_name&&s.student_name.toLowerCase()===uu.name.toLowerCase())rank=i;
       });
-      if(inTop3){
+      if(rank>=0){
         grantChestLocal("podium_"+prevWk,"guerrier");
+        var podMarks=rank===0?150:rank===1?100:60;
+        grantMarks(podMarks,"podium","podium_marks_"+prevWk,true);
       }
     }catch(e){console.warn("[CHEST V2] podium check error:",e&&e.message);}
   }
@@ -16157,6 +16216,42 @@ useEffect(function(){
     var id=++chestToastIdRef.current;
     setChestToastQueue(function(q){return q.concat([{id:id,trigger:trigger,chestType:chestType}]);});
   }
+  // Arena Shop P1 (2026-05-29) — Daric currency grant wrapper.
+  // Server-authoritative via grant_marks RPC. Returns the delta actually applied
+  // (0 on idempotent no-op when p_unique=true and source_detail already exists).
+  // - unique=true for one-shot sources (mastery, achievement, weekly_toeic,
+  //   podium, focus, daily, login). source_detail must include the time window
+  //   (today() / weekId() / modId / a.id) so dedup is anchored to the right scope.
+  // - silent=true skips the toast (used by chest drops where the reveal modal
+  //   already shows the Daric card — avoids double-feedback).
+  // The functional sU update protects against stale-closure when grantMarks
+  // fires inside async callbacks that resolve after subsequent sv() calls.
+  function grantMarks(delta,source,sourceDetail,unique,silent){
+    if(!u||!u.name)return;
+    if(u.classCode==="visitor")return; // visitors are shop-blocked, no marks accrual
+    if(!delta||delta<=0)return;
+    var un=u.name,cc=u.classCode||"visitor";
+    supabase.rpc("grant_marks",{
+      p_user_name:un,p_class_code:cc,p_delta:delta,
+      p_source:source,p_source_detail:sourceDetail,p_unique:!!unique,
+    }).then(function(res){
+      if(res.error){console.warn("[MARKS] grant_marks RPC error:",res.error.message);return;}
+      var applied=(typeof res.data==="number")?res.data:0;
+      if(applied<=0)return; // server returned 0 → idempotent no-op, no toast
+      sU(function(prev){
+        if(!prev)return prev;
+        var c=JSON.parse(JSON.stringify(prev));
+        c.arenaMarks=(c.arenaMarks||0)+applied;
+        saveLocal(c);
+        return c;
+      });
+      if(!silent){
+        setMarksToast(applied);
+        setTimeout(function(){setMarksToast(null);},3500);
+      }
+    }).catch(function(e){console.warn("[MARKS] grant_marks exception:",e&&e.message);});
+  }
+
   function grantChestLocal(trigger,chestType){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"visitor";
@@ -16198,6 +16293,13 @@ useEffect(function(){
     c.gameScores.pityCount=result.newPityCount;
     if(result.totalXp>0){c.xp+=result.totalXp;c.weeklyXp+=result.totalXp;}
     sv(c);
+    // Arena Shop P1 — grant Darics via RPC after sv(). silent=true because the
+    // reveal modal already shows the Daric card ; no double-feedback toast.
+    // unique=false because each chest opening is a distinct grant event (the
+    // chest_log + pending_chests delete pair already guarantees no double-open).
+    if(result.totalDarics>0){
+      grantMarks(result.totalDarics,"chest",chest.trigger_source,false,true);
+    }
     setChestResult(result);haptic("chestOpen");
     // Narrator triggers on chest open. Both push to the queue but DON'T render
     // immediately — the overlay is gated on !chestModal (see main return +
@@ -16232,6 +16334,9 @@ function sv(d){
             // Coffre novice pour les découvertes (première session d'un sous-module)
             grantChestLocal("ach_novice_"+a.id,"novice");
           }
+          // Arena Shop P1 — 30 Darics per newly unlocked achievement, in addition
+          // to any tier-specific chest. One-shot via source_detail="ach_marks_"+a.id.
+          grantMarks(30,"achievement","ach_marks_"+a.id,true);
         }
       });
     }
@@ -16306,6 +16411,10 @@ function sv(d){
         var focus=computeTodayFocus(u);
         if(focus&&partOfModule(modId)===focus.partId){
           gatedXp=Math.round(gatedXp*1.25);
+          // Arena Shop P1 — 30 Darics for following the Mentor reco, 1×/day.
+          // source_detail="focus_"+today() → applyXpGates re-firing the same
+          // day on another focus module hits the server dedup, silent no-op.
+          grantMarks(30,"focus","focus_"+today(),true);
         }
       }catch(e){console.warn("[focus-boost] computation failed:",e&&e.message);}
     }
@@ -16589,7 +16698,14 @@ var prevLeague=getLeague(c.weeklyXp);
       if(result.won){grantWeeklyChest("duel_win","guerrier");
         if(result.winStreak>=3)grantWeeklyChest("duel_win3","champion");}
     } else {
-      var prev2=c.gameScores[modeKey];var dominated=!prev2||(result.time!==undefined?result.time<prev2.time:(result.score>prev2.score||(result.score===prev2.score&&result.maxCombo>(prev2.maxCombo||0))));if(dominated){c.gameScores[modeKey]=result;}else if(prev2&&result.maxCombo!==undefined&&result.maxCombo>(prev2.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev2,{maxCombo:result.maxCombo});}
+      // Defensive: if prev2 exists but the relevant field is missing/null (corrupted
+       // record after a partial save or tab-race overwrite), treat as no record and
+       // accept the new result. Without this, a malformed prev2 traps the student
+       // forever in a non-recordable state (Baptiste C / Speed Match incident 2026-05-26).
+       var prev2=c.gameScores[modeKey];
+       var prev2Stale=prev2&&(result.time!==undefined?(prev2.time==null):(prev2.score==null));
+       var dominated=!prev2||prev2Stale||(result.time!==undefined?result.time<prev2.time:(result.score>prev2.score||(result.score===prev2.score&&result.maxCombo>(prev2.maxCombo||0))));
+       if(dominated){c.gameScores[modeKey]=result;}else if(prev2&&result.maxCombo!==undefined&&result.maxCombo>(prev2.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev2,{maxCombo:result.maxCombo});}
       // Chest triggers: WordFall combos
       if(modeKey==="wordFall"&&result.maxCombo){
         if(result.maxCombo>=30)grantWeeklyChest("wfall_combo30","champion");
@@ -16601,7 +16717,7 @@ var prevLeague=getLeague(c.weeklyXp);
     }
     c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
-  function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");try{playJingleDaily();}catch(e){}
+  function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");grantMarks(10,"daily","daily_marks_"+today(),true);try{playJingleDaily();}catch(e){}
     // Track seen questions for anti-repetition
     if(!c.dailySeen)c.dailySeen=[];
     var todayQsArr=dailyQs(today(),c);
@@ -16691,7 +16807,7 @@ var prevLeague=getLeague(c.weeklyXp);
       </button>
     </div>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
 
   // Reset password : bypass complet du flow normal si l'URL a ?reset=<token>.
   // Doit être AVANT loading/teacher/onboard parce que le user peut être complètement
@@ -16768,7 +16884,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="lisP3")return pg(<ListenP3 u={u} nav={nav} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP3");}} back={function(){sSP("lis");}}/>);
   if(sp==="lisP4")return pg(<ListenP4 u={u} nav={nav} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"lisP4");}} back={function(){sSP("lis");}}/>);
 
-  return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}
+  return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}
     {!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
