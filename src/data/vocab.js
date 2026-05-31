@@ -573,7 +573,7 @@ export var VOCAB = [
     {id:"pp9",w:"comply WITH",d:"To act in accordance with rules or requests",e:"All employees must comply with safety regulations.",fr:"se conformer À"},
     {id:"pp10",w:"familiar WITH",d:"Having knowledge or experience of something",e:"Are you familiar with this software?",fr:"familier AVEC / connaître"},
     {id:"pp11",w:"associated WITH",d:"Connected or linked to something",e:"The risks associated with the project are minimal.",fr:"associé À / lié À"},
-    {id:"pp12",w:"depend ON",d:"To be determined or influenced by something",e:"The outcome depends on several factors.",fr:"dépendre DE"},
+    {id:"pp12",w:"depend ON",d:"To rely on something — the result is conditional on it",e:"The outcome depends on several factors.",fr:"dépendre DE"},
     {id:"pp13",w:"consist OF",d:"To be made up of particular parts",e:"The team consists of five members.",fr:"être composé DE / se composer DE"},
     {id:"pp14",w:"in charge OF",d:"Having responsibility or control over",e:"Mr. Park is in charge of the Tokyo office.",fr:"en charge DE / responsable DE"},
     {id:"pp15",w:"capable OF",d:"Having the ability to do something",e:"The machine is capable of producing 1,000 units per hour.",fr:"capable DE"},

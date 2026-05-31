@@ -127,7 +127,7 @@ export var PREP_COLLOCATIONS = [
   {base:"dependent",prep:"on",type:"adj",ex:"The launch date is dependent on regulatory approval."},
   {base:"proud",prep:"of",type:"adj",ex:"Management is proud of the team's quarterly performance."},
   {base:"afraid",prep:"of",type:"adj",ex:"Some clients are afraid of switching to the new platform."},
-  {base:"essential",prep:"to",type:"adj",ex:"Clear documentation is essential to onboarding new staff."},
+  {base:"essential",prep:"to",alts:["for"],type:"adj",ex:"Clear documentation is essential to onboarding new staff."},
   {base:"accustomed",prep:"to",type:"adj",ex:"Senior consultants are accustomed to international travel."},
   {base:"opposed",prep:"to",type:"adj",ex:"Several board members are opposed to the merger."},
   {base:"attached",prep:"to",type:"adj",ex:"Please find the invoice attached to this email."},
