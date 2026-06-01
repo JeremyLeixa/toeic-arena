@@ -23,7 +23,7 @@ import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
-import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, convertCosmeticDups, convertTokensToPremium, consumeToken } from "./data/chests.js";
+import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, convertCosmeticDups, convertTokensToPremium, consumeToken, SHOP_CATALOG, spendMarks } from "./data/chests.js";
 import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
@@ -490,7 +490,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-05-29-arena-marks-p1";
+var BUILD_ID="2026-06-01-shop-p2a";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -14008,6 +14008,156 @@ function generateInsight(u){
 
 // V2 step 5 — Conversions sub-view : trade duplicate cosmetics for tokens, or 5 non-premium
 // tokens for 1 premium. Mounted from Profile when view==="conversions".
+// ═══ ARENA SHOP (P2a, 2026-06-01) ═══
+// Spend Darics on shop-exclusive cosmetics, tokens, and cheat sheets. Conversions
+// (dups → token, tokens → premium) reachable via the in-shop Conversions sub-view
+// (reuses ConversionsView). Buying is atomic server-side (spend_marks RPC, via
+// p.buy → shopBuy). Owned one-shots grey out (anti-rebuy), tokens grey at cap. A
+// confirm step guards accidental spends (no refund on cosmetics by design). The
+// Shop entry point is visitor-blocked (currency never accrues for visitors).
+var SHOP_SECTIONS=[
+  {cat:"skin",label:"Skins"},
+  {cat:"frame",label:"Frames"},
+  {cat:"title",label:"Titles"},
+  {cat:"token",label:"Tokens"},
+  {cat:"cheat_sheet",label:"Cheat Sheets"},
+];
+function shopRarColor(rid){for(var i=0;i<RARITIES.length;i++){if(RARITIES[i].id===rid)return RARITIES[i].color;}return "var(--bdr)";}
+function shopItemName(item){
+  var m=item.cat==="skin"?SKINS:item.cat==="frame"?FRAMES:item.cat==="title"?TITLES:item.cat==="cheat_sheet"?CHEAT_SHEETS:item.cat==="token"?TOKEN_TYPES:null;
+  return (m&&m[item.ref]&&m[item.ref].name)||item.ref;
+}
+function shopItemDesc(item){
+  if(item.cat==="token")return (TOKEN_TYPES[item.ref]||{}).desc||"";
+  if(item.cat==="cheat_sheet")return "Cheat sheet — unlocks in your codex";
+  var r=item.rarity||"";return r.charAt(0).toUpperCase()+r.slice(1)+" · shop exclusive";
+}
+function ShopItemVisual(p){
+  var item=p.item;
+  if(item.cat==="skin"){var sk=SKINS[item.ref]||{};return(<div style={{width:52,height:52,borderRadius:13,background:"linear-gradient(135deg,"+(sk.hex||"#888")+","+(sk.dark||"#555")+")",border:"2px solid "+shopRarColor(item.rarity),boxShadow:"0 0 14px "+(sk.hex||"#888")+"66"}}/>);}
+  if(item.cat==="frame")return <AvatarMedal avatarId="champion" size={50} frameId={item.ref}/>;
+  if(item.cat==="title"){var ti=TITLES[item.ref]||{};return(<div style={{width:52,height:52,borderRadius:13,border:"2px solid "+(ti.color||"#888"),display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(180deg,#1a1208,#0a0604)"}}><span style={{fontSize:24,fontWeight:900,color:ti.color||"#888"}}>{"✦"}</span></div>);}
+  if(item.cat==="token"){var tk=TOKEN_TYPES[item.ref]||{};return <span style={{fontSize:36}}>{tk.icon}</span>;}
+  if(item.cat==="cheat_sheet"){var cs=CHEAT_SHEETS[item.ref]||{};return <span style={{fontSize:36}}>{cs.icon||"📜"}</span>;}
+  return null;
+}
+function Shop(p){
+  var u=p.u;
+  var [owned,setOwned]=useState(null);      // player_rewards rows (one-shot ownership)
+  var [toks,setToks]=useState({});          // token qty map (cap checks)
+  var [busy,setBusy]=useState(false);
+  var [confirmItem,setConfirmItem]=useState(null);
+  var [flash,setFlash]=useState(null);      // {ok, msg}
+  var [shopView,setShopView]=useState("shop"); // "shop" | "conversions"
+
+  function refreshOwned(){
+    Promise.all([
+      getOwnedRewards(u.name,u.classCode||"visitor"),
+      getOwnedTokens(u.name,u.classCode||"visitor"),
+    ]).then(function(arr){setOwned(arr[0]||[]);setToks(arr[1]||{});})
+    .catch(function(e){console.warn("[SHOP] refreshOwned failed:",e&&e.message);setOwned([]);});
+  }
+  useEffect(function(){refreshOwned();},[]);
+
+  function isOwned(item){
+    if(item.cat==="token"||!owned)return false;
+    return owned.some(function(r){return r.reward_type===item.cat&&r.reward_id===item.ref;});
+  }
+  function atCap(item){
+    if(item.cat!=="token")return false;
+    var cap=(TOKEN_TYPES[item.ref]&&TOKEN_TYPES[item.ref].cap)||1;
+    return (toks[item.ref]||0)>=cap;
+  }
+  function showFlash(ok,msg){setFlash({ok:ok,msg:msg});setTimeout(function(){setFlash(null);},2600);}
+
+  var ERRMAP={insufficient_marks:"Not enough Darics",already_owned:"Already owned",at_cap:"Already at maximum",no_student:"Account error",visitor:"Unavailable in visitor mode",empty_response:"No response, try again"};
+  function doBuy(item){
+    setConfirmItem(null);
+    if(busy)return;
+    setBusy(true);
+    Promise.resolve(p.buy(item)).then(function(res){
+      setBusy(false);
+      if(res&&res.ok){showFlash(true,"Acquired — "+shopItemName(item));refreshOwned();}
+      else{showFlash(false,ERRMAP[res&&res.error]||"Purchase failed, try again");}
+    });
+  }
+
+  // Conversions sub-view : reuse ConversionsView (its back calls setView(null) → return to shop)
+  if(shopView==="conversions"){
+    return(<ConversionsView u={u} setView={function(){setShopView("shop");refreshOwned();}} setAvatar={p.setAvatar}/>);
+  }
+
+  var marks=u.arenaMarks||0;
+  var loading=owned===null;
+  var goldBtn={background:"linear-gradient(135deg,#e8c45a,#a8801f)",color:"#1a1208"};
+  return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <button className="back-btn" onClick={p.back}>{"←"} Back</button>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,marginBottom:8}}>
+      <h1 className="out" style={{fontWeight:800,fontSize:23,margin:0,display:"flex",alignItems:"center",gap:8}}><GIcon name="daric" size={24} color="var(--gold)"/> Arena Shop</h1>
+      <DaricPill marks={marks}/>
+    </div>
+    <p style={{fontSize:12,color:"var(--t2)",marginTop:0,marginBottom:18,lineHeight:1.5}}>Spend Darics earned from chests and progression. Shop cosmetics never drop in chests.</p>
+
+    <button onClick={function(){setShopView("conversions");}} className="crd" style={{width:"100%",padding:"12px 14px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:18,background:"rgba(192,96,240,.05)",border:"1px solid rgba(192,96,240,.2)"}}>
+      <GIcon name="gem-necklace" size={22} color="#c060f0"/>
+      <div style={{flex:1,textAlign:"left"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#c060f0"}}>Conversions</div>
+        <div style={{fontSize:10,color:"var(--t2)"}}>Duplicates {"→"} tokens · 5 tokens {"→"} premium</div>
+      </div>
+      <span style={{color:"var(--t3)",fontSize:18}}>{"›"}</span>
+    </button>
+
+    {loading&&<p style={{color:"var(--t3)",textAlign:"center",padding:40}}>Loading shop...</p>}
+
+    {!loading&&SHOP_SECTIONS.map(function(sec){
+      var items=SHOP_CATALOG.filter(function(it){return it.cat===sec.cat;});
+      if(items.length===0)return null;
+      return(<div key={sec.cat} style={{marginBottom:22}}>
+        <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>{sec.label}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {items.map(function(item){
+            var ownedFlag=isOwned(item);
+            var capFlag=atCap(item);
+            var affordable=marks>=item.price;
+            var locked=ownedFlag||capFlag;
+            return(<div key={item.item_id} className="crd" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,opacity:(locked||!affordable)?.6:1}}>
+              <div style={{flexShrink:0,width:52,height:52,display:"flex",alignItems:"center",justifyContent:"center"}}><ShopItemVisual item={item}/></div>
+              <div style={{flex:1,minWidth:0,overflow:"hidden"}}>
+                <div style={{fontSize:14,fontWeight:700,color:"var(--t1)",marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{shopItemName(item)}</div>
+                <div style={{fontSize:10,color:"var(--t2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{shopItemDesc(item)}</div>
+              </div>
+              <div style={{flexShrink:0,textAlign:"right"}}>
+                {locked?(
+                  <span style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:.5}}>{ownedFlag?"Owned":"Max"}</span>
+                ):(
+                  <button onClick={function(){setConfirmItem(item);}} disabled={!affordable||busy}
+                    style={Object.assign({fontSize:12,fontWeight:800,padding:"8px 14px",borderRadius:99,border:"none",whiteSpace:"nowrap",cursor:affordable?"pointer":"not-allowed",display:"inline-flex",alignItems:"center",gap:4},affordable?goldBtn:{background:"rgba(224,82,82,.12)",color:"var(--red)"})}>
+                    <GIcon name="daric" size={13} color={affordable?"#1a1208":"var(--red)"}/> {item.price}
+                  </button>
+                )}
+              </div>
+            </div>);
+          })}
+        </div>
+      </div>);
+    })}
+
+    {confirmItem&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9998,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={function(){if(!busy)setConfirmItem(null);}}>
+      <div className="crd" style={{maxWidth:320,textAlign:"center",background:"var(--bg2)"}} onClick={function(e){e.stopPropagation();}}>
+        <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><ShopItemVisual item={confirmItem}/></div>
+        <h3 className="out" style={{fontSize:18,fontWeight:800,margin:"0 0 6px",color:"var(--t1)"}}>{shopItemName(confirmItem)}</h3>
+        <p style={{fontSize:13,color:"var(--t2)",margin:"0 0 16px"}}>Buy for <b style={{color:"var(--gold)"}}>{confirmItem.price}</b> Darics?</p>
+        <div style={{display:"flex",gap:10}}>
+          <button className="btn2" style={{flex:1}} disabled={busy} onClick={function(){setConfirmItem(null);}}>Cancel</button>
+          <button disabled={busy} onClick={function(){doBuy(confirmItem);}} style={Object.assign({flex:1,fontSize:14,fontWeight:800,padding:"12px",borderRadius:12,border:"none",cursor:"pointer"},goldBtn)}>{busy?"...":"Confirm"}</button>
+        </div>
+      </div>
+    </div>}
+
+    {flash&&<div style={{position:"fixed",bottom:80,left:"50%",transform:"translateX(-50%)",padding:"12px 18px",borderRadius:10,background:flash.ok?"rgba(46,180,100,.15)":"rgba(220,58,80,.15)",border:"1px solid "+(flash.ok?"var(--green)":"var(--red)"),color:flash.ok?"var(--green)":"var(--red)",fontSize:13,fontWeight:700,zIndex:1000,maxWidth:"90%",textAlign:"center"}}>{flash.msg}</div>}
+  </div>);
+}
+
 function ConversionsView(p){
   var u=p.u;
   var [rewardsRows,setRewardsRows]=useState(null);
@@ -15306,6 +15456,16 @@ function Profile(p){
         </button>
       </div>
 
+      {/* Arena Shop — transitory entry (P2a). Replaced by a real nav tile in P2b. */}
+      {u.classCode!=="visitor"&&<button onClick={function(){p.goShop&&p.goShop();}} className="crd" style={{width:"100%",padding:"14px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:20,background:"linear-gradient(135deg,rgba(232,196,90,.1),transparent)",border:"1px solid rgba(232,196,90,.3)"}}>
+        <GIcon name="daric" size={24} color="var(--gold)"/>
+        <div style={{flex:1,textAlign:"left"}}>
+          <div style={{fontSize:14,fontWeight:800,color:"var(--gold)"}}>Arena Shop</div>
+          <div style={{fontSize:10,color:"var(--t2)"}}>Spend your Darics — beta</div>
+        </div>
+        <DaricPill marks={u.arenaMarks}/>
+      </button>}
+
       {/* Chronicles — entry card (parchment themed) */}
       {(function(){
         var heard=(u.narrator&&u.narrator.heard)||[];
@@ -16252,6 +16412,20 @@ useEffect(function(){
     }).catch(function(e){console.warn("[MARKS] grant_marks exception:",e&&e.message);});
   }
 
+  // Arena Shop P2a (2026-06-01) — buy a catalog item. Atomic via spend_marks RPC.
+  // On success, align the local wallet mirror to the server-returned balance
+  // (authoritative — no optimistic guess). arena_marks stays out of save() (guarded).
+  function shopBuy(item){
+    if(!u||u.classCode==="visitor")return Promise.resolve({ok:false,error:"visitor"});
+    return spendMarks(u.name,u.classCode||"visitor",item).then(function(res){
+      if(res&&res.ok){
+        sU(function(prev){if(!prev)return prev;var c=JSON.parse(JSON.stringify(prev));c.arenaMarks=res.balance;saveLocal(c);return c;});
+        haptic("chest");
+      }
+      return res;
+    });
+  }
+
   function grantChestLocal(trigger,chestType){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"visitor";
@@ -16870,6 +17044,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="clue"){playBGM("bgm_clue");return pg(<ClueHunter u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"clue");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");if(sc===tot&&tot>0)grantWeeklyChest("clue_perfect","guerrier");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="ablitz")return pg(<AudioBlitz u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"ablitz");}} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);if(tot>0){var abPct=sc/tot;if(abPct>=0.9)grantWeeklyChest("ablitz_90","guerrier");else if(abPct>=0.7)grantWeeklyChest("ablitz_70","novice");}sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/>);
   if(sp==="upgrade")return pg(<UpgradeScreen u={u} back={function(){sSP(null);sT("profile");}}/>);
+  if(sp==="shop")return pg(<Shop u={u} buy={shopBuy} setAvatar={function(c){sv(c);}} back={function(){sSP(null);sT("profile");}}/>);
   if(sp==="abouttoeic")return pg(<AboutToeic back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="strats")return pg(<StratCards back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
@@ -16890,7 +17065,7 @@ var prevLeague=getLeague(c.weeklyXp);
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} setUser={function(c){sv(c);}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} setUser={function(c){sv(c);}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} goShop={function(){sSP("shop");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
     {/* TutorialTour supprimé 2026-05-03 — absorbé dans le Verdict d'Aldric (cf. narrator.js). */}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}

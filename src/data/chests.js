@@ -76,6 +76,10 @@ export var SKINS = {
   jade:      {name:"Jade",            rarity:"epic",      cx:"20,180,170",  hex:"#14b4aa", dark:"#0a8880"},
   obsidienne:{name:"Obsidian",        rarity:"legend",    cx:"176,144,240", hex:"#b090f0", dark:"#8060c0"},
   aurore:    {name:"Aurora Borealis", rarity:"legend",    cx:"64,208,192",  hex:"#40d0c0", dark:"#3a9870"},
+  // ─── Shop-exclusive skins (Arena Shop P2, 2026-06-01) — exclusive:true → never drop in chests ───
+  lapis:         {name:"Lapis Lazuli",   rarity:"rare",   cx:"42,74,158",   hex:"#2a4a9e", dark:"#16285c", exclusive:true},
+  verdant:       {name:"Verdant Library",rarity:"epic",   cx:"58,110,74",   hex:"#3a6e4a", dark:"#1d3a26", exclusive:true},
+  aldric_chamber:{name:"Aldric's Chamber",rarity:"legend",cx:"106,106,114", hex:"#6a6a72", dark:"#d4af37", exclusive:true},
 };
 
 // ═══ FRAMES (V2 — cosmétique non-stackable, second shield outline glow) ═══
@@ -94,6 +98,10 @@ export var FRAMES = {
   // Legendary (2) — gradient stroke + animated pulse
   cosmic:    {name:"Cosmic",     rarity:"legend", gradient:["#ff40c0","#40c0ff","#ffc040"], glow:20, strokeWidth:4, anim:"cosmic"},
   dragonbone:{name:"Dragonbone", rarity:"legend", gradient:["#ffd060","#ff8020"],            glow:20, strokeWidth:4, anim:"dragon"},
+  // ─── Shop-exclusive frames (Arena Shop P2, 2026-06-01) — exclusive:true → never drop in chests ───
+  sceau_persan:    {name:"Sceau Persan",    rarity:"rare",  color:"#c9a23a", glow:12, strokeWidth:3, exclusive:true},
+  couronne_lyciane:{name:"Couronne Lyciane",rarity:"epic",  color:"#c060f0", glow:16, strokeWidth:4, exclusive:true},
+  anneau_asphodele:{name:"Anneau d'Asphodèle",rarity:"legend",gradient:["#e8c45a","#fff4c8","#a8801f"], glow:20, strokeWidth:4, anim:"dragon", exclusive:true},
 };
 
 // ═══ TITLES (V2 — texte affiché sous le nom partout dans l'app) ═══
@@ -115,6 +123,11 @@ export var TITLES = {
   legend:        {name:"Legend",             rarity:"legend",color:"#ffc020"},
   // Exclusive (never drops via chests — granted via SQL only).
   aldric_chosen: {name:"Aldric's Chosen",    rarity:"legend",color:"#e8d4a8",exclusive:true},
+  // ─── Shop-exclusive titles (Arena Shop P2, 2026-06-01) — exclusive:true → never drop in chests ───
+  marchand_reliques: {name:"Marchand des Reliques", rarity:"rare", color:"#3a8ee0", exclusive:true},
+  arpenteur_comptoir:{name:"Arpenteur du Comptoir", rarity:"rare", color:"#3a8ee0", exclusive:true},
+  tisseur_darics:    {name:"Tisseur de Darics",     rarity:"epic", color:"#c060f0", exclusive:true},
+  oeil_aldric:       {name:"L'Œil d'Aldric",        rarity:"epic", color:"#c9a23a", exclusive:true},
 };
 
 // ═══ TOKENS (V2 — tactiques stackables, nouvelle table player_tokens) ═══
@@ -299,6 +312,48 @@ export var CHEAT_SHEETS = {
     ],
   },
 };
+
+// ═══ SHOP CATALOG (Arena Shop P2, 2026-06-01) ═══
+// Hardcoded (not Supabase) — 1 source of truth: visual lives in the cosmetic maps
+// above, price lives here. Tuning a price = redeploy (cheap on Vercel).
+//   item_id  : stable shop id (used in shop_purchases + marks_log source_detail)
+//   cat      : skin | frame | title | cheat_sheet | token  (= player_rewards.reward_type, or token)
+//   ref      : id within SKINS/FRAMES/TITLES/CHEAT_SHEETS, or token_type in TOKEN_TYPES
+//   price    : in Darics
+//   rarity   : passed to spend_marks → stored on the player_rewards row (cosmetics)
+//   one_shot : true for cosmetics/cheat sheets (anti-rebuy via player_rewards), false for tokens (cap-aware)
+// XP Boosts + Anaïs avatars + "Bourse Inépuisable" milestone title = deferred (P2.5).
+export var SHOP_CATALOG = [
+  // Skins exclusifs
+  {item_id:"sk_lapis",    cat:"skin",  ref:"lapis",          price:1400, rarity:"rare",   one_shot:true},
+  {item_id:"sk_verdant",  cat:"skin",  ref:"verdant",        price:2800, rarity:"epic",   one_shot:true},
+  {item_id:"sk_aldric",   cat:"skin",  ref:"aldric_chamber", price:5800, rarity:"legend", one_shot:true},
+  // Frames exclusifs
+  {item_id:"fr_persan",   cat:"frame", ref:"sceau_persan",     price:400,  rarity:"rare",   one_shot:true},
+  {item_id:"fr_lyciane",  cat:"frame", ref:"couronne_lyciane", price:750,  rarity:"epic",   one_shot:true},
+  {item_id:"fr_asphodele",cat:"frame", ref:"anneau_asphodele", price:1400, rarity:"legend", one_shot:true},
+  // Titres
+  {item_id:"ti_marchand", cat:"title", ref:"marchand_reliques", price:200, rarity:"rare", one_shot:true},
+  {item_id:"ti_arpenteur",cat:"title", ref:"arpenteur_comptoir",price:250, rarity:"rare", one_shot:true},
+  {item_id:"ti_tisseur",  cat:"title", ref:"tisseur_darics",    price:350, rarity:"epic", one_shot:true},
+  {item_id:"ti_oeil",     cat:"title", ref:"oeil_aldric",       price:500, rarity:"epic", one_shot:true},
+  // Tokens (répétables — cap géré server-side via TOKEN_TYPES[ref].cap)
+  {item_id:"tok_reroll",  cat:"token", ref:"daily_reroll",       price:60,  one_shot:false},
+  {item_id:"tok_bypass",  cat:"token", ref:"diminishing_bypass", price:90,  one_shot:false},
+  {item_id:"tok_shield",  cat:"token", ref:"streak_shield",      price:120, one_shot:false},
+  {item_id:"tok_mock",    cat:"token", ref:"mock_reset",         price:150, one_shot:false},
+  {item_id:"tok_endless", cat:"token", ref:"endless_resurrect",  price:150, one_shot:false},
+  {item_id:"tok_boss",    cat:"token", ref:"boss_reset",         price:220, one_shot:false},
+  {item_id:"tok_insight", cat:"token", ref:"insight_token",      price:300, one_shot:false},
+].concat(
+  // Cheat sheets — generated from CHEAT_SHEETS so the catalog never drifts from content.
+  // Price by rarity. These are NOT exclusive (also droppable on Légendaire chests).
+  Object.keys(CHEAT_SHEETS).map(function(csId){
+    var cs=CHEAT_SHEETS[csId];
+    var price=({rare:450,epic:700,legend:900})[cs.rarity]||450;
+    return {item_id:"cs_"+csId, cat:"cheat_sheet", ref:csId, price:price, rarity:cs.rarity, one_shot:true};
+  })
+);
 
 // ═══ DROP TABLES SEGMENTÉES (V2 — 1 coffre = N items) ═══
 // Format slot : {kind, ...params}
@@ -607,6 +662,24 @@ export async function consumeToken(userName, classCode, tokenType, amount){
     if(res.data===false)return{ok:false,error:"insufficient_quantity"};
     return{ok:true};
   }catch(e){return{ok:false,error:e&&e.message};}
+}
+
+// Arena Shop P2 (2026-06-01) — spend Darics on a catalog item via the atomic
+// spend_marks RPC. Mirror of consumeToken. `item` = a SHOP_CATALOG entry.
+// Returns {ok, balance?, error?}. The RPC handles balance check, ownership/cap
+// check, decrement, grant (player_rewards or grant_token), and ledger — all in
+// one transaction. Error codes: no_student / already_owned / at_cap / insufficient_marks.
+export async function spendMarks(userName, classCode, item){
+  try{
+    var cap=item.cat==="token"?((TOKEN_TYPES[item.ref]&&TOKEN_TYPES[item.ref].cap)||1):0;
+    var res=await supabase.rpc("spend_marks",{
+      p_user_name:userName, p_class_code:classCode, p_item_id:item.item_id,
+      p_category:item.cat, p_ref_id:item.ref, p_price:item.price,
+      p_rarity:item.rarity||"rare", p_cap:cap, p_one_shot:!!item.one_shot,
+    });
+    if(res.error){console.warn("[SHOP] spend_marks RPC error:",res.error.message);return{ok:false,error:res.error.message};}
+    return res.data||{ok:false,error:"empty_response"}; // {ok, balance?, error?}
+  }catch(e){console.warn("[SHOP] spendMarks exception:",e&&e.message);return{ok:false,error:e&&e.message};}
 }
 
 // V2 — grant a token via the SQL helper (cap-aware UPSERT)
