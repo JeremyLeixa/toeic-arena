@@ -85,6 +85,8 @@ export var SKINS = {
   cosmic_void: {name:"Cosmic Void", rarity:"epic",   cx:"150,110,240", hex:"#9a6ef0", dark:"#5030a0", exclusive:true},
   molten_gold: {name:"Molten Gold", rarity:"legend", cx:"232,176,32",  hex:"#e8b020", dark:"#8a5a10", exclusive:true},
   heraldic:    {name:"Heraldic",    rarity:"legend", cx:"74,108,210",  hex:"#5a7ce0", dark:"#c8a032", exclusive:true},
+  // Signature flagship — Aldric the chronicler's identity : B&W + gold leaf, candlelit study.
+  aldric_chamber:{name:"Aldric's Chamber", rarity:"legend", cx:"212,170,80", hex:"#d4af37", dark:"#3a3630", exclusive:true},
 };
 
 // ═══ FRAMES (V2 — cosmétique non-stackable, second shield outline glow) ═══
@@ -341,6 +343,7 @@ export var SHOP_CATALOG = [
   {item_id:"sk_cosmic",    cat:"skin",  ref:"cosmic_void", price:2800, rarity:"epic",   one_shot:true},
   {item_id:"sk_molten",    cat:"skin",  ref:"molten_gold", price:5800, rarity:"legend", one_shot:true},
   {item_id:"sk_heraldic",  cat:"skin",  ref:"heraldic",    price:5800, rarity:"legend", one_shot:true},
+  {item_id:"sk_aldric",    cat:"skin",  ref:"aldric_chamber",price:5800,rarity:"legend", one_shot:true},
   // Frames exclusifs (animated avatar rings)
   {item_id:"fr_arc",     cat:"frame", ref:"arc_pulse",    price:400,  rarity:"rare",   one_shot:true},
   {item_id:"fr_halo",    cat:"frame", ref:"gilded_halo",  price:750,  rarity:"epic",   one_shot:true},

@@ -1205,6 +1205,14 @@ var CSS=`
 .skin-heraldic .bar-fill{background-image:linear-gradient(90deg,#5a7ce0,#c8a032,#5a7ce0)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3.5s ease infinite!important;transition:none!important}
 .skin-heraldic .btn2{border-color:rgba(90,124,224,.3)!important;color:#5a7ce0!important}
 .skin-heraldic .tab-bar{box-shadow:0 -40px 70px rgba(90,124,224,.14)}
+.skin-aldric_chamber{--cx:212,170,80;--cyan:#d4af37;--orange:#b08a2a;--bg:#0a0a0b;--bg2:#151517;--bg3:#1f1f22;--t1:#ece8e0;--t2:#8a857a;--bdr:rgba(212,170,80,.16)}
+.skin-aldric_chamber .crd{position:relative!important;border-color:rgba(212,170,80,.24)!important;background-image:linear-gradient(135deg,rgba(60,58,52,.30),rgba(28,26,22,.20),rgba(212,170,80,.06))!important;background-size:200% 100%!important;animation:aurora 6s ease-in-out infinite!important;transition:none!important}
+.skin-aldric_chamber .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:linear-gradient(105deg,transparent 42%,rgba(212,170,80,.22) 50%,transparent 58%)!important;background-size:250% 100%!important;animation:skSheen 5s linear infinite!important}
+.skin-aldric_chamber .btn1{background-image:linear-gradient(135deg,#3a3630,#d4af37,#f4e4a0,#d4af37,#5a4a20)!important;background-color:transparent!important;background-size:250%!important;color:#0a0a0b!important;animation:aurora 4s ease infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(212,170,80,.4)}
+.skin-aldric_chamber .bar-fill{background-image:linear-gradient(90deg,#d4af37,#f4e4a0,#d4af37)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 4s linear infinite!important;transition:none!important}
+.skin-aldric_chamber .btn2{border-color:rgba(212,170,80,.32)!important;color:#d4af37!important}
+.skin-aldric_chamber .tab-bar{box-shadow:0 -40px 70px rgba(212,170,80,.14)}
+.skin-aldric_chamber .out{text-shadow:0 0 18px rgba(212,170,80,.14)}
 /* Light-mode accent retints (mirror .light.skin-aurore pattern — bg stays light via .light) */
 .light.skin-frostbite{--cx:30,110,170;--cyan:#1e6ea8;--orange:#185888}
 .light.skin-emberheart{--cx:180,70,20;--cyan:#b84810;--orange:#963810}
@@ -1212,6 +1220,7 @@ var CSS=`
 .light.skin-abyssal{--cx:14,120,105;--cyan:#0e8070;--orange:#0a6256}
 .light.skin-molten_gold{--cx:150,108,10;--cyan:#946810;--orange:#7e580e}
 .light.skin-heraldic{--cx:40,68,150;--cyan:#2e4a98;--orange:#8a6c18}
+.light.skin-aldric_chamber{--cx:150,115,20;--cyan:#967312;--orange:#7e5e0e}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes narratorFadeFromBlack{from{opacity:1}to{opacity:0}}
