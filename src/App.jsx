@@ -490,7 +490,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-01-shop-p2a";
+var BUILD_ID="2026-06-02-shop-p2b";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -14114,7 +14114,7 @@ function generateInsight(u){
 }
 
 // V2 step 5 — Conversions sub-view : trade duplicate cosmetics for tokens, or 5 non-premium
-// tokens for 1 premium. Mounted from Profile when view==="conversions".
+// tokens for 1 premium. Mounted from the Shop (P2b) ; was a Profile sub-view pre-P2b.
 // ═══ ARENA SHOP (P2a, 2026-06-01) ═══
 // Spend Darics on shop-exclusive cosmetics, tokens, and cheat sheets. Conversions
 // (dups → token, tokens → premium) reachable via the in-shop Conversions sub-view
@@ -14459,7 +14459,7 @@ function Profile(p){
   // truth for goal management.
 
   useEffect(function(){isPushSubscribed().then(function(v){setPushOn(v);});biometricAvailable().then(function(v){setBioAvail(v);});},[]);
-  useEffect(function(){if(view==="inventory"||view==="avatar"){setInvLoading(true);Promise.all([getOwnedRewards(u.name,u.classCode||"visitor"),getOwnedTokens(u.name,u.classCode||"visitor")]).then(function(arr){setInvData(arr[0]);setInvTokens(arr[1]||{});setInvLoading(false);});}},[view]);
+  useEffect(function(){if(view==="style"){setInvLoading(true);Promise.all([getOwnedRewards(u.name,u.classCode||"visitor"),getOwnedTokens(u.name,u.classCode||"visitor")]).then(function(arr){setInvData(arr[0]);setInvTokens(arr[1]||{});setInvLoading(false);});}},[view]);
   useEffect(function(){try{setTipOff(localStorage.getItem("toeic-tip-disabled")==="1");}catch(e){}},[]);
 
   var lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores);
@@ -14772,7 +14772,7 @@ function Profile(p){
 
   // ── SUB-VIEW : AVATAR ───────────────────────────────────────────────────
   // ═══ INVENTORY VIEW ═══
-  if(view==="inventory"){
+  if(view==="style"){
     var ownedAvatars=invData?invData.filter(function(r){return r.reward_type==="avatar";}):[];
     var ownedSkins=invData?invData.filter(function(r){return r.reward_type==="skin";}):[];
     // V2 — overlay : tap a cheat sheet card → open as a single-chapter grimoire
@@ -14795,82 +14795,137 @@ function Profile(p){
     return(<>
     {csNow&&<GrimoireReader grimoire={{title:csNow.name,subtitle:"Cheat Sheet",icon:csNow.icon||"📜",chapters:[{id:"main",title:csNow.name,intro:"",blocks:csNow.blocks||[]}]}} back={function(){setCsOpen(null);}}/>}
     <div className="enter" style={{padding:"20px 16px 100px"}}>
+      <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handlePhotoUpload}/>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
         <button onClick={function(){setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>{"\u2190"}</button>
-        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Collection</h1>
+        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Style</h1>
       </div>
+      <div style={{textAlign:"center",marginBottom:28}}>
+        <div style={{position:"relative",display:"inline-block",marginBottom:16}}>
+          {renderAvatar(96,48)}
+          <button onClick={function(){fileRef.current.click();}}
+            style={{position:"absolute",bottom:0,right:0,width:30,height:30,borderRadius:"50%",
+              background:"var(--cyan)",border:"2px solid var(--bg)",cursor:"pointer",fontSize:14,
+              display:"flex",alignItems:"center",justifyContent:"center"}}>\ud83d\udcf7</button>
+        </div>
+        <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:8}}>
+          <button onClick={function(){fileRef.current.click();}} className="btn1"
+            style={{fontSize:12,padding:"8px 18px"}}>\ud83d\udcf7 Import a photo</button>
+          {isPhoto&&<button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar="\u2694\ufe0f";p.setAvatar(c);}}
+            className="btn2" style={{fontSize:12,padding:"8px 18px",color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>\u2715 Remove</button>}
+        </div>
+        <div style={{fontSize:11,color:"var(--t3)"}}>Photo resized \u00b7 stored locally</div>
+      </div>
+      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>or pick an emoji</div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
+        {["\u2694\ufe0f","\ud83e\uddd9","\ud83e\udd8a","\ud83d\udc09","\ud83c\udfaf","\ud83c\udfc6","\ud83e\udd85","\ud83d\udc8e","\ud83d\udd25","\ud83c\udf1f","\ud83c\udfad","\ud83d\udc3a","\ud83e\udd81","\ud83c\udfaa","\ud83d\udc64","\ud83e\udde0","\ud83c\udfb2","\ud83e\udd89","\ud83d\udc32","\ud83d\udde1\ufe0f","\ud83c\udff4\u200d\u2620\ufe0f","\u26a1","\ud83e\udd88","\ud83c\udf00","\ud83c\udfb8"].map(function(av){
+          var sel=!isPhoto&&av===(u.avatar||"\u2694\ufe0f");
+          return(<button key={av} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar=av;p.setAvatar(c);}}
+            style={{width:48,height:48,borderRadius:14,border:sel?"2px solid var(--cyan)":"2px solid var(--bdr)",
+              background:sel?"rgba(var(--cx),.1)":"var(--bg2)",cursor:"pointer",fontSize:24,
+              display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
+            {av}</button>);
+        })}
+        {u.name==="Teacher"&&(function(){
+          var sel=!isPhoto&&u.avatar==="\ud83d\udddd\ufe0f";
+          return(<button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar="\ud83d\udddd\ufe0f";p.setAvatar(c);}}
+            style={{width:48,height:48,borderRadius:14,
+              border:sel?"2px solid var(--gold)":"2px solid rgba(255,215,0,.3)",
+              background:sel?"rgba(255,215,0,.15)":"rgba(255,215,0,.05)",cursor:"pointer",fontSize:24,
+              display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",
+              boxShadow:sel?"0 0 12px rgba(255,215,0,.3)":"none"}}>
+            {"\ud83d\udddd\ufe0f"}</button>);
+        })()}
+      </div>
+      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:16,fontStyle:"italic"}}>\ud83d\udddd\ufe0f Game Master \u2014 exclusive avatar</div>}
 
       {invLoading&&<p style={{color:"var(--t3)",textAlign:"center",padding:40}}>Loading...</p>}
 
       {!invLoading&&<>
-        {/* V2 — Avatars (collapsible banner) */}
-        {secBanner("avatars","Avatars",ownedAvatars.length,Object.keys(AVATARS).length,
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(60px,1fr))",gap:6}}>
-            {Object.keys(AVATARS).map(function(aid){
-              var av=AVATARS[aid];var dupCount=ownedAvatars.filter(function(r){return r.reward_id===aid;}).length;var owned=dupCount>0;
-              var rarity=RARITIES.find(function(rt){return rt.id===av.rarity;})||RARITIES[0];
-              return(<div key={aid} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",padding:6,borderRadius:10,
-                opacity:owned?1:0.25,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
-                <AvatarMedal avatarId={aid} size={36}/>
-                <div style={{fontSize:8,marginTop:2,color:owned?rarity.color:"var(--t3)",fontWeight:600}}>{av.name}</div>
-                {dupCount>1&&<span style={{position:"absolute",top:2,right:2,fontSize:8,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"1px 4px",borderRadius:6}}>{"×"+dupCount}</span>}
-              </div>);
+        {/* Owned avatars — equip + ×N dup badge */}
+        {ownedAvatars.length>0&&<>
+          <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Chest avatars</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(72px,1fr))",gap:8,marginBottom:20}}>
+            {(function(){var d={};ownedAvatars.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
+              var r=grp.row;var av=AVATARS[r.reward_id];if(!av)return null;
+              var rarity=RARITIES.find(function(rt){return rt.id===r.rarity;})||RARITIES[0];
+              var isEquipped=u.avatar===r.reward_id;
+              return(<button key={r.reward_id} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar=r.reward_id;p.setAvatar(c);}}
+                style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,cursor:"pointer",background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",border:isEquipped?"2px solid var(--cx-hex)":"1px solid var(--bdr)",fontFamily:"'DM Sans',sans-serif"}}>
+                <AvatarMedal avatarId={r.reward_id} size={40}/>
+                <div style={{fontSize:9,fontWeight:700,color:rarity.color,textAlign:"center"}}>{av.name}</div>
+                {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+                {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
+              </button>);
             })}
           </div>
-        )}
+        </>}
 
-        {/* V2 — Skins (collapsible banner) */}
-        {secBanner("skins","Skins",ownedSkins.length,Object.keys(SKINS).length,
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:8}}>
-            {Object.keys(SKINS).map(function(sid){
-              var sk=SKINS[sid];var dupCount=ownedSkins.filter(function(r){return r.reward_id===sid;}).length;var owned=dupCount>0;
-              var rarity=RARITIES.find(function(rt){return rt.id===sk.rarity;})||RARITIES[0];
-              return(<div key={sid} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,
-                opacity:owned?1:0.25,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
-                <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+(owned?rarity.color:"var(--bg3)")}}/>
-                <div style={{fontSize:9,fontWeight:600,color:owned?rarity.color:"var(--t3)"}}>{sk.name}</div>
-                {dupCount>1&&<span style={{position:"absolute",top:2,right:2,fontSize:8,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"1px 4px",borderRadius:6}}>{"×"+dupCount}</span>}
-              </div>);
-            })}
-          </div>
-        )}
+        {/* ── SKINS (equip) ── */}
+        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Skin</div>
+        {ownedSkins.length===0&&<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>No skin yet. Buy one in the Shop or open Rare+ chests.</p></div>}
+        {ownedSkins.length>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:8,marginBottom:12}}>
+          {(function(){var d={};ownedSkins.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
+            var r=grp.row;var sk=SKINS[r.reward_id];if(!sk)return null;
+            var rarity=RARITIES.find(function(rt){return rt.id===sk.rarity;})||RARITIES[0];
+            var isEquipped=u.equippedSkin===r.reward_id;
+            return(<button key={r.reward_id} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedSkin=isEquipped?null:r.reward_id;p.setAvatar(c);}}
+              style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:10,borderRadius:14,cursor:"pointer",background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",border:isEquipped?"2px solid "+sk.hex:"1px solid var(--bdr)",fontFamily:"'DM Sans',sans-serif"}}>
+              <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+rarity.color}}/>
+              <div style={{fontSize:10,fontWeight:700,color:rarity.color}}>{sk.name}</div>
+              {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+              {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
+            </button>);
+          })}
+        </div>}
+        {u.equippedSkin&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedSkin=null;p.setAvatar(c);}} style={{width:"100%",marginBottom:20,fontSize:12}}>Remove current skin</button>}
 
-        {/* V2 — Frames (collapsible banner) */}
+        {/* ── FRAME (equip) ── */}
+        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Frame</div>
         {(function(){
           var ownedFrames=invData?invData.filter(function(r){return r.reward_type==="frame";}):[];
-          return secBanner("frames","Frames",ownedFrames.length,Object.keys(FRAMES).length,
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:10}}>
-              {Object.keys(FRAMES).map(function(fid){
-                var fr=FRAMES[fid];var dupCount=ownedFrames.filter(function(r){return r.reward_id===fid;}).length;var owned=dupCount>0;
+          if(ownedFrames.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>No frame yet. Buy one in the Shop or open Warrior+ chests.</p></div>);
+          return(<>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:10,marginBottom:12}}>
+              {(function(){var d={};ownedFrames.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
+                var r=grp.row;var fr=FRAMES[r.reward_id];if(!fr)return null;
                 var rarity=RARITIES.find(function(rt){return rt.id===fr.rarity;})||RARITIES[0];
-                return(<div key={fid} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:8,borderRadius:12,opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)"}}>
-                  {owned?<AvatarMedal avatarId="champion" size={52} frameId={fid}/>:<div style={{width:56,height:56,borderRadius:"50%",border:"2px dashed var(--bdr)"}}/>}
-                  <div style={{fontSize:9,fontWeight:600,color:owned?rarity.color:"var(--t3)",textAlign:"center"}}>{fr.name}</div>
-                  {dupCount>1&&<span style={{position:"absolute",top:2,right:2,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"1px 5px",borderRadius:6}}>{"×"+dupCount}</span>}
-                </div>);
+                var isEquipped=u.equippedFrame===r.reward_id;
+                return(<button key={r.reward_id} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedFrame=isEquipped?null:r.reward_id;p.setAvatar(c);}}
+                  style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:10,borderRadius:14,cursor:"pointer",background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",border:isEquipped?"2px solid var(--cyan)":"1px solid var(--bdr)",fontFamily:"'DM Sans',sans-serif"}}>
+                  <AvatarMedal avatarId="champion" size={48} frameId={r.reward_id}/>
+                  <div style={{fontSize:10,fontWeight:700,color:rarity.color,textAlign:"center"}}>{fr.name}</div>
+                  {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
+                  {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
+                </button>);
               })}
             </div>
-          );
+            {u.equippedFrame&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedFrame=null;p.setAvatar(c);}} style={{width:"100%",marginBottom:20,fontSize:12}}>Remove current frame</button>}
+          </>);
         })()}
 
-        {/* V2 — Titles (collapsible banner) */}
+        {/* ── TITLE (equip) ── */}
+        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Title</div>
         {(function(){
           var ownedTitles=invData?invData.filter(function(r){return r.reward_type==="title";}):[];
-          return secBanner("titles","Titles",ownedTitles.length,Object.keys(TITLES).length,
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {Object.keys(TITLES).map(function(tid){
-                var ti=TITLES[tid];var dupCount=ownedTitles.filter(function(r){return r.reward_id===tid;}).length;var owned=dupCount>0;
-                var rarity=RARITIES.find(function(rt){return rt.id===ti.rarity;})||RARITIES[0];
-                return(<div key={tid} style={{padding:"10px 14px",borderRadius:10,opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)",border:"1px solid "+(owned?ti.color:"var(--bdr)"),display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-                  <span style={{fontSize:14,fontWeight:800,color:owned?ti.color:"var(--t3)",letterSpacing:1,textTransform:"uppercase",flex:1,minWidth:0}}>{ti.name}</span>
+          if(ownedTitles.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>No title yet. Buy one in the Shop or open Warrior+ chests.</p></div>);
+          return(<>
+            <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
+              {(function(){var d={};ownedTitles.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
+                var r=grp.row;var ti=TITLES[r.reward_id];if(!ti)return null;
+                var isEquipped=u.equippedTitle===r.reward_id;
+                return(<button key={r.reward_id} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedTitle=isEquipped?null:r.reward_id;p.setAvatar(c);}}
+                  style={{padding:"10px 14px",borderRadius:10,cursor:"pointer",textAlign:"left",background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",border:isEquipped?"2px solid "+ti.color:"1px solid var(--bdr)",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                  <span style={{fontSize:14,fontWeight:800,color:ti.color,letterSpacing:1,textTransform:"uppercase",flex:1,minWidth:0}}>{ti.name}</span>
                   <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-                    {dupCount>1&&<span style={{fontSize:10,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.5)",padding:"2px 6px",borderRadius:8}}>{"×"+dupCount}</span>}
-                    <span style={{fontSize:9,fontWeight:600,color:rarity.color,letterSpacing:1,textTransform:"uppercase"}}>{rarity.label}</span>
+                    {grp.count>1&&<span style={{fontSize:10,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.5)",padding:"2px 6px",borderRadius:8}}>{"×"+grp.count}</span>}
+                    {isEquipped&&<span style={{fontSize:8,color:"var(--cyan)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Equipped</span>}
                   </div>
-                </div>);
+                </button>);
               })}
             </div>
-          );
+            {u.equippedTitle&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedTitle=null;p.setAvatar(c);}} style={{width:"100%",marginBottom:20,fontSize:12}}>Remove current title</button>}
+          </>);
         })()}
 
         {/* V2 — Consommables (tokens stackables, fetched from player_tokens) */}
@@ -14961,17 +15016,27 @@ function Profile(p){
         {/* V2 step 5 — Conversions entry, moved into the Collection (was on Profile home).
             Placed after all banners so it sits "at the end of the catalog" — natural
             destination once the user has spotted dups via the ×N badges above. */}
-        <button onClick={function(){setView("conversions");}} className="crd"
+        {/* Convert duplicates — the conversions UI now lives in the Shop */}
+        <button onClick={function(){p.goShop&&p.goShop();}} className="crd"
           style={{width:"100%",padding:"12px 16px",marginTop:14,textAlign:"left",cursor:"pointer",
             background:"linear-gradient(135deg,rgba(255,192,32,.08),rgba(220,58,80,.05))",
             border:"1px solid rgba(255,192,32,.25)",display:"flex",alignItems:"center",gap:12}}>
           <span style={{fontSize:24,flexShrink:0}}>{"⚖️"}</span>
           <div style={{flex:1,minWidth:0}}>
-            <div className="out" style={{fontWeight:800,fontSize:14,color:"#ffc020"}}>Conversions</div>
-            <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>Dups → tokens · 5 tokens → premium</div>
+            <div className="out" style={{fontWeight:800,fontSize:14,color:"#ffc020"}}>Convert duplicates</div>
+            <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>Dups → tokens · 5 tokens → premium · in the Shop</div>
           </div>
           <span style={{fontSize:18,color:"var(--t3)"}}>{"›"}</span>
         </button>
+
+        {/* ── THEME ── */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",marginTop:8}}>
+          <div>
+            <div className="out" style={{fontWeight:700,fontSize:13}}>Mode</div>
+            <div style={{fontSize:11,color:"var(--t2)"}}>{u.theme==="light"?"Light":"Dark"}</div>
+          </div>
+          {Toggle(u.theme==="light",function(){var c=JSON.parse(JSON.stringify(u));c.theme=c.theme==="light"?"dark":"light";p.setAvatar(c);})}
+        </div>
       </>}
     </div>
     {/* V2 — Multi-flow confirm modal for actionable tokens (Daily Reroll / Bypass / Insight) */}
@@ -15116,178 +15181,10 @@ function Profile(p){
     </>);
   }
 
-  if(view==="avatar"){
-    var styleAvatars=invData?invData.filter(function(r){return r.reward_type==="avatar";}):[];
-    var styleSkins=invData?invData.filter(function(r){return r.reward_type==="skin";}):[];
-    return(
-    <div className="enter" style={{padding:"20px 16px 100px"}}>
-      <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handlePhotoUpload}/>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
-        <button onClick={function(){setView(null);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:22,cursor:"pointer",padding:0,lineHeight:1}}>←</button>
-        <h1 className="out" style={{fontWeight:800,fontSize:20,margin:0}}>Style</h1>
-      </div>
-      <div style={{textAlign:"center",marginBottom:28}}>
-        <div style={{position:"relative",display:"inline-block",marginBottom:16}}>
-          {renderAvatar(96,48)}
-          <button onClick={function(){fileRef.current.click();}}
-            style={{position:"absolute",bottom:0,right:0,width:30,height:30,borderRadius:"50%",
-              background:"var(--cyan)",border:"2px solid var(--bg)",cursor:"pointer",fontSize:14,
-              display:"flex",alignItems:"center",justifyContent:"center"}}>📷</button>
-        </div>
-        <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:8}}>
-          <button onClick={function(){fileRef.current.click();}} className="btn1"
-            style={{fontSize:12,padding:"8px 18px"}}>📷 Import a photo</button>
-          {isPhoto&&<button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar="⚔️";p.setAvatar(c);}}
-            className="btn2" style={{fontSize:12,padding:"8px 18px",color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>✕ Remove</button>}
-        </div>
-        <div style={{fontSize:11,color:"var(--t3)"}}>Photo resized · stored locally</div>
-      </div>
-      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>or pick an emoji</div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
-        {["⚔️","🧙","🦊","🐉","🎯","🏆","🦅","💎","🔥","🌟","🎭","🐺","🦁","🎪","👤","🧠","🎲","🦉","🐲","🗡️","🏴‍☠️","⚡","🦈","🌀","🎸"].map(function(av){
-          var sel=!isPhoto&&av===(u.avatar||"⚔️");
-          return(<button key={av} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar=av;p.setAvatar(c);}}
-            style={{width:48,height:48,borderRadius:14,border:sel?"2px solid var(--cyan)":"2px solid var(--bdr)",
-              background:sel?"rgba(var(--cx),.1)":"var(--bg2)",cursor:"pointer",fontSize:24,
-              display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
-            {av}</button>);
-        })}
-        {u.name==="Teacher"&&(function(){
-          var sel=!isPhoto&&u.avatar==="🗝️";
-          return(<button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar="🗝️";p.setAvatar(c);}}
-            style={{width:48,height:48,borderRadius:14,
-              border:sel?"2px solid var(--gold)":"2px solid rgba(255,215,0,.3)",
-              background:sel?"rgba(255,215,0,.15)":"rgba(255,215,0,.05)",cursor:"pointer",fontSize:24,
-              display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",
-              boxShadow:sel?"0 0 12px rgba(255,215,0,.3)":"none"}}>
-            {"🗝️"}</button>);
-        })()}
-      </div>
-      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:16,fontStyle:"italic"}}>🗝️ Game Master — exclusive avatar</div>}
+  // Legacy "avatar" Style view removed (P2b) — merged into view==="style" above
+  // (equip + duplicate counters + consumables + cheat sheets in one tab).
 
-      {/* Chest avatars — deduped by reward_id, ×N badge when duplicate */}
-      {!invLoading&&styleAvatars.length>0&&<>
-        <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Chest avatars</div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(72px,1fr))",gap:8,marginBottom:20}}>
-          {(function(){var d={};styleAvatars.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
-            var r=grp.row;var av=AVATARS[r.reward_id];if(!av)return null;
-            var rarity=RARITIES.find(function(rt){return rt.id===r.rarity;})||RARITIES[0];
-            var isEquipped=u.avatar===r.reward_id;
-            return(<button key={r.reward_id} onClick={function(){
-              var c=JSON.parse(JSON.stringify(u));c.avatar=r.reward_id;p.setAvatar(c);
-            }} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,cursor:"pointer",
-              background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
-              border:isEquipped?"2px solid var(--cx-hex)":"1px solid var(--bdr)",
-              fontFamily:"'DM Sans',sans-serif"}}>
-              <AvatarMedal avatarId={r.reward_id} size={40}/>
-              <div style={{fontSize:9,fontWeight:700,color:rarity.color,textAlign:"center"}}>{av.name}</div>
-              {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
-              {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
-            </button>);
-          })}
-        </div>
-      </>}
-
-      {/* ── SKINS ── */}
-      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Skin</div>
-      {invLoading&&<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>}
-      {!invLoading&&styleSkins.length===0&&<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>No skin yet. Open Rare+ chests to find some!</p></div>}
-      {!invLoading&&styleSkins.length>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:8,marginBottom:12}}>
-        {(function(){var d={};styleSkins.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
-          var r=grp.row;var sk=SKINS[r.reward_id];if(!sk)return null;
-          var rarity=RARITIES.find(function(rt){return rt.id===sk.rarity;})||RARITIES[0];
-          var isEquipped=u.equippedSkin===r.reward_id;
-          return(<button key={r.reward_id} onClick={function(){
-            var c=JSON.parse(JSON.stringify(u));c.equippedSkin=isEquipped?null:r.reward_id;p.setAvatar(c);
-          }} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:10,borderRadius:14,cursor:"pointer",
-            background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
-            border:isEquipped?"2px solid "+sk.hex:"1px solid var(--bdr)",
-            fontFamily:"'DM Sans',sans-serif"}}>
-            <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+rarity.color}}/>
-            <div style={{fontSize:10,fontWeight:700,color:rarity.color}}>{sk.name}</div>
-            {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
-            {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
-          </button>);
-        })}
-      </div>}
-      {u.equippedSkin&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedSkin=null;p.setAvatar(c);}}
-        style={{width:"100%",marginBottom:20,fontSize:12}}>Remove current skin</button>}
-
-      {/* ── FRAME (V2) ── */}
-      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Frame</div>
-      {(function(){
-        var styleFrames=invData?invData.filter(function(r){return r.reward_type==="frame";}):[];
-        if(invLoading)return(<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>);
-        if(styleFrames.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>No frame yet. Open Warrior+ chests to find some!</p></div>);
-        return(<>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:10,marginBottom:12}}>
-            {(function(){var d={};styleFrames.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
-              var r=grp.row;var fr=FRAMES[r.reward_id];if(!fr)return null;
-              var rarity=RARITIES.find(function(rt){return rt.id===fr.rarity;})||RARITIES[0];
-              var isEquipped=u.equippedFrame===r.reward_id;
-              return(<button key={r.reward_id} onClick={function(){
-                var c=JSON.parse(JSON.stringify(u));c.equippedFrame=isEquipped?null:r.reward_id;p.setAvatar(c);
-              }} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:10,borderRadius:14,cursor:"pointer",
-                background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
-                border:isEquipped?"2px solid var(--cyan)":"1px solid var(--bdr)",
-                fontFamily:"'DM Sans',sans-serif"}}>
-                <AvatarMedal avatarId="champion" size={48} frameId={r.reward_id}/>
-                <div style={{fontSize:10,fontWeight:700,color:rarity.color,textAlign:"center"}}>{fr.name}</div>
-                {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
-                {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
-              </button>);
-            })}
-          </div>
-          {u.equippedFrame&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedFrame=null;p.setAvatar(c);}}
-            style={{width:"100%",marginBottom:20,fontSize:12}}>Remove current frame</button>}
-        </>);
-      })()}
-
-      {/* ── TITLE (V2) ── */}
-      <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Title</div>
-      {(function(){
-        var styleTitles=invData?invData.filter(function(r){return r.reward_type==="title";}):[];
-        if(invLoading)return(<p style={{color:"var(--t3)",fontSize:12,padding:12}}>Loading...</p>);
-        if(styleTitles.length===0)return(<div className="crd" style={{padding:16,textAlign:"center",marginBottom:20}}><p style={{color:"var(--t3)",fontSize:12}}>No title yet. Open Warrior+ chests to unlock some!</p></div>);
-        return(<>
-          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:12}}>
-            {(function(){var d={};styleTitles.forEach(function(r){if(!d[r.reward_id])d[r.reward_id]={row:r,count:0};d[r.reward_id].count++;});return Object.values(d);})().map(function(grp){
-              var r=grp.row;var ti=TITLES[r.reward_id];if(!ti)return null;
-              var isEquipped=u.equippedTitle===r.reward_id;
-              return(<button key={r.reward_id} onClick={function(){
-                var c=JSON.parse(JSON.stringify(u));c.equippedTitle=isEquipped?null:r.reward_id;p.setAvatar(c);
-              }} style={{padding:"10px 14px",borderRadius:10,cursor:"pointer",textAlign:"left",
-                background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",
-                border:isEquipped?"2px solid "+ti.color:"1px solid var(--bdr)",
-                fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-                <span style={{fontSize:14,fontWeight:800,color:ti.color,letterSpacing:1,textTransform:"uppercase",flex:1,minWidth:0}}>{ti.name}</span>
-                <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-                  {grp.count>1&&<span style={{fontSize:10,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.5)",padding:"2px 6px",borderRadius:8}}>{"×"+grp.count}</span>}
-                  {isEquipped&&<span style={{fontSize:8,color:"var(--cyan)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Equipped</span>}
-                </div>
-              </button>);
-            })}
-          </div>
-          {u.equippedTitle&&<button className="btn2" onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedTitle=null;p.setAvatar(c);}}
-            style={{width:"100%",marginBottom:20,fontSize:12}}>Remove current title</button>}
-        </>);
-      })()}
-
-      {/* ── THEME ── */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0"}}>
-        <div>
-          <div className="out" style={{fontWeight:700,fontSize:13}}>Mode</div>
-          <div style={{fontSize:11,color:"var(--t2)"}}>{u.theme==="light"?"Light":"Dark"}</div>
-        </div>
-        {Toggle(u.theme==="light",function(){var c=JSON.parse(JSON.stringify(u));c.theme=c.theme==="light"?"dark":"light";p.setAvatar(c);})}
-      </div>
-    </div>);
-  }
-
-  // ═══ V2 STEP 5 — CONVERSIONS SUB-VIEW ═══
-  if(view==="conversions"){
-    return(<ConversionsView u={u} setView={setView} setAvatar={p.setAvatar}/>);
-  }
+  // Conversions now live in the Shop (P2b) — the old in-Profile sub-view was removed.
 
   // ── SOUS-PAGE COMPTE & PARAMÈTRES ───────────────────────────────────────
   // Consolide 5 anciens CTAs du Profile principal (abonnement, confidentialité,
@@ -15512,7 +15409,7 @@ function Profile(p){
 
       {/* Hero */}
       <div style={{textAlign:"center",marginBottom:24}}>
-        <button onClick={function(){setView("avatar");}}
+        <button onClick={function(){setView("style");}}
           style={{background:"none",border:"none",cursor:"pointer",padding:0,marginBottom:12,display:"inline-block",position:"relative"}}>
           {renderAvatar(88,44)}
           <div style={{position:"absolute",bottom:0,right:0,width:26,height:26,borderRadius:"50%",
@@ -15547,7 +15444,7 @@ function Profile(p){
           <div className="out" style={{fontWeight:800,fontSize:16,color:"var(--gold)"}}>{ea.length}<span style={{fontSize:11,color:"var(--t3)",fontWeight:400}}>/{ACHIEVEMENTS.length}</span></div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Achievements</div>
         </button>
-        <button onClick={function(){setView("avatar");}} className="crd"
+        <button onClick={function(){setView("style");}} className="crd"
           style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(var(--cx),.03)",border:"1px solid rgba(var(--cx),.2)",width:"100%"}}>
           <div style={{height:28,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:4}}>
             {renderAvatar(28,18)}
@@ -15555,23 +15452,13 @@ function Profile(p){
           <div style={{fontWeight:800,fontSize:16,color:"var(--t1)"}}>Style</div>
           <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Apparence</div>
         </button>
-        <button onClick={function(){setView("inventory");}} className="crd"
-          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(192,96,240,.03)",border:"1px solid rgba(192,96,240,.15)",width:"100%"}}>
-          <div style={{marginBottom:4,display:"flex",justifyContent:"center"}}><GIcon name="gem-necklace" size={26} color="#c060f0"/></div>
-          <div style={{fontWeight:800,fontSize:16,color:"#c060f0"}}>Collection</div>
-          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Catalogue</div>
+        <button onClick={function(){p.goShop&&p.goShop();}} className="crd"
+          style={{padding:"14px 8px",textAlign:"center",cursor:"pointer",background:"rgba(232,196,90,.04)",border:"1px solid rgba(232,196,90,.25)",width:"100%"}}>
+          <div style={{marginBottom:4,display:"flex",justifyContent:"center"}}><GIcon name="daric" size={26} color="var(--gold)"/></div>
+          <div style={{fontWeight:800,fontSize:16,color:"var(--gold)"}}>Shop</div>
+          <div style={{fontSize:10,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5}}>Darics</div>
         </button>
       </div>
-
-      {/* Arena Shop — transitory entry (P2a). Replaced by a real nav tile in P2b. */}
-      {u.classCode!=="visitor"&&<button onClick={function(){p.goShop&&p.goShop();}} className="crd" style={{width:"100%",padding:"14px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:20,background:"linear-gradient(135deg,rgba(232,196,90,.1),transparent)",border:"1px solid rgba(232,196,90,.3)"}}>
-        <GIcon name="daric" size={24} color="var(--gold)"/>
-        <div style={{flex:1,textAlign:"left"}}>
-          <div style={{fontSize:14,fontWeight:800,color:"var(--gold)"}}>Arena Shop</div>
-          <div style={{fontSize:10,color:"var(--t2)"}}>Spend your Darics — beta</div>
-        </div>
-        <DaricPill marks={u.arenaMarks}/>
-      </button>}
 
       {/* Chronicles — entry card (parchment themed) */}
       {(function(){
