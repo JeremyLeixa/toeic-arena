@@ -101,14 +101,16 @@
   /* 5. Runic Circle — slow rotating dashed glyph ring */
   .fr-runic{border:2px dashed #c9a23a;animation:spin 14s linear infinite;box-shadow:0 0 8px rgba(201,162,58,.4)}
   .fr-runic::after{content:"";position:absolute;inset:4px;border-radius:50%;border:1px solid rgba(201,162,58,.35)}
-  /* 6. Prismatic — rainbow conic spin */
+  /* 6. Prismatic v2 — soft-edged rainbow halo (gradient fade in+out, glow, pulse) */
   .fr-prism{background:conic-gradient(from 0deg,#ff4040,#ffd000,#40ff60,#40d0ff,#a040ff,#ff4040);animation:spin 5s linear infinite;
-    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));filter:saturate(1.3) drop-shadow(0 0 6px rgba(255,255,255,.4))}
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);filter:saturate(1.25) drop-shadow(0 0 8px rgba(255,255,255,.4)) blur(.3px)}
+  .fr-prism::after{content:'';position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle,transparent 62%,rgba(200,160,255,.14) 80%,transparent 94%);animation:pulse 2.2s ease-in-out infinite}
   /* 7. Gilded Halo — soft pulsing gold glow */
   .fr-halo{border:2px solid #f0c850;box-shadow:0 0 4px #f0c850,0 0 18px rgba(240,200,80,.7),0 0 34px rgba(240,200,80,.4);animation:pulse 2.6s ease-in-out infinite}
-  /* 8. Tempest — electric blue rotating + flicker */
-  .fr-tempest{background:conic-gradient(from 0deg,transparent,#40a0ff,transparent,#a0e0ff,transparent,#40a0ff,transparent);animation:spin 2.2s linear infinite,flicker 1.8s ease-in-out infinite;
-    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px));mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px));filter:drop-shadow(0 0 9px rgba(64,160,255,.8))}
+  /* 8. Tempest v2 — soft-edged electric halo (gradient fade in+out, glow, pulse) */
+  .fr-tempest{background:conic-gradient(from 0deg,transparent,#40a0ff,transparent,#a0e0ff,transparent,#40a0ff,transparent);animation:spin 2.6s linear infinite;
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);filter:drop-shadow(0 0 10px rgba(64,160,255,.7)) blur(.3px)}
+  .fr-tempest::after{content:'';position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle,transparent 60%,rgba(64,160,255,.16) 78%,transparent 92%);animation:pulse 1.8s ease-in-out infinite}
 
   /* ─── keyframes ─── */
   @keyframes spin{to{transform:rotate(360deg)}}
