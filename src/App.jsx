@@ -14156,6 +14156,7 @@ function Shop(p){
   var [confirmItem,setConfirmItem]=useState(null);
   var [flash,setFlash]=useState(null);      // {ok, msg}
   var [shopView,setShopView]=useState("shop"); // "shop" | "conversions"
+  var [openSec,setOpenSec]=useState({});       // collapsible shop sections (collapsed by default)
 
   function refreshOwned(){
     Promise.all([
@@ -14219,9 +14220,14 @@ function Shop(p){
     {!loading&&SHOP_SECTIONS.map(function(sec){
       var items=SHOP_CATALOG.filter(function(it){return it.cat===sec.cat;});
       if(items.length===0)return null;
-      return(<div key={sec.cat} style={{marginBottom:22}}>
-        <div style={{fontSize:11,color:"var(--t2)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>{sec.label}</div>
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      var open=!!openSec[sec.cat];
+      return(<div key={sec.cat} style={{marginBottom:10,borderRadius:12,border:"1px solid var(--bdr)",overflow:"hidden",background:"var(--bg2)"}}>
+        <button onClick={function(){var nv=Object.assign({},openSec);nv[sec.cat]=!open;setOpenSec(nv);}}
+          style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",background:"transparent",border:"none",cursor:"pointer",color:"var(--t1)",fontFamily:"inherit"}}>
+          <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,color:"var(--t2)"}}>{sec.label} <span style={{color:"var(--t3)",marginLeft:4,fontWeight:600}}>{items.length}</span></span>
+          <span style={{fontSize:14,color:"var(--gold)",display:"inline-block",transform:open?"rotate(0deg)":"rotate(-90deg)",transition:"transform .2s"}}>{"▾"}</span>
+        </button>
+        {open&&<div style={{padding:"4px 14px 16px",borderTop:"1px solid var(--bdr)",display:"flex",flexDirection:"column",gap:10}}>
           {items.map(function(item){
             var ownedFlag=isOwned(item);
             var capFlag=atCap(item);
@@ -14245,7 +14251,7 @@ function Shop(p){
               </div>
             </div>);
           })}
-        </div>
+        </div>}
       </div>);
     })}
 
