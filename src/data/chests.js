@@ -76,10 +76,15 @@ export var SKINS = {
   jade:      {name:"Jade",            rarity:"epic",      cx:"20,180,170",  hex:"#14b4aa", dark:"#0a8880"},
   obsidienne:{name:"Obsidian",        rarity:"legend",    cx:"176,144,240", hex:"#b090f0", dark:"#8060c0"},
   aurore:    {name:"Aurora Borealis", rarity:"legend",    cx:"64,208,192",  hex:"#40d0c0", dark:"#3a9870"},
-  // ─── Shop-exclusive skins (Arena Shop P2, 2026-06-01) — exclusive:true → never drop in chests ───
-  lapis:         {name:"Lapis Lazuli",   rarity:"rare",   cx:"42,74,158",   hex:"#2a4a9e", dark:"#16285c", exclusive:true},
-  verdant:       {name:"Verdant Library",rarity:"epic",   cx:"58,110,74",   hex:"#3a6e4a", dark:"#1d3a26", exclusive:true},
-  aldric_chamber:{name:"Aldric's Chamber",rarity:"legend",cx:"106,106,114", hex:"#6a6a72", dark:"#d4af37", exclusive:true},
+  // ─── Shop-exclusive GLOBAL skins (Arena Shop P2, 2026-06-01) — exclusive:true → never drop
+  // in chests. The whole-app theming lives in App.jsx CSS (.skin-<id> packages). hex/dark here
+  // are the signature colours used for the shop swatch + chest reward card preview. ───
+  frostbite:   {name:"Frostbite",   rarity:"rare",   cx:"90,180,232",  hex:"#5ab4e8", dark:"#2a6a9a", exclusive:true},
+  abyssal:     {name:"Abyssal",     rarity:"rare",   cx:"30,180,160",  hex:"#1eb4a0", dark:"#0a5a50", exclusive:true},
+  emberheart:  {name:"Emberheart",  rarity:"epic",   cx:"230,110,40",  hex:"#ff6020", dark:"#c01810", exclusive:true},
+  cosmic_void: {name:"Cosmic Void", rarity:"epic",   cx:"150,110,240", hex:"#9a6ef0", dark:"#5030a0", exclusive:true},
+  molten_gold: {name:"Molten Gold", rarity:"legend", cx:"232,176,32",  hex:"#e8b020", dark:"#8a5a10", exclusive:true},
+  heraldic:    {name:"Heraldic",    rarity:"legend", cx:"74,108,210",  hex:"#5a7ce0", dark:"#c8a032", exclusive:true},
 };
 
 // ═══ FRAMES (V2 — cosmétique non-stackable, second shield outline glow) ═══
@@ -98,10 +103,15 @@ export var FRAMES = {
   // Legendary (2) — gradient stroke + animated pulse
   cosmic:    {name:"Cosmic",     rarity:"legend", gradient:["#ff40c0","#40c0ff","#ffc040"], glow:20, strokeWidth:4, anim:"cosmic"},
   dragonbone:{name:"Dragonbone", rarity:"legend", gradient:["#ffd060","#ff8020"],            glow:20, strokeWidth:4, anim:"dragon"},
-  // ─── Shop-exclusive frames (Arena Shop P2, 2026-06-01) — exclusive:true → never drop in chests ───
-  sceau_persan:    {name:"Sceau Persan",    rarity:"rare",  color:"#c9a23a", glow:12, strokeWidth:3, exclusive:true},
-  couronne_lyciane:{name:"Couronne Lyciane",rarity:"epic",  color:"#c060f0", glow:16, strokeWidth:4, exclusive:true},
-  anneau_asphodele:{name:"Anneau d'Asphodèle",rarity:"legend",gradient:["#e8c45a","#fff4c8","#a8801f"], glow:20, strokeWidth:4, anim:"dragon", exclusive:true},
+  // ─── Shop-exclusive frames (Arena Shop P2, 2026-06-01) — exclusive:true → never drop in chests.
+  // css:true → AvatarMedal renders a circular CSS overlay (.aframe-<id> in App.jsx CSS) around
+  // the shield medal instead of an SVG stroke. `color` = signature colour (shop swatch / fallback). ───
+  arc_pulse:    {name:"Arc Pulse",    rarity:"rare",   css:true, color:"#40d0ff", exclusive:true},
+  gilded_halo:  {name:"Gilded Halo",  rarity:"epic",   css:true, color:"#f0c850", exclusive:true},
+  orbit:        {name:"Orbit",        rarity:"epic",   css:true, color:"#f0c850", exclusive:true},
+  tempest:      {name:"Tempest",      rarity:"epic",   css:true, color:"#40a0ff", exclusive:true},
+  inferno_ring: {name:"Inferno Ring", rarity:"legend", css:true, color:"#ff5000", exclusive:true},
+  prismatic:    {name:"Prismatic",    rarity:"legend", css:true, color:"#d060e0", exclusive:true},
 };
 
 // ═══ TITLES (V2 — texte affiché sous le nom partout dans l'app) ═══
@@ -124,10 +134,10 @@ export var TITLES = {
   // Exclusive (never drops via chests — granted via SQL only).
   aldric_chosen: {name:"Aldric's Chosen",    rarity:"legend",color:"#e8d4a8",exclusive:true},
   // ─── Shop-exclusive titles (Arena Shop P2, 2026-06-01) — exclusive:true → never drop in chests ───
-  marchand_reliques: {name:"Marchand des Reliques", rarity:"rare", color:"#3a8ee0", exclusive:true},
-  arpenteur_comptoir:{name:"Arpenteur du Comptoir", rarity:"rare", color:"#3a8ee0", exclusive:true},
-  tisseur_darics:    {name:"Tisseur de Darics",     rarity:"epic", color:"#c060f0", exclusive:true},
-  oeil_aldric:       {name:"L'Œil d'Aldric",        rarity:"epic", color:"#c9a23a", exclusive:true},
+  marchand_reliques: {name:"Relic Merchant",  rarity:"rare", color:"#3a8ee0", exclusive:true},
+  arpenteur_comptoir:{name:"Coin Warden",     rarity:"rare", color:"#3a8ee0", exclusive:true},
+  tisseur_darics:    {name:"Daric Weaver",    rarity:"epic", color:"#c060f0", exclusive:true},
+  oeil_aldric:       {name:"Aldric's Eye",    rarity:"epic", color:"#c9a23a", exclusive:true},
 };
 
 // ═══ TOKENS (V2 — tactiques stackables, nouvelle table player_tokens) ═══
@@ -324,14 +334,20 @@ export var CHEAT_SHEETS = {
 //   one_shot : true for cosmetics/cheat sheets (anti-rebuy via player_rewards), false for tokens (cap-aware)
 // XP Boosts + Anaïs avatars + "Bourse Inépuisable" milestone title = deferred (P2.5).
 export var SHOP_CATALOG = [
-  // Skins exclusifs
-  {item_id:"sk_lapis",    cat:"skin",  ref:"lapis",          price:1400, rarity:"rare",   one_shot:true},
-  {item_id:"sk_verdant",  cat:"skin",  ref:"verdant",        price:2800, rarity:"epic",   one_shot:true},
-  {item_id:"sk_aldric",   cat:"skin",  ref:"aldric_chamber", price:5800, rarity:"legend", one_shot:true},
-  // Frames exclusifs
-  {item_id:"fr_persan",   cat:"frame", ref:"sceau_persan",     price:400,  rarity:"rare",   one_shot:true},
-  {item_id:"fr_lyciane",  cat:"frame", ref:"couronne_lyciane", price:750,  rarity:"epic",   one_shot:true},
-  {item_id:"fr_asphodele",cat:"frame", ref:"anneau_asphodele", price:1400, rarity:"legend", one_shot:true},
+  // Skins exclusifs (global app themes)
+  {item_id:"sk_frostbite", cat:"skin",  ref:"frostbite",   price:1400, rarity:"rare",   one_shot:true},
+  {item_id:"sk_abyssal",   cat:"skin",  ref:"abyssal",     price:1400, rarity:"rare",   one_shot:true},
+  {item_id:"sk_emberheart",cat:"skin",  ref:"emberheart",  price:2800, rarity:"epic",   one_shot:true},
+  {item_id:"sk_cosmic",    cat:"skin",  ref:"cosmic_void", price:2800, rarity:"epic",   one_shot:true},
+  {item_id:"sk_molten",    cat:"skin",  ref:"molten_gold", price:5800, rarity:"legend", one_shot:true},
+  {item_id:"sk_heraldic",  cat:"skin",  ref:"heraldic",    price:5800, rarity:"legend", one_shot:true},
+  // Frames exclusifs (animated avatar rings)
+  {item_id:"fr_arc",     cat:"frame", ref:"arc_pulse",    price:400,  rarity:"rare",   one_shot:true},
+  {item_id:"fr_halo",    cat:"frame", ref:"gilded_halo",  price:750,  rarity:"epic",   one_shot:true},
+  {item_id:"fr_orbit",   cat:"frame", ref:"orbit",        price:750,  rarity:"epic",   one_shot:true},
+  {item_id:"fr_tempest", cat:"frame", ref:"tempest",      price:750,  rarity:"epic",   one_shot:true},
+  {item_id:"fr_inferno", cat:"frame", ref:"inferno_ring", price:1400, rarity:"legend", one_shot:true},
+  {item_id:"fr_prism",   cat:"frame", ref:"prismatic",    price:1400, rarity:"legend", one_shot:true},
   // Titres
   {item_id:"ti_marchand", cat:"title", ref:"marchand_reliques", price:200, rarity:"rare", one_shot:true},
   {item_id:"ti_arpenteur",cat:"title", ref:"arpenteur_comptoir",price:250, rarity:"rare", one_shot:true},

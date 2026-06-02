@@ -1161,6 +1161,57 @@ var CSS=`
 .light.skin-rubis .btn1,.light.skin-amethyste .btn1,.light.skin-corail .btn1,.light.skin-jade .btn1{box-shadow:0 4px 16px rgba(var(--cx),.3)!important}
 .light.skin-obsidienne .btn1{box-shadow:0 4px 20px rgba(80,60,140,.35),0 0 30px rgba(80,60,140,.12)!important}
 .light.skin-aurore .btn1{box-shadow:0 4px 20px rgba(20,120,90,.4)!important}
+/* ═══ SHOP-EXCLUSIVE GLOBAL SKINS (Arena Shop P2, 2026-06-01) — ported verbatim from
+   prototypes/shop-cosmetics/skins-global.html. Same model as aurore/obsidienne:
+   override CSS vars + animate .crd/.btn1/.bar-fill/.tab-bar via background-image keyframes.
+   Keyframes skSheen/skTwinkle/skFlicker + reused aurora are defined below near the others. ═══ */
+.skin-frostbite{--cx:90,180,232;--cyan:#5ab4e8;--orange:#4a90c0;--bg:#070b12;--bg2:#0e1622;--bg3:#16202e;--t1:#dcefff;--t2:#6a92b4;--bdr:rgba(120,190,240,.12)}
+.skin-frostbite .crd{position:relative!important;border-color:rgba(120,190,240,.22)!important;background-image:linear-gradient(135deg,rgba(90,180,232,.10),rgba(160,220,255,.06),rgba(60,120,180,.08))!important;background-size:250% 100%!important;animation:skSheen 4.5s linear infinite!important;transition:none!important}
+.skin-frostbite .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:radial-gradient(1.5px 1.5px at 25% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 70% 60%,#cfefff,transparent),radial-gradient(1px 1px at 50% 80%,#fff,transparent)!important;animation:skTwinkle 2.2s ease-in-out infinite!important}
+.skin-frostbite .btn1{background-image:linear-gradient(135deg,#7ec8f0,#5ab4e8,#bfeaff,#5ab4e8)!important;background-color:transparent!important;background-size:250%!important;color:#070b12!important;animation:skSheen 3s linear infinite!important;transition:none!important;box-shadow:0 4px 24px rgba(90,180,232,.45)}
+.skin-frostbite .bar-fill{background-image:linear-gradient(90deg,#5ab4e8,#bfeaff,#5ab4e8)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 3s linear infinite!important;transition:none!important}
+.skin-frostbite .btn2{border-color:rgba(90,180,232,.3)!important;color:#5ab4e8!important}
+.skin-frostbite .tab-bar{box-shadow:0 -40px 70px rgba(90,180,232,.14)}
+.skin-emberheart{--cx:230,110,40;--cyan:#e87a28;--orange:#d04818;--bg:#0e0705;--bg2:#1c0f08;--bg3:#2a160c;--t1:#ffe4d0;--t2:#b08068;--bdr:rgba(230,120,50,.14)}
+.skin-emberheart .crd{border-color:rgba(230,120,50,.22)!important;background-image:linear-gradient(135deg,rgba(230,110,40,.12),rgba(255,180,60,.07),rgba(200,30,20,.08))!important;background-size:200% 100%!important;animation:aurora 5s ease-in-out infinite,skFlicker 1.8s ease-in-out infinite!important;transition:none!important}
+.skin-emberheart .btn1{background-image:linear-gradient(135deg,#ffb030,#ff6020,#c01810,#ff6020)!important;background-color:transparent!important;background-size:250%!important;color:#0e0705!important;animation:aurora 3s ease infinite,skFlicker 1.4s ease-in-out infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(255,90,20,.5)}
+.skin-emberheart .bar-fill{background-image:linear-gradient(90deg,#ffb030,#ff6020,#ffb030)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3s ease infinite!important;transition:none!important}
+.skin-emberheart .btn2{border-color:rgba(230,120,50,.3)!important;color:#e87a28!important}
+.skin-emberheart .tab-bar{box-shadow:0 -40px 70px rgba(255,90,20,.16)}
+.skin-cosmic_void{--cx:150,110,240;--cyan:#9a6ef0;--orange:#7048c0;--bg:#06040f;--bg2:#0e0a1e;--bg3:#16102c;--t1:#e8e0fb;--t2:#8878b0;--bdr:rgba(150,110,240,.14)}
+.skin-cosmic_void .crd{position:relative!important;border-color:rgba(150,110,240,.22)!important;background-image:radial-gradient(circle at 70% 75%,rgba(150,80,255,.16),transparent 55%),linear-gradient(135deg,rgba(80,40,140,.14),rgba(40,20,80,.10))!important}
+.skin-cosmic_void .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:radial-gradient(1.5px 1.5px at 18% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 65% 55%,#fdf,transparent),radial-gradient(1px 1px at 42% 78%,#cfe,transparent),radial-gradient(1px 1px at 85% 22%,#fff,transparent)!important;animation:skTwinkle 2.6s ease-in-out infinite!important}
+.skin-cosmic_void .btn1{background-image:linear-gradient(135deg,#a060f0,#6040c0,#d060e0,#a060f0)!important;background-color:transparent!important;background-size:300%!important;color:#06040f!important;animation:aurora 3.5s ease infinite!important;transition:none!important;box-shadow:0 4px 28px rgba(150,90,255,.5)}
+.skin-cosmic_void .bar-fill{background-image:linear-gradient(90deg,#a060f0,#d060e0,#a060f0)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3s ease infinite!important;transition:none!important}
+.skin-cosmic_void .btn2{border-color:rgba(150,110,240,.3)!important;color:#9a6ef0!important}
+.skin-cosmic_void .tab-bar{box-shadow:0 -40px 70px rgba(150,90,255,.16)}
+.skin-abyssal{--cx:30,180,160;--cyan:#1eb4a0;--orange:#0e8a78;--bg:#03100f;--bg2:#08201d;--bg3:#0e302a;--t1:#cfeee8;--t2:#5a9088;--bdr:rgba(40,200,170,.13)}
+.skin-abyssal .crd{border-color:rgba(40,200,170,.2)!important;background-image:repeating-radial-gradient(circle at 35% 25%,transparent 0,rgba(60,255,210,.07) 8px,transparent 16px),linear-gradient(135deg,rgba(20,140,120,.12),rgba(6,60,55,.10))!important;background-size:180% 180%,100% 100%!important;animation:aurora 6s ease-in-out infinite!important;transition:none!important}
+.skin-abyssal .btn1{background-image:linear-gradient(135deg,#1eb4a0,#0e7a6a,#3ee0c0,#0e7a6a)!important;background-color:transparent!important;background-size:250%!important;color:#03100f!important;animation:aurora 4s ease infinite!important;transition:none!important;box-shadow:0 4px 24px rgba(30,180,160,.45)}
+.skin-abyssal .bar-fill{background-image:linear-gradient(90deg,#1eb4a0,#3ee0c0,#1eb4a0)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 4s ease infinite!important;transition:none!important}
+.skin-abyssal .btn2{border-color:rgba(30,180,160,.3)!important;color:#1eb4a0!important}
+.skin-abyssal .tab-bar{box-shadow:0 -40px 70px rgba(30,180,160,.14)}
+.skin-molten_gold{--cx:232,176,32;--cyan:#e8b020;--orange:#c08a10;--bg:#0e0a04;--bg2:#1c1508;--bg3:#2a200c;--t1:#fff0d0;--t2:#b09860;--bdr:rgba(240,190,60,.16)}
+.skin-molten_gold .crd{position:relative!important;border-color:rgba(240,190,60,.24)!important;background-image:linear-gradient(135deg,rgba(90,58,8,.30),rgba(232,176,32,.16),rgba(255,240,160,.10),rgba(138,90,16,.18))!important;background-size:250% 250%!important;animation:aurora 5s ease-in-out infinite!important;transition:none!important}
+.skin-molten_gold .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 62%)!important;background-size:250% 100%!important;animation:skSheen 3.5s linear infinite!important}
+.skin-molten_gold .btn1{background-image:linear-gradient(135deg,#5a3a08,#e8b020,#fff0a0,#e8b020,#8a5a10)!important;background-color:transparent!important;background-size:250%!important;color:#0e0a04!important;animation:aurora 3.5s ease infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(232,176,32,.5)}
+.skin-molten_gold .bar-fill{background-image:linear-gradient(90deg,#e8b020,#fff0a0,#e8b020)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 3s linear infinite!important;transition:none!important}
+.skin-molten_gold .btn2{border-color:rgba(232,176,32,.3)!important;color:#e8b020!important}
+.skin-molten_gold .tab-bar{box-shadow:0 -40px 70px rgba(232,176,32,.16)}
+.skin-heraldic{--cx:74,108,210;--cyan:#5a7ce0;--orange:#c8a032;--bg:#05070f;--bg2:#0c1020;--bg3:#141a30;--t1:#dce4fb;--t2:#7888b0;--bdr:rgba(90,124,224,.14)}
+.skin-heraldic .crd{position:relative!important;border-color:rgba(90,124,224,.22)!important;background-image:linear-gradient(135deg,rgba(74,108,210,.12),rgba(200,160,50,.07),rgba(40,60,140,.10))!important;background-size:250% 100%!important;animation:skSheen 5s linear infinite!important;transition:none!important}
+.skin-heraldic .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:linear-gradient(105deg,transparent 40%,rgba(220,190,90,.18) 50%,transparent 60%)!important;background-size:250% 100%!important;animation:skSheen 4s linear infinite!important}
+.skin-heraldic .btn1{background-image:linear-gradient(135deg,#5a7ce0,#3a52a8,#c8a032,#3a52a8)!important;background-color:transparent!important;background-size:250%!important;color:#05070f!important;animation:aurora 3.5s ease infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(90,124,224,.45)}
+.skin-heraldic .bar-fill{background-image:linear-gradient(90deg,#5a7ce0,#c8a032,#5a7ce0)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3.5s ease infinite!important;transition:none!important}
+.skin-heraldic .btn2{border-color:rgba(90,124,224,.3)!important;color:#5a7ce0!important}
+.skin-heraldic .tab-bar{box-shadow:0 -40px 70px rgba(90,124,224,.14)}
+/* Light-mode accent retints (mirror .light.skin-aurore pattern — bg stays light via .light) */
+.light.skin-frostbite{--cx:30,110,170;--cyan:#1e6ea8;--orange:#185888}
+.light.skin-emberheart{--cx:180,70,20;--cyan:#b84810;--orange:#963810}
+.light.skin-cosmic_void{--cx:100,60,180;--cyan:#5a30a8;--orange:#48289a}
+.light.skin-abyssal{--cx:14,120,105;--cyan:#0e8070;--orange:#0a6256}
+.light.skin-molten_gold{--cx:150,108,10;--cyan:#946810;--orange:#7e580e}
+.light.skin-heraldic{--cx:40,68,150;--cyan:#2e4a98;--orange:#8a6c18}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes narratorFadeFromBlack{from{opacity:1}to{opacity:0}}
@@ -1212,6 +1263,27 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes chestV2RewardSettle{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-10px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
 @keyframes frame-cosmic{0%,100%{filter:drop-shadow(0 0 14px #ff40c0) drop-shadow(0 0 22px #40c0ff)}50%{filter:drop-shadow(0 0 20px #ffc040) drop-shadow(0 0 28px #ff40c0)}}
 @keyframes frame-dragon{0%,100%{filter:drop-shadow(0 0 14px #ff4020) drop-shadow(0 0 22px #ffd060)}50%{filter:drop-shadow(0 0 22px #ff4020) drop-shadow(0 0 30px #ffd060)}}
+/* ═══ SHOP-EXCLUSIVE FRAMES (Arena Shop P2, 2026-06-01) — CSS-overlay ring effects, ported
+   verbatim from prototypes/shop-cosmetics/index.html. AvatarMedal renders a circular
+   .aframe overlay (position:absolute;inset:0;border-radius:50%) AROUND the shield medal for
+   frames flagged css:true. Keyframes namespaced afr* to avoid clashing with the app's
+   pulse (scale) / flame keyframes. ═══ */
+@keyframes skSheen{0%{background-position:200% 0}100%{background-position:-100% 0}}
+@keyframes skTwinkle{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes skFlicker{0%,100%{filter:brightness(1)}45%{filter:brightness(1.14)}70%{filter:brightness(.92)}}
+@keyframes afrSpin{to{transform:rotate(360deg)}}
+@keyframes afrPulse{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes afrFlicker{0%,100%{filter:brightness(1)}45%{filter:brightness(1.25)}70%{filter:brightness(.85)}}
+.aframe-arc_pulse{border:3px solid #40d0ff;box-shadow:0 0 14px rgba(64,208,255,.7),inset 0 0 8px rgba(64,208,255,.5);animation:afrPulse 1.8s ease-in-out infinite}
+.aframe-arc_pulse::after{content:'';position:absolute;inset:5px;border-radius:50%;border:1px solid rgba(64,208,255,.5)}
+.aframe-orbit{border:1px dashed rgba(180,140,80,.4)}
+.aframe-orbit::before,.aframe-orbit::after{content:'';position:absolute;inset:0;border-radius:50%;animation:afrSpin 3s linear infinite}
+.aframe-orbit::before{background:radial-gradient(circle 4px at 50% 3px,var(--gold) 3px,transparent 4px);filter:drop-shadow(0 0 6px var(--gold))}
+.aframe-orbit::after{background:radial-gradient(circle 4px at 50% 3px,#40d0ff 3px,transparent 4px);filter:drop-shadow(0 0 6px #40d0ff);animation-delay:-1.5s}
+.aframe-inferno_ring{background:conic-gradient(from 90deg,#ff3000,#ffb020,#ff5000,#ffd040,#ff3000);animation:afrSpin 3s linear infinite,afrFlicker 1.2s ease-in-out infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px));mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px))}
+.aframe-tempest{background:conic-gradient(from 0deg,transparent,#40a0ff,transparent,#a0e0ff,transparent,#40a0ff,transparent);animation:afrSpin 2.2s linear infinite,afrFlicker 1.8s ease-in-out infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px));mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px))}
+.aframe-gilded_halo{border:2px solid #f0c850;box-shadow:0 0 4px #f0c850,0 0 18px rgba(240,200,80,.7),0 0 34px rgba(240,200,80,.4);animation:afrPulse 2.6s ease-in-out infinite}
+.aframe-prismatic{background:conic-gradient(from 0deg,#ff4040,#ffd000,#40ff60,#40d0ff,#a040ff,#ff4040);animation:afrSpin 5s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));filter:saturate(1.3)}
 @keyframes chestV2ImpactRing{0%{opacity:1;transform:translate(-50%,-50%) scaleY(.4) scaleX(.3)}100%{opacity:0;transform:translate(-50%,-50%) scaleY(.4) scaleX(2.5)}}
 @keyframes chestV2SpeedLine{0%{opacity:0;transform:translateY(-100px)}30%{opacity:1}100%{opacity:0;transform:translateY(200px)}}
 @keyframes chestV2IconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -10948,10 +11020,15 @@ function AvatarMedal(p){
   var rs=RARITY_STYLES[av.rarity]||RARITY_STYLES.common;
   var iconPath=GAME_ICON_PATHS[av.icon]||"";
   var frame=frameId&&FRAMES[frameId];
+  // Arena Shop P2 — `css:true` frames are rendered as a circular CSS overlay (.aframe-*)
+  // around the shield medal (conic rings, orbiting dots, glows) instead of an SVG stroke.
+  var cssFrame=frame&&frame.css;
   var svgStyle={overflow:"visible",flexShrink:0,display:"inline-block",verticalAlign:"middle"};
   // V2 — Frame styling (drop-shadow glow + optional pulse animation) takes precedence
   // over the rarity glow, since the user-equipped frame is the explicit cosmetic choice.
-  if(frame){
+  if(cssFrame){
+    // inner medal stays clean — the .aframe overlay carries all the frame visuals
+  }else if(frame){
     var glowColor=frame.gradient?frame.gradient[0]:frame.color;
     // Single drop-shadow keeps the outer-shield outline crisp ; double-stacking
     // softened the path into a halo that masked the shape.
@@ -10965,20 +11042,28 @@ function AvatarMedal(p){
   // Outer shield path for frames — slightly larger than the avatar shield (5px halo).
   var FRAME_PATH="M 50,1 L 95,16 L 95,58 C 95,80 75,93 50,102 C 25,93 5,80 5,58 L 5,16 Z";
   // Unique gradient id per render to avoid clashes across multiple AvatarMedal instances.
-  var gradId=frame&&frame.gradient?("frmg-"+(frameId||"x")+"-"+Math.floor(Math.random()*1e6)):null;
-  return(<svg viewBox="0 -3 100 110" width={size} height={size*1.10} style={svgStyle}>
-    {frame&&frame.gradient&&<defs>
+  var gradId=frame&&frame.gradient&&!cssFrame?("frmg-"+(frameId||"x")+"-"+Math.floor(Math.random()*1e6)):null;
+  var medalSvg=(<svg viewBox="0 -3 100 110" width={size} height={size*1.10} style={svgStyle}>
+    {frame&&frame.gradient&&!cssFrame&&<defs>
       <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
         {frame.gradient.map(function(c,i){return(<stop key={i} offset={(i/Math.max(1,frame.gradient.length-1)*100)+"%"} stopColor={c}/>);})}
       </linearGradient>
     </defs>}
-    {frame&&<path d={FRAME_PATH} fill="none" stroke={frame.gradient?("url(#"+gradId+")"):frame.color} strokeWidth={frame.strokeWidth||2.5} strokeLinejoin="round"/>}
+    {frame&&!cssFrame&&<path d={FRAME_PATH} fill="none" stroke={frame.gradient?("url(#"+gradId+")"):frame.color} strokeWidth={frame.strokeWidth||2.5} strokeLinejoin="round"/>}
     <path d="M 50,7 L 90,20 L 90,56 C 90,76 72,88 50,96 C 28,88 10,76 10,56 L 10,20 Z" fill={rs.bg} stroke={rs.stroke} strokeWidth="1.5"/>
     <path d="M 50,13 L 84,24 L 84,54 C 84,72 67,83 50,90 C 33,83 16,72 16,54 L 16,24 Z" fill="none" stroke={rs.stroke} strokeWidth="0.7" opacity="0.35"/>
     <svg x="16" y="18" width="68" height="65" viewBox="0 0 512 512" style={{color:rs.icon}}>
       <g fill={rs.icon} dangerouslySetInnerHTML={{__html:iconPath}}/>
     </svg>
   </svg>);
+  if(cssFrame){
+    var wsz=Math.round(size*1.18);
+    return(<span style={{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",width:wsz,height:wsz,flexShrink:0,verticalAlign:"middle"}}>
+      <span className={"aframe aframe-"+frameId} style={{position:"absolute",inset:0,borderRadius:"50%",pointerEvents:"none"}}/>
+      {medalSvg}
+    </span>);
+  }
+  return medalSvg;
 }
 
 // ═══════════════════════════════════════════════════════════════

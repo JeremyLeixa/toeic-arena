@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arena Shop — Global App Skins Proto</title>
+<style>
+  /* Proto v2 — GLOBAL app skins (the real model: a skin themes the WHOLE app,
+     like the existing Aurora Borealis / Obsidian). Each phone mock below uses the
+     SAME class structure as the app (.crd .btn1 .btn2 .bar-fill .tab-bar) and the
+     SAME skinning technique (skin-<id> overrides CSS vars + animates components via
+     background-image keyframes). So porting to App.jsx is 1:1 → strict parity.
+     Open in a browser to see the animations live. */
+
+  /* ── App base tokens (copied from App.jsx :root, dark mode) ── */
+  :root{
+    --bg:#0f0c08; --bg2:#1a1610; --bg3:#28221a;
+    --bdr:rgba(180,140,80,.12); --cyan:#d4943a; --orange:#c87a35;
+    --gold:#f0c850; --green:#4abe60; --red:#e05252;
+    --t1:#ede4d4; --t2:#8a7e6a; --t3:#5a5040;
+    --cx:212,148,58;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#070504;color:#ede4d4;font-family:'Outfit',system-ui,sans-serif;padding:26px 16px 70px}
+  h1{font-size:23px;font-weight:800;text-align:center;margin-bottom:6px}
+  .sub{text-align:center;color:#8a7e6a;font-size:13px;max-width:600px;margin:0 auto 28px;line-height:1.5}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:24px;max-width:1120px;margin:0 auto}
+
+  /* ── Phone mock : the skin class sits on .phone so each mock is themed independently.
+       In the real app the same class sits on the root .app wrapper. ── */
+  .phone{background:var(--bg);border:1px solid var(--bdr);border-radius:22px;padding:16px 14px 10px;
+         display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;min-height:430px;
+         box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .skin-name{position:absolute;top:10px;right:14px;font-size:10px;font-weight:800;text-transform:uppercase;
+             letter-spacing:1.5px;color:var(--cyan);opacity:.9;z-index:5}
+
+  /* header */
+  .hdr{display:flex;align-items:center;gap:10px}
+  .ava{width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+       background:radial-gradient(circle at 38% 32%,var(--bg3),var(--bg2));border:1px solid rgba(var(--cx),.35)}
+  .ava svg{width:24px;height:24px;fill:rgba(var(--cx),.9)}
+  .aname{font-size:15px;font-weight:800;color:var(--t1)}
+  .pill{font-size:11px;font-weight:700;color:var(--gold);background:rgba(240,200,80,.1);
+        border:1px solid rgba(240,200,80,.25);padding:2px 9px;border-radius:99px;display:inline-flex;gap:4px;align-items:center}
+  .pill .dot{width:9px;height:9px;border-radius:2px;background:var(--gold);transform:rotate(45deg)}
+
+  /* cards (.crd mirrors the app) */
+  .crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:13px;
+       box-shadow:inset 0 1px 0 rgba(180,140,80,.04);position:relative;overflow:hidden}
+  .crd .lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t2);margin-bottom:4px;position:relative;z-index:2}
+  .crd .val{font-size:18px;font-weight:800;color:var(--t1);position:relative;z-index:2}
+  .crd .ico{position:absolute;right:12px;top:12px;width:26px;height:26px;fill:rgba(var(--cx),.85);z-index:2}
+
+  /* progress bar (.bar-fill mirrors the app) */
+  .bar{height:9px;border-radius:99px;background:var(--bg3);overflow:hidden;margin-top:8px;position:relative;z-index:2}
+  .bar-fill{height:100%;border-radius:99px;background:var(--cyan);width:66%}
+
+  /* buttons */
+  .btn1{border:none;border-radius:12px;padding:11px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;
+        background:var(--cyan);color:#0f0c08}
+  .btn2{background:var(--bg2);border:1px solid var(--bdr);color:var(--t1);border-radius:12px;padding:10px;
+        font-family:inherit;font-weight:600;font-size:13px;cursor:pointer}
+  .btns{display:flex;gap:8px}
+  .btns .btn1{flex:1}.btns .btn2{flex:1}
+
+  /* tab bar */
+  .tab-bar{margin-top:auto;display:flex;justify-content:space-around;padding:9px 4px 4px;border-top:1px solid var(--bdr)}
+  .tab-bar svg{width:20px;height:20px;fill:var(--t2)}
+  .tab-bar svg.on{fill:var(--cyan)}
+
+  /* ══════════════════════════════════════════════════════════════
+     SKIN PACKAGES — same structure as App.jsx .skin-aurore / .skin-obsidienne
+     Each: (1) override vars, (2) animate .crd, (3) animate .btn1, (4) .bar-fill,
+     (5) tab-bar glow. Ported verbatim into App.jsx → identical rendering.
+     ══════════════════════════════════════════════════════════════ */
+
+  /* ── 1a. BLOODMOON — crimson eclipse (Aurora Veil replacement candidate) ── */
+  .skin-bloodmoon{--cx:206,46,58;--cyan:#d44a52;--orange:#a02028;--bg:#0c0406;--bg2:#1c080c;--bg3:#2a0c12;--t1:#f4d8dc;--t2:#a86870;--bdr:rgba(210,60,70,.14)}
+  .skin-bloodmoon .crd{border-color:rgba(210,60,70,.22)!important;background-image:radial-gradient(circle at 70% 80%,rgba(220,40,50,.16),transparent 55%),linear-gradient(135deg,rgba(140,20,30,.16),rgba(60,8,16,.12))!important;background-size:200% 200%,100% 100%!important;animation:s_drift 6s ease-in-out infinite!important}
+  .skin-bloodmoon .btn1{background-image:linear-gradient(135deg,#e04050,#a01828,#ff6070,#a01828)!important;background-size:250%!important;color:#0c0406!important;animation:s_drift 3.5s ease infinite!important;box-shadow:0 4px 26px rgba(200,40,55,.5)}
+  .skin-bloodmoon .bar-fill{background-image:linear-gradient(90deg,#e04050,#ff7080,#e04050)!important;background-size:200%!important;animation:s_drift 3.5s ease infinite!important}
+  .skin-bloodmoon .tab-bar{box-shadow:0 -40px 70px rgba(200,40,55,.16)}
+
+  /* ── 1b. SYLVAN — living forest green / druidic (Aurora Veil replacement candidate) ── */
+  .skin-sylvan{--cx:74,168,84;--cyan:#4aa854;--orange:#2e7838;--bg:#060c06;--bg2:#0e1a0e;--bg3:#162816;--t1:#daf0d8;--t2:#6a9870;--bdr:rgba(90,190,100,.13)}
+  .skin-sylvan .crd{border-color:rgba(90,190,100,.2)!important;background-image:linear-gradient(135deg,rgba(74,168,84,.12),rgba(150,210,90,.07),rgba(30,110,70,.10))!important;background-size:250% 100%!important;animation:s_drift 5.5s ease-in-out infinite!important}
+  .skin-sylvan .btn1{background-image:linear-gradient(135deg,#6ac860,#3a9040,#a8e060,#3a9040)!important;background-size:250%!important;color:#060c06!important;animation:s_drift 3.5s ease infinite!important;box-shadow:0 4px 24px rgba(74,168,84,.45)}
+  .skin-sylvan .bar-fill{background-image:linear-gradient(90deg,#4aa854,#a8e060,#4aa854)!important;background-size:200%!important;animation:s_drift 3.5s ease infinite!important}
+  .skin-sylvan .tab-bar{box-shadow:0 -40px 70px rgba(74,168,84,.14)}
+
+  /* ── 1c. HERALDIC — royal blue + gold heraldry (Aurora Veil replacement candidate) ── */
+  .skin-heraldic{--cx:74,108,210;--cyan:#5a7ce0;--orange:#c8a032;--bg:#05070f;--bg2:#0c1020;--bg3:#141a30;--t1:#dce4fb;--t2:#7888b0;--bdr:rgba(90,124,224,.14)}
+  .skin-heraldic .crd{border-color:rgba(90,124,224,.22)!important;background-image:linear-gradient(135deg,rgba(74,108,210,.12),rgba(200,160,50,.07),rgba(40,60,140,.10))!important;background-size:250% 100%!important;animation:s_sheen 5s linear infinite!important}
+  .skin-heraldic .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(105deg,transparent 40%,rgba(220,190,90,.18) 50%,transparent 60%);background-size:250% 100%;animation:s_sheen 4s linear infinite}
+  .skin-heraldic .btn1{background-image:linear-gradient(135deg,#5a7ce0,#3a52a8,#c8a032,#3a52a8)!important;background-size:250%!important;color:#05070f!important;animation:s_drift 3.5s ease infinite!important;box-shadow:0 4px 26px rgba(90,124,224,.45)}
+  .skin-heraldic .bar-fill{background-image:linear-gradient(90deg,#5a7ce0,#c8a032,#5a7ce0)!important;background-size:200%!important;animation:s_drift 3.5s ease infinite!important}
+  .skin-heraldic .tab-bar{box-shadow:0 -40px 70px rgba(90,124,224,.14)}
+
+  /* ── 2. FROSTBITE — icy blue shimmer + frost sparkle ── */
+  .skin-frostbite{--cx:90,180,232;--cyan:#5ab4e8;--orange:#4a90c0;--bg:#070b12;--bg2:#0e1622;--bg3:#16202e;--t1:#dcefff;--t2:#6a92b4;--bdr:rgba(120,190,240,.12)}
+  .skin-frostbite .crd{border-color:rgba(120,190,240,.22)!important;background-image:linear-gradient(135deg,rgba(90,180,232,.10),rgba(160,220,255,.06),rgba(60,120,180,.08))!important;background-size:250% 100%!important;animation:s_sheen 4.5s linear infinite!important}
+  .skin-frostbite .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(1.5px 1.5px at 25% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 70% 60%,#cfefff,transparent),radial-gradient(1px 1px at 50% 80%,#fff,transparent);animation:s_twinkle 2.2s ease-in-out infinite}
+  .skin-frostbite .btn1{background-image:linear-gradient(135deg,#7ec8f0,#5ab4e8,#bfeaff,#5ab4e8)!important;background-size:250%!important;color:#070b12!important;animation:s_sheen 3s linear infinite!important;box-shadow:0 4px 24px rgba(90,180,232,.45)}
+  .skin-frostbite .bar-fill{background-image:linear-gradient(90deg,#5ab4e8,#bfeaff,#5ab4e8)!important;background-size:200%!important;animation:s_sheen 3s linear infinite!important}
+  .skin-frostbite .tab-bar{box-shadow:0 -40px 70px rgba(90,180,232,.14)}
+
+  /* ── 3. EMBERHEART — fire orange/red flicker ── */
+  .skin-emberheart{--cx:230,110,40;--cyan:#e87a28;--orange:#d04818;--bg:#0e0705;--bg2:#1c0f08;--bg3:#2a160c;--t1:#ffe4d0;--t2:#b08068;--bdr:rgba(230,120,50,.14)}
+  .skin-emberheart .crd{border-color:rgba(230,120,50,.22)!important;background-image:linear-gradient(135deg,rgba(230,110,40,.12),rgba(255,180,60,.07),rgba(200,30,20,.08))!important;background-size:200% 100%!important;animation:s_drift 5s ease-in-out infinite,s_flicker 1.8s ease-in-out infinite!important}
+  .skin-emberheart .btn1{background-image:linear-gradient(135deg,#ffb030,#ff6020,#c01810,#ff6020)!important;background-size:250%!important;color:#0e0705!important;animation:s_drift 3s ease infinite,s_flicker 1.4s ease-in-out infinite!important;box-shadow:0 4px 26px rgba(255,90,20,.5)}
+  .skin-emberheart .bar-fill{background-image:linear-gradient(90deg,#ffb030,#ff6020,#ffb030)!important;background-size:200%!important;animation:s_drift 3s ease infinite!important}
+  .skin-emberheart .tab-bar{box-shadow:0 -40px 70px rgba(255,90,20,.16)}
+
+  /* ── 4. COSMIC VOID — deep purple nebula + starfield ── */
+  .skin-cosmic_void{--cx:150,110,240;--cyan:#9a6ef0;--orange:#7048c0;--bg:#06040f;--bg2:#0e0a1e;--bg3:#16102c;--t1:#e8e0fb;--t2:#8878b0;--bdr:rgba(150,110,240,.14)}
+  .skin-cosmic_void .crd{border-color:rgba(150,110,240,.22)!important;background-image:radial-gradient(circle at 70% 75%,rgba(150,80,255,.16),transparent 55%),linear-gradient(135deg,rgba(80,40,140,.14),rgba(40,20,80,.10))!important}
+  .skin-cosmic_void .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(1.5px 1.5px at 18% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 65% 55%,#fdf,transparent),radial-gradient(1px 1px at 42% 78%,#cfe,transparent),radial-gradient(1px 1px at 85% 22%,#fff,transparent);animation:s_twinkle 2.6s ease-in-out infinite}
+  .skin-cosmic_void .btn1{background-image:linear-gradient(135deg,#a060f0,#6040c0,#d060e0,#a060f0)!important;background-size:300%!important;color:#06040f!important;animation:s_aurora 3.5s ease infinite!important;box-shadow:0 4px 28px rgba(150,90,255,.5)}
+  .skin-cosmic_void .bar-fill{background-image:linear-gradient(90deg,#a060f0,#d060e0,#a060f0)!important;background-size:200%!important;animation:s_aurora 3s ease infinite!important}
+  .skin-cosmic_void .tab-bar{box-shadow:0 -40px 70px rgba(150,90,255,.16)}
+
+  /* ── 5. ABYSSAL — deep ocean teal-green caustics ── */
+  .skin-abyssal{--cx:30,180,160;--cyan:#1eb4a0;--orange:#0e8a78;--bg:#03100f;--bg2:#08201d;--bg3:#0e302a;--t1:#cfeee8;--t2:#5a9088;--bdr:rgba(40,200,170,.13)}
+  .skin-abyssal .crd{border-color:rgba(40,200,170,.2)!important;background-image:repeating-radial-gradient(circle at 35% 25%,transparent 0,rgba(60,255,210,.07) 8px,transparent 16px),linear-gradient(135deg,rgba(20,140,120,.12),rgba(6,60,55,.10))!important;background-size:180% 180%,100% 100%!important;animation:s_drift 6s ease-in-out infinite!important}
+  .skin-abyssal .btn1{background-image:linear-gradient(135deg,#1eb4a0,#0e7a6a,#3ee0c0,#0e7a6a)!important;background-size:250%!important;color:#03100f!important;animation:s_drift 4s ease infinite!important;box-shadow:0 4px 24px rgba(30,180,160,.45)}
+  .skin-abyssal .bar-fill{background-image:linear-gradient(90deg,#1eb4a0,#3ee0c0,#1eb4a0)!important;background-size:200%!important;animation:s_drift 4s ease infinite!important}
+  .skin-abyssal .tab-bar{box-shadow:0 -40px 70px rgba(30,180,160,.14)}
+
+  /* ── 6. MOLTEN GOLD — liquid gold sheen ── */
+  .skin-molten_gold{--cx:232,176,32;--cyan:#e8b020;--orange:#c08a10;--bg:#0e0a04;--bg2:#1c1508;--bg3:#2a200c;--t1:#fff0d0;--t2:#b09860;--bdr:rgba(240,190,60,.16)}
+  .skin-molten_gold .crd{border-color:rgba(240,190,60,.24)!important;background-image:linear-gradient(135deg,rgba(90,58,8,.30),rgba(232,176,32,.16),rgba(255,240,160,.10),rgba(138,90,16,.18))!important;background-size:250% 250%!important;animation:s_drift 5s ease-in-out infinite!important}
+  .skin-molten_gold .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 62%);background-size:250% 100%;animation:s_sheen 3.5s linear infinite}
+  .skin-molten_gold .btn1{background-image:linear-gradient(135deg,#5a3a08,#e8b020,#fff0a0,#e8b020,#8a5a10)!important;background-size:250%!important;color:#0e0a04!important;animation:s_drift 3.5s ease infinite!important;box-shadow:0 4px 26px rgba(232,176,32,.5)}
+  .skin-molten_gold .bar-fill{background-image:linear-gradient(90deg,#e8b020,#fff0a0,#e8b020)!important;background-size:200%!important;animation:s_sheen 3s linear infinite!important}
+  .skin-molten_gold .tab-bar{box-shadow:0 -40px 70px rgba(232,176,32,.16)}
+
+  /* shared keyframes (mirror app: aurora / skinShimmer techniques) */
+  @keyframes s_aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  @keyframes s_drift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  @keyframes s_sheen{0%{background-position:200% 0}100%{background-position:-100% 0}}
+  @keyframes s_twinkle{0%,100%{opacity:.4}50%{opacity:1}}
+  @keyframes s_flicker{0%,100%{filter:brightness(1)}45%{filter:brightness(1.14)}70%{filter:brightness(.92)}}
+</style>
+</head>
+<body>
+  <h1>Arena Shop — Global App Skins</h1>
+  <p class="sub">Each mock is a real app screen wearing the skin (header, cards, primary/secondary buttons, progress bar, tab bar) — same classes &amp; skinning technique as the app, so what you see is what ships. Tell me any palette tweaks.</p>
+  <div class="grid" id="phones"></div>
+
+  <h2 style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#f0c850;text-align:center;margin:38px auto 6px;max-width:1120px">Aurora Veil — replacement candidates</h2>
+  <p class="sub" style="margin-bottom:22px">Aurora Veil was too close to the existing Aurora Borealis skin. Pick <b>1</b> of these 3 — all coherent with the medieval-fantasy / arena theme.</p>
+  <div class="grid" id="candidates"></div>
+
+<script>
+  var CROWN='<svg viewBox="0 0 100 100"><path d="M12 74 H88 V82 H12 Z M12 70 L12 30 L30 49 L50 22 L70 49 L88 30 L88 70 Z"/></svg>';
+  var BOOK='<svg viewBox="0 0 24 24"><path d="M4 3h7a2 2 0 0 1 2 2v14a3 3 0 0 0-3-3H4z M20 3h-7a2 2 0 0 0-2 2v14a3 3 0 0 1 3-3h6z"/></svg>';
+  var TABS='<svg viewBox="0 0 24 24" class="on"><path d="M3 11 12 3l9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>'+
+           '<svg viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5z M2 12l10 5 10-5"/></svg>'+
+           '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg>';
+
+  var CONFIRMED=[
+    {cls:'skin-frostbite',   name:'Frostbite'},
+    {cls:'skin-emberheart',  name:'Emberheart'},
+    {cls:'skin-cosmic_void', name:'Cosmic Void'},
+    {cls:'skin-abyssal',     name:'Abyssal'},
+    {cls:'skin-molten_gold', name:'Molten Gold'}
+  ];
+  var CANDIDATES=[
+    {cls:'skin-bloodmoon', name:'Bloodmoon'},
+    {cls:'skin-sylvan',    name:'Sylvan'},
+    {cls:'skin-heraldic',  name:'Heraldic'}
+  ];
+
+  function mock(s){
+    return '<div class="phone '+s.cls+'">'+
+      '<div class="skin-name">'+s.name+'</div>'+
+      '<div class="hdr"><div class="ava">'+CROWN+'</div>'+
+        '<div><div class="aname">Trainee</div><div class="pill"><span class="dot"></span>1 240</div></div></div>'+
+      '<div class="crd"><div class="lbl">Today’s Focus</div><div class="val">Part 5 — Grammar</div>'+
+        '<span class="ico">'+BOOK+'</span><div class="bar"><div class="bar-fill"></div></div></div>'+
+      '<div class="crd"><div class="lbl">TOEIC estimate</div><div class="val">685</div></div>'+
+      '<div class="btns"><button class="btn2">Back</button><button class="btn1">Continue</button></div>'+
+      '<div class="tab-bar">'+TABS+'</div>'+
+    '</div>';
+  }
+  document.getElementById('phones').innerHTML=CONFIRMED.map(mock).join('');
+  document.getElementById('candidates').innerHTML=CANDIDATES.map(mock).join('');
+</script>
+</body>
+</html>
