@@ -490,7 +490,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-02-shop-p2b";
+var BUILD_ID="2026-06-02-shop-p25";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -570,6 +570,8 @@ function supaToLocal(data){
     // server-authoritative students.arena_marks column. Mutated ONLY by the
     // grant_marks / spend_marks RPCs, never by save() (see guard in save()).
     arenaMarks: data.arena_marks || 0,
+    // Arena Shop P2.5 — XP boost state (client-authoritative, travels in save()).
+    boosts: data.boosts || {},
   };
 }
 
@@ -705,6 +707,8 @@ async function save(d){
     // Personalization Phase 1 (2026-05-05) — opt-in goal-setting
     target_toeic:d.targetToeic||null,
     target_date:d.targetDate||null,
+    // Arena Shop P2.5 (2026-06-02) — XP boost state (client-authoritative, persisted).
+    boosts:d.boosts||{},
     // Arena Shop P1 (2026-05-29) — DELIBERATELY NO arena_marks HERE.
     // The currency is server-authoritative: only grant_marks/spend_marks RPCs
     // mutate students.arena_marks via atomic increments. save() does a full-row
@@ -774,7 +778,7 @@ async function bioAuthenticate(){
   return true;
 }
 
-function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null,targetToeic:null,targetDate:null,arenaMarks:0};}
+function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null,targetToeic:null,targetDate:null,arenaMarks:0,boosts:{}};}
 
 // ─── MODULE SCORE TRACKING ───
 function recordModule(u,modId,sc,tot,catStats){
@@ -797,6 +801,7 @@ function recordModule(u,modId,sc,tot,catStats){
   // V2 — Bypass Token consumed once a round of the armed module lands. Clearing here
   // (rather than in each Done handler) keeps the contract central and consistent.
   if(u.bypassArmedModule===modId)u.bypassArmedModule=null;
+  if(u.boosts&&u.boosts.moduleBoostArmed===modId)u.boosts.moduleBoostArmed=null; // P2.5 — consume Module Booster
   return u;
 }
 
@@ -14123,11 +14128,12 @@ function generateInsight(u){
 // confirm step guards accidental spends (no refund on cosmetics by design). The
 // Shop entry point is visitor-blocked (currency never accrues for visitors).
 var SHOP_SECTIONS=[
-  {cat:"skin",label:"Skins"},
-  {cat:"frame",label:"Frames"},
-  {cat:"title",label:"Titles"},
-  {cat:"token",label:"Tokens"},
-  {cat:"cheat_sheet",label:"Cheat Sheets"},
+  {key:"skin",label:"Skins"},
+  {key:"frame",label:"Frames"},
+  {key:"title",label:"Titles"},
+  {key:"boost",label:"XP Boosts"},
+  {key:"token",label:"Tokens"},
+  {key:"cheat_sheet",label:"Cheat Sheets"},
 ];
 function shopRarColor(rid){for(var i=0;i<RARITIES.length;i++){if(RARITIES[i].id===rid)return RARITIES[i].color;}return "var(--bdr)";}
 function shopItemName(item){
@@ -14178,7 +14184,7 @@ function Shop(p){
   }
   function showFlash(ok,msg){setFlash({ok:ok,msg:msg});setTimeout(function(){setFlash(null);},2600);}
 
-  var ERRMAP={insufficient_marks:"Not enough Darics",already_owned:"Already owned",at_cap:"Already at maximum",no_student:"Account error",visitor:"Unavailable in visitor mode",empty_response:"No response, try again"};
+  var ERRMAP={insufficient_marks:"Not enough Darics",already_owned:"Already owned",at_cap:"Already at maximum",weekly_cap:"Weekly limit reached (2/week)",no_student:"Account error",visitor:"Unavailable in visitor mode",empty_response:"No response, try again"};
   function doBuy(item){
     setConfirmItem(null);
     if(busy)return;
@@ -14218,11 +14224,11 @@ function Shop(p){
     {loading&&<p style={{color:"var(--t3)",textAlign:"center",padding:40}}>Loading shop...</p>}
 
     {!loading&&SHOP_SECTIONS.map(function(sec){
-      var items=SHOP_CATALOG.filter(function(it){return it.cat===sec.cat;});
+      var items=SHOP_CATALOG.filter(function(it){return (it.group||it.cat)===sec.key;});
       if(items.length===0)return null;
-      var open=!!openSec[sec.cat];
-      return(<div key={sec.cat} style={{marginBottom:10,borderRadius:12,border:"1px solid var(--bdr)",overflow:"hidden",background:"var(--bg2)"}}>
-        <button onClick={function(){var nv=Object.assign({},openSec);nv[sec.cat]=!open;setOpenSec(nv);}}
+      var open=!!openSec[sec.key];
+      return(<div key={sec.key} style={{marginBottom:10,borderRadius:12,border:"1px solid var(--bdr)",overflow:"hidden",background:"var(--bg2)"}}>
+        <button onClick={function(){var nv=Object.assign({},openSec);nv[sec.key]=!open;setOpenSec(nv);}}
           style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",background:"transparent",border:"none",cursor:"pointer",color:"var(--t1)",fontFamily:"inherit"}}>
           <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,color:"var(--t2)"}}>{sec.label} <span style={{color:"var(--t3)",marginLeft:4,fontWeight:600}}>{items.length}</span></span>
           <span style={{fontSize:14,color:"var(--gold)",display:"inline-block",transform:open?"rotate(0deg)":"rotate(-90deg)",transition:"transform .2s"}}>{"▾"}</span>
@@ -14232,7 +14238,9 @@ function Shop(p){
             var ownedFlag=isOwned(item);
             var capFlag=atCap(item);
             var affordable=marks>=item.price;
-            var locked=ownedFlag||capFlag;
+            // Daily Doubler — 2/week purchase cap (in addition to the stock cap)
+            var weekLocked=item.ref==="daily_doubler"&&(function(){var b=u.boosts||{};var wk=weekId();return ((b.ddWeekId===wk)?(b.ddWeekCount||0):0)>=2;})();
+            var locked=ownedFlag||capFlag||weekLocked;
             return(<div key={item.item_id} className="crd" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,opacity:(locked||!affordable)?.6:1}}>
               <div style={{flexShrink:0,width:52,height:52,display:"flex",alignItems:"center",justifyContent:"center"}}><ShopItemVisual item={item}/></div>
               <div style={{flex:1,minWidth:0,overflow:"hidden"}}>
@@ -14241,7 +14249,7 @@ function Shop(p){
               </div>
               <div style={{flexShrink:0,textAlign:"right"}}>
                 {locked?(
-                  <span style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:.5}}>{ownedFlag?"Owned":"Max"}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:.5}}>{ownedFlag?"Owned":weekLocked?"Weekly max":"Max"}</span>
                 ):(
                   <button onClick={function(){setConfirmItem(item);}} disabled={!affordable||busy}
                     style={Object.assign({fontSize:12,fontWeight:800,padding:"8px 14px",borderRadius:99,border:"none",whiteSpace:"nowrap",cursor:affordable?"pointer":"not-allowed",display:"inline-flex",alignItems:"center",gap:4},affordable?goldBtn:{background:"rgba(224,82,82,.12)",color:"var(--red)"})}>
@@ -14941,7 +14949,7 @@ function Profile(p){
           var nonPremium=Object.keys(TOKEN_TYPES).filter(function(tt){return!TOKEN_TYPES[tt].premium;});
           var premium=Object.keys(TOKEN_TYPES).filter(function(tt){return TOKEN_TYPES[tt].premium;});
           // V2 — which tokens are usable from the Collection (others are in-context or passive)
-          var COLLECTION_ACTIONABLE={daily_reroll:true,diminishing_bypass:true,insight_token:true};
+          var COLLECTION_ACTIONABLE={daily_reroll:true,diminishing_bypass:true,insight_token:true,module_booster:true,mock_multiplier:true,daily_doubler:true};
           var IN_CONTEXT_HINT={
             mock_reset:"Used on the locked Mock Test screen",
             boss_reset:"Used on the locked Boss Test screen",
@@ -14961,6 +14969,9 @@ function Profile(p){
             else if(tt==="mock_reset"&&u.mockResetArmed){hint="🎟️ Armed — bypass on next Mock played";}
             else if(tt==="boss_reset"&&u.bossResetArmed){hint="🐲 Armed — enter the Boss arena";}
             else if(tt==="endless_resurrect"&&u.endlessResetArmed){hint="💎 Armed — replay Endless";}
+            else if(tt==="module_booster"&&u.boosts&&u.boosts.moduleBoostArmed){var mbm=MISSION_MODULES.find(function(m){return m.id===u.boosts.moduleBoostArmed;});hint="🚀 Armed on "+(mbm?mbm.name:u.boosts.moduleBoostArmed)+" — +50% next session";}
+            else if(tt==="mock_multiplier"&&u.boosts&&u.boosts.mockMultArmed){hint="📈 Armed — ×1.5 on next Mock";}
+            else if(tt==="daily_doubler"&&u.boosts&&u.boosts.dailyDoublerUntil&&Date.now()<u.boosts.dailyDoublerUntil){var ddm=Math.max(0,Math.round((u.boosts.dailyDoublerUntil-Date.now())/60000));hint="⏫ Active — ×2 XP ("+(ddm>=60?Math.round(ddm/60)+"h":ddm+"m")+" left)";}
             var bg=owned?(isPremium?"rgba(255,192,32,.05)":"rgba(var(--cx),.04)"):(isPremium?"rgba(255,192,32,.02)":"var(--bg3)");
             var bdr=owned?(isPremium?"rgba(255,192,32,.25)":"var(--bdr)"):(isPremium?"rgba(255,192,32,.1)":"var(--bdr)");
             var fill=isPremium?"#ffc020":"var(--cyan)";
@@ -15177,6 +15188,89 @@ function Profile(p){
             <div style={{display:"flex",gap:10,justifyContent:"center"}}>
               <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Cancel</button>
               <button onClick={doInsight} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Reveal</button>
+            </div>
+          </div>
+        </div>);
+      }
+      // ── XP Boost flow A : Module Booster (pick a module, +50% next session) ──
+      if(useTokenAsk==="module_booster"){
+        var bModList=MISSION_MODULES.slice();
+        if(!bypassPick){
+          return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
+            <div className="crd" style={{maxWidth:380,maxHeight:"80vh",overflowY:"auto",padding:20,border:"1px solid var(--bdr)"}}>
+              <div style={{textAlign:"center",marginBottom:12}}>
+                <div style={{fontSize:48,marginBottom:8}}>{info.icon}</div>
+                <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:6}}>Module Booster — pick a module</h2>
+                <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>The chosen module earns <strong style={{color:"var(--cyan)"}}>+50% XP</strong> on its next session.</p>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
+                {bModList.map(function(m){return(<button key={m.id} onClick={function(){setBypassPick(m.id);}} style={{padding:"10px 12px",borderRadius:10,cursor:"pointer",textAlign:"left",border:"1px solid var(--bdr)",background:"var(--bg2)",display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{width:22,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{GAME_ICON_PATHS[m.icon]?<GIcon name={m.icon} size={20} color="var(--cyan)"/>:m.icon}</span>
+                  <span style={{flex:1,fontSize:13,fontWeight:700,color:"var(--t1)"}}>{m.name}</span>
+                </button>);})}
+              </div>
+              <button onClick={closeAll} className="btn2" style={{width:"100%",fontSize:13,padding:"10px 16px"}}>Cancel</button>
+            </div>
+          </div>);
+        }
+        var bPicked=MISSION_MODULES.find(function(m){return m.id===bypassPick;})||{name:bypassPick,icon:"🎯"};
+        function doModuleBoost(){
+          applyConsume("module_booster",function(){
+            var c=JSON.parse(JSON.stringify(u));if(!c.boosts)c.boosts={};c.boosts.moduleBoostArmed=bypassPick;p.setAvatar(c);
+            setTokenToast({err:false,msg:"🚀 Booster armed on "+bPicked.name});setTimeout(function(){setTokenToast(null);},2800);closeAll();
+          });
+        }
+        return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
+          <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
+            <div style={{marginBottom:8,height:48,display:"flex",alignItems:"center",justifyContent:"center",fontSize:40}}>{GAME_ICON_PATHS[bPicked.icon]?<GIcon name={bPicked.icon} size={44} color="var(--cyan)"/>:bPicked.icon}</div>
+            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Boost <span style={{color:"var(--cyan)"}}>{bPicked.name}</span>?</h2>
+            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>Your next {bPicked.name} session earns +50% XP. Burns automatically at the end of the round.</p>
+            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}><strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> Boosters will remain.</p>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={function(){setBypassPick(null);}} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>{"← Module"}</button>
+              <button onClick={doModuleBoost} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Arm</button>
+            </div>
+          </div>
+        </div>);
+      }
+      // ── XP Boost flow B : Mock Multiplier (×1.5 next mock) ──
+      if(useTokenAsk==="mock_multiplier"){
+        function doMockMult(){
+          applyConsume("mock_multiplier",function(){
+            var c=JSON.parse(JSON.stringify(u));if(!c.boosts)c.boosts={};c.boosts.mockMultArmed=true;p.setAvatar(c);
+            setTokenToast({err:false,msg:"📈 Mock Multiplier armed"});setTimeout(function(){setTokenToast(null);},2400);closeAll();
+          });
+        }
+        return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
+          <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
+            <div style={{fontSize:48,marginBottom:12}}>{info.icon}</div>
+            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Arm {info.name}?</h2>
+            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>Your next Mock Test earns ×1.5 XP. Burns after that mock.</p>
+            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}><strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> will remain after use.</p>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Cancel</button>
+              <button onClick={doMockMult} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Arm</button>
+            </div>
+          </div>
+        </div>);
+      }
+      // ── XP Boost flow C : Daily Doubler (×2 all modules 24h) ──
+      if(useTokenAsk==="daily_doubler"){
+        function doDailyDoubler(){
+          applyConsume("daily_doubler",function(){
+            var c=JSON.parse(JSON.stringify(u));if(!c.boosts)c.boosts={};c.boosts.dailyDoublerUntil=Date.now()+24*60*60*1000;p.setAvatar(c);
+            setTokenToast({err:false,msg:"⏫ Daily Doubler active for 24h!"});setTimeout(function(){setTokenToast(null);},2800);closeAll();
+          });
+        }
+        return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
+          <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
+            <div style={{fontSize:48,marginBottom:12}}>{info.icon}</div>
+            <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Activate {info.name}?</h2>
+            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>×2 XP on all modules for the next 24 hours. Starts immediately.</p>
+            <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}><strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> will remain after use.</p>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Cancel</button>
+              <button onClick={doDailyDoubler} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Activate</button>
             </div>
           </div>
         </div>);
@@ -16415,12 +16509,44 @@ useEffect(function(){
   // Arena Shop P2a (2026-06-01) — buy a catalog item. Atomic via spend_marks RPC.
   // On success, align the local wallet mirror to the server-returned balance
   // (authoritative — no optimistic guess). arena_marks stays out of save() (guarded).
+  // Arena Shop P2.5 — Bourse Inépuisable : grant the milestone title once cumulative
+  // Darics spent crosses 10k. Guarded insert (mirrors openChestFromPending's reward insert).
+  function maybeGrantBourse(c){
+    if(!c||(c.boosts&&c.boosts.spent<10000))return;
+    var un=c.name,cc=c.classCode||"visitor";
+    supabase.from("player_rewards").select("id").ilike("user_name",un).eq("class_code",cc).eq("reward_type","title").eq("reward_id","bourse_inepuisable").limit(1).then(function(r){
+      if(r.error){console.warn("[BOURSE] check error:",r.error.message);return;}
+      if(r.data&&r.data.length>0)return; // already owned
+      supabase.from("player_rewards").insert({user_name:un,class_code:cc,reward_type:"title",reward_id:"bourse_inepuisable",rarity:"legend"}).then(function(ins){
+        if(ins.error){console.warn("[BOURSE] grant error:",ins.error.message);return;}
+        try{playJingleAchieve();}catch(e){}haptic("achieve");
+        setAchToast({name:"Bottomless Purse",icon:"💰",desc:"10,000 Darics spent — title unlocked"});
+        setTimeout(function(){setAchToast(null);},3500);
+      });
+    }).catch(function(e){console.warn("[BOURSE] exception:",e&&e.message);});
+  }
   function shopBuy(item){
     if(!u||u.classCode==="visitor")return Promise.resolve({ok:false,error:"visitor"});
+    // Daily Doubler — weekly purchase cap (2/week), enforced client-side
+    if(item.ref==="daily_doubler"){
+      var b0=u.boosts||{};var wk0=weekId();
+      var cnt0=(b0.ddWeekId===wk0)?(b0.ddWeekCount||0):0;
+      if(cnt0>=2)return Promise.resolve({ok:false,error:"weekly_cap"});
+    }
     return spendMarks(u.name,u.classCode||"visitor",item).then(function(res){
       if(res&&res.ok){
-        sU(function(prev){if(!prev)return prev;var c=JSON.parse(JSON.stringify(prev));c.arenaMarks=res.balance;saveLocal(c);return c;});
+        var c=JSON.parse(JSON.stringify(u));
+        c.arenaMarks=res.balance; // local mirror (server-authoritative source = res.balance)
+        if(!c.boosts)c.boosts={};
+        c.boosts.spent=(c.boosts.spent||0)+(item.price||0); // Bourse Inépuisable tracker
+        if(item.ref==="daily_doubler"){
+          var wk1=weekId();
+          if(c.boosts.ddWeekId!==wk1){c.boosts.ddWeekId=wk1;c.boosts.ddWeekCount=0;}
+          c.boosts.ddWeekCount=(c.boosts.ddWeekCount||0)+1;
+        }
+        sv(c); // persists boosts (arena_marks excluded from save payload by design)
         haptic("chest");
+        maybeGrantBourse(c);
       }
       return res;
     });
@@ -16592,6 +16718,16 @@ function sv(d){
         }
       }catch(e){console.warn("[focus-boost] computation failed:",e&&e.message);}
     }
+    // ── Arena Shop P2.5 — XP Boosts (purchased with Darics, armed by the player) ──
+    // Primary ranking metric (TOEIC Progression) is accuracy-based → immune. These
+    // only scale XP (level + XP Overall + League weeklyXp), per design decision.
+    if(modId&&u&&u.boosts){
+      var bst=u.boosts;
+      // Module Booster : +50% on the armed module (flag cleared in recordModule)
+      if(bst.moduleBoostArmed===modId){gatedXp=Math.round(gatedXp*1.5);}
+      // Mock Multiplier : ×1.5 on any mock (flag cleared in mockDone)
+      if(bst.mockMultArmed&&(modId==="mock1"||modId==="mock2"||modId==="mock3")){gatedXp=Math.round(gatedXp*1.5);}
+    }
     return Math.max(0,gatedXp);
   }
   function addXp(baseAmt){if(baseAmt>0)try{playXP();}catch(e){}
@@ -16621,6 +16757,10 @@ function sv(d){
         });
       }
 
+      // Arena Shop P2.5 — Daily Doubler (×2 on all modules for 24h, purchased with Darics)
+      if(c.boosts&&c.boosts.dailyDoublerUntil&&Date.now()<c.boosts.dailyDoublerUntil){
+        mult*=2;bonuses.push({label:"⏫ Daily Doubler x2",color:"#f0c850"});
+      }
 
       amt=Math.round(baseAmt*mult);
 
@@ -16847,6 +16987,7 @@ var prevLeague=getLeague(c.weeklyXp);
     trackModSession(c,modId);
     recordModule(c,modId,result.score,result.total);
     if(c.mockResetArmed)c.mockResetArmed=false; // V2 — consume Mock Reset flag after run
+    if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false; // P2.5 — consume Mock Multiplier
     try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}haptic("complete");
     // Coffres : Mock Tests + Boss Test
     if(result.mockId==="1"||result.mockId===1)grantChestLocal("mock_1","champion");

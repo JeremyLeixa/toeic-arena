@@ -1,0 +1,24 @@
+-- ════════════════════════════════════════════════════════════════════════
+-- Arena Shop P2.5 — XP Boosts state (2026-06-02)
+-- ════════════════════════════════════════════════════════════════════════
+-- Client-authoritative profile state for the 3 XP Boost tokens (Module Booster,
+-- Mock Multiplier, Daily Doubler) + the "Bourse Inépuisable" milestone tracker.
+-- Single jsonb column so no further migrations are needed as boost fields evolve.
+--
+-- Shape of students.boosts:
+--   {
+--     "moduleBoostArmed": null | "<modId>",   -- Module Booster armed on a module
+--     "mockMultArmed":    false,               -- Mock Multiplier armed for next mock
+--     "dailyDoublerUntil": null | <ms epoch>,  -- Daily Doubler active until (24h window)
+--     "ddWeekId":         null | "<weekId>",   -- week the dd purchase counter belongs to
+--     "ddWeekCount":      0,                    -- Daily Doublers bought this week (cap 2)
+--     "spent":            0                     -- cumulative Darics spent (Bourse Inépuisable @10k)
+--   }
+--
+-- NOTE: unlike arena_marks (server-authoritative, excluded from save()), `boosts`
+-- IS client-authoritative profile state — it travels in the save() payload like
+-- mission/stats. The boost TOKENS themselves live in player_tokens (existing infra,
+-- granted by the Shop buy flow / spend_marks).
+-- ════════════════════════════════════════════════════════════════════════
+
+ALTER TABLE students ADD COLUMN IF NOT EXISTS boosts jsonb DEFAULT '{}'::jsonb;

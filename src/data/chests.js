@@ -140,6 +140,8 @@ export var TITLES = {
   arpenteur_comptoir:{name:"Coin Warden",     rarity:"rare", color:"#3a8ee0", exclusive:true},
   tisseur_darics:    {name:"Daric Weaver",    rarity:"epic", color:"#c060f0", exclusive:true},
   oeil_aldric:       {name:"Aldric's Eye",    rarity:"epic", color:"#c9a23a", exclusive:true},
+  // Milestone title (Arena Shop P2.5) — granted at 10,000 cumulative Darics spent. Not sold.
+  bourse_inepuisable:{name:"Bottomless Purse",rarity:"legend", color:"#e8c45a", exclusive:true},
 };
 
 // ═══ TOKENS (V2 — tactiques stackables, nouvelle table player_tokens) ═══
@@ -153,6 +155,11 @@ export var TOKEN_TYPES = {
   boss_reset:        {name:"Boss Reset",        icon:"🐲", cap:1, premium:true,  desc:"Bypass 24h cooldown on Boss Test"},
   endless_resurrect: {name:"Endless Resurrect", icon:"💎", cap:2, premium:true,  desc:"Continue Endless after 1 fatal mistake"},
   insight_token:     {name:"Insight Token",     icon:"🔮", cap:3, premium:true,  desc:"Generates a personalized weakness insight (consume to reveal)"},
+  // ─── XP Boosts (Arena Shop P2.5, 2026-06-02) — boost:true. Shop-only (never in chest/conversion
+  // pools). Buying = grant_token ; using = arm a boost flag in students.boosts (XP pipeline hooks). ───
+  module_booster:    {name:"Module Booster",     icon:"🚀", cap:3, premium:false, boost:true, desc:"+50% XP on your next session of a chosen module"},
+  mock_multiplier:   {name:"Mock Multiplier",    icon:"📈", cap:2, premium:false, boost:true, desc:"×1.5 XP on your next Mock Test"},
+  daily_doubler:     {name:"Daily Doubler",      icon:"⏫", cap:2, premium:false, boost:true, desc:"×2 XP on all modules for 24h (max 2 bought/week)"},
 };
 
 // ═══ CHEAT SHEETS (V2 — méta codex, garantie sur Légendaire) ═══
@@ -364,6 +371,10 @@ export var SHOP_CATALOG = [
   {item_id:"tok_endless", cat:"token", ref:"endless_resurrect",  price:150, one_shot:false},
   {item_id:"tok_boss",    cat:"token", ref:"boss_reset",         price:220, one_shot:false},
   {item_id:"tok_insight", cat:"token", ref:"insight_token",      price:300, one_shot:false},
+  // XP Boosts — cat:"token" (granted via grant_token), group:"boost" (own Shop section)
+  {item_id:"boost_module", cat:"token", group:"boost", ref:"module_booster",  price:120, one_shot:false},
+  {item_id:"boost_mock",   cat:"token", group:"boost", ref:"mock_multiplier", price:220, one_shot:false},
+  {item_id:"boost_daily",  cat:"token", group:"boost", ref:"daily_doubler",   price:400, one_shot:false},
 ].concat(
   // Cheat sheets — generated from CHEAT_SHEETS so the catalog never drifts from content.
   // Price by rarity. These are NOT exclusive (also droppable on Légendaire chests).
