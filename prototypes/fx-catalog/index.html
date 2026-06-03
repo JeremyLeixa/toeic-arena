@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FX Catalog — TOEIC Arena</title>
+<style>
+*{box-sizing:border-box;font-family:'DM Sans',system-ui,sans-serif}
+body{background:#070605;margin:0;padding:28px 22px 80px;color:#e8e2d6}
+h1{font-size:20px;margin:0 0 4px}
+.intro{font-size:13px;color:#9a9486;max-width:760px;line-height:1.5;margin-bottom:6px}
+.intro b{color:#e8c870}
+.legend{font-size:12px;color:#7a756a;max-width:760px;line-height:1.5;margin-bottom:26px}
+h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#caa84a;font-weight:700;margin:34px 0 14px;border-bottom:1px solid rgba(202,168,74,.2);padding-bottom:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
+.cell .cap{margin-top:8px}
+.cell .id{font-size:11px;font-weight:800;color:#f0c860;letter-spacing:.05em}
+.cell .nm{font-size:13px;font-weight:700;color:#e8e2d6}
+.cell .ds{font-size:11px;color:#8a857a;line-height:1.35;margin-top:2px}
+/* base demo card — mirrors .crd geometry */
+.fx{position:relative;overflow:hidden;height:140px;border-radius:16px;border:1.5px solid rgba(255,255,255,.10);background:#16140f;display:flex;align-items:center;justify-content:center;color:#cfc8b8;font-weight:700;font-size:14px;text-shadow:0 1px 3px #000}
+.fx span{position:relative;z-index:5;pointer-events:none}
+.dark2{background:#0c0b08}
+/* ============ 1. FONDS ANIMÉS ============ */
+.fx-aurora{background-image:linear-gradient(115deg,#5a3a08,#e8b020,#fff0a0,#c08a10,#5a3a08);background-size:300% 300%;animation:aurora 5s ease-in-out infinite}
+.fx-liquid{background-image:linear-gradient(115deg,rgba(208,96,12,.6),rgba(240,168,32,.55),rgba(255,242,170,.6),rgba(120,60,8,.6));background-size:320% 320%;animation:aurora 3.4s ease-in-out infinite,flick 2s ease-in-out infinite}
+.fx-breathe{background:#0c0b08}
+.fx-breathe::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(120,200,255,.5),transparent 60%);animation:breathe 4.5s ease-in-out infinite}
+.fx-mesh{background:#0a0a10}
+.fx-mesh::before{content:'';position:absolute;inset:-30%;background:radial-gradient(circle at 25% 30%,rgba(240,90,160,.5),transparent 40%),radial-gradient(circle at 75% 65%,rgba(90,140,255,.5),transparent 40%),radial-gradient(circle at 60% 20%,rgba(140,240,200,.4),transparent 40%);animation:meshmove 9s ease-in-out infinite}
+.fx-rays{background:#0c0a06}
+.fx-rays::before{content:'';position:absolute;inset:-60%;background:repeating-conic-gradient(from 0deg,rgba(255,210,90,.16) 0 5deg,transparent 5deg 16deg);animation:spin 14s linear infinite}
+.fx-holo{background:#08080c}
+.fx-holo::before{content:'';position:absolute;inset:-60%;background:conic-gradient(from 0deg,#ff2d55,#ff9500,#ffd60a,#34c759,#00c7be,#0a84ff,#bf5af2,#ff2d55);opacity:.5;mix-blend-mode:screen;animation:spin 8s linear infinite}
+.fx-ripple{background:#051512}
+.fx-ripple::before{content:'';position:absolute;inset:0;background:repeating-radial-gradient(circle at 40% 40%,transparent 0,rgba(90,230,200,.18) 12px,transparent 26px);background-size:200% 200%;animation:aurora 7s ease-in-out infinite}
+.fx-plasma{background:#0a0612}
+.fx-plasma::before{content:'';position:absolute;inset:-40%;background:radial-gradient(circle at 30% 30%,rgba(180,80,255,.55),transparent 45%),radial-gradient(circle at 70% 70%,rgba(255,80,140,.5),transparent 45%);animation:spin 12s linear infinite}
+.fx-plasma::after{content:'';position:absolute;inset:-40%;background:radial-gradient(circle at 70% 30%,rgba(80,160,255,.5),transparent 45%);animation:spin 9s linear infinite reverse}
+/* ============ 2. PARTICULES ============ */
+.fx-motes{background:#1a1206}
+.fx-motes::after{content:'';position:absolute;inset:0;background:radial-gradient(1.6px 1.6px at 20% 100%,#ffe890,transparent),radial-gradient(1.3px 1.3px at 48% 100%,#ffd860,transparent),radial-gradient(1.6px 1.6px at 72% 100%,#fff0a0,transparent),radial-gradient(1.3px 1.3px at 88% 100%,#ffe890,transparent);animation:rise 5.5s linear infinite}
+.fx-snow{background:#0a1018}
+.fx-snow::after{content:'';position:absolute;inset:0;background:radial-gradient(1.8px 1.8px at 18% 0,#fff,transparent),radial-gradient(1.4px 1.4px at 42% 0,#dff,transparent),radial-gradient(1.8px 1.8px at 68% 0,#fff,transparent),radial-gradient(1.4px 1.4px at 90% 0,#eef,transparent);animation:fall 6s linear infinite}
+.fx-stars{background:radial-gradient(circle at 60% 40%,#16122a,#06040f)}
+.fx-stars::after{content:'';position:absolute;inset:0;background:radial-gradient(1.6px 1.6px at 18% 30%,#fff,transparent),radial-gradient(1.6px 1.6px at 65% 55%,#fdf,transparent),radial-gradient(1.2px 1.2px at 42% 78%,#cfe,transparent),radial-gradient(1.4px 1.4px at 85% 22%,#fff,transparent),radial-gradient(1.2px 1.2px at 30% 60%,#fff,transparent);animation:twinkle 2.6s ease-in-out infinite}
+.fx-embers{background:#160805}
+.fx-embers::before{content:'';position:absolute;inset:0;background:radial-gradient(1.8px 1.8px at 22% 100%,#ffd060,transparent),radial-gradient(1.4px 1.4px at 55% 100%,#ff7020,transparent),radial-gradient(1.8px 1.8px at 82% 100%,#ffb040,transparent);animation:rise 3.2s linear infinite}
+.fx-embers::after{content:'';position:absolute;inset:0;background:radial-gradient(1.4px 1.4px at 38% 100%,#ffd060,transparent),radial-gradient(1.8px 1.8px at 70% 100%,#ff5018,transparent);animation:rise 4.4s linear infinite;animation-delay:-1.6s}
+.fx-dust{background:#100e16}
+.fx-dust::after{content:'';position:absolute;inset:0;background:radial-gradient(1.5px 1.5px at 10% 40%,#cbb8ff,transparent),radial-gradient(1.2px 1.2px at 40% 60%,#e0d0ff,transparent),radial-gradient(1.5px 1.5px at 70% 35%,#cbb8ff,transparent),radial-gradient(1.2px 1.2px at 90% 70%,#fff,transparent);opacity:.7;animation:drift 9s ease-in-out infinite}
+.fx-bubbles{background:linear-gradient(#0a2230,#06141c)}
+.fx-bubbles::after{content:'';position:absolute;inset:0;background:radial-gradient(4px 4px at 20% 100%,transparent 40%,rgba(160,220,255,.5) 42%,transparent 52%),radial-gradient(6px 6px at 55% 100%,transparent 40%,rgba(160,220,255,.45) 42%,transparent 52%),radial-gradient(3px 3px at 82% 100%,transparent 40%,rgba(160,220,255,.5) 42%,transparent 52%);animation:rise 6s linear infinite}
+.fx-sparkpop{background:#140a18}
+.fx-sparkpop::after{content:'';position:absolute;inset:0;background:radial-gradient(2px 2px at 25% 35%,#fff,transparent),radial-gradient(2px 2px at 70% 60%,#ffe8ff,transparent),radial-gradient(2px 2px at 50% 80%,#fff,transparent),radial-gradient(2px 2px at 85% 25%,#fff,transparent);animation:sparkpop 2.4s ease-in-out infinite}
+.fx-rain{background:#0a1016}
+.fx-rain::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(100deg,transparent 0 6px,rgba(150,200,255,.25) 6px 7px,transparent 7px 12px);background-size:auto 60px;animation:fallfast .6s linear infinite}
+/* ============ 3. LUMIÈRE / REFLETS ============ */
+.fx-sheen{background:linear-gradient(135deg,#3a3026,#1c1810)}
+.fx-sheen::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 64%);background-size:250% 100%;animation:sheen 2.6s linear infinite}
+.fx-gloss{background:linear-gradient(135deg,#2a2618,#16140d)}
+.fx-gloss::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(244,228,160,.3) 50%,transparent 60%);background-size:250% 100%;animation:sheen 6s linear infinite}
+.fx-hotspot{background:#101010}
+.fx-hotspot::after{content:'';position:absolute;inset:0;background:radial-gradient(circle 60px at 50% 50%,rgba(255,255,255,.5),transparent 70%);background-size:300% 100%;animation:sheen 3.5s ease-in-out infinite}
+.fx-scan{background:#06120c}
+.fx-scan::after{content:'';position:absolute;left:0;right:0;height:34%;top:-34%;background:linear-gradient(180deg,transparent,rgba(80,255,170,.35),transparent);animation:scan 2.8s linear infinite}
+.fx-prism{background:linear-gradient(135deg,#161018,#0c0810)}
+.fx-prism::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 38%,rgba(255,0,128,.4) 46%,rgba(0,200,255,.4) 54%,transparent 62%);background-size:250% 100%;mix-blend-mode:screen;animation:sheen 3s linear infinite}
+.fx-edgeglow{background:#0e0a06;animation:edgeglow 2.6s ease-in-out infinite}
+.fx-godray{background:#0c0a04}
+.fx-godray::before{content:'';position:absolute;inset:-50% -20%;background:conic-gradient(from 200deg at 50% 0,transparent 0 18deg,rgba(255,220,120,.18) 22deg 26deg,transparent 30deg 48deg,rgba(255,220,120,.14) 52deg 56deg,transparent 60deg);animation:sway 6s ease-in-out infinite}
+/* ============ 4. BORDURES / CADRES ============ */
+.fx-ringflow{background:#14110a}
+.fx-ringflow::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;background:linear-gradient(90deg,#f0a020,#fff2b0,#f0a020);background-size:200% 100%;animation:slide 3s linear infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.fx-ringspin{background:#0a0c14}
+.fx-ringspin::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;background:conic-gradient(from 0deg,transparent,#5a9cff,transparent 40%);animation:spin 3.5s linear infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.fx-borderpulse{background:#0e0a06;border-color:rgba(240,170,40,.5);animation:bpulse 2.2s ease-in-out infinite}
+.fx-inset{background:#14110b;box-shadow:inset 0 0 0 1px rgba(240,210,140,.3),inset 0 0 0 6px rgba(0,0,0,.4),inset 0 0 0 7px rgba(240,210,140,.18)}
+.fx-corners{background:#0c0a06}
+.fx-corners::before,.fx-corners::after{content:'';position:absolute;width:26px;height:26px;border:2px solid #e8c060}
+.fx-corners::before{top:8px;left:8px;border-right:none;border-bottom:none}
+.fx-corners::after{bottom:8px;right:8px;border-left:none;border-top:none}
+.fx-neon{background:#0a0612;border:2px solid #c060f0;box-shadow:0 0 8px #c060f0,0 0 18px #c060f0aa,inset 0 0 10px #c060f066;animation:neon 1.8s ease-in-out infinite}
+/* ============ 5. TEXTURES ============ */
+.fx-grain{background:#1a160e}
+.fx-grain::after{content:'';position:absolute;inset:0;opacity:.12;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.fx-carbon{background-color:#15151a;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 1px,transparent 1px 4px),repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 1px,transparent 1px 4px)}
+.fx-parchment{background-color:#1c1810;background-image:radial-gradient(rgba(120,90,40,.18) 1px,transparent 1px),radial-gradient(rgba(90,70,30,.12) 1px,transparent 1px);background-size:7px 7px,11px 11px;background-position:0 0,3px 4px}
+.fx-dotgrid{background-color:#0c0e12;background-image:radial-gradient(rgba(120,160,220,.3) 1.2px,transparent 1.2px);background-size:14px 14px}
+.fx-hex{background-color:#0e0c14;background-image:repeating-linear-gradient(60deg,rgba(160,120,255,.12) 0 1px,transparent 1px 18px),repeating-linear-gradient(-60deg,rgba(160,120,255,.12) 0 1px,transparent 1px 18px),repeating-linear-gradient(0deg,rgba(160,120,255,.12) 0 1px,transparent 1px 18px)}
+.fx-brushed{background:linear-gradient(135deg,#2a2620,#1a1712);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px),linear-gradient(135deg,#2a2620,#1a1712)}
+/* ============ 6. COMBOS PRÊTES ============ */
+.combo{height:180px}
+.c-royal{background-image:linear-gradient(135deg,rgba(120,80,12,.5),rgba(240,190,60,.3),rgba(80,50,8,.5));background-size:250% 250%;animation:aurora 6s ease-in-out infinite;box-shadow:inset 0 0 30px rgba(0,0,0,.4)}
+.c-royal::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;background:linear-gradient(90deg,#f0c860,#fff4c0,#f0c860);background-size:200%;animation:slide 4s linear infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.c-royal::after{content:'';position:absolute;inset:0;background:radial-gradient(1.6px 1.6px at 25% 100%,#fff0a0,transparent),radial-gradient(1.3px 1.3px at 65% 100%,#ffd860,transparent),radial-gradient(1.6px 1.6px at 85% 100%,#ffe890,transparent);animation:rise 5.5s linear infinite}
+.c-frost{background:linear-gradient(160deg,#0e2030,#081420);box-shadow:inset 0 0 36px rgba(120,200,255,.12)}
+.c-frost::before{content:'';position:absolute;inset:0;background:radial-gradient(1.8px 1.8px at 20% 0,#fff,transparent),radial-gradient(1.4px 1.4px at 50% 0,#dff,transparent),radial-gradient(1.8px 1.8px at 78% 0,#fff,transparent);animation:fall 7s linear infinite}
+.c-frost::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 40%,rgba(200,240,255,.3) 50%,transparent 60%);background-size:250% 100%;animation:sheen 5s linear infinite}
+.c-foil{background:#0a0810;box-shadow:inset 0 0 30px rgba(0,0,0,.5)}
+.c-foil::before{content:'';position:absolute;inset:-60%;background:conic-gradient(from 0deg,#ff2d55,#ff9500,#ffd60a,#34c759,#00c7be,#0a84ff,#bf5af2,#ff2d55);opacity:.35;mix-blend-mode:screen;animation:spin 7s linear infinite}
+.c-foil::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 42%,rgba(255,255,255,.5) 50%,transparent 58%);background-size:250% 100%;animation:sheen 3s linear infinite}
+.c-void{background:radial-gradient(circle at 65% 35%,#1a0f2e,#06040f);box-shadow:inset 0 0 40px rgba(0,0,0,.6)}
+.c-void::before{content:'';position:absolute;inset:-40%;background:radial-gradient(circle at 35% 40%,rgba(150,80,255,.4),transparent 45%),radial-gradient(circle at 70% 65%,rgba(255,80,160,.32),transparent 45%);animation:spin 16s linear infinite}
+.c-void::after{content:'';position:absolute;inset:0;background:radial-gradient(1.6px 1.6px at 18% 30%,#fff,transparent),radial-gradient(1.4px 1.4px at 65% 55%,#fdf,transparent),radial-gradient(1.2px 1.2px at 42% 78%,#cfe,transparent),radial-gradient(1.4px 1.4px at 85% 22%,#fff,transparent);animation:twinkle 3s ease-in-out infinite}
+/* ============ KEYFRAMES ============ */
+@keyframes aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes flick{0%,100%{filter:brightness(1)}45%{filter:brightness(1.15)}70%{filter:brightness(.9)}}
+@keyframes breathe{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.05)}}
+@keyframes meshmove{0%,100%{transform:translate(0,0)}33%{transform:translate(6%,-5%)}66%{transform:translate(-5%,4%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes rise{0%{transform:translateY(6px);opacity:0}20%{opacity:.9}80%{opacity:.5}100%{transform:translateY(-150px);opacity:0}}
+@keyframes fall{0%{transform:translateY(-20px);opacity:0}20%{opacity:.9}80%{opacity:.6}100%{transform:translateY(150px);opacity:0}}
+@keyframes fallfast{0%{background-position:0 -60px}100%{background-position:0 60px}}
+@keyframes twinkle{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes drift{0%,100%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
+@keyframes sparkpop{0%,100%{opacity:0;transform:scale(.4)}40%{opacity:1;transform:scale(1.2)}60%{opacity:.8;transform:scale(1)}}
+@keyframes sheen{0%{background-position:200% 0}100%{background-position:-100% 0}}
+@keyframes scan{0%{top:-34%}100%{top:104%}}
+@keyframes slide{0%{background-position:0 0}100%{background-position:200% 0}}
+@keyframes breathe2{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes edgeglow{0%,100%{box-shadow:inset 0 0 14px rgba(240,170,40,.25),0 0 10px rgba(240,170,40,.2)}50%{box-shadow:inset 0 0 22px rgba(240,170,40,.5),0 0 26px rgba(240,170,40,.5)}}
+@keyframes bpulse{0%,100%{border-color:rgba(240,170,40,.3)}50%{border-color:rgba(255,210,90,.9)}}
+@keyframes neon{0%,100%{box-shadow:0 0 8px #c060f0,0 0 18px #c060f0aa,inset 0 0 10px #c060f066}50%{box-shadow:0 0 14px #d080ff,0 0 32px #c060f0,inset 0 0 16px #c060f099}}
+@keyframes sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+</style></head>
+<body>
+<h1>FX Catalog — effets de carte</h1>
+<p class="intro">Tout ce que je peux poser sur une <b>.crd</b> en CSS pur (zéro dépendance, marche sur mobile). Repère les IDs qui t'attirent — un skin se compose : <b>1 fond</b> + (optionnel) <b>1 nappe de particules</b> + (optionnel) <b>1 reflet</b> + <b>1 bordure</b> + (optionnel) <b>1 texture</b>.</p>
+<p class="legend">Ex. de commande : « FX-04 (fond) + FX-12 (particules) + FX-31 (bordure) » ou « la combo Frost mais en violet ». Note : ce que je <b>ne peux pas</b> faire en CSS pur = vraies particules physiques / fumée volumétrique / shaders 3D (ça demanderait du canvas/WebGL par carte — possible mais lourd, on en parle si besoin).</p>
+
+<h2>1 · Fonds animés (le champ de la carte)</h2>
+<div class="grid">
+  <div class="cell"><div class="fx fx-aurora"><span>FX-01</span></div><div class="cap"><div class="id">FX-01</div><div class="nm">Aurora Flow</div><div class="ds">Dégradé multi-stop qui ondule en diagonale. (effet actuel des skins)</div></div></div>
+  <div class="cell"><div class="fx fx-liquid"><span>FX-02</span></div><div class="cap"><div class="id">FX-02</div><div class="nm">Liquid Metal</div><div class="ds">Flux rapide + pulsation de luminosité = métal en fusion.</div></div></div>
+  <div class="cell"><div class="fx fx-breathe"><span>FX-03</span></div><div class="cap"><div class="id">FX-03</div><div class="nm">Breathing Glow</div><div class="ds">Une lueur centrale qui respire (scale + opacité).</div></div></div>
+  <div class="cell"><div class="fx fx-mesh"><span>FX-04</span></div><div class="cap"><div class="id">FX-04</div><div class="nm">Mesh Drift</div><div class="ds">Plusieurs taches de couleur qui dérivent (mesh gradient).</div></div></div>
+  <div class="cell"><div class="fx fx-rays"><span>FX-05</span></div><div class="cap"><div class="id">FX-05</div><div class="nm">Conic Rays</div><div class="ds">Rayons qui tournent lentement autour du centre.</div></div></div>
+  <div class="cell"><div class="fx fx-holo"><span>FX-06</span></div><div class="cap"><div class="id">FX-06</div><div class="nm">Holo Spectrum</div><div class="ds">Arc-en-ciel conique en rotation (mode holographique).</div></div></div>
+  <div class="cell"><div class="fx fx-ripple"><span>FX-07</span></div><div class="cap"><div class="id">FX-07</div><div class="nm">Ripple Field</div><div class="ds">Ondes concentriques qui pulsent (eau / abyssal).</div></div></div>
+  <div class="cell"><div class="fx fx-plasma"><span>FX-08</span></div><div class="cap"><div class="id">FX-08</div><div class="nm">Plasma</div><div class="ds">Deux nappes radiales contra-rotatives qui se mélangent.</div></div></div>
+</div>
+
+<h2>2 · Particules &amp; overlays (nappe par-dessus le fond)</h2>
+<div class="grid">
+  <div class="cell"><div class="fx fx-motes"><span>FX-10</span></div><div class="cap"><div class="id">FX-10</div><div class="nm">Rising Motes</div><div class="ds">Poussières dorées qui montent. (effet actuel)</div></div></div>
+  <div class="cell"><div class="fx fx-snow"><span>FX-11</span></div><div class="cap"><div class="id">FX-11</div><div class="nm">Falling Snow</div><div class="ds">Flocons / cendres qui descendent doucement.</div></div></div>
+  <div class="cell"><div class="fx fx-stars"><span>FX-12</span></div><div class="cap"><div class="id">FX-12</div><div class="nm">Twinkle Stars</div><div class="ds">Étoiles fixes qui scintillent (cosmic void).</div></div></div>
+  <div class="cell"><div class="fx fx-embers"><span>FX-13</span></div><div class="cap"><div class="id">FX-13</div><div class="nm">Embers</div><div class="ds">Braises chaudes orange qui s'envolent (feu).</div></div></div>
+  <div class="cell"><div class="fx fx-dust"><span>FX-14</span></div><div class="cap"><div class="id">FX-14</div><div class="nm">Floating Dust</div><div class="ds">Poussière en suspension qui dérive latéralement.</div></div></div>
+  <div class="cell"><div class="fx fx-bubbles"><span>FX-15</span></div><div class="cap"><div class="id">FX-15</div><div class="nm">Bubbles</div><div class="ds">Bulles qui remontent (aquatique / potion).</div></div></div>
+  <div class="cell"><div class="fx fx-sparkpop"><span>FX-16</span></div><div class="cap"><div class="id">FX-16</div><div class="nm">Sparkle Pop</div><div class="ds">Éclats qui apparaissent/disparaissent en pulsant.</div></div></div>
+  <div class="cell"><div class="fx fx-rain"><span>FX-17</span></div><div class="cap"><div class="id">FX-17</div><div class="nm">Rain</div><div class="ds">Stries de pluie en diagonale, rapides.</div></div></div>
+</div>
+
+<h2>3 · Lumière &amp; reflets</h2>
+<div class="grid">
+  <div class="cell"><div class="fx fx-sheen"><span>FX-20</span></div><div class="cap"><div class="id">FX-20</div><div class="nm">Mirror Sheen</div><div class="ds">Balayage miroir vif et rapide. (effet actuel)</div></div></div>
+  <div class="cell"><div class="fx fx-gloss"><span>FX-21</span></div><div class="cap"><div class="id">FX-21</div><div class="nm">Slow Gloss</div><div class="ds">Reflet doux et lent, discret/premium.</div></div></div>
+  <div class="cell"><div class="fx fx-hotspot"><span>FX-22</span></div><div class="cap"><div class="id">FX-22</div><div class="nm">Specular Hotspot</div><div class="ds">Un point de lumière qui glisse sur la surface.</div></div></div>
+  <div class="cell"><div class="fx fx-scan"><span>FX-23</span></div><div class="cap"><div class="id">FX-23</div><div class="nm">Scanline</div><div class="ds">Ligne lumineuse qui balaye de haut en bas (techno).</div></div></div>
+  <div class="cell"><div class="fx fx-prism"><span>FX-24</span></div><div class="cap"><div class="id">FX-24</div><div class="nm">Prism Sweep</div><div class="ds">Reflet arc-en-ciel qui passe (foil holographique).</div></div></div>
+  <div class="cell"><div class="fx fx-edgeglow"><span>FX-25</span></div><div class="cap"><div class="id">FX-25</div><div class="nm">Edge Glow Pulse</div><div class="ds">Halo de bordure qui pulse (intérieur + extérieur).</div></div></div>
+  <div class="cell"><div class="fx fx-godray"><span>FX-26</span></div><div class="cap"><div class="id">FX-26</div><div class="nm">God Rays</div><div class="ds">Faisceaux de lumière qui oscillent depuis le haut.</div></div></div>
+</div>
+
+<h2>4 · Bordures &amp; cadres</h2>
+<div class="grid">
+  <div class="cell"><div class="fx fx-ringflow"><span>FX-30</span></div><div class="cap"><div class="id">FX-30</div><div class="nm">Flowing Ring</div><div class="ds">Bordure dégradée qui coule tout autour.</div></div></div>
+  <div class="cell"><div class="fx fx-ringspin"><span>FX-31</span></div><div class="cap"><div class="id">FX-31</div><div class="nm">Spinning Halo</div><div class="ds">Arc lumineux qui tourne le long du cadre.</div></div></div>
+  <div class="cell"><div class="fx fx-borderpulse"><span>FX-32</span></div><div class="cap"><div class="id">FX-32</div><div class="nm">Border Pulse</div><div class="ds">La bordure s'illumine en rythme.</div></div></div>
+  <div class="cell"><div class="fx fx-inset"><span>FX-33</span></div><div class="cap"><div class="id">FX-33</div><div class="nm">Double Inset Frame</div><div class="ds">Cadre incrusté double, façon médaille gravée.</div></div></div>
+  <div class="cell"><div class="fx fx-corners"><span>FX-34</span></div><div class="cap"><div class="id">FX-34</div><div class="nm">Corner Brackets</div><div class="ds">Équerres aux coins (HUD / viseur).</div></div></div>
+  <div class="cell"><div class="fx fx-neon"><span>FX-35</span></div><div class="cap"><div class="id">FX-35</div><div class="nm">Neon Outline</div><div class="ds">Contour néon qui palpite (cyber).</div></div></div>
+</div>
+
+<h2>5 · Textures (matière de fond, statique)</h2>
+<div class="grid">
+  <div class="cell"><div class="fx fx-grain"><span>FX-40</span></div><div class="cap"><div class="id">FX-40</div><div class="nm">Film Grain</div><div class="ds">Grain fin façon pellicule (chaleur, anti-plat).</div></div></div>
+  <div class="cell"><div class="fx fx-carbon"><span>FX-41</span></div><div class="cap"><div class="id">FX-41</div><div class="nm">Carbon Weave</div><div class="ds">Tissage fibre de carbone (tech / sport).</div></div></div>
+  <div class="cell"><div class="fx fx-parchment"><span>FX-42</span></div><div class="cap"><div class="id">FX-42</div><div class="nm">Parchment</div><div class="ds">Grain de parchemin (manuscrit, Aldric).</div></div></div>
+  <div class="cell"><div class="fx fx-dotgrid"><span>FX-43</span></div><div class="cap"><div class="id">FX-43</div><div class="nm">Dot Grid</div><div class="ds">Grille de points (blueprint / minimaliste).</div></div></div>
+  <div class="cell"><div class="fx fx-hex"><span>FX-44</span></div><div class="cap"><div class="id">FX-44</div><div class="nm">Hex Mesh</div><div class="ds">Maille hexagonale (sci-fi / cristal).</div></div></div>
+  <div class="cell"><div class="fx fx-brushed"><span>FX-45</span></div><div class="cap"><div class="id">FX-45</div><div class="nm">Brushed Metal</div><div class="ds">Métal brossé fin (luxe sobre).</div></div></div>
+</div>
+
+<h2>6 · Combos prêtes (assemblages complets)</h2>
+<div class="grid">
+  <div class="cell"><div class="fx combo c-royal"><span>COMBO-1</span></div><div class="cap"><div class="id">COMBO-1</div><div class="nm">Royal Gold</div><div class="ds">FX-01 + FX-10 + bordure FX-30 + ombre interne.</div></div></div>
+  <div class="cell"><div class="fx combo c-frost"><span>COMBO-2</span></div><div class="cap"><div class="id">COMBO-2</div><div class="nm">Frost Crystal</div><div class="ds">Fond glace + FX-11 neige + FX-20 reflet froid.</div></div></div>
+  <div class="cell"><div class="fx combo c-foil"><span>COMBO-3</span></div><div class="cap"><div class="id">COMBO-3</div><div class="nm">Holographic Foil</div><div class="ds">FX-06 holo + FX-20 = carte holographique type TCG.</div></div></div>
+  <div class="cell"><div class="fx combo c-void"><span>COMBO-4</span></div><div class="cap"><div class="id">COMBO-4</div><div class="nm">Void Nebula</div><div class="ds">FX-08 plasma + FX-12 étoiles, profond et calme.</div></div></div>
+</div>
+</body></html>

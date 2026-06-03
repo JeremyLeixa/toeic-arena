@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Skins rework — aperçu</title>
+<style>
+*{box-sizing:border-box;font-family:'DM Sans',system-ui,sans-serif}
+body{background:#070605;margin:0;padding:26px 20px 80px;color:#e8e2d6}
+h1{font-size:20px;margin:0 0 6px}
+.intro{font-size:13px;color:#9a9486;max-width:780px;line-height:1.5;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
+.cell{background:var(--bg,#0c0b08);border-radius:18px;padding:16px;border:1px solid rgba(255,255,255,.05)}
+.cell .hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.cell .nm{font-size:15px;font-weight:800;color:var(--cyan,#e8c870)}
+.cell .rc{font-size:10.5px;color:#8a857a;font-weight:600;text-align:right;max-width:160px;line-height:1.3}
+/* base widgets mirror real app */
+.crd{background:var(--bg2);border:1.5px solid var(--bdr,rgba(255,255,255,.1));border-radius:14px;padding:14px;margin-bottom:10px;color:var(--t1)}
+.crd h3{margin:0 0 4px;font-size:15px}
+.crd p{margin:0;font-size:12px;color:var(--t2)}
+.bar{height:10px;border-radius:7px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:10px}
+.bar-fill{height:100%;width:66%;border-radius:7px;background:var(--cyan)}
+.out{font-size:20px;font-weight:800;text-align:center;color:var(--cyan)}
+.btn1{display:block;width:100%;border:none;border-radius:11px;padding:12px;font-weight:800;font-size:14px;margin-top:4px;cursor:pointer;background:var(--cyan);color:#000}
+.btn2{display:block;width:100%;background:none;border:1.5px solid var(--bdr);border-radius:11px;padding:10px;font-weight:600;font-size:13px;color:var(--t1);margin-top:8px}
+.crd>*{position:relative;z-index:2}
+
+/* ===================== 1. FROSTBITE → COMBO-2 Frost Crystal ===================== */
+.frostbite{--cx:90,180,232;--cyan:#5ab4e8;--bg:#070b12;--bg2:#0e1622;--t1:#dcefff;--t2:#6a92b4;--bdr:rgba(120,190,240,.22)}
+.frostbite .crd{position:relative;overflow:hidden;background:linear-gradient(160deg,#0e2030,#081420);box-shadow:inset 0 0 36px rgba(120,200,255,.12)}
+.frostbite .crd::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(1.8px 1.8px at 20% 0,#fff,transparent),radial-gradient(1.4px 1.4px at 50% 0,#dff,transparent),radial-gradient(1.8px 1.8px at 78% 0,#fff,transparent);animation:fall 7s linear infinite}
+.frostbite .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(100deg,transparent 40%,rgba(200,240,255,.3) 50%,transparent 60%);background-size:250% 100%;animation:sheen 5s linear infinite}
+.frostbite .btn1{background-image:linear-gradient(135deg,#7ec8f0,#5ab4e8,#bfeaff,#5ab4e8);background-size:250%;color:#070b12;animation:sheen 3s linear infinite}
+.frostbite .bar-fill{background-image:linear-gradient(90deg,#5ab4e8,#bfeaff,#5ab4e8);background-size:200%;animation:sheen 3s linear infinite}
+
+/* ===================== 2. MOLTEN GOLD → COMBO-1 Royal Gold ===================== */
+.molten{--cx:238,158,36;--cyan:#f0a020;--bg:#0e0903;--bg2:#1e1206;--t1:#fff0cc;--t2:#b89858;--bdr:rgba(244,178,50,.3)}
+.molten .crd{position:relative;overflow:hidden;background-image:linear-gradient(135deg,rgba(120,80,12,.5),rgba(240,190,60,.3),rgba(80,50,8,.5));background-size:250% 250%;animation:aurora 6s ease-in-out infinite;box-shadow:inset 0 0 30px rgba(0,0,0,.4)}
+.molten .crd::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;background:linear-gradient(90deg,#f0c860,#fff4c0,#f0c860);background-size:200%;animation:slide 4s linear infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;z-index:1}
+.molten .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(1.7px 1.7px at 25% 100%,#fff0a0,transparent),radial-gradient(1.4px 1.4px at 65% 100%,#ffd860,transparent),radial-gradient(1.7px 1.7px at 85% 100%,#ffe890,transparent);animation:rise 5.5s linear infinite}
+.molten .btn1{background-image:linear-gradient(115deg,#7a4a08,#f0a020,#fff2b0,#f0a020,#a86010);background-size:280%;color:#1a0e02;animation:aurora 3s ease infinite;box-shadow:0 4px 24px rgba(244,150,30,.5)}
+.molten .bar-fill{background-image:linear-gradient(90deg,#f0a020,#fff2b0,#f0a020);background-size:200%;animation:sheen 2.6s linear infinite}
+
+/* ===================== 3. COSMIC VOID → COMBO-4 Void Nebula ===================== */
+.cosmic{--cx:150,110,240;--cyan:#9a6ef0;--bg:#06040f;--bg2:#0e0a1e;--t1:#e8e0fb;--t2:#8878b0;--bdr:rgba(150,110,240,.22)}
+.cosmic .crd{position:relative;overflow:hidden;background:radial-gradient(circle at 65% 35%,#1a0f2e,#06040f);box-shadow:inset 0 0 40px rgba(0,0,0,.6)}
+.cosmic .crd::before{content:'';position:absolute;inset:-40%;z-index:0;pointer-events:none;background:radial-gradient(circle at 35% 40%,rgba(150,80,255,.4),transparent 45%),radial-gradient(circle at 70% 65%,rgba(255,80,160,.32),transparent 45%);animation:spin 16s linear infinite}
+.cosmic .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(1.6px 1.6px at 18% 30%,#fff,transparent),radial-gradient(1.4px 1.4px at 65% 55%,#fdf,transparent),radial-gradient(1.2px 1.2px at 42% 78%,#cfe,transparent),radial-gradient(1.4px 1.4px at 85% 22%,#fff,transparent);animation:twinkle 3s ease-in-out infinite}
+.cosmic .btn1{background-image:linear-gradient(135deg,#a060f0,#6040c0,#d060e0,#a060f0);background-size:300%;color:#06040f;animation:aurora 3.5s ease infinite;box-shadow:0 4px 26px rgba(150,90,255,.5)}
+.cosmic .bar-fill{background-image:linear-gradient(90deg,#a060f0,#d060e0,#a060f0);background-size:200%;animation:aurora 3s ease infinite}
+
+/* ===================== 4. ALDRIC → FX-42 parchemin + FX-33 cadre + FX-21 gloss ===================== */
+.aldric{--cx:206,176,108;--cyan:#cdb06a;--bg:#0b0a08;--bg2:#15140f;--t1:#ece4d2;--t2:#8c8472;--bdr:rgba(206,176,108,.16)}
+.aldric .crd{position:relative;overflow:hidden;background-color:#191510;background-image:radial-gradient(rgba(150,115,55,.16) 1px,transparent 1px),radial-gradient(rgba(110,85,40,.11) 1px,transparent 1px);background-size:7px 7px,11px 11px;background-position:0 0,3px 4px;box-shadow:inset 0 0 0 1px rgba(240,210,140,.28),inset 0 0 0 6px rgba(0,0,0,.4),inset 0 0 0 7px rgba(240,210,140,.16)}
+.aldric .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(105deg,transparent 40%,rgba(244,228,160,.28) 50%,transparent 60%);background-size:250% 100%;animation:sheen 6.5s linear infinite}
+.aldric .btn1{background-image:linear-gradient(135deg,#2e2820,#b89a52,#e8d49a,#b89a52,#4a4030);background-size:240%;color:#14110a;animation:aurora 5s ease infinite;box-shadow:0 4px 22px rgba(180,154,82,.32),inset 0 1px 0 rgba(244,228,170,.25)}
+.aldric .bar-fill{background-image:linear-gradient(90deg,#b89a52,#e8d49a,#b89a52);background-size:200%;animation:sheen 6s linear infinite}
+.aldric .out{text-shadow:0 0 16px rgba(206,176,108,.16)}
+
+/* ===================== 5. AURORE → FX-04 mesh + FX-12 étoiles (bordure d'origine) ===================== */
+.aurore{--cx:64,208,192;--cyan:#40d0c0;--bg:#08090e;--bg2:#10121c;--t1:#d8f0e8;--t2:#5898a0;--bdr:rgba(64,208,192,.2)}
+.aurore .crd{position:relative;overflow:hidden;background:#0a0c14;border-color:rgba(64,208,192,.2);box-shadow:0 0 16px rgba(64,208,192,.1),inset 0 1px 0 rgba(64,208,192,.1)}
+.aurore .crd::before{content:'';position:absolute;inset:-30%;z-index:0;pointer-events:none;background:radial-gradient(circle at 25% 30%,rgba(64,208,192,.5),transparent 42%),radial-gradient(circle at 75% 65%,rgba(96,96,232,.5),transparent 42%),radial-gradient(circle at 60% 20%,rgba(192,64,160,.4),transparent 42%);animation:mesh 9s ease-in-out infinite}
+.aurore .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(1.6px 1.6px at 18% 30%,#fff,transparent),radial-gradient(1.4px 1.4px at 65% 55%,#dffff5,transparent),radial-gradient(1.2px 1.2px at 42% 78%,#fff,transparent),radial-gradient(1.4px 1.4px at 85% 22%,#dffff5,transparent);animation:twinkle 2.8s ease-in-out infinite}
+.aurore .btn1{background-image:linear-gradient(135deg,#40d0c0,#6060e8,#c040a0,#40d0c0);background-size:300%;color:#08090e;animation:aurora 2.5s ease infinite;box-shadow:0 4px 28px rgba(64,208,192,.5),0 0 0 1px rgba(64,208,192,.3)}
+.aurore .bar-fill{background-image:linear-gradient(90deg,#40d0c0,#6060e8,#c040a0,#40d0c0);background-size:300%;animation:aurora 3s ease infinite}
+
+/* ===================== 6. ABYSSAL → FX-15 bulles + FX-32 bordure pulse (couleur d'origine) ===================== */
+.abyssal{--cx:42,154,140;--cyan:#2a9a8c;--bg:#051512;--bg2:#0a221e;--t1:#d2eae4;--t2:#5e8e86;--bdr:rgba(60,180,160,.5)}
+.abyssal .crd{position:relative;overflow:hidden;background:linear-gradient(#0a2a24,#06181480);border-color:rgba(60,180,160,.3);animation:bpulseTeal 2.6s ease-in-out infinite}
+.abyssal .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(4px 4px at 22% 100%,transparent 40%,rgba(120,230,210,.5) 42%,transparent 52%),radial-gradient(6px 6px at 55% 100%,transparent 40%,rgba(120,230,210,.42) 42%,transparent 52%),radial-gradient(3px 3px at 82% 100%,transparent 40%,rgba(120,230,210,.5) 42%,transparent 52%);animation:rise 6s linear infinite}
+.abyssal .btn1{background-image:linear-gradient(135deg,#2a9a8c,#157064,#5ec8b8,#157064);background-size:250%;color:#051512;animation:aurora 5s ease infinite;box-shadow:0 4px 22px rgba(42,154,140,.4)}
+.abyssal .bar-fill{background-image:linear-gradient(90deg,#2a9a8c,#5ec8b8,#2a9a8c);background-size:200%;animation:aurora 5s ease infinite}
+
+/* ===================== 7. EMBERHEART → FX-25 edge glow + FX-13 braises + glow or bas ===================== */
+.ember{--cx:230,110,40;--cyan:#e87a28;--bg:#0e0705;--bg2:#1c0f08;--t1:#ffe4d0;--t2:#b08068;--bdr:rgba(230,120,50,.3)}
+.ember .crd{position:relative;overflow:hidden;background:radial-gradient(ellipse 120% 80% at 50% 125%,rgba(255,180,50,.3),rgba(255,110,20,.1) 45%,transparent 65%),#160805;animation:edgeglowOrange 2.8s ease-in-out infinite}
+.ember .crd::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(1.9px 1.9px at 22% 100%,#ffd060,transparent),radial-gradient(1.5px 1.5px at 55% 100%,#ff7020,transparent),radial-gradient(1.9px 1.9px at 82% 100%,#ffb040,transparent);animation:rise 3.2s linear infinite}
+.ember .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(1.5px 1.5px at 38% 100%,#ffd060,transparent),radial-gradient(1.9px 1.9px at 70% 100%,#ff5018,transparent);animation:rise 4.4s linear infinite;animation-delay:-1.6s}
+.ember .btn1{background-image:linear-gradient(135deg,#ffb030,#ff6020,#c01810,#ff6020);background-size:250%;color:#0e0705;animation:aurora 3s ease infinite,flick 1.4s ease-in-out infinite;box-shadow:0 4px 26px rgba(255,90,20,.5)}
+.ember .bar-fill{background-image:linear-gradient(90deg,#ffb030,#ff6020,#ffb030);background-size:200%;animation:aurora 3s ease infinite}
+
+/* ===================== 8. OBSIDIENNE → FX-08 plasma + FX-14 poussière + FX-45 métal brossé (noir/violet) ===================== */
+.obsi{--cx:180,160,220;--cyan:#b4a0dc;--bg:#080810;--bg2:#12101c;--t1:#e8e4f4;--t2:#807898;--bdr:rgba(160,128,224,.2)}
+.obsi .crd{position:relative;overflow:hidden;background-color:#14101c;background-image:repeating-linear-gradient(95deg,rgba(180,160,220,.05) 0 1px,transparent 1px 3px),linear-gradient(135deg,#16121f,#0e0b16);box-shadow:inset 0 0 30px rgba(0,0,0,.5)}
+.obsi .crd::before{content:'';position:absolute;inset:-40%;z-index:0;pointer-events:none;background:radial-gradient(circle at 30% 30%,rgba(150,90,230,.45),transparent 45%),radial-gradient(circle at 70% 70%,rgba(200,90,200,.3),transparent 45%);animation:spin 13s linear infinite}
+.obsi .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(1.5px 1.5px at 10% 40%,#cbb8ff,transparent),radial-gradient(1.2px 1.2px at 40% 60%,#e0d0ff,transparent),radial-gradient(1.5px 1.5px at 70% 35%,#cbb8ff,transparent),radial-gradient(1.2px 1.2px at 90% 70%,#fff,transparent);opacity:.7;animation:drift 9s ease-in-out infinite}
+.obsi .btn1{background-image:linear-gradient(135deg,#9a78e0,#6c4ab8,#c090f0,#6c4ab8,#9a78e0);background-size:300%;color:#080810;animation:aurora 3.5s ease infinite;box-shadow:0 4px 26px rgba(160,130,255,.45),0 0 0 1px rgba(160,130,255,.25)}
+.obsi .bar-fill{background-image:linear-gradient(90deg,#9a78e0,#c090f0,#9a78e0);background-size:200%;animation:aurora 3.5s ease infinite}
+
+/* ===================== KEYFRAMES ===================== */
+@keyframes aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes sheen{0%{background-position:200% 0}100%{background-position:-100% 0}}
+@keyframes slide{0%{background-position:0 0}100%{background-position:200% 0}}
+@keyframes twinkle{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes rise{0%{transform:translateY(8px);opacity:0}20%{opacity:.9}80%{opacity:.5}100%{transform:translateY(-150px);opacity:0}}
+@keyframes fall{0%{transform:translateY(-20px);opacity:0}20%{opacity:.9}80%{opacity:.6}100%{transform:translateY(160px);opacity:0}}
+@keyframes mesh{0%,100%{transform:translate(0,0)}33%{transform:translate(6%,-5%)}66%{transform:translate(-5%,4%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes drift{0%,100%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
+@keyframes flick{0%,100%{filter:brightness(1)}45%{filter:brightness(1.14)}70%{filter:brightness(.92)}}
+@keyframes bpulseTeal{0%,100%{border-color:rgba(60,180,160,.25)}50%{border-color:rgba(100,230,200,.9)}}
+@keyframes edgeglowOrange{0%,100%{box-shadow:inset 0 0 16px rgba(255,140,40,.18),0 0 10px rgba(255,120,30,.18)}50%{box-shadow:inset 0 0 26px rgba(255,150,50,.4),0 0 28px rgba(255,120,30,.45)}}
+</style></head>
+<body>
+<h1>Skins rework — aperçu du chantier</h1>
+<p class="intro">Les 8 skins reconstitués selon tes choix (carte + barre de progression + bouton, comme dans l'app réelle). Ouvre cette page dans le panneau preview pour voir les animations. Dis-moi ce qui colle et ce qui dévie.</p>
+<div class="grid">
+
+  <div class="cell frostbite"><div class="hd"><div class="nm">Frostbite</div><div class="rc">COMBO-2 · Frost Crystal</div></div>
+    <div class="crd"><h3>Final Arena</h3><p>Glace éternelle</p><div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div></div>
+    <button class="btn1">Enter</button><button class="btn2">Back</button></div>
+
+  <div class="cell molten"><div class="hd"><div class="nm">Molten Gold</div><div class="rc">COMBO-1 · Royal Gold</div></div>
+    <div class="crd"><h3>Final Arena</h3><p>Or royal</p><div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div></div>
+    <button class="btn1">Enter</button><button class="btn2">Back</button></div>
+
+  <div class="cell cosmic"><div class="hd"><div class="nm">Cosmic Void</div><div class="rc">COMBO-4 · Void Nebula</div></div>
+    <div class="crd"><h3>Final Arena</h3><p>Néant stellaire</p><div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div></div>
+    <button class="btn1">Enter</button><button class="btn2">Back</button></div>
+
+  <div class="cell aldric"><div class="hd"><div class="nm">Aldric's Chamber</div><div class="rc">FX-42 parchemin + FX-33 cadre + FX-21 gloss</div></div>
+    <div class="crd"><h3>Final Arena</h3><p>Cabinet du chroniqueur</p><div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div></div>
+    <button class="btn1">Enter</button><button class="btn2">Back</button></div>
+
+  <div class="cell aurore"><div class="hd"><div class="nm">Aurore Boréale</div><div class="rc">FX-04 mesh + FX-12 étoiles · bordure d'origine</div></div>
+    <div class="crd"><h3>Final Arena</h3><p>Voile polaire</p><div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div></div>
+    <button class="btn1">Enter</button><button class="btn2">Back</button></div>
+
+  <div class="cell abyssal"><div class="hd"><div class="nm">Abyssal</div><div class="rc">FX-15 bulles + FX-32 bordure pulse</div></div>
+    <div class="crd"><h3>Final Arena</h3><p>Profondeurs</p><div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div></div>
+    <button class="btn1">Enter</button><button class="btn2">Back</button></div>
+
+  <div class="cell ember"><div class="hd"><div class="nm">Emberheart</div><div class="rc">FX-25 edge glow + FX-13 braises + glow or bas</div></div>
+    <div class="crd"><h3>Final Arena</h3><p>Cœur de braise</p><div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div></div>
+    <button class="btn1">Enter</button><button class="btn2">Back</button></div>
+
+  <div class="cell obsi"><div class="hd"><div class="nm">Obsidienne</div><div class="rc">FX-08 plasma + FX-14 poussière + FX-45 métal brossé</div></div>
+    <div class="crd"><h3>Final Arena</h3><p>Verre de lave noir</p><div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div></div>
+    <button class="btn1">Enter</button><button class="btn2">Back</button></div>
+
+</div>
+</body></html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Gold skins rework</title>
+<style>
+:root{--bg:#0c0a06;--bg2:#181208;--bg3:#241a0c;--t1:#fff0d0;--t2:#b09860;--cyan:#d4af37;--cx:212,170,80}
+*{box-sizing:border-box;font-family:'DM Sans',system-ui,sans-serif}
+body{background:#050403;margin:0;padding:24px;color:#fff}
+h1{font-size:16px;opacity:.6;font-weight:600}
+.grid{display:flex;gap:28px;flex-wrap:wrap}
+.col{flex:1;min-width:300px;max-width:420px}
+.label{font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:18px 0 10px;color:#caa84a;font-weight:700}
+.app{padding:0}
+.crd{background:var(--bg2);border:1.5px solid var(--bdr,rgba(255,255,255,.1));border-radius:16px;padding:18px;margin-bottom:14px;color:var(--t1)}
+.crd h2{margin:0 0 6px;font-size:18px}
+.crd p{margin:0;font-size:13px;color:var(--t2)}
+.btn1{display:block;width:100%;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:15px;margin:12px 0;cursor:pointer}
+.btn2{display:block;width:100%;background:none;border:1.5px solid rgba(255,255,255,.2);border-radius:12px;padding:12px;font-weight:600;font-size:14px;color:#fff;margin:8px 0}
+.bar{height:12px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden;margin:14px 0}
+.bar-fill{height:100%;width:68%;border-radius:8px}
+.out{font-size:22px;font-weight:800;text-align:center;margin:10px 0}
+
+/* ===== MOLTEN GOLD v2 — flowing liquid metal ===== */
+.skin-molten_gold{--cx:238,158,36;--cyan:#f0a020;--bg:#0e0903;--bg2:#1e1206;--bg3:#2e1d09;--t1:#fff0cc;--t2:#b89858;--bdr:rgba(244,178,50,.18)}
+.skin-molten_gold .crd{position:relative;overflow:hidden;border-color:rgba(244,178,50,.30);background-image:linear-gradient(115deg,rgba(208,96,12,.32),rgba(240,168,32,.26),rgba(255,242,170,.20),rgba(214,120,18,.28),rgba(120,60,8,.34));background-size:320% 320%;animation:aurora 3.6s ease-in-out infinite,skFlicker 2s ease-in-out infinite;box-shadow:0 0 0 1px rgba(255,200,90,.10),inset 0 0 26px rgba(255,150,30,.10)}
+.skin-molten_gold .crd::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:1;pointer-events:none;background:radial-gradient(1.4px 1.4px at 30% 100%,#fff0a0,transparent),radial-gradient(1.2px 1.2px at 60% 100%,#ffc040,transparent),radial-gradient(1.4px 1.4px at 84% 100%,#ffd860,transparent);animation:skEmberRise 3s linear infinite}
+.skin-molten_gold .crd::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.5) 48%,rgba(255,236,170,.3) 54%,transparent 64%);background-size:220% 100%;animation:skSheen 2.6s linear infinite}
+.skin-molten_gold .crd>*{position:relative;z-index:2}
+.skin-molten_gold .btn1{background-image:linear-gradient(115deg,#7a4a08,#f0a020,#fff2b0,#f0a020,#a86010);background-size:280%;color:#1a0e02;animation:aurora 3s ease infinite,skFlicker 1.8s ease-in-out infinite;box-shadow:0 4px 28px rgba(244,150,30,.55)}
+.skin-molten_gold .bar-fill{background-image:linear-gradient(90deg,#f0a020,#fff2b0,#f0a020);background-size:200%;animation:skSheen 2.4s linear infinite}
+.skin-molten_gold .out{color:#f0a020}
+
+/* ===== ALDRIC'S CHAMBER v2 — candlelit B&W + gold leaf ===== */
+.skin-aldric_chamber{--cx:206,176,108;--cyan:#cdb06a;--bg:#0b0a08;--bg2:#15140f;--bg3:#1e1c15;--t1:#ece4d2;--t2:#8c8472;--bdr:rgba(206,176,108,.16)}
+.skin-aldric_chamber .crd{position:relative;overflow:hidden;border-color:rgba(206,176,108,.24);background-image:radial-gradient(circle at 80% 12%,rgba(232,196,120,.16),rgba(180,150,90,.05) 40%,transparent 62%),linear-gradient(160deg,rgba(46,42,32,.46),rgba(18,16,12,.34));animation:skCandle 5.5s ease-in-out infinite;box-shadow:inset 0 0 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(244,228,170,.10),0 0 0 1px rgba(206,176,108,.06)}
+.skin-aldric_chamber .crd::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:1;pointer-events:none;background:radial-gradient(1px 1px at 22% 32%,#f0dca0,transparent),radial-gradient(1px 1px at 70% 58%,#cdb06a,transparent),radial-gradient(1px 1px at 46% 78%,#e6cc88,transparent),radial-gradient(1px 1px at 84% 40%,#f0dca0,transparent),radial-gradient(1px 1px at 34% 54%,#d8bc7a,transparent);opacity:.7;animation:skTwinkle 4.5s ease-in-out infinite}
+.skin-aldric_chamber .crd>*{position:relative;z-index:2}
+.skin-aldric_chamber .btn1{background-image:linear-gradient(135deg,#2e2820,#b89a52,#e8d49a,#b89a52,#4a4030);background-size:240%;color:#14110a;animation:aurora 5s ease infinite;box-shadow:0 4px 24px rgba(180,154,82,.32),inset 0 1px 0 rgba(244,228,170,.25)}
+.skin-aldric_chamber .bar-fill{background-image:linear-gradient(90deg,#b89a52,#e8d49a,#b89a52);background-size:200%;animation:skSheen 6s linear infinite}
+.skin-aldric_chamber .out{color:#cdb06a;text-shadow:0 0 16px rgba(206,176,108,.16)}
+
+@keyframes aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes skSheen{0%{background-position:200% 0}100%{background-position:-100% 0}}
+@keyframes skTwinkle{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes skFlicker{0%,100%{filter:brightness(1)}45%{filter:brightness(1.14)}70%{filter:brightness(.92)}}
+@keyframes skEmberRise{0%{transform:translateY(4px);opacity:0}15%{opacity:.95}80%{opacity:.6}100%{transform:translateY(-44px);opacity:0}}
+@keyframes skCandle{0%,100%{filter:brightness(1)}15%{filter:brightness(1.07)}30%{filter:brightness(.95)}45%{filter:brightness(1.1)}60%{filter:brightness(.93)}80%{filter:brightness(1.04)}}
+</style></head>
+<body>
+<h1>Gold skins rework — comparaison côte à côte</h1>
+<div class="grid">
+  <div class="col skin-molten_gold app">
+    <div class="label">Molten Gold — métal liquide</div>
+    <div class="crd"><h2>Final Arena</h2><p>The boss awaits. Liquid gold flows.</p>
+      <div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div><p>Estimated TOEIC score</p></div>
+    <button class="btn1">Enter the Arena</button>
+    <button class="btn2">Back</button>
+  </div>
+  <div class="col skin-aldric_chamber app">
+    <div class="label">Aldric's Chamber — cabinet à la bougie</div>
+    <div class="crd"><h2>Final Arena</h2><p>The chronicler watches by candlelight.</p>
+      <div class="bar"><div class="bar-fill"></div></div></div>
+    <div class="crd"><div class="out">820 / 990</div><p>Estimated TOEIC score</p></div>
+    <button class="btn1">Enter the Arena</button>
+    <button class="btn2">Back</button>
+  </div>
+</div>
+</body></html>
