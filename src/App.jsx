@@ -490,7 +490,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-02-shop-p25";
+var BUILD_ID="2026-06-02-shop-p4";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -15875,6 +15875,11 @@ export default function App(){
       return q.slice(1);
     });
   }
+  // Arena Shop P4 — Aldric's chronicle plays once on the first Shop visit.
+  // pushNarratorMoment is idempotent (hasHeardMoment guard) → fires only the first time.
+  useEffect(function(){
+    if(sp==="shop"&&u&&u.classCode!=="visitor")pushNarratorMoment(u,"shop_intro");
+  },[sp]);
   // ─── NARRATOR BGM DUCKING ───
   // When a chronicle becomes active : fade out the current BGM (stopBGM has
   // a 600ms built-in fade). When it dismisses : restore bgm_home if we're on
@@ -16369,7 +16374,7 @@ useEffect(function(){
   useEffect(function(){
     if(ld||!u||!bgmStarted.current)return;
     // Routes that manage their own BGM (do not interfere):
-    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet","modals","bforge"];
+    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet","modals","bforge","shop"];
     if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
     if(sp){stopBGM();return;}
     // No subpage active and on a home-BGM tab → ensure bgm_home is playing
@@ -17185,7 +17190,7 @@ var prevLeague=getLeague(c.weeklyXp);
   if(sp==="clue"){playBGM("bgm_clue");return pg(<ClueHunter u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"clue");}} done={function(sc,tot,xp){stopBGM();var gxp=applyXpGates(xp,sc,tot,"clue");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");if(sc===tot&&tot>0)grantWeeklyChest("clue_perfect","guerrier");sv(c);sSP(null);sT("games");}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="ablitz")return pg(<AudioBlitz u={u} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"ablitz");}} done={function(sc,tot,xp){var gxp=applyXpGates(xp,sc,tot,"ablitz");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);if(tot>0){var abPct=sc/tot;if(abPct>=0.9)grantWeeklyChest("ablitz_90","guerrier");else if(abPct>=0.7)grantWeeklyChest("ablitz_70","novice");}sv(c);sSP(null);sT("games");}} back={function(){sSP(null);sT("games");}}/>);
   if(sp==="upgrade")return pg(<UpgradeScreen u={u} back={function(){sSP(null);sT("profile");}}/>);
-  if(sp==="shop")return pg(<Shop u={u} buy={shopBuy} setAvatar={function(c){sv(c);}} back={function(){sSP(null);sT("profile");}}/>);
+  if(sp==="shop"){playBGM("bgm_shop");return pg(<Shop u={u} buy={shopBuy} setAvatar={function(c){sv(c);}} back={function(){stopBGM();sSP(null);sT("profile");}}/>);}
   if(sp==="abouttoeic")return pg(<AboutToeic back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="strats")return pg(<StratCards back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(3);sT("train");}}/>);

@@ -198,6 +198,31 @@ export var NARRATOR_MOMENTS = {
       { from: 17.73, to: 18.96, text: "Va." },
       { from: 18.96, to: 21.47, text: "Que ta route soit plus courte que ne fut la mienne." }
     ]
+  },
+  shop_intro: {
+    id: "shop_intro",
+    order: 100,          // Side Chronicle (hors canon) — comme mentor_intro, exclu de NARRATOR_ORDER
+    chapter: "Aside",
+    chapterTitle: "The Merchant's Counter",
+    title: "The Counter",
+    subtitle: "Aldric speaks",
+    // Arena Shop P4 (2026-06-02) — joué une seule fois à la 1re visite du Shop.
+    // AUDIO en anglais (voix Old Wizard) ; sous-titres FR. Timings recalés sur le MP3
+    // réel via silencedetect (-30dB, d=0.35) : transitions = silence_end (entrée de
+    // la phrase suivante). durationSec = durée exacte du MP3 (ffprobe).
+    audio: "/audio/narrator/10_shop_intro.mp3",
+    image: "/images/narrator/10_shop_intro.jpg",
+    durationSec: 29.47,
+    subtitles: [
+      { from: 0.00,  to: 2.65,  text: "Approche, candidat." },
+      { from: 2.65,  to: 9.43,  text: "Sur ce comptoir reposent les vestiges de mille épreuves —" },
+      { from: 9.43,  to: 12.69, text: "fragments d'âmes vaincues, échos de victoires oubliées." },
+      { from: 12.69, to: 16.41, text: "Les darics que tu portes ont survécu à des empires." },
+      { from: 16.41, to: 19.75, text: "Quels royaumes survivront aux tiens ?" },
+      { from: 19.75, to: 22.16, text: "Dépense-les avec discernement…" },
+      { from: 22.16, to: 25.77, text: "car certains trésors ne reviennent pas deux fois." },
+      { from: 25.77, to: 29.47, text: "Le comptoir ne juge pas. Il marchande." }
+    ]
   }
 };
 
