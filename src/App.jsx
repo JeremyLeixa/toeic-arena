@@ -14970,7 +14970,7 @@ function Profile(p){
             else if(tt==="boss_reset"&&u.bossResetArmed){hint="🐲 Armed — enter the Boss arena";}
             else if(tt==="endless_resurrect"&&u.endlessResetArmed){hint="💎 Armed — replay Endless";}
             else if(tt==="module_booster"&&u.boosts&&u.boosts.moduleBoostArmed){var mbm=MISSION_MODULES.find(function(m){return m.id===u.boosts.moduleBoostArmed;});hint="🚀 Armed on "+(mbm?mbm.name:u.boosts.moduleBoostArmed)+" — +50% next session";}
-            else if(tt==="mock_multiplier"&&u.boosts&&u.boosts.mockMultArmed){hint="📈 Armed — ×1.5 on next Mock";}
+            else if(tt==="mock_multiplier"&&u.boosts&&u.boosts.mockMultArmed){hint="📈 Armed — ×1.5 on next Mock or Boss";}
             else if(tt==="daily_doubler"&&u.boosts&&u.boosts.dailyDoublerUntil&&Date.now()<u.boosts.dailyDoublerUntil){var ddm=Math.max(0,Math.round((u.boosts.dailyDoublerUntil-Date.now())/60000));hint="⏫ Active — ×2 XP ("+(ddm>=60?Math.round(ddm/60)+"h":ddm+"m")+" left)";}
             var bg=owned?(isPremium?"rgba(255,192,32,.05)":"rgba(var(--cx),.04)"):(isPremium?"rgba(255,192,32,.02)":"var(--bg3)");
             var bdr=owned?(isPremium?"rgba(255,192,32,.25)":"var(--bdr)"):(isPremium?"rgba(255,192,32,.1)":"var(--bdr)");
@@ -15245,7 +15245,7 @@ function Profile(p){
           <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
             <div style={{fontSize:48,marginBottom:12}}>{info.icon}</div>
             <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>Arm {info.name}?</h2>
-            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>Your next Mock Test earns ×1.5 XP. Burns after that mock.</p>
+            <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>Your next Mock Test or Final Arena earns ×1.5 XP. Burns after that battle.</p>
             <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}><strong style={{color:"var(--cyan)"}}>{Math.max(0,qty-1)} / {info.cap}</strong> will remain after use.</p>
             <div style={{display:"flex",gap:10,justifyContent:"center"}}>
               <button onClick={closeAll} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Cancel</button>
@@ -16731,7 +16731,7 @@ function sv(d){
       // Module Booster : +50% on the armed module (flag cleared in recordModule)
       if(bst.moduleBoostArmed===modId){gatedXp=Math.round(gatedXp*1.5);}
       // Mock Multiplier : ×1.5 on any mock (flag cleared in mockDone)
-      if(bst.mockMultArmed&&(modId==="mock1"||modId==="mock2"||modId==="mock3")){gatedXp=Math.round(gatedXp*1.5);}
+      if(bst.mockMultArmed&&(modId==="mock1"||modId==="mock2"||modId==="mock3"||modId==="boss")){gatedXp=Math.round(gatedXp*1.5);}
     }
     return Math.max(0,gatedXp);
   }
@@ -16961,7 +16961,7 @@ var prevLeague=getLeague(c.weeklyXp);
 
   function goTeacher(){setTeacher(true);}
 
-  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.bossResetArmed)c.bossResetArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
+  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.bossResetArmed)c.bossResetArmed=false;if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
   function endlessDone(result,xp,meta){
     var c=addXp(xp);
     c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;

@@ -158,7 +158,7 @@ export var TOKEN_TYPES = {
   // ─── XP Boosts (Arena Shop P2.5, 2026-06-02) — boost:true. Shop-only (never in chest/conversion
   // pools). Buying = grant_token ; using = arm a boost flag in students.boosts (XP pipeline hooks). ───
   module_booster:    {name:"Module Booster",     icon:"⚗️", cap:3, premium:false, boost:true, desc:"+50% XP on your next session of a chosen module"},
-  mock_multiplier:   {name:"Mock Multiplier",    icon:"🔱", cap:2, premium:false, boost:true, desc:"×1.5 XP on your next Mock Test"},
+  mock_multiplier:   {name:"Mock Multiplier",    icon:"🔱", cap:2, premium:false, boost:true, desc:"×1.5 XP on your next Mock Test or Final Arena (Boss)"},
   daily_doubler:     {name:"Daily Doubler",      icon:"⏳", cap:2, premium:false, boost:true, desc:"×2 XP on all modules for 24h (max 2 bought/week)"},
 };
 
