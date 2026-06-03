@@ -6,7 +6,48 @@
 
 ---
 
-## Last session: 2026-04-27 → 2026-04-28 (Chest redesign V2 — full sprint, ~30 commits)
+## Last session: 2026-05-29 → 2026-06-02 (ARENA SHOP — full build P1→P4, ~14 commits)
+
+**Nouveau gros chantier S2 : la boutique Daric.** Une étudiante a proposé un shop pour dépenser doublons + une monnaie ; on a conçu puis livré de bout en bout. Idée centrale : **sanctuariser l'XP** (métrique de classement) et introduire une **monnaie dérivée**, le **Daric** (D), gagnée via progression (coffres, mastery, podium, Mentor focus, achievements, daily, login). Tout est en prod, Vercel deployed. Détail complet : mémoire `project_shop_design.md`.
+
+### P1 — Infra monnaie (commit `ca21df6`, validé prod `2026-06-01`)
+- `students.arena_marks` **server-authoritative** : muté UNIQUEMENT par RPC `grant_marks(user,class,delta,source,detail,unique)` (increment atomique + log `marks_log`). **Exclu du payload `save()`** (commentaire de garde) → pas de lost-update. Mirror read-only dans `supaToLocal`.
+- Wrapper client `grantMarks()` idempotent (skip toast si RPC renvoie 0). Drop Daric **garanti** dans chaque coffre (30/90/250/700, slot séparé). 7 sources de progression câblées. Pastille `DaricPill` + `MarksToast` + SVG sceau perse. Idempotence validée (stable au reload — neutralise la classe de bug +37k XP).
+
+### P2a — Boutique + achat (commit `ea321fc`)
+- SQL `2026-06-01_shop_p2.sql` : table `shop_purchases` + RPC **`spend_marks`** (transaction atomique : check solde + ownership/cap, décrément, grant player_rewards OU grant_token, log). Renvoie jsonb {ok,balance,error}.
+- `SHOP_CATALOG` **hardcodé** dans chests.js (pas de table). Composant `Shop` (sous-page `sp==="shop"`), flow d'achat avec **confirm anti-achat-accidentel** (pas de refund-30s), sous-vue Conversions réutilisant `ConversionsView`. Sections **collapsables** (commit `2f7c5f5`).
+
+### P2cos — Cosmétiques inspirés (commits `c065031`, `c8ea9f0`, `10abbfc`, `1d8531a`, `4ca0bc7`)
+- **Workflow proto-first** : protos `prototypes/shop-cosmetics/` (index.html frames + skins-global.html). Je screenshote le proto (py http.server via preview MCP) ; **l'app live hang l'outil de screenshot** → Jérémy valide en prod.
+- **7 skins GLOBAUX** (thèmes d'appli comme aurore/obsidienne, pas habillage d'avatar — modèle `.skin-<id>` qui override les vars CSS + anime `.crd/.btn1/.bar-fill/.tab-bar`) : Frostbite, Abyssal, Emberheart, Cosmic Void, Molten Gold, Heraldic, **Aldric's Chamber** (flagship B&W+or). Tous `exclusive:true`.
+- **6 frames** = overlay CSS circulaire (`.aframe-<id>`) autour du blason via extension `AvatarMedal` (les frames proto étaient circulaires, l'avatar app est un blason) : Arc Pulse, Orbit, Inferno Ring, Tempest, Gilded Halo, Prismatic.
+- Passe **polish particules** (neige Frostbite, braises Emberheart, motes Aldric/Molten, Abyssal adouci, Inferno/Tempest/Prismatic en halos fondus). Titres renommés EN. Icônes XP-boost rendues théma-cohérentes (⚗️🔱⏳, fini la fusée).
+
+### P2b — Refonte Profil (commit `a176524`, net -113 lignes)
+- **Fusion Style+Collection** en un onglet `view==="style"` (équip + badges doublons + consommables + cheat sheets + lien Convert→Shop + thème). Tuiles : Stats / Achievements / Style / **Shop**. Conversions vivent désormais DANS le Shop. Méthode : transformer la vue inventory en place (garder la machinerie tokens), swapper catalogue→équip, supprimer les vues avatar+conversions.
+
+### P2.5 — XP Boosts + Bottomless Purse (commit `b0dd9df`)
+- SQL `2026-06-02_xp_boosts.sql` : colonne `students.boosts` jsonb (**client-authoritative**, dans save()).
+- 3 boosts = **tokens** (section "XP Boosts" via `group:"boost"`) : Module Booster 120D (+50% module au choix), Mock Multiplier 220D (×1.5 mock **ET Boss** — extension `daec0bf`), Daily Doubler 400D (×2 tout 24h, cap 2/sem). Armés depuis Consommables (3 flux `useTokenAsk`).
+- **Décision** : boosts scalent l'XP PARTOUT (xp + weeklyXp/Ligue + XP Overall) ; la métrique PRIMAIRE TOEIC Progression (accuracy) est **immunisée**. Hooks : applyXpGates (module+mock) consommés dans recordModule/mockDone/bossDone, addXp (daily doubler 24h).
+- **Bottomless Purse** : titre Légendaire auto-granté à 10 000 Darics dépensés cumulés (`boosts.spent`).
+
+### P4 — Ambiance Shop (commit `5935c03`)
+- **Chronique d'Aldric** à la 1re visite du Shop : narrator.js `shop_intro` (Side Chronicle, "The Merchant's Counter"). Voix-off EN Old Wizard + sous-titres FR parchemin, jouée **une fois** (gaté `narrator.heard`). Timings recalés sur le MP3 réel (ffmpeg silencedetect). `bgm_shop` câblée (SELF_MANAGED + duck sous la chronique).
+- **Assets** : Jérémy génère (ElevenLabs voix, Mureka BGM, image). Image : Leonardo refusait le N&B → **converti via Pillow** (gris neutre carré 1536², matche les 9 chroniques existantes). ffprobe + ffmpeg + Pillow dispos sur la machine de Jérémy.
+
+### État final
+- Shop **complet end-to-end** (P1→P4). 14 commits sur main, en sync, Vercel deployed.
+- **Restes** : avatars Anaïs (attente designs graphiques — ajout trivial via SHOP_CATALOG) · Mock Multiplier→Boss FAIT · **refacto App.jsx** (le gros chantier structurel, acté APRÈS le Shop — voir `project_refactor_appjsx.md`, plan sur le Desktop à déplacer dans le repo).
+
+### Pour la prochaine session
+- Si refacto App.jsx : lire `project_refactor_appjsx.md` (verdict : plan solide, séquencé après features ; 4 améliorations à intégrer ; CSS extrait en premier).
+- Avatars Anaïs dès dispo. Sinon backlog S2 (re-engagement, Magic Link Phase 3).
+
+---
+
+## Earlier session: 2026-04-27 → 2026-04-28 (Chest redesign V2 — full sprint, ~30 commits)
 
 **Le plus gros sprint mono-chantier de S2.** Refonte complète du système de coffres + token actions + cosmétiques cohérents avec la DA shield + League extension + 5 cheat sheets pédagogiques inédites + 3 mémoires post-mortem capturées.
 
@@ -393,4 +434,4 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 
 ---
 
-_Last updated: 2026-04-22 evening · session "focused-chaum" (icon refactor complete — 60 game-icons, tile design unification, tab bar V5 light/dark, Gauntlet XP rebalance tier B, 2 bugs fixed: TTS silent after Listen + XP toast missing on sp routes). Next: open — chantier cosmétique icônes bouclé._
+_Last updated: 2026-06-02 · Arena Shop session (Daric currency P1 → boutique P2a → cosmétiques inspirés P2cos → refonte Profil P2b → XP Boosts P2.5 → chronique+bgm P4). Shop complet end-to-end, ~14 commits, en prod. Next: avatars Anaïs (attente designs) ou refacto App.jsx (voir project_refactor_appjsx.md)._
