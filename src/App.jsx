@@ -284,6 +284,12 @@ function getEffectiveLeague(wxp,ms){
   var l=getLeague(wxp);
   if(l.id==="legend"){
     var toeic=estimateTOEICScore(ms||{});
+    // CHANTIER-A : total peut etre null (non estimable / partiel). null<400 vaut
+    // false en JS -> debloquerait Legende a tort. On lock tant qu'aucune preuve >=400.
+    if(toeic.total===null){
+      var champN=LEAGUES.find(function(lg){return lg.id==="champion";});
+      return Object.assign({},champN||l,{locked:true,lockedScore:null,lockReason:"need_estimation"});
+    }
     if(toeic.total<400){
       var champ=LEAGUES.find(function(lg){return lg.id==="champion";});
       return Object.assign({},champ||l,{locked:true,lockedScore:toeic.total});
@@ -490,7 +496,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-02-shop-p4";
+var BUILD_ID="2026-06-09-toeic-estimation-v2";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -4536,7 +4542,18 @@ function MentorGoalCard(p){
   // ── View mode : progress + ETA. Whole card is clickable → enter edit. ──
   var current=estimateTOEICScore(u.moduleScores||{}).total;
   var target=u.targetToeic;
-  var series=(snaps||[]).slice().reverse().map(function(s){return{toeic:estimateTOEICScore(s.module_scores_snapshot||{}).total};});
+  // CHANTIER-A : pas d'estimation -> pas de tracking, carte sobre (toujours editable).
+  if(current===null){
+    return(<div className="crd" onClick={function(){setEditing(true);}}
+      style={{marginBottom:16,padding:"14px 16px",background:"linear-gradient(135deg,rgba(139,92,246,.08),rgba(var(--cx),.04))",border:"1px solid rgba(139,92,246,.25)",cursor:"pointer"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+        <GIcon name="path-distance" size={18} color="var(--purple)"/>
+        <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--purple)"}}>{"Goal: "+target+" TOEIC"}</div>
+      </div>
+      <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>{"Your TOEIC estimate isn't available yet — complete more modules or a Mock test to start tracking progress toward your goal."}</div>
+    </div>);
+  }
+  var series=(snaps||[]).slice().reverse().map(function(s){return{toeic:estimateTOEICScore(s.module_scores_snapshot||{}).total};}).filter(function(x){return x.toeic!==null;});
   var avgDeltaPerWeek=null;
   if(series.length>=2){
     var first=series[0].toeic,last=series[series.length-1].toeic;
@@ -4649,7 +4666,7 @@ function MentorMap(p){
      tone:focus?"active":"muted"},
     {id:"camp", x:67, y:75, side:"right",
      label:"Your Camp",
-     value:current+" TOEIC",
+     value:(current!==null?current+" TOEIC":"\u2014 TOEIC"),
      tone:"active"}
   ]:[
     {id:"goal", x:48, y:22, side:"left",
@@ -4666,7 +4683,7 @@ function MentorMap(p){
      tone:focus?"active":"muted"},
     {id:"camp", x:83, y:68, side:"right",
      label:"Your Camp",
-     value:current+" TOEIC",
+     value:(current!==null?current+" TOEIC":"\u2014 TOEIC"),
      tone:"active"}
   ];
 
@@ -4868,7 +4885,7 @@ function Mentor(p){
 
     <MentorSheet open={sheet==="camp"} onClose={function(){setSheet(null);}} title="Your Camp — where you stand">
       <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:14}}>
-        <div className="out" style={{fontSize:30,fontWeight:900,color:"var(--cyan)"}}>{estimateTOEICScore(u.moduleScores||{}).total}</div>
+        <div className="out" style={{fontSize:30,fontWeight:900,color:"var(--cyan)"}}>{(function(){var tt=estimateTOEICScore(u.moduleScores||{}).total;return tt!==null?tt:"\u2014";})()}</div>
         <div style={{fontSize:11,color:"var(--t2)"}}>{"estimated TOEIC"}</div>
       </div>
       {measured.length===0
@@ -11579,11 +11596,12 @@ function WeeklyReport(p){
   });
 
   // TOEIC distribution
-  var buckets={s0:0,s400:0,s500:0,s600:0,s700:0,s800:0};
+  var buckets={s0:0,s400:0,s500:0,s600:0,s700:0,s800:0,sNA:0}; // CHANTIER-A : sNA = non estimables
   (p.students||[]).forEach(function(s){
     if(s.name==="Teacher")return;
     var t=estimateTOEICScore(s.module_scores||{}).total;
-    if(t<400)buckets.s0++;
+    if(t===null){buckets.sNA++;}
+    else if(t<400)buckets.s0++;
     else if(t<500)buckets.s400++;
     else if(t<600)buckets.s500++;
     else if(t<700)buckets.s600++;
@@ -11765,7 +11783,7 @@ function WeeklyReport(p){
         <h3 style={{fontSize:13,fontWeight:700,margin:"12px 0 8px"}}>📈 Distribution TOEIC estimé de la classe</h3>
         <div className="wr-card" style={{border:"1px solid #ddd",borderRadius:8,padding:"10px 14px"}}>
           {[{k:"s0",l:"< 400",c:"#b82020"},{k:"s400",l:"400–499",c:"#c87a35"},{k:"s500",l:"500–599",c:"#d4943a"},{k:"s600",l:"600–699",c:"#b0a030"},{k:"s700",l:"700–799",c:"#22803d"},{k:"s800",l:"800+",c:"#0f6020"}].map(function(b,i){
-            var tot=Object.keys(buckets).reduce(function(a,k){return a+buckets[k];},0);var pct=tot>0?Math.round(buckets[b.k]/tot*100):0;
+            var tot=Object.keys(buckets).reduce(function(a,k){return k==="sNA"?a:a+buckets[k];},0);var pct=tot>0?Math.round(buckets[b.k]/tot*100):0;
             return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
               <div style={{width:90,fontSize:11,color:"#333"}}>{b.l}</div>
               <div style={{flex:1,height:10,background:"#f0f0f0",borderRadius:6,overflow:"hidden"}}>
@@ -11774,6 +11792,7 @@ function WeeklyReport(p){
               <div style={{width:60,fontSize:11,fontWeight:700,textAlign:"right"}}>{buckets[b.k]} ({pct}%)</div>
             </div>);
           })}
+          {buckets.sNA>0&&<div style={{marginTop:8,paddingTop:8,borderTop:"1px dashed #ddd",fontSize:11,color:"#888",fontStyle:"italic"}}>{"Non estim\u00e9 (donn\u00e9es insuffisantes) : "+buckets.sNA+" \u00e9l\u00e8ve"+(buckets.sNA>1?"s":"")}</div>}
         </div>
       </div>
 
@@ -12021,7 +12040,7 @@ function TeacherDash(p){
         pcta(stats.correct||0,stats.totalQ||0),pcta(noFlashC,noFlashQ),
         na(stats.cardsRev||0),na(stats.drills||0),na(stats.perfects||0),
         na(s.weekly_daily_count||s.weeklyDailyCount||0),
-        na(toeic.total),na(toeic.listening),na(toeic.reading),
+        toeic.total===null?"non estim\u00e9":na(toeic.total),toeic.listening===null?"non estim\u00e9":na(toeic.listening),toeic.reading===null?"non estim\u00e9":na(toeic.reading),
       ].concat(mockC("mock1")).concat(mockC("mock2")).concat([
         na(gs.matchEasy?gs.matchEasy.score:""),na(gs.matchEasy?gs.matchEasy.time:""),
         na(gs.matchHard?gs.matchHard.score:""),na(gs.matchHard?gs.matchHard.time:""),
@@ -12106,22 +12125,22 @@ function TeacherDash(p){
       {/* KPI cards */}
       {(function(){
         var toeic=estimateTOEIC(s);
-        var toeicCol=toeic.total>=750?"var(--green)":toeic.total>=500?"var(--orange)":"var(--red)";
+        var toeicCol=toeic.total===null?"var(--t3)":toeic.total>=750?"var(--green)":toeic.total>=500?"var(--orange)":"var(--red)";
         return(<div style={{marginBottom:20}}>
           {/* TOEIC Score — full width banner */}
           <div className="crd" style={{padding:"12px 16px",marginBottom:8,background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(27,112,207,.06))",borderColor:"rgba(var(--cx),.15)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div>
               <div className="out" style={{fontWeight:800,fontSize:11,color:"var(--t3)",letterSpacing:1,textTransform:"uppercase",marginBottom:2}}>Est. TOEIC Score</div>
-              <div className="out" style={{fontWeight:900,fontSize:28,color:toeicCol,lineHeight:1}}>{toeic.total}<span style={{fontSize:13,color:"var(--t3)",fontWeight:400}}>/990</span></div>
+              <div className="out" style={{fontWeight:900,fontSize:28,color:toeicCol,lineHeight:1}}>{toeic.total!==null?toeic.total:"\u2014"}<span style={{fontSize:13,color:"var(--t3)",fontWeight:400}}>/990</span></div>
             </div>
             <div style={{textAlign:"right"}}>
               <div style={{display:"flex",gap:12}}>
                 <div style={{textAlign:"center"}}>
-                  <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{toeic.listening}</div>
+                  <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{toeic.listening!==null?toeic.listening:"\u2014"}</div>
                   <div style={{fontSize:9,color:"var(--t3)"}}>Listening</div>
                 </div>
                 <div style={{textAlign:"center"}}>
-                  <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--purple)"}}>{toeic.reading}</div>
+                  <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--purple)"}}>{toeic.reading!==null?toeic.reading:"\u2014"}</div>
                   <div style={{fontSize:9,color:"var(--t3)"}}>Reading</div>
                 </div>
               </div>
@@ -12452,7 +12471,7 @@ function TeacherDash(p){
           ];
           var pool=showGhostsOnly?students.filter(isGhost):students;
           var sorted=pool.slice().sort(function(a,b){
-            if(sortBy==="toeic"){return estimateTOEIC(b).total-estimateTOEIC(a).total;}
+            if(sortBy==="toeic"){return (estimateTOEIC(b).total||-1)-(estimateTOEIC(a).total||-1);}
             if(sortBy==="xp"){return(b.xp||0)-(a.xp||0);}
             if(sortBy==="accuracy"){
               var aa=a.stats&&a.stats.totalQ>0?a.stats.correct/a.stats.totalQ:0;
@@ -12487,7 +12506,7 @@ function TeacherDash(p){
               var sAcc=s.stats&&s.stats.totalQ>0?Math.round(s.stats.correct/s.stats.totalQ*100):0;
               var accCol=sAcc>=70?"var(--green)":sAcc>=50?"var(--orange)":"var(--red)";
               var toeic=estimateTOEIC(s);
-              var toeicCol=toeic.total>=750?"var(--green)":toeic.total>=500?"var(--orange)":"var(--red)";
+              var toeicCol=toeic.total===null?"var(--t3)":toeic.total>=750?"var(--green)":toeic.total>=500?"var(--orange)":"var(--red)";
               var lastSeen=s.last_active?s.last_active.substring(5):"—";
               return(<div key={i} className="crd" style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",cursor:"pointer"}}
                 onClick={function(){setDetail(origIdx);}}>
@@ -12501,7 +12520,7 @@ function TeacherDash(p){
                   </div>
                 </div>
                 <div style={{textAlign:"right",flexShrink:0}}>
-                  <div className="out" style={{fontWeight:800,fontSize:15,color:toeicCol}}>{toeic.total}</div>
+                  <div className="out" style={{fontWeight:800,fontSize:15,color:toeicCol}}>{toeic.total!==null?toeic.total:"\u2014"}</div>
                   <div style={{fontSize:9,color:"var(--t3)"}}>est. TOEIC</div>
                 </div>
                 <div style={{textAlign:"right",flexShrink:0,marginLeft:6}}>
@@ -13527,7 +13546,7 @@ function loadProgressionData(){
           var snapToeic=firstSnapshotToeic(name);
           baseline=snapToeic!==null?snapToeic:200;
         }
-        var gain=assessedQ>=50?(currentToeic-baseline):null;
+        var gain=(assessedQ>=50&&currentToeic!==null)?(currentToeic-baseline):null;
         return{name:name,avatar:avatar||"⚔️",frameId:frameId||null,titleId:titleId||null,currentToeic:currentToeic,baseline:baseline,gain:gain,assessedQ:assessedQ,me:!!me};
       }
       var rows=[];
@@ -13544,7 +13563,7 @@ function loadProgressionData(){
         if(a.gain!==null&&b.gain!==null)return b.gain-a.gain;
         if(a.gain!==null)return -1;
         if(b.gain!==null)return 1;
-        return b.currentToeic-a.currentToeic;
+        return (b.currentToeic||0)-(a.currentToeic||0);
       });
       setProgressionData(rows);
       setProgLoading(false);
@@ -13805,7 +13824,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
                 </div>
                 {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
                 <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>
-                  {pl.baseline} → {pl.currentToeic} pts TOEIC
+                  {pl.baseline} → {pl.currentToeic!==null?pl.currentToeic:"\u2014"} pts TOEIC
                   {bonusLabel&&<span style={{marginLeft:6,color:"var(--gold)",fontWeight:700}}>{bonusLabel}</span>}
                 </div>
               </div>
@@ -13890,32 +13909,68 @@ function battleScanToToeic(bs){
 }
 
 // ── TOEIC Score Estimator (global — used by Profile + TeacherDash) ──
-function estimateTOEICScore(ms){
-  function acc(id){var d=ms[id];if(!d||!d.total)return null;return d.correct/d.total;}
-  var lisParts=[{id:"lisP1",w:0.20},{id:"lisP2",w:0.30},{id:"lisP3",w:0.25},{id:"lisP4",w:0.25}];
-  var vocabVals=[acc("wordfam"),acc("connsort"),acc("prepdrill"),acc("gerinf")].filter(function(v){return v!==null;});
-  var vocabAvg=vocabVals.length>0?vocabVals.reduce(function(a,b){return a+b;},0)/vocabVals.length:null;
-  // Grammar Gauntlet — average across the 4 sub-modules (morpho-syntaxe verbale deep dive)
-  var gauntletVals=[acc("gauntlet_irregular"),acc("gauntlet_tense"),acc("gauntlet_passive"),acc("gauntlet_relative")].filter(function(v){return v!==null;});
-  var gauntletAvg=gauntletVals.length>0?gauntletVals.reduce(function(a,b){return a+b;},0)/gauntletVals.length:null;
-  var rdParts=[{id:"drill",w:0.30},{id:"p6",w:0.20},{id:"p7",w:0.25},{val:vocabAvg,w:0.10},{val:gauntletAvg,w:0.15}];
+function estimateTOEICScore(ms,opts){
+  // CHANTIER-A v2 (2026-06-09) — refonte calibree sur la cohorte IDRAC T2.
+  // Changements clefs vs V1 :
+  //  - Normalisation PROPORTIONNELLE des sections (wSum/wTot) au lieu du hack
+  //    "wSum+=(1-wTot)*0.01" qui ecrasait le Reading des profils a couverture
+  //    partielle (defaut #2 "Reading 8/495"). NE PAS revenir en arriere.
+  //  - Gating A.1 : retourne {total:null,estimable:false|"partial"} tant que la
+  //    preuve est insuffisante, au lieu d'un cold-start trompeur a 200.
+  //  - Assiette Reading elargie aux modules transverses (A.2).
+  //  - A.5 ponderation par confiance (volume de questions par module).
+  //  - Bonus mock ASYMETRIQUE (Kamel-safe) : recompense la sur-perf mock,
+  //    ne penalise jamais une mauvaise perf mock.
+  //  - A.4 ancrage Boss 60% via opts.bossToeic (echelle 990, optionnel).
+  ms=ms||{};opts=opts||{};
+  function rec(id){var d=ms[id];if(!d||!d.total)return null;return{acc:d.correct/d.total,q:d.total};}
+  function confW(q){if(q<10)return 0.3;if(q<30)return 0.6;if(q<100)return 0.85;return 1;}
+  function sumQ(ids){var s=0;ids.forEach(function(id){var r=rec(id);if(r)s+=r.q;});return s;}
+  var READING_MODS=["drill","p6","p7","wordfam","connsort","prepdrill","gerinf","falsefr","pvdojo","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative"];
+  var LIS_MODS=["lisP1","lisP2","lisP3","lisP4","ablitz"];
+  var readingQ=sumQ(READING_MODS),listeningQ=sumQ(LIS_MODS);
+  var m1=rec("mock1"),m2=rec("mock2"),mbR=rec("boss");
+  var bossToeic=(opts.bossToeic!=null&&isFinite(opts.bossToeic))?opts.bossToeic:null;
+  var mocksList=[m1,m2,mbR].filter(Boolean);
+  var hasMock=mocksList.length>0||bossToeic!==null;
+  var mocksDone=mocksList.length+((bossToeic!==null&&!mbR)?1:0);
+  var evidence={listeningQ:listeningQ,readingQ:readingQ,mocksDone:mocksDone};
+  // A.1 seuils (decision produit — ne pas modifier sans validation) : 80 Reading, 40 Listening, ou >=1 mock.
+  var readingOK=readingQ>=80||hasMock;
+  var listeningOK=listeningQ>=40||hasMock;
+  // Sections, normalisation proportionnelle (A.2/A.3).
+  var gaunt=[rec("gauntlet_irregular"),rec("gauntlet_tense"),rec("gauntlet_passive"),rec("gauntlet_relative")].filter(Boolean);
+  var gauntAvg=gaunt.length?{acc:gaunt.reduce(function(a,b){return a+b.acc;},0)/gaunt.length,q:gaunt.reduce(function(a,b){return a+b.q;},0)}:null;
+  var rdParts=[{id:"drill",w:0.22},{id:"p6",w:0.15},{id:"p7",w:0.18},{id:"wordfam",w:0.06},{id:"connsort",w:0.06},{id:"prepdrill",w:0.05},{id:"gerinf",w:0.05},{id:"falsefr",w:0.04},{id:"pvdojo",w:0.04},{id:"sbuild",w:0.04},{val:gauntAvg,w:0.11}];
+  var lisParts=[{id:"lisP1",w:0.18},{id:"lisP2",w:0.27},{id:"lisP3",w:0.25},{id:"lisP4",w:0.22},{id:"ablitz",w:0.08}];
   function section(parts){
-    var wSum=0,wTot=0,hasData=false;
-    parts.forEach(function(p){var v=p.val!==undefined?p.val:acc(p.id);if(v!==null){wSum+=v*p.w;wTot+=p.w;hasData=true;}});
-    if(!hasData)return null;
-    wSum+=(1-wTot)*0.01;
-    return wSum;
+    var wSum=0,wTot=0,has=false;
+    parts.forEach(function(p){var r=p.val!==undefined?p.val:rec(p.id);if(r){var ew=p.w*confW(r.q);wSum+=r.acc*ew;wTot+=ew;has=true;}});
+    if(!has)return null;
+    return wSum/wTot;
   }
-  var lis=section(lisParts);var rd=section(rdParts);
-  var lisScore=lis!==null?Math.round(5+lis*490):5;
-  var rdScore=rd!==null?Math.round(5+rd*490):5;
-  var total=lisScore+rdScore;
-  var m1=acc("mock1"),m2=acc("mock2"),bonus=0;
-  if(m1!==null&&m1>=0.60)bonus+=0.05;
-  if(m2!==null&&m2>=0.60)bonus+=0.05;
-  if(bonus>0)total=Math.min(990,Math.round(total*(1+bonus)));
-  total=Math.max(200,Math.min(990,total));
-  return{total:Math.round(total/5)*5,listening:lisScore,reading:rdScore};
+  var rawLis=section(lisParts),rawRd=section(rdParts);
+  // Anti-trou : une section debloquee par un mock mais sans module propre est derivee de l'acc mock.
+  var mockAcc=null;
+  if(mocksList.length){var sa=0,qa=0;mocksList.forEach(function(m){sa+=m.acc*m.q;qa+=m.q;});mockAcc=qa?sa/qa:null;}
+  if(hasMock&&mockAcc!==null){if(rawRd===null)rawRd=mockAcc;if(rawLis===null)rawLis=mockAcc;}
+  var lisScore=rawLis!==null?Math.round(Math.max(5,Math.min(495,5+rawLis*490))):null;
+  var rdScore=rawRd!==null?Math.round(Math.max(5,Math.min(495,5+rawRd*490))):null;
+  // A.1 — aucune preuve : non estimable.
+  if(!readingOK&&!listeningOK){
+    return{total:null,listening:null,reading:null,estimable:false,evidence:evidence,reason:"insufficient_data"};
+  }
+  var bothShown=lisScore!==null&&rdScore!==null;
+  if(readingOK&&listeningOK&&bothShown){
+    var total=lisScore+rdScore;
+    var bonus=0;mocksList.forEach(function(m){if(m.acc>0.60)bonus+=(m.acc-0.60)*0.30;});bonus=Math.min(0.20,bonus);
+    if(bonus>0)total=total*(1+bonus);
+    if(bossToeic!==null)total=0.60*bossToeic+0.40*total; // A.4
+    total=Math.max(200,Math.min(990,total));
+    return{total:Math.round(total/5)*5,listening:lisScore,reading:rdScore,estimable:true,evidence:evidence};
+  }
+  // A.1 — cas partiel : une seule section calculable.
+  return{total:null,listening:(listeningOK&&lisScore!==null)?lisScore:null,reading:(readingOK&&rdScore!==null)?rdScore:null,estimable:"partial",evidence:evidence};
 }
 
 // ─── UPGRADE SCREEN (Phase 3 Session 2) ───
@@ -14496,6 +14551,14 @@ function Profile(p){
   var la=ACHIEVEMENTS.filter(function(a){return!a.check(uC);});
   var isPhoto=!!(u.avatar&&u.avatar.startsWith("data:"));
   var toeicCol=toeic.total>=750?"var(--green)":toeic.total>=500?"var(--orange)":toeic.total>200?"var(--red)":"var(--t3)";
+  // CHANTIER-A : etat non estimable / partiel pour la carte score.
+  var toeicNA=toeic.total===null;
+  var toeicRemain=null;
+  if(toeic.estimable===false&&toeic.evidence){
+    var gapR=80-(toeic.evidence.readingQ||0),gapL=40-(toeic.evidence.listeningQ||0);
+    var gaps=[gapR,gapL].filter(function(g){return g>0;});
+    toeicRemain=gaps.length?Math.min.apply(null,gaps):null;
+  }
 
   function renderAvatar(size,fs){
     // V2 — for chest avatars (shield SVG), the frame is rendered inside AvatarMedal as
@@ -14619,14 +14682,16 @@ function Profile(p){
           <div>
             <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Estimated TOEIC Score</div>
             <div className="out" style={{fontWeight:900,fontSize:36,color:toeicCol,lineHeight:1}}>
-              {toeic.total}<span style={{fontSize:14,color:"var(--t3)",fontWeight:400}}>/990</span>
+              {toeicNA?<span style={{color:"var(--t3)"}}>{"\u2014"}</span>:<span>{toeic.total}<span style={{fontSize:14,color:"var(--t3)",fontWeight:400}}>/990</span></span>}
             </div>
-            {toeic.total<=200&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>{"Complete more modules to refine your score"}</div>}
+            {toeic.estimable===false&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>{toeicRemain!==null?("Estimation available after ~"+toeicRemain+" more questions or a Mock test."):"Estimation available after a Mock test or more training."}</div>}
+            {toeic.estimable==="partial"&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>{"Total score available after activity in the other section."}</div>}
+            {toeic.estimable===true&&toeic.total<=200&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>{"Complete more modules to refine your score"}</div>}
           </div>
           <div style={{textAlign:"right"}}>
             <div style={{display:"flex",gap:16,marginBottom:4}}>
-              <div style={{textAlign:"center"}}><div className="out" style={{fontWeight:700,fontSize:18,color:"var(--cyan)"}}>{toeic.listening}</div><div style={{fontSize:9,color:"var(--t3)"}}>Listening</div></div>
-              <div style={{textAlign:"center"}}><div className="out" style={{fontWeight:700,fontSize:18,color:"var(--purple)"}}>{toeic.reading}</div><div style={{fontSize:9,color:"var(--t3)"}}>Reading</div></div>
+              <div style={{textAlign:"center"}}><div className="out" style={{fontWeight:700,fontSize:18,color:"var(--cyan)"}}>{toeic.listening!==null?toeic.listening:"\u2014"}</div><div style={{fontSize:9,color:"var(--t3)"}}>Listening</div></div>
+              <div style={{textAlign:"center"}}><div className="out" style={{fontWeight:700,fontSize:18,color:"var(--purple)"}}>{toeic.reading!==null?toeic.reading:"\u2014"}</div><div style={{fontSize:9,color:"var(--t3)"}}>Reading</div></div>
             </div>
             <div style={{fontSize:9,color:"var(--t3)"}}>Based on your training</div>
           </div>
@@ -15536,7 +15601,7 @@ function Profile(p){
   {lg.icon} {lg.name}
   {lg.locked&&<span style={{fontSize:10,color:"var(--t3)",marginLeft:4}}>🔒</span>}
 </span>
-{lg.locked&&<span style={{fontSize:11,color:"var(--t3)",padding:"3px 10px",borderRadius:20,background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.15)"}}>Legend tier: reach TOEIC {lg.lockedScore}</span>}
+{lg.locked&&<span style={{fontSize:11,color:"var(--t3)",padding:"3px 10px",borderRadius:20,background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.15)"}}>{lg.lockReason==="need_estimation"?"Legend tier: complete more modules or a Mock test":("Legend tier: reach TOEIC "+lg.lockedScore)}</span>}
           <span style={{fontSize:12,background:"rgba(255,100,0,.1)",color:"#ff6428",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(255,100,0,.2)"}}>🔥 {u.streak}</span>
           <DaricPill marks={u.arenaMarks}/>
         </div>
@@ -16127,7 +16192,7 @@ useEffect(function(){
       var prevMs=res.data[0].module_scores_snapshot||{};
       var prevToeic=estimateTOEICScore(prevMs).total;
       var currentToeic=estimateTOEICScore(uu.moduleScores||{}).total;
-      if(currentToeic-prevToeic>=25){
+      if(currentToeic!==null&&prevToeic!==null&&currentToeic-prevToeic>=25){
         grantChestLocal("weekly_toeic_"+wkId,"guerrier");
         // Arena Shop P1 — 50 Darics on +25 TOEIC week-over-week, 1×/week.
         grantMarks(50,"toeic_weekly","weekly_toeic_marks_"+wkId,true);

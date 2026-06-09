@@ -152,9 +152,19 @@ prototypes/
 - **Accuracy gate:** <30% accuracy → 10% XP, 30-49% → 50%, ≥50% → 100%.
 - **TOEIC Progression ranking is the primary bonification metric.** XP Overall is secondary.
 
-### TOEIC Score Estimator
-- `estimateToeic(raw, total)` — piecewise curve, harder to gain at the top.
-- `estimateTOEICScore(u)` — weighted by module accuracy: Listening (P1×0.20, P2×0.30, P3×0.25, P4×0.25 → 5-495) + Reading (drill×0.35, P6×0.25, P7×0.30, vocab×0.10 → 5-495). Mock test bonus +5% per mock ≥60%. Clamped 200-990, rounded to nearest 5.
+### TOEIC Score Estimator (Chantier A — refonte V2, 2026-06-09)
+- `estimateToeic(raw, total)` — piecewise curve, harder to gain at the top. Échelle **section** (5-495), pas un total.
+- `estimateTOEICScore(ms, opts)` — **retour structuré** `{total, listening, reading, estimable, evidence, reason?}`.
+  - **`estimable`** : `true` (chiffre complet), `"partial"` (une seule section calculable → `total:null`), ou `false` (`total/listening/reading:null` + `reason:"insufficient_data"`). **`total` peut être `null`** : tout call site doit le gérer (un cold-start à 200 trompeur n'existe plus).
+  - **Gating A.1** (seuils = décision produit, ne pas toucher sans validation) : Reading exige ≥80 Q cumulées sur les modules contribuant au Reading, Listening ≥40 Q, **OU** ≥1 Mock complété (débloque + sert d'ancrage).
+  - **Sections normalisées proportionnellement** (`wSum/wTot`). ⚠️ NE PAS revenir au hack `wSum+=(1-wTot)*0.01` : il écrasait le Reading des profils à couverture partielle (défaut historique "Reading 8/495").
+  - **Reading élargi** (A.2) : drill .22, p6 .15, p7 .18, wordfam .06, connsort .06, prepdrill .05, gerinf .05, falsefr .04, pvdojo .04, sbuild .04, gauntlet(moy 4) .11.
+  - **Listening** (A.3) : lisP1 .18, lisP2 .27, lisP3 .25, lisP4 .22, ablitz .08.
+  - **A.5 pondération par confiance** : poids effectif × {q<10:0.3, <30:0.6, <100:0.85, ≥100:1}.
+  - **Bonus mock asymétrique (Kamel-safe)** : `+(acc−0.60)×0.30` par mock >60% (cap +0.20). Ne pénalise jamais une mauvaise perf mock. Remplace l'ancien +5%/+5%.
+  - **A.4 ancrage Boss** : si `opts.bossToeic` (= `mockResults.boss.toeicEstimate`, échelle 990) fourni → `0.60×bossToeic + 0.40×estim_modules`. Optionnel, câblé depuis les vues "score perso". Non validé numériquement (aucun Boss dans la cohorte IDRAC T2).
+  - **Validation** : `tests/validate_toeic_estimation.cjs` (corrélation + cas-test sur CSV cohorte) et `tests/verify_patched_estimation.cjs` (égalité fonction patchée ↔ V2). Patch de prod : `scripts/patch_chantier_A_toeic_estimation.cjs` (idempotent, écrit `App_patched.jsx`).
+  - **Critère d'évidence** : porte sur les **questions alimentant une section TOEIC**, PAS sur toutes les questions hors-flashcards (le Clue Hunter, par ex., ne donne aucun signal de section → ne débloque pas l'estimation).
 
 ### Flashcards
 - **Flashcard accuracy is NOT a performance metric.** SRS self-evaluation, not right/wrong.
