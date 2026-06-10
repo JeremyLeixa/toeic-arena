@@ -496,7 +496,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-10-chantier-b-p0p1";
+var BUILD_ID="2026-06-10-chantier-b-p2";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -13978,16 +13978,22 @@ function estimateTOEICScore(ms,opts){
   //  - Bonus mock ASYMETRIQUE (Kamel-safe) : recompense la sur-perf mock,
   //    ne penalise jamais une mauvaise perf mock.
   //  - A.4 ancrage Boss 60% via opts.bossToeic (echelle 990, optionnel).
+  // CHANTIER-B (2026-06-10) — principe "tout ce qui fait de l'XP bouge le score" :
+  //  - Modules-support versés dans le Reading en POIDS FAIBLE (garde-fou validité :
+  //    le backbone Part5/6/7+Gauntlet reste dominant) : tavern, clue, traps,
+  //    modals (moy 2), bforge, timesim, stratquiz, daily.
+  //  - Endless Arena rejoint le groupe mock (full TOEIC : débloque + bonus).
+  //  - Exceptions assumées hors-score : Flashcards (0 XP) + jeux d'arcade (pas de précision).
   ms=ms||{};opts=opts||{};
   function rec(id){var d=ms[id];if(!d||!d.total)return null;return{acc:d.correct/d.total,q:d.total};}
   function confW(q){if(q<10)return 0.3;if(q<30)return 0.6;if(q<100)return 0.85;return 1;}
   function sumQ(ids){var s=0;ids.forEach(function(id){var r=rec(id);if(r)s+=r.q;});return s;}
-  var READING_MODS=["drill","p6","p7","wordfam","connsort","prepdrill","gerinf","falsefr","pvdojo","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative"];
+  var READING_MODS=["drill","p6","p7","wordfam","connsort","prepdrill","gerinf","falsefr","pvdojo","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","tavern","clue","traps","modals_match","modals_sort","bforge","timesim","stratquiz","daily"];
   var LIS_MODS=["lisP1","lisP2","lisP3","lisP4","ablitz"];
   var readingQ=sumQ(READING_MODS),listeningQ=sumQ(LIS_MODS);
-  var m1=rec("mock1"),m2=rec("mock2"),mbR=rec("boss");
+  var m1=rec("mock1"),m2=rec("mock2"),mbR=rec("boss"),meR=rec("endless");
   var bossToeic=(opts.bossToeic!=null&&isFinite(opts.bossToeic))?opts.bossToeic:null;
-  var mocksList=[m1,m2,mbR].filter(Boolean);
+  var mocksList=[m1,m2,mbR,meR].filter(Boolean); // CHANTIER-B : Endless = full TOEIC, compte comme un mock
   var hasMock=mocksList.length>0||bossToeic!==null;
   var mocksDone=mocksList.length+((bossToeic!==null&&!mbR)?1:0);
   var evidence={listeningQ:listeningQ,readingQ:readingQ,mocksDone:mocksDone};
@@ -13995,9 +14001,11 @@ function estimateTOEICScore(ms,opts){
   var readingOK=readingQ>=80||hasMock;
   var listeningOK=listeningQ>=40||hasMock;
   // Sections, normalisation proportionnelle (A.2/A.3).
-  var gaunt=[rec("gauntlet_irregular"),rec("gauntlet_tense"),rec("gauntlet_passive"),rec("gauntlet_relative")].filter(Boolean);
-  var gauntAvg=gaunt.length?{acc:gaunt.reduce(function(a,b){return a+b.acc;},0)/gaunt.length,q:gaunt.reduce(function(a,b){return a+b.q;},0)}:null;
-  var rdParts=[{id:"drill",w:0.22},{id:"p6",w:0.15},{id:"p7",w:0.18},{id:"wordfam",w:0.06},{id:"connsort",w:0.06},{id:"prepdrill",w:0.05},{id:"gerinf",w:0.05},{id:"falsefr",w:0.04},{id:"pvdojo",w:0.04},{id:"sbuild",w:0.04},{val:gauntAvg,w:0.11}];
+  function meanRec(ids){var rs=ids.map(rec).filter(Boolean);if(!rs.length)return null;return{acc:rs.reduce(function(a,b){return a+b.acc;},0)/rs.length,q:rs.reduce(function(a,b){return a+b.q;},0)};}
+  var gauntAvg=meanRec(["gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative"]);
+  var modalsAvg=meanRec(["modals_match","modals_sort"]);
+  // CHANTIER-B : backbone (poids V2) DOMINANT + modules-support en poids FAIBLE.
+  var rdParts=[{id:"drill",w:0.22},{id:"p6",w:0.15},{id:"p7",w:0.18},{id:"wordfam",w:0.06},{id:"connsort",w:0.06},{id:"prepdrill",w:0.05},{id:"gerinf",w:0.05},{id:"falsefr",w:0.04},{id:"pvdojo",w:0.04},{id:"sbuild",w:0.04},{val:gauntAvg,w:0.11},{id:"tavern",w:0.05},{id:"clue",w:0.04},{id:"traps",w:0.04},{val:modalsAvg,w:0.04},{id:"bforge",w:0.03},{id:"timesim",w:0.03},{id:"stratquiz",w:0.02},{id:"daily",w:0.03}];
   var lisParts=[{id:"lisP1",w:0.18},{id:"lisP2",w:0.27},{id:"lisP3",w:0.25},{id:"lisP4",w:0.22},{id:"ablitz",w:0.08}];
   function section(parts){
     var wSum=0,wTot=0,has=false;

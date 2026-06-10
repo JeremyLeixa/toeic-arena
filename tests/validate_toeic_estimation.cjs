@@ -64,15 +64,26 @@ const MODULE_COLS = {
   lisP3: 'Listening Part 3',
   lisP4: 'Listening Part 4',
   ablitz: 'Audio Blitz',
-  // Non utilises par l'estimateur mais parses pour le compte d'activite :
-  flashcard: 'Flashcard Review',
+  // Non utilises par l'estimateur V2 mais parses (compte d'activite + Phase 2) :
+  csess: 'Flashcard Review',     // FIX : csess = Flashcards (pas "Exam Simulation")
   traps: 'TOEIC Traps',
   stratquiz: 'Strategy Quiz',
-  csess: 'Exam Simulation',
+  timesim: 'Exam Simulation',    // FIX : "Exam Simulation" = Time Sim (id timesim)
   clue: 'Clue Hunter',
+  // Colonnes ajoutees par l'export complet Chantier B (CSV >= 2026-06-10) :
+  tavern: 'Word Tavern',
+  bforge: 'Linking Bridge',
+  gauntlet_irregular: 'Gauntlet Irregular Crypt',
+  gauntlet_tense: 'Gauntlet Chronomancer',
+  gauntlet_passive: 'Gauntlet Passive Forge',
+  gauntlet_relative: 'Gauntlet Relative Weaver',
+  modals_match: 'Modal Council Oracle',
+  modals_sort: 'Modal Council Verdict',
+  daily: 'Daily Challenge',
+  endless: 'Endless Arena',
 };
-// Note : le CSV n'a PAS de colonnes Grammar Gauntlet ni Modal Council.
-// Ces modules seront simplement absents du proxy (normalisation gere l'absence).
+// Avant le 2026-06-10 le CSV n'avait pas ces colonnes -> ces modules etaient
+// absents du proxy (la normalisation gerait l'absence). Desormais disponibles.
 
 // ─────────────────────────────────────────────────────────────────────────
 // 3. Parseur CSV (gere les champs quotes)
