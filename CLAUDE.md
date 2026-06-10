@@ -158,8 +158,12 @@ prototypes/
   - **`estimable`** : `true` (chiffre complet), `"partial"` (une seule section calculable → `total:null`), ou `false` (`total/listening/reading:null` + `reason:"insufficient_data"`). **`total` peut être `null`** : tout call site doit le gérer (un cold-start à 200 trompeur n'existe plus).
   - **Gating A.1** (seuils = décision produit, ne pas toucher sans validation) : Reading exige ≥80 Q cumulées sur les modules contribuant au Reading, Listening ≥40 Q, **OU** ≥1 Mock complété (débloque + sert d'ancrage).
   - **Sections normalisées proportionnellement** (`wSum/wTot`). ⚠️ NE PAS revenir au hack `wSum+=(1-wTot)*0.01` : il écrasait le Reading des profils à couverture partielle (défaut historique "Reading 8/495").
-  - **Reading élargi** (A.2) : drill .22, p6 .15, p7 .18, wordfam .06, connsort .06, prepdrill .05, gerinf .05, falsefr .04, pvdojo .04, sbuild .04, gauntlet(moy 4) .11.
+  - **Reading backbone** (A.2) : drill .22, p6 .15, p7 .18, wordfam .06, connsort .06, prepdrill .05, gerinf .05, falsefr .04, pvdojo .04, sbuild .04, gauntlet(moy 4) .11.
+  - **Reading support (Chantier B, 2026-06-10)** — poids FAIBLE, garde-fou validité (backbone dominant) : tavern .05, clue .04, traps .04, modals(moy match+sort) .04, bforge .03, timesim .03, stratquiz .02, daily .03. Principe : tout module à précision réelle qui donne de l'XP bouge le score (exceptions : Flashcards 0 XP + jeux d'arcade sans précision).
   - **Listening** (A.3) : lisP1 .18, lisP2 .27, lisP3 .25, lisP4 .22, ablitz .08.
+  - **Groupe mock** (débloque l'estimation + bonus asymétrique) : mock1, mock2, boss, **endless** (Endless = full TOEIC, ajouté Chantier B).
+  - **`MODULE_TOEIC_MAP`** (juste avant `partOfModule`) = source unique module→{part,section,score}, consommée par partOfModule + partAccuracies (Mentor/Focus). Fix Chantier B des ids falsefr/pvdojo/ablitz qui étaient invisibles au Mentor.
+  - **Export CSV** : itère `EXPORT_MODULES` (superset, PAS `MISSION_MODULES`) → toutes les colonnes modules présentes depuis le 2026-06-10.
   - **A.5 pondération par confiance** : poids effectif × {q<10:0.3, <30:0.6, <100:0.85, ≥100:1}.
   - **Bonus mock asymétrique (Kamel-safe)** : `+(acc−0.60)×0.30` par mock >60% (cap +0.20). Ne pénalise jamais une mauvaise perf mock. Remplace l'ancien +5%/+5%.
   - **A.4 ancrage Boss** : si `opts.bossToeic` (= `mockResults.boss.toeicEstimate`, échelle 990) fourni → `0.60×bossToeic + 0.40×estim_modules`. Optionnel, câblé depuis les vues "score perso". Non validé numériquement (aucun Boss dans la cohorte IDRAC T2).
