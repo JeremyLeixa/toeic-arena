@@ -496,7 +496,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-09-toeic-estimation-v2";
+var BUILD_ID="2026-06-10-chantier-b-p0p1";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -4398,17 +4398,55 @@ var[step,sSt]=useState("name");
 // Modules that don't fit a single part (mocks, boss, daily, games) are not
 // mapped and therefore not boosted — those have their own incentive layers.
 // ═══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// MODULE_TOEIC_MAP — SOURCE UNIQUE DE VÉRITÉ : module id → câblage TOEIC.
+//   part    : bucket radar Mentor / Today's Focus (p1-p7 | vocab | null).
+//   section : section de l'estimateur (listening | reading | null).
+//   score   : compte AUJOURD'HUI dans estimateTOEICScore (jeu Chantier A).
+// Chantier B Phase 1 (2026-06-10) : consommée par partOfModule + partAccuracies
+// pour tuer les mismatches falsefr/pvdojo/ablitz (la route enregistre "falsefr"
+// et "pvdojo", mais l'ancien partOfModule cherchait "falsefriends" et ignorait
+// pvdojo/ablitz → ces modules étaient invisibles au Mentor et au boost Focus).
+// Les listes pondérées de l'estimateur rejoindront cette map en Phase 2
+// (élargissement + recalibration). NE PAS dupliquer ce mapping ailleurs.
+// ═══════════════════════════════════════════════════════════════════════
+var MODULE_TOEIC_MAP={
+  lisP1:{part:"p1",section:"listening",score:true},
+  lisP2:{part:"p2",section:"listening",score:true},
+  lisP3:{part:"p3",section:"listening",score:true},
+  lisP4:{part:"p4",section:"listening",score:true},
+  ablitz:{part:"p2",section:"listening",score:true},   // FIX : était absent de partOfModule
+  p6:{part:"p6",section:"reading",score:true},
+  p7:{part:"p7",section:"reading",score:true},
+  drill:{part:"p5",section:"reading",score:true},
+  wordfam:{part:"p5",section:"reading",score:true},
+  connsort:{part:"p5",section:"reading",score:true},
+  prepdrill:{part:"p5",section:"reading",score:true},
+  gerinf:{part:"p5",section:"reading",score:true},
+  falsefr:{part:"p5",section:"reading",score:true},     // FIX : était "falsefriends"
+  pvdojo:{part:"p5",section:"reading",score:true},      // FIX : était absent
+  sbuild:{part:"p5",section:"reading",score:true},
+  gauntlet_irregular:{part:"p5",section:"reading",score:true},
+  gauntlet_tense:{part:"p5",section:"reading",score:true},
+  gauntlet_passive:{part:"p5",section:"reading",score:true},
+  gauntlet_relative:{part:"p5",section:"reading",score:true},
+  // Donnent de l'XP + vus par le Mentor, PAS encore dans le score (Phase 2) :
+  bforge:{part:"p5",section:"reading",score:false},
+  modals_match:{part:"p5",section:"reading",score:false},
+  modals_sort:{part:"p5",section:"reading",score:false},
+  tavern:{part:"vocab",section:"reading",score:false},
+  csess:{part:"vocab",section:null,score:false},        // flashcards : 0 XP, jamais dans le score
+  cdom:{part:"vocab",section:null,score:false},
+  phrasalpicker:{part:"vocab",section:null,score:false},
+  clue:{part:null,section:null,score:false},
+  traps:{part:null,section:null,score:false},
+  stratquiz:{part:null,section:null,score:false},
+  timesim:{part:null,section:null,score:false}
+};
 function partOfModule(modId){
   if(!modId)return null;
-  if(modId==="lisP1")return"p1";
-  if(modId==="lisP2")return"p2";
-  if(modId==="lisP3")return"p3";
-  if(modId==="lisP4")return"p4";
-  if(modId==="p6")return"p6";
-  if(modId==="p7")return"p7";
-  if(modId==="tavern"||modId==="csess"||modId==="cdom"||modId==="phrasalpicker"||modId==="phrasaldojo")return"vocab";
-  if(modId==="drill"||modId==="wordfam"||modId==="connsort"||modId==="bforge"||modId==="prepdrill"||modId==="gerinf"||modId==="falsefriends"||modId==="sbuild"||modId.indexOf("gauntlet_")===0||modId.indexOf("modals_")===0)return"p5";
-  return null;
+  var e=MODULE_TOEIC_MAP[modId];
+  return e?e.part:null;
 }
 // Per-part accuracy + sample size from u.moduleScores. Returns object keyed by part.
 // Phase D (scan-v2): when a part has no real moduleScores data and bsParts has a Battle Scan
@@ -4420,8 +4458,10 @@ function partAccuracies(ms,bsParts){
   function fallback(partId){if(!bsParts||typeof bsParts[partId]!=="number")return null;return{acc:bsParts[partId],n:5,source:"scan"};}
   function getOrFallback(modId,partId){return get(modId)||fallback(partId);}
   function avg(arr){var f=arr.filter(function(x){return x!==null;});if(f.length===0)return null;var sa=0,sn=0;f.forEach(function(x){sa+=x.acc*x.n;sn+=x.n;});return{acc:sa/sn,n:sn};}
-  var p5Mods=["drill","wordfam","connsort","bforge","prepdrill","gerinf","falsefriends","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","modals_match","modals_sort"];
-  var vocabMods=["tavern","csess","cdom","phrasalpicker"];
+  // Chantier B : dérivés de MODULE_TOEIC_MAP (source unique) — falsefr + pvdojo
+  // entrent désormais dans le radar p5, qui les ignorait à cause du mismatch d'id.
+  var p5Mods=Object.keys(MODULE_TOEIC_MAP).filter(function(k){return MODULE_TOEIC_MAP[k].part==="p5";});
+  var vocabMods=Object.keys(MODULE_TOEIC_MAP).filter(function(k){return MODULE_TOEIC_MAP[k].part==="vocab";});
   return{
     p1:getOrFallback("lisP1","p1"),p2:getOrFallback("lisP2","p2"),p3:getOrFallback("lisP3","p3"),p4:getOrFallback("lisP4","p4"),
     p5:avg(p5Mods.map(get)),p6:getOrFallback("p6","p6"),p7:getOrFallback("p7","p7"),vocab:avg(vocabMods.map(get))
@@ -11999,6 +12039,22 @@ function TeacherDash(p){
     function pcta(correct,total){return total>0?Math.round(correct/total*100):"";}
     function fdatea(d){return d||"";}
     function ftimea(sec){return sec?Math.round(sec/60):"";}
+    // Chantier B Phase 0 : superset complet pour l'export. On NE touche PAS
+    // MISSION_MODULES (missions/tokens/dashboard en dépendent) — on étend
+    // seulement la portée de l'export aux modules trackés mais sans colonne
+    // jusqu'ici (Word Tavern, Linking Bridge, Gauntlet, Modal Council, Daily, Endless).
+    var EXPORT_MODULES=MISSION_MODULES.concat([
+      {id:"tavern",name:"Word Tavern"},
+      {id:"bforge",name:"Linking Bridge"},
+      {id:"gauntlet_irregular",name:"Gauntlet Irregular Crypt"},
+      {id:"gauntlet_tense",name:"Gauntlet Chronomancer"},
+      {id:"gauntlet_passive",name:"Gauntlet Passive Forge"},
+      {id:"gauntlet_relative",name:"Gauntlet Relative Weaver"},
+      {id:"modals_match",name:"Modal Council Oracle"},
+      {id:"modals_sort",name:"Modal Council Verdict"},
+      {id:"daily",name:"Daily Challenge"},
+      {id:"endless",name:"Endless Arena"}
+    ]);
     var headers=[
       "Nom","Classe","XP Total","XP Semaine","Niveau","Ligue","Streak","Derniere activite",
       "Sessions totales","Temps total (min)",
@@ -12012,7 +12068,7 @@ function TeacherDash(p){
       "Duel parties","Duel victoires","Duel XP vole",
       "Achievements debloques","Achievements total",
     ];
-    MISSION_MODULES.forEach(function(m){
+    EXPORT_MODULES.forEach(function(m){
       headers.push(m.name+" Precision%");
       headers.push(m.name+" Sessions");
       headers.push(m.name+" Questions");
@@ -12048,7 +12104,7 @@ function TeacherDash(p){
         na(gs.duel?gs.duel.played:0),na(gs.duel?gs.duel.wins:0),na(gs.duel?(gs.duel.wagerWon||0):0),
         na(ach.length),na(ACHIEVEMENTS.length),
       ]);
-      MISSION_MODULES.forEach(function(m){
+      EXPORT_MODULES.forEach(function(m){
         var d=ms[m.id];
         row.push(d&&d.total>0?Math.round(d.correct/d.total*100):"");
         row.push(d?na(d.sessions):"");
