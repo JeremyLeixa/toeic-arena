@@ -7572,6 +7572,13 @@ function BossTest(p){
       reading:{score:rRaw,total:readQ,toeic:rT,p5:{score:p5s,total:RP5.length},p6:{score:p6s,total:p6BC},p7:{score:p7s,total:p7QC}},
       toeicEstimate:lT+rT,timeUsed:TOTAL_TIME-timeLeft};
     setResult(res);setPhase("done");
+    // GARDE : persister IMMÉDIATEMENT le résultat, pas au clic "Save & Exit".
+    // Même bug que MockTest (Yannou 2026-05-17) : réviser puis fermer l'app
+    // perdait le run entier (2h) — la session de reprise est déjà effacée par
+    // clearBossSession() ci-dessus. bossDone ne navigue plus (l'écran de
+    // résultats reste affiché) ; le bouton Exit ne fait que naviguer.
+    var resXp=Math.round(res.toeicEstimate*1.5)+(res.toeicEstimate>=800?200:res.toeicEstimate>=600?100:0);
+    try{p.done(res,resXp);}catch(e){console.warn("[BossTest] persist failed:",e&&e.message);}
   }
 
   // ── Progress ──
@@ -7865,7 +7872,8 @@ function BossTest(p){
       <div className="out" style={{fontSize:22,fontWeight:800,color:"var(--gold)",marginBottom:20}}>+{xp} XP</div>
 
       <button className="btn1" onClick={function(){setRevMode(true);setRevSec("p1");setRevIdx(0);}}>📖 Review Answers</button>
-      <button className="btn2" onClick={function(){result.mockId="boss";p.done(result,xp);}} style={{marginTop:10,width:"100%",fontSize:16,padding:"14px 24px"}}>Save & Exit</button>
+      {/* Résultat déjà persisté au submit (voir GARDE dans doSubmit) — ce bouton ne fait que naviguer. */}
+      <button className="btn2" onClick={p.back} style={{marginTop:10,width:"100%",fontSize:16,padding:"14px 24px"}}>Exit</button>
     </div>);
   }
 
@@ -17102,7 +17110,10 @@ var prevLeague=getLeague(c.weeklyXp);
 
   function goTeacher(){setTeacher(true);}
 
-  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.bossResetArmed)c.bossResetArmed=false;if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);sSP(null);sT("train");}
+  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.bossResetArmed)c.bossResetArmed=false;if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);
+    // Pas de navigation ici : bossDone est appelé depuis doSubmit() pendant que
+    // l'écran de résultats reste affiché (même GARDE que mockDone / bug Yannou).
+  }
   function endlessDone(result,xp,meta){
     var c=addXp(xp);
     c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;
