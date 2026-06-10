@@ -28,3 +28,13 @@ dist-ssr
 test-push.js
 # Chantier A — exports CSV cohorte (données élèves, ne pas committer)
 tests/data/
+
+# Backups de scripts de patch — git EST le backup, ne jamais committer
+*.bak*
+
+# Secrets locaux hors .env
+stripe_backup_code.txt
+
+# Outillage local
+.claude/worktrees/
+supabase/.temp/
