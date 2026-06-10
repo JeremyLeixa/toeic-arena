@@ -6320,7 +6320,7 @@ function TrapsQuiz(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start Quiz</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,quizItems.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,traps.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Traps Mastered!</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{traps.length}</div>
