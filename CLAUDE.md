@@ -166,8 +166,8 @@ prototypes/
   - **Export CSV** : itère `EXPORT_MODULES` (superset, PAS `MISSION_MODULES`) → toutes les colonnes modules présentes depuis le 2026-06-10.
   - **A.5 pondération par confiance** : poids effectif × {q<10:0.3, <30:0.6, <100:0.85, ≥100:1}.
   - **Bonus mock asymétrique (Kamel-safe)** : `+(acc−0.60)×0.30` par mock >60% (cap +0.20). Ne pénalise jamais une mauvaise perf mock. Remplace l'ancien +5%/+5%.
-  - **A.4 ancrage Boss** : si `opts.bossToeic` (= `mockResults.boss.toeicEstimate`, échelle 990) fourni → `0.60×bossToeic + 0.40×estim_modules`. Optionnel, câblé depuis les vues "score perso". Non validé numériquement (aucun Boss dans la cohorte IDRAC T2).
-  - **Validation** : `tests/validate_toeic_estimation.cjs` (corrélation + cas-test sur CSV cohorte) et `tests/verify_patched_estimation.cjs` (égalité fonction patchée ↔ V2). Patch de prod : `scripts/patch_chantier_A_toeic_estimation.cjs` (idempotent, écrit `App_patched.jsx`).
+  - **A.4 ancrage Boss** : si `opts.bossToeic` (= `mockResults.boss.toeicEstimate`, échelle 990) fourni → `0.60×bossToeic + 0.40×estim_modules`. ⚠️ **DORMANT (audit 2026-06-10)** : aucun call site ne passe `opts.bossToeic` — à câbler depuis les vues "score perso" ou à retirer. Non validé numériquement (aucun Boss dans la cohorte IDRAC T2).
+  - **Validation** : `tests/validate_toeic_estimation.cjs` (corrélation + cas-test sur CSV cohorte). (`verify_patched_estimation.cjs` supprimé 2026-06-10 — il lisait `src/App_patched.jsx` qui n'existe plus.) Patch de prod : `scripts/patch_chantier_A_toeic_estimation.cjs` (idempotent, écrit `App_patched.jsx`).
   - **Critère d'évidence** : porte sur les **questions alimentant une section TOEIC**, PAS sur toutes les questions hors-flashcards (le Clue Hunter, par ex., ne donne aucun signal de section → ne débloque pas l'estimation).
 
 ### Flashcards
