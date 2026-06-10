@@ -8108,6 +8108,7 @@ function EndlessArena(p){
   function clearSession(){try{localStorage.removeItem(ENDLESS_STORAGE_KEY);}catch(e){}}
   useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
   var[result,setResult]=useState(null);
+  var[doneInfo,setDoneInfo]=useState(null); // valeurs PB/attempts/XP figées au submit (voir GARDE dans doSubmit)
   var[aState,setAState]=useState("ready");
   var[curOpt,setCurOpt]=useState(-1);
   var timerRef=useRef(null);
@@ -8194,7 +8195,24 @@ function EndlessArena(p){
       listening:{score:lRaw,total:lisQ,toeic:lT,p1:{score:p1s,total:LP1.length},p2:{score:p2s,total:LP2.length},p3:{score:p3s,total:p3QC},p4:{score:p4s,total:p4QC}},
       reading:{score:rRaw,total:readQ,toeic:rT,p5:{score:p5s,total:RP5.length},p6:{score:p6s,total:p6BC},p7:{score:p7s,total:p7QC}},
       weakestPart:weakestPart,weakestAccuracy:weakestAcc,timeUsed:TOTAL_TIME-timeLeft};
+    // GARDE : persister IMMÉDIATEMENT le résultat (même bug que MockTest/Boss,
+    // Yannou 2026-05-17 : persistance au clic = run perdu si fermeture depuis
+    // l'écran de résultats). Les valeurs PB/attempts/XP sont FIGÉES ici AVANT
+    // p.done : après la persistance, p.u.mockResults.endless est à jour et les
+    // recalculer au render afficherait isNewPB=false et attempts décalé.
+    // endlessDone ne navigue plus ; les boutons ne font que naviguer.
+    var prevE=p.u.mockResults&&p.u.mockResults.endless;
+    var prevBest=prevE&&prevE.best?prevE.best:0;
+    var attempts=(prevE&&prevE.attempts?prevE.attempts:0)+1;
+    var isNewPB=res.toeicEstimate>prevBest;
+    var baseXp=Math.round(res.toeicEstimate*1.5*0.7);
+    var pbBonus=isNewPB&&attempts>1?500:0;
+    var history=prevE&&prevE.history?prevE.history.slice(-6):[];
+    history.push({date:Date.now(),toeicEstimate:res.toeicEstimate,listening:lT,reading:rT,weakestPart:weakestPart,weakestAccuracy:weakestAcc});
+    if(isNewPB&&attempts>1)haptic("pb");
+    setDoneInfo({prevBest:prevBest,attempts:attempts,isNewPB:isNewPB,baseXp:baseXp,pbBonus:pbBonus,totalXp:baseXp+pbBonus,history:history});
     setResult(res);setPhase("done");
+    try{p.done(res,baseXp+pbBonus,{history:history,attempts:attempts,isNewPB:isNewPB});}catch(e){console.warn("[Endless] persist failed:",e&&e.message);}
   }
 
   // ── Progress ──
@@ -8420,29 +8438,24 @@ function EndlessArena(p){
   }
 
   // ═══ RESULTS ═══
-  if(phase==="done"&&result){
-    // Compute XP and PB
-    var prevEndless=p.u.mockResults&&p.u.mockResults.endless;
-    var prevBest=prevEndless&&prevEndless.best?prevEndless.best:0;
-    var attempts=(prevEndless&&prevEndless.attempts?prevEndless.attempts:0)+1;
-    var isNewPB=result.toeicEstimate>prevBest;
-    if(isNewPB&&attempts>1)haptic("pb");
-    var baseXp=Math.round(result.toeicEstimate*1.5*0.7);
-    var pbBonus=isNewPB&&attempts>1?500:0;
-    var totalXp=baseXp+pbBonus;
+  if(phase==="done"&&result&&doneInfo){
+    // Valeurs figées au submit (voir GARDE dans doSubmit) — ne PAS recalculer
+    // depuis p.u ici : il a déjà été mis à jour par la persistance.
+    var prevBest=doneInfo.prevBest;var attempts=doneInfo.attempts;var isNewPB=doneInfo.isNewPB;
+    var baseXp=doneInfo.baseXp;var pbBonus=doneInfo.pbBonus;var totalXp=doneInfo.totalXp;
 
     // Part labels & icons for weakest recommendation
     var PART_MAP={1:{label:"Part 1 \xb7 Photos",icon:"\ud83d\uddbc\ufe0f",nav:"lisP1"},2:{label:"Part 2 \xb7 Q&R",icon:"\ud83c\udfa7",nav:"lisP2"},3:{label:"Part 3 \xb7 Conversations",icon:"\ud83d\udcac",nav:"lisP3"},4:{label:"Part 4 \xb7 Talks",icon:"\ud83d\udce2",nav:"lisP4"},5:{label:"Part 5 \xb7 Grammar",icon:"\ud83d\udcdd",nav:"drill"},6:{label:"Part 6 \xb7 Text completion",icon:"\ud83d\udcc4",nav:"p6"},7:{label:"Part 7 \xb7 Reading",icon:"\ud83d\udcd6",nav:"p7"}};
     var wp=PART_MAP[result.weakestPart]||PART_MAP[5];
     var wAcc=Math.round(result.weakestAccuracy*100);
 
-    // History for progression chart
-    var history=prevEndless&&prevEndless.history?prevEndless.history.slice(-6):[];
-    history.push({date:Date.now(),toeicEstimate:result.toeicEstimate,listening:result.listening.toeic,reading:result.reading.toeic,weakestPart:result.weakestPart,weakestAccuracy:result.weakestAccuracy});
+    // History for progression chart (figé au submit)
+    var history=doneInfo.history;
 
     return(<div className="enter" style={{padding:"20px 16px 100px",minHeight:"100vh"}}>
       {/* Breadcrumb */}
-      <div style={{fontSize:13,color:"#8a7e6a",marginBottom:14,cursor:"pointer"}} onClick={function(){p.done(result,totalXp,{history:history,attempts:attempts,isNewPB:isNewPB});}}>{"← ⏳ Endless Arena"}</div>
+      {/* Résultat déjà persisté au submit (GARDE doSubmit) — les boutons ne font que naviguer. */}
+      <div style={{fontSize:13,color:"#8a7e6a",marginBottom:14,cursor:"pointer"}} onClick={p.back}>{"← ⏳ Endless Arena"}</div>
 
       {/* PB Banner or First Run */}
       {attempts===1?(<div style={{background:"linear-gradient(135deg,#3a2810 0%,#0a1e35 50%,#3a2810 100%)",border:"1.5px solid #f0c850",borderRadius:12,padding:"11px 14px",marginBottom:14,textAlign:"center"}}>
@@ -8519,13 +8532,13 @@ function EndlessArena(p){
       </div>
 
       {/* Primary Button — Train weakest */}
-      <button onClick={function(){p.done(result,totalXp,{history:history,attempts:attempts,isNewPB:isNewPB});setTimeout(function(){p.nav(wp.nav);},100);}}
+      <button onClick={function(){p.nav(wp.nav);}}
         style={{width:"100%",padding:14,background:"linear-gradient(135deg,#d4943a,#8b6020)",border:"none",borderRadius:12,fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:13,color:"#0f0c08",letterSpacing:1,cursor:"pointer",marginBottom:10}}>
         {wp.icon} TRAIN PART {result.weakestPart} NOW {"→"}
       </button>
 
       {/* Secondary Button */}
-      <button onClick={function(){p.done(result,totalXp,{history:history,attempts:attempts,isNewPB:isNewPB});}}
+      <button onClick={p.back}
         style={{width:"100%",padding:12,background:"transparent",border:"1px solid rgba(180,140,80,.25)",borderRadius:12,fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13,color:"#8a7e6a",cursor:"pointer",marginBottom:16}}>
         Back to the training grounds
       </button>
@@ -17131,7 +17144,9 @@ var prevLeague=getLeague(c.weeklyXp);
     trackModSession(c,"endless");recordModule(c,"endless",result.score,result.total);
     if(c.endlessResetArmed)c.endlessResetArmed=false; // V2 — consume after the run
     try{if(result.toeicEstimate>=800)playJingleMock();else playJingleMockOk();}catch(e){}haptic("complete");
-    sv(c);sSP(null);sT("train");
+    sv(c);
+    // Pas de navigation ici : endlessDone est appelé depuis doSubmit() pendant
+    // que l'écran de résultats reste affiché (même GARDE que mockDone/bossDone).
   }
   function mockDone(result,xp){
     var modId="mock"+result.mockId;
