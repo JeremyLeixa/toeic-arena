@@ -477,5 +477,166 @@ export var PART6_TEXTS = [
       "Several new interns will join the team in June.",
       "Failure to follow these protocols may result in equipment damage or injury.",
       "The cafeteria now offers vegetarian options daily."
-    ],correct:2,x:"Sentence insertion: reinforces safety instructions with a clear warning about consequences."}]}
+    ],correct:2,x:"Sentence insertion: reinforces safety instructions with a clear warning about consequences."}]},
+  // ─── BATCH 3 (p6t31–p6t40) — added 2026-06-22 ───
+  { id:"p6t31", type:"Email", from:"Conference Services", to:"Registered Attendees", subject:"Your Badge and Arrival Details",
+    parts:[
+      {text:"Dear attendee,\n\nThank you for registering for the Annual Supply Chain Summit. We are writing to provide some practical information to ensure your arrival goes smoothly. Your personalized name badge "},
+      {blank:true,options:["will be","is being","has been","was"],correct:2,x:"Present perfect passive: 'has been prepared' — the badge is ready now, available for pickup."},
+      {text:" prepared and can be collected at the registration desk in the main atrium starting at 8:00 AM.\n\nTo avoid long lines, we recommend arriving "},
+      {blank:true,options:["short","shortly","shorter","shortness"],correct:1,x:"Adverb modifying 'before': 'shortly before' = a little before. 'Shortly' is the adverb form."},
+      {text:" before your first session. Please have your confirmation email ready, either printed or on your phone. "},
+      {blank:true,options:["Otherwise","Therefore","Although","Meanwhile"],correct:0,x:"'Otherwise' = if not. If you don't have your confirmation, staff will need to verify your details manually."},
+      {text:", our staff will need to look up your registration manually, which may cause delays.\n\n"},
+      {blank:true,options:[
+        "We look forward to welcoming you to the summit.",
+        "The hotel restaurant is closed for renovation.",
+        "All refunds are processed within ten business days.",
+        "Parking permits expired at the end of last month."
+      ],correct:0,x:"Sentence insertion: warm closing for a welcome/logistics email to event attendees."},
+    ]},
+  { id:"p6t32", type:"Notice", from:"Building Management", to:"All Tenants", subject:"Fire Alarm Testing",
+    parts:[
+      {text:"Please be advised that the building's fire alarm system will undergo "},
+      {blank:true,options:["routine","routinely","route","routines"],correct:0,x:"Adjective before noun: 'routine testing'. Describes the type of testing."},
+      {text:" testing on Wednesday, March 18, between 9:00 AM and 11:00 AM.\n\nDuring this period, alarm bells will sound intermittently. These are tests only, and "},
+      {blank:true,options:["no","any","none","not"],correct:0,x:"'No action is required' — 'no' + noun. Tenants do not need to do anything."},
+      {text:" action is required on your part. You do not need to evacuate the building unless an announcement specifically instructs you to do so.\n\nWe apologize in advance for any disruption the noise may cause. "},
+      {blank:true,options:["Despite","If","Once","Unless"],correct:2,x:"'Once the testing is complete' = after it finishes. Time clause introducing what happens afterward."},
+      {text:" the testing is complete, normal operations will resume immediately.\n\n"},
+      {blank:true,options:[
+        "Thank you for your patience and understanding.",
+        "The annual tenant meeting is scheduled for July.",
+        "New vending machines have been installed in the lobby.",
+        "Rent payments are now accepted online."
+      ],correct:0,x:"Sentence insertion: polite closing for a building notice about a temporary disruption."},
+    ]},
+  { id:"p6t33", type:"Letter", from:"Riverside Bank", to:"Mr. Coleman", subject:"Loan Application Approval",
+    parts:[
+      {text:"Dear Mr. Coleman,\n\nWe are pleased to inform you that your application for a small business loan "},
+      {blank:true,options:["approving","has been approved","approves","approval"],correct:1,x:"Present perfect passive: 'has been approved'. The decision is complete and relevant now."},
+      {text:". After careful review of your business plan and financial statements, our committee determined that your proposal meets all of our lending criteria.\n\nThe approved amount is fifty thousand dollars, "},
+      {blank:true,options:["payable","paying","payment","pays"],correct:0,x:"'Payable over five years' — adjective meaning 'to be paid'. Describes the repayment terms."},
+      {text:" over a term of five years at a fixed annual interest rate of 6.5%. A detailed repayment schedule is enclosed for your review.\n\nTo finalize the loan, please visit any Riverside Bank branch with two forms of identification "},
+      {blank:true,options:["in order to","so that","in order that","such as"],correct:0,x:"'In order to sign' = purpose, followed by base verb. Expresses the reason for visiting."},
+      {text:" sign the final documents. Funds will be deposited within three business days of signing.\n\n"},
+      {blank:true,options:[
+        "We are delighted to support the growth of your business.",
+        "Our branches will be closed on the upcoming holiday.",
+        "Interest rates are subject to change without notice.",
+        "Please update your contact information online."
+      ],correct:0,x:"Sentence insertion: supportive, positive closing for a loan approval letter."},
+    ]},
+  { id:"p6t34", type:"Memo", from:"Sales Director", to:"Sales Team", subject:"New CRM System Rollout",
+    parts:[
+      {text:"Team,\n\nStarting next Monday, we will be transitioning to a new customer relationship management (CRM) platform. This change is intended to streamline our workflow and give us "},
+      {blank:true,options:["bette","better","best","well"],correct:1,x:"Comparative adjective before noun: 'better visibility'. Comparing to the old system."},
+      {text:" visibility into the sales pipeline.\n\nAll team members are expected to complete the online training module before the launch date. The module takes approximately one hour and "},
+      {blank:true,options:["can access","can be accessed","accessing","access"],correct:1,x:"Modal passive: 'can be accessed' — the module receives the action. Subject 'the module' is accessed."},
+      {text:" through the company learning portal. "},
+      {blank:true,options:["Until","Once","Despite","Whereas"],correct:1,x:"'Once you have completed' = after you finish. Time clause introducing the next requirement."},
+      {text:" you have completed the training, please migrate your active accounts into the new system by the end of the week.\n\n"},
+      {blank:true,options:[
+        "Please reach out to me directly if you encounter any difficulties.",
+        "The quarterly sales figures will be published next month.",
+        "Our office will relocate to the fourth floor in autumn.",
+        "Remember to submit your travel expenses on time."
+      ],correct:0,x:"Sentence insertion: offers support, fitting a memo about adopting a new system."},
+    ]},
+  { id:"p6t35", type:"Advertisement", from:"SwiftClean Services", to:"", subject:"Commercial Cleaning You Can Count On",
+    parts:[
+      {text:"Is your workplace as clean and professional as it should be? SwiftClean Services provides reliable commercial cleaning "},
+      {blank:true,options:["tailor","tailored","tailoring","tailor-made"],correct:1,x:"Past participle as adjective: 'cleaning tailored to your needs' (= which is tailored). 'Tailored to' = customized for."},
+      {text:" to the unique needs of your business. From offices to retail spaces, we keep your environment spotless so you can focus on what matters.\n\nOur trained staff use eco-friendly products and follow strict quality checklists. "},
+      {blank:true,options:["Furthermore","However","Otherwise","Nonetheless"],correct:0,x:"'Furthermore' adds another benefit. The ad continues listing advantages."},
+      {text:", we offer flexible scheduling, including evenings and weekends, to avoid disrupting your operations.\n\nNew clients who sign a three-month contract "},
+      {blank:true,options:["receive","receiving","received","to receive"],correct:0,x:"Present simple in a relative clause: 'clients who sign... receive'. Subject 'clients who sign' takes the verb 'receive'."},
+      {text:" their first cleaning completely free.\n\n"},
+      {blank:true,options:[
+        "Call today for a free, no-obligation quote.",
+        "Our company was founded over thirty years ago.",
+        "All employees must wear identification badges.",
+        "The weather has been unusually warm this season."
+      ],correct:0,x:"Sentence insertion: a call to action is the natural ending for an advertisement."},
+    ]},
+  { id:"p6t36", type:"Article", from:"City Business Journal", to:"", subject:"Downtown Sees Surge in New Startups",
+    parts:[
+      {text:"The downtown business district has experienced a remarkable surge in new company registrations over the past year. According to the Chamber of Commerce, the number of startups "},
+      {blank:true,options:["rose","risen","rising","rise"],correct:0,x:"Past simple: 'the number rose by 35%' — a completed change over the past year."},
+      {text:" by 35% compared to the previous year, the highest growth rate in over a decade.\n\nExperts attribute this trend to several factors, including lower commercial rents and a new city grant program "},
+      {blank:true,options:["who","which","where","whom"],correct:1,x:"'Which' for things: refers to 'grant program.' Defining relative clause introducing what the program does."},
+      {text:" provides funding to first-time entrepreneurs. The improved public transit network has also made the area more accessible. "},
+      {blank:true,options:["As a result","Although","In contrast","For example"],correct:0,x:"'As a result' = consequence. Because of these factors, the area is thriving."},
+      {text:", several previously vacant storefronts have been transformed into bustling cafés, coworking spaces, and boutiques.\n\n"},
+      {blank:true,options:[
+        "Analysts expect the momentum to continue throughout the coming year.",
+        "The city council meets on the first Tuesday of each month.",
+        "Local schools will close early for the summer break.",
+        "The new sports stadium opened to mixed reviews."
+      ],correct:0,x:"Sentence insertion: a forward-looking statement fits an article about an ongoing economic trend."},
+    ]},
+  { id:"p6t37", type:"Email", from:"Human Resources", to:"All Staff", subject:"Annual Employee Survey",
+    parts:[
+      {text:"Dear colleagues,\n\nIt is time for our annual employee engagement survey, and your feedback "},
+      {blank:true,options:["is","are","be","being"],correct:0,x:"Singular subject 'your feedback' (uncountable) takes 'is': 'your feedback is essential.'"},
+      {text:" essential in helping us shape a better workplace. The survey is completely anonymous and should take no more than fifteen minutes to complete.\n\nThis year, we have added new questions about remote work and professional development "},
+      {blank:true,options:["opportunity","opportune","opportunities","opportunely"],correct:2,x:"Plural noun after 'development': 'development opportunities'. The plural fits 'questions about... opportunities.'"},
+      {text:". Your honest responses will directly inform the initiatives we prioritize next year. "},
+      {blank:true,options:["Because","To","So that","In order"],correct:2,x:"'So that' + clause = purpose. 'So that everyone has a chance to participate' explains why the deadline is extended."},
+      {text:" everyone has a chance to participate, the survey will remain open until the end of the month.\n\n"},
+      {blank:true,options:[
+        "Thank you in advance for taking the time to share your thoughts.",
+        "The cafeteria will introduce a new menu next week.",
+        "Please remember to lock your computer when away.",
+        "Our company picnic was a tremendous success."
+      ],correct:0,x:"Sentence insertion: a thank-you closing fits an email requesting employee participation."},
+    ]},
+  { id:"p6t38", type:"Notice", from:"Transit Authority", to:"Commuters", subject:"Temporary Route Changes",
+    parts:[
+      {text:"Attention commuters,\n\nDue to scheduled road resurfacing, bus routes 12 and 18 will be temporarily "},
+      {blank:true,options:["diverted","diverting","diversion","diverts"],correct:0,x:"Future passive: 'will be temporarily diverted'. Past participle after 'will be.'"},
+      {text:" between June 1 and June 14. During this period, buses will not stop at the Elm Street and Park Avenue stations.\n\nCommuters traveling to those areas should use the temporary stops on Maple Road, "},
+      {blank:true,options:["locate","located","locating","location"],correct:1,x:"Past participle as adjective: 'stops located just two blocks away' (= which are located)."},
+      {text:" just two blocks away. Clear signage will be posted to guide passengers. "},
+      {blank:true,options:["In addition","Nevertheless","Because of","Even though"],correct:0,x:"'In addition' adds another piece of information about the service change."},
+      {text:", extra buses will be added during peak hours to reduce crowding and minimize delays.\n\n"},
+      {blank:true,options:[
+        "We appreciate your patience during these improvements.",
+        "Monthly passes are available at all ticket machines.",
+        "The transit museum is open to the public on weekends.",
+        "Lost items can be claimed at the central depot."
+      ],correct:0,x:"Sentence insertion: polite closing acknowledging inconvenience from the route changes."},
+    ]},
+  { id:"p6t39", type:"Letter", from:"Northgate University", to:"Ms. Alvarez", subject:"Admission Decision",
+    parts:[
+      {text:"Dear Ms. Alvarez,\n\nCongratulations! On behalf of the admissions committee, I am pleased to offer you "},
+      {blank:true,options:["admit","admission","admitted","admittedly"],correct:1,x:"Noun after 'offer you': 'offer you admission'. The noun form is needed as the object."},
+      {text:" to the Master of Business Administration program at Northgate University for the autumn semester.\n\nYour application was "},
+      {blank:true,options:["high","highly","height","heighten"],correct:1,x:"Adverb modifying 'competitive': 'highly competitive'. 'Highly' intensifies the adjective."},
+      {text:" competitive, and the committee was especially impressed by your professional achievements and leadership potential.\n\nTo secure your place, please submit your enrollment deposit by July 15. "},
+      {blank:true,options:["Should","Would","Must","Will"],correct:0,x:"'Should you require' = formal conditional inversion meaning 'If you require.' Common in formal letters."},
+      {text:" you require financial assistance, our scholarship office would be happy to discuss the available options with you.\n\n"},
+      {blank:true,options:[
+        "We look forward to welcoming you to our community of scholars.",
+        "The campus bookstore is currently hiring student staff.",
+        "Parking on campus requires a valid permit.",
+        "Library hours are extended during examination periods."
+      ],correct:0,x:"Sentence insertion: warm, welcoming closing for a university admission letter."},
+    ]},
+  { id:"p6t40", type:"Instructions", from:"Warehouse Operations", to:"Floor Staff", subject:"Updated Inventory Scanning Procedure",
+    parts:[
+      {text:"Floor staff,\n\nTo improve accuracy, we are updating the procedure for inventory scanning, effective immediately. Please read these steps "},
+      {blank:true,options:["careful","carefully","careless","caring"],correct:1,x:"Adverb modifying the verb 'read': 'read these steps carefully.' Describes how to read."},
+      {text:" before your next shift.\n\nFirst, ensure your handheld scanner is fully charged at the start of each shift. Scan each item's barcode until you hear a confirmation beep. If the scanner displays an error, do "},
+      {blank:true,options:["not","no","none","never"],correct:0,x:"'Do not re-scan' — 'do not' + base verb forms the negative imperative."},
+      {text:" not re-scan the same item repeatedly, as this may create duplicate entries. Instead, note the item number and report it to your supervisor.\n\n"},
+      {blank:true,options:["Once","Although","Despite","Unless"],correct:0,x:"'Once you have finished' = after you complete. Time clause introducing the final step."},
+      {text:" you have finished scanning a section, dock the scanner to upload the data to the central system.\n\n"},
+      {blank:true,options:[
+        "Following these steps will help us maintain accurate stock records.",
+        "The break room refrigerator will be cleaned every Friday.",
+        "New uniforms will be distributed at the end of the month.",
+        "Visitor access is restricted to the front office only."
+      ],correct:0,x:"Sentence insertion: reinforces the purpose of the scanning instructions."},
+    ]}
 ];

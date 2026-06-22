@@ -73,14 +73,14 @@ All content is imported at build time. No dynamic fetching. Files use `export va
     { text: "___", blank: true, options: [...4], correct: 0, x: "..." }
   ] }
 ```
-30 texts (120 blanks total). Types: Email, Memo, Notice, Letter, Instructions.
+40 texts (160 blanks total). Types: Email, Memo, Notice, Letter, Instructions, Advertisement, Article, Report.
 
 ### part7.js — `PART7_PASSAGES`
 ```js
 { id: "p7p1", type: "Email", text: "full passage...",
   questions: [{ q: "What is implied?", options: [...4], correct: 0, x: "..." }] }
 ```
-39 passages (single or double, ~139 questions total). Double passages use `--- DOCUMENT 1/2 ---` separator.
+51 passages (single, double, text-message chain, ~185 questions total). Double passages use `--- DOCUMENT 1/2 ---` separator.
 
 ### audioBlitz.js — `AUDIO_BLITZ`
 ```js

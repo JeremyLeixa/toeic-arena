@@ -49,11 +49,11 @@ src/
   chests.js            — Loot/reward system (imported from src/data/chests.js)
   supabase.js          — Supabase client init
   data/
-    vocab.js           — 870 flashcards, 18 domains
+    vocab.js           — 920 flashcards, 18 domains
     grammar.js         — 410 Part 5 drill questions
-    listening.js       — P1 (43), P2 (125), P3 (30 convos), P4 (31 talks)
-    part6.js           — 30 texts, 120 blanks
-    part7.js           — 39 passages
+    listening.js       — P1 (43), P2 (175), P3 (70 convos), P4 (60 talks)
+    part6.js           — 40 texts, 160 blanks
+    part7.js           — 51 passages
     mockTests.js       — Mock Tests 1-3
     bossTestFull.js    — The Final Arena (full TOEIC, 202Q, 7 parts)
     miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps
@@ -61,7 +61,7 @@ src/
     clueHunter.js      — 80 Clue Hunter items
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
-    placement.js       — 20 Battle Scan questions + tier levels + mission modules
+    placement.js       — 85 Battle Scan questions + tier levels + mission modules
     achievements.js    — 58 achievements (incl. 16 Gauntlet, 4 Word Tavern, 4 Duel)
     leagues.js         — 7 league tiers + bot competitors
     avatarIcons.js     — Iconify SVG paths for game icons
