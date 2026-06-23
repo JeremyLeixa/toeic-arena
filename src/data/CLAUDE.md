@@ -53,7 +53,7 @@ All content is imported at build time. No dynamic fetching. Files use `export va
 ```js
 { id: "g1", s: "The report _____ yesterday.", o: ["was submitted","submitted","submitting","submit"], c: 0, x: "Passive voice...", cat: "Passive Voice" }
 ```
-410 questions, 14 categories.
+456 questions, 12 categories (35-40 each). IDs must be unique — a 2026-06-22 audit found 35 colliding ids + 2 exact dupes from appended batches (fixed via scripts/fix_grammar_ids.py). The drill picker excludes recently-seen questions by q.id, so duplicate ids silently suppress their twin.
 
 ### listening.js — `LISTENING_P1`, `LISTENING_P2`, `LISTENING_P3`, `LISTENING_P4`
 ```js
@@ -80,7 +80,7 @@ All content is imported at build time. No dynamic fetching. Files use `export va
 { id: "p7p1", type: "Email", text: "full passage...",
   questions: [{ q: "What is implied?", options: [...4], correct: 0, x: "..." }] }
 ```
-51 passages (single, double, text-message chain, ~185 questions total). Double passages use `--- DOCUMENT 1/2 ---` separator.
+61 passages (single, double, text-message chain, meeting minutes, FAQ, itinerary, ~224 questions total). Double passages use `--- DOCUMENT 1/2 ---` separator.
 
 ### audioBlitz.js — `AUDIO_BLITZ`
 ```js
