@@ -485,6 +485,68 @@ export var QUESTIONS = [
   {id:"g441",s:"The workshop was cancelled _____ insufficient enrollment.",o:["because","due to","although","so that"],c:1,x:"'Due to' + noun phrase (no clause). 'Because' would need a clause: 'because enrollment was insufficient'.",cat:"Connectors"},
   {id:"g442",s:"Mr. Sato agreed to the terms; _____, he signed the contract immediately.",o:["otherwise","whereas","furthermore","therefore"],c:3,x:"'Therefore' = consequence. He agreed, therefore he signed.",cat:"Connectors"},
   {id:"g443",s:"The CEO will visit the Tokyo office _____ the Osaka branch next week.",o:["as well as","however","therefore","despite"],c:0,x:"'As well as' = in addition to. Connecting two parallel items.",cat:"Connectors"},
+
+  // ─── BATCH 3 (g444–g491) — added 2026-06-22, 4 per category ───
+  // Word Families
+  {id:"g444",s:"The marketing team presented a highly _____ proposal to the board.",o:["persuade","persuasive","persuasively","persuasion"],c:1,x:"Adjective before noun: 'a persuasive proposal'.",cat:"Word Families"},
+  {id:"g445",s:"The new policy was implemented _____ across all branches.",o:["consistent","consistency","consistently","consist"],c:2,x:"Adverb 'consistently' modifies the verb 'was implemented'.",cat:"Word Families"},
+  {id:"g446",s:"Management expressed its _____ with the quarterly results.",o:["satisfy","satisfied","satisfaction","satisfactory"],c:2,x:"Noun after the possessive 'its': 'its satisfaction with'.",cat:"Word Families"},
+  {id:"g447",s:"The instructions were not _____ enough for new users to follow.",o:["clear","clearly","clarity","clarify"],c:0,x:"Adjective after the linking verb 'were' + 'enough': 'clear enough'.",cat:"Word Families"},
+  // Subject-Verb Agreement
+  {id:"g448",s:"Neither the supervisor nor the technicians _____ aware of the change.",o:["was","is","were","has been"],c:2,x:"'Neither A nor B' agrees with the nearer subject. 'Technicians' (plural) → 'were'.",cat:"Subject-Verb Agreement"},
+  {id:"g449",s:"The committee _____ its final decision next Monday.",o:["announce","announces","announcing","are announcing"],c:1,x:"'Committee' acting as one unit takes a singular verb: 'announces'.",cat:"Subject-Verb Agreement"},
+  {id:"g450",s:"Statistics _____ a useful tool for analyzing market trends.",o:["are","is","were","have been"],c:1,x:"'Statistics' as a field of study is singular: 'is a useful tool'.",cat:"Subject-Verb Agreement"},
+  {id:"g451",s:"Each of the departments _____ submitted its budget on time.",o:["have","has","were","are"],c:1,x:"'Each of' is always singular: 'has submitted'.",cat:"Subject-Verb Agreement"},
+  // Connectors
+  {id:"g452",s:"_____ the heavy rain, the outdoor event proceeded as scheduled.",o:["Despite","Although","Because","However"],c:0,x:"'Despite' + noun phrase. 'Although' would need a clause.",cat:"Connectors"},
+  {id:"g453",s:"The shipment was delayed; _____, we informed all customers promptly.",o:["therefore","otherwise","nevertheless","meanwhile"],c:0,x:"'Therefore' = as a result. The delay led to informing customers.",cat:"Connectors"},
+  {id:"g454",s:"We extended the deadline _____ the team could finish the work properly.",o:["so that","in order to","due to","despite"],c:0,x:"'So that' + clause (subject + verb). 'In order to' takes a base verb, not a clause.",cat:"Connectors"},
+  {id:"g455",s:"_____ sales increased, profits remained flat due to rising costs.",o:["Even though","Despite","Because of","In addition"],c:0,x:"'Even though' + clause introduces a contrast: sales rose BUT profits stayed flat.",cat:"Connectors"},
+  // Tenses
+  {id:"g456",s:"By the time the auditors arrive, we _____ all the documents.",o:["will prepare","will have prepared","prepared","have prepared"],c:1,x:"Future perfect: 'By the time X arrives, we will have prepared...' — completed before a future point.",cat:"Tenses"},
+  {id:"g457",s:"She _____ for the company for ten years before she retired last spring.",o:["worked","has worked","had worked","works"],c:2,x:"Past perfect: 'had worked' — completed before another past event (retired).",cat:"Tenses"},
+  {id:"g458",s:"Our flight _____ at 6 a.m. tomorrow, so we should sleep early.",o:["leaves","left","has left","will have left"],c:0,x:"Present simple for fixed timetables: 'The flight leaves at 6 a.m.'",cat:"Tenses"},
+  {id:"g459",s:"While the manager _____ the report, the phone rang twice.",o:["reviewed","was reviewing","reviews","has reviewed"],c:1,x:"Past continuous for an action in progress interrupted by another: 'was reviewing'.",cat:"Tenses"},
+  // Relative Pronouns
+  {id:"g460",s:"The supplier _____ we signed the contract has excellent reviews.",o:["who","which","with whom","whose"],c:2,x:"'The supplier with whom we signed' — preposition + 'whom' (object form).",cat:"Relative Pronouns"},
+  {id:"g461",s:"The factory, _____ opened in 1998, will be modernized next year.",o:["which","that","who","where"],c:0,x:"Non-defining clause (with commas) uses 'which', never 'that'.",cat:"Relative Pronouns"},
+  {id:"g462",s:"This is the room _____ the board meetings are usually held.",o:["which","that","where","what"],c:2,x:"'Where' refers to a place: 'the room where meetings are held' (= in which).",cat:"Relative Pronouns"},
+  {id:"g463",s:"Any applicant _____ application is incomplete will be contacted by email.",o:["who","whose","whom","which"],c:1,x:"'Whose application' = possessive relative pronoun (the applicant's application).",cat:"Relative Pronouns"},
+  // Prepositions
+  {id:"g464",s:"The annual report will be published _____ the end of the fiscal year.",o:["in","at","on","by"],c:1,x:"'At the end of' = fixed expression for a point in time.",cat:"Prepositions"},
+  {id:"g465",s:"Please respond to this email _____ 48 hours.",o:["within","since","for","until"],c:0,x:"'Within 48 hours' = inside that time frame.",cat:"Prepositions"},
+  {id:"g466",s:"The two firms have been competing _____ the same market for years.",o:["in","at","on","to"],c:0,x:"'Compete in' a market = standard collocation.",cat:"Prepositions"},
+  {id:"g467",s:"The keynote speaker is known _____ her research in renewable energy.",o:["of","for","as","with"],c:1,x:"'Known for' + reason/achievement. ('Known as' would introduce a name or role.)",cat:"Prepositions"},
+  // Passive Voice
+  {id:"g468",s:"The damaged goods _____ to the supplier last week.",o:["returned","were returned","have returning","was returned"],c:1,x:"Passive past, plural subject: 'goods were returned'.",cat:"Passive Voice"},
+  {id:"g469",s:"A new safety protocol _____ currently being developed by the team.",o:["is","are","has","have"],c:0,x:"Present continuous passive, singular subject 'protocol': 'is being developed'.",cat:"Passive Voice"},
+  {id:"g470",s:"The contract must _____ by both parties before it becomes valid.",o:["sign","be signed","signing","be signing"],c:1,x:"Modal passive: 'must be signed'. The contract receives the action.",cat:"Passive Voice"},
+  {id:"g471",s:"Several errors _____ in the final version of the report.",o:["found","were found","has found","finding"],c:1,x:"Passive past, plural: 'errors were found' (by someone).",cat:"Passive Voice"},
+  // Gerunds vs Infinitives
+  {id:"g472",s:"The board decided _____ the project until further notice.",o:["postponing","to postpone","postpone","postponed"],c:1,x:"'Decide' takes a to-infinitive: 'decided to postpone'.",cat:"Gerunds vs Infinitives"},
+  {id:"g473",s:"We look forward to _____ from you at your earliest convenience.",o:["hear","hearing","heard","be hearing"],c:1,x:"'Look forward to' + gerund ('to' is a preposition here): 'hearing'.",cat:"Gerunds vs Infinitives"},
+  {id:"g474",s:"The technician recommended _____ the system before the upgrade.",o:["to restart","restarting","restart","to restarting"],c:1,x:"'Recommend' takes a gerund: 'recommended restarting'.",cat:"Gerunds vs Infinitives"},
+  {id:"g475",s:"The new hire is responsible for _____ the monthly newsletter.",o:["produce","to produce","producing","produced"],c:2,x:"'Responsible for' + gerund (preposition 'for'): 'responsible for producing'.",cat:"Gerunds vs Infinitives"},
+  // Conditionals
+  {id:"g476",s:"If the package _____ today, it will reach the client by Friday.",o:["ships","will ship","shipped","would ship"],c:0,x:"First conditional: 'If + present simple, will + base verb'.",cat:"Conditionals"},
+  {id:"g477",s:"If we had booked earlier, we _____ a better rate.",o:["will get","would get","would have got","got"],c:2,x:"Third conditional: 'If + had + V3, would have + V3'. Unreal past.",cat:"Conditionals"},
+  {id:"g478",s:"_____ you need any assistance, our staff will be happy to help.",o:["Should","Would","Had","Were"],c:0,x:"'Should you need' = formal conditional inversion = 'If you need'.",cat:"Conditionals"},
+  {id:"g479",s:"If I _____ more time, I would review the figures again.",o:["have","had","will have","would have"],c:1,x:"Second conditional: 'If + past simple, would + base verb'.",cat:"Conditionals"},
+  // Comparatives
+  {id:"g480",s:"The updated software runs much _____ than the previous version.",o:["smooth","smoothly","more smoothly","most smoothly"],c:2,x:"Comparative adverb 'more smoothly' modifies the verb 'runs'; 'much' intensifies it.",cat:"Comparatives"},
+  {id:"g481",s:"This is by far the _____ comprehensive guide on the subject.",o:["more","most","much","very"],c:1,x:"Superlative: 'by far the most comprehensive'. 'By far' intensifies a superlative.",cat:"Comparatives"},
+  {id:"g482",s:"The more experience you gain, the _____ confident you become.",o:["more","most","much","very"],c:0,x:"Double comparative: 'The more..., the more...'. Parallel structure.",cat:"Comparatives"},
+  {id:"g483",s:"The second proposal was _____ more practical than the first.",o:["far","very","too","so"],c:0,x:"'Far more' intensifies a comparative. 'Very' cannot modify 'more'.",cat:"Comparatives"},
+  // Collocations
+  {id:"g484",s:"The company will _____ a survey to gather customer feedback.",o:["make","do","conduct","take"],c:2,x:"'Conduct a survey' = standard collocation (not 'make/do a survey').",cat:"Collocations"},
+  {id:"g485",s:"Please _____ into consideration the additional shipping costs.",o:["take","make","bring","put"],c:0,x:"'Take into consideration' = fixed expression meaning 'consider'.",cat:"Collocations"},
+  {id:"g486",s:"The manager asked the team to _____ a solution by the end of the day.",o:["come up with","put up with","get along with","look up to"],c:0,x:"'Come up with' = to produce/find a solution. Phrasal verb collocation.",cat:"Collocations"},
+  {id:"g487",s:"We need to _____ a strong impression during the client presentation.",o:["do","make","take","give"],c:1,x:"'Make an impression' = standard collocation (not 'do/take an impression').",cat:"Collocations"},
+  // Articles
+  {id:"g488",s:"Ms. Patel was offered _____ position of regional director.",o:["a","an","the","some"],c:2,x:"'The position of regional director' — definite, a specific role.",cat:"Articles"},
+  {id:"g489",s:"The applicant has _____ excellent command of three languages.",o:["a","an","the","some"],c:1,x:"'An excellent command' — 'an' before a vowel sound.",cat:"Articles"},
+  {id:"g490",s:"We are looking for _____ honest and reliable assistant.",o:["a","an","the","some"],c:1,x:"'An honest' — 'honest' starts with a silent 'h' (vowel sound), so 'an'.",cat:"Articles"},
+  {id:"g491",s:"Could you recommend _____ good restaurant near the office?",o:["a","an","the","any"],c:0,x:"'A good restaurant' — singular, non-specific, consonant sound → 'a'.",cat:"Articles"}
 ];
 
 // ─── WORD FAMILIES DATA ───
