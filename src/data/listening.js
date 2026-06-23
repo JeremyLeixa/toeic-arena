@@ -1596,7 +1596,41 @@ export var LISTENING_P3 = [
   qs:[
     {q:"What kind of project is being planned?",opts:["A new office building","A residential redesign","An office redesign","A restaurant renovation"],c:2},
     {q:"What is the main priority?",opts:["A more luxurious look","Better productivity","Higher rent yield","Smaller floor space"],c:1},
-    {q:"How long does the build phase typically take?",opts:["Two to three weeks","Two to three months","Six months","One year"],c:1}]}
+    {q:"How long does the build phase typically take?",opts:["Two to three weeks","Two to three months","Six months","One year"],c:1}]},
+
+  // ─── PILOT: "Look at the graphic" conversations (p3_71–p3_73) — added 2026-06-22 ───
+  // ⚠️ NOT LIVE UNTIL AUDIO EXISTS. Needs /audio/p3/{id}_line0..3.mp3, {id}.mp3 (stitched),
+  //    {id}_q1..3.mp3. Until then the conversation plays silent in training (regression).
+  {id:"p3_71",lines:[
+    {s:"W",t:"Hi, I'd like to book a meeting room for our client presentation this Thursday at two o'clock. What's available?"},
+    {s:"M",t:"Let me see. At two o'clock, both the Oak Room and the Maple Room are free."},
+    {s:"W",t:"We'll have around ten people, so I'll need the larger of those two. Let's go with whichever one fits us."},
+    {s:"M",t:"No problem. I'll reserve it now and send you a confirmation email this afternoon."}],
+    qs:[
+      {q:"Why is the woman booking a room?",opts:["For a job interview","For a client presentation","For a training session","For a birthday party"],c:1},
+      {q:"What will the man do this afternoon?",opts:["Cancel a booking","Call the client","Send a confirmation email","Rearrange the furniture"],c:2},
+      {q:"Look at the graphic. Which room will the woman reserve?",opts:["Oak Room","Maple Room","Birch Room","Cedar Room"],c:0,
+        graphic:{type:"table",title:"Meeting Room Capacities",headers:["Room","Capacity"],rows:[["Oak Room","12 people"],["Maple Room","8 people"],["Birch Room","6 people"],["Cedar Room","20 people"]]}}]},
+  {id:"p3_72",lines:[
+    {s:"M",t:"Our flight to Chicago was supposed to leave at three fifteen. Have you looked at the departures board?"},
+    {s:"W",t:"I just did. It's been delayed, and the new time and gate are up on the board now."},
+    {s:"M",t:"How bad is the delay? I'm worried we'll miss our connection."},
+    {s:"W",t:"We should still make it. Let's grab a coffee near the new gate while we wait."}],
+    qs:[
+      {q:"Where most likely are the speakers?",opts:["At a train station","At an airport","At a bus terminal","At a hotel"],c:1},
+      {q:"What does the woman suggest doing?",opts:["Booking another flight","Getting a coffee while they wait","Calling the airline","Going to a different terminal"],c:1},
+      {q:"Look at the graphic. What is the new departure time of their flight?",opts:["3:30 PM","4:00 PM","4:45 PM","5:10 PM"],c:2,
+        graphic:{type:"table",title:"Departures",headers:["Destination","Departure","Gate"],rows:[["Boston","3:30 PM","A4"],["Chicago","4:45 PM","B12"],["Denver","5:10 PM","C7"]]}}]},
+  {id:"p3_73",lines:[
+    {s:"W",t:"I'm trying to pick a membership plan for the gym. I work out about three times a week."},
+    {s:"M",t:"The plans are all on the flyer there. The basic one only covers weekday mornings, though."},
+    {s:"W",t:"That won't work — I always go in the evenings. I want unlimited access, but I really don't need the personal training add-on."},
+    {s:"M",t:"Then the middle option is perfect for you. Full access, and a reasonable monthly price."}],
+    qs:[
+      {q:"How often does the woman exercise?",opts:["Once a week","Twice a week","Three times a week","Every day"],c:2},
+      {q:"Why doesn't the woman want the most expensive plan?",opts:["It is only for mornings","She does not need personal training","It has no evening access","It is sold out"],c:1},
+      {q:"Look at the graphic. Which plan will the woman most likely choose?",opts:["Basic","Premium","Elite","Day Pass"],c:1,
+        graphic:{type:"list",title:"Gym Membership Plans",items:["Basic — weekday mornings only, $20/month","Premium — unlimited access, $40/month","Elite — unlimited access + personal training, $70/month","Day Pass — single visit, $8"]}}]}
 ];
 
 // ─── PART 4 — Talks (20 talks, 60 questions) ───
@@ -2020,5 +2054,30 @@ export var LISTENING_P4 = [
     qs:[
       {q:"What is being announced?",opts:["A bonus program","A wellness program","A new health insurance plan","A staff retreat"],c:1},
       {q:"How much is the monthly fitness allowance?",opts:["Twenty-five dollars","Forty dollars","Fifty dollars","One hundred dollars"],c:2},
-      {q:"What is the deadline to enroll?",opts:["Next Friday","End of the month","First of next month","No deadline mentioned"],c:0}]}
+      {q:"What is the deadline to enroll?",opts:["Next Friday","End of the month","First of next month","No deadline mentioned"],c:0}]},
+
+  // ─── PILOT: "Look at the graphic" talks (p4_61–p4_63) — added 2026-06-22 ───
+  // ⚠️ NOT LIVE UNTIL AUDIO EXISTS. Needs /audio/p4/{id}.mp3 and {id}_q1..3.mp3.
+  //    Until then the talk plays silent in training (regression).
+  {id:"p4_61",type:"Announcement",voice:"M",
+    text:"Good morning, everyone, and welcome to the annual Marketing Innovation Summit. Before we begin, a few quick notes. The full session schedule is displayed on the screens around the hall. Our opening keynote will start shortly in the Main Auditorium. Please note that the data analytics workshop has been moved to a later time slot because of a speaker's travel delay, so be sure to check the updated schedule for its new time. Lunch will be served in the foyer at noon. Enjoy the summit.",
+    qs:[
+      {q:"What type of event is taking place?",opts:["A product launch","A marketing summit","A job fair","A shareholder meeting"],c:1},
+      {q:"Where will lunch be served?",opts:["In the Main Auditorium","In the foyer","At a nearby restaurant","On the rooftop terrace"],c:1},
+      {q:"Look at the graphic. When does the data analytics workshop now begin?",opts:["9:00 AM","11:00 AM","2:00 PM","4:00 PM"],c:2,
+        graphic:{type:"table",title:"Summit Schedule",headers:["Session","Time"],rows:[["Opening Keynote","9:00 AM"],["Branding Panel","11:00 AM"],["Data Analytics Workshop","2:00 PM"],["Closing Remarks","4:00 PM"]]}}]},
+  {id:"p4_62",type:"Announcement",voice:"W",
+    text:"Attention shoppers, and thank you for visiting Brightway Department Store. We're holding our biggest seasonal sale of the year, this weekend only. Discounts vary by department, so please check the signs posted at each section. Our customer service desk on the second floor can help you with returns, gift wrapping, and loyalty card sign-ups. And remember, members with a loyalty card receive an extra ten percent off all marked-down items. Happy shopping.",
+    qs:[
+      {q:"How long will the sale last?",opts:["One day only","This weekend only","All month","Until supplies run out"],c:1},
+      {q:"What extra benefit do loyalty card members receive?",opts:["Free gift wrapping","An extra ten percent off","Free parking","A free tote bag"],c:1},
+      {q:"Look at the graphic. Which department offers the largest discount?",opts:["Clothing","Footwear","Home & Kitchen","Electronics"],c:1,
+        graphic:{type:"list",title:"Weekend Sale — Discounts by Department",items:["Clothing — 30% off","Footwear — 50% off","Home & Kitchen — 25% off","Electronics — 15% off"]}}]},
+  {id:"p4_63",type:"Voicemail",voice:"M",
+    text:"Hi, it's Marcus. I'm calling about our trip to the regional office tomorrow. I've looked at the train timetable, and I think we should take an express service so we arrive before the nine-thirty meeting. The local trains stop too many times and would get us there too late. I've forwarded you the timetable. I'd suggest the earliest express so we have a bit of a buffer. Let me know which one works for you, and call me back when you can.",
+    qs:[
+      {q:"Why is Marcus calling?",opts:["To cancel a meeting","To arrange travel to the regional office","To book a hotel","To reschedule the nine-thirty meeting"],c:1},
+      {q:"Why does Marcus prefer an express train?",opts:["It is cheaper","The local trains stop too often and arrive too late","It has more seats","It departs from a closer station"],c:1},
+      {q:"Look at the graphic. Which train does Marcus suggest taking?",opts:["The 7:10 local","The 7:45 express","The 8:30 express","The 8:00 local"],c:1,
+        graphic:{type:"table",title:"Train Timetable",headers:["Train","Departs","Arrives"],rows:[["Local","7:10 AM","9:50 AM"],["Express","7:45 AM","9:00 AM"],["Express","8:30 AM","9:45 AM"],["Local","8:00 AM","10:20 AM"]]}}]}
 ];
