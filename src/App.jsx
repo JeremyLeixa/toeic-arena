@@ -222,6 +222,38 @@ function SpeakBtn(p){
     <span style={{fontSize:p.size?p.size*0.5:18,lineHeight:1}}>{playing?"🔊":"🔈"}</span>
   </button>);
 }
+
+// ─── LISTENING GRAPHIC (Part 3/4 "Look at the graphic") ───
+// Renders a small table or list as the visual prompt for graphic questions.
+// Shape: {type:"table", title?, headers:[...], rows:[[...],...]}  or  {type:"list", title?, items:[...]}
+// The graphic is shown (not spoken); the question stem says "Look at the graphic.".
+function ListeningGraphic(p){
+  var g=p.g;
+  if(!g)return null;
+  var wrap={background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,padding:"12px 14px",margin:"0 0 16px",animation:"fadeIn .3s"};
+  var title=(<div className="out" style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,fontWeight:700,color:"var(--cyan)",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+    <span style={{fontSize:12}}>📊</span>{g.title||"Refer to the information below"}</div>);
+  if(g.type==="list"){
+    return(<div style={wrap}>{title}
+      <ul style={{margin:0,paddingLeft:18,display:"flex",flexDirection:"column",gap:6}}>
+        {(g.items||[]).map(function(it,i){return(<li key={i} style={{fontSize:13,lineHeight:1.5,color:"var(--t1)"}}>{it}</li>);})}
+      </ul></div>);
+  }
+  // type:"table" (default)
+  return(<div style={wrap}>{title}
+    <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+      <table style={{borderCollapse:"collapse",width:"100%",fontSize:12,minWidth:"max-content"}}>
+        {g.headers&&<thead><tr>
+          {g.headers.map(function(h,i){return(<th key={i} style={{textAlign:"left",padding:"7px 10px",background:"var(--bg3)",color:"var(--t2)",fontWeight:700,borderBottom:"1px solid var(--bdr)",whiteSpace:"nowrap"}}>{h}</th>);})}
+        </tr></thead>}
+        <tbody>
+          {(g.rows||[]).map(function(row,ri){return(<tr key={ri} style={{background:ri%2?"rgba(var(--bg3-rgb),.35)":"transparent"}}>
+            {row.map(function(cell,ci){return(<td key={ci} style={{padding:"7px 10px",color:"var(--t1)",borderBottom:"1px solid var(--bdr)",whiteSpace:"nowrap"}}>{cell}</td>);})}
+          </tr>);})}
+        </tbody>
+      </table>
+    </div></div>);
+}
 function weekId(){var d=new Date();var day=d.getDay();var diff=d.getDate()-day+(day===0?-6:1);var mon=new Date(d);mon.setDate(diff);mon.setHours(0,0,0,0);var jan1=new Date(mon.getFullYear(),0,1);var wk=Math.floor((mon-jan1)/(7*864e5))+1;return mon.getFullYear()+"-W"+wk;}
 // Push a weekly_snapshots row for the week that just ended. Fire-and-forget.
 // Called from both load-time and mid-session week transitions so that snapshots
@@ -7731,6 +7763,7 @@ function BossTest(p){
         {aState==="playing"&&<div style={{textAlign:"center",marginTop:30}}><div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>🗣️</div><p className="out" style={{color:"var(--purple)",fontSize:13,marginTop:8}}>Listening to conversation...</p></div>}
         {aState==="done"&&<div style={{animation:"fadeIn .3s"}}>
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{q3.q}</h3>
+          {q3.graphic&&<ListeningGraphic g={q3.graphic}/>}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {q3.opts.map(function(opt,i){var sel=ans.p3[qi][sqi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(var(--cx),.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
               <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -7755,6 +7788,7 @@ function BossTest(p){
         {aState==="playing"&&<div style={{textAlign:"center",marginTop:30}}><div style={{fontSize:40,animation:"pulse 1.5s infinite"}}>🎤</div><p className="out" style={{color:"var(--cyan)",fontSize:13,marginTop:8}}>Listening to talk...</p></div>}
         {aState==="done"&&<div style={{animation:"fadeIn .3s"}}>
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{q4.q}</h3>
+          {q4.graphic&&<ListeningGraphic g={q4.graphic}/>}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {q4.opts.map(function(opt,i){var sel=ans.p4[qi][sqi]===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sel?"rgba(var(--cx),.15)":"var(--bg2)",border:"1px solid "+(sel?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
               <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(sel?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:sel?"var(--cyan)":"transparent",color:sel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -8352,6 +8386,7 @@ function EndlessArena(p){
         {sqi===0&&aState==="playing"&&<p className="out" style={{color:"var(--orange)",fontSize:13,textAlign:"center",marginBottom:12,animation:"pulse 1.5s infinite"}}>{"🔊"} Playing conversation...</p>}
         {(aState==="done"||sqi>0)&&<div>
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>Q{sqi+1}. {q3.q}</h3>
+          {q3.graphic&&<ListeningGraphic g={q3.graphic}/>}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {q3.opts.map(function(opt,i){var isSel=sel3===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(27,112,207,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--endless)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
               <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--endless)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--endless)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -8372,6 +8407,7 @@ function EndlessArena(p){
         {sqi===0&&aState==="playing"&&<p className="out" style={{color:"var(--orange)",fontSize:13,textAlign:"center",marginBottom:12,animation:"pulse 1.5s infinite"}}>{"🔊"} Playing...</p>}
         {(aState==="done"||sqi>0)&&<div>
           <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>Q{sqi+1}. {q4.q}</h3>
+          {q4.graphic&&<ListeningGraphic g={q4.graphic}/>}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {q4.opts.map(function(opt,i){var isSel=sel4===i;return(<button key={i} onClick={function(){pick(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:isSel?"rgba(27,112,207,.15)":"var(--bg2)",border:"1px solid "+(isSel?"var(--endless)":"var(--bdr)"),borderRadius:12,cursor:"pointer",fontSize:13,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
               <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(isSel?"var(--endless)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:isSel?"var(--endless)":"transparent",color:isSel?"#fff":"var(--t3)"}}>{String.fromCharCode(65+i)}</div>
@@ -13237,7 +13273,7 @@ function ListenP3(p){
     <div className="out" style={{fontSize:11,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginTop:16,marginBottom:12}}>Preview the questions first</div>
     <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>
       {it.qs.map(function(q,i){return(<div key={i} className="crd" style={{padding:"10px 14px",background:"rgba(139,92,246,.04)",borderColor:"rgba(139,92,246,.1)"}}>
-        <span style={{fontSize:12,color:"var(--t2)"}}>{(i+1)+". "+q.q}</span></div>);})}
+        <span style={{fontSize:12,color:"var(--t2)"}}>{(i+1)+". "+q.q}</span>{q.graphic&&<ListeningGraphic g={q.graphic}/>}</div>);})}
     </div>
 
     {!played?<div style={{textAlign:"center"}}>
@@ -13267,6 +13303,7 @@ function ListenP3(p){
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#8b5cf6,#ec4899)"/>
     <div style={{fontSize:10,color:"var(--purple)",marginTop:8,marginBottom:4}} className="out">Conversation {ci+1} — Question {qi+1}/3</div>
     <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:8}}>{curQ.q}</h2>
+    {curQ.graphic&&<ListeningGraphic g={curQ.graphic}/>}
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
       {curQ.opts.map(function(opt,i){
         var isCor=i===curQ.c;var isPick=pick===i;var show=ph==="fb";
@@ -13346,7 +13383,7 @@ function ListenP4(p){
     <div className="out" style={{fontSize:11,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12}}>Preview the questions first</div>
     <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>
       {it.qs.map(function(q,i){return(<div key={i} className="crd" style={{padding:"10px 14px",background:"rgba(6,182,212,.04)",borderColor:"rgba(6,182,212,.1)"}}>
-        <span style={{fontSize:12,color:"var(--t2)"}}>{(i+1)+". "+q.q}</span></div>);})}
+        <span style={{fontSize:12,color:"var(--t2)"}}>{(i+1)+". "+q.q}</span>{q.graphic&&<ListeningGraphic g={q.graphic}/>}</div>);})}
     </div>
 
     {!played?<div style={{textAlign:"center"}}>
@@ -13374,6 +13411,7 @@ function ListenP4(p){
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#06b6d4,#3b82f6)"/>
     <div style={{fontSize:10,color:"var(--cyan)",marginTop:8,marginBottom:4}} className="out">{it.type} — Question {qi+1}/3</div>
     <h2 className="out" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:8}}>{curQ.q}</h2>
+    {curQ.graphic&&<ListeningGraphic g={curQ.graphic}/>}
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
       {curQ.opts.map(function(opt,i){
         var isCor=i===curQ.c;var isPick=pick===i;var show=ph==="fb";
