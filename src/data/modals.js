@@ -180,6 +180,116 @@ export var MODAL_MATCH_BOARDS = [
       { situation: "You haven't updated your CV in three years.", modal: "I really must update it this weekend." },
       { situation: "You're considering moving abroad for a new opportunity.", modal: "It could change your whole career path." }
     ]
+  },
+  {
+    id: "mb_16",
+    theme: "Email & communication",
+    pairs: [
+      { situation: "You received an email marked 'urgent' from a client.", modal: "I should reply before the end of the day." },
+      { situation: "You're not sure if your message sounded too direct.", modal: "Maybe I ought to soften the tone." },
+      { situation: "The attachment didn't go through the first time.", modal: "I'll have to resend it." },
+      { situation: "Your manager was copied on a very long email thread.", modal: "She might not have read all of it." },
+      { situation: "You want permission to send the newsletter early.", modal: "May I schedule it for tomorrow morning?" }
+    ]
+  },
+  {
+    id: "mb_17",
+    theme: "Weather & outdoor plans",
+    pairs: [
+      { situation: "Dark clouds are gathering over the picnic spot.", modal: "It might start raining soon." },
+      { situation: "The hiking trail is icy after last night's frost.", modal: "We must wear proper boots." },
+      { situation: "The forecast is uncertain for the weekend trip.", modal: "We could check again on Friday." },
+      { situation: "Your kids want to swim but the sea looks rough.", modal: "They shouldn't go in too deep." },
+      { situation: "The sun is very strong at midday.", modal: "You'd better put on sunscreen." }
+    ]
+  },
+  {
+    id: "mb_18",
+    theme: "Banking & finance",
+    pairs: [
+      { situation: "Your account balance is lower than expected.", modal: "There might be a pending charge." },
+      { situation: "The loan application requires proof of income.", modal: "You have to provide your last three payslips." },
+      { situation: "The cash machine just swallowed your card.", modal: "I must call the bank right away." },
+      { situation: "Interest rates are expected to drop next month.", modal: "We could wait before fixing the mortgage." },
+      { situation: "You're unsure whether the transfer went through.", modal: "It may take two business days to appear." }
+    ]
+  },
+  {
+    id: "mb_19",
+    theme: "Renting an apartment",
+    pairs: [
+      { situation: "The lease clearly states that no pets are allowed.", modal: "Tenants can't keep animals in the building." },
+      { situation: "The heating broke down in the middle of winter.", modal: "The landlord must fix it quickly." },
+      { situation: "You'd like to repaint the living room walls.", modal: "May I change the wall color?" },
+      { situation: "The neighbor upstairs is very noisy at night.", modal: "You should mention it to the landlord." },
+      { situation: "Your deposit hasn't been returned three weeks later.", modal: "They might have forgotten to process it." }
+    ]
+  },
+  {
+    id: "mb_20",
+    theme: "IT & tech support",
+    pairs: [
+      { situation: "Your laptop won't turn on at all this morning.", modal: "The battery might be completely dead." },
+      { situation: "Company policy requires a password change every 90 days.", modal: "You have to update it by Friday." },
+      { situation: "A suspicious email asks for your login details.", modal: "You mustn't click on the link." },
+      { situation: "The software keeps crashing during the update.", modal: "We could try reinstalling it." },
+      { situation: "You've been locked out of your account.", modal: "I'd better contact the helpdesk." }
+    ]
+  },
+  {
+    id: "mb_21",
+    theme: "Cooking & kitchen",
+    pairs: [
+      { situation: "The recipe says the oven needs to be preheated.", modal: "We have to wait ten minutes before baking." },
+      { situation: "You're not sure if the chicken is fully cooked.", modal: "You'd better check the temperature." },
+      { situation: "There's no salt left in the cupboard.", modal: "I could borrow some from the neighbor." },
+      { situation: "The milk smells a little strange today.", modal: "It might have gone off." },
+      { situation: "Guests arrive in an hour and nothing is ready.", modal: "We should start cooking right now." }
+    ]
+  },
+  {
+    id: "mb_22",
+    theme: "Negotiation & deals",
+    pairs: [
+      { situation: "The supplier offered 5% off for bulk orders.", modal: "We might get a better deal if we ask." },
+      { situation: "The contract terms are unclear about delivery dates.", modal: "You should clarify them before signing." },
+      { situation: "Both sides agree on price but not on timing.", modal: "We could split the difference on the schedule." },
+      { situation: "The client keeps hesitating over the final figure.", modal: "He may be comparing other offers." },
+      { situation: "The deadline to accept the offer is tonight.", modal: "We must decide before midnight." }
+    ]
+  },
+  {
+    id: "mb_23",
+    theme: "Airport & security",
+    pairs: [
+      { situation: "Liquids over 100 ml aren't allowed through security.", modal: "You can't bring that bottle on board." },
+      { situation: "Your boarding gate has just been changed.", modal: "We'll have to hurry to the other terminal." },
+      { situation: "The security line is extremely long this morning.", modal: "We should have arrived earlier." },
+      { situation: "Your passport expires in less than a month.", modal: "You might be denied entry abroad." },
+      { situation: "The officer asked you to remove your laptop.", modal: "Passengers must take electronics out of their bags." }
+    ]
+  },
+  {
+    id: "mb_24",
+    theme: "Environment & habits",
+    pairs: [
+      { situation: "The recycling bins are overflowing again.", modal: "People ought to sort their waste properly." },
+      { situation: "You left all the lights on overnight by mistake.", modal: "I should be more careful with energy." },
+      { situation: "The bathroom tap has been dripping for days.", modal: "We must get it fixed to save water." },
+      { situation: "Your office still prints everything on paper.", modal: "We could switch to digital documents." },
+      { situation: "The bus is cheaper and greener than driving.", modal: "You might consider taking it more often." }
+    ]
+  },
+  {
+    id: "mb_25",
+    theme: "Childcare & family",
+    pairs: [
+      { situation: "The baby has been crying for nearly an hour.", modal: "She might be hungry or tired." },
+      { situation: "Your son has a school project due tomorrow.", modal: "He must finish it tonight." },
+      { situation: "The playground equipment looks a bit rusty.", modal: "Kids shouldn't climb on it." },
+      { situation: "Grandma offered to babysit on Saturday evening.", modal: "We could finally have an evening out." },
+      { situation: "Your daughter wants to walk to school alone.", modal: "You'd better discuss the route with her first." }
+    ]
   }
 ];
 
@@ -240,5 +350,31 @@ export var MODAL_SORT_ITEMS = [
   {id:"ms_47",s:"She can't be older than 25.",bucket:"deduction",modal:"can't be",x:"Déduction négative présente fondée sur l'observation."},
   {id:"ms_48",s:"They must be very wealthy to afford that house.",bucket:"deduction",modal:"must be",x:"Inférence logique à partir d'un indice (le prix de la maison)."},
   {id:"ms_49",s:"He could have missed his train.",bucket:"deduction",modal:"could have missed",x:"« Could have V3 » = déduction modérée au passé (possibilité plausible)."},
-  {id:"ms_50",s:"That can't be true — I just spoke with him.",bucket:"deduction",modal:"can't be",x:"« Can't be » = rejet logique d'une affirmation (impossibilité immédiate)."}
+  {id:"ms_50",s:"That can't be true — I just spoke with him.",bucket:"deduction",modal:"can't be",x:"« Can't be » = rejet logique d'une affirmation (impossibilité immédiate)."},
+
+  // ─── BATCH 2 (ms_51–ms_70) — added 2026-06-22, balanced 5/5/5/5 ───
+  // OBLIGATION (5)
+  {id:"ms_51",s:"All employees must clock in before 9 a.m.",bucket:"obligation",modal:"must",x:"« Must » = règle interne stricte de l'entreprise."},
+  {id:"ms_52",s:"You have to wear a helmet on the construction site.",bucket:"obligation",modal:"have to",x:"« Have to » = obligation de sécurité imposée de l'extérieur."},
+  {id:"ms_53",s:"Guests mustn't smoke inside the hotel.",bucket:"obligation",modal:"mustn't",x:"« Mustn't » = interdiction stricte (≠ « don't have to », qui est l'absence d'obligation)."},
+  {id:"ms_54",s:"We need to confirm the booking by tomorrow.",bucket:"obligation",modal:"need to",x:"« Need to » = nécessité avec échéance, équivalent doux de « have to »."},
+  {id:"ms_55",s:"You don't have to bring your own laptop; we provide one.",bucket:"obligation",modal:"don't have to",x:"« Don't have to » = ABSENCE d'obligation (c'est facultatif), surtout pas une interdiction."},
+  // ADVICE (5)
+  {id:"ms_56",s:"You should back up your files regularly.",bucket:"advice",modal:"should",x:"« Should » = conseil neutre, bonne pratique recommandée."},
+  {id:"ms_57",s:"He ought to arrive earlier to get a good seat.",bucket:"advice",modal:"ought to",x:"« Ought to » = recommandation, variante légèrement plus formelle de « should »."},
+  {id:"ms_58",s:"You'd better charge your phone before the trip.",bucket:"advice",modal:"had better",x:"« Had better » = conseil FORT, avec une conséquence négative implicite si on l'ignore."},
+  {id:"ms_59",s:"You shouldn't skip breakfast before a long meeting.",bucket:"advice",modal:"shouldn't",x:"« Shouldn't » = conseil négatif (déconseiller une action)."},
+  {id:"ms_60",s:"We should double-check the figures before sending the report.",bucket:"advice",modal:"should",x:"« Should » = recommandation prudente fondée sur le bon sens."},
+  // POSSIBILITY (5)
+  {id:"ms_61",s:"The meeting might be postponed until next week.",bucket:"possibility",modal:"might",x:"« Might » = possibilité moyenne, événement incertain."},
+  {id:"ms_62",s:"She may arrive late because of the traffic.",bucket:"possibility",modal:"may",x:"« May » = possibilité ouverte, registre un peu plus formel que « might »."},
+  {id:"ms_63",s:"We could meet at the café instead of the office.",bucket:"possibility",modal:"could",x:"« Could » = option proposée parmi plusieurs."},
+  {id:"ms_64",s:"There may be a few seats left on the early train.",bucket:"possibility",modal:"may",x:"« May » exprime la possibilité qu'une chose existe encore."},
+  {id:"ms_65",s:"It might be cheaper to book the flight online.",bucket:"possibility",modal:"might",x:"« Might » + adjectif = éventualité d'un avantage."},
+  // DEDUCTION (5)
+  {id:"ms_66",s:"The lights are on, so someone must be home.",bucket:"deduction",modal:"must be",x:"Indice visible (lumières) → « must be » = déduction logique présente forte."},
+  {id:"ms_67",s:"She can't be at the office; it's a public holiday.",bucket:"deduction",modal:"can't be",x:"« Can't be » = impossibilité logique au présent fondée sur un fait connu."},
+  {id:"ms_68",s:"They must have finished early — the room is already empty.",bucket:"deduction",modal:"must have finished",x:"« Must have V3 » = déduction forte au passé à partir d'une preuve présente."},
+  {id:"ms_69",s:"He might have taken the wrong train.",bucket:"deduction",modal:"might have taken",x:"« Might have V3 » = déduction faible au passé (hypothèse plausible)."},
+  {id:"ms_70",s:"This bill can't be right; we only ordered two coffees.",bucket:"deduction",modal:"can't be",x:"« Can't be » = rejet logique d'une affirmation (impossibilité immédiate)."}
 ];
