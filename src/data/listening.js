@@ -2079,5 +2079,13 @@ export var LISTENING_P4 = [
       {q:"Why is Marcus calling?",opts:["To cancel a meeting","To arrange travel to the regional office","To book a hotel","To reschedule the nine-thirty meeting"],c:1},
       {q:"Why does Marcus prefer an express train?",opts:["It is cheaper","The local trains stop too often and arrive too late","It has more seats","It departs from a closer station"],c:1},
       {q:"Look at the graphic. Which train does Marcus suggest taking?",opts:["The 7:10 local","The 7:45 express","The 8:30 express","The 8:00 local"],c:1,
-        graphic:{type:"table",title:"Train Timetable",headers:["Train","Departs","Arrives"],rows:[["Local","7:10 AM","9:50 AM"],["Express","7:45 AM","9:00 AM"],["Express","8:30 AM","9:45 AM"],["Local","8:00 AM","10:20 AM"]]}}]}
+        graphic:{type:"table",title:"Train Timetable",headers:["Train","Departs","Arrives"],rows:[["Local","7:10 AM","9:50 AM"],["Express","7:45 AM","9:00 AM"],["Express","8:30 AM","9:45 AM"],["Local","8:00 AM","10:20 AM"]]}}]},
+  // ── bar-chart graphic pilot (p4_64) — added 2026-06-22 ──
+  {id:"p4_64",type:"Meeting excerpt",voice:"M",
+    text:"Good afternoon, everyone. Let's take a look at this year's regional sales performance, shown in the chart on the screen. As you can see, the North region was our strongest performer by a wide margin, which is excellent news. Today, though, I want to focus on our weakest region, the one with the lowest sales this year. Starting next quarter, we'll be directing additional marketing resources there to turn things around. Take a moment to review the figures, and then we'll discuss the strategy.",
+    qs:[
+      {q:"What is the speaker mainly discussing?",opts:["A new product launch","Regional sales performance","A hiring plan","An office relocation"],c:1},
+      {q:"According to the speaker, which region performed best?",opts:["North","South","East","West"],c:0},
+      {q:"Look at the graphic. Which region will receive additional marketing resources?",opts:["North","South","East","West"],c:2,
+        graphic:{type:"bar",title:"Regional Sales This Year",data:[{label:"North",value:480,display:"$480K"},{label:"South",value:310,display:"$310K"},{label:"East",value:190,display:"$190K"},{label:"West",value:350,display:"$350K"}]}}]}
 ];

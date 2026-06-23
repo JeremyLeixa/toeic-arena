@@ -34,8 +34,10 @@ if (!API_KEY) {
   process.exit(1);
 }
 
+// All graphic-pilot ids. Resume-safe: existing MP3s are skipped, so re-running
+// is free. Edit these arrays when authoring new graphic items.
 const P3_IDS = ["p3_71", "p3_72", "p3_73"];
-const P4_IDS = ["p4_61", "p4_62", "p4_63"];
+const P4_IDS = ["p4_61", "p4_62", "p4_63", "p4_64"];
 
 const VOICES = { W: "EXAVITQu4vr4xnSDxMaL", M: "pNInz6obpgDQGcFmaJgB" }; // Sarah / Adam
 const MODEL_ID = "eleven_multilingual_v2";

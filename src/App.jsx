@@ -239,6 +239,24 @@ function ListeningGraphic(p){
         {(g.items||[]).map(function(it,i){return(<li key={i} style={{fontSize:13,lineHeight:1.5,color:"var(--t1)"}}>{it}</li>);})}
       </ul></div>);
   }
+  if(g.type==="bar"){
+    // Lightweight skin-aware horizontal bar chart. data:[{label,value,display?}].
+    var _vals=(g.data||[]).map(function(d){return d.value;});
+    var _max=Math.max.apply(null,_vals.concat([1]));
+    return(<div style={wrap}>{title}
+      <div style={{display:"flex",flexDirection:"column",gap:9}}>
+        {(g.data||[]).map(function(d,i){
+          var pct=Math.max(2,Math.round((d.value/_max)*100));
+          return(<div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:"28%",minWidth:58,fontSize:11,color:"var(--t2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.label}</div>
+            <div style={{flex:1,height:16,background:"rgba(var(--bg3-rgb),.6)",borderRadius:4,overflow:"hidden"}}>
+              <div style={{width:pct+"%",height:"100%",background:"var(--cyan)",borderRadius:4,transition:"width .4s"}}/>
+            </div>
+            <div style={{width:54,textAlign:"right",fontSize:11,fontWeight:700,color:"var(--t1)"}}>{d.display!=null?d.display:d.value}</div>
+          </div>);
+        })}
+      </div></div>);
+  }
   // type:"table" (default)
   return(<div style={wrap}>{title}
     <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
