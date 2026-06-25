@@ -15059,15 +15059,15 @@ function Profile(p){
           <button onClick={function(){fileRef.current.click();}}
             style={{position:"absolute",bottom:0,right:0,width:30,height:30,borderRadius:"50%",
               background:"var(--cyan)",border:"2px solid var(--bg)",cursor:"pointer",fontSize:14,
-              display:"flex",alignItems:"center",justifyContent:"center"}}>\ud83d\udcf7</button>
+              display:"flex",alignItems:"center",justifyContent:"center"}}>{"\ud83d\udcf7"}</button>
         </div>
         <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:8}}>
           <button onClick={function(){fileRef.current.click();}} className="btn1"
-            style={{fontSize:12,padding:"8px 18px"}}>\ud83d\udcf7 Import a photo</button>
+            style={{fontSize:12,padding:"8px 18px"}}>{"\ud83d\udcf7"} Import a photo</button>
           {isPhoto&&<button onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar="\u2694\ufe0f";p.setAvatar(c);}}
-            className="btn2" style={{fontSize:12,padding:"8px 18px",color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>\u2715 Remove</button>}
+            className="btn2" style={{fontSize:12,padding:"8px 18px",color:"var(--red)",borderColor:"rgba(255,71,87,.2)"}}>{"\u2715"} Remove</button>}
         </div>
-        <div style={{fontSize:11,color:"var(--t3)"}}>Photo resized \u00b7 stored locally</div>
+        <div style={{fontSize:11,color:"var(--t3)"}}>Photo resized {"\u00b7"} stored locally</div>
       </div>
       <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>or pick an emoji</div>
       <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>
