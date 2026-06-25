@@ -5913,7 +5913,7 @@ var q=qs[ci];return(<div className={sk?"sk":""} style={{padding:"20px 16px",minH
 <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
 <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{qs.length}</span></div>
 <Bar value={ci} max={qs.length} h={4}/>
-<span className="out" style={{fontSize:11,fontWeight:600,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,marginTop:8,display:"block"}}>{q.cat}</span>
+<span className="out" style={{fontSize:11,fontWeight:600,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,marginTop:8,display:"block"}}>{q.cat}</span>
 <h2 className="qstem" style={{fontWeight:700,fontSize:19,lineHeight:1.5,marginBottom:24,marginTop:8}}>{q.s}</h2>
 <div style={{display:"flex",flexDirection:"column",gap:10}}>{q.o.map(function(opt,i){var iS=sel===i,iC=i===q.c,sr=ph==="fb",bg="var(--bg2)",bd="var(--bdr)";
 if(sr&&iC){bg="rgba(0,230,118,.12)";bd="var(--green)";}else if(sr&&iS&&!iC){bg="rgba(255,71,87,.12)";bd="var(--red)";}
@@ -15822,7 +15822,9 @@ function Profile(p){
       {/* Chronicles — entry card (parchment themed) */}
       {(function(){
         var heard=(u.narrator&&u.narrator.heard)||[];
-        var cnt=heard.length;
+        // Count only heard moments that belong to the canon (heard can hold replays
+        // or the off-canon side chronicle → raw length showed "10/8"). (audit 2026-06-25)
+        var cnt=NARRATOR_ORDER.filter(function(id){return heard.indexOf(id)!==-1;}).length;
         return(<button onClick={function(){setView("chronicles");}} className="crd"
           style={{width:"100%",padding:"14px 16px",marginBottom:14,textAlign:"left",cursor:"pointer",
             background:"linear-gradient(135deg,rgba(232,212,168,0.08),rgba(138,112,64,0.05))",
