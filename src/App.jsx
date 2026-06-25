@@ -1417,6 +1417,9 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .fl{animation:flame 1.5s ease-in-out infinite;display:inline-block}
 .sk{animation:shake .4s ease-in-out}
 .out{font-family:'Cinzel','Outfit',serif;letter-spacing:0.5px}
+/* Question stems read in sans-serif (not Cinzel) — comprehension > flourish on the
+   core learning task, and mirrors the real TOEIC's clean typography. (audit 2026-06-25) */
+.qstem{font-family:'Outfit','DM Sans',sans-serif;letter-spacing:0}
 @media(min-width:768px){
 .app:not(.onboard-shell){max-width:none;margin:0 0 0 200px;padding:0 32px}
 .app.onboard-shell{max-width:480px;margin:0 auto;padding:0 16px}
@@ -5339,7 +5342,7 @@ return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"
 <div className="out" style={{fontSize:20,fontWeight:800,color:tc,minWidth:32,textAlign:"right"}}>{tl}</div></div>
 <div style={{width:"100%",height:3,background:"var(--bg3)",borderRadius:2,marginBottom:32,overflow:"hidden"}}><div style={{width:(tl/30*100)+"%",height:"100%",background:tc,borderRadius:2,transition:"width 1s linear"}}/></div>
 <span className="out" style={{fontSize:11,fontWeight:600,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{q.cat}</span>
-<h2 className="out" style={{fontWeight:700,fontSize:20,lineHeight:1.5,marginBottom:28,marginTop:8}}>{q.s}</h2>
+<h2 className="qstem" style={{fontWeight:700,fontSize:20,lineHeight:1.5,marginBottom:28,marginTop:8}}>{q.s}</h2>
 <div style={{display:"flex",flexDirection:"column",gap:10}}>{q.o.map(function(opt,i){var iS=sel===i,iC=i===q.c,sr=ph==="fb",bg="var(--bg2)",bd="var(--bdr)";
 if(sr&&iC){bg="rgba(0,230,118,.12)";bd="var(--green)";}else if(sr&&iS&&!iC){bg="rgba(255,71,87,.12)";bd="var(--red)";}
 return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph==="fb"} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
@@ -5894,7 +5897,7 @@ var q=qs[ci];return(<div className={sk?"sk":""} style={{padding:"20px 16px",minH
 <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{qs.length}</span></div>
 <Bar value={ci} max={qs.length} h={4}/>
 <span className="out" style={{fontSize:11,fontWeight:600,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,marginTop:8,display:"block"}}>{q.cat}</span>
-<h2 className="out" style={{fontWeight:700,fontSize:19,lineHeight:1.5,marginBottom:24,marginTop:8}}>{q.s}</h2>
+<h2 className="qstem" style={{fontWeight:700,fontSize:19,lineHeight:1.5,marginBottom:24,marginTop:8}}>{q.s}</h2>
 <div style={{display:"flex",flexDirection:"column",gap:10}}>{q.o.map(function(opt,i){var iS=sel===i,iC=i===q.c,sr=ph==="fb",bg="var(--bg2)",bd="var(--bdr)";
 if(sr&&iC){bg="rgba(0,230,118,.12)";bd="var(--green)";}else if(sr&&iS&&!iC){bg="rgba(255,71,87,.12)";bd="var(--red)";}
 return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph==="fb"} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
@@ -7174,7 +7177,7 @@ function TimeSim(p){
             <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{q.cat}</span>
             <span style={{fontSize:11,color:a.correct?"var(--green)":"var(--red)",fontWeight:700}}>{a.correct?"Correct":"Wrong"} — Q{revIdx+1}</span>
           </div>
-          <p className="out" style={{fontSize:15,fontWeight:700,lineHeight:1.5,marginBottom:14,color:"var(--t1)"}}>{q.s}</p>
+          <p className="qstem" style={{fontSize:15,fontWeight:700,lineHeight:1.5,marginBottom:14,color:"var(--t1)"}}>{q.s}</p>
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
             {q.o.map(function(opt,i){
               var isCor=i===q.c;var isPick=i===a.pick;
@@ -7229,7 +7232,7 @@ function TimeSim(p){
         <button className="btn1" onClick={nxt}>{ci<qs.length-1?"Next Question ("+(ci+2)+"/30)":"Finish Exam"}</button></div>
     :<div>
       <span className="out" style={{fontSize:11,fontWeight:600,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{q.cat}</span>
-      <h2 className="out" style={{fontWeight:700,fontSize:19,lineHeight:1.5,marginBottom:24,marginTop:8}}>{q.s}</h2>
+      <h2 className="qstem" style={{fontWeight:700,fontSize:19,lineHeight:1.5,marginBottom:24,marginTop:8}}>{q.s}</h2>
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {q.o.map(function(opt,i){
           return(<button key={i} onClick={function(){doAns(i);}}
@@ -8770,7 +8773,7 @@ function MockTest(p){
       return(<div style={{padding:"0 16px 40px"}}>{header}
         <div style={{marginTop:16}}>
           <span style={{fontSize:11,color:"var(--t3)"}}>{qi+1} / {p5Qs.length}</span>
-          <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginTop:8,marginBottom:24}}>{q.s}</h2>
+          <h2 className="qstem" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginTop:8,marginBottom:24}}>{q.s}</h2>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {q.o.map(function(opt,i){
               var bg=selected===i?"rgba(var(--cx),.15)":"var(--bg2)";
@@ -8834,7 +8837,7 @@ function MockTest(p){
           </div>
           <div style={{fontSize:11,color:"var(--t2)",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}}>{passage.type}</div>
           <div className="crd read-scroll" style={{padding:14,marginBottom:16,maxHeight:200,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{passage.text}</div>
-          <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pq.q}</h3>
+          <h3 className="qstem" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pq.q}</h3>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {pq.options.map(function(opt,i){
               var bg=selected7===i?"rgba(var(--cx),.15)":"var(--bg2)";
@@ -8921,7 +8924,7 @@ function MockTest(p){
       rTotal=p5Qs.length;var q=p5Qs[reviewIdx];
       rLabel="Part 5 — Q"+(reviewIdx+1);rAnswer=ans.p5[reviewIdx];rCorrect=q.c;rExpl=q.x;
       rItem=(<div>
-        <h3 className="out" style={{fontWeight:700,fontSize:16,lineHeight:1.5,marginBottom:16}}>{q.s}</h3>
+        <h3 className="qstem" style={{fontWeight:700,fontSize:16,lineHeight:1.5,marginBottom:16}}>{q.s}</h3>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {q.o.map(function(opt,i){
             var isCorrect=i===q.c;var isPicked=i===rAnswer;
@@ -8964,7 +8967,7 @@ function MockTest(p){
       rLabel="Part 7 — Passage "+(pi+1)+", Q"+(pqIdx+1);rAnswer=ans.p7[pi][pqIdx];rCorrect=pqr.correct;rExpl=pqr.x;
       rItem=(<div>
         <div style={{fontSize:11,color:"var(--t2)",marginBottom:8}}>{ps.type}</div>
-        <h3 className="out" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pqr.q}</h3>
+        <h3 className="qstem" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pqr.q}</h3>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {pqr.options.map(function(opt,i){
             var isCorrect=i===pqr.correct;var isPicked=i===rAnswer;
@@ -9665,7 +9668,7 @@ function AudioBlitz(p){
         <p className="out" style={{fontWeight:700,fontSize:16,color:"var(--cyan)"}}>Listening...</p>
       </div>}
       {played>=2&&ph==="q"&&<div>
-        <p className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:12}}>{it.q}</p>
+        <p className="qstem" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:12}}>{it.q}</p>
         {replays===0&&<button onClick={replay} style={{background:"rgba(27,112,207,.1)",border:"1px solid rgba(27,112,207,.2)",
           borderRadius:10,padding:"8px 20px",cursor:"pointer",fontSize:12,color:"var(--purple)",fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>
           {"🔁"} Replay once</button>}
@@ -11144,7 +11147,7 @@ function animateFall(){
           transition:"border-color .3s, background .3s",
         }}>
           <span style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}} className="out">{q.cat}</span>
-          <span className="out" style={{fontSize:16,fontWeight:700,lineHeight:1.5,color:"var(--t1)"}}>{q.s}</span>
+          <span className="qstem" style={{fontSize:16,fontWeight:700,lineHeight:1.5,color:"var(--t1)"}}>{q.s}</span>
         </div>
       </div>
 
@@ -13795,7 +13798,7 @@ function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=pro
 return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>League</h1>
 {leagueGroup!==u.classCode&&<div style={{textAlign:"center",marginBottom:8}}>
-  <span style={{fontSize:11,padding:"4px 12px",borderRadius:99,background:"rgba(27,112,207,.12)",border:"1px solid rgba(27,112,207,.25)",color:"var(--purple)"}} className="out">👁️ Viewing: {leagueGroup}</span>
+  <span style={{fontSize:11,padding:"4px 12px",borderRadius:99,background:"rgba(27,112,207,.12)",border:"1px solid rgba(27,112,207,.25)",color:"var(--purple)",display:"inline-flex",alignItems:"center",gap:5}} className="out"><GIcon name="eye-target" size={12} color="var(--purple)"/>Viewing: {leagueGroup}</span>
 </div>}
 
 {/* Season banner */}
@@ -13816,7 +13819,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 {/* Tab bar */}
 <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:10,padding:3}}>
-  {(hasSeasons?[{k:"week",l:"Semaine"},{k:"season",l:"Saison "+(curSeason?curSeason.id:"")},{k:"overall",l:"G\u00e9n\u00e9ral"},{k:"progress",l:"\uD83D\uDCC8 Progr\u00e8s"}]:[{k:"week",l:"Semaine"}]).map(function(t){
+  {(hasSeasons?[{k:"week",l:"Semaine"},{k:"season",l:"Saison "+(curSeason?curSeason.id:"")},{k:"overall",l:"G\u00e9n\u00e9ral"},{k:"progress",l:"Progr\u00e8s"}]:[{k:"week",l:"Semaine"}]).map(function(t){
     var active=tab===t.k;
     return(<button key={t.k} onClick={function(){setTab(t.k);if(t.k==="progress")loadProgressionData();}} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:active?700:500,background:active?"var(--cyan)":"transparent",color:active?"#000":"var(--t3)",transition:"all .2s"}}>{t.l}</button>);
   })}
@@ -13825,7 +13828,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {/* Stats summary */}
 {u.name==="Teacher"?
 <div className="crd" style={{padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,rgba(245,158,11,.06),rgba(27,112,207,.06))",borderColor:"rgba(245,158,11,.15)"}}>
-  <span style={{fontSize:18}}>{"\uD83D\uDC41\uFE0F"}</span>
+  <span style={{display:"flex",flexShrink:0}}><GIcon name="eye-target" size={18} color="var(--gold)"/></span>
   <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--gold)"}}>Mode observateur</div>
   <div style={{fontSize:11,color:"var(--t3)"}}>{"Tes stats sont masqu\u00e9es du classement"}</div></div>
 </div>
@@ -15807,7 +15810,7 @@ function Profile(p){
           style={{width:"100%",padding:"14px 16px",marginBottom:14,textAlign:"left",cursor:"pointer",
             background:"linear-gradient(135deg,rgba(232,212,168,0.08),rgba(138,112,64,0.05))",
             border:"1px solid rgba(180,150,100,0.3)",display:"flex",alignItems:"center",gap:12}}>
-          <span style={{fontSize:26,flexShrink:0}}>{"\uD83D\uDCDC"}</span>
+          <span style={{flexShrink:0,display:"flex"}}><GIcon name="scroll-unfurled" size={26} color="var(--gold)"/></span>
           <div style={{flex:1,minWidth:0}}>
             <div className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:15,color:"var(--t1)",letterSpacing:.5}}>Chronicles</div>
             <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>
@@ -15825,7 +15828,7 @@ function Profile(p){
         style={{width:"100%",padding:"14px 16px",marginBottom:14,textAlign:"left",cursor:"pointer",
           background:"linear-gradient(135deg,rgba(8,145,178,0.06),rgba(124,58,237,0.04))",
           border:"1px solid rgba(8,145,178,0.25)",display:"flex",alignItems:"center",gap:12}}>
-        <span style={{fontSize:24,flexShrink:0}}>{"📬"}</span>
+        <span style={{flexShrink:0,display:"flex"}}><GIcon name="chat-bubble" size={24} color="var(--cyan)"/></span>
         <div style={{flex:1,minWidth:0}}>
           <div className="out" style={{fontWeight:800,fontSize:15,color:"var(--t1)",letterSpacing:.3}}>Send feedback</div>
           <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>Bug, suggestion ou question pédagogique → Jérémy</div>
@@ -15844,7 +15847,7 @@ function Profile(p){
         // Fall back to password prompt
         var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}p.goTeacher();}else{alert("Code invalide");}});}}
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
-        👨‍🏫 Teacher Dashboard
+        <GIcon name="public-speaker" size={16} color="var(--cyan)" style={{marginRight:6}}/>Teacher Dashboard
       </button>}
 
       {/* Settings */}
@@ -15958,7 +15961,7 @@ function FeedbackForm(p){
   if(done){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
       <div style={{textAlign:"center",padding:"40px 16px"}}>
-        <div style={{fontSize:60,marginBottom:18}}>{"📬"}</div>
+        <div style={{marginBottom:18,display:"flex",justifyContent:"center"}}><GIcon name="chat-bubble" size={60} color="var(--cyan)"/></div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:10}}>Message envoyé !</h2>
         <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:24}}>Merci pour ton retour. Jérémy a été notifié et reviendra vers toi si nécessaire.</p>
         <button className="btn1" style={{fontSize:15,padding:"13px 28px"}} onClick={p.back}>Retour au profil</button>
