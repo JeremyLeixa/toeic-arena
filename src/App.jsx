@@ -203,6 +203,15 @@ function GIcon(p){
   return(<svg viewBox="0 0 512 512" width={sz} height={sz} style={sty}><g fill="currentColor" dangerouslySetInnerHTML={{__html:pth}}/></svg>);
 }
 
+// Tier badge for a league object {gi,icon,color}: SVG medal/gem/crown tinted by tier
+// color, with emoji fallback if the icon is missing. (audit 2026-06-25 — replaces the
+// 🥇🥈🥉💎👑🏆⚡ tier emojis app-wide.)
+function LeagueIcon(p){
+  var lg=p.lg||{};var sz=p.size||20;
+  if(GAME_ICON_PATHS[lg.gi])return(<GIcon name={lg.gi} size={sz} color={p.color||lg.color||"var(--gold)"} style={p.style}/>);
+  return(<span style={Object.assign({fontSize:sz,lineHeight:1},p.style||{})}>{lg.icon}</span>);
+}
+
 // ─── AUDIO BUTTON COMPONENT ───
 function SpeakBtn(p){
   var[playing,sP]=useState(false);
@@ -5161,19 +5170,19 @@ return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
 <div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28,u.equippedFrame)}</h1>{u.equippedTitle&&TITLES[u.equippedTitle]&&<div className="out" style={{fontSize:10,fontWeight:800,color:TITLES[u.equippedTitle].color,letterSpacing:2,textTransform:"uppercase",marginTop:2}}>{TITLES[u.equippedTitle].name}</div>}</div>
-<div style={{textAlign:"center"}}><span className="fl" style={{fontSize:28}}>{u.streak>0?"🔥":"❄️"}</span><div className="out" style={{fontSize:13,fontWeight:700,color:u.streak>0?"var(--orange)":"var(--t3)"}}>{u.streak}</div></div></div>
+<div style={{textAlign:"center"}}><span className="fl" style={{fontSize:28,display:"inline-flex"}}>{u.streak>0?<GIcon name="flame" size={28} color="var(--orange)"/>:<span>{"❄️"}</span>}</span><div className="out" style={{fontSize:13,fontWeight:700,color:u.streak>0?"var(--orange)":"var(--t3)"}}>{u.streak}</div></div></div>
 
 {/* Active bonus indicators */}
 {function(){
   var pills=[];var dow=new Date().getDay();
   if(dow===0||dow===6)pills.push({label:"x2 Weekend",col:"#ff6bff",icon:"🎉"});
-  if(u.streak>=7)pills.push({label:"x1.5 Streak",col:"#ff8c42",icon:"🔥"});
-  else if(u.streak>=3)pills.push({label:"x1.2 Streak",col:"#ff8c42",icon:"🔥"});
+  if(u.streak>=7)pills.push({label:"x1.5 Streak",col:"#ff8c42",icon:"🔥",gi:"flame"});
+  else if(u.streak>=3)pills.push({label:"x1.2 Streak",col:"#ff8c42",icon:"🔥",gi:"flame"});
   if(u.lastActive!==today())pills.push({label:"+10 Login bonus",col:"#00e676",icon:"🎁"});
   // Event pills removed — each event has its own banner below, no need to duplicate
   if(pills.length===0)return null;
   return(<div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-    {pills.map(function(p,i){return (<div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:99,background:p.col+"15",border:"1px solid "+p.col+"30",fontSize:11,fontWeight:600,color:p.col}} className="out"><span style={{fontSize:12}}>{p.icon}</span>{p.label}</div>);})}
+    {pills.map(function(p,i){return (<div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:99,background:p.col+"15",border:"1px solid "+p.col+"30",fontSize:11,fontWeight:600,color:p.col}} className="out">{GAME_ICON_PATHS[p.gi]?<GIcon name={p.gi} size={12} color={p.col}/>:<span style={{fontSize:12}}>{p.icon}</span>}{p.label}</div>);})}
   </div>);
 }()}
 
@@ -5233,7 +5242,7 @@ return(
 <div><div className="out" style={{fontSize:13,fontWeight:700}}>Level {lv.level}</div><div style={{fontSize:11,color:"var(--t2)"}}>{lv.cur} / {lv.next} XP{u.weeklyXp>0?" · "+u.weeklyXp+" this week":""}</div></div></div>
 <div style={{display:"flex",alignItems:"center",gap:8}}>
 <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"var(--bg3)",borderRadius:99}}>
-<span style={{fontSize:16}}>{lg.icon}</span><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div>
+<LeagueIcon lg={lg} size={16} style={{marginRight:4,verticalAlign:"-2px"}}/><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div>
 <span style={{fontSize:18,color:"var(--t3)",lineHeight:1}}>{"›"}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
@@ -13784,7 +13793,7 @@ function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=pro
   // room and to let titles + frames have visual room on every tab.
   var titleData=pl.titleId&&TITLES[pl.titleId];
   return(<div style={{display:"flex",alignItems:"center",gap:14,padding:"16px 14px",background:isMe?"rgba(var(--cx),.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12}}>
-    <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?(rank===1?"🥇":rank===2?"🥈":"🥉"):rank}</div>
+    <div className="out" style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?<GIcon name="medal" size={20} color={rank===1?"#ffd700":rank===2?"#c0c0c0":"#cd7f32"}/>:rank}</div>
     <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
     <div style={{flex:1,minWidth:0}}>
       <div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{isMe?pl.name+" (Toi)":pl.name}</div>
@@ -13805,7 +13814,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {curSeason&&<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(27,112,207,.06))",borderColor:"rgba(var(--cx),.15)"}}>
   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
-      <span style={{fontSize:22}}>{curSeason.icon}</span>
+      {curSeason.icon==="🔥"?<GIcon name="flame" size={22} color={curSeason.color}/>:<span style={{fontSize:22}}>{curSeason.icon}</span>}
       <div>
         <div className="out" style={{fontWeight:800,fontSize:15,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
         <div style={{fontSize:11,color:"var(--t3)"}}>{curSeason.start} {"\u2192"} {curSeason.end}</div>
@@ -13842,7 +13851,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {/* ── WEEK TAB ── */}
 {tab==="week"&&(<div>
   {u.name!=="Teacher"&&<div className="crd glo" style={{textAlign:"center",marginBottom:16,padding:20}}>
-    <div style={{fontSize:40,marginBottom:6,animation:"glow 3s infinite"}}>{lg.icon}</div>
+    <div style={{marginBottom:6,animation:"glow 3s infinite",display:"flex",justifyContent:"center"}}><LeagueIcon lg={lg} size={40}/></div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:lg.color}}>Ligue {lg.name}</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Rang #{weekRank} cette semaine</div>
     {nx&&<div style={{marginTop:10}}><div style={{fontSize:10,color:"var(--t3)",marginBottom:4}}>{nx.min-u.weeklyXp} XP pour atteindre {nx.name}</div><Bar value={u.weeklyXp-lg.min} max={nx.min-lg.min} h={4} color={nx.color}/></div>}
@@ -15763,11 +15772,11 @@ function Profile(p){
         <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap",marginTop:4}}>
           <span style={{fontSize:12,background:"rgba(var(--cx),.1)",color:"var(--orange)",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(var(--cx),.2)"}}>Lv. {lv.level}</span>
           <span style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"1px solid rgba(27,112,207,.2)",background:"rgba(27,112,207,.1)",color:lg.color}}>
-  {lg.icon} {lg.name}
+  <LeagueIcon lg={lg} size={13} style={{marginRight:4,verticalAlign:"-2px"}}/>{lg.name}
   {lg.locked&&<span style={{fontSize:10,color:"var(--t3)",marginLeft:4}}>🔒</span>}
 </span>
 {lg.locked&&<span style={{fontSize:11,color:"var(--t3)",padding:"3px 10px",borderRadius:20,background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.15)"}}>{lg.lockReason==="need_estimation"?"Legend tier: complete more modules or a Mock test":("Legend tier: reach TOEIC "+lg.lockedScore)}</span>}
-          <span style={{fontSize:12,background:"rgba(255,100,0,.1)",color:"#ff6428",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(255,100,0,.2)"}}>🔥 {u.streak}</span>
+          <span style={{fontSize:12,background:"rgba(255,100,0,.1)",color:"#ff6428",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(255,100,0,.2)",display:"inline-flex",alignItems:"center",gap:4}}><GIcon name="flame" size={12} color="#ff6428"/>{u.streak}</span>
           <DaricPill marks={u.arenaMarks}/>
         </div>
       </div>
