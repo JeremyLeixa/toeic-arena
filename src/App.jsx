@@ -546,7 +546,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-25-bgm-token-fix";
+var BUILD_ID="2026-06-25-grim-safearea";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -1471,7 +1471,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .grim-overlay{position:fixed;inset:0;background:#0a0604;z-index:9000;display:flex;flex-direction:column;animation:grim-fade-in .3s ease}
 .grim-overlay.grim-closing{animation:grim-fade-out .3s ease forwards;pointer-events:none}
 @keyframes grim-fade-in{from{opacity:0}to{opacity:1}}
-.grim-topbar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(0,0,0,.7);border-bottom:1px solid rgba(245,223,170,.15);flex-shrink:0}
+.grim-topbar{display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top, 0px)) 12px 10px;background:rgba(0,0,0,.7);border-bottom:1px solid rgba(245,223,170,.15);flex-shrink:0}
 .grim-title{color:#f5dfaa;font-family:'Cinzel','Outfit',serif;font-size:14px;font-weight:600;letter-spacing:.4px;flex:1;text-align:center;padding:0 4px;line-height:1.25}
 .grim-btn-close,.grim-btn-toc{background:rgba(245,223,170,.08);color:#f5dfaa;border:1px solid rgba(245,223,170,.2);border-radius:10px;padding:8px 12px;font-size:12px;cursor:pointer;font-weight:700;flex-shrink:0}
 .grim-book{flex:1;perspective:2500px;display:flex;justify-content:center;align-items:stretch;padding:12px;overflow:hidden;position:relative}
@@ -1503,11 +1503,11 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .grim-list{margin:6px 0 12px 18px;padding:0}
 .grim-list li{margin-bottom:5px;line-height:1.55}
 .grim-page-num{margin-top:auto;padding-top:24px;text-align:center;font-family:'Cinzel','Outfit',serif;color:#6b4820;font-size:11px;opacity:.65;letter-spacing:2px;pointer-events:none}
-.grim-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:rgba(0,0,0,.7);border-top:1px solid rgba(245,223,170,.15);flex-shrink:0}
+.grim-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px));background:rgba(0,0,0,.7);border-top:1px solid rgba(245,223,170,.15);flex-shrink:0}
 .grim-nav-btn{background:linear-gradient(135deg,#8b5a28,#6b3410);color:#f5dfaa;border:1px solid rgba(245,223,170,.3);border-radius:12px;padding:11px 14px;font-weight:700;font-size:13px;cursor:pointer;min-width:80px;touch-action:manipulation}
 .grim-nav-btn:disabled{opacity:.3;cursor:not-allowed}
 .grim-nav-info{color:#f5dfaa;font-family:'DM Sans',sans-serif;font-size:12px;flex:1;text-align:center;letter-spacing:.4px}
-.grim-toc{position:absolute;inset:0;background:rgba(10,6,4,.97);z-index:20;padding:20px 18px;overflow-y:auto;animation:grim-fade-in .2s ease}
+.grim-toc{position:absolute;inset:0;background:rgba(10,6,4,.97);z-index:20;padding:calc(20px + env(safe-area-inset-top, 0px)) 18px 20px;overflow-y:auto;animation:grim-fade-in .2s ease}
 .grim-toc-title{color:#f5dfaa;font-family:'Cinzel','Outfit',serif;font-size:18px;font-weight:700;text-align:center;margin-bottom:16px;letter-spacing:1px}
 .grim-toc-item{display:block;width:100%;background:rgba(245,223,170,.06);color:#f5dfaa;border:1px solid rgba(245,223,170,.15);border-radius:10px;padding:12px 14px;margin-bottom:7px;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.35}
 .grim-toc-item.active{background:rgba(245,223,170,.18);border-color:rgba(245,223,170,.45)}
