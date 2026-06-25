@@ -211,6 +211,14 @@ function LeagueIcon(p){
   if(GAME_ICON_PATHS[lg.gi])return(<GIcon name={lg.gi} size={sz} color={p.color||lg.color||"var(--gold)"} style={p.style}/>);
   return(<span style={Object.assign({fontSize:sz,lineHeight:1},p.style||{})}>{lg.icon}</span>);
 }
+// Season emoji → game-icon. Seasons carry an emoji icon in data (🌱🔥⚔️🏆…); map to
+// SVG so the banner/chips/hero match the rest of the chrome. (audit 2026-06-25)
+var SEASON_GI={"🌱":"oak-leaf","🔥":"flame","⚔":"crossed-swords","🏆":"trophy-cup","⭐":"star-formation","⚡":"lightning-storm"};
+function SeasonIcon(p){
+  var ic=(p.icon||"").replace(/️/g,"");var sz=p.size||20;var gi=SEASON_GI[ic];
+  if(gi&&GAME_ICON_PATHS[gi])return(<GIcon name={gi} size={sz} color={p.color||"var(--gold)"} style={p.style}/>);
+  return(<span style={Object.assign({fontSize:sz,lineHeight:1},p.style||{})}>{p.icon}</span>);
+}
 
 // ─── AUDIO BUTTON COMPONENT ───
 function SpeakBtn(p){
@@ -13814,7 +13822,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {curSeason&&<div className="crd" style={{padding:"14px 18px",marginBottom:16,background:"linear-gradient(135deg,rgba(var(--cx),.06),rgba(27,112,207,.06))",borderColor:"rgba(var(--cx),.15)"}}>
   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
-      {curSeason.icon==="🔥"?<GIcon name="flame" size={22} color={curSeason.color}/>:<span style={{fontSize:22}}>{curSeason.icon}</span>}
+      <SeasonIcon icon={curSeason.icon} size={22} color={curSeason.color}/>
       <div>
         <div className="out" style={{fontWeight:800,fontSize:15,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
         <div style={{fontSize:11,color:"var(--t3)"}}>{curSeason.start} {"\u2192"} {curSeason.end}</div>
@@ -13869,13 +13877,13 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
           var plLg=getLeague(pl.xp);
           var titleData=pl.titleId&&TITLES[pl.titleId];
           return(<div key={pl.name} style={{display:"flex",alignItems:"center",gap:14,padding:"16px 14px",background:pl.me?"rgba(var(--cx),.08)":pl.inactive?"var(--bg1)":"var(--bg2)",border:pl.me?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12,opacity:pl.inactive?0.55:1}}>
-            <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,color:(!pl.inactive&&i<3)?"var(--gold)":"var(--t3)"}}>{pl.inactive?"—":i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</div>
+            <div className="out" style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,color:(!pl.inactive&&i<3)?"var(--gold)":"var(--t3)"}}>{pl.inactive?"—":i<3?<GIcon name="medal" size={20} color={i===0?"#ffd700":i===1?"#c0c0c0":"#cd7f32"}/>:i+1}</div>
             <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
             <div style={{flex:1,minWidth:0}}>
               <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{pl.me?pl.name+" (Toi)":pl.name}</div>
               {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
               {pl.inactive&&<div style={{fontSize:10,color:"var(--t3)",fontWeight:500,marginTop:2}}>{"⏸ Inactif(ve) cette semaine"}</div>}
-              {!pl.inactive&&isTeacher&&<div style={{fontSize:10,color:plLg.color,fontWeight:600,marginTop:2}}>{plLg.icon} {plLg.name}</div>}
+              {!pl.inactive&&isTeacher&&<div style={{fontSize:10,color:plLg.color,fontWeight:600,marginTop:2,display:"flex",alignItems:"center",gap:3}}><LeagueIcon lg={plLg} size={11}/>{plLg.name}</div>}
             </div>
             <div className="out" style={{fontWeight:700,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t2)",flexShrink:0}}>{pl.inactive?"—":pl.xp+" XP"}</div>
           </div>);
@@ -13884,7 +13892,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
       </div>
       {!isTeacher&&hidden.length>0&&<div style={{textAlign:"center",marginTop:12}}>
         <button onClick={function(){setShowAllLeagues(function(v){return !v;});}} style={{background:"none",border:"1px solid var(--bdr)",borderRadius:8,padding:"6px 14px",fontSize:11,color:"var(--t3)",cursor:"pointer",fontFamily:"inherit"}}>
-          {showAllLeagues?"Ma ligue uniquement ←":"👁 Voir les "+active.length+" participants actifs"}
+          {showAllLeagues?"Ma ligue uniquement ←":<span style={{display:"inline-flex",alignItems:"center",gap:5}}><GIcon name="eye-target" size={12} color="var(--t3)"/>{"Voir les "+active.length+" participants actifs"}</span>}
         </button>
       </div>}
     </div>);
@@ -13895,7 +13903,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {/* ── SEASON TAB ── */}
 {tab==="season"&&curSeason&&(<div>
   <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(var(--cx),.04),rgba(27,112,207,.04))"}}>
-    <div style={{fontSize:36,marginBottom:6}}>{curSeason.icon}</div>
+    <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><SeasonIcon icon={curSeason.icon} size={42} color={curSeason.color}/></div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} semaines {"\u00B7"} {countdown}</div>
     <div style={{fontSize:11,color:"var(--t3)",marginTop:8,lineHeight:1.5}}>Chaque semaine, le 1er gagne N pts, le 2ème N-1...<br/>La régularité prime sur les coups d'éclat !</div>
@@ -13909,10 +13917,10 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {/* ── OVERALL TAB ── */}
 {tab==="overall"&&(<div>
   <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(245,158,11,.04),rgba(27,112,207,.04))"}}>
-    <div style={{fontSize:36,marginBottom:6}}>{"🏆"}</div>
+    <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><GIcon name="trophy-cup" size={42} color="var(--gold)"/></div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--gold)"}}>Classement Général</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Points de classement cumulés sur toutes les saisons</div>
-    {showGradeBonus&&<div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600}}>{"🏆"} Top 3 {"→"} +2 pts {"·"} Top 10 {"→"} +1 pt sur la note finale</div>}
+    {showGradeBonus&&<div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:4,flexWrap:"wrap"}}><GIcon name="trophy-cup" size={12} color="var(--gold)"/>Top 3 {"→"} +2 pts {"·"} Top 10 {"→"} +1 pt sur la note finale</div>}
     {showGradeBonus&&<div style={{fontSize:10,color:"var(--t3)",marginTop:4}}>Cumulable avec le bonus Progression (max +4 pts au total)</div>}
   </div>
   {/* Season breakdown mini-bar */}
@@ -13920,7 +13928,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     {dynSeasons.map(function(s){
       var isCurrent=s.id===curSeason.id;var isPast=s.weeks[s.weeks.length-1]<cw;
       return(<div key={s.id} className="crd" style={{flex:1,padding:"8px 4px",textAlign:"center",borderColor:isCurrent?"rgba(var(--cx),.3)":"var(--bdr)",opacity:(!isCurrent&&!isPast)?0.4:1}}>
-        <div style={{fontSize:16}}>{s.icon}</div>
+        <div style={{display:"flex",justifyContent:"center",marginBottom:2}}><SeasonIcon icon={s.icon} size={18} color={isCurrent?"var(--cyan)":"var(--t3)"}/></div>
         <div style={{fontSize:9,color:isCurrent?"var(--cyan)":"var(--t3)",fontWeight:isCurrent?700:400}}>S{s.id}</div>
         <div style={{fontSize:8,color:"var(--t3)"}}>{isPast?"Terminé":isCurrent?"En cours":"Bientôt"}</div>
       </div>);
@@ -13929,7 +13937,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
     {overallRanking.filter(function(pl){return pl.pts>0;}).map(function(pl,i){
       var rank=i+1;
-      var bonusLabel=showGradeBonus?(rank<=3?"\uD83C\uDFC6 +2pts note finale":rank<=10?"\u2B50 +1pt note finale":null):null;
+      var bonusLabel=showGradeBonus?(rank<=3?<span style={{display:"inline-flex",alignItems:"center",gap:3}}><GIcon name="trophy-cup" size={11} color="var(--gold)"/>+2pts note finale</span>:rank<=10?<span style={{display:"inline-flex",alignItems:"center",gap:3}}><GIcon name="star-formation" size={11} color="var(--cyan)"/>+1pt note finale</span>:null):null;
       var bColor=rank<=3?"var(--gold)":"var(--cyan)";
       return(<RankRow key={i} pl={pl} rank={rank} isMe={pl.name===u.name} unit="pts" bonus={bonusLabel} bonusColor={bColor}/>);
     })}
@@ -13942,14 +13950,14 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,
     background:"linear-gradient(135deg,rgba(74,190,96,.04),rgba(27,112,207,.04))",
     borderColor:"rgba(74,190,96,.15)"}}>
-    <div style={{fontSize:36,marginBottom:6}}>📈</div>
+    <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><GIcon name="progression" size={42} color="var(--green)"/></div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:"var(--green)"}}>Classement Progression</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Gain de score TOEIC estimé depuis la première semaine de données</div>
-    {showGradeBonus&&<div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600}}>🏆 Top 3 → +2 pts · Top 10 → +1 pt sur la note finale</div>}
+    {showGradeBonus&&<div style={{fontSize:11,color:"var(--gold)",marginTop:8,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:4,flexWrap:"wrap"}}><GIcon name="trophy-cup" size={12} color="var(--gold)"/>Top 3 → +2 pts · Top 10 → +1 pt sur la note finale</div>}
   </div>
 
   {progLoading&&<div style={{textAlign:"center",padding:40}}>
-    <div style={{fontSize:24,marginBottom:8}}>⏳</div>
+    <div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><GIcon name="sands-of-time" size={26} color="var(--t3)"/></div>
     <p style={{fontSize:13,color:"var(--t3)"}}>Calcul en cours...</p>
   </div>}
 
