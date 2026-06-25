@@ -616,21 +616,29 @@ export function playJingleDaily() {
 
 var bgmAudio = null;
 var _bgmFadeTimer = null;
+// Generation token: every stopBGM() (and every playBGM request) bumps it.
+// An in-flight playBGM whose token is stale MUST NOT adopt its audio, so a
+// stopBGM() that fires during the play() async gap stays authoritative.
+// Without this, navigating into an exercise while bgm_home is still fading in
+// would let the home loop revive itself over the exercise audio.
+var _bgmToken = 0;
 
 export function playBGM(track) {
   if (isMuted()) return;
   if (bgmAudio && bgmAudio._track === track && !bgmAudio.paused) return;
-  stopBGM(function() {
+  var myToken = ++_bgmToken; // this play request's identity
+  _stopBGMInternal(function() {
+    if (myToken !== _bgmToken) return; // a later stop/play superseded us
     var audio = new Audio("/audio/bgm/" + track + ".mp3");
     audio._track = track;
     audio.loop = true;
     audio.volume = 0;
     audio.play().then(function() {
-      // Only adopt this audio if nothing else took over during async gap
-      if (bgmAudio && bgmAudio !== audio) { audio.pause(); return; }
+      // A stopBGM() (or newer playBGM) during the play() async gap invalidates us
+      if (myToken !== _bgmToken) { audio.pause(); audio.src = ""; return; }
       bgmAudio = audio;
       _bgmFadeTimer = setInterval(function() {
-        if (!bgmAudio || bgmAudio !== audio) { clearInterval(_bgmFadeTimer); return; }
+        if (!bgmAudio || bgmAudio !== audio || myToken !== _bgmToken) { clearInterval(_bgmFadeTimer); return; }
         if (bgmAudio.volume < 0.25) {
           bgmAudio.volume = Math.min(0.25, bgmAudio.volume + 0.02);
         } else { clearInterval(_bgmFadeTimer); _bgmFadeTimer = null; }
@@ -643,6 +651,13 @@ export function playBGM(track) {
 }
 
 export function stopBGM(cb) {
+  _bgmToken++; // invalidate any in-flight playBGM so it can't revive after this stop
+  _stopBGMInternal(cb);
+}
+
+// Internal stop — does NOT bump the token (playBGM bumps once for the whole
+// request and must keep its own token valid through its internal stop+fade).
+function _stopBGMInternal(cb) {
   // Kill any in-progress fade-in first
   if (_bgmFadeTimer) { clearInterval(_bgmFadeTimer); _bgmFadeTimer = null; }
   if (!bgmAudio) { if (cb) cb(); return; }
