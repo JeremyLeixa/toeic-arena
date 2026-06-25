@@ -213,11 +213,20 @@ function LeagueIcon(p){
 }
 // Season emoji → game-icon. Seasons carry an emoji icon in data (🌱🔥⚔️🏆…); map to
 // SVG so the banner/chips/hero match the rest of the chrome. (audit 2026-06-25)
-var SEASON_GI={"🌱":"oak-leaf","🔥":"flame","⚔":"crossed-swords","🏆":"trophy-cup","⭐":"star-formation","⚡":"lightning-storm"};
+var SEASON_GI={0x1F331:"oak-leaf",0x1F525:"flame",0x2694:"crossed-swords",0x1F3C6:"trophy-cup",0x2B50:"star-formation",0x26A1:"lightning-storm"};
 function SeasonIcon(p){
-  var ic=(p.icon||"").replace(/️/g,"");var sz=p.size||20;var gi=SEASON_GI[ic];
+  var sz=p.size||20;var gi=SEASON_GI[(p.icon||" ").codePointAt(0)];
   if(gi&&GAME_ICON_PATHS[gi])return(<GIcon name={gi} size={sz} color={p.color||"var(--gold)"} style={p.style}/>);
   return(<span style={Object.assign({fontSize:sz,lineHeight:1},p.style||{})}>{p.icon}</span>);
+}
+// Result-screen tier icon: maps the celebration emoji a screen already computes
+// (🏆/⚔️/🛡️/👑/⚡…) to a tinted game-icon, emoji fallback for anything unmapped.
+// Variation-selector (FE0F) stripped so ⚔️/🛡️/⚖️ match. (audit 2026-06-25)
+var RESULT_GI={0x1F3C6:["trophy-cup","var(--gold)"],0x1F451:["crown","var(--gold)"],0x2694:["crossed-swords","var(--cyan)"],0x1F6E1:["templar-shield","var(--t2)"],0x26A1:["lightning-storm","var(--gold)"],0x1F525:["flame","var(--orange)"],0x1F4AA:["biceps","var(--cyan)"],0x1F4D6:["spell-book","var(--t2)"],0x1F4DA:["bookshelf","var(--t2)"],0x1F9ED:["path-distance","var(--cyan)"],0x1F4DC:["scroll-unfurled","var(--t2)"],0x2696:["scales","var(--cyan)"],0x1F3AF:["bullseye","var(--cyan)"],0x2705:["check-mark","var(--green)"]};
+function ResultIcon(p){
+  var m=RESULT_GI[(p.e||" ").codePointAt(0)];var sz=p.size||52;
+  if(m&&GAME_ICON_PATHS[m[0]])return(<GIcon name={m[0]} size={sz} color={p.color||m[1]}/>);
+  return(<span style={{fontSize:sz,lineHeight:1}}>{p.e}</span>);
 }
 
 // ─── AUDIO BUTTON COMPONENT ───
@@ -2598,7 +2607,7 @@ function ModalMatch(p){
     var isGood=totalCorrect>=Math.ceil(totalQ*0.7);
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
       <div style={{textAlign:"center",padding:"20px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"👑":isGood?"🏆":"📜"}</div>
+        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><ResultIcon e={isPerfect?"👑":isGood?"🏆":"📜"} size={58}/></div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"PERFECT ORACLE":isGood?"Oracle answers":"Audience adjourned"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"var(--cyan)",margin:"14px 0 2px"}}>{totalCorrect}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {totalQ}</span></div>
         <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>pairs correctly matched</p>
@@ -2792,7 +2801,7 @@ function ModalSort(p){
     var missed=results.filter(function(r){return!r.ok;});
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
       <div style={{textAlign:"center",padding:"20px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"👑":isGood?"🏆":"⚖️"}</div>
+        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><ResultIcon e={isPerfect?"👑":isGood?"🏆":"⚖️"} size={58}/></div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"FLAWLESS VERDICT":isGood?"Verdict delivered":"Bench adjourned"}</h2>
         <div style={{fontSize:44,fontWeight:800,color:"var(--cyan)",margin:"14px 0 2px"}}>{correct}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
         <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>verdicts upheld</p>
@@ -5346,7 +5355,7 @@ if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHei
 <button className="btn1" onClick={function(){sP("q");}}>Start Challenge</button><button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
 if(ph==="done"){var fx=30+sc*14+(sc===5?20:0);if(p.gate)fx=p.gate(fx,sc,5);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-<div style={{fontSize:64,marginBottom:16,animation:"countUp .6s"}}>{sc===5?"👑":sc>=3?"⚔️":"🛡️"}</div><h1 className="out" style={{fontWeight:900,fontSize:32,marginBottom:8}}>{sc===5?"FLAWLESS!":sc>=4?"Great fight!":sc>=3?"Not bad!":"Keep training!"}</h1>
+<div style={{fontSize:64,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc===5?"👑":sc>=3?"⚔️":"🛡️"} size={56}/>)}</div><h1 className="out" style={{fontWeight:900,fontSize:32,marginBottom:8}}>{sc===5?"FLAWLESS!":sc>=4?"Great fight!":sc>=3?"Not bad!":"Keep training!"}</h1>
 <div className="out" style={{fontSize:48,fontWeight:900,color:"var(--cyan)",marginBottom:4,animation:"countUp .8s"}}>{sc}/5</div>
 <div className="out" style={{fontSize:22,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{fx} XP</div>
 {sc===5&&<p style={{color:"var(--gold)",marginBottom:16,fontWeight:600}}>Perfect bonus: +20 XP!</p>}<button className="btn1" onClick={p.back}>Back to Home</button></div>);}
@@ -5902,7 +5911,7 @@ function doAns(i){
 function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sP("done");p.done(sc,qs.length,20+sc*7,catStatsRef.current);}}
 
 if(ph==="done"){var fx=20+sc*7;if(p.gate)fx=p.gate(fx,sc,qs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-<div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Drill Complete</h1>
+<div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=8?"🏆":sc>=5?"⚔️":"🛡️"} size={52}/>)}</div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Drill Complete</h1>
 <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{qs.length}</div>
 <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{fx} XP</div><button className="btn1" onClick={p.back}>Back to Training</button>
 <NextStepReco u={p.u} fromMod="drill" nav={p.nav}/>
@@ -5998,7 +6007,7 @@ function WordFam(p){
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
 
   if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"🏆":sc>=8?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=12?"🏆":sc>=8?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Classifier Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -6065,7 +6074,7 @@ function ConnSort(p){
   </div>);
 
   if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=10?"🏆":sc>=7?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Sorting Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -6146,7 +6155,7 @@ function LinkingBridge(p){
   </div>);
 
   if(ph==="done"){var xp=15+sc*5+(sc===items.length?35:0);if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=13?"🏆":sc>=9?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=13?"🏆":sc>=9?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Bridge Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=13?"var(--green)":sc>=9?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -6227,7 +6236,7 @@ function PrepDrill(p){
     <button className="btn1" onClick={function(){sP("q");}} style={{marginTop:24}}>Ready! Start Drill</button></div>);
 
   if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=10?"🏆":sc>=7?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Prep Drill Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -6334,7 +6343,7 @@ function GerInf(p){
     var q=quizItems[ci];
 
     if(ph==="done"){var xp=20+sc*4;if(p.gate)xp=p.gate(xp,sc,quizItems.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=25?"🏆":sc>=18?"⚔️":"🛡️"}</div>
+      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=25?"🏆":sc>=18?"⚔️":"🛡️"} size={52}/>)}</div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Quiz Complete</h1>
       <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=25?"var(--green)":sc>=18?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{quizItems.length}</div>
       <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -6412,7 +6421,7 @@ function TrapsQuiz(p){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,traps.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=8?"🏆":sc>=5?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Traps Mastered!</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{traps.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -6718,7 +6727,7 @@ function PhrasalDojo(p){
     var mq=matchQs[ci];var mOpts=matchAllOpts[ci];
 
     if(ph==="done"){var mxp=20+sc*4;if(p.gate)mxp=p.gate(mxp,sc,matchQs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"🏆":sc>=8?"⚔️":"🛡️"}</div>
+      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=12?"🏆":sc>=8?"⚔️":"🛡️"} size={52}/>)}</div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Meaning Match</h1>
       <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{matchQs.length}</div>
       <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{mxp} XP</div>
@@ -6773,7 +6782,7 @@ function PhrasalDojo(p){
     var pq=pickerQs[ci];var pOpts=pickerAllOpts[ci];
 
     if(ph==="done"){var pxp=25+sc*5;if(p.gate)pxp=p.gate(pxp,sc,pickerQs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"⚡":sc>=8?"🔥":"💪"}</div>
+      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=12?"⚡":sc>=8?"🔥":"💪"} size={52}/>)}</div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Particle Picker</h1>
       <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{pickerQs.length}</div>
       {bestStreak>=3&&<div style={{fontSize:14,color:"var(--gold)",fontWeight:700,marginBottom:8}}>Best streak: {bestStreak} {"🔥"}</div>}
@@ -7043,7 +7052,7 @@ function StratQuizPage(p){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,qs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=13?"🏆":sc>=9?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=13?"🏆":sc>=9?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Quiz Complete!</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=13?"var(--green)":sc>=9?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{qs.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:12}}>+{xp} XP</div>
@@ -7122,7 +7131,7 @@ function TimeSim(p){
 
     return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{textAlign:"center",marginBottom:24}}>
-      <div style={{fontSize:48,marginBottom:12,animation:"countUp .6s"}}>{sc>=25?"🏆":sc>=18?"⚔️":"🛡️"}</div>
+      <div style={{fontSize:48,marginBottom:12,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=25?"🏆":sc>=18?"⚔️":"🛡️"} size={52}/>)}</div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Exam Complete</h1>
       <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=25?"var(--green)":sc>=18?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/30</div>
       <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:8}}>+{xp} XP</div>
@@ -7312,7 +7321,7 @@ function Part6Drill(p){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   if(ph==="done"){var xp=25+sc*5;if(p.gate)xp=p.gate(xp,sc,totalBlanks);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalBlanks*0.8?"🏆":sc>=totalBlanks*0.5?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalBlanks*0.8?"🏆":sc>=totalBlanks*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 6 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalBlanks*0.8?"var(--green)":sc>=totalBlanks*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalBlanks}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -7413,7 +7422,7 @@ function Part7Read(p){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQs);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Reading Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -7491,7 +7500,7 @@ function FalseFriends(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start</button></div>);
 
   if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=10?"🏆":sc>=7?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>False Friends Defeated!</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -7691,7 +7700,7 @@ function BossTest(p){
     saved.ans.p5.forEach(function(a){if(a>=0)rAnswered++;});saved.ans.p6.forEach(function(t){t.forEach(function(a){if(a>=0)rAnswered++;});});
     saved.ans.p7.forEach(function(ps){ps.forEach(function(a){if(a>=0)rAnswered++;});});
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:56,marginBottom:12}}>{"🛡️"}</div>
+      <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><ResultIcon e={"🛡️"} size={56}/></div>
       <h1 className="out" style={{fontWeight:900,fontSize:24,marginBottom:8}}>Session in progress</h1>
       <p style={{color:"var(--t2)",fontSize:14,marginBottom:24}}>You have an unfinished Final Arena attempt from today.</p>
       <div className="crd" style={{padding:16,marginBottom:24,textAlign:"left"}}>
@@ -7920,7 +7929,7 @@ function BossTest(p){
     var xp=Math.round(result.toeicEstimate*1.5)+(result.toeicEstimate>=800?200:result.toeicEstimate>=600?100:0);
 
     return(<div className="enter" style={{padding:"20px 16px 100px",minHeight:"100vh",textAlign:"center"}}>
-      <div style={{fontSize:64,marginBottom:12,animation:"countUp .6s"}}>{gradeIcon}</div>
+      <div style={{marginBottom:12,display:"flex",justifyContent:"center",animation:"countUp .6s"}}><ResultIcon e={gradeIcon} size={60}/></div>
       <h1 className="out" style={{fontWeight:900,fontSize:26,background:"linear-gradient(135deg,#dc2626,#f59e0b)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>THE FINAL ARENA</h1>
       <p style={{color:gradeCol,fontWeight:700,fontSize:16,marginBottom:20}}>{grade}</p>
 
@@ -8877,7 +8886,7 @@ function MockTest(p){
     var gradeCol=pct>=80?"var(--gold)":pct>=65?"var(--green)":pct>=50?"var(--orange)":"var(--red)";
 
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",textAlign:"center"}}>
-      <div style={{fontSize:56,marginBottom:12,animation:"countUp .6s"}}>{gradeIcon}</div>
+      <div style={{marginBottom:12,display:"flex",justifyContent:"center",animation:"countUp .6s"}}><ResultIcon e={gradeIcon} size={56}/></div>
       <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:4}}>Mock Test {mockId} Complete</h1>
       <p style={{color:gradeCol,fontWeight:700,fontSize:16,marginBottom:20}}>{grade}</p>
 
@@ -9464,7 +9473,7 @@ function SentenceBuilder(p){
 
   // ═══ DONE ═══
   if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,TOTAL);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=12?"🏆":sc>=8?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=12?"🏆":sc>=8?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Builder Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -9655,7 +9664,7 @@ function AudioBlitz(p){
 
   // ═══ DONE ═══
   if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,TOTAL);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=10?"🏆":sc>=7?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=10?"🏆":sc>=7?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Blitz Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -10531,7 +10540,7 @@ function ClueHunter(p){
     var emoji=pct>=80?"🏆":pct>=60?"⚔️":pct>=40?"🧭":"📚";
     return(
       <div className="enter" style={{padding:"32px 24px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-        <div style={{fontSize:64,marginBottom:16}}>{emoji}</div>
+        <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><ResultIcon e={emoji} size={60}/></div>
         <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:6}}>Case Closed!</h1>
         <div className="out" style={{fontSize:52,fontWeight:900,color:pct>=70?"var(--green)":pct>=40?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{pct}%</div>
         <div className="out" style={{fontSize:22,fontWeight:800,color:"var(--gold)",marginBottom:36}}>+{xp} XP</div>
@@ -10767,7 +10776,7 @@ function WordTavern(p){
     var gxp=p.gate?p.gate(baseXp,sc,TOTAL):baseXp;
     var missedCount=missed.length;
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:56,marginBottom:16,animation:"countUp .6s"}}>{emoji}</div>
+      <div style={{marginBottom:16,display:"flex",justifyContent:"center",animation:"countUp .6s"}}><ResultIcon e={emoji} size={56}/></div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>{title}</h1>
       <p style={{color:"var(--t2)",fontSize:16,marginBottom:4}}>{sc} / {TOTAL}</p>
       <p className="out" style={{color:"var(--gold)",fontWeight:700,fontSize:20,marginBottom:16}}>+{gxp} XP</p>
@@ -10915,7 +10924,7 @@ function SpeedMatch(p){
     var isRecord=!prev||finalTime<prev.time;
 
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:56,marginBottom:16,animation:"countUp .6s"}}>{stars===3?"⚡":stars===2?"🎯":"✅"}</div>
+      <div style={{marginBottom:16,display:"flex",justifyContent:"center",animation:"countUp .6s"}}><ResultIcon e={stars===3?"⚡":stars===2?"🎯":"✅"} size={56}/></div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>{stars===3?"Lightning Fast!":stars===2?"Well Done!":"Completed!"}</h1>
       {isRecord&&<div style={{fontSize:14,color:"var(--gold)",fontWeight:700,marginBottom:8,animation:"pulse 1s infinite"}}>🏅 NEW RECORD!</div>}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20,maxWidth:280,margin:"0 auto 20px"}}>
@@ -11115,7 +11124,7 @@ function animateFall(){
     var isRecord=!prev||score>prev.score;
 
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:56,marginBottom:12,animation:"countUp .6s"}}>{gradeIcon}</div>
+      <div style={{marginBottom:12,display:"flex",justifyContent:"center",animation:"countUp .6s"}}><ResultIcon e={gradeIcon} size={56}/></div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>{grade}</h1>
       {isRecord&&<div style={{fontSize:14,color:"var(--gold)",fontWeight:700,marginBottom:8,animation:"pulse 1s infinite"}}>🏅 NEW RECORD!</div>}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:20,maxWidth:320,margin:"0 auto 20px"}}>
@@ -13092,7 +13101,7 @@ function ListenP2(p){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=8?"🏆":sc>=5?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Listening Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -13190,7 +13199,7 @@ function ListenP1(p){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=8?"🏆":sc>=5?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=8?"🏆":sc>=5?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 1 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -13312,7 +13321,7 @@ function ListenP3(p){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ+1);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 3 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
@@ -13420,7 +13429,7 @@ function ListenP4(p){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ+1);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"}</div>
+    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 4 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
     <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
