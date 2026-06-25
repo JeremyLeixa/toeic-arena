@@ -222,7 +222,7 @@ function SeasonIcon(p){
 // Result-screen tier icon: maps the celebration emoji a screen already computes
 // (🏆/⚔️/🛡️/👑/⚡…) to a tinted game-icon, emoji fallback for anything unmapped.
 // Variation-selector (FE0F) stripped so ⚔️/🛡️/⚖️ match. (audit 2026-06-25)
-var RESULT_GI={0x1F3C6:["trophy-cup","var(--gold)"],0x1F451:["crown","var(--gold)"],0x2694:["crossed-swords","var(--cyan)"],0x1F6E1:["templar-shield","var(--t2)"],0x26A1:["lightning-storm","var(--gold)"],0x1F525:["flame","var(--orange)"],0x1F4AA:["biceps","var(--cyan)"],0x1F4D6:["spell-book","var(--t2)"],0x1F4DA:["bookshelf","var(--t2)"],0x1F9ED:["path-distance","var(--cyan)"],0x1F4DC:["scroll-unfurled","var(--t2)"],0x2696:["scales","var(--cyan)"],0x1F3AF:["bullseye","var(--cyan)"],0x2705:["check-mark","var(--green)"]};
+var RESULT_GI={0x1F3C6:["trophy-cup","var(--gold)"],0x1F451:["crown","var(--gold)"],0x2694:["crossed-swords","var(--cyan)"],0x1F6E1:["templar-shield","var(--t2)"],0x26A1:["lightning-storm","var(--gold)"],0x1F525:["flame","var(--orange)"],0x1F4AA:["biceps","var(--cyan)"],0x1F4D6:["spell-book","var(--t2)"],0x1F4DA:["bookshelf","var(--t2)"],0x1F9ED:["path-distance","var(--cyan)"],0x1F4DC:["scroll-unfurled","var(--t2)"],0x2696:["scales","var(--cyan)"],0x1F3AF:["bullseye","var(--cyan)"],0x2705:["check-mark","var(--green)"],0x1F512:["padlock","var(--t3)"],0x23F3:["sands-of-time","var(--endless)"],0x1F680:["rocket","var(--cyan)"]};
 function ResultIcon(p){
   var m=RESULT_GI[(p.e||" ").codePointAt(0)];var sz=p.size||52;
   if(m&&GAME_ICON_PATHS[m[0]])return(<GIcon name={m[0]} size={sz} color={p.color||m[1]}/>);
@@ -3972,7 +3972,7 @@ var[step,sSt]=useState("name");
         <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:20}}>Teacher Dashboard</h2>
         {bioAvail&&bioRegistered&&<button className="btn1" style={{marginBottom:20,display:"flex",alignItems:"center",justifyContent:"center",gap:10,width:"100%"}} onClick={async function(){
           try{var ok=await bioAuthenticate();if(ok)p.goTeacher();}catch(e){setTeacherErr(true);}
-        }}>{"🔒"} Unlock with biometrics</button>}
+        }}><GIcon name="padlock" size={14} color="var(--cyan)" style={{marginRight:6,verticalAlign:"-2px"}}/>Unlock with biometrics</button>}
         {bioAvail&&bioRegistered&&<div style={{fontSize:12,color:"var(--t3)",marginBottom:16}}>or enter code manually</div>}
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Access code</label>
@@ -5237,7 +5237,7 @@ return(
   var clickable=!!targetModule&&!!p.nav;
   return(<div key={ei} className="crd" onClick={clickable?function(){p.nav(targetModule);}:undefined} style={{marginBottom:12,padding:14,background:bg,border:"1px solid "+bd,cursor:clickable?"pointer":"default",animation:(pulseSlot==="event"&&ei===0)?"pulse 3s infinite":"none"}}>
     <div style={{display:"flex",alignItems:"center",gap:10}}>
-      <span style={{fontSize:24}}>{icon}</span>
+      <span style={{display:"flex",flexShrink:0}}><ResultIcon e={icon} size={24} color={col}/></span>
       <div style={{flex:1}}>
         <div className="out" style={{fontWeight:700,fontSize:14,color:col}}>{ev.title}</div>
         <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>{ev.description||(ev.type==="spotlight"?"x"+m+" XP on "+cfg.module:ev.type==="flash_hour"?"x"+m+" XP on everything":"x"+m+" XP if below class median")}</div>
@@ -5350,7 +5350,7 @@ function doAns(i){answered.current=true;clearTimeout(tr.current);sS(i);if(i===qs
 function nxt(){answered.current=false;if(ci<qs.length-1){sC(ci+1);sS(-1);sT(30);sP("q");}else{sP("done");var xp=30+sc*14+(sc===5?20:0);p.done(sc,xp);}}
 
 if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-<div style={{fontSize:64,marginBottom:20,animation:"pulse 2s infinite"}}>⚡</div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Daily Challenge</h1>
+<div style={{marginBottom:20,display:"flex",justifyContent:"center",animation:"pulse 2s infinite"}}><ResultIcon e={"⚡"} size={60}/></div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Daily Challenge</h1>
 <p style={{color:"var(--t2)",marginBottom:8}}>5 grammar questions · 30 seconds each</p><p style={{color:"var(--gold)",fontWeight:600,marginBottom:40,fontSize:14}}>Up to 100 XP + Perfect Bonus!</p>
 <button className="btn1" onClick={function(){sP("q");}}>Start Challenge</button><button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
@@ -5545,7 +5545,7 @@ function MockResetCTA(p){
                   <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
                   <div style={{fontSize:11,color:"var(--t3)"}}>{m.d}</div>
                 </div>
-                {m.lock?<span style={{fontSize:16}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+                {m.lock?<ResultIcon e={"🔒"} size={15} color="var(--t3)"/>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
               </div>);
           })}
         </div>
@@ -5591,7 +5591,7 @@ function MockResetCTA(p){
                   })}
                 </div>
               </div>
-              {bossLocked?<span style={{fontSize:18}}>{"🔒"}</span>:<span style={{fontSize:18,color:"rgba(220,38,38,.6)"}}>{"➔"}</span>}
+              {bossLocked?<ResultIcon e={"🔒"} size={17} color="var(--t3)"/>:<span style={{fontSize:18,color:"rgba(220,38,38,.6)"}}>{"➔"}</span>}
             </div>
           </div>
         </div>
@@ -5623,7 +5623,7 @@ function MockResetCTA(p){
                   </div>
                   <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:11,color:"#8a7e6a"}}>the arena never sleeps</div>
                 </div>
-                {isReady?<span style={{fontSize:18,color:"#7fb8e8"}}>{"→"}</span>:<span style={{fontSize:18}}>{"🔒"}</span>}
+                {isReady?<span style={{fontSize:18,color:"#7fb8e8"}}>{"→"}</span>:<ResultIcon e={"🔒"} size={17} color="var(--t3)"/>}
               </div>
 
               {/* Locked: progress bar toward 650 gate */}
@@ -5682,7 +5682,7 @@ function MockResetCTA(p){
                   <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
                   <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
                 </div>
-                {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:m.lock?<span style={{fontSize:16}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+                {vl?<ResultIcon e={"🔒"} size={14} color="var(--gold)"/>:m.lock?<ResultIcon e={"🔒"} size={15} color="var(--t3)"/>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
               </div>);
           })}
         </div>
@@ -5824,7 +5824,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 return(<div key={dom.id} className="crd" onClick={function(){if(vl){p.onPremium(dom.name+" Flashcards");return;}p.nav("cdom",dom.id);}} style={{display:"flex",alignItems:"center",gap:14,cursor:vl?"default":"pointer",padding:"14px 16px",opacity:vl?.55:1}}>
 <div style={{width:42,height:42,borderRadius:12,background:vl?"var(--bg3)":dom.col+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{dom.icon}</div>
 <div style={{flex:1,minWidth:0}}><div className="out" style={{fontWeight:600,fontSize:14}}>{dom.name}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t2)"}}>{vl?"Arena Premium":ms+"/"+dom.cards.length+" mastered"}</div></div>
-{vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<div style={{width:48}}><Bar value={ms} max={dom.cards.length} h={4} color={dom.col}/></div>}</div>);})}</div></div>);}
+{vl?<ResultIcon e={"🔒"} size={14} color="var(--gold)"/>:<div style={{width:48}}><Bar value={ms} max={dom.cards.length} h={4} color={dom.col}/></div>}</div>);})}</div></div>);}
 
 // ─── FLASHCARD SESSION ───
 function CardSess(p){var all=[];if(p.domId){var dom=VOCAB.find(function(d){return d.id===p.domId;});if(dom)all=dom.cards;}else{VOCAB.forEach(function(d){d.cards.forEach(function(c){all.push(c);});});}
@@ -8335,7 +8335,7 @@ function EndlessArena(p){
     saved.ans.p5.forEach(function(a){if(a>=0)rAnswered++;});saved.ans.p6.forEach(function(t){t.forEach(function(a){if(a>=0)rAnswered++;});});
     saved.ans.p7.forEach(function(ps){ps.forEach(function(a){if(a>=0)rAnswered++;});});
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:56,marginBottom:12}}>{"⏳"}</div>
+      <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><ResultIcon e={"⏳"} size={54}/></div>
       <h1 className="out" style={{fontWeight:900,fontSize:24,marginBottom:8}}>Session in progress</h1>
       <p style={{color:"var(--t2)",fontSize:14,marginBottom:24}}>You have an unfinished Endless Arena attempt from today.</p>
       <div className="crd" style={{padding:16,marginBottom:24,textAlign:"left"}}>
@@ -8352,7 +8352,7 @@ function EndlessArena(p){
   // ═══ INTRO ═══
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:64,marginBottom:12,animation:"pulse 2s infinite"}}>{"⏳"}</div>
+      <div style={{marginBottom:12,display:"flex",justifyContent:"center",animation:"pulse 2s infinite"}}><ResultIcon e={"⏳"} size={60}/></div>
       <h1 className="out" style={{fontWeight:900,fontSize:28,background:"linear-gradient(90deg,#7fb8e8,#4a9fe0,#d4943a)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>ENDLESS ARENA</h1>
       <p style={{color:"var(--t2)",fontSize:14,fontStyle:"italic",marginBottom:20}}>the arena never sleeps</p>
       <div className="crd" style={{textAlign:"left",padding:16,marginBottom:16}}>
@@ -8378,9 +8378,9 @@ function EndlessArena(p){
         <div style={{display:"flex",justifyContent:"space-between",fontWeight:800,fontSize:15,color:"var(--t1)"}}><span>TOTAL</span><span className="out" style={{color:"var(--gold)"}}>{totalQ} questions {"·"} 120 min</span></div>
       </div>
       <div className="crd" style={{padding:14,marginBottom:24,borderColor:"rgba(27,112,207,.3)",background:"rgba(27,112,207,.06)"}}>
-        <p style={{fontSize:12,color:"var(--endless)",lineHeight:1.6}}>{"⏳"} Randomly generated from the full content pool. No feedback during test. Your score and weakest part will be analyzed.</p>
+        <p style={{fontSize:12,color:"var(--endless)",lineHeight:1.6}}><GIcon name="sands-of-time" size={12} color="var(--endless)" style={{marginRight:4,verticalAlign:"-1px"}}/>Randomly generated from the full content pool. No feedback during test. Your score and weakest part will be analyzed.</p>
       </div>
-      <button className="btn1" style={{background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",fontSize:18,padding:"16px 32px"}} onClick={function(){stopBGM();setPhase("test");}}>{"⏳"} Enter the Sanctuary</button>
+      <button className="btn1" style={{background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",fontSize:18,padding:"16px 32px"}} onClick={function(){stopBGM();setPhase("test");}}><GIcon name="sands-of-time" size={16} color="#0f0c08" style={{marginRight:6,verticalAlign:"-2px"}}/>Enter the Sanctuary</button>
       <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Not ready yet</button>
     </div>);
   }
@@ -9131,7 +9131,7 @@ function GamesHub(p){
             <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
             {!vl&&lb&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{"🏆 "}{lb.name}{" · "}{lb.label}</div>}
             {!vl&&m.tag&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{m.tag}</div>}</div>
-          {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+          {vl?<ResultIcon e={"🔒"} size={14} color="var(--gold)"/>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
         </div>);})}
     </div>
   </div>);
@@ -13060,7 +13060,7 @@ function ListenHub(p){
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
           <div style={{width:42,height:42,borderRadius:12,background:vl?"transparent":"linear-gradient(135deg,rgba(var(--cx),.22),transparent)",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
-          {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+          {vl?<ResultIcon e={"🔒"} size={14} color="var(--gold)"/>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
         </div>);})}
     </div>
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
@@ -13515,7 +13515,7 @@ function ReadingHub(p){
         <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
           <div style={{width:42,height:42,borderRadius:12,background:vl?"transparent":"linear-gradient(135deg,rgba(var(--cx),.22),transparent)",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
           <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
-          {vl?<span style={{fontSize:14,color:"var(--gold)"}}>{"🔒"}</span>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
+          {vl?<ResultIcon e={"🔒"} size={14} color="var(--gold)"/>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
         </div>);})}
     </div>
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
@@ -13897,7 +13897,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
             <div className="out" style={{fontWeight:700,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t2)",flexShrink:0}}>{pl.inactive?"—":pl.xp+" XP"}</div>
           </div>);
         })}
-        {displayed.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>Personne en ligue {lg.name} pour l'instant 🚀</p></div>}
+        {displayed.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}><p style={{fontSize:13,color:"var(--t3)"}}>Personne en ligue {lg.name} pour l'instant <GIcon name="rocket" size={13} color="var(--t3)" style={{verticalAlign:"-1px"}}/></p></div>}
       </div>
       {!isTeacher&&hidden.length>0&&<div style={{textAlign:"center",marginTop:12}}>
         <button onClick={function(){setShowAllLeagues(function(v){return !v;});}} style={{background:"none",border:"1px solid var(--bdr)",borderRadius:8,padding:"6px 14px",fontSize:11,color:"var(--t3)",cursor:"pointer",fontFamily:"inherit"}}>
@@ -15790,7 +15790,7 @@ function Profile(p){
           <span style={{fontSize:12,background:"rgba(var(--cx),.1)",color:"var(--orange)",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(var(--cx),.2)"}}>Lv. {lv.level}</span>
           <span style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"1px solid rgba(27,112,207,.2)",background:"rgba(27,112,207,.1)",color:lg.color}}>
   <LeagueIcon lg={lg} size={13} style={{marginRight:4,verticalAlign:"-2px"}}/>{lg.name}
-  {lg.locked&&<span style={{fontSize:10,color:"var(--t3)",marginLeft:4}}>🔒</span>}
+  {lg.locked&&<span style={{marginLeft:4,display:"inline-flex"}}><ResultIcon e={"🔒"} size={11} color="var(--t3)"/></span>}
 </span>
 {lg.locked&&<span style={{fontSize:11,color:"var(--t3)",padding:"3px 10px",borderRadius:20,background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.15)"}}>{lg.lockReason==="need_estimation"?"Legend tier: complete more modules or a Mock test":("Legend tier: reach TOEIC "+lg.lockedScore)}</span>}
           <span style={{fontSize:12,background:"rgba(255,100,0,.1)",color:"#ff6428",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(255,100,0,.2)",display:"inline-flex",alignItems:"center",gap:4}}><GIcon name="flame" size={12} color="#ff6428"/>{u.streak}</span>
