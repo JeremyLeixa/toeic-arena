@@ -1165,7 +1165,18 @@ var CSS=`
 @font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url('/fonts/outfit-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url('/fonts/outfit-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;--cx:212,148,58;--cx-hex:#d4943a;--cx-dark:#a06e20;--endless:#1B70CF;--endless-dark:#0a3a6e;--endless-light:#7fb8e8;--endless-mid:#4a9fe0;--endless-muted:#7a9ac0}
+/* A11y: keyboard focus ring. Many inputs set inline outline:none with no replacement,
+   so this needs !important to win over inline styles. :focus-visible = keyboard only,
+   so taps/clicks stay ring-free. (audit 2026-06-25) */
+:focus-visible{outline:2px solid var(--cyan)!important;outline-offset:2px}
+.btn1:focus-visible,.btn2:focus-visible{outline-offset:3px}
+/* A11y: honor reduced-motion. ~50 keyframes (shimmer/glow/pulse/chest/skin loops) ran
+   unconditionally; collapse them to instant + run-once. Entrance reveals still appear,
+   just without motion. (audit 2026-06-25) */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#756b54;--cx:212,148,58;--cx-hex:#d4943a;--cx-dark:#a06e20;--endless:#1B70CF;--endless-dark:#0a3a6e;--endless-light:#7fb8e8;--endless-mid:#4a9fe0;--endless-muted:#7a9ac0}
 .skin-argent{--cx:180,180,200;--cx-hex:#b4b4c8;--cx-dark:#888898;--cyan:#b4b4c8;--orange:#888898}
 .skin-emeraude{--cx:46,180,100;--cx-hex:#2eb464;--cx-dark:#1a8a46;--cyan:#2eb464;--orange:#1a8a46}
 .skin-saphir{--cx:58,148,220;--cx-hex:#3a94dc;--cx-dark:#1a6aaa;--cyan:#3a94dc;--orange:#1a6aaa}
@@ -1175,7 +1186,7 @@ var CSS=`
 .skin-jade{--cx:20,180,170;--cx-hex:#14b4aa;--cx-dark:#0a8880;--cyan:#14b4aa;--orange:#0a8880}
 .skin-obsidienne{--cx:180,160,220;--cx-hex:#b4a0dc;--cx-dark:#8870b0;--cyan:#b4a0dc;--orange:#8870b0;--bg:#080810;--bg2:#12101c;--bg3:#1c1a28;--t1:#e8e4f4;--t2:#807898;--bdr:rgba(160,128,224,.08)}
 .skin-aurore{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870;--bg:#08090e;--bg2:#10121c;--bg3:#18202c;--t1:#d8f0e8;--t2:#5898a0;--bdr:rgba(64,208,192,.08)}
-.light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bg-rgb:245,240,232;--bg2-rgb:255,252,245;--bg3-rgb:232,224,210;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#8a7e6a;--cx:139,105,20;--cx-hex:#8b6914;--cx-dark:#6a4e10}
+.light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bg-rgb:245,240,232;--bg2-rgb:255,252,245;--bg3-rgb:232,224,210;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#6e6048;--cx:139,105,20;--cx-hex:#8b6914;--cx-dark:#6a4e10}
 .light.skin-argent{--cx:80,80,110;--cx-hex:#505070;--cx-dark:#383848;--cyan:#505070;--orange:#383848}
 .light.skin-emeraude{--cx:18,110,52;--cx-hex:#126e34;--cx-dark:#0c5228;--cyan:#126e34;--orange:#0c5228}
 .light.skin-saphir{--cx:20,80,150;--cx-hex:#145096;--cx-dark:#0e3a78;--cyan:#145096;--orange:#0e3a78}
@@ -1423,6 +1434,10 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .tab-bar button span:nth-child(2){font-size:13px!important;font-weight:600!important}
 .tab-bar button div{display:none!important}
 .enter{padding-bottom:32px!important}
+/* Desktop: cap content width so cards/reading passages don't stretch edge-to-edge on
+   large monitors (line length was >100ch). Centered in the area right of the 200px
+   sidebar. Tune the 1000px if a data-dense screen needs more. (audit 2026-06-25) */
+.app:not(.onboard-shell) .enter{max-width:1000px;margin-left:auto;margin-right:auto}
 .crd{padding:24px}
 .crd:hover{border-color:rgba(180,140,80,.18);box-shadow:0 2px 12px rgba(var(--cx),.06)}
 .btn1{width:auto;padding:14px 36px}
@@ -3617,7 +3632,7 @@ var[step,sSt]=useState("name");
   if(step==="name")return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .8s ease-out"}}>
-        <div style={{fontSize:64,marginBottom:16}}>⚔️</div>
+        <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="crossed-swords" size={64} color="var(--cyan)"/></div>
         <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>TOEIC ARENA</h1>
         <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>Train smarter. Climb the ranks.<br/>Conquer the TOEIC.</p>
         <div style={{marginBottom:20,textAlign:"left"}}>
@@ -3673,7 +3688,7 @@ var[step,sSt]=useState("name");
       <button className="back-btn" onClick={function(){sSt("name");setPwdErr("");setPwdEmailDup(false);}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"←"} Back</button>
       <div style={{maxWidth:420,margin:"60px auto 0"}}>
         <div style={{textAlign:"center",marginBottom:24}}>
-          <div style={{fontSize:48,marginBottom:12}}>{"🏰"}</div>
+          <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><GIcon name="castle" size={48} color="var(--cyan)"/></div>
           <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{"Crée ton compte"}</h1>
           <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Email et mot de passe pour sauvegarder ton avancée et te reconnecter sur tous tes appareils."}</p>
         </div>
@@ -3744,7 +3759,7 @@ var[step,sSt]=useState("name");
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:56,marginBottom:16}}>{emailSent?"✉️":"🏰"}</div>
+        <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}>{emailSent?<span style={{fontSize:56,lineHeight:1}}>{"✉️"}</span>:<GIcon name="castle" size={56} color="var(--cyan)"/>}</div>
         <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:24,color:"var(--t1)",marginBottom:10}}>
           {emailSent?"Mail envoyé":"Bon retour !"}
         </h2>
@@ -3854,28 +3869,28 @@ var[step,sSt]=useState("name");
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       {showPrivacy?<PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>:
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:420}}>
-        <div style={{fontSize:48,marginBottom:16}}>{"🛡️"}</div>
+        <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="templar-shield" size={48} color="var(--cyan)"/></div>
         <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{"Protection de vos donn\u00e9es"}</h2>
         <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.6}}>{"Avant de commencer, voici comment TOEIC Arena utilise vos donn\u00e9es :"}</p>
         <div style={{textAlign:"left",padding:"16px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:14,marginBottom:20}}>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>{"📊"}</span>
+              <span style={{flexShrink:0,marginTop:1}}><GIcon name="stone-tablet" size={20} color="var(--cyan)"/></span>
               <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Donn\u00e9es collect\u00e9es"}</div>
               <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Votre pr\u00e9nom, code classe, scores, progression, temps d\u2019entra\u00eenement. Aucun e-mail, aucun mot de passe."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>{"🎯"}</span>
+              <span style={{flexShrink:0,marginTop:1}}><GIcon name="bullseye" size={20} color="var(--cyan)"/></span>
               <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Finalit\u00e9"}</div>
               <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Suivi p\u00e9dagogique, classements, et personnalisation de l\u2019entra\u00eenement. Donn\u00e9es accessibles \u00e0 votre formateur."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>{"🔒"}</span>
+              <span style={{flexShrink:0,marginTop:1}}><GIcon name="scales" size={20} color="var(--cyan)"/></span>
               <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Vos droits"}</div>
               <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Vous pouvez \u00e0 tout moment exporter, modifier ou supprimer vos donn\u00e9es depuis votre profil."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:18,lineHeight:1.2,flexShrink:0}}>{"🌐"}</span>
+              <span style={{flexShrink:0,marginTop:1}}><GIcon name="world" size={20} color="var(--cyan)"/></span>
               <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"H\u00e9bergement"}</div>
               <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Donn\u00e9es stock\u00e9es chez Supabase (UE/US) et Vercel. Aucune revente \u00e0 des tiers."}</p></div>
             </div>
