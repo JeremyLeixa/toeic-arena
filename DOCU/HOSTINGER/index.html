@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verse Arena — Prépare ton TOEIC comme un jeu</title>
+<meta name="description" content="Verse Arena : la plateforme gamifiée de préparation au TOEIC. 4000+ questions, 20+ modules, classements, achievements, Boss Test. Gratuit pour commencer.">
+<meta name="keywords" content="TOEIC, préparation TOEIC, entraînement TOEIC, TOEIC gratuit, gamification, score TOEIC, test anglais">
+<meta property="og:title" content="Verse Arena — Prépare ton TOEIC comme un jeu">
+<meta property="og:description" content="20+ modules, classements entre étudiants, achievements, Boss Test final. La seule plateforme TOEIC où tu as envie de t'entraîner.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://verse-arena.fr">
+<link rel="canonical" href="https://verse-arena.fr">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:#0f0c08;color:#ede4d4;font-family:'DM Sans',sans-serif;overflow-x:hidden}
+::selection{background:#d4943a;color:#0f0c08}
+img{max-width:100%;display:block}
+a{text-decoration:none}
+
+/* ── Vars ── */
+:root{
+  --bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;
+  --gold:#d4943a;--gold2:#f0c850;--orange:#c87a35;--purple:#8b5e83;--green:#4abe60;
+  --t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;
+  --bdr:rgba(180,140,80,0.08);
+}
+
+/* ── Animations ── */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes flicker{0%,100%{opacity:.7}50%{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+@keyframes fadeLeft{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes grain{0%,100%{transform:translate(0)}10%{transform:translate(-1%,-1%)}30%{transform:translate(1%,1%)}50%{transform:translate(-1%,0)}70%{transform:translate(0,-1%)}90%{transform:translate(1%,0)}}
+
+.fade-up{opacity:0;animation:fadeUp .7s cubic-bezier(.23,1,.32,1) forwards}
+.fade-left{opacity:0;animation:fadeLeft .7s cubic-bezier(.23,1,.32,1) forwards}
+.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.4s}
+.d5{animation-delay:.5s}.d6{animation-delay:.6s}.d7{animation-delay:.7s}.d8{animation-delay:.8s}
+
+/* ── Grain overlay ── */
+.grain{
+  position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat:repeat;background-size:180px;
+  animation:grain 8s steps(10) infinite;
+}
+
+/* ── Nav ── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:0 28px;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:all .35s;
+}
+.nav.solid{background:rgba(15,12,8,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr)}
+.nav-logo{display:flex;align-items:center;gap:8px}
+.nav-logo span:last-child{
+  font-family:'Cinzel',serif;font-weight:800;font-size:14px;
+  background:linear-gradient(135deg,var(--gold),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.nav-links{display:flex;align-items:center;gap:20px}
+.nav-links a{color:var(--t2);font-size:12px;font-weight:600;font-family:'Cinzel',serif;transition:color .2s}
+.nav-links a:hover{color:var(--gold)}
+.nav-links a.cta-main{color:#000}
+.nav-links a.cta-main:hover{color:#000}
+
+/* ── Buttons ── */
+.cta-main{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 34px;border-radius:12px;border:none;cursor:pointer;
+  font-family:'Cinzel',serif;font-weight:700;font-size:14px;
+  background:linear-gradient(135deg,var(--gold),#a06e20);
+  color:#000;position:relative;overflow:hidden;
+  box-shadow:0 4px 24px rgba(212,148,58,.25),inset 0 1px 0 rgba(255,255,255,.15);
+  text-shadow:0 1px 0 rgba(255,255,255,.15);
+  transition:transform .2s,box-shadow .3s;letter-spacing:.5px;
+}
+.cta-main:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(212,148,58,.4),inset 0 1px 0 rgba(255,255,255,.15)}
+.cta-main::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  background-size:200% 100%;animation:shimmer 4s infinite;
+}
+.cta-sm{padding:9px 20px;font-size:11px}
+.cta-ghost{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 28px;border-radius:12px;
+  border:1px solid rgba(180,140,80,.15);cursor:pointer;
+  font-family:'Cinzel',serif;font-weight:600;font-size:13px;
+  background:rgba(180,140,80,.04);color:var(--t2);
+  transition:all .2s;letter-spacing:.5px;
+}
+.cta-ghost:hover{background:rgba(180,140,80,.08);border-color:rgba(180,140,80,.3);color:var(--gold)}
+
+/* ── Cards ── */
+.card{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;
+  padding:28px 24px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04);
+  transition:transform .3s,border-color .3s;
+}
+.card:hover{transform:translateY(-4px);border-color:rgba(180,140,80,.15)}
+.stat-card{
+  text-align:center;padding:24px 16px;
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;
+  box-shadow:inset 0 1px 0 rgba(180,140,80,.04);transition:transform .3s;
+}
+.stat-card:hover{transform:translateY(-3px)}
+
+/* ── Ornament ── */
+.ornament{display:flex;align-items:center;gap:12px;justify-content:center;margin:8px 0}
+.ornament::before,.ornament::after{content:'';width:40px;height:1px}
+.ornament::before{background:linear-gradient(90deg,transparent,rgba(212,148,58,.3))}
+.ornament::after{background:linear-gradient(90deg,rgba(212,148,58,.3),transparent)}
+.ornament span{color:var(--gold2);font-size:10px;opacity:.6}
+
+/* ── Phone mockup ── */
+.phone{
+  width:272px;min-height:500px;background:var(--bg2);border-radius:34px;
+  border:2px solid rgba(180,140,80,.2);padding:10px 7px;
+  box-shadow:0 40px 80px rgba(0,0,0,.7),0 0 80px rgba(212,148,58,.06),inset 0 1px 0 rgba(180,140,80,.08);
+  position:relative;overflow:hidden;animation:float 6s ease-in-out infinite;
+}
+.phone-notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:76px;height:22px;background:var(--bg);border-radius:18px;z-index:2}
+.phone-screen{border-radius:26px;overflow:hidden;height:100%;background:var(--bg)}
+.mock-card{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;
+  background:var(--bg2);border-radius:12px;border:1px solid var(--bdr);
+  box-shadow:inset 0 1px 0 rgba(180,140,80,.04);
+}
+.mock-card.locked{opacity:.45}
+.mock-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.mock-card h4{font-weight:700;font-size:10.5px;color:var(--t1);font-family:'DM Sans',sans-serif;margin:0}
+.mock-card p{font-size:8.5px;color:var(--t3);margin:0}
+.mock-card.locked p{color:var(--gold)}
+
+/* ── Comparison table ── */
+.comp{border-radius:16px;overflow:hidden;border:1px solid var(--bdr);background:var(--bg2)}
+.comp-head{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;background:linear-gradient(135deg,var(--bg3),var(--bg2));border-bottom:1px solid var(--bdr)}
+.comp-head>div{padding:14px 12px;font-size:11px;font-weight:600;color:var(--t3);text-align:center}
+.comp-head>div:first-child{text-align:left}
+.comp-head>div:last-child{font-weight:800;color:var(--gold);font-family:'Cinzel',serif;border-left:2px solid rgba(212,148,58,.18);background:rgba(212,148,58,.04)}
+.comp-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;border-bottom:1px solid var(--bdr);transition:background .2s}
+.comp-row:last-child{border-bottom:none}
+.comp-row:hover{background:rgba(180,140,80,.03)}
+.comp-row>div{padding:12px 12px;font-size:11.5px;color:var(--t2);text-align:center;display:flex;align-items:center;justify-content:center}
+.comp-row>div:first-child{font-weight:700;color:var(--t1);text-align:left;justify-content:flex-start}
+.comp-row>div:last-child{font-weight:700;color:var(--gold);border-left:2px solid rgba(212,148,58,.18);background:rgba(212,148,58,.02)}
+
+/* ── Sections ── */
+.section{padding:90px 40px}
+.section-title{font-family:'Cinzel',serif;font-weight:800;font-size:clamp(26px,3.8vw,40px);margin-bottom:12px}
+.section-label{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:3px;margin-bottom:10px;font-family:'Cinzel',serif}
+
+/* ── Grids ── */
+.stats-grid{max-width:860px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  /* Nav — compact */
+  .nav{padding:0 12px!important;height:50px;gap:8px}
+  .nav-logo span:first-child{font-size:16px!important}
+  .nav-logo span:last-child{font-size:11px!important}
+  .nav-links{gap:8px}
+  .nav-links a.nav-link-text{display:none}
+  .cta-sm{padding:7px 14px!important;font-size:10px!important;letter-spacing:0!important;gap:4px!important;white-space:nowrap;flex-shrink:0}
+
+  /* Hero */
+  .hero{padding:70px 16px 24px!important;min-height:auto!important}
+  .hero-flex{flex-direction:column!important;text-align:center!important;gap:24px!important}
+  .hero-flex>div:first-child{align-items:center!important}
+  .hero-ctas{justify-content:center!important;flex-direction:column!important;align-items:stretch!important;width:100%}
+  .hero-ctas .cta-main,.hero-ctas .cta-ghost{width:100%;justify-content:center;text-align:center;box-sizing:border-box}
+  .phone-wrap{transform:scale(.75)!important;margin:0 auto!important}
+
+  /* Stats */
+  .stats-section{padding:32px 16px!important}
+  .stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px}
+  .stat-card{padding:16px 10px}
+  .stat-card div[data-count]{font-size:24px!important}
+
+  /* Pricing — stack en mobile pour éviter l'écrasement des 3 colonnes */
+  .pricing-grid{grid-template-columns:1fr!important;gap:14px!important}
+  .pricing-card{padding:24px 20px!important}
+  .pricing-featured{order:-1} /* Le Pass remonte en 1er sur mobile = le plus visible */
+
+  /* Footer — stack en mobile */
+  .footer-grid{grid-template-columns:1fr!important;gap:32px!important;text-align:center}
+  .footer-grid>div:first-child p{max-width:100%!important;margin-left:auto;margin-right:auto}
+
+  /* Sections — tighter */
+  .section{padding:40px 16px!important}
+  .section-title{font-size:clamp(22px,6vw,32px)!important}
+
+  /* Features */
+  .feat-grid{grid-template-columns:1fr!important;gap:12px}
+  .card{padding:22px 18px!important}
+
+  /* Comparison — mobile card layout */
+  .comp-wrap{overflow:visible!important;margin:0!important;padding:0!important}
+  .comp{display:none!important}
+  .comp-mobile{display:flex!important}
+
+  /* Boss Test */
+  .boss-section{padding:40px 16px!important}
+  .boss-section div[style*="font-size:64px"]{font-size:48px!important}
+
+  /* Final CTA */
+  .final-cta{padding:40px 16px 40px!important}
+  .final-cta .cta-main{width:100%;justify-content:center;text-align:center;box-sizing:border-box;padding:16px 24px!important;font-size:14px!important}
+
+  /* Footer */
+  footer{padding:28px 16px!important}
+
+  /* General overrides for inline paddings */
+  section[style*="padding:50px 40px"]{padding:32px 16px!important}
+  section[style*="padding:90px 40px"]{padding:40px 16px!important}
+  section[style*="padding:100px 40px"]{padding:40px 16px!important}
+}
+
+@media(max-width:480px){
+  .nav{padding:0 10px!important}
+  .nav-logo span:last-child{font-size:10px!important}
+  .cta-sm{padding:6px 12px!important;font-size:9px!important}
+  .phone-wrap{transform:scale(.65)!important}
+  h1{font-size:clamp(26px,7vw,36px)!important}
+  .hero-ctas .cta-main{padding:14px 20px!important;font-size:13px!important}
+}
+
+/* ── Mobile comparison cards (hidden on desktop) ── */
+.comp-mobile{
+  display:none;
+  flex-direction:column;gap:12px;
+}
+.comp-mobile-card{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;
+  padding:18px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04);
+}
+.comp-mobile-card h4{
+  font-family:'Cinzel',serif;font-weight:800;font-size:14px;
+  margin-bottom:12px;padding-bottom:10px;
+  border-bottom:1px solid var(--bdr);
+}
+.comp-mobile-card .cm-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid rgba(180,140,80,.04);
+  font-size:12px;
+}
+.comp-mobile-card .cm-row:last-child{border-bottom:none}
+.comp-mobile-card .cm-label{color:var(--t3);font-weight:600}
+.comp-mobile-card .cm-val{color:var(--t2);text-align:right;max-width:55%}
+.comp-mobile-card.arena{border-color:rgba(212,148,58,.2)}
+.comp-mobile-card.arena h4{color:var(--gold);border-bottom-color:rgba(212,148,58,.15)}
+.comp-mobile-card.arena .cm-val{color:var(--gold);font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- Grain -->
+<div class="grain"></div>
+
+<!-- Nav -->
+<nav class="nav" id="nav">
+  <div class="nav-logo">
+    <span style="font-size:20px">⚔️</span>
+    <span>VERSE ARENA</span>
+  </div>
+  <div class="nav-links">
+    <a href="#features" class="nav-link-text">Fonctionnalités</a>
+    <a href="#compare" class="nav-link-text">Comparatif</a>
+    <a href="#pricing" class="nav-link-text">Tarifs</a>
+    <a href="/blog/" class="nav-link-text">Blog</a>
+    <a href="https://app.verse-arena.fr" target="_blank" class="cta-main cta-sm">Commencer</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero" style="min-height:100vh;display:flex;align-items:center;padding:100px 40px 60px;position:relative;overflow:hidden">
+  <!-- Glows -->
+  <div style="position:absolute;top:-15%;right:-8%;width:600px;height:600px;background:radial-gradient(circle,rgba(212,148,58,.07),transparent 65%);filter:blur(60px);pointer-events:none"></div>
+  <div style="position:absolute;bottom:-10%;left:-5%;width:400px;height:400px;background:radial-gradient(circle,rgba(139,94,131,.06),transparent 65%);filter:blur(50px);pointer-events:none"></div>
+  <!-- Dot grid -->
+  <div style="position:absolute;inset:0;opacity:.015;background-image:radial-gradient(rgba(180,140,80,.6) 1px,transparent 1px);background-size:32px 32px;pointer-events:none"></div>
+
+  <div class="hero-flex" style="max-width:1140px;margin:0 auto;width:100%;display:flex;align-items:center;gap:56px">
+    <!-- Left -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start">
+      <div class="fade-up" style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:rgba(180,140,80,.06);border:1px solid rgba(180,140,80,.12);margin-bottom:22px">
+        <span style="width:5px;height:5px;border-radius:50%;background:var(--green)"></span>
+        <span style="font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.3px">Testé par 120+ étudiants dans plusieurs écoles de commerce</span>
+      </div>
+
+      <h1 class="fade-up d1" style="font-family:'Cinzel',serif;font-weight:900;font-size:clamp(34px,5vw,56px);line-height:1.08;margin-bottom:18px;letter-spacing:-0.3px">
+        <span style="display:block;color:var(--t1)">Prépare ton</span>
+        <span style="display:block;background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent">TOEIC</span>
+        <span style="display:block;color:var(--t1)">comme un jeu.</span>
+      </h1>
+
+      <div class="ornament fade-up d2"><span>◆</span></div>
+
+      <p class="fade-up d2" style="font-size:16px;line-height:1.75;color:var(--t2);max-width:460px;margin-bottom:32px;margin-top:8px">
+        20+ modules d'entraînement, des classements entre étudiants, des achievements à débloquer, un Boss Test final.
+        La seule plateforme TOEIC où tu as <em style="color:var(--gold);font-style:normal;font-weight:700">envie</em> de t'entraîner.
+      </p>
+
+      <div class="fade-up d3 hero-ctas" style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="https://app.verse-arena.fr" target="_blank" class="cta-main">⚔️ Entrer dans l'arène</a>
+        <a href="#features" class="cta-ghost">En savoir plus ↓</a>
+      </div>
+      <p class="fade-up d4" style="font-size:11px;color:var(--t3);margin-top:14px">
+        Gratuit · Aucune carte bancaire · 8 modules accessibles immédiatement
+      </p>
+    </div>
+
+    <!-- Phone -->
+    <div class="fade-left d3 phone-wrap" style="flex:0 0 auto">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div style="padding:38px 12px 12px">
+            <div style="margin-bottom:12px">
+              <div style="font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;font-weight:700">Training Grounds</div>
+              <div style="font-size:13px;font-weight:800;color:var(--t1);font-family:'Cinzel',serif">Choose your battle</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div class="mock-card">
+                <div class="mock-icon" style="background:linear-gradient(135deg,#d4943a,#8b5e83)">⚡</div>
+                <div style="flex:1"><h4>Daily Challenge</h4><p>5 daily questions</p></div>
+                <span style="font-size:11px;color:var(--gold)">→</span>
+              </div>
+              <div class="mock-card">
+                <div class="mock-icon" style="background:linear-gradient(135deg,#5a7a9a,#7a5a80)">📝</div>
+                <div style="flex:1"><h4>Part 5 Drill</h4><p>Grammar &amp; Vocab</p></div>
+                <span style="font-size:11px;color:var(--gold)">→</span>
+              </div>
+              <div class="mock-card">
+                <div class="mock-icon" style="background:linear-gradient(135deg,#ff8c42,#ff6b35)">🃏</div>
+                <div style="flex:1"><h4>Flashcards</h4><p>SRS spaced repetition</p></div>
+                <span style="font-size:11px;color:var(--gold)">→</span>
+              </div>
+              <div class="mock-card">
+                <div class="mock-icon" style="background:linear-gradient(135deg,#8b5e83,#5a5c8a)">🧠</div>
+                <div style="flex:1"><h4>Strategy Quiz</h4><p>Test your exam IQ</p></div>
+                <span style="font-size:11px;color:var(--gold)">→</span>
+              </div>
+              <div class="mock-card locked">
+                <div class="mock-icon" style="background:var(--bg3)">🎭</div>
+                <div style="flex:1"><h4>False Friends</h4><p>Arena Premium</p></div>
+                <span style="font-size:11px;color:var(--gold2)">🔒</span>
+              </div>
+              <div class="mock-card locked">
+                <div class="mock-icon" style="background:var(--bg3)">⚔️</div>
+                <div style="flex:1"><h4>Phrasal Verb Dojo</h4><p>Arena Premium</p></div>
+                <span style="font-size:11px;color:var(--gold2)">🔒</span>
+              </div>
+              <div class="mock-card locked">
+                <div class="mock-icon" style="background:var(--bg3)">📜</div>
+                <div style="flex:1"><h4>Mock Test 1</h4><p>Arena Premium</p></div>
+                <span style="font-size:11px;color:var(--gold2)">🔒</span>
+              </div>
+            </div>
+            <div style="margin-top:10px;padding:8px 10px;border-radius:10px;background:linear-gradient(135deg,rgba(212,148,58,.08),rgba(139,94,131,.05));border:1px solid rgba(180,140,80,.12);text-align:center">
+              <div style="font-size:8px;color:var(--gold2);font-weight:700;letter-spacing:1px;text-transform:uppercase;font-family:'Cinzel',serif">🏰 Arena Premium</div>
+              <div style="font-size:9px;color:var(--t3);margin-top:2px">Débloquer les 20+ modules</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="stats-section" style="padding:50px 40px;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:linear-gradient(180deg,rgba(180,140,80,.015),transparent)">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div style="font-size:24px;margin-bottom:6px">📝</div>
+      <div style="font-family:'Cinzel',serif;font-weight:800;font-size:28px;color:var(--gold);margin-bottom:3px" data-count="3000">0+</div>
+      <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:1.5px">Questions</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:24px;margin-bottom:6px">⚔️</div>
+      <div style="font-family:'Cinzel',serif;font-weight:800;font-size:28px;color:var(--gold);margin-bottom:3px" data-count="25">0+</div>
+      <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:1.5px">Modules</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:24px;margin-bottom:6px">🏆</div>
+      <div style="font-family:'Cinzel',serif;font-weight:800;font-size:28px;color:var(--gold);margin-bottom:3px" data-count="38">0</div>
+      <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:1.5px">Achievements</div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:24px;margin-bottom:6px">👑</div>
+      <div style="font-family:'Cinzel',serif;font-weight:800;font-size:28px;color:var(--gold);margin-bottom:3px" data-count="7">0</div>
+      <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:1.5px">Leagues</div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="section">
+  <div style="max-width:1060px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:50px">
+      <div class="section-label">Fonctionnalités</div>
+      <h2 class="section-title">Pas un cours. Une <span style="color:var(--gold)">arène</span>.</h2>
+      <div class="ornament"><span>◆</span></div>
+      <p style="font-size:14px;color:var(--t2);max-width:500px;margin:10px auto 0;line-height:1.7">
+        Chaque session te rapproche de ton objectif de score. Et tu ne t'en rends même pas compte.
+      </p>
+    </div>
+
+    <div class="feat-grid">
+      <div class="card">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(212,148,58,.08);border:1px solid rgba(212,148,58,.12);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px">🏆</div>
+        <h3 style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;margin-bottom:8px;color:var(--t1)">Gamification profonde</h3>
+        <p style="font-size:12.5px;line-height:1.7;color:var(--t2)">XP, niveaux, 7 ligues de Bronze à Légende, 38 achievements, streaks quotidiens. Ton cerveau ne fait pas la différence avec un vrai jeu.</p>
+      </div>
+      <div class="card">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(90,122,154,.08);border:1px solid rgba(90,122,154,.12);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px">📊</div>
+        <h3 style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;margin-bottom:8px;color:var(--t1)">Contenu TOEIC complet</h3>
+        <p style="font-size:12.5px;line-height:1.7;color:var(--t2)">Les 7 parties couvertes : Listening avec audio multi-accents IA, Reading, Grammar, Vocabulary. 4 Mock Tests + Boss Test final /990.</p>
+      </div>
+      <div class="card">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(139,94,131,.08);border:1px solid rgba(139,94,131,.12);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px">🧠</div>
+        <h3 style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;margin-bottom:8px;color:var(--t1)">Mémorisation intelligente</h3>
+        <p style="font-size:12.5px;line-height:1.7;color:var(--t2)">390+ flashcards en répétition espacée, 18 domaines de vocabulaire professionnel. Le système s'adapte à ce que tu oublies.</p>
+      </div>
+      <div class="card">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px">⚡</div>
+        <h3 style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;margin-bottom:8px;color:var(--t1)">Mini-jeux addictifs</h3>
+        <p style="font-size:12.5px;line-height:1.7;color:var(--t2)">Sentence Builder, Audio Blitz, Clue Hunter, Word Fall, Vocabulary Duel... L'entraînement TOEIC qui ne ressemble pas à de l'entraînement.</p>
+      </div>
+      <div class="card">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(74,190,96,.08);border:1px solid rgba(74,190,96,.12);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px">📱</div>
+        <h3 style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;margin-bottom:8px;color:var(--t1)">Dans ta poche</h3>
+        <p style="font-size:12.5px;line-height:1.7;color:var(--t2)">Installable sur ton téléphone. Notifications de rappel. Entraîne-toi dans le bus, entre deux cours, avant de dormir.</p>
+      </div>
+      <div class="card">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(200,122,53,.08);border:1px solid rgba(200,122,53,.12);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px">🏫</div>
+        <h3 style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;margin-bottom:8px;color:var(--t1)">Classements entre étudiants</h3>
+        <p style="font-size:12.5px;line-height:1.7;color:var(--t2)">Classements hebdomadaires et saisonniers. Vois qui progresse le plus dans ta promo. La compétition saine booste tout le monde.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Comparatif -->
+<section id="compare" class="section" style="background:linear-gradient(180deg,transparent,rgba(180,140,80,.012),transparent)">
+  <div style="max-width:880px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:44px">
+      <div class="section-label">Comparatif</div>
+      <h2 class="section-title">Face à la <span style="color:var(--gold)">concurrence</span></h2>
+      <div class="ornament"><span>◆</span></div>
+    </div>
+
+    <div class="comp-wrap">
+    <div class="comp">
+      <div class="comp-head">
+        <div></div><div>GlobalExam</div><div>PrepMyFuture</div><div>7Speaking</div><div>Verse Arena</div>
+      </div>
+      <div class="comp-row"><div>Gamification</div><div>Faible</div><div>Non</div><div>Faible</div><div>XP, Leagues, 38 Achievements</div></div>
+      <div class="comp-row"><div>Contenu TOEIC</div><div>~6 000 Q</div><div>~3 000 Q</div><div>Module</div><div>4 000+ items, 20+ modules</div></div>
+      <div class="comp-row"><div>Simulations</div><div>Oui</div><div>7 blancs</div><div>Non</div><div>4 Mocks + Boss Test /990</div></div>
+      <div class="comp-row"><div>App mobile installable</div><div>Non</div><div>Non</div><div>Non</div><div>Oui (PWA + notifications)</div></div>
+      <div class="comp-row"><div>Engagement</div><div>Moyen</div><div>Faible</div><div>Moyen</div><div>Streaks, Push, Saisons</div></div>
+      <div class="comp-row"><div>Dashboard prof</div><div>Oui</div><div>Oui</div><div>Oui</div><div>Oui + Events + CSV</div></div>
+      <div class="comp-row"><div>Prix estimé</div><div>10–25€/an</div><div>10–20€/an</div><div>20–40€/an</div><div>Gratuit*</div></div>
+    </div>
+    </div>
+
+    <!-- Mobile comparison cards -->
+    <div class="comp-mobile">
+      <div class="comp-mobile-card arena">
+        <h4>⚔️ Verse Arena</h4>
+        <div class="cm-row"><span class="cm-label">Gamification</span><span class="cm-val">XP, Leagues, 38 Achievements</span></div>
+        <div class="cm-row"><span class="cm-label">Contenu</span><span class="cm-val">4 000+ items, 20+ modules</span></div>
+        <div class="cm-row"><span class="cm-label">Simulations</span><span class="cm-val">4 Mocks + Boss Test /990</span></div>
+        <div class="cm-row"><span class="cm-label">App mobile</span><span class="cm-val">Oui (PWA + notifications)</span></div>
+        <div class="cm-row"><span class="cm-label">Engagement</span><span class="cm-val">Streaks, Push, Saisons</span></div>
+        <div class="cm-row"><span class="cm-label">Dashboard prof</span><span class="cm-val">Oui + Events + CSV</span></div>
+        <div class="cm-row"><span class="cm-label">Prix</span><span class="cm-val">Gratuit*</span></div>
+      </div>
+      <div class="comp-mobile-card">
+        <h4 style="color:var(--t2)">GlobalExam</h4>
+        <div class="cm-row"><span class="cm-label">Gamification</span><span class="cm-val">Faible</span></div>
+        <div class="cm-row"><span class="cm-label">Contenu</span><span class="cm-val">~6 000 Q</span></div>
+        <div class="cm-row"><span class="cm-label">Simulations</span><span class="cm-val">Oui</span></div>
+        <div class="cm-row"><span class="cm-label">App mobile</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">Engagement</span><span class="cm-val">Moyen</span></div>
+        <div class="cm-row"><span class="cm-label">Dashboard prof</span><span class="cm-val">Oui</span></div>
+        <div class="cm-row"><span class="cm-label">Prix</span><span class="cm-val">10–25€/an</span></div>
+      </div>
+      <div class="comp-mobile-card">
+        <h4 style="color:var(--t2)">PrepMyFuture</h4>
+        <div class="cm-row"><span class="cm-label">Gamification</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">Contenu</span><span class="cm-val">~3 000 Q</span></div>
+        <div class="cm-row"><span class="cm-label">Simulations</span><span class="cm-val">7 blancs</span></div>
+        <div class="cm-row"><span class="cm-label">App mobile</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">Engagement</span><span class="cm-val">Faible</span></div>
+        <div class="cm-row"><span class="cm-label">Dashboard prof</span><span class="cm-val">Oui</span></div>
+        <div class="cm-row"><span class="cm-label">Prix</span><span class="cm-val">10–20€/an</span></div>
+      </div>
+      <div class="comp-mobile-card">
+        <h4 style="color:var(--t2)">7Speaking</h4>
+        <div class="cm-row"><span class="cm-label">Gamification</span><span class="cm-val">Faible</span></div>
+        <div class="cm-row"><span class="cm-label">Contenu</span><span class="cm-val">Module</span></div>
+        <div class="cm-row"><span class="cm-label">Simulations</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">App mobile</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">Engagement</span><span class="cm-val">Moyen</span></div>
+        <div class="cm-row"><span class="cm-label">Dashboard prof</span><span class="cm-val">Oui</span></div>
+        <div class="cm-row"><span class="cm-label">Prix</span><span class="cm-val">20–40€/an</span></div>
+      </div>
+    </div>
+
+    <p style="font-size:10px;color:var(--t3);margin-top:10px;text-align:center">* 8 modules en accès libre. Accès complet via votre école ou Arena Premium (bientôt).</p>
+  </div>
+</section>
+
+<!-- Boss Test -->
+<section class="section boss-section" style="position:relative">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(212,148,58,.05),transparent 65%);filter:blur(60px);pointer-events:none"></div>
+  <div style="max-width:640px;margin:0 auto;text-align:center;position:relative">
+    <div style="font-size:64px;margin-bottom:16px;filter:drop-shadow(0 0 24px rgba(212,148,58,.25));animation:flicker 4s ease-in-out infinite">🏰</div>
+    <h2 class="section-title">The <span style="color:var(--gold)">Final Arena</span></h2>
+    <div class="ornament"><span>◆</span></div>
+    <p style="font-size:15px;line-height:1.8;color:var(--t2);margin-top:10px;margin-bottom:10px">
+      202 questions. 120 minutes. Les 7 parties du TOEIC. Scoring /990.
+    </p>
+    <p style="font-size:13px;line-height:1.7;color:var(--t3);margin-bottom:32px">
+      Complète les 3 Mock Tests pour déverrouiller le Boss Test final. Cooldown de 24h entre chaque tentative. Pas de raccourci.
+    </p>
+    <a href="https://app.verse-arena.fr" target="_blank" class="cta-main">⚔️ Relever le défi</a>
+  </div>
+</section>
+
+<!-- Pricing -->
+<!-- Pricing CTAs : deep link vers l'app (?upgrade=pass3m / ?upgrade=monthly) qui auto-route vers UpgradeScreen post-onboarding. Validé 2026-05-14. -->
+<section id="pricing" class="section" style="background:linear-gradient(180deg,transparent,rgba(180,140,80,.015),transparent);border-top:1px solid var(--bdr)">
+  <div style="max-width:1140px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="section-label">Tarifs</div>
+      <h2 class="section-title">Choisis ta <span style="color:var(--gold)">formule</span></h2>
+      <div class="ornament"><span>◆</span></div>
+      <p style="font-size:14px;color:var(--t2);max-width:520px;margin:14px auto 0;line-height:1.7">
+        Commence gratuitement. Passe Premium quand tu sens que ça vaut le coup — pas avant.
+      </p>
+    </div>
+
+    <div class="pricing-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch">
+
+      <!-- Free -->
+      <div class="pricing-card" style="display:flex;flex-direction:column;padding:32px 26px;background:rgba(180,140,80,.03);border:1px solid rgba(180,140,80,.1);border-radius:16px">
+        <div style="font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--t2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px">Free</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+          <span style="font-family:'Cinzel',serif;font-weight:900;font-size:42px;color:var(--t1)">0€</span>
+        </div>
+        <div style="font-size:12px;color:var(--t3);margin-bottom:24px">Permanent · sans carte bancaire</div>
+        <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;flex:1">
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> 10 modules de base</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Daily Quest, Drill, Cards</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Word Tavern, Strategy Quiz</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Achievements, classements</li>
+          <li style="font-size:13px;color:var(--t3);display:flex;gap:8px"><span style="color:var(--t3)">·</span> Mock Tests, Boss, Endless verrouillés</li>
+        </ul>
+        <a href="https://app.verse-arena.fr" target="_blank" class="cta-ghost" style="display:flex;justify-content:center;width:100%">Commencer gratuitement</a>
+      </div>
+
+      <!-- Pass 3m (featured) -->
+      <div class="pricing-card pricing-featured" style="display:flex;flex-direction:column;padding:32px 26px;background:linear-gradient(180deg,rgba(212,148,58,.08),rgba(139,94,131,.04));border:1.5px solid rgba(212,148,58,.4);border-radius:16px;position:relative;box-shadow:0 8px 40px rgba(212,148,58,.12),inset 0 1px 0 rgba(255,255,255,.04)">
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),#a06e20);color:#000;padding:5px 14px;border-radius:99px;font-family:'Cinzel',serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase">⭐ Le plus choisi</div>
+        <div style="font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px">TOEIC Pass 3 mois</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+          <span style="font-family:'Cinzel',serif;font-weight:900;font-size:42px;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">22,99€</span>
+          <span style="font-size:13px;color:var(--t3)">une fois</span>
+        </div>
+        <div style="font-size:12px;color:var(--t3);margin-bottom:24px;font-style:italic">Moins cher qu'un manuel papier</div>
+        <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;flex:1">
+          <li style="font-size:13px;color:var(--t1);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> <strong>Tous les modules débloqués pendant 90 jours</strong></li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Mock Tests 1, 2, 3 + Boss Test</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Endless Arena (TOEIC random)</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Tous les mini-jeux G&V</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Pas de reconduction automatique</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Email de courtoisie 7j avant échéance</li>
+        </ul>
+        <a href="https://app.verse-arena.fr/?upgrade=pass3m" target="_blank" class="cta-main" style="display:flex;justify-content:center;width:100%">Acheter le Pass</a>
+      </div>
+
+      <!-- Mensuel -->
+      <div class="pricing-card" style="display:flex;flex-direction:column;padding:32px 26px;background:rgba(180,140,80,.03);border:1px solid rgba(180,140,80,.1);border-radius:16px">
+        <div style="font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--t2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px">Premium Mensuel</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+          <span style="font-family:'Cinzel',serif;font-weight:900;font-size:42px;color:var(--t1)">9,99€</span>
+          <span style="font-size:13px;color:var(--t3)">/ mois</span>
+        </div>
+        <div style="font-size:12px;color:var(--t3);margin-bottom:24px">Idéal si tu hésites encore</div>
+        <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;flex:1">
+          <li style="font-size:13px;color:var(--t1);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> <strong>Tous les modules débloqués</strong></li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Mock Tests, Boss, Endless</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Tous les mini-jeux G&V</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Résiliable en 1 clic à tout moment</li>
+          <li style="font-size:13px;color:var(--t2);display:flex;gap:8px"><span style="color:var(--gold)">✓</span> Reconduction tacite mensuelle</li>
+        </ul>
+        <a href="https://app.verse-arena.fr/?upgrade=monthly" target="_blank" class="cta-ghost" style="display:flex;justify-content:center;width:100%">S'abonner</a>
+      </div>
+
+    </div>
+
+    <p style="text-align:center;font-size:11px;color:var(--t3);margin-top:32px;line-height:1.7;max-width:680px;margin-left:auto;margin-right:auto">
+      Renonciation au délai de rétractation requise au checkout (case à cocher dédiée) · Paiement sécurisé Stripe · Données conformes RGPD<br>
+      <a href="/legal/cgv.html" style="color:var(--t2)">CGV</a> · <a href="/legal/confidentialite.html" style="color:var(--t2)">Politique de confidentialité</a>
+    </p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="section" style="background:rgba(180,140,80,.012)">
+  <div style="max-width:780px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:40px">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Les questions <span style="color:var(--gold)">légitimes</span></h2>
+      <div class="ornament"><span>◆</span></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Quelle est la différence entre le Pass 3 mois et l'abonnement Mensuel ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Le <strong>Pass 3 mois</strong> est un paiement unique de 22,99€ qui débloque tout pendant 90 jours, sans reconduction. À l'échéance, ton accès Premium est désactivé automatiquement — pas de surprise sur ta carte. L'<strong>abonnement Mensuel</strong> à 9,99€/mois se reconduit tacitement chaque mois et tu peux le résilier en 1 clic depuis ton profil. Si tu sais que tu vas bosser à fond pendant 2-3 mois pour passer ton TOEIC, le Pass est mathématiquement plus rentable (22,99€ vs 30€ sur 3 mois).</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Puis-je résilier à tout moment ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Oui pour le Mensuel : 1 clic depuis ton profil (ou via le portail Stripe), et l'accès reste actif jusqu'à la fin de la période payée — pas de remboursement au prorata. Le Pass 3m n'a pas de mécanisme de résiliation puisqu'il n'y a pas de reconduction : il s'éteint tout seul à l'échéance.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Qu'est-ce que la "renonciation au droit de rétractation" ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">La loi française prévoit 14 jours pour se rétracter sur un achat en ligne. Mais comme Verse Arena te donne accès aux contenus <strong>immédiatement</strong> après paiement, tu dois explicitement accepter de renoncer à ce délai (case à cocher dédiée au checkout). C'est la loi (art. L.221-28 13° Code conso). Si tu ne coches pas, tu peux te rétracter dans les 14j et obtenir un remboursement intégral.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">L'application fonctionne-t-elle sur mobile ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Oui — c'est une PWA (Progressive Web App) optimisée mobile-first. Tu peux l'installer sur ton écran d'accueil iOS/Android comme une vraie app, et certaines fonctionnalités (notifications push, retour haptique) sont natives. Tu peux aussi t'entraîner sur ordinateur — ta progression se synchronise entre les appareils si tu te connectes avec ton email.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Combien de temps faut-il pour préparer son TOEIC sur la plateforme ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">La majorité des étudiants atteignent leur score cible en <strong>2 à 4 mois</strong> à raison de 15-20 min par jour (Daily Quest + 1 module). C'est précisément pour cette durée d'usage typique que le Pass 3 mois a été pensé. Pour les sprints intensifs (1 mois avant l'épreuve), l'abonnement Mensuel suffit largement.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Mes données personnelles sont-elles protégées ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Oui. Conformité RGPD complète : aucun cookie publicitaire, aucun traqueur, données stockées chez Supabase (UE/US). Les données bancaires ne transitent jamais par Verse Arena — Stripe les gère directement (standard PCI-DSS). Tu peux exporter ou supprimer ton compte à tout moment depuis ton profil. Détails : <a href="/legal/confidentialite.html" style="color:var(--gold)">Politique de confidentialité</a>.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Que se passe-t-il à la fin de mon Pass / abonnement ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Tu repasses automatiquement en formule Free. Ta progression, tes scores, tes achievements, ton avatar et tes flashcards <strong>restent intacts</strong> — rien n'est effacé. Tu peux te réabonner ou racheter un Pass à tout moment et tout reprendre où tu l'avais laissé.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Et en cas de litige ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Contact direct par email d'abord (<a href="mailto:leixa.formation@gmail.com" style="color:var(--gold)">leixa.formation@gmail.com</a>), réponse sous 5 jours ouvrés. Si pas de solution amiable, tu peux saisir gratuitement notre médiateur de la consommation agréé CECMC (<a href="/legal/mediation.html" style="color:var(--gold)">détails</a>).</p>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta" style="padding:90px 40px 70px;text-align:center;border-top:1px solid var(--bdr);background:linear-gradient(180deg,transparent,rgba(180,140,80,.02),transparent)">
+  <h2 class="section-title">Ton prochain score TOEIC<br><span style="color:var(--gold)">commence ici.</span></h2>
+  <div class="ornament"><span>◆</span></div>
+  <p style="font-size:14px;color:var(--t2);margin:10px auto 32px;max-width:400px;line-height:1.7">
+    Crée ton compte en 30 secondes. Pas de carte bancaire. Pas d'email. Juste ton prénom et c'est parti.
+  </p>
+  <a href="https://app.verse-arena.fr" target="_blank" class="cta-main" style="font-size:15px;padding:18px 40px">⚔️ Entrer dans l'arène</a>
+</section>
+
+<!-- Footer -->
+<footer style="padding:60px 40px 32px;border-top:1px solid var(--bdr);background:linear-gradient(180deg,transparent,rgba(180,140,80,.02))">
+  <div class="footer-grid" style="max-width:1140px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:48px 40px;margin-bottom:36px">
+
+    <!-- Brand column -->
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <span style="font-size:22px">⚔️</span>
+        <span style="font-family:'Cinzel',serif;font-weight:800;font-size:16px;background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent">VERSE ARENA</span>
+      </div>
+      <p style="font-size:13px;color:var(--t2);line-height:1.7;max-width:340px;margin-bottom:16px">
+        La plateforme gamifiée de préparation au TOEIC. Conçue par un formateur en exercice, testée par 120+ étudiants en école de commerce.
+      </p>
+      <p style="font-size:11px;color:var(--t3);line-height:1.6">
+        Créé par <strong style="color:var(--t2)">Jérémy LEIXA</strong> — Formateur en anglais.
+      </p>
+    </div>
+
+    <!-- Product column -->
+    <div>
+      <div style="font-family:'Cinzel',serif;font-weight:700;font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px">Produit</div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
+        <li><a href="#features" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Fonctionnalités</a></li>
+        <li><a href="#pricing" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Tarifs</a></li>
+        <li><a href="#faq" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">FAQ</a></li>
+        <li><a href="/blog/" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Blog</a></li>
+        <li><a href="https://app.verse-arena.fr" target="_blank" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Commencer ↗</a></li>
+      </ul>
+    </div>
+
+    <!-- Legal column -->
+    <div>
+      <div style="font-family:'Cinzel',serif;font-weight:700;font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px">Légal</div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
+        <li><a href="/legal/cgv.html" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">CGV</a></li>
+        <li><a href="/legal/confidentialite.html" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Politique de confidentialité</a></li>
+        <li><a href="/legal/mediation.html" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Médiation conso</a></li>
+        <li><a href="/legal/mentions.html" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Mentions légales</a></li>
+        <li><a href="mailto:leixa.formation@gmail.com" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Contact</a></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Bottom legal -->
+  <div style="max-width:1140px;margin:0 auto;padding-top:24px;border-top:1px solid var(--bdr)">
+    <p style="font-size:11px;color:var(--t3);text-align:center;line-height:1.7;margin-bottom:6px">
+      <strong>Jérémy LEIXA</strong> · SIRET 830 200 556 00025 · Code APE 85.59B · 33 route de la Daleure, 38590 Saint-Étienne-de-Saint-Geoirs<br>
+      TVA non applicable, art. 293 B du CGI · <a href="mailto:leixa.formation@gmail.com" style="color:var(--t2)">leixa.formation@gmail.com</a>
+    </p>
+    <p style="font-size:10px;color:rgba(90,80,64,.6);text-align:center;line-height:1.6;margin-top:10px">
+      © 2026 Verse Arena · TOEIC® est une marque déposée d'Educational Testing Service (ETS), non affiliée à Verse Arena.
+    </p>
+  </div>
+</footer>
+
+<!-- Scripts -->
+<script>
+// Nav background on scroll
+var nav = document.getElementById('nav');
+window.addEventListener('scroll', function() {
+  if (window.scrollY > 50) nav.classList.add('solid');
+  else nav.classList.remove('solid');
+}, { passive: true });
+
+// Animated counters
+var counters = document.querySelectorAll('[data-count]');
+var observed = new Set();
+var obs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting && !observed.has(e.target)) {
+      observed.add(e.target);
+      var target = parseInt(e.target.getAttribute('data-count'));
+      var suffix = target >= 100 ? '+' : '';
+      var start = 0, step = target / 100;
+      var id = setInterval(function() {
+        start += step;
+        if (start >= target) {
+          e.target.textContent = target.toLocaleString('fr-FR') + suffix;
+          clearInterval(id);
+        } else {
+          e.target.textContent = Math.floor(start).toLocaleString('fr-FR') + suffix;
+        }
+      }, 16);
+    }
+  });
+}, { threshold: 0.2 });
+counters.forEach(function(c) { obs.observe(c); });
+
+// Scroll-triggered fade-in for sections
+var faders = document.querySelectorAll('.card, .stat-card, .comp');
+var fadeObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'none';
+      fadeObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+faders.forEach(function(el, i) {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity .6s cubic-bezier(.23,1,.32,1) ' + (i % 6) * 0.07 + 's, transform .6s cubic-bezier(.23,1,.32,1) ' + (i % 6) * 0.07 + 's';
+  fadeObs.observe(el);
+});
+</script>
+</body>
+</html>

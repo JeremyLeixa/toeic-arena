@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TOEIC Reading : la méthode pour finir les 100 questions dans les temps</title>
+<meta name="description" content="75 minutes, 100 questions, et la majorité des candidats laissent 5 à 10 questions vides en Part 7. Voici comment découper le temps et terminer le Reading sans se laisser dépasser.">
+<meta name="keywords" content="TOEIC Reading, gestion du temps TOEIC, TOEIC Part 7, TOEIC Part 6, TOEIC Part 5, stratégie TOEIC, finir TOEIC Reading">
+<meta property="og:title" content="TOEIC Reading : la méthode pour finir les 100 questions dans les temps">
+<meta property="og:description" content="75 minutes, 100 questions, et la majorité des candidats laissent des questions vides en Part 7. La méthode pour découper le temps et tenir le rythme.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://verse-arena.fr/blog/toeic-reading-gestion-temps.html">
+<link rel="canonical" href="https://verse-arena.fr/blog/toeic-reading-gestion-temps.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:#0f0c08;color:#ede4d4;font-family:'DM Sans',sans-serif;overflow-x:hidden;line-height:1.8}
+::selection{background:#d4943a;color:#0f0c08}
+a{color:#d4943a;text-decoration:none;transition:color .2s}
+a:hover{color:#f0c850}
+:root{
+  --bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;
+  --gold:#d4943a;--gold2:#f0c850;--purple:#8b5e83;--green:#4abe60;--orange:#c87a35;
+  --t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;
+  --bdr:rgba(180,140,80,0.08);
+}
+
+/* Grain */
+.grain{position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat:repeat;background-size:180px}
+
+/* Nav */
+.nav{padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--bdr);background:var(--bg);position:sticky;top:0;z-index:100;backdrop-filter:blur(16px)}
+.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo span:last-child{font-family:'Cinzel',serif;font-weight:800;font-size:14px;
+  background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;align-items:center;gap:20px}
+.nav-links a{color:var(--t2);font-size:12px;font-weight:600;font-family:'Cinzel',serif;text-decoration:none}
+.nav-links a:hover{color:var(--gold)}
+.cta-sm{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;
+  font-family:'Cinzel',serif;font-weight:700;font-size:11px;letter-spacing:.5px;
+  background:linear-gradient(135deg,var(--gold),#a06e20);color:#000!important;
+  box-shadow:0 2px 12px rgba(212,148,58,.2)}
+
+/* Article */
+.article{max-width:720px;margin:0 auto;padding:48px 24px 80px}
+.article-header{text-align:center;margin-bottom:48px}
+.article-tag{display:inline-block;padding:5px 12px;border-radius:6px;font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1.5px;background:rgba(200,122,53,.1);color:var(--orange);margin-bottom:16px}
+.article-title{font-family:'Cinzel',serif;font-weight:900;font-size:clamp(26px,5vw,40px);line-height:1.15;margin-bottom:16px}
+.article-meta{font-size:13px;color:var(--t3);display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.ornament{display:flex;align-items:center;gap:12px;justify-content:center;margin:20px 0}
+.ornament::before,.ornament::after{content:'';width:40px;height:1px}
+.ornament::before{background:linear-gradient(90deg,transparent,rgba(212,148,58,.3))}
+.ornament::after{background:linear-gradient(90deg,rgba(212,148,58,.3),transparent)}
+
+/* Content */
+.content h2{font-family:'Cinzel',serif;font-weight:800;font-size:clamp(20px,3.5vw,24px);color:var(--t1);
+  margin:44px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--bdr)}
+.content h2 .num{color:var(--gold);margin-right:10px}
+.content h3{font-weight:800;font-size:17px;color:var(--gold);margin:28px 0 12px}
+.content p{font-size:15px;color:var(--t2);margin-bottom:16px;line-height:1.85}
+.content strong{color:var(--t1);font-weight:700}
+.content em{color:var(--gold);font-style:italic;font-weight:500}
+.content ul,.content ol{margin:12px 0 20px 24px;color:var(--t2);font-size:15px}
+.content li{margin-bottom:8px;line-height:1.7}
+
+/* Score / time table */
+.score-table{width:100%;border-collapse:collapse;margin:20px 0 24px;font-size:14px}
+.score-table th{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.8px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--bdr)}
+.score-table td{padding:10px;color:var(--t2);border-bottom:1px solid rgba(180,140,80,.04)}
+.score-table tr:last-child td{border-bottom:none}
+.score-table .part-name{color:var(--t1);font-weight:600}
+.score-table .pts{color:var(--gold);font-weight:700;font-family:'Cinzel',serif}
+.score-table .time{color:var(--orange);font-weight:700;font-family:'Cinzel',serif}
+
+/* Callouts */
+.callout{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:18px 22px;margin:18px 0;
+  box-shadow:inset 0 1px 0 rgba(180,140,80,.04)}
+.callout.tip{border-left:3px solid var(--gold)}
+.callout.danger{border-left:3px solid #e05a5a;background:linear-gradient(135deg,rgba(224,90,90,.04),transparent)}
+.callout.arena{border-left:3px solid var(--purple);background:linear-gradient(135deg,rgba(139,94,131,.06),rgba(212,148,58,.03))}
+.callout .callout-title{font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'Cinzel',serif}
+.callout.tip .callout-title{color:var(--gold)}
+.callout.danger .callout-title{color:#e05a5a}
+.callout.arena .callout-title{color:var(--purple)}
+.callout p{margin-bottom:6px;font-size:14px}
+.callout p:last-child{margin-bottom:0}
+
+/* Plan grid (2 weeks side by side) */
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0}
+.plan-week{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:18px 20px}
+.plan-week .week-label{font-family:'Cinzel',serif;font-weight:800;font-size:11px;color:var(--gold);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.plan-week .week-focus{font-size:13px;color:var(--t1);font-weight:700;margin-bottom:10px;line-height:1.4}
+.plan-week ul{margin:0 0 0 16px;color:var(--t2);font-size:13px}
+.plan-week li{margin-bottom:6px;line-height:1.55}
+
+/* Time-split visual */
+.time-split{display:grid;grid-template-columns:12fr 10fr 50fr;gap:4px;margin:18px 0 24px;height:50px;border-radius:8px;overflow:hidden}
+.time-split .split-block{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;font-family:'Cinzel',serif}
+.time-split .split-block .split-label{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.time-split .split-block .split-time{font-size:13px;font-weight:800;margin-top:2px}
+.time-split .split-p5{background:rgba(74,190,96,.18);color:var(--green)}
+.time-split .split-p6{background:rgba(139,94,131,.22);color:var(--purple)}
+.time-split .split-p7{background:linear-gradient(135deg,rgba(212,148,58,.22),rgba(212,148,58,.16));color:var(--gold)}
+
+/* CTA block */
+.cta-block{text-align:center;background:linear-gradient(135deg,rgba(212,148,58,.06),rgba(139,94,131,.04));
+  border:1px solid rgba(212,148,58,.15);border-radius:16px;padding:32px 24px;margin:40px 0}
+.cta-block h3{font-family:'Cinzel',serif;font-weight:800;font-size:20px;color:var(--t1);margin-bottom:8px}
+.cta-block p{font-size:14px;color:var(--t2);margin-bottom:18px}
+.cta-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:12px;
+  font-family:'Cinzel',serif;font-weight:700;font-size:14px;
+  background:linear-gradient(135deg,var(--gold),#a06e20);color:#000!important;
+  box-shadow:0 4px 20px rgba(212,148,58,.25);transition:transform .2s}
+.cta-btn:hover{transform:translateY(-2px);color:#000!important}
+
+/* Back link */
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--t3);margin-bottom:32px;transition:color .2s}
+.back-link:hover{color:var(--gold)}
+
+/* Footer */
+footer{padding:36px 24px;text-align:center;border-top:1px solid var(--bdr)}
+footer p{font-size:11px;color:var(--t3)}
+
+/* Responsive */
+@media(max-width:768px){
+  .nav{padding:0 12px;height:50px}
+  .nav-logo span:last-child{font-size:11px}
+  .nav-links a.nav-link-text{display:none}
+  .article{padding:32px 16px 60px}
+  .content h2{font-size:19px}
+  .callout{padding:16px}
+  .plan-grid{grid-template-columns:1fr}
+  .time-split{height:auto;grid-template-columns:1fr;gap:6px}
+  .time-split .split-block{padding:10px;flex-direction:row;gap:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+
+<nav class="nav">
+  <a href="https://verse-arena.fr" class="nav-logo">
+    <span style="font-size:20px">⚔️</span>
+    <span>VERSE ARENA</span>
+  </a>
+  <div class="nav-links">
+    <a href="https://verse-arena.fr" class="nav-link-text">Accueil</a>
+    <a href="https://verse-arena.fr/blog/" class="nav-link-text">Blog</a>
+    <a href="https://app.verse-arena.fr" target="_blank" class="cta-sm">Commencer</a>
+  </div>
+</nav>
+
+<article class="article">
+
+  <a href="index.html" class="back-link">← Retour au blog</a>
+
+  <header class="article-header">
+    <div class="article-tag">Reading</div>
+    <h1 class="article-title">TOEIC Reading : la méthode pour finir les 100 questions dans les temps</h1>
+    <div class="article-meta">
+      <span>📅 Mai 2026</span>
+      <span>⏱️ 10 min de lecture</span>
+      <span>✍️ Jérémy Leixa</span>
+    </div>
+    <div class="ornament"><span style="color:var(--gold2);font-size:10px;opacity:.6">◆</span></div>
+  </header>
+
+  <div class="content">
+
+    <p>Voilà ce que j'observe chaque session avec mes étudiants : ceux qui plafonnent en Reading ne plafonnent presque jamais sur leur niveau de grammaire ou de vocabulaire. Ils plafonnent sur la <strong>gestion du temps</strong>.</p>
+
+    <p>Le scénario typique se répète à l'identique d'une promo à l'autre : ils démarrent fort en Part 5, prennent leur temps en Part 6 parce que « ça ressemble à du Part 5 », arrivent essoufflés en Part 7, et terminent en remplissant les 8 à 12 dernières questions au hasard sans même avoir lu les passages.</p>
+
+    <p>Bilan : 30 à 50 points perdus uniquement sur la gestion du chrono. Pas sur le niveau d'anglais.</p>
+
+    <p>Le Reading TOEIC, c'est <strong>75 minutes pour 100 questions</strong>, sans pause, sans retour audio, sans excuse. La bonne nouvelle : il existe un découpage temporel qui marche. Voici la méthode que je transmets, et l'entraînement pour l'intérioriser en deux semaines.</p>
+
+    <h2><span class="num">01</span>Le constat — pourquoi le Reading se joue sur la montre</h2>
+
+    <p>Avant de parler stratégie, prends une minute pour regarder ce que représente vraiment chaque partie en termes de poids et de temps disponible :</p>
+
+    <table class="score-table">
+      <thead>
+        <tr>
+          <th>Partie</th>
+          <th>Type</th>
+          <th>Questions</th>
+          <th>Score</th>
+          <th>Temps idéal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="part-name">Part 5</td>
+          <td>Phrases à compléter</td>
+          <td>30</td>
+          <td class="pts">~150 pts</td>
+          <td class="time">12 min</td>
+        </tr>
+        <tr>
+          <td class="part-name">Part 6</td>
+          <td>Textes à compléter</td>
+          <td>16</td>
+          <td class="pts">~80 pts</td>
+          <td class="time">10 min</td>
+        </tr>
+        <tr>
+          <td class="part-name">Part 7</td>
+          <td>Compréhension de textes</td>
+          <td>54</td>
+          <td class="pts">~270 pts</td>
+          <td class="time">53 min</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Ce qui saute aux yeux : <strong>Part 7 contient à elle seule plus de questions que Part 5 et Part 6 réunies</strong>. Et c'est aussi la partie la plus chronophage par question, parce qu'il faut lire des textes entiers.</p>
+
+    <p>L'erreur la plus fréquente que je vois — et de très loin — c'est le découpage 25/25/25 : un tiers du temps par partie. Ça paraît équilibré sur le papier. C'est en réalité catastrophique : avec 25 minutes pour 54 questions de Part 7, tu disposes de moins de 28 secondes par question, lecture de passage incluse. Mathématiquement intenable.</p>
+
+    <h2><span class="num">02</span>Le découpage qui fait la différence</h2>
+
+    <p>La répartition du temps qui fonctionne — celle que les meilleurs candidats appliquent sans même y penser — ressemble à ça :</p>
+
+    <div class="time-split">
+      <div class="split-block split-p5">
+        <div class="split-label">Part 5</div>
+        <div class="split-time">12 min</div>
+      </div>
+      <div class="split-block split-p6">
+        <div class="split-label">Part 6</div>
+        <div class="split-time">10 min</div>
+      </div>
+      <div class="split-block split-p7">
+        <div class="split-label">Part 7</div>
+        <div class="split-time">53 min</div>
+      </div>
+    </div>
+
+    <p>Soit en moyenne, par question :</p>
+
+    <ul>
+      <li><strong>Part 5</strong> : 24 secondes par question (30 sec max sur les plus difficiles)</li>
+      <li><strong>Part 6</strong> : 38 secondes par blanc (mais on lit le texte d'abord, ce qui change tout)</li>
+      <li><strong>Part 7</strong> : 59 secondes par question (lecture + analyse)</li>
+    </ul>
+
+    <p>Si tu intériorises ces trois chiffres, tu as déjà résolu 80 % du problème. Le reste, c'est de la discipline d'application.</p>
+
+    <div class="callout tip">
+      <div class="callout-title">💡 Astuce chrono</div>
+      <p>Pose-toi des <strong>checkpoints mentaux</strong> : à 12 min, tu dois avoir terminé la Part 5. À 22 min, tu dois être en Part 7. Si tu n'y es pas, tu accélères — tu ne ralentis jamais. Le pire ennemi du Reading TOEIC, c'est l'illusion qu'on va « rattraper le temps perdu plus tard ».</p>
+    </div>
+
+    <h2><span class="num">03</span>Part 5 — sortir vite ou perdre la course</h2>
+
+    <p>La Part 5, c'est 30 questions de grammaire et de vocabulaire isolées. Une phrase, un blanc, quatre options. Pas de contexte étendu. Tu dois passer à travers en 12 minutes maximum.</p>
+
+    <p>La règle : <strong>30 secondes par question, jamais plus</strong>. Si tu hésites au-delà : élimine ce que tu peux, choisis ta meilleure intuition (B ou C statistiquement légèrement favorisés), passe à la suivante. Tu reviendras éventuellement à la fin si tu as du temps. Spoiler : tu n'en auras pas.</p>
+
+    <p>Le réflexe qui sauve : <strong>identifier le type de question dans les 5 premières secondes</strong>. La grande majorité des questions Part 5 tombent dans 3 catégories :</p>
+
+    <ul>
+      <li><strong>Word form</strong> (les 4 options dérivent du même mot : <em>employ / employment / employer / employable</em>) → tu cherches la bonne classe grammaticale</li>
+      <li><strong>Vocabulaire</strong> (les 4 options sont 4 mots différents de sens proche) → tu cherches le mot qui colle au sens et à la collocation</li>
+      <li><strong>Grammaire</strong> (temps verbal, préposition, conjonction, pronom) → tu cherches l'indice dans la phrase qui force une seule réponse possible</li>
+    </ul>
+
+    <p>Pour creuser les pièges spécifiques de cette partie, j'ai écrit un article dédié : <a href="toeic-part-5-pieges-grammaire.html">les 10 pièges de grammaire les plus fréquents en Part 5</a>. Indispensable si tu n'as pas encore solidifié les bases.</p>
+
+    <h2><span class="num">04</span>Part 6 — le piège du « presque comme Part 5 »</h2>
+
+    <p>La Part 6, c'est 4 textes courts (emails, notes, annonces) avec 4 blancs chacun, soit 16 questions au total. Beaucoup de candidats l'abordent comme une Part 5 avec plus de contexte. C'est une erreur stratégique.</p>
+
+    <p>La différence clé : <strong>une partie des blancs ne peut pas être résolue sans avoir lu l'intégralité du texte</strong>. Notamment les questions de cohésion logique (transitions : <em>however, therefore, in addition</em>) et les questions d'insertion de phrase entière, qui demandent de comprendre le flow du texte avant et après l'emplacement.</p>
+
+    <p>La méthode efficace pour chaque texte :</p>
+
+    <ol>
+      <li><strong>1 minute de lecture</strong> du texte entier, sans s'arrêter sur les blancs (lecture rapide, on cherche le sens global et le ton)</li>
+      <li><strong>2 minutes pour les 4 blancs</strong>, avec le contexte global maintenant en tête</li>
+    </ol>
+
+    <p>Soit 3 minutes par texte × 4 textes = 12 minutes. On vise plutôt 10 minutes en réalité, parce que tu liras de plus en plus vite à mesure que tu t'entraînes.</p>
+
+    <div class="callout danger">
+      <div class="callout-title">⚠ Le piège qui coûte cher</div>
+      <p>Une question par texte de Part 6 — soit <strong>4 questions au total</strong> — est une <strong>insertion de phrase entière</strong>. Beaucoup d'étudiants choisissent en fonction du sujet, sans vérifier que la phrase coule logiquement avec celle d'avant ET celle d'après. Toujours relire le micro-contexte des deux phrases voisines avant de valider.</p>
+    </div>
+
+    <h2><span class="num">05</span>Part 7 — la course de fond</h2>
+
+    <p>Part 7, c'est 54 questions réparties sur environ 15 passages : single passages (un texte, 2-4 questions), double passages (deux textes liés, 5 questions), triple passages (trois textes, 5 questions). C'est <strong>54 % du score Reading et plus de 70 % du temps disponible</strong>. C'est ici que tout se joue.</p>
+
+    <p>La méta-stratégie qui change tout : <strong>questions FIRST, scan THEN, lecture détaillée seulement si nécessaire</strong>. Concrètement :</p>
+
+    <ol>
+      <li>Tu identifies le type de passage (email, article, notice, schedule…) en 5 secondes en regardant la mise en forme</li>
+      <li>Tu lis les questions associées AVANT de lire le texte</li>
+      <li>Tu scannes le texte pour repérer les zones contenant l'info recherchée</li>
+      <li>Tu ne lis en détail que les paragraphes qui contiennent l'info</li>
+    </ol>
+
+    <h3>Sous-stratégies par type de question</h3>
+
+    <p>Les questions Part 7 retombent dans une demi-douzaine de patterns récurrents. Apprends à les reconnaître pour ajuster ta méthode :</p>
+
+    <ul>
+      <li><strong>Schedules / itinéraires / annonces</strong> (horaires, prix, lieux) : <strong>scan visuel direct</strong>, pas de lecture linéaire. Tu cherches la donnée, tu la trouves, tu réponds.</li>
+      <li><strong>Purpose questions</strong> (« Why was this email sent? ») : la réponse est <strong>toujours dans les 1-2 premières phrases</strong>. Inutile de lire la suite pour ce type de Q.</li>
+      <li><strong>Inférence</strong> (« What is implied? », « What can be concluded? ») : ne sur-déduis jamais. La réponse correcte est une déduction <strong>évidente</strong> du texte, pas une supposition créative.</li>
+      <li><strong>NOT questions</strong> (« Which is NOT mentioned? ») : check chaque option contre le texte, élimine les 3 qui sont mentionnées. La réponse est celle qui ne l'est pas.</li>
+      <li><strong>Vocabulary in context</strong> (« the word X is closest in meaning to ») : relis la phrase entière. Le sens dépend du contexte, pas du dictionnaire.</li>
+    </ul>
+
+    <h3>Double et triple passages</h3>
+
+    <p>Sur les passages doubles et triples, l'organisation est presque toujours la même : <strong>les premières questions s'appuient sur un seul document, les dernières exigent de croiser les informations entre les documents</strong>. Une question type : « Selon le calendrier (doc 1) et la mise à jour des prix (doc 2), combien M. Tanaka paiera-t-il finalement pour son inscription ? » Cette question n'a aucune réponse si tu ne lis qu'un seul document.</p>
+
+    <div class="callout tip">
+      <div class="callout-title">💡 Réflexe Part 7</div>
+      <p>Quand tu vois 3 options qui reprennent des mots du texte et 1 qui n'en reprend aucun, <strong>la réponse est souvent celle qui n'en reprend aucun</strong>. Le TOEIC paraphrase massivement — la réponse correcte reformule, elle ne recopie pas.</p>
+    </div>
+
+    <h2><span class="num">06</span>Le réflexe qui sauve — le checkpoint à 60 minutes</h2>
+
+    <p>À 60 minutes écoulées (donc 15 minutes restantes), tu fais un point rapide. Ce checkpoint a sauvé un nombre incalculable de scores chez mes étudiants.</p>
+
+    <p>Tu vérifies trois choses :</p>
+
+    <ol>
+      <li><strong>Où en es-tu dans le booklet ?</strong> Si tu n'as pas atteint la question 175 (= environ trois quarts de la Part 7), tu es en retard. Tu accélères. Tu sautes les questions les plus longues et tu y reviens à la fin.</li>
+      <li><strong>Ton bubble sheet est-il à jour ?</strong> Toutes les réponses que tu as choisies dans le booklet sont bien transférées sur la feuille de réponses ? Une réponse qui reste dans le booklet et pas sur le bubble sheet est une réponse perdue.</li>
+      <li><strong>Y a-t-il des cases vides ?</strong> Aucune. Pas une seule. Aux 5 dernières minutes, si tu n'as toujours pas tout traité, remplis B ou C sur tout ce qui reste vide. <strong>Une réponse au hasard te donne 25 % de chance, une case vide te donne 0 %</strong>. Les concepteurs du TOEIC ne pénalisent pas les mauvaises réponses — c'est un cadeau, prends-le.</li>
+    </ol>
+
+    <div class="callout danger">
+      <div class="callout-title">⚠ L'erreur fatale du dernier quart d'heure</div>
+      <p>Beaucoup d'étudiants en retard se mettent à <strong>relire ce qu'ils ont déjà fait</strong>, par stress. Ne fais jamais ça. Si tu n'as pas fini la Part 7, chaque seconde passée sur une question déjà répondue est une seconde volée à une question vide. Avance, toujours.</p>
+    </div>
+
+    <h2><span class="num">07</span>Plan d'entraînement — 2 semaines pour intérioriser le rythme</h2>
+
+    <p>Connaître le découpage théorique ne sert à rien si tu ne l'as pas pratiqué sous chrono. Voici le plan que je donne à mes étudiants la quinzaine précédant leur épreuve :</p>
+
+    <div class="plan-grid">
+      <div class="plan-week">
+        <div class="week-label">Semaine 1</div>
+        <div class="week-focus">Construire le réflexe de découpage</div>
+        <ul>
+          <li><strong>J1-J2</strong> : 30 questions Part 5 chronométrées (12 min). Mesurer l'écart.</li>
+          <li><strong>J3</strong> : 4 textes Part 6 chronométrés (10 min)</li>
+          <li><strong>J4</strong> : 1 single passage Part 7 (5 questions, 5 min)</li>
+          <li><strong>J5</strong> : 1 double passage (5 questions, 6 min)</li>
+          <li><strong>J6-J7</strong> : Reading complet (75 min) — analyse écart par partie</li>
+        </ul>
+      </div>
+      <div class="plan-week">
+        <div class="week-label">Semaine 2</div>
+        <div class="week-focus">Stabiliser sous pression réelle</div>
+        <ul>
+          <li><strong>J8-J10</strong> : 1 Reading complet par jour (75 min strict)</li>
+          <li><strong>J11</strong> : Mock test complet (Listening + Reading, 2 h)</li>
+          <li><strong>J12</strong> : Analyse — où as-tu perdu du temps ?</li>
+          <li><strong>J13</strong> : 1 dernier Reading sous chrono</li>
+          <li><strong>J14</strong> : Repos. On ne révise pas la veille.</li>
+        </ul>
+      </div>
+    </div>
+
+    <p>Une chose essentielle : <strong>chronomètre par partie, pas seulement par session complète</strong>. C'est en mesurant tes 12 minutes de Part 5, tes 10 minutes de Part 6 et tes 53 minutes de Part 7 que tu repères où le rythme dérape. Une montre ou un timer sur ton téléphone suffisent.</p>
+
+    <div class="callout arena">
+      <div class="callout-title">🏰 Sur Verse Arena</div>
+      <p>Les <strong>3 Mock Tests</strong> et le <strong>Boss Test</strong> reproduisent les conditions chronométrées exactes du Reading TOEIC. Le mode <strong>Endless Arena</strong>, débloqué après le Boss, génère des Reading complets aléatoires pour s'entraîner au chrono autant que tu veux. Le score TOEIC estimé est calculé sur la base de tes accuracies par partie — tu vois en direct si ta gestion du temps tient la route.</p>
+    </div>
+
+    <h2><span class="num">08</span>Le mot de la fin</h2>
+
+    <p>Le Reading TOEIC ne récompense pas le candidat le plus précis. Il récompense le candidat le plus <strong>régulier</strong> dans son rythme. La différence entre un score 700 et un score 850 ne vient presque jamais du niveau d'anglais — elle vient de la capacité à tenir la cadence sur 75 minutes sans flancher.</p>
+
+    <p>Si tu retiens trois choses de cet article :</p>
+
+    <ol>
+      <li>Le découpage <strong>12 min Part 5 / 10 min Part 6 / 53 min Part 7</strong> est ton plan de bataille</li>
+      <li>Aucune case vide — jamais — sur le bubble sheet à la fin</li>
+      <li>Deux semaines de pratique chronométrée font la différence entre tenir le rythme et le subir</li>
+    </ol>
+
+    <p>Le reste, c'est de la grammaire et du vocabulaire. Et ça, tu peux le travailler tous les jours.</p>
+
+    <div class="cta-block">
+      <h3>Mets-toi au chrono dès maintenant</h3>
+      <p>Mock Tests, Boss Test, Endless Arena — tout ce qu'il faut pour s'entraîner au rythme TOEIC, sous conditions réelles.</p>
+      <a href="https://app.verse-arena.fr" target="_blank" class="cta-btn">⚔️ Entrer dans l'arène</a>
+    </div>
+
+  </div>
+
+</article>
+
+<footer>
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px">
+    <span style="font-size:16px">⚔️</span>
+    <span style="font-family:'Cinzel',serif;font-weight:800;font-size:13px;background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent">VERSE ARENA</span>
+  </div>
+  <p>Créé par Jérémy Leixa — Formateur en anglais</p>
+  <p style="margin-top:4px;font-size:10px;color:rgba(90,80,64,.5)">© 2026 Verse Arena · TOEIC® est une marque déposée d'ETS Global</p>
+</footer>
+
+</body>
+</html>
