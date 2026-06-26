@@ -1,6 +1,6 @@
 // =============================================================
 // narrator.js — Système narratif "Aldric"
-// TOEIC Arena — 8 moments-clés narratifs
+// Verse Arena — 8 moments-clés narratifs
 //
 // Chaque moment est déclenché par un trigger spécifique dans App.jsx,
 // puis joué via <NarratorOverlay> (popup parchemin plein écran).

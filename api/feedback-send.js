@@ -83,11 +83,11 @@ export default async function handler(req, res) {
   var emailStatus = "skipped";
   if (process.env.RESEND_API_KEY) {
     try {
-      var subject = "[TOEIC Arena] " + (TYPE_LABELS[feedback_type] || feedback_type) + " — " + module_label;
+      var subject = "[Verse Arena] " + (TYPE_LABELS[feedback_type] || feedback_type) + " — " + module_label;
       var html =
         "<div style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8f8f8;\">" +
         "<div style=\"background:#fff;padding:24px;border-radius:8px;border:1px solid #e0e0e0;\">" +
-        "<h2 style=\"margin:0 0 16px;color:#333;font-size:18px;\">New feedback from TOEIC Arena</h2>" +
+        "<h2 style=\"margin:0 0 16px;color:#333;font-size:18px;\">New feedback from Verse Arena</h2>" +
         "<table style=\"width:100%;border-collapse:collapse;font-size:14px;color:#333;\">" +
         "<tr><td style=\"padding:6px 8px;color:#888;width:120px;\">Student</td><td style=\"padding:6px 8px;font-weight:600;\">" + escapeHtml(user_name) + "</td></tr>" +
         "<tr><td style=\"padding:6px 8px;color:#888;\">Class</td><td style=\"padding:6px 8px;\">" + escapeHtml(class_code) + "</td></tr>" +
@@ -108,7 +108,7 @@ export default async function handler(req, res) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          from: process.env.RESEND_FROM || "TOEIC Arena <onboarding@resend.dev>",
+          from: process.env.RESEND_FROM || "Verse Arena <onboarding@resend.dev>",
           to: process.env.FEEDBACK_RECIPIENT || "leixa.formation@gmail.com",
           reply_to: process.env.FEEDBACK_REPLY_TO || undefined,
           subject: subject,

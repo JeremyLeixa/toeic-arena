@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// src/sounds.js — TOEIC Arena Sound Identity v2.0
+// src/sounds.js — Verse Arena Sound Identity v2.0
 // Medieval Fantasy sonic palette — Web Audio API (zero files)
 // ═══════════════════════════════════════════════════════════
 

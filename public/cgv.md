@@ -1,4 +1,4 @@
-# Conditions Générales de Vente — TOEIC Arena
+# Conditions Générales de Vente — Verse Arena
 
 **Version 1.0 — Date d'entrée en vigueur : [À COMPLÉTER — ex: 2026-05-20]**
 
@@ -12,7 +12,7 @@
 
 ## Article 1 — Objet et champ d'application
 
-Les présentes Conditions Générales de Vente (ci-après « **CGV** ») ont pour objet de définir les conditions dans lesquelles Jérémy Leixa (ci-après l' « **Éditeur** ») commercialise l'accès aux fonctionnalités premium du service TOEIC Arena (ci-après le « **Service** ») au profit de personnes physiques majeures, agissant en qualité de consommateurs au sens du Code de la consommation (ci-après le « **Client** »).
+Les présentes Conditions Générales de Vente (ci-après « **CGV** ») ont pour objet de définir les conditions dans lesquelles Jérémy Leixa (ci-après l' « **Éditeur** ») commercialise l'accès aux fonctionnalités premium du service Verse Arena (ci-après le « **Service** ») au profit de personnes physiques majeures, agissant en qualité de consommateurs au sens du Code de la consommation (ci-après le « **Client** »).
 
 Les CGV s'appliquent à toute souscription d'un abonnement payant au Service. Elles s'ajoutent aux **Conditions Générales d'Utilisation** (accessibles depuis l'application) qui régissent l'usage gratuit (« Freemium ») et premium du Service, ainsi qu'à la **Politique de Confidentialité** qui régit le traitement des données personnelles.
 
@@ -22,7 +22,7 @@ En cas de contradiction, les CGV prévalent pour les aspects contractuels et tar
 
 ## Article 2 — Mentions légales / Identification de l'Éditeur
 
-- **Nom commercial** : TOEIC Arena
+- **Nom commercial** : Verse Arena
 - **Éditeur** : Jérémy Leixa
 - **Statut juridique** : Entrepreneur Individuel — régime de la micro-entreprise
 - **SIRET** : [À COMPLÉTER]
@@ -40,7 +40,7 @@ En cas de contradiction, les CGV prévalent pour les aspects contractuels et tar
 
 ## Article 3 — Description du Service
 
-TOEIC Arena est une application web progressive (PWA) de préparation au test TOEIC (Test of English for International Communication®), proposant des exercices interactifs, des tests blancs, des flashcards, des mini-jeux pédagogiques et un système de progression gamifié.
+Verse Arena est une application web progressive (PWA) de préparation au test TOEIC (Test of English for International Communication®), proposant des exercices interactifs, des tests blancs, des flashcards, des mini-jeux pédagogiques et un système de progression gamifié.
 
 Le Service est proposé selon deux formules :
 
@@ -49,7 +49,7 @@ Le Service est proposé selon deux formules :
 
 La liste exhaustive des contenus et fonctionnalités de chaque formule est disponible à tout moment dans l'application, sur la page « Upgrade » ou équivalent. L'Éditeur se réserve le droit de faire évoluer cette liste, dans le respect de l'article 18.
 
-**Le TOEIC® est une marque déposée d'ETS (Educational Testing Service). TOEIC Arena est un service indépendant et n'est en aucune manière affilié à, approuvé par, ou partenaire d'ETS.**
+**Le TOEIC® est une marque déposée d'ETS (Educational Testing Service). Verse Arena est un service indépendant et n'est en aucune manière affilié à, approuvé par, ou partenaire d'ETS.**
 
 ---
 

@@ -3,7 +3,7 @@ import { playCorrect, playWrong, playXP, playLevelUp, playCombo, playStreak, pla
 import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
 /* ═══════════════════════════════════════════
-   TOEIC ARENA — MVP v2.0
+   VERSE ARENA — MVP v2.0
    Mobile-first TOEIC training platform
    ═══════════════════════════════════════════ */
 
@@ -572,7 +572,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-26-onboard-simplify";
+var BUILD_ID="2026-06-26-rename-verse-arena";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -585,7 +585,7 @@ var BUILD_ID="2026-06-26-onboard-simplify";
 var PREMIUM_UPGRADE_ENABLED=true;
 import { supabase } from './supabase.js'
 import { getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword } from './auth.js'
-console.warn("[TOEIC ARENA] Build:",BUILD_ID);
+console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
 // ─── Name normalization (accent-insensitive + lowercase) ───
 function normalizeName(s){return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();}
@@ -841,7 +841,7 @@ async function bioRegister(){
   var challenge=crypto.getRandomValues(new Uint8Array(32));
   var userId=crypto.getRandomValues(new Uint8Array(16));
   var opts={publicKey:{
-    challenge:challenge,rp:{name:"TOEIC Arena"},
+    challenge:challenge,rp:{name:"Verse Arena"},
     user:{id:userId,name:"teacher",displayName:"Teacher"},
     pubKeyCredParams:[{alg:-7,type:"public-key"},{alg:-257,type:"public-key"}],
     authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},
@@ -1602,7 +1602,7 @@ function downloadGrimoire(grim){
     return"<section class=\"g-chapter\"><div class=\"g-chap-num\">Chapitre "+num+"</div><h2 class=\"g-chap-title\">"+escHtml(ch.title)+"</h2>"+intro+blocks+"</section>";
   }).join("\n");
   var css="*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:Georgia,'Times New Roman',serif;background:#fbf5e8;color:#2a2118;line-height:1.6;padding:24px}.g-toolbar{position:sticky;top:0;background:#fbf5e8;padding:12px 0;margin-bottom:24px;border-bottom:2px solid #d4943a;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}.g-print-btn{background:#d4943a;color:#fff;border:none;padding:10px 18px;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;font-family:inherit}.g-print-btn:hover{background:#b87a26}.g-hint{font-size:12px;color:#6a5a3a;font-style:italic}.g-header{text-align:center;padding:32px 16px 24px;border-bottom:1px solid #c4a868;margin-bottom:32px}.g-title{font-family:'Cinzel',Georgia,serif;font-size:28px;font-weight:900;color:#8b5a1f;margin:0 0 8px;letter-spacing:1px}.g-subtitle{font-size:14px;color:#6a5a3a;font-style:italic;margin:0 0 12px}.g-meta{font-size:12px;color:#8a7a5a}.g-chapter{margin-bottom:48px}.g-chap-num{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#b87a26;font-weight:700;margin-bottom:6px}.g-chap-title{font-family:'Cinzel',Georgia,serif;font-size:22px;font-weight:800;color:#3a2a18;margin:0 0 16px;border-bottom:2px solid #d4943a;padding-bottom:8px}.g-intro{font-style:italic;color:#5a4a32;background:rgba(212,148,58,.08);border-left:3px solid #d4943a;padding:12px 14px;margin:0 0 18px;border-radius:4px}.g-p{margin:0 0 12px;color:#2a2118}.g-h{font-size:16px;font-weight:700;color:#5a3a18;margin:20px 0 10px}.g-rule{background:rgba(6,182,212,.08);border-left:3px solid #06b6d4;padding:12px 14px;margin:0 0 14px;border-radius:4px}.g-rule-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#0891b2;font-weight:700;margin-bottom:4px}.g-rule-f{font-weight:600;color:#1a3a48}.g-ex{background:rgba(255,255,255,.5);border:1px solid #d4c8a8;padding:10px 14px;margin:0 0 12px;border-radius:4px}.g-ex-en{font-style:italic;color:#3a2a18;font-weight:500}.g-ex-fr{color:#5a4a32;margin-top:4px;font-size:14px}.g-ex-note{font-size:12px;color:#7a6a4a;margin-top:6px;border-top:1px dashed #c4a868;padding-top:6px}.g-trap{background:rgba(224,82,82,.08);border-left:3px solid #c84040;padding:10px 14px;margin:0 0 14px;border-radius:4px;color:#5a1a18}.g-trap-tag{display:inline-block;background:#c84040;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:3px;margin-right:6px}.g-table{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:13px}.g-table th{background:#d4943a;color:#fff;padding:8px 10px;text-align:left;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px}.g-table td{padding:8px 10px;border-bottom:1px solid #d4c8a8;color:#2a2118}.g-table tbody tr:nth-child(even){background:rgba(212,148,58,.05)}.g-list{padding-left:20px;margin:0 0 14px}.g-list li{margin-bottom:6px;color:#2a2118}.g-footer{text-align:center;margin-top:48px;padding-top:24px;border-top:1px solid #c4a868;font-size:11px;color:#8a7a5a;font-style:italic}@media print{body{background:#fff;color:#000;padding:0;font-size:11pt;line-height:1.5}.g-toolbar{display:none}.g-header{padding:0 0 16px;border-bottom:2px solid #000;margin-bottom:24px;page-break-after:avoid}.g-title{color:#000;font-size:22pt}.g-subtitle,.g-meta{color:#000}.g-chapter{page-break-before:always;margin-bottom:24px}.g-chapter:first-of-type{page-break-before:auto}.g-chap-num{color:#000;font-weight:700}.g-chap-title{color:#000;font-size:16pt;border-bottom:1px solid #000;page-break-after:avoid}.g-intro{background:transparent;border-left:2px solid #000;color:#000;page-break-inside:avoid}.g-p,.g-h{color:#000}.g-h{color:#000;font-size:13pt}.g-rule{background:transparent;border:1px solid #000;border-left:3px solid #000;page-break-inside:avoid}.g-rule-lbl{color:#000}.g-rule-f{color:#000}.g-ex{background:transparent;border:1px solid #000;page-break-inside:avoid}.g-ex-en,.g-ex-fr,.g-ex-note{color:#000}.g-ex-note{border-top:1px dashed #000}.g-trap{background:transparent;border:1px solid #000;border-left:3px solid #000;color:#000;page-break-inside:avoid}.g-trap-tag{background:#000;color:#fff}.g-table{page-break-inside:avoid}.g-table th{background:#000;color:#fff;border:1px solid #000}.g-table td{border:1px solid #000;color:#000}.g-table tbody tr:nth-child(even){background:#f0f0f0}.g-footer{color:#000;border-top:1px solid #000}@page{margin:18mm 16mm}}";
-  var html="<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"utf-8\"><title>"+escHtml(grim.title)+"</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>"+css+"</style></head><body><div class=\"g-toolbar\"><button class=\"g-print-btn\" onclick=\"window.print()\">"+"🖨️ Imprimer / Enregistrer en PDF</button><div class=\"g-hint\">Astuce : choisir « Enregistrer en PDF » comme destination</div></div><div class=\"g-header\"><h1 class=\"g-title\">"+escHtml(grim.title)+"</h1>"+(grim.subtitle?"<div class=\"g-subtitle\">"+escHtml(grim.subtitle)+"</div>":"")+"<div class=\"g-meta\">"+(grim.readingTime?"Lecture : "+escHtml(grim.readingTime)+" · ":"")+grim.chapters.length+" chapitres</div></div>"+chapters+"<div class=\"g-footer\">TOEIC Arena · Grimoire exporté pour étude personnelle</div></body></html>";
+  var html="<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"utf-8\"><title>"+escHtml(grim.title)+"</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>"+css+"</style></head><body><div class=\"g-toolbar\"><button class=\"g-print-btn\" onclick=\"window.print()\">"+"🖨️ Imprimer / Enregistrer en PDF</button><div class=\"g-hint\">Astuce : choisir « Enregistrer en PDF » comme destination</div></div><div class=\"g-header\"><h1 class=\"g-title\">"+escHtml(grim.title)+"</h1>"+(grim.subtitle?"<div class=\"g-subtitle\">"+escHtml(grim.subtitle)+"</div>":"")+"<div class=\"g-meta\">"+(grim.readingTime?"Lecture : "+escHtml(grim.readingTime)+" · ":"")+grim.chapters.length+" chapitres</div></div>"+chapters+"<div class=\"g-footer\">Verse Arena · Grimoire exporté pour étude personnelle</div></body></html>";
   var w=window.open("","_blank");
   if(!w){alert("La fenêtre d'export a été bloquée. Autorise les pop-ups pour ce site et réessaie.");return;}
   w.document.open();w.document.write(html);w.document.close();
@@ -3345,7 +3345,7 @@ var blocked=p.blocked||[];
 // 6 tabs : tighter container padding + per-button padding so "Profile" doesn't truncate
 // on narrow screens (≤375px). Icon stays 24px, label drops 11→10px.
 return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(var(--bg3-rgb),0) 0%,rgba(var(--bg3-rgb),.8) 15%,var(--bg3) 100%)",borderTop:"1px solid rgba(var(--cx),.15)",padding:"8px 4px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-between"}}>
-<div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>TOEIC ARENA</span></div>
+<div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>VERSE ARENA</span></div>
 {tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 4px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t1)",transform:a&&!dis?"scale(1.06)":"scale(1)",opacity:dis?.35:a?1:.55,transition:"all .2s",flex:1,minWidth:0}}>
 <svg viewBox="0 0 512 512" width="24" height="24" style={{display:"block",filter:a&&!dis?"drop-shadow(0 0 6px rgba(var(--cx),.55))":"none",transition:"filter .2s",flexShrink:0}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS[t.i]||""}}/></svg><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.3,whiteSpace:"nowrap"}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:2}}/>}</button>);})}</div>);}
 
@@ -3353,15 +3353,15 @@ return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",tra
 function PrivacyPolicy(p){
   var sections=[
     {t:"1. Responsable du traitement",c:"J\u00e9r\u00e9my LEIXA, formateur en anglais (Entrepreneur Individuel \u2014 SIRET 830 200 556 00025).\nContact\u00a0: leixa.formation@gmail.com"},
-    {t:"2. Donn\u00e9es collect\u00e9es",c:"Pr\u00e9nom ou pseudonyme, code classe, scores et progression par module, temps d'entra\u00eenement cumul\u00e9, \u00e9tats de r\u00e9vision des flashcards, r\u00e9sultats aux tests blancs, avatar choisi, pr\u00e9f\u00e9rence de th\u00e8me.\n\nSi vous souscrivez un abonnement payant\u00a0: email (obligatoire pour le lien magique et la facturation), identifiant client Stripe, historique d'abonnement (formule, dates de d\u00e9but/fin, statut), historique de factures.\n\nAucune donn\u00e9e de carte bancaire n'est collect\u00e9e ni stock\u00e9e par TOEIC Arena\u00a0: elle est g\u00e9r\u00e9e exclusivement par Stripe, au standard PCI-DSS. Aucune donn\u00e9e de localisation."},
+    {t:"2. Donn\u00e9es collect\u00e9es",c:"Pr\u00e9nom ou pseudonyme, code classe, scores et progression par module, temps d'entra\u00eenement cumul\u00e9, \u00e9tats de r\u00e9vision des flashcards, r\u00e9sultats aux tests blancs, avatar choisi, pr\u00e9f\u00e9rence de th\u00e8me.\n\nSi vous souscrivez un abonnement payant\u00a0: email (obligatoire pour le lien magique et la facturation), identifiant client Stripe, historique d'abonnement (formule, dates de d\u00e9but/fin, statut), historique de factures.\n\nAucune donn\u00e9e de carte bancaire n'est collect\u00e9e ni stock\u00e9e par Verse Arena\u00a0: elle est g\u00e9r\u00e9e exclusivement par Stripe, au standard PCI-DSS. Aucune donn\u00e9e de localisation."},
     {t:"3. Base l\u00e9gale",c:"Int\u00e9r\u00eat l\u00e9gitime p\u00e9dagogique (article 6.1.f du RGPD) pour le suivi de la progression des apprenants dans le cadre d'une formation. Consentement explicite recueilli lors de la cr\u00e9ation du profil.\n\nPour les donn\u00e9es de paiement\u00a0: ex\u00e9cution du contrat (article 6.1.b du RGPD) et obligations comptables l\u00e9gales (article 6.1.c)."},
     {t:"4. Finalit\u00e9s",c:"\u2022 Suivi p\u00e9dagogique individuel et collectif\n\u2022 Classements et gamification\n\u2022 Personnalisation des exercices et recommandations\n\u2022 Rapport hebdomadaire au responsable p\u00e9dagogique\n\u2022 Gestion des paiements et abonnements (souscription Premium)\n\u2022 \u00c9mission et conservation des factures (obligation comptable)\n\u2022 R\u00e8glement amiable des litiges (m\u00e9diation de la consommation)"},
     {t:"5. Destinataires",c:"Votre formateur (acc\u00e8s au tableau de bord enseignant), le responsable p\u00e9dagogique (rapports agr\u00e9g\u00e9s). Aucune donn\u00e9e n'est vendue ou transmise \u00e0 des tiers \u00e0 des fins commerciales.\n\nPour les abonnements payants\u00a0: Stripe (en tant que sous-traitant, cf. section 6) et, le cas \u00e9ch\u00e9ant, le m\u00e9diateur de la consommation (uniquement en cas de litige soumis par vous)."},
-    {t:"6. Sous-traitants",c:"\u2022 Supabase Inc. (h\u00e9bergement base de donn\u00e9es, authentification \u2014 serveurs UE/US).\n\u2022 Vercel Inc. (h\u00e9bergement de l'application).\n\u2022 Google Fonts (polices de caract\u00e8res \u2014 votre navigateur contacte les serveurs Google pour t\u00e9l\u00e9charger les polices).\n\u2022 Stripe Payments Europe, Ltd (traitement des paiements, \u00e9mission des factures, gestion des abonnements \u2014 soci\u00e9t\u00e9 de droit irlandais, conformit\u00e9 PCI-DSS). Les donn\u00e9es de carte bancaire sont collect\u00e9es et stock\u00e9es directement par Stripe, jamais par TOEIC Arena."},
+    {t:"6. Sous-traitants",c:"\u2022 Supabase Inc. (h\u00e9bergement base de donn\u00e9es, authentification \u2014 serveurs UE/US).\n\u2022 Vercel Inc. (h\u00e9bergement de l'application).\n\u2022 Google Fonts (polices de caract\u00e8res \u2014 votre navigateur contacte les serveurs Google pour t\u00e9l\u00e9charger les polices).\n\u2022 Stripe Payments Europe, Ltd (traitement des paiements, \u00e9mission des factures, gestion des abonnements \u2014 soci\u00e9t\u00e9 de droit irlandais, conformit\u00e9 PCI-DSS). Les donn\u00e9es de carte bancaire sont collect\u00e9es et stock\u00e9es directement par Stripe, jamais par Verse Arena."},
     {t:"7. Dur\u00e9e de conservation",c:"Donn\u00e9es p\u00e9dagogiques\u00a0: conserv\u00e9es pendant la dur\u00e9e de la formation, puis supprim\u00e9es \u00e0 la fin de l'ann\u00e9e scolaire ou sur demande. Les snapshots hebdomadaires sont conserv\u00e9s 12 mois maximum.\n\nDonn\u00e9es de facturation et pi\u00e8ces comptables\u00a0: conserv\u00e9es dix (10) ans \u00e0 compter de la cl\u00f4ture de l'exercice, conform\u00e9ment \u00e0 l'article L.123-22 du Code de commerce.\n\nDonn\u00e9es d'abonnement actif\u00a0: conserv\u00e9es pendant toute la dur\u00e9e de la relation contractuelle."},
     {t:"8. Vos droits (RGPD Art. 15-20)",c:"Acc\u00e8s\u00a0: consultez votre profil \u00e0 tout moment.\nPortabilit\u00e9\u00a0: exportez vos donn\u00e9es en JSON depuis votre profil.\nRectification\u00a0: modifiez votre avatar et pr\u00e9f\u00e9rences dans le profil.\nEffacement\u00a0: supprimez votre compte et toutes vos donn\u00e9es depuis le profil (hors pi\u00e8ces comptables conserv\u00e9es 10 ans par obligation l\u00e9gale).\nPour toute demande\u00a0: leixa.formation@gmail.com"},
     {t:"9. Stockage local",c:"L'application stocke une copie de votre profil dans le localStorage de votre navigateur pour un acc\u00e8s hors-ligne. Ces donn\u00e9es sont supprim\u00e9es lorsque vous supprimez votre compte."},
-    {t:"10. Cookies",c:"TOEIC Arena n'utilise aucun cookie publicitaire ni traqueur. Seul le stockage local du navigateur (localStorage) est utilis\u00e9 pour la persistance de session. Stripe peut poser ses propres cookies techniques sur la page de paiement (strictement n\u00e9cessaires au fonctionnement du checkout, exemption CNIL)."},
+    {t:"10. Cookies",c:"Verse Arena n'utilise aucun cookie publicitaire ni traqueur. Seul le stockage local du navigateur (localStorage) est utilis\u00e9 pour la persistance de session. Stripe peut poser ses propres cookies techniques sur la page de paiement (strictement n\u00e9cessaires au fonctionnement du checkout, exemption CNIL)."},
     {t:"11. Notifications push",c:"Optionnelles. Vous pouvez les activer ou d\u00e9sactiver \u00e0 tout moment dans votre profil. L'abonnement push est stock\u00e9 c\u00f4t\u00e9 serveur et supprim\u00e9 lors de la d\u00e9sactivation ou de la suppression du compte."},
     {t:"12. Mise \u00e0 jour",c:"Cette politique peut \u00eatre mise \u00e0 jour. La date de derni\u00e8re modification est indiqu\u00e9e ci-dessous. Derni\u00e8re mise \u00e0 jour\u00a0: 24 avril 2026 \u2014 ajout de Stripe comme sous-traitant pour la gestion des paiements."},
   ];
@@ -3394,7 +3394,7 @@ function MediationInfo(p){
   var mandatoryPostalBlock="ou par voie postale en \u00e9crivant \u00e0\u00a0:\n\nM\u00c9DIATION CONSOMMATION D\u00c9VELOPPEMENT\nC/O Centre d'Affaires St\u00e9phanois SAS - Immeuble l'Horizon - Esplanade de France - 3 rue J. Constant Milleret - 42000 SAINT-ETIENNE";
   var extraSections=[
     {t:"Informations compl\u00e9mentaires",
-      c:"\u2022 Num\u00e9ro d'adh\u00e9rent\u00a0: MED60239\n\u2022 Convention sign\u00e9e le 20 avril 2026 pour une dur\u00e9e de trois ans, enregistr\u00e9e aupr\u00e8s de la CECMC (Commission d'\u00c9valuation et de Contr\u00f4le de la M\u00e9diation de la Consommation).\n\u2022 Gratuit\u00e9\u00a0: la proc\u00e9dure est enti\u00e8rement gratuite pour vous, les frais sont pris en charge par TOEIC Arena.\n\u2022 D\u00e9lai\u00a0: le m\u00e9diateur rend son avis dans un d\u00e9lai maximum de 90 jours \u00e0 compter de sa saisine, prorogeable en cas de litige complexe.\n\u2022 Confidentialit\u00e9\u00a0: les \u00e9changes en m\u00e9diation sont soumis \u00e0 une obligation de confidentialit\u00e9 absolue (art. 21-3 loi n\u00b0 95-125 du 8 f\u00e9vrier 1995).\n\u2022 D\u00e9lai de saisine\u00a0: votre demande doit intervenir dans un d\u00e9lai d'un an \u00e0 compter de votre r\u00e9clamation initiale aupr\u00e8s de notre service client (leixa.formation@gmail.com)."},
+      c:"\u2022 Num\u00e9ro d'adh\u00e9rent\u00a0: MED60239\n\u2022 Convention sign\u00e9e le 20 avril 2026 pour une dur\u00e9e de trois ans, enregistr\u00e9e aupr\u00e8s de la CECMC (Commission d'\u00c9valuation et de Contr\u00f4le de la M\u00e9diation de la Consommation).\n\u2022 Gratuit\u00e9\u00a0: la proc\u00e9dure est enti\u00e8rement gratuite pour vous, les frais sont pris en charge par Verse Arena.\n\u2022 D\u00e9lai\u00a0: le m\u00e9diateur rend son avis dans un d\u00e9lai maximum de 90 jours \u00e0 compter de sa saisine, prorogeable en cas de litige complexe.\n\u2022 Confidentialit\u00e9\u00a0: les \u00e9changes en m\u00e9diation sont soumis \u00e0 une obligation de confidentialit\u00e9 absolue (art. 21-3 loi n\u00b0 95-125 du 8 f\u00e9vrier 1995).\n\u2022 D\u00e9lai de saisine\u00a0: votre demande doit intervenir dans un d\u00e9lai d'un an \u00e0 compter de votre r\u00e9clamation initiale aupr\u00e8s de notre service client (leixa.formation@gmail.com)."},
     {t:"Plateforme europ\u00e9enne (RLL)",
       c:"Si vous r\u00e9sidez dans un autre \u00c9tat membre de l'Union europ\u00e9enne, vous pouvez \u00e9galement recourir \u00e0 la plateforme europ\u00e9enne de R\u00e8glement en Ligne des Litiges mise en place par la Commission europ\u00e9enne\u00a0:\nhttps://ec.europa.eu/consumers/odr/\n\nCette plateforme permet de rechercher un organisme de r\u00e8glement extrajudiciaire comp\u00e9tent et de d\u00e9poser une demande en ligne."},
     {t:"Information l\u00e9gale",
@@ -3662,7 +3662,7 @@ var[step,sSt]=useState("name");
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .8s ease-out"}}>
         <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="crossed-swords" size={64} color="var(--cyan)"/></div>
-        <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>TOEIC ARENA</h1>
+        <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>VERSE ARENA</h1>
         <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>Train smarter. Climb the ranks.<br/>Conquer the TOEIC.</p>
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Your arena name</label>
@@ -3863,7 +3863,7 @@ var[step,sSt]=useState("name");
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>🏫</div>
         <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Join a Group</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>Enter the class code given by your teacher to unlock all modules, or discover TOEIC Arena for free.</p>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>Enter the class code given by your teacher to unlock all modules, or discover Verse Arena for free.</p>
         <div style={{marginBottom:16,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Class code</label>
           <input type="text" value={classCode} onChange={function(e){var v=e.target.value.toLowerCase().replace(/\s/g,'');setClassCode(v);setClassValid(null);setClassGroupName("");}} onBlur={function(){checkGroupCode(classCode);}} placeholder="Code from your teacher"
@@ -3900,7 +3900,7 @@ var[step,sSt]=useState("name");
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:420}}>
         <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="templar-shield" size={48} color="var(--cyan)"/></div>
         <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{"Protection de vos donn\u00e9es"}</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.6}}>{"Avant de commencer, voici comment TOEIC Arena utilise vos donn\u00e9es :"}</p>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.6}}>{"Avant de commencer, voici comment Verse Arena utilise vos donn\u00e9es :"}</p>
         <div style={{textAlign:"left",padding:"16px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:14,marginBottom:20}}>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
@@ -6949,7 +6949,7 @@ function AboutToeic(p){
     <div className="crd" style={{padding:18,background:"linear-gradient(135deg,rgba(var(--cx),.08),rgba(139,94,131,.08))",borderColor:"rgba(var(--cx),.25)"}}>
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
         <span style={{fontSize:26}}>{"\u2694\uFE0F"}</span>
-        <h3 className="out" style={{fontWeight:700,fontSize:16,margin:0,color:"var(--cx-hex)"}}>How TOEIC Arena trains you</h3>
+        <h3 className="out" style={{fontWeight:700,fontSize:16,margin:0,color:"var(--cx-hex)"}}>How Verse Arena trains you</h3>
       </div>
       <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.9}}>
         <div><span style={{fontSize:15}}>{"\uD83C\uDFA7"}</span> <strong>Listening Practice</strong> {"\u2014"} all 4 parts, real audio, escalating difficulty</div>
@@ -11827,7 +11827,7 @@ function WeeklyReport(p){
     <div style={{maxWidth:820,margin:"0 auto"}}>
       {/* ──── HEADER ──── */}
       <div style={{borderBottom:"3px solid #1a1a1a",paddingBottom:16,marginBottom:24}}>
-        <p style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:"#666",margin:0}}>TOEIC Arena · Rapport hebdomadaire</p>
+        <p style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:"#666",margin:0}}>Verse Arena · Rapport hebdomadaire</p>
         <h1 style={{fontSize:28,fontWeight:900,margin:"6px 0 4px"}}>Bilan pédagogique — {leagueName}</h1>
         <p style={{fontSize:14,color:"#555",margin:0}}>Semaine du {fmtDate(lastMonday)} au {fmtDate(lastSunday)} · {p.students.length} étudiants inscrits</p>
       </div>
@@ -11983,7 +11983,7 @@ function WeeklyReport(p){
 
       {/* ──── FOOTER ──── */}
       <div style={{borderTop:"1px solid #ddd",paddingTop:12,marginTop:24,textAlign:"center"}}>
-        <p style={{fontSize:10,color:"#888",margin:0}}>TOEIC Arena · Rapport généré le {fmtDate(now)} · Jérémy Leixa · IDRAC Business School</p>
+        <p style={{fontSize:10,color:"#888",margin:0}}>Verse Arena · Rapport généré le {fmtDate(now)} · Jérémy Leixa · IDRAC Business School</p>
       </div>
     </div>
   </div>);
@@ -14316,7 +14316,7 @@ function UpgradeScreen(p){
         <input type="checkbox" checked={acceptCGV} onChange={function(e){setAcceptCGV(e.target.checked);setErr("");}}
           style={{marginTop:2,width:18,height:18,flexShrink:0,accentColor:"var(--cx-hex)"}}/>
         <span style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>
-          {"J'ai lu et j'accepte les "}<button type="button" onClick={function(e){e.preventDefault();setShowCGV(true);}} style={{background:"none",border:"none",padding:0,color:"var(--cyan)",textDecoration:"underline",cursor:"pointer",fontFamily:"inherit",fontSize:"inherit"}}>Conditions G\u00e9n\u00e9rales de Vente</button>{" de TOEIC Arena."}
+          {"J'ai lu et j'accepte les "}<button type="button" onClick={function(e){e.preventDefault();setShowCGV(true);}} style={{background:"none",border:"none",padding:0,color:"var(--cyan)",textDecoration:"underline",cursor:"pointer",fontFamily:"inherit",fontSize:"inherit"}}>Conditions G\u00e9n\u00e9rales de Vente</button>{" de Verse Arena."}
         </span>
       </label>
 
@@ -15646,6 +15646,11 @@ function Profile(p){
       {showMediation&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--bg)",zIndex:9999,overflow:"auto"}}>
         <MediationInfo onClose={function(){setShowMediation(false);}}/>
       </div>}
+
+      {/* ─── DISCLAIMER MARQUE ETS (obligatoire — usage informatif TOEIC) ─── */}
+      <p style={{fontSize:10,color:"var(--t3)",lineHeight:1.5,textAlign:"center",marginTop:24,marginBottom:0}}>
+        {"TOEIC® is a registered trademark of ETS. Verse Arena is not endorsed or approved by ETS."}
+      </p>
     </div>);
   }
 

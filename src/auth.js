@@ -250,7 +250,7 @@ export async function updatePassword(newPassword) {
 
 // Demande un reset password : envoie un mail avec lien magique vers /?reset=<token>.
 // Custom flow (Edge Function + Resend) — PAS le built-in Supabase
-// (resetPasswordForEmail) car Jérémy veut un mail brandé TOEIC Arena.
+// (resetPasswordForEmail) car Jérémy veut un mail brandé Verse Arena.
 // Toujours return success (même si email inexistant) pour éviter user
 // enumeration — l'Edge Function décide silencieusement de envoyer ou pas.
 export async function requestPasswordReset(email) {

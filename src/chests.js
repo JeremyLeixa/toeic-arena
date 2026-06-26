@@ -1,6 +1,6 @@
 // =============================================================
 // chests.js — Système de Coffres aux Trésors
-// TOEIC Arena — logique métier complète
+// Verse Arena — logique métier complète
 //
 // Import dans App.jsx :
 // import {

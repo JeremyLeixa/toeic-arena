@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "TOEIC Arena",
-  "short_name": "TOEIC Arena",
+  "name": "Verse Arena",
+  "short_name": "Verse Arena",
   "description": "Gamified TOEIC preparation platform",
   "start_url": "/",
   "display": "standalone",

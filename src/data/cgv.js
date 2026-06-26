@@ -1,5 +1,5 @@
 // =============================================================
-// cgv.js — Conditions Générales de Vente de TOEIC Arena
+// cgv.js — Conditions Générales de Vente de Verse Arena
 // Version 1.0 (maj 2026-04-24) — À faire relire par un juriste avant
 // publication commerciale.
 //
@@ -21,17 +21,17 @@ export var CGV_ARTICLES = [
   {
     id: "intro",
     title: "Préambule",
-    body: "Les présentes Conditions Générales de Vente (ci-après « CGV ») ont pour objet de définir les conditions dans lesquelles Jérémy LEIXA commercialise l'accès aux fonctionnalités premium du service TOEIC Arena au profit de personnes physiques majeures, agissant en qualité de consommateurs au sens du Code de la consommation.\n\nEn souscrivant un abonnement, le Client accepte sans réserve les présentes CGV."
+    body: "Les présentes Conditions Générales de Vente (ci-après « CGV ») ont pour objet de définir les conditions dans lesquelles Jérémy LEIXA commercialise l'accès aux fonctionnalités premium du service Verse Arena au profit de personnes physiques majeures, agissant en qualité de consommateurs au sens du Code de la consommation.\n\nEn souscrivant un abonnement, le Client accepte sans réserve les présentes CGV."
   },
   {
     id: "art2",
     title: "Article 2 — Mentions légales / Identification de l'Éditeur",
-    body: "• Nom commercial : TOEIC Arena\n• Éditeur : Jérémy LEIXA\n• Statut juridique : Entrepreneur Individuel — régime de la micro-entreprise\n• SIRET : 830 200 556 00025\n• Code APE : 85.59B (Formation continue d'adultes)\n• Adresse : 33 route de la Daleure, 38590 Saint-Étienne-de-Saint-Geoirs\n• Email : leixa.formation@gmail.com\n• Directeur de la publication : Jérémy LEIXA\n• Régime TVA : TVA non applicable, art. 293 B du CGI (franchise en base)\n\nHébergement :\n• Application web et API : Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA\n• Base de données et authentification : Supabase Inc., 970 Toa Payoh North #07-04, Singapour 318992"
+    body: "• Nom commercial : Verse Arena\n• Éditeur : Jérémy LEIXA\n• Statut juridique : Entrepreneur Individuel — régime de la micro-entreprise\n• SIRET : 830 200 556 00025\n• Code APE : 85.59B (Formation continue d'adultes)\n• Adresse : 33 route de la Daleure, 38590 Saint-Étienne-de-Saint-Geoirs\n• Email : leixa.formation@gmail.com\n• Directeur de la publication : Jérémy LEIXA\n• Régime TVA : TVA non applicable, art. 293 B du CGI (franchise en base)\n\nHébergement :\n• Application web et API : Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA\n• Base de données et authentification : Supabase Inc., 970 Toa Payoh North #07-04, Singapour 318992"
   },
   {
     id: "art3",
     title: "Article 3 — Description du Service",
-    body: "TOEIC Arena est une application web progressive (PWA) de préparation au test TOEIC®, proposant des exercices interactifs, des tests blancs, des flashcards, des mini-jeux pédagogiques et un système de progression gamifié.\n\nLe Service est proposé selon deux formules :\n• Freemium (gratuite) : accès limité à un ensemble restreint de modules et contenus.\n• Premium (payante) : accès à l'intégralité des modules, tests blancs, Boss Test, Endless Arena, et fonctionnalités avancées.\n\nLe TOEIC® est une marque déposée d'ETS (Educational Testing Service). TOEIC Arena est un service indépendant et n'est en aucune manière affilié à, approuvé par, ou partenaire d'ETS."
+    body: "Verse Arena est une application web progressive (PWA) de préparation au test TOEIC®, proposant des exercices interactifs, des tests blancs, des flashcards, des mini-jeux pédagogiques et un système de progression gamifié.\n\nLe Service est proposé selon deux formules :\n• Freemium (gratuite) : accès limité à un ensemble restreint de modules et contenus.\n• Premium (payante) : accès à l'intégralité des modules, tests blancs, Boss Test, Endless Arena, et fonctionnalités avancées.\n\nLe TOEIC® est une marque déposée d'ETS (Educational Testing Service). Verse Arena est un service indépendant et n'est en aucune manière affilié à, approuvé par, ou partenaire d'ETS."
   },
   {
     id: "art4",

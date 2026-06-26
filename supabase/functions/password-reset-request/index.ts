@@ -5,7 +5,7 @@
 // avec cet email :
 //   1. Génère un token aléatoire (32 bytes hex)
 //   2. INSERT dans password_reset_tokens (expires_at = now + 1h)
-//   3. Envoie un mail brandé TOEIC Arena via Resend avec lien
+//   3. Envoie un mail brandé Verse Arena via Resend avec lien
 //      https://<APP_URL>/?reset=<token>
 //
 // Toujours retourne 200 + { ok: true } — JAMAIS d'info sur l'existence
@@ -16,7 +16,7 @@
 //   - SUPABASE_SERVICE_ROLE_KEY   (auto)
 //   - RESEND_API_KEY              (à set : re_xxxxxxxxxxxx)
 //   - APP_URL                     (à set : https://toeic-arena.vercel.app)
-//   - RESEND_FROM                 (optionnel, default "TOEIC Arena <onboarding@resend.dev>")
+//   - RESEND_FROM                 (optionnel, default "Verse Arena <onboarding@resend.dev>")
 // ═══════════════════════════════════════════════════════════
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -51,10 +51,10 @@ async function sendResetEmail(email: string, resetUrl: string, apiKey: string, f
   <div style="max-width:520px;margin:32px auto;padding:32px 24px;background:#1a1610;border-radius:16px;border:1px solid rgba(180,140,80,0.15);">
     <div style="text-align:center;margin-bottom:24px;">
       <div style="font-size:48px;line-height:1;">🏰</div>
-      <h1 style="font-family:'Cinzel',serif;color:#f0c850;font-weight:800;font-size:24px;margin:12px 0 4px;letter-spacing:1px;">TOEIC ARENA</h1>
+      <h1 style="font-family:'Cinzel',serif;color:#f0c850;font-weight:800;font-size:24px;margin:12px 0 4px;letter-spacing:1px;">VERSE ARENA</h1>
     </div>
     <h2 style="color:#ede4d4;font-size:18px;font-weight:700;margin:0 0 12px;">Réinitialisation du mot de passe</h2>
-    <p style="color:#8a7e6a;font-size:14px;line-height:1.6;margin:0 0 20px;">Tu as demandé à réinitialiser ton mot de passe TOEIC Arena. Clique sur le bouton ci-dessous (lien valide 1 heure).</p>
+    <p style="color:#8a7e6a;font-size:14px;line-height:1.6;margin:0 0 20px;">Tu as demandé à réinitialiser ton mot de passe Verse Arena. Clique sur le bouton ci-dessous (lien valide 1 heure).</p>
     <div style="text-align:center;margin:28px 0;">
       <a href="${safeUrl}" style="display:inline-block;padding:14px 28px;background:linear-gradient(135deg,#f0c850,#d4943a);color:#1a1610;text-decoration:none;font-weight:700;border-radius:10px;font-size:14px;">Choisir un nouveau mot de passe</a>
     </div>
@@ -74,7 +74,7 @@ async function sendResetEmail(email: string, resetUrl: string, apiKey: string, f
     body: JSON.stringify({
       from: fromAddr,
       to: [email],
-      subject: "Réinitialisation de ton mot de passe TOEIC Arena",
+      subject: "Réinitialisation de ton mot de passe Verse Arena",
       html: html,
     }),
   });
@@ -151,7 +151,7 @@ serve(async (req: Request) => {
     const appUrl = Deno.env.get("APP_URL") || "https://toeic-arena.vercel.app";
     const resetUrl = `${appUrl}/?reset=${encodeURIComponent(token)}`;
     const resendKey = Deno.env.get("RESEND_API_KEY");
-    const fromAddr = Deno.env.get("RESEND_FROM") || "TOEIC Arena <onboarding@resend.dev>";
+    const fromAddr = Deno.env.get("RESEND_FROM") || "Verse Arena <onboarding@resend.dev>";
 
     if (!resendKey) {
       console.error("[password-reset-request] RESEND_API_KEY not set");

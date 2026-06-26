@@ -66,7 +66,7 @@ export default async function handler(req, res) {
   }
 
   var payload = JSON.stringify({
-    title: title || "TOEIC Arena",
+    title: title || "Verse Arena",
     body: body || "Time to train!",
     icon: "/icon-192.png",
     tag: tag || "toeic-default",

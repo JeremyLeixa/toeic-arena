@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// sw.js — TOEIC Arena Service Worker v2
+// sw.js — Verse Arena Service Worker v2
 // Cache static assets + handle push notifications
 // ═══════════════════════════════════════════════════════════
 
@@ -93,7 +93,7 @@ function sanitizeUrl(str) {
 
 self.addEventListener("push", function (e) {
   var data = {
-    title: "TOEIC Arena",
+    title: "Verse Arena",
     body: "Time to train!",
     icon: "/icon-192.png",
     tag: "toeic-default",
