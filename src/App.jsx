@@ -13658,9 +13658,12 @@ var dynSeasons=useMemo(function(){
 },[groupData,leagueGroup]);
 var isVisitor=groupData&&groupData.type==="visitor";
 var hasSeasons=dynSeasons.length>0&&!isVisitor;
-// Grade bonus display: hidden if group explicitly opts out (Famille, Teacher, Visitor).
-// Defaults to true (e.g. IDRAC, CESI, ESGI) if the column is missing or group not loaded yet.
-var showGradeBonus=groupData?(groupData.grade_bonus_enabled!==false):true;
+// Grade-bonus display (Top 3 → +2 / Top 10 → +1 « sur la note finale », cumul max +4)
+// RETIRÉ le 2026-06-26 (décision produit Jérémy : plus de bonification de note dans les ligues).
+// On force false ici — source unique qui éteint les 5 affichages (en-têtes + badges, onglets
+// Général & Progression) d'un coup. Le flag groups.grade_bonus_enabled n'est donc plus consulté ;
+// la colonne reste en base, inerte. Remettre l'ancienne ligne ci-dessous pour réactiver.
+var showGradeBonus=false;
 var curSeason=hasSeasons?getCurrentSeason(dynSeasons):null;
 
 // Calcule le tab Progression.
