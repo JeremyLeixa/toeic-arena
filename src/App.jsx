@@ -4185,11 +4185,12 @@ var[step,sSt]=useState("name");
           </div>
         </div>
 
-        {/* Single entry point — everyone lands on Home, where Aldric greets them.
-            The Mentor stays one tap away from the menu (no forced detour). */}
-        <button className="btn1" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(null);}}
+        {/* Forward action only. "Enter the Arena" (+ its arena-call jingle) is
+            reserved for the real threshold (langBridge), so here the label is
+            "Continue" — avoids a duplicate "Enter the Arena" two screens apart. */}
+        <button className="btn1" onClick={function(){stopTts();stopListenAudio();goAfterPushStep(null);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
-          Enter the Arena
+          Continue {"→"}
         </button>
         <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your radar refines as you train. Aldric will greet you inside, and your Mentor is one tap away whenever you want a personalized path.</p>
       </div>
@@ -4267,7 +4268,7 @@ var[step,sSt]=useState("name");
         <div className="crd" style={{padding:"12px 16px",marginBottom:24,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
           <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0,fontStyle:"italic"}}>{"\u201C"}The best way to learn a language is to live in it.{"\u201D"}</p>
         </div>
-        <button className="btn1" onClick={enterArena}
+        <button className="btn1" onClick={function(){playArenaCall();enterArena();}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
           Enter the Arena {"\u2192"}</button>
       </div>
