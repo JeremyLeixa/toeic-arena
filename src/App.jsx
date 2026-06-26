@@ -16154,6 +16154,11 @@ export default function App(){
   // a tab that plays it. Combined with the 2s autoplay delay inside
   // NarratorOverlay, this gives "click → fade out → silence → voice" flow.
   useEffect(function(){
+    // Guard ajouté 2026-06-26 : cet effet n'avait pas le check !u (contrairement aux
+    // deux autres effets BGM). Pendant l'onboarding (u null, tab="home" par défaut, sp
+    // null), le else-if déclenchait playBGM("bgm_home") → le BGM fuyait sur l'onboarding
+    // dès le 1er clic (l'autoplay débloqué). On ne touche au BGM qu'une fois connecté.
+    if(ld||!u)return;
     if(currentNarratorMoment){
       try{stopBGM();}catch(e){console.warn("[narrator-bgm] stop:",e&&e.message);}
     }else if(!sp&&(tab==="home"||tab==="mentor"||tab==="league"||tab==="profile")){
