@@ -13914,7 +13914,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   <div className="crd" style={{textAlign:"center",marginBottom:16,padding:20,background:"linear-gradient(135deg,rgba(var(--cx),.04),rgba(27,112,207,.04))"}}>
     <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><SeasonIcon icon={curSeason.icon} size={42} color={curSeason.color}/></div>
     <div className="out" style={{fontWeight:800,fontSize:20,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
-    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.weeks.length} semaines {"\u00B7"} {countdown}</div>
+    <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>{curSeason.eternal?"Ligue permanente \u00B7 \u221E":(curSeason.weeks.length+" semaines \u00B7 "+countdown)}</div>
     <div style={{fontSize:11,color:"var(--t3)",marginTop:8,lineHeight:1.5}}>Chaque semaine, le 1er gagne N pts, le 2ème N-1...<br/>La régularité prime sur les coups d'éclat !</div>
   </div>
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -13935,7 +13935,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
   {/* Season breakdown mini-bar */}
   <div style={{display:"flex",gap:6,marginBottom:16}}>
     {dynSeasons.map(function(s){
-      var isCurrent=s.id===curSeason.id;var isPast=s.weeks[s.weeks.length-1]<cw;
+      var isCurrent=s.id===curSeason.id;var isPast=(s.weeks&&s.weeks.length)?s.weeks[s.weeks.length-1]<cw:false;
       return(<div key={s.id} className="crd" style={{flex:1,padding:"8px 4px",textAlign:"center",borderColor:isCurrent?"rgba(var(--cx),.3)":"var(--bdr)",opacity:(!isCurrent&&!isPast)?0.4:1}}>
         <div style={{display:"flex",justifyContent:"center",marginBottom:2}}><SeasonIcon icon={s.icon} size={18} color={isCurrent?"var(--cyan)":"var(--t3)"}/></div>
         <div style={{fontSize:9,color:isCurrent?"var(--cyan)":"var(--t3)",fontWeight:isCurrent?700:400}}>S{s.id}</div>
