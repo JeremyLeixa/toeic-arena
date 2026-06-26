@@ -572,7 +572,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-25-grim-safearea";
+var BUILD_ID="2026-06-26-onboard-simplify";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -4170,8 +4170,8 @@ var[step,sSt]=useState("name");
         </div>}
 
         {/* FIRST QUEST */}
-        <div className="crd" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(quest.mod);}}
-          style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16,marginBottom:14,textAlign:"left",cursor:"pointer",transition:"all .2s"}}>
+        <div className="crd"
+          style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16,marginBottom:14,textAlign:"left"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
             <GIcon name="rolled-cloth" size={16} color="var(--cyan)"/>
             <span className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:14,color:"var(--cyan)"}}>First Quest</span>
@@ -4185,19 +4185,13 @@ var[step,sSt]=useState("name");
           </div>
         </div>
 
-        <button className="btn1" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(quest.mod);}}
+        {/* Single entry point — everyone lands on Home, where Aldric greets them.
+            The Mentor stays one tap away from the menu (no forced detour). */}
+        <button className="btn1" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(null);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
-          Start Your Quest
+          Enter the Arena
         </button>
-
-        {/* MENTOR CTA — the continuity bridge */}
-        <button className="btn2" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep("mentor");}}
-          style={{fontSize:14,padding:"12px 28px",width:"100%",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-          <GIcon name="wizard-staff" size={16} color="currentColor"/> Open your Mentor
-        </button>
-        <button className="btn2" onClick={function(){stopTts();stopListenAudio();playArenaCall();goAfterPushStep(null);}}
-          style={{fontSize:13,padding:"10px 28px",width:"100%",opacity:0.85}}>Enter the Arena</button>
-        <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your radar will refine as you train. The Mentor uses these scores to personalize your path from day one.</p>
+        <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your radar refines as you train. Aldric will greet you inside, and your Mentor is one tap away whenever you want a personalized path.</p>
       </div>
     </div>);}
 
