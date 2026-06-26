@@ -15,7 +15,7 @@
 //   - SUPABASE_URL                (auto)
 //   - SUPABASE_SERVICE_ROLE_KEY   (auto)
 //   - RESEND_API_KEY              (à set : re_xxxxxxxxxxxx)
-//   - APP_URL                     (à set : https://toeic-arena.vercel.app)
+//   - APP_URL                     (à set : https://app.verse-arena.fr)
 //   - RESEND_FROM                 (optionnel, default "Verse Arena <onboarding@resend.dev>")
 // ═══════════════════════════════════════════════════════════
 
@@ -148,7 +148,7 @@ serve(async (req: Request) => {
     }
 
     // Send mail via Resend
-    const appUrl = Deno.env.get("APP_URL") || "https://toeic-arena.vercel.app";
+    const appUrl = Deno.env.get("APP_URL") || "https://app.verse-arena.fr";
     const resetUrl = `${appUrl}/?reset=${encodeURIComponent(token)}`;
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const fromAddr = Deno.env.get("RESEND_FROM") || "Verse Arena <onboarding@resend.dev>";

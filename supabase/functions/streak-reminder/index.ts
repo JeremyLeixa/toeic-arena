@@ -47,7 +47,7 @@ serve(async (req: Request) => {
     }
 
     // Build per-student messages
-    const VERCEL_URL = Deno.env.get("VERCEL_APP_URL")!; // e.g. https://toeic-arena.vercel.app
+    const VERCEL_URL = Deno.env.get("VERCEL_APP_URL")!; // e.g. https://app.verse-arena.fr
     const PUSH_SECRET = Deno.env.get("PUSH_SECRET")!;
 
     // Group subscriptions by student_name+class_code

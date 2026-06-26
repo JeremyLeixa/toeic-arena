@@ -158,7 +158,7 @@ export default async function handler(req, res) {
   const studentClassCode = req.body && req.body.student_class_code;
 
   // Success/cancel URLs — frontend will handle the query params on return
-  const origin = req.headers.origin || req.headers.referer || "https://toeic-arena.vercel.app";
+  const origin = req.headers.origin || req.headers.referer || "https://app.verse-arena.fr";
   const successUrl = origin.replace(/\/$/, "") + planConfig.successSuffix;
   const cancelUrl = origin.replace(/\/$/, "") + "?checkout=cancel";
 

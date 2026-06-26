@@ -85,7 +85,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const origin = req.headers.origin || req.headers.referer || "https://toeic-arena.vercel.app";
+  const origin = req.headers.origin || req.headers.referer || "https://app.verse-arena.fr";
   const returnUrl = origin.replace(/\/$/, "") + "/?portal=return";
 
   try {
