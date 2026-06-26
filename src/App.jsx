@@ -572,7 +572,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-26-rename-verse-arena";
+var BUILD_ID="2026-06-26-eternal-league";
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -13573,8 +13573,9 @@ var SEASONS=[
   {id:3,name:"Clash",icon:"⚔️",color:"var(--red)",weeks:["2026-W18","2026-W19","2026-W20"],start:"May 4",end:"May 24",endDate:"2026-05-24"},
   {id:4,name:"Final Push",icon:"🏆",color:"var(--gold)",weeks:["2026-W21","2026-W22","2026-W23","2026-W24","2026-W25"],start:"May 25",end:"Jun 28",endDate:"2026-06-28"},
 ];
-function getCurrentSeason(ss){var arr=ss||SEASONS;if(!arr||arr.length===0)return null;var cw=weekId();for(var i=0;i<arr.length;i++){if(arr[i].weeks.indexOf(cw)!==-1)return arr[i];}return arr[arr.length-1];}
+function getCurrentSeason(ss){var arr=ss||SEASONS;if(!arr||arr.length===0)return null;for(var e=0;e<arr.length;e++){if(arr[e].eternal)return arr[e];}var cw=weekId();for(var i=0;i<arr.length;i++){if((arr[i].weeks||[]).indexOf(cw)!==-1)return arr[i];}return arr[arr.length-1];}
 function getSeasonEndCountdown(season){
+  if(!season||season.eternal||!season.endDate)return "∞"; // Ligue éternelle : pas de fin
   var parts=season.endDate.split("-");
   var endSunday=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]),23,59,59);
   var now=new Date();
@@ -13781,11 +13782,12 @@ weekAll.sort(function(a,b){
 // ── SEASON VIEW data ──
 var seasonRanking=useMemo(function(){
   if(rivals.length===0||!curSeason)return[];
-  return computeRankings(rivals,cw,curSeason.weeks);
+  // Ligue éternelle : weeks=null → computeRankings somme TOUT l'historique (cumul depuis le début)
+  return computeRankings(rivals,cw,curSeason.eternal?null:curSeason.weeks);
 },[rivals,cw,curSeason]);
 
 // ── OVERALL VIEW data ──
-var allSeasonWeeks=useMemo(function(){var w=[];dynSeasons.forEach(function(s){s.weeks.forEach(function(wk){w.push(wk);});});return w;},[dynSeasons]);
+var allSeasonWeeks=useMemo(function(){var w=[];dynSeasons.forEach(function(s){(s.weeks||[]).forEach(function(wk){w.push(wk);});});return w;},[dynSeasons]);
 var overallRanking=useMemo(function(){
   if(rivals.length===0||!hasSeasons)return[];
   return computeRankings(rivals,cw,allSeasonWeeks);
@@ -13831,7 +13833,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
       <SeasonIcon icon={curSeason.icon} size={22} color={curSeason.color}/>
       <div>
-        <div className="out" style={{fontWeight:800,fontSize:15,color:curSeason.color}}>Saison {curSeason.id} : {curSeason.name}</div>
+        <div className="out" style={{fontWeight:800,fontSize:15,color:curSeason.color}}>{curSeason.eternal?("Saison "+curSeason.name):("Saison "+curSeason.id+" : "+curSeason.name)}</div>
         <div style={{fontSize:11,color:"var(--t3)"}}>{curSeason.start} {"\u2192"} {curSeason.end}</div>
       </div>
     </div>
@@ -13843,7 +13845,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 {/* Tab bar */}
 <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:10,padding:3}}>
-  {(hasSeasons?[{k:"week",l:"Semaine"},{k:"season",l:"Saison "+(curSeason?curSeason.id:"")},{k:"overall",l:"G\u00e9n\u00e9ral"},{k:"progress",l:"Progr\u00e8s"}]:[{k:"week",l:"Semaine"}]).map(function(t){
+  {(hasSeasons?[{k:"week",l:"Semaine"},{k:"season",l:curSeason&&curSeason.eternal?"\u00c9ternelle":("Saison "+(curSeason?curSeason.id:""))},{k:"overall",l:"G\u00e9n\u00e9ral"},{k:"progress",l:"Progr\u00e8s"}]:[{k:"week",l:"Semaine"}]).map(function(t){
     var active=tab===t.k;
     return(<button key={t.k} onClick={function(){setTab(t.k);if(t.k==="progress")loadProgressionData();}} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:active?700:500,background:active?"var(--cyan)":"transparent",color:active?"#000":"var(--t3)",transition:"all .2s"}}>{t.l}</button>);
   })}
