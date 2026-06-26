@@ -107,7 +107,7 @@ export var BATTLE_SCAN_V2 = {
         ],
         medium:[
           {id:"bs_f_m1",cat:"Word Families",s:"The team showed great _____ in handling the crisis.",o:["profess","professional","professionally","professionalism"],c:3,x:"After 'great' (adj describing a quality) → abstract noun in -ism."},
-          {id:"bs_f_m2",cat:"Comparatives",s:"Sales this quarter were _____ as last year's.",o:["as good","good as","as good as","as best"],c:2,x:"Equality structure: as + adj + as."},
+          {id:"bs_f_m2",cat:"Comparatives",s:"Sales this quarter were _____ last year's.",o:["as good","good as","as good as","as best"],c:2,x:"Equality structure: as + adj + as."},
           {id:"bs_f_m3",cat:"Word Families",s:"The proposal was rejected for being financially _____.",o:["sustain","sustained","sustainable","sustainability"],c:2,x:"After 'be' + adverb → adjective (sustainable)."}
         ],
         hard:[
