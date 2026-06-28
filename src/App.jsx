@@ -3565,7 +3565,9 @@ var[step,sSt]=useState("name");
     setScanSec(0);
     setScanScores({grammar:0,vocab:0,reading:0,listening:0});
     setSectionResults({});
-    setScanPhase("intro");
+    // One-time narrative gate before the per-section intros. Sections 2-4 still
+    // land on "intro" (see nextSectionV2), so this welcome screen never repeats.
+    setScanPhase("welcome");
     setCurrentQ(null);
     sS(-1);
     ctrlRef.current=createCatController(SCAN_SECTION_ORDER[0]);
@@ -4313,6 +4315,22 @@ var[step,sSt]=useState("name");
     return{bg:"rgba(245,158,11,.15)",fg:"#f59e0b"};
   }
   function partLabelV2(p){return{p1:"Part 1 — Photo",p2:"Part 2 — Q&R",p3:"Part 3 — Conversation",p4:"Part 4 — Talk"}[p]||p;}
+
+  // Battle Scan Welcome (V2) — one-time narrative gate after consent, before section 1.
+  // Set only by startTestV2(); nextSectionV2() uses "intro", so this never repeats.
+  if(scanPhase==="welcome")return(
+    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
+      <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
+        <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:2,marginBottom:14}}>Battle Scan</div>
+        <div style={{marginBottom:18,animation:"countUp .6s"}}><GIcon name="coliseum" size={64} color="var(--cyan)"/></div>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,color:"var(--cyan)",marginBottom:12}}>{"Votre première épreuve"}</h2>
+        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.65,marginBottom:16,maxWidth:330,margin:"0 auto 16px"}}>{"Avant de bâtir votre légende, l’arène doit jauger votre niveau. Cette épreuve adaptative déterminera le point de départ de votre quête."}</p>
+        <div className="crd" style={{padding:"12px 16px",marginBottom:22,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",fontSize:12,color:"var(--t2)",lineHeight:1.55,textAlign:"left"}}>
+          {"Quatre sections — grammaire, vocabulaire, lecture et écoute. Les questions s’ajustent à vos réponses. Pas de chrono, aucun piège : répondez du mieux que vous pouvez."}
+        </div>
+        <button className="btn1" onClick={function(){setScanPhase("intro");}} style={{fontSize:16,padding:"14px 32px",width:"100%"}}>{"Commencer l’épreuve"}</button>
+      </div>
+    </div>);
 
   // Section Intro (V2)
   if(scanPhase==="intro")return(
