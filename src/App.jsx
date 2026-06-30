@@ -3468,7 +3468,7 @@ var[step,sSt]=useState("name");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
   // PIN state removed 2026-04-20 — auth is now handled via Supabase magic link
-  var[pendingNav,setPendingNav]=useState(null);var[pushBusy,setPushBusy]=useState(false);
+  var[pendingNav,setPendingNav]=useState(null);
   var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
   // ── Phase 2 — email+password signup state (cohabite avec emailLogin/emailPrompt magic link) ──
   // pwd1/pwd2 : nouveau mot de passe + confirmation
@@ -3479,11 +3479,17 @@ var[step,sSt]=useState("name");
   var[pwdSetupDone,setPwdSetupDone]=useState(false);var[pwdEmailDup,setPwdEmailDup]=useState(false);
   // Phase 2 commit 3 (2026-04-27) : useEffect pollEmailConfirmation supprimé avec
   // le step emailPrompt. Plus de magic link post-onboarding → plus de poll nécessaire.
-  function goAfterPushStep(firstNav){
-    // If browser lacks Push API, skip the opt-in phase entirely
-    var hasPush=("serviceWorker" in navigator)&&("PushManager" in window);
-    if(!hasPush){p.go(name.trim(),classCode||"visitor",scanScores,firstNav,sectionResults);return;}
-    setPendingNav(firstNav||null);sSt("pushPrompt");
+  function goToInstallStep(firstNav){
+    // 2026-06-30: the former push opt-in screen is now a home-screen INSTALL prompt.
+    // Push opt-in moved out of onboarding (better triggered live at launch, or from
+    // Profile). No longer gated on the Push API — installing matters for fullscreen
+    // too, and on iOS it's the prerequisite for push. Skip only when already running
+    // as an installed PWA (nothing to install), going straight to the langBridge.
+    // Reverting this to an auto Notification.requestPermission() risks a premature
+    // hard-deny that's hard to recover from on iOS/Android.
+    setPendingNav(firstNav||null);
+    if(isStandalonePWA()){sSt("langBridge");return;}
+    sSt("install");
   }
 
   async function lookupName(n){
@@ -4190,7 +4196,7 @@ var[step,sSt]=useState("name");
         {/* Forward action only. "Enter the Arena" (+ its arena-call jingle) is
             reserved for the real threshold (langBridge), so here the label is
             "Continue" — avoids a duplicate "Enter the Arena" two screens apart. */}
-        <button className="btn1" onClick={function(){stopTts();stopListenAudio();goAfterPushStep(null);}}
+        <button className="btn1" onClick={function(){stopTts();stopListenAudio();goToInstallStep(null);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
           Continue {"→"}
         </button>
@@ -4198,62 +4204,59 @@ var[step,sSt]=useState("name");
       </div>
     </div>);}
 
-  // ─ Push notification opt-in ─
-  if(step==="pushPrompt"){
-    // Phase 2 commit 3 (2026-04-27) : l'ancien step emailPrompt magic link est dropped.
-    // L'email est posé soit au signup (signUpWithPassword crée auth user + email),
-    // soit pas du tout pour les visiteurs. Pas de "sécurisation post-onboarding".
+  // ─ Install on home screen (replaces the former push opt-in — 2026-06-30) ─
+  // Why install-first: on iOS, push & fullscreen only work once the PWA is on the
+  // home screen, and a teacher-led launch walks students through it live. The push
+  // opt-in itself now lives in Profile (toggle), not here. The browser-control glyph
+  // in the mock is kept REALISTIC on purpose (it's the button students must find);
+  // only the decorative icons are med-fan game-icons.
+  if(step==="install"){
     function finishOnb(){sSt("langBridge");}
-    async function enableAndGo(){
-      if(pushBusy)return;
-      setPushBusy(true);
-      try{await subscribePush(name.trim(),classCode||"visitor");}catch(e){console.warn("[push] subscribe failed:",e);}
-      setPushBusy(false);
-      finishOnb();
-    }
+    var ios=isIOSDevice();
+    var ctrl=ios
+      ?(<svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{display:"block"}}><path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>)
+      :(<svg viewBox="0 0 24 24" width={17} height={17} fill="currentColor" style={{display:"block"}}><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>);
+    var steps=ios?[
+      {n:1,ic:"compass",tx:(<span>{"Ouvre cette page dans "}<b style={{color:"var(--cx-hex)"}}>Safari</b></span>)},
+      {n:2,ic:"pointing",tx:(<span>{"Touche le bouton "}<b style={{color:"var(--cx-hex)"}}>Partager</b>{" en bas de l'écran"}</span>)},
+      {n:3,ic:"tower-flag",tx:(<span>{"Choisis "}<b style={{color:"var(--cx-hex)"}}>{"« Sur l'écran d'accueil »"}</b></span>)}
+    ]:[
+      {n:1,ic:"pointing",tx:(<span>{"Touche le menu "}<b style={{color:"var(--cx-hex)"}}>{"⋮"}</b>{" de ton navigateur"}</span>)},
+      {n:2,ic:"tower-flag",tx:(<span>{"Choisis "}<b style={{color:"var(--cx-hex)"}}>{"« Installer l'application »"}</b></span>)},
+      {n:3,ic:"castle",tx:(<span>{"L'icône apparaît avec tes autres apps"}</span>)}
+    ];
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
-      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:64,marginBottom:16}}>{"\uD83D\uDD14"}</div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:24,color:"var(--t1)",marginBottom:10}}>Stay connected to your quest</h2>
-        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.6,marginBottom:24}}>
-          {"Active les rappels pour ne pas perdre ta série, rester informé de tes progrès hebdomadaires, et recevoir des encouragements de ton prof."}
-        </p>
-        <div className="crd" style={{padding:"14px 16px",marginBottom:20,textAlign:"left",background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
-          <div style={{display:"flex",gap:10,marginBottom:8}}>
-            <span style={{fontSize:20}}>{"\uD83D\uDD25"}</span>
-            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Streak reminder</div><div style={{fontSize:11,color:"var(--t2)"}}>20h tous les soirs, si tu n'as rien fait</div></div>
+      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:360}}>
+        <div style={{marginBottom:14,display:"flex",justifyContent:"center",filter:"drop-shadow(0 4px 10px rgba(var(--cx),.35))"}}><GIcon name="castle" size={56} color="var(--cx-hex)"/></div>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:22,color:"var(--t1)",lineHeight:1.25,marginBottom:18}}>{"Installe Verse Arena sur ton écran d'accueil"}</h2>
+
+        {/* Browser mock: highlights the real control to look for (kept realistic). */}
+        <div style={{padding:14,marginBottom:18,background:"rgba(var(--bg3-rgb),.5)",border:"1px solid var(--bdr)",borderRadius:16}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(var(--bg-rgb),.6)",borderRadius:10,padding:"8px 10px"}}>
+            <span style={{flex:1,textAlign:"left",fontSize:12,color:"var(--t2)",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>app.verse-arena.fr</span>
+            <span style={{width:30,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--cx-hex)",background:"rgba(var(--cx),.16)",border:"2px solid var(--cx-hex)",animation:"pulse 1.6s ease-in-out infinite"}}>{ctrl}</span>
           </div>
-          <div style={{display:"flex",gap:10,marginBottom:8}}>
-            <span style={{fontSize:20}}>{"\uD83D\uDCCA"}</span>
-            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Weekly results</div><div style={{fontSize:11,color:"var(--t2)"}}>Lundi matin, ton classement</div></div>
-          </div>
-          <div style={{display:"flex",gap:10}}>
-            <span style={{fontSize:20}}>{"\u2694\uFE0F"}</span>
-            <div><div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>Re-engagement</div><div style={{fontSize:11,color:"var(--t2)"}}>{"Rappels doux après quelques jours d'absence"}</div></div>
-          </div>
+          <div style={{marginTop:10,fontSize:11,fontWeight:700,color:"var(--cx-hex)",display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}><GIcon name="pointing" size={13} color="var(--cx-hex)"/>{ios?"Touche ce bouton dans Safari":"Touche le menu de ton navigateur"}</div>
         </div>
-        {!isStandalonePWA()&&(
-          <div className="crd" style={{padding:"12px 14px",marginBottom:16,background:"rgba(240,200,80,.06)",borderColor:"rgba(240,200,80,.2)",textAlign:"left"}}>
-            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{fontSize:20,flexShrink:0}}>{"\uD83D\uDCF2"}</span>
-              <div>
-                <div className="out" style={{fontSize:12,fontWeight:700,color:"var(--gold)",marginBottom:4}}>{"Installe l'app sur ton écran d'accueil"}</div>
-                <div style={{fontSize:11,color:"var(--t2)",lineHeight:1.5}}>
-                  {isIOSDevice()
-                    ? "Sur iPhone, les notifications ne marchent que si l'app est installée. Dans Safari : touche le bouton Partager (\u2B06\uFE0F en bas) puis « Sur l\u2019écran d\u2019accueil »."
-                    : "Pour recevoir les rappels même sans le navigateur ouvert : menu du navigateur puis « Installer l\u2019app » ou « Ajouter à l\u2019écran d\u2019accueil »."}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        <button className="btn1" onClick={enableAndGo} disabled={pushBusy}
-          style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:10,opacity:pushBusy?0.6:1}}>
-          {pushBusy?"\u2026":"Activer les rappels"}</button>
-        <button className="btn2" onClick={finishOnb} disabled={pushBusy}
-          style={{fontSize:13,padding:"12px 28px",width:"100%"}}>Plus tard</button>
-        <p style={{color:"var(--t3)",fontSize:10,marginTop:12,lineHeight:1.5}}>{"Tu peux changer d'avis à tout moment depuis ton Profil."}</p>
+
+        {/* Steps */}
+        <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:18,textAlign:"left"}}>
+          {steps.map(function(s){return(
+            <div key={s.n} style={{display:"flex",gap:11,alignItems:"center",background:"rgba(var(--cx),.06)",border:"1px solid rgba(var(--cx),.15)",borderRadius:12,padding:"11px 13px"}}>
+              <span style={{width:24,height:24,flexShrink:0,borderRadius:"50%",background:"var(--cx-hex)",color:"#0f0c08",fontWeight:800,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{s.n}</span>
+              <span style={{flex:1,fontSize:13,color:"var(--t1)",lineHeight:1.45}}>{s.tx}</span>
+              <GIcon name={s.ic} size={17} color="var(--cx-hex)"/>
+            </div>);})}
+        </div>
+
+        <p style={{fontSize:11,color:"var(--t3)",marginBottom:18}}>{"Plein écran · rappels de série · tes acquis te suivent"}</p>
+
+        <button className="btn1" onClick={finishOnb}
+          style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:9,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>{"C'est fait, continuer →"}</button>
+        <button className="btn2" onClick={finishOnb}
+          style={{fontSize:13,padding:"11px 28px",width:"100%"}}>Plus tard</button>
+        <p style={{color:"var(--t3)",fontSize:10,marginTop:11,lineHeight:1.5}}>{"Tu pourras activer les rappels à tout moment depuis ton Profil."}</p>
       </div>
     </div>);}
 
