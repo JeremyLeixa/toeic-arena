@@ -220,53 +220,23 @@ export function playArenaCall() {
 // SFX — Micro-interactions
 // ═══════════════════════════════════════════════════════════
 
-// ── playCorrect — warm chime with harmonic shimmer ──
-export function playCorrect() {
-  if (isMuted()) return;
-  try {
-    var c = ctx();
-    var t = c.currentTime;
-
-    // Note 1: E5
-    var h1 = harpNote(c, 659, t, 0.25, 0.2);
-    h1.connect(c.destination);
-    
-    // Note 2: B5 (brighter, more resolved)
-    var h2 = harpNote(c, 988, t + 0.1, 0.35, 0.22);
-    addReverb(c, h2, 0.1, [0.03, 0.06]);
-  } catch (e) {}
+// ── playFile — pre-generated SFX from public/audio/sfx/ (ElevenLabs Sound Generation) ──
+function playFile(name, vol) {
+  var a = new Audio("/audio/sfx/" + name + ".mp3");
+  a.volume = vol != null ? vol : 0.6;
+  a.play().catch(function () {});
 }
 
-// ── playWrong — low muted thud + minor dissonance ──
+// ── playCorrect — bell chime (pre-generated) ──
+export function playCorrect() {
+  if (isMuted()) return;
+  try { playFile("correct", 0.55); } catch (e) {}
+}
+
+// ── playWrong — metallic clang (pre-generated) ──
 export function playWrong() {
   if (isMuted()) return;
-  try {
-    var c = ctx();
-    var t = c.currentTime;
-
-    // Dull thud
-    var d = drumHit(c, t, 0.1, 120);
-    d.connect(c.destination);
-    
-    // Minor 2nd dissonance: Bb3 + B3
-    var o1 = c.createOscillator();
-    var g1 = c.createGain();
-    o1.type = "triangle";
-    o1.frequency.setValueAtTime(233, t);
-    g1.gain.setValueAtTime(0.08, t);
-    g1.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-    o1.connect(g1); g1.connect(c.destination);
-    o1.start(t); o1.stop(t + 0.35);
-    
-    var o2 = c.createOscillator();
-    var g2 = c.createGain();
-    o2.type = "triangle";
-    o2.frequency.setValueAtTime(247, t);
-    g2.gain.setValueAtTime(0.07, t);
-    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-    o2.connect(g2); g2.connect(c.destination);
-    o2.start(t); o2.stop(t + 0.3);
-  } catch (e) {}
+  try { playFile("wrong", 0.5); } catch (e) {}
 }
 
 // ── playXP — treasure sparkle (harp arpeggio ascending) ──
@@ -285,28 +255,10 @@ export function playXP() {
   } catch (e) {}
 }
 
-// ── playLevelUp — triumphant brass fanfare ──
+// ── playLevelUp — triumphant fanfare (pre-generated) ──
 export function playLevelUp() {
   if (isMuted()) return;
-  try {
-    var c = ctx();
-    var t = c.currentTime;
-
-    // 4-note brass fanfare: C5 → E5 → G5 → C6
-    var notes = [523, 659, 784, 1047];
-    var durs = [0.18, 0.18, 0.18, 0.6];
-    var offset = 0;
-    
-    notes.forEach(function(freq, i) {
-      var horn = brass(c, freq, t + offset, durs[i], i < 3 ? 0.12 : 0.16);
-      addReverb(c, horn, 0.1, [0.03, 0.08, 0.14]);
-      offset += durs[i] * 0.75;
-    });
-    
-    // String swell under last note
-    var pad = stringPad(c, 523, t + offset - 0.15, 0.7, 0.06);
-    pad.connect(c.destination);
-  } catch (e) {}
+  try { playFile("levelup", 0.6); } catch (e) {}
 }
 
 // ── playCombo — quick ascending power chime ──
