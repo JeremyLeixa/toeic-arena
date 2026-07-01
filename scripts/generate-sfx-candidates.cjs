@@ -24,30 +24,18 @@ if (!API_KEY) {
 
 const OUT_DIR = path.join(__dirname, '..', 'public', 'audio', 'sfx', 'candidates');
 
-// ─── Candidate definitions — ROUND 2 (refined after Jérémy's feedback) ───
-// correct: v1 bell-chime direction confirmed, sharpen it further.
-// wrong: round 1 was too soft/unclear — needs to read unmistakably as an error.
-// fanfare: round 1 was too generic-orchestral — wants a medieval horn/lute feel, not a symphony sting.
+// ─── Candidate definitions — ROUND 3 (correct only) ───
+// Round 2's correct_v1 (bell chime) sounded great in isolation but fatiguing
+// on repetition across a 15-50 question quiz session. Round 3 goes shorter,
+// drier, quieter — minimal shimmer/decay so it disappears into the background
+// on the 30th repeat instead of ringing out each time.
 const SOUNDS = [
   {
     name: 'correct',
     variants: [
-      { text: 'A single clear bright bell chime, like a small temple bell struck once, warm metallic shimmer, fantasy RPG correct-answer sound, pure tone, short decay', duration_seconds: 0.8, prompt_influence: 0.7 },
-      { text: 'A crystal-clear magic bell chime with a quick sparkling harmonic overtone, warm and satisfying, fantasy game success sound, bright and pure, no vocal or noise elements', duration_seconds: 0.8, prompt_influence: 0.75 },
-    ],
-  },
-  {
-    name: 'wrong',
-    variants: [
-      { text: 'A short sharp error buzz, unmistakably a mistake sound, low dissonant double note clashing together, dry and immediate, fantasy game UI negative feedback, no long tail', duration_seconds: 0.6, prompt_influence: 0.7 },
-      { text: 'A dull metallic clang like a sword hitting a shield and failing, low pitched, single hit, clearly negative feedback tone, fantasy game wrong-answer sound, dry and short', duration_seconds: 0.6, prompt_influence: 0.7 },
-    ],
-  },
-  {
-    name: 'fanfare',
-    variants: [
-      { text: 'A short medieval horn fanfare, natural brass hunting horn playing two to three ascending heroic notes, no strings, no modern orchestra, tavern and battlefield feel, triumphant and brief', duration_seconds: 2.2, prompt_influence: 0.75 },
-      { text: 'A quick medieval lute and horn victory flourish, acoustic instruments only, heroic ascending melody resolving brightly, folk fantasy tavern celebration sound, short and warm', duration_seconds: 2.2, prompt_influence: 0.7 },
+      { text: 'A very short soft notification tick, subtle gentle pop with a faint pleasant pitch, minimal decay, almost no reverb, unobtrusive positive feedback sound meant to be heard dozens of times in a row without fatigue', duration_seconds: 0.5, prompt_influence: 0.6 },
+      { text: 'A tiny soft muted marimba tap, single short note, warm but very quiet and brief, clean with no ringing tail, gentle repeatable UI confirmation sound', duration_seconds: 0.5, prompt_influence: 0.6 },
+      { text: 'A short breathy soft chime, low volume, quick attack and very fast fade, delicate and understated, non-fatiguing positive feedback for frequent repetition', duration_seconds: 0.5, prompt_influence: 0.55 },
     ],
   },
 ];
@@ -92,7 +80,7 @@ async function main() {
     console.log(`\n${sound.name}:`);
     for (let i = 0; i < sound.variants.length; i++) {
       const v = sound.variants[i];
-      const outPath = path.join(OUT_DIR, `${sound.name}_v${i + 3}.mp3`);
+      const outPath = path.join(OUT_DIR, `${sound.name}_v${i + 5}.mp3`);
       await generateSound(v.text, v.duration_seconds, v.prompt_influence, outPath);
     }
   }

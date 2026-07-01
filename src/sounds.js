@@ -187,32 +187,12 @@ function drumHit(c, start, vol, pitch) {
 
 
 // ═══════════════════════════════════════════════════════════
-// ★ SONIC LOGO — The Arena Call (3 horn notes, ~2s)
+// ★ SONIC LOGO — The Arena Call (pre-generated fanfare)
 // ═══════════════════════════════════════════════════════════
 
 export function playArenaCall() {
   if (isMuted()) return;
-  try {
-    var c = ctx();
-    var t = c.currentTime;
-    
-    // Three ascending horn notes: D4 → F4 → A4 (D minor triad, heroic)
-    var notes = [293.66, 349.23, 440.00];
-    var starts = [0, 0.55, 1.1];
-    var durs = [0.5, 0.5, 0.9]; // last note sustains longer
-    var vols = [0.16, 0.19, 0.22]; // crescendo
-
-    notes.forEach(function(freq, i) {
-      var horn = brass(c, freq, t + starts[i], durs[i], vols[i]);
-      addReverb(c, horn, 0.12, [0.04, 0.09, 0.16, 0.25]);
-    });
-    
-    // Subtle string swell under the last note
-    var pad = stringPad(c, 293.66, t + 1.1, 1.0, 0.06); // D4
-    pad.connect(c.destination);
-    var pad2 = stringPad(c, 220.00, t + 1.1, 1.0, 0.05); // A3
-    pad2.connect(c.destination);
-  } catch (e) {}
+  try { playFile("levelup", 0.65); } catch (e) {}
 }
 
 
