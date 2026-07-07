@@ -572,7 +572,22 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-06-26-eternal-league";
+var BUILD_ID="2026-07-02-teacher-scoping";
+
+// ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
+// Each teacher logs in with their own teacher_code and sees ONLY the groups
+// stamped with that code (groups.teacher_code). The ADMIN master code bypasses
+// the filter and sees every group (Jérémy's super-admin role).
+// IMPORTANT: this is a CLIENT-side guard, not a security boundary — RLS is OFF
+// on students. Fine for good-faith partner teachers; a real data-isolation
+// boundary requires Supabase Auth + RLS (deferred "hard" version).
+// The logged-in code is stored at login in localStorage['toeic-dash-teacher'].
+// EMPTY code = admin (backward-compat: sessions logged in before this change,
+// and biometric unlock on Jérémy's own device, have no stored code). Reverting
+// isDashAdmin() to "always true" would re-expose every campus to every teacher.
+var ADMIN_TEACHER_CODE=(import.meta.env&&import.meta.env.VITE_ADMIN_TEACHER_CODE)||"arena-teacher-2026";
+function getDashTeacher(){try{return localStorage.getItem('toeic-dash-teacher')||"";}catch(e){console.warn("[teacher-scope] read failed:",e&&e.message);return"";}}
+function isDashAdmin(){var t=getDashTeacher();return!t||t===ADMIN_TEACHER_CODE;}
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -3994,7 +4009,7 @@ var[step,sSt]=useState("name");
             .then(function(res){
               setTeacherChecking(false);
               if(res.data&&res.data.length>0){
-                try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}
+                try{localStorage.setItem('toeic-dash-teacher',teacherCode);localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){console.warn("[teacher] login store failed:",e&&e.message);}
                 p.goTeacher();
               }else{setTeacherErr(true);}
             });
@@ -12031,7 +12046,7 @@ function TeacherDash(p){
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
   var[groups,setGroups]=useState([]);
   var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard" | "create-group"
-  var[cgForm,setCgForm]=useState({name:"",code:"",teacherCode:"",type:"school",startDate:"",endDate:""});
+  var[cgForm,setCgForm]=useState({name:"",code:"",teacherCode:isDashAdmin()?"":getDashTeacher(),type:"school",startDate:"",endDate:""});
   var[cgCodeErr,setCgCodeErr]=useState("");var[cgSaving,setCgSaving]=useState(false);
   var[dashEvents,setDashEvents]=useState([]);var[evForm,setEvForm]=useState({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:"all"});var[evSaving,setEvSaving]=useState(false);var[evPushResult,setEvPushResult]=useState(null);
   // ── Feedback tab state ──
@@ -12095,10 +12110,20 @@ function TeacherDash(p){
   }
 
   function loadGroups(){
-    supabase.from('groups').select('*').neq('code','teacher-internal').order('type',{ascending:true}).order('name',{ascending:true})
+    // Multi-campus scoping: non-admin teachers see only their own groups.
+    var q=supabase.from('groups').select('*').neq('code','teacher-internal');
+    if(!isDashAdmin())q=q.eq('teacher_code',getDashTeacher());
+    q.order('type',{ascending:true}).order('name',{ascending:true})
       .then(function(res){if(res.data)setGroups(res.data);});
   }
   useEffect(function(){loadGroups();loadEvents();},[]);
+  // Guard-rail: if the remembered group isn't in the scoped set (stale localStorage
+  // or a group belonging to another teacher), snap to the teacher's first group.
+  useEffect(function(){
+    if(!groups.length)return;
+    var codes=groups.map(function(g){return g.code;});
+    if(codes.indexOf(classCode)<0)setClassCode(groups[0].code);
+  },[groups]);
   useEffect(function(){if(dashTab==="feedback")loadFeedback();},[dashTab]);
 
   function loadStudents(){
@@ -12527,8 +12552,9 @@ function TeacherDash(p){
 
         {/* Teacher Code */}
         <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>{"Code d\u0027acc\u00e8s enseignant"}</label>
-        <input value={cgForm.teacherCode} onChange={function(e){setCgForm(Object.assign({},cgForm,{teacherCode:e.target.value}));}}
-          placeholder="ex: arena-idrac2027" style={{width:"100%",padding:"12px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:16,boxSizing:"border-box"}}/>
+        <input value={cgForm.teacherCode} readOnly={!isDashAdmin()} onChange={function(e){if(!isDashAdmin())return;setCgForm(Object.assign({},cgForm,{teacherCode:e.target.value}));}}
+          placeholder="ex: arena-idrac2027" title={isDashAdmin()?"":"Verrouillé sur votre code formateur"} style={{width:"100%",padding:"12px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:isDashAdmin()?"var(--t1)":"var(--t3)",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:16,boxSizing:"border-box",cursor:isDashAdmin()?"text":"not-allowed"}}/>
+        {!isDashAdmin()&&<div style={{fontSize:11,color:"var(--t3)",marginTop:-10,marginBottom:14}}>{"Les groupes que vous créez sont rattachés à votre code formateur."}</div>}
 
         {/* Type */}
         <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>Type</label>
@@ -12587,7 +12613,7 @@ function TeacherDash(p){
           supabase.from('groups').upsert({
             code:cgForm.code,name:cgForm.name.trim(),type:cgForm.type,
             start_date:cgForm.startDate,end_date:cgForm.endDate,
-            seasons:cgSeasons,teacher_code:cgForm.teacherCode.trim()
+            seasons:cgSeasons,teacher_code:isDashAdmin()?cgForm.teacherCode.trim():getDashTeacher()
           },{onConflict:'code'}).then(function(res){
             setCgSaving(false);
             if(res.error){alert("Erreur: "+res.error.message);return;}
@@ -15899,7 +15925,7 @@ function Profile(p){
         // Try biometric first if registered
         if(bioAvail&&bioRegistered){try{var ok=await bioAuthenticate();if(ok){p.goTeacher();return;}}catch(e){console.warn("[teacher] biometric auth failed:",e&&e.message);}}
         // Fall back to password prompt
-        var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){}p.goTeacher();}else{alert("Code invalide");}});}}
+        var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-teacher',code);localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){console.warn("[teacher] login store failed:",e&&e.message);}p.goTeacher();}else{alert("Code invalide");}});}}
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
         <GIcon name="public-speaker" size={16} color="var(--cyan)" style={{marginRight:6}}/>Teacher Dashboard
       </button>}
