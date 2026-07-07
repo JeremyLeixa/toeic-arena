@@ -6,7 +6,27 @@
 
 ---
 
-## Last session: 2026-05-29 → 2026-06-02 (ARENA SHOP — full build P1→P4, ~14 commits)
+## Last session: 2026-07-07 (MULTI-CAMPUS — teacher scoping + cross-campus admin view)
+
+**Mise en place de la stratégie multi-campus** (argument de déploiement en école). Avant, un seul `teacher_code` (`arena-teacher-2026`) donnait accès à TOUS les groupes : `loadGroups()` chargeait tout sans filtre. Objectif : 1 campus = 1 formateur voyant SES cohortes.
+
+### Soft scoping V1 (commit `30ff411`, validé live)
+- Cloisonnement **côté UI** par `teacher_code` (colonne déjà par-groupe dans `groups`). Helpers module-level `ADMIN_TEACHER_CODE` (env `VITE_ADMIN_TEACHER_CODE`, fallback `arena-teacher-2026`), `getDashTeacher()`, `isDashAdmin()`. **Code vide = admin** (backward-compat + biométrie sur l'appareil de Jérémy).
+- `localStorage['toeic-dash-teacher']` stocké aux 2 entrées login. `loadGroups()` filtre `.eq('teacher_code',code)` sauf admin. Garde-fou : snap du groupe sélectionné dans le set scopé. Formulaire création : `teacher_code` prérempli + verrouillé (non-admin), stamp forcé au save.
+- ⚠️ **Garde CLIENT only** (RLS off sur students) — OK formateurs de bonne foi. Isolation « hard » (Auth + RLS) = deferred, à déclencher si un établissement l'exige.
+
+### Vue Cross-Campus super-admin (commit `a62961f`, validé live)
+- Bouton admin-only « 🏫 Vue tous campus » sur le picker → `dashPhase==="campus"`. Une ligne/campus (nb élèves, actifs 7j %, TOEIC médian, accuracy) + bandeau récap global. Triable (TOEIC médian/actifs/taille), clic → plonge dans le campus. Un seul read agrégé (`.in('class_code',codes)`), zéro schéma. Réutilise `estimateTOEICScore` + `isGhost`.
+- Fix bug d'interaction : reset `teacher_code:""` du bouton « Créer un groupe » bloquait la création pour non-admin → préremplit `getDashTeacher()`.
+
+### Chantier EN PAUSE (demande Jérémy). Restes possibles
+- **#2 onboarding formateur** : script `scripts/create-groups.cjs` (batch de groupes réutilisant `generateSeasons`) — proposé, pas écrit.
+- **Version hard Auth+RLS** — en réserve.
+- Détail : mémoire `project_multicampus_teacher_scoping.md`.
+
+---
+
+## Earlier session: 2026-05-29 → 2026-06-02 (ARENA SHOP — full build P1→P4, ~14 commits)
 
 **Nouveau gros chantier S2 : la boutique Daric.** Une étudiante a proposé un shop pour dépenser doublons + une monnaie ; on a conçu puis livré de bout en bout. Idée centrale : **sanctuariser l'XP** (métrique de classement) et introduire une **monnaie dérivée**, le **Daric** (D), gagnée via progression (coffres, mastery, podium, Mentor focus, achievements, daily, login). Tout est en prod, Vercel deployed. Détail complet : mémoire `project_shop_design.md`.
 
