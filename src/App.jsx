@@ -6993,7 +6993,7 @@ function AboutToeic(p){
         <div><span style={{fontSize:15}}>{"\uD83D\uDCDC"}</span> <strong>3 Mock Tests</strong> {"\u2014"} exam-like half-tests to measure your real level</div>
         <div><span style={{fontSize:15}}>{"\uD83D\uDC09"}</span> <strong>The Final Arena</strong> {"\u2014"} the full 200-question Boss Test</div>
         <div><span style={{fontSize:15}}>{"\u23F3"}</span> <strong>Endless Arena</strong> {"\u2014"} unlimited replay once you hit 650+</div>
-        <div><span style={{fontSize:15}}>{"\uD83C\uDF7A"}</span> <strong>Word Tavern</strong> {"\u2014"} 390 business vocab across 21 domains</div>
+        <div><span style={{fontSize:15}}>{"\uD83C\uDF7A"}</span> <strong>Word Tavern</strong> {"\u2014"} 1,070 business vocab across 21 domains</div>
       </div>
       <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid rgba(var(--cx),.15)",fontSize:11,color:"var(--t3)",textAlign:"center",fontStyle:"italic",lineHeight:1.5}}>
         Every module you play feeds your <strong style={{color:"var(--cx-hex)"}}>TOEIC score estimate</strong>, visible in your Profile.
