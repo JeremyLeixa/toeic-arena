@@ -572,7 +572,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-07-02-teacher-scoping";
+var BUILD_ID="2026-07-07-multicampus";
 
 // ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
 // Each teacher logs in with their own teacher_code and sees ONLY the groups
@@ -12040,6 +12040,8 @@ function TeacherDash(p){
   var[students,setStudents]=useState([]);var[loading,setLoad]=useState(true);
   var[detail,setDetail]=useState(null);var[classCode,setClassCode]=useState(function(){try{return localStorage.getItem('toeic-dash-group')||"idrac2026";}catch(e){return"idrac2026";}});
   var[dashTab,setDashTab]=useState("overview"); // "overview" | "analytics"
+  var[campusData,setCampusData]=useState(null); // null=loading, {rows,totals} once loaded (cross-campus admin view)
+  var[campusSort,setCampusSort]=useState("toeic"); // "toeic"|"active"|"students"
   var[sortBy,setSortBy]=useState("toeic"); // "toeic"|"xp"|"accuracy"|"time"|"last_active"
   var[showGhostsOnly,setShowGhostsOnly]=useState(false);
   var[showReport,setShowReport]=useState(false);
@@ -12124,6 +12126,37 @@ function TeacherDash(p){
     var codes=groups.map(function(g){return g.code;});
     if(codes.indexOf(classCode)<0)setClassCode(groups[0].code);
   },[groups]);
+
+  // ── Cross-campus aggregation (admin-only super-admin view) ──
+  function medianOf(arr){if(!arr.length)return null;var a=arr.slice().sort(function(x,y){return x-y;});var m=Math.floor(a.length/2);return a.length%2?a[m]:Math.round((a[m-1]+a[m])/2);}
+  function loadCampusData(){
+    var codes=groups.map(function(g){return g.code;});
+    if(!codes.length){setCampusData({rows:[],totals:{campuses:0,students:0,active:0,median:null}});return;}
+    setCampusData(null); // loading
+    // Active = last_active within 7 days (last_active is a "YYYY-MM-DD" string → lexical compare works).
+    var cutoff=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
+    supabase.from('students').select('name,class_code,stats,total_time,module_scores,last_active').in('class_code',codes).limit(5000)
+      .then(function(res){
+        var rows=(res.data||[]).filter(function(r){return !isGhost(r);});
+        var byCode={};
+        groups.forEach(function(g){byCode[g.code]={code:g.code,name:g.name,type:g.type,students:0,active:0,toeics:[],accSum:0,accCnt:0};});
+        var allToeics=[],totActive=0;
+        rows.forEach(function(s){
+          var c=byCode[s.class_code];if(!c)return;
+          c.students++;
+          if((s.last_active||"")>=cutoff){c.active++;totActive++;}
+          var t=estimateTOEICScore(s.module_scores||{}).total;
+          if(t!==null&&t!==undefined){c.toeics.push(t);allToeics.push(t);}
+          if(s.stats&&s.stats.totalQ>0){c.accSum+=s.stats.correct/s.stats.totalQ;c.accCnt++;}
+        });
+        var out=groups.map(function(g){var c=byCode[g.code];
+          return{code:c.code,name:c.name,type:c.type,students:c.students,active:c.active,
+            median:medianOf(c.toeics),acc:c.accCnt>0?Math.round(c.accSum/c.accCnt*100):null};});
+        setCampusData({rows:out,totals:{campuses:out.length,students:rows.length,active:totActive,median:medianOf(allToeics)}});
+      })
+      .catch(function(e){console.warn("[campus] load failed:",e&&e.message);setCampusData({rows:[],totals:{campuses:0,students:0,active:0,median:null}});});
+  }
+  useEffect(function(){if(dashPhase==="campus"&&isDashAdmin())loadCampusData();},[dashPhase]);
   useEffect(function(){if(dashTab==="feedback")loadFeedback();},[dashTab]);
 
   function loadStudents(){
@@ -12513,12 +12546,79 @@ function TeacherDash(p){
           </button>);
         })}
       </div>
-      <button onClick={function(){var code=prompt("Code administrateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){setCgForm({name:"",code:"",teacherCode:"",type:"school",startDate:"",endDate:""});setCgCodeErr("");setDashPhase("create-group");}else{alert("Code invalide");}});}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
+      {isDashAdmin()&&groups.length>0&&<button onClick={function(){setDashPhase("campus");}} className="crd" style={{display:"flex",alignItems:"center",gap:16,padding:"16px 20px",cursor:"pointer",border:"1px solid rgba(var(--cx),.25)",background:"rgba(var(--cx),.06)",borderRadius:16,textAlign:"left",fontFamily:"'DM Sans',sans-serif",width:"100%",marginTop:14}}>
+        <div style={{width:48,height:48,borderRadius:14,background:"rgba(var(--cx),.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{"\ud83c\udfeb"}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)",marginBottom:2}}>{"Vue tous campus"}</div>
+          <div style={{fontSize:11,color:"var(--t3)"}}>{"Comparer l'engagement et le niveau par campus"}</div>
+        </div>
+        <div style={{color:"var(--cyan)",fontSize:16}}>{"\u2192"}</div>
+      </button>}
+      <button onClick={function(){var code=prompt("Code administrateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){setCgForm({name:"",code:"",teacherCode:isDashAdmin()?"":getDashTeacher(),type:"school",startDate:"",endDate:""});setCgCodeErr("");setDashPhase("create-group");}else{alert("Code invalide");}});}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
         {"\u2795 Cr\u00e9er un groupe"}
       </button>
       <button onClick={p.back} style={{display:"block",margin:"16px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"\u2190"} Exit</button>
     </div>
   </div>);
+
+  // CROSS-CAMPUS PHASE (admin-only super-admin overview)
+  if(dashPhase==="campus"){
+    var cSorted=campusData?campusData.rows.slice().sort(function(a,b){
+      if(campusSort==="active")return b.active-a.active;
+      if(campusSort==="students")return b.students-a.students;
+      var am=a.median===null?-1:a.median,bm=b.median===null?-1:b.median;return bm-am; // toeic median desc, nulls last
+    }):[];
+    var cTot=campusData?campusData.totals:{campuses:0,students:0,active:0,median:null};
+    return(<div className="app enter" style={{padding:"20px 16px 40px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <button onClick={function(){setDashPhase("picker");}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14}}>{"\u2190"} Groups</button>
+        <span className="out" style={{fontWeight:700,fontSize:15}}>{"\ud83c\udfeb Tous campus"}</span>
+        <div style={{width:60}}/>
+      </div>
+      {campusData===null?
+        <div style={{textAlign:"center",padding:40,color:"var(--t3)",fontSize:13}}>{"Chargement des campus\u2026"}</div>
+      :<div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:16}}>
+          <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--cyan)"}}>{cTot.campuses}</div><div style={{fontSize:10,color:"var(--t3)"}}>Campus</div></div>
+          <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--purple)"}}>{cTot.students}</div><div style={{fontSize:10,color:"var(--t3)"}}>{"\u00c9l\u00e8ves"}</div></div>
+          <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--green)"}}>{cTot.active}</div><div style={{fontSize:10,color:"var(--t3)"}}>{"Actifs 7j"}</div></div>
+          <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--orange)"}}>{cTot.median!==null?cTot.median:"\u2014"}</div><div style={{fontSize:10,color:"var(--t3)"}}>{"TOEIC m\u00e9d."}</div></div>
+        </div>
+        <div style={{display:"flex",gap:6,marginBottom:14}}>
+          {[{k:"toeic",l:"TOEIC m\u00e9dian"},{k:"active",l:"Actifs 7j"},{k:"students",l:"\u00c9l\u00e8ves"}].map(function(o){
+            var sel=campusSort===o.k;
+            return(<button key={o.k} onClick={function(){setCampusSort(o.k);}} className="out" style={{flex:1,padding:"8px 6px",borderRadius:10,border:sel?"1.5px solid var(--cyan)":"1px solid var(--bdr)",background:sel?"rgba(var(--cx),.08)":"var(--bg2)",color:sel?"var(--cyan)":"var(--t3)",fontSize:12,fontWeight:sel?700:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{o.l}</button>);
+          })}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {cSorted.map(function(c){
+            var typeIcon=c.type==="school"?"\ud83c\udfeb":c.type==="pro"?"\ud83d\udcbc":"\ud83c\udf0d";
+            var actPct=c.students>0?Math.round(c.active/c.students*100):0;
+            return(<button key={c.code} onClick={function(){
+              setClassCode(c.code);try{localStorage.setItem('toeic-dash-group',c.code);}catch(e){console.warn("[campus] set group failed:",e&&e.message);}
+              setLoad(true);setDetail(null);setDashTab("overview");setDashPhase("dashboard");
+              supabase.from('students').select('*').eq('class_code',c.code).order('xp',{ascending:false}).limit(200)
+                .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
+                .catch(function(){setLoad(false);});
+            }} className="crd" style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",cursor:"pointer",border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:14,textAlign:"left",fontFamily:"'DM Sans',sans-serif",width:"100%"}}>
+              <div style={{fontSize:20,flexShrink:0}}>{typeIcon}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name}</div>
+                <div style={{display:"flex",gap:10,fontSize:11,color:"var(--t3)",flexWrap:"wrap"}}>
+                  <span>{"\ud83d\udc65 "}{c.students}</span>
+                  <span style={{color:actPct>=50?"var(--green)":actPct>=25?"var(--orange)":"var(--red)"}}>{"\u25cf "}{c.active} ({actPct}%)</span>
+                  <span>{"\ud83c\udfaf "}{c.median!==null?c.median:"\u2014"}</span>
+                  <span>{c.acc!==null?c.acc+"% acc":"\u2014"}</span>
+                </div>
+              </div>
+              <div style={{color:"var(--t3)",fontSize:15}}>{"\u2192"}</div>
+            </button>);
+          })}
+        </div>
+        <div style={{fontSize:11,color:"var(--t3)",textAlign:"center",marginTop:16}}>{"\u25cf Actifs = derni\u00e8re activit\u00e9 dans les 7 jours. Ghosts exclus. TOEIC estim\u00e9 (m\u00e9diane, profils non estimables exclus)."}</div>
+      </div>}
+    </div>);
+  }
 
   // ─── CREATE GROUP PHASE ───
   if(dashPhase==="create-group"){
