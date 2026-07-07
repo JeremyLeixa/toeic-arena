@@ -8071,7 +8071,7 @@ function BossTest(p){
       rItem=(<div>
         <div className="crd" style={{padding:12,marginBottom:12,maxHeight:140,overflowY:"auto"}}>
           {conv.lines.map(function(ln,i){return(<div key={i} style={{fontSize:12,color:"var(--t1)",lineHeight:1.6,marginBottom:4}}>
-            <span style={{fontWeight:700,color:ln.s==="M"?"var(--cyan)":"var(--purple)",marginRight:6}}>{ln.s}:</span>{ln.t}
+            <span style={{fontWeight:700,color:ln.s.charAt(0)==="M"?"var(--cyan)":"var(--purple)",marginRight:6}}>{ln.s}:</span>{ln.t}
           </div>);})}
         </div>
         <h3 className="out" style={{fontWeight:700,fontSize:14,lineHeight:1.5,marginBottom:12}}>{q3r.q}</h3>
@@ -13494,7 +13494,7 @@ function ListenP3(p){
         <span style={{fontSize:32}}>{playing?"🔊":"▶️"}</span>
       </button>
       {playing&&curLine>=0&&<p className="out" style={{color:"var(--purple)",fontSize:13,fontWeight:600}}>
-        {it.lines[curLine].s==="M"?"👨 Man speaking...":"👩 Woman speaking..."}</p>}
+        {it.lines[curLine].s.charAt(0)==="M"?"👨 Man speaking...":"👩 Woman speaking..."}</p>}
       {!playing&&!played&&<p className="out" style={{color:"var(--t2)",fontSize:13}}>Tap to hear the conversation</p>}
     </div>
     :<div style={{textAlign:"center",animation:"fadeIn .3s"}}>

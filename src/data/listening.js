@@ -1675,7 +1675,157 @@ export var LISTENING_P3 = [
       {q:"How often does the woman exercise?",opts:["Once a week","Twice a week","Three times a week","Every day"],c:2},
       {q:"Why doesn't the woman want the most expensive plan?",opts:["It is only for mornings","She does not need personal training","It has no evening access","It is sold out"],c:1},
       {q:"Look at the graphic. Which plan will the woman most likely choose?",opts:["Basic","Premium","Elite","Day Pass"],c:1,
-        graphic:{type:"list",title:"Gym Membership Plans",items:["Basic — weekday mornings only, $20/month","Premium — unlimited access, $40/month","Elite — unlimited access + personal training, $70/month","Day Pass — single visit, $8"]}}]}
+        graphic:{type:"list",title:"Gym Membership Plans",items:["Basic — weekday mornings only, $20/month","Premium — unlimited access, $40/month","Elite — unlimited access + personal training, $70/month","Day Pass — single visit, $8"]}}]},
+  {id:"p3_74",lines:[
+      {s:"W",t:"Everyone, the clients from Meridian are visiting on Thursday, so we need to finalize the agenda today."},
+      {s:"M",t:"I can prepare the product demo. How long should it run?"},
+      {s:"W",t:"Let's keep it to about twenty minutes. Daniel, could you handle the office tour?"},
+      {s:"M2",t:"Sure. I'll show them the new lab and the design studio. Should I include the rooftop terrace?"},
+      {s:"W",t:"Good idea, it always impresses visitors. Let's meet again tomorrow to rehearse everything."}],
+    qs:[
+      {q:"What event are the speakers preparing for?",opts:["A product launch","A client visit","A job interview","A staff party"],c:1},
+      {q:"What will the first man do?",opts:["Give the office tour","Order lunch","Prepare a product demo","Book a hotel"],c:2},
+      {q:"What does the woman suggest doing tomorrow?",opts:["Rehearsing the agenda","Cancelling the visit","Redesigning the lab","Emailing the clients"],c:0}]},
+  {id:"p3_75",lines:[
+      {s:"W",t:"We still haven't chosen a venue for the annual conference. Any thoughts?"},
+      {s:"W2",t:"The Grand Hotel has a large hall, but it's quite expensive."},
+      {s:"M",t:"What about the convention center downtown? It's cheaper and closer to the train station."},
+      {s:"W",t:"That's a good point. Accessibility really matters for our out-of-town attendees."},
+      {s:"W2",t:"I'll call the convention center this afternoon to check availability."}],
+    qs:[
+      {q:"What are the speakers trying to decide?",opts:["A meeting time","A guest speaker","A budget","A conference venue"],c:3},
+      {q:"What advantage of the convention center is mentioned?",opts:["It is free","It is near the train station","It has better food","It is larger"],c:1},
+      {q:"What will the second woman do?",opts:["Book the Grand Hotel","Cancel the conference","Call to check availability","Email the attendees"],c:2}]},
+  {id:"p3_76",lines:[
+      {s:"M",t:"The new scheduling software goes live next Monday. Are both teams ready?"},
+      {s:"W",t:"Sales has been trained, but support still needs a session."},
+      {s:"M2",t:"I can run a training session for support on Friday morning. Will that work?"},
+      {s:"M",t:"Perfect. Let's also prepare a short guide for anyone who misses it."},
+      {s:"W",t:"I'll write the guide and send it out by the end of the day on Thursday."}],
+    qs:[
+      {q:"What is going live on Monday?",opts:["New scheduling software","A new website","A phone system","A mobile app"],c:0},
+      {q:"What does the second man offer to do?",opts:["Write the guide","Delay the launch","Contact sales","Run a training session"],c:3},
+      {q:"What will the woman send out by Thursday?",opts:["An invoice","A short guide","A survey","A schedule"],c:1}]},
+  {id:"p3_77",lines:[
+      {s:"W",t:"We need to arrange catering for the retirement party. About forty people are coming."},
+      {s:"M",t:"Should we go with the caterer we used last time?"},
+      {s:"W2",t:"Their food was good, but the service was slow. Maybe we should try someone new."},
+      {s:"W",t:"Let's get two or three quotes and compare them."},
+      {s:"M",t:"I'll email a few caterers this afternoon and ask for menus and prices."}],
+    qs:[
+      {q:"What are the speakers organizing?",opts:["A product launch","A training day","A retirement party","A sales meeting"],c:2},
+      {q:"What was the problem with the previous caterer?",opts:["The service was slow","The food was cold","The prices were high","The menu was small"],c:0},
+      {q:"What will the man do this afternoon?",opts:["Book a venue","Order decorations","Send invitations","Email caterers for quotes"],c:3}]},
+  {id:"p3_78",lines:[
+      {s:"M",t:"The shipment to the Chicago branch is going to be two days late."},
+      {s:"W",t:"That's a problem. They need those parts for Monday's production run."},
+      {s:"M2",t:"Could we send a partial order by express courier to cover Monday?"},
+      {s:"M",t:"That might work. How much would express shipping cost?"},
+      {s:"M2",t:"I'll get a quote right now and let you know in about ten minutes."}],
+    qs:[
+      {q:"What is the problem?",opts:["A machine broke down","A shipment is delayed","An order was cancelled","A price increased"],c:1},
+      {q:"What does the second man propose?",opts:["Cancelling the order","Delaying production","Sending a partial order by express","Calling the client"],c:2},
+      {q:"What will the second man do next?",opts:["Get a shipping quote","Contact the branch","Reorder the parts","Update the schedule"],c:0}]},
+  {id:"p3_79",lines:[
+      {s:"W",t:"We have five candidates to interview for the analyst position this week."},
+      {s:"W2",t:"Can we fit them all in before Friday? My schedule is very tight on Thursday."},
+      {s:"M",t:"I could take two of the interviews if that helps spread the load."},
+      {s:"W",t:"That would be great. Let's do three on Wednesday and two on Friday."},
+      {s:"W2",t:"I'll send everyone the updated schedule and book the meeting room."}],
+    qs:[
+      {q:"What position are they hiring for?",opts:["A manager","A receptionist","A designer","An analyst"],c:3},
+      {q:"What does the man offer to do?",opts:["Reschedule Friday","Conduct two interviews","Book the room","Review the résumés"],c:1},
+      {q:"What will the second woman do?",opts:["Interview the candidates","Call the manager","Send the schedule and book a room","Cancel Thursday"],c:2}]},
+  {id:"p3_80",lines:[
+      {s:"W",t:"The social media campaign launches next week. Is the content ready?"},
+      {s:"M",t:"The videos are done, but we're still waiting on the final graphics."},
+      {s:"M2",t:"The designer promised the graphics by tomorrow afternoon."},
+      {s:"W",t:"Good. Once they're in, let's schedule everything to post automatically."},
+      {s:"M",t:"I'll set up the scheduling tool as soon as the graphics arrive."}],
+    qs:[
+      {q:"What is launching next week?",opts:["A social media campaign","A new product","A store opening","A website"],c:0},
+      {q:"What are they still waiting for?",opts:["The videos","The budget","The approval","The final graphics"],c:3},
+      {q:"What will the first man do once the graphics arrive?",opts:["Email the designer","Schedule the posts","Film more videos","Review the campaign"],c:1}]},
+  {id:"p3_81",lines:[
+      {s:"M",t:"Now that the lease is signed, we need a plan to move to the new office."},
+      {s:"W",t:"The movers are already booked for the last weekend of the month."},
+      {s:"W2",t:"What about the IT setup? We can't lose network access on Monday morning."},
+      {s:"M",t:"Good point. Let's have IT install everything the Friday before."},
+      {s:"W",t:"I'll coordinate with the IT team and confirm the timeline."}],
+    qs:[
+      {q:"What are the speakers planning?",opts:["A renovation","A holiday party","An office move","A hiring drive"],c:2},
+      {q:"What is the second woman concerned about?",opts:["Losing network access","The moving cost","The new location","The schedule"],c:0},
+      {q:"What will the first woman do?",opts:["Book the movers","Sign the lease","Pack the boxes","Coordinate with IT"],c:3}]},
+  {id:"p3_82",lines:[
+      {s:"W",t:"Our department is slightly over budget this quarter, so we need to cut about five percent."},
+      {s:"M",t:"Most of our spending is on travel. Could we do more meetings online?"},
+      {s:"M2",t:"That would save a lot. We could also delay the new equipment purchase."},
+      {s:"W",t:"Let's do both, switch to virtual meetings and postpone the equipment."},
+      {s:"M",t:"I'll update the budget forecast to reflect those changes."}],
+    qs:[
+      {q:"What is the problem with the department's budget?",opts:["It is unclear","It is over budget","It was frozen","It was cut"],c:1},
+      {q:"What does the first man suggest?",opts:["Reducing staff","Cancelling travel entirely","Holding more meetings online","Buying new equipment"],c:2},
+      {q:"What will the first man do?",opts:["Update the budget forecast","Book the flights","Approve the equipment","Schedule a meeting"],c:0}]},
+  {id:"p3_83",lines:[
+      {s:"W",t:"We've received several complaints about slow delivery times this month."},
+      {s:"M",t:"Is it a problem with the warehouse or the courier?"},
+      {s:"W2",t:"I checked. The warehouse is fine; the courier has been understaffed."},
+      {s:"W",t:"Then maybe we should switch to a different delivery partner."},
+      {s:"M",t:"I'll research a few alternatives and present options at next week's meeting."}],
+    qs:[
+      {q:"What is causing the delivery delays?",opts:["A warehouse error","Bad weather","A system failure","An understaffed courier"],c:3},
+      {q:"What does the woman suggest?",opts:["Hiring more staff","Switching delivery partners","Refunding customers","Closing the warehouse"],c:1},
+      {q:"What will the man do?",opts:["Contact the courier","Apologize to customers","Research alternatives","Visit the warehouse"],c:2}]},
+  {id:"p3_84",lines:[
+      {s:"M",t:"Our booth at the tech expo is confirmed for Hall C, space twelve."},
+      {s:"W",t:"How big is the space? We had trouble fitting everything in last year."},
+      {s:"M2",t:"It's about thirty percent larger this time, so we'll have more room."},
+      {s:"M",t:"Great. Let's design a layout that includes a small demo area."},
+      {s:"W",t:"I'll sketch a floor plan and share it with the team tomorrow."}],
+    qs:[
+      {q:"What are the speakers discussing?",opts:["A trade show booth","A store layout","An office design","A product demo"],c:0},
+      {q:"What was the problem last year?",opts:["The location was bad","The cost was high","The staff was busy","The space was too small"],c:3},
+      {q:"What will the woman do tomorrow?",opts:["Confirm the space","Share a floor plan","Order the demo units","Book the hall"],c:1}]},
+  {id:"p3_85",lines:[
+      {s:"W",t:"Management wants us to launch a mentorship program for new hires."},
+      {s:"W2",t:"That's a great idea. Who would act as the mentors?"},
+      {s:"M",t:"We could ask experienced staff to volunteer, and maybe offer them a small incentive."},
+      {s:"W",t:"Let's start with a pilot, pairing five mentors with five new employees."},
+      {s:"W2",t:"I'll draft an invitation to send to potential mentors."}],
+    qs:[
+      {q:"What program are they discussing?",opts:["A training course","A recruitment drive","A mentorship program","A bonus scheme"],c:2},
+      {q:"What does the man suggest to attract mentors?",opts:["Offering a small incentive","Reducing their hours","Giving them titles","Hiring more staff"],c:0},
+      {q:"What will the second woman do?",opts:["Choose the new hires","Run the pilot","Interview mentors","Draft an invitation"],c:3}]},
+  {id:"p3_86",lines:[
+      {s:"M",t:"We've had a few reports of the new blender overheating."},
+      {s:"W",t:"How many units are affected? Is it a safety issue?"},
+      {s:"M2",t:"So far it's a small batch, but we should investigate before it spreads."},
+      {s:"M",t:"Let's pause shipments of that batch until we know the cause."},
+      {s:"W",t:"I'll contact the factory and ask for their inspection report."}],
+    qs:[
+      {q:"What is the problem with the product?",opts:["It is too expensive","It overheats","It is out of stock","It is the wrong color"],c:1},
+      {q:"What does the first man suggest doing?",opts:["Recalling all units","Lowering the price","Pausing shipments of the batch","Redesigning the product"],c:2},
+      {q:"What will the woman do?",opts:["Contact the factory","Test the units","Refund customers","Stop production"],c:0}]},
+  {id:"p3_87",lines:[
+      {s:"W",t:"The company wants to reduce paper use by half this year."},
+      {s:"M",t:"We could switch most reports to digital and cut down on printing."},
+      {s:"W2",t:"We should also set the default printer settings to double-sided."},
+      {s:"W",t:"Those are easy wins. Let's send a memo explaining the new guidelines."},
+      {s:"M",t:"I'll write the memo and include some tips for going paperless."}],
+    qs:[
+      {q:"What is the company's goal?",opts:["To increase sales","To hire more staff","To open a branch","To reduce paper use"],c:3},
+      {q:"What does the second woman suggest?",opts:["Buying new printers","Setting printers to double-sided","Removing all printers","Printing in color"],c:1},
+      {q:"What will the man do?",opts:["Buy tablets","Survey the staff","Write a memo","Recycle the paper"],c:2}]},
+  {id:"p3_88",lines:[
+      {s:"W",t:"The board wants to move the product launch up by two weeks."},
+      {s:"M",t:"That's tight. Marketing needs at least a month to prepare the campaign."},
+      {s:"M2",t:"Engineering can be ready, but only if we skip the second round of testing."},
+      {s:"W",t:"Skipping testing is too risky. Let's ask the board to keep the original date."},
+      {s:"M",t:"Agreed. I'll prepare a short report explaining why we need more time."}],
+    qs:[
+      {q:"What does the board want to do?",opts:["Move up the launch","Delay the launch","Cancel the launch","Expand the campaign"],c:0},
+      {q:"Why is the second man hesitant?",opts:["The budget is too small","Marketing is ready","The product is finished","Testing would have to be skipped"],c:3},
+      {q:"What will the first man do?",opts:["Contact the board directly","Prepare a report","Start the campaign","Skip the testing"],c:1}]}
 ];
 
 // ─── PART 4 — Talks (20 talks, 60 questions) ───
