@@ -4454,14 +4454,14 @@ var[step,sSt]=useState("name");
       {currentQ.sectionId==="reading"&&currentQ.format==="p7"&&currentQ.isFirstQ&&(
         <div className="crd" style={{marginTop:14,padding:14,maxHeight:240,overflowY:"auto",fontSize:13,lineHeight:1.7,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
           <div className="out" style={{fontWeight:700,fontSize:11,color:"#22c55e",marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>{currentQ.passage.title+" · "+currentQ.passage.type}</div>
-          {currentQ.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"6px 0 0"}}>{line}</p>);})}
+          <PassageDocs key={currentQ.passage.id} text={currentQ.passage.text} fontSize={13} lineHeight={1.7}/>
         </div>
       )}
       {currentQ.sectionId==="reading"&&currentQ.format==="p7"&&!currentQ.isFirstQ&&(
         <details style={{marginTop:12,marginBottom:4}}>
           <summary style={{fontSize:12,color:"var(--t3)",cursor:"pointer",marginBottom:4}}>Show passage</summary>
           <div className="crd" style={{padding:12,maxHeight:200,overflowY:"auto",fontSize:12,lineHeight:1.6,color:"var(--t2)",borderColor:"rgba(34,197,94,.15)",background:"rgba(34,197,94,.04)"}}>
-            {currentQ.passage.text.split("\n").map(function(line,li){return(<p key={li} style={{margin:li===0?"0":"4px 0 0"}}>{line}</p>);})}
+            <PassageDocs key={currentQ.passage.id+"-d"} text={currentQ.passage.text} fontSize={12} lineHeight={1.6}/>
           </div>
         </details>
       )}
@@ -7420,6 +7420,39 @@ function Part6Drill(p){
 }
 
 // ─── PART 7 READING COMPREHENSION ───
+// ── Multi-document passage viewer (Double/Triple Passages) ──
+// Splits a P7 `text` field on "--- DOCUMENT N: Label ---" markers into tabs so
+// mobile users switch between the linked documents instead of scrolling past all
+// of them stacked. Single passages (no markers) render as plain pre-line text,
+// so every existing single/letter/memo/email passage is untouched.
+// IMPORTANT: give the component a `key` tied to the passage id at each call site
+// so the active tab resets to Doc 1 when the passage changes.
+function parsePassageDocs(text){
+  if(!text||text.indexOf("--- DOCUMENT")<0)return null;
+  var re=/---\s*DOCUMENT\s*\d+\s*:?\s*([^\n]*?)\s*---/g;
+  var docs=[],m,lastIdx=0,lastLabel=null;
+  while((m=re.exec(text))){
+    if(lastLabel!==null)docs.push({label:lastLabel,body:text.slice(lastIdx,m.index).replace(/^\s+|\s+$/g,"")});
+    lastLabel=(m[1]||"").replace(/-+$/,"").replace(/^\s+|\s+$/g,"");
+    lastIdx=re.lastIndex;
+  }
+  if(lastLabel!==null)docs.push({label:lastLabel,body:text.slice(lastIdx).replace(/^\s+|\s+$/g,"")});
+  return docs.length>=2?docs:null;
+}
+function PassageDocs(p){
+  var docs=parsePassageDocs(p.text);
+  var[tab,setTab]=useState(0);
+  var fs=p.fontSize||13,lh=p.lineHeight||1.8;
+  if(!docs)return(<p className="read-text" style={{fontSize:fs,color:"var(--t2)",lineHeight:lh,whiteSpace:"pre-line"}}>{p.text}</p>);
+  var ti=Math.min(tab,docs.length-1);
+  return(<div>
+    <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:2}}>
+      {docs.map(function(d,i){var on=i===ti;
+        return(<button key={i} onClick={function(){setTab(i);}} className="out" style={{flexShrink:0,fontSize:11,fontWeight:on?700:600,padding:"6px 10px",borderRadius:8,border:"1px solid "+(on?"var(--cyan)":"var(--bdr)"),background:on?"rgba(var(--cx),.1)":"var(--bg2)",color:on?"var(--cyan)":"var(--t3)",cursor:"pointer",whiteSpace:"nowrap"}}>{(i+1)+". "+(d.label||"Document")}</button>);})}
+    </div>
+    <p className="read-text" style={{fontSize:fs,color:"var(--t2)",lineHeight:lh,whiteSpace:"pre-line"}}>{docs[ti].body}</p>
+  </div>);
+}
 function Part7Read(p){
   var passages=useMemo(function(){return shuffle(PART7_PASSAGES).filter(function(p){return p&&p.questions&&p.questions.length>0;}).slice(0,4);},[]);
   var[pi,sPi]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
@@ -7474,7 +7507,7 @@ function Part7Read(p){
       <div style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Read these first!</div>
       {(shuffledQMap[curPass.id]||curPass.questions).map(function(q,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,padding:"4px 0",borderBottom:i<curPass.questions.length-1?"1px solid var(--bdr)":"none"}}><span style={{color:"var(--purple)",fontWeight:700}}>Q{i+1}.</span> {q.q}</div>);})}</div>}
     <div className="crd" style={{padding:16,marginBottom:16}}>
-      <p className="read-text" style={{fontSize:13,color:"var(--t2)",lineHeight:1.8,whiteSpace:"pre-line"}}>{curPass.text}</p></div>
+      <PassageDocs key={curPass.id} text={curPass.text} fontSize={13} lineHeight={1.8}/></div>
     <button className="btn1" onClick={function(){sP("q");setShowQPreview(false);setShowText(false);}}>Answer Questions</button></div>);
 
 // Question mode
@@ -7487,7 +7520,7 @@ function Part7Read(p){
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type} — Passage {pi+1}</span>
       <button onClick={function(){setShowText(!showText);}} style={{fontSize:10,padding:"3px 8px",background:showText?"rgba(6,182,212,.15)":"var(--bg3)",color:showText?"var(--cyan)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showText?"Hide text ▲":"Show text ▼"}</button></div>
     {showText&&<div className="crd read-scroll" style={{padding:14,marginBottom:12,maxHeight:200,overflowY:"auto",borderColor:"rgba(6,182,212,.2)"}}>
-      <p className="read-text" style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,whiteSpace:"pre-line"}}>{curPass.text}</p></div>}
+      <PassageDocs key={curPass.id+"-q"} text={curPass.text} fontSize={12} lineHeight={1.7}/></div>}
 
     <h2 className="out q-heading" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:12}}>{curQ.q}</h2>
     <div className="read-opts" style={{display:"flex",flexDirection:"column",gap:8}}>
