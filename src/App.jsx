@@ -12079,6 +12079,9 @@ function TeacherDash(p){
   var[sortBy,setSortBy]=useState("toeic"); // "toeic"|"xp"|"accuracy"|"time"|"last_active"
   var[showGhostsOnly,setShowGhostsOnly]=useState(false);
   var[showReport,setShowReport]=useState(false);
+  var[showReportCfg,setShowReportCfg]=useState(false);
+  var[rcEmail,setRcEmail]=useState("");var[rcOptin,setRcOptin]=useState(true);
+  var[rcBusy,setRcBusy]=useState(false);var[rcMsg,setRcMsg]=useState(null);
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
   var[groups,setGroups]=useState([]);
   var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard" | "create-group"
@@ -12160,6 +12163,47 @@ function TeacherDash(p){
     var codes=groups.map(function(g){return g.code;});
     if(codes.indexOf(classCode)<0)setClassCode(groups[0].code);
   },[groups]);
+
+  // ── Rapport hebdo : configuration email (popup) ──
+  // Le cron (job pg_cron global) ramasse tout groupe ayant un teacher_email.
+  // "Activer son rapport" = juste écrire l'email sur les groupes du formateur.
+  function currentTeacherCode(){
+    var g=groups.find(function(x){return x.code===classCode;});
+    return (g&&g.teacher_code)||getDashTeacher()||"";
+  }
+  function openReportCfg(){
+    var g=groups.find(function(x){return x.teacher_email;});
+    setRcEmail((g&&g.teacher_email)||"");
+    setRcOptin(g?g.weekly_report_optin!==false:true);
+    setRcMsg(null);setShowReportCfg(true);
+  }
+  function saveReportCfg(){
+    var email=rcEmail.trim();
+    if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){setRcMsg({err:true,text:"Email invalide."});return;}
+    var tc=currentTeacherCode();
+    if(!tc){setRcMsg({err:true,text:"Aucun code formateur rattaché à cette cohorte."});return;}
+    setRcBusy(true);
+    // Portée "toutes mes cohortes" = tous les groupes partageant ce teacher_code.
+    supabase.from('groups').update({teacher_email:email||null,weekly_report_optin:rcOptin}).eq('teacher_code',tc)
+      .then(function(res){
+        setRcBusy(false);
+        if(res.error){console.warn("[reportcfg] update failed:",res.error.message);setRcMsg({err:true,text:"Échec : "+res.error.message});return;}
+        setRcMsg({ok:true,text:email?"Enregistré — rapport hebdo activé pour toutes tes cohortes ✓":"Email retiré — plus de rapport hebdo."});
+        loadGroups();
+      });
+  }
+  function sendReportPreview(){
+    var email=rcEmail.trim();
+    if(!email){setRcMsg({err:true,text:"Renseigne un email d'abord."});return;}
+    setRcBusy(true);
+    supabase.functions.invoke('weekly-teacher-report',{body:{test:true,email:email,classCode:classCode}})
+      .then(function(res){
+        setRcBusy(false);
+        if(res.error){console.warn("[reportcfg] preview failed:",res.error&&res.error.message);setRcMsg({err:true,text:"Échec de l'aperçu : "+(res.error&&res.error.message)});return;}
+        setRcMsg({ok:true,text:"Aperçu envoyé à "+email+" ✓ (vérifie ta boîte)"});
+      })
+      .catch(function(e){setRcBusy(false);console.warn("[reportcfg] preview caught:",e&&e.message);setRcMsg({err:true,text:"Échec : "+(e&&e.message)});});
+  }
 
   // ── Cross-campus aggregation (admin-only super-admin view) ──
   function medianOf(arr){if(!arr.length)return null;var a=arr.slice().sort(function(x,y){return x-y;});var m=Math.floor(a.length/2);return a.length%2?a[m]:Math.round((a[m-1]+a[m])/2);}
@@ -12821,8 +12865,39 @@ function TeacherDash(p){
       <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
         <button className="btn1" onClick={function(){setLoad(true);loadStudents();}} style={{flex:"1 1 30%",fontSize:13}}>🔄 Refresh</button>
         <button className="btn2" onClick={exportCSV} style={{flex:"1 1 30%",fontSize:13,borderColor:"rgba(var(--cx),.3)",color:"var(--cyan)"}}>📥 Export CSV</button>
-        <button className="btn2" onClick={function(){setShowReport(true);}} style={{flex:"1 1 30%",fontSize:13,borderColor:"rgba(240,200,80,.4)",color:"var(--gold)"}}>📄 Rapport hebdo</button>
+        <button className="btn2" onClick={openReportCfg} style={{flex:"1 1 30%",fontSize:13,borderColor:"rgba(240,200,80,.4)",color:"var(--gold)"}}>📧 Rapport hebdo</button>
       </div>
+
+      {/* ── Popup config rapport hebdo (email + aperçu + accès doc imprimable) ── */}
+      {showReportCfg&&(<div onClick={function(){if(!rcBusy)setShowReportCfg(false);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,padding:16}}>
+        <div onClick={function(e){e.stopPropagation();}} className="crd" style={{width:"100%",maxWidth:440,padding:24,borderRadius:16,maxHeight:"90vh",overflowY:"auto"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+            <h2 className="out" style={{fontWeight:800,fontSize:18,color:"var(--gold)",margin:0}}>{"📧 Rapport hebdo"}</h2>
+            <button onClick={function(){if(!rcBusy)setShowReportCfg(false);}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:22,cursor:"pointer",lineHeight:1}}>{"×"}</button>
+          </div>
+          <p style={{fontSize:12,color:"var(--t3)",margin:"0 0 18px"}}>{"Reçois chaque lundi un rapport pédagogique de tes cohortes : ce qui coince, ce qui est peu travaillé, et 3 activités à proposer."}</p>
+
+          <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>{"Ton email"}</label>
+          <input type="email" value={rcEmail} onChange={function(e){setRcEmail(e.target.value);}} placeholder="prenom.nom@ecole.fr"
+            style={{width:"100%",padding:"12px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:14,boxSizing:"border-box"}}/>
+
+          <div onClick={function(){setRcOptin(!rcOptin);}} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:18}}>
+            <div style={{width:38,height:22,borderRadius:11,background:rcOptin?"var(--cyan)":"var(--bdr)",position:"relative",transition:"background .2s",flexShrink:0}}>
+              <div style={{width:16,height:16,borderRadius:8,background:"#fff",position:"absolute",top:3,left:rcOptin?19:3,transition:"left .2s"}}/>
+            </div>
+            <span style={{fontSize:12,color:"var(--t2)"}}>{"Recevoir le rapport chaque lundi"}</span>
+          </div>
+
+          {rcMsg&&<div style={{padding:"10px 12px",borderRadius:10,marginBottom:14,fontSize:12,background:rcMsg.err?"rgba(224,82,82,.1)":"rgba(74,190,96,.1)",color:rcMsg.err?"var(--red)":"var(--green)"}}>{rcMsg.text}</div>}
+
+          <div style={{display:"flex",gap:8,marginBottom:10}}>
+            <button className="btn1" onClick={saveReportCfg} disabled={rcBusy} style={{flex:1,fontSize:13,opacity:rcBusy?.5:1}}>{rcBusy?"…":"Enregistrer"}</button>
+            <button className="btn2" onClick={sendReportPreview} disabled={rcBusy} style={{flex:1,fontSize:13,borderColor:"rgba(var(--cx),.3)",color:"var(--cyan)",opacity:rcBusy?.5:1}}>{"M'envoyer un aperçu"}</button>
+          </div>
+
+          <button onClick={function(){setShowReportCfg(false);setShowReport(true);}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",textDecoration:"underline",padding:"8px 0 0",width:"100%"}}>{"Voir / imprimer le rapport complet (direction)"}</button>
+        </div>
+      </div>)}
 
       {/* Student list */}
       <h3 className="out" style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--t2)"}}>{showGhostsOnly?"\uD83D\uDC7B Ghost students":"Students"} ({showGhostsOnly?students.filter(isGhost).length:students.length})</h3>
