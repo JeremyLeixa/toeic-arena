@@ -638,5 +638,101 @@ export var PART6_TEXTS = [
         "New uniforms will be distributed at the end of the month.",
         "Visitor access is restricted to the front office only."
       ],correct:0,x:"Sentence insertion: reinforces the purpose of the scanning instructions."},
+    ]},
+  { id:"p6t41", type:"Announcement", from:"Human Resources", to:"All Staff", subject:"New Flexible Work Policy",
+    parts:[
+      {text:"We are pleased to announce that, starting next month, all employees will be able to work from home up to two days per week. This new policy "},
+      {blank:true,options:["reflects","reflecting","reflection","reflected"],correct:0,x:"Present-simple verb 'reflects' agrees with the singular subject 'policy'."},
+      {text:" our ongoing commitment to a healthy work-life balance.\n\nTo take part, please submit a request to your manager "},
+      {blank:true,options:["by","until","among","across"],correct:0,x:"'by' + a deadline means 'no later than'. 'until' would imply a continuous action."},
+      {text:" the end of the month. Once your request has been "},
+      {blank:true,options:["approve","approval","approved","approving"],correct:2,x:"Passive: 'has been approved' requires the past participle."},
+      {text:", you may begin the new schedule the following week.\n\n"},
+      {blank:true,options:[
+        "We thank you for helping us build a more flexible workplace.",
+        "The parking lot will be repaved next spring.",
+        "Our new product line will launch in Asia this year.",
+        "Please remember to water the plants in the lobby."
+      ],correct:0,x:"Sentence insertion: a fitting closing for an HR announcement about the new policy."}
+    ]},
+  { id:"p6t42", type:"Announcement", from:"City Public Library", to:"", subject:"Extended Weekend Hours",
+    parts:[
+      {text:"We are excited to announce that, beginning in September, the City Public Library will extend its weekend hours. The library will now "},
+      {blank:true,options:["remain","remains","remaining","remained"],correct:0,x:"After 'will', use the base form 'remain'."},
+      {text:" open until 8:00 p.m. on Saturdays and Sundays.\n\nThese longer hours are a direct "},
+      {blank:true,options:["respond","response","responsive","responsively"],correct:1,x:"Noun 'response' after the adjective 'direct' and article 'a'."},
+      {text:" to feedback from our members, many of whom requested more evening access.\n\nIn addition, the study rooms on the second floor can now be "},
+      {blank:true,options:["reserve","reserved","reserving","reservation"],correct:1,x:"Passive: 'can now be reserved' requires the past participle."},
+      {text:" online through our website.\n\n"},
+      {blank:true,options:[
+        "We look forward to welcoming you during these new hours.",
+        "The museum across the street is closed on Mondays.",
+        "Annual membership fees will increase next year.",
+        "A new coffee machine has been installed in the lobby."
+      ],correct:0,x:"Sentence insertion: a welcoming closing for a library announcement about new hours."}
+    ]},
+  { id:"p6t43", type:"Web Page", from:"", to:"", subject:"WorkHub — Flexible Office Space",
+    parts:[
+      {text:"Welcome to WorkHub, where growing businesses find the space they need to "},
+      {blank:true,options:["succeed","success","successful","successfully"],correct:0,x:"After 'to', use the base verb 'succeed' (infinitive)."},
+      {text:".\n\nOur flexible memberships give you access to modern desks, private meeting rooms, and high-speed internet. Whether you are a freelancer or a small team, we have a plan that "},
+      {blank:true,options:["fit","fits","fitting","to fit"],correct:1,x:"The relative-clause verb 'fits' agrees with the singular 'a plan'."},
+      {text:" your needs.\n\nAll members enjoy "},
+      {blank:true,options:["complimentary","complimented","compliment","complimenting"],correct:0,x:"The adjective 'complimentary' (free) modifies the noun 'coffee'."},
+      {text:" coffee, printing services, and access to our community events.\n\n"},
+      {blank:true,options:[
+        "Sign up today and get your first month at half price.",
+        "The building was sold to new owners last year.",
+        "Heavy rain is expected across the region this weekend.",
+        "Our accountant will contact you about last year's taxes."
+      ],correct:0,x:"Sentence insertion: a call-to-action fitting a promotional web page."}
+    ]},
+  { id:"p6t44", type:"Web Page", from:"", to:"", subject:"LearnBright — How It Works",
+    parts:[
+      {text:"Thank you for choosing LearnBright, the easiest way to build new skills from home. Getting started "},
+      {blank:true,options:["take","takes","taking","taken"],correct:1,x:"The verb 'takes' agrees with the singular gerund subject 'Getting started'."},
+      {text:" just a few minutes.\n\nOnce you create an account, you can browse hundreds of courses and enroll "},
+      {blank:true,options:["instant","instantly","instance","instances"],correct:1,x:"The adverb 'instantly' modifies the verb 'enroll'."},
+      {text:".\n\nEach course includes video lessons, downloadable materials, and a certificate of completion. If you are not "},
+      {blank:true,options:["satisfy","satisfied","satisfaction","satisfying"],correct:1,x:"'not satisfied' — adjective/past participle after 'are'."},
+      {text:" within thirty days, we offer a full refund.\n\n"},
+      {blank:true,options:[
+        "Start learning today and cancel anytime.",
+        "The office will be closed for the holidays.",
+        "Our delivery trucks now run on electric power.",
+        "The annual gala raised funds for local schools."
+      ],correct:0,x:"Sentence insertion: a fitting closing and call-to-action for a course platform page."}
+    ]},
+  { id:"p6t45", type:"Press Release", from:"Nexa Robotics", to:"", subject:"FOR IMMEDIATE RELEASE: Nexa Robotics Opens New Facility",
+    parts:[
+      {text:"SAN DIEGO — Nexa Robotics, a leader in industrial automation, today announced the opening of a new manufacturing facility that "},
+      {blank:true,options:["expect","expects","is expected","expecting"],correct:2,x:"Passive: 'is expected to create' — the facility is expected by others to do so."},
+      {text:" to create more than three hundred jobs over the next two years.\n\nThe facility, located just outside the city, will "},
+      {blank:true,options:["produce","product","production","productive"],correct:0,x:"After 'will', use the base verb 'produce'."},
+      {text:" the company's next generation of warehouse robots.\n\n'This expansion marks an important milestone,' said CEO Laura Kim. 'It "},
+      {blank:true,options:["reflect","reflects","reflecting","reflected"],correct:1,x:"Present-simple 'reflects' agrees with the singular subject 'It'."},
+      {text:" our confidence in the growing demand for automation.'\n\n"},
+      {blank:true,options:[
+        "Hiring for the new positions will begin next month.",
+        "The CEO enjoys hiking on weekends.",
+        "Local restaurants have recently extended their hours.",
+        "The company was originally founded as a bakery."
+      ],correct:0,x:"Sentence insertion: a relevant next-step detail for a press release about a new facility and jobs."}
+    ]},
+  { id:"p6t46", type:"Press Release", from:"Brightline Foods", to:"", subject:"FOR IMMEDIATE RELEASE: Brightline Foods Launches Plant-Based Line",
+    parts:[
+      {text:"CHICAGO — Brightline Foods announced today the launch of its new plant-based product line, which "},
+      {blank:true,options:["will available","will be available","availability","available"],correct:1,x:"Future passive form 'will be available' is needed before 'in stores'."},
+      {text:" in stores nationwide beginning next month.\n\nThe new line was developed in "},
+      {blank:true,options:["respond","response","responsive","responsibly"],correct:1,x:"Noun 'response' — the fixed phrase 'in response to'."},
+      {text:" to rising consumer demand for healthier and more sustainable options.\n\n'We are proud to offer products that are both delicious and "},
+      {blank:true,options:["environment","environmental","environmentally","environments"],correct:2,x:"The adverb 'environmentally' modifies the adjective 'friendly'."},
+      {text:" friendly,' said a company spokesperson.\n\n"},
+      {blank:true,options:[
+        "The products will be sold at more than two thousand locations.",
+        "The company's offices were recently repainted.",
+        "Ticket sales for the concert begin on Friday.",
+        "The river flooded after several days of heavy rain."
+      ],correct:0,x:"Sentence insertion: a relevant distribution detail for a product-launch press release."}
     ]}
 ];
