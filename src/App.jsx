@@ -12082,7 +12082,7 @@ function TeacherDash(p){
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
   var[groups,setGroups]=useState([]);
   var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard" | "create-group"
-  var[cgForm,setCgForm]=useState({name:"",code:"",teacherCode:isDashAdmin()?"":getDashTeacher(),type:"school",startDate:"",endDate:""});
+  var[cgForm,setCgForm]=useState({name:"",code:"",teacherCode:isDashAdmin()?"":getDashTeacher(),type:"school",startDate:"",endDate:"",teacherEmail:"",reportOptin:true});
   var[cgCodeErr,setCgCodeErr]=useState("");var[cgSaving,setCgSaving]=useState(false);
   var[dashEvents,setDashEvents]=useState([]);var[evForm,setEvForm]=useState({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:"all"});var[evSaving,setEvSaving]=useState(false);var[evPushResult,setEvPushResult]=useState(null);
   // ── Feedback tab state ──
@@ -12690,6 +12690,18 @@ function TeacherDash(p){
           placeholder="ex: arena-idrac2027" title={isDashAdmin()?"":"Verrouillé sur votre code formateur"} style={{width:"100%",padding:"12px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:isDashAdmin()?"var(--t1)":"var(--t3)",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:16,boxSizing:"border-box",cursor:isDashAdmin()?"text":"not-allowed"}}/>
         {!isDashAdmin()&&<div style={{fontSize:11,color:"var(--t3)",marginTop:-10,marginBottom:14}}>{"Les groupes que vous créez sont rattachés à votre code formateur."}</div>}
 
+        {/* Teacher Email — rapport pédagogique hebdo automatique */}
+        <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>{"Email rapport hebdo (optionnel)"}</label>
+        <input type="email" value={cgForm.teacherEmail} onChange={function(e){setCgForm(Object.assign({},cgForm,{teacherEmail:e.target.value}));}}
+          placeholder="prenom.nom@ecole.fr" style={{width:"100%",padding:"12px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:8,boxSizing:"border-box"}}/>
+        <div onClick={function(){if(!cgForm.teacherEmail.trim())return;setCgForm(Object.assign({},cgForm,{reportOptin:!cgForm.reportOptin}));}}
+          style={{display:"flex",alignItems:"center",gap:8,cursor:cgForm.teacherEmail.trim()?"pointer":"not-allowed",opacity:cgForm.teacherEmail.trim()?1:.5,marginBottom:16}}>
+          <div style={{width:38,height:22,borderRadius:11,background:cgForm.reportOptin?"var(--cyan)":"var(--bdr)",position:"relative",transition:"background .2s",flexShrink:0}}>
+            <div style={{width:16,height:16,borderRadius:8,background:"#fff",position:"absolute",top:3,left:cgForm.reportOptin?19:3,transition:"left .2s"}}/>
+          </div>
+          <span style={{fontSize:12,color:"var(--t2)"}}>{"Recevoir le rapport pédagogique chaque lundi"}</span>
+        </div>
+
         {/* Type */}
         <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>Type</label>
         <div style={{display:"flex",gap:8,marginBottom:16}}>
@@ -12747,7 +12759,8 @@ function TeacherDash(p){
           supabase.from('groups').upsert({
             code:cgForm.code,name:cgForm.name.trim(),type:cgForm.type,
             start_date:cgForm.startDate,end_date:cgForm.endDate,
-            seasons:cgSeasons,teacher_code:isDashAdmin()?cgForm.teacherCode.trim():getDashTeacher()
+            seasons:cgSeasons,teacher_code:isDashAdmin()?cgForm.teacherCode.trim():getDashTeacher(),
+            teacher_email:cgForm.teacherEmail.trim()||null,weekly_report_optin:cgForm.reportOptin
           },{onConflict:'code'}).then(function(res){
             setCgSaving(false);
             if(res.error){alert("Erreur: "+res.error.message);return;}
