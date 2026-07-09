@@ -596,10 +596,18 @@ function _stopBGMInternal(cb) {
   var ref = bgmAudio;
   bgmAudio = null; // Immediately clear so no race with playBGM
   if (ref.paused) { ref.src = ""; if (cb) cb(); return; }
+  // iOS/Safari ignore les écritures sur HTMLMediaElement.volume (reste bloqué à 1).
+  // On DOIT donc piloter la fin du fondu par un compteur de pas, PAS en relisant
+  // ref.volume : sinon la condition ne bascule jamais, pause() n'est jamais appelé
+  // et le BGM tourne à l'infini jusqu'au refresh (bug toggle son iOS 2026-07-09).
+  var startVol = ref.volume;
+  var steps = 12; // ~600ms @ 50ms/pas
+  var i = 0;
   var fadeOut = setInterval(function() {
-    if (ref.volume > 0.02) {
-      ref.volume = Math.max(0, ref.volume - 0.020);
-    } else {
+    i++;
+    // Rampe best-effort (no-op sur iOS) — la terminaison ne dépend QUE du compteur.
+    ref.volume = Math.max(0, startVol * (1 - i / steps));
+    if (i >= steps) {
       clearInterval(fadeOut);
       ref.pause();
       ref.src = ""; // Release iOS audio session
