@@ -194,6 +194,37 @@ function resumeAudioSession(){_audioAborted=false;}
 // Preload voices (some browsers need this)
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){_voices=null;getEnVoice();};}
 
+// ─── BRAND MARK ───
+// Verse Arena logo ("plume & épée"): steel sword crossed with a gold quill.
+// Single source of truth for the launch identity — loading screen + onboarding hero,
+// and matches the app icon / favicon (public/icon-*.png, favicon.svg) exactly.
+// Colors are brand-FIXED (gold/steel), deliberately NOT skin-tinted, so the mark
+// stays constant across skins and never desyncs from the installed app icon.
+function BrandMark(p){
+  var s=p.size||94;
+  return(<svg width={s} height={s} viewBox="0 0 100 100" style={Object.assign({display:"block"},p.style||{})} aria-hidden="true">
+    <defs>
+      <linearGradient id="bmGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f9dd84"/><stop offset="1" stopColor="#dca02e"/></linearGradient>
+      <linearGradient id="bmSteel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#efe3c6"/><stop offset="1" stopColor="#a89878"/></linearGradient>
+    </defs>
+    <g transform="rotate(-45 50 50)">
+      <path d="M50 8 L53 15 L53 57 L47 57 L47 15 Z" fill="url(#bmSteel)"/>
+      <path d="M50 13 L50 55" fill="none" stroke="#c9bfa6" strokeWidth="1" opacity="0.55"/>
+      <path d="M36 57 L64 57 L61 63 L39 63 Z" fill="url(#bmGold)"/>
+      <rect x="47.5" y="63" width="5" height="13" rx="1.5" fill="#6e4a24"/>
+      <path d="M48 66.5 L52 66.5 M48 69.5 L52 69.5 M48 72.5 L52 72.5" fill="none" stroke="#3f2a14" strokeWidth="1"/>
+      <circle cx="50" cy="79" r="3.6" fill="url(#bmGold)"/>
+    </g>
+    <g transform="rotate(45 50 50)">
+      <path d="M50 9 C43 19 41 33 43 44 C44 51 46 57 48 61 L50 63 L52 61 C54 57 56 51 57 44 C59 33 57 19 50 9 Z" fill="url(#bmGold)"/>
+      <path d="M50 20 L44.5 17 M50 28 L43.5 26 M50 37 L44 36 M50 46 L45 46" fill="none" stroke="#b9791a" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M50 20 L55.5 17 M50 28 L56.5 26 M50 37 L56 36 M50 46 L55 46" fill="none" stroke="#b9791a" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M50 13 L50 78" fill="none" stroke="#8f5f16" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M50 72 L47.4 78 L50 76 L52.6 78 Z" fill="url(#bmGold)"/>
+    </g>
+  </svg>);
+}
+
 // ─── GAME-ICON SVG HELPER ───
 // Renders an Iconify game-icons SVG by name. Use: <GIcon name="castle" size={26} color="var(--cyan)"/>
 function GIcon(p){
@@ -3684,7 +3715,7 @@ var[step,sSt]=useState("name");
   if(step==="name")return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .8s ease-out"}}>
-        <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="crossed-swords" size={64} color="var(--cyan)"/></div>
+        <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><BrandMark size={72}/></div>
         <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>VERSE ARENA</h1>
         <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>Train smarter. Climb the ranks.<br/>Conquer the TOEIC.</p>
         <div style={{marginBottom:20,textAlign:"left"}}>
@@ -17687,7 +17718,13 @@ var prevLeague=getLeague(c.weeklyXp);
   // Doit être AVANT loading/teacher/onboard parce que le user peut être complètement
   // déconnecté quand il clique le lien depuis son mail.
   if(resetToken)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><ResetPasswordView token={resetToken}/></div>);
-  if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}><div style={{fontSize:48,animation:"pulse 1.5s infinite"}}>⚔️</div><p className="out" style={{color:"var(--t2)",marginTop:12}}>Loading Arena...</p></div></div></div>);
+  if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}>
+    <div style={{animation:"pulse 1.6s ease-in-out infinite"}}>
+      <BrandMark size={94} style={{margin:"0 auto"}}/>
+    </div>
+    <p className="out" style={{color:"var(--t1)",marginTop:16,letterSpacing:"0.24em",textTransform:"uppercase",fontSize:15}}>Verse Arena</p>
+    <p style={{color:"var(--t3)",marginTop:5,letterSpacing:"0.3em",textTransform:"uppercase",fontSize:9}}>loading…</p>
+  </div></div></div>);
   if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
   if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></div>);
 
