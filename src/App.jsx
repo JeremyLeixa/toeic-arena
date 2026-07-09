@@ -12663,7 +12663,7 @@ function TeacherDash(p){
         </div>
         <div style={{color:"var(--cyan)",fontSize:16}}>{"\u2192"}</div>
       </button>}
-      <button onClick={function(){var code=prompt("Code administrateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){setCgForm({name:"",code:"",teacherCode:isDashAdmin()?"":getDashTeacher(),type:"school",startDate:"",endDate:""});setCgCodeErr("");setDashPhase("create-group");}else{alert("Code invalide");}});}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
+      <button onClick={function(){var code=prompt("Code administrateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){setCgForm({name:"",code:"",teacherCode:isDashAdmin()?"":getDashTeacher(),type:"school",startDate:"",endDate:"",teacherEmail:"",reportOptin:true});setCgCodeErr("");setDashPhase("create-group");}else{alert("Code invalide");}});}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
         {"\u2795 Cr\u00e9er un groupe"}
       </button>
       <button onClick={p.back} style={{display:"block",margin:"16px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"\u2190"} Exit</button>
