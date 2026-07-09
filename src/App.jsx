@@ -603,7 +603,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-07-07-multicampus";
+var BUILD_ID="2026-07-09-bgm-ios-fix";
 
 // ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
 // Each teacher logs in with their own teacher_code and sees ONLY the groups
@@ -10381,9 +10381,9 @@ function DuelArena(p){
     var q2=questions[qi];
     var myEntry2=roundRanking.find(function(r){return r.pid===myIdRef.current;});
     var myRank=roundRanking.indexOf(myEntry2)+1;
-    // Show top 5 + my position if lower
-    var top5=roundRanking.slice(0,5);
-    var showMe=myRank>5;
+    // Show top 10 + my position if lower
+    var top10=roundRanking.slice(0,10);
+    var showMe=myRank>10;
 
     return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
       <div style={{textAlign:"center",marginBottom:12}}>
@@ -10399,8 +10399,8 @@ function DuelArena(p){
       </div>
 
       <div className="crd" style={{padding:14,marginBottom:16}}>
-        <div style={{display:"flex",flexDirection:"column",gap:6}}>
-          {top5.map(function(r,i){
+        <div className="read-scroll" style={{display:"flex",flexDirection:"column",gap:6,maxHeight:"46vh",overflowY:"auto"}}>
+          {top10.map(function(r,i){
             var isMe=r.pid===myIdRef.current;
             var correct3=r.pick===q2.c;
             return(<div key={r.pid} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:10,background:isMe?"rgba(var(--cx),.08)":"transparent"}}>

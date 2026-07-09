@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════
-// sw.js — Verse Arena Service Worker v2
+// sw.js — Verse Arena Service Worker v4
 // Cache static assets + handle push notifications
 // ═══════════════════════════════════════════════════════════
 
-var CACHE_NAME = "toeic-arena-v3";
+var CACHE_NAME = "toeic-arena-v4";
 
 // ─── INSTALL: cache app shell + force activate ───
 self.addEventListener("install", function (e) {
