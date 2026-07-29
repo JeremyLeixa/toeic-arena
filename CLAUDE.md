@@ -34,8 +34,16 @@ The app is a **monolithic React application** — all UI logic lives in `src/App
 | `npm run build` | Build production → `dist/` |
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
+| `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
 
 No test framework integrated — testing is manual.
+
+**À lancer après tout ajout de contenu listening.** Un MP3 manquant ne casse
+rien à l'exécution : `playAudioFile()` résout silencieusement sur `onerror`,
+l'exercice se contente d'être muet. C'est ce qui a rendu 15 items Part 1
+(`p1_44-58`) inaudibles pendant 3 semaines — les images avaient été commitées,
+pas l'audio. Le check couvre aussi les chemins **dérivés** dans App.jsx
+(`/audio/p1/{id}_{0-3}.mp3`), que rien dans `src/data/` ne mentionne.
 
 ---
 
