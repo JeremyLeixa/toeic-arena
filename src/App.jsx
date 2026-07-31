@@ -636,6 +636,65 @@ console.warn("[VERSE ARENA] Build:",BUILD_ID);
 // ─── Name normalization (accent-insensitive + lowercase) ───
 function normalizeName(s){return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();}
 
+// ─── Homonymes DANS UN MÊME groupe (2026-07-31) ───
+// (name, class_code) est la clé naturelle de toute l'app : save() fait un
+// UPDATE .ilike(name).eq(class_code) SANS .limit(), load() relit la même paire,
+// et weekly_snapshots / push_subscriptions / chest_log / pending_chests /
+// player_rewards / player_tokens sont tous keyés dessus. Deux lignes de même nom
+// dans une même promo ne sont donc PAS deux comptes : chaque save de l'un écrase
+// l'autre. L'unicité de (nom normalisé, class_code) est une invariante, pas du
+// confort d'affichage.
+// Désambiguïsation à l'inscription en suffixant l'initiale du nom de famille —
+// "Romain" + "L" → "Romain L.". Le premier inscrit n'est JAMAIS renommé : son nom
+// est la clé de toutes ses lignes dans les tables ci-dessus, le renommer les
+// orphelinerait en silence.
+function composeDiscriminatedName(first,disc){
+  var f=(first||"").trim();
+  // Lettres uniquement : ça cadre l'affichage ET ça tient % et _ hors des noms,
+  // qui partent ensuite dans des .ilike() où ils seraient des jokers SQL (un
+  // "Rom%n" stocké ferait matcher l'UPDATE de save() sur d'autres lignes).
+  var d=(disc||"").replace(/[^A-Za-zÀ-ſ]/g,"").slice(0,8);
+  if(!d)return f;
+  return f+" "+d.charAt(0).toUpperCase()+d.slice(1).toLowerCase()+".";
+}
+// Nom de base d'un homonyme désambiguïsé : "Romain L." -> "romain".
+// Ne capte QUE un token final court (<=2 lettres) ou terminé par un point — la
+// forme qu'on génère. Un vrai prénom composé ("Jean Pierre") n'est pas capté :
+// sinon tous les "Jean *" remonteraient dans l'écran de reconnaissance de
+// n'importe quel "Jean".
+function stripNameDiscriminant(s){
+  var n=normalizeName(s||"");
+  var m=n.match(/^(.+\S)\s+(?:[a-z]{1,8}\.|[a-z]{1,2})$/);
+  return m?m[1]:n;
+}
+// La ligne qui occupe déjà (nom normalisé, class_code), ou null.
+// Comparaison côté client : un .eq('name') raterait Léa/Lea/LEA.
+// Renvoie {row,failed} — l'appelant DOIT distinguer "libre" de "on ne sait pas" :
+// sur échec de la requête on laisse passer l'inscription (mieux qu'un blocage
+// dur), c'est le filet dans onboard() qui rattrape.
+async function findNameHolder(name,classCode){
+  var norm=normalizeName(name||"");
+  var cc=classCode||"visitor";
+  var res=await supabase.from("students").select("name,class_code,xp,last_active,joined_at").eq("class_code",cc);
+  if(res.error){console.warn("[NAMECHECK] select failed for",cc,":",res.error.message);return{row:null,failed:true};}
+  var hits=(res.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
+  hits.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
+  return{row:hits.length>0?hits[0]:null,failed:false};
+}
+// Dernier recours quand une collision persiste malgré la désambiguïsation
+// (course entre deux inscriptions simultanées, ou SELECT muselé par la RLS).
+// Un nom moche vaut mieux qu'un écrasement : ne renvoie jamais un nom déjà pris.
+function resolveUniqueNameInClass(name,rows){
+  var taken={};
+  (rows||[]).forEach(function(s){taken[normalizeName(s.name)]=true;});
+  if(!taken[normalizeName(name)])return name;
+  for(var i=2;i<=50;i++){
+    var cand=name+" "+i;
+    if(!taken[normalizeName(cand)])return cand;
+  }
+  return name+" "+Math.floor(Math.random()*100000);
+}
+
 // ─── localStorage-first persistence layer ───
 var _cachedUserId=null;
 var _syncDirty=false;
@@ -17442,19 +17501,38 @@ var prevLeague=getLeague(c.weeklyXp);
     return m;
   }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
-  async function onboard(name,classCode,bsScores,firstNav,bsV2Results){
+  // opts.claimNew — l'user a explicitement déclaré être quelqu'un d'autre que les
+  // comptes qu'on lui a montrés ("Not me", ou passage par l'écran discriminate).
+  async function onboard(name,classCode,bsScores,firstNav,bsV2Results,opts){
     classCode=classCode||'visitor';
-    // Check if student already exists (use limit(1) — safe even with duplicates)
+    var claimNew=!!(opts&&opts.claimNew);
     // Check for existing student (accent + case insensitive)
     var norm=normalizeName(name);
     var allInClass=await supabase.from('students').select('*').eq('class_code',classCode);
+    if(allInClass.error)console.warn("[ONBOARD] class select failed for",classCode,":",allInClass.error.message);
     var existingMatch=(allInClass.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
     existingMatch.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
-    var existing={data:existingMatch.length>0?existingMatch:null};
-    if(existing.data&&existing.data.length>0){
-      // Student exists — recover using the DB-stored name (preserves original casing)
-      var recovered=await recover(existing.data[0].name,classCode);
-      if(recovered)return;
+    if(existingMatch.length>0){
+      if(claimNew){
+        // FILET DE SÉCURITÉ. L'écran discriminate a déjà dû rendre le nom unique ;
+        // s'il reste une collision ici, c'est une course (deux inscriptions
+        // simultanées) ou un SELECT muselé par la RLS au moment du check.
+        // Récupérer la ligne existante serait le PIRE choix : l'user vient de dire
+        // que ce n'est pas son compte, et son premier save() écraserait 3 mois de
+        // progression de l'autre étudiant. On préfère un nom moche mais à lui.
+        var uniqueName=resolveUniqueNameInClass(name,allInClass.data||[]);
+        console.error("[ONBOARD] collision persistante sur ("+name+", "+classCode+") alors que l'user a déclaré un compte neuf — renommé en "+uniqueName+" plutôt que de fusionner");
+        name=uniqueName;
+      }else{
+        // Pas de déclaration de nouveauté : l'user est arrivé ici sans qu'on lui
+        // montre de compte (lookupName n'avait rien trouvé — RLS, ou saisie
+        // différente). Le rendre à son compte existant est le bon défaut, sinon on
+        // fabrique un doublon sur la clé naturelle.
+        console.warn("[ONBOARD]",name,"existe déjà dans",classCode,"et aucun claimNew — récupération du compte existant");
+        var recovered=await recover(existingMatch[0].name,classCode);
+        if(recovered)return;
+        console.warn("[ONBOARD] récupération échouée — poursuite en création de compte");
+      }
     }
 
     // Get or create auth session
@@ -17530,15 +17608,40 @@ var prevLeague=getLeague(c.weeklyXp);
     },300);}
   }
   async function recover(name,classCode){
-    // Find the best row (highest XP) for this student
-    // Accent + case insensitive lookup
+    // Accent + case insensitive lookup, sur le nom EXACT tel que stocké.
+    // Les appelants qui ont la ligne sous la main (cartes de l'écran recognize)
+    // doivent passer acc.name, pas ce que l'user a tapé : depuis la gestion des
+    // homonymes, "Romain" et "Romain L." coexistent dans la même promo et se
+    // récupèrent par leur nom complet.
     var rnorm=normalizeName(name);
     var rAll=await supabase.from('students').select('*').eq('class_code',classCode);
+    if(rAll.error)console.warn("[RECOVER] select failed for",classCode,":",rAll.error.message);
     var rMatches=(rAll.data||[]).filter(function(s){return normalizeName(s.name)===rnorm;});
-    rMatches.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
+    if(rMatches.length>1){
+      // Doublon hérité sur la clé naturelle : les deux lignes s'écrasent
+      // mutuellement à chaque save(). On prend la plus avancée et on le crie —
+      // c'est réparable en SQL, mais silencieusement c'est de la perte de données.
+      console.error("[RECOVER] "+rMatches.length+" lignes partagent ("+name+", "+classCode+") — doublon sur la clé naturelle, reprise de la plus avancée en XP");
+      rMatches.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
+    }
+    if(rMatches.length===0){
+      // Repli nom de base : l'user tape "Romain" alors que sa ligne est
+      // "Romain L." (formulaire de récupération manuelle, saisie de mémoire).
+      // Uniquement si ça ne désigne QU'UNE ligne — sinon on ouvrirait le compte
+      // d'un homonyme au petit bonheur.
+      var base=stripNameDiscriminant(name);
+      var baseMatches=(rAll.data||[]).filter(function(s){return stripNameDiscriminant(s.name)===base;});
+      if(baseMatches.length===1){
+        console.warn("[RECOVER]",name,"→ résolu en",baseMatches[0].name,"par nom de base");
+        rMatches=baseMatches;
+      }else if(baseMatches.length>1){
+        console.warn("[RECOVER]",name,"correspond à",baseMatches.length,"homonymes dans",classCode,"— ambigu, récupération refusée");
+        return false;
+      }
+    }
     if(rMatches.length===0)return false;
-    var res={data:rMatches};
-    var d=res.data[0];
+    var d=rMatches[0];
+    name=d.name; // le nom stocké fait foi — c'est la clé de save()/load()
 
     // Get or create auth session
     var sess=await supabase.auth.getSession();
