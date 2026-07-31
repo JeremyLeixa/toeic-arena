@@ -3530,6 +3530,11 @@ var[step,sSt]=useState("name");
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
+  // typedName — ce que l'user a RÉELLEMENT tapé, avant que lookupName n'écrase `name`
+  // avec la casse stockée en base (nécessaire pour recover, cf. commentaire dans
+  // lookupName). Sert à restaurer sa saisie s'il repart en création de compte : sans
+  // ça, un nouveau "Romain" s'inscrirait sous la casse du "romain" existant.
+  var[typedName,setTypedName]=useState("");
   // PIN state removed 2026-04-20 — auth is now handled via Supabase magic link
   var[pendingNav,setPendingNav]=useState(null);
   var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
@@ -3557,6 +3562,7 @@ var[step,sSt]=useState("name");
 
   async function lookupName(n){
     setLookingUp(true);
+    setTypedName((n||"").trim());
     try{
       // Ensure anon auth exists before querying
       var sess=await supabase.auth.getSession();
@@ -3568,13 +3574,13 @@ var[step,sSt]=useState("name");
       // Use ilike('name', n) to minimize RLS surface — broader SELECT without filter
       // has historically returned 0 rows on some RLS configs for new anon users.
       var norm=normalizeName(n);
-      var res=await supabase.from('students').select('name,class_code,xp').ilike('name',n);
+      var res=await supabase.from('students').select('name,class_code,xp,last_active,joined_at').ilike('name',n);
       console.warn("[LOOKUP]",n,"→ rows:",(res.data||[]).length,"error:",res.error?res.error.message:"none");
       var matches=(res.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
       // Fallback: if the ilike query returned nothing, try a broader select
       // (may be blocked by RLS but worth a shot before giving up)
       if(matches.length===0){
-        var res2=await supabase.from('students').select('name,class_code,xp');
+        var res2=await supabase.from('students').select('name,class_code,xp,last_active,joined_at');
         console.warn("[LOOKUP] fallback broader select → rows:",(res2.data||[]).length);
         matches=(res2.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
       }
@@ -3598,6 +3604,9 @@ var[step,sSt]=useState("name");
         var accounts=matches.map(function(s){
           var g=groupMap[s.class_code];
           return{class_code:s.class_code,xp:s.xp||0,
+            // Discriminants affichés sur la carte : sans eux, deux homonymes ne se
+            // distinguent que par le nom de promo, et l'user clique à l'aveugle.
+            lastActive:s.last_active||null,joinedAt:s.joined_at||null,
             groupName:g?g.name:(s.class_code==="visitor"?"Visitor / Free Access":s.class_code),
             groupType:g?g.type:"visitor",
             typeIcon:g?(g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍"):"🌍"};
@@ -3892,14 +3901,30 @@ var[step,sSt]=useState("name");
     }
 
   // ─ Account recognition ─
-  if(step==="recognize")return(
+  if(step==="recognize"){
+    // Un prénom trouvé en base ne veut PAS dire "c'est la même personne" : deux promos
+    // successives peuvent avoir chacune leur Romain. D'où la formulation neutre — l'ancien
+    // "Welcome back, Romain!" poussait l'homonyme à cliquer sur la carte de l'autre, et
+    // son premier save() écrasait alors les données de l'étudiant existant.
+    function fmtWhen(s){
+      if(!s)return null;
+      var dt=new Date(s);
+      if(isNaN(dt.getTime()))return null;
+      return dt.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+    }
+    var multi=foundAccounts.length>1;
+    return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:380}}>
         <div style={{fontSize:48,marginBottom:12}}>👋</div>
-        <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6}}>Welcome back, {name.trim()}!</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>We found your account. Select your group to continue:</p>
+        <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6}}>{multi?"Which account is yours?":"Is this you?"}</h2>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>
+          {(multi?"Several accounts already use the name ":"An account already uses the name ")+"“"+name.trim()+"”. Pick your group to continue — or create your own account below."}
+        </p>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
           {foundAccounts.map(function(acc){
+            var when=fmtWhen(acc.lastActive)||fmtWhen(acc.joinedAt);
+            var whenLabel=when?((acc.lastActive?"Last active ":"Joined ")+when):null;
             return(<button key={acc.class_code} onClick={async function(){
               var ok=await p.recover(name.trim(),acc.class_code);
               if(!ok){sSt("classcode");}
@@ -3912,6 +3937,7 @@ var[step,sSt]=useState("name");
               <div style={{flex:1,minWidth:0}}>
                 <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{acc.groupName}</div>
                 <div style={{fontSize:11,color:"var(--t3)"}}>{acc.class_code} · {acc.xp} XP</div>
+                {whenLabel&&<div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>{whenLabel}</div>}
               </div>
               <div style={{color:"var(--cyan)",fontSize:16}}>→</div>
             </button>);
@@ -3919,14 +3945,18 @@ var[step,sSt]=useState("name");
         </div>
         <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
-          <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">not you?</span>
+          <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">none of these?</span>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
         </div>
-        <button className="btn2" onClick={function(){setFoundAccounts([]);sSt("classcode");}}
-          style={{width:"100%",fontSize:14,padding:"12px 24px"}}>I'm new — create an account</button>
+        {/* Route vers emailPassword (et non classcode) : l'homonyme est un nouvel user
+            comme les autres, il doit se voir proposer email+mot de passe pour le
+            cross-device. sN(typedName) restaure SA casse, écrasée par lookupName. */}
+        <button className="btn2" onClick={function(){setFoundAccounts([]);if(typedName)sN(typedName);sSt("emailPassword");}}
+          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(var(--cx),.35)",color:"var(--cyan)"}}>Not me — create my own account</button>
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
       </div>
     </div>);
+  }
 
   // ─ Class code selection ─
   if(step==="classcode")return(
