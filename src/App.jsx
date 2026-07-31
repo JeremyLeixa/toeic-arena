@@ -3594,6 +3594,17 @@ var[step,sSt]=useState("name");
   // lookupName). Sert à restaurer sa saisie s'il repart en création de compte : sans
   // ça, un nouveau "Romain" s'inscrirait sous la casse du "romain" existant.
   var[typedName,setTypedName]=useState("");
+  // ── Homonymes dans un même groupe (2026-07-31) ──
+  // claimNew : l'user a explicitement déclaré ne pas être un des comptes affichés
+  // ("Not me", ou passage par l'écran discriminate). Voyage jusqu'à onboard(), où
+  // il interdit la récupération silencieuse du compte d'un autre. Ne PAS le
+  // déduire de l'état (foundAccounts vide, etc.) : c'est une déclaration d'intention
+  // de l'user, pas un état dérivable — c'est justement la confusion des deux qui
+  // faisait avaler le second Romain par le compte du premier.
+  var[claimNew,setClaimNew]=useState(false);
+  var[discInput,setDiscInput]=useState("");var[discBusy,setDiscBusy]=useState(false);
+  var[discErr,setDiscErr]=useState("");var[discHolder,setDiscHolder]=useState(null);
+  var[nameChecking,setNameChecking]=useState(false);
   // PIN state removed 2026-04-20 — auth is now handled via Supabase magic link
   var[pendingNav,setPendingNav]=useState(null);
   var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
@@ -3685,6 +3696,32 @@ var[step,sSt]=useState("name");
       sSt("emailPassword");
     }
     setLookingUp(false);
+  }
+
+  // Choke point unique vers l'écran de consentement. C'est ici qu'on sait enfin
+  // dans QUEL groupe l'user atterrit — donc le premier moment où une collision de
+  // nom est détectable, et le dernier avant les ~20 min de Battle Scan. Détecter
+  // plus tard (au p.go final) obligerait à réclamer l'initiale APRÈS le scan.
+  // Les 3 chemins vers consent passent par ici : code classe validé, "Discover for
+  // Free", et "Continuer sans compte". En ajouter un 4e qui appelle sSt("consent")
+  // en direct rouvre le trou (deux lignes de même nom dans le même class_code).
+  async function enterConsent(cc){
+    if(nameChecking)return;
+    var code=((cc||classCode||"visitor")+"").trim().toLowerCase()||"visitor";
+    setClassCode(code); // fige le code résolu : l'écran discriminate le relit
+    setNameChecking(true);
+    var holder=await findNameHolder(name,code);
+    setNameChecking(false);
+    if(holder.row){
+      console.warn("[ONBOARD] nom déjà pris dans",code,"→",holder.row.name,"— écran de désambiguïsation");
+      setDiscHolder(holder.row);setDiscInput("");setDiscErr("");
+      sSt("discriminate");
+      return;
+    }
+    // holder.failed : la requête a échoué, on ne sait pas. On laisse passer —
+    // bloquer une inscription sur une RLS capricieuse serait pire que le risque
+    // résiduel, et le filet claimNew d'onboard() rattrape la vraie collision.
+    sSt("consent");
   }
 
   async function checkGroupCode(code){
@@ -3847,9 +3884,11 @@ var[step,sSt]=useState("name");
     function continueAsVisitor(){
       // Skip email+password : mode visitor pur, pas de compte cross-device.
       // Va direct à consent (pas classcode) puisque le choix est déjà fait.
-      setClassCode("visitor");
+      // Passe quand même par enterConsent : "visitor" est un class_code comme un
+      // autre, et c'est celui qui concentre le plus d'homonymes (prénoms courants,
+      // aucun code partagé pour les répartir).
       setPwdErr("");setPwdEmailDup(false);
-      sSt("consent");
+      enterConsent("visitor");
     }
     return(
     <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
@@ -4010,7 +4049,7 @@ var[step,sSt]=useState("name");
         {/* Route vers emailPassword (et non classcode) : l'homonyme est un nouvel user
             comme les autres, il doit se voir proposer email+mot de passe pour le
             cross-device. sN(typedName) restaure SA casse, écrasée par lookupName. */}
-        <button className="btn2" onClick={function(){setFoundAccounts([]);if(typedName)sN(typedName);sSt("emailPassword");}}
+        <button className="btn2" onClick={function(){setFoundAccounts([]);if(typedName)sN(typedName);setClaimNew(true);sSt("emailPassword");}}
           style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(var(--cx),.35)",color:"var(--cyan)"}}>Not me — create my own account</button>
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
       </div>
@@ -4032,8 +4071,8 @@ var[step,sSt]=useState("name");
           {classValid===true&&<p style={{fontSize:12,color:"var(--green)",marginTop:6,fontWeight:600}}>✓ {classGroupName}</p>}
           {classValid===false&&<p style={{fontSize:12,color:"var(--red)",marginTop:6}}>Code not found. Check with your teacher.</p>}
         </div>
-        <button className="btn1" onClick={function(){if(classValid)sSt("consent");}}
-          style={{opacity:classValid?1:.4,pointerEvents:classValid?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>Next</button>
+        <button className="btn1" onClick={function(){if(classValid&&!nameChecking)enterConsent(classCode);}}
+          style={{opacity:classValid&&!nameChecking?1:.4,pointerEvents:classValid&&!nameChecking?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>{nameChecking?"Checking...":"Next"}</button>
         <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
           <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">or</span>
@@ -4045,13 +4084,75 @@ var[step,sSt]=useState("name");
           <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>{"\u26A0\uFE0F Free access includes 9 training modules. Unlock everything with a class code from your teacher, or with Arena Premium (9,99\u20AC/mo or 22,99\u20AC Pass 3m)."}</p>
           <div style={{display:"flex",gap:8}}>
             <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>Cancel</button>
-            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);sSt("consent");}}
+            <button className="btn2" onClick={function(){setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);enterConsent("visitor");}}
               style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>Start Free Discovery</button>
           </div>
         </div>}
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
       </div>
     </div>);
+
+  // ─ Homonyme dans le même groupe : on réclame un discriminant ─
+  // Écran atteint uniquement via enterConsent() quand (nom, class_code) est déjà
+  // occupé. Deux sorties seulement : ajouter l'initiale de son nom de famille, ou
+  // repartir en arrière pour récupérer le compte existant si c'est bien le sien.
+  // Aucune sortie ne mène à un doublon sur la clé naturelle — c'est le point.
+  if(step==="discriminate"){
+    var discPreview=composeDiscriminatedName(name,discInput);
+    async function confirmDiscriminant(){
+      if(discBusy)return;
+      var cleaned=(discInput||"").replace(/[^A-Za-zÀ-ſ]/g,"");
+      if(!cleaned){setDiscErr("Ajoute au moins la première lettre de ton nom de famille.");return;}
+      var candidate=composeDiscriminatedName(name,cleaned);
+      setDiscBusy(true);setDiscErr("");
+      var holder=await findNameHolder(candidate,classCode||"visitor");
+      setDiscBusy(false);
+      if(holder.row){
+        // Deux Romain L. dans la même promo : on redemande, sans limite de longueur
+        // artificielle. Mieux vaut "Romain Leb." qu'un compte partagé.
+        setDiscErr("« "+candidate+" » est aussi pris dans ce groupe. Ajoute une lettre de plus.");
+        return;
+      }
+      console.warn("[ONBOARD] homonyme désambiguïsé :",name,"→",candidate,"dans",classCode||"visitor");
+      sN(candidate);
+      setClaimNew(true);
+      sSt("consent");
+    }
+    return(
+    <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
+      <button className="back-btn" onClick={function(){setDiscErr("");sSt("classcode");}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"←"} Back</button>
+      <div style={{maxWidth:420,margin:"60px auto 0",textAlign:"center"}}>
+        <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><GIcon name="duality-mask" size={48} color="var(--cyan)"/></div>
+        <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{"Un autre "+name.trim()+" dans ce groupe"}</h1>
+        <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6,marginBottom:20}}>
+          {"Quelqu'un s'entraîne déjà sous ce prénom ici. Ajoute la première lettre de ton nom de famille pour qu'on ne confonde jamais vos deux comptes."}
+        </p>
+        {discHolder&&<div className="crd" style={{padding:"10px 14px",marginBottom:20,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
+          <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>
+            {"Compte déjà présent : "}<b style={{color:"var(--t1)"}}>{discHolder.name}</b>{" · "+(discHolder.xp||0)+" XP"}
+          </p>
+        </div>}
+        <div style={{textAlign:"left",marginBottom:8}}>
+          <label htmlFor="disc-input" className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>{"Initiale de ton nom"}</label>
+          <input id="disc-input" type="text" value={discInput} maxLength={8} autoComplete="family-name"
+            onChange={function(e){setDiscInput(e.target.value);setDiscErr("");}}
+            onKeyDown={function(e){if(e.key==="Enter")confirmDiscriminant();}}
+            placeholder="L"
+            style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid "+(discErr?"var(--red)":"var(--bdr)"),borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+        </div>
+        <p style={{fontSize:12,color:"var(--t3)",marginBottom:16,textAlign:"left"}}>
+          {"Ton nom dans l'arène : "}<b style={{color:"var(--cyan)"}}>{discPreview}</b>
+        </p>
+        {discErr&&<p style={{fontSize:12,color:"var(--red)",marginBottom:14,textAlign:"left"}}>{discErr}</p>}
+        <button className="btn1" onClick={confirmDiscriminant} disabled={discBusy}
+          style={{width:"100%",fontSize:16,padding:"14px 28px",marginBottom:12,opacity:discBusy?.5:1}}>{discBusy?"Vérification...":"Continuer"}</button>
+        {/* Sortie de secours : si c'est en fait SON compte, il doit pouvoir le
+            reprendre au lieu d'en créer un second sous un nom déguisé. */}
+        <button className="btn2" onClick={function(){setDiscErr("");setClaimNew(false);if(typedName)sN(typedName);sSt("name");}}
+          style={{width:"100%",fontSize:13,padding:"11px 24px"}}>{"C'est mon compte — me connecter"}</button>
+      </div>
+    </div>);
+  }
 
   // ─ GDPR Consent ─
   if(step==="consent")return(
@@ -4414,7 +4515,10 @@ var[step,sSt]=useState("name");
 
   // ─ Language bridge: transition to English ─
   if(step==="langBridge"){
-    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,pendingNav||undefined,sectionResults);}
+    // claimNew voyage jusqu'ici : c'est le seul endroit où onboard() apprend que
+    // l'user a déclaré être quelqu'un de nouveau. Le perdre en route ferait
+    // retomber un homonyme dans la récupération silencieuse du compte de l'autre.
+    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,pendingNav||undefined,sectionResults,{claimNew:claimNew});}
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
