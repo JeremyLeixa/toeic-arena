@@ -3641,25 +3641,48 @@ var[step,sSt]=useState("name");
         if(!authRes.data.user){setLookingUp(false);sSt("classcode");return;}
       }
       // Fetch students and filter by normalized name (accent + case insensitive).
-      // Use ilike('name', n) to minimize RLS surface — broader SELECT without filter
+      // Use ilike to minimize RLS surface — broader SELECT without filter
       // has historically returned 0 rows on some RLS configs for new anon users.
       var norm=normalizeName(n);
-      var res=await supabase.from('students').select('name,class_code,xp,last_active,joined_at').ilike('name',n);
+      // Motif élargi au préfixe : depuis la désambiguïsation des homonymes, la
+      // ligne de l'étudiant peut s'appeler "Romain L." alors qu'il tape "Romain".
+      // Sans le "%", son compte est introuvable à la reconnexion et il repart en
+      // création — exactement le doublon qu'on cherche à empêcher.
+      // Les jokers SQL sont RETIRÉS du motif, pas échappés : l'échappement
+      // PostgREST a des subtilités de quoting et ceci est le chemin de connexion,
+      // celui qu'on ne casse pas. Un nom contenant % ou _ reste rattrapé par le
+      // select large en repli.
+      var likePrefix=(n||"").replace(/[\\%_]/g,"")+"%";
+      var res=await supabase.from('students').select('name,class_code,xp,last_active,joined_at').ilike('name',likePrefix);
       console.warn("[LOOKUP]",n,"→ rows:",(res.data||[]).length,"error:",res.error?res.error.message:"none");
-      var matches=(res.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
+      // Une ligne correspond si son nom vaut le nom tapé, OU si son nom de base
+      // le vaut ("Romain L." pour un "Romain" tapé). Le préfixe ramène aussi des
+      // faux amis ("Romaine Dupont") que ce filtre écarte.
+      function nameMatches(s){
+        return normalizeName(s.name)===norm||stripNameDiscriminant(s.name)===norm;
+      }
+      var matches=(res.data||[]).filter(nameMatches);
       // Fallback: if the ilike query returned nothing, try a broader select
       // (may be blocked by RLS but worth a shot before giving up)
       if(matches.length===0){
         var res2=await supabase.from('students').select('name,class_code,xp,last_active,joined_at');
         console.warn("[LOOKUP] fallback broader select → rows:",(res2.data||[]).length);
-        matches=(res2.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
+        matches=(res2.data||[]).filter(nameMatches);
       }
+      // Le compte au nom exact d'abord : c'est celui que l'user vise dans le cas
+      // courant, les homonymes désambiguïsés viennent après.
+      matches.sort(function(a,b){
+        var ea=normalizeName(a.name)===norm?0:1,eb=normalizeName(b.name)===norm?0:1;
+        return ea!==eb?ea-eb:(b.xp||0)-(a.xp||0);
+      });
       console.warn("[LOOKUP] matches filtered:",matches.length);
       if(matches.length>0){
         // Use the DB name (original casing) so recovery works with the exact stored name.
         // setter is `sN` not setName (this was broken for 13 days and silently killed the
         // Welcome back path via the outer catch — origin of the "everyone re-onboards" crisis).
-        sN(matches[0].name);
+        // Uniquement sur un match EXACT : sinon un "Romain" se retrouverait à
+        // s'inscrire sous le nom "Romain L." d'un autre étudiant.
+        if(normalizeName(matches[0].name)===norm)sN(matches[0].name);
         // Isolated try/catch: groups query failure must NOT kill the Welcome back path.
         // If it throws or errors, we fall through with empty groupMap — cards show raw
         // class_code instead of pretty group names, but the user can still proceed.
@@ -3673,7 +3696,11 @@ var[step,sSt]=useState("name");
         }
         var accounts=matches.map(function(s){
           var g=groupMap[s.class_code];
-          return{class_code:s.class_code,xp:s.xp||0,
+          // name : le nom EXACT stocké. C'est lui qu'on passe à recover() (clé de
+          // save/load) et qu'on affiche quand il diffère de la saisie — sans quoi
+          // "Romain" et "Romain L." de la même promo donnent deux cartes
+          // indiscernables.
+          return{name:s.name,class_code:s.class_code,xp:s.xp||0,
             // Discriminants affichés sur la carte : sans eux, deux homonymes ne se
             // distinguent que par le nom de promo, et l'user clique à l'aveugle.
             lastActive:s.last_active||null,joinedAt:s.joined_at||null,
@@ -4023,9 +4050,15 @@ var[step,sSt]=useState("name");
           {foundAccounts.map(function(acc){
             var when=fmtWhen(acc.lastActive)||fmtWhen(acc.joinedAt);
             var whenLabel=when?((acc.lastActive?"Last active ":"Joined ")+when):null;
-            return(<button key={acc.class_code} onClick={async function(){
-              var ok=await p.recover(name.trim(),acc.class_code);
-              if(!ok){sSt("classcode");}
+            // key sur (class_code, name) : deux comptes du même groupe peuvent
+            // désormais coexister ("Romain" et "Romain L."), la classe seule
+            // n'est plus unique.
+            return(<button key={acc.class_code+"|"+acc.name} onClick={async function(){
+              // acc.name, pas la saisie : c'est le nom stocké qui est la clé de
+              // save()/load(), et il diffère de ce que l'user a tapé dès qu'il
+              // s'agit d'un homonyme désambiguïsé.
+              var ok=await p.recover(acc.name,acc.class_code);
+              if(!ok){console.warn("[RECOGNIZE] recover failed for",acc.name,acc.class_code);sSt("classcode");}
             }} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:"16px 18px",cursor:"pointer",
               border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
               transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
@@ -4034,6 +4067,11 @@ var[step,sSt]=useState("name");
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{acc.typeIcon}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{acc.groupName}</div>
+                {/* Nom stocké affiché dès qu'il diffère de la saisie : c'est le
+                    seul élément qui sépare "Romain" de "Romain L." dans la MÊME
+                    promo, où le nom de groupe est identique sur les deux cartes. */}
+                {normalizeName(acc.name)!==normalizeName(name)&&
+                  <div style={{fontSize:12,color:"var(--cyan)",fontWeight:600,marginBottom:2}}>{acc.name}</div>}
                 <div style={{fontSize:11,color:"var(--t3)"}}>{acc.class_code} · {acc.xp} XP</div>
                 {whenLabel&&<div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>{whenLabel}</div>}
               </div>
