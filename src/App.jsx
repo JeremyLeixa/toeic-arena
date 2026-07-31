@@ -794,7 +794,10 @@ async function ensureAuthSession(){
   return null;
 }
 
-async function save(d){
+// opts.allowInsert — autorise la création d'une ligne pour un prénom déjà présent
+// dans une AUTRE promo (homonyme légitime). Seul onboard() le passe. Voir le garde
+// anti-phantom plus bas.
+async function save(d,opts){
   saveLocal(d);
   if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
   // Safety rail: never let a missing classCode fall through to the "visitor" fallback
@@ -857,8 +860,22 @@ async function save(d){
       // student had a legit row in idrac2026/famille2026/cesi2026/etc).
       var dup=await supabase.from("students").select("class_code").ilike("name",d.name).neq("class_code",cc);
       if(dup.data&&dup.data.length>0){
-        console.error("[SAVE] BLOCKED: would create phantom — "+d.name+" already exists in class "+dup.data[0].class_code+" (attempted cc="+cc+")");
-        return;
+        // Homonyme légitime vs phantom : les deux ont la même signature ici (le nom
+        // existe ailleurs, l'UPDATE n'a rien matché). On les sépare par l'INTENTION,
+        // pas par l'état : seul onboard() passe allowInsert, et c'est le seul endroit
+        // où une ligne naît légitimement. Tous les autres save() (sync périodique,
+        // sv(), unload) restent bloqués — c'est eux qui fabriquaient les phantoms
+        // quand le classCode local dérivait vers "visitor".
+        // Retirer allowInsert re-casse l'inscription de TOUT homonyme d'une nouvelle
+        // promo : son onboarding se termine normalement mais aucune ligne Supabase
+        // n'est créée, il joue en local, invisible du classement et du TeacherDash,
+        // et tout est perdu au changement d'appareil. Bug vécu (nouveau "Romain"
+        // en 2027 face au "Romain" d'idrac2026) — corrigé le 2026-07-31.
+        if(!(opts&&opts.allowInsert)){
+          console.error("[SAVE] BLOCKED: would create phantom — "+d.name+" already exists in class "+dup.data[0].class_code+" (attempted cc="+cc+")");
+          return;
+        }
+        console.warn("[SAVE] homonym INSERT authorized by onboarding —",d.name,"cc="+cc,"| also in:",dup.data.map(function(r){return r.class_code;}).join(", "));
       }
       // Clean INSERT — student is genuinely new.
       // Do NOT set id: user.id — the same auth user may already own another students row
@@ -874,9 +891,9 @@ async function save(d){
 }
 
 // syncToCloud() — replaced by save(), kept as no-op for existing call sites
-async function syncToCloud(d){
+async function syncToCloud(d,opts){
   if(!d||!d.name||!_syncDirty)return;
-  return save(d);
+  return save(d,opts);
 }
 // ─── BIOMETRIC AUTH (WebAuthn) for Teacher Dashboard ───
 var BIOMETRIC_KEY="toeic-teacher-bio";
@@ -17452,9 +17469,12 @@ var prevLeague=getLeague(c.weeklyXp);
     }
     sU(u);
     saveLocal(u);
-    // Initial sync to create the row in Supabase
+    // Initial sync to create the row in Supabase.
+    // allowInsert: onboard() est le SEUL appelant autorisé à créer une ligne pour un
+    // prénom déjà présent dans une autre promo (homonyme). Cf. garde anti-phantom
+    // dans save() — ne pas propager ce flag aux syncs de routine.
     _syncDirty=true;
-    syncToCloud(u);
+    syncToCloud(u,{allowInsert:true});
     // Narrator: "The Verdict" fires once, right after the student clicks
     // "Enter the Arena" (langBridge). Depuis 2026-05-03, ce moment intègre
     // aussi la présentation des 3 piliers de l'app (Daily Quest, Salle
