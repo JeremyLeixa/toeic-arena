@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "check:assets": "node scripts/check-audio-assets.mjs",
+    "check:identity": "node tests/validate_name_identity.cjs",
     "preview": "vite preview"
   },
   "dependencies": {

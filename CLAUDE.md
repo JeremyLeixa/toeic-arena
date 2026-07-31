@@ -35,6 +35,7 @@ The app is a **monolithic React application** — all UI logic lives in `src/App
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
+| `npm run check:identity` | Rejoue les helpers d'homonymie **extraits de App.jsx** (compose/strip/resolve). À lancer après toute modif d'`onboard`/`recover`/`lookupName` (exit 1 sinon) |
 
 No test framework integrated — testing is manual.
 
