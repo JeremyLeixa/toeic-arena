@@ -3530,6 +3530,13 @@ var[step,sSt]=useState("name");
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
+  // SECURITY (2026-09-11) — confinement cross-promo : detectMode=true quand on arrive
+  // sur l'écran classcode depuis l'écran name (détection "welcome back"). Il déclenche
+  // la recherche de compte SCOPÉE au class_code saisi (lookupName(name,cc)). false =
+  // chemin d'inscription (choix de cohorte après emailPassword) → va direct à consent.
+  // Sans ce scope, lookupName remontait tous les homonymes TOUTES promos et le picker
+  // affichait même leur class_code (incident Hugo : accès à une promo CESI non sienne).
+  var[detectMode,setDetectMode]=useState(false);
   // typedName — ce que l'user a RÉELLEMENT tapé, avant que lookupName n'écrase `name`
   // avec la casse stockée en base (nécessaire pour recover, cf. commentaire dans
   // lookupName). Sert à restaurer sa saisie s'il repart en création de compte : sans
@@ -3560,7 +3567,7 @@ var[step,sSt]=useState("name");
     sSt("install");
   }
 
-  async function lookupName(n){
+  async function lookupName(n,cc){
     setLookingUp(true);
     setTypedName((n||"").trim());
     try{
@@ -3571,17 +3578,20 @@ var[step,sSt]=useState("name");
         if(!authRes.data.user){setLookingUp(false);sSt("classcode");return;}
       }
       // Fetch students and filter by normalized name (accent + case insensitive).
-      // Use ilike('name', n) to minimize RLS surface — broader SELECT without filter
-      // has historically returned 0 rows on some RLS configs for new anon users.
+      // SECURITY (2026-09-11) — la requête est SCOPÉE au class_code (cc) : on ne remonte
+      // que les comptes de la promo dont l'user a fourni le code. Sans ce .eq, le picker
+      // exposait les homonymes de toutes les promos + leur class_code (incident Hugo).
       var norm=normalizeName(n);
-      var res=await supabase.from('students').select('name,class_code,xp,last_active,joined_at').ilike('name',n);
+      var res=await supabase.from('students').select('name,class_code,xp,last_active,joined_at').ilike('name',n).eq('class_code',cc);
       console.warn("[LOOKUP]",n,"→ rows:",(res.data||[]).length,"error:",res.error?res.error.message:"none");
       var matches=(res.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
       // Fallback: if the ilike query returned nothing, try a broader select
       // (may be blocked by RLS but worth a shot before giving up)
       if(matches.length===0){
-        var res2=await supabase.from('students').select('name,class_code,xp,last_active,joined_at');
-        console.warn("[LOOKUP] fallback broader select → rows:",(res2.data||[]).length);
+        // Fallback lui aussi SCOPÉ au class_code — ne jamais revenir à un select global
+        // (ça réintroduirait la fuite cross-promo).
+        var res2=await supabase.from('students').select('name,class_code,xp,last_active,joined_at').eq('class_code',cc);
+        console.warn("[LOOKUP] fallback scoped select → rows:",(res2.data||[]).length);
         matches=(res2.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
       }
       console.warn("[LOOKUP] matches filtered:",matches.length);
@@ -3617,12 +3627,14 @@ var[step,sSt]=useState("name");
       } else {
         // Phase 2 (2026-04-27) : nouveaux users → écran emailPassword au lieu de classcode direct.
         // Le step emailPassword propose signUp OU "Continuer sans compte" (visitor).
-        console.warn("[LOOKUP] no match → emailPassword step");
+        console.warn("[LOOKUP] no match in cohort → emailPassword step");
         setFoundAccounts([]);
+        setDetectMode(false); // nouvel inscrit dans cette promo : quitte le mode détection
         sSt("emailPassword");
       }
     }catch(e){
       console.warn("[LOOKUP] outer catch → emailPassword, err:",e&&e.message);
+      setDetectMode(false);
       sSt("emailPassword");
     }
     setLookingUp(false);
@@ -3749,7 +3761,7 @@ var[step,sSt]=useState("name");
           <input type="text" value={name} onChange={function(e){sN(e.target.value);}} placeholder="Enter your name..."
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
-        <button className="btn1" onClick={function(){if(name.trim()&&!lookingUp)lookupName(name);}} disabled={lookingUp}
+        <button className="btn1" onClick={function(){if(name.trim()&&!lookingUp){setDetectMode(true);setTypedName(name.trim());sSt("classcode");}}} disabled={lookingUp}
           style={{opacity:name.trim()&&!lookingUp?1:.4,pointerEvents:name.trim()&&!lookingUp?"auto":"none",fontSize:18,padding:"16px 32px"}}>{lookingUp?"Checking...":"Next"}</button>
         <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:20}}>
           <button onClick={function(){sSt("emailLogin");setEmailInput("");setEmailErr("");setEmailSent(false);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"D\u00e9j\u00e0 un compte ? Me connecter"}</button>
@@ -3774,7 +3786,10 @@ var[step,sSt]=useState("name");
         await signUpWithPassword(e,pwd1,{name:name.trim()});
         setPwdSetupDone(true);
         // Email saisi reste dans emailInput au cas où d'autres branches le lisent.
-        sSt("classcode");
+        // Le class_code a déjà été saisi et validé AVANT la détection (écran classcode
+        // en amont) → on va direct à consent, on ne le redemande pas. Fallback classcode
+        // si jamais il est vide (chemin inattendu).
+        sSt(classCode?"consent":"classcode");
       }catch(err){
         var msg=((err&&err.message)||"").toLowerCase();
         if(msg.includes("already")||msg.includes("registered")||msg.includes("exists")||msg.includes("duplicate")){
@@ -3951,7 +3966,7 @@ var[step,sSt]=useState("name");
         {/* Route vers emailPassword (et non classcode) : l'homonyme est un nouvel user
             comme les autres, il doit se voir proposer email+mot de passe pour le
             cross-device. sN(typedName) restaure SA casse, écrasée par lookupName. */}
-        <button className="btn2" onClick={function(){setFoundAccounts([]);if(typedName)sN(typedName);sSt("emailPassword");}}
+        <button className="btn2" onClick={function(){setFoundAccounts([]);setDetectMode(false);if(typedName)sN(typedName);sSt("emailPassword");}}
           style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(var(--cx),.35)",color:"var(--cyan)"}}>Not me — create my own account</button>
         <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
       </div>
@@ -3973,8 +3988,8 @@ var[step,sSt]=useState("name");
           {classValid===true&&<p style={{fontSize:12,color:"var(--green)",marginTop:6,fontWeight:600}}>✓ {classGroupName}</p>}
           {classValid===false&&<p style={{fontSize:12,color:"var(--red)",marginTop:6}}>Code not found. Check with your teacher.</p>}
         </div>
-        <button className="btn1" onClick={function(){if(classValid)sSt("consent");}}
-          style={{opacity:classValid?1:.4,pointerEvents:classValid?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>Next</button>
+        <button className="btn1" onClick={function(){if(!classValid)return;if(detectMode){lookupName(name.trim(),classCode);}else{sSt("consent");}}}
+          style={{opacity:classValid?1:.4,pointerEvents:classValid?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>{lookingUp?"Checking...":"Next"}</button>
         <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
           <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">or</span>
