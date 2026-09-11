@@ -613,12 +613,19 @@ var BUILD_ID="2026-07-09-bgm-ios-fix";
 // on students. Fine for good-faith partner teachers; a real data-isolation
 // boundary requires Supabase Auth + RLS (deferred "hard" version).
 // The logged-in code is stored at login in localStorage['toeic-dash-teacher'].
-// EMPTY code = admin (backward-compat: sessions logged in before this change,
-// and biometric unlock on Jérémy's own device, have no stored code). Reverting
-// isDashAdmin() to "always true" would re-expose every campus to every teacher.
-var ADMIN_TEACHER_CODE=(import.meta.env&&import.meta.env.VITE_ADMIN_TEACHER_CODE)||"arena-teacher-2026";
+// SECURITY (2026-09-11, finding H2) — deux trous fermés ici :
+//  1. Plus de fallback en dur : l'ancien code admin était compilé dans le bundle,
+//     donc quiconque le tapait devenait super-admin tous campus. Le code admin vient
+//     désormais UNIQUEMENT de VITE_ADMIN_TEACHER_CODE (Vercel). Si l'env var manque →
+//     "" → personne n'est admin (fail-closed), au lieu de fail-open.
+//  2. EMPTY code n'est PLUS admin. Avant, `!t` donnait l'admin à toute session sans
+//     code stocké (dont un attaquant qui vide localStorage). Désormais il FAUT un code
+//     stocké non-vide égal au code admin. Conséquence assumée : les sessions "code vide"
+//     (dont le déverrouillage biométrique) doivent se reconnecter une fois avec le code
+//     admin pour retrouver la vue multi-campus.
+var ADMIN_TEACHER_CODE=(import.meta.env&&import.meta.env.VITE_ADMIN_TEACHER_CODE)||"";
 function getDashTeacher(){try{return localStorage.getItem('toeic-dash-teacher')||"";}catch(e){console.warn("[teacher-scope] read failed:",e&&e.message);return"";}}
-function isDashAdmin(){var t=getDashTeacher();return!t||t===ADMIN_TEACHER_CODE;}
+function isDashAdmin(){var t=getDashTeacher();return!!t&&!!ADMIN_TEACHER_CODE&&t===ADMIN_TEACHER_CODE;}
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
