@@ -829,8 +829,14 @@ async function save(d,opts){
     joined_at:d.joinedAt||null,
     tutorial_pending:d.tutorialPending===true,
     email:d.email||null,
-    access_level:d.accessLevel||'free',
-    access_expires_at:d.accessExpiresAt||null,
+    // SECURITY (2026-09-11, finding C3) — access_level / access_expires_at
+    // DELIBERATELY NOT written here. L'entitlement est server-authoritative : seul le
+    // webhook Stripe (service_role) écrit ces colonnes. Les inclure dans ce full-row
+    // UPDATE laissait un élève persister un premium forgé (accessLevel local → save()).
+    // Le client les LIT (load/merge) mais ne les écrit jamais. Baseline 'free' posée à
+    // l'INSERT uniquement (plus bas). Reverting = premium gratuit.
+    // NB : fermeture COMPLÈTE = RLS auth.uid()=user_id sur students (chantier P2). Tant
+    // que la RLS est off, un PATCH REST direct reste possible ; ceci ferme la voie applicative.
     narrator:d.narrator||{heard:[],muted:false},
     cgv_accepted_at:d.cgvAcceptedAt||null,
     cgv_version:d.cgvVersion||null,
@@ -882,7 +888,10 @@ async function save(d,opts){
       // (Teacher/student on same device, multi-profile family accounts, etc.), which would
       // trigger a PK conflict. Let Postgres auto-generate a fresh UUID; identity is tracked
       // via the natural key (name, class_code) for UPDATEs and via lookupName for recovery.
-      var ins=await supabase.from("students").insert({name:d.name,class_code:cc,...payload});
+      // access_level/access_expires_at ne sont plus dans payload (server-authoritative) —
+      // on pose la baseline 'free' à la création. Un nouvel inscrit est toujours free ;
+      // s'il paie, le webhook Stripe réécrit la colonne.
+      var ins=await supabase.from("students").insert({name:d.name,class_code:cc,access_level:'free',access_expires_at:null,...payload});
       if(ins.error)console.error("[SAVE] INSERT error:",ins.error.message);
       else console.warn("[SAVE] OK —",d.name,cc,"inserted");
     }else{console.warn("[SAVE] OK —",d.name,cc,"updated");}
