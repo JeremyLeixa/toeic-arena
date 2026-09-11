@@ -637,7 +637,7 @@ function isDashAdmin(){var t=getDashTeacher();return!!t&&!!ADMIN_TEACHER_CODE&&t
 // d'attribution de row (cf. chantier hardening 2026-04-24).
 var PREMIUM_UPGRADE_ENABLED=true;
 import { supabase } from './supabase.js'
-import { getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword } from './auth.js'
+import { getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword, signUpStudent, signInStudent, bindStudentUserId } from './auth.js'
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
 // ─── Name normalization (accent-insensitive + lowercase) ───
@@ -860,6 +860,14 @@ async function save(d,opts){
     // between a client read and the next save() (classic lost-update). Reverting
     // this (adding arena_marks to the payload) silently erases earned Darics.
   };
+  // P2 Phase A (2026-09-11) — binding identité. opts.bindAuth (passé par onboard() lors d'un
+  // signup PASSWORD) lie la ligne à l'auth user courant + marque le compte comme sécurisé.
+  // Injecté dans payload → écrit à la fois par l'UPDATE et l'INSERT (spread), donc couvre le
+  // NOUVEL élève dont la ligne naît ici. Jamais posé par les saves de routine (churn user_id).
+  if(opts&&opts.bindAuth&&user&&user.id){
+    payload.user_id=user.id;
+    payload.password_set_at=new Date().toISOString();
+  }
   var cc=d.classCode||"visitor";
   try{
     // Step 1: UPDATE by (name, class_code) — cross-device safe, never mutates PK
@@ -3553,6 +3561,13 @@ var[step,sSt]=useState("name");
   // Sans ce scope, lookupName remontait tous les homonymes TOUTES promos et le picker
   // affichait même leur class_code (incident Hugo : accès à une promo CESI non sienne).
   var[detectMode,setDetectMode]=useState(false);
+  // P2 Phase A (2026-09-11) — flux mot de passe (email synthétique).
+  // pwdMode : "new" (nouvel élève) | "claim" (compte legacy à sécuriser). pwdTarget : la
+  // ligne visée au retour {name, class_code, password_set_at}. studentPwdSet : vrai quand le
+  // nouvel élève a posé son mot de passe → enterArena passe authBind à onboard().
+  var[pwdMode,setPwdMode]=useState("new");
+  var[pwdTarget,setPwdTarget]=useState(null);
+  var[studentPwdSet,setStudentPwdSet]=useState(false);
   // typedName — ce que l'user a RÉELLEMENT tapé, avant que lookupName n'écrase `name`
   // avec la casse stockée en base (nécessaire pour recover, cf. commentaire dans
   // lookupName). Sert à restaurer sa saisie s'il repart en création de compte : sans
@@ -3598,7 +3613,7 @@ var[step,sSt]=useState("name");
       // que les comptes de la promo dont l'user a fourni le code. Sans ce .eq, le picker
       // exposait les homonymes de toutes les promos + leur class_code (incident Hugo).
       var norm=normalizeName(n);
-      var res=await supabase.from('students').select('name,class_code,xp,last_active,joined_at').ilike('name',n).eq('class_code',cc);
+      var res=await supabase.from('students').select('name,class_code,xp,last_active,joined_at,password_set_at').ilike('name',n).eq('class_code',cc);
       console.warn("[LOOKUP]",n,"→ rows:",(res.data||[]).length,"error:",res.error?res.error.message:"none");
       var matches=(res.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
       // Fallback: if the ilike query returned nothing, try a broader select
@@ -3606,19 +3621,38 @@ var[step,sSt]=useState("name");
       if(matches.length===0){
         // Fallback lui aussi SCOPÉ au class_code — ne jamais revenir à un select global
         // (ça réintroduirait la fuite cross-promo).
-        var res2=await supabase.from('students').select('name,class_code,xp,last_active,joined_at').eq('class_code',cc);
+        var res2=await supabase.from('students').select('name,class_code,xp,last_active,joined_at,password_set_at').eq('class_code',cc);
         console.warn("[LOOKUP] fallback scoped select → rows:",(res2.data||[]).length);
         matches=(res2.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
       }
       console.warn("[LOOKUP] matches filtered:",matches.length);
-      if(matches.length>0){
-        // Use the DB name (original casing) so recovery works with the exact stored name.
-        // setter is `sN` not setName (this was broken for 13 days and silently killed the
-        // Welcome back path via the outer catch — origin of the "everyone re-onboards" crisis).
+      // P2 Phase A (2026-09-11) — routing par mot de passe (email synthétique).
+      // 0 match → nouvel élève (poser un mot de passe). 1 match → password_set_at ? "entre ton
+      // mot de passe" : "sécurise ton compte" (claim). >1 (ne devrait plus arriver : 0 collision
+      // + index unique) → picker legacy de désambiguïsation.
+      setPwd1("");setPwd2("");setPwdErr("");
+      if(matches.length===0){
+        console.warn("[LOOKUP] no match in cohort → setPassword (new)");
+        setFoundAccounts([]);
+        setDetectMode(false); // nouvel inscrit : quitte le mode détection
+        setPwdMode("new");
+        sSt("setPassword");
+      } else if(matches.length===1){
+        // Cas normal. Casing DB nécessaire pour synthEmail + recover.
+        var m=matches[0];
+        sN(m.name);
+        setPwdTarget({name:m.name,class_code:m.class_code,password_set_at:m.password_set_at||null});
+        if(m.password_set_at){
+          console.warn("[LOOKUP] 1 match, secured → enterPassword");
+          sSt("enterPassword");
+        }else{
+          console.warn("[LOOKUP] 1 match, legacy (no pwd) → claim");
+          setPwdMode("claim");
+          sSt("setPassword");
+        }
+      } else {
+        // >1 homonyme même promo — filet : picker de désambiguïsation (legacy recover()).
         sN(matches[0].name);
-        // Isolated try/catch: groups query failure must NOT kill the Welcome back path.
-        // If it throws or errors, we fall through with empty groupMap — cards show raw
-        // class_code instead of pretty group names, but the user can still proceed.
         var groupMap={};
         try {
           var groupRes=await supabase.from('groups').select('code,name,type');
@@ -3630,28 +3664,20 @@ var[step,sSt]=useState("name");
         var accounts=matches.map(function(s){
           var g=groupMap[s.class_code];
           return{class_code:s.class_code,xp:s.xp||0,
-            // Discriminants affichés sur la carte : sans eux, deux homonymes ne se
-            // distinguent que par le nom de promo, et l'user clique à l'aveugle.
             lastActive:s.last_active||null,joinedAt:s.joined_at||null,
             groupName:g?g.name:(s.class_code==="visitor"?"Visitor / Free Access":s.class_code),
             groupType:g?g.type:"visitor",
             typeIcon:g?(g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍"):"🌍"};
         });
-        console.warn("[LOOKUP] → recognize step, accounts:",accounts.length);
+        console.warn("[LOOKUP] >1 → recognize picker, accounts:",accounts.length);
         setFoundAccounts(accounts);
         sSt("recognize");
-      } else {
-        // Phase 2 (2026-04-27) : nouveaux users → écran emailPassword au lieu de classcode direct.
-        // Le step emailPassword propose signUp OU "Continuer sans compte" (visitor).
-        console.warn("[LOOKUP] no match in cohort → emailPassword step");
-        setFoundAccounts([]);
-        setDetectMode(false); // nouvel inscrit dans cette promo : quitte le mode détection
-        sSt("emailPassword");
       }
     }catch(e){
-      console.warn("[LOOKUP] outer catch → emailPassword, err:",e&&e.message);
+      console.warn("[LOOKUP] outer catch → setPassword (new), err:",e&&e.message);
       setDetectMode(false);
-      sSt("emailPassword");
+      setPwdMode("new");
+      sSt("setPassword");
     }
     setLookingUp(false);
   }
@@ -3856,6 +3882,123 @@ var[step,sSt]=useState("name");
             style={{width:"100%",fontSize:13,padding:"11px 16px",borderColor:"var(--bdr)",color:"var(--t3)"}}>
             {"Continuer sans compte"}
           </button>
+        </div>
+      </div>
+    </div>);
+  }
+
+  // ─ P2 Phase A (2026-09-11) : entre ton mot de passe (retour, compte sécurisé) ─
+  // Atteint depuis lookupName quand la ligne a password_set_at. Login via compte synthétique
+  // (signInStudent) puis hydratation via recover(). Filet soft : "continuer sans" → recover legacy.
+  if(step==="enterPassword"){
+    var epName=(pwdTarget&&pwdTarget.name)||name.trim();
+    var epCc=(pwdTarget&&pwdTarget.class_code)||classCode;
+    async function doStudentSignIn(){
+      if(pwdBusy)return;
+      if(!pwd1){setPwdErr("Entre ton mot de passe");return;}
+      setPwdErr("");setPwdBusy(true);
+      try{
+        await signInStudent(epName,epCc,pwd1);
+        try{await bindStudentUserId(epName,epCc);}catch(e){console.warn("[pwd] bind caught:",e&&e.message);}
+        var ok=await p.recover(epName,epCc);
+        if(!ok)setPwdErr("Compte introuvable. Réessaie.");
+      }catch(err){
+        console.warn("[pwd] signIn failed:",err&&err.message);
+        setPwdErr("Mot de passe incorrect.");
+      }finally{setPwdBusy(false);}
+    }
+    async function signInLater(){
+      if(pwdBusy)return;setPwdBusy(true);setPwdErr("");
+      try{var ok=await p.recover(epName,epCc);if(!ok)setPwdErr("Compte introuvable.");}
+      catch(e){setPwdErr("Erreur");}finally{setPwdBusy(false);}
+    }
+    return(
+    <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
+      <button className="back-btn" onClick={function(){setPwdErr("");sSt("classcode");}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"←"} Back</button>
+      <div style={{maxWidth:420,margin:"60px auto 0"}}>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{fontSize:44,marginBottom:10}}>{"👋"}</div>
+          <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6,color:"var(--gold)"}}>{"Bon retour, "+epName+" !"}</h1>
+          <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Entre ton mot de passe pour retrouver ta progression"+(classGroupName?" ("+classGroupName+")":"")+"."}</p>
+        </div>
+        <input type="password" value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}}
+          placeholder={"Mot de passe"} autoComplete="current-password"
+          onKeyDown={function(e){if(e.key==="Enter")doStudentSignIn();}}
+          style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
+        {pwdErr&&<div style={{color:"var(--red)",fontSize:13,marginBottom:12,textAlign:"center"}}>{pwdErr}</div>}
+        <button className="btn1" onClick={doStudentSignIn} disabled={pwdBusy}
+          style={{width:"100%",fontSize:15,padding:"13px 20px",opacity:pwdBusy?.6:1}}>
+          {pwdBusy?"Connexion...":"Se connecter"}
+        </button>
+        <div style={{marginTop:20,textAlign:"center"}}>
+          <button onClick={signInLater} disabled={pwdBusy} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"Mot de passe oublié ? Continuer sans pour l'instant"}</button>
+        </div>
+      </div>
+    </div>);
+  }
+
+  // ─ P2 Phase A (2026-09-11) : pose un mot de passe (nouvel élève OU claim d'un compte legacy) ─
+  // pwdMode="new" → signUpStudent puis onboarding normal (ligne créée avec authBind).
+  // pwdMode="claim" → signUpStudent puis bind user_id + password_set_at + recover(). "Plus tard"
+  // → recover legacy (migration soft, jusqu'à la date butoir).
+  if(step==="setPassword"){
+    var spClaim=(pwdMode==="claim");
+    async function doStudentSignUp(){
+      if(pwdBusy)return;
+      if((pwd1||"").length<8){setPwdErr("Mot de passe trop court (8 caractères minimum)");return;}
+      if(pwd1!==pwd2){setPwdErr("Les deux mots de passe ne correspondent pas");return;}
+      setPwdErr("");setPwdBusy(true);
+      var tName=name.trim(),tCc=classCode;
+      try{
+        await signUpStudent(tName,tCc,pwd1);
+        if(spClaim){
+          try{await bindStudentUserId(tName,tCc,true);}catch(e){console.warn("[pwd] claim bind caught:",e&&e.message);}
+          var ok=await p.recover(tName,tCc);
+          if(!ok)setPwdErr("Compte introuvable.");
+        }else{
+          // Nouvel élève : la ligne naîtra en fin d'onboarding avec user_id + password_set_at.
+          setStudentPwdSet(true);
+          sSt(classCode?"consent":"classcode");
+        }
+      }catch(err){
+        var msg=((err&&err.message)||"").toLowerCase();
+        if(msg.includes("already")||msg.includes("registered")||msg.includes("exists")||msg.includes("duplicate")){
+          setPwdErr("Un compte existe déjà pour ce nom dans cette promo — connecte-toi avec ton mot de passe.");
+        }else{
+          setPwdErr((err&&err.message)||"Erreur");
+        }
+      }finally{setPwdBusy(false);}
+    }
+    async function claimLater(){
+      if(pwdBusy)return;setPwdBusy(true);setPwdErr("");
+      try{var ok=await p.recover(name.trim(),classCode);if(!ok)setPwdErr("Compte introuvable.");}
+      catch(e){setPwdErr("Erreur");}finally{setPwdBusy(false);}
+    }
+    return(
+    <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
+      <button className="back-btn" onClick={function(){setPwdErr("");sSt("classcode");}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"←"} Back</button>
+      <div style={{maxWidth:420,margin:"60px auto 0"}}>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><GIcon name="castle" size={48} color="var(--cyan)"/></div>
+          <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{spClaim?("Sécurise ton compte, "+name.trim()):"Choisis ton mot de passe"}</h1>
+          <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{spClaim?"Choisis un mot de passe pour protéger ta progression et te reconnecter partout.":("Ce mot de passe protège ton compte"+(classGroupName?" ("+classGroupName+")":"")+" et te reconnecte sur tous tes appareils.")}</p>
+        </div>
+        <input type="password" value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}}
+          placeholder="Mot de passe (8 caractères min.)" autoComplete="new-password"
+          style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:10,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
+        <input type="password" value={pwd2} onChange={function(e){setPwd2(e.target.value);setPwdErr("");}}
+          placeholder="Confirme le mot de passe" autoComplete="new-password"
+          onKeyDown={function(e){if(e.key==="Enter")doStudentSignUp();}}
+          style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
+        {pwdErr&&<div style={{color:"var(--red)",fontSize:13,marginBottom:12,textAlign:"center"}}>{pwdErr}</div>}
+        <button className="btn1" onClick={doStudentSignUp} disabled={pwdBusy}
+          style={{width:"100%",fontSize:14,padding:"13px 20px",background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700,opacity:pwdBusy?.6:1}}>
+          {pwdBusy?"...":(spClaim?"Sécuriser mon compte":"Créer mon compte")}
+        </button>
+        <div style={{marginTop:20,textAlign:"center"}}>
+          {spClaim
+            ?<button onClick={claimLater} disabled={pwdBusy} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"Plus tard — continuer sans mot de passe"}</button>
+            :<button onClick={function(){setPwdErr("");setPwdTarget({name:name.trim(),class_code:classCode,password_set_at:true});sSt("enterPassword");}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"J'ai déjà un mot de passe — me connecter"}</button>}
         </div>
       </div>
     </div>);
@@ -4386,7 +4529,7 @@ var[step,sSt]=useState("name");
 
   // ─ Language bridge: transition to English ─
   if(step==="langBridge"){
-    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,pendingNav||undefined,sectionResults);}
+    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,pendingNav||undefined,sectionResults,studentPwdSet);}
     return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
       <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
@@ -17473,7 +17616,7 @@ var prevLeague=getLeague(c.weeklyXp);
     return m;
   }
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
-  async function onboard(name,classCode,bsScores,firstNav,bsV2Results){
+  async function onboard(name,classCode,bsScores,firstNav,bsV2Results,authBind){
     classCode=classCode||'visitor';
     // Check if student already exists (use limit(1) — safe even with duplicates)
     // Check for existing student (accent + case insensitive)
@@ -17535,7 +17678,9 @@ var prevLeague=getLeague(c.weeklyXp);
     // prénom déjà présent dans une autre promo (homonyme). Cf. garde anti-phantom
     // dans save() — ne pas propager ce flag aux syncs de routine.
     _syncDirty=true;
-    syncToCloud(u,{allowInsert:true});
+    // authBind (P2 Phase A) : signup PASSWORD → la ligne créée ici reçoit user_id +
+    // password_set_at (via save/bindAuth). Absent pour visitor/legacy (session anonyme).
+    syncToCloud(u,{allowInsert:true,bindAuth:!!authBind});
     // Narrator: "The Verdict" fires once, right after the student clicks
     // "Enter the Arena" (langBridge). Depuis 2026-05-03, ce moment intègre
     // aussi la présentation des 3 piliers de l'app (Daily Quest, Salle

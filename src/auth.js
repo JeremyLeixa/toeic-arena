@@ -236,6 +236,81 @@ export async function signInWithPassword(email, password) {
   return data;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// P2 Phase A (2026-09-11) — identité par mot de passe via EMAIL SYNTHÉTIQUE.
+//
+// Modèle « code promo + mot de passe perso » : chaque personne = un compte
+// Supabase Auth dérivé DÉTERMINISTIQUEMENT de (nom, class_code), sans vraie boîte
+// mail. Ça donne un auth.uid() stable 1:1 avec la ligne students → prérequis de la
+// RLS auth.uid()=user_id (Phase C). L'email synthétique n'est JAMAIS montré à l'user.
+//
+// ⚠️ DÉPEND de "Confirm email" = OFF dans Supabase Auth (déjà le cas, cf. signup
+// email+password existant qui logge immédiatement). Si un jour c'est réactivé, ces
+// comptes ne pourraient plus se connecter et Supabase tenterait d'emailer des
+// adresses fictives.
+//
+// ⚠️ La normalisation de synthEmail DOIT rester identique à celle de l'index unique
+// SQL (lower + strip accents + strip non-alphanumérique) — sinon collision d'email
+// sans collision d'index. Miroir de normalizeName() (App.jsx:637) + strip.
+// ─────────────────────────────────────────────────────────────────────────────
+const SYNTH_EMAIL_DOMAIN = 'students.verse-arena.fr';
+
+// Forme normalisée du nom pour l'email synthétique ET pour l'index unique DB.
+export function normNameForEmail(name) {
+  return (name || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents (miroir de normalizeName App.jsx:637)
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');                        // strip espaces/ponctuation
+}
+
+// Email synthétique déterministe. Throws si le nom se normalise à vide (ex. nom
+// uniquement non-latin) — le caller doit gérer (proposer un nom latin / fallback).
+export function synthEmail(name, classCode) {
+  const localName = normNameForEmail(name);
+  if (!localName) throw new Error('Nom invalide pour la création de compte (caractères non pris en charge)');
+  const cc = (classCode || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  if (!cc) throw new Error('Code de promo manquant');
+  return localName + '.' + cc + '@' + SYNTH_EMAIL_DOMAIN;
+}
+
+// Inscription élève : crée le compte Supabase Auth (email synthétique) + password.
+// L'user est loggé immédiatement (confirmation OFF). La row students est créée/mise
+// à jour séparément par App.jsx save() ; le binding user_id se fait via bindStudentUserId.
+export async function signUpStudent(name, classCode, password) {
+  return signUpWithPassword(synthEmail(name, classCode), password, { name: name, class_code: classCode });
+}
+
+// Connexion élève : ouvre la session sur le compte synthétique.
+// NOTE : Supabase renvoie "Invalid login credentials" AUSSI BIEN pour un mauvais mot
+// de passe QUE pour un compte inexistant (anti-énumération) → on ne peut PAS distinguer
+// "à claim" de "mauvais mot de passe" via l'erreur. Le routing (A2) s'appuie sur
+// students.password_set_at (NULL = pas encore de compte synthétique), pas sur l'erreur.
+export async function signInStudent(name, classCode, password) {
+  return signInWithPassword(synthEmail(name, classCode), password);
+}
+
+// Backfill : lie la ligne students (clé naturelle nom+class_code) à l'auth user COURANT.
+// À n'appeler que depuis une session PASSWORD (signUpStudent/signInStudent) — jamais
+// depuis une session anonyme, qui churnerait le user_id. RLS OFF en Phase A → l'UPDATE passe.
+// markPasswordSet=true écrit aussi password_set_at (utilisé au claim/setup : signale que
+// le compte synthétique existe → au prochain login, routing vers "entre ton mot de passe").
+export async function bindStudentUserId(name, classCode, markPasswordSet) {
+  try {
+    const { data } = await supabase.auth.getUser();
+    const user = data && data.user;
+    if (!user) return false;
+    const patch = { user_id: user.id };
+    if (markPasswordSet) patch.password_set_at = new Date().toISOString();
+    const { error } = await supabase
+      .from('students')
+      .update(patch)
+      .ilike('name', name)
+      .eq('class_code', classCode);
+    if (error) { console.warn('[auth] bindStudentUserId failed:', error.message); return false; }
+    return true;
+  } catch (e) { console.warn('[auth] bindStudentUserId caught:', e && e.message); return false; }
+}
+
 // Change le password de l'auth user courant. Nécessite une session active.
 // Utilisé : (1) au setup forcé Phase 3 quand password_set_at est NULL,
 // (2) depuis Profile → "Changer mon mot de passe".
