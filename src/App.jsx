@@ -730,11 +730,13 @@ async function load(userId){
         if(res.error)console.error("[LOAD] SELECT error:",res.error.message);
         if(res.data&&res.data.length>0)remote=res.data[0];
       }
-      // Fallback: lookup by auth ID
+      // Fallback: lookup by auth user_id (P2 Phase A binding). L'ancien .eq("id",userId)
+      // ne matchait jamais (students.id = PK aléatoire, pas l'auth uid). Depuis le binding
+      // Phase A, user_id = auth.uid() pour les comptes migrés → ce fallback fonctionne enfin.
       if(!remote){
-        console.warn("[LOAD] primary miss, trying fallback by auth ID");
-        var res2=await supabase.from("students").select("*").eq("id",userId).maybeSingle();
-        if(res2.data)remote=res2.data;
+        console.warn("[LOAD] primary miss, trying fallback by user_id");
+        var res2=await supabase.from("students").select("*").eq("user_id",userId).order("xp",{ascending:false}).limit(1);
+        if(res2.data&&res2.data.length>0)remote=res2.data[0];
       }
       if(remote){
         console.warn("[LOAD] got remote — xp:",remote.xp,"weekly_xp:",remote.weekly_xp,"streak:",remote.streak);
@@ -17890,16 +17892,41 @@ var prevLeague=getLeague(c.weeklyXp);
     sU(null);sSP(null);sT("home");
   }
 
+  // RGPD erasure (P2 Phase B, B6). L'ancien delete `.eq('id',uid)` ne matchait JAMAIS
+  // la ligne students (id = PK aléatoire auto-généré, PAS l'auth uid) → le compte
+  // survivait à la "suppression". Fait vérifié 2026-09-13 : le rôle authenticated N'A PAS
+  // le privilège DELETE sur students (donc, au passage, un élève ne PEUT PAS supprimer un
+  // autre — pas de vecteur cross-user). La seule voie d'effacement du profil est donc une
+  // RPC SECURITY DEFINER (delete_my_account), appelée depuis purgeUserRows.
+  // (Le delete du dashboard prof, App.jsx:12818, souffre du même manque de privilège →
+  // il ne supprime probablement rien ; à router via une RPC teacher en B5.)
+  async function purgeUserRows(uid,name,cc){
+    try{
+      // La ligne students ne peut PAS être supprimée par le client : le rôle authenticated
+      // n'a pas le privilège DELETE dessus (vérifié 2026-09-13). Seul chemin = RPC
+      // delete_my_account (SECURITY DEFINER, ownership stricte auth.uid()=user_id). Elle
+      // supprime la ligne profil + toutes les tables satellites côté serveur.
+      // Comptes legacy non migrés (user_id NULL) : la RPC refuse (not_secured) — il faut
+      // sécuriser le compte (mot de passe) avant de pouvoir l'effacer. Dégrade proprement
+      // si la RPC n'est pas encore déployée (function not found → warn, pas de crash).
+      var r=await supabase.rpc('delete_my_account',{p_name:name,p_class_code:cc});
+      if(r.error)console.warn("[purge] rpc error:",r.error.message);
+      else if(r.data&&r.data.ok===false)console.warn("[purge] rpc refused:",r.data.error);
+      // Best-effort satellites côté client (couvre les legacy que la RPC n'a pas touchés ;
+      // no-op idempotent sinon). Ces tables SONT supprimables par authenticated.
+      if(uid)await supabase.from('weekly_snapshots').delete().eq('user_id',uid);
+      await supabase.from('push_subscriptions').delete().eq('student_name',name).eq('class_code',cc);
+      await supabase.from('player_rewards').delete().eq('user_name',name).eq('class_code',cc);
+      await supabase.from('player_tokens').delete().eq('user_name',name).eq('class_code',cc);
+      await supabase.from('pending_chests').delete().eq('user_name',name).eq('class_code',cc);
+      await supabase.from('chest_log').delete().eq('user_name',name).eq('class_code',cc);
+    }catch(e){console.warn("[purge] caught:",e&&e.message);}
+  }
   async function deleteAccount(){
     var sess=await supabase.auth.getSession();
     var uid=sess.data.session?sess.data.session.user.id:null;
-    if(uid){
-      // Delete all user data across all tables
-      await supabase.from('weekly_snapshots').delete().eq('user_id',uid);
-      await supabase.from('push_subscriptions').delete().eq('student_name',u.name).eq('class_code',u.classCode);
-      await supabase.from('students').delete().eq('id',uid);
-      try{await supabase.auth.signOut();}catch(e){}
-    }
+    await purgeUserRows(uid,u.name,u.classCode);
+    try{await supabase.auth.signOut();}catch(e){console.warn("[deleteAccount] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     _cachedUserId=null;_syncDirty=false;
     sU(null);sSP(null);sT("home");
@@ -17907,12 +17934,8 @@ var prevLeague=getLeague(c.weeklyXp);
   async function reset(){
     var sess=await supabase.auth.getSession();
     var uid=sess.data.session?sess.data.session.user.id:null;
-    if(uid){
-      await supabase.from('weekly_snapshots').delete().eq('user_id',uid);
-      await supabase.from('push_subscriptions').delete().eq('student_name',u.name).eq('class_code',u.classCode);
-      await supabase.from('students').delete().eq('id',uid);
-      try{await supabase.auth.signOut();}catch(e){}
-    }
+    await purgeUserRows(uid,u.name,u.classCode);
+    try{await supabase.auth.signOut();}catch(e){console.warn("[reset] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     _cachedUserId=null;_syncDirty=false;
     sU(null);sSP(null);sT("home");
