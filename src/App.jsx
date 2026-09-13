@@ -3568,6 +3568,10 @@ var[step,sSt]=useState("name");
   var[pwdMode,setPwdMode]=useState("new");
   var[pwdTarget,setPwdTarget]=useState(null);
   var[studentPwdSet,setStudentPwdSet]=useState(false);
+  // Filet auto-réparateur : si signUpStudent échoue "compte déjà existant" (ex. binding
+  // password_set_at raté à la création, ou pré-claim par un tiers), on propose "me connecter"
+  // → enterPassword, au lieu de laisser l'user coincé sur l'écran claim.
+  var[pwdExistsDup,setPwdExistsDup]=useState(false);
   // typedName — ce que l'user a RÉELLEMENT tapé, avant que lookupName n'écrase `name`
   // avec la casse stockée en base (nécessaire pour recover, cf. commentaire dans
   // lookupName). Sert à restaurer sa saisie s'il repart en création de compte : sans
@@ -3630,7 +3634,7 @@ var[step,sSt]=useState("name");
       // 0 match → nouvel élève (poser un mot de passe). 1 match → password_set_at ? "entre ton
       // mot de passe" : "sécurise ton compte" (claim). >1 (ne devrait plus arriver : 0 collision
       // + index unique) → picker legacy de désambiguïsation.
-      setPwd1("");setPwd2("");setPwdErr("");
+      setPwd1("");setPwd2("");setPwdErr("");setPwdExistsDup(false);
       if(matches.length===0){
         console.warn("[LOOKUP] no match in cohort → setPassword (new)");
         setFoundAccounts([]);
@@ -3964,6 +3968,7 @@ var[step,sSt]=useState("name");
         var msg=((err&&err.message)||"").toLowerCase();
         if(msg.includes("already")||msg.includes("registered")||msg.includes("exists")||msg.includes("duplicate")){
           setPwdErr("Un compte existe déjà pour ce nom dans cette promo — connecte-toi avec ton mot de passe.");
+          setPwdExistsDup(true);
         }else{
           setPwdErr((err&&err.message)||"Erreur");
         }
@@ -3991,6 +3996,10 @@ var[step,sSt]=useState("name");
           onKeyDown={function(e){if(e.key==="Enter")doStudentSignUp();}}
           style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
         {pwdErr&&<div style={{color:"var(--red)",fontSize:13,marginBottom:12,textAlign:"center"}}>{pwdErr}</div>}
+        {pwdExistsDup&&<button className="btn2" onClick={function(){setPwdErr("");setPwdExistsDup(false);setPwd1("");setPwdTarget({name:name.trim(),class_code:classCode,password_set_at:true});sSt("enterPassword");}}
+          style={{width:"100%",fontSize:13,padding:"11px 16px",marginBottom:10,borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
+          {"Me connecter avec mon mot de passe"}
+        </button>}
         <button className="btn1" onClick={doStudentSignUp} disabled={pwdBusy}
           style={{width:"100%",fontSize:14,padding:"13px 20px",background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700,opacity:pwdBusy?.6:1}}>
           {pwdBusy?"...":(spClaim?"Sécuriser mon compte":"Créer mon compte")}
