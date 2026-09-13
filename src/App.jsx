@@ -647,38 +647,23 @@ function setDashSession(code,role){try{localStorage.setItem('toeic-dash-teacher'
 function clearDashSession(){try{localStorage.removeItem('toeic-dash-teacher');localStorage.removeItem('toeic-dash-role');localStorage.removeItem('toeic-dash-group');}catch(e){console.warn("[teacher] session clear failed:",e&&e.message);}}
 function isDashAdmin(){return getDashRole()==="admin";}
 
-// TRANSITION UNIQUEMENT (à retirer une fois la migration B4 appliquée en prod) :
-// sert seulement au fallback legacy ci-dessous, le temps que les RPC existent.
-var ADMIN_TEACHER_CODE=(import.meta.env&&import.meta.env.VITE_ADMIN_TEACHER_CODE)||"";
-
 // Valide un code formateur ET renvoie ses cohortes, côté serveur.
 // → {ok:true, role:"teacher"|"admin", groups:[…sans teacher_code…]}
 // → {ok:false, error:"invalid_code"|"rpc_error"}
+// SEUL chemin de validation possible depuis le client : depuis la migration
+// 2026-09-13_p2b4_lock_groups.sql, anon/authenticated n'ont plus aucun droit sur
+// `groups` au niveau table (SELECT accordé colonne par colonne, teacher_code et
+// teacher_email exclus). Un `.eq('teacher_code',…)` ou un `select('*')` échouerait.
+// Il n'y a plus de fallback : si la RPC répond mal, on refuse, bruyamment.
 async function teacherAuth(code){
   if(!code)return{ok:false,error:"invalid_code"};
   try{
     var r=await supabase.rpc('teacher_groups',{p_code:code});
-    if(!r.error){
-      var d=r.data||{};
-      if(d.ok)return{ok:true,role:d.role||"teacher",groups:d.groups||[]};
-      return{ok:false,error:d.error||"invalid_code"};
-    }
-    // PGRST202 = fonction inconnue → la migration B4 n'est pas encore appliquée.
-    // Tout autre code d'erreur est une vraie panne : on ne retombe PAS sur le
-    // chemin legacy (qui serait de toute façon refusé une fois le SQL passé).
-    if(r.error.code!=="PGRST202"){console.warn("[teacher] teacher_groups failed:",r.error.message);return{ok:false,error:"rpc_error"};}
-    console.warn("[teacher] teacher_groups absente — fallback legacy (migration B4 non appliquée)");
+    if(r.error){console.warn("[teacher] teacher_groups failed:",r.error.message);return{ok:false,error:"rpc_error"};}
+    var d=r.data||{};
+    if(d.ok)return{ok:true,role:d.role||"teacher",groups:d.groups||[]};
+    return{ok:false,error:d.error||"invalid_code"};
   }catch(e){console.warn("[teacher] teacher_groups caught:",e&&e.message);return{ok:false,error:"rpc_error"};}
-  // ── Fallback de transition (supprimé avec ADMIN_TEACHER_CODE une fois le SQL
-  //    B4 appliqué). Garde le dashboard vivant entre le déploiement du code et
-  //    l'exécution de la migration. Devient inerte après le verrouillage.
-  var admin=!!ADMIN_TEACHER_CODE&&code===ADMIN_TEACHER_CODE;
-  var q=supabase.from('groups').select('*').neq('code','teacher-internal');
-  if(!admin)q=q.eq('teacher_code',code);
-  var lr=await q.order('type',{ascending:true}).order('name',{ascending:true});
-  if(lr.error){console.warn("[teacher] legacy check failed:",lr.error.message);return{ok:false,error:"rpc_error"};}
-  if(!lr.data||!lr.data.length)return{ok:false,error:"invalid_code"};
-  return{ok:true,role:admin?"admin":"teacher",groups:lr.data};
 }
 
 // ─── PREMIUM FEATURE FLAG ───
