@@ -84,7 +84,11 @@ export async function signOutCompletely() {
     localStorage.removeItem('toeic-arena-profile');
     localStorage.removeItem('toeic-arena-name');
     localStorage.removeItem('toeic-arena-class');
+    // Session dashboard formateur (B4, 2026-09-13) : le code et le rôle survivaient
+    // à TOUS les logouts — un poste partagé gardait un accès enseignant indéfiniment.
     localStorage.removeItem('toeic-dash-group');
+    localStorage.removeItem('toeic-dash-teacher');
+    localStorage.removeItem('toeic-dash-role');
   } catch (e) { console.warn("[auth] localStorage purge caught:", e && e.message); }
 }
 

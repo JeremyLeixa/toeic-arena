@@ -640,6 +640,10 @@ var BUILD_ID="2026-09-13-security-p2ab";
 function getDashTeacher(){try{return localStorage.getItem('toeic-dash-teacher')||"";}catch(e){console.warn("[teacher-scope] read failed:",e&&e.message);return"";}}
 function getDashRole(){try{return localStorage.getItem('toeic-dash-role')||"";}catch(e){console.warn("[teacher-scope] role read failed:",e&&e.message);return"";}}
 function setDashSession(code,role){try{localStorage.setItem('toeic-dash-teacher',code);localStorage.setItem('toeic-dash-role',role||"teacher");}catch(e){console.warn("[teacher] session store failed:",e&&e.message);}}
+// Avant B4, AUCUN chemin de déconnexion (logout, deleteAccount, reset,
+// signOutCompletely) n'effaçait le code formateur : une session enseignante
+// survivait indéfiniment sur un poste partagé. Appelée depuis les 3 chemins de
+// App.jsx + signOutCompletely (auth.js) + le bouton de déconnexion du dashboard.
 function clearDashSession(){try{localStorage.removeItem('toeic-dash-teacher');localStorage.removeItem('toeic-dash-role');localStorage.removeItem('toeic-dash-group');}catch(e){console.warn("[teacher] session clear failed:",e&&e.message);}}
 function isDashAdmin(){return getDashRole()==="admin";}
 
@@ -12991,6 +12995,10 @@ function TeacherDash(p){
         {"\u2795 Cr\u00e9er un groupe"}
       </button>
       <button onClick={p.back} style={{display:"block",margin:"16px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"\u2190"} Exit</button>
+      {/* "Exit" ne fait que quitter la vue \u2014 le code formateur restait stock\u00e9.
+          Vraie d\u00e9connexion (B4) : purge le code, le r\u00f4le et la cohorte m\u00e9moris\u00e9e. */}
+      <button onClick={function(){if(!confirm("Se d\u00e9connecter du dashboard formateur ? Il faudra ressaisir ton code."))return;clearDashSession();p.back();}}
+        style={{display:"block",margin:"8px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",textDecoration:"underline"}}>{"Se d\u00e9connecter (formateur)"}</button>
     </div>
   </div>);
 
@@ -16378,7 +16386,11 @@ function Profile(p){
         }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.3)",width:"100%",marginBottom:8}}>
           {"\uD83D\uDDD1\uFE0F Supprimer mon compte et mes donn\u00e9es"}
         </button>
-        <button className="btn2" onClick={async function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;var r=await teacherAuth(code);if(!r.ok){alert("Code invalide");return;}p.reset();}}
+        <button className="btn2" onClick={async function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;var r=await teacherAuth(code);if(!r.ok){alert("Code invalide");return;}
+          // Un code valide d\u00e9clenchait la purge compl\u00e8te du compte sans la moindre
+          // confirmation \u2014 alors que son voisin "Supprimer mon compte" en demande deux.
+          if(!confirm("R\u00e9initialiser ce compte ? Toute la progression sera effac\u00e9e, sans retour possible."))return;
+          p.reset();}}
           style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.15)",width:"100%",marginBottom:8}}>
           {"\uD83D\uDD04 R\u00e9initialiser (formateur)"}
         </button>
@@ -18000,6 +18012,7 @@ var prevLeague=getLeague(c.weeklyXp);
     // path (lookupName returns empty → user re-goes through full onboarding incl. Battle Scan).
     // To fully destroy the session use deleteAccount instead.
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
+    clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
     _cachedUserId=null;_syncDirty=false;
     sU(null);sSP(null);sT("home");
   }
@@ -18040,6 +18053,7 @@ var prevLeague=getLeague(c.weeklyXp);
     await purgeUserRows(uid,u.name,u.classCode);
     try{await supabase.auth.signOut();}catch(e){console.warn("[deleteAccount] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
+    clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
     _cachedUserId=null;_syncDirty=false;
     sU(null);sSP(null);sT("home");
   }
@@ -18049,6 +18063,7 @@ var prevLeague=getLeague(c.weeklyXp);
     await purgeUserRows(uid,u.name,u.classCode);
     try{await supabase.auth.signOut();}catch(e){console.warn("[reset] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
+    clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
     _cachedUserId=null;_syncDirty=false;
     sU(null);sSP(null);sT("home");
   }
