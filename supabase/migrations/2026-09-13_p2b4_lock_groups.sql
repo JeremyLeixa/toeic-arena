@@ -39,9 +39,16 @@
 -- ════════════════════════════════════════════════════════════════════════
 
 -- On révoque tout, puis on ré-accorde SELECT colonne par colonne, sur toutes les
--- colonnes SAUF teacher_code. Le DO block lit information_schema plutôt qu'une
--- liste en dur : pas de maintenance à faire si une colonne est ajoutée plus tard
--- (elle sera simplement lisible, ce qui est le défaut voulu pour `groups`).
+-- colonnes SAUF teacher_code et teacher_email. Le DO block lit information_schema
+-- plutôt qu'une liste en dur : pas de maintenance à faire si une colonne est
+-- ajoutée plus tard (elle sera simplement lisible, ce qui est le défaut voulu
+-- pour `groups`).
+--
+-- teacher_email : ce n'est pas un secret d'authentification, mais c'est la PII
+-- des formateurs (adresse pro nominative) et AUCUN chemin élève ne la lit. Le
+-- dashboard la reçoit via teacher_groups (la RPC ne retire que teacher_code) et
+-- le cron du rapport hebdo passe par service_role. Rien à y gagner à la laisser
+-- ouverte à l'anon.
 DO $do$
 DECLARE v_cols text;
 BEGIN
@@ -50,7 +57,7 @@ BEGIN
     FROM information_schema.columns
    WHERE table_schema = 'public'
      AND table_name   = 'groups'
-     AND column_name <> 'teacher_code';
+     AND column_name NOT IN ('teacher_code', 'teacher_email');
 
   IF v_cols IS NULL THEN
     RAISE EXCEPTION 'table public.groups introuvable — migration interrompue';
@@ -65,14 +72,16 @@ END
 $do$;
 
 -- ── Vérification post-migration ────────────────────────────────────────
--- 1) Aucune ligne ne doit ressortir pour teacher_code :
+-- 1) Aucune ligne ne doit ressortir (schema public, colonnes sensibles) :
 --    SELECT grantee, privilege_type, column_name
 --      FROM information_schema.column_privileges
---     WHERE table_name = 'groups' AND column_name = 'teacher_code'
+--     WHERE table_name = 'groups'
+--       AND column_name IN ('teacher_code','teacher_email')
 --       AND grantee IN ('anon','authenticated');
 --
 -- 2) Sonde anon (console navigateur, non connecté au dashboard) :
 --    await supabase.from('groups').select('teacher_code')   -> erreur permission
+--    await supabase.from('groups').select('teacher_email')  -> erreur permission
 --    await supabase.from('groups').select('code,name,type') -> 200 + données
 --    await supabase.from('groups').select('*')              -> erreur (attendu)
 --    await supabase.from('groups').update({type:'school'}).eq('code','idrac2026')
