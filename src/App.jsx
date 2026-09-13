@@ -613,19 +613,69 @@ var BUILD_ID="2026-09-13-security-p2ab";
 // on students. Fine for good-faith partner teachers; a real data-isolation
 // boundary requires Supabase Auth + RLS (deferred "hard" version).
 // The logged-in code is stored at login in localStorage['toeic-dash-teacher'].
-// SECURITY (2026-09-11, finding H2) — deux trous fermés ici :
-//  1. Plus de fallback en dur : l'ancien code admin était compilé dans le bundle,
-//     donc quiconque le tapait devenait super-admin tous campus. Le code admin vient
-//     désormais UNIQUEMENT de VITE_ADMIN_TEACHER_CODE (Vercel). Si l'env var manque →
-//     "" → personne n'est admin (fail-closed), au lieu de fail-open.
-//  2. EMPTY code n'est PLUS admin. Avant, `!t` donnait l'admin à toute session sans
-//     code stocké (dont un attaquant qui vide localStorage). Désormais il FAUT un code
-//     stocké non-vide égal au code admin. Conséquence assumée : les sessions "code vide"
-//     (dont le déverrouillage biométrique) doivent se reconnecter une fois avec le code
-//     admin pour retrouver la vue multi-campus.
-var ADMIN_TEACHER_CODE=(import.meta.env&&import.meta.env.VITE_ADMIN_TEACHER_CODE)||"";
+// SECURITY (2026-09-11, finding H2) — deux trous fermés à l'époque : plus de code
+// admin en dur dans le bundle (il venait de VITE_ADMIN_TEACHER_CODE, fail-closed
+// si absent), et un code vide n'était plus admin (avant, vider localStorage
+// suffisait à devenir super-admin). Conséquence assumée, toujours valable : les
+// sessions "code vide" (dont le déverrouillage biométrique) doivent se reconnecter
+// une fois avec leur code pour retrouver leur scope.
+// Depuis B4 (2026-09-13) le rôle admin ne vient plus du bundle du tout : il est
+// décidé par le serveur (table privée `teacher_codes`) — voir ci-dessous.
+// SECURITY (2026-09-13, finding H3 — B4) : la validation du code et le listing
+// des cohortes passent maintenant par la RPC `teacher_groups` (SECURITY DEFINER).
+// POURQUOI. Avant, le login était `groups.select('code').eq('teacher_code',code)`
+// exécuté avec la clé anon. Comme `groups` est lisible par anon, n'importe qui
+// faisait `select('teacher_code')` dans la console, récupérait TOUS les codes
+// formateur et ouvrait le dashboard → PII de tous les élèves. La migration
+// 2026-09-13_p2b4_lock_groups.sql retire la colonne `teacher_code` de la portée
+// du rôle anon (lecture ET écriture) : ce chemin client n'est donc plus possible,
+// et ne doit plus être utilisé. NE PAS réintroduire de `.eq('teacher_code',…)`
+// ni de `select('*')` sur `groups` côté client — les deux échouent désormais.
+// Le rôle (teacher/admin) est décidé par le serveur et mémorisé dans
+// localStorage['toeic-dash-role'] : c'est un confort d'affichage, PAS la
+// frontière de sécurité (celle-ci est le scoping SQL des RPC).
+// ⚠️ Rappel : tant que la RLS est OFF sur `students` (Phase C), un attaquant peut
+// encore lire la table en direct via curl. B4 ferme l'usurpation d'identité
+// enseignante, pas l'exposition de `students`.
 function getDashTeacher(){try{return localStorage.getItem('toeic-dash-teacher')||"";}catch(e){console.warn("[teacher-scope] read failed:",e&&e.message);return"";}}
-function isDashAdmin(){var t=getDashTeacher();return!!t&&!!ADMIN_TEACHER_CODE&&t===ADMIN_TEACHER_CODE;}
+function getDashRole(){try{return localStorage.getItem('toeic-dash-role')||"";}catch(e){console.warn("[teacher-scope] role read failed:",e&&e.message);return"";}}
+function setDashSession(code,role){try{localStorage.setItem('toeic-dash-teacher',code);localStorage.setItem('toeic-dash-role',role||"teacher");}catch(e){console.warn("[teacher] session store failed:",e&&e.message);}}
+function clearDashSession(){try{localStorage.removeItem('toeic-dash-teacher');localStorage.removeItem('toeic-dash-role');localStorage.removeItem('toeic-dash-group');}catch(e){console.warn("[teacher] session clear failed:",e&&e.message);}}
+function isDashAdmin(){return getDashRole()==="admin";}
+
+// TRANSITION UNIQUEMENT (à retirer une fois la migration B4 appliquée en prod) :
+// sert seulement au fallback legacy ci-dessous, le temps que les RPC existent.
+var ADMIN_TEACHER_CODE=(import.meta.env&&import.meta.env.VITE_ADMIN_TEACHER_CODE)||"";
+
+// Valide un code formateur ET renvoie ses cohortes, côté serveur.
+// → {ok:true, role:"teacher"|"admin", groups:[…sans teacher_code…]}
+// → {ok:false, error:"invalid_code"|"rpc_error"}
+async function teacherAuth(code){
+  if(!code)return{ok:false,error:"invalid_code"};
+  try{
+    var r=await supabase.rpc('teacher_groups',{p_code:code});
+    if(!r.error){
+      var d=r.data||{};
+      if(d.ok)return{ok:true,role:d.role||"teacher",groups:d.groups||[]};
+      return{ok:false,error:d.error||"invalid_code"};
+    }
+    // PGRST202 = fonction inconnue → la migration B4 n'est pas encore appliquée.
+    // Tout autre code d'erreur est une vraie panne : on ne retombe PAS sur le
+    // chemin legacy (qui serait de toute façon refusé une fois le SQL passé).
+    if(r.error.code!=="PGRST202"){console.warn("[teacher] teacher_groups failed:",r.error.message);return{ok:false,error:"rpc_error"};}
+    console.warn("[teacher] teacher_groups absente — fallback legacy (migration B4 non appliquée)");
+  }catch(e){console.warn("[teacher] teacher_groups caught:",e&&e.message);return{ok:false,error:"rpc_error"};}
+  // ── Fallback de transition (supprimé avec ADMIN_TEACHER_CODE une fois le SQL
+  //    B4 appliqué). Garde le dashboard vivant entre le déploiement du code et
+  //    l'exécution de la migration. Devient inerte après le verrouillage.
+  var admin=!!ADMIN_TEACHER_CODE&&code===ADMIN_TEACHER_CODE;
+  var q=supabase.from('groups').select('*').neq('code','teacher-internal');
+  if(!admin)q=q.eq('teacher_code',code);
+  var lr=await q.order('type',{ascending:true}).order('name',{ascending:true});
+  if(lr.error){console.warn("[teacher] legacy check failed:",lr.error.message);return{ok:false,error:"rpc_error"};}
+  if(!lr.data||!lr.data.length)return{ok:false,error:"invalid_code"};
+  return{ok:true,role:admin?"admin":"teacher",groups:lr.data};
+}
 
 // ─── PREMIUM FEATURE FLAG ───
 // Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
@@ -4285,17 +4335,16 @@ var[step,sSt]=useState("name");
           <input type="password" value={teacherCode} onChange={function(e){sTC(e.target.value);}} placeholder="Enter teacher code..."
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
-        <button className="btn1" onClick={function(){
+        <button className="btn1" onClick={async function(){
           if(!teacherCode||teacherChecking)return;
           setTeacherChecking(true);setTeacherErr(false);
-          supabase.from('groups').select('code').eq('teacher_code',teacherCode).limit(1)
-            .then(function(res){
-              setTeacherChecking(false);
-              if(res.data&&res.data.length>0){
-                try{localStorage.setItem('toeic-dash-teacher',teacherCode);localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){console.warn("[teacher] login store failed:",e&&e.message);}
-                p.goTeacher();
-              }else{setTeacherErr(true);}
-            });
+          // B4 : la validation se fait côté serveur (teacherAuth → RPC teacher_groups).
+          var r=await teacherAuth(teacherCode);
+          setTeacherChecking(false);
+          if(!r.ok){setTeacherErr(true);return;}
+          setDashSession(teacherCode,r.role);
+          if(r.groups.length){try{localStorage.setItem('toeic-dash-group',r.groups[0].code);}catch(e){console.warn("[teacher] group store failed:",e&&e.message);}}
+          p.goTeacher();
         }} style={{opacity:teacherCode&&!teacherChecking?1:.4,pointerEvents:teacherCode&&!teacherChecking?"auto":"none"}}>
           {teacherChecking?"V\u00e9rification...":"Access Dashboard"}
         </button>
@@ -12432,11 +12481,15 @@ function TeacherDash(p){
   }
 
   function loadGroups(){
-    // Multi-campus scoping: non-admin teachers see only their own groups.
-    var q=supabase.from('groups').select('*').neq('code','teacher-internal');
-    if(!isDashAdmin())q=q.eq('teacher_code',getDashTeacher());
-    q.order('type',{ascending:true}).order('name',{ascending:true})
-      .then(function(res){if(res.data)setGroups(res.data);});
+    // B4 : le scoping multi-campus est fait EN SQL par la RPC teacher_groups.
+    // On ne fait plus `select('*')` (le `*` inclurait teacher_code, dont la lecture
+    // est révoquée) ni de filtre client sur teacher_code. La RPC renvoie déjà la
+    // liste scopée, teacher_code retiré, et le rôle qui fait autorité.
+    teacherAuth(getDashTeacher()).then(function(r){
+      if(!r.ok){console.warn("[teacher] loadGroups refused:",r.error);setGroups([]);return;}
+      try{localStorage.setItem('toeic-dash-role',r.role);}catch(e){console.warn("[teacher] role store failed:",e&&e.message);}
+      setGroups(r.groups);
+    });
   }
   useEffect(function(){loadGroups();loadEvents();},[]);
   // Guard-rail: if the remembered group isn't in the scoped set (stale localStorage
@@ -12915,7 +12968,7 @@ function TeacherDash(p){
         </div>
         <div style={{color:"var(--cyan)",fontSize:16}}>{"\u2192"}</div>
       </button>}
-      <button onClick={function(){var code=prompt("Code administrateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){setCgForm({name:"",code:"",teacherCode:isDashAdmin()?"":getDashTeacher(),type:"school",startDate:"",endDate:"",teacherEmail:"",reportOptin:true});setCgCodeErr("");setDashPhase("create-group");}else{alert("Code invalide");}});}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
+      <button onClick={async function(){var code=prompt("Code administrateur :");if(!code)return;var r=await teacherAuth(code);if(!r.ok){alert("Code invalide");return;}setCgForm({name:"",code:"",teacherCode:r.role==="admin"?"":getDashTeacher(),type:"school",startDate:"",endDate:"",teacherEmail:"",reportOptin:true});setCgCodeErr("");setDashPhase("create-group");}} className="btn2" style={{width:"100%",marginTop:16,padding:"14px 24px",fontSize:14,borderColor:"rgba(0,224,255,.2)",color:"var(--cyan)"}}>
         {"\u2795 Cr\u00e9er un groupe"}
       </button>
       <button onClick={p.back} style={{display:"block",margin:"16px auto 0",background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"\u2190"} Exit</button>
@@ -16294,7 +16347,7 @@ function Profile(p){
         }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.3)",width:"100%",marginBottom:8}}>
           {"\uD83D\uDDD1\uFE0F Supprimer mon compte et mes donn\u00e9es"}
         </button>
-        <button className="btn2" onClick={function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0)p.reset();else alert("Code invalide");});}}
+        <button className="btn2" onClick={async function(){var code=prompt("Code formateur pour r\u00e9initialiser :");if(!code)return;var r=await teacherAuth(code);if(!r.ok){alert("Code invalide");return;}p.reset();}}
           style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.15)",width:"100%",marginBottom:8}}>
           {"\uD83D\uDD04 R\u00e9initialiser (formateur)"}
         </button>
@@ -16430,7 +16483,12 @@ function Profile(p){
         // Try biometric first if registered
         if(bioAvail&&bioRegistered){try{var ok=await bioAuthenticate();if(ok){p.goTeacher();return;}}catch(e){console.warn("[teacher] biometric auth failed:",e&&e.message);}}
         // Fall back to password prompt
-        var code=prompt("Code formateur :");if(!code)return;supabase.from('groups').select('code').eq('teacher_code',code).limit(1).then(function(res){if(res.data&&res.data.length>0){try{localStorage.setItem('toeic-dash-teacher',code);localStorage.setItem('toeic-dash-group',res.data[0].code);}catch(e){console.warn("[teacher] login store failed:",e&&e.message);}p.goTeacher();}else{alert("Code invalide");}});}}
+        var code=prompt("Code formateur :");if(!code)return;
+        var r=await teacherAuth(code);
+        if(!r.ok){alert("Code invalide");return;}
+        setDashSession(code,r.role);
+        if(r.groups.length){try{localStorage.setItem('toeic-dash-group',r.groups[0].code);}catch(e){console.warn("[teacher] group store failed:",e&&e.message);}}
+        p.goTeacher();}}
         style={{fontSize:13,width:"100%",marginBottom:20,padding:"14px 24px",borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
         <GIcon name="public-speaker" size={16} color="var(--cyan)" style={{marginRight:6}}/>Teacher Dashboard
       </button>}
