@@ -12891,11 +12891,27 @@ function TeacherDash(p){
       </div>
       
       {/* Delete student */}
-      <button className="btn2" onClick={function(){
+      {/* B5 (2026-09-13) — ce bouton ne supprimait RIEN. Le filtre `.eq('id',s.id)`
+          était bon (s.id EST la PK) mais ni anon ni authenticated n'ont le privilège
+          DELETE sur students : 0 ligne affectée, erreur avalée, et l'UI affichait
+          quand même un succès. Et aucune table satellite n'était purgée.
+          Passe donc par teacher_delete_student (SECURITY DEFINER) : portée limitée
+          aux cohortes du formateur, purge des satellites, trace dans
+          teacher_audit_log. On identifie l'élève par (name, class_code) — la clé
+          naturelle de toutes les tables satellites. */}
+      <button className="btn2" onClick={async function(){
         if(prompt("Type DELETE to confirm removing "+s.name)!=="DELETE")return;
-        supabase.from('students').delete().eq('id',s.id).then(function(){
-          setDetail(null);loadStudents();
-        });
+        var r=await supabase.rpc('teacher_delete_student',{p_code:getDashTeacher(),p_name:s.name,p_class_code:s.class_code});
+        if(r.error){console.warn("[teacher-delete] rpc failed:",r.error.message);alert("Échec de la suppression : "+r.error.message);return;}
+        if(!r.data||!r.data.ok){
+          var why=r.data&&r.data.error;
+          console.warn("[teacher-delete] refused:",why);
+          alert(why==="not_owner"?"Cet élève n'est pas dans une de tes cohortes."
+               :why==="no_student"?"Élève introuvable."
+               :"Code formateur invalide — reconnecte-toi.");
+          return;
+        }
+        setDetail(null);loadStudents();
       }} style={{fontSize:12,color:"var(--red)",borderColor:"rgba(255,71,87,.2)",width:"100%",marginBottom:20}}>🗑️ Delete this student</button>
     </div>);
   }
