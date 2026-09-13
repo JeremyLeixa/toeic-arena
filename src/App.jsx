@@ -12503,30 +12503,33 @@ function TeacherDash(p){
   // ── Rapport hebdo : configuration email (popup) ──
   // Le cron (job pg_cron global) ramasse tout groupe ayant un teacher_email.
   // "Activer son rapport" = juste écrire l'email sur les groupes du formateur.
-  function currentTeacherCode(){
-    var g=groups.find(function(x){return x.code===classCode;});
-    return (g&&g.teacher_code)||getDashTeacher()||"";
-  }
+  // B4 : `currentTeacherCode()` a disparu — les groupes renvoyés par la RPC ne
+  // portent plus `teacher_code`. Le serveur retrouve lui-même le code cible à
+  // partir du code de cohorte sélectionné, et vérifie qu'il nous appartient.
   function openReportCfg(){
     var g=groups.find(function(x){return x.teacher_email;});
     setRcEmail((g&&g.teacher_email)||"");
     setRcOptin(g?g.weekly_report_optin!==false:true);
     setRcMsg(null);setShowReportCfg(true);
   }
-  function saveReportCfg(){
+  async function saveReportCfg(){
     var email=rcEmail.trim();
     if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){setRcMsg({err:true,text:"Email invalide."});return;}
-    var tc=currentTeacherCode();
-    if(!tc){setRcMsg({err:true,text:"Aucun code formateur rattaché à cette cohorte."});return;}
     setRcBusy(true);
-    // Portée "toutes mes cohortes" = tous les groupes partageant ce teacher_code.
-    supabase.from('groups').update({teacher_email:email||null,weekly_report_optin:rcOptin}).eq('teacher_code',tc)
-      .then(function(res){
-        setRcBusy(false);
-        if(res.error){console.warn("[reportcfg] update failed:",res.error.message);setRcMsg({err:true,text:"Échec : "+res.error.message});return;}
-        setRcMsg({ok:true,text:email?"Enregistré — rapport hebdo activé pour toutes tes cohortes ✓":"Email retiré — plus de rapport hebdo."});
-        loadGroups();
-      });
+    // Portée "toutes mes cohortes" = tous les groupes partageant le teacher_code
+    // de la cohorte sélectionnée. C'est le serveur qui le résout (le client ne
+    // connaît plus les teacher_code) et qui vérifie qu'elle nous appartient.
+    var r=await supabase.rpc('teacher_set_report_email',{p_code:getDashTeacher(),p_group_code:classCode,p_email:email||null,p_optin:rcOptin});
+    setRcBusy(false);
+    if(r.error){console.warn("[reportcfg] rpc failed:",r.error.message);setRcMsg({err:true,text:"Échec : "+r.error.message});return;}
+    if(!r.data||!r.data.ok){
+      var why=r.data&&r.data.error;
+      console.warn("[reportcfg] refused:",why);
+      setRcMsg({err:true,text:why==="no_teacher_code"?"Aucun code formateur rattaché à cette cohorte.":why==="not_owner"?"Cette cohorte n'est pas la tienne.":"Code formateur invalide — reconnecte-toi."});
+      return;
+    }
+    setRcMsg({ok:true,text:email?"Enregistré — rapport hebdo activé pour toutes tes cohortes ✓":"Email retiré — plus de rapport hebdo."});
+    loadGroups();
   }
   function sendReportPreview(){
     var email=rcEmail.trim();
@@ -13133,19 +13136,31 @@ function TeacherDash(p){
         :null}
 
         {/* Create Button */}
-        <button className="btn1" onClick={function(){
+        <button className="btn1" onClick={async function(){
           if(!cgValid||cgSaving)return;
           setCgSaving(true);
-          supabase.from('groups').upsert({
-            code:cgForm.code,name:cgForm.name.trim(),type:cgForm.type,
-            start_date:cgForm.startDate,end_date:cgForm.endDate,
-            seasons:cgSeasons,teacher_code:isDashAdmin()?cgForm.teacherCode.trim():getDashTeacher(),
-            teacher_email:cgForm.teacherEmail.trim()||null,weekly_report_optin:cgForm.reportOptin
-          },{onConflict:'code'}).then(function(res){
-            setCgSaving(false);
-            if(res.error){alert("Erreur: "+res.error.message);return;}
-            loadGroups();setDashPhase("picker");
+          // B4 : l'upsert direct permettait de réutiliser le `code` d'une cohorte
+          // existante et d'en écraser la ligne, teacher_code compris — soit une
+          // prise de contrôle de la cohorte d'un autre formateur. La RPC refuse
+          // (not_owner) et ignore p_teacher_code sauf pour l'admin.
+          var r=await supabase.rpc('teacher_upsert_group',{
+            p_code:getDashTeacher(),p_group_code:cgForm.code,p_name:cgForm.name.trim(),p_type:cgForm.type,
+            p_start:cgForm.startDate,p_end:cgForm.endDate,p_seasons:cgSeasons,
+            p_teacher_code:cgForm.teacherCode.trim()||null,
+            p_teacher_email:cgForm.teacherEmail.trim()||null,p_optin:cgForm.reportOptin
           });
+          setCgSaving(false);
+          if(r.error){alert("Erreur: "+r.error.message);return;}
+          if(!r.data||!r.data.ok){
+            var why=r.data&&r.data.error;
+            console.warn("[create-group] refused:",why);
+            alert(why==="not_owner"?"Ce code de cohorte appartient déjà à un autre formateur."
+                 :why==="reserved_code"?"Ce code est réservé."
+                 :why==="bad_group_code"?"Code de cohorte trop court."
+                 :"Code formateur invalide — reconnecte-toi.");
+            return;
+          }
+          loadGroups();setDashPhase("picker");
         }} style={{width:"100%",padding:"14px 24px",fontSize:15,opacity:cgValid&&!cgSaving?1:.4,pointerEvents:cgValid&&!cgSaving?"auto":"none"}}>
           {cgSaving?"Cr\u00e9ation...":"Cr\u00e9er le groupe"}
 
