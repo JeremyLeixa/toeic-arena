@@ -668,6 +668,26 @@ function saveLocal(d){
   }catch(e){}
 }
 
+// Lecture SYNCHRONE du JWT user depuis le storage supabase-js (clé sb-<ref>-auth-token).
+// P2 Phase B (B2) : le keepalive beforeunload ne peut pas await getSession(), donc il lit
+// le token ici pour l'envoyer en Bearer au lieu de la clé anon → sous RLS (Phase C),
+// auth.uid() est renseigné et l'UPDATE de sa PROPRE ligne passe (la clé anon donnerait
+// auth.uid()=NULL → refus). Retourne null si absent/illisible (fallback anon côté appelant).
+function getAccessTokenSync(){
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(k&&k.slice(0,3)==="sb-"&&k.indexOf("-auth-token")>0){
+        var raw=localStorage.getItem(k); if(!raw)continue;
+        var o=JSON.parse(raw);
+        var tok=o&&(o.access_token||(o.currentSession&&o.currentSession.access_token));
+        if(tok)return tok;
+      }
+    }
+  }catch(e){console.warn("[auth] getAccessTokenSync caught:",e&&e.message);}
+  return null;
+}
+
 function supaToLocal(data){
   return{
     name:data.name,classCode:data.class_code||"visitor",
@@ -17262,14 +17282,17 @@ useEffect(function(){
             daily_seen:d.dailySeen||[],
             gdpr_consent:d.gdprConsent||null,
           };
-          // fetch keepalive with PATCH (=UPDATE) — survives tab close, sends auth headers
-          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/students?name=ilike."+encodeURIComponent(d.name)+"&class_code=eq."+encodeURIComponent(cc),{
+          // fetch keepalive with PATCH (=UPDATE) — survives tab close, sends auth headers.
+          // B2 : Bearer = JWT user (getAccessTokenSync), fallback clé anon. apikey reste la
+          // clé anon (requise par Supabase). Sous RLS (Phase C) le JWT donne auth.uid() pour
+          // passer la policy own-row ; la clé anon donnerait auth.uid()=NULL → refus.
+          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;var _bearer=getAccessTokenSync()||_anonKey;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/students?name=ilike."+encodeURIComponent(d.name)+"&class_code=eq."+encodeURIComponent(cc),{
             method:"PATCH",keepalive:true,
             headers:{
               "Content-Type":"application/json",
               "Prefer":"return=minimal",
               "apikey":_anonKey,
-              "Authorization":"Bearer "+_anonKey
+              "Authorization":"Bearer "+_bearer
             },
             body:JSON.stringify(payload)
           });}catch(e){}
