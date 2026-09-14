@@ -603,7 +603,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-09-14-security-h1-push";
+var BUILD_ID="2026-09-14-forced-claim";
 
 // ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
 // Each teacher logs in with their own teacher_code and sees ONLY the groups
@@ -4096,8 +4096,18 @@ var[step,sSt]=useState("name");
           {pwdBusy?"...":(spClaim?"Sécuriser mon compte":"Créer mon compte")}
         </button>
         <div style={{marginTop:20,textAlign:"center"}}>
+          {/* DATE BUTOIR (2026-09-14) — le lien "Plus tard - continuer sans mot de passe"
+              a ete retire : c'etait le filet de la migration souple, et il faisait que
+              personne ne migrait (1 compte sur 160 au moment du retrait). Un eleve legacy
+              qui revient DOIT desormais choisir un mot de passe ; le claim est de toute
+              facon le chemin, sa progression est conservee et il n'est bloque nulle part.
+              S'il oublie ensuite ce mot de passe : bouton "Reinitialiser l'acces" cote
+              formateur (fiche eleve du dashboard). La fonction claimLater() et recover()
+              restent en place le temps de verifier que la migration se passe bien — c'est
+              ce qui rend ce retrait revertable d'un seul commit. Elles disparaissent avec
+              l'activation de la RLS, en meme temps que recover_student_row. */}
           {spClaim
-            ?<button onClick={claimLater} disabled={pwdBusy} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"Plus tard — continuer sans mot de passe"}</button>
+            ?null
             :<button onClick={function(){setPwdErr("");setPwdTarget({name:name.trim(),class_code:classCode,password_set_at:true});sSt("enterPassword");}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"J'ai déjà un mot de passe — me connecter"}</button>}
         </div>
       </div>
