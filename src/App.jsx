@@ -940,7 +940,15 @@ async function save(d,opts){
       // in ANOTHER class_code. If yes, refuse to INSERT a duplicate (this is how the
       // visitor phantoms got created — local classCode drifted to "visitor" but the
       // student had a legit row in idrac2026/famille2026/cesi2026/etc).
-      var dup=await supabase.from("students").select("class_code").ilike("name",d.name).neq("class_code",cc);
+      // B3 : ce `select('class_code').ilike('name',…).neq('class_code',cc)` était un
+      // oracle inter-promos (« existe-t-il un Hugo ailleurs, et dans quelle promo ? ») —
+      // la même classe de fuite que celle fermée sur lookupName le 2026-09-11. La RPC ne
+      // renvoie plus de lignes : un booléen et la liste des codes, qui ne sert qu'au log.
+      // Le filtre passe de `ilike` à norm_name (insensible aussi aux accents) → le
+      // garde-fou devient légèrement PLUS strict, ce qui est le bon sens de l'erreur.
+      var dupR=await supabase.rpc('name_exists_in_other_class',{p_name:d.name,p_class_code:cc});
+      if(dupR.error)console.warn("[SAVE] dup check failed:",dupR.error.message);
+      var dup={data:(dupR.data&&dupR.data.found)?(dupR.data.codes||[]):[]};
       if(dup.data&&dup.data.length>0){
         // Homonyme légitime vs phantom : les deux ont la même signature ici (le nom
         // existe ailleurs, l'UPDATE n'a rien matché). On les sépare par l'INTENTION,
@@ -954,10 +962,10 @@ async function save(d,opts){
         // et tout est perdu au changement d'appareil. Bug vécu (nouveau "Romain"
         // en 2027 face au "Romain" d'idrac2026) — corrigé le 2026-07-31.
         if(!(opts&&opts.allowInsert)){
-          console.error("[SAVE] BLOCKED: would create phantom — "+d.name+" already exists in class "+dup.data[0].class_code+" (attempted cc="+cc+")");
+          console.error("[SAVE] BLOCKED: would create phantom — "+d.name+" already exists in class "+dup.data[0]+" (attempted cc="+cc+")");
           return;
         }
-        console.warn("[SAVE] homonym INSERT authorized by onboarding —",d.name,"cc="+cc,"| also in:",dup.data.map(function(r){return r.class_code;}).join(", "));
+        console.warn("[SAVE] homonym INSERT authorized by onboarding —",d.name,"cc="+cc,"| also in:",dup.data.join(", "));
       }
       // Clean INSERT — student is genuinely new.
       // Do NOT set id: user.id — the same auth user may already own another students row
@@ -17947,11 +17955,18 @@ var prevLeague=getLeague(c.weeklyXp);
   async function recoverByEmail(email){
     var e=(email||"").trim().toLowerCase();
     if(!e)return false;
-    var rAll=await supabase.from('students').select('*').ilike('email',e);
-    var rMatches=(rAll.data||[]).filter(function(s){return (s.email||"").toLowerCase()===e;});
-    rMatches.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
-    if(rMatches.length===0){console.warn("[recoverByEmail] no students row for",e);return false;}
-    var d=rMatches[0];
+    // B3 : c'était `select('*').ilike('email', e)` — une lecture GLOBALE, sans filtre de
+    // cohorte, avec un `ilike` non échappé : un email contenant `%` aurait ramené la
+    // table entière. La RPC ne prend AUCUN paramètre, elle lit l'email dans le JWT de la
+    // session — on ne peut donc viser que son propre compte. C'est la seule des RPC de ce
+    // lot qui soit déjà sûre sous la Phase C.
+    // La pré-condition ne change pas : signInWithPassword() a réussi juste avant, donc la
+    // session porte bien l'email demandé. Le garde-fou ci-dessous le revérifie.
+    var rr=await supabase.rpc('my_student_by_email');
+    if(rr.error)console.warn("[recoverByEmail] rpc failed:",rr.error.message);
+    var d=rr.data||null;
+    if(!d){console.warn("[recoverByEmail] no students row for",e);return false;}
+    if((d.email||"").toLowerCase()!==e){console.warn("[recoverByEmail] session email mismatch for",e);return false;}
     // La session est censée être active grâce à signInWithPassword
     var sess=await supabase.auth.getSession();
     var userId=sess.data.session?sess.data.session.user.id:null;
