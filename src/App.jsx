@@ -603,7 +603,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-09-14-forced-claim";
+var BUILD_ID="2026-09-14-phase-c-lite";
 
 // ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
 // Each teacher logs in with their own teacher_code and sees ONLY the groups
@@ -869,7 +869,10 @@ var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync t
 // lettres — c'est ce qui donnait "public-speaker Listening Part 4" dans le dashboard.
 function optIcon(ic){if(!ic)return"";for(var k=0;k<ic.length;k++){if(ic.charCodeAt(k)>127)return ic;}return"";}
 
-var DASH_STUDENT_COLS="id,name,class_code,xp,weekly_xp,week_id,streak,last_active,stats,total_time,module_scores,mock_results,game_scores,unlocked_ach,weekly_daily_count,weekly_history";
+// Colonnes du roster formateur. Plus utilisee comme argument de select() depuis la
+// Phase C-lite (le dashboard passe par la RPC teacher_students) : gardee comme
+// reference, la liste SQL de la RPC doit rester identique a celle-ci.
+// var DASH_STUDENT_COLS="id,name,class_code,xp,weekly_xp,week_id,streak,last_active,stats,total_time,module_scores,mock_results,game_scores,unlocked_ach,weekly_daily_count,weekly_history";
 // A "ghost student" is a registered student (non-visitor) who barely engaged with the app
 function isGhost(s){if(!s)return false;if(s.class_code==="visitor")return false;var tq=(s.stats&&s.stats.totalQ)||0;var cr=(s.stats&&s.stats.cardsRev)||0;return tq<=15&&cr<=10;}
 // Recover an auth session if the current one has been lost (refresh token expired,
@@ -12626,9 +12629,12 @@ function TeacherDash(p){
     setCampusData(null); // loading
     // Active = last_active within 7 days (last_active is a "YYYY-MM-DD" string → lexical compare works).
     var cutoff=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
-    supabase.from('students').select('name,class_code,stats,total_time,module_scores,last_active').in('class_code',codes).limit(5000)
+    // Phase C-lite : meme raison, via la RPC admin (scoping par teacher_role_of).
+    supabase.rpc('teacher_campus_rows',{p_code:getDashTeacher()})
       .then(function(res){
-        var rows=(res.data||[]).filter(function(r){return !isGhost(r);});
+        if(res.error){console.warn("[campus] teacher_campus_rows failed:",res.error.message);setCampusData({rows:[],totals:{campuses:0,students:0,active:0,median:null}});return;}
+        if(!res.data||!res.data.ok){console.warn("[campus] refused:",res.data&&res.data.error);setCampusData({rows:[],totals:{campuses:0,students:0,active:0,median:null}});return;}
+        var rows=(res.data.students||[]).filter(function(r){return !isGhost(r);});
         var byCode={};
         groups.forEach(function(g){byCode[g.code]={code:g.code,name:g.name,type:g.type,students:0,active:0,toeics:[],accSum:0,accCnt:0};});
         var allToeics=[],totActive=0;
@@ -12651,9 +12657,22 @@ function TeacherDash(p){
   useEffect(function(){if(dashTab==="feedback")loadFeedback();},[dashTab]);
 
   function loadStudents(){
-    supabase.from('students').select(DASH_STUDENT_COLS).eq('class_code',classCode).order('xp',{ascending:false}).limit(200)
-      .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
-      .catch(function(){setLoad(false);});
+    fetchRoster(classCode);
+  }
+  // Phase C-lite : les 3 chargements de roster lisaient `students` en direct, ce que le
+  // verrou de privileges refuse. La RPC teacher_students applique le scoping formateur
+  // (cohorte possedee, admin = toutes) et exclut Teacher cote serveur. Colonnes
+  // identiques a DASH_STUDENT_COLS. Factorise au passage : c'etait copie-colle 3 fois.
+  function fetchRoster(code){
+    setLoad(true);
+    supabase.rpc('teacher_students',{p_code:getDashTeacher(),p_class_code:code})
+      .then(function(res){
+        setLoad(false);
+        if(res.error){console.warn("[dash] teacher_students failed:",res.error.message);setStudents([]);return;}
+        if(!res.data||!res.data.ok){console.warn("[dash] roster refused:",res.data&&res.data.error);setStudents([]);return;}
+        setStudents(res.data.students||[]);
+      })
+      .catch(function(e){setLoad(false);console.warn("[dash] teacher_students caught:",e&&e.message);});
   }
   useEffect(function(){loadStudents();},[classCode])
 
@@ -13062,9 +13081,7 @@ function TeacherDash(p){
             setClassCode(g.code);
             try{localStorage.setItem('toeic-dash-group',g.code);}catch(e){}
             setLoad(true);setDetail(null);setDashPhase("dashboard");
-            supabase.from('students').select(DASH_STUDENT_COLS).eq('class_code',g.code).order('xp',{ascending:false}).limit(200)
-              .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
-              .catch(function(){setLoad(false);});
+            fetchRoster(g.code);
           }} className="crd" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 20px",cursor:"pointer",
             border:"1px solid "+(isExpired?"rgba(255,71,87,.25)":"var(--bdr)"),background:"var(--bg2)",borderRadius:16,textAlign:"left",
             transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
@@ -13134,9 +13151,7 @@ function TeacherDash(p){
             return(<button key={c.code} onClick={function(){
               setClassCode(c.code);try{localStorage.setItem('toeic-dash-group',c.code);}catch(e){console.warn("[campus] set group failed:",e&&e.message);}
               setLoad(true);setDetail(null);setDashTab("overview");setDashPhase("dashboard");
-              supabase.from('students').select(DASH_STUDENT_COLS).eq('class_code',c.code).order('xp',{ascending:false}).limit(200)
-                .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
-                .catch(function(){setLoad(false);});
+              fetchRoster(c.code);
             }} className="crd" style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",cursor:"pointer",border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:14,textAlign:"left",fontFamily:"'DM Sans',sans-serif",width:"100%"}}>
               <div style={{fontSize:20,flexShrink:0}}>{typeIcon}</div>
               <div style={{flex:1,minWidth:0}}>
