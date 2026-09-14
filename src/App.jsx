@@ -848,6 +848,14 @@ var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync t
 // Cette liste est l'union EXACTE de ce que le dashboard consomme. Si une colonne
 // manque, c'est un rendu vide silencieux : reverifier l'export CSV en priorite, c'est
 // le plus large consommateur.
+// MISSION_MODULES melange des emoji et des cles d'icone SVG : la migration
+// emoji->SVG n'a converti que lisP4 ("public-speaker"), ses 19 voisines sont restees
+// en emoji. Les rendus doivent donc gerer LES DEUX (pattern de repli documente :
+// GAME_ICON_PATHS[x] ? <GIcon/> : x). Dans un <option>, une SVG est impossible :
+// on n'affiche l'icone que si c'en est une, sinon la cle s'afficherait en toutes
+// lettres — c'est ce qui donnait "public-speaker Listening Part 4" dans le dashboard.
+function optIcon(ic){if(!ic)return"";for(var k=0;k<ic.length;k++){if(ic.charCodeAt(k)>127)return ic;}return"";}
+
 var DASH_STUDENT_COLS="id,name,class_code,xp,weekly_xp,week_id,streak,last_active,stats,total_time,module_scores,mock_results,game_scores,unlocked_ach,weekly_daily_count,weekly_history";
 // A "ghost student" is a registered student (non-visitor) who barely engaged with the app
 function isGhost(s){if(!s)return false;if(s.class_code==="visitor")return false;var tq=(s.stats&&s.stats.totalQ)||0;var cr=(s.stats&&s.stats.cardsRev)||0;return tq<=15&&cr<=10;}
@@ -12902,7 +12910,7 @@ function TeacherDash(p){
           <select value={chartMod} onChange={function(e){setChartMod(e.target.value);}} 
             style={{background:"var(--bg3)",border:"1px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontSize:11,padding:"4px 8px",fontFamily:"'DM Sans',sans-serif"}}>
             <option value="all">All modules</option>
-            {modsWithHistory.map(function(m){return(<option key={m.id} value={m.id}>{m.icon} {m.name}</option>);})}
+            {modsWithHistory.map(function(m){return(<option key={m.id} value={m.id}>{optIcon(m.icon)} {m.name}</option>);})}
           </select>
         </div>
         {timeline.length>1?(<ResponsiveContainer width="100%" height={200}>
@@ -12922,13 +12930,13 @@ function TeacherDash(p){
         {MISSION_MODULES.map(function(m){
           var ms=modules[m.id];
           if(!ms)return(<div key={m.id} className="crd" style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:10,opacity:.4}}>
-            <span style={{fontSize:16}}>{m.icon}</span><span style={{fontSize:13,color:"var(--t3)"}}>{m.name}</span>
+            <span style={{width:20,display:"inline-flex",justifyContent:"center",fontSize:16}}>{GAME_ICON_PATHS[m.icon]?<GIcon name={m.icon} size={16} color="var(--t3)"/>:m.icon}</span><span style={{fontSize:13,color:"var(--t3)"}}>{m.name}</span>
             <span style={{marginLeft:"auto",fontSize:11,color:"var(--t3)"}}>Not started</span></div>);
           var modAcc=ms.total>0?Math.round(ms.correct/ms.total*100):0;
           var col=modAcc>=70?"var(--green)":modAcc>=50?"var(--orange)":"var(--red)";
           var histLen=(ms.history||[]).length;
           return(<div key={m.id} className="crd" style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:16}}>{m.icon}</span>
+            <span style={{width:20,display:"inline-flex",justifyContent:"center",fontSize:16}}>{GAME_ICON_PATHS[m.icon]?<GIcon name={m.icon} size={16} color="var(--cyan)"/>:m.icon}</span>
             <div style={{flex:1,minWidth:0}}><div style={{fontSize:13,color:"var(--t1)"}} className="out">{m.name}</div>
               <div style={{fontSize:10,color:"var(--t3)"}}>{ms.sessions} sessions · Last: {ms.lastDate||"?"}{histLen>0?" · "+histLen+" data pts":""}</div></div>
             <div style={{textAlign:"right"}}><div className="out" style={{fontWeight:800,fontSize:15,color:col}}>{modAcc}%</div>
@@ -13583,7 +13591,7 @@ function TeacherDash(p){
           <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t3)",display:"block",marginBottom:6}}>Target Module</label>
           <select value={evForm.module} onChange={function(e){setEvForm(function(f){return Object.assign({},f,{module:e.target.value});});}}
             style={{width:"100%",padding:"10px 14px",background:"var(--bg3)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontSize:14,fontFamily:"'DM Sans',sans-serif"}}>
-            {MISSION_MODULES.map(function(m){return(<option key={m.id} value={m.id}>{m.icon} {m.name}</option>);})}
+            {MISSION_MODULES.map(function(m){return(<option key={m.id} value={m.id}>{optIcon(m.icon)} {m.name}</option>);})}
           </select>
         </div>}
         <div style={{display:"flex",gap:12,marginBottom:12}}>
