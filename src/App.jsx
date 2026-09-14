@@ -17306,12 +17306,15 @@ useEffect(function(){
           });
           setActiveEvents(evts);
         });
-      supabase.from('students').select('xp').eq('class_code',u.classCode||'visitor')
+      // B3 : la médiane rapatriait l'XP de toute la promo toutes les 5 minutes sur
+      // chaque appareil, pour n'en tirer qu'un entier. Calcul déplacé côté serveur.
+      // Elle exclut désormais la ligne Teacher, que le calcul client incluait et qui
+      // tirait la médiane vers le haut (son XP n'a rien à voir avec celui des élèves).
+      // Seuil conservé : moins de 3 élèves → 0.
+      supabase.rpc('class_median_xp',{p_class_code:u.classCode||'visitor'})
         .then(function(res){
-          if(!res.data||res.data.length<3){setClassMedianXp(0);return;}
-          var xps=res.data.map(function(s){return s.xp||0;}).sort(function(a,b){return a-b;});
-          var mid=Math.floor(xps.length/2);
-          setClassMedianXp(xps.length%2?xps[mid]:Math.round((xps[mid-1]+xps[mid])/2));
+          if(res.error){console.warn("[median] rpc failed:",res.error.message);setClassMedianXp(0);return;}
+          setClassMedianXp(res.data||0);
         });
     }
     loadEvents();
