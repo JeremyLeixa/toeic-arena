@@ -1,0 +1,58 @@
+-- ════════════════════════════════════════════════════════════════════════
+-- Phase C-lite — verrouillage de `students`, fichier 2/2
+-- (2026-09-14)
+-- ════════════════════════════════════════════════════════════════════════
+-- ⚠️ À N'APPLIQUER QU'APRÈS, DANS CET ORDRE :
+--   1. 2026-09-14_p2c_student_rpc.sql appliqué ;
+--   2. le code client qui passe par les RPC déployé en production ;
+--   3. le parcours complet vérifié EN PROD (création de compte, gain d'XP,
+--      rechargement, fermeture d'onglet, dashboard, export CSV).
+--
+-- Tant que ce fichier n'est pas passé, les privilèges directs existent encore :
+-- si le chemin RPC déraille, reverter les commits client suffit à tout remettre
+-- d'aplomb. C'est le SEUL filet de ce chantier — ne pas le brûler en appliquant
+-- ce fichier trop tôt.
+--
+-- CE QUE ÇA FERME. Plus aucun accès direct à `students` depuis le navigateur :
+-- fini l'exfiltration en masse (aujourd'hui un `curl` rend les 160 lignes avec
+-- emails, consentements RGPD, access_level), fini le PATCH REST arbitraire. Tout
+-- passe par les RPC du fichier 1, qui répondent pour UNE ligne à la fois et
+-- appliquent une liste blanche de colonnes en écriture.
+--
+-- CE QUE ÇA NE FERME PAS. L'usurpation ciblée d'un compte encore legacy : qui
+-- connaît un prénom et un code promo obtient ce profil-là (finding C4). La garde
+-- de `student_guard` se resserre d'elle-même à chaque compte migré ; le
+-- durcissement final consistera à retirer la tolérance legacy.
+--
+-- CE QUI CONTINUE DE MARCHER, et pourquoi :
+--  · `students_public` (vue B3) — `security_invoker = false`, donc elle s'exécute
+--    avec les droits de son PROPRIÉTAIRE, pas de l'appelant. Le REVOKE ci-dessous
+--    ne la gêne pas. C'est exactement la raison pour laquelle elle a été créée
+--    ainsi. League et GamesHub continuent de lire le classement.
+--  · Les RPC `SECURITY DEFINER` — load_student, save_student, bind_student_user_id,
+--    sync_my_student_email, teacher_students, teacher_campus_rows, plus celles déjà
+--    en place (grant_marks, spend_marks, delete_my_account, recover_student_row,
+--    find_students_by_name, teacher_delete_student…).
+--  · Les 6 endpoints `api/*.js` et les 7 Edge Functions — tous en service_role,
+--    qui ignore ces privilèges. Vérifié un par un, y compris le webhook Stripe
+--    qui écrit `access_level`.
+-- ════════════════════════════════════════════════════════════════════════
+
+-- Liste complète et explicite. Leçon de B5 : un REVOKE partiel y avait laissé
+-- TRUNCATE au rôle anon, repéré seulement parce que la vérification a été exécutée.
+REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.students FROM anon, authenticated;
+
+-- ── Vérification post-migration ────────────────────────────────────────
+-- 1) Doit renvoyer 0 ligne :
+--    SELECT grantee, privilege_type FROM information_schema.role_table_grants
+--     WHERE table_schema='public' AND table_name='students'
+--       AND grantee IN ('anon','authenticated');
+--
+-- 2) La vue de classement doit survivre (elle lit `students` en tant que owner) :
+--    SELECT count(*) FROM public.students_public;
+--
+-- 3) Sonde anon, console navigateur :
+--    await supabase.from('students').select('name')        -> erreur de permission
+--    await supabase.from('students_public').select('name') -> 200
+--    await supabase.rpc('load_student',{p_name:'…',p_class_code:'…'}) -> la ligne
