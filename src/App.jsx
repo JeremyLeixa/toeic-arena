@@ -12460,8 +12460,18 @@ function TeacherDash(p){
   }
 
   function loadEvents(){
-    supabase.from('events').select('*').order('start_at',{ascending:false}).limit(20)
-      .then(function(res){if(res.data)setDashEvents(res.data);});
+    supabase.from('events').select('*').order('start_at',{ascending:false}).limit(50)
+      .then(function(res){
+        if(!res.data)return;
+        // Filtrage d'AFFICHAGE, pas une frontière de sécurité : `events` reste
+        // lisible par tous (le client élève en a besoin pour les bannières) et
+        // n'y stocke aucune donnée personnelle. On scope pour la cohérence — sans
+        // ça un formateur partenaire voyait l'historique des autres établissements
+        // et se voyait proposer un bouton "Stop" que la RPC lui refuserait.
+        if(isDashAdmin()){setDashEvents(res.data.slice(0,20));return;}
+        var mine=groups.map(function(g){return g.code;});
+        setDashEvents(res.data.filter(function(e){return mine.indexOf(e.class_code)>=0;}).slice(0,20));
+      });
   }
   async function sendEventPush(title,body,targetClass){
     try{
@@ -12477,12 +12487,9 @@ function TeacherDash(p){
       setTimeout(function(){setEvPushResult(null);},5000);
     }catch(e){console.log('Push failed:',e);setEvPushResult({error:"Push send failed"});setTimeout(function(){setEvPushResult(null);},5000);}
   }
-  var[dashEvents,setDashEvents]=useState([]);var[evForm,setEvForm]=useState({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:"all"});var[evSaving,setEvSaving]=useState(false);var[evPushResult,setEvPushResult]=useState(null);
-
-  function loadEvents(){
-    supabase.from('events').select('*').order('start_at',{ascending:false}).limit(20)
-      .then(function(res){if(res.data)setDashEvents(res.data);});
-  }
+  // (Ces 4 useState et loadEvents étaient déclarés une SECONDE fois ici — 8 slots
+  //  d'état inutiles à chaque render, et la 2e loadEvents masquait la 1re par
+  //  hoisting. Doublon supprimé en B5 ; les originaux sont plus haut.)
 
   function loadGroups(){
     // B4 : le scoping multi-campus est fait EN SQL par la RPC teacher_groups.
@@ -12502,6 +12509,18 @@ function TeacherDash(p){
     if(!groups.length)return;
     var codes=groups.map(function(g){return g.code;});
     if(codes.indexOf(classCode)<0)setClassCode(groups[0].code);
+  },[groups]);
+  // B5 : la cible par défaut d'un événement est "all" (toute la plateforme), mais
+  // cette option n'existe plus que pour l'admin. Sans ça, un formateur partenaire
+  // verrait la 1re cohorte affichée dans le <select> alors que l'état vaut encore
+  // "all" — et la RPC refuserait au moment de créer, sans explication visible.
+  function defaultEventTarget(){return isDashAdmin()?"all":((groups[0]&&groups[0].code)||classCode);}
+  useEffect(function(){
+    if(isDashAdmin()||!groups.length)return;
+    if(evForm.classTarget==="all")setEvForm(function(f){return Object.assign({},f,{classTarget:groups[0].code});});
+    // loadEvents() filtre sur `groups`, qui est encore vide au montage → on
+    // recharge l'historique une fois les cohortes connues.
+    loadEvents();
   },[groups]);
 
   // ── Rapport hebdo : configuration email (popup) ──
@@ -13564,27 +13583,40 @@ function TeacherDash(p){
           <label className="out" style={{fontSize:11,fontWeight:600,color:"var(--t3)",display:"block",marginBottom:6}}>Target group</label>
           <select value={evForm.classTarget} onChange={function(e){setEvForm(function(f){return Object.assign({},f,{classTarget:e.target.value});});}}
             style={{width:"100%",padding:"10px 14px",background:"var(--bg3)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontSize:14,fontFamily:"'DM Sans',sans-serif"}}>
-            <option value="all">All groups</option>
+            {/* B5 : « All groups » = toute la plateforme, tous établissements
+                confondus (événement + push). Réservé à l'admin — un formateur
+                partenaire ne doit pas pouvoir arroser les cohortes des autres.
+                La RPC refuse aussi côté serveur (not_owner), ceci n'est que l'UI. */}
+            {isDashAdmin()&&<option value="all">All groups</option>}
             {groups.map(function(g){return(<option key={g.code} value={g.code}>{g.name} ({g.code})</option>);})}
           </select>
         </div>
         <button className="btn1" disabled={evSaving||!evForm.title.trim()} onClick={async function(){
           setEvSaving(true);setEvPushResult(null);
-          var startAt=new Date().toISOString();
-          var endAt=new Date(Date.now()+evForm.hours*36e5).toISOString();
+          // B5 : l'insert direct n'était gardé que par le flag localStorage du
+          // dashboard. La RPC vérifie la propriété de la cohorte, calcule elle-même
+          // start_at/end_at (on ne fait plus confiance aux timestamps du client) et
+          // borne multiplicateur et durée.
           var config={multiplier:evForm.multiplier};
           if(evForm.type==="spotlight")config.module=evForm.module;
-          var ins={type:evForm.type,title:evForm.title.trim(),description:evForm.desc.trim()||null,
-            start_at:startAt,end_at:endAt,config:config,class_code:evForm.classTarget,active:true};
-          var res=await supabase.from('events').insert(ins);
-          if(!res.error){
-            var icon=evForm.type==="spotlight"?"🎯":evForm.type==="flash_hour"?"⚡":"💪";
-            var pushTitle=icon+" "+evForm.title.trim();
-            var pushBody=evForm.desc.trim()||(evForm.type==="spotlight"?"x"+evForm.multiplier+" XP on "+evForm.module+" — go train!":evForm.type==="flash_hour"?"x"+evForm.multiplier+" XP on everything for "+evForm.hours+"h!":"x"+evForm.multiplier+" XP boost for those catching up!");
-            sendEventPush(pushTitle,pushBody,evForm.classTarget);
-            setEvForm({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:"all"});
-            loadEvents();
+          var res=await supabase.rpc('teacher_create_event',{
+            p_code:getDashTeacher(),p_type:evForm.type,p_title:evForm.title.trim(),
+            p_desc:evForm.desc.trim()||null,p_class_code:evForm.classTarget,
+            p_hours:evForm.hours,p_config:config
+          });
+          if(res.error||!res.data||!res.data.ok){
+            var why=res.error?res.error.message:(res.data&&res.data.error);
+            console.warn("[event] create refused:",why);
+            setEvPushResult({error:why==="not_owner"?"Cette cohorte n'est pas la tienne":why==="bad_type"?"Type d'événement invalide":"Création refusée — reconnecte-toi"});
+            setTimeout(function(){setEvPushResult(null);},5000);
+            setEvSaving(false);return;
           }
+          var icon=evForm.type==="spotlight"?"🎯":evForm.type==="flash_hour"?"⚡":"💪";
+          var pushTitle=icon+" "+evForm.title.trim();
+          var pushBody=evForm.desc.trim()||(evForm.type==="spotlight"?"x"+evForm.multiplier+" XP on "+evForm.module+" — go train!":evForm.type==="flash_hour"?"x"+evForm.multiplier+" XP on everything for "+evForm.hours+"h!":"x"+evForm.multiplier+" XP boost for those catching up!");
+          sendEventPush(pushTitle,pushBody,evForm.classTarget);
+          setEvForm({type:"spotlight",title:"",desc:"",module:"drill",multiplier:2,hours:24,classTarget:defaultEventTarget()});
+          loadEvents();
           setEvSaving(false);
         }} style={{opacity:evForm.title.trim()&&!evSaving?1:.4}}>
           {evSaving?"Creating...":"🎪 Launch Event + Notify Students"}</button>
@@ -13613,7 +13645,16 @@ function TeacherDash(p){
                   sendEventPush(ic+" Reminder: "+ev.title,ev.description||"Event still active!",ev.class_code);
                 }} style={{background:"none",border:"1px solid var(--cyan)",borderRadius:8,padding:"4px 8px",fontSize:10,color:"var(--cyan)",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>📬</button>}
                 {isActive&&<button onClick={async function(){
-                  await supabase.from('events').update({active:false}).eq('id',ev.id);
+                  // B5 : l'erreur était totalement avalée ici — un refus passait
+                  // pour un succès (le bouton disparaissait au rechargement… ou pas).
+                  var r=await supabase.rpc('teacher_stop_event',{p_code:getDashTeacher(),p_id:String(ev.id)});
+                  if(r.error||!r.data||!r.data.ok){
+                    var why=r.error?r.error.message:(r.data&&r.data.error);
+                    console.warn("[event] stop refused:",why);
+                    setEvPushResult({error:why==="not_owner"?"Cet événement n'est pas le tien":"Arrêt refusé"});
+                    setTimeout(function(){setEvPushResult(null);},5000);
+                    return;
+                  }
                   loadEvents();
                 }} style={{background:"none",border:"1px solid var(--red)",borderRadius:8,padding:"4px 8px",fontSize:10,color:"var(--red)",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Stop</button>}
               </div>
