@@ -12558,7 +12558,9 @@ function TeacherDash(p){
     var email=rcEmail.trim();
     if(!email){setRcMsg({err:true,text:"Renseigne un email d'abord."});return;}
     setRcBusy(true);
-    supabase.functions.invoke('weekly-teacher-report',{body:{test:true,email:email,classCode:classCode}})
+    // B5 : la fonction exige désormais un code formateur valide (elle envoyait
+    // l'agrégat de n'importe quelle cohorte à n'importe quelle adresse).
+    supabase.functions.invoke('weekly-teacher-report',{body:{test:true,email:email,classCode:classCode,teacherCode:getDashTeacher()}})
       .then(function(res){
         setRcBusy(false);
         if(res.error){console.warn("[reportcfg] preview failed:",res.error&&res.error.message);setRcMsg({err:true,text:"Échec de l'aperçu : "+(res.error&&res.error.message)});return;}

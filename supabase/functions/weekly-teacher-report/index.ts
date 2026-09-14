@@ -297,6 +297,38 @@ serve(async (req: Request) => {
     try { body = await req.json(); } catch { body = {}; }
     const isTest = !!(body && body.test);
 
+    // ── Authentification de l'appelant (mode test uniquement) ─────────────
+    // B5 (2026-09-14, pentest). La branche test prenait le destinataire ET la
+    // cohorte dans le body, sans le moindre contrôle : un simple
+    // invoke({test:true, email:<n'importe qui>, classCode:"ALL"}) suffisait à se
+    // faire envoyer l'agrégat de n'importe quelle cohorte, voire de toutes.
+    // On valide donc le code formateur avec le client service_role (qui ignore
+    // les REVOKE posés en B4/B5 sur groups et teacher_codes).
+    // Le cron n'envoie aucun body → isTest=false → cette branche est ignorée.
+    // NB : le destinataire reste libre, volontairement — l'aperçu sert justement
+    // à tester une adresse AVANT de l'enregistrer. Le vecteur réel (agrégat d'une
+    // cohorte arbitraire) est fermé par le contrôle de propriété ci-dessous.
+    let callerRole: string | null = null;
+    let callerCohorts: string[] = [];
+    if (isTest) {
+      const code = String((body && body.teacherCode) || "").trim();
+      if (code.length >= 4) {
+        const { data: adm } = await supabase
+          .from("teacher_codes").select("role").eq("code", code).maybeSingle();
+        if (adm && adm.role === "admin") callerRole = "admin";
+        const { data: owned } = await supabase
+          .from("groups").select("code").eq("teacher_code", code);
+        callerCohorts = (owned || []).map((g: any) => g.code);
+        if (!callerRole && callerCohorts.length > 0) callerRole = "teacher";
+      }
+      if (!callerRole) {
+        console.warn("[weekly-teacher-report] test call rejected: invalid teacher code");
+        return new Response(JSON.stringify({ error: "unauthorized" }), {
+          status: 401, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Tous les students (hors Teacher), avec leurs scores modules
     const { data: students, error: sErr } = await supabase
       .from("students")
@@ -320,14 +352,26 @@ serve(async (req: Request) => {
       let cohortStudents: any[];
       let title: string;
 
+      const forbidden = () => new Response(JSON.stringify({ error: "forbidden" }), {
+        status: 403, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+
       if (cc === "ALL") {
+        // Agrégat toutes cohortes = vue plateforme → admin uniquement.
+        if (callerRole !== "admin") { console.warn("[weekly-teacher-report] ALL refused for non-admin"); return forbidden(); }
         cohortStudents = all;
         title = "Toutes cohortes (agrégé)";
         cc = "";
       } else {
         if (!cc) {
-          // plus grande cohorte
-          cc = Object.keys(byCohort).sort((a, b) => byCohort[b].length - byCohort[a].length)[0] || "";
+          // plus grande cohorte — parmi les SIENNES si l'appelant n'est pas admin
+          const pool = callerRole === "admin"
+            ? Object.keys(byCohort)
+            : Object.keys(byCohort).filter((k) => callerCohorts.indexOf(k) >= 0);
+          cc = pool.sort((a, b) => byCohort[b].length - byCohort[a].length)[0] || "";
+        } else if (callerRole !== "admin" && callerCohorts.indexOf(cc) < 0) {
+          console.warn(`[weekly-teacher-report] cohort '${cc}' refused: not owned by caller`);
+          return forbidden();
         }
         cohortStudents = byCohort[cc] || [];
         title = cc || "(cohorte inconnue)";
