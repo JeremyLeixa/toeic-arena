@@ -893,21 +893,16 @@ async function ensureAuthSession(){
   return null;
 }
 
-// opts.allowInsert — autorise la création d'une ligne pour un prénom déjà présent
-// dans une AUTRE promo (homonyme légitime). Seul onboard() le passe. Voir le garde
-// anti-phantom plus bas.
-async function save(d,opts){
-  saveLocal(d);
-  if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
-  // Safety rail: never let a missing classCode fall through to the "visitor" fallback
-  // during an UPDATE — this could match (name, visitor) and either overwrite another
-  // student's row or create a phantom. Refuse to save instead; local keeps the state.
-  if(!d.classCode){console.error("[SAVE] BLOCKED: missing classCode for",d.name,"— refusing to sync to avoid corruption");return;}
-  // Teacher now syncs to Supabase (hidden from leaderboards via League/TeacherDash filters)
-  var user=await ensureAuthSession();
-  if(!user){console.error("[SAVE] BLOCKED: could not establish auth session");return;}
-  _cachedUserId=user.id;
-  var payload={
+// Construit le payload de persistance. EXTRAIT de save() en Phase C-lite pour que le
+// keepalive beforeunload envoie EXACTEMENT les memes colonnes : il maintenait sa propre
+// liste, plus courte de 15 cles, et perdait donc silencieusement cadre/titre/boosts
+// quand un onglet se fermait sans save prealable. Une seule liste, un seul endroit.
+// Ce qui n'y est PAS, et ne doit pas y revenir : access_level / access_expires_at
+// (entitlement, ecrit par le seul webhook Stripe) et arena_marks (monnaie, incrementee
+// par grant_marks/spend_marks ; un full-row UPDATE ecraserait tout gain arrive entre
+// temps). La RPC save_student les refuse aussi cote serveur depuis la Phase C-lite.
+function buildSavePayload(d){
+  return {
     xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
     streak:d.streak,last_active:d.lastActive,
     card_states:d.cardStates,daily_challenge:d.daily,
@@ -952,6 +947,23 @@ async function save(d,opts){
     // between a client read and the next save() (classic lost-update). Reverting
     // this (adding arena_marks to the payload) silently erases earned Darics.
   };
+}
+
+// opts.allowInsert — autorise la création d'une ligne pour un prénom déjà présent
+// dans une AUTRE promo (homonyme légitime). Seul onboard() le passe. Voir le garde
+// anti-phantom plus bas.
+async function save(d,opts){
+  saveLocal(d);
+  if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
+  // Safety rail: never let a missing classCode fall through to the "visitor" fallback
+  // during an UPDATE — this could match (name, visitor) and either overwrite another
+  // student's row or create a phantom. Refuse to save instead; local keeps the state.
+  if(!d.classCode){console.error("[SAVE] BLOCKED: missing classCode for",d.name,"— refusing to sync to avoid corruption");return;}
+  // Teacher now syncs to Supabase (hidden from leaderboards via League/TeacherDash filters)
+  var user=await ensureAuthSession();
+  if(!user){console.error("[SAVE] BLOCKED: could not establish auth session");return;}
+  _cachedUserId=user.id;
+  var payload=buildSavePayload(d);
   // Phase C-lite : le binding d'identité n'est plus injecté dans le payload. La RPC
   // pose user_id AVEC auth.uid(), jamais avec une valeur fournie par le client — on ne
   // fait plus confiance à l'appelant sur cette colonne. opts.bindAuth devient un simple
@@ -17479,37 +17491,28 @@ useEffect(function(){
           // the 60s loop didn't fire before close. Mutates d in place.
           applyWeekTransition(d);
           var cc=d.classCode||"visitor";
-          var payload={
-            xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
-            streak:d.streak,last_active:d.lastActive,
-            card_states:d.cardStates,daily_challenge:d.daily,
-            stats:d.stats,module_scores:d.moduleScores,
-            mock_results:d.mockResults,game_scores:d.gameScores,
-            mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
-            skin_id:d.equippedSkin||null,
-            unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
-            weekly_history:d.weeklyHistory||[],
-            daily_mod_sessions:d.dailyModSessions||{},
-            weekly_daily_count:d.weeklyDailyCount||0,
-            battle_scan:d.battleScan||null,
-            tips_shown:d.tipsShown||[],
-            daily_seen:d.dailySeen||[],
-            gdpr_consent:d.gdprConsent||null,
-          };
-          // fetch keepalive with PATCH (=UPDATE) — survives tab close, sends auth headers.
-          // B2 : Bearer = JWT user (getAccessTokenSync), fallback clé anon. apikey reste la
-          // clé anon (requise par Supabase). Sous RLS (Phase C) le JWT donne auth.uid() pour
-          // passer la policy own-row ; la clé anon donnerait auth.uid()=NULL → refus.
-          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;var _bearer=getAccessTokenSync()||_anonKey;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/students?name=ilike."+encodeURIComponent(d.name)+"&class_code=eq."+encodeURIComponent(cc),{
-            method:"PATCH",keepalive:true,
+          // Phase C-lite : ce bloc construisait SA PROPRE liste de colonnes, un
+          // sous-ensemble de 21 clés contre 36 dans save(). Conséquence silencieuse :
+          // fermer l'onglet sans save prealable perdait le cadre, le titre et les boosts
+          // equipes. On envoie desormais le meme payload que save(), et la RPC fusionne
+          // (seules les cles presentes sont ecrites), donc il n'y a plus deux listes a
+          // garder synchronisees.
+          var payload=buildSavePayload(d);
+          // POST keepalive sur la RPC (=UPDATE cote serveur) — survit a la fermeture
+          // d'onglet. B2 : Bearer = JWT user (getAccessTokenSync), fallback cle anon ;
+          // apikey reste la cle anon, requise par Supabase. Le JWT donne auth.uid(), dont
+          // la RPC a besoin pour la garde de propriete.
+          // NB : beforeunload ne se declenche pas de facon fiable sur iOS Safari — ce
+          // chemin est un best-effort, la sauvegarde reelle vient de sv() et du sync 60s.
+          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;var _bearer=getAccessTokenSync()||_anonKey;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/rpc/save_student",{
+            method:"POST",keepalive:true,
             headers:{
               "Content-Type":"application/json",
-              "Prefer":"return=minimal",
               "apikey":_anonKey,
               "Authorization":"Bearer "+_bearer
             },
-            body:JSON.stringify(payload)
-          });}catch(e){}
+            body:JSON.stringify({p_name:d.name,p_class_code:cc,p_payload:payload,p_allow_insert:false,p_bind_auth:false})
+          });}catch(e){console.warn("[UNLOAD] keepalive failed:",e&&e.message);}
         }
       }catch(e){}
     }
