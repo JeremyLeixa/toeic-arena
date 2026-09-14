@@ -3677,19 +3677,19 @@ var[step,sSt]=useState("name");
       // SECURITY (2026-09-11) — la requête est SCOPÉE au class_code (cc) : on ne remonte
       // que les comptes de la promo dont l'user a fourni le code. Sans ce .eq, le picker
       // exposait les homonymes de toutes les promos + leur class_code (incident Hugo).
+      // B3 (2026-09-14) — la RPC fait la comparaison de nom normalisé CÔTÉ SERVEUR et ne
+      // renvoie que les lignes correspondantes, avec les seules colonnes du routage.
+      // Elle remplace DEUX requêtes : le `ilike` scopé, et surtout son fallback qui
+      // rapatriait la cohorte entière — donc le `password_set_at` de tous les camarades,
+      // soit « qui n'a pas encore sécurisé son compte ». Le scoping class_code de
+      // l'Étape 0 est conservé (la RPC prend cc en paramètre et filtre dessus) : ne
+      // jamais l'enlever, c'est ce qui a fermé la fuite cross-promo (incident Hugo).
+      // norm_name() en SQL est au moins aussi permissif que normalizeName() en JS, et on
+      // re-filtre ici : la RPC ne peut donc ramener que trop de lignes, jamais trop peu.
       var norm=normalizeName(n);
-      var res=await supabase.from('students').select('name,class_code,xp,last_active,joined_at,password_set_at').ilike('name',n).eq('class_code',cc);
+      var res=await supabase.rpc('find_students_by_name',{p_name:n,p_class_code:cc});
       console.warn("[LOOKUP]",n,"→ rows:",(res.data||[]).length,"error:",res.error?res.error.message:"none");
       var matches=(res.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
-      // Fallback: if the ilike query returned nothing, try a broader select
-      // (may be blocked by RLS but worth a shot before giving up)
-      if(matches.length===0){
-        // Fallback lui aussi SCOPÉ au class_code — ne jamais revenir à un select global
-        // (ça réintroduirait la fuite cross-promo).
-        var res2=await supabase.from('students').select('name,class_code,xp,last_active,joined_at,password_set_at').eq('class_code',cc);
-        console.warn("[LOOKUP] fallback scoped select → rows:",(res2.data||[]).length);
-        matches=(res2.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
-      }
       console.warn("[LOOKUP] matches filtered:",matches.length);
       // P2 Phase A (2026-09-11) — routing par mot de passe (email synthétique).
       // 0 match → nouvel élève (poser un mot de passe). 1 match → password_set_at ? "entre ton
@@ -17810,8 +17810,14 @@ var prevLeague=getLeague(c.weeklyXp);
     // Check if student already exists (use limit(1) — safe even with duplicates)
     // Check for existing student (accent + case insensitive)
     var norm=normalizeName(name);
-    var allInClass=await supabase.from('students').select('*').eq('class_code',classCode);
-    var existingMatch=(allInClass.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
+    // B3 : c'était un `select('*')` sur TOUTE la cohorte — ~156 lignes complètes (email,
+    // access_level, gdpr_consent, password_set_at…) envoyées au navigateur de quiconque
+    // saisit un class code, pour répondre à « ce nom existe-t-il déjà ? ». La RPC fait la
+    // comparaison normalisée côté serveur et ne renvoie que les correspondances, en
+    // colonnes minimales. On n'a besoin que du nom canonique (casing DB) pour recover().
+    var lookup=await supabase.rpc('find_students_by_name',{p_name:name,p_class_code:classCode});
+    if(lookup.error)console.warn("[onboard] find_students_by_name failed:",lookup.error.message);
+    var existingMatch=(lookup.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
     existingMatch.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
     var existing={data:existingMatch.length>0?existingMatch:null};
     if(existing.data&&existing.data.length>0){
@@ -17898,12 +17904,17 @@ var prevLeague=getLeague(c.weeklyXp);
     // Find the best row (highest XP) for this student
     // Accent + case insensitive lookup
     var rnorm=normalizeName(name);
-    var rAll=await supabase.from('students').select('*').eq('class_code',classCode);
-    var rMatches=(rAll.data||[]).filter(function(s){return normalizeName(s.name)===rnorm;});
-    rMatches.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
-    if(rMatches.length===0)return false;
-    var res={data:rMatches};
-    var d=res.data[0];
+    // B3 : idem onboard() — la cohorte entière partait en select('*') pour retrouver UNE
+    // ligne. La RPC renvoie directement la meilleure correspondance (XP décroissant), en
+    // ligne complète car supaToLocal() hydrate tout le profil avec.
+    // ⚠️ recover_student_row rend un profil complet à partir d'un simple prénom, sans
+    // secret : c'est le finding C4. Elle n'ajoute rien (le client pouvait déjà faire pire)
+    // mais elle DOIT être supprimée en même temps que ce chemin recover() legacy, à la
+    // date butoir de la migration soft — sinon elle devient le trou de la Phase C.
+    var rr=await supabase.rpc('recover_student_row',{p_name:name,p_class_code:classCode});
+    if(rr.error)console.warn("[recover] rpc failed:",rr.error.message);
+    var d=rr.data||null;
+    if(!d||normalizeName(d.name||"")!==rnorm){console.warn("[recover] no row for",name,classCode);return false;}
 
     // Get or create auth session
     var sess=await supabase.auth.getSession();
