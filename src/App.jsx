@@ -4293,7 +4293,12 @@ var[step,sSt]=useState("name");
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
               <span style={{flexShrink:0,marginTop:1}}><GIcon name="stone-tablet" size={20} color="var(--cyan)"/></span>
               <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Donn\u00e9es collect\u00e9es"}</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Votre pr\u00e9nom, code classe, scores, progression, temps d\u2019entra\u00eenement. Aucun e-mail, aucun mot de passe."}</p></div>
+              {/* La mention "Aucun e-mail, aucun mot de passe" datait d'avant la Phase A
+                  (identit\u00e9 par mot de passe, 2026-09-11). Elle est rest\u00e9e affich\u00e9e sur
+                  l'\u00e9cran QUI SUIT la saisie du mot de passe. Cet \u00e9cran est un consentement
+                  RGPD : toute \u00e9volution du mod\u00e8le d'identit\u00e9 doit \u00eatre r\u00e9percut\u00e9e ICI,
+                  sinon on collecte une donn\u00e9e en affirmant le contraire. */}
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Votre pr\u00e9nom, code classe, scores, progression, temps d\u2019entra\u00eenement, et le mot de passe que vous choisissez \u2014 stock\u00e9 chiffr\u00e9, jamais lisible, ni par nous ni par votre formateur. Aucune adresse e-mail n\u2019est requise."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
               <span style={{flexShrink:0,marginTop:1}}><GIcon name="bullseye" size={20} color="var(--cyan)"/></span>
