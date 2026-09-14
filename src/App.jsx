@@ -1277,7 +1277,11 @@ function generateEndlessTest(){
 }
 
 // ─── TEACHER DASHBOARD CONFIG ───
-var PUSH_SECRET=import.meta.env.VITE_PUSH_SECRET||"";
+// H1 (2026-09-14) : VITE_PUSH_SECRET a disparu d'ici. C'etait un "secret" partage inline
+// en clair dans le bundle : n'importe qui pouvait le lire et appeler /api/push-send pour
+// notifier une promo entiere, voire class_code:"all". L'endpoint authentifie desormais le
+// navigateur par le code formateur (valide cote serveur), et garde x-push-secret pour les
+// seules Edge Functions cron. NE PAS reintroduire de secret cote client.
 
 // ─── PUSH NOTIFICATIONS ───
 var VAPID_PUBLIC_KEY="BGiKomKxy1j081qd5ZaZnp7EUAYXIGRPWu8ePQySLGhQ0T45-m3oKTqgj-teqm2l5RoR0jnamCWHZ6pMYjrPVy4";
@@ -12477,15 +12481,21 @@ function TeacherDash(p){
     }
     // Best-effort push notif to the student (existing /api/push-send pipeline)
     var pushBody=note?("Ton report sur "+report.module_label+" a été traité : "+note):("Ton report sur "+report.module_label+" a été traité.");
-    supabase.from('push_subscriptions').select('subscription').eq('student_name',report.user_name).eq('class_code',report.class_code).then(function(r2){
-      var subs=(r2.data||[]).map(function(x){return x.subscription;}).filter(Boolean);
-      if(subs.length===0){setFbToast({ok:"Marqué résolu (pas de push subscriber pour cet élève)."});}
-      else{
-        fetch('/api/push-send',{method:'POST',headers:{'Content-Type':'application/json','x-push-secret':PUSH_SECRET},body:JSON.stringify({subscriptions:subs,title:"📬 Feedback traité",body:pushBody,tag:'fb-'+report.id,url:"/"})}).catch(function(){});
-        setFbToast({ok:"Marqué résolu + push envoyé."});
-      }
-      setTimeout(function(){setFbToast(null);},3500);
-    });
+    // H1 : le client lisait push_subscriptions lui-meme puis postait les endpoints bruts.
+    // Desormais il envoie juste la cible (eleve + cohorte) et son code formateur ; c'est le
+    // serveur qui resout les abonnements, apres avoir verifie que la cohorte est bien la
+    // sienne. Un endpoint push ne transite plus par le navigateur.
+    fetch('/api/push-send',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({teacherCode:getDashTeacher(),class_code:report.class_code,student_name:report.user_name,
+        title:"📬 Feedback traité",body:pushBody,tag:'fb-'+report.id,url:"/"})})
+      .then(function(r2){return r2.json();})
+      .then(function(dd){
+        if(dd&&dd.total===0)setFbToast({ok:"Marqué résolu (pas de push subscriber pour cet élève)."});
+        else if(dd&&dd.error)setFbToast({err:"Marqué résolu, mais push refusé ("+dd.error+")."});
+        else setFbToast({ok:"Marqué résolu + push envoyé."});
+        setTimeout(function(){setFbToast(null);},3500);
+      })
+      .catch(function(e){console.warn("[fb] push failed:",e&&e.message);setFbToast({ok:"Marqué résolu (push indisponible)."});setTimeout(function(){setFbToast(null);},3500);});
     setFbDetailId(null);setFbResNote("");setFbResBusy(false);loadFeedback();
   }
 
@@ -12507,8 +12517,8 @@ function TeacherDash(p){
     try{
       var res=await fetch('/api/push-send',{
         method:'POST',
-        headers:{'Content-Type':'application/json','x-push-secret':PUSH_SECRET},
-        body:JSON.stringify({class_code:targetClass||'all',title:title,body:body,tag:'toeic-event'})
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({teacherCode:getDashTeacher(),class_code:targetClass||'all',title:title,body:body,tag:'toeic-event'})
       });
       var data=await res.json();
       if(data.total===0){setEvPushResult({error:"No push subscribers found",total:0});setTimeout(function(){setEvPushResult(null);},5000);return;}

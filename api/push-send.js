@@ -40,19 +40,65 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: "Too many requests" });
   }
 
-  var secret = req.headers["x-push-secret"];
-  if (secret !== process.env.PUSH_SECRET) {
-    return res.status(401).json({ error: "Unauthorized" });
+  // AUTH (H1, 2026-09-14). Avant, ce endpoint n'etait garde que par un secret partage
+  // `x-push-secret` compare a PUSH_SECRET... que le navigateur envoyait depuis le bundle
+  // (VITE_PUSH_SECRET). Donc "secret" public : n'importe qui pouvait notifier toute une
+  // promo, ou `class_code:"all"` = toute la plateforme, et faire fuir les endpoints push.
+  //
+  // Deux appelants legitimes, deux gardes distinctes :
+  //  1. SERVEUR (les 4 Edge Functions cron) : gardent x-push-secret, qui redevient un vrai
+  //     secret serveur une fois retire du bundle. Elles seules peuvent passer `subscriptions`
+  //     en clair et viser class_code:"all".
+  //  2. NAVIGATEUR (dashboard formateur) : fournit `teacherCode`, valide ici cote service_role
+  //     contre teacher_codes / groups — meme modele qu'en B4/B5. Il ne peut viser que SES
+  //     cohortes, ne peut PAS envoyer de liste de subscriptions (on les resout ici), et
+  //     class_code:"all" lui est refuse sauf role admin.
+  var isServerCall = !!process.env.PUSH_SECRET
+    && req.headers["x-push-secret"] === process.env.PUSH_SECRET;
+
+  var { subscriptions, title, body, tag, url, class_code, student_name, teacherCode } = req.body;
+
+  var callerRole = null;
+  var callerCohorts = [];
+  if (!isServerCall) {
+    var code = String(teacherCode || "").trim();
+    if (code.length >= 4) {
+      var admRes = await supaAdmin.from("teacher_codes").select("role").eq("code", code).maybeSingle();
+      if (admRes.data && admRes.data.role === "admin") callerRole = "admin";
+      var ownRes = await supaAdmin.from("groups").select("code").eq("teacher_code", code);
+      callerCohorts = (ownRes.data || []).map(function (g) { return g.code; });
+      if (!callerRole && callerCohorts.length > 0) callerRole = "teacher";
+    }
+    if (!callerRole) {
+      console.warn("[push-send] rejected: no valid teacher code and no server secret");
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    // Un appelant navigateur ne choisit jamais les destinataires lui-meme.
+    subscriptions = null;
+    if (!class_code) {
+      return res.status(400).json({ error: "class_code required" });
+    }
+    if (class_code === "all" && callerRole !== "admin") {
+      console.warn("[push-send] 'all' refused for non-admin");
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    if (class_code !== "all" && callerCohorts.indexOf(class_code) < 0) {
+      console.warn("[push-send] cohort refused:", class_code);
+      return res.status(403).json({ error: "Forbidden" });
+    }
   }
 
-  var { subscriptions, title, body, tag, url, class_code } = req.body;
-
-  // Mode 1: class_code provided → fetch subscriptions server-side (for frontend calls)
-  // Mode 2: subscriptions provided directly (for edge functions that already have them)
+  // Mode 1: class_code fourni -> on resout les subscriptions ici (appels navigateur).
+  // Mode 2: subscriptions fournies directement (Edge Functions serveur uniquement).
   if (!subscriptions && class_code) {
     var query = supaAdmin.from("push_subscriptions").select("subscription, student_name, class_code");
     if (class_code !== "all") {
       query = query.eq("class_code", class_code);
+    }
+    // Cible un seul eleve (push "feedback traite") : evite que le navigateur ait a lire
+    // push_subscriptions lui-meme, ce qu'il faisait avant.
+    if (student_name) {
+      query = query.eq("student_name", student_name);
     }
     var { data: subRows, error: fetchErr } = await query;
     if (fetchErr) {
