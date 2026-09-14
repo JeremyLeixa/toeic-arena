@@ -31,7 +31,16 @@ REVOKE ALL ON public.feedback_reports FROM anon, authenticated;
 -- Les colonnes d'events ne contiennent aucune donnée personnelle (type, titre,
 -- description, dates, config, class_code) → SELECT au niveau table suffit, pas
 -- besoin de grants colonne par colonne comme sur `groups`.
-REVOKE INSERT, UPDATE, DELETE ON public.events FROM anon, authenticated;
+-- ⚠️ Lister TRUNCATE et REFERENCES explicitement : une 1re version de ce fichier
+-- ne révoquait que INSERT/UPDATE/DELETE et laissait TRUNCATE (= vider la table)
+-- au rôle anon. Pas atteignable via PostgREST, qui n'émet jamais de TRUNCATE,
+-- mais aucune raison de le laisser. TRIGGER part aussi, par symétrie avec groups.
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.events FROM anon, authenticated;
+
+-- Même nettoyage sur groups, verrouillée en B4 : le REVOKE d'alors ne listait pas
+-- TRIGGER. Idempotent si déjà fait.
+REVOKE TRIGGER ON public.groups FROM anon, authenticated;
 
 -- ── Vérification post-migration ────────────────────────────────────────
 -- SELECT table_name, grantee, privilege_type
@@ -40,5 +49,5 @@ REVOKE INSERT, UPDATE, DELETE ON public.events FROM anon, authenticated;
 --    AND grantee IN ('anon','authenticated')
 --  ORDER BY table_name, grantee, privilege_type;
 --
--- Attendu : feedback_reports -> plus aucune ligne (hors TRIGGER, grant Supabase
--- par défaut, inerte car PostgREST n'émet pas de DDL) ; events -> SELECT seul.
+-- Attendu : feedback_reports -> aucune ligne ; events -> SELECT seul, pour anon
+-- et authenticated (soit 2 lignes en tout).
