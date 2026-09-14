@@ -12416,32 +12416,47 @@ function TeacherDash(p){
   var[fbResNote,setFbResNote]=useState("");var[fbResBusy,setFbResBusy]=useState(false);
   var[fbToast,setFbToast]=useState(null);
 
+  // B5 (2026-09-14) — l'onglet Feedback lisait `feedback_reports` SANS AUCUN filtre :
+  // chaque formateur partenaire voyait les retours nominatifs (nom, promo, message
+  // libre) de toutes les promos de la plateforme, soit une fuite de PII entre
+  // établissements clients. Le scoping est désormais fait EN SQL par la RPC
+  // (admin = tout, formateur = ses cohortes) et la table est fermée au client.
+  // NE PAS réintroduire de `supabase.from('feedback_reports')` ici : depuis
+  // 2026-09-14_p2b5_lock_feedback_events.sql, anon/authenticated n'y ont plus accès.
   function loadFeedback(){
     setFbLoading(true);
-    supabase.from('feedback_reports').select('*').order('created_at',{ascending:false}).limit(200)
-      .then(function(res){if(res.data)setFbList(res.data);setFbLoading(false);})
-      .catch(function(){setFbLoading(false);});
+    supabase.rpc('teacher_feedback',{p_code:getDashTeacher()}).then(function(res){
+      setFbLoading(false);
+      if(res.error){console.warn("[fb] teacher_feedback failed:",res.error.message);setFbList([]);return;}
+      if(!res.data||!res.data.ok){console.warn("[fb] refused:",res.data&&res.data.error);setFbList([]);return;}
+      setFbList(res.data.reports||[]);
+    }).catch(function(e){setFbLoading(false);console.warn("[fb] teacher_feedback caught:",e&&e.message);});
   }
-  function resolveFeedback(report){
+  async function resolveFeedback(report){
     if(fbResBusy)return;
     var note=fbResNote.trim();
     setFbResBusy(true);
-    supabase.from('feedback_reports').update({status:'resolved',resolved_at:new Date().toISOString(),resolution_note:note||null}).eq('id',report.id)
-      .then(function(res){
-        if(res.error){console.warn("[fb] update failed:",res.error.message);setFbResBusy(false);setFbToast({err:"Échec de la mise à jour."});setTimeout(function(){setFbToast(null);},3500);return;}
-        // Best-effort push notif to the student (existing /api/push-send pipeline)
-        var pushBody=note?("Ton report sur "+report.module_label+" a été traité : "+note):("Ton report sur "+report.module_label+" a été traité.");
-        supabase.from('push_subscriptions').select('subscription').eq('student_name',report.user_name).eq('class_code',report.class_code).then(function(r2){
-          var subs=(r2.data||[]).map(function(x){return x.subscription;}).filter(Boolean);
-          if(subs.length===0){setFbToast({ok:"Marqué résolu (pas de push subscriber pour cet élève)."});}
-          else{
-            fetch('/api/push-send',{method:'POST',headers:{'Content-Type':'application/json','x-push-secret':PUSH_SECRET},body:JSON.stringify({subscriptions:subs,title:"📬 Feedback traité",body:pushBody,tag:'fb-'+report.id,url:"/"})}).catch(function(){});
-            setFbToast({ok:"Marqué résolu + push envoyé."});
-          }
-          setTimeout(function(){setFbToast(null);},3500);
-        });
-        setFbDetailId(null);setFbResNote("");setFbResBusy(false);loadFeedback();
-      });
+    var res=await supabase.rpc('teacher_resolve_feedback',{p_code:getDashTeacher(),p_id:String(report.id),p_note:note||null});
+    if(res.error||!res.data||!res.data.ok){
+      var why=res.error?res.error.message:(res.data&&res.data.error);
+      console.warn("[fb] resolve refused:",why);
+      setFbResBusy(false);
+      setFbToast({err:why==="not_owner"?"Ce report n'est pas dans une de tes cohortes.":"Échec de la mise à jour."});
+      setTimeout(function(){setFbToast(null);},3500);
+      return;
+    }
+    // Best-effort push notif to the student (existing /api/push-send pipeline)
+    var pushBody=note?("Ton report sur "+report.module_label+" a été traité : "+note):("Ton report sur "+report.module_label+" a été traité.");
+    supabase.from('push_subscriptions').select('subscription').eq('student_name',report.user_name).eq('class_code',report.class_code).then(function(r2){
+      var subs=(r2.data||[]).map(function(x){return x.subscription;}).filter(Boolean);
+      if(subs.length===0){setFbToast({ok:"Marqué résolu (pas de push subscriber pour cet élève)."});}
+      else{
+        fetch('/api/push-send',{method:'POST',headers:{'Content-Type':'application/json','x-push-secret':PUSH_SECRET},body:JSON.stringify({subscriptions:subs,title:"📬 Feedback traité",body:pushBody,tag:'fb-'+report.id,url:"/"})}).catch(function(){});
+        setFbToast({ok:"Marqué résolu + push envoyé."});
+      }
+      setTimeout(function(){setFbToast(null);},3500);
+    });
+    setFbDetailId(null);setFbResNote("");setFbResBusy(false);loadFeedback();
   }
 
   function loadEvents(){
