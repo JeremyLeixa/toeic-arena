@@ -196,6 +196,19 @@ BEGIN
   END IF;
 
   -- Pas de ligne : création, sous conditions.
+  -- (a) La cohorte doit EXISTER. Sans ce test, save_student crée une ligne dans
+  -- n'importe quel class_code inventé — repéré le 2026-09-14 en testant la RPC avec
+  -- 'idrac2099'. Ce n'était pas une régression (l'anon insérait déjà librement en
+  -- direct) mais il n'y a aucune raison de laisser passer ça maintenant qu'on filtre.
+  -- Vérifié avant d'ajouter la contrainte : zéro ligne students sur un class_code
+  -- absent de groups, donc aucune sauvegarde existante ne casse. Ne s'applique QU'À
+  -- la création : mettre à jour une ligne déjà là reste possible quoi qu'il arrive.
+  IF NOT EXISTS(SELECT 1 FROM groups WHERE code = p_class_code) THEN
+    RAISE LOG 'save_student refused: unknown class_code %', p_class_code;
+    RETURN jsonb_build_object('ok', false, 'error', 'unknown_class_code');
+  END IF;
+
+  -- (b) Garde anti-phantom : le prénom existe-t-il dans une AUTRE promo ?
   SELECT array_agg(DISTINCT class_code) INTO v_other
     FROM students
    WHERE norm_name(name) = norm_name(p_name) AND class_code IS DISTINCT FROM p_class_code;
