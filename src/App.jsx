@@ -783,19 +783,27 @@ async function load(userId){
       if(!cc)try{cc=localStorage.getItem("toeic-arena-class");}catch(e){}
       console.warn("[LOAD] querying Supabase for:",cn,cc);
       var remote=null;
-      // Primary: lookup by (name, class_code) — works cross-device
+      // Phase C-lite : plus de SELECT direct sur `students` (le rôle anon n'y a plus
+      // aucun privilège). La RPC renvoie la ligne COMPLÈTE, non aliasée — le garde
+      // stale-remote plus bas lit des clés DB brutes (remote.class_code, access_level…)
+      // avant que supaToLocal ne tourne, donc surtout pas de projection camelCase ici.
+      // La RPC applique la garde conditionnelle : ligne migrée → il faut être le
+      // propriétaire ; ligne legacy → tolérance. Un refus renvoie null, l'app repart
+      // alors sur l'onboarding, qui réclamera le mot de passe.
       if(cn){
-        var res=await supabase.from("students").select("*").ilike("name",cn).eq("class_code",cc||"visitor").order("xp",{ascending:false}).limit(1);
-        if(res.error)console.error("[LOAD] SELECT error:",res.error.message);
-        if(res.data&&res.data.length>0)remote=res.data[0];
+        var res=await supabase.rpc("load_student",{p_name:cn,p_class_code:cc||"visitor"});
+        if(res.error)console.error("[LOAD] load_student error:",res.error.message);
+        if(res.data)remote=res.data;
       }
-      // Fallback: lookup by auth user_id (P2 Phase A binding). L'ancien .eq("id",userId)
-      // ne matchait jamais (students.id = PK aléatoire, pas l'auth uid). Depuis le binding
-      // Phase A, user_id = auth.uid() pour les comptes migrés → ce fallback fonctionne enfin.
+      // Chemin de secours : la ligne liée à la session courante (binding Phase A).
       if(!remote){
         console.warn("[LOAD] primary miss, trying fallback by user_id");
-        var res2=await supabase.from("students").select("*").eq("user_id",userId).order("xp",{ascending:false}).limit(1);
-        if(res2.data&&res2.data.length>0)remote=res2.data[0];
+        var res2=await supabase.rpc("load_student_by_uid");
+        // Cette erreur était totalement avalée : sous verrou de privilèges, l'app
+        // paraissait « hors ligne » au lieu de cassée, ce qui rend un incident
+        // indétectable. On la logge maintenant.
+        if(res2.error)console.error("[LOAD] load_student_by_uid error:",res2.error.message);
+        if(res2.data)remote=res2.data;
       }
       if(remote){
         console.warn("[LOAD] got remote — xp:",remote.xp,"weekly_xp:",remote.weekly_xp,"streak:",remote.streak);
@@ -831,7 +839,12 @@ async function load(userId){
         _syncDirty=false;
         return d;
       }else{console.warn("[LOAD] no remote data found");}
-    }catch(e){/* Supabase unreachable — fall through to local */}
+    }catch(e){
+      // Regle #1 (post-crise) : plus de catch muet sur un chemin critique. Sous le
+      // verrou de privileges, une erreur ici est indiscernable d'une panne reseau
+      // si on ne la logge pas.
+      console.warn("[LOAD] caught:",e&&e.message);
+    }
   }
   // Offline or no userId: use localStorage
   return local||null;
