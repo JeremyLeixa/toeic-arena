@@ -839,6 +839,16 @@ async function load(userId){
 
 // save() — localStorage + Supabase (UPDATE first, INSERT if no row)
 var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync to Supabase
+
+// B3 (2026-09-14) — colonnes lues par le Teacher Dashboard.
+// Avant, les 3 chargements de roster faisaient `select('*')` : 200 lignes COMPLETES,
+// email / access_level / access_expires_at / user_id / password_set_at / gdpr_consent /
+// arena_marks compris, alors que ni l'UI ni l'export CSV n'en utilisent une seule
+// (verifie ligne par ligne sur tout le composant). Pur sur-fetch de PII.
+// Cette liste est l'union EXACTE de ce que le dashboard consomme. Si une colonne
+// manque, c'est un rendu vide silencieux : reverifier l'export CSV en priorite, c'est
+// le plus large consommateur.
+var DASH_STUDENT_COLS="id,name,class_code,xp,weekly_xp,week_id,streak,last_active,stats,total_time,module_scores,mock_results,game_scores,unlocked_ach,weekly_daily_count,weekly_history";
 // A "ghost student" is a registered student (non-visitor) who barely engaged with the app
 function isGhost(s){if(!s)return false;if(s.class_code==="visitor")return false;var tq=(s.stats&&s.stats.totalQ)||0;var cr=(s.stats&&s.stats.cardsRev)||0;return tq<=15&&cr<=10;}
 // Recover an auth session if the current one has been lost (refresh token expired,
@@ -12614,7 +12624,7 @@ function TeacherDash(p){
   useEffect(function(){if(dashTab==="feedback")loadFeedback();},[dashTab]);
 
   function loadStudents(){
-    supabase.from('students').select('*').eq('class_code',classCode).order('xp',{ascending:false}).limit(200)
+    supabase.from('students').select(DASH_STUDENT_COLS).eq('class_code',classCode).order('xp',{ascending:false}).limit(200)
       .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
       .catch(function(){setLoad(false);});
   }
@@ -12999,7 +13009,7 @@ function TeacherDash(p){
             setClassCode(g.code);
             try{localStorage.setItem('toeic-dash-group',g.code);}catch(e){}
             setLoad(true);setDetail(null);setDashPhase("dashboard");
-            supabase.from('students').select('*').eq('class_code',g.code).order('xp',{ascending:false}).limit(200)
+            supabase.from('students').select(DASH_STUDENT_COLS).eq('class_code',g.code).order('xp',{ascending:false}).limit(200)
               .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
               .catch(function(){setLoad(false);});
           }} className="crd" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 20px",cursor:"pointer",
@@ -13071,7 +13081,7 @@ function TeacherDash(p){
             return(<button key={c.code} onClick={function(){
               setClassCode(c.code);try{localStorage.setItem('toeic-dash-group',c.code);}catch(e){console.warn("[campus] set group failed:",e&&e.message);}
               setLoad(true);setDetail(null);setDashTab("overview");setDashPhase("dashboard");
-              supabase.from('students').select('*').eq('class_code',c.code).order('xp',{ascending:false}).limit(200)
+              supabase.from('students').select(DASH_STUDENT_COLS).eq('class_code',c.code).order('xp',{ascending:false}).limit(200)
                 .then(function(res){setStudents((res.data||[]).filter(function(r){return r.name!==GHOST_NAME;}));setLoad(false);})
                 .catch(function(){setLoad(false);});
             }} className="crd" style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",cursor:"pointer",border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:14,textAlign:"left",fontFamily:"'DM Sans',sans-serif",width:"100%"}}>
