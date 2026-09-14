@@ -952,64 +952,38 @@ async function save(d,opts){
     // between a client read and the next save() (classic lost-update). Reverting
     // this (adding arena_marks to the payload) silently erases earned Darics.
   };
-  // P2 Phase A (2026-09-11) — binding identité. opts.bindAuth (passé par onboard() lors d'un
-  // signup PASSWORD) lie la ligne à l'auth user courant + marque le compte comme sécurisé.
-  // Injecté dans payload → écrit à la fois par l'UPDATE et l'INSERT (spread), donc couvre le
-  // NOUVEL élève dont la ligne naît ici. Jamais posé par les saves de routine (churn user_id).
-  if(opts&&opts.bindAuth&&user&&user.id){
-    payload.user_id=user.id;
-    payload.password_set_at=new Date().toISOString();
-  }
+  // Phase C-lite : le binding d'identité n'est plus injecté dans le payload. La RPC
+  // pose user_id AVEC auth.uid(), jamais avec une valeur fournie par le client — on ne
+  // fait plus confiance à l'appelant sur cette colonne. opts.bindAuth devient un simple
+  // drapeau (passé par onboard() lors d'un signup PASSWORD).
   var cc=d.classCode||"visitor";
   try{
-    // Step 1: UPDATE by (name, class_code) — cross-device safe, never mutates PK
-    var upd=await supabase.from("students").update(payload).ilike("name",d.name).eq("class_code",cc).select("id");
-    if(upd.error){console.error("[SAVE] UPDATE error:",upd.error.message);return;}
-    if(!upd.data||upd.data.length===0){
-      console.warn("[SAVE] UPDATE matched 0 rows for",d.name,cc,"— checking for phantom duplicate before INSERT...");
-      // Phantom guard: before creating a new row, check if this student already exists
-      // in ANOTHER class_code. If yes, refuse to INSERT a duplicate (this is how the
-      // visitor phantoms got created — local classCode drifted to "visitor" but the
-      // student had a legit row in idrac2026/famille2026/cesi2026/etc).
-      // B3 : ce `select('class_code').ilike('name',…).neq('class_code',cc)` était un
-      // oracle inter-promos (« existe-t-il un Hugo ailleurs, et dans quelle promo ? ») —
-      // la même classe de fuite que celle fermée sur lookupName le 2026-09-11. La RPC ne
-      // renvoie plus de lignes : un booléen et la liste des codes, qui ne sert qu'au log.
-      // Le filtre passe de `ilike` à norm_name (insensible aussi aux accents) → le
-      // garde-fou devient légèrement PLUS strict, ce qui est le bon sens de l'erreur.
-      var dupR=await supabase.rpc('name_exists_in_other_class',{p_name:d.name,p_class_code:cc});
-      if(dupR.error)console.warn("[SAVE] dup check failed:",dupR.error.message);
-      var dup={data:(dupR.data&&dupR.data.found)?(dupR.data.codes||[]):[]};
-      if(dup.data&&dup.data.length>0){
-        // Homonyme légitime vs phantom : les deux ont la même signature ici (le nom
-        // existe ailleurs, l'UPDATE n'a rien matché). On les sépare par l'INTENTION,
-        // pas par l'état : seul onboard() passe allowInsert, et c'est le seul endroit
-        // où une ligne naît légitimement. Tous les autres save() (sync périodique,
-        // sv(), unload) restent bloqués — c'est eux qui fabriquaient les phantoms
-        // quand le classCode local dérivait vers "visitor".
-        // Retirer allowInsert re-casse l'inscription de TOUT homonyme d'une nouvelle
-        // promo : son onboarding se termine normalement mais aucune ligne Supabase
-        // n'est créée, il joue en local, invisible du classement et du TeacherDash,
-        // et tout est perdu au changement d'appareil. Bug vécu (nouveau "Romain"
-        // en 2027 face au "Romain" d'idrac2026) — corrigé le 2026-07-31.
-        if(!(opts&&opts.allowInsert)){
-          console.error("[SAVE] BLOCKED: would create phantom — "+d.name+" already exists in class "+dup.data[0]+" (attempted cc="+cc+")");
-          return;
-        }
-        console.warn("[SAVE] homonym INSERT authorized by onboarding —",d.name,"cc="+cc,"| also in:",dup.data.join(", "));
-      }
-      // Clean INSERT — student is genuinely new.
-      // Do NOT set id: user.id — the same auth user may already own another students row
-      // (Teacher/student on same device, multi-profile family accounts, etc.), which would
-      // trigger a PK conflict. Let Postgres auto-generate a fresh UUID; identity is tracked
-      // via the natural key (name, class_code) for UPDATEs and via lookupName for recovery.
-      // access_level/access_expires_at ne sont plus dans payload (server-authoritative) —
-      // on pose la baseline 'free' à la création. Un nouvel inscrit est toujours free ;
-      // s'il paie, le webhook Stripe réécrit la colonne.
-      var ins=await supabase.from("students").insert({name:d.name,class_code:cc,access_level:'free',access_expires_at:null,...payload});
-      if(ins.error)console.error("[SAVE] INSERT error:",ins.error.message);
-      else console.warn("[SAVE] OK —",d.name,cc,"inserted");
-    }else{console.warn("[SAVE] OK —",d.name,cc,"updated");}
+    // Phase C-lite : UPDATE, garde anti-phantom et INSERT sont désormais UNE seule
+    // transaction côté serveur. Trois gains :
+    //  · le rôle anon n'a plus aucun privilège sur `students` (fichier SQL 2) ;
+    //  · la liste blanche de colonnes est appliquée par le serveur, donc access_level,
+    //    access_expires_at et arena_marks deviennent inécrivables quoi qu'on envoie —
+    //    jusqu'ici ils n'étaient exclus que par ce fichier JS, un PATCH REST direct
+    //    passait outre (finding C3, à moitié fermé) ;
+    //  · la garde anti-phantom n'est plus contournable en sautant le client.
+    // La RPC fusionne : seules les clés présentes dans le payload sont écrites, ce qui
+    // rend le payload réduit du keepalive sans danger.
+    var r=await supabase.rpc("save_student",{
+      p_name:d.name,p_class_code:cc,p_payload:payload,
+      p_allow_insert:!!(opts&&opts.allowInsert),
+      p_bind_auth:!!(opts&&opts.bindAuth)
+    });
+    if(r.error){console.error("[SAVE] rpc error:",r.error.message);return;}
+    var dd=r.data||{};
+    if(!dd.ok){
+      // blocked_phantom : le prénom existe dans une AUTRE promo et l'appel ne vient pas
+      // d'onboard(). C'est le cas qui fabriquait les lignes fantômes quand le classCode
+      // local dérivait vers "visitor". not_owner : la ligne appartient à un compte migré
+      // qui n'est pas celui de la session.
+      console.error("[SAVE] refused:",dd.error,dd.codes?("| aussi dans: "+JSON.stringify(dd.codes)):"");
+      return;
+    }
+    console.warn("[SAVE] OK —",d.name,cc,dd.action);
     _syncDirty=false;
   }catch(e){console.warn("[SAVE] Exception:",e);}
 }
