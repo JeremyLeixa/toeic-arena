@@ -17332,14 +17332,13 @@ useEffect(function(){
       if(!session.user.email_confirmed_at)return;
       if(u.email===session.user.email)return; // already synced
       var newEmail=session.user.email;
-      supabase.from('students')
-        .update({email:newEmail})
-        .ilike('name',u.name)
-        .eq('class_code',u.classCode||'visitor')
-        .select('id') // return affected rows so we can check the actual count
+      // Phase C-lite : l'email n'est plus fourni par le client. La RPC le lit dans le
+      // JWT de la session, donc on ne peut coller sur son profil que l'adresse de SA
+      // propre session — et plus celle qu'on veut.
+      supabase.rpc('sync_my_student_email',{p_name:u.name,p_class_code:u.classCode||'visitor'})
         .then(function(res){
           if(res.error){console.error('[auth] email sync failed:',res.error.message);return;}
-          if(!res.data||res.data.length===0){
+          if(!res.data||!res.data.ok||!res.data.rows){
             // No students row matched — probably not yet written to DB (onboarding still in progress).
             // Don't claim "email linked" in local state, otherwise the Profile UI would show
             // "Compte sécurisé" while the DB has no record of it.

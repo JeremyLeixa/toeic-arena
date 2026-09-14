@@ -303,14 +303,15 @@ export async function bindStudentUserId(name, classCode, markPasswordSet) {
     const { data } = await supabase.auth.getUser();
     const user = data && data.user;
     if (!user) return false;
-    const patch = { user_id: user.id };
-    if (markPasswordSet) patch.password_set_at = new Date().toISOString();
-    const { error } = await supabase
-      .from('students')
-      .update(patch)
-      .ilike('name', name)
-      .eq('class_code', classCode);
-    if (error) { console.warn('[auth] bindStudentUserId failed:', error.message); return false; }
+    // Phase C-lite : plus d'UPDATE direct (le role anon n'a plus de privilege sur
+    // students). La RPC pose user_id AVEC auth.uid() — la valeur ne transite plus par
+    // le client — et refuse de lier une ligne deja rattachee a QUELQU'UN D'AUTRE, ce
+    // qui empechait jusqu'ici une session quelconque de s'approprier un compte migre.
+    const res = await supabase.rpc('bind_student_user_id', {
+      p_name: name, p_class_code: classCode, p_mark_password: !!markPasswordSet,
+    });
+    if (res.error) { console.warn('[auth] bind_student_user_id failed:', res.error.message); return false; }
+    if (!res.data || !res.data.ok) { console.warn('[auth] bind_student_user_id refused:', res.data && res.data.error); return false; }
     return true;
   } catch (e) { console.warn('[auth] bindStudentUserId caught:', e && e.message); return false; }
 }
