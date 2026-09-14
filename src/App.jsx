@@ -9439,7 +9439,11 @@ function GamesHub(p){
   useEffect(function(){
     var cc=p.u&&p.u.classCode;
     if(!cc||cc==="visitor")return;
-    supabase.from("students").select("name,class_code,game_scores,module_scores")
+    // B3 : lecture des lignes des CAMARADES → passe par la vue restreinte
+    // `students_public` (colonnes publiques uniquement, ligne Teacher déjà exclue
+    // côté serveur). Ne pas revenir à `from("students")` : la Phase C y posera une
+    // policy auth.uid()=user_id qui rendrait cette requête vide.
+    supabase.from("students_public").select("name,class_code,game_scores,module_scores")
       .eq("class_code",cc)
       .neq("name",GHOST_NAME)
       .then(function(res){
@@ -14439,8 +14443,12 @@ function loadProgressionData(){
     });
 }
 
+// B3 : classement = lignes des camarades → vue restreinte `students_public`.
+// Elle n'expose que les colonnes du classement et exclut déjà Teacher côté serveur
+// (le filtre client est conservé par ceinture-bretelles). Ne pas repasser sur
+// `students` : la Phase C y posera une policy auth.uid()=user_id.
 useEffect(function(){
-  supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan,frame_id,title_id').eq('class_code',leagueGroup).order('weekly_xp',{ascending:false}).limit(150)
+  supabase.from('students_public').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan,frame_id,title_id').eq('class_code',leagueGroup).order('weekly_xp',{ascending:false}).limit(150)
     .then(function(res){if(res.data){setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));setProgressionData([]);}});
 },[u.weeklyXp,leagueGroup]);
 
@@ -14451,7 +14459,7 @@ useEffect(function(){
     // Sinon chaque tick écrase `rivals` SANS module_scores ni battle_scan, ce qui
     // fait retomber tout le monde à baseline 200 / currentToeic 200 dans l'onglet
     // Progrès. Régression du 2026-04-23. frame_id/title_id ajoutés 2026-04-28.
-    supabase.from('students').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan,frame_id,title_id').eq('class_code',leagueGroup).limit(150)
+    supabase.from('students_public').select('name,weekly_xp,week_id,avatar,weekly_history,module_scores,battle_scan,frame_id,title_id').eq('class_code',leagueGroup).limit(150)
       .then(function(res){if(res.data)setRivals(res.data.filter(function(r){return r.name!=="Teacher";}));});
   },180000);
   return function(){clearInterval(iv);};
