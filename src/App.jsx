@@ -12955,6 +12955,32 @@ function TeacherDash(p){
         })}
       </div>
       
+      {/* Reinitialiser l'acces — Phase C : les comptes eleves ont un email synthetique,
+          donc aucun "mot de passe oublie" par mail n'est possible. Ce bouton ne fabrique
+          et ne transmet AUCUN mot de passe : il remet le compte a l'etat "a securiser",
+          l'eleve en choisit un nouveau lui-meme a sa prochaine connexion. Sa progression
+          n'est pas touchee. Cliquer pendant que l'eleve est present : entre le reset et
+          sa reconnexion, le compte est reclamable par quelqu'un qui connait son prenom. */}
+      <button className="btn2" onClick={async function(){
+        var NL2=String.fromCharCode(10,10);
+        if(!confirm("Réinitialiser l’accès de "+s.name+" ?"+NL2+"Il devra choisir un nouveau mot de passe à sa prochaine connexion. Sa progression est conservée."+NL2+"À faire pendant qu’il est avec toi : d’ici sa reconnexion, son compte est réclamable."))return;
+        try{
+          var rr=await fetch('/api/teacher-reset-student',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({teacherCode:getDashTeacher(),name:s.name,class_code:s.class_code})});
+          var dd=await rr.json().catch(function(){return{};});
+          if(!rr.ok||!dd.ok){
+            console.warn("[teacher-reset] refused:",rr.status,dd&&dd.error);
+            alert(rr.status===403?"Cet élève n'est pas dans une de tes cohortes."
+                 :rr.status===404?"Élève introuvable."
+                 :rr.status===401?"Code formateur invalide — reconnecte-toi."
+                 :"Échec de la réinitialisation.");
+            return;
+          }
+          alert("Accès réinitialisé. "+s.name+" choisira un nouveau mot de passe à sa prochaine connexion.");
+          loadStudents();
+        }catch(e){console.warn("[teacher-reset] caught:",e&&e.message);alert("Échec de la réinitialisation.");}
+      }} style={{fontSize:12,color:"var(--cyan)",borderColor:"rgba(0,224,255,.2)",width:"100%",marginBottom:10}}>{"↻ Réinitialiser l'accès"}</button>
+
       {/* Delete student */}
       {/* B5 (2026-09-13) — ce bouton ne supprimait RIEN. Le filtre `.eq('id',s.id)`
           était bon (s.id EST la PK) mais ni anon ni authenticated n'ont le privilège
