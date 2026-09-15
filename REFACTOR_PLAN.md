@@ -429,4 +429,13 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   n'a pas changé). Le lot 37 (League) a été refusé une première fois, à raison :
   `RankRow` et `loadProgressionData` sont internes à `League` et voyagent avec elle.
   Les 3 `var` de CSS local (`DTL_CSS`, `SBD_CSS`) et `GRAMMAR_SHEETS` sont privées à
-  leur module. **Phases 2 et 3 non mergées** : smoke complet de Jérémy puis merge.
+  leur module. Smoke complet validé par Jérémy, puis **Phases 2 et 3 mergées sur `main`
+  le 2026-09-15 à 22h10** (commit de merge `2bdc963`, `--no-ff`, rollback = `git revert
+  -m 1 2bdc963`). Portes finales sur `main` : tests 9/9, lint 372, build 29 s, bundle
+  3 271 093 o. Pendant le smoke, un bug du flux auth repéré, sans lien avec le refactor
+  (voir §9, entrée suivante).
+- 2026-09-15 — **Hors refactor, à corriger sur `main`** : le chemin de secours « compte
+  déjà existant → me connecter » lie l'utilisateur sans poser `password_set_at`, et le
+  retour `not_owner` de `bind_student_user_id` est avalé en silence. Un compte dans ce cas
+  revoit l'écran « choisis un mot de passe » à chaque login (vécu par Jérémy). Chemin auth :
+  lecture complète du flux avant de patcher (Hardened Rules).
