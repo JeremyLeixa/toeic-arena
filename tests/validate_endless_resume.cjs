@@ -16,44 +16,11 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-const src = fs.readFileSync(path.join(ROOT, "src", "App.jsx"), "utf8").replace(/\r\n/g, "\n");
-
-// ── On evalue les VRAIES fonctions extraites d'App.jsx, pas une copie ──
-const START = "function generateEndlessTest(){";
-const END = "\n  return true;\n}\n";              // fin de endlessAnsFitsTest
-const a = src.indexOf(START);
-const b = src.indexOf(END, a);
-if (a < 0 || b < 0) throw new Error("bloc generateEndlessTest/freshAnsFor/endlessAnsFitsTest introuvable");
-const block = src.slice(a, b + END.length);
-
-const D = path.join(ROOT, "src", "data");
-const load = (f, name) => {
-  const code = fs.readFileSync(path.join(D, f), "utf8").replace(/^export var /gm, "var ");
-  return new Function(code + ";return " + name + ";")();
-};
-const pools = {
-  LISTENING_P1: load("listening.js", "LISTENING_P1"),
-  LISTENING_P2: load("listening.js", "LISTENING_P2"),
-  LISTENING_P3: load("listening.js", "LISTENING_P3"),
-  LISTENING_P4: load("listening.js", "LISTENING_P4"),
-  BOSS_P1: load("bossTestFull.js", "BOSS_P1"),
-  BOSS_P2: load("bossTestFull.js", "BOSS_P2"),
-  BOSS_P3: load("bossTestFull.js", "BOSS_P3"),
-  BOSS_P4: load("bossTestFull.js", "BOSS_P4"),
-  BOSS_P5: load("bossTestFull.js", "BOSS_P5"),
-  BOSS_P6: load("bossTestFull.js", "BOSS_P6"),
-  BOSS_P7: load("bossTestFull.js", "BOSS_P7"),
-  QUESTIONS: load("grammar.js", "QUESTIONS"),
-  PART6_TEXTS: load("part6.js", "PART6_TEXTS"),
-  PART7_PASSAGES: load("part7.js", "PART7_PASSAGES"),
-};
-const names = Object.keys(pools);
-const api = new Function(
-  ...names,
-  block + "\nreturn{generateEndlessTest,freshAnsFor,endlessAnsFitsTest};"
-)(...names.map(n => pools[n]));
-
-const { generateEndlessTest, freshAnsFor, endlessAnsFitsTest } = api;
+// ── On requiert le VRAI module lib/endless.js (découpage d'App.jsx, 2026-09-15) ──
+// require(esm) : Node >= 22.12 et package.json "type": "module". Le module importe les
+// pools de data/ lui-même : plus de transpilation à la main, plus de découpage de texte.
+const { generateEndlessTest, freshAnsFor, endlessAnsFitsTest } =
+  require(path.join(ROOT, "src", "lib", "endless.js"));
 
 let fails = 0;
 const check = (cond, msg) => { if (!cond) { fails++; console.log("  FAIL " + msg); } };
