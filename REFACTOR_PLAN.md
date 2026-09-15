@@ -397,4 +397,13 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   commité), `lintgate.cjs` (no-undef, imports inutilisés nouveaux, total qui ne monte pas).
   Leçon : une chaîne de lots doit s'arrêter à la première erreur (`set -e`), sinon un lot
   s'extrait par-dessus un lot non commité (vu sur 10-12, arbre remis à zéro et rejoué).
-  **Non mergé sur `main`** : smoke téléphone par Jérémy sur la preview Vercel d'abord.
+  Smoke téléphone validé par Jérémy, puis **mergé sur `main` le 2026-09-15 au soir**
+  (commit de merge `da011e1`, `--no-ff` : rollback = `git revert -m 1 da011e1`). Portes
+  finales sur `main` après merge : tests 9/9, lint 372, build 29,5 s, bundle 3 271 069 o.
+- 2026-09-15 — **Incident découvert pendant le smoke, sans lien avec le refactor** : la
+  migration d'hygiène du matin avait coupé la lecture élève de `groups` (« Code not found »
+  pour toutes les promos). Hotfix SQL `2026-09-15_p2d3_restore_groups_read.sql` appliqué
+  par Jérémy ; le balayage `check:security` dérive désormais ses chemins légitimes du
+  source (`scripts/clientPaths.cjs`) et deux règles sont ajoutées à `CLAUDE.md`. Le seul
+  effet sur le chantier : `groups` reste lue en direct (4 sites), à passer en RPC hors
+  refactor.
