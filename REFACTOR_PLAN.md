@@ -452,8 +452,9 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   / `design-tokens`, commandes `add-supabase-field` / `fix-css`), puis **Phase 4a + docs
   mergées sur `main` à 22h45** (`d1ae8f9`, `--no-ff`) après smoke navigation validé par
   Jérémy. **Chantier terminé.** Phase 5 (lazy chunks, `lib/xp.js` pur, code mort) reste
-  disponible à la demande, hors de ce chantier. La branche `refactor/split-app` peut être
-  supprimée ; l'outillage `scripts/refactor/` reste dans le dépôt.
+  disponible à la demande, hors de ce chantier. La branche `refactor/split-app` a été
+  supprimée (local et origin) le soir même, entièrement mergée ; l'outillage
+  `scripts/refactor/` reste dans le dépôt.
 
 ## 10. Bilan (2026-09-15)
 

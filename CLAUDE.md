@@ -95,7 +95,7 @@ src/
                           chestLabels, shopCatalog, iconMaps, passageDocs, rarityStyles
   components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
                           PassageDocs, avatar (renderAv, AvatarMedal), toasts, Tabs,
-                          GrimoireReader, NextStepReco, TokenCTAs, legal
+                          GrimoireReader, NextStepReco, TokenCTAs, legal, PasswordInput (œil)
   features/            — one folder per screen: train/ (grammar, reading, strategy),
                           home/ (Home, Train, Cards, Daily, DailyTip), gauntlet/, modals/,
                           games/, listening/, exams/ (Mock, Boss, Endless), mentor/,
@@ -132,6 +132,8 @@ src/
     modals.js              — MODAL_MATCH_BOARDS (15 boards × 5 pairs) +
                           MODAL_SORT_ITEMS (50 sentences, 4 buckets)
     modalsGrimoire.js      — GRIMOIRE_MODALS (7 chapters FR)
+    grammarSheets.js       — GRAMMAR_SHEETS (12 fiches Grammar Reference, aussi rendues en
+                          place dans la revue de l'Exam Simulation via <GrammarSheet/>)
 public/
   audio/
     bgm/               — bgm_home, bgm_speed, bgm_wfall, bgm_duel, bgm_clue,
@@ -423,6 +425,18 @@ l'ajouter à `supabase/migrations/`.
 `student_guard` a une **tolérance legacy** : une ligne sans `user_id` passe, faute de
 preuve à exiger. Chaque compte migré se protège tout seul. Le durcissement final de la
 Phase C = retirer cette branche, une ligne.
+
+**Deux marqueurs d'identité sur `students`, deux lecteurs différents** (piège vécu le
+2026-09-15, P2-D4) : le **routage du login** (`find_students_by_name` → Onboard) lit
+`password_set_at` (NULL → écran « choisis un mot de passe », sinon « entre ton mot de
+passe ») ; la **garde** (`student_guard`, donc load/save) lit `user_id`. Toute liaison
+après une connexion réussie doit poser les deux (`bind_student_user_id` avec
+`p_mark_password=true`), sinon la ligne est « liée sans date » et revoit l'écran claim à
+chaque login. `bind_student_user_id` n'oppose `not_owner` qu'à une ligne **sécurisée**
+(`password_set_at` posé) appartenant à quelqu'un d'autre ; un `user_id` résiduel sur une
+ligne non sécurisée n'est la preuve de rien et se laisse relier. Le client refuse d'entrer
+si la liaison est refusée : sinon `student_guard` refuserait ensuite chaque sauvegarde en
+silence.
 
 ### Règles à ne pas enfreindre
 

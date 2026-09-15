@@ -73,15 +73,22 @@
   Tests 9/9 en import natif, lint inchangé, bundle identique, **aucun impact étudiant**.
 - Règles nouvelles dans `CLAUDE.md` (Architecture) : sens des couches, `App()` seul
   détenteur d'état, un `.jsx` n'exporte que des composants, jamais assigner un import.
-- Hors refactor, repéré pendant le smoke : régression `groups` de la migration d'hygiène
-  (corrigée, `2026-09-15_p2d3`), bug du claim de mot de passe (chemin de secours sans
-  `password_set_at`, `not_owner` avalé — à corriger), toggle œil sur les champs mot de
-  passe (demandé).
+- Hors refactor, repéré pendant le smoke et **corrigé le soir même** : régression `groups`
+  de la migration d'hygiène (`2026-09-15_p2d3`, appliqué) ; piège du claim de mot de passe
+  (`2026-09-15_p2d4`, appliqué, + client : marquage à la connexion, refus d'entrer si la
+  liaison échoue — diagnostic : 158 legacy libres, 0 lié sans date, 4 sécurisés sains) ;
+  toggle œil sur les 11 champs mot de passe (`components/PasswordInput.jsx`) ; fiche de
+  cours en place dans la revue de l'Exam Simulation (retour de Noah, iabd2627).
+- Tout est mergé sur `main`, branche `refactor/split-app` supprimée. `npm run
+  check:security` dérive désormais ses chemins légitimes du source.
 
 ### Pour la prochaine session
-- Merger la Phase 4a après smoke navigation ; puis toggle œil (composant `PasswordInput`
-  partagé, 11 champs dans 3 fichiers) ; puis le bug du claim (lecture complète du flux auth
-  avant de patcher).
+- Hors refactor, petit lot : remplacer les 4 lectures directes de `groups` par une RPC
+  bornée (supprime l'exception « grant colonne + policy » qui a piégé la migration
+  d'hygiène).
+- Phase 5 du refactor, optionnelle : lazy chunks (Teacher, Onboarding, exams), portes XP en
+  fonctions pures testables (`lib/xp.js`), code mort (`speakAndWait`, `compScores`,
+  `getModuleAccuracy`, `parseInlineStyle`, `_lastSync`, `SK`).
 - Avatars Anaïs dès dispo. Sinon backlog S2 (re-engagement, Magic Link Phase 3).
 
 ---
@@ -474,4 +481,4 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 
 ---
 
-_Last updated: 2026-09-15 · Découpage d'App.jsx (18 589 → 1 493 lignes, lib/components/features/routes), Phases 1-3 en prod, 4a à merger. Sécurité : verrou RPC complet, régression `groups` corrigée, balayage dérivé du source. Next: merge 4a, toggle œil mdp, bug claim password_set_at, avatars Anaïs._
+_Last updated: 2026-09-15 (soir) · Découpage d'App.jsx terminé et en prod (18 589 → 1 493 lignes, lib/components/features/routes, docs et skills à jour). Sécurité : verrou RPC complet, régression `groups` corrigée, piège du claim corrigé (P2-D4), balayage dérivé du source. UX : toggle œil mdp, fiche de cours en place (Exam Simulation). Next: RPC `groups`, Phase 5 optionnelle, avatars Anaïs._
