@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { playCorrect, playWrong, playXP, playLevelUp, playCombo, playStreak, playTimer, playClick, playArenaCall, playJingleEnter, playJingleAchieve, playJingleLeague, playJingleMock, playJingleMockOk, playJingleDaily, playBGM, stopBGM, setSoundEnabled, isSoundEnabled } from "./sounds.js";
 import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
+import { today, weekId, shuffle, srand, normalizeName } from "./lib/util.js";
+import { fresh, supaToLocal, buildSavePayload } from "./lib/profileSchema.js";
+import { haptic, isStandalonePWA, isIOSDevice } from "./lib/device.js";
+import { getEnVoice, speak, stopCurrentListenAudio, setListenAudio, isAudioAborted, playAudioFile, stopListenAudio, resumeAudioSession } from "./lib/audio.js";
 
 /* ═══════════════════════════════════════════
    VERSE ARENA — MVP v2.0
@@ -40,158 +44,7 @@ import { CGV_ARTICLES, CGV_VERSION, CGV_EFFECTIVE_DATE } from "./data/cgv.js";
 
 
 
-// ─── TTS ENGINE (pre-generated MP3 → browser TTS fallback) ───
-var _voices=null;
-function getEnVoice(){
-  if(_voices)return _voices;
-  var all=window.speechSynthesis?window.speechSynthesis.getVoices():[];
-  // Safari on macOS/iOS returns lang codes like "en-US", "en_US", "en_us" inconsistently.
-  // Normalize to lowercase and accept both separators.
-  function isEn(v){
-    if(!v||!v.lang)return false;
-    var l=v.lang.toLowerCase().replace(/_/g,"-");
-    return l.indexOf("en")===0&&(l.length===2||l.charAt(2)==="-");
-  }
-  // Prefer high-quality voices on Safari (Enhanced/Premium in voice name).
-  // Then en-US > en-GB > en-AU > any en.
-  var enVoices=all.filter(isEn);
-  if(enVoices.length===0){
-    // NEVER fall back to non-English. Returning null lets the browser pick based on u.lang,
-    // which is safer than explicitly assigning a French voice on a FR-locale device.
-    return null;
-  }
-  var pref=["en-us","en-gb","en-au"];
-  for(var p=0;p<pref.length;p++){
-    for(var i=0;i<enVoices.length;i++){
-      var lg=enVoices[i].lang.toLowerCase().replace(/_/g,"-");
-      if(lg===pref[p]){_voices=enVoices[i];return _voices;}
-    }
-  }
-  // Any English voice
-  _voices=enVoices[0];return _voices;
-}
-var _audioCache={};
-var _mp3Failed={};
-async function speak(text,rate,audioPath){
-  // Respect abort flag — if component unmounted, don't start new audio.
-  if(_audioAborted)return;
-  // If an explicit MP3 path is given, try it first
-  if(audioPath&&!_mp3Failed[audioPath]){
-    if(_audioCache[audioPath]){
-      var a=_audioCache[audioPath].cloneNode();
-      a.playbackRate=rate||0.9;
-      // Track so stopListenAudio can kill it on unmount.
-      if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-      _listenAudio=a;
-      a.play().catch(function(){});
-      return;
-    }
-    try{
-      var audio=new Audio(audioPath);
-      await new Promise(function(resolve,reject){
-        audio.oncanplaythrough=resolve;
-        audio.onerror=reject;
-        audio.load();
-      });
-      if(_audioAborted)return;
-      audio.playbackRate=rate||0.9;
-      _audioCache[audioPath]=audio;
-      if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-      _listenAudio=audio;
-      audio.play().catch(function(){});
-      return;
-    }catch(e){_mp3Failed[audioPath]=true;}
-  }
-  // Fallback to browser TTS
-  if(!window.speechSynthesis)return;
-  if(_audioAborted)return;
-  window.speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(text);
-  u.rate=rate||0.9;u.pitch=1;u.volume=1;
-  // Set lang BEFORE voice — Safari bug: voice assignment can override/lock language otherwise
-  u.lang="en-US";
-  var v=getEnVoice();if(v)u.voice=v;
-  window.speechSynthesis.speak(u);
-}
-function speakAndWait(text,rate,audioPath){
-  return new Promise(function(resolve){
-    if(_audioAborted){resolve();return;}
-    if(audioPath&&!_mp3Failed[audioPath]){
-      if(_audioCache[audioPath]){
-        var a=_audioCache[audioPath].cloneNode();
-        a.playbackRate=rate||0.9;
-        a.onended=resolve;a.onerror=resolve;
-        if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-        _listenAudio=a;
-        a.play().catch(resolve);
-        return;
-      }
-      var audio=new Audio(audioPath);
-      audio.oncanplaythrough=function(){
-        if(_audioAborted){resolve();return;}
-        audio.playbackRate=rate||0.9;
-        _audioCache[audioPath]=audio;
-        audio.onended=resolve;audio.onerror=resolve;
-        if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-        _listenAudio=audio;
-        audio.play().catch(resolve);
-      };
-      audio.onerror=function(){_mp3Failed[audioPath]=true;speakBrowserTTS(text,rate,resolve);};
-      audio.load();
-      return;
-    }
-    speakBrowserTTS(text,rate,resolve);
-  });
-}
-function speakBrowserTTS(text,rate,cb){
-  if(!window.speechSynthesis){cb();return;}
-  window.speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(text);
-  u.rate=rate||0.9;u.pitch=1;u.volume=1;
-  // Set lang BEFORE voice — Safari bug: voice assignment can override/lock language otherwise
-  u.lang="en-US";
-  var v=getEnVoice();if(v)u.voice=v;
-  u.onend=cb;u.onerror=cb;
-  window.speechSynthesis.speak(u);
-}
 
-// Track the currently-playing listening audio so we can stop it on unmount/Quit.
-// Otherwise audio keeps playing in background after the user exits a listening exercise.
-//
-// GUARD: _audioAborted flag is essential to kill in-flight async sequences.
-// Before this fix, stopListenAudio stopped the CURRENT audio but the async
-// playQuestion()/playP1()/etc sequences kept running their await chain and
-// started the NEXT audio clip after the user had already navigated away
-// (Part 2 bug reported 2026-04-22). Each audio-exercise component must call
-// resumeAudioSession() on mount (via useEffect) to reset the flag, and
-// stopListenAudio() on unmount to abort in-flight sequences.
-var _listenAudio=null;
-var _audioAborted=false;
-function playAudioFile(url){
-  return new Promise(function(resolve){
-    // Sequence was aborted (component unmounted) — bail out immediately,
-    // don't create a new Audio object for the next clip in the chain.
-    if(_audioAborted){resolve();return;}
-    // Abort any previous audio still playing from this helper
-    if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}
-    var audio=new Audio(url);
-    _listenAudio=audio;
-    function cleanup(){if(_listenAudio===audio)_listenAudio=null;resolve();}
-    audio.onended=cleanup;
-    audio.onerror=function(){console.warn("Audio not found: "+url);cleanup();};
-    audio.play().catch(cleanup);
-  });
-}
-function stopListenAudio(){
-  _audioAborted=true;
-  if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}
-  // Also cancel any active browser TTS (speechSynthesis) — speak() fallback
-  // uses window.speechSynthesis which has its own queue, distinct from _listenAudio.
-  try{if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){console.warn("[audio] tts cancel:",e&&e.message);}
-}
-function resumeAudioSession(){_audioAborted=false;}
-// Preload voices (some browsers need this)
-if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){_voices=null;getEnVoice();};}
 
 // ─── BRAND MARK ───
 // Verse Arena logo ("plume & épée"): steel sword crossed with a gold quill.
@@ -766,9 +619,6 @@ async function teacherAuth(code){
 var PREMIUM_UPGRADE_ENABLED=true;
 import { supabase } from './supabase.js'
 import { getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword, signUpStudent, signInStudent, bindStudentUserId } from './auth.js'
-import { today, weekId, shuffle, srand, normalizeName } from "./lib/util.js";
-import { fresh, supaToLocal, buildSavePayload } from "./lib/profileSchema.js";
-import { haptic, isStandalonePWA, isIOSDevice } from "./lib/device.js";
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
 
@@ -3849,7 +3699,7 @@ var[step,sSt]=useState("name");
         for(var i=0;i<4;i++){
           setAudioStep(i);
           await playAudioFile("/audio/p1/"+refId+"_"+i+".mp3");
-          if(_audioAborted)break;
+          if(isAudioAborted())break;
         }
         setAudioStep(-1);
       }else if(part==="p2"){
@@ -10080,9 +9930,9 @@ function AudioBlitz(p){
     var playTimeout=setTimeout(function(){
       setPlayed(1);
       var it=items[ci];
-      if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
+      stopCurrentListenAudio();
       var audio=new Audio(it.audio);
-      _listenAudio=audio;
+      setListenAudio(audio);
       var usedTTS=false;
       var afterCalled=false;
 
@@ -10123,9 +9973,9 @@ function AudioBlitz(p){
     if(replays>=1||played<2)return;
     setReplays(1);
     var it=items[ci];
-    if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
+    stopCurrentListenAudio();
     var audio=new Audio(it.audio);
-    _listenAudio=audio;
+    setListenAudio(audio);
     audio.onerror=function(){speak(it.text,0.85);};
     audio.playbackRate=0.9;
     audio.play().catch(function(){speak(it.text,0.85);});
