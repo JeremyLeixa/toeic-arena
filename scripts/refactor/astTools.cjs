@@ -139,9 +139,12 @@ function attachedStart(code, ast, stmt) {
   }
 }
 
-/* Fin du bloc : la déclaration + son retour à la ligne. */
+/* Fin du bloc : la déclaration, son éventuel commentaire de fin de ligne
+ * (`var X=1; // …`, qui documente X et doit voyager avec lui), et le retour à la ligne. */
 function blockEnd(code, stmt) {
   let e = stmt.range[1];
+  const rest = code.slice(e).match(/^[ \t]*\/\/[^\r\n]*/);
+  if (rest) e += rest[0].length;
   if (code.startsWith('\r\n', e)) e += 2; else if (code[e] === '\n') e += 1;
   return e;
 }
