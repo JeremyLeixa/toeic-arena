@@ -404,10 +404,17 @@ Phase C = retirer cette branche, une ligne.
   pendant des mois — et **TRUNCATE ignore la RLS**.
 - **Les policies PERMISSIVE sont OR'ées.** Une policy `USING true` à côté d'une policy
   de propriété annule la seconde. C'est pourquoi les 12 policies legacy ont été
-  supprimées : la protection vient des privilèges, pas de la RLS.
+  supprimées : la protection vient des privilèges, pas de la RLS. **Exception : `groups`**,
+  seule table lue en direct par les élèves, vit sur les deux à la fois (grant colonne
+  par colonne + policy SELECT `USING true`). Retirer l'un des deux ne « nettoie » rien,
+  ça coupe la lecture (régression du 2026-09-15).
 - **Ordre de déploiement** : fichier SQL 1 (les RPC, purement additif) → code déployé →
   vérification en prod → fichier SQL 2 (le REVOKE). Le SQL 2 brûle le filet : tant qu'il
   n'est pas passé, reverter le commit client suffit.
+- **Après TOUTE migration qui touche un GRANT, un REVOKE ou une POLICY** : `npm run
+  check:security` (ses chemins légitimes sont dérivés du source, pas d'une liste) **et**
+  un login + un « Join a Group » sur la prod. La migration d'hygiène du 2026-09-15 est
+  passée sans ni l'un ni l'autre : aucune inscription par code de promo pendant des heures.
 - `api/*.js` et les Edge Functions tournent en `service_role` → insensibles à tout ceci.
 
 ---

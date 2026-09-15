@@ -11,7 +11,9 @@
  *   · seules la vue de classement et les événements répondent, en lecture ;
  *   · les suppressions en lot sont refusées — c'était le vecteur le plus grave, capable
  *     de couper les notifications d'une promo entière sans laisser de trace ;
- *   · les RPC légitimes répondent toujours (sinon on aurait « sécurisé » en cassant).
+ *   · chaque chemin que le CLIENT emprunte répond toujours — lectures directes et RPC
+ *     relevées dans le source, pas dans une liste tenue à la main (sinon on aurait
+ *     « sécurisé » en cassant : c'est arrivé le 2026-09-15, lecture de `groups` coupée).
  *
  * INNOCUITÉ. Toutes les sondes sont soit des lectures, soit des écritures filtrées sur
  * une cohorte qui n'existe pas. Aucune ligne réelle n'est touchée, même si un privilège
@@ -22,8 +24,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(import.meta.url);
+const { collectReads, collectRpcNames, collectDefs, dummyFor } = require('./clientPaths.cjs');
 
 // ── .env ──────────────────────────────────────────────────────────────────
 const envPath = path.join(ROOT, '.env');
@@ -107,21 +112,73 @@ if (rv.status !== 401) {
 }
 console.log('  5 vecteurs destructeurs refusés');
 
-// ── 4. Les chemins légitimes répondent toujours ───────────────────────────
-// Sécuriser en cassant l'application n'est pas sécuriser.
+// ── 4. Chaque chemin que le CLIENT emprunte répond — dérivé du source ─────
+// Sécuriser en cassant l'application n'est pas sécuriser. La liste n'est PAS tenue à
+// la main : c'est une liste à la main (3 RPC + 1 garde) qui a laissé passer la
+// régression du 2026-09-15 — la migration d'hygiène a supprimé la policy SELECT de
+// `groups` en la croyant inerte, et « Join a Group » a répondu « Code not found » pour
+// toutes les promos. Ici, tout `supabase.from(...).select(...)` et tout
+// `supabase.rpc(...)` du source est relevé (scripts/clientPaths.cjs) et sondé.
+const SRC = path.join(ROOT, 'src');
+
+// 4a. Lectures directes. Un 200 ne suffit pas : RLS active sans policy SELECT donne
+// `200 []` sur une table pleine — c'était exactement le symptôme. Sur une table qui
+// n'est jamais vide, on exige une ligne. `events` peut l'être légitimement.
+const reads = collectReads(SRC, ROOT);
+const NEVER_EMPTY = new Set(['groups', 'students_public']);
+for (const rd of reads) {
+  const r = await get(rd.table + '?select=' + rd.cols + '&limit=1');
+  const rows = r.status === 200 ? await r.json() : null;
+  if (r.status !== 200) {
+    fail('GET ' + rd.table + '?select=' + rd.cols + ' → HTTP ' + r.status + ' (' + rd.where[0]
+      + '). Lecture directe coupée : grant colonne ou policy.');
+  } else if (NEVER_EMPTY.has(rd.table) && (!Array.isArray(rows) || rows.length === 0)) {
+    fail('GET ' + rd.table + '?select=' + rd.cols + ' → 200 mais aucune ligne (' + rd.where[0]
+      + '). RLS active sans policy SELECT ? (régression du 2026-09-15)');
+  }
+}
+// Les colonnes sensibles de `groups` restent refusées (grant colonne par colonne, B4).
+for (const col of ['teacher_code', 'teacher_email']) {
+  const r = await get('groups?select=' + col + '&limit=1');
+  if (r.status === 200) fail('GET groups?select=' + col + ' → 200 : la colonne sensible est redevenue lisible.');
+}
+
+// 4b. RPC. Chaque fonction appelée par le client est sondée avec des arguments factices
+// typés d'après sa DERNIÈRE signature SQL (migrations rejouées dans l'ordre). Seules les
+// fonctions dont le corps porte une garde (student_guard, teacher_role_of, auth.uid) ou
+// qui ne font que lire sont sondées : la garde refuse un compte qui n'existe pas AVANT
+// toute écriture. Une fonction sans garde reconnue n'est pas sondée, et son nom est
+// affiché : à garder ou à écrire, mais jamais en silence.
+//   401/403 → EXECUTE révoquée ; 404 → introuvable pour cette signature (migration non
+//   appliquée, ou paramètre renommé) ; 200/400 → elle existe et s'exécute.
 const rpc = async (name, body) => fetch(URL_ + '/rest/v1/rpc/' + name, {
   method: 'POST', headers: { ...H, 'Content-Type': 'application/json' },
   body: JSON.stringify(body || {}),
 });
-for (const [name, body] of [
-  ['class_median_xp', { p_class_code: 'idrac2026' }],
-  ['class_weekly_progress', { p_class_code: 'idrac2026' }],
-  ['find_students_by_name', { p_name: 'ZZPersonne', p_class_code: 'idrac2026' }],
-]) {
-  const r = await rpc(name, body);
-  if (r.status !== 200) {
-    fail('rpc/' + name + ' → HTTP ' + r.status + ', 200 attendu. '
-      + 'Une RPC dont l\'application dépend ne répond plus.');
+const rpcNames = collectRpcNames(SRC, ROOT);
+const defs = collectDefs(path.join(ROOT, 'supabase', 'migrations'));
+const isGuarded = (d) => /\bstudent_guard\s*\(|\bteacher_role_of\s*\(|\bauth\.(uid|jwt)\s*\(\)/.test(d.body);
+// Lectures sans garde (patron « classement », plus les deux lookups legacy de l'onboarding,
+// pur SELECT) : rien n'écrit, on peut les sonder. Vérifié corps par corps le 2026-09-15.
+const READ_ONLY = new Set(['class_median_xp', 'class_weekly_progress', 'class_week_podium', 'find_students_by_name',
+  'my_student_by_email', 'recover_student_row']);
+let probed = 0;
+const skipped = [];
+for (const [name, where] of [...rpcNames].sort()) {
+  const d = defs[name];
+  if (!d) { fail('rpc/' + name + ' (' + where[0] + ') : définie nulle part dans supabase/migrations/'); continue; }
+  if (!isGuarded(d) && !READ_ONLY.has(name)) { skipped.push(name); continue; }
+  const args = {};
+  for (const p of d.params) args[p.name] = dummyFor(p.type);
+  const r = await rpc(name, args);
+  probed++;
+  if (r.status === 401 || r.status === 403) {
+    fail('rpc/' + name + ' → HTTP ' + r.status + ' : EXECUTE révoquée pour anon/authenticated (' + where[0] + ').');
+  } else if (r.status === 404) {
+    fail('rpc/' + name + ' → 404 : introuvable pour la signature (' + d.params.map((p) => p.name).join(', ')
+      + ') de ' + d.file + ' ; migration non appliquée, ou paramètre renommé ?');
+  } else if (r.status !== 200 && r.status !== 400) {
+    fail('rpc/' + name + ' → HTTP ' + r.status + ' inattendu (' + where[0] + ').');
   }
 }
 // Et une garde de propriété doit bien refuser un compte qui n'existe pas.
@@ -130,23 +187,8 @@ if (!guard || guard.ok !== false) {
   fail('rpc/my_rewards sur un compte inexistant devrait refuser, a répondu : '
     + JSON.stringify(guard) + '. La garde de propriété ne s\'applique plus.');
 }
-// La lecture élève de `groups` par code est VOULUE (B4 : grant SELECT colonne par
-// colonne + policy SELECT ; P2-D3 : la policy recréée). C'est le chemin de l'écran
-// « Join a Group », du chargement du profil (bornes de cohorte) et des saisons League.
-// Cassé le 2026-09-15 par la migration d'hygiène, invisible ici parce que `groups`
-// n'était vérifié QUE comme table verrouillée : `select=*` échoue toujours (colonnes
-// sensibles non accordées), une liste vide sur un code existant est le symptôme.
-const gr = await get('groups?select=name,type&code=eq.idrac2026');
-const grRows = gr.status === 200 ? await gr.json() : null;
-if (!grRows || grRows.length !== 1) {
-  fail('GET groups?code=eq.idrac2026 → HTTP ' + gr.status + ', ' + JSON.stringify(grRows)
-    + ' ; une ligne attendue. L\'onboarding par code de promo est cassé (policy SELECT sur groups ?).');
-}
-const gs = await get('groups?select=teacher_code&limit=1');
-if (gs.status === 200) {
-  fail('GET groups?select=teacher_code → 200 : la colonne sensible est redevenue lisible.');
-}
-console.log('  6 chemins légitimes vérifiés');
+console.log('  ' + reads.length + ' lectures directes et ' + probed + ' RPC du client vérifiées'
+  + (skipped.length ? '\n  non sondées (aucune garde reconnue dans leur corps) : ' + skipped.join(', ') : ''));
 
 console.log(fails === 0
   ? '\nOK — le verrou tient, et l\'application fonctionne toujours.'
