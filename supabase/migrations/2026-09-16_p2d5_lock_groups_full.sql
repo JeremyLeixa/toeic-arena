@@ -1,0 +1,61 @@
+-- ════════════════════════════════════════════════════════════════════════
+-- P2-D5 — `groups` fermée au client, comme toutes les autres tables
+-- (2026-09-16), fichier 2/2 : le verrou
+-- ════════════════════════════════════════════════════════════════════════
+-- ⚠️ À N'APPLIQUER QU'APRÈS :
+--   1. 2026-09-16_p2d5_group_public_rpc.sql (fichier 1) ;
+--   2. le déploiement du client qui n'a plus AUCUN supabase.from('groups')
+--      (commit « groups par RPC group_public », 5 sites) ;
+--   3. `npm run check:security` + un login + un « Join a Group » sur la prod.
+-- Appliqué AVANT, ce fichier reproduit exactement la régression du 2026-09-15
+-- (« Code not found » pour toutes les promos). Appliqué APRÈS, il ne change rien
+-- de visible : c'est le seul moment où un REVOKE est sans risque.
+--
+-- CE QUE ÇA FERME. Les deux mécanismes qui portaient la lecture élève de `groups` :
+--   (a) le grant SELECT colonne par colonne de B4 (2026-09-13_p2b4_lock_groups.sql) —
+--       révoqué, avec les 7 privilèges listés (un REVOKE partiel a laissé TRUNCATE à
+--       anon sur `events` pendant des mois, et TRUNCATE ignore la RLS) ;
+--   (b) la policy « Groups are readable by everyone » (recréée par
+--       2026-09-15_p2d3_restore_groups_read.sql) — supprimée. Elle ne protégeait rien
+--       (USING true) ; sans privilège, elle ne serait plus qu'une ligne de catalogue
+--       qui ferait croire, à la prochaine migration d'hygiène, qu'il reste quelque
+--       chose à comprendre. La RLS reste ACTIVE sur la table (ceinture et bretelles :
+--       si un GRANT revenait par erreur, zéro policy = zéro ligne).
+--
+-- CE QUI CONTINUE DE MARCHER.
+--  · Élève : les 5 lectures passent par group_public (SECURITY DEFINER, tourne avec
+--    les droits du propriétaire, insensible à ce REVOKE).
+--  · Dashboard : teacher_groups / teacher_upsert_group / teacher_set_group_email
+--    (SECURITY DEFINER, B4).
+--  · api/*.js et Edge Functions : service_role, ignore les privilèges.
+--
+-- CE QUI CASSE VOLONTAIREMENT. Tout `supabase.from('groups')` depuis le client, quelle
+-- que soit la colonne : 42501 permission denied. Il n'en reste aucun dans src/ ; le
+-- balayage (scripts/check-security.mjs) EXIGE désormais ce 401 sur `groups?select=code`.
+
+REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.groups FROM anon, authenticated;
+
+DROP POLICY IF EXISTS "Groups are readable by everyone" ON public.groups;
+
+-- ── Vérification post-migration ────────────────────────────────────────
+-- 1) Plus aucun privilège, colonne comprise, pour anon/authenticated :
+--    SELECT grantee, privilege_type, column_name
+--      FROM information_schema.column_privileges
+--     WHERE table_schema = 'public' AND table_name = 'groups'
+--       AND grantee IN ('anon', 'authenticated');            → 0 ligne
+--    SELECT grantee, privilege_type
+--      FROM information_schema.role_table_grants
+--     WHERE table_schema = 'public' AND table_name = 'groups'
+--       AND grantee IN ('anon', 'authenticated', 'PUBLIC');  → 0 ligne
+-- 2) Plus aucune policy sur groups, RLS toujours active :
+--    SELECT policyname FROM pg_policies
+--     WHERE schemaname = 'public' AND tablename = 'groups';  → 0 ligne
+--    SELECT relrowsecurity FROM pg_class
+--     WHERE oid = 'public.groups'::regclass;                 → true
+-- 3) Depuis le client (clé anon) :
+--    GET  /rest/v1/groups?select=code&limit=1                → 401 (42501)
+--    POST /rest/v1/rpc/group_public {"p_code":"idrac2026"}   → 200 + la fiche
+-- 4) `npm run check:security`, puis un login et un « Join a Group » sur la prod
+--    (règle CLAUDE.md : après TOUTE migration qui touche un GRANT, un REVOKE ou
+--    une POLICY).
