@@ -50,6 +50,10 @@ import { recordModule, pickAdaptive, checkMission, getDailyMission, canUnlockMoc
 import { generateEndlessTest, freshAnsFor, endlessAnsFitsTest } from "./lib/endless.js";
 import { getDashTeacher, setDashSession, clearDashSession, isDashAdmin, teacherAuth, BIOMETRIC_KEY, biometricAvailable, getBioCredId, bioRegister, bioAuthenticate, optIcon } from "./lib/teacherSession.js";
 import { subscribePush, unsubscribePush, isPushSubscribed } from "./lib/push.js";
+import { downloadGrimoire } from "./lib/grimoireExport.js";
+import { FEEDBACK_MODULES, findModuleLabel } from "./lib/feedbackModules.js";
+import { getTriggerLabel } from "./lib/chestLabels.js";
+import { SHOP_SECTIONS, shopRarColor, shopItemName, shopItemDesc } from "./lib/shopCatalog.js";
 
 
 
@@ -195,71 +199,6 @@ function ListeningGraphic(p){
 
 import { getLevel } from "./data/helpers.js";
 
-// ─── FEEDBACK FORM: catalog of modules grouped by category ───
-// Used by the in-app feedback form (Profile → Send feedback) and by the
-// TeacherDash Feedback tab. Each entry has a stable `id` (stored in DB,
-// matches existing module keys when relevant) and a human-readable `label`.
-var FEEDBACK_MODULES = [
-  {group:"Listening",items:[
-    {id:"daily",label:"Daily Challenge"},
-    {id:"lis_p1",label:"Listening — Part 1 (Photos)"},
-    {id:"lis_p2",label:"Listening — Part 2 (Q&A)"},
-    {id:"lis_p3",label:"Listening — Part 3 (Conversations)"},
-    {id:"lis_p4",label:"Listening — Part 4 (Talks)"},
-    {id:"ablitz",label:"Audio Blitz"}
-  ]},
-  {group:"Reading",items:[
-    {id:"drill",label:"Reading Drill (Part 5)"},
-    {id:"p6",label:"Part 6 (Text Completion)"},
-    {id:"p7",label:"Part 7 (Reading Comprehension)"},
-    {id:"clue",label:"Clue Hunter"}
-  ]},
-  {group:"Grammar",items:[
-    {id:"gauntlet_irregular",label:"Grammar Gauntlet — Irregular Crypt"},
-    {id:"gauntlet_tense",label:"Grammar Gauntlet — Chronomancer"},
-    {id:"gauntlet_passive",label:"Grammar Gauntlet — Passive Forge"},
-    {id:"gauntlet_relative",label:"Grammar Gauntlet — Relative Weaver"},
-    {id:"modals_match",label:"Modal Council — The Oracle"},
-    {id:"modals_sort",label:"Modal Council — The Verdict"},
-    {id:"wordfam",label:"Word Families"},
-    {id:"connsort",label:"Connectors Sorting"},
-    {id:"prepdrill",label:"Preposition Collocations"},
-    {id:"gerinf",label:"Gerund vs Infinitive"},
-    {id:"pvdojo",label:"Phrasal Verb Dojo"},
-    {id:"falsefr",label:"False Friends"},
-    {id:"traps",label:"Traps Quiz"}
-  ]},
-  {group:"Vocabulary",items:[
-    {id:"csess",label:"Flashcard Review"},
-    {id:"tavern",label:"Word Tavern"},
-    {id:"sbuild",label:"Sentence Builder"}
-  ]},
-  {group:"Games",items:[
-    {id:"duel",label:"Vocabulary Arena (Duel)"},
-    {id:"wfall",label:"Word Fall"},
-    {id:"matchE",label:"Speed Match"}
-  ]},
-  {group:"Mocks",items:[
-    {id:"mock1",label:"Mock Test 1"},
-    {id:"mock2",label:"Mock Test 2"},
-    {id:"mock3",label:"Mock Test 3"},
-    {id:"boss",label:"Boss Test (The Final Arena)"},
-    {id:"endless",label:"Endless Arena"}
-  ]},
-  {group:"Profile / Account",items:[
-    {id:"profile",label:"Profile"},
-    {id:"onboarding",label:"Onboarding"},
-    {id:"push",label:"Push notifications"},
-    {id:"auth",label:"Login / Signup / Password"},
-    {id:"league",label:"League / Rankings"},
-    {id:"chest",label:"Chests / Rewards"}
-  ]},
-  {group:"Other",items:[
-    {id:"general",label:"General app issue (UI / Performance)"},
-    {id:"other",label:"Other"}
-  ]}
-];
-function findModuleLabel(id){for(var i=0;i<FEEDBACK_MODULES.length;i++){var g=FEEDBACK_MODULES[i].items;for(var j=0;j<g.length;j++){if(g[j].id===id)return g[j].label;}}return id;}
 
 
 
@@ -712,40 +651,6 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 }
 `;
 
-// ─── GRIMOIRE RENDERER (block-based pedagogical manuscript) ───
-// Consumes blocks from data/grammarGauntletGrimoire.js.
-// Mobile-first: single page, swipe left/right, CSS 3D flip animation.
-// ─── DOWNLOADABLE GRIMOIRE ───
-// Open a new window with the full grimoire rendered as a self-contained HTML
-// document. Screen view uses the Arena palette (gold/cream, serif titles).
-// @media print switches to B&W professional layout (no backgrounds, page-break
-// per chapter, A4-friendly margins) so the user can Ctrl/Cmd+P → Save as PDF
-// without bleeding ink on chest decorations. Triggered from GrimoireReader topbar.
-function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-function renderGrimoireBlockHtml(b){
-  if(b.type==="paragraph")return"<p class=\"g-p\">"+escHtml(b.text)+"</p>";
-  if(b.type==="heading")return"<h3 class=\"g-h\">"+escHtml(b.text)+"</h3>";
-  if(b.type==="rule"){var lbl=b.label?"<div class=\"g-rule-lbl\">"+escHtml(b.label)+"</div>":"";return"<div class=\"g-rule\">"+lbl+"<div class=\"g-rule-f\">"+escHtml(b.formula)+"</div></div>";}
-  if(b.type==="example"){var en="<div class=\"g-ex-en\">"+escHtml(b.en)+"</div>";var fr=b.fr?"<div class=\"g-ex-fr\">"+escHtml(b.fr)+"</div>":"";var note=b.note?"<div class=\"g-ex-note\">"+escHtml(b.note)+"</div>":"";return"<div class=\"g-ex\">"+en+fr+note+"</div>";}
-  if(b.type==="trap")return"<div class=\"g-trap\"><span class=\"g-trap-tag\">Piège</span> "+escHtml(b.text)+"</div>";
-  if(b.type==="table"){var hd=b.headers.map(function(h){return"<th>"+escHtml(h)+"</th>";}).join("");var rw=b.rows.map(function(r){return"<tr>"+r.map(function(c){return"<td>"+escHtml(c)+"</td>";}).join("")+"</tr>";}).join("");return"<table class=\"g-table\"><thead><tr>"+hd+"</tr></thead><tbody>"+rw+"</tbody></table>";}
-  if(b.type==="list")return"<ul class=\"g-list\">"+b.items.map(function(it){return"<li>"+escHtml(it)+"</li>";}).join("")+"</ul>";
-  return"";
-}
-function downloadGrimoire(grim){
-  var romans=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
-  var chapters=grim.chapters.map(function(ch,i){
-    var blocks=ch.blocks.map(renderGrimoireBlockHtml).join("\n");
-    var intro=ch.intro?"<p class=\"g-intro\">"+escHtml(ch.intro)+"</p>":"";
-    var num=romans[i]||(i+1);
-    return"<section class=\"g-chapter\"><div class=\"g-chap-num\">Chapitre "+num+"</div><h2 class=\"g-chap-title\">"+escHtml(ch.title)+"</h2>"+intro+blocks+"</section>";
-  }).join("\n");
-  var css="*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:Georgia,'Times New Roman',serif;background:#fbf5e8;color:#2a2118;line-height:1.6;padding:24px}.g-toolbar{position:sticky;top:0;background:#fbf5e8;padding:12px 0;margin-bottom:24px;border-bottom:2px solid #d4943a;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}.g-print-btn{background:#d4943a;color:#fff;border:none;padding:10px 18px;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;font-family:inherit}.g-print-btn:hover{background:#b87a26}.g-hint{font-size:12px;color:#6a5a3a;font-style:italic}.g-header{text-align:center;padding:32px 16px 24px;border-bottom:1px solid #c4a868;margin-bottom:32px}.g-title{font-family:'Cinzel',Georgia,serif;font-size:28px;font-weight:900;color:#8b5a1f;margin:0 0 8px;letter-spacing:1px}.g-subtitle{font-size:14px;color:#6a5a3a;font-style:italic;margin:0 0 12px}.g-meta{font-size:12px;color:#8a7a5a}.g-chapter{margin-bottom:48px}.g-chap-num{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#b87a26;font-weight:700;margin-bottom:6px}.g-chap-title{font-family:'Cinzel',Georgia,serif;font-size:22px;font-weight:800;color:#3a2a18;margin:0 0 16px;border-bottom:2px solid #d4943a;padding-bottom:8px}.g-intro{font-style:italic;color:#5a4a32;background:rgba(212,148,58,.08);border-left:3px solid #d4943a;padding:12px 14px;margin:0 0 18px;border-radius:4px}.g-p{margin:0 0 12px;color:#2a2118}.g-h{font-size:16px;font-weight:700;color:#5a3a18;margin:20px 0 10px}.g-rule{background:rgba(6,182,212,.08);border-left:3px solid #06b6d4;padding:12px 14px;margin:0 0 14px;border-radius:4px}.g-rule-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#0891b2;font-weight:700;margin-bottom:4px}.g-rule-f{font-weight:600;color:#1a3a48}.g-ex{background:rgba(255,255,255,.5);border:1px solid #d4c8a8;padding:10px 14px;margin:0 0 12px;border-radius:4px}.g-ex-en{font-style:italic;color:#3a2a18;font-weight:500}.g-ex-fr{color:#5a4a32;margin-top:4px;font-size:14px}.g-ex-note{font-size:12px;color:#7a6a4a;margin-top:6px;border-top:1px dashed #c4a868;padding-top:6px}.g-trap{background:rgba(224,82,82,.08);border-left:3px solid #c84040;padding:10px 14px;margin:0 0 14px;border-radius:4px;color:#5a1a18}.g-trap-tag{display:inline-block;background:#c84040;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:3px;margin-right:6px}.g-table{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:13px}.g-table th{background:#d4943a;color:#fff;padding:8px 10px;text-align:left;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px}.g-table td{padding:8px 10px;border-bottom:1px solid #d4c8a8;color:#2a2118}.g-table tbody tr:nth-child(even){background:rgba(212,148,58,.05)}.g-list{padding-left:20px;margin:0 0 14px}.g-list li{margin-bottom:6px;color:#2a2118}.g-footer{text-align:center;margin-top:48px;padding-top:24px;border-top:1px solid #c4a868;font-size:11px;color:#8a7a5a;font-style:italic}@media print{body{background:#fff;color:#000;padding:0;font-size:11pt;line-height:1.5}.g-toolbar{display:none}.g-header{padding:0 0 16px;border-bottom:2px solid #000;margin-bottom:24px;page-break-after:avoid}.g-title{color:#000;font-size:22pt}.g-subtitle,.g-meta{color:#000}.g-chapter{page-break-before:always;margin-bottom:24px}.g-chapter:first-of-type{page-break-before:auto}.g-chap-num{color:#000;font-weight:700}.g-chap-title{color:#000;font-size:16pt;border-bottom:1px solid #000;page-break-after:avoid}.g-intro{background:transparent;border-left:2px solid #000;color:#000;page-break-inside:avoid}.g-p,.g-h{color:#000}.g-h{color:#000;font-size:13pt}.g-rule{background:transparent;border:1px solid #000;border-left:3px solid #000;page-break-inside:avoid}.g-rule-lbl{color:#000}.g-rule-f{color:#000}.g-ex{background:transparent;border:1px solid #000;page-break-inside:avoid}.g-ex-en,.g-ex-fr,.g-ex-note{color:#000}.g-ex-note{border-top:1px dashed #000}.g-trap{background:transparent;border:1px solid #000;border-left:3px solid #000;color:#000;page-break-inside:avoid}.g-trap-tag{background:#000;color:#fff}.g-table{page-break-inside:avoid}.g-table th{background:#000;color:#fff;border:1px solid #000}.g-table td{border:1px solid #000;color:#000}.g-table tbody tr:nth-child(even){background:#f0f0f0}.g-footer{color:#000;border-top:1px solid #000}@page{margin:18mm 16mm}}";
-  var html="<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"utf-8\"><title>"+escHtml(grim.title)+"</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>"+css+"</style></head><body><div class=\"g-toolbar\"><button class=\"g-print-btn\" onclick=\"window.print()\">"+"🖨️ Imprimer / Enregistrer en PDF</button><div class=\"g-hint\">Astuce : choisir « Enregistrer en PDF » comme destination</div></div><div class=\"g-header\"><h1 class=\"g-title\">"+escHtml(grim.title)+"</h1>"+(grim.subtitle?"<div class=\"g-subtitle\">"+escHtml(grim.subtitle)+"</div>":"")+"<div class=\"g-meta\">"+(grim.readingTime?"Lecture : "+escHtml(grim.readingTime)+" · ":"")+grim.chapters.length+" chapitres</div></div>"+chapters+"<div class=\"g-footer\">Verse Arena · Grimoire exporté pour étude personnelle</div></body></html>";
-  var w=window.open("","_blank");
-  if(!w){alert("La fenêtre d'export a été bloquée. Autorise les pop-ups pour ce site et réessaie.");return;}
-  w.document.open();w.document.write(html);w.document.close();
-}
 
 function renderGrimoireBlock(b,i){
   if(b.type==="paragraph")return(<p key={i} className="grim-paragraph">{b.text}</p>);
@@ -10660,76 +10565,6 @@ function TreasureChestSvg(p){
   </svg>);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TRIGGER LABEL — human-friendly description of why a chest was granted
-// ═══════════════════════════════════════════════════════════════
-function getTriggerLabel(trigger){
-  if(!trigger)return"Milestone reached";
-  if(trigger==="apology_crisis_2026-04-21")return"A gift from your teacher — thanks for your patience";
-  if(trigger==="mock_1")return"Mock Test 1 completed";
-  if(trigger==="mock_2")return"Mock Test 2 completed";
-  if(trigger==="mock_3")return"Mock Test 3 completed";
-  if(trigger==="boss_test")return"The Final Arena conquered";
-  if(trigger==="streak_7")return"7-day streak";
-  if(trigger==="streak_30")return"30-day streak";
-  if(trigger==="streak_100")return"100-day streak";
-  if(trigger==="xp_1k")return"1,000 XP milestone";
-  if(trigger==="xp_3k")return"3,000 XP milestone";
-  if(trigger==="xp_5k")return"5,000 XP milestone";
-  if(trigger==="xp_10k")return"10,000 XP milestone";
-  if(trigger==="xp_20k")return"20,000 XP milestone";
-  if(trigger==="xp_30k")return"30,000 XP milestone";
-  if(trigger==="xp_50k")return"50,000 XP milestone";
-  if(trigger==="duel_win")return"Duel victory";
-  if(trigger==="duel_win3")return"3 duel wins in a row";
-  if(trigger==="wfall_combo10")return"Word Fall combo x10";
-  if(trigger==="wfall_combo20")return"Word Fall combo x20";
-  if(trigger==="wfall_combo30")return"Word Fall combo x30";
-  if(trigger==="smatch_easy_good")return"Speed Match mastered";
-  if(trigger==="smatch_easy_80")return"Speed Match 80%+";
-  if(trigger==="smatch_hard_80")return"Speed Match Hard 80%+";
-  if(trigger==="clue_perfect")return"Clue Hunter perfect run";
-  if(trigger==="ablitz_70")return"Audio Blitz 70%+";
-  if(trigger==="ablitz_90")return"Audio Blitz 90%+";
-  if(trigger==="sbuild_90")return"Sentence Builder 90%+";
-  if(trigger==="gauntlet_irregular_perfect")return"Irregular Crypt perfect raid";
-  if(trigger==="gauntlet_tense_perfect")return"Chronomancer mastered";
-  if(trigger==="gauntlet_passive_perfect")return"Passive Forge mastered";
-  if(trigger==="gauntlet_relative_perfect")return"Relative Weaver mastered";
-  if(trigger.indexOf("league_up_")===0){
-    var lg=trigger.substring(10);
-    return"Promoted to "+lg.charAt(0).toUpperCase()+lg.slice(1)+" League";
-  }
-  // V2 chest redesign — 5 recurring sources
-  if(trigger.indexOf("daily_login_")===0)return"Daily login reward"; // legacy V2 step 2, kept for old chest_log rows
-  if(trigger.indexOf("streak_login_")===0)return"3-day streak login";
-  if(trigger.indexOf("weekly_toeic_")===0)return"+25 TOEIC pts this week";
-  if(trigger.indexOf("podium_")===0)return"League podium — top 3";
-  if(trigger.indexOf("mission_streak_")===0){
-    var ms=trigger.substring(15);
-    return ms+"-day mission streak";
-  }
-  if(trigger.indexOf("mastery_")===0){
-    var modIdT=trigger.substring(8);
-    return"Module mastery: "+modIdT;
-  }
-  if(trigger.indexOf("ach_legendary_")===0){
-    var achId=trigger.substring(14);
-    var ach=ACHIEVEMENTS.find(function(a){return a.id===achId;});
-    return(ach?ach.name:"Legendary achievement")+" unlocked";
-  }
-  if(trigger.indexOf("ach_epic_")===0){
-    var achIdE=trigger.substring(9);
-    var achE=ACHIEVEMENTS.find(function(a){return a.id===achIdE;});
-    return(achE?achE.name:"Epic achievement")+" unlocked";
-  }
-  if(trigger.indexOf("ach_novice_")===0){
-    var achIdN=trigger.substring(11);
-    var achN=ACHIEVEMENTS.find(function(a){return a.id===achIdN;});
-    return(achN?achN.name:"Achievement")+" unlocked";
-  }
-  return"Milestone reached";
-}
 
 // ═══════════════════════════════════════════════════════════════
 // CHEST EARNED TOAST — appears at the moment a chest is granted
@@ -10844,18 +10679,6 @@ function ChestRewardCard(p){
     <div className="out" style={{fontSize:22,fontWeight:900,color:"#ede4d4",marginBottom:4,letterSpacing:1}}>{name}</div>
     <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:1}}>{caption}</div>
   </>);
-}
-// Convert "k:v;k:v" inline CSS string to a React style object
-function parseInlineStyle(s){
-  var out={};if(!s)return out;
-  s.split(";").forEach(function(part){
-    var ix=part.indexOf(":");if(ix<0)return;
-    var k=part.slice(0,ix).trim(), v=part.slice(ix+1).trim();
-    if(!k)return;
-    var jsKey=k.replace(/-([a-z])/g,function(_,c){return c.toUpperCase();});
-    out[jsKey]=v;
-  });
-  return out;
 }
 
 function ChestOpenModal(p){
@@ -13813,33 +13636,6 @@ function UpgradeScreen(p){
 }
 
 
-// V2 step 5 — Conversions sub-view : trade duplicate cosmetics for tokens, or 5 non-premium
-// tokens for 1 premium. Mounted from the Shop (P2b) ; was a Profile sub-view pre-P2b.
-// ═══ ARENA SHOP (P2a, 2026-06-01) ═══
-// Spend Darics on shop-exclusive cosmetics, tokens, and cheat sheets. Conversions
-// (dups → token, tokens → premium) reachable via the in-shop Conversions sub-view
-// (reuses ConversionsView). Buying is atomic server-side (spend_marks RPC, via
-// p.buy → shopBuy). Owned one-shots grey out (anti-rebuy), tokens grey at cap. A
-// confirm step guards accidental spends (no refund on cosmetics by design). The
-// Shop entry point is visitor-blocked (currency never accrues for visitors).
-var SHOP_SECTIONS=[
-  {key:"skin",label:"Skins"},
-  {key:"frame",label:"Frames"},
-  {key:"title",label:"Titles"},
-  {key:"boost",label:"XP Boosts"},
-  {key:"token",label:"Tokens"},
-  {key:"cheat_sheet",label:"Cheat Sheets"},
-];
-function shopRarColor(rid){for(var i=0;i<RARITIES.length;i++){if(RARITIES[i].id===rid)return RARITIES[i].color;}return "var(--bdr)";}
-function shopItemName(item){
-  var m=item.cat==="skin"?SKINS:item.cat==="frame"?FRAMES:item.cat==="title"?TITLES:item.cat==="cheat_sheet"?CHEAT_SHEETS:item.cat==="token"?TOKEN_TYPES:null;
-  return (m&&m[item.ref]&&m[item.ref].name)||item.ref;
-}
-function shopItemDesc(item){
-  if(item.cat==="token")return (TOKEN_TYPES[item.ref]||{}).desc||"";
-  if(item.cat==="cheat_sheet")return "Cheat sheet — unlocks in your codex";
-  var r=item.rarity||"";return r.charAt(0).toUpperCase()+r.slice(1)+" · shop exclusive";
-}
 function ShopItemVisual(p){
   var item=p.item;
   if(item.cat==="skin"){var sk=SKINS[item.ref]||{};return(<div style={{width:52,height:52,borderRadius:13,background:"linear-gradient(135deg,"+(sk.hex||"#888")+","+(sk.dark||"#555")+")",border:"2px solid "+shopRarColor(item.rarity),boxShadow:"0 0 14px "+(sk.hex||"#888")+"66"}}/>);}
