@@ -391,6 +391,57 @@ function applyWeekTransition(d){
 }
 function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
 function srand(s){var x=Math.sin(s)*10000;return x-Math.floor(x);}
+
+// ─── Listening : randomisation de la position des bonnes reponses ───
+// Les pools listening ont ete rediges avec un biais positionnel massif :
+// B = 43% en P2, 41% en P3, 55% en P4, et BOSS_P2 n'a qu'un seul C sur 25.
+// Un eleve pouvait scorer sans ecouter (signale par un etudiant iabd2627,
+// 2026-09-15 : "toutes les bonnes reponses sont B"). On permute au runtime
+// plutot que de reecrire ~800 items et de renommer ~1150 MP3.
+//
+// DEUX COUPLAGES A NE JAMAIS CASSER EN TOUCHANT A CA :
+//
+//  1. AUDIO (P1/P2 seulement). L'ordre des reponses est fige par le nom des
+//     fichiers : {id}_0/_1/_2(/_3).mp3. La permutation DOIT etre transportee
+//     jusqu'au lecteur via `aud` : aud[position affichee] = index audio
+//     d'origine. Un playXX() qui reboucle sur 0,1,2 en dur fait entendre la
+//     reponse A pendant que l'app score la reponse C — c'est exactement le
+//     bug qui existait dans l'Endless Arena avant le 2026-09-15.
+//     P3/P4 ne sont pas concernes : l'audio est la conversation, pas les options.
+//
+//  2. EXPLICATIONS (P1/P2 seulement). Elles citent les lettres ("Only B names
+//     someone"). Sans reecriture, l'explication designe la mauvaise option.
+//     P3/P4 n'en citent aucune (verifie sur 546 items) : rien a faire.
+function shufListeningOpts(opts,correct){
+  var idx=[];for(var i=0;i<opts.length;i++)idx.push(i);
+  idx=shuffle(idx);
+  return{opts:idx.map(function(k){return opts[k];}),c:idx.indexOf(correct),aud:idx};
+}
+// "A" est la seule lettre ambigue : c'est aussi l'article anglais ("A laptop is
+// open"). Elle est un LABEL quand elle est suivie d'une ponctuation, d'une
+// parenthese, d'une conjonction, d'un modal, ou d'un verbe a la 3e personne
+// (termine par -s ou n't) ; un article est suivi d'un nom/adjectif, qui ne l'est
+// jamais. B/C/D ne sont jamais ambigues. Regle verifiee exhaustivement sur les
+// 288 explications P1+P2 : elle laisse exactement les 21 articles de P1 et
+// remappe tout le reste. Si un jour un item ecrit "A business card is..." (nom
+// en -s apres l'article) il faudra reformuler l'explication, pas la regle.
+var A_IS_OPT_LABEL=/^(?:$|[.,;:)/]|\s*[([]|\s+(?:is|are|was|were|will|would|cannot|can't|and|or)\b|\s+[a-z]+(?:s|n't)\b)/;
+function remapOptLetters(x,aud){
+  if(!x)return x;
+  var map={};
+  for(var i=0;i<aud.length;i++)map[String.fromCharCode(65+aud[i])]=String.fromCharCode(65+i);
+  return x.replace(/(^|[^A-Za-z'])([A-D])(?![A-Za-z'])/g,function(m,pre,L,off,str){
+    if(!map[L])return m;
+    if(L==="A"&&!A_IS_OPT_LABEL.test(str.slice(off+m.length)))return m;
+    return pre+map[L];
+  });
+}
+// Permute un item listening complet (options + bonne reponse + explication).
+// `withAudio` a true seulement pour P1/P2, ou `aud` doit survivre jusqu'au lecteur.
+function shufListeningItem(it){
+  var s=shufListeningOpts(it.opts,it.c);
+  return Object.assign({},it,{opts:s.opts,c:s.c,aud:s.aud,x:remapOptLetters(it.x,s.aud)});
+}
 import { getLevel } from "./data/helpers.js";
 function getLeague(wxp){var l=LEAGUES[0];for(var i=0;i<LEAGUES.length;i++)if(wxp>=LEAGUES[i].min)l=LEAGUES[i];return l;}
 // Légende est conditionnelle : TOEIC estimé >= 400 requis
@@ -611,7 +662,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-09-14-phase-c-lite";
+var BUILD_ID="2026-09-15-listening-shuffle";
 
 // ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
 // Each teacher logs in with their own teacher_code and sees ONLY the groups
@@ -1260,18 +1311,20 @@ function generateEndlessTest(){
   function fy(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 
   // Shuffle options for a 4-option question, return {options, correct}
+  // `aud` doit remonter jusqu'a playP1/playP2 : l'ordre des reponses P1/P2 est
+  // fige par le nom des MP3 (_0.._3). Sans lui, l'audio et le scoring divergent.
   function shufOpts4(opts,correct){
     var idx=[0,1,2,3];idx=fy(idx);
-    return{options:idx.map(function(k){return opts[k];}),correct:idx.indexOf(correct)};
+    return{options:idx.map(function(k){return opts[k];}),correct:idx.indexOf(correct),aud:idx};
   }
   function shufOpts3(opts,correct){
     var idx=[0,1,2];idx=fy(idx);
-    return{options:idx.map(function(k){return opts[k];}),correct:idx.indexOf(correct)};
+    return{options:idx.map(function(k){return opts[k];}),correct:idx.indexOf(correct),aud:idx};
   }
 
   // Pick & shuffle items, then shuffle their options
-  var ep1=fy(allP1).slice(0,6).map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});});
-  var ep2=fy(allP2).slice(0,25).map(function(q){var s=shufOpts3(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});});
+  var ep1=fy(allP1).slice(0,6).map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct,aud:s.aud});});
+  var ep2=fy(allP2).slice(0,25).map(function(q){var s=shufOpts3(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct,aud:s.aud});});
   var ep3=fy(allP3).slice(0,13).map(function(conv){return Object.assign({},conv,{qs:conv.qs.map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});})});});
   var ep4=fy(allP4).slice(0,10).map(function(talk){return Object.assign({},talk,{qs:talk.qs.map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});})});});
   var ep5=fy(allP5).slice(0,30).map(function(q){var s=shufOpts4(q.o,q.c);return Object.assign({},q,{o:s.options,c:s.correct});});
@@ -1628,6 +1681,13 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
 @supports(height:100dvh){.app{min-height:100dvh}}
 .pg-wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px))}
+.rev-nav{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom, 0px));display:flex;gap:10px;padding:14px 16px 10px;z-index:6;background:linear-gradient(to top,var(--bg) 62%,rgba(var(--bg-rgb),0))}
+.rev-nav>*{flex:1;margin:0}
+/* Slot Prev conserve sur la 1re question : sans lui Next passe de pleine
+   largeur a demi-largeur et se decale lateralement. */
+.rev-nav-ghost{visibility:hidden;pointer-events:none}
+/* Reserve la hauteur de la barre fixe pour ne pas masquer la fin du contenu. */
+.rev-nav-spacer{height:96px;flex:none}
 .enter{animation:fadeIn .3s ease-out}
 .crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:20px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04)}
 /* Scrollable reading boxes (Mock/Boss/Endless P6-P7 passages). 7 skins force
@@ -1656,6 +1716,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
    width:100% which fills phone width. On desktop, the landscape 3:2 image
    takes the full column width but is also capped via max-width to prevent
    stretching too wide on ultra-wide monitors. */
+.rev-nav{left:200px;bottom:12px;padding:14px 32px 10px}
+.rev-nav-spacer{height:84px}
 .mentor-map-wrap{margin:0 auto 14px!important}
 @media(min-width:768px){.mentor-map-wrap{max-width:1100px!important}}
 .sidebar-brand{display:flex!important;align-items:center;gap:10px;padding:8px 14px 20px;margin-bottom:8px;border-bottom:1px solid var(--bdr)}
@@ -7646,8 +7708,10 @@ function TimeSim(p){
             <span className="out" style={{fontSize:12,fontWeight:600,color:"#3b82f6"}}>Review: {q.cat}</span>
           </button>}
           <div style={{display:"flex",gap:8,marginTop:12}}>
-            {revIdx>0&&<button className="btn2" onClick={function(){setRevIdx(revIdx-1);}} style={{flex:1,fontSize:12}}>← Prev</button>}
-            {revIdx<answers.length-1&&<button className="btn2" onClick={function(){setRevIdx(revIdx+1);}} style={{flex:1,fontSize:12}}>Next →</button>}
+            <button className="btn2" onClick={function(){setRevIdx(revIdx-1);}} disabled={revIdx===0}
+              style={{flex:1,fontSize:12,visibility:revIdx===0?"hidden":"visible"}}>← Prev</button>
+            <button className="btn2" onClick={function(){setRevIdx(revIdx+1);}} disabled={revIdx>=answers.length-1}
+              style={{flex:1,fontSize:12,visibility:revIdx>=answers.length-1?"hidden":"visible"}}>Next →</button>
           </div>
         </div>);
       }()}
@@ -8052,6 +8116,7 @@ function BossTest(p){
   var[revSec,setRevSec]=useState("p1");
   var[revIdx,setRevIdx]=useState(0);
   useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
+  useEffect(function(){if(revMode)window.scrollTo(0,0);},[revMode,revSec,revIdx]);
   var timerRef=useRef(null);
 
   useEffect(function(){
@@ -8609,9 +8674,10 @@ function BossTest(p){
         <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{rExpl}</p>
       </div>}
 
-      <div style={{display:"flex",gap:10,marginTop:16}}>
-        {!isFirst&&<button className="btn2" onClick={revPrev} style={{flex:1}}>{"←"} Prev</button>}
-        <button className="btn1" onClick={revNext} style={{flex:1}}>{isLast?"Back to Results":"Next →"}</button>
+      <div className="rev-nav-spacer"/>
+      <div className="rev-nav">
+        <button className={"btn2"+(isFirst?" rev-nav-ghost":"")} onClick={revPrev} disabled={isFirst}>{"←"} Prev</button>
+        <button className="btn1" onClick={revNext}>{isLast?"Back to Results":"Next →"}</button>
       </div>
     </div>);
   }
@@ -8690,8 +8756,8 @@ function EndlessArena(p){
   function fmtT(s){var m=Math.floor(s/60);var sc2=s%60;return m+":"+(sc2<10?"0":"")+sc2;}
 
   // ── Audio — dynamic paths based on item origin ──
-  async function playP1(){if(aState!=="ready")return;setAState("playing");var it=LP1[qi];for(var i=0;i<it.opts.length;i++){setCurOpt(i);if(isBoss(it.id)){await playAudioFile("/audio/boss/p1_"+String(bossIdx(it.id)).padStart(2,"0")+"_"+i+".mp3");}else{await playAudioFile("/audio/p1/"+it.id+"_"+i+".mp3");}await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
-  async function playP2(){if(aState!=="ready")return;setAState("playing");var it=LP2[qi];if(isBoss(it.id)){var bid=String(bossIdx(it.id)).padStart(2,"0");await playAudioFile("/audio/boss/p2_"+bid+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+bid+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,300);});};}else{await playAudioFile("/audio/p2/"+it.id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i2=0;i2<3;i2++){setCurOpt(i2);await playAudioFile("/audio/p2/"+it.id+"_"+i2+".mp3");await new Promise(function(r){setTimeout(r,300);});}}setCurOpt(-1);setAState("done");}
+  async function playP1(){if(aState!=="ready")return;setAState("playing");var it=LP1[qi];for(var i=0;i<it.opts.length;i++){setCurOpt(i);var ai=it.aud?it.aud[i]:i;if(isBoss(it.id)){await playAudioFile("/audio/boss/p1_"+String(bossIdx(it.id)).padStart(2,"0")+"_"+ai+".mp3");}else{await playAudioFile("/audio/p1/"+it.id+"_"+ai+".mp3");}await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
+  async function playP2(){if(aState!=="ready")return;setAState("playing");var it=LP2[qi];if(isBoss(it.id)){var bid=String(bossIdx(it.id)).padStart(2,"0");await playAudioFile("/audio/boss/p2_"+bid+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+bid+"_"+(it.aud?it.aud[i]:i)+".mp3");await new Promise(function(r){setTimeout(r,300);});};}else{await playAudioFile("/audio/p2/"+it.id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i2=0;i2<3;i2++){setCurOpt(i2);await playAudioFile("/audio/p2/"+it.id+"_"+(it.aud?it.aud[i2]:i2)+".mp3");await new Promise(function(r){setTimeout(r,300);});}}setCurOpt(-1);setAState("done");}
   // P3/P4 Endless mode (2026-05-05 V2) : TOEIC-faithful per-question playback.
   // Talk plays once → 800ms pause → q1 audio → done state (q1 options revealed).
   // Subsequent qN audio fired by nxt() when sqi increments. Boss-origin items
@@ -9132,6 +9198,7 @@ function MockTest(p){
   var[reviewSection,setReviewSection]=useState("p5");
   var[reviewIdx,setReviewIdx]=useState(0);
   var timerRef=useRef(null);
+  useEffect(function(){if(reviewMode)window.scrollTo(0,0);},[reviewMode,reviewSection,reviewIdx]);
 
   // Timer
   useEffect(function(){
@@ -9484,9 +9551,10 @@ function MockTest(p){
       {rExpl&&<div className="crd" style={{marginTop:16,padding:14,background:rAnswer===rCorrect?"rgba(0,230,118,.06)":"rgba(255,71,87,.06)",borderColor:rAnswer===rCorrect?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)"}}>
         <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{rExpl}</p>
       </div>}
-      <div style={{display:"flex",gap:10,marginTop:20}}>
-        {!isFirst&&<button className="btn2" onClick={reviewPrev} style={{flex:1}}>← Prev</button>}
-        <button className="btn1" onClick={reviewNext} style={{flex:1}}>{isLast?"Back to Results":"Next →"}</button>
+      <div className="rev-nav-spacer"/>
+      <div className="rev-nav">
+        <button className={"btn2"+(isFirst?" rev-nav-ghost":"")} onClick={reviewPrev} disabled={isFirst}>← Prev</button>
+        <button className="btn1" onClick={reviewNext}>{isLast?"Back to Results":"Next →"}</button>
       </div>
     </div>);
   }
@@ -13873,7 +13941,7 @@ function ListenHub(p){
 
 // ─── PART 2 LISTENING ───
 function ListenP2(p){
-  var items=useMemo(function(){return shuffle(LISTENING_P2).slice(0,10);},[]);
+  var items=useMemo(function(){return shuffle(LISTENING_P2).slice(0,10).map(shufListeningItem);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);
   useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
@@ -13884,12 +13952,12 @@ function ListenP2(p){
     var it=items[ci];
     await playAudioFile("/audio/p2/"+it.id+"_q.mp3");
     await new Promise(function(r){setTimeout(r,400);});
-    await playAudioFile("/audio/p2/"+it.id+"_0.mp3");
-    await new Promise(function(r){setTimeout(r,300);});
-    await playAudioFile("/audio/p2/"+it.id+"_1.mp3");
-    await new Promise(function(r){setTimeout(r,300);});
-    await playAudioFile("/audio/p2/"+it.id+"_2.mp3");
-    await new Promise(function(r){setTimeout(r,200);});
+    // it.aud[i] : la reponse jouee en position i est celle que l'UI affiche en
+    // position i. Remettre "_"+i+" ici desaligne l'audio et le scoring.
+    for(var i=0;i<3;i++){
+      await playAudioFile("/audio/p2/"+it.id+"_"+it.aud[i]+".mp3");
+      await new Promise(function(r){setTimeout(r,i<2?300:200);});
+    }
     setPlaying(false);setPlayed(true);
   }
 
@@ -13974,7 +14042,7 @@ function ListenP2(p){
 
 // ─── PART 1 LISTENING ───
 function ListenP1(p){
-  var items=useMemo(function(){return shuffle(LISTENING_P1).slice(0,10);},[]);
+  var items=useMemo(function(){return shuffle(LISTENING_P1).slice(0,10).map(shufListeningItem);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curOpt,setCurOpt]=useState(-1);
   useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
@@ -13985,7 +14053,7 @@ function ListenP1(p){
     var it=items[ci];
     for(var i=0;i<it.opts.length;i++){
       setCurOpt(i);
-      await playAudioFile("/audio/p1/"+it.id+"_"+i+".mp3");
+      await playAudioFile("/audio/p1/"+it.id+"_"+it.aud[i]+".mp3");
       await new Promise(function(r){setTimeout(r,400);});
     }
     setCurOpt(-1);setPlaying(false);setPlayed(true);
@@ -14083,7 +14151,7 @@ function ListenP1(p){
 
 // ─── PART 3 CONVERSATIONS ───
 function ListenP3(p){
-  var items=useMemo(function(){return shuffle(LISTENING_P3).slice(0,6);},[]);
+  var items=useMemo(function(){return shuffle(LISTENING_P3).slice(0,6).map(function(cv){return Object.assign({},cv,{qs:cv.qs.map(shufListeningItem)});});},[]);
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curLine,setCurLine]=useState(-1);
@@ -14196,7 +14264,7 @@ function ListenP3(p){
 
 // ─── PART 4 TALKS ───
 function ListenP4(p){
-  var items=useMemo(function(){return shuffle(LISTENING_P4).slice(0,6);},[]);
+  var items=useMemo(function(){return shuffle(LISTENING_P4).slice(0,6).map(function(tk){return Object.assign({},tk,{qs:tk.qs.map(shufListeningItem)});});},[]);
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);

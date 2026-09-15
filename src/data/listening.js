@@ -548,7 +548,7 @@ export var LISTENING_P2 = [
 
   {id:"p2_78",q:"Would you rather take the morning flight or the afternoon one?",
     opts:["I usually fly with the same airline.","The flight was delayed by an hour.","The afternoon would give me more time to prepare."],
-    c:2,x:"Choice question (A or B). C picks one option with a reason. B reports a delay and A talks about airline preference."},
+    c:2,x:"Or-question: you must choose one of the two alternatives. C picks one option with a reason. B reports a delay and A talks about airline preference."},
 
   {id:"p2_79",q:"Did the new intern start this Monday or last Monday?",
     opts:["She started just this past Monday.","The internship lasts six months.","Yes, she's very enthusiastic."],
@@ -612,7 +612,7 @@ export var LISTENING_P2 = [
 
   {id:"p2_94",q:"Where did you put the keys to the storage room?",
     opts:["I locked the door before leaving.","The storage room is full.","I left them on your desk this morning."],
-    c:2,x:"'Where' asks for a location. C specifies where the keys were placed. B describes the room and A an action with a door."},
+    c:2,x:"'Where' asks for a location. C specifies where the keys were placed. B describes the room and A describes an action with a door."},
 
   {id:"p2_95",q:"Could you forward me the agenda before the call?",
     opts:["The call lasted forty minutes.","Sure, I'll send it right after this meeting.","I forwarded the email yesterday."],
