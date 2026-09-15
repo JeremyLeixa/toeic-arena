@@ -1,0 +1,54 @@
+-- ════════════════════════════════════════════════════════════════════════
+-- Verrou des tables satellites — lot 2 : push_subscriptions, fichier 2/2
+-- (2026-09-15)
+-- ════════════════════════════════════════════════════════════════════════
+-- ⚠️ A N'APPLIQUER QU'APRES, DANS CET ORDRE :
+--   1. 2026-09-15_p2d1_push_rpc.sql applique ;
+--   2. le client qui passe par les RPC deploye en production ;
+--   3. verifie EN PROD sur un vrai compte : activer les notifications depuis
+--      le Profil (la ligne apparait), les desactiver (la ligne disparait),
+--      puis envoyer un push reel depuis le dashboard formateur (il arrive).
+--
+-- Tant que ce fichier n'est pas passe, les privileges directs existent encore :
+-- si le chemin RPC deraille, reverter le commit client suffit. C'est le SEUL
+-- filet de ce lot — ne pas le bruler en appliquant ce fichier trop tot.
+--
+-- CE QUE CA FERME. Plus aucun acces direct a push_subscriptions depuis le
+-- navigateur : fini la lecture de la liste nominative des eleves abonnes avec
+-- leur cohorte et leur endpoint, et surtout fini le DELETE en lot, qui
+-- permettait de couper les notifications d'une promo entiere sans laisser de
+-- trace. Les deux RPC du fichier 1 repondent pour UN endpoint a la fois.
+--
+-- CE QUI CONTINUE DE MARCHER, et pourquoi :
+--  · api/push-send.js et les 5 Edge Functions cron (streak-reminder,
+--    weekly-results, inactive-reminder, pass3m-expiration-reminder,
+--    weekly-teacher-report) tournent en service_role, qui ignore ces
+--    privileges. C'est eux qui lisent la table pour envoyer, et qui
+--    suppriment les lignes mortes sur 410 Gone.
+--  · delete_my_account (B6) purge la table cote serveur en SECURITY DEFINER.
+-- ════════════════════════════════════════════════════════════════════════
+
+-- Liste complete et explicite. Lecon B5, confirmee par le balayage du
+-- 2026-09-14 : un REVOKE partiel laisse TRUNCATE derriere lui, et TRUNCATE
+-- ignore la RLS.
+REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.push_subscriptions FROM anon, authenticated;
+
+
+-- ════════════════════════════════════════════════════════════════════════
+-- Verification post-migration
+-- ════════════════════════════════════════════════════════════════════════
+-- 1) Doit renvoyer 0 ligne :
+--
+--    SELECT grantee, privilege_type FROM information_schema.role_table_grants
+--     WHERE table_schema='public' AND table_name='push_subscriptions'
+--       AND grantee IN ('anon','authenticated','PUBLIC');
+--
+-- 2) Sonde anon, console du navigateur sur app.verse-arena.fr :
+--    await supabase.from('push_subscriptions').select('*')   -> permission denied
+--    await supabase.from('push_subscriptions').delete().eq('class_code','idrac2026')
+--                                                            -> permission denied
+--
+-- 3) Parcours reel : reactiver puis desactiver les notifications depuis le
+--    Profil doit toujours fonctionner, et un push envoye depuis le dashboard
+--    doit toujours arriver.
