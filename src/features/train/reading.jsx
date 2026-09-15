@@ -9,6 +9,8 @@ import { PART7_PASSAGES } from "../../data/part7.js";
 import { shuffle } from "../../lib/util.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
+import { GrammarSheet } from "./grammar.jsx";
+import { GRAMMAR_SHEETS } from "../../data/grammarSheets.js";
 
 // ─── TIME MANAGEMENT SIMULATOR ───
 export function TimeSim(p){
@@ -16,6 +18,10 @@ export function TimeSim(p){
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");
   var[elapsed,sEl]=useState(0);var[answers,sAn]=useState([]);var timerRef=useRef(null);
   var[showReview,setShowReview]=useState(false);var[revIdx,setRevIdx]=useState(null);
+  // Fiche de cours ouverte EN PLACE sous l'erreur relue (retour étudiant 2026-09-15) : avant,
+  // « Review » naviguait vers Grammar Reference, ce qui démontait cette revue, et « Back »
+  // renvoyait au menu Train — impossible de revenir aux autres erreurs.
+  var[sheetOpen,setSheetOpen]=useState(false);
   var TARGET=600; // 10 minutes = 600 seconds
   var perQ=TARGET/30; // 20s per question target
 
@@ -71,7 +77,7 @@ export function TimeSim(p){
       {/* Grid overview */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(10,1fr)",gap:4,marginBottom:16}}>
         {answers.map(function(a,i){
-          return(<div key={i} onClick={function(){setRevIdx(revIdx===i?null:i);}}
+          return(<div key={i} onClick={function(){setSheetOpen(false);setRevIdx(revIdx===i?null:i);}}
             style={{padding:"8px 0",textAlign:"center",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700,
               background:a.correct?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)",
               border:revIdx===i?"2px solid var(--cyan)":"1.5px solid "+(a.correct?"rgba(0,230,118,.3)":"rgba(255,71,87,.3)"),
@@ -136,15 +142,25 @@ export function TimeSim(p){
           {q.x&&<div style={{marginTop:10,padding:10,background:"rgba(var(--cx),.06)",borderRadius:8,border:"1px solid rgba(var(--cx),.12)"}}>
             <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p>
           </div>}
-          {sheetId&&<button onClick={function(){p.nav("gramref",sheetId);}}
+          {sheetId&&<button onClick={function(){setSheetOpen(!sheetOpen);}} aria-expanded={sheetOpen}
             style={{marginTop:10,width:"100%",padding:"10px 14px",background:"rgba(59,130,246,.08)",border:"1px solid rgba(59,130,246,.2)",borderRadius:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontFamily:"'DM Sans',sans-serif"}}>
             <span style={{fontSize:14}}>📖</span>
-            <span className="out" style={{fontSize:12,fontWeight:600,color:"#3b82f6"}}>Review: {q.cat}</span>
+            <span className="out" style={{fontSize:12,fontWeight:600,color:"#3b82f6"}}>{sheetOpen?"Hide the lesson":"Review: "+q.cat}</span>
+            <span style={{fontSize:12,color:"#3b82f6",transition:"transform .2s",transform:sheetOpen?"rotate(90deg)":"rotate(0)"}}>{"›"}</span>
           </button>}
+          {sheetId&&sheetOpen&&(function(){
+            var g=GRAMMAR_SHEETS.find(function(s){return s.id===sheetId;});
+            if(!g)return null;
+            return(<div style={{marginTop:10,padding:"12px 14px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,animation:"fadeIn .2s"}}>
+              <div className="out" style={{fontSize:13,fontWeight:700,marginBottom:10}}>{g.icon} {g.title}</div>
+              <GrammarSheet g={g}/>
+              <button className="btn2" onClick={function(){p.nav("gramref",sheetId);}} style={{width:"100%",marginTop:10,fontSize:12}}>Open the full Grammar Reference</button>
+            </div>);
+          })()}
           <div style={{display:"flex",gap:8,marginTop:12}}>
-            <button className="btn2" onClick={function(){setRevIdx(revIdx-1);}} disabled={revIdx===0}
+            <button className="btn2" onClick={function(){setSheetOpen(false);setRevIdx(revIdx-1);}} disabled={revIdx===0}
               style={{flex:1,fontSize:12,visibility:revIdx===0?"hidden":"visible"}}>← Prev</button>
-            <button className="btn2" onClick={function(){setRevIdx(revIdx+1);}} disabled={revIdx>=answers.length-1}
+            <button className="btn2" onClick={function(){setSheetOpen(false);setRevIdx(revIdx+1);}} disabled={revIdx>=answers.length-1}
               style={{flex:1,fontSize:12,visibility:revIdx>=answers.length-1?"hidden":"visible"}}>Next →</button>
           </div>
         </div>);
