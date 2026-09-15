@@ -341,6 +341,46 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 
 ---
 
+## Modèle d'accès Supabase — verrou complet du 2026-09-15
+
+**Le client n'a plus AUCUN privilège de table.** `anon` et `authenticated` ne peuvent
+lire que deux objets : la vue `students_public` (classement) et la table `events`
+(événements en cours). Tout le reste passe par des RPC `SECURITY DEFINER`.
+
+Conséquence pour tout nouveau code : **un `supabase.from("<table>")` dans `src/` est un
+bug**, il renverra `42501 permission denied`. Écrire une RPC et l'ajouter à
+`supabase/migrations/`.
+
+### Les trois patrons d'autorisation
+
+| Patron | Garde | Exemples |
+|---|---|---|
+| Données perso | `student_guard(p_name, p_class_code)` | `load_student`, `save_student`, `my_rewards`, `my_tokens`, `my_pending_chests`, `my_weekly_snapshots`, `upsert_push_subscription`, `open_pending_chest` |
+| Classement (public par nature) | aucune, mais **bornée** : colonnes figées, limite dure, `Teacher` exclu en SQL | `students_public`, `class_median_xp`, `class_weekly_progress`, `class_week_podium` |
+| Dashboard formateur | `teacher_role_of(p_code)` + propriété de cohorte | `teacher_students`, `teacher_weekly_snapshots`, `teacher_feedback`, `teacher_create_event` |
+
+`student_guard` a une **tolérance legacy** : une ligne sans `user_id` passe, faute de
+preuve à exiger. Chaque compte migré se protège tout seul. Le durcissement final de la
+Phase C = retirer cette branche, une ligne.
+
+### Règles à ne pas enfreindre
+
+- **Toute vue exposée** : `REVOKE ALL` **puis** `GRANT SELECT`. Jamais un GRANT seul —
+  une vue mono-table est auto-modifiable et tourne avec les droits de son propriétaire
+  (piège vécu sur `students_public`, écriture possible à travers elle jusqu'au 2026-09-14).
+- **Tout REVOKE liste les 7 privilèges** : `SELECT, INSERT, UPDATE, DELETE, TRUNCATE,
+  REFERENCES, TRIGGER`. Un REVOKE partiel a laissé `TRUNCATE` à `anon` sur `events`
+  pendant des mois — et **TRUNCATE ignore la RLS**.
+- **Les policies PERMISSIVE sont OR'ées.** Une policy `USING true` à côté d'une policy
+  de propriété annule la seconde. C'est pourquoi les 12 policies legacy ont été
+  supprimées : la protection vient des privilèges, pas de la RLS.
+- **Ordre de déploiement** : fichier SQL 1 (les RPC, purement additif) → code déployé →
+  vérification en prod → fichier SQL 2 (le REVOKE). Le SQL 2 brûle le filet : tant qu'il
+  n'est pas passé, reverter le commit client suffit.
+- `api/*.js` et les Edge Functions tournent en `service_role` → insensibles à tout ceci.
+
+---
+
 ## Hardened Rules — post-crisis 2026-04-21
 
 Ces règles s'appliquent à tout changement touchant : auth, sessions, save/load, identity binding, Supabase RLS, Onboarding, routing (sp/tab). Elles ont été durcies après la crise du 20-21 avril 2026 où un typo `setName` (au lieu de `sN`) caché par un `catch(e){}` muet a cassé le flow "Welcome back" pour tous les étudiants pendant 13 jours, suivi de 8 commits correctifs mal orientés. Voir `AUDIT_2026-04-21.md` pour le rapport complet.
@@ -413,7 +453,7 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 - **Anon key must NEVER be hardcoded** in App.jsx. Use `import.meta.env.VITE_SUPABASE_ANON_KEY`.
 - **`fetch({ keepalive: true })` with auth headers** replaces `sendBeacon` for unload saves.
 - **Realtime:** Avoid `self:false`; use unique session PIDs.
-- **RLS on `push_subscriptions` and `weekly_snapshots`** was disabled after persistent cross-device anonymous auth issues.
+- **Aucune table n'est accessible en direct depuis le client** (verrou du 2026-09-15, voir ci-dessous). Un `supabase.from("<table>")` dans du code client renverra `42501 permission denied` — utiliser une RPC.
 - **Column `skin_id`** (not `equipped_skin`) stores the equipped skin.
 - **Assets in `public/`** must be `git add`-ed or Vercel won't deploy them (silent 404). Past bug: `bgm_tavern.mp3` existed locally but not in git → silent playback failure.
 
