@@ -22,6 +22,7 @@ import { NARRATOR_ORDER, NARRATOR_MOMENTS } from "../../narrator.js";
 import { isSoundEnabled, setSoundEnabled, playCorrect, stopBGM } from "../../sounds.js";
 import { useState, useRef, useEffect } from "react";
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar as RBar, Cell } from "recharts";
+import { PasswordInput } from "../../components/PasswordInput.jsx";
 
 export function Profile(p){
   var u=p.u;
@@ -1007,10 +1008,10 @@ export function Profile(p){
               style={{fontSize:12,padding:"8px 14px",width:"100%"}}>{"Fermer"}</button>
           </>
           :<>
-            <input type="password" value={pwdChange1} onChange={function(ev){setPwdChange1(ev.target.value);setPwdChangeErr("");}}
+            <PasswordInput value={pwdChange1} onChange={function(ev){setPwdChange1(ev.target.value);setPwdChangeErr("");}}
               placeholder="Nouveau mot de passe (8 car. min.)" autoComplete="new-password" disabled={pwdChangeBusy}
               style={{width:"100%",padding:"10px 12px",fontSize:13,marginBottom:8,background:"var(--bg)",border:"1px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box"}}/>
-            <input type="password" value={pwdChange2} onChange={function(ev){setPwdChange2(ev.target.value);setPwdChangeErr("");}}
+            <PasswordInput value={pwdChange2} onChange={function(ev){setPwdChange2(ev.target.value);setPwdChangeErr("");}}
               placeholder="Confirme le mot de passe" autoComplete="new-password" disabled={pwdChangeBusy}
               style={{width:"100%",padding:"10px 12px",fontSize:13,marginBottom:10,background:"var(--bg)",border:"1px solid var(--bdr)",borderRadius:8,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box"}}/>
             {pwdChangeErr&&<div style={{color:"var(--red)",fontSize:12,marginBottom:8}}>{pwdChangeErr}</div>}

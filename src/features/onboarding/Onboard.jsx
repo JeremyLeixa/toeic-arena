@@ -13,6 +13,7 @@ import { createCatController, computeScanResult } from "../../scanEngine.js";
 import { playCorrect, playWrong, playArenaCall } from "../../sounds.js";
 import { supabase } from "../../supabase.js";
 import { useState, useRef, useEffect } from "react";
+import { PasswordInput } from "../../components/PasswordInput.jsx";
 
 // ─── ONBOARDING ───
 export function Onboard(p){
@@ -349,10 +350,10 @@ var[step,sSt]=useState("name");
         <input type="email" value={emailInput} onChange={function(e){setEmailInput(e.target.value);setPwdEmailDup(false);setPwdErr("");}}
           placeholder="ton@email.com" autoComplete="email" autoCapitalize="off" autoCorrect="off"
           style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:10,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
-        <input type="password" value={pwd1} onChange={function(e){setPwd1(e.target.value);}}
+        <PasswordInput value={pwd1} onChange={function(e){setPwd1(e.target.value);}}
           placeholder="Mot de passe (8 caractères min.)" autoComplete="new-password"
           style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:10,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
-        <input type="password" value={pwd2} onChange={function(e){setPwd2(e.target.value);}}
+        <PasswordInput value={pwd2} onChange={function(e){setPwd2(e.target.value);}}
           placeholder="Confirme le mot de passe" autoComplete="new-password"
           style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
         {pwdErr&&<div style={{color:"var(--red)",fontSize:13,marginBottom:12,textAlign:"center"}}>{pwdErr}</div>}
@@ -409,7 +410,7 @@ var[step,sSt]=useState("name");
           <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6,color:"var(--gold)"}}>{"Bon retour, "+epName+" !"}</h1>
           <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Entre ton mot de passe pour retrouver ta progression"+(classGroupName?" ("+classGroupName+")":"")+"."}</p>
         </div>
-        <input type="password" value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}}
+        <PasswordInput value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}}
           placeholder={"Mot de passe"} autoComplete="current-password"
           onKeyDown={function(e){if(e.key==="Enter")doStudentSignIn();}}
           style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
@@ -472,10 +473,10 @@ var[step,sSt]=useState("name");
           <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{spClaim?("Sécurise ton compte, "+name.trim()):"Choisis ton mot de passe"}</h1>
           <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{spClaim?"Choisis un mot de passe pour protéger ta progression et te reconnecter partout.":("Ce mot de passe protège ton compte"+(classGroupName?" ("+classGroupName+")":"")+" et te reconnecte sur tous tes appareils.")}</p>
         </div>
-        <input type="password" value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}}
+        <PasswordInput value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}}
           placeholder="Mot de passe (8 caractères min.)" autoComplete="new-password"
           style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:10,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
-        <input type="password" value={pwd2} onChange={function(e){setPwd2(e.target.value);setPwdErr("");}}
+        <PasswordInput value={pwd2} onChange={function(e){setPwd2(e.target.value);setPwdErr("");}}
           placeholder="Confirme le mot de passe" autoComplete="new-password"
           onKeyDown={function(e){if(e.key==="Enter")doStudentSignUp();}}
           style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
@@ -562,7 +563,7 @@ var[step,sSt]=useState("name");
           </p>
           <input type="email" value={emailInput} onChange={function(ev){setEmailInput(ev.target.value);setEmailErr("");}} placeholder="ton@email.com" autoComplete="email" disabled={emailBusy}
             style={{width:"100%",padding:"12px 14px",fontSize:14,borderRadius:10,border:"1.5px solid "+(emailErr?"var(--red)":"rgba(var(--cx),.25)"),background:"var(--bg2)",color:"var(--t1)",marginBottom:10,textAlign:"left",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box"}}/>
-          <input type="password" value={pwd1} onChange={function(ev){setPwd1(ev.target.value);setEmailErr("");}} placeholder="Mot de passe" autoComplete="current-password" disabled={emailBusy}
+          <PasswordInput value={pwd1} onChange={function(ev){setPwd1(ev.target.value);setEmailErr("");}} placeholder="Mot de passe" autoComplete="current-password" disabled={emailBusy}
             style={{width:"100%",padding:"12px 14px",fontSize:14,borderRadius:10,border:"1.5px solid "+(emailErr?"var(--red)":"rgba(var(--cx),.25)"),background:"var(--bg2)",color:"var(--t1)",marginBottom:emailErr?4:14,textAlign:"left",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box"}}/>
           {emailErr&&<div style={{fontSize:11,color:"var(--red)",marginBottom:10,textAlign:"left"}}>{emailErr}</div>}
           <button className="btn1" onClick={doLogin} disabled={emailBusy||!emailInput||!pwd1}
@@ -759,7 +760,7 @@ var[step,sSt]=useState("name");
         {bioAvail&&bioRegistered&&<div style={{fontSize:12,color:"var(--t3)",marginBottom:16}}>or enter code manually</div>}
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Access code</label>
-          <input type="password" value={teacherCode} onChange={function(e){sTC(e.target.value);}} placeholder="Enter teacher code..."
+          <PasswordInput labelShow="Show code" labelHide="Hide code" value={teacherCode} onChange={function(e){sTC(e.target.value);}} placeholder="Enter teacher code..."
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
         <button className="btn1" onClick={async function(){

@@ -1,6 +1,7 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { confirmPasswordReset } from "../../auth.js";
 import { useState } from "react";
+import { PasswordInput } from "../../components/PasswordInput.jsx";
 
 // ═══════════════════════════════════════════
 // RESET PASSWORD VIEW (Phase 1 — refonte 2026-04-24)
@@ -46,10 +47,10 @@ export function ResetPasswordView(p){
       <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{"Nouveau mot de passe"}</h1>
       <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Choisis un mot de passe d'au moins 8 caractères."}</p>
     </div>
-    <input type="password" value={pwd} onChange={function(e){setPwd(e.target.value);}}
+    <PasswordInput value={pwd} onChange={function(e){setPwd(e.target.value);}}
       placeholder="Nouveau mot de passe" autoComplete="new-password"
       style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:12,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",boxSizing:"border-box"}}/>
-    <input type="password" value={confirm} onChange={function(e){setConfirm(e.target.value);}}
+    <PasswordInput value={confirm} onChange={function(e){setConfirm(e.target.value);}}
       placeholder="Confirme le mot de passe" autoComplete="new-password"
       style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:16,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",boxSizing:"border-box"}}/>
     {err&&<div style={{color:"var(--red)",fontSize:13,marginBottom:12,textAlign:"center"}}>{err}</div>}
