@@ -416,5 +416,17 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   fonction minuscule exportée depuis `avatar.jsx`, inévitable : elle et `AvatarMedal` se
   référencent mutuellement, les séparer créerait un cycle). Règle apprise : un fichier
   `.jsx` n'exporte que des composants → constantes vers `lib/`, helper de rendu privé
-  (`~nom` dans le manifeste). **Non mergée** : smoke court puis merge, ou enchaîner la
-  Phase 3 et ne faire qu'un smoke complet — au choix de Jérémy.
+  (`~nom` dans le manifeste). Jérémy a choisi d'enchaîner la Phase 3 sans smoke intermédiaire.
+- 2026-09-15 — **Phase 3 livrée** sur `refactor/split-app` (lots 31-43, 13 commits + 1
+  d'outillage). App.jsx **15 786 → 1 730 lignes**. 16 dossiers `src/features/` (train,
+  home, gauntlet, modals, games, listening, exams, mentor, league, chests, shop, profile,
+  narrator, onboarding, teacher). Les 13 lots relus en mode commité avec le vérificateur
+  par **multi-ensembles** : déplacement pur, zéro retouche manuelle. Lint 372 inchangé.
+  Deux leçons d'outillage : (1) `git diff` aligne mal deux composants au JSX voisin (74
+  fausses lignes sur le lot 31), d'où `review.cjs` réécrit en comparaison de
+  multi-ensembles de lignes ; (2) `set -e` sans `pipefail` laisse passer l'échec d'un
+  `| head`, d'où le lanceur `run_lot.sh` (arrêt si l'extraction est refusée ou si App.jsx
+  n'a pas changé). Le lot 37 (League) a été refusé une première fois, à raison :
+  `RankRow` et `loadProgressionData` sont internes à `League` et voyagent avec elle.
+  Les 3 `var` de CSS local (`DTL_CSS`, `SBD_CSS`) et `GRAMMAR_SHEETS` sont privées à
+  leur module. **Phases 2 et 3 non mergées** : smoke complet de Jérémy puis merge.
