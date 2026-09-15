@@ -1311,14 +1311,21 @@ async function subscribePush(userName,userClassCode){
       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
     var subJson=sub.toJSON();
-    await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code",userClassCode).eq("endpoint",subJson.endpoint);
-    var res=await supabase.from("push_subscriptions").insert({
-      student_name:userName,
-      class_code:userClassCode,
-      subscription:subJson,
-      endpoint:subJson.endpoint
+    // Securite (lot 2 du verrou satellites) : plus d'acces direct a
+    // push_subscriptions depuis le navigateur. La table etait lisible ET
+    // supprimable avec la cle publique — de quoi couper les notifications
+    // d'une promo entiere. La RPC fait le delete+insert en une transaction
+    // (l'ancien couple ne l'etait pas : entre les deux appels REST, l'eleve
+    // pouvait se retrouver sans aucune ligne) et exige l'endpoint : aucune
+    // forme "supprime tous mes abonnements" n'est exposee.
+    var res=await supabase.rpc("upsert_push_subscription",{
+      p_name:userName,
+      p_class_code:userClassCode,
+      p_endpoint:subJson.endpoint,
+      p_subscription:subJson
     });
     if(res.error){console.error("Push DB insert failed:",res.error.message);return null;}
+    if(res.data&&res.data.ok===false){console.error("Push DB insert refused:",res.data.error);return null;}
     return sub;
   }catch(e){console.log("Push subscription failed:",e);return null;}
 }
@@ -1329,8 +1336,13 @@ async function unsubscribePush(userName,userClassCode){
     var reg=await navigator.serviceWorker.ready;
     var sub=await reg.pushManager.getSubscription();
     if(sub){
+      var ep=sub.endpoint;
       await sub.unsubscribe();
-      await supabase.from("push_subscriptions").delete().eq("student_name",userName).eq("class_code",userClassCode).eq("endpoint",sub.endpoint);
+      var del=await supabase.rpc("delete_push_subscription",{
+        p_name:userName,p_class_code:userClassCode,p_endpoint:ep
+      });
+      if(del.error)console.warn("[push] unsubscribe RPC error:",del.error.message);
+      else if(del.data&&del.data.ok===false)console.warn("[push] unsubscribe refused:",del.data.error);
     }
   }catch(e){console.log("Push unsubscribe failed:",e);}
 }
@@ -18193,7 +18205,10 @@ var prevLeague=getLeague(c.weeklyXp);
       // Best-effort satellites côté client (couvre les legacy que la RPC n'a pas touchés ;
       // no-op idempotent sinon). Ces tables SONT supprimables par authenticated.
       if(uid)await supabase.from('weekly_snapshots').delete().eq('user_id',uid);
-      await supabase.from('push_subscriptions').delete().eq('student_name',name).eq('class_code',cc);
+      // push_subscriptions : plus d'acces direct depuis le client (lot 2 du verrou
+      // satellites). delete_my_account purge deja cette table cote serveur ; pour un
+      // compte legacy que la RPC refuse, il n'y a plus de rattrapage best-effort ici
+      // — c'est assume, voir le message affiche a l'utilisateur.
       await supabase.from('player_rewards').delete().eq('user_name',name).eq('class_code',cc);
       await supabase.from('player_tokens').delete().eq('user_name',name).eq('class_code',cc);
       await supabase.from('pending_chests').delete().eq('user_name',name).eq('class_code',cc);
