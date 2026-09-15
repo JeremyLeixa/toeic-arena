@@ -343,24 +343,32 @@ function pushWeeklySnapshot(snap){
       var jan1=new Date(yr,0,1);
       var ws=new Date(jan1.getTime()+(wk-1)*7*86400000);
       var dy=ws.getDay();ws.setDate(ws.getDate()+(dy===0?-6:1-dy));
-      supabase.from('weekly_snapshots').upsert({
-        user_id:r.data.user.id,
-        student_name:snap.name,
-        class_code:snap.classCode||'visitor',
-        week_id:snap.weekId,
-        week_start:ws.toISOString().split('T')[0],
-        xp_this_week:snap.weeklyXp,
-        xp_cumulative:snap.xp,
-        daily_completions:snap.weeklyDailyCount||0,
-        streak_at_end:snap.streak,
-        stats_snapshot:snap.stats,
-        module_scores_snapshot:snap.moduleScores,
-        mock_results_snapshot:snap.mockResults||{},
-        achievements_count:(snap.unlockedAch||[]).length
-      },{onConflict:'student_name,class_code,week_id'})
-      .then(function(res){if(res.error)console.error('Snapshot error:',res.error.message);});
+      // Securite (lot 3 du verrou satellites) : plus d'ecriture directe.
+      // user_id n'est plus envoye — la RPC le prend dans le JWT. Sinon
+      // n'importe qui pouvait s'attribuer les snapshots d'un autre, et donc
+      // les faire effacer par sa propre purge RGPD (qui efface par user_id).
+      supabase.rpc('save_weekly_snapshot',{
+        p_name:snap.name,
+        p_class_code:snap.classCode||'visitor',
+        p_payload:{
+          week_id:snap.weekId,
+          week_start:ws.toISOString().split('T')[0],
+          xp_this_week:snap.weeklyXp,
+          xp_cumulative:snap.xp,
+          daily_completions:snap.weeklyDailyCount||0,
+          streak_at_end:snap.streak,
+          stats_snapshot:snap.stats,
+          module_scores_snapshot:snap.moduleScores,
+          mock_results_snapshot:snap.mockResults||{},
+          achievements_count:(snap.unlockedAch||[]).length
+        }
+      })
+      .then(function(res){
+        if(res.error){console.error('Snapshot error:',res.error.message);return;}
+        if(res.data&&res.data.ok===false)console.error('Snapshot refused:',res.data.error);
+      });
     });
-  }catch(e){}
+  }catch(e){console.warn("[snapshot] caught:",e&&e.message);}
 }
 
 // Applies a week transition if the stored weekId is outdated. Mutates `d` in place
@@ -5026,13 +5034,11 @@ function MentorGoalCard(p){
   useEffect(function(){
     if(!hasGoal){setSnaps([]);return;}
     var cn=u.name,cc=u.classCode||"visitor";
-    supabase.from("weekly_snapshots")
-      .select("week_id,week_start,module_scores_snapshot")
-      .ilike("student_name",cn).eq("class_code",cc)
-      .order("week_start",{ascending:false}).limit(6)
+    supabase.rpc("my_weekly_snapshots",{p_name:cn,p_class_code:cc,p_limit:6,p_exclude_week_id:null})
       .then(function(r){
         if(r.error){console.warn("[MentorGoalCard] snaps fetch failed:",r.error.message);setSnaps([]);return;}
-        setSnaps(r.data||[]);
+        if(r.data&&r.data.ok===false){console.warn("[MentorGoalCard] snaps refused:",r.data.error);setSnaps([]);return;}
+        setSnaps((r.data&&r.data.snapshots)||[]);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[hasGoal,u.name,u.classCode,u.targetToeic,u.targetDate]);
@@ -12107,11 +12113,20 @@ function WeeklyReport(p){
   var prevMondayStr=prevMonday.toISOString().split("T")[0];
 
   useEffect(function(){
-    supabase.from("weekly_snapshots")
-      .select("*")
-      .eq("class_code",p.classCode)
-      .in("week_start",[lastMondayStr,prevMondayStr])
-      .then(function(res){setSnaps(res.data||[]);setLoading(false);});
+    // Securite (lot 3) : ce select('*') tirait toute la cohorte sur deux semaines.
+    // La RPC applique le meme scoping formateur que teacher_students (B4/B5) et
+    // ne renvoie ni id, ni user_id, ni created_at.
+    supabase.rpc("teacher_weekly_snapshots",{
+      p_code:getDashTeacher(),p_class_code:p.classCode,
+      p_week_starts:[lastMondayStr,prevMondayStr]
+    })
+      .then(function(res){
+        setLoading(false);
+        if(res.error){console.warn("[report] teacher_weekly_snapshots failed:",res.error.message);setSnaps([]);return;}
+        if(res.data&&res.data.ok===false){console.warn("[report] refused:",res.data.error);setSnaps([]);return;}
+        setSnaps((res.data&&res.data.snapshots)||[]);
+      })
+      .catch(function(e){setLoading(false);console.warn("[report] caught:",e&&e.message);});
   },[]);
 
   function fmtDate(d){var dd=String(d.getDate()).padStart(2,"0");var mm=String(d.getMonth()+1).padStart(2,"0");return dd+"/"+mm;}
@@ -14481,21 +14496,20 @@ function loadProgressionData(){
   // Fetch les snapshots pour le fallback — utile tant qu'une partie du
   // cohort a battle_scan=null (Idrac 2026). Supprimable quand tous les
   // étudiants auront un scan.
-  supabase.from('weekly_snapshots')
-    .select('student_name,week_start,module_scores_snapshot')
-    .eq('class_code',leagueGroup)
-    .order('week_start',{ascending:true})
-    .limit(500)
+  // Securite (lot 3) : RPC bornee (3 colonnes, limite 500, Teacher exclu en SQL)
+  // plutot qu'un select sur la table. Meme donnee, mais plus de dump possible.
+  supabase.rpc('class_weekly_progress',{p_class_code:leagueGroup})
     .then(function(res){
+      if(res.error)console.warn("[progress] class_weekly_progress failed:",res.error.message);
+      else if(res.data&&res.data.ok===false)console.warn("[progress] refused:",res.data.error);
       var byStudent={};
-      if(res.data){
-        res.data.forEach(function(snap){
-          var n=snap.student_name;
-          if(n==="Teacher")return;
-          if(!byStudent[n])byStudent[n]=[];
-          byStudent[n].push(snap);
-        });
-      }
+      var rows=(res.data&&res.data.snapshots)||[];
+      rows.forEach(function(snap){
+        var n=snap.student_name;
+        if(n==="Teacher")return;
+        if(!byStudent[n])byStudent[n]=[];
+        byStudent[n].push(snap);
+      });
       function firstSnapshotToeic(name){
         var snaps=byStudent[name]||[];
         for(var i=0;i<snaps.length;i++){
@@ -17191,15 +17205,15 @@ useEffect(function(){
   // V2 helper — Weekly TOEIC Progression (+25 pts vs last weekly_snapshot)
   async function checkWeeklyToeicChest(uu,wkId){
     try{
-      var res=await supabase.from("weekly_snapshots")
-        .select("module_scores_snapshot")
-        .ilike("student_name",uu.name)
-        .eq("class_code",uu.classCode||"visitor")
-        .neq("week_id",wkId)
-        .order("week_start",{ascending:false})
-        .limit(1);
-      if(!res.data||res.data.length===0)return; // no baseline yet
-      var prevMs=res.data[0].module_scores_snapshot||{};
+      var res=await supabase.rpc("my_weekly_snapshots",{
+        p_name:uu.name,p_class_code:uu.classCode||"visitor",
+        p_limit:1,p_exclude_week_id:wkId
+      });
+      if(res.error){console.warn("[CHEST V2] weekly TOEIC snaps error:",res.error.message);return;}
+      if(res.data&&res.data.ok===false){console.warn("[CHEST V2] weekly TOEIC snaps refused:",res.data.error);return;}
+      var prevRows=(res.data&&res.data.snapshots)||[];
+      if(prevRows.length===0)return; // no baseline yet
+      var prevMs=prevRows[0].module_scores_snapshot||{};
       var prevToeic=estimateTOEICScore(prevMs).total;
       var currentToeic=estimateTOEICScore(uu.moduleScores||{}).total;
       if(currentToeic!==null&&prevToeic!==null&&currentToeic-prevToeic>=25){
@@ -17218,18 +17232,17 @@ useEffect(function(){
       var prevWk=uu.weeklyHistory&&uu.weeklyHistory.length>0
         ?uu.weeklyHistory[uu.weeklyHistory.length-1].week:null;
       if(!prevWk)return;
-      var res=await supabase.from("weekly_snapshots")
-        .select("student_name,xp_this_week")
-        .eq("class_code",uu.classCode||"visitor")
-        .eq("week_id",prevWk)
-        .neq("student_name",GHOST_NAME)
-        .order("xp_this_week",{ascending:false})
-        .limit(3);
-      if(!res.data||res.data.length===0)return;
+      var res=await supabase.rpc("class_week_podium",{
+        p_class_code:uu.classCode||"visitor",p_week_id:prevWk
+      });
+      if(res.error){console.warn("[CHEST V2] podium rpc error:",res.error.message);return;}
+      if(res.data&&res.data.ok===false){console.warn("[CHEST V2] podium refused:",res.data.error);return;}
+      var podRows=(res.data&&res.data.podium)||[];
+      if(podRows.length===0)return;
       // Arena Shop P1 — find exact rank (0/1/2) to graduate Daric reward 150/100/60.
       // The existing chest grant stays unchanged (any top-3 position triggers it).
       var rank=-1;
-      res.data.forEach(function(s,i){
+      podRows.forEach(function(s,i){
         if(s.student_name&&s.student_name.toLowerCase()===uu.name.toLowerCase())rank=i;
       });
       if(rank>=0){
@@ -18204,7 +18217,8 @@ var prevLeague=getLeague(c.weeklyXp);
       else if(r.data&&r.data.ok===false)console.warn("[purge] rpc refused:",r.data.error);
       // Best-effort satellites côté client (couvre les legacy que la RPC n'a pas touchés ;
       // no-op idempotent sinon). Ces tables SONT supprimables par authenticated.
-      if(uid)await supabase.from('weekly_snapshots').delete().eq('user_id',uid);
+      // weekly_snapshots : plus d'acces direct (lot 3). delete_my_account purge
+      // deja la table cote serveur, par user_id, dans la meme transaction.
       // push_subscriptions : plus d'acces direct depuis le client (lot 2 du verrou
       // satellites). delete_my_account purge deja cette table cote serveur ; pour un
       // compte legacy que la RPC refuse, il n'y a plus de rattrapage best-effort ici
