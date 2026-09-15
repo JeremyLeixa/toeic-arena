@@ -41,16 +41,22 @@ for (const f of results) {
   }
 }
 
+// Les imports inutilisés PRÉEXISTANTS (8 dans App.jsx au départ : playCombo, rollRarity,
+// getAuthUser…) sont figés par nom, pas par ligne (les lignes bougent à chaque lot).
+// Seul un import inutilisé NOUVEAU fait rougir la porte.
+const key = (s) => s.replace(/:\d+\s+'/, " '").replace(/'\s.*$/, "'");
 if (FREEZE) {
-  fs.writeFileSync(REF, JSON.stringify({ frozenAt: new Date().toISOString().slice(0, 10), totalSrc: total }, null, 2) + '\n');
-  console.log('référence figée : ' + total + ' problèmes sur src/');
+  fs.writeFileSync(REF, JSON.stringify({ frozenAt: new Date().toISOString().slice(0, 10), totalSrc: total, unusedImports: unusedImports.map(key).sort() }, null, 2) + '\n');
+  console.log('référence figée : ' + total + ' problèmes sur src/, ' + unusedImports.length + ' import(s) inutilisé(s) préexistant(s)');
   process.exit(0);
 }
 const ref = fs.existsSync(REF) ? JSON.parse(fs.readFileSync(REF, 'utf8')) : null;
+const known = new Set((ref && ref.unusedImports) || []);
+const newUnused = unusedImports.filter((s) => !known.has(key(s)));
 let fails = 0;
 const show = (title, arr) => { console.log(title + ' : ' + arr.length); for (const l of arr) console.log('   ' + l); if (arr.length) fails++; };
 show('no-undef (import manquant)', undef);
-show('imports inutilisés', unusedImports);
+show('imports inutilisés nouveaux (' + (unusedImports.length - newUnused.length) + ' préexistants ignorés)', newUnused);
 console.log('total src/ : ' + total + (ref ? ' (référence ' + ref.totalSrc + ', figée le ' + ref.frozenAt + ')' : ' (pas de référence : --freeze)'));
 if (ref && total > ref.totalSrc) { fails++; console.log('   le total a AUGMENTÉ de ' + (total - ref.totalSrc)); }
 process.exit(fails ? 1 : 0);

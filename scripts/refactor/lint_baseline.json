@@ -1,4 +1,14 @@
 {
   "frozenAt": "2026-09-15",
-  "totalSrc": 378
+  "totalSrc": 375,
+  "unusedImports": [
+    "src/App.jsx 'getAuthUser'",
+    "src/App.jsx 'onAuthChange'",
+    "src/App.jsx 'playClick'",
+    "src/App.jsx 'playCombo'",
+    "src/App.jsx 'playJingleEnter'",
+    "src/App.jsx 'playStreak'",
+    "src/App.jsx 'playTimer'",
+    "src/App.jsx 'rollRarity'"
+  ]
 }

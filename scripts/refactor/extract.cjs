@@ -216,7 +216,10 @@ for (const s of importStmts) {
   if (named.length) parts.push('{ ' + named.join(', ') + ' }');
   edits.push([s.range[0], end, 'import ' + parts.join(', ') + ' from ' + app.slice(s.source.range[0], s.source.range[1]) + ';' + EOL]);
 }
-const lastImport = importStmts[importStmts.length - 1];
+// Insertion après le dernier import du bloc de TÊTE (App.jsx a aussi un import mid-fichier,
+// auth.js vers la l. 768 : y accrocher les nouveaux imports serait légal mais illisible).
+let lastImport = null;
+for (const s of appAst.body) { if (s.type === 'ImportDeclaration') lastImport = s; else if (lastImport) break; }
 if (addLines.length) edits.push([T.blockEnd(app, lastImport), T.blockEnd(app, lastImport), addLines.join(EOL) + EOL]);
 edits.sort((a, b) => b[0] - a[0]);
 for (const [s, e, rep] of edits) app = app.slice(0, s) + rep + app.slice(e);

@@ -57,7 +57,7 @@ const others = files.filter((f) => f !== 'src/App.jsx').map((f) => ({ file: f, .
 
 // multiset des lignes retirées d'App.jsx (normalisées)
 const pool = new Map();
-for (const l of app.removed) { const k = strip(l); pool.set(k, (pool.get(k) || 0) + 1); }
+for (const l of app.removed) { const k = strip(l); if (isImport(k)) continue; pool.set(k, (pool.get(k) || 0) + 1); }
 const unmatchedAdded = [];
 for (const o of others) {
   for (const l of o.added) {
