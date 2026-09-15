@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { playCorrect, playWrong, playXP, playLevelUp, playCombo, playStreak, playTimer, playClick, playArenaCall, playJingleEnter, playJingleAchieve, playJingleLeague, playJingleMock, playJingleMockOk, playJingleDaily, playBGM, stopBGM, setSoundEnabled, isSoundEnabled } from "./sounds.js";
 import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
+import { today, weekId, shuffle, normalizeName } from "./lib/util.js";
+import { fresh, supaToLocal, buildSavePayload } from "./lib/profileSchema.js";
+import { haptic, isStandalonePWA, isIOSDevice } from "./lib/device.js";
+import { getEnVoice, speak, stopCurrentListenAudio, setListenAudio, isAudioAborted, playAudioFile, stopListenAudio, resumeAudioSession } from "./lib/audio.js";
 
 /* ═══════════════════════════════════════════
    VERSE ARENA — MVP v2.0
@@ -9,7 +13,7 @@ import { BarChart, Bar as RBar, LineChart, Line, XAxis, YAxis, Tooltip, Responsi
 
 
 // ─── DATA IMPORTS ───
-import { LEAGUES, COMPETITORS } from "./data/leagues.js";
+import { LEAGUES } from "./data/leagues.js";
 import { ACHIEVEMENTS } from "./data/achievements.js";
 import { VOCAB } from "./data/vocab.js";
 import { QUESTIONS, WORD_FAMILIES } from "./data/grammar.js";
@@ -26,7 +30,7 @@ import { CLUE_HUNTER } from "./data/clueHunter.js";
 import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, convertCosmeticDups, convertTokensToPremium, consumeToken, SHOP_CATALOG, spendMarks } from "./data/chests.js";
 import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
-import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
+import { BOSS_P1, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
 import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } from "./data/grammarGauntlet.js";
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "./data/grammarGauntletGrimoire.js";
 import { MODAL_MATCH_BOARDS, MODAL_SORT_ITEMS } from "./data/modals.js";
@@ -37,162 +41,24 @@ import { GRIMOIRE_CONNECTORS } from "./data/connectorsGrimoire.js";
 import { LINKING_BRIDGE } from "./data/linkingBridge.js";
 import { NARRATOR_MOMENTS, NARRATOR_ORDER, hasHeardMoment, markMomentHeard } from "./narrator.js";
 import { CGV_ARTICLES, CGV_VERSION, CGV_EFFECTIVE_DATE } from "./data/cgv.js";
+import { shufListeningItem, BOSS_P2_SHUF } from "./lib/listeningShuffle.js";
+import { FREE_FLASHCARD_DOMAINS, hasFullAccess, isModuleLocked, PREMIUM_UPGRADE_ENABLED, GHOST_NAME, isGhost } from "./lib/access.js";
+import { estimateToeic, partOfModule, partAccuracies, bsScanParts, computeTodayFocus, battleScanToToeic, estimateTOEICScore, generateInsight } from "./lib/toeic.js";
+import { getLeague, getEffectiveLeague, applyWeekTransition, generateSeasons, SEASONS, getCurrentSeason, getSeasonEndCountdown, computeRankings } from "./lib/league.js";
+import { _cachedUserId, _syncDirty, saveLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty } from "./lib/persistence.js";
+import { recordModule, pickAdaptive, checkMission, getDailyMission, canUnlockMock, canUnlockBoss, needsMockNudge, getEndlessState, dailyQs, srsUp, dueCards } from "./lib/progress.js";
+import { generateEndlessTest, freshAnsFor, endlessAnsFitsTest } from "./lib/endless.js";
+import { getDashTeacher, setDashSession, clearDashSession, isDashAdmin, teacherAuth, BIOMETRIC_KEY, biometricAvailable, getBioCredId, bioRegister, bioAuthenticate, optIcon } from "./lib/teacherSession.js";
+import { subscribePush, unsubscribePush, isPushSubscribed } from "./lib/push.js";
+import { downloadGrimoire } from "./lib/grimoireExport.js";
+import { FEEDBACK_MODULES, findModuleLabel } from "./lib/feedbackModules.js";
+import { getTriggerLabel } from "./lib/chestLabels.js";
+import { SHOP_SECTIONS, shopRarColor, shopItemName, shopItemDesc } from "./lib/shopCatalog.js";
+import { CSS } from "./styles/appCss.js";
 
 
-function today(){return new Date().toISOString().split("T")[0];}
 
-// ─── TTS ENGINE (pre-generated MP3 → browser TTS fallback) ───
-var _voices=null;
-function getEnVoice(){
-  if(_voices)return _voices;
-  var all=window.speechSynthesis?window.speechSynthesis.getVoices():[];
-  // Safari on macOS/iOS returns lang codes like "en-US", "en_US", "en_us" inconsistently.
-  // Normalize to lowercase and accept both separators.
-  function isEn(v){
-    if(!v||!v.lang)return false;
-    var l=v.lang.toLowerCase().replace(/_/g,"-");
-    return l.indexOf("en")===0&&(l.length===2||l.charAt(2)==="-");
-  }
-  // Prefer high-quality voices on Safari (Enhanced/Premium in voice name).
-  // Then en-US > en-GB > en-AU > any en.
-  var enVoices=all.filter(isEn);
-  if(enVoices.length===0){
-    // NEVER fall back to non-English. Returning null lets the browser pick based on u.lang,
-    // which is safer than explicitly assigning a French voice on a FR-locale device.
-    return null;
-  }
-  var pref=["en-us","en-gb","en-au"];
-  for(var p=0;p<pref.length;p++){
-    for(var i=0;i<enVoices.length;i++){
-      var lg=enVoices[i].lang.toLowerCase().replace(/_/g,"-");
-      if(lg===pref[p]){_voices=enVoices[i];return _voices;}
-    }
-  }
-  // Any English voice
-  _voices=enVoices[0];return _voices;
-}
-var _audioCache={};
-var _mp3Failed={};
-async function speak(text,rate,audioPath){
-  // Respect abort flag — if component unmounted, don't start new audio.
-  if(_audioAborted)return;
-  // If an explicit MP3 path is given, try it first
-  if(audioPath&&!_mp3Failed[audioPath]){
-    if(_audioCache[audioPath]){
-      var a=_audioCache[audioPath].cloneNode();
-      a.playbackRate=rate||0.9;
-      // Track so stopListenAudio can kill it on unmount.
-      if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-      _listenAudio=a;
-      a.play().catch(function(){});
-      return;
-    }
-    try{
-      var audio=new Audio(audioPath);
-      await new Promise(function(resolve,reject){
-        audio.oncanplaythrough=resolve;
-        audio.onerror=reject;
-        audio.load();
-      });
-      if(_audioAborted)return;
-      audio.playbackRate=rate||0.9;
-      _audioCache[audioPath]=audio;
-      if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-      _listenAudio=audio;
-      audio.play().catch(function(){});
-      return;
-    }catch(e){_mp3Failed[audioPath]=true;}
-  }
-  // Fallback to browser TTS
-  if(!window.speechSynthesis)return;
-  if(_audioAborted)return;
-  window.speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(text);
-  u.rate=rate||0.9;u.pitch=1;u.volume=1;
-  // Set lang BEFORE voice — Safari bug: voice assignment can override/lock language otherwise
-  u.lang="en-US";
-  var v=getEnVoice();if(v)u.voice=v;
-  window.speechSynthesis.speak(u);
-}
-function speakAndWait(text,rate,audioPath){
-  return new Promise(function(resolve){
-    if(_audioAborted){resolve();return;}
-    if(audioPath&&!_mp3Failed[audioPath]){
-      if(_audioCache[audioPath]){
-        var a=_audioCache[audioPath].cloneNode();
-        a.playbackRate=rate||0.9;
-        a.onended=resolve;a.onerror=resolve;
-        if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-        _listenAudio=a;
-        a.play().catch(resolve);
-        return;
-      }
-      var audio=new Audio(audioPath);
-      audio.oncanplaythrough=function(){
-        if(_audioAborted){resolve();return;}
-        audio.playbackRate=rate||0.9;
-        _audioCache[audioPath]=audio;
-        audio.onended=resolve;audio.onerror=resolve;
-        if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-        _listenAudio=audio;
-        audio.play().catch(resolve);
-      };
-      audio.onerror=function(){_mp3Failed[audioPath]=true;speakBrowserTTS(text,rate,resolve);};
-      audio.load();
-      return;
-    }
-    speakBrowserTTS(text,rate,resolve);
-  });
-}
-function speakBrowserTTS(text,rate,cb){
-  if(!window.speechSynthesis){cb();return;}
-  window.speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(text);
-  u.rate=rate||0.9;u.pitch=1;u.volume=1;
-  // Set lang BEFORE voice — Safari bug: voice assignment can override/lock language otherwise
-  u.lang="en-US";
-  var v=getEnVoice();if(v)u.voice=v;
-  u.onend=cb;u.onerror=cb;
-  window.speechSynthesis.speak(u);
-}
 
-// Track the currently-playing listening audio so we can stop it on unmount/Quit.
-// Otherwise audio keeps playing in background after the user exits a listening exercise.
-//
-// GUARD: _audioAborted flag is essential to kill in-flight async sequences.
-// Before this fix, stopListenAudio stopped the CURRENT audio but the async
-// playQuestion()/playP1()/etc sequences kept running their await chain and
-// started the NEXT audio clip after the user had already navigated away
-// (Part 2 bug reported 2026-04-22). Each audio-exercise component must call
-// resumeAudioSession() on mount (via useEffect) to reset the flag, and
-// stopListenAudio() on unmount to abort in-flight sequences.
-var _listenAudio=null;
-var _audioAborted=false;
-function playAudioFile(url){
-  return new Promise(function(resolve){
-    // Sequence was aborted (component unmounted) — bail out immediately,
-    // don't create a new Audio object for the next clip in the chain.
-    if(_audioAborted){resolve();return;}
-    // Abort any previous audio still playing from this helper
-    if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}
-    var audio=new Audio(url);
-    _listenAudio=audio;
-    function cleanup(){if(_listenAudio===audio)_listenAudio=null;resolve();}
-    audio.onended=cleanup;
-    audio.onerror=function(){console.warn("Audio not found: "+url);cleanup();};
-    audio.play().catch(cleanup);
-  });
-}
-function stopListenAudio(){
-  _audioAborted=true;
-  if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}_listenAudio=null;}
-  // Also cancel any active browser TTS (speechSynthesis) — speak() fallback
-  // uses window.speechSynthesis which has its own queue, distinct from _listenAudio.
-  try{if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){console.warn("[audio] tts cancel:",e&&e.message);}
-}
-function resumeAudioSession(){_audioAborted=false;}
-// Preload voices (some browsers need this)
-if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){_voices=null;getEnVoice();};}
 
 // ─── BRAND MARK ───
 // Verse Arena logo ("plume & épée"): steel sword crossed with a gold quill.
@@ -329,1089 +195,49 @@ function ListeningGraphic(p){
       </table>
     </div></div>);
 }
-function weekId(){var d=new Date();var day=d.getDay();var diff=d.getDate()-day+(day===0?-6:1);var mon=new Date(d);mon.setDate(diff);mon.setHours(0,0,0,0);var jan1=new Date(mon.getFullYear(),0,1);var wk=Math.floor((mon-jan1)/(7*864e5))+1;return mon.getFullYear()+"-W"+wk;}
-// Push a weekly_snapshots row for the week that just ended. Fire-and-forget.
-// Called from both load-time and mid-session week transitions so that snapshots
-// are never missed regardless of when the transition is detected.
-function pushWeeklySnapshot(snap){
-  try{
-    supabase.auth.getUser().then(function(r){
-      if(!r.data||!r.data.user)return;
-      var parts=(snap.weekId||"").split('-W');
-      if(parts.length!==2)return;
-      var yr=parseInt(parts[0]),wk=parseInt(parts[1]);
-      var jan1=new Date(yr,0,1);
-      var ws=new Date(jan1.getTime()+(wk-1)*7*86400000);
-      var dy=ws.getDay();ws.setDate(ws.getDate()+(dy===0?-6:1-dy));
-      // Securite (lot 3 du verrou satellites) : plus d'ecriture directe.
-      // user_id n'est plus envoye — la RPC le prend dans le JWT. Sinon
-      // n'importe qui pouvait s'attribuer les snapshots d'un autre, et donc
-      // les faire effacer par sa propre purge RGPD (qui efface par user_id).
-      supabase.rpc('save_weekly_snapshot',{
-        p_name:snap.name,
-        p_class_code:snap.classCode||'visitor',
-        p_payload:{
-          week_id:snap.weekId,
-          week_start:ws.toISOString().split('T')[0],
-          xp_this_week:snap.weeklyXp,
-          xp_cumulative:snap.xp,
-          daily_completions:snap.weeklyDailyCount||0,
-          streak_at_end:snap.streak,
-          stats_snapshot:snap.stats,
-          module_scores_snapshot:snap.moduleScores,
-          mock_results_snapshot:snap.mockResults||{},
-          achievements_count:(snap.unlockedAch||[]).length
-        }
-      })
-      .then(function(res){
-        if(res.error){console.error('Snapshot error:',res.error.message);return;}
-        if(res.data&&res.data.ok===false)console.error('Snapshot refused:',res.data.error);
-      });
-    });
-  }catch(e){console.warn("[snapshot] caught:",e&&e.message);}
-}
 
-// Applies a week transition if the stored weekId is outdated. Mutates `d` in place
-// and returns true if a transition occurred. Used both at load time and periodically
-// during a session (in case the tab stays open across a week boundary — common on
-// mobile PWAs). Snapshots the weekly_xp to weeklyHistory + Supabase before reset.
-function applyWeekTransition(d){
-  if(!d||!d.weekId)return false;
-  var cw=weekId();
-  if(d.weekId===cw)return false;
-  if(!d.weeklyHistory)d.weeklyHistory=[];
-  if(d.weeklyXp>0){
-    // Push Supabase snapshot BEFORE we reset so the old week's XP is preserved there too
-    pushWeeklySnapshot(d);
-    d.weeklyHistory.push({week:d.weekId,xp:d.weeklyXp});
-    if(d.weeklyHistory.length>20)d.weeklyHistory=d.weeklyHistory.slice(-20);
-  }
-  d.weeklyXp=0;d.weeklyDailyCount=0;d.weekId=cw;
-  return true;
-}
-function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
-function srand(s){var x=Math.sin(s)*10000;return x-Math.floor(x);}
 
-// ─── Listening : randomisation de la position des bonnes reponses ───
-// Les pools listening ont ete rediges avec un biais positionnel massif :
-// B = 43% en P2, 41% en P3, 55% en P4, et BOSS_P2 n'a qu'un seul C sur 25.
-// Un eleve pouvait scorer sans ecouter (signale par un etudiant iabd2627,
-// 2026-09-15 : "toutes les bonnes reponses sont B"). On permute au runtime
-// plutot que de reecrire ~800 items et de renommer ~1150 MP3.
-//
-// DEUX COUPLAGES A NE JAMAIS CASSER EN TOUCHANT A CA :
-//
-//  1. AUDIO (P1/P2 seulement). L'ordre des reponses est fige par le nom des
-//     fichiers : {id}_0/_1/_2(/_3).mp3. La permutation DOIT etre transportee
-//     jusqu'au lecteur via `aud` : aud[position affichee] = index audio
-//     d'origine. Un playXX() qui reboucle sur 0,1,2 en dur fait entendre la
-//     reponse A pendant que l'app score la reponse C — c'est exactement le
-//     bug qui existait dans l'Endless Arena avant le 2026-09-15.
-//     P3/P4 ne sont pas concernes : l'audio est la conversation, pas les options.
-//
-//  2. EXPLICATIONS (P1/P2 seulement). Elles citent les lettres ("Only B names
-//     someone"). Sans reecriture, l'explication designe la mauvaise option.
-//     P3/P4 n'en citent aucune (verifie sur 546 items) : rien a faire.
-function shufListeningOpts(opts,correct){
-  var idx=[];for(var i=0;i<opts.length;i++)idx.push(i);
-  idx=shuffle(idx);
-  return{opts:idx.map(function(k){return opts[k];}),c:idx.indexOf(correct),aud:idx};
-}
-// "A" est la seule lettre ambigue : c'est aussi l'article anglais ("A laptop is
-// open"). Elle est un LABEL quand elle est suivie d'une ponctuation, d'une
-// parenthese, d'une conjonction, d'un modal, ou d'un verbe a la 3e personne
-// (termine par -s ou n't) ; un article est suivi d'un nom/adjectif, qui ne l'est
-// jamais. B/C/D ne sont jamais ambigues. Regle verifiee exhaustivement sur les
-// 288 explications P1+P2 : elle laisse exactement les 21 articles de P1 et
-// remappe tout le reste. Si un jour un item ecrit "A business card is..." (nom
-// en -s apres l'article) il faudra reformuler l'explication, pas la regle.
-var A_IS_OPT_LABEL=/^(?:$|[.,;:)/]|\s*[([]|\s+(?:is|are|was|were|will|would|cannot|can't|and|or)\b|\s+[a-z]+(?:s|n't)\b)/;
-function remapOptLetters(x,aud){
-  if(!x)return x;
-  var map={};
-  for(var i=0;i<aud.length;i++)map[String.fromCharCode(65+aud[i])]=String.fromCharCode(65+i);
-  return x.replace(/(^|[^A-Za-z'])([A-D])(?![A-Za-z'])/g,function(m,pre,L,off,str){
-    if(!map[L])return m;
-    if(L==="A"&&!A_IS_OPT_LABEL.test(str.slice(off+m.length)))return m;
-    return pre+map[L];
-  });
-}
-// Permute un item listening complet (options + bonne reponse + explication).
-// `withAudio` a true seulement pour P1/P2, ou `aud` doit survivre jusqu'au lecteur.
-function shufListeningItem(it){
-  var s=shufListeningOpts(it.opts,it.c);
-  return Object.assign({},it,{opts:s.opts,c:s.c,aud:s.aud,x:remapOptLetters(it.x,s.aud)});
-}
 
-// Variante DETERMINISTE, pour le Boss Test uniquement.
-// Le Boss persiste sa session en stockant les reponses PAR INDEX. Une permutation
-// tiree au hasard a chaque montage ferait donc correspondre les reponses deja
-// donnees a d'autres options au moment de la reprise. Derivee de l'id de l'item,
-// la permutation est identique a chaque montage : la reprise reste juste, et le
-// "toujours B" saute quand meme (BOSS_P2 etait a 14 bonnes reponses sur 25 en B,
-// et une seule en C — soit 56% en tapant B sans ecouter, sur une epreuve notee).
-// Contrairement au training, on NE peut PAS randomiser par session ici : ce serait
-// reintroduire le bug de reprise. Le prix a payer est qu'un eleve qui refait le
-// Boss plusieurs fois retrouve la meme disposition — c'est le comportement normal
-// d'un test fixe, et c'est deja le cas de l'ordre des questions.
-function seedFromId(id){
-  var h=0;
-  for(var i=0;i<id.length;i++){h=(h*31+id.charCodeAt(i))%100000;}
-  return h+1;
-}
-// 0.2 n'est pas arbitraire : c'est le pas qui, sur les 25 items de BOSS_P2, donne
-// la repartition la plus equilibree (A8/B9/C8, jamais plus de 2 fois la meme
-// lettre d'affilee). Le changer redistribue tout le Boss -> bumper BOSS_LAYOUT_V.
-var BOSS_SHUF_STEP=0.2;
-function detShufListeningItem(it){
-  var idx=[];for(var i=0;i<it.opts.length;i++)idx.push(i);
-  var sd=seedFromId(it.id);
-  for(var j=idx.length-1;j>0;j--){
-    var k=Math.floor(srand(sd+j*BOSS_SHUF_STEP)*(j+1));
-    var t=idx[j];idx[j]=idx[k];idx[k]=t;
-  }
-  return Object.assign({},it,{opts:idx.map(function(q){return it.opts[q];}),
-    c:idx.indexOf(it.c),aud:idx,x:remapOptLetters(it.x,idx)});
-}
-// Calcule une fois au chargement du module : pure fonction de donnees statiques.
-// BOSS_P2 reste brut pour l'Endless, qui applique sa propre permutation par run.
-var BOSS_P2_SHUF=BOSS_P2.map(detShufListeningItem);
 import { getLevel } from "./data/helpers.js";
-function getLeague(wxp){var l=LEAGUES[0];for(var i=0;i<LEAGUES.length;i++)if(wxp>=LEAGUES[i].min)l=LEAGUES[i];return l;}
-// Légende est conditionnelle : TOEIC estimé >= 400 requis
-// Si non atteint, on affiche Champion avec un badge "locked"
-function getEffectiveLeague(wxp,ms){
-  var l=getLeague(wxp);
-  if(l.id==="legend"){
-    var toeic=estimateTOEICScore(ms||{});
-    // CHANTIER-A : total peut etre null (non estimable / partiel). null<400 vaut
-    // false en JS -> debloquerait Legende a tort. On lock tant qu'aucune preuve >=400.
-    if(toeic.total===null){
-      var champN=LEAGUES.find(function(lg){return lg.id==="champion";});
-      return Object.assign({},champN||l,{locked:true,lockedScore:null,lockReason:"need_estimation"});
-    }
-    if(toeic.total<400){
-      var champ=LEAGUES.find(function(lg){return lg.id==="champion";});
-      return Object.assign({},champ||l,{locked:true,lockedScore:toeic.total});
-    }
-  }
-  return l;
-}
-// ─── FREEMIUM: modules available in visitor/free mode ───
-var FREE_MODULES = ["daily","drill","csess","lisP2","stratquiz","strats","gramref","wfall","tavern"];
-var FREE_FLASHCARD_DOMAINS = ["finance","travel","office","linking"];
 
-// ─── FEEDBACK FORM: catalog of modules grouped by category ───
-// Used by the in-app feedback form (Profile → Send feedback) and by the
-// TeacherDash Feedback tab. Each entry has a stable `id` (stored in DB,
-// matches existing module keys when relevant) and a human-readable `label`.
-var FEEDBACK_MODULES = [
-  {group:"Listening",items:[
-    {id:"daily",label:"Daily Challenge"},
-    {id:"lis_p1",label:"Listening — Part 1 (Photos)"},
-    {id:"lis_p2",label:"Listening — Part 2 (Q&A)"},
-    {id:"lis_p3",label:"Listening — Part 3 (Conversations)"},
-    {id:"lis_p4",label:"Listening — Part 4 (Talks)"},
-    {id:"ablitz",label:"Audio Blitz"}
-  ]},
-  {group:"Reading",items:[
-    {id:"drill",label:"Reading Drill (Part 5)"},
-    {id:"p6",label:"Part 6 (Text Completion)"},
-    {id:"p7",label:"Part 7 (Reading Comprehension)"},
-    {id:"clue",label:"Clue Hunter"}
-  ]},
-  {group:"Grammar",items:[
-    {id:"gauntlet_irregular",label:"Grammar Gauntlet — Irregular Crypt"},
-    {id:"gauntlet_tense",label:"Grammar Gauntlet — Chronomancer"},
-    {id:"gauntlet_passive",label:"Grammar Gauntlet — Passive Forge"},
-    {id:"gauntlet_relative",label:"Grammar Gauntlet — Relative Weaver"},
-    {id:"modals_match",label:"Modal Council — The Oracle"},
-    {id:"modals_sort",label:"Modal Council — The Verdict"},
-    {id:"wordfam",label:"Word Families"},
-    {id:"connsort",label:"Connectors Sorting"},
-    {id:"prepdrill",label:"Preposition Collocations"},
-    {id:"gerinf",label:"Gerund vs Infinitive"},
-    {id:"pvdojo",label:"Phrasal Verb Dojo"},
-    {id:"falsefr",label:"False Friends"},
-    {id:"traps",label:"Traps Quiz"}
-  ]},
-  {group:"Vocabulary",items:[
-    {id:"csess",label:"Flashcard Review"},
-    {id:"tavern",label:"Word Tavern"},
-    {id:"sbuild",label:"Sentence Builder"}
-  ]},
-  {group:"Games",items:[
-    {id:"duel",label:"Vocabulary Arena (Duel)"},
-    {id:"wfall",label:"Word Fall"},
-    {id:"matchE",label:"Speed Match"}
-  ]},
-  {group:"Mocks",items:[
-    {id:"mock1",label:"Mock Test 1"},
-    {id:"mock2",label:"Mock Test 2"},
-    {id:"mock3",label:"Mock Test 3"},
-    {id:"boss",label:"Boss Test (The Final Arena)"},
-    {id:"endless",label:"Endless Arena"}
-  ]},
-  {group:"Profile / Account",items:[
-    {id:"profile",label:"Profile"},
-    {id:"onboarding",label:"Onboarding"},
-    {id:"push",label:"Push notifications"},
-    {id:"auth",label:"Login / Signup / Password"},
-    {id:"league",label:"League / Rankings"},
-    {id:"chest",label:"Chests / Rewards"}
-  ]},
-  {group:"Other",items:[
-    {id:"general",label:"General app issue (UI / Performance)"},
-    {id:"other",label:"Other"}
-  ]}
-];
-function findModuleLabel(id){for(var i=0;i<FEEDBACK_MODULES.length;i++){var g=FEEDBACK_MODULES[i].items;for(var j=0;j<g.length;j++){if(g[j].id===id)return g[j].label;}}return id;}
 
-// Returns true if the user has unrestricted access to all premium modules.
-// Reasons: active Stripe subscription, active 3-month pass, or active institutional group.
-function hasFullAccess(u, gType) {
-  if (!u) return false;
-  if (u.accessLevel === "premium_monthly") return true;
-  if (u.accessLevel === "premium_pass" && u.accessExpiresAt && new Date(u.accessExpiresAt) > new Date()) return true;
-  // Institutional (school/pro) users get full access until their group's end_date
-  // (expired groups are handled upstream — user is redirected to the expired screen before reaching module gates)
-  if (gType === "school" || gType === "pro") return true;
-  return false;
-}
 
-function isModuleLocked(moduleId, u, gType) {
-  if (hasFullAccess(u, gType)) return false;
-  return FREE_MODULES.indexOf(moduleId) === -1;
-}
 
-function dailyQs(date,u){
-  var seed=0;for(var i=0;i<date.length;i++)seed+=date.charCodeAt(i);
 
-  // Seeded shuffle helper (deterministic per day)
-  function seededPick(arr,s){
-    var b=arr.slice();
-    for(var i=b.length-1;i>0;i--){var j=Math.floor(srand(s+i)*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}
-    return b;
-  }
+var BUILD_ID="2026-09-15-split-phase1";
 
-  // Filter out questions seen in the last 30 days
-  var recentIds={};
-  if(u&&u.dailySeen){
-    var cutoff=new Date();cutoff.setDate(cutoff.getDate()-30);
-    var cutoffStr=cutoff.toISOString().slice(0,10);
-    u.dailySeen.forEach(function(entry){if(entry.date>=cutoffStr)recentIds[entry.id]=true;});
-  }
 
-  // Group QUESTIONS by category, excluding recently seen
-  var catMap={};
-  QUESTIONS.forEach(function(q){if(!recentIds[q.id]){if(!catMap[q.cat])catMap[q.cat]=[];catMap[q.cat].push(q);}});
-  // Fallback: if filtering empties a category, include all for that cat
-  QUESTIONS.forEach(function(q){if(!catMap[q.cat]||catMap[q.cat].length===0){if(!catMap[q.cat])catMap[q.cat]=[];catMap[q.cat].push(q);}});
-  var allCats=Object.keys(catMap);
 
-  // Map specific modules to grammar categories for weakness detection
-  var modToCat={
-    "wordfam":"Word Families","connsort":"Connectors","prepdrill":"Prepositions",
-    "gerinf":"Gerunds vs Infinitives","falsefr":"False Friends",
-    "pvdojo":"Phrasal Verbs","csess":"Vocabulary"
-  };
-
-  // Score each category by weakness (lower = weaker = higher priority)
-  var catScores={};
-  allCats.forEach(function(cat){catScores[cat]={acc:0.5,total:0};});
-
-  if(u&&u.moduleScores&&(u.stats.sessions||0)>=5){
-    // 1) Use specific module scores where they map to a category
-    Object.keys(modToCat).forEach(function(modId){
-      var ms=u.moduleScores[modId];
-      var cat=modToCat[modId];
-      if(ms&&ms.total>0&&catScores[cat]){
-        catScores[cat]={acc:ms.correct/ms.total,total:ms.total};
-      }
-    });
-
-    // 2) Use overall drill/daily accuracy as proxy for categories without specific modules
-    var drillAcc=null;
-    ["drill","daily","timesim"].forEach(function(modId){
-      var ms=u.moduleScores[modId];
-      if(ms&&ms.total>=10){
-        drillAcc=drillAcc!==null?((drillAcc+ms.correct/ms.total)/2):(ms.correct/ms.total);
-      }
-    });
-
-    // Categories without a specific module get the drill average (or 0.5 default)
-    allCats.forEach(function(cat){
-      if(catScores[cat].total===0){
-        catScores[cat].acc=drillAcc!==null?drillAcc:0.5;
-      }
-    });
-  }
-
-  // Sort categories: lowest accuracy first, then least practiced
-  var ranked=allCats.map(function(cat){return{cat:cat,acc:catScores[cat].acc,total:catScores[cat].total};});
-  ranked.sort(function(a,b){return a.acc===b.acc?a.total-b.total:a.acc-b.acc;});
-
-  var picked=[];
-  var usedCats={};
-
-  // Pick 3 from the weakest categories (1 question per cat)
-  for(var w=0;w<ranked.length&&picked.length<3;w++){
-    var cat=ranked[w].cat;
-    if(usedCats[cat])continue;
-    var pool=seededPick(catMap[cat],seed+w*7);
-    if(pool.length>0){picked.push(pool[0]);usedCats[cat]=true;}
-  }
-
-  // Pick 2 random from remaining categories (variety)
-  var remainCats=seededPick(allCats.filter(function(c){return!usedCats[c];}),seed+99);
-  for(var r=0;r<remainCats.length&&picked.length<5;r++){
-    var cat2=remainCats[r];
-    if(usedCats[cat2])continue;
-    var pool2=seededPick(catMap[cat2],seed+50+r*13);
-    if(pool2.length>0){picked.push(pool2[0]);usedCats[cat2]=true;}
-  }
-
-  // Bias: ensure PV or Vocab appears if neither was picked via weakness/random
-  var hasNewCat=picked.some(function(q){return q.cat==="Phrasal Verbs"||q.cat==="Vocabulary";});
-  if(!hasNewCat&&picked.length<5){
-    var newCats=["Phrasal Verbs","Vocabulary"].filter(function(c){return catMap[c]&&catMap[c].length>0&&!usedCats[c];});
-    if(newCats.length>0){
-      var forceCat=newCats[Math.floor(srand(seed+777)*newCats.length)];
-      var forcePool=seededPick(catMap[forceCat],seed+888);
-      if(forcePool.length>0){picked.push(forcePool[0]);usedCats[forceCat]=true;}
-    }
-  }
-
-  // Fallback: if still < 5, fill with unused questions
-  if(picked.length<5){
-    var usedIds={};picked.forEach(function(q){usedIds[q.id]=true;});
-    var filler=seededPick(QUESTIONS.filter(function(q){return!usedIds[q.id];}),seed+200);
-    while(picked.length<5&&filler.length>0)picked.push(filler.shift());
-  }
-
-  return seededPick(picked,seed+300);
-}
-function compScores(wk){var seed=0;for(var i=0;i<wk.length;i++)seed+=wk.charCodeAt(i);return COMPETITORS.map(function(c,idx){return{name:c.n,avatar:c.a,xp:Math.floor(srand(seed+idx*137)*600+50+srand(seed+idx*53+Math.floor(Date.now()/864e5))*100)};});}
-function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.max(1.3,e-0.2);}else if(r===2){iv=Math.max(1,Math.ceil(iv*1.2));e=Math.max(1.3,e-0.15);}else if(r===3){iv=iv===0?1:Math.ceil(iv*e);}else{iv=iv===0?3:Math.ceil(iv*e*1.3);e+=0.15;}var nx=new Date();nx.setDate(nx.getDate()+iv);return{ease:e,interval:iv,nextReview:nx.toISOString().split("T")[0],correct:(st.correct||0)+(r>=3?1:0),total:(st.total||0)+1};}
-function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
-
-var SK="toeic-arena-v2";
-var BUILD_ID="2026-09-15-toeic-shrinkage";
-
-// ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
-// Each teacher logs in with their own teacher_code and sees ONLY the groups
-// stamped with that code (groups.teacher_code). The ADMIN master code bypasses
-// the filter and sees every group (Jérémy's super-admin role).
-// IMPORTANT: this is a CLIENT-side guard, not a security boundary — RLS is OFF
-// on students. Fine for good-faith partner teachers; a real data-isolation
-// boundary requires Supabase Auth + RLS (deferred "hard" version).
-// The logged-in code is stored at login in localStorage['toeic-dash-teacher'].
-// SECURITY (2026-09-11, finding H2) — deux trous fermés à l'époque : plus de code
-// admin en dur dans le bundle (il venait de VITE_ADMIN_TEACHER_CODE, fail-closed
-// si absent), et un code vide n'était plus admin (avant, vider localStorage
-// suffisait à devenir super-admin). Conséquence assumée, toujours valable : les
-// sessions "code vide" (dont le déverrouillage biométrique) doivent se reconnecter
-// une fois avec leur code pour retrouver leur scope.
-// Depuis B4 (2026-09-13) le rôle admin ne vient plus du bundle du tout : il est
-// décidé par le serveur (table privée `teacher_codes`) — voir ci-dessous.
-// SECURITY (2026-09-13, finding H3 — B4) : la validation du code et le listing
-// des cohortes passent maintenant par la RPC `teacher_groups` (SECURITY DEFINER).
-// POURQUOI. Avant, le login était `groups.select('code').eq('teacher_code',code)`
-// exécuté avec la clé anon. Comme `groups` est lisible par anon, n'importe qui
-// faisait `select('teacher_code')` dans la console, récupérait TOUS les codes
-// formateur et ouvrait le dashboard → PII de tous les élèves. La migration
-// 2026-09-13_p2b4_lock_groups.sql retire la colonne `teacher_code` de la portée
-// du rôle anon (lecture ET écriture) : ce chemin client n'est donc plus possible,
-// et ne doit plus être utilisé. NE PAS réintroduire de `.eq('teacher_code',…)`
-// ni de `select('*')` sur `groups` côté client — les deux échouent désormais.
-// Le rôle (teacher/admin) est décidé par le serveur et mémorisé dans
-// localStorage['toeic-dash-role'] : c'est un confort d'affichage, PAS la
-// frontière de sécurité (celle-ci est le scoping SQL des RPC).
-// ⚠️ Rappel : tant que la RLS est OFF sur `students` (Phase C), un attaquant peut
-// encore lire la table en direct via curl. B4 ferme l'usurpation d'identité
-// enseignante, pas l'exposition de `students`.
-function getDashTeacher(){try{return localStorage.getItem('toeic-dash-teacher')||"";}catch(e){console.warn("[teacher-scope] read failed:",e&&e.message);return"";}}
-function getDashRole(){try{return localStorage.getItem('toeic-dash-role')||"";}catch(e){console.warn("[teacher-scope] role read failed:",e&&e.message);return"";}}
-function setDashSession(code,role){try{localStorage.setItem('toeic-dash-teacher',code);localStorage.setItem('toeic-dash-role',role||"teacher");}catch(e){console.warn("[teacher] session store failed:",e&&e.message);}}
-// Avant B4, AUCUN chemin de déconnexion (logout, deleteAccount, reset,
-// signOutCompletely) n'effaçait le code formateur : une session enseignante
-// survivait indéfiniment sur un poste partagé. Appelée depuis les 3 chemins de
-// App.jsx + signOutCompletely (auth.js) + le bouton de déconnexion du dashboard.
-function clearDashSession(){try{localStorage.removeItem('toeic-dash-teacher');localStorage.removeItem('toeic-dash-role');localStorage.removeItem('toeic-dash-group');}catch(e){console.warn("[teacher] session clear failed:",e&&e.message);}}
-function isDashAdmin(){return getDashRole()==="admin";}
-
-// Valide un code formateur ET renvoie ses cohortes, côté serveur.
-// → {ok:true, role:"teacher"|"admin", groups:[…sans teacher_code…]}
-// → {ok:false, error:"invalid_code"|"rpc_error"}
-// SEUL chemin de validation possible depuis le client : depuis la migration
-// 2026-09-13_p2b4_lock_groups.sql, anon/authenticated n'ont plus aucun droit sur
-// `groups` au niveau table (SELECT accordé colonne par colonne, teacher_code et
-// teacher_email exclus). Un `.eq('teacher_code',…)` ou un `select('*')` échouerait.
-// Il n'y a plus de fallback : si la RPC répond mal, on refuse, bruyamment.
-async function teacherAuth(code){
-  if(!code)return{ok:false,error:"invalid_code"};
-  try{
-    var r=await supabase.rpc('teacher_groups',{p_code:code});
-    if(r.error){console.warn("[teacher] teacher_groups failed:",r.error.message);return{ok:false,error:"rpc_error"};}
-    var d=r.data||{};
-    if(d.ok)return{ok:true,role:d.role||"teacher",groups:d.groups||[]};
-    return{ok:false,error:d.error||"invalid_code"};
-  }catch(e){console.warn("[teacher] teacher_groups caught:",e&&e.message);return{ok:false,error:"rpc_error"};}
-}
-
-// ─── PREMIUM FEATURE FLAG ───
-// Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
-// bloqué (affiche juste "Bientôt disponible"). Les utilisateurs déjà Premium
-// (pass ou monthly actif) gardent leur accès — seule la nouvelle souscription
-// est bloquée.
-//
-// À remettre à TRUE dès que le flow E2E est validé end-to-end sans bug
-// d'attribution de row (cf. chantier hardening 2026-04-24).
-var PREMIUM_UPGRADE_ENABLED=true;
 import { supabase } from './supabase.js'
 import { getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword, signUpStudent, signInStudent, bindStudentUserId } from './auth.js'
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
-// ─── Name normalization (accent-insensitive + lowercase) ───
-function normalizeName(s){return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();}
-
-// ─── localStorage-first persistence layer ───
-var _cachedUserId=null;
-var _syncDirty=false;
-var _lastSync=0;
-
-// Clean up dirty flag — no longer used, was causing cross-device overwrites
-try{localStorage.removeItem("toeic-arena-dirty");}catch(e){}
-
-function loadLocal(){
-  try{
-    var raw=localStorage.getItem("toeic-arena-profile");
-    if(raw){var d=JSON.parse(raw);if(d&&d.name)return d;}
-  }catch(e){}
-  return null;
-}
-
-function saveLocal(d){
-  try{
-    localStorage.setItem("toeic-arena-profile",JSON.stringify(d));
-    localStorage.setItem("toeic-arena-name",d.name);
-    localStorage.setItem("toeic-arena-class",d.classCode||"visitor");
-    _syncDirty=true;
-  }catch(e){}
-}
-
-// Lecture SYNCHRONE du JWT user depuis le storage supabase-js (clé sb-<ref>-auth-token).
-// P2 Phase B (B2) : le keepalive beforeunload ne peut pas await getSession(), donc il lit
-// le token ici pour l'envoyer en Bearer au lieu de la clé anon → sous RLS (Phase C),
-// auth.uid() est renseigné et l'UPDATE de sa PROPRE ligne passe (la clé anon donnerait
-// auth.uid()=NULL → refus). Retourne null si absent/illisible (fallback anon côté appelant).
-function getAccessTokenSync(){
-  try{
-    for(var i=0;i<localStorage.length;i++){
-      var k=localStorage.key(i);
-      if(k&&k.slice(0,3)==="sb-"&&k.indexOf("-auth-token")>0){
-        var raw=localStorage.getItem(k); if(!raw)continue;
-        var o=JSON.parse(raw);
-        var tok=o&&(o.access_token||(o.currentSession&&o.currentSession.access_token));
-        if(tok)return tok;
-      }
-    }
-  }catch(e){console.warn("[auth] getAccessTokenSync caught:",e&&e.message);}
-  return null;
-}
-
-function supaToLocal(data){
-  return{
-    name:data.name,classCode:data.class_code||"visitor",
-    xp:data.xp,weeklyXp:data.weekly_xp,weekId:data.week_id,
-    streak:data.streak,lastActive:data.last_active,
-    cardStates:data.card_states||{},
-    daily:data.daily_challenge||{date:null,done:false,score:0,xpE:0},
-    stats:data.stats||{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},
-    moduleScores:data.module_scores||{},mockResults:data.mock_results||{},
-    gameScores:data.game_scores||{pityCount:0},mission:data.mission||{date:null,actId:null,done:false,streak:0,lastDoneDate:null},
-    unlockedAch:data.unlocked_ach||[],avatar:data.avatar||"⚔️",theme:data.theme||"dark",
-    equippedSkin:data.skin_id||null,
-    equippedFrame:data.frame_id||null,
-    equippedTitle:data.title_id||null,
-    totalTime:data.total_time||0,weeklyHistory: data.weekly_history || [],
-    dailyModSessions: data.daily_mod_sessions || {},
-    weeklyDailyCount: data.weekly_daily_count || 0,
-    battleScan: data.battle_scan || null,
-    tipsShown: data.tips_shown || [],
-    dailySeen: data.daily_seen || [],
-    gdprConsent: data.gdpr_consent || null,
-    joinedAt: data.joined_at || null,
-    tutorialPending: data.tutorial_pending===true,
-    email: data.email || null,
-    accessLevel: data.access_level || 'free',
-    accessExpiresAt: data.access_expires_at || null,
-    narrator: data.narrator || {heard:[], muted:false},
-    cgvAcceptedAt: data.cgv_accepted_at || null,
-    cgvVersion: data.cgv_version || null,
-    retractationWaivedAt: data.retractation_waived_at || null,
-    // Personalization Phase 1 (2026-05-05) — opt-in goal-setting (Profile editor)
-    targetToeic: data.target_toeic || null,
-    targetDate: data.target_date || null,
-    // Arena Shop P1 (2026-05-29) — Daric currency. READ-ONLY mirror of the
-    // server-authoritative students.arena_marks column. Mutated ONLY by the
-    // grant_marks / spend_marks RPCs, never by save() (see guard in save()).
-    arenaMarks: data.arena_marks || 0,
-    // Arena Shop P2.5 — XP boost state (client-authoritative, travels in save()).
-    boosts: data.boosts || {},
-  };
-}
-
-// load() — always fetch from Supabase when online, use localStorage as fallback
-async function load(userId){
-  var local=loadLocal();
-  console.warn("[LOAD] start — userId:",userId?"yes":"no","local:",local?local.name:"null");
-  if(userId)_cachedUserId=userId;
-  // Try to fetch the freshest data from Supabase
-  if(userId){
-    try{
-      var cn=local?local.name:null;
-      if(!cn)try{cn=localStorage.getItem("toeic-arena-name");}catch(e){}
-      var cc=local?local.classCode:null;
-      if(!cc)try{cc=localStorage.getItem("toeic-arena-class");}catch(e){}
-      console.warn("[LOAD] querying Supabase for:",cn,cc);
-      var remote=null;
-      // Phase C-lite : plus de SELECT direct sur `students` (le rôle anon n'y a plus
-      // aucun privilège). La RPC renvoie la ligne COMPLÈTE, non aliasée — le garde
-      // stale-remote plus bas lit des clés DB brutes (remote.class_code, access_level…)
-      // avant que supaToLocal ne tourne, donc surtout pas de projection camelCase ici.
-      // La RPC applique la garde conditionnelle : ligne migrée → il faut être le
-      // propriétaire ; ligne legacy → tolérance. Un refus renvoie null, l'app repart
-      // alors sur l'onboarding, qui réclamera le mot de passe.
-      if(cn){
-        var res=await supabase.rpc("load_student",{p_name:cn,p_class_code:cc||"visitor"});
-        if(res.error)console.error("[LOAD] load_student error:",res.error.message);
-        if(res.data)remote=res.data;
-      }
-      // Chemin de secours : la ligne liée à la session courante (binding Phase A).
-      if(!remote){
-        console.warn("[LOAD] primary miss, trying fallback by user_id");
-        var res2=await supabase.rpc("load_student_by_uid");
-        // Cette erreur était totalement avalée : sous verrou de privilèges, l'app
-        // paraissait « hors ligne » au lieu de cassée, ce qui rend un incident
-        // indétectable. On la logge maintenant.
-        if(res2.error)console.error("[LOAD] load_student_by_uid error:",res2.error.message);
-        if(res2.data)remote=res2.data;
-      }
-      if(remote){
-        console.warn("[LOAD] got remote — xp:",remote.xp,"weekly_xp:",remote.weekly_xp,"streak:",remote.streak);
-        // ── Stale-remote guard ──
-        // Heuristic: if local has strictly more XP than remote AND was active more recently,
-        // the saves were probably failing (e.g. schema mismatch) and local holds the truth.
-        // Use local and mark _syncDirty so the next save() pushes it to Supabase.
-        // XP is monotonic (cumulative, never decreases), so local.xp > remote.xp is a
-        // reliable signal that local has progress that never reached Supabase.
-        var localXp=(local&&local.xp)||0;
-        var remoteXp=remote.xp||0;
-        var localLA=(local&&local.lastActive)||"";
-        var remoteLA=remote.last_active||"";
-        if(local&&localXp>remoteXp&&localLA>=remoteLA){
-          console.warn("[LOAD] local is fresher (xp "+localXp+">"+remoteXp+", lastActive "+localLA+">="+remoteLA+") — merging with remote server-side fields");
-          // CRITICAL: server-side fields (classCode, access_level, email) can be changed
-          // by Stripe webhooks, admin SQL, or group migration — never by client activity.
-          // Always trust remote for these, even when local is fresher for XP/streak/etc.
-          // Without this merge, a downgrade bug could flip a paying student or school member
-          // to visitor/free just because their local had more XP.
-          if(remote.class_code)local.classCode=remote.class_code;
-          if(remote.access_level)local.accessLevel=remote.access_level;
-          if(remote.access_expires_at!==undefined)local.accessExpiresAt=remote.access_expires_at;
-          if(remote.email)local.email=remote.email;
-          _syncDirty=true;
-          saveLocal(local); // persist the merged classCode/accessLevel so subsequent saves don't regress
-          // Fire-and-forget: push local to Supabase immediately so device-switching works.
-          save(local);
-          return local;
-        }
-        var d=supaToLocal(remote);
-        saveLocal(d);
-        _syncDirty=false;
-        return d;
-      }else{console.warn("[LOAD] no remote data found");}
-    }catch(e){
-      // Regle #1 (post-crise) : plus de catch muet sur un chemin critique. Sous le
-      // verrou de privileges, une erreur ici est indiscernable d'une panne reseau
-      // si on ne la logge pas.
-      console.warn("[LOAD] caught:",e&&e.message);
-    }
-  }
-  // Offline or no userId: use localStorage
-  return local||null;
-}
-
-// save() — localStorage + Supabase (UPDATE first, INSERT if no row)
-var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync to Supabase
-
-// B3 (2026-09-14) — colonnes lues par le Teacher Dashboard.
-// Avant, les 3 chargements de roster faisaient `select('*')` : 200 lignes COMPLETES,
-// email / access_level / access_expires_at / user_id / password_set_at / gdpr_consent /
-// arena_marks compris, alors que ni l'UI ni l'export CSV n'en utilisent une seule
-// (verifie ligne par ligne sur tout le composant). Pur sur-fetch de PII.
-// Cette liste est l'union EXACTE de ce que le dashboard consomme. Si une colonne
-// manque, c'est un rendu vide silencieux : reverifier l'export CSV en priorite, c'est
-// le plus large consommateur.
-// MISSION_MODULES melange des emoji et des cles d'icone SVG : la migration
-// emoji->SVG n'a converti que lisP4 ("public-speaker"), ses 19 voisines sont restees
-// en emoji. Les rendus doivent donc gerer LES DEUX (pattern de repli documente :
-// GAME_ICON_PATHS[x] ? <GIcon/> : x). Dans un <option>, une SVG est impossible :
-// on n'affiche l'icone que si c'en est une, sinon la cle s'afficherait en toutes
-// lettres — c'est ce qui donnait "public-speaker Listening Part 4" dans le dashboard.
-function optIcon(ic){if(!ic)return"";for(var k=0;k<ic.length;k++){if(ic.charCodeAt(k)>127)return ic;}return"";}
-
-// Colonnes du roster formateur. Plus utilisee comme argument de select() depuis la
-// Phase C-lite (le dashboard passe par la RPC teacher_students) : gardee comme
-// reference, la liste SQL de la RPC doit rester identique a celle-ci.
-// var DASH_STUDENT_COLS="id,name,class_code,xp,weekly_xp,week_id,streak,last_active,stats,total_time,module_scores,mock_results,game_scores,unlocked_ach,weekly_daily_count,weekly_history";
-// A "ghost student" is a registered student (non-visitor) who barely engaged with the app
-function isGhost(s){if(!s)return false;if(s.class_code==="visitor")return false;var tq=(s.stats&&s.stats.totalQ)||0;var cr=(s.stats&&s.stats.cardsRev)||0;return tq<=15&&cr<=10;}
-// Recover an auth session if the current one has been lost (refresh token expired,
-// tab backgrounded too long, etc). Returns a user object or null if recovery failed.
-async function ensureAuthSession(){
-  try{
-    var sess=await supabase.auth.getUser();
-    if(sess.data&&sess.data.user)return sess.data.user;
-  }catch(e){/* session missing — fall through to recovery */}
-  // Try to refresh first (session may exist in storage but JWT expired)
-  try{
-    var refreshed=await supabase.auth.refreshSession();
-    if(refreshed.data&&refreshed.data.user){console.warn("[AUTH] recovered via refreshSession");return refreshed.data.user;}
-  }catch(e){/* refresh failed — need a new session */}
-  // Last resort: new anonymous session. save()'s UPDATE matches by (name, class_code)
-  // not id, so the row stays reachable even though the user_id changed.
-  try{
-    var anon=await supabase.auth.signInAnonymously();
-    if(anon.data&&anon.data.user){console.warn("[AUTH] recovered via new anon session");return anon.data.user;}
-  }catch(e){/* fully stuck */}
-  return null;
-}
-
-// Construit le payload de persistance. EXTRAIT de save() en Phase C-lite pour que le
-// keepalive beforeunload envoie EXACTEMENT les memes colonnes : il maintenait sa propre
-// liste, plus courte de 15 cles, et perdait donc silencieusement cadre/titre/boosts
-// quand un onglet se fermait sans save prealable. Une seule liste, un seul endroit.
-// Ce qui n'y est PAS, et ne doit pas y revenir : access_level / access_expires_at
-// (entitlement, ecrit par le seul webhook Stripe) et arena_marks (monnaie, incrementee
-// par grant_marks/spend_marks ; un full-row UPDATE ecraserait tout gain arrive entre
-// temps). La RPC save_student les refuse aussi cote serveur depuis la Phase C-lite.
-function buildSavePayload(d){
-  return {
-    xp:d.xp,weekly_xp:d.weeklyXp,week_id:d.weekId,
-    streak:d.streak,last_active:d.lastActive,
-    card_states:d.cardStates,daily_challenge:d.daily,
-    stats:d.stats,module_scores:d.moduleScores,
-    mock_results:d.mockResults,game_scores:d.gameScores,
-    mission:d.mission,avatar:d.avatar||"⚔️",theme:d.theme||"dark",
-    skin_id:d.equippedSkin||null,
-    frame_id:d.equippedFrame||null,
-    title_id:d.equippedTitle||null,
-    unlocked_ach:d.unlockedAch||[],total_time:d.totalTime||0,
-    weekly_history:d.weeklyHistory||[],
-    daily_mod_sessions:d.dailyModSessions||{},
-    weekly_daily_count:d.weeklyDailyCount||0,
-    battle_scan:d.battleScan||null,
-    tips_shown:d.tipsShown||[],
-    daily_seen:d.dailySeen||[],
-    gdpr_consent:d.gdprConsent||null,
-    joined_at:d.joinedAt||null,
-    tutorial_pending:d.tutorialPending===true,
-    email:d.email||null,
-    // SECURITY (2026-09-11, finding C3) — access_level / access_expires_at
-    // DELIBERATELY NOT written here. L'entitlement est server-authoritative : seul le
-    // webhook Stripe (service_role) écrit ces colonnes. Les inclure dans ce full-row
-    // UPDATE laissait un élève persister un premium forgé (accessLevel local → save()).
-    // Le client les LIT (load/merge) mais ne les écrit jamais. Baseline 'free' posée à
-    // l'INSERT uniquement (plus bas). Reverting = premium gratuit.
-    // NB : fermeture COMPLÈTE = RLS auth.uid()=user_id sur students (chantier P2). Tant
-    // que la RLS est off, un PATCH REST direct reste possible ; ceci ferme la voie applicative.
-    narrator:d.narrator||{heard:[],muted:false},
-    cgv_accepted_at:d.cgvAcceptedAt||null,
-    cgv_version:d.cgvVersion||null,
-    retractation_waived_at:d.retractationWaivedAt||null,
-    // Personalization Phase 1 (2026-05-05) — opt-in goal-setting
-    target_toeic:d.targetToeic||null,
-    target_date:d.targetDate||null,
-    // Arena Shop P2.5 (2026-06-02) — XP boost state (client-authoritative, persisted).
-    boosts:d.boosts||{},
-    // Arena Shop P1 (2026-05-29) — DELIBERATELY NO arena_marks HERE.
-    // The currency is server-authoritative: only grant_marks/spend_marks RPCs
-    // mutate students.arena_marks via atomic increments. save() does a full-row
-    // UPDATE — including arena_marks would CLOBBER any RPC increment that landed
-    // between a client read and the next save() (classic lost-update). Reverting
-    // this (adding arena_marks to the payload) silently erases earned Darics.
-  };
-}
-
-// opts.allowInsert — autorise la création d'une ligne pour un prénom déjà présent
-// dans une AUTRE promo (homonyme légitime). Seul onboard() le passe. Voir le garde
-// anti-phantom plus bas.
-async function save(d,opts){
-  saveLocal(d);
-  if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
-  // Safety rail: never let a missing classCode fall through to the "visitor" fallback
-  // during an UPDATE — this could match (name, visitor) and either overwrite another
-  // student's row or create a phantom. Refuse to save instead; local keeps the state.
-  if(!d.classCode){console.error("[SAVE] BLOCKED: missing classCode for",d.name,"— refusing to sync to avoid corruption");return;}
-  // Teacher now syncs to Supabase (hidden from leaderboards via League/TeacherDash filters)
-  var user=await ensureAuthSession();
-  if(!user){console.error("[SAVE] BLOCKED: could not establish auth session");return;}
-  _cachedUserId=user.id;
-  var payload=buildSavePayload(d);
-  // Phase C-lite : le binding d'identité n'est plus injecté dans le payload. La RPC
-  // pose user_id AVEC auth.uid(), jamais avec une valeur fournie par le client — on ne
-  // fait plus confiance à l'appelant sur cette colonne. opts.bindAuth devient un simple
-  // drapeau (passé par onboard() lors d'un signup PASSWORD).
-  var cc=d.classCode||"visitor";
-  try{
-    // Phase C-lite : UPDATE, garde anti-phantom et INSERT sont désormais UNE seule
-    // transaction côté serveur. Trois gains :
-    //  · le rôle anon n'a plus aucun privilège sur `students` (fichier SQL 2) ;
-    //  · la liste blanche de colonnes est appliquée par le serveur, donc access_level,
-    //    access_expires_at et arena_marks deviennent inécrivables quoi qu'on envoie —
-    //    jusqu'ici ils n'étaient exclus que par ce fichier JS, un PATCH REST direct
-    //    passait outre (finding C3, à moitié fermé) ;
-    //  · la garde anti-phantom n'est plus contournable en sautant le client.
-    // La RPC fusionne : seules les clés présentes dans le payload sont écrites, ce qui
-    // rend le payload réduit du keepalive sans danger.
-    var r=await supabase.rpc("save_student",{
-      p_name:d.name,p_class_code:cc,p_payload:payload,
-      p_allow_insert:!!(opts&&opts.allowInsert),
-      p_bind_auth:!!(opts&&opts.bindAuth)
-    });
-    if(r.error){console.error("[SAVE] rpc error:",r.error.message);return;}
-    var dd=r.data||{};
-    if(!dd.ok){
-      // blocked_phantom : le prénom existe dans une AUTRE promo et l'appel ne vient pas
-      // d'onboard(). C'est le cas qui fabriquait les lignes fantômes quand le classCode
-      // local dérivait vers "visitor". not_owner : la ligne appartient à un compte migré
-      // qui n'est pas celui de la session.
-      console.error("[SAVE] refused:",dd.error,dd.codes?("| aussi dans: "+JSON.stringify(dd.codes)):"");
-      return;
-    }
-    console.warn("[SAVE] OK —",d.name,cc,dd.action);
-    _syncDirty=false;
-  }catch(e){console.warn("[SAVE] Exception:",e);}
-}
-
-// syncToCloud() — replaced by save(), kept as no-op for existing call sites
-async function syncToCloud(d,opts){
-  if(!d||!d.name||!_syncDirty)return;
-  return save(d,opts);
-}
-// ─── BIOMETRIC AUTH (WebAuthn) for Teacher Dashboard ───
-var BIOMETRIC_KEY="toeic-teacher-bio";
-async function biometricAvailable(){try{if(!window.PublicKeyCredential)return false;return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}}
-function getBioCredId(){try{var v=localStorage.getItem(BIOMETRIC_KEY);return v?Uint8Array.from(atob(v),function(c){return c.charCodeAt(0);}):null;}catch(e){return null;}}
-function storeBioCredId(rawId){try{var b=btoa(String.fromCharCode.apply(null,new Uint8Array(rawId)));localStorage.setItem(BIOMETRIC_KEY,b);}catch(e){}}
-async function bioRegister(){
-  var challenge=crypto.getRandomValues(new Uint8Array(32));
-  var userId=crypto.getRandomValues(new Uint8Array(16));
-  var opts={publicKey:{
-    challenge:challenge,rp:{name:"Verse Arena"},
-    user:{id:userId,name:"teacher",displayName:"Teacher"},
-    pubKeyCredParams:[{alg:-7,type:"public-key"},{alg:-257,type:"public-key"}],
-    authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},
-    timeout:120000
-  }};
-  var cred=await navigator.credentials.create(opts);
-  storeBioCredId(cred.rawId);return true;
-}
-async function bioAuthenticate(){
-  var credId=getBioCredId();if(!credId)return false;
-  var challenge=crypto.getRandomValues(new Uint8Array(32));
-  await navigator.credentials.get({publicKey:{
-    challenge:challenge,allowCredentials:[{id:credId,type:"public-key",transports:["internal"]}],
-    userVerification:"required",timeout:120000
-  }});
-  return true;
-}
-
-function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null,targetToeic:null,targetDate:null,arenaMarks:0,boosts:{}};}
-
-// ─── MODULE SCORE TRACKING ───
-function recordModule(u,modId,sc,tot,catStats){
-  if(!u.moduleScores)u.moduleScores={};
-  var prev=u.moduleScores[modId]||{correct:0,total:0,sessions:0,lastDate:null,history:[],catStats:{}};
-  var hist=prev.history||[];
-  hist.push({date:today(),correct:sc,total:tot});
-  if(hist.length>100)hist=hist.slice(-100);
-  // Personalization Phase 2 (2026-05-06) — merge per-category stats when provided.
-  // Used by the adaptive picker (pickAdaptive) to weight question selection toward
-  // the user's weakest sub-topics. Backward compatible : catStats arg is optional.
-  var mergedCats=Object.assign({},prev.catStats||{});
-  if(catStats){
-    Object.keys(catStats).forEach(function(c){
-      var p=mergedCats[c]||{correct:0,total:0};
-      mergedCats[c]={correct:p.correct+(catStats[c].correct||0),total:p.total+(catStats[c].total||0)};
-    });
-  }
-  u.moduleScores[modId]={correct:prev.correct+sc,total:prev.total+tot,sessions:prev.sessions+1,lastDate:today(),history:hist,catStats:mergedCats};
-  // V2 — Bypass Token consumed once a round of the armed module lands. Clearing here
-  // (rather than in each Done handler) keeps the contract central and consistent.
-  if(u.bypassArmedModule===modId)u.bypassArmedModule=null;
-  if(u.boosts&&u.boosts.moduleBoostArmed===modId)u.boosts.moduleBoostArmed=null; // P2.5 — consume Module Booster
-  return u;
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// pickAdaptive — Personalization Phase 2 (2026-05-06)
-// Weighted question selection driven by per-category accuracy stored in
-// u.moduleScores[modId].catStats. Hybrid 60/40 formula (validated by
-// Jérémy) : 60% picks weighted by category weakness, 40% pure random.
-// Cold start (no cat with ≥5 samples) falls back to pure shuffle so new
-// users aren't penalized by a biased pool.
-// ═══════════════════════════════════════════════════════════════════════
-function pickAdaptive(u,all,modId,target){
-  if(!target)target=10;
-  var cs=(u&&u.moduleScores&&u.moduleScores[modId]&&u.moduleScores[modId].catStats)||{};
-  var hasData=Object.keys(cs).some(function(k){return cs[k]&&cs[k].total>=5;});
-  if(!hasData)return shuffle(all).slice(0,target);
-
-  // Bucket items by cat (fall back to "Other" if missing)
-  var byCat={};
-  all.forEach(function(q){var c=q.cat||"Other";if(!byCat[c])byCat[c]=[];byCat[c].push(q);});
-
-  // Weight per cat : weakness = 1 - accuracy, floor 0.1 to keep some chance of being picked
-  // even for mastered topics. Cats with insufficient data get a neutral 0.5 weight.
-  var weights={};
-  Object.keys(byCat).forEach(function(c){
-    var s=cs[c];
-    if(!s||s.total<5)weights[c]=0.5;
-    else weights[c]=Math.max(0.1,1-(s.correct/s.total));
-  });
-
-  // 60% weighted picks : sample a cat by weights, then a random item in that cat.
-  // Each picked item is removed from the pool so we don't repeat.
-  var weightedN=Math.round(target*0.6);
-  var randomN=target-weightedN;
-  var available=JSON.parse(JSON.stringify(byCat));
-  var picked=[],pickedIds={};
-  for(var i=0;i<weightedN;i++){
-    var cats=Object.keys(available).filter(function(c){return available[c].length>0;});
-    if(cats.length===0)break;
-    var totalW=0;cats.forEach(function(c){totalW+=weights[c];});
-    var r=Math.random()*totalW,sumW=0,chosenCat=cats[0];
-    for(var j=0;j<cats.length;j++){sumW+=weights[cats[j]];if(r<=sumW){chosenCat=cats[j];break;}}
-    var pool=available[chosenCat];
-    var idx=Math.floor(Math.random()*pool.length);
-    var q=pool.splice(idx,1)[0];
-    picked.push(q);pickedIds[q.id]=true;
-  }
-  // 40% random picks from remaining items
-  var remaining=all.filter(function(q){return !pickedIds[q.id];});
-  var randomPicks=shuffle(remaining).slice(0,randomN);
-  return shuffle(picked.concat(randomPicks));
-}
-function checkMission(u,modId){
-  if(!u.mission)return u;
-  if(u.mission.date===today()&&u.mission.actId===modId&&!u.mission.done){
-    u.mission.done=true;
-    u.xp+=15;u.weeklyXp+=15; // Mission bonus
-    // V2 chest redesign — track consecutive-days streak (drives Mission Streak 7 chest).
-    // We store the streak in the existing mission jsonb to avoid a Supabase migration.
-    var prev=u.mission.lastDoneDate||null;
-    var ydDate=new Date();ydDate.setDate(ydDate.getDate()-1);
-    var ysIso=ydDate.toISOString().split("T")[0];
-    if(prev===ysIso)u.mission.streak=(u.mission.streak||0)+1;
-    else if(prev!==today())u.mission.streak=1; // gap or first time → restart at 1
-    u.mission.lastDoneDate=today();
-  }
-  return u;
-}
-function getModuleAccuracy(u,modId){
-  if(!u.moduleScores||!u.moduleScores[modId])return null;
-  var m=u.moduleScores[modId];
-  if(m.total===0)return null;
-  return Math.round(m.correct/m.total*100);
-}
-
-// ─── RECOMMENDATION ENGINE ───
-var MISSION_THRESHOLD=10; // min sessions before recommending
-function getDailyMission(u){
-  if(!u.moduleScores)return null;
-  if((u.stats.sessions||0)<MISSION_THRESHOLD)return{status:"calibrating",remaining:MISSION_THRESHOLD-(u.stats.sessions||0)};
-
-  // Already have a mission for today?
-  if(u.mission&&u.mission.date===today())return{status:u.mission.done?"completed":"active",actId:u.mission.actId,mod:MISSION_MODULES.find(function(m){return m.id===u.mission.actId;}),done:u.mission.done};
-
-  // Generate new mission: find weakest module
-  var candidates=[];
-  for(var i=0;i<MISSION_MODULES.length;i++){
-    var m=MISSION_MODULES[i];
-    var ms=u.moduleScores[m.id];
-    if(!ms){
-      // Never tried — high priority
-      candidates.push({mod:m,priority:100,reason:"You haven't tried this yet!"});
-    } else {
-      var acc=ms.total>0?ms.correct/ms.total:0;
-      var daysSince=ms.lastDate?Math.floor((new Date()-new Date(ms.lastDate))/(864e5)):999;
-      // Score: lower accuracy + more days since last = higher priority
-      var score=((1-acc)*70)+(Math.min(daysSince,14)*2);
-      var reasonText=acc<0.5?"Accuracy is low — let's improve!":acc<0.7?"Room for improvement here.":daysSince>5?"It's been a while — keep it fresh!":"Maintain your level.";
-      candidates.push({mod:m,priority:score,reason:reasonText});
-    }
-  }
-  // Sort by priority descending, pick top
-  candidates.sort(function(a,b){return b.priority-a.priority;});
-  // Add some variety: pick from top 3 using day seed + reroll counter (so Daily Reroll
-  // tokens actually change the pick instead of re-selecting the same deterministic slot).
-  var seed=0;var d=today();for(var j=0;j<d.length;j++)seed+=d.charCodeAt(j);
-  seed+=(u.mission&&u.mission.rerollCount)||0;
-  var pick=candidates[seed%Math.min(3,candidates.length)];
-  return{status:"new",actId:pick.mod.id,mod:pick.mod,reason:pick.reason};
-}
-
-// ─── MOCK TEST HELPERS ───
-function estimateToeic(raw,total){
-  var pct=raw/total;
-  // Piecewise curve: harder to gain points at the top, like real TOEIC
-  var est;
-  if(pct<0.4)est=5+pct*2.5*155;      // 5-160
-  else if(pct<0.7)est=160+(pct-0.4)/0.3*180; // 160-340
-  else if(pct<0.9)est=340+(pct-0.7)/0.2*110; // 340-450
-  else est=450+(pct-0.9)/0.1*45;              // 450-495
-  est=Math.round(est/5)*5;
-  return Math.max(5,Math.min(495,est));
-}
-function canUnlockMock(u,mockId){
-  if(!u||!u.stats)return{ok:false,reasons:[]};
-  var reasons=[];
-  if((u.stats.totalQ||0)<50)reasons.push("Answer 50+ questions ("+(u.stats.totalQ||0)+"/50)");
-  var modCount=u.moduleScores?Object.keys(u.moduleScores).length:0;
-  if(modCount<5)reasons.push("Try 5+ different modules ("+modCount+"/5)");
-  if(!u.moduleScores||!u.moduleScores.drill)reasons.push("Complete at least 1 Part 5 Drill");
-  if(mockId===2&&(!u.mockResults||!u.mockResults.mock1))reasons.push("Complete Mock Test 1 first");
-  if(mockId===3&&(!u.mockResults||!u.mockResults.mock2))reasons.push("Complete Mock Test 2 first");
-  // V2 — Note : Mocks lock permanently AFTER completion (see Train.mocksSection
-  // override at line ~3601), not via canUnlockMock. Mock Reset token bypasses
-  // that override directly. We don't add a 24h cooldown reason here because the
-  // override would re-lock anyway.
-  return{ok:reasons.length===0,reasons:reasons};
-}
-
-function canUnlockBoss(u){
-  if(!u||!u.stats)return{ok:false,reasons:[]};
-  var reasons=[];
-  if(!u.mockResults||!u.mockResults.mock1)reasons.push("Complete Mock Test 1 first");
-  if(!u.mockResults||!u.mockResults.mock2)reasons.push("Complete Mock Test 2 first");
-  if(!u.mockResults||!u.mockResults.mock3)reasons.push("Complete Mock Test 3 first");
-  // V2 — Boss Reset token bypasses the 24h cooldown when armed.
-  if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()&&!u.bossResetArmed){
-    reasons.push("24h cooldown — come back tomorrow");
-  }
-  return{ok:reasons.length===0,reasons:reasons};
-}
 
 
-// ─── SEASON & MOCK NUDGE ───
-var SEASON_START="2026-09-01";
-function needsMockNudge(u){
-  if(!u||!u.name)return false;
-  if(u.mockResults&&(u.mockResults.mock1||u.mockResults.mock2||u.mockResults.mock3))return false;
-  var joined=u.joinedAt?new Date(u.joinedAt):null;
-  if(joined&&(Date.now()-joined.getTime())>=3*24*60*60*1000)return true;
-  if(today()>=SEASON_START)return true;
-  return false;
-}
 
-// ─── HAPTIC FEEDBACK ───
-var HAPTICS={chest:[100,50,100],chestOpen:[50,30,50,30,150],levelUp:[100,50,200],achieve:[80,40,80,40,80],league:[200,100,300],pb:[100,50,100,50,200],streak:[80,60,120],complete:[150],pageturn:[10]};
-function haptic(k){try{if(navigator.vibrate&&HAPTICS[k])navigator.vibrate(HAPTICS[k]);}catch(e){}}
 
-// ─── ENDLESS ARENA HELPERS ───
-function getEndlessState(u){
-  if(!u.mockResults||!u.mockResults.boss)return"hidden";
-  if((u.mockResults.boss.toeicEstimate||0)<650)return"locked";
-  var last=u.mockResults.endless&&u.mockResults.endless.lastAttempt;
-  // V2 — Endless Resurrect token bypasses the 24h cooldown when armed.
-  if(last&&(Date.now()-last)<24*60*60*1000&&!u.endlessResetArmed)return"cooldown";
-  return"ready";
-}
 
-function generateEndlessTest(){
-  // Merge training + boss pools
-  var allP1=LISTENING_P1.concat(BOSS_P1);
-  var allP2=LISTENING_P2.concat(BOSS_P2);
-  var allP3=LISTENING_P3.concat(BOSS_P3);
-  var allP4=LISTENING_P4.concat(BOSS_P4);
-  var allP5=QUESTIONS.concat(BOSS_P5);
-  var allP6=PART6_TEXTS.concat(BOSS_P6);
-  var allP7=PART7_PASSAGES.concat(BOSS_P7);
 
-  // Fisher-Yates shuffle helper
-  function fy(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 
-  // Shuffle options for a 4-option question, return {options, correct}
-  // `aud` doit remonter jusqu'a playP1/playP2 : l'ordre des reponses P1/P2 est
-  // fige par le nom des MP3 (_0.._3). Sans lui, l'audio et le scoring divergent.
-  function shufOpts4(opts,correct){
-    var idx=[0,1,2,3];idx=fy(idx);
-    return{options:idx.map(function(k){return opts[k];}),correct:idx.indexOf(correct),aud:idx};
-  }
-  function shufOpts3(opts,correct){
-    var idx=[0,1,2];idx=fy(idx);
-    return{options:idx.map(function(k){return opts[k];}),correct:idx.indexOf(correct),aud:idx};
-  }
 
-  // Pick & shuffle items, then shuffle their options
-  var ep1=fy(allP1).slice(0,6).map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct,aud:s.aud});});
-  var ep2=fy(allP2).slice(0,25).map(function(q){var s=shufOpts3(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct,aud:s.aud});});
-  var ep3=fy(allP3).slice(0,13).map(function(conv){return Object.assign({},conv,{qs:conv.qs.map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});})});});
-  var ep4=fy(allP4).slice(0,10).map(function(talk){return Object.assign({},talk,{qs:talk.qs.map(function(q){var s=shufOpts4(q.opts,q.c);return Object.assign({},q,{opts:s.options,c:s.correct});})});});
-  var ep5=fy(allP5).slice(0,30).map(function(q){var s=shufOpts4(q.o,q.c);return Object.assign({},q,{o:s.options,c:s.correct});});
-  var ep6=fy(allP6).slice(0,4).map(function(t){return Object.assign({},t,{parts:t.parts.map(function(pt){if(!pt.blank)return pt;var s=shufOpts4(pt.options,pt.correct);return Object.assign({},pt,{options:s.options,correct:s.correct});})});});
-  // P7: pick enough passages for ~54 questions
-  var p7Shuffled=fy(allP7);var ep7=[];var p7qCount=0;
-  for(var i=0;i<p7Shuffled.length&&p7qCount<54;i++){
-    var ps=p7Shuffled[i];if(!ps||!ps.questions||!ps.questions.length)continue;
-    ep7.push(Object.assign({},ps,{questions:ps.questions.map(function(q){var s=shufOpts4(q.options,q.correct);return Object.assign({},q,{options:s.options,correct:s.correct});})}));
-    p7qCount+=ps.questions.length;
-  }
-  return{p1:ep1,p2:ep2,p3:ep3,p4:ep4,p5:ep5,p6:ep6,p7:ep7};
-}
 
-// La grille de reponses epouse la FORME du test tire (nombre de passages P7,
-// questions par passage...). generateEndlessTest() ne tire pas deux fois la meme
-// forme : le nombre de passages P7 varie (14 ou 15, collectes jusqu a ~54 Q) et
-// leurs longueurs aussi. Une grille construite pour un test ne vaut donc RIEN
-// pour un autre : d ou freshAnsFor(t), qui prend le test en argument au lieu de
-// capturer celui du rendu courant.
-function freshAnsFor(t){return{
-  p1:t.p1.map(function(){return -1;}),p2:t.p2.map(function(){return -1;}),
-  p3:t.p3.map(function(c){return c.qs.map(function(){return -1;});}),
-  p4:t.p4.map(function(tk){return tk.qs.map(function(){return -1;});}),
-  p5:t.p5.map(function(){return -1;}),
-  p6:t.p6.map(function(tx){var n=0;tx.parts.forEach(function(pt){if(pt.blank)n++;});return Array(n).fill(-1);}),
-  p7:t.p7.map(function(ps){return ps.questions.map(function(){return -1;});})
-};}
 
-// Garde-fou de reprise : refuse de rebrancher une grille de reponses sur un test
-// dont elle n a pas la forme. Sans ce controle, ans.p7[qi] vaut undefined des que
-// le test restaure a un passage de plus, et la Part 7 jette un TypeError en plein
-// examen (deux heures de travail perdues). Ne jamais court-circuiter ce test :
-// mieux vaut perdre la reprise que corrompre une epreuve notee.
-function endlessAnsFitsTest(a,t){
-  if(!a||!t||!t.p1||!t.p7)return false;
-  var flat=["p1","p2","p5"];
-  for(var i=0;i<flat.length;i++){
-    if(!a[flat[i]]||a[flat[i]].length!==t[flat[i]].length)return false;
-  }
-  if(!a.p3||a.p3.length!==t.p3.length)return false;
-  for(var j=0;j<t.p3.length;j++){if(!a.p3[j]||a.p3[j].length!==t.p3[j].qs.length)return false;}
-  if(!a.p4||a.p4.length!==t.p4.length)return false;
-  for(var k=0;k<t.p4.length;k++){if(!a.p4[k]||a.p4[k].length!==t.p4[k].qs.length)return false;}
-  if(!a.p6||a.p6.length!==t.p6.length)return false;
-  for(var m=0;m<t.p6.length;m++){
-    var nb=0;t.p6[m].parts.forEach(function(pt){if(pt.blank)nb++;});
-    if(!a.p6[m]||a.p6[m].length!==nb)return false;
-  }
-  if(!a.p7||a.p7.length!==t.p7.length)return false;
-  for(var q=0;q<t.p7.length;q++){if(!a.p7[q]||a.p7[q].length!==t.p7[q].questions.length)return false;}
-  return true;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ─── TEACHER DASHBOARD CONFIG ───
 // H1 (2026-09-14) : VITE_PUSH_SECRET a disparu d'ici. C'etait un "secret" partage inline
@@ -1420,529 +246,13 @@ function endlessAnsFitsTest(a,t){
 // navigateur par le code formateur (valide cote serveur), et garde x-push-secret pour les
 // seules Edge Functions cron. NE PAS reintroduire de secret cote client.
 
-// ─── PUSH NOTIFICATIONS ───
-var VAPID_PUBLIC_KEY="BGiKomKxy1j081qd5ZaZnp7EUAYXIGRPWu8ePQySLGhQ0T45-m3oKTqgj-teqm2l5RoR0jnamCWHZ6pMYjrPVy4";
 
-function urlBase64ToUint8Array(base64String){
-  var padding="=".repeat((4-base64String.length%4)%4);
-  var base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
-  var rawData=window.atob(base64);var outputArray=new Uint8Array(rawData.length);
-  for(var i=0;i<rawData.length;++i)outputArray[i]=rawData.charCodeAt(i);
-  return outputArray;
-}
 
-async function subscribePush(userName,userClassCode){
-  try{
-    if(!("serviceWorker" in navigator)||!("PushManager" in window))return null;
-    // Explicit permission request (some browsers don't auto-prompt on subscribe)
-    if("Notification" in window&&Notification.permission!=="granted"){
-      var perm=await Notification.requestPermission();
-      if(perm!=="granted"){console.log("Push permission denied:",perm);return null;}
-    }
-    var reg=await navigator.serviceWorker.ready;
-    var existing=await reg.pushManager.getSubscription();
-    var sub=existing||await reg.pushManager.subscribe({
-      userVisibleOnly:true,
-      applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-    });
-    var subJson=sub.toJSON();
-    // Securite (lot 2 du verrou satellites) : plus d'acces direct a
-    // push_subscriptions depuis le navigateur. La table etait lisible ET
-    // supprimable avec la cle publique — de quoi couper les notifications
-    // d'une promo entiere. La RPC fait le delete+insert en une transaction
-    // (l'ancien couple ne l'etait pas : entre les deux appels REST, l'eleve
-    // pouvait se retrouver sans aucune ligne) et exige l'endpoint : aucune
-    // forme "supprime tous mes abonnements" n'est exposee.
-    var res=await supabase.rpc("upsert_push_subscription",{
-      p_name:userName,
-      p_class_code:userClassCode,
-      p_endpoint:subJson.endpoint,
-      p_subscription:subJson
-    });
-    if(res.error){console.error("Push DB insert failed:",res.error.message);return null;}
-    if(res.data&&res.data.ok===false){console.error("Push DB insert refused:",res.data.error);return null;}
-    return sub;
-  }catch(e){console.log("Push subscription failed:",e);return null;}
-}
 
-async function unsubscribePush(userName,userClassCode){
-  try{
-    if(!("serviceWorker" in navigator))return;
-    var reg=await navigator.serviceWorker.ready;
-    var sub=await reg.pushManager.getSubscription();
-    if(sub){
-      var ep=sub.endpoint;
-      await sub.unsubscribe();
-      var del=await supabase.rpc("delete_push_subscription",{
-        p_name:userName,p_class_code:userClassCode,p_endpoint:ep
-      });
-      if(del.error)console.warn("[push] unsubscribe RPC error:",del.error.message);
-      else if(del.data&&del.data.ok===false)console.warn("[push] unsubscribe refused:",del.data.error);
-    }
-  }catch(e){console.log("Push unsubscribe failed:",e);}
-}
 
-async function isPushSubscribed(){
-  try{
-    if(!("serviceWorker" in navigator)||!("PushManager" in window))return false;
-    var reg=await navigator.serviceWorker.ready;
-    var sub=await reg.pushManager.getSubscription();
-    return!!sub;
-  }catch(e){return false;}
-}
 
-// ─── PLATFORM DETECTION ─── (used for install prompts, haptic, etc.)
-function isStandalonePWA(){
-  try{
-    if(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)return true;
-    if(window.navigator&&window.navigator.standalone===true)return true;
-  }catch(e){}
-  return false;
-}
-function isIOSDevice(){
-  try{
-    var ua=navigator.userAgent||"";
-    if(/iPad|iPhone|iPod/.test(ua))return true;
-    // iPadOS 13+ masquerades as Mac — detect via touch points
-    if(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)return true;
-  }catch(e){}
-  return false;
-}
 
-// ─── CSS ───
-var CSS=`
-@font-face{font-family:'Cinzel';font-style:normal;font-weight:600 900;font-display:swap;src:url('/fonts/cinzel-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-@font-face{font-family:'Cinzel';font-style:normal;font-weight:600 900;font-display:swap;src:url('/fonts/cinzel-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'DM Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('/fonts/dmsans-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-@font-face{font-family:'DM Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url('/fonts/dmsans-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url('/fonts/outfit-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-@font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url('/fonts/outfit-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-/* A11y: keyboard focus ring. Many inputs set inline outline:none with no replacement,
-   so this needs !important to win over inline styles. :focus-visible = keyboard only,
-   so taps/clicks stay ring-free. (audit 2026-06-25) */
-:focus-visible{outline:2px solid var(--cyan)!important;outline-offset:2px}
-.btn1:focus-visible,.btn2:focus-visible{outline-offset:3px}
-/* A11y: honor reduced-motion. ~50 keyframes (shimmer/glow/pulse/chest/skin loops) ran
-   unconditionally; collapse them to instant + run-once. Entrance reveals still appear,
-   just without motion. (audit 2026-06-25) */
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
-}
-:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#756b54;--cx:212,148,58;--cx-hex:#d4943a;--cx-dark:#a06e20;--endless:#1B70CF;--endless-dark:#0a3a6e;--endless-light:#7fb8e8;--endless-mid:#4a9fe0;--endless-muted:#7a9ac0}
-.skin-argent{--cx:180,180,200;--cx-hex:#b4b4c8;--cx-dark:#888898;--cyan:#b4b4c8;--orange:#888898}
-.skin-emeraude{--cx:46,180,100;--cx-hex:#2eb464;--cx-dark:#1a8a46;--cyan:#2eb464;--orange:#1a8a46}
-.skin-saphir{--cx:58,148,220;--cx-hex:#3a94dc;--cx-dark:#1a6aaa;--cyan:#3a94dc;--orange:#1a6aaa}
-.skin-rubis{--cx:220,58,80;--cx-hex:#dc3a50;--cx-dark:#c01830;--cyan:#dc3a50;--orange:#c01830}
-.skin-amethyste{--cx:160,90,220;--cx-hex:#a05adc;--cx-dark:#7030aa;--cyan:#a05adc;--orange:#7030aa}
-.skin-corail{--cx:220,100,50;--cx-hex:#dc6432;--cx-dark:#c03018;--cyan:#dc6432;--orange:#c03018}
-.skin-jade{--cx:20,180,170;--cx-hex:#14b4aa;--cx-dark:#0a8880;--cyan:#14b4aa;--orange:#0a8880}
-.skin-obsidienne{--cx:180,160,220;--cx-hex:#b4a0dc;--cx-dark:#8870b0;--cyan:#b4a0dc;--orange:#8870b0;--bg:#080810;--bg2:#12101c;--bg3:#1c1a28;--t1:#e8e4f4;--t2:#807898;--bdr:rgba(160,128,224,.08)}
-.skin-aurore{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870;--bg:#08090e;--bg2:#10121c;--bg3:#18202c;--t1:#d8f0e8;--t2:#5898a0;--bdr:rgba(64,208,192,.08)}
-.light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bg-rgb:245,240,232;--bg2-rgb:255,252,245;--bg3-rgb:232,224,210;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#6e6048;--cx:139,105,20;--cx-hex:#8b6914;--cx-dark:#6a4e10}
-.light.skin-argent{--cx:80,80,110;--cx-hex:#505070;--cx-dark:#383848;--cyan:#505070;--orange:#383848}
-.light.skin-emeraude{--cx:18,110,52;--cx-hex:#126e34;--cx-dark:#0c5228;--cyan:#126e34;--orange:#0c5228}
-.light.skin-saphir{--cx:20,80,150;--cx-hex:#145096;--cx-dark:#0e3a78;--cyan:#145096;--orange:#0e3a78}
-.light.skin-rubis{--cx:160,20,40;--cx-hex:#a01428;--cx-dark:#780e1e;--cyan:#a01428;--orange:#780e1e}
-.light.skin-amethyste{--cx:100,40,160;--cx-hex:#6428a0;--cx-dark:#4a1878;--cyan:#6428a0;--orange:#4a1878}
-.light.skin-corail{--cx:160,55,20;--cx-hex:#a03714;--cx-dark:#7a2408;--cyan:#a03714;--orange:#7a2408}
-.light.skin-jade{--cx:10,110,105;--cx-hex:#0a6e69;--cx-dark:#085250;--cyan:#0a6e69;--orange:#085250}
-.light.skin-obsidienne{--cx:80,60,140;--cx-hex:#503c8c;--cx-dark:#382868;--cyan:#503c8c;--orange:#382868}
-.light.skin-aurore{--cx:20,120,90;--cx-hex:#147858;--cx-dark:#0c5a40;--cyan:#147858;--orange:#0c5a40}
-/* ── SHIMMER OVERLAY via ::after (immune to inline style overrides) ── */
-/* ── EPIC SKINS — ::after shimmer overlay ── */
-.skin-rubis .btn1,.skin-amethyste .btn1,.skin-corail .btn1,.skin-jade .btn1{position:relative!important;overflow:hidden!important;box-shadow:0 4px 20px rgba(var(--cx),.4),0 0 0 1px rgba(var(--cx),.2)!important}
-.skin-rubis .btn1::after,.skin-amethyste .btn1::after,.skin-corail .btn1::after,.skin-jade .btn1::after{content:''!important;position:absolute!important;inset:0!important;background-image:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.2) 50%,transparent 65%)!important;background-size:300%!important;animation:skinShimmer 2.5s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
-.skin-rubis .bar-fill,.skin-amethyste .bar-fill,.skin-corail .bar-fill,.skin-jade .bar-fill{position:relative!important;overflow:hidden!important}
-.skin-rubis .bar-fill::after,.skin-amethyste .bar-fill::after,.skin-corail .bar-fill::after,.skin-jade .bar-fill::after{content:''!important;position:absolute!important;inset:0!important;background-image:linear-gradient(90deg,transparent 35%,rgba(255,255,255,.25) 50%,transparent 65%)!important;background-size:300%!important;animation:skinShimmer 2s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
-.skin-rubis .crd,.skin-amethyste .crd,.skin-corail .crd,.skin-jade .crd{border-color:rgba(var(--cx),.18)!important;box-shadow:0 0 12px rgba(var(--cx),.08),inset 0 1px 0 rgba(var(--cx),.08)!important}
-.skin-rubis .glo,.skin-amethyste .glo,.skin-corail .glo,.skin-jade .glo{box-shadow:0 0 30px rgba(var(--cx),.12)!important}
-.skin-rubis .btn2,.skin-amethyste .btn2,.skin-corail .btn2,.skin-jade .btn2{border-color:rgba(var(--cx),.3)!important;color:var(--cyan)!important}
-/* ── OBSIDIENNE — violet+or pulsation + shimmer overlay ── */
-/* NOTE: box-shadow sans !important pour permettre à obsidianPulse de l'animer */
-.skin-obsidienne .btn1{position:relative!important;overflow:hidden!important;background-image:linear-gradient(135deg,#9a78e0,#6c4ab8,#c090f0,#6c4ab8,#9a78e0)!important;background-color:transparent!important;background-size:300%!important;animation:obsidianPulse 3s ease-in-out infinite!important;transition:none!important;filter:brightness(1.1)!important;color:#080810!important;box-shadow:0 4px 28px rgba(160,130,255,.45),0 0 50px rgba(160,130,255,.18),0 0 0 1px rgba(160,130,255,.25)}
-.skin-obsidienne .btn1::after{content:''!important;position:absolute!important;inset:0!important;background-image:linear-gradient(105deg,transparent 30%,rgba(200,180,255,.25) 45%,rgba(180,150,255,.16) 55%,transparent 70%)!important;background-size:300%!important;animation:skinShimmer 3s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
-.skin-obsidienne .bar-fill{position:relative!important;overflow:hidden!important;background-image:linear-gradient(90deg,#9a78e0,#6c4ab8,#c090f0,#9a78e0)!important;background-color:transparent!important;background-size:200%!important;animation:obsidianPulse 4s ease-in-out infinite!important;transition:none!important;box-shadow:0 0 12px rgba(var(--cx),.5)}
-.skin-obsidienne .bar-fill::after{content:''!important;position:absolute!important;inset:0!important;background-image:linear-gradient(90deg,transparent 30%,rgba(200,180,255,.3) 45%,rgba(180,150,255,.18) 55%,transparent 70%)!important;background-size:300%!important;animation:skinShimmer 2.5s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
-.skin-obsidienne .crd{position:relative!important;overflow:hidden!important;border-color:rgba(160,128,224,.2)!important;background-color:#14101c!important;background-image:repeating-linear-gradient(95deg,rgba(180,160,220,.05) 0 1px,transparent 1px 3px),linear-gradient(135deg,#16121f,#0e0b16)!important;transition:none!important;box-shadow:inset 0 0 30px rgba(0,0,0,.5)!important}
-.skin-obsidienne .crd>*{position:relative!important;z-index:2!important}
-.skin-obsidienne .crd::before{content:''!important;position:absolute!important;inset:-20%!important;z-index:0!important;pointer-events:none!important;background:radial-gradient(circle at 30% 32%,rgba(150,90,230,.42),transparent 55%),radial-gradient(circle at 72% 70%,rgba(200,90,200,.28),transparent 55%)!important;animation:skMesh 12s ease-in-out infinite!important}
-.skin-obsidienne .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:radial-gradient(1.5px 1.5px at 10% 40%,#cbb8ff,transparent),radial-gradient(1.2px 1.2px at 40% 60%,#e0d0ff,transparent),radial-gradient(1.5px 1.5px at 70% 35%,#cbb8ff,transparent),radial-gradient(1.2px 1.2px at 90% 70%,#fff,transparent)!important;opacity:.7!important;animation:skDrift 9s ease-in-out infinite!important}
-.skin-obsidienne .glo{animation:obsidianPulse 3s ease-in-out infinite!important}
-.skin-obsidienne .btn2{border-color:rgba(160,128,224,.3)!important;color:#b090f0!important;box-shadow:0 0 12px rgba(160,130,255,.12)}
-.skin-argent .tab-bar,.skin-emeraude .tab-bar,.skin-saphir .tab-bar{box-shadow:0 -30px 50px rgba(var(--cx),.07)!important}
-.skin-rubis .tab-bar,.skin-amethyste .tab-bar,.skin-corail .tab-bar,.skin-jade .tab-bar{box-shadow:0 -40px 60px rgba(var(--cx),.10)!important}
-.skin-obsidienne .tab-bar,.skin-aurore .tab-bar{box-shadow:0 -50px 80px rgba(var(--cx),.14)}
-.skin-obsidienne .tab-bar{animation:obsidianPulse 5s ease-in-out infinite!important}
-.skin-obsidienne .out{text-shadow:0 0 16px rgba(160,130,255,.12)}
-/* ── AURORE BORÉALE — 4-color aurora gradient animation + shimmer ── */
-/* NOTE: background-image (pas background shorthand) pour ne pas verrouiller background-position en !important */
-.skin-aurore .btn1{position:relative!important;overflow:hidden!important;background-image:linear-gradient(135deg,#40d0c0,#6060e8,#c040a0,#40d0c0)!important;background-color:transparent!important;background-size:300%!important;animation:aurora 2.5s ease infinite!important;transition:none!important;color:#08090e!important;box-shadow:0 4px 32px rgba(64,208,192,.5),0 0 60px rgba(96,96,232,.2),0 0 0 1px rgba(64,208,192,.3)!important}
-.skin-aurore .btn1::after{content:''!important;position:absolute!important;inset:0!important;background-image:linear-gradient(105deg,transparent 30%,rgba(180,255,240,.22) 45%,rgba(160,140,255,.15) 55%,transparent 70%)!important;background-size:300%!important;animation:skinShimmer 2.5s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
-.skin-aurore .bar-fill{position:relative!important;overflow:hidden!important;background-image:linear-gradient(90deg,#40d0c0,#6060e8,#c040a0,#40c8a0,#40d0c0)!important;background-color:transparent!important;background-size:300%!important;animation:aurora 3s ease infinite!important;transition:none!important}
-.skin-aurore .bar-fill::after{content:''!important;position:absolute!important;inset:0!important;background-image:linear-gradient(90deg,transparent 30%,rgba(180,255,240,.28) 45%,rgba(160,140,255,.18) 55%,transparent 70%)!important;background-size:300%!important;animation:skinShimmer 2s ease-in-out infinite!important;pointer-events:none!important;border-radius:inherit!important}
-.skin-aurore .crd{position:relative!important;overflow:hidden!important;border-color:rgba(64,208,192,.2)!important;background:#0a0c14!important;transition:none!important;box-shadow:0 0 16px rgba(64,208,192,.1),inset 0 1px 0 rgba(64,208,192,.1)!important}
-.skin-aurore .crd>*{position:relative!important;z-index:2!important}
-.skin-aurore .crd::before{content:''!important;position:absolute!important;inset:-30%!important;z-index:0!important;pointer-events:none!important;background:radial-gradient(circle at 25% 30%,rgba(64,208,192,.5),transparent 42%),radial-gradient(circle at 75% 65%,rgba(96,96,232,.5),transparent 42%),radial-gradient(circle at 60% 20%,rgba(192,64,160,.4),transparent 42%)!important;animation:skMesh 9s ease-in-out infinite!important}
-.skin-aurore .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:radial-gradient(1.6px 1.6px at 18% 30%,#fff,transparent),radial-gradient(1.4px 1.4px at 65% 55%,#dffff5,transparent),radial-gradient(1.2px 1.2px at 42% 78%,#fff,transparent),radial-gradient(1.4px 1.4px at 85% 22%,#dffff5,transparent)!important;animation:skTwinkle 2.8s ease-in-out infinite!important}
-.skin-aurore .glo{box-shadow:0 0 40px rgba(64,208,192,.2)!important;background-image:linear-gradient(135deg,rgba(64,208,192,.08),rgba(96,96,232,.06),rgba(192,64,160,.05))!important;background-size:300%!important;animation:aurora 4s ease infinite!important}
-.skin-aurore .btn2{border-color:rgba(64,208,192,.3)!important;color:#40d0c0!important;box-shadow:0 0 16px rgba(64,208,192,.12)!important}
-.skin-aurore .tab-bar{animation:aurora 4s ease infinite!important}
-.skin-aurore .out{text-shadow:0 0 20px rgba(64,208,192,.12)}
-.light.skin-rubis .btn1,.light.skin-amethyste .btn1,.light.skin-corail .btn1,.light.skin-jade .btn1{box-shadow:0 4px 16px rgba(var(--cx),.3)!important}
-.light.skin-obsidienne .btn1{box-shadow:0 4px 20px rgba(80,60,140,.35),0 0 30px rgba(80,60,140,.12)!important}
-.light.skin-aurore .btn1{box-shadow:0 4px 20px rgba(20,120,90,.4)!important}
-/* ═══ SHOP-EXCLUSIVE GLOBAL SKINS (Arena Shop P2, 2026-06-01) — ported verbatim from
-   prototypes/shop-cosmetics/skins-global.html. Same model as aurore/obsidienne:
-   override CSS vars + animate .crd/.btn1/.bar-fill/.tab-bar via background-image keyframes.
-   Keyframes skSheen/skTwinkle/skFlicker + reused aurora are defined below near the others. ═══ */
-.skin-frostbite{--cx:90,180,232;--cyan:#5ab4e8;--orange:#4a90c0;--bg:#070b12;--bg2:#0e1622;--bg3:#16202e;--t1:#dcefff;--t2:#6a92b4;--bdr:rgba(120,190,240,.12)}
-.skin-frostbite .crd{position:relative!important;overflow:hidden!important;border-color:rgba(120,190,240,.24)!important;background-image:linear-gradient(160deg,#0e2030,#081420)!important;transition:none!important;box-shadow:inset 0 0 36px rgba(120,200,255,.12)!important}
-.skin-frostbite .crd::before{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;z-index:1!important;pointer-events:none!important;background:radial-gradient(1.4px 1.4px at 30% 0%,#fff,transparent),radial-gradient(1px 1px at 64% 0%,#dffaff,transparent),radial-gradient(1.2px 1.2px at 48% 0%,#fff,transparent),radial-gradient(1px 1px at 82% 0%,#dffaff,transparent)!important;animation:skSnowFall 5.5s linear infinite!important}
-.skin-frostbite .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:linear-gradient(100deg,transparent 40%,rgba(200,240,255,.3) 50%,transparent 60%)!important;background-size:250% 100%!important;animation:skSheen 5s linear infinite!important}
-.skin-frostbite .btn1{background-image:linear-gradient(135deg,#7ec8f0,#5ab4e8,#bfeaff,#5ab4e8)!important;background-color:transparent!important;background-size:250%!important;color:#070b12!important;animation:skSheen 3s linear infinite!important;transition:none!important;box-shadow:0 4px 24px rgba(90,180,232,.45)}
-.skin-frostbite .bar-fill{background-image:linear-gradient(90deg,#5ab4e8,#bfeaff,#5ab4e8)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 3s linear infinite!important;transition:none!important}
-.skin-frostbite .btn2{border-color:rgba(90,180,232,.3)!important;color:#5ab4e8!important}
-.skin-frostbite .tab-bar{box-shadow:0 -40px 70px rgba(90,180,232,.14)}
-.skin-emberheart{--cx:230,110,40;--cyan:#e87a28;--orange:#d04818;--bg:#0e0705;--bg2:#1c0f08;--bg3:#2a160c;--t1:#ffe4d0;--t2:#b08068;--bdr:rgba(230,120,50,.14)}
-.skin-emberheart .crd{position:relative!important;overflow:hidden!important;border-color:rgba(230,120,50,.26)!important;background:radial-gradient(ellipse 120% 80% at 50% 125%,rgba(255,180,50,.3),rgba(255,110,20,.1) 45%,transparent 65%),#160805!important;animation:skEdgeGlowAmber 2.8s ease-in-out infinite!important;transition:none!important}
-.skin-emberheart .crd::before,.skin-emberheart .crd::after{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;pointer-events:none!important;z-index:1!important}
-.skin-emberheart .crd::before{background:radial-gradient(1.6px 1.6px at 20% 100%,#ffd060,transparent),radial-gradient(1.2px 1.2px at 55% 100%,#ff8030,transparent),radial-gradient(1.6px 1.6px at 82% 100%,#ffb040,transparent)!important;animation:skEmberRise 3.2s linear infinite!important}
-.skin-emberheart .crd::after{background:radial-gradient(1.2px 1.2px at 35% 100%,#ffd060,transparent),radial-gradient(1.6px 1.6px at 68% 100%,#ff6020,transparent),radial-gradient(1.2px 1.2px at 12% 100%,#ffa040,transparent)!important;animation:skEmberRise 4.1s linear infinite!important;animation-delay:-1.8s!important}
-.skin-emberheart .btn1{background-image:linear-gradient(135deg,#ffb030,#ff6020,#c01810,#ff6020)!important;background-color:transparent!important;background-size:250%!important;color:#0e0705!important;animation:aurora 3s ease infinite,skFlicker 1.4s ease-in-out infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(255,90,20,.5)}
-.skin-emberheart .bar-fill{background-image:linear-gradient(90deg,#ffb030,#ff6020,#ffb030)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3s ease infinite!important;transition:none!important}
-.skin-emberheart .btn2{border-color:rgba(230,120,50,.3)!important;color:#e87a28!important}
-.skin-emberheart .tab-bar{box-shadow:0 -40px 70px rgba(255,90,20,.16)}
-.skin-cosmic_void{--cx:150,110,240;--cyan:#9a6ef0;--orange:#7048c0;--bg:#06040f;--bg2:#0e0a1e;--bg3:#16102c;--t1:#e8e0fb;--t2:#8878b0;--bdr:rgba(150,110,240,.14)}
-.skin-cosmic_void .crd{position:relative!important;overflow:hidden!important;border-color:rgba(150,110,240,.22)!important;background:radial-gradient(circle at 65% 35%,#1a0f2e,#06040f)!important;box-shadow:inset 0 0 40px rgba(0,0,0,.6)!important}
-.skin-cosmic_void .crd>*{position:relative!important;z-index:2!important}
-.skin-cosmic_void .crd::before{content:''!important;position:absolute!important;inset:-20%!important;z-index:0!important;pointer-events:none!important;background:radial-gradient(circle at 35% 40%,rgba(150,80,255,.38),transparent 55%),radial-gradient(circle at 72% 66%,rgba(255,80,160,.30),transparent 55%)!important;animation:skMesh 14s ease-in-out infinite!important}
-.skin-cosmic_void .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:radial-gradient(1.5px 1.5px at 18% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 65% 55%,#fdf,transparent),radial-gradient(1px 1px at 42% 78%,#cfe,transparent),radial-gradient(1px 1px at 85% 22%,#fff,transparent)!important;animation:skTwinkle 2.6s ease-in-out infinite!important}
-.skin-cosmic_void .btn1{background-image:linear-gradient(135deg,#a060f0,#6040c0,#d060e0,#a060f0)!important;background-color:transparent!important;background-size:300%!important;color:#06040f!important;animation:aurora 3.5s ease infinite!important;transition:none!important;box-shadow:0 4px 28px rgba(150,90,255,.5)}
-.skin-cosmic_void .bar-fill{background-image:linear-gradient(90deg,#a060f0,#d060e0,#a060f0)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3s ease infinite!important;transition:none!important}
-.skin-cosmic_void .btn2{border-color:rgba(150,110,240,.3)!important;color:#9a6ef0!important}
-.skin-cosmic_void .tab-bar{box-shadow:0 -40px 70px rgba(150,90,255,.16)}
-.skin-abyssal{--cx:42,154,140;--cyan:#2a9a8c;--orange:#177064;--bg:#051512;--bg2:#0a221e;--bg3:#103029;--t1:#d2eae4;--t2:#5e8e86;--bdr:rgba(60,180,160,.12)}
-.skin-abyssal .crd{position:relative!important;overflow:hidden!important;border-color:rgba(60,180,160,.3);background:linear-gradient(#0a2a24,rgba(6,24,20,.5))!important;animation:skBPulseTeal 2.6s ease-in-out infinite!important;transition:none!important}
-.skin-abyssal .crd::after{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;z-index:1!important;pointer-events:none!important;background:radial-gradient(4px 4px at 22% 100%,transparent 40%,rgba(120,230,210,.5) 42%,transparent 52%),radial-gradient(6px 6px at 55% 100%,transparent 40%,rgba(120,230,210,.42) 42%,transparent 52%),radial-gradient(3px 3px at 82% 100%,transparent 40%,rgba(120,230,210,.5) 42%,transparent 52%)!important;animation:skMoteRise 6s linear infinite!important}
-.skin-abyssal .btn1{background-image:linear-gradient(135deg,#2a9a8c,#157064,#5ec8b8,#157064)!important;background-color:transparent!important;background-size:250%!important;color:#051512!important;animation:aurora 5s ease infinite!important;transition:none!important;box-shadow:0 4px 22px rgba(42,154,140,.38)}
-.skin-abyssal .bar-fill{background-image:linear-gradient(90deg,#2a9a8c,#5ec8b8,#2a9a8c)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 5s ease infinite!important;transition:none!important}
-.skin-abyssal .btn2{border-color:rgba(42,154,140,.3)!important;color:#2a9a8c!important}
-.skin-abyssal .tab-bar{box-shadow:0 -40px 70px rgba(42,154,140,.12)}
-.skin-molten_gold{--cx:238,158,36;--cyan:#f0a020;--orange:#d07010;--bg:#0e0903;--bg2:#1e1206;--bg3:#2e1d09;--t1:#fff0cc;--t2:#b89858;--bdr:rgba(244,178,50,.18)}
-.skin-molten_gold .crd{position:relative!important;overflow:hidden!important;border-color:rgba(244,178,50,.30)!important;background-image:linear-gradient(135deg,rgba(120,80,12,.5),rgba(240,190,60,.3),rgba(80,50,8,.5))!important;background-size:250% 250%!important;animation:aurora 6s ease-in-out infinite!important;transition:none!important;box-shadow:inset 0 0 30px rgba(0,0,0,.4)!important}
-.skin-molten_gold .crd::before{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;padding:2px!important;background:linear-gradient(90deg,#f0c860,#fff4c0,#f0c860)!important;background-size:200% 100%!important;animation:skSheen 4s linear infinite!important;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;-webkit-mask-composite:xor!important;mask-composite:exclude!important;z-index:1!important;pointer-events:none!important}
-.skin-molten_gold .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:radial-gradient(1.7px 1.7px at 25% 100%,#fff0a0,transparent),radial-gradient(1.4px 1.4px at 65% 100%,#ffd860,transparent),radial-gradient(1.7px 1.7px at 85% 100%,#ffe890,transparent)!important;animation:skMoteRise 5.5s linear infinite!important}
-.skin-molten_gold .btn1{background-image:linear-gradient(115deg,#7a4a08,#f0a020,#fff2b0,#f0a020,#a86010)!important;background-color:transparent!important;background-size:280%!important;color:#1a0e02!important;animation:aurora 3s ease infinite,skFlicker 1.8s ease-in-out infinite!important;transition:none!important;box-shadow:0 4px 28px rgba(244,150,30,.55)}
-.skin-molten_gold .bar-fill{background-image:linear-gradient(90deg,#f0a020,#fff2b0,#f0a020)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 2.4s linear infinite!important;transition:none!important}
-.skin-molten_gold .btn2{border-color:rgba(240,160,32,.34)!important;color:#f0a020!important}
-.skin-molten_gold .tab-bar{box-shadow:0 -40px 70px rgba(244,150,30,.18)}
-.skin-heraldic{--cx:74,108,210;--cyan:#5a7ce0;--orange:#c8a032;--bg:#05070f;--bg2:#0c1020;--bg3:#141a30;--t1:#dce4fb;--t2:#7888b0;--bdr:rgba(90,124,224,.14)}
-.skin-heraldic .crd{position:relative!important;border-color:rgba(90,124,224,.22)!important;background-image:linear-gradient(135deg,rgba(74,108,210,.12),rgba(200,160,50,.07),rgba(40,60,140,.10))!important;background-size:250% 100%!important;animation:skSheen 5s linear infinite!important;transition:none!important}
-.skin-heraldic .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:linear-gradient(105deg,transparent 40%,rgba(220,190,90,.18) 50%,transparent 60%)!important;background-size:250% 100%!important;animation:skSheen 4s linear infinite!important}
-.skin-heraldic .btn1{background-image:linear-gradient(135deg,#5a7ce0,#3a52a8,#c8a032,#3a52a8)!important;background-color:transparent!important;background-size:250%!important;color:#05070f!important;animation:aurora 3.5s ease infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(90,124,224,.45)}
-.skin-heraldic .bar-fill{background-image:linear-gradient(90deg,#5a7ce0,#c8a032,#5a7ce0)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3.5s ease infinite!important;transition:none!important}
-.skin-heraldic .btn2{border-color:rgba(90,124,224,.3)!important;color:#5a7ce0!important}
-.skin-heraldic .tab-bar{box-shadow:0 -40px 70px rgba(90,124,224,.14)}
-.skin-aldric_chamber{--cx:206,176,108;--cyan:#cdb06a;--orange:#9a8246;--bg:#0b0a08;--bg2:#15140f;--bg3:#1e1c15;--t1:#ece4d2;--t2:#8c8472;--bdr:rgba(206,176,108,.16)}
-.skin-aldric_chamber .crd{position:relative!important;overflow:hidden!important;border-color:rgba(206,176,108,.22)!important;background-color:#191510!important;background-image:radial-gradient(circle at 82% 14%,rgba(232,196,120,.16),transparent 55%),radial-gradient(rgba(150,115,55,.16) 1px,transparent 1px),radial-gradient(rgba(110,85,40,.11) 1px,transparent 1px)!important;background-size:100% 100%,7px 7px,11px 11px!important;background-position:0 0,0 0,3px 4px!important;animation:skCandle 5.5s ease-in-out infinite!important;transition:none!important;box-shadow:inset 0 0 0 1px rgba(240,210,140,.26),inset 0 0 0 6px rgba(0,0,0,.4),inset 0 0 0 7px rgba(240,210,140,.15)!important}
-.skin-aldric_chamber .crd::before{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;z-index:1!important;pointer-events:none!important;background:linear-gradient(105deg,transparent 40%,rgba(244,228,160,.26) 50%,transparent 60%)!important;background-size:250% 100%!important;animation:skSheen 6.5s linear infinite!important}
-.skin-aldric_chamber .btn1{background-image:linear-gradient(135deg,#2e2820,#b89a52,#e8d49a,#b89a52,#4a4030)!important;background-color:transparent!important;background-size:240%!important;color:#14110a!important;animation:aurora 5s ease infinite!important;transition:none!important;box-shadow:0 4px 24px rgba(180,154,82,.32),inset 0 1px 0 rgba(244,228,170,.25)}
-.skin-aldric_chamber .bar-fill{background-image:linear-gradient(90deg,#b89a52,#e8d49a,#b89a52)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 6s linear infinite!important;transition:none!important}
-.skin-aldric_chamber .btn2{border-color:rgba(206,176,108,.3)!important;color:#cdb06a!important}
-.skin-aldric_chamber .tab-bar{box-shadow:0 -40px 70px rgba(180,154,82,.12)}
-.skin-aldric_chamber .out{text-shadow:0 0 16px rgba(206,176,108,.16)}
-/* Light-mode accent retints (mirror .light.skin-aurore pattern — bg stays light via .light) */
-.light.skin-frostbite{--cx:30,110,170;--cyan:#1e6ea8;--orange:#185888}
-.light.skin-emberheart{--cx:180,70,20;--cyan:#b84810;--orange:#963810}
-.light.skin-cosmic_void{--cx:100,60,180;--cyan:#5a30a8;--orange:#48289a}
-.light.skin-abyssal{--cx:14,120,105;--cyan:#0e8070;--orange:#0a6256}
-.light.skin-molten_gold{--cx:150,100,8;--cyan:#946008;--orange:#7e5008}
-.light.skin-heraldic{--cx:40,68,150;--cyan:#2e4a98;--orange:#8a6c18}
-.light.skin-aldric_chamber{--cx:140,112,40;--cyan:#8a7028;--orange:#766020}
-body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
-@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes narratorFadeFromBlack{from{opacity:1}to{opacity:0}}
-@keyframes narratorFadeToBlack{from{opacity:0}to{opacity:1}}
-@keyframes grim-fade-out{from{opacity:1}to{opacity:0}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-@keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
-@keyframes flame{0%,100%{transform:scale(1) rotate(-2deg)}25%{transform:scale(1.1) rotate(2deg)}50%{transform:scale(1.05) rotate(-1deg)}75%{transform:scale(1.12) rotate(1deg)}}
-@keyframes achPop{0%{transform:translateY(30px) scale(.7);opacity:0}10%{transform:translateY(-5px) scale(1.05);opacity:1}15%{transform:translateY(0) scale(1);opacity:1}85%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-20px) scale(.95);opacity:0}}
-@keyframes xpPop{0%{transform:translateY(0) scale(.5);opacity:0}15%{transform:translateY(-10px) scale(1.1);opacity:1}75%{transform:translateY(-10px) scale(1);opacity:1}100%{transform:translateY(-30px) scale(.95);opacity:0}}
-@keyframes legendGlow{0%,100%{filter:drop-shadow(0 0 5px #ffc020bb) drop-shadow(0 0 12px #ffc02055)}50%{filter:drop-shadow(0 0 10px #ffc020dd) drop-shadow(0 0 24px #ffc02088)}}
-@keyframes epicGlow{0%,100%{filter:drop-shadow(0 0 3px #c060f099)}50%{filter:drop-shadow(0 0 8px #c060f0cc)}}
-@keyframes rareGlow{0%,100%{filter:drop-shadow(0 0 2px #3a8ee066)}50%{filter:drop-shadow(0 0 6px #3a8ee0aa)}}
-@keyframes skinShimmer{0%{background-position:-100% 50%}100%{background-position:200% 50%}}
-@keyframes aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-@keyframes obsidianPulse{0%,100%{box-shadow:0 0 12px rgba(160,130,255,.20),inset 0 0 24px rgba(80,50,180,.08)}50%{box-shadow:0 0 32px rgba(160,130,255,.45),inset 0 0 40px rgba(80,50,180,.18)}}
-@keyframes legendCardPulse{0%,100%{box-shadow:0 0 16px rgba(var(--cx),.1),inset 0 1px 0 rgba(var(--cx),.1)}50%{box-shadow:0 0 28px rgba(var(--cx),.2),inset 0 1px 0 rgba(var(--cx),.18)}}
-@keyframes chestShake{0%,100%{transform:rotate(0)}10%{transform:rotate(-8deg)}20%{transform:rotate(8deg)}30%{transform:rotate(-6deg)}40%{transform:rotate(6deg)}50%{transform:rotate(-3deg)}60%{transform:rotate(3deg)}70%{transform:rotate(-1deg)}80%{transform:rotate(1deg)}}
-@keyframes chestFlash{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(2)}}
-@keyframes endless-star-twinkle{0%,100%{opacity:0.15;transform:scale(0.8)}50%{opacity:0.95;transform:scale(1.1)}}
-@keyframes endless-halo-breathe{0%,100%{opacity:0.25}50%{opacity:0.55}}
-@keyframes final-ember-rise{0%{transform:translateY(0) scale(0.6);opacity:0}15%{opacity:0.85}100%{transform:translateY(-55px) scale(0.2);opacity:0}}
-@keyframes final-ember-glow{0%,100%{opacity:0.4}50%{opacity:0.75}}
-.fx-ember{position:absolute;width:3px;height:3px;border-radius:50%;background:#ff8c42;animation:final-ember-rise 4s ease-out infinite;pointer-events:none;will-change:transform,opacity}
-.fx-ember.sm{width:2px;height:2px;background:#ffaa66}
-.fx-ember.lg{width:4px;height:4px;background:#ff6020}
-.fx-star{position:absolute;border-radius:50%;animation:endless-star-twinkle 3s ease-in-out infinite;pointer-events:none;will-change:transform,opacity}
-@media(prefers-reduced-motion:reduce){.fx-ember,.fx-star{animation:none}.fx-ember{opacity:0}}
-@keyframes chestReveal{0%{opacity:0;transform:translateY(30px) scale(.6)}60%{opacity:1;transform:translateY(-8px) scale(1.05)}100%{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes chestParticle{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(0)}}
-@keyframes flip{0%{transform:rotateY(90deg);opacity:0}100%{transform:rotateY(0);opacity:1}}
-@keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
-@keyframes tipSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes tipFade{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(20px)}}
-/* ── Chest V2 (Boss Loot) animations ── */
-@keyframes chestV2Zoom{0%{opacity:0;transform:scale(.3)}60%{transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
-@keyframes chestV2Trembor{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-5px,-3px) rotate(-4deg)}75%{transform:translate(5px,-3px) rotate(4deg)}}
-@keyframes chestV2LidFly{0%{transform:translateY(0) rotate(0deg);opacity:1}40%{transform:translateY(-80px) rotate(-30deg);opacity:1}100%{transform:translateY(-200px) rotate(-80deg);opacity:0}}
-@keyframes chestV2BodyCollapse{0%{transform:scale(1,1) translateY(0);opacity:1;filter:brightness(1)}40%{transform:scale(1.1,.85) translateY(8px);filter:brightness(2)}100%{transform:scale(.4,.2) translateY(30px);opacity:0;filter:brightness(4)}}
-@keyframes chestV2ScreenFlash{0%,100%{opacity:0}50%{opacity:.85}}
-@keyframes chestV2BurstExpand{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(80)}}
-@keyframes chestV2DustExpand{0%{opacity:0;transform:translate(-50%,-50%) scale(0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(3.5)}}
-@keyframes chestV2ShardFly{0%{opacity:1;transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(0) rotate(0deg)}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(var(--dist,200px)) rotate(720deg)}}
-@keyframes chestV2BeamGrow{0%{height:0;opacity:.4}100%{height:100vh;opacity:1}}
-@keyframes chestV2BeamShrink{to{opacity:0}}
-@keyframes chestV2RewardFall{0%{opacity:0;transform:translateY(-220px) scale(.6) rotate(-8deg)}30%{opacity:1}100%{transform:translateY(0) scale(1) rotate(0deg);opacity:1}}
-@keyframes chestV2RewardSettle{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-10px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
-@keyframes frame-cosmic{0%,100%{filter:drop-shadow(0 0 14px #ff40c0) drop-shadow(0 0 22px #40c0ff)}50%{filter:drop-shadow(0 0 20px #ffc040) drop-shadow(0 0 28px #ff40c0)}}
-@keyframes frame-dragon{0%,100%{filter:drop-shadow(0 0 14px #ff4020) drop-shadow(0 0 22px #ffd060)}50%{filter:drop-shadow(0 0 22px #ff4020) drop-shadow(0 0 30px #ffd060)}}
-/* ═══ SHOP-EXCLUSIVE FRAMES (Arena Shop P2, 2026-06-01) — CSS-overlay ring effects, ported
-   verbatim from prototypes/shop-cosmetics/index.html. AvatarMedal renders a circular
-   .aframe overlay (position:absolute;inset:0;border-radius:50%) AROUND the shield medal for
-   frames flagged css:true. Keyframes namespaced afr* to avoid clashing with the app's
-   pulse (scale) / flame keyframes. ═══ */
-@keyframes skSheen{0%{background-position:200% 0}100%{background-position:-100% 0}}
-@keyframes skTwinkle{0%,100%{opacity:.4}50%{opacity:1}}
-@keyframes skFlicker{0%,100%{filter:brightness(1)}45%{filter:brightness(1.14)}70%{filter:brightness(.92)}}
-@keyframes skEmberRise{0%{transform:translateY(4px);opacity:0}15%{opacity:.95}80%{opacity:.6}100%{transform:translateY(-44px);opacity:0}}
-@keyframes skMoteRise{0%{transform:translateY(3px);opacity:0}22%{opacity:.85}80%{opacity:.45}100%{transform:translateY(-42px);opacity:0}}
-@keyframes skCandle{0%,100%{filter:brightness(1)}15%{filter:brightness(1.07)}30%{filter:brightness(.95)}45%{filter:brightness(1.1)}60%{filter:brightness(.93)}80%{filter:brightness(1.04)}}
-@keyframes skSnowFall{0%{transform:translateY(-8px);opacity:0}20%{opacity:.9}80%{opacity:.55}100%{transform:translateY(46px);opacity:0}}
-@keyframes skMesh{0%,100%{transform:translate(0,0)}33%{transform:translate(6%,-5%)}66%{transform:translate(-5%,4%)}}
-@keyframes skDrift{0%,100%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
-@keyframes skBPulseTeal{0%,100%{border-color:rgba(60,180,160,.3)}50%{border-color:rgba(100,230,200,.85)}}
-@keyframes skEdgeGlowAmber{0%,100%{box-shadow:inset 0 0 16px rgba(255,140,40,.18),0 0 10px rgba(255,120,30,.18)}50%{box-shadow:inset 0 0 26px rgba(255,150,50,.4),0 0 28px rgba(255,120,30,.45)}}
-@keyframes afrSpin{to{transform:rotate(360deg)}}
-@keyframes afrPulse{0%,100%{opacity:.55}50%{opacity:1}}
-@keyframes afrFlicker{0%,100%{filter:brightness(1)}45%{filter:brightness(1.25)}70%{filter:brightness(.85)}}
-.aframe-arc_pulse{border:3px solid #40d0ff;box-shadow:0 0 14px rgba(64,208,255,.7),inset 0 0 8px rgba(64,208,255,.5);animation:afrPulse 1.8s ease-in-out infinite}
-.aframe-arc_pulse::after{content:'';position:absolute;inset:5px;border-radius:50%;border:1px solid rgba(64,208,255,.5)}
-.aframe-orbit{border:1px dashed rgba(180,140,80,.4)}
-.aframe-orbit::before,.aframe-orbit::after{content:'';position:absolute;inset:0;border-radius:50%;animation:afrSpin 3s linear infinite}
-.aframe-orbit::before{background:radial-gradient(circle 4px at 50% 3px,var(--gold) 3px,transparent 4px);filter:drop-shadow(0 0 6px var(--gold))}
-.aframe-orbit::after{background:radial-gradient(circle 4px at 50% 3px,#40d0ff 3px,transparent 4px);filter:drop-shadow(0 0 6px #40d0ff);animation-delay:-1.5s}
-.aframe-inferno_ring{background:conic-gradient(from 90deg,rgba(255,48,0,.95),#ffb020,rgba(255,80,0,.18),#ffd040,rgba(255,60,0,.92),rgba(255,120,20,.15),rgba(255,48,0,.95));animation:afrSpin 4.5s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 17px),rgba(0,0,0,.35) calc(100% - 13px),#000 calc(100% - 8px),#000 calc(100% - 4px),transparent 100%);mask:radial-gradient(farthest-side,transparent calc(100% - 17px),rgba(0,0,0,.35) calc(100% - 13px),#000 calc(100% - 8px),#000 calc(100% - 4px),transparent 100%);filter:drop-shadow(0 0 10px rgba(255,90,0,.7)) blur(.4px)}
-.aframe-inferno_ring::after{content:'';position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle,transparent 60%,rgba(255,90,0,.16) 78%,transparent 92%);animation:afrPulse 1.6s ease-in-out infinite}
-.aframe-tempest{background:conic-gradient(from 0deg,transparent,#40a0ff,transparent,#a0e0ff,transparent,#40a0ff,transparent);animation:afrSpin 2.6s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);filter:drop-shadow(0 0 10px rgba(64,160,255,.7)) blur(.3px)}
-.aframe-tempest::after{content:'';position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle,transparent 60%,rgba(64,160,255,.16) 78%,transparent 92%);animation:afrPulse 1.8s ease-in-out infinite}
-.aframe-gilded_halo{border:2px solid #f0c850;box-shadow:0 0 4px #f0c850,0 0 18px rgba(240,200,80,.7),0 0 34px rgba(240,200,80,.4);animation:afrPulse 2.6s ease-in-out infinite}
-.aframe-prismatic{background:conic-gradient(from 0deg,#ff4040,#ffd000,#40ff60,#40d0ff,#a040ff,#ff4040);animation:afrSpin 5s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);filter:saturate(1.25) drop-shadow(0 0 8px rgba(255,255,255,.4)) blur(.3px)}
-.aframe-prismatic::after{content:'';position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle,transparent 62%,rgba(200,160,255,.14) 80%,transparent 94%);animation:afrPulse 2.2s ease-in-out infinite}
-@keyframes chestV2ImpactRing{0%{opacity:1;transform:translate(-50%,-50%) scaleY(.4) scaleX(.3)}100%{opacity:0;transform:translate(-50%,-50%) scaleY(.4) scaleX(2.5)}}
-@keyframes chestV2SpeedLine{0%{opacity:0;transform:translateY(-100px)}30%{opacity:1}100%{opacity:0;transform:translateY(200px)}}
-@keyframes chestV2IconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-/* ── Chest Earned Toast ── */
-@keyframes toastSlideUp{from{opacity:0;transform:translate(-50%,40px)}to{opacity:1;transform:translate(-50%,0)}}
-@keyframes toastFadeOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-10px)}}
-@keyframes chestWiggle{0%,100%{transform:rotate(0deg)}15%{transform:rotate(-6deg)}30%{transform:rotate(6deg)}45%{transform:rotate(-4deg)}60%{transform:rotate(4deg)}75%{transform:rotate(-2deg)}90%{transform:rotate(2deg)}}
-@keyframes legendGoldFlash{0%,100%{opacity:0}35%{opacity:.6}}
-@keyframes legendShimmer{0%{background-position:-150% 50%}50%{background-position:250% 50%}100%{background-position:-150% 50%}}
-.app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
-@supports(height:100dvh){.app{min-height:100dvh}}
-.pg-wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px))}
-.rev-nav{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom, 0px));display:flex;gap:10px;padding:14px 16px 10px;z-index:6;background:linear-gradient(to top,var(--bg) 62%,rgba(var(--bg-rgb),0))}
-.rev-nav>*{flex:1;margin:0}
-/* Slot Prev conserve sur la 1re question : sans lui Next passe de pleine
-   largeur a demi-largeur et se decale lateralement. */
-.rev-nav-ghost{visibility:hidden;pointer-events:none}
-/* Reserve la hauteur de la barre fixe pour ne pas masquer la fin du contenu. */
-.rev-nav-spacer{height:96px;flex:none}
-.enter{animation:fadeIn .3s ease-out}
-.crd{background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;padding:20px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04)}
-/* Scrollable reading boxes (Mock/Boss/Endless P6-P7 passages). 7 skins force
-   .crd{overflow:hidden!important} for their shimmer ::after clipping, which
-   killed the inline overflowY:auto and clipped long passages with no scroll
-   for any student on those skins. Same specificity as .skin-x .crd, declared
-   later → wins the tie. Keep AFTER the skin block. (bug 2026-06-25) */
-.crd.read-scroll{overflow-y:auto!important;-webkit-overflow-scrolling:touch}
-.glo{box-shadow:0 0 30px rgba(var(--cx),.06)}
-.btn1{background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));color:#0f0c08;border:none;border-radius:12px;padding:14px 28px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:all .2s}
-.btn1:active{transform:scale(.97)}
-.btn2{background:var(--bg2);border:1px solid var(--bdr);color:var(--t1);border-radius:12px;padding:12px 24px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:14px;cursor:pointer}
-.fl{animation:flame 1.5s ease-in-out infinite;display:inline-block}
-.sk{animation:shake .4s ease-in-out}
-.out{font-family:'Cinzel','Outfit',serif;letter-spacing:0.5px}
-/* Question stems read in sans-serif (not Cinzel) — comprehension > flourish on the
-   core learning task, and mirrors the real TOEIC's clean typography. (audit 2026-06-25) */
-.qstem{font-family:'Outfit','DM Sans',sans-serif;letter-spacing:0}
-@media(min-width:768px){
-.app:not(.onboard-shell){max-width:none;margin:0 0 0 200px;padding:0 32px}
-.app.onboard-shell{max-width:480px;margin:0 auto;padding:0 16px}
-.tab-bar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;transform:none!important;width:200px!important;max-width:200px!important;height:100vh!important;flex-direction:column!important;justify-content:flex-start!important;padding:24px 12px!important;background:var(--bg2)!important;border-right:1px solid var(--bdr)!important;gap:4px!important}
-.light .tab-bar{background:var(--bg2)!important}
-.tab-bar button{flex-direction:row!important;gap:10px!important;padding:12px 14px!important;border-radius:10px!important;justify-content:flex-start!important;width:100%!important;flex:0 0 auto!important}
-/* Mentor map wrapper — capped on mobile (portrait 2:3 image) by the inline
-   width:100% which fills phone width. On desktop, the landscape 3:2 image
-   takes the full column width but is also capped via max-width to prevent
-   stretching too wide on ultra-wide monitors. */
-.rev-nav{left:200px;bottom:12px;padding:14px 32px 10px}
-.rev-nav-spacer{height:84px}
-.mentor-map-wrap{margin:0 auto 14px!important}
-@media(min-width:768px){.mentor-map-wrap{max-width:1100px!important}}
-.sidebar-brand{display:flex!important;align-items:center;gap:10px;padding:8px 14px 20px;margin-bottom:8px;border-bottom:1px solid var(--bdr)}
-.tab-bar button span:first-child{font-size:18px!important}
-.tab-bar button span:nth-child(2){font-size:13px!important;font-weight:600!important}
-.tab-bar button div{display:none!important}
-.enter{padding-bottom:32px!important}
-/* Desktop: cap content width so cards/reading passages don't stretch edge-to-edge on
-   large monitors (line length was >100ch). Centered in the area right of the 200px
-   sidebar. Tune the 1000px if a data-dense screen needs more. (audit 2026-06-25) */
-.app:not(.onboard-shell) .enter{max-width:1000px;margin-left:auto;margin-right:auto}
-.crd{padding:24px}
-.crd:hover{border-color:rgba(180,140,80,.18);box-shadow:0 2px 12px rgba(var(--cx),.06)}
-.btn1{width:auto;padding:14px 36px}
-.btn2{padding:12px 28px}
-.rg2{grid-template-columns:1fr 1fr 1fr!important}
-/* .rg3 — supprimé 2026-05-04 (trio de stats Home retiré) */
-.rg-games{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
-.p1-photo,.p1-photo-sm{max-height:500px!important}
-.read-text{font-size:15px!important;line-height:2!important}
-.read-opts button{font-size:15px!important;padding:14px 16px!important}
-.q-heading{font-size:19px!important}
-}
 
-/* ═══ GRAMMAR GAUNTLET — HUB ═══ */
-.gauntlet-hub{padding:20px 16px 100px;max-width:640px;margin:0 auto}
-.gauntlet-header{text-align:center;margin-bottom:24px}
-.gauntlet-title{font-family:'Cinzel','Outfit',serif;font-size:26px;font-weight:800;color:var(--t1);margin-bottom:6px;letter-spacing:1px}
-.gauntlet-sub{color:var(--t3);font-size:13px;font-style:italic}
-.gauntlet-card{position:relative;background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px 16px;margin-bottom:14px;overflow:hidden}
-.gauntlet-card-accent{position:absolute;top:0;left:0;right:0;height:4px}
-.gauntlet-card-head{display:flex;align-items:center;gap:14px;margin-bottom:8px}
-.gauntlet-card-icon{font-size:36px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));flex-shrink:0}
-.gauntlet-card-name{font-family:'Cinzel','Outfit',serif;font-size:17px;font-weight:800;color:var(--t1);letter-spacing:.3px}
-.gauntlet-card-desc{font-size:13px;color:var(--t3);margin-bottom:10px;line-height:1.5}
-.gauntlet-card-stats{display:flex;gap:10px;font-size:11px;color:var(--t3);margin-bottom:12px;opacity:.85}
-.gauntlet-card-actions{display:flex;gap:8px}
-.gauntlet-btn-enter{flex:1;background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));color:#0f0c08;border:none;border-radius:12px;padding:12px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:14px;cursor:pointer;letter-spacing:.3px}
-.gauntlet-btn-grim{background:rgba(var(--cx),.1);color:var(--cyan);border:1px solid rgba(var(--cx),.3);border-radius:12px;padding:12px 14px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
-.gauntlet-btn-grim:active{background:rgba(var(--cx),.22)}
-.icrypt-input:focus{border-color:#c026d3!important;box-shadow:0 0 0 3px rgba(192,38,211,.2)}
-.icrypt-input::placeholder{color:var(--t3);opacity:.5}
-/* ═══ BACK BUTTON — standardized top-left navigation across all training modules ═══ */
-.back-btn{background:none;border:none;color:var(--t2);cursor:pointer;font-size:14px;padding:8px 2px;min-height:40px;display:inline-flex;align-items:center;gap:4px;font-weight:600;font-family:inherit;margin-bottom:12px;transition:color .15s;letter-spacing:.2px}
-.back-btn:hover{color:var(--t1)}
-.back-btn:active{opacity:.7}
-.chrono-marker{display:inline-block;padding:1px 8px;background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(192,38,211,.25));border:1px solid rgba(192,38,211,.5);border-radius:6px;color:#e9d5ff;font-weight:700;margin:0 2px;letter-spacing:.2px}
-.chrono-blank{display:inline-block;min-width:60px;border-bottom:2px solid #c026d3;margin:0 3px;vertical-align:middle;color:transparent;user-select:none}
-.chrono-opt{display:block;width:100%;text-align:left;padding:13px 16px;margin-bottom:9px;background:var(--bg2);border:1.5px solid var(--bg3);border-radius:12px;color:var(--t1);font-size:15px;font-weight:600;cursor:pointer;transition:all .15s ease;font-family:inherit}
-.chrono-opt:hover:not(:disabled){border-color:#7c3aed;background:rgba(124,58,237,.08)}
-.chrono-opt:disabled{cursor:default}
-.chrono-opt.correct{border-color:#22c55e;background:rgba(34,197,94,.12);color:#86efac}
-.chrono-opt.wrong{border-color:#ef4444;background:rgba(239,68,68,.1);color:#fca5a5}
-.chrono-opt.faded{opacity:.45}
-
-/* ═══ GRIMOIRE READER ═══ */
-.grim-overlay{position:fixed;inset:0;background:#0a0604;z-index:9000;display:flex;flex-direction:column;animation:grim-fade-in .3s ease}
-.grim-overlay.grim-closing{animation:grim-fade-out .3s ease forwards;pointer-events:none}
-@keyframes grim-fade-in{from{opacity:0}to{opacity:1}}
-.grim-topbar{display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top, 0px)) 12px 10px;background:rgba(0,0,0,.7);border-bottom:1px solid rgba(245,223,170,.15);flex-shrink:0}
-.grim-title{color:#f5dfaa;font-family:'Cinzel','Outfit',serif;font-size:14px;font-weight:600;letter-spacing:.4px;flex:1;text-align:center;padding:0 4px;line-height:1.25}
-.grim-btn-close,.grim-btn-toc{background:rgba(245,223,170,.08);color:#f5dfaa;border:1px solid rgba(245,223,170,.2);border-radius:10px;padding:8px 12px;font-size:12px;cursor:pointer;font-weight:700;flex-shrink:0}
-.grim-book{flex:1;perspective:2500px;display:flex;justify-content:center;align-items:stretch;padding:12px;overflow:hidden;position:relative}
-.grim-page-wrap{position:relative;width:100%;max-width:560px;height:100%;transform-style:preserve-3d}
-.grim-page{position:absolute;inset:0;background:radial-gradient(ellipse at center,#f4e8cc 0%,#e8d5a8 92%,#d9c288 100%);border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.65),inset 0 0 50px rgba(139,90,40,.1);padding:6px;overflow-y:auto;filter:sepia(6%);-webkit-overflow-scrolling:touch}
-.grim-flip-anim{transform-origin:left center;transition:transform 700ms cubic-bezier(.42,0,.2,1);backface-visibility:hidden;box-shadow:0 12px 40px rgba(0,0,0,.65),inset 0 0 50px rgba(139,90,40,.1)}
-.grim-flip-next{animation:grim-flip-next 700ms cubic-bezier(.42,0,.2,1) forwards}
-.grim-flip-prev{animation:grim-flip-prev 700ms cubic-bezier(.42,0,.2,1) forwards;transform-origin:right center}
-@keyframes grim-flip-next{from{transform:rotateY(0);box-shadow:0 12px 40px rgba(0,0,0,.65)}to{transform:rotateY(-170deg);box-shadow:-20px 12px 40px rgba(0,0,0,.75)}}
-@keyframes grim-flip-prev{from{transform:rotateY(0)}to{transform:rotateY(170deg)}}
-/* Typography inside page */
-.grim-page-content{font-family:'DM Sans',sans-serif;color:#3d2817;font-size:15px;line-height:1.65;display:flex;flex-direction:column;min-height:100%;box-sizing:border-box;border:1px solid rgba(139,90,40,.22);border-radius:3px;padding:20px 16px 34px}
-.grim-chapter-title{font-family:'Cinzel','Outfit',serif;font-size:21px;font-weight:700;text-align:center;margin-bottom:6px;color:#6b3410;letter-spacing:1.2px;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid rgba(107,52,16,.28)}
-.grim-chapter-intro{font-style:italic;text-align:center;color:#6b4820;margin-bottom:18px;font-size:13.5px;line-height:1.55}
-.grim-heading{font-family:'Cinzel','Outfit',serif;font-size:16px;font-weight:700;color:#6b3410;margin:18px 0 8px;letter-spacing:.3px;border-left:3px solid #8b5a28;padding-left:10px}
-.grim-paragraph{margin-bottom:11px}
-.grim-rule{background:rgba(139,90,40,.08);border-left:3px solid #8b5a28;border-radius:4px;padding:9px 13px;margin:11px 0}
-.grim-rule-label{font-family:'Cinzel','Outfit',serif;font-weight:800;color:#6b3410;font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
-.grim-rule-formula{font-family:'Courier New',monospace;font-size:13.5px;color:#3d2817;font-style:italic}
-.grim-example{background:rgba(255,255,255,.38);border-radius:6px;padding:9px 12px;margin:9px 0;border-left:2px solid rgba(139,90,40,.4)}
-.grim-example-en{font-weight:600;color:#2a1a08;font-size:14.5px}
-.grim-example-fr{color:#6b4820;font-size:12.5px;margin-top:3px;font-style:italic}
-.grim-example-note{color:#8b5a28;font-size:11.5px;margin-top:5px;padding-top:5px;border-top:1px dashed rgba(139,90,40,.25);line-height:1.5}
-.grim-trap{background:rgba(200,50,50,.1);border:1px solid rgba(200,50,50,.32);border-radius:6px;padding:10px 13px;margin:12px 0;color:#6b1a1a;font-size:13px;line-height:1.5}
-.grim-trap::before{content:"⚠  ";font-weight:800;color:#b02020;margin-right:2px}
-.grim-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.5px}
-.grim-table th{background:rgba(139,90,40,.18);color:#3d2817;font-weight:800;padding:7px 8px;border:1px solid rgba(139,90,40,.3);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
-.grim-table td{padding:6px 8px;border:1px solid rgba(139,90,40,.22);color:#3d2817;background:rgba(255,255,255,.22)}
-.grim-list{margin:6px 0 12px 18px;padding:0}
-.grim-list li{margin-bottom:5px;line-height:1.55}
-.grim-page-num{margin-top:auto;padding-top:24px;text-align:center;font-family:'Cinzel','Outfit',serif;color:#6b4820;font-size:11px;opacity:.65;letter-spacing:2px;pointer-events:none}
-.grim-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px));background:rgba(0,0,0,.7);border-top:1px solid rgba(245,223,170,.15);flex-shrink:0}
-.grim-nav-btn{background:linear-gradient(135deg,#8b5a28,#6b3410);color:#f5dfaa;border:1px solid rgba(245,223,170,.3);border-radius:12px;padding:11px 14px;font-weight:700;font-size:13px;cursor:pointer;min-width:80px;touch-action:manipulation}
-.grim-nav-btn:disabled{opacity:.3;cursor:not-allowed}
-.grim-nav-info{color:#f5dfaa;font-family:'DM Sans',sans-serif;font-size:12px;flex:1;text-align:center;letter-spacing:.4px}
-.grim-toc{position:absolute;inset:0;background:rgba(10,6,4,.97);z-index:20;padding:calc(20px + env(safe-area-inset-top, 0px)) 18px 20px;overflow-y:auto;animation:grim-fade-in .2s ease}
-.grim-toc-title{color:#f5dfaa;font-family:'Cinzel','Outfit',serif;font-size:18px;font-weight:700;text-align:center;margin-bottom:16px;letter-spacing:1px}
-.grim-toc-item{display:block;width:100%;background:rgba(245,223,170,.06);color:#f5dfaa;border:1px solid rgba(245,223,170,.15);border-radius:10px;padding:12px 14px;margin-bottom:7px;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.35}
-.grim-toc-item.active{background:rgba(245,223,170,.18);border-color:rgba(245,223,170,.45)}
-@media(max-width:480px){
-  .grim-page{padding:6px;border-radius:4px}
-  .grim-chapter-title{font-size:18px;letter-spacing:1px}
-  .grim-heading{font-size:15px}
-  .grim-page-content{font-size:14px;line-height:1.6;padding:16px 12px 30px}
-  .grim-paragraph{margin-bottom:10px}
-  .grim-example-en{font-size:13.5px}
-  .grim-table{font-size:11.5px}
-  .grim-table th,.grim-table td{padding:5px 6px}
-  .gauntlet-card{padding:14px 13px}
-  .gauntlet-card-icon{font-size:32px}
-  .gauntlet-card-name{font-size:15.5px}
-  .grim-nav-btn{padding:10px 12px;font-size:12.5px;min-width:72px}
-  .grim-btn-close,.grim-btn-toc{padding:7px 10px;font-size:11.5px}
-  .grim-title{font-size:13px}
-}
-`;
-
-// ─── GRIMOIRE RENDERER (block-based pedagogical manuscript) ───
-// Consumes blocks from data/grammarGauntletGrimoire.js.
-// Mobile-first: single page, swipe left/right, CSS 3D flip animation.
-// ─── DOWNLOADABLE GRIMOIRE ───
-// Open a new window with the full grimoire rendered as a self-contained HTML
-// document. Screen view uses the Arena palette (gold/cream, serif titles).
-// @media print switches to B&W professional layout (no backgrounds, page-break
-// per chapter, A4-friendly margins) so the user can Ctrl/Cmd+P → Save as PDF
-// without bleeding ink on chest decorations. Triggered from GrimoireReader topbar.
-function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-function renderGrimoireBlockHtml(b){
-  if(b.type==="paragraph")return"<p class=\"g-p\">"+escHtml(b.text)+"</p>";
-  if(b.type==="heading")return"<h3 class=\"g-h\">"+escHtml(b.text)+"</h3>";
-  if(b.type==="rule"){var lbl=b.label?"<div class=\"g-rule-lbl\">"+escHtml(b.label)+"</div>":"";return"<div class=\"g-rule\">"+lbl+"<div class=\"g-rule-f\">"+escHtml(b.formula)+"</div></div>";}
-  if(b.type==="example"){var en="<div class=\"g-ex-en\">"+escHtml(b.en)+"</div>";var fr=b.fr?"<div class=\"g-ex-fr\">"+escHtml(b.fr)+"</div>":"";var note=b.note?"<div class=\"g-ex-note\">"+escHtml(b.note)+"</div>":"";return"<div class=\"g-ex\">"+en+fr+note+"</div>";}
-  if(b.type==="trap")return"<div class=\"g-trap\"><span class=\"g-trap-tag\">Piège</span> "+escHtml(b.text)+"</div>";
-  if(b.type==="table"){var hd=b.headers.map(function(h){return"<th>"+escHtml(h)+"</th>";}).join("");var rw=b.rows.map(function(r){return"<tr>"+r.map(function(c){return"<td>"+escHtml(c)+"</td>";}).join("")+"</tr>";}).join("");return"<table class=\"g-table\"><thead><tr>"+hd+"</tr></thead><tbody>"+rw+"</tbody></table>";}
-  if(b.type==="list")return"<ul class=\"g-list\">"+b.items.map(function(it){return"<li>"+escHtml(it)+"</li>";}).join("")+"</ul>";
-  return"";
-}
-function downloadGrimoire(grim){
-  var romans=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
-  var chapters=grim.chapters.map(function(ch,i){
-    var blocks=ch.blocks.map(renderGrimoireBlockHtml).join("\n");
-    var intro=ch.intro?"<p class=\"g-intro\">"+escHtml(ch.intro)+"</p>":"";
-    var num=romans[i]||(i+1);
-    return"<section class=\"g-chapter\"><div class=\"g-chap-num\">Chapitre "+num+"</div><h2 class=\"g-chap-title\">"+escHtml(ch.title)+"</h2>"+intro+blocks+"</section>";
-  }).join("\n");
-  var css="*{box-sizing:border-box}html,body{margin:0;padding:0}body{font-family:Georgia,'Times New Roman',serif;background:#fbf5e8;color:#2a2118;line-height:1.6;padding:24px}.g-toolbar{position:sticky;top:0;background:#fbf5e8;padding:12px 0;margin-bottom:24px;border-bottom:2px solid #d4943a;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}.g-print-btn{background:#d4943a;color:#fff;border:none;padding:10px 18px;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;font-family:inherit}.g-print-btn:hover{background:#b87a26}.g-hint{font-size:12px;color:#6a5a3a;font-style:italic}.g-header{text-align:center;padding:32px 16px 24px;border-bottom:1px solid #c4a868;margin-bottom:32px}.g-title{font-family:'Cinzel',Georgia,serif;font-size:28px;font-weight:900;color:#8b5a1f;margin:0 0 8px;letter-spacing:1px}.g-subtitle{font-size:14px;color:#6a5a3a;font-style:italic;margin:0 0 12px}.g-meta{font-size:12px;color:#8a7a5a}.g-chapter{margin-bottom:48px}.g-chap-num{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#b87a26;font-weight:700;margin-bottom:6px}.g-chap-title{font-family:'Cinzel',Georgia,serif;font-size:22px;font-weight:800;color:#3a2a18;margin:0 0 16px;border-bottom:2px solid #d4943a;padding-bottom:8px}.g-intro{font-style:italic;color:#5a4a32;background:rgba(212,148,58,.08);border-left:3px solid #d4943a;padding:12px 14px;margin:0 0 18px;border-radius:4px}.g-p{margin:0 0 12px;color:#2a2118}.g-h{font-size:16px;font-weight:700;color:#5a3a18;margin:20px 0 10px}.g-rule{background:rgba(6,182,212,.08);border-left:3px solid #06b6d4;padding:12px 14px;margin:0 0 14px;border-radius:4px}.g-rule-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#0891b2;font-weight:700;margin-bottom:4px}.g-rule-f{font-weight:600;color:#1a3a48}.g-ex{background:rgba(255,255,255,.5);border:1px solid #d4c8a8;padding:10px 14px;margin:0 0 12px;border-radius:4px}.g-ex-en{font-style:italic;color:#3a2a18;font-weight:500}.g-ex-fr{color:#5a4a32;margin-top:4px;font-size:14px}.g-ex-note{font-size:12px;color:#7a6a4a;margin-top:6px;border-top:1px dashed #c4a868;padding-top:6px}.g-trap{background:rgba(224,82,82,.08);border-left:3px solid #c84040;padding:10px 14px;margin:0 0 14px;border-radius:4px;color:#5a1a18}.g-trap-tag{display:inline-block;background:#c84040;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:3px;margin-right:6px}.g-table{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:13px}.g-table th{background:#d4943a;color:#fff;padding:8px 10px;text-align:left;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px}.g-table td{padding:8px 10px;border-bottom:1px solid #d4c8a8;color:#2a2118}.g-table tbody tr:nth-child(even){background:rgba(212,148,58,.05)}.g-list{padding-left:20px;margin:0 0 14px}.g-list li{margin-bottom:6px;color:#2a2118}.g-footer{text-align:center;margin-top:48px;padding-top:24px;border-top:1px solid #c4a868;font-size:11px;color:#8a7a5a;font-style:italic}@media print{body{background:#fff;color:#000;padding:0;font-size:11pt;line-height:1.5}.g-toolbar{display:none}.g-header{padding:0 0 16px;border-bottom:2px solid #000;margin-bottom:24px;page-break-after:avoid}.g-title{color:#000;font-size:22pt}.g-subtitle,.g-meta{color:#000}.g-chapter{page-break-before:always;margin-bottom:24px}.g-chapter:first-of-type{page-break-before:auto}.g-chap-num{color:#000;font-weight:700}.g-chap-title{color:#000;font-size:16pt;border-bottom:1px solid #000;page-break-after:avoid}.g-intro{background:transparent;border-left:2px solid #000;color:#000;page-break-inside:avoid}.g-p,.g-h{color:#000}.g-h{color:#000;font-size:13pt}.g-rule{background:transparent;border:1px solid #000;border-left:3px solid #000;page-break-inside:avoid}.g-rule-lbl{color:#000}.g-rule-f{color:#000}.g-ex{background:transparent;border:1px solid #000;page-break-inside:avoid}.g-ex-en,.g-ex-fr,.g-ex-note{color:#000}.g-ex-note{border-top:1px dashed #000}.g-trap{background:transparent;border:1px solid #000;border-left:3px solid #000;color:#000;page-break-inside:avoid}.g-trap-tag{background:#000;color:#fff}.g-table{page-break-inside:avoid}.g-table th{background:#000;color:#fff;border:1px solid #000}.g-table td{border:1px solid #000;color:#000}.g-table tbody tr:nth-child(even){background:#f0f0f0}.g-footer{color:#000;border-top:1px solid #000}@page{margin:18mm 16mm}}";
-  var html="<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"utf-8\"><title>"+escHtml(grim.title)+"</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>"+css+"</style></head><body><div class=\"g-toolbar\"><button class=\"g-print-btn\" onclick=\"window.print()\">"+"🖨️ Imprimer / Enregistrer en PDF</button><div class=\"g-hint\">Astuce : choisir « Enregistrer en PDF » comme destination</div></div><div class=\"g-header\"><h1 class=\"g-title\">"+escHtml(grim.title)+"</h1>"+(grim.subtitle?"<div class=\"g-subtitle\">"+escHtml(grim.subtitle)+"</div>":"")+"<div class=\"g-meta\">"+(grim.readingTime?"Lecture : "+escHtml(grim.readingTime)+" · ":"")+grim.chapters.length+" chapitres</div></div>"+chapters+"<div class=\"g-footer\">Verse Arena · Grimoire exporté pour étude personnelle</div></body></html>";
-  var w=window.open("","_blank");
-  if(!w){alert("La fenêtre d'export a été bloquée. Autorise les pop-ups pour ce site et réessaie.");return;}
-  w.document.open();w.document.write(html);w.document.close();
-}
 
 function renderGrimoireBlock(b,i){
   if(b.type==="paragraph")return(<p key={i} className="grim-paragraph">{b.text}</p>);
@@ -3969,7 +2279,7 @@ var[step,sSt]=useState("name");
         for(var i=0;i<4;i++){
           setAudioStep(i);
           await playAudioFile("/audio/p1/"+refId+"_"+i+".mp3");
-          if(_audioAborted)break;
+          if(isAudioAborted())break;
         }
         setAudioStep(-1);
       }else if(part==="p2"){
@@ -5042,110 +3352,6 @@ var[step,sSt]=useState("name");
       </div>}
     </div>);
 
-}
-// ─── HOME ───
-// ═══════════════════════════════════════════════════════════════════════
-// Personalization Phase 1 commit 4 (2026-05-05) — Today's Focus + reco
-// Maps a module id to a "part bucket" (p1-p7 + vocab), used by:
-//   - computeTodayFocus(u) → finds the user's weakest part with enough data.
-//   - applyXpGates → applies a +25% XP boost when modId maps to focus part.
-//   - <NextStepReco/> → suggests the next module on done screens.
-// Modules that don't fit a single part (mocks, boss, daily, games) are not
-// mapped and therefore not boosted — those have their own incentive layers.
-// ═══════════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════════
-// MODULE_TOEIC_MAP — SOURCE UNIQUE DE VÉRITÉ : module id → câblage TOEIC.
-//   part    : bucket radar Mentor / Today's Focus (p1-p7 | vocab | null).
-//   section : section de l'estimateur (listening | reading | null).
-//   score   : compte AUJOURD'HUI dans estimateTOEICScore (jeu Chantier A).
-// Chantier B Phase 1 (2026-06-10) : consommée par partOfModule + partAccuracies
-// pour tuer les mismatches falsefr/pvdojo/ablitz (la route enregistre "falsefr"
-// et "pvdojo", mais l'ancien partOfModule cherchait "falsefriends" et ignorait
-// pvdojo/ablitz → ces modules étaient invisibles au Mentor et au boost Focus).
-// Les listes pondérées de l'estimateur rejoindront cette map en Phase 2
-// (élargissement + recalibration). NE PAS dupliquer ce mapping ailleurs.
-// ═══════════════════════════════════════════════════════════════════════
-var MODULE_TOEIC_MAP={
-  lisP1:{part:"p1",section:"listening",score:true},
-  lisP2:{part:"p2",section:"listening",score:true},
-  lisP3:{part:"p3",section:"listening",score:true},
-  lisP4:{part:"p4",section:"listening",score:true},
-  ablitz:{part:"p2",section:"listening",score:true},   // FIX : était absent de partOfModule
-  p6:{part:"p6",section:"reading",score:true},
-  p7:{part:"p7",section:"reading",score:true},
-  drill:{part:"p5",section:"reading",score:true},
-  wordfam:{part:"p5",section:"reading",score:true},
-  connsort:{part:"p5",section:"reading",score:true},
-  prepdrill:{part:"p5",section:"reading",score:true},
-  gerinf:{part:"p5",section:"reading",score:true},
-  falsefr:{part:"p5",section:"reading",score:true},     // FIX : était "falsefriends"
-  pvdojo:{part:"p5",section:"reading",score:true},      // FIX : était absent
-  sbuild:{part:"p5",section:"reading",score:true},
-  gauntlet_irregular:{part:"p5",section:"reading",score:true},
-  gauntlet_tense:{part:"p5",section:"reading",score:true},
-  gauntlet_passive:{part:"p5",section:"reading",score:true},
-  gauntlet_relative:{part:"p5",section:"reading",score:true},
-  // Donnent de l'XP + vus par le Mentor, PAS encore dans le score (Phase 2) :
-  bforge:{part:"p5",section:"reading",score:false},
-  modals_match:{part:"p5",section:"reading",score:false},
-  modals_sort:{part:"p5",section:"reading",score:false},
-  tavern:{part:"vocab",section:"reading",score:false},
-  csess:{part:"vocab",section:null,score:false},        // flashcards : 0 XP, jamais dans le score
-  cdom:{part:"vocab",section:null,score:false},
-  phrasalpicker:{part:"vocab",section:null,score:false},
-  clue:{part:null,section:null,score:false},
-  traps:{part:null,section:null,score:false},
-  stratquiz:{part:null,section:null,score:false},
-  timesim:{part:null,section:null,score:false}
-};
-function partOfModule(modId){
-  if(!modId)return null;
-  var e=MODULE_TOEIC_MAP[modId];
-  return e?e.part:null;
-}
-// Per-part accuracy + sample size from u.moduleScores. Returns object keyed by part.
-// Phase D (scan-v2): when a part has no real moduleScores data and bsParts has a Battle Scan
-// baseline for it, fall back to the scan accuracy with synthetic n=5 + source:"scan" so callers
-// can distinguish baseline-from-scan vs measured. This bootstraps Mentor / TodayFocus / NextStepReco
-// from day 1 of the post-onboarding journey.
-function partAccuracies(ms,bsParts){
-  function get(id){var d=ms&&ms[id];return d&&d.total?{acc:d.correct/d.total,n:d.total,source:"trained"}:null;}
-  function fallback(partId){if(!bsParts||typeof bsParts[partId]!=="number")return null;return{acc:bsParts[partId],n:5,source:"scan"};}
-  function getOrFallback(modId,partId){return get(modId)||fallback(partId);}
-  function avg(arr){var f=arr.filter(function(x){return x!==null;});if(f.length===0)return null;var sa=0,sn=0;f.forEach(function(x){sa+=x.acc*x.n;sn+=x.n;});return{acc:sa/sn,n:sn};}
-  // Chantier B : dérivés de MODULE_TOEIC_MAP (source unique) — falsefr + pvdojo
-  // entrent désormais dans le radar p5, qui les ignorait à cause du mismatch d'id.
-  var p5Mods=Object.keys(MODULE_TOEIC_MAP).filter(function(k){return MODULE_TOEIC_MAP[k].part==="p5";});
-  var vocabMods=Object.keys(MODULE_TOEIC_MAP).filter(function(k){return MODULE_TOEIC_MAP[k].part==="vocab";});
-  return{
-    p1:getOrFallback("lisP1","p1"),p2:getOrFallback("lisP2","p2"),p3:getOrFallback("lisP3","p3"),p4:getOrFallback("lisP4","p4"),
-    p5:avg(p5Mods.map(get)),p6:getOrFallback("p6","p6"),p7:getOrFallback("p7","p7"),vocab:avg(vocabMods.map(get))
-  };
-}
-// Helper: get the scan parts baseline from a user. Returns null if no scan ran.
-function bsScanParts(u){return u&&u.battleScan&&u.battleScan.subScores&&u.battleScan.subScores.parts||null;}
-// Find the weakest part with enough data. Returns {partId, acc, n, recoModId, label} or null.
-// Phase D (scan-v2): the gate is now totalQ>=20 OR a Battle Scan baseline exists. The scan
-// provides a per-part baseline (n=5, source:"scan") that lets the banner light up from day 1
-// of the post-onboarding journey. Once real training data accumulates, it overrides the scan.
-function computeTodayFocus(u){
-  if(!u||!u.moduleScores)return null;
-  var totalQ=(u.stats&&u.stats.totalQ)||0;
-  var hasScan=!!bsScanParts(u);
-  if(totalQ<20&&!hasScan)return null;
-  var pa=partAccuracies(u.moduleScores,bsScanParts(u));
-  var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
-  var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
-  var weakest=null;
-  // Min sample size: 10 if trained, 5 if scan-derived.
-  Object.keys(pa).forEach(function(k){
-    var d=pa[k];if(!d)return;
-    var minN=d.source==="scan"?5:10;
-    if(d.n<minN)return;
-    if(!weakest||d.acc<weakest.acc)weakest={partId:k,acc:d.acc,n:d.n,source:d.source};
-  });
-  if(!weakest||weakest.acc>=0.85)return null;
-  return Object.assign(weakest,{recoModId:reco[weakest.partId],label:labels[weakest.partId]});
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -10200,9 +8406,9 @@ function AudioBlitz(p){
     var playTimeout=setTimeout(function(){
       setPlayed(1);
       var it=items[ci];
-      if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
+      stopCurrentListenAudio();
       var audio=new Audio(it.audio);
-      _listenAudio=audio;
+      setListenAudio(audio);
       var usedTTS=false;
       var afterCalled=false;
 
@@ -10243,9 +8449,9 @@ function AudioBlitz(p){
     if(replays>=1||played<2)return;
     setReplays(1);
     var it=items[ci];
-    if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
+    stopCurrentListenAudio();
     var audio=new Audio(it.audio);
-    _listenAudio=audio;
+    setListenAudio(audio);
     audio.onerror=function(){speak(it.text,0.85);};
     audio.playbackRate=0.9;
     audio.play().catch(function(){speak(it.text,0.85);});
@@ -11961,76 +10167,6 @@ function TreasureChestSvg(p){
   </svg>);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TRIGGER LABEL — human-friendly description of why a chest was granted
-// ═══════════════════════════════════════════════════════════════
-function getTriggerLabel(trigger){
-  if(!trigger)return"Milestone reached";
-  if(trigger==="apology_crisis_2026-04-21")return"A gift from your teacher — thanks for your patience";
-  if(trigger==="mock_1")return"Mock Test 1 completed";
-  if(trigger==="mock_2")return"Mock Test 2 completed";
-  if(trigger==="mock_3")return"Mock Test 3 completed";
-  if(trigger==="boss_test")return"The Final Arena conquered";
-  if(trigger==="streak_7")return"7-day streak";
-  if(trigger==="streak_30")return"30-day streak";
-  if(trigger==="streak_100")return"100-day streak";
-  if(trigger==="xp_1k")return"1,000 XP milestone";
-  if(trigger==="xp_3k")return"3,000 XP milestone";
-  if(trigger==="xp_5k")return"5,000 XP milestone";
-  if(trigger==="xp_10k")return"10,000 XP milestone";
-  if(trigger==="xp_20k")return"20,000 XP milestone";
-  if(trigger==="xp_30k")return"30,000 XP milestone";
-  if(trigger==="xp_50k")return"50,000 XP milestone";
-  if(trigger==="duel_win")return"Duel victory";
-  if(trigger==="duel_win3")return"3 duel wins in a row";
-  if(trigger==="wfall_combo10")return"Word Fall combo x10";
-  if(trigger==="wfall_combo20")return"Word Fall combo x20";
-  if(trigger==="wfall_combo30")return"Word Fall combo x30";
-  if(trigger==="smatch_easy_good")return"Speed Match mastered";
-  if(trigger==="smatch_easy_80")return"Speed Match 80%+";
-  if(trigger==="smatch_hard_80")return"Speed Match Hard 80%+";
-  if(trigger==="clue_perfect")return"Clue Hunter perfect run";
-  if(trigger==="ablitz_70")return"Audio Blitz 70%+";
-  if(trigger==="ablitz_90")return"Audio Blitz 90%+";
-  if(trigger==="sbuild_90")return"Sentence Builder 90%+";
-  if(trigger==="gauntlet_irregular_perfect")return"Irregular Crypt perfect raid";
-  if(trigger==="gauntlet_tense_perfect")return"Chronomancer mastered";
-  if(trigger==="gauntlet_passive_perfect")return"Passive Forge mastered";
-  if(trigger==="gauntlet_relative_perfect")return"Relative Weaver mastered";
-  if(trigger.indexOf("league_up_")===0){
-    var lg=trigger.substring(10);
-    return"Promoted to "+lg.charAt(0).toUpperCase()+lg.slice(1)+" League";
-  }
-  // V2 chest redesign — 5 recurring sources
-  if(trigger.indexOf("daily_login_")===0)return"Daily login reward"; // legacy V2 step 2, kept for old chest_log rows
-  if(trigger.indexOf("streak_login_")===0)return"3-day streak login";
-  if(trigger.indexOf("weekly_toeic_")===0)return"+25 TOEIC pts this week";
-  if(trigger.indexOf("podium_")===0)return"League podium — top 3";
-  if(trigger.indexOf("mission_streak_")===0){
-    var ms=trigger.substring(15);
-    return ms+"-day mission streak";
-  }
-  if(trigger.indexOf("mastery_")===0){
-    var modIdT=trigger.substring(8);
-    return"Module mastery: "+modIdT;
-  }
-  if(trigger.indexOf("ach_legendary_")===0){
-    var achId=trigger.substring(14);
-    var ach=ACHIEVEMENTS.find(function(a){return a.id===achId;});
-    return(ach?ach.name:"Legendary achievement")+" unlocked";
-  }
-  if(trigger.indexOf("ach_epic_")===0){
-    var achIdE=trigger.substring(9);
-    var achE=ACHIEVEMENTS.find(function(a){return a.id===achIdE;});
-    return(achE?achE.name:"Epic achievement")+" unlocked";
-  }
-  if(trigger.indexOf("ach_novice_")===0){
-    var achIdN=trigger.substring(11);
-    var achN=ACHIEVEMENTS.find(function(a){return a.id===achIdN;});
-    return(achN?achN.name:"Achievement")+" unlocked";
-  }
-  return"Milestone reached";
-}
 
 // ═══════════════════════════════════════════════════════════════
 // CHEST EARNED TOAST — appears at the moment a chest is granted
@@ -12145,18 +10281,6 @@ function ChestRewardCard(p){
     <div className="out" style={{fontSize:22,fontWeight:900,color:"#ede4d4",marginBottom:4,letterSpacing:1}}>{name}</div>
     <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:1}}>{caption}</div>
   </>);
-}
-// Convert "k:v;k:v" inline CSS string to a React style object
-function parseInlineStyle(s){
-  var out={};if(!s)return out;
-  s.split(";").forEach(function(part){
-    var ix=part.indexOf(":");if(ix<0)return;
-    var k=part.slice(0,ix).trim(), v=part.slice(ix+1).trim();
-    if(!k)return;
-    var jsKey=k.replace(/-([a-z])/g,function(_,c){return c.toUpperCase();});
-    out[jsKey]=v;
-  });
-  return out;
 }
 
 function ChestOpenModal(p){
@@ -14488,115 +12612,8 @@ function ReadingHub(p){
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
   </div>);
 }
-// ─── LEAGUE ───
-function generateSeasons(startDate,endDate){
-  if(!startDate||!endDate)return[];
-  // Get ISO week ID for a date
-  function isoWeek(d){var tmp=new Date(d.getTime());tmp.setHours(0,0,0,0);tmp.setDate(tmp.getDate()+3-(tmp.getDay()+6)%7);var jan4=new Date(tmp.getFullYear(),0,4);var wk=1+Math.round(((tmp-jan4)/864e5-3+(jan4.getDay()+6)%7)/7);return tmp.getFullYear()+"-W"+wk;}
-  // Parse dates
-  var sd=new Date(startDate+"T00:00:00");var ed=new Date(endDate+"T00:00:00");
-  if(isNaN(sd)||isNaN(ed)||ed<=sd)return[];
-  // Collect all ISO weeks between start and end
-  var weeks=[];var cur=new Date(sd.getTime());
-  // Move to Monday of start week
-  var dayOff=(cur.getDay()+6)%7;cur.setDate(cur.getDate()-dayOff);
-  var seen={};
-  while(cur<=ed){
-    var wid=isoWeek(cur);
-    if(!seen[wid]){seen[wid]=true;weeks.push(wid);}
-    cur.setDate(cur.getDate()+7);
-  }
-  if(weeks.length===0)return[];
-  // Decide number of seasons
-  var tw=weeks.length;var ns;
-  if(tw<=3)ns=1;else if(tw<=6)ns=2;else if(tw<=10)ns=3;else if(tw<=14)ns=4;else ns=5;
-  // Season pool
-  var pool=[
-    {name:"Awakening",icon:"\uD83C\uDF31",color:"var(--green)"},
-    {name:"Rising",icon:"\uD83D\uDD25",color:"var(--orange)"},
-    {name:"Clash",icon:"\u2694\uFE0F",color:"var(--red)"},
-    {name:"Final Push",icon:"\uD83C\uDFC6",color:"var(--gold)"},
-    {name:"Legends",icon:"\uD83D\uDC51",color:"var(--purple)"}
-  ];
-  // Distribute weeks
-  var base=Math.floor(tw/ns);var rem=tw%ns;var seasons=[];var idx=0;
-  for(var i=0;i<ns;i++){
-    var count=base+(i<ns-1?(i<rem?1:0):tw-idx); // last season gets remainder
-    if(i===ns-1)count=tw-idx;
-    var sw=weeks.slice(idx,idx+count);idx+=count;
-    // Compute start/end labels from week IDs
-    function weekToDate(wid){var pts=wid.split("-W");var yr=parseInt(pts[0]),wn=parseInt(pts[1]);var jan1=new Date(yr,0,1);var d=jan1.getDay();var mon=new Date(jan1);mon.setDate(jan1.getDate()+(d<=4?1-d:8-d)+(wn-1)*7);return mon;}
-    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    var sDate=weekToDate(sw[0]);
-    var eDate=weekToDate(sw[sw.length-1]);eDate.setDate(eDate.getDate()+6); // Sunday
-    var endDateStr=eDate.getFullYear()+"-"+String(eDate.getMonth()+1).padStart(2,"0")+"-"+String(eDate.getDate()).padStart(2,"0");
-    var p=pool[i]||pool[pool.length-1];
-    seasons.push({id:i+1,name:p.name,icon:p.icon,color:p.color,weeks:sw,
-      start:months[sDate.getMonth()]+" "+sDate.getDate(),
-      end:months[eDate.getMonth()]+" "+eDate.getDate(),
-      endDate:endDateStr});
-  }
-  return seasons;
-}
 
-var SEASONS=[
-  {id:1,name:"Awakening",icon:"🌱",color:"var(--green)",weeks:["2026-W12","2026-W13","2026-W14"],start:"Mar 23",end:"Apr 12",endDate:"2026-04-12"},
-  {id:2,name:"Rising",icon:"🔥",color:"var(--orange)",weeks:["2026-W15","2026-W16","2026-W17"],start:"Apr 13",end:"May 3",endDate:"2026-05-03"},
-  {id:3,name:"Clash",icon:"⚔️",color:"var(--red)",weeks:["2026-W18","2026-W19","2026-W20"],start:"May 4",end:"May 24",endDate:"2026-05-24"},
-  {id:4,name:"Final Push",icon:"🏆",color:"var(--gold)",weeks:["2026-W21","2026-W22","2026-W23","2026-W24","2026-W25"],start:"May 25",end:"Jun 28",endDate:"2026-06-28"},
-];
-function getCurrentSeason(ss){var arr=ss||SEASONS;if(!arr||arr.length===0)return null;for(var e=0;e<arr.length;e++){if(arr[e].eternal)return arr[e];}var cw=weekId();for(var i=0;i<arr.length;i++){if((arr[i].weeks||[]).indexOf(cw)!==-1)return arr[i];}return arr[arr.length-1];}
-function getSeasonEndCountdown(season){
-  if(!season||season.eternal||!season.endDate)return "∞"; // Ligue éternelle : pas de fin
-  var parts=season.endDate.split("-");
-  var endSunday=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]),23,59,59);
-  var now=new Date();
-  var diff=Math.ceil((endSunday-now)/(864e5));
-  return diff>0?diff+" days left":"Ended";
-}
 
-function computeRankings(students,cw,weeks){
-  // Build weekly XP map: {weekId: [{name, xp}]}
-  var weekMap={};
-  students.forEach(function(s){
-    var hist=s.weekly_history||[];
-    hist.forEach(function(h){
-      if(!weekMap[h.week])weekMap[h.week]=[];
-      weekMap[h.week].push({name:s.name,xp:h.xp||0});
-    });
-    // Include current week
-    if(s.week_id===cw&&(s.weekly_xp||0)>0){
-      if(!weekMap[cw])weekMap[cw]=[];
-      var exists=weekMap[cw].find(function(e){return e.name===s.name;});
-      if(!exists)weekMap[cw].push({name:s.name,xp:s.weekly_xp});
-    }
-  });
-
-  // Compute ranking points per student
-  var pointsMap={};
-  students.forEach(function(s){pointsMap[s.name]=0;});
-
-  var filteredWeeks=weeks?weeks:Object.keys(weekMap);
-  filteredWeeks.forEach(function(wk){
-    var entries=weekMap[wk]||[];
-    // Filter only active (xp > 0)
-    var active=entries.filter(function(e){return e.xp>0;}).sort(function(a,b){return b.xp-a.xp;});
-    var N=active.length;
-    active.forEach(function(entry,rank){
-      if(!pointsMap[entry.name])pointsMap[entry.name]=0;
-      pointsMap[entry.name]+=(N-rank); // 1st = N pts, 2nd = N-1, ...
-    });
-  });
-
-  // Convert to sorted array — preserve frame_id / title_id so the League rows can
-  // render the rival's equipped cosmetics (V2.4 chest redesign).
-  var result=Object.keys(pointsMap).map(function(name){
-    var s=students.find(function(st){return st.name===name;});
-    return{name:name,pts:pointsMap[name],avatar:s?s.avatar||"⚔️":"⚔️",frameId:s?s.frame_id||null:null,titleId:s?s.title_id||null:null};
-  });
-  result.sort(function(a,b){return b.pts-a.pts;});
-  return result;
-}
 
 function League(p){var u=p.u,lg=getEffectiveLeague(u.weeklyXp,u.moduleScores);
 var[rivals,setRivals]=useState([]);
@@ -15032,138 +13049,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 
 </div>);}
 
-// ─── PROFILE ───
-// ── Battle Scan → TOEIC baseline ──
-// Converts the 20-Q diagnostic Battle Scan into an approximate initial
-// TOEIC score. Used by the League "Progrès" tab to anchor each student's
-// progression baseline to their TRUE starting point (not the first weekly
-// snapshot that happened to fire after onboarding). A student who skipped
-// the scan, or who existed before the scan system, falls back to 200 —
-// same as a brand-new student with empty moduleScores.
-//
-// Linear mapping total(0-20) → TOEIC(200-600). The scan only samples 20
-// items so we cap the high end at 600 to reflect its diagnostic nature:
-// a genuinely strong starter will exceed this once real module training
-// bumps their currentToeic up.
-function battleScanToToeic(bs){
-  if(!bs)return 200;
-  // Defense: some older Supabase clients return jsonb as a string. Try to
-  // parse before giving up.
-  if(typeof bs==="string"){
-    try{bs=JSON.parse(bs);}catch(e){console.warn("[battleScan] parse failed:",e&&e.message);return 200;}
-  }
-  // Fallback: if total is missing but scores object is there, recompute it.
-  // Older scan payloads in the wild may lack a top-level total.
-  var t=null;
-  if(typeof bs.total==="number")t=bs.total;
-  else if(bs.scores&&typeof bs.scores==="object"){
-    var s=bs.scores;
-    var g=+s.grammar||0,v=+s.vocab||0,r=+s.reading||0,l=+s.listening||0;
-    t=g+v+r+l;
-  }
-  if(t===null||isNaN(t))return 200;
-  t=Math.max(0,Math.min(20,t));
-  return Math.round(200+(t/20)*400);
-}
 
-// ── TOEIC Score Estimator (global — used by Profile + TeacherDash) ──
-function estimateTOEICScore(ms,opts){
-  // CHANTIER-A v2 (2026-06-09) — refonte calibree sur la cohorte IDRAC T2.
-  // Changements clefs vs V1 :
-  //  - Normalisation PROPORTIONNELLE des sections (wSum/wTot) au lieu du hack
-  //    "wSum+=(1-wTot)*0.01" qui ecrasait le Reading des profils a couverture
-  //    partielle (defaut #2 "Reading 8/495"). NE PAS revenir en arriere.
-  //  - Gating A.1 : retourne {total:null,estimable:false|"partial"} tant que la
-  //    preuve est insuffisante, au lieu d'un cold-start trompeur a 200.
-  //  - Assiette Reading elargie aux modules transverses (A.2).
-  //  - A.5 ponderation par confiance (volume de questions par module).
-  //    /!\ Cette version A.5 etait INOPERANTE : le facteur se simplifiait dans
-  //    wSum/wTot. Remplacee le 2026-09-15 par une retenue bayesienne (voir plus bas).
-  //  - Bonus mock ASYMETRIQUE (Kamel-safe) : recompense la sur-perf mock,
-  //    ne penalise jamais une mauvaise perf mock.
-  //  - A.4 ancrage Boss 60% via opts.bossToeic (echelle 990, optionnel).
-  // CHANTIER-B (2026-06-10) — principe "tout ce qui fait de l'XP bouge le score" :
-  //  - Modules-support versés dans le Reading en POIDS FAIBLE (garde-fou validité :
-  //    le backbone Part5/6/7+Gauntlet reste dominant) : tavern, clue, traps,
-  //    modals (moy 2), bforge, timesim, stratquiz, daily.
-  //  - Endless Arena rejoint le groupe mock (full TOEIC : débloque + bonus).
-  //  - Exceptions assumées hors-score : Flashcards (0 XP) + jeux d'arcade (pas de précision).
-  ms=ms||{};opts=opts||{};
-  function rec(id){var d=ms[id];if(!d||!d.total)return null;return{acc:d.correct/d.total,q:d.total};}
-  // A.5 v2 (2026-09-15) — RETENUE BAYESIENNE, en remplacement de confW().
-  // confW ponderait les poids par le volume : ew = w*confW(q), puis la section
-  // renvoyait wSum/wTot. Le facteur apparaissait donc au numerateur ET au
-  // denominateur : il se SIMPLIFIAIT. Consequences mesurees avant correctif :
-  //   - 4 questions justes sur 4 donnaient le meme score que 300 questions a 100% ;
-  //   - un seul module sur les 23 du Reading suffisait a afficher 495/495.
-  // Desormais la masse de preuve ne disparait plus : elle est confrontee a une
-  // masse de prior. Peu de couverture ou peu de volume -> le score est tire vers
-  // PRIOR_ACC ; couverture large et volume eleve -> le prior s efface.
-  // Signale par un etudiant iabd2627 le 2026-09-15 (estimation a 990 sans etre
-  // a 100% partout).
-  var EVID_HALF=30;    // questions donnant une demi-confiance sur un module
-  var PRIOR_K=0.12;    // masse du prior, exprimee en poids de section
-  var PRIOR_ACC=0.60;  // precision supposee d un profil sans preuve
-  var MOCK_BONUS_MAX=40; // plafond du bonus mock, EN POINTS
-  function evidW(q){return q/(q+EVID_HALF);}
-  function sumQ(ids){var s=0;ids.forEach(function(id){var r=rec(id);if(r)s+=r.q;});return s;}
-  var READING_MODS=["drill","p6","p7","wordfam","connsort","prepdrill","gerinf","falsefr","pvdojo","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","tavern","clue","traps","modals_match","modals_sort","bforge","timesim","stratquiz","daily"];
-  var LIS_MODS=["lisP1","lisP2","lisP3","lisP4","ablitz"];
-  var readingQ=sumQ(READING_MODS),listeningQ=sumQ(LIS_MODS);
-  var m1=rec("mock1"),m2=rec("mock2"),mbR=rec("boss"),meR=rec("endless");
-  var bossToeic=(opts.bossToeic!=null&&isFinite(opts.bossToeic))?opts.bossToeic:null;
-  var mocksList=[m1,m2,mbR,meR].filter(Boolean); // CHANTIER-B : Endless = full TOEIC, compte comme un mock
-  var hasMock=mocksList.length>0||bossToeic!==null;
-  var mocksDone=mocksList.length+((bossToeic!==null&&!mbR)?1:0);
-  var evidence={listeningQ:listeningQ,readingQ:readingQ,mocksDone:mocksDone};
-  // A.1 seuils (decision produit — ne pas modifier sans validation) : 80 Reading, 40 Listening, ou >=1 mock.
-  var readingOK=readingQ>=80||hasMock;
-  var listeningOK=listeningQ>=40||hasMock;
-  // Sections, normalisation proportionnelle (A.2/A.3).
-  function meanRec(ids){var rs=ids.map(rec).filter(Boolean);if(!rs.length)return null;return{acc:rs.reduce(function(a,b){return a+b.acc;},0)/rs.length,q:rs.reduce(function(a,b){return a+b.q;},0)};}
-  var gauntAvg=meanRec(["gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative"]);
-  var modalsAvg=meanRec(["modals_match","modals_sort"]);
-  // CHANTIER-B : backbone (poids V2) DOMINANT + modules-support en poids FAIBLE.
-  var rdParts=[{id:"drill",w:0.22},{id:"p6",w:0.15},{id:"p7",w:0.18},{id:"wordfam",w:0.06},{id:"connsort",w:0.06},{id:"prepdrill",w:0.05},{id:"gerinf",w:0.05},{id:"falsefr",w:0.04},{id:"pvdojo",w:0.04},{id:"sbuild",w:0.04},{val:gauntAvg,w:0.11},{id:"tavern",w:0.05},{id:"clue",w:0.04},{id:"traps",w:0.04},{val:modalsAvg,w:0.04},{id:"bforge",w:0.03},{id:"timesim",w:0.03},{id:"stratquiz",w:0.02},{id:"daily",w:0.03}];
-  var lisParts=[{id:"lisP1",w:0.18},{id:"lisP2",w:0.27},{id:"lisP3",w:0.25},{id:"lisP4",w:0.22},{id:"ablitz",w:0.08}];
-  function section(parts){
-    var wSum=0,wTot=0,has=false;
-    parts.forEach(function(p){var r=p.val!==undefined?p.val:rec(p.id);if(r){var ew=p.w*evidW(r.q);wSum+=r.acc*ew;wTot+=ew;has=true;}});
-    if(!has)return null;
-    // NE PAS revenir a wSum/wTot : c est ce qui rendait la ponderation par
-    // confiance inoperante (elle se simplifie). Le +PRIOR_K est ce qui fait
-    // que la couverture et le volume comptent vraiment.
-    return (wSum+PRIOR_K*PRIOR_ACC)/(wTot+PRIOR_K);
-  }
-  var rawLis=section(lisParts),rawRd=section(rdParts);
-  // Anti-trou : une section debloquee par un mock mais sans module propre est derivee de l'acc mock.
-  var mockAcc=null;
-  if(mocksList.length){var sa=0,qa=0;mocksList.forEach(function(m){sa+=m.acc*m.q;qa+=m.q;});mockAcc=qa?sa/qa:null;}
-  if(hasMock&&mockAcc!==null){if(rawRd===null)rawRd=mockAcc;if(rawLis===null)rawLis=mockAcc;}
-  var lisScore=rawLis!==null?Math.round(Math.max(5,Math.min(495,5+rawLis*490))):null;
-  var rdScore=rawRd!==null?Math.round(Math.max(5,Math.min(495,5+rawRd*490))):null;
-  // A.1 — aucune preuve : non estimable.
-  if(!readingOK&&!listeningOK){
-    return{total:null,listening:null,reading:null,estimable:false,evidence:evidence,reason:"insufficient_data"};
-  }
-  var bothShown=lisScore!==null&&rdScore!==null;
-  if(readingOK&&listeningOK&&bothShown){
-    var total=lisScore+rdScore;
-    // Bonus mock ADDITIF plafonne en points. Il etait multiplicatif (+20% max)
-    // applique au total : +18% sur 843 donnait 995, donc 990 apres plafonnement.
-    // Autrement dit 82,5% de precision suffisaient a afficher un 990. En points,
-    // la sur-performance mock reste recompensee sans jamais saturer l echelle.
-    // Toujours ASYMETRIQUE (Kamel-safe) : une mauvaise perf mock ne retire rien.
-    var bonusPts=0;mocksList.forEach(function(m){if(m.acc>0.60)bonusPts+=(m.acc-0.60)*100;});
-    bonusPts=Math.min(MOCK_BONUS_MAX,bonusPts);
-    if(bonusPts>0)total=total+bonusPts;
-    if(bossToeic!==null)total=0.60*bossToeic+0.40*total; // A.4
-    total=Math.max(200,Math.min(990,total));
-    return{total:Math.round(total/5)*5,listening:lisScore,reading:rdScore,estimable:true,evidence:evidence};
-  }
-  // A.1 — cas partiel : une seule section calculable.
-  return{total:null,listening:(listeningOK&&lisScore!==null)?lisScore:null,reading:(readingOK&&rdScore!==null)?rdScore:null,estimable:"partial",evidence:evidence};
-}
 
 // ─── UPGRADE SCREEN (Phase 3 Session 2) ───
 // Full-page screen presenting Monthly vs Pass 3m and launching Stripe Checkout.
@@ -15351,59 +13237,7 @@ function UpgradeScreen(p){
   </div>);
 }
 
-// V2 — Insight Token heuristic. Picks the module with the lowest accuracy (≥ 20 Q
-// to filter noise) and returns a personalized weakness paragraph. Used by the Insight
-// Token consume flow ; the result is persisted to u.insights for later review.
-function generateInsight(u){
-  if(!u||!u.moduleScores)return"Not enough data yet. Keep training and come back later.";
-  var weak=null,weakAcc=1.01;
-  Object.keys(u.moduleScores).forEach(function(modId){
-    var m=u.moduleScores[modId];
-    if(!m||(m.total||0)<20)return; // need a meaningful sample
-    var acc=m.correct/m.total;
-    if(acc<weakAcc){weakAcc=acc;weak={modId:modId,acc:acc,total:m.total,sessions:m.sessions||0};}
-  });
-  if(!weak){
-    return"Not enough questions on any single module yet to pinpoint a weak spot (need at least 20 Q per module). Keep mixing exercises and come back to spend this token later.";
-  }
-  var modMeta=MISSION_MODULES.find(function(m){return m.id===weak.modId;});
-  var label=modMeta?modMeta.name:weak.modId;
-  var pct=Math.round(weak.acc*100);
-  var advice;
-  if(pct<40)advice="This is your weakest area — aim for 2-3 targeted sessions this week to close the gap.";
-  else if(pct<60)advice="You're improving, but this module still has room. One focused session a day for 3 days and you'll feel the difference.";
-  else if(pct<75)advice="You know the basics, the leftovers are pure traps. Re-read the explanation after every miss.";
-  else advice="No real measurable weakness here. Move to Mock Tests for a harder format challenge.";
-  return"Weakest spot: "+label+" — "+pct+"% accuracy on "+weak.total+" questions ("+weak.sessions+" sessions). "+advice;
-}
 
-// V2 step 5 — Conversions sub-view : trade duplicate cosmetics for tokens, or 5 non-premium
-// tokens for 1 premium. Mounted from the Shop (P2b) ; was a Profile sub-view pre-P2b.
-// ═══ ARENA SHOP (P2a, 2026-06-01) ═══
-// Spend Darics on shop-exclusive cosmetics, tokens, and cheat sheets. Conversions
-// (dups → token, tokens → premium) reachable via the in-shop Conversions sub-view
-// (reuses ConversionsView). Buying is atomic server-side (spend_marks RPC, via
-// p.buy → shopBuy). Owned one-shots grey out (anti-rebuy), tokens grey at cap. A
-// confirm step guards accidental spends (no refund on cosmetics by design). The
-// Shop entry point is visitor-blocked (currency never accrues for visitors).
-var SHOP_SECTIONS=[
-  {key:"skin",label:"Skins"},
-  {key:"frame",label:"Frames"},
-  {key:"title",label:"Titles"},
-  {key:"boost",label:"XP Boosts"},
-  {key:"token",label:"Tokens"},
-  {key:"cheat_sheet",label:"Cheat Sheets"},
-];
-function shopRarColor(rid){for(var i=0;i<RARITIES.length;i++){if(RARITIES[i].id===rid)return RARITIES[i].color;}return "var(--bdr)";}
-function shopItemName(item){
-  var m=item.cat==="skin"?SKINS:item.cat==="frame"?FRAMES:item.cat==="title"?TITLES:item.cat==="cheat_sheet"?CHEAT_SHEETS:item.cat==="token"?TOKEN_TYPES:null;
-  return (m&&m[item.ref]&&m[item.ref].name)||item.ref;
-}
-function shopItemDesc(item){
-  if(item.cat==="token")return (TOKEN_TYPES[item.ref]||{}).desc||"";
-  if(item.cat==="cheat_sheet")return "Cheat sheet — unlocks in your codex";
-  var r=item.rarity||"";return r.charAt(0).toUpperCase()+r.slice(1)+" · shop exclusive";
-}
 function ShopItemVisual(p){
   var item=p.item;
   if(item.cat==="skin"){var sk=SKINS[item.ref]||{};return(<div style={{width:52,height:52,borderRadius:13,background:"linear-gradient(135deg,"+(sk.hex||"#888")+","+(sk.dark||"#555")+")",border:"2px solid "+shopRarColor(item.rarity),boxShadow:"0 0 14px "+(sk.hex||"#888")+"66"}}/>);}
@@ -17250,7 +15084,7 @@ useEffect(function(){
             // Week transition (load-time). Same logic as mid-session — delegates to
             // applyWeekTransition which also pushes the weekly_snapshots row.
             if(applyWeekTransition(d)){
-              _syncDirty=true;
+              setSyncDirty(true);
               saveLocal(d); // ensure localStorage reflects the transition so keepalive onUnload doesn't push stale data
             }
             if(!d.moduleScores)d.moduleScores={};
@@ -17690,7 +15524,7 @@ useEffect(function(){
         // (common on mobile PWAs). Without this, weekly_xp would accumulate across weeks
         // and week_id would stay stale until next full page load.
         var weekChanged=applyWeekTransition(c);
-        if(weekChanged){console.warn("[WEEK] transition detected mid-session —",c.weekId);_syncDirty=true;}
+        if(weekChanged){console.warn("[WEEK] transition detected mid-session —",c.weekId);setSyncDirty(true);}
         saveLocal(c);
         timeRef.current.ticks+=1;
         // Sync to cloud every 2 min — ONLY if tab is visible (prevents overwriting other devices)
@@ -17705,7 +15539,7 @@ useEffect(function(){
         sU(function(prev){
           if(!prev)return prev;
           var c=JSON.parse(JSON.stringify(prev));
-          if(applyWeekTransition(c))_syncDirty=true;
+          if(applyWeekTransition(c))setSyncDirty(true);
           saveLocal(c);
           syncToCloud(c);
           return c;
@@ -18182,7 +16016,7 @@ var prevLeague=getLeague(c.weeklyXp);
     // allowInsert: onboard() est le SEUL appelant autorisé à créer une ligne pour un
     // prénom déjà présent dans une autre promo (homonyme). Cf. garde anti-phantom
     // dans save() — ne pas propager ce flag aux syncs de routine.
-    _syncDirty=true;
+    setSyncDirty(true);
     // authBind (P2 Phase A) : signup PASSWORD → la ligne créée ici reçoit user_id +
     // password_set_at (via save/bindAuth). Absent pour visitor/legacy (session anonyme).
     syncToCloud(u,{allowInsert:true,bindAuth:!!authBind});
@@ -18240,7 +16074,7 @@ var prevLeague=getLeague(c.weeklyXp);
     // devices (same auth user recovering different students — each UPDATE hit the PK unique
     // constraint). Since the INSERT policy was relaxed (no more id = auth.uid() requirement)
     // and primary lookup uses (name, class_code) from localStorage, id rebinding is obsolete.
-    _cachedUserId=userId;
+    setCachedUserId(userId);
 
     try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     try { localStorage.setItem('toeic-arena-class', classCode); } catch(e) {}
@@ -18273,7 +16107,7 @@ var prevLeague=getLeague(c.weeklyXp);
     var sess=await supabase.auth.getSession();
     var userId=sess.data.session?sess.data.session.user.id:null;
     if(!userId){console.warn("[recoverByEmail] no session post signin");return false;}
-    _cachedUserId=userId;
+    setCachedUserId(userId);
     try{localStorage.setItem('toeic-arena-name',d.name);}catch(e){}
     try{localStorage.setItem('toeic-arena-class',d.class_code);}catch(e){}
     var u=supaToLocal(d);
@@ -18395,7 +16229,7 @@ var prevLeague=getLeague(c.weeklyXp);
     // To fully destroy the session use deleteAccount instead.
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
-    _cachedUserId=null;_syncDirty=false;
+    setCachedUserId(null);setSyncDirty(false);
     sU(null);sSP(null);sT("home");
   }
 
@@ -18438,7 +16272,7 @@ var prevLeague=getLeague(c.weeklyXp);
     try{await supabase.auth.signOut();}catch(e){console.warn("[deleteAccount] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
-    _cachedUserId=null;_syncDirty=false;
+    setCachedUserId(null);setSyncDirty(false);
     sU(null);sSP(null);sT("home");
   }
   async function reset(){
@@ -18448,7 +16282,7 @@ var prevLeague=getLeague(c.weeklyXp);
     try{await supabase.auth.signOut();}catch(e){console.warn("[reset] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
-    _cachedUserId=null;_syncDirty=false;
+    setCachedUserId(null);setSyncDirty(false);
     sU(null);sSP(null);sT("home");
   }
 

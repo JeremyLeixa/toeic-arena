@@ -40,9 +40,10 @@ const BASELINE = '26c1f80';
 const OLD = extractEstimator(
   execSync('git show ' + BASELINE + ':src/App.jsx', { cwd: ROOT, maxBuffer: 64 * 1024 * 1024 }).toString('utf8'),
   'baseline ' + BASELINE);
-const NEW = extractEstimator(
-  fs.readFileSync(path.join(ROOT, 'src', 'App.jsx'), 'utf8'),
-  'working tree');
+// Cote NEW : le vrai module lib/toeic.js (decoupage d'App.jsx, 2026-09-15), requis tel quel.
+// Cote OLD : inchange, le commit fige contient encore le monolithe et extractEstimator y
+// reste valable. Aucune copie de l'algo n'est maintenue ici.
+const NEW = require(path.join(ROOT, 'src', 'lib', 'toeic.js')).estimateTOEICScore;
 
 let fails = 0;
 const check = (cond, msg) => { if (!cond) { fails++; console.log('  FAIL ' + msg); } };

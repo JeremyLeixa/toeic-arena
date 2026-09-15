@@ -17,29 +17,11 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-// CRLF normalise : les marqueurs d'extraction ci-dessous utilisent "\n".
-const src = fs.readFileSync(path.join(ROOT, "src", "App.jsx"), "utf8").replace(/\r\n/g, "\n");
-
-// ── On evalue le VRAI bloc helper extrait d'App.jsx, pas une copie ──
-function extract(startMarker, endMarker) {
-  const a = src.indexOf(startMarker);
-  const b = src.indexOf(endMarker, a);
-  if (a < 0 || b < 0) throw new Error("helper block not found in App.jsx: " + startMarker);
-  return src.slice(a, b);
-}
-const helperSrc =
-  "function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}\n" +
-  "function srand(s){var x=Math.sin(s)*10000;return x-Math.floor(x);}\n" +
-  extract("function shufListeningOpts(", "// Permute un item listening complet") +
-  extract("function shufListeningItem(", "\n}\n", 1) +
-  "\n}\n" +
-  extract("function seedFromId(", "// Calcule une fois au chargement du module") +
-  "module.exports={shufListeningItem:shufListeningItem,remapOptLetters:remapOptLetters," +
-  "detShufListeningItem:detShufListeningItem,BOSS_SHUF_STEP:BOSS_SHUF_STEP};";
-
-const mod = { exports: {} };
-new Function("module", "exports", helperSrc)(mod, mod.exports);
-const { shufListeningItem, remapOptLetters, detShufListeningItem } = mod.exports;
+// ── On requiert le VRAI module lib/listeningShuffle.js (découpage d'App.jsx, 2026-09-15) ──
+// require(esm) : Node >= 22.12 et package.json "type": "module". Le module tire util.js et
+// data/bossTestFull.js, tous purs. Plus aucun découpage de texte.
+const { shufListeningItem, remapOptLetters, detShufListeningItem } =
+  require(path.join(ROOT, "src", "lib", "listeningShuffle.js"));
 
 let fails = 0;
 function check(cond, msg) {
