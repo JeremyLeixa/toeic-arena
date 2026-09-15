@@ -97,10 +97,10 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ url: portalSession.url });
   } catch (err) {
+    // L4 : voir stripe-checkout-create.js — le detail reste cote logs.
     console.error("[stripe-portal-create] error:", err && err.message);
     return res.status(500).json({
       error: "Portal session creation failed",
-      detail: err && err.message,
     });
   }
 }

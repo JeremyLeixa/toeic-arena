@@ -220,10 +220,13 @@ export default async function handler(req, res) {
       mode: STRIPE_MODE,
     });
   } catch (err) {
+    // L4 : le message d'erreur reste dans les logs Vercel, il ne part plus au
+    // client. Une exception Stripe ou Supabase renvoyee telle quelle decrit
+    // l'infra (noms de tables, contraintes, ids de prix, etat des cles) a qui
+    // sait provoquer l'erreur. Rien dans l'UI ne lisait ce champ.
     console.error("[stripe-checkout-create] error:", err && err.message);
     return res.status(500).json({
       error: "Checkout session creation failed",
-      detail: err && err.message,
     });
   }
 }
