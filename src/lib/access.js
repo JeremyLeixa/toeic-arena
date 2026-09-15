@@ -28,7 +28,8 @@ export function isModuleLocked(moduleId, u, gType) {
 // d'attribution de row (cf. chantier hardening 2026-04-24).
 export var PREMIUM_UPGRADE_ENABLED=true;
 // save() — localStorage + Supabase (UPDATE first, INSERT if no row)
-export var GHOST_NAME="Teacher";// Colonnes du roster formateur. Plus utilisee comme argument de select() depuis la
+export var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync to Supabase
+// Colonnes du roster formateur. Plus utilisee comme argument de select() depuis la
 // Phase C-lite (le dashboard passe par la RPC teacher_students) : gardee comme
 // reference, la liste SQL de la RPC doit rester identique a celle-ci.
 // var DASH_STUDENT_COLS="id,name,class_code,xp,weekly_xp,week_id,streak,last_active,stats,total_time,module_scores,mock_results,game_scores,unlocked_ach,weekly_daily_count,weekly_history";

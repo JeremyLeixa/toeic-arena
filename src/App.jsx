@@ -642,7 +642,6 @@ async function load(userId){
   return local||null;
 }
 
- // Teacher is hidden from leaderboards but DOES sync to Supabase
 
 // B3 (2026-09-14) — colonnes lues par le Teacher Dashboard.
 // Avant, les 3 chargements de roster faisaient `select('*')` : 200 lignes COMPLETES,
