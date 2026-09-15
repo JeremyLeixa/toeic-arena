@@ -76,6 +76,8 @@ import { renderAv, AvatarMedal, TreasureChestSvg } from "./components/avatar.jsx
 import { AchToast, MarksToast, DaricPill, XpToast } from "./components/toasts.jsx";
 import { Tabs } from "./components/Tabs.jsx";
 import { GrimoireReader } from "./components/GrimoireReader.jsx";
+import { NextStepReco } from "./components/NextStepReco.jsx";
+import { BossResetCTA, EndlessResetCTA, MockResetCTA } from "./components/TokenCTAs.jsx";
 
 
 
@@ -3610,41 +3612,6 @@ function TodayFocusBanner(p){
   </button>);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// NextStepReco — drop-in card for module done screens. Suggests the part
-// where the user is currently weakest (excluding the one they just did).
-// Used in Drill/Tavern/Listening done screens for V1, expandable later.
-// ═══════════════════════════════════════════════════════════════════════
-function NextStepReco(p){
-  var u=p.u,fromMod=p.fromMod,nav=p.nav;
-  if(!u||!u.moduleScores)return null;
-  var totalQ=(u.stats&&u.stats.totalQ)||0;
-  var hasScan=!!bsScanParts(u);
-  if(totalQ<20&&!hasScan)return null;
-  var pa=partAccuracies(u.moduleScores,bsScanParts(u));
-  var fromPart=partOfModule(fromMod);
-  var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
-  var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
-  var pickFrom=null;
-  Object.keys(pa).forEach(function(k){
-    if(k===fromPart)return; // suggest something different than what they just did
-    var d=pa[k];if(!d)return;
-    var minN=d.source==="scan"?5:10;
-    if(d.n<minN)return;
-    if(!pickFrom||d.acc<pickFrom.acc)pickFrom={partId:k,acc:d.acc};
-  });
-  if(!pickFrom||pickFrom.acc>=0.85)return null;
-  var accPct=Math.round(pickFrom.acc*100);
-  return(<button onClick={function(){if(nav)nav(reco[pickFrom.partId]);}}
-    style={{width:"100%",marginTop:12,padding:"12px 14px",background:"rgba(139,92,246,.06)",border:"1px solid rgba(139,92,246,.25)",borderRadius:12,cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontFamily:"'DM Sans',sans-serif",textAlign:"left"}}>
-    <GIcon name="path-distance" size={18} color="var(--purple)"/>
-    <div style={{flex:1,minWidth:0}}>
-      <div className="out" style={{fontWeight:700,fontSize:12,color:"var(--purple)"}}>{"Next: "+labels[pickFrom.partId]}</div>
-      <div style={{fontSize:10,color:"var(--t2)",marginTop:1}}>{"Your weakest remaining area ("+accPct+"%)"}</div>
-    </div>
-    <span style={{fontSize:14,color:"var(--purple)"}}>{"›"}</span>
-  </button>);
-}
 
 function Home(p){
 var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily&&u.daily.date===today()&&u.daily.done;
@@ -3850,77 +3817,6 @@ return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph=
 {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s ease-out"}}><div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}><p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.x}</p></div>
 <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next Question":"See Results"}</button></div>}</div>);}
 
-// V2 — Generic in-context token CTA. Self-fetches the token quantity, exposes a
-// confirm modal, calls consumeToken on confirm, and arms a custom flag on the user.
-// Used by Boss Reset (under Train Boss card) and Endless Resurrect (under Endless card).
-function TokenContextCTA(p){
-  // p : tokenType, armField, ctaLabel, modalTitle, modalDesc, accentColor, headline
-  var [qty,setQty]=useState(null);
-  var [asking,setAsking]=useState(false);
-  var [busy,setBusy]=useState(false);
-  var [toast,setToast]=useState(null);
-  useEffect(function(){
-    getOwnedTokens(p.u.name,p.u.classCode||"visitor").then(function(t){setQty((t&&t[p.tokenType])||0);});
-  },[]);
-  if(qty===null||qty===0)return null;
-  var info=TOKEN_TYPES[p.tokenType]||{};
-  var icon=info.icon||"🎟️";
-  var cap=info.cap||1;
-  var color=p.accentColor||"var(--gold)";
-  function doUse(){
-    if(busy)return;
-    setBusy(true);
-    consumeToken(p.u.name,p.u.classCode||"visitor",p.tokenType,1).then(function(res){
-      setBusy(false);setAsking(false);
-      if(!res.ok){setToast({err:true,msg:"Failed: "+(res.error||"unknown")});setTimeout(function(){setToast(null);},2400);return;}
-      var c=JSON.parse(JSON.stringify(p.u));c[p.armField]=true;
-      p.setUser(c);
-      setQty(qty-1);
-      setToast({err:false,msg:icon+" "+(p.armedMsg||"Token armed")});
-      setTimeout(function(){setToast(null);},2400);
-    });
-  }
-  return(<div style={{padding:"12px 14px",marginBottom:10,borderRadius:12,background:"rgba(255,192,32,.06)",border:"1px solid rgba(255,192,32,.25)",display:"flex",alignItems:"center",gap:10}}>
-    <span style={{fontSize:24,flexShrink:0}}>{icon}</span>
-    <div style={{flex:1,minWidth:0}}>
-      <div style={{fontSize:12,fontWeight:700,color:color}}>{p.headline} (×{qty})</div>
-      <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>{p.cardDesc}</div>
-    </div>
-    <button onClick={function(){setAsking(true);}} className="btn2" style={{fontSize:11,padding:"7px 12px",flexShrink:0,whiteSpace:"nowrap"}}>Use</button>
-    {asking&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)setAsking(false);}}>
-      <div className="crd" style={{maxWidth:340,padding:20,textAlign:"center",border:"1px solid var(--bdr)"}}>
-        <div style={{fontSize:48,marginBottom:12}}>{icon}</div>
-        <h2 className="out" style={{fontSize:18,fontWeight:800,marginBottom:8}}>{p.modalTitle}</h2>
-        <p style={{fontSize:13,color:"var(--t2)",marginBottom:6,lineHeight:1.5}}>{p.modalDesc}</p>
-        <p style={{fontSize:12,color:"var(--t3)",marginBottom:18}}><strong style={{color:color}}>{Math.max(0,qty-1)} / {cap}</strong> will remain after use.</p>
-        <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-          <button onClick={function(){setAsking(false);}} className="btn2" style={{flex:1,fontSize:13,padding:"10px 16px"}}>Cancel</button>
-          <button onClick={doUse} disabled={busy} className="btn1" style={{flex:1,fontSize:13,padding:"10px 16px"}}>{busy?"...":"Use"}</button>
-        </div>
-      </div>
-    </div>}
-    {toast&&<div style={{position:"fixed",bottom:80,left:"50%",transform:"translateX(-50%)",padding:"12px 18px",borderRadius:10,background:toast.err?"rgba(220,58,80,.15)":"rgba(46,180,100,.15)",border:"1px solid "+(toast.err?"var(--red)":"var(--green)"),color:toast.err?"var(--red)":"var(--green)",fontSize:13,fontWeight:700,zIndex:10000}}>{toast.msg}</div>}
-  </div>);
-}
-// Wrappers that fix the per-token copy.
-function BossResetCTA(p){
-  return(<TokenContextCTA u={p.u} setUser={p.setUser} tokenType="boss_reset" armField="bossResetArmed"
-    headline="Boss Reset available" cardDesc="Bypass the 24h cooldown to re-enter the boss now."
-    modalTitle="Use Boss Reset?" modalDesc="Bypass the 24h cooldown on the Boss Test."
-    armedMsg="Boss Reset armed — arena is open"/>);
-}
-function EndlessResetCTA(p){
-  return(<TokenContextCTA u={p.u} setUser={p.setUser} tokenType="endless_resurrect" armField="endlessResetArmed"
-    headline="Endless Resurrect available" cardDesc="Bypass the 24h cooldown to replay an Endless run."
-    modalTitle="Use Endless Resurrect?" modalDesc="Bypass the 24h cooldown on the Endless Arena."
-    armedMsg="Endless Resurrect armed — replay your run"/>);
-}
-function MockResetCTA(p){
-  return(<TokenContextCTA u={p.u} setUser={p.setUser} tokenType="mock_reset" armField="mockResetArmed"
-    headline="Mock Reset available" cardDesc="Bypass the lock to replay a completed Mock Test now."
-    modalTitle="Use Mock Reset?" modalDesc="Unlocks the next Mock Test you play (any of the 3)."
-    armedMsg="Mock Reset armed — pick your Mock"/>);
-}
 
 // ─── TRAIN PAGE ───
   function Train(p){
