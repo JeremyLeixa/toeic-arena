@@ -42,6 +42,7 @@ import { LINKING_BRIDGE } from "./data/linkingBridge.js";
 import { NARRATOR_MOMENTS, NARRATOR_ORDER, hasHeardMoment, markMomentHeard } from "./narrator.js";
 import { CGV_ARTICLES, CGV_VERSION, CGV_EFFECTIVE_DATE } from "./data/cgv.js";
 import { shufListeningItem, BOSS_P2_SHUF } from "./lib/listeningShuffle.js";
+import { FREE_FLASHCARD_DOMAINS, hasFullAccess, isModuleLocked, PREMIUM_UPGRADE_ENABLED, GHOST_NAME, isGhost } from "./lib/access.js";
 
 
 
@@ -264,9 +265,6 @@ function getEffectiveLeague(wxp,ms){
   }
   return l;
 }
-// ─── FREEMIUM: modules available in visitor/free mode ───
-var FREE_MODULES = ["daily","drill","csess","lisP2","stratquiz","strats","gramref","wfall","tavern"];
-var FREE_FLASHCARD_DOMAINS = ["finance","travel","office","linking"];
 
 // ─── FEEDBACK FORM: catalog of modules grouped by category ───
 // Used by the in-app feedback form (Profile → Send feedback) and by the
@@ -334,22 +332,7 @@ var FEEDBACK_MODULES = [
 ];
 function findModuleLabel(id){for(var i=0;i<FEEDBACK_MODULES.length;i++){var g=FEEDBACK_MODULES[i].items;for(var j=0;j<g.length;j++){if(g[j].id===id)return g[j].label;}}return id;}
 
-// Returns true if the user has unrestricted access to all premium modules.
-// Reasons: active Stripe subscription, active 3-month pass, or active institutional group.
-function hasFullAccess(u, gType) {
-  if (!u) return false;
-  if (u.accessLevel === "premium_monthly") return true;
-  if (u.accessLevel === "premium_pass" && u.accessExpiresAt && new Date(u.accessExpiresAt) > new Date()) return true;
-  // Institutional (school/pro) users get full access until their group's end_date
-  // (expired groups are handled upstream — user is redirected to the expired screen before reaching module gates)
-  if (gType === "school" || gType === "pro") return true;
-  return false;
-}
 
-function isModuleLocked(moduleId, u, gType) {
-  if (hasFullAccess(u, gType)) return false;
-  return FREE_MODULES.indexOf(moduleId) === -1;
-}
 
 function dailyQs(date,u){
   var seed=0;for(var i=0;i<date.length;i++)seed+=date.charCodeAt(i);
@@ -526,15 +509,6 @@ async function teacherAuth(code){
   }catch(e){console.warn("[teacher] teacher_groups caught:",e&&e.message);return{ok:false,error:"rpc_error"};}
 }
 
-// ─── PREMIUM FEATURE FLAG ───
-// Bascule manuelle. False = bouton "Passer à Premium" grisé + UpgradeScreen
-// bloqué (affiche juste "Bientôt disponible"). Les utilisateurs déjà Premium
-// (pass ou monthly actif) gardent leur accès — seule la nouvelle souscription
-// est bloquée.
-//
-// À remettre à TRUE dès que le flow E2E est validé end-to-end sans bug
-// d'attribution de row (cf. chantier hardening 2026-04-24).
-var PREMIUM_UPGRADE_ENABLED=true;
 import { supabase } from './supabase.js'
 import { getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCustomerPortal, confirmPasswordReset, signUpWithPassword, signInWithPassword, requestPasswordReset, updatePassword, signUpStudent, signInStudent, bindStudentUserId } from './auth.js'
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
@@ -667,8 +641,7 @@ async function load(userId){
   return local||null;
 }
 
-// save() — localStorage + Supabase (UPDATE first, INSERT if no row)
-var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync to Supabase
+ // Teacher is hidden from leaderboards but DOES sync to Supabase
 
 // B3 (2026-09-14) — colonnes lues par le Teacher Dashboard.
 // Avant, les 3 chargements de roster faisaient `select('*')` : 200 lignes COMPLETES,
@@ -686,12 +659,6 @@ var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES sync t
 // lettres — c'est ce qui donnait "public-speaker Listening Part 4" dans le dashboard.
 function optIcon(ic){if(!ic)return"";for(var k=0;k<ic.length;k++){if(ic.charCodeAt(k)>127)return ic;}return"";}
 
-// Colonnes du roster formateur. Plus utilisee comme argument de select() depuis la
-// Phase C-lite (le dashboard passe par la RPC teacher_students) : gardee comme
-// reference, la liste SQL de la RPC doit rester identique a celle-ci.
-// var DASH_STUDENT_COLS="id,name,class_code,xp,weekly_xp,week_id,streak,last_active,stats,total_time,module_scores,mock_results,game_scores,unlocked_ach,weekly_daily_count,weekly_history";
-// A "ghost student" is a registered student (non-visitor) who barely engaged with the app
-function isGhost(s){if(!s)return false;if(s.class_code==="visitor")return false;var tq=(s.stats&&s.stats.totalQ)||0;var cr=(s.stats&&s.stats.cardsRev)||0;return tq<=15&&cr<=10;}
 // Recover an auth session if the current one has been lost (refresh token expired,
 // tab backgrounded too long, etc). Returns a user object or null if recovery failed.
 async function ensureAuthSession(){
