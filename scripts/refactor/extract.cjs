@@ -10,6 +10,9 @@
  * Une entrée "stmt:<préfixe>" désigne une instruction top-level qui n'est pas une
  * déclaration (ex. "stmt:if(window.speechSynthesis)") : App.jsx en a trois, elles suivent
  * leur groupe sans `export`. Le préfixe doit être unique.
+ * Une entrée "~nom" déplace `nom` SANS l'exporter (helper privé du nouveau module, utilisé
+ * par lui seul) : évite qu'un fichier de composants exporte une fonction qui n'en est pas
+ * une (react-refresh/only-export-components). Le census compte aussi ces symboles privés.
  * --show imprime le contenu des cibles (utile avec --dry).
  *
  * Pour chaque cible :
@@ -85,9 +88,11 @@ for (const file of walkDir(SRC, [])) {
 // ── Validation du manifeste ──────────────────────────────────────────────────
 const targets = Object.keys(manifest);
 const targetOf = new Map(); // nom → cible
+const privateNames = new Set(); // "~nom" : déplacé sans export
 for (const t of targets) {
   if (!t.startsWith('src/')) die('cible hors src/ : ' + t);
   if (fs.existsSync(path.join(ROOT, t))) die('la cible existe déjà : ' + t + ' (un lot = un fichier, en une fois)');
+  manifest[t] = manifest[t].map((n) => { if (n.startsWith('~')) { privateNames.add(n.slice(1)); return n.slice(1); } return n; });
   for (const n of manifest[t]) {
     if (targetOf.has(n)) die(n + ' listé deux fois');
     if (n.startsWith('stmt:')) { findLoose(n.slice(5)); targetOf.set(n, t); continue; }
@@ -142,7 +147,8 @@ for (const target of targets) {
     removeRanges.push([start, end]);
     const head = code.slice(start, s.range[0]);
     let body = code.slice(s.range[0], end);
-    if (isLoose(s)) { pieces.push(head + body); }
+    const stmtNames = manifest[target].filter((n) => !n.startsWith('stmt:') && byName.get(n).stmt === s);
+    if (isLoose(s) || stmtNames.every((n) => privateNames.has(n))) { pieces.push(head + body); }
     else {
       if (!/^(async\s+)?function\b|^(var|let|const)\b/.test(body)) die('déclaration inattendue pour ' + manifest[target].join(',') + ' : ' + body.slice(0, 40));
       pieces.push(head + 'export ' + body);
@@ -193,6 +199,8 @@ const stillUsed = T.collectRefs(appAst, symbolNames);
 const addLines = [];
 for (const target of targets) {
   const need = manifest[target].filter((n) => stillUsed.has(n));
+  const leak = need.filter((n) => privateNames.has(n));
+  if (leak.length) die('App.jsx utilise encore ' + leak.join(', ') + ' : impossible de les déplacer en privé (~)');
   if (need.length) addLines.push('import { ' + need.join(', ') + ' } from "' + relImport('src/App.jsx', target) + '";');
 }
 // imports d'App.jsx devenus inutiles (utilisés AVANT uniquement par le code déplacé)

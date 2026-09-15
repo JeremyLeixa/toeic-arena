@@ -46,7 +46,11 @@ for (const file of walkDir(SRC, [])) {
   try { ast = T.parse(fs.readFileSync(file, 'utf8')); } catch (e) { console.log('  FAIL ' + rel + ' ne parse pas : ' + e.message); process.exit(1); }
   for (const d of T.topLevelDecls(ast)) {
     if (d.kind === 'import') continue;
-    if (rel !== 'src/App.jsx' && !/^export-/.test(d.kind)) continue; // privé à son module
+    // Hors App.jsx : une déclaration privée ne compte pas dans un module historique (le
+    // `shuffle` de scanEngine.js n'est pas une copie), mais compte dans les dossiers créés
+    // par le découpage : un helper déplacé sans export ("~nom" dans le manifeste) y vit.
+    const splitDir = /^src\/(lib|components|features|styles)\//.test(rel);
+    if (rel !== 'src/App.jsx' && !splitDir && !/^export-/.test(d.kind)) continue;
     if (!where.has(d.name)) where.set(d.name, []);
     if (!where.get(d.name).includes(rel)) where.get(d.name).push(rel);
     if (rel === 'src/App.jsx' && d.kind === 'default-function' && d.name === 'App') appHasDefault = true;

@@ -29,12 +29,17 @@ try {
 } catch (e) { json = e.stdout ? e.stdout.toString('utf8') : ''; }
 const results = JSON.parse(json);
 
-let total = 0;
+// `react-refresh/only-export-components` ne parle pas de qualité du code mais de HMR : un
+// fichier .jsx qui exporte un composant ET autre chose (renderAv, une table de styles)
+// perd le fast-refresh pour lui seul. Le monolithe n'exportait rien, donc ne l'avait
+// jamais ; le découpage la fait apparaître mécaniquement. Hors total, mais comptée à part.
+let total = 0, refresh = 0;
 const undef = [], unusedImports = [];
 for (const f of results) {
   const rel = path.relative(ROOT, f.filePath).split(path.sep).join('/');
   const lines = fs.readFileSync(f.filePath, 'utf8').split('\n');
   for (const m of f.messages) {
+    if (m.ruleId === 'react-refresh/only-export-components') { refresh++; continue; }
     total++;
     if (m.ruleId === 'no-undef') undef.push(rel + ':' + m.line + '  ' + m.message);
     if (m.ruleId === 'no-unused-vars' && /^\s*import\b/.test(lines[m.line - 1] || '')) unusedImports.push(rel + ':' + m.line + '  ' + m.message);
@@ -57,6 +62,6 @@ let fails = 0;
 const show = (title, arr) => { console.log(title + ' : ' + arr.length); for (const l of arr) console.log('   ' + l); if (arr.length) fails++; };
 show('no-undef (import manquant)', undef);
 show('imports inutilisés nouveaux (' + (unusedImports.length - newUnused.length) + ' préexistants ignorés)', newUnused);
-console.log('total src/ : ' + total + (ref ? ' (référence ' + ref.totalSrc + ', figée le ' + ref.frozenAt + ')' : ' (pas de référence : --freeze)'));
+console.log('total src/ : ' + total + (ref ? ' (référence ' + ref.totalSrc + ', figée le ' + ref.frozenAt + ')' : ' (pas de référence : --freeze)') + (refresh ? ' ; ' + refresh + ' avertissement(s) react-refresh hors total' : ''));
 if (ref && total > ref.totalSrc) { fails++; console.log('   le total a AUGMENTÉ de ' + (total - ref.totalSrc)); }
 process.exit(fails ? 1 : 0);
