@@ -407,3 +407,14 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   source (`scripts/clientPaths.cjs`) et deux règles sont ajoutées à `CLAUDE.md`. Le seul
   effet sur le chantier : `groups` reste lue en direct (4 sites), à passer en RPC hors
   refactor.
+- 2026-09-15 — **Phase 2 livrée** sur `refactor/split-app` (lots 15-21, 7 commits + 1
+  d'outillage). App.jsx **16 423 → 15 786 lignes**. 12 fichiers dans `src/components/`
+  (icons, Bar, SpeakBtn, ListeningGraphic, PassageDocs, avatar, toasts, Tabs,
+  GrimoireReader, NextStepReco, TokenCTAs, legal) + 3 helpers purs vers `lib/` (iconMaps,
+  passageDocs, rarityStyles). Les 7 lots relus en mode commité : déplacement pur. Lint 372
+  inchangé ; 1 erreur `react-refresh/only-export-components` comptée à part (`renderAv`,
+  fonction minuscule exportée depuis `avatar.jsx`, inévitable : elle et `AvatarMedal` se
+  référencent mutuellement, les séparer créerait un cycle). Règle apprise : un fichier
+  `.jsx` n'exporte que des composants → constantes vers `lib/`, helper de rendu privé
+  (`~nom` dans le manifeste). **Non mergée** : smoke court puis merge, ou enchaîner la
+  Phase 3 et ne faire qu'un smoke complet — au choix de Jérémy.
