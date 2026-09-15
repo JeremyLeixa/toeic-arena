@@ -1,0 +1,73 @@
+-- ════════════════════════════════════════════════════════════════════════
+-- Verrou des tables satellites — lot 3 : weekly_snapshots, fichier 2/2
+-- (2026-09-15)
+-- ════════════════════════════════════════════════════════════════════════
+-- ⚠️ A N'APPLIQUER QU'APRES, DANS CET ORDRE :
+--   1. 2026-09-15_p2d2_snapshots_rpc.sql applique ;
+--   2. le client qui passe par les RPC deploye en production ;
+--   3. verifie EN PROD :
+--      · League -> onglet Progres affiche toujours la progression de la cohorte ;
+--      · la carte objectif du Mentor affiche toujours son historique ;
+--      · le dashboard formateur ouvre le rapport hebdomadaire ;
+--      · l'export CSV du dashboard sort les memes colonnes ;
+--      · un changement de semaine ecrit bien un snapshot (voir requete 4 plus bas).
+--
+-- Tant que ce fichier n'est pas passe, les privileges directs existent encore :
+-- reverter le commit client suffit. C'est le SEUL filet de ce lot.
+--
+-- CE QUE CA FERME. La donnee pedagogique nominative la plus detaillee qui
+-- restait exposee : nom, cohorte, XP hebdomadaire et module_scores_snapshot de
+-- chaque eleve, semaine par semaine, lisibles d'un seul GET avec la cle
+-- publique. Et les ECRITURES : n'importe qui pouvait fabriquer ou ecraser le
+-- snapshot d'un autre eleve — donc fausser le podium hebdomadaire, le rapport
+-- au directeur pedagogique, et l'onglet Progres.
+--
+-- CE QUI CONTINUE DE MARCHER :
+--  · les 5 RPC du fichier 1 (SECURITY DEFINER, donc executees en tant que
+--    proprietaire de la table) ;
+--  · l'Edge Function weekly-teacher-report, en service_role ;
+--  · delete_my_account (B6), qui purge la table par user_id.
+--
+-- RAPPEL DU PIEGE (lot 1) : les 3 policies de cette table ont ete supprimees,
+-- elles ne protegeaient rien. `allow_authenticated` etait ALL / authenticated /
+-- USING true, et les policies PERMISSIVE sont ORees : un simple ENABLE aurait
+-- laisse la table grande ouverte a tout compte connecte. La protection vient
+-- du REVOKE ci-dessous, pas de la RLS.
+-- ════════════════════════════════════════════════════════════════════════
+
+-- Liste complete et explicite (TRUNCATE inclus : il ignore la RLS).
+REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.weekly_snapshots FROM anon, authenticated;
+
+-- Ceinture et bretelles. Sans effet sur les RPC SECURITY DEFINER (le
+-- proprietaire de la table est exempt de RLS tant que FORCE n'est pas pose),
+-- mais la table ne repart plus jamais "ouverte par defaut" si quelqu'un lui
+-- re-accorde un privilege par megarde. Elle n'a plus aucune policy depuis le
+-- lot 1, donc RLS active = deny par defaut.
+ALTER TABLE public.weekly_snapshots ENABLE ROW LEVEL SECURITY;
+
+
+-- ════════════════════════════════════════════════════════════════════════
+-- Verification post-migration
+-- ════════════════════════════════════════════════════════════════════════
+-- 1) Doit renvoyer 0 ligne :
+--
+--    SELECT grantee, privilege_type FROM information_schema.role_table_grants
+--     WHERE table_schema='public' AND table_name='weekly_snapshots'
+--       AND grantee IN ('anon','authenticated','PUBLIC');
+--
+-- 2) RLS active, 0 policy :
+--
+--    SELECT relrowsecurity FROM pg_class WHERE relname='weekly_snapshots';   -- true
+--    SELECT count(*) FROM pg_policies WHERE tablename='weekly_snapshots';    -- 0
+--
+-- 3) Sonde anon, console du navigateur sur app.verse-arena.fr :
+--    await supabase.from('weekly_snapshots').select('*')            -> permission denied
+--    await supabase.rpc('class_weekly_progress',{p_class_code:'…'}) -> 200
+--
+-- 4) Le chemin d'ecriture fonctionne toujours. Le plus simple est de forcer une
+--    transition de semaine sur un compte de test : mettre son week_id a une
+--    semaine passee, recharger l'app, puis verifier qu'une ligne est apparue :
+--
+--    SELECT student_name, week_id, week_start, xp_this_week, created_at
+--      FROM weekly_snapshots ORDER BY created_at DESC LIMIT 5;
