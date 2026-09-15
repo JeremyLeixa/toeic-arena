@@ -376,7 +376,8 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
 - 2026-09-15 — **Phase 0 livrée** sur `refactor/split-app` : `scripts/refactor/`
   (`astTools.cjs`, `depgraph.cjs`, `extract.cjs`), `tests/check_symbol_census.cjs` +
   `tests/check_import_graph.cjs` (prouvés mordants : doublon exporté, symbole disparu,
-  cycle, sens interdit), baseline de 221 symboles figée (`tests/data/appjsx_symbols_baseline.json`).
+  cycle, sens interdit), baseline de 221 symboles figée (`tests/appjsx_symbols_baseline.json`,
+  pas dans `tests/data/` qui est gitignoré).
   Deux exceptions préexistantes documentées dans les tests : le `shuffle` privé de
   `scanEngine.js` (un helper non exporté n'est pas une copie) et `data/chests.js` rangé en
   couche 1 (il importe Supabase). App.jsx contient aussi 3 instructions top-level hors

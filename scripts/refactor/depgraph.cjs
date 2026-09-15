@@ -5,7 +5,7 @@
  * Usage :
  *   node scripts/refactor/depgraph.cjs                 → rapport markdown sur stdout
  *   node scripts/refactor/depgraph.cjs --md out.md     → rapport dans un fichier
- *   node scripts/refactor/depgraph.cjs --baseline tests/data/appjsx_symbols_baseline.json
+ *   node scripts/refactor/depgraph.cjs --baseline tests/appjsx_symbols_baseline.json
  *                                                       → fige la liste des symboles (census)
  *   node scripts/refactor/depgraph.cjs --who NOM       → qui référence NOM, et ce que NOM référence
  *
