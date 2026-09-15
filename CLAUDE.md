@@ -100,7 +100,6 @@ public/
   manifest.json, sw.js
 api/
   push-send.js         — Vercel serverless function for push notifications
-  tts.js               — ElevenLabs TTS proxy
 supabase/
   functions/
     streak-reminder/   — Daily 20h CET push
