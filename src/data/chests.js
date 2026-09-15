@@ -622,62 +622,66 @@ export function pickReward(rarityTier, ownedAvatars, ownedSkins){
 }
 
 // ═══ SUPABASE HELPERS ═══
+// Lot 4 du verrou des tables satellites (2026-09-15) : plus aucun accès direct
+// à pending_chests / chest_log / player_rewards / player_tokens depuis le
+// navigateur. Les quatre tables étaient lisibles ET écrivables avec la clé
+// publique — inventaire de n'importe quel élève lisible, coffres d'autrui
+// supprimables. Tout passe désormais par des RPC SECURITY DEFINER gardées par
+// student_guard.
 
-// Check if a unique trigger has already been granted (log OR pending)
-export async function hasUniqueTrigger(userName, classCode, triggerSource){
+// Grant a pending chest. `cooldownDays` = null → one-shot trigger (xp_10k,
+// mock_1, ach_*…) ; 7 → re-grantable after a week (perfect module runs).
+//
+// ⚠️ CHANGEMENT DE COMPORTEMENT ASSUMÉ : cette fonction remplace le couple
+// hasUniqueTrigger()/isWeeklyCooldown() PUIS grantChest(), qui était un TOCTOU.
+// Entre le check et l'INSERT, rien n'empêchait un second appel de passer —
+// c'est exactement ce qui a produit les pending_chests en double et les +37k XP
+// fantômes du 2026-04-27 (watcher de maîtrise re-déclenché sur chaque sv()).
+// Le check et l'insert sont maintenant dans la même transaction SQL.
+// Retourne {ok, granted} ; `granted` vaut false si le trigger est déjà servi.
+export async function grantChest(userName, classCode, chestType, triggerSource, cooldownDays){
   try{
-    var res=await supabase.from("chest_log").select("id").ilike("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).limit(1);
-    if(res.data&&res.data.length>0)return true;
-    // Also check pending (not yet opened) to prevent double-grant
-    var pen=await supabase.from("pending_chests").select("id").ilike("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).limit(1);
-    return pen.data&&pen.data.length>0;
-  }catch(e){console.error("[CHEST] hasUniqueTrigger error:",e);return true;} // fail-safe: assume granted
-}
-
-// Check if a weekly trigger is on cooldown (7 days) — checks log AND pending
-export async function isWeeklyCooldown(userName, classCode, triggerSource){
-  try{
-    var cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);
-    var res=await supabase.from("chest_log").select("id").ilike("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).gte("opened_at",cutoff.toISOString()).limit(1);
-    if(res.data&&res.data.length>0)return true;
-    // Also check pending to prevent double-grant within the same week
-    var pen=await supabase.from("pending_chests").select("id").ilike("user_name",userName).eq("class_code",classCode).eq("trigger_source",triggerSource).limit(1);
-    return pen.data&&pen.data.length>0;
-  }catch(e){console.error("[CHEST] isWeeklyCooldown error:",e);return true;} // fail-safe: assume on cooldown
-}
-
-// Add a pending chest
-export async function grantChest(userName, classCode, chestType, triggerSource){
-  try{
-    var res=await supabase.from("pending_chests").insert({user_name:userName,class_code:classCode,chest_type:chestType,trigger_source:triggerSource});
-    if(res.error)console.error("[CHEST] grantChest error:",res.error.message);
-  }catch(e){console.error("[CHEST] grantChest exception:",e);}
+    var res=await supabase.rpc("grant_pending_chest",{
+      p_name:userName, p_class_code:classCode,
+      p_chest_type:chestType, p_trigger:triggerSource,
+      p_cooldown_days:(cooldownDays===undefined?null:cooldownDays),
+    });
+    if(res.error){console.error("[CHEST] grantChest RPC error:",res.error.message);return{ok:false,granted:false};}
+    if(res.data&&res.data.ok===false){console.warn("[CHEST] grantChest refused:",res.data.error);return{ok:false,granted:false};}
+    return{ok:true,granted:!!(res.data&&res.data.granted)};
+  }catch(e){console.error("[CHEST] grantChest exception:",e&&e.message);return{ok:false,granted:false};}
 }
 
 // Get pending chests for a user
 export async function getPendingChests(userName, classCode){
   try{
-    var res=await supabase.from("pending_chests").select("*").ilike("user_name",userName).eq("class_code",classCode).order("earned_at",{ascending:true});
-    return res.data||[];
-  }catch(e){console.error("[CHEST] getPendingChests error:",e);return[];}
+    var res=await supabase.rpc("my_pending_chests",{p_name:userName,p_class_code:classCode});
+    if(res.error){console.error("[CHEST] getPendingChests error:",res.error.message);return[];}
+    if(res.data&&res.data.ok===false){console.warn("[CHEST] getPendingChests refused:",res.data.error);return[];}
+    return(res.data&&res.data.chests)||[];
+  }catch(e){console.error("[CHEST] getPendingChests exception:",e&&e.message);return[];}
 }
 
 // Get owned rewards (avatars + skins + frames + titles + cheat_sheets — all stored in player_rewards)
 export async function getOwnedRewards(userName, classCode){
   try{
-    var res=await supabase.from("player_rewards").select("*").ilike("user_name",userName).eq("class_code",classCode);
-    return res.data||[];
-  }catch(e){console.error("[CHEST] getOwnedRewards error:",e);return[];}
+    var res=await supabase.rpc("my_rewards",{p_name:userName,p_class_code:classCode});
+    if(res.error){console.error("[CHEST] getOwnedRewards error:",res.error.message);return[];}
+    if(res.data&&res.data.ok===false){console.warn("[CHEST] getOwnedRewards refused:",res.data.error);return[];}
+    return(res.data&&res.data.rewards)||[];
+  }catch(e){console.error("[CHEST] getOwnedRewards exception:",e&&e.message);return[];}
 }
 
 // V2 — get owned tokens, returns {token_type: quantity, ...}
 export async function getOwnedTokens(userName, classCode){
   try{
-    var res=await supabase.from("player_tokens").select("token_type,quantity").ilike("user_name",userName).eq("class_code",classCode);
+    var res=await supabase.rpc("my_tokens",{p_name:userName,p_class_code:classCode});
+    if(res.error){console.warn("[CHEST] getOwnedTokens error:",res.error.message);return{};}
+    if(res.data&&res.data.ok===false){console.warn("[CHEST] getOwnedTokens refused:",res.data.error);return{};}
     var map={};
-    if(res.data)res.data.forEach(function(r){map[r.token_type]=r.quantity||0;});
+    ((res.data&&res.data.tokens)||[]).forEach(function(r){map[r.token_type]=r.quantity||0;});
     return map;
-  }catch(e){console.warn("[CHEST] getOwnedTokens error (table may not exist yet):",e&&e.message);return{};}
+  }catch(e){console.warn("[CHEST] getOwnedTokens exception:",e&&e.message);return{};}
 }
 
 // V2 — consume a token via the SQL helper. Returns {ok, error?}.
@@ -733,38 +737,33 @@ var PREMIUM_TOKENS=["mock_reset","boss_reset","endless_resurrect"];
 // Failure modes : <3 dups (ok:false), all token types capped (returns XP gem instead).
 export async function convertCosmeticDups(userName, classCode, rewardType, rewardId, ownedTokens){
   try{
-    // Fetch up to 4 rows so we can verify count >= 4 (3 duplicates + 1 original kept).
-    // The plan's "3 duplicates" wording implies 3 EXTRAS beyond the original copy ;
-    // converting at count=3 would erase the user's only instance of that cosmetic.
-    var sel=await supabase.from("player_rewards").select("id")
-      .ilike("user_name",userName).eq("class_code",classCode)
-      .eq("reward_type",rewardType).eq("reward_id",rewardId)
-      .limit(4);
-    if(sel.error)return{ok:false,error:sel.error.message};
-    if(!sel.data||sel.data.length<4)return{ok:false,error:"not_enough_duplicates"};
-
-    // Pick a non-capped non-premium token to grant
+    // Pick a non-capped non-premium token to grant, AVANT de supprimer quoi que
+    // ce soit — on veut savoir ce qu'on rend avant de retirer.
     var owned=ownedTokens||{};
     var candidates=NON_PREMIUM_TOKENS.filter(function(tt){
       var qty=owned[tt]||0;
       var cap=(TOKEN_TYPES[tt]&&TOKEN_TYPES[tt].cap)||1;
       return qty<cap;
     });
-    if(candidates.length===0){
-      // All non-premium tokens capped → DELETE 3 dups + grant a 100 XP fallback (caller handles).
-      // Same "keep the 4th" invariant as the happy path.
-      var ids=sel.data.slice(0,3).map(function(r){return r.id;});
-      var del0=await supabase.from("player_rewards").delete().in("id",ids);
-      if(del0.error)return{ok:false,error:del0.error.message};
-      return{ok:true,xpFallback:100};
-    }
+
+    // Le plancher "≥ 4 exemplaires, on n'en supprime que 3" est désormais tenu
+    // EN SQL (convert_cosmetic_dups) et plus seulement par ce fichier : la base
+    // ne peut plus être amenée à effacer le dernier exemplaire d'un cosmétique,
+    // quoi qu'envoie le client. La RPC supprime les 3 plus récents et garde le
+    // plus ancien — choix déterministe, là où ce code prenait 3 lignes dans un
+    // ordre non spécifié.
+    var conv=await supabase.rpc("convert_cosmetic_dups",{
+      p_name:userName,p_class_code:classCode,
+      p_reward_type:rewardType,p_reward_id:rewardId,
+    });
+    if(conv.error)return{ok:false,error:conv.error.message};
+    if(!conv.data||conv.data.ok===false)return{ok:false,error:(conv.data&&conv.data.error)||"convert_failed"};
+
+    // All non-premium tokens capped → the 3 dups are gone, caller grants 100 XP instead.
+    if(candidates.length===0)return{ok:true,xpFallback:100};
+
     var pick=candidates[Math.floor(Math.random()*candidates.length)];
     var cap=TOKEN_TYPES[pick].cap||1;
-
-    // DELETE only 3 rows (the duplicates) — keep the 4th as the user's original copy.
-    var ids2=sel.data.slice(0,3).map(function(r){return r.id;});
-    var del=await supabase.from("player_rewards").delete().in("id",ids2);
-    if(del.error)return{ok:false,error:del.error.message};
 
     // Grant the token (cap-aware via SQL helper)
     await grantTokenRPC(userName,classCode,pick,1,cap);
@@ -843,34 +842,30 @@ export async function openChestFromPending(pendingChest, pityCount, owned){
         }
         continue;
       }
-      // avatar / skin / frame / title / cheat_sheet → player_rewards
-      var rRarity=r.rarity||rarityId;
-      var rw=await supabase.from("player_rewards").insert({
-        user_name:un, class_code:cc,
-        reward_type:r.type, reward_id:r.id, rarity:rRarity,
-      });
-      if(rw.error)console.warn("[CHEST] player_rewards insert error:",rw.error.message);
+      // avatar / skin / frame / title / cheat_sheet → persistés par la RPC ci-dessous
     }
 
-    // Single chest_log row per chest (multi-reward summary). Per-item history lives in
-    // player_rewards / player_tokens. Keeps log compact and avoids a schema migration.
-    var lg=await supabase.from("chest_log").insert({
-      user_name:un, class_code:cc,
-      chest_type:ct, trigger_source:pendingChest.trigger_source,
-      rarity_obtained:rarityId, reward_type:"multi", reward_id:"v2",
-      xp_amount:totalXp||null,
+    // Les TROIS écritures (player_rewards, chest_log, suppression du pending)
+    // tiennent maintenant dans UNE transaction SQL.
+    //
+    // Avant, ce code les enchaînait à la main et devait se garder de supprimer
+    // le pending si l'INSERT de chest_log échouait : chest_log sert à dédupliquer
+    // les attributions futures, perdre la ligne de log tout en consommant le
+    // pending rendait le trigger ré-attribuable sans trace. Cette précaution
+    // devient inutile — soit tout passe, soit rien ne passe et le coffre reste
+    // en attente.
+    //
+    // La RPC est idempotente : elle exige que la ligne pending existe encore et
+    // appartienne à l'appelant, donc un rejeu réseau ne double pas les récompenses.
+    var op=await supabase.rpc("open_pending_chest",{
+      p_pending_id:pendingChest.id,
+      p_name:un, p_class_code:cc,
+      p_rewards:rewards,
+      p_total_xp:totalXp||0,
+      p_rarity:rarityId,
     });
-    if(lg.error){
-      // CRITICAL : if the audit log INSERT fails, do NOT delete the pending row.
-      // hasUniqueTrigger relies on chest_log to dedupe future grants — losing the
-      // log entry while consuming the pending leaves the trigger source untraceable
-      // and re-grantable. Better to let the user see a stuck pending until the
-      // schema is fixed than silently corrupt the audit trail.
-      console.warn("[CHEST] chest_log insert error (pending kept):",lg.error.message);
-    }else{
-      var dl=await supabase.from("pending_chests").delete().eq("id",pendingChest.id);
-      if(dl.error)console.warn("[CHEST] pending delete error:",dl.error.message);
-    }
+    if(op.error)console.warn("[CHEST] open_pending_chest error (pending kept):",op.error.message);
+    else if(op.data&&op.data.ok===false)console.warn("[CHEST] open_pending_chest refused (pending kept):",op.data.error);
   }catch(e){console.warn("[CHEST] openChest exception:",e&&e.message);}
 
   return{

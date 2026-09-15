@@ -23,7 +23,7 @@ import { PHRASAL_VERBS } from "./data/phrasalVerbs.js";
 import { SENTENCES } from "./data/sentences.js";
 import { AUDIO_BLITZ } from "./data/audioBlitz.js";
 import { CLUE_HUNTER } from "./data/clueHunter.js";
-import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, hasUniqueTrigger, isWeeklyCooldown, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, convertCosmeticDups, convertTokensToPremium, consumeToken, SHOP_CATALOG, spendMarks } from "./data/chests.js";
+import { CHEST_TYPES, RARITIES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, convertCosmeticDups, convertTokensToPremium, consumeToken, SHOP_CATALOG, spendMarks } from "./data/chests.js";
 import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { MOCK1_P5, MOCK2_P5, MOCK3_P5, MOCK1_P6, MOCK2_P6, MOCK3_P6, MOCK1_P7, MOCK2_P7, MOCK3_P7} from "./data/mockTests.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "./data/bossTestFull.js";
@@ -17128,8 +17128,9 @@ useEffect(function(){
 
   // ═══ V2 chest redesign — 5 recurring sources (step 2) ═══
   // Fires on first u-load + weekId change + when streak crosses a threshold.
-  // Uses unique trigger IDs that include date/weekId/module → hasUniqueTrigger
-  // is the natural anti-double-grant guard, no new Supabase column needed.
+  // Uses unique trigger IDs that include date/weekId/module → la deduplication
+  // dans grant_pending_chest est le garde-fou anti-double-attribution, aucune
+  // colonne Supabase supplementaire n'est necessaire.
   // Visitor accounts are skipped (no progression context, no class peers).
   var v2ChestRef=useRef({lastDate:null,lastWeekChecked:null});
   useEffect(function(){
@@ -17177,9 +17178,13 @@ useEffect(function(){
   //
   // CRITICAL : `u && u.moduleScores` changes its identity on every sv() (because the
   // user object is JSON-cloned). Without an in-memory dedup ref, this useEffect re-fires
-  // on every chest opening / xp update, which races hasUniqueTrigger across N parallel
-  // grant_chest calls and inserts duplicate pending_chests rows. The ref below ensures
-  // each module is only attempted ONCE per session ; hasUniqueTrigger handles cross-session.
+  // on every chest opening / xp update. C'est ce qui, le 2026-04-27, lancait N
+  // attributions en parallele qui couraient toutes contre un chest_log pas encore
+  // ecrit -> pending_chests en double et +37k XP fantomes.
+  // Depuis le lot 4 du verrou satellites, la course est fermee cote SQL :
+  // grant_pending_chest verifie et insere dans la MEME transaction. Ce ref reste
+  // utile pour ne pas emettre N appels reseau inutiles par session ; ce n'est
+  // plus lui qui garantit l'unicite.
   //
   // Modules excluded from Mastery : mock1/2/3/boss already have dedicated Champion triggers
   // (mock_1, etc.), and "daily" / "csess" are not real practice modules.
@@ -17615,15 +17620,20 @@ useEffect(function(){
   function maybeGrantBourse(c){
     if(!c||(c.boosts&&c.boosts.spent<10000))return;
     var un=c.name,cc=c.classCode||"visitor";
-    supabase.from("player_rewards").select("id").ilike("user_name",un).eq("class_code",cc).eq("reward_type","title").eq("reward_id","bourse_inepuisable").limit(1).then(function(r){
-      if(r.error){console.warn("[BOURSE] check error:",r.error.message);return;}
-      if(r.data&&r.data.length>0)return; // already owned
-      supabase.from("player_rewards").insert({user_name:un,class_code:cc,reward_type:"title",reward_id:"bourse_inepuisable",rarity:"legend"}).then(function(ins){
-        if(ins.error){console.warn("[BOURSE] grant error:",ins.error.message);return;}
-        try{playJingleAchieve();}catch(e){}haptic("achieve");
-        setAchToast({name:"Bottomless Purse",icon:"💰",desc:"10,000 Darics spent — title unlocked"});
-        setTimeout(function(){setAchToast(null);},3500);
-      });
+    // Lot 4 : le couple SELECT-puis-INSERT etait le meme TOCTOU que les coffres
+    // (deux appels rapproches pouvaient inserer le titre deux fois). grant_reward_once
+    // fait les deux en une transaction et dit s'il a reellement accorde.
+    supabase.rpc("grant_reward_once",{
+      p_name:un,p_class_code:cc,
+      p_reward_type:"title",p_reward_id:"bourse_inepuisable",p_rarity:"legend"
+    }).then(function(r){
+      if(r.error){console.warn("[BOURSE] grant error:",r.error.message);return;}
+      if(r.data&&r.data.ok===false){console.warn("[BOURSE] grant refused:",r.data.error);return;}
+      if(!(r.data&&r.data.granted))return; // already owned
+      try{playJingleAchieve();}catch(e){console.warn("[BOURSE] jingle caught:",e&&e.message);}
+      haptic("achieve");
+      setAchToast({name:"Bottomless Purse",icon:"💰",desc:"10,000 Darics spent — title unlocked"});
+      setTimeout(function(){setAchToast(null);},3500);
     }).catch(function(e){console.warn("[BOURSE] exception:",e&&e.message);});
   }
   function shopBuy(item){
@@ -17653,20 +17663,25 @@ useEffect(function(){
     });
   }
 
+  // Lot 4 du verrou satellites : le "est-ce deja attribue ?" et l'INSERT sont
+  // maintenant une seule transaction SQL (grant_pending_chest). L'ancien couple
+  // check-puis-insert cote client etait un TOCTOU — c'est lui qui a produit les
+  // pending_chests en double et les +37k XP fantomes du 2026-04-27. On ne montre
+  // le toast que si le serveur dit avoir reellement cree le coffre.
   function grantChestLocal(trigger,chestType){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"visitor";
-    hasUniqueTrigger(un,cc,trigger).then(function(done){
-      if(!done){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
-    }).catch(function(e){console.error("[CHEST] uniqueTrigger check error:",e);});
+    grantChest(un,cc,chestType,trigger,null).then(function(r){
+      if(r&&r.granted){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}
+    }).catch(function(e){console.error("[CHEST] grant error:",e&&e.message);});
   }
   // Fire-and-forget: grant a weekly chest (7-day cooldown per trigger)
   function grantWeeklyChest(trigger,chestType){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"visitor";
-    isWeeklyCooldown(un,cc,trigger).then(function(onCd){
-      if(!onCd){grantChest(un,cc,chestType,trigger).then(function(){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}).catch(function(e){console.error("[CHEST] grant error:",e);});}
-    }).catch(function(e){console.error("[CHEST] cooldown check error:",e);});
+    grantChest(un,cc,chestType,trigger,7).then(function(r){
+      if(r&&r.granted){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}
+    }).catch(function(e){console.error("[CHEST] grant error:",e&&e.message);});
   }
   async function refreshPendingChests(un,cc){
     var list=await getPendingChests(un,cc);
@@ -18223,10 +18238,8 @@ var prevLeague=getLeague(c.weeklyXp);
       // satellites). delete_my_account purge deja cette table cote serveur ; pour un
       // compte legacy que la RPC refuse, il n'y a plus de rattrapage best-effort ici
       // — c'est assume, voir le message affiche a l'utilisateur.
-      await supabase.from('player_rewards').delete().eq('user_name',name).eq('class_code',cc);
-      await supabase.from('player_tokens').delete().eq('user_name',name).eq('class_code',cc);
-      await supabase.from('pending_chests').delete().eq('user_name',name).eq('class_code',cc);
-      await supabase.from('chest_log').delete().eq('user_name',name).eq('class_code',cc);
+      // Les 4 tables de coffres non plus (lot 4). delete_my_account les purge
+      // toutes cote serveur, dans la meme transaction que la ligne students.
     }catch(e){console.warn("[purge] caught:",e&&e.message);}
   }
   async function deleteAccount(){
