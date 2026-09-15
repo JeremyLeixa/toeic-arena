@@ -64,79 +64,15 @@ import { GIcon, LeagueIcon, SeasonIcon, ResultIcon, BrandMark } from "./componen
 
 
 
-// ─── AUDIO BUTTON COMPONENT ───
-function SpeakBtn(p){
-  var[playing,sP]=useState(false);
-  function go(){
-    // User-initiated play: reset the abort flag left behind by any prior
-    // Listen/Boss/AudioBlitz unmount. Without this, speak() silently returns
-    // if abort was still set when the user reaches Flashcards/Tavern/SpeakBtn.
-    resumeAudioSession();
-    sP(true);
-    speak(p.text,p.rate||0.9,p.audio||null);
-    setTimeout(function(){sP(false);},Math.max(1000,p.text.length*80));
-  }
-  return(<button onClick={function(e){e.stopPropagation();go();}}
-    style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:p.size||36,height:p.size||36,borderRadius:"50%",
-      background:playing?"rgba(var(--cx),.2)":"var(--bg3)",border:"1px solid "+(playing?"var(--cyan)":"var(--bdr)"),
-      cursor:"pointer",transition:"all .2s",flexShrink:0}}>
-    <span style={{fontSize:p.size?p.size*0.5:18,lineHeight:1}}>{playing?"🔊":"🔈"}</span>
-  </button>);
-}
 
-// ─── LISTENING GRAPHIC (Part 3/4 "Look at the graphic") ───
-// Renders a small table or list as the visual prompt for graphic questions.
-// Shape: {type:"table", title?, headers:[...], rows:[[...],...]}  or  {type:"list", title?, items:[...]}
-// The graphic is shown (not spoken); the question stem says "Look at the graphic.".
-function ListeningGraphic(p){
-  var g=p.g;
-  if(!g)return null;
-  var wrap={background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,padding:"12px 14px",margin:"0 0 16px",animation:"fadeIn .3s"};
-  var title=(<div className="out" style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,fontWeight:700,color:"var(--cyan)",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
-    <span style={{fontSize:12}}>📊</span>{g.title||"Refer to the information below"}</div>);
-  if(g.type==="list"){
-    return(<div style={wrap}>{title}
-      <ul style={{margin:0,paddingLeft:18,display:"flex",flexDirection:"column",gap:6}}>
-        {(g.items||[]).map(function(it,i){return(<li key={i} style={{fontSize:13,lineHeight:1.5,color:"var(--t1)"}}>{it}</li>);})}
-      </ul></div>);
-  }
-  if(g.type==="bar"){
-    // Lightweight skin-aware horizontal bar chart. data:[{label,value,display?}].
-    var _vals=(g.data||[]).map(function(d){return d.value;});
-    var _max=Math.max.apply(null,_vals.concat([1]));
-    return(<div style={wrap}>{title}
-      <div style={{display:"flex",flexDirection:"column",gap:9}}>
-        {(g.data||[]).map(function(d,i){
-          var pct=Math.max(2,Math.round((d.value/_max)*100));
-          return(<div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:"28%",minWidth:58,fontSize:11,color:"var(--t2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.label}</div>
-            <div style={{flex:1,height:16,background:"rgba(var(--bg3-rgb),.6)",borderRadius:4,overflow:"hidden"}}>
-              <div style={{width:pct+"%",height:"100%",background:"var(--cyan)",borderRadius:4,transition:"width .4s"}}/>
-            </div>
-            <div style={{width:54,textAlign:"right",fontSize:11,fontWeight:700,color:"var(--t1)"}}>{d.display!=null?d.display:d.value}</div>
-          </div>);
-        })}
-      </div></div>);
-  }
-  // type:"table" (default)
-  return(<div style={wrap}>{title}
-    <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
-      <table style={{borderCollapse:"collapse",width:"100%",fontSize:12,minWidth:"max-content"}}>
-        {g.headers&&<thead><tr>
-          {g.headers.map(function(h,i){return(<th key={i} style={{textAlign:"left",padding:"7px 10px",background:"var(--bg3)",color:"var(--t2)",fontWeight:700,borderBottom:"1px solid var(--bdr)",whiteSpace:"nowrap"}}>{h}</th>);})}
-        </tr></thead>}
-        <tbody>
-          {(g.rows||[]).map(function(row,ri){return(<tr key={ri} style={{background:ri%2?"rgba(var(--bg3-rgb),.35)":"transparent"}}>
-            {row.map(function(cell,ci){return(<td key={ci} style={{padding:"7px 10px",color:"var(--t1)",borderBottom:"1px solid var(--bdr)",whiteSpace:"nowrap"}}>{cell}</td>);})}
-          </tr>);})}
-        </tbody>
-      </table>
-    </div></div>);
-}
 
 
 
 import { getLevel } from "./data/helpers.js";
+import { Bar } from "./components/Bar.jsx";
+import { SpeakBtn } from "./components/SpeakBtn.jsx";
+import { ListeningGraphic } from "./components/ListeningGraphic.jsx";
+import { PassageDocs } from "./components/PassageDocs.jsx";
 
 
 
@@ -1515,8 +1451,6 @@ function ModalCouncilHub(p){
   </div>);
 }
 
-// ─── SMALL COMPONENTS ───
-function Bar(p){var pct=p.max>0?Math.min(100,p.value/p.max*100):0;return(<div style={{width:"100%",height:p.h||8,background:"var(--bg3)",borderRadius:99,overflow:"hidden"}}><div className="bar-fill" style={{width:pct+"%",height:"100%",background:p.color||"linear-gradient(90deg,var(--cx-hex),var(--cx-dark))",borderRadius:99,transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/></div>);}
 // ─── Avatar renderer — handles both emoji and base64 photo ───
 function renderAv(avatar,size,frameId){
   var s=size||32;
@@ -6087,41 +6021,6 @@ function Part6Drill(p){
   </div>);
 }
 
-// ─── PART 7 READING COMPREHENSION ───
-// ── Multi-document passage viewer (Double/Triple Passages) ──
-// Splits a P7 `text` field on "--- DOCUMENT N: Label ---" markers into tabs so
-// mobile users switch between the linked documents instead of scrolling past all
-// of them stacked. Single passages (no markers) render as plain pre-line text,
-// so every existing single/letter/memo/email passage is untouched.
-// IMPORTANT: give the component a `key` tied to the passage id at each call site
-// so the active tab resets to Doc 1 when the passage changes.
-function parsePassageDocs(text){
-  if(!text||text.indexOf("--- DOCUMENT")<0)return null;
-  var re=/---\s*DOCUMENT\s*\d+\s*:?\s*([^\n]*?)\s*---/g;
-  var docs=[],m,lastIdx=0,lastLabel=null;
-  while((m=re.exec(text))){
-    if(lastLabel!==null)docs.push({label:lastLabel,body:text.slice(lastIdx,m.index).replace(/^\s+|\s+$/g,"")});
-    lastLabel=(m[1]||"").replace(/-+$/,"").replace(/^\s+|\s+$/g,"");
-    lastIdx=re.lastIndex;
-  }
-  if(lastLabel!==null)docs.push({label:lastLabel,body:text.slice(lastIdx).replace(/^\s+|\s+$/g,"")});
-  return docs.length>=2?docs:null;
-}
-function PassageDocs(p){
-  var docs=parsePassageDocs(p.text);
-  var[tab,setTab]=useState(0);
-  var fs=p.fontSize||13,lh=p.lineHeight||1.8;
-  if(!docs)return(<p className="read-text" style={{fontSize:fs,color:"var(--t2)",lineHeight:lh,whiteSpace:"pre-line"}}>{p.text}</p>);
-  var ti=Math.min(tab,docs.length-1);
-  return(<div>
-    <div style={{display:"flex",gap:6,marginBottom:8}}>
-      {docs.map(function(d,i){var on=i===ti;
-        return(<button key={i} onClick={function(){setTab(i);}} className="out" style={{flex:1,minWidth:0,fontSize:12,fontWeight:on?700:600,padding:"6px 4px",borderRadius:8,border:"1px solid "+(on?"var(--cyan)":"var(--bdr)"),background:on?"rgba(var(--cx),.1)":"var(--bg2)",color:on?"var(--cyan)":"var(--t3)",cursor:"pointer",whiteSpace:"nowrap"}}>{"Doc "+(i+1)}</button>);})}
-    </div>
-    {docs[ti].label&&<div className="out" style={{fontSize:10,color:"var(--t3)",fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>{docs[ti].label}</div>}
-    <p className="read-text" style={{fontSize:fs,color:"var(--t2)",lineHeight:lh,whiteSpace:"pre-line"}}>{docs[ti].body}</p>
-  </div>);
-}
 function Part7Read(p){
   var passages=useMemo(function(){return shuffle(PART7_PASSAGES).filter(function(p){return p&&p.questions&&p.questions.length>0;}).slice(0,4);},[]);
   var[pi,sPi]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
