@@ -14,6 +14,14 @@ import { supabase } from "../../supabase.js";
 import { useState, useEffect } from "react";
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar as RBar, Cell, LineChart, Line } from "recharts";
 
+// ─── TEACHER DASHBOARD CONFIG ───
+// H1 (2026-09-14) : VITE_PUSH_SECRET a disparu d'ici. C'etait un "secret" partage inline
+// en clair dans le bundle : n'importe qui pouvait le lire et appeler /api/push-send pour
+// notifier une promo entiere, voire class_code:"all". L'endpoint authentifie desormais le
+// navigateur par le code formateur (valide cote serveur), et garde x-push-secret pour les
+// seules Edge Functions cron. NE PAS reintroduire de secret cote client.
+
+
 export function WeeklyReport(p){
   // p.classCode, p.students (current), p.onBack
   var [snaps,setSnaps]=useState(null);
