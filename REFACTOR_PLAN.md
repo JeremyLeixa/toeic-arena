@@ -447,8 +447,13 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   ModalCouncil.jsx, note tutorialPending → profileSchema.js), 12 lignes d'en-têtes morts
   supprimées, 2 imports mid-fichier remontés. **App.jsx : 1 493 lignes** (61 imports,
   `BUILD_ID`, `App()`). Tests 9/9, lint 372, build 20 s. **Le chantier s'arrête là**,
-  comme décidé : `App()` garde ses 23 états, 20 effets et 42 fonctions internes. Reste :
-  la mise à jour des docs (en cours), puis merge après un smoke de navigation.
+  comme décidé : `App()` garde ses 23 états, 20 effets et 42 fonctions internes.
+- 2026-09-15 — **Docs à jour** (CLAUDE.md, CONTEXT.md, skills `add-module` / `add-grimoire`
+  / `design-tokens`, commandes `add-supabase-field` / `fix-css`), puis **Phase 4a + docs
+  mergées sur `main` à 22h45** (`d1ae8f9`, `--no-ff`) après smoke navigation validé par
+  Jérémy. **Chantier terminé.** Phase 5 (lazy chunks, `lib/xp.js` pur, code mort) reste
+  disponible à la demande, hors de ce chantier. La branche `refactor/split-app` peut être
+  supprimée ; l'outillage `scripts/refactor/` reste dans le dépôt.
 
 ## 10. Bilan (2026-09-15)
 
