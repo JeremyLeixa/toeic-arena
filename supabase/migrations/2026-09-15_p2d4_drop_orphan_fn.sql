@@ -1,0 +1,50 @@
+-- ════════════════════════════════════════════════════════════════════════
+-- Suppression d'une fonction orpheline : name_exists_in_other_class
+-- (2026-09-15)
+-- ════════════════════════════════════════════════════════════════════════
+-- REPÉRÉE PAR LE TEST. `tests/check_rpc_contracts.cjs`, ajouté le même jour,
+-- signale les fonctions définies en base mais appelées par personne. Celle-ci
+-- est sortie au premier passage.
+--
+-- POURQUOI ELLE EST DEVENUE INUTILE. Créée en B3 pour remplacer, côté client,
+-- un `select('class_code').ilike('name',…).neq('class_code',cc)` qui servait de
+-- garde anti-phantom à save() — et qui était accessoirement un oracle
+-- inter-promos (« existe-t-il un Hugo ailleurs, et dans quelle promo ? »).
+--
+-- La Phase C-lite a déplacé cette garde DANS `save_student` (voir
+-- 2026-09-14_p2c_student_rpc.sql, section « (b) Garde anti-phantom », qui
+-- renvoie `blocked_phantom`). Le client n'a donc plus jamais eu à poser la
+-- question lui-même : la fonction n'a plus aucun appelant, ni dans `src/`, ni
+-- dans une autre fonction SQL (vérifié avant d'écrire ce fichier).
+--
+-- POURQUOI LA SUPPRIMER PLUTÔT QUE LA LAISSER DORMIR. Son EXECUTE est ouvert à
+-- `anon`, et elle répond à la question « ce prénom existe-t-il ailleurs, et où ? »
+-- sans demander le moindre secret. C'est précisément la classe de fuite fermée
+-- sur `lookupName` le 2026-09-11 (incident Hugo, cross-promo). Une fonction morte
+-- mais exécutable reste une surface d'attaque — même motif que `get_pity_count`
+-- et les deux `is_*_trigger_available`, supprimées plus tôt dans la journée.
+--
+-- RÉVERSIBLE : la définition complète reste dans
+-- supabase/migrations/2026-09-14_p2b3_public_reads.sql, section 7. Si un usage
+-- réapparaît, la recréer depuis là — mais en se demandant d'abord pourquoi le
+-- client repose une question à laquelle save_student répond déjà.
+-- ════════════════════════════════════════════════════════════════════════
+
+DROP FUNCTION IF EXISTS public.name_exists_in_other_class(p_name text, p_class_code text);
+
+
+-- ── Vérification post-migration ────────────────────────────────────────
+-- 1) Doit renvoyer 0 ligne :
+--
+--    SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+--     WHERE n.nspname = 'public' AND proname = 'name_exists_in_other_class';
+--
+-- 2) La garde anti-phantom doit continuer de fonctionner — c'est elle qui
+--    comptait, pas la fonction supprimée. Sur un prénom existant dans une AUTRE
+--    promo, save_student doit refuser avec `blocked_phantom` :
+--
+--    SELECT public.save_student('<prénom existant ailleurs>', 'idrac2027',
+--             '{"xp":1}'::jsonb, true, false);
+--    -- attendu : {"ok": false, "error": "blocked_phantom", "codes": [...]}
+--
+-- 3) Et le parcours élève normal reste inchangé (connexion, gain d'XP, reload).
