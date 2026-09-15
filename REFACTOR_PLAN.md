@@ -429,4 +429,36 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   n'a pas changé). Le lot 37 (League) a été refusé une première fois, à raison :
   `RankRow` et `loadProgressionData` sont internes à `League` et voyagent avec elle.
   Les 3 `var` de CSS local (`DTL_CSS`, `SBD_CSS`) et `GRAMMAR_SHEETS` sont privées à
-  leur module. **Phases 2 et 3 non mergées** : smoke complet de Jérémy puis merge.
+  leur module. Smoke complet validé par Jérémy, puis **Phases 2 et 3 mergées sur `main`
+  le 2026-09-15 à 22h10** (commit de merge `2bdc963`, `--no-ff`, rollback = `git revert
+  -m 1 2bdc963`). Portes finales sur `main` : tests 9/9, lint 372, build 29 s, bundle
+  3 271 093 o. Pendant le smoke, un bug du flux auth repéré, sans lien avec le refactor
+  (voir §9, entrée suivante).
+- 2026-09-15 — **Hors refactor, à corriger sur `main`** : le chemin de secours « compte
+  déjà existant → me connecter » lie l'utilisateur sans poser `password_set_at`, et le
+  retour `not_owner` de `bind_student_user_id` est avalé en silence. Un compte dans ce cas
+  revoit l'écran « choisis un mot de passe » à chaque login (vécu par Jérémy). Chemin auth :
+  lecture complète du flux avant de patcher (Hardened Rules).
+- 2026-09-15 — **Phase 4a livrée** sur `refactor/split-app` (2 commits). `src/routes.jsx` :
+  les 41 routes `sp` déplacées telles quelles dans `renderRoute(c)`, 26 noms de la portée
+  d'`App()` par contexte déstructuré, 42 imports de niveau module ; garantie statique :
+  `no-undef` à zéro des deux côtés. Puis les 38 lignes de commentaires orphelins : 3 blocs
+  recasés (garde VITE_PUSH_SECRET → TeacherDash.jsx, en-tête Modal Council →
+  ModalCouncil.jsx, note tutorialPending → profileSchema.js), 12 lignes d'en-têtes morts
+  supprimées, 2 imports mid-fichier remontés. **App.jsx : 1 493 lignes** (61 imports,
+  `BUILD_ID`, `App()`). Tests 9/9, lint 372, build 20 s. **Le chantier s'arrête là**,
+  comme décidé : `App()` garde ses 23 états, 20 effets et 42 fonctions internes. Reste :
+  la mise à jour des docs (en cours), puis merge après un smoke de navigation.
+
+## 10. Bilan (2026-09-15)
+
+| | Départ | Arrivée |
+|---|---|---|
+| `src/App.jsx` | 18 589 lignes | **1 493 lignes** (−92 %) |
+| Fichiers source | 1 | 20 `lib/` + 12 `components/` + 32 `features/` + `styles/` + `routes.jsx` |
+| Lots | — | 44 (14 lib, 7 components, 13 features, 2 routes/nettoyage, 8 outillage) |
+| Retouches manuelles hors déplacement pur | — | audio (3 accesseurs), persistance (2 setters, 12 sites), routes (contexte), commentaires |
+| Tests | 7, dont 5 découpant App.jsx par texte | 9, tous en import natif |
+| Lint src/ | 375 | 372 (+1 react-refresh à part) |
+| Bundle | 3 272 160 o | 3 271 093 o |
+| Vu par les étudiants | — | rien : aucun rechargement forcé, aucun incident lié au chantier |

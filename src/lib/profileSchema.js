@@ -1,6 +1,15 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { weekId, today } from "./util.js";
 
+// ─── TUTORIAL TOUR — supprimé 2026-05-03 (absorbé par Verdict d'Aldric) ───
+// Le tour 3 popups (Daily / Progress & League / Train) a été absorbé dans le
+// Verdict d'Aldric (cf. NARRATOR_MOMENTS.verdict dans src/narrator.js, qui
+// présente désormais "cinq lames rapides" → "Salle d'Entraînement" → "Ligue").
+// Le booléen u.tutorialPending et la colonne Supabase students.tutorial_pending
+// restent en place, lecture/écriture inertes dans supaToLocal/save/fresh, pour
+// éviter une migration BDD destructive. Nettoyage différé si le concept ne ressort pas.
+
+
 export function supaToLocal(data){
   return{
     name:data.name,classCode:data.class_code||"visitor",

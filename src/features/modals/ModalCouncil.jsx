@@ -9,6 +9,15 @@ import { shuffle } from "../../lib/util.js";
 import { playCorrect, playWrong, playBGM, stopBGM } from "../../sounds.js";
 import { useState, useRef, useEffect } from "react";
 
+// ═══════════════════════════════════════════════════════════
+// MODAL COUNCIL — global module mirroring Grammar Gauntlet
+// ═══════════════════════════════════════════════════════════
+// Two sub-modules (Modal Match + Modal Sort) + complete grimoire.
+// Module score keys: modals_match, modals_sort.
+// Tier B XP (15 + 5×correct + 35 perfect = 125 max), aligned with Gauntlet.
+// Tap-to-pair / tap-to-bucket UX (mobile-first, no native HTML5 drag).
+
+
 // ─── MODAL MATCH — sub-module 1/2 of Modal Council ───
 // 3 boards × 5 pairs per session = 15 scored items.
 // Tap a situation (left), then tap a modal (right) → pairs them with a

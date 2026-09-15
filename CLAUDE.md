@@ -4,7 +4,7 @@
 
 TOEIC Arena is a gamified TOEIC exam preparation web application built by Jérémy Leixa, English trainer at IDRAC Business School (Lyon/Grenoble). Used by ~66 Bachelor 3 students (class code: `idrac2026`) and planned for deployment at other institutions (CESI, professional learners).
 
-The app is a **monolithic React application** — all UI logic lives in `src/App.jsx` (~14,860 lines as of 2026-04-30). Jérémy is the sole developer; Claude is the technical partner.
+The app is a React application **split into modules since the 2026-09-15 refactor** (it was an 18,589-line monolith). `src/App.jsx` (~1,500 lines) holds the root component `App()` alone: global state, effects, XP pipeline, session, chest queue. `src/routes.jsx` is the `sp` → screen table, `src/lib/` the pure helpers (no JSX), `src/components/` the shared widgets, `src/features/<module>/` one folder per screen, `src/styles/appCss.js` the stylesheet. Full story and tooling in `REFACTOR_PLAN.md`. Jérémy is the sole developer; Claude is the technical partner.
 
 **Live URL:** Deployed on Vercel
 **Supabase project ref:** `huklmklwvwwhhrrcyytq`
@@ -15,7 +15,7 @@ The app is a **monolithic React application** — all UI logic lives in `src/App
 ## Tech Stack
 
 - **Frontend:** React 19 + Vite 8 (build tool: Rolldown via Vite)
-- **Main file:** `src/App.jsx` — monolithic, contains all components and inline CSS
+- **Layout:** `src/App.jsx` (root `App()` only) · `src/routes.jsx` · `src/lib/` (pure, no JSX) · `src/components/` (shared widgets) · `src/features/<module>/` (screens) · `src/styles/appCss.js` (CSS). See Project Structure.
 - **Data files:** `src/data/*.js` — content separated by module
 - **Backend:** Supabase (PostgreSQL, Realtime for duels, Edge Functions for cron)
 - **Hosting:** Vercel (serverless functions at `api/`)
@@ -35,13 +35,17 @@ The app is a **monolithic React application** — all UI logic lives in `src/App
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (7 fichiers, ~1,3 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (9 fichiers, ~3 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
-**Pas de framework de test** — tout est en Node natif, zéro dépendance. Les tests
-découpent le source d'`App.jsx` et l'évaluent (`new Function`), parce que le monolithe
-n'est pas importable (JSX + React + CSS inline). Patron : `sliceFunction()` par comptage
-d'accolades, dans `tests/check_profile_roundtrip.cjs`.
+**Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
+découpage (2026-09-15), les tests **requièrent les modules purs de `src/lib/` en natif**
+(`require(esm)` : Node 22 + `"type": "module"`) : `profileSchema.js`, `util.js`,
+`endless.js`, `listeningShuffle.js`, `toeic.js`. Plus aucun découpage de texte. Un module
+de `lib/` qui se met à importer Supabase casse le test qui le requiert : c'est voulu,
+remettre le module pur plutôt que revenir au découpage. Deux gardes protègent la
+structure elle-même : `check_symbol_census` (aucun symbole perdu ni dédoublé) et
+`check_import_graph` (aucun cycle, sens des couches respecté).
 
 Ce que la suite protège, et pourquoi :
 
@@ -74,10 +78,29 @@ pas l'audio. Le check couvre aussi les chemins **dérivés** dans App.jsx
 
 ```
 src/
-  App.jsx              — Main app (~10,700 lines, all components + inline CSS)
+  App.jsx              — Root component App() only (~1,500 lines): state, effects, XP
+                          pipeline (applyXpGates/addXp), session (onboard/recover/logout),
+                          chest queue, BGM control, pg() wrapper. BUILD_ID just above it.
+  routes.jsx           — renderRoute(c): the 41 `sp` routes, context destructured from App()
   main.jsx             — React entry point
-  sounds.js            — Web Audio API synthesized SFX + jingles
+  sounds.js            — Web Audio API synthesized SFX + jingles + BGM
   supabase.js          — Supabase client init
+  auth.js              — Supabase Auth (synthetic email, password, reset)
+  narrator.js          — Aldric moments · scanEngine.js — Battle Scan CAT
+  lib/                 — PURE helpers, no JSX, importable by tests. util, device, audio,
+                          listeningShuffle, access, toeic (estimateTOEICScore), league,
+                          profileSchema (fresh/supaToLocal/buildSavePayload), persistence
+                          (load/save), progress (recordModule, missions, unlocks), endless,
+                          teacherSession, push, grimoireExport, feedbackModules,
+                          chestLabels, shopCatalog, iconMaps, passageDocs, rarityStyles
+  components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
+                          PassageDocs, avatar (renderAv, AvatarMedal), toasts, Tabs,
+                          GrimoireReader, NextStepReco, TokenCTAs, legal
+  features/            — one folder per screen: train/ (grammar, reading, strategy),
+                          home/ (Home, Train, Cards, Daily, DailyTip), gauntlet/, modals/,
+                          games/, listening/, exams/ (Mock, Boss, Endless), mentor/,
+                          league/, chests/, shop/, profile/, narrator/, onboarding/, teacher/
+  styles/appCss.js     — the CSS template literal, injected by App.jsx via <style>{CSS}</style>
   data/
     vocab.js           — 920 flashcards, 18 domains
     grammar.js         — 456 Part 5 drill questions
@@ -130,6 +153,9 @@ supabase/
     inactive-reminder/ — Every 3d 17h CET push for 7-30d inactive students
 prototypes/
   chest-animations/    — HTML standalone design prototypes (not deployed)
+scripts/refactor/      — outillage du découpage : extract.cjs (déplace des déclarations avec
+                          imports calculés), review.cjs (prouve un déplacement pur), lintgate.cjs,
+                          depgraph.cjs. Réutilisable pour tout déplacement futur.
 ```
 
 ---
@@ -150,8 +176,8 @@ prototypes/
 
 ## Workflow Guidelines
 
-- **Use Plan Mode** (`/plan`) before any structural change to App.jsx (new module, refactor, new Supabase table).
-- **Use `/compact`** after 3-4 exchanges or whenever Claude seems to lose context on App.jsx specifics.
+- **Use Plan Mode** (`/plan`) before any structural change (new module, refactor, new Supabase table, anything touching `App()` state or the layering).
+- **Use `/compact`** after 3-4 exchanges or whenever Claude seems to lose context on the codebase.
 - **Use `/clear`** when switching to a completely different topic.
 - **Auto push + pull authorized**: after each commit, push to main and pull on user's main repo automatically. No confirmation needed.
 
@@ -159,9 +185,13 @@ prototypes/
 
 ## Critical Development Rules
 
-### Architecture
-- **App.jsx is monolithic.** All components, state, routing, and CSS live in one file. Do not attempt to split it without explicit instruction.
-- **Inline CSS via template literal** at the top of App.jsx (the `CSS` variable). Class `.crd` has `background: var(--bg2)` which overrides inline styles.
+### Architecture (découpage du 2026-09-15)
+- **Couches, dans un seul sens** : `data/` → `lib/` → `components/` → `features/` → `App.jsx` / `routes.jsx`. `lib/` n'importe jamais de JSX ; `components/` n'importe jamais `features/` ; une feature n'importe que son propre dossier. `tests/check_import_graph.cjs` refuse tout cycle et tout sens interdit (un cycle ESM donne `undefined` à l'init d'une constante, sans casser le build).
+- **`App()` reste le seul détenteur de l'état global** : 23 `useState`, 20 effets, 42 fonctions internes (`sv`, `addXp`, `applyXpGates`, `grantChestLocal`, `onboard`, `recover`, `logout`…). Les écrans sont **prop-driven** : ils reçoivent `u`, `done`, `back`, `nav`, `gate`… et ne touchent jamais l'état d'`App()` directement. Pas de contexte React, pas d'extraction des hooks (Phase 4b non retenue) sans décision explicite.
+- **Nouveau module = nouveau fichier** dans `src/features/<module>/`, route dans `src/routes.jsx` (voir le skill `add-module`). Ne pas remettre de composant dans `App.jsx`.
+- **Un fichier `.jsx` n'exporte que des composants** (`react-refresh/only-export-components`, en erreur ici) : constantes → `lib/`, helper de rendu → privé au fichier. Exception connue, comptée à part par `lintgate` : `renderAv` dans `components/avatar.jsx`.
+- **Une `var` de niveau module exportée est en lecture seule pour ses importateurs.** Écrire via un accesseur (`setSyncDirty`, `setCachedUserId`, `setListenAudio`, `isAudioAborted`), jamais assigner un import : Rolldown refuse au build.
+- **CSS dans `src/styles/appCss.js`** (le `CSS` template literal), toujours injecté par `<style>{CSS}</style>` dans App.jsx : cascade inchangée. Deux CSS locaux privés : `DTL_CSS` (ModalCouncil.jsx), `SBD_CSS` (SentenceBuilder.jsx). Class `.crd` has `background: var(--bg2)` which overrides inline styles.
 - **`.onboard-shell` class** overrides the desktop `.app` sidebar margin during onboarding/loading. Required on wrapper and on every Onboard phase div.
 - **Data files are read-only at runtime.** All content is imported at build time. No dynamic fetching of question data.
 
@@ -339,7 +369,7 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - **User-initiated speak() must call resumeAudioSession() first**: `speak()` / `speakAndWait()` bail out early if `_audioAborted` is true. Components that play audio on click WITHOUT mounting a `resumeAudioSession` useEffect (SpeakBtn, Flashcards, Word Tavern) need to reset the flag themselves at click time — otherwise any prior Listen unmount leaves the flag set and they stay silent. `SpeakBtn.go()` handles this centrally.
 
 ### Icon system (2026-04-22)
-- **`<GIcon name size color block style/>`** — inline SVG helper at top of `App.jsx` (~line 174). Renders an Iconify `game-icons:` path from `GAME_ICON_PATHS`. `color` defaults to `currentColor`. Use skin-aware `var(--cyan)` for module content; specific hex for signaling (e.g. gold for achievements).
+- **`<GIcon name size color block style/>`** — inline SVG helper in `src/components/icons.jsx` (with LeagueIcon, SeasonIcon, ResultIcon, BrandMark). Renders an Iconify `game-icons:` path from `GAME_ICON_PATHS`. `color` defaults to `currentColor`. Use skin-aware `var(--cyan)` for module content; specific hex for signaling (e.g. gold for achievements).
 - **`GAME_ICON_PATHS`** in `src/data/avatarIcons.js` — 60+ entries, format `"name":"<path fill=\"currentColor\" d=\"...\"/>"`. ViewBox is always `0 0 512 512` (game-icons standard). Add new paths via the Iconify API: `https://api.iconify.design/game-icons/NAME.svg`.
 - **Fallback-friendly render pattern**: `{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} ...\/>:m.i}`. This lets modules migrate incrementally — any item still on emoji renders as emoji. Used everywhere data arrays use `i:` for an icon key.
 - **Unified tile design** (Games 48×48, Train sub-view 42×42, Listen/Reading Hub 42×42, Mock sub-view, Mock Exams hero):
@@ -444,10 +474,10 @@ Sur auth/sync/identity, ne jamais batcher plusieurs fixes corrélés. Chaque com
 Une hypothèse sur une RLS policy, un schema DB, un env var, une config serveur doit être **confirmée** (screenshot/SQL/dashboard) avant d'être utilisée comme base de raisonnement. Ne pas supposer — demander ou aller chercher.
 
 ### 5. Setters React — grep d'abord
-Les setters dans `App.jsx` utilisent souvent des raccourcis : `sN` (setName), `sU` (setU), `sT` (setTab), `sSP` (setSp), `sL` (setLoading). Avant d'appeler un setter dans une fonction inline (notamment dans les composants Onboard, Home, Train, etc.), **grep** pour confirmer qu'il existe dans le scope. Les `ReferenceError` runtime sont invisibles à la compilation.
+Les setters dans `App()` et dans les écrans (`features/onboarding/Onboard.jsx` surtout) utilisent souvent des raccourcis : `sN` (setName), `sU` (setU), `sT` (setTab), `sSP` (setSp), `sL` (setLoading). Avant d'appeler un setter dans une fonction inline, **grep** pour confirmer qu'il existe dans le scope du fichier. Dans `routes.jsx`, les noms d'`App()` n'existent que s'ils sont dans le contexte `c` (eslint `no-undef` le vérifie). Les `ReferenceError` runtime sont invisibles à la compilation.
 
 ### 6. BUILD_ID synchronisé
-Le `BUILD_ID` hardcodé en haut d'`App.jsx` (ligne ~369) doit refléter la date du dernier changement significatif. S'il est obsolète, les logs console sont trompeurs. À bumper à chaque session de modif critique.
+Le `BUILD_ID` hardcodé dans `App.jsx` (ligne ~62, juste avant `App()`) doit refléter la date du dernier changement significatif. S'il est obsolète, les logs console sont trompeurs. À bumper à chaque session de modif critique.
 
 ### 7. Logs diagnostiques avant fix mystérieux
 Face à un bug dont le symptôme n'est pas reproductible via la logique visible, **ajouter des logs aux points de décision du flow et dans tous les catch du chemin d'exécution suspect, push, demander à l'utilisateur de reproduire, analyser**. C'est ce qui a débloqué la crise du 21 avril.
@@ -532,7 +562,7 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 
 ### BGM Wiring Pattern
 ```javascript
-// In the router:
+// In the router (src/routes.jsx, renderRoute — les noms d'App() viennent du contexte c) :
 if(sp==="moduleName"){playBGM("bgm_name");return pg(<Component done={function(...){stopBGM();handler(...);}} back={function(){stopBGM();sSP(null);sT("tab");}}/>);}
 ```
 
@@ -558,7 +588,7 @@ All secrets in `.env` (local) and Vercel environment variables. **Never hardcode
 | `VITE_SUPABASE_URL` | `.env` + Vercel | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | `.env` + Vercel | Use `import.meta.env`, never hardcode |
 | `ELEVENLABS_API_KEY` | `.env` | Audio generation scripts only |
-| `VAPID_PUBLIC_KEY` | App.jsx | Safe to expose client-side |
+| `VAPID_PUBLIC_KEY` | `src/lib/push.js` | Safe to expose client-side |
 | `VAPID_PRIVATE_KEY` | Vercel only | Server-side push signing |
 | `VITE_PUSH_SECRET` / `PUSH_SECRET` | `.env` + Vercel | Push endpoint auth (same value, 2 names) |
 | Teacher dashboard password | Vercel env vars | Do not store in code |
@@ -568,6 +598,7 @@ All secrets in `.env` (local) and Vercel environment variables. **Never hardcode
 ## Companion Documentation
 
 - `CONTEXT.md` (project root) — Living state: what's done, what's in progress, what's next
+- `REFACTOR_PLAN.md` — le découpage d'App.jsx (2026-09-15) : plan, journal lot par lot, bilan, outillage `scripts/refactor/`
 - `CLAUDE_chest.md` — Loot system deep-dive (chest types, rarities, drop tables)
 - `DAILY_CHALLENGE_BRIEF.md` — Daily Challenge specs
 - `TODO_S2.md` — Season 2 backlog (tracked in `.claude/projects/.../memory/project_todo_s2_progress.md`)
