@@ -383,3 +383,18 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   couche 1 (il importe Supabase). App.jsx contient aussi 3 instructions top-level hors
   déclaration (`onvoiceschanged` l.195, `console.warn` BUILD_ID l.773, nettoyage
   localStorage l.784) : l'extracteur les adresse par `"stmt:<préfixe>"`.
+- 2026-09-15 — **Phase 1 livrée** sur `refactor/split-app` (14 lots, 14 commits + 1 correctif
+  de commentaire + 4 commits d'outillage). App.jsx **18 589 → 16 423 lignes** (−2 166).
+  17 modules dans `src/lib/` + `src/styles/appCss.js` (2 256 lignes). Tests 9/9, **les cinq
+  tests qui découpaient App.jsx par texte requièrent désormais les modules en natif**
+  (`require(esm)`, Node 22 + `"type":"module"`). Lint src/ 375 → 372 (les fonctions mortes
+  exportées ne comptent plus comme inutilisées). Bundle 3 272 160 → 3 271 072 octets.
+  Trois lots avec retouches manuelles, toutes listées par `review.cjs` : audio (lot 3,
+  `stopCurrentListenAudio`/`setListenAudio`/`isAudioAborted`), persistance (lot 8,
+  `setCachedUserId`/`setSyncDirty`, 12 sites dans `App()`), commentaire de `GHOST_NAME`
+  (lot 5). Décision : `BUILD_ID` et son `console.warn` restent en tête d'App.jsx.
+  Outillage ajouté en route : `review.cjs` (équivalence texte, mode `--head` pour un lot
+  commité), `lintgate.cjs` (no-undef, imports inutilisés nouveaux, total qui ne monte pas).
+  Leçon : une chaîne de lots doit s'arrêter à la première erreur (`set -e`), sinon un lot
+  s'extrait par-dessus un lot non commité (vu sur 10-12, arbre remis à zéro et rejoué).
+  **Non mergé sur `main`** : smoke téléphone par Jérémy sur la preview Vercel d'abord.

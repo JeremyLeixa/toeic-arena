@@ -5,9 +5,10 @@
  * déplacée gagne un préfixe `export `, donc git ne la reconnaît plus comme un bloc déplacé.
  *
  * Usage :
- *   node scripts/refactor/review.cjs [--base <ref>]     (défaut : HEAD)
+ *   node scripts/refactor/review.cjs [--base <ref>]            arbre de travail contre <ref> (défaut : HEAD)
+ *   node scripts/refactor/review.cjs --base <ref> --head <ref>  un lot déjà commité
  *
- * Compare l'arbre de travail à <ref> :
+ * Compare l'arbre de travail (ou <head>) à <ref> :
  *   - chaque ligne RETIRÉE de src/App.jsx doit réapparaître, à l'identique (préfixe
  *     `export ` toléré), dans un fichier src/ ajouté ou modifié par le lot ;
  *   - chaque ligne AJOUTÉE dans ces fichiers doit provenir d'une ligne retirée d'App.jsx,
@@ -24,6 +25,8 @@ const ROOT = path.join(__dirname, '..', '..');
 const args = process.argv.slice(2);
 const bi = args.indexOf('--base');
 const BASE = bi >= 0 ? args[bi + 1] : 'HEAD';
+const hi = args.indexOf('--head');
+const HEAD = hi >= 0 ? args[hi + 1] : null; // null = arbre de travail
 const git = (cmd) => execSync('git ' + cmd, { cwd: ROOT, maxBuffer: 256 * 1024 * 1024 }).toString('utf8');
 
 const norm = (l) => l.replace(/\r$/, '');
@@ -31,17 +34,25 @@ const strip = (l) => norm(l).replace(/^export /, '');
 const isImport = (l) => /^import\s/.test(l) || /^\/\/ Extrait de src\/App\.jsx/.test(l);
 
 // fichiers src/ touchés par le lot (modifiés ou nouveaux, y compris non suivis)
-const status = git('status --porcelain -- src').split('\n').filter(Boolean);
-const files = status.map((l) => l.slice(3).trim().replace(/^"|"$/g, '')).filter((f) => /\.(js|jsx)$/.test(f));
+let files, isNew;
+if (HEAD) {
+  const ns = git('diff --name-status ' + BASE + ' ' + HEAD + ' -- src').split('\n').filter(Boolean).map((l) => l.split('\t'));
+  files = ns.map((x) => x[1]).filter((f) => /\.(js|jsx)$/.test(f));
+  isNew = (f) => ns.some((x) => x[1] === f && x[0] === 'A');
+} else {
+  const status = git('status --porcelain -- src').split('\n').filter(Boolean);
+  files = status.map((l) => l.slice(3).trim().replace(/^"|"$/g, '')).filter((f) => /\.(js|jsx)$/.test(f));
+  isNew = (f) => git('ls-files -- "' + f + '"').trim() === '';
+}
 if (!files.includes('src/App.jsx')) { console.log('src/App.jsx n\'a pas changé : rien à relire.'); process.exit(0); }
 
 function diffLines(file) {
   let out;
-  try { out = git('diff ' + BASE + ' -- "' + file + '"'); } catch (e) { out = ''; }
-  const tracked = git('ls-files -- "' + file + '"').trim() !== '';
+  try { out = git('diff ' + BASE + ' ' + (HEAD || '') + ' -- "' + file + '"'); } catch (e) { out = ''; }
   const removed = [], added = [];
-  if (!tracked) { // nouveau fichier : tout est ajouté
-    for (const l of fs.readFileSync(path.join(ROOT, file), 'utf8').split('\n')) added.push(l);
+  if (isNew(file)) { // nouveau fichier : tout est ajouté
+    const content = HEAD ? git('show ' + HEAD + ':' + file) : fs.readFileSync(path.join(ROOT, file), 'utf8');
+    for (const l of content.split('\n')) added.push(l);
     return { removed, added: added.filter((l, i, a) => !(i === a.length - 1 && l === '')) };
   }
   for (const l of out.split('\n')) {
