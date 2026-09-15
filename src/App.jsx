@@ -696,7 +696,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-09-15-boss-p2-layout";
+var BUILD_ID="2026-09-15-endless-resume";
 
 // ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
 // Each teacher logs in with their own teacher_code and sees ONLY the groups
@@ -1371,6 +1371,46 @@ function generateEndlessTest(){
     p7qCount+=ps.questions.length;
   }
   return{p1:ep1,p2:ep2,p3:ep3,p4:ep4,p5:ep5,p6:ep6,p7:ep7};
+}
+
+// La grille de reponses epouse la FORME du test tire (nombre de passages P7,
+// questions par passage...). generateEndlessTest() ne tire pas deux fois la meme
+// forme : le nombre de passages P7 varie (14 ou 15, collectes jusqu a ~54 Q) et
+// leurs longueurs aussi. Une grille construite pour un test ne vaut donc RIEN
+// pour un autre : d ou freshAnsFor(t), qui prend le test en argument au lieu de
+// capturer celui du rendu courant.
+function freshAnsFor(t){return{
+  p1:t.p1.map(function(){return -1;}),p2:t.p2.map(function(){return -1;}),
+  p3:t.p3.map(function(c){return c.qs.map(function(){return -1;});}),
+  p4:t.p4.map(function(tk){return tk.qs.map(function(){return -1;});}),
+  p5:t.p5.map(function(){return -1;}),
+  p6:t.p6.map(function(tx){var n=0;tx.parts.forEach(function(pt){if(pt.blank)n++;});return Array(n).fill(-1);}),
+  p7:t.p7.map(function(ps){return ps.questions.map(function(){return -1;});})
+};}
+
+// Garde-fou de reprise : refuse de rebrancher une grille de reponses sur un test
+// dont elle n a pas la forme. Sans ce controle, ans.p7[qi] vaut undefined des que
+// le test restaure a un passage de plus, et la Part 7 jette un TypeError en plein
+// examen (deux heures de travail perdues). Ne jamais court-circuiter ce test :
+// mieux vaut perdre la reprise que corrompre une epreuve notee.
+function endlessAnsFitsTest(a,t){
+  if(!a||!t||!t.p1||!t.p7)return false;
+  var flat=["p1","p2","p5"];
+  for(var i=0;i<flat.length;i++){
+    if(!a[flat[i]]||a[flat[i]].length!==t[flat[i]].length)return false;
+  }
+  if(!a.p3||a.p3.length!==t.p3.length)return false;
+  for(var j=0;j<t.p3.length;j++){if(!a.p3[j]||a.p3[j].length!==t.p3[j].qs.length)return false;}
+  if(!a.p4||a.p4.length!==t.p4.length)return false;
+  for(var k=0;k<t.p4.length;k++){if(!a.p4[k]||a.p4[k].length!==t.p4[k].qs.length)return false;}
+  if(!a.p6||a.p6.length!==t.p6.length)return false;
+  for(var m=0;m<t.p6.length;m++){
+    var nb=0;t.p6[m].parts.forEach(function(pt){if(pt.blank)nb++;});
+    if(!a.p6[m]||a.p6[m].length!==nb)return false;
+  }
+  if(!a.p7||a.p7.length!==t.p7.length)return false;
+  for(var q=0;q<t.p7.length;q++){if(!a.p7[q]||a.p7[q].length!==t.p7[q].questions.length)return false;}
+  return true;
 }
 
 // ─── TEACHER DASHBOARD CONFIG ───
@@ -8722,7 +8762,19 @@ function BossTest(p){
 
 // ─── ENDLESS ARENA ───
 function EndlessArena(p){
-  var test=useMemo(function(){return generateEndlessTest();},[]);
+  // Le test etait regenere a chaque montage (useMemo), alors que la session ne
+  // sauvegardait QUE les reponses et la position : reprendre une session
+  // rebranchait donc les anciennes reponses sur un test entierement different.
+  // Le test est desormais persiste avec la session, dans sa propre cle pour que
+  // la sauvegarde toutes les 5 s n ait pas a re-serialiser ~80 Ko.
+  var ENDLESS_TEST_KEY="endlessArenaTest";
+  var savedTest=useMemo(function(){try{
+    var rawT=localStorage.getItem(ENDLESS_TEST_KEY);if(!rawT)return null;
+    var dT=JSON.parse(rawT);if(dT.date!==today())return null;
+    if(!dT.test||!dT.test.p1||!dT.test.p7)return null;
+    return dT.test;
+  }catch(e){console.warn("[ENDLESS] test restore caught:",e&&e.message);return null;}},[]);
+  var[test,setTest]=useState(function(){return savedTest||generateEndlessTest();});
   var LP1=test.p1,LP2=test.p2,LP3=test.p3,LP4=test.p4;
   var RP5=test.p5,RP6=test.p6,RP7=test.p7;
   var p3QC=0;LP3.forEach(function(c){p3QC+=c.qs.length;});
@@ -8740,16 +8792,22 @@ function EndlessArena(p){
   function bossIdx(id){return parseInt(id.replace(/^bp\d_/,""),10);}
 
   // ── Restore saved session ──
-  var saved=useMemo(function(){try{var raw=localStorage.getItem(ENDLESS_STORAGE_KEY);if(!raw)return null;var d=JSON.parse(raw);if(d.date!==today())return null;if(!d.ans||!d.sec||d.timeLeft==null)return null;return d;}catch(e){return null;}},[]);
+  var saved=useMemo(function(){try{
+    // Sans le test d origine, les reponses enregistrees ne designent plus rien.
+    if(!savedTest)return null;
+    var raw=localStorage.getItem(ENDLESS_STORAGE_KEY);if(!raw)return null;
+    var d=JSON.parse(raw);if(d.date!==today())return null;
+    if(!d.ans||!d.sec||d.timeLeft==null)return null;
+    if(!endlessAnsFitsTest(d.ans,savedTest))return null;
+    return d;
+  }catch(e){console.warn("[ENDLESS] session restore caught:",e&&e.message);return null;}},[]);
 
-  var freshAns=function(){return{
-    p1:LP1.map(function(){return -1;}),p2:LP2.map(function(){return -1;}),
-    p3:LP3.map(function(c){return c.qs.map(function(){return -1;});}),
-    p4:LP4.map(function(t){return t.qs.map(function(){return -1;});}),
-    p5:RP5.map(function(){return -1;}),
-    p6:RP6.map(function(t){var n=0;t.parts.forEach(function(pt){if(pt.blank)n++;});return Array(n).fill(-1);}),
-    p7:RP7.map(function(ps){return ps.questions.map(function(){return -1;});})
-  };};
+  var freshAns=function(){return freshAnsFor(test);};
+  // Ecrit une seule fois, au demarrage d une session (pas dans la boucle des 5 s).
+  // Si le quota localStorage refuse les ~80 Ko, on log et on continue : la partie
+  // se joue normalement, seule la reprise est perdue. C est la bonne degradation.
+  function persistTest(t){try{localStorage.setItem(ENDLESS_TEST_KEY,JSON.stringify({date:today(),test:t}));}
+    catch(e){console.warn("[ENDLESS] test save caught:",e&&e.message);}}
 
   var[phase,setPhase]=useState(saved?"resume":"intro");
   var[sec,setSec]=useState(saved?saved.sec:"p1");
@@ -8758,8 +8816,10 @@ function EndlessArena(p){
   var[ans,setAns]=useState(function(){return saved?saved.ans:freshAns();});
   var[timeLeft,setTimeLeft]=useState(saved?saved.timeLeft:TOTAL_TIME);
 
-  function saveSession(a,s,q,sq,tl){try{localStorage.setItem(ENDLESS_STORAGE_KEY,JSON.stringify({date:today(),ans:a,sec:s,qi:q,sqi:sq,timeLeft:tl}));}catch(e){}}
-  function clearSession(){try{localStorage.removeItem(ENDLESS_STORAGE_KEY);}catch(e){}}
+  function saveSession(a,s,q,sq,tl){try{localStorage.setItem(ENDLESS_STORAGE_KEY,JSON.stringify({date:today(),ans:a,sec:s,qi:q,sqi:sq,timeLeft:tl}));}
+    catch(e){console.warn("[ENDLESS] session save caught:",e&&e.message);}}
+  function clearSession(){try{localStorage.removeItem(ENDLESS_STORAGE_KEY);localStorage.removeItem(ENDLESS_TEST_KEY);}
+    catch(e){console.warn("[ENDLESS] session clear caught:",e&&e.message);}}
   useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
   var[result,setResult]=useState(null);
   var[doneInfo,setDoneInfo]=useState(null); // valeurs PB/attempts/XP figées au submit (voir GARDE dans doSubmit)
@@ -8896,7 +8956,7 @@ function EndlessArena(p){
         <div style={{display:"flex",justifyContent:"space-between",marginTop:10}}><span style={{color:"var(--t2)",fontSize:13}}>Time remaining</span><span className="out" style={{fontWeight:700,color:saved.timeLeft>600?"var(--endless)":"var(--orange)",fontSize:14}}>{fmtT(saved.timeLeft)}</span></div>
       </div>
       <button className="btn1" style={{background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",fontSize:16,padding:"14px 28px",marginBottom:12}} onClick={function(){stopBGM();setPhase("test");}}>Resume session</button>
-      <button className="btn2" style={{marginBottom:8}} onClick={function(){clearSession();setAns(freshAns());setSec("p1");setQi(0);setSqi(0);setTimeLeft(TOTAL_TIME);setPhase("intro");}}>Start over</button>
+      <button className="btn2" style={{marginBottom:8}} onClick={function(){var nt=generateEndlessTest();clearSession();setTest(nt);setAns(freshAnsFor(nt));setSec("p1");setQi(0);setSqi(0);setTimeLeft(TOTAL_TIME);setPhase("intro");}}>Start over</button>
       <button className="btn2" onClick={p.back}>Back</button>
     </div>);
   }
@@ -8932,7 +8992,7 @@ function EndlessArena(p){
       <div className="crd" style={{padding:14,marginBottom:24,borderColor:"rgba(27,112,207,.3)",background:"rgba(27,112,207,.06)"}}>
         <p style={{fontSize:12,color:"var(--endless)",lineHeight:1.6}}><GIcon name="sands-of-time" size={12} color="var(--endless)" style={{marginRight:4,verticalAlign:"-1px"}}/>Randomly generated from the full content pool. No feedback during test. Your score and weakest part will be analyzed.</p>
       </div>
-      <button className="btn1" style={{background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",fontSize:18,padding:"16px 32px"}} onClick={function(){stopBGM();setPhase("test");}}><GIcon name="sands-of-time" size={16} color="#0f0c08" style={{marginRight:6,verticalAlign:"-2px"}}/>Enter the Sanctuary</button>
+      <button className="btn1" style={{background:"linear-gradient(135deg,#1B70CF,#4a9fe0)",fontSize:18,padding:"16px 32px"}} onClick={function(){stopBGM();persistTest(test);setPhase("test");}}><GIcon name="sands-of-time" size={16} color="#0f0c08" style={{marginRight:6,verticalAlign:"-2px"}}/>Enter the Sanctuary</button>
       <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Not ready yet</button>
     </div>);
   }
