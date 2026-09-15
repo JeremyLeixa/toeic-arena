@@ -5,7 +5,7 @@ description: Use this skill any time Jérémy is styling, tweaking colors, fixin
 
 # Design Tokens — TOEIC Arena
 
-Inline CSS sits at the top of `App.jsx` (`CSS` template literal, ~line 1095). The app supports 9 skins × 2 modes (light/dark) = 18 variants. Every style decision must use CSS variables, NOT hex values, otherwise skin/mode switching breaks silently.
+The global CSS is `src/styles/appCss.js` (`CSS` template literal, injected by App.jsx via `<style>{CSS}</style>`); inline styles live in `src/features/**` and `src/components/**`. The app supports 9 skins × 2 modes (light/dark) = 18 variants. Every style decision must use CSS variables, NOT hex values, otherwise skin/mode switching breaks silently.
 
 ## When to use
 

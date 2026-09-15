@@ -59,10 +59,29 @@
 
 ### État final
 - Shop **complet end-to-end** (P1→P4). 14 commits sur main, en sync, Vercel deployed.
-- **Restes** : avatars Anaïs (attente designs graphiques — ajout trivial via SHOP_CATALOG) · Mock Multiplier→Boss FAIT · **refacto App.jsx** (le gros chantier structurel, acté APRÈS le Shop — voir `project_refactor_appjsx.md`, plan sur le Desktop à déplacer dans le repo).
+- **Restes** : avatars Anaïs (attente designs graphiques — ajout trivial via SHOP_CATALOG) · Mock Multiplier→Boss FAIT · refacto App.jsx **FAIT le 2026-09-15** (ci-dessous).
+
+## Découpage d'App.jsx — 2026-09-15 (voir `REFACTOR_PLAN.md`)
+
+- Le monolithe de 18 589 lignes est devenu `App.jsx` (1 493 lignes, `App()` seul) +
+  `routes.jsx` + `src/lib/` (20 modules purs) + `src/components/` (12 widgets) +
+  `src/features/` (16 dossiers d'écrans) + `src/styles/appCss.js`. Phases 1 à 3 mergées
+  sur `main` (`da011e1`, `2bdc963`), Phase 4a (routes + commentaires) sur
+  `refactor/split-app`, à merger après un smoke de navigation.
+- 44 lots, tous prouvés « déplacement pur » par `scripts/refactor/review.cjs` ; 4 retouches
+  manuelles connues (accesseurs audio et persistance, contexte des routes, commentaires).
+  Tests 9/9 en import natif, lint inchangé, bundle identique, **aucun impact étudiant**.
+- Règles nouvelles dans `CLAUDE.md` (Architecture) : sens des couches, `App()` seul
+  détenteur d'état, un `.jsx` n'exporte que des composants, jamais assigner un import.
+- Hors refactor, repéré pendant le smoke : régression `groups` de la migration d'hygiène
+  (corrigée, `2026-09-15_p2d3`), bug du claim de mot de passe (chemin de secours sans
+  `password_set_at`, `not_owner` avalé — à corriger), toggle œil sur les champs mot de
+  passe (demandé).
 
 ### Pour la prochaine session
-- Si refacto App.jsx : lire `project_refactor_appjsx.md` (verdict : plan solide, séquencé après features ; 4 améliorations à intégrer ; CSS extrait en premier).
+- Merger la Phase 4a après smoke navigation ; puis toggle œil (composant `PasswordInput`
+  partagé, 11 champs dans 3 fichiers) ; puis le bug du claim (lecture complète du flux auth
+  avant de patcher).
 - Avatars Anaïs dès dispo. Sinon backlog S2 (re-engagement, Magic Link Phase 3).
 
 ---
@@ -450,8 +469,9 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 1. Read this `CONTEXT.md` first
 2. Check `project_todo_s2_progress.md` in memory for fine-grained backlog state
 3. If diving into code, read `CLAUDE.md` for conventions
-4. Before any structural change to App.jsx, use Plan Mode
+4. Before any structural change (App() state, layering, new module), use Plan Mode
+5. A new module goes in `src/features/<module>/` + a line in `src/routes.jsx` — see the `add-module` skill
 
 ---
 
-_Last updated: 2026-06-02 · Arena Shop session (Daric currency P1 → boutique P2a → cosmétiques inspirés P2cos → refonte Profil P2b → XP Boosts P2.5 → chronique+bgm P4). Shop complet end-to-end, ~14 commits, en prod. Next: avatars Anaïs (attente designs) ou refacto App.jsx (voir project_refactor_appjsx.md)._
+_Last updated: 2026-09-15 · Découpage d'App.jsx (18 589 → 1 493 lignes, lib/components/features/routes), Phases 1-3 en prod, 4a à merger. Sécurité : verrou RPC complet, régression `groups` corrigée, balayage dérivé du source. Next: merge 4a, toggle œil mdp, bug claim password_set_at, avatars Anaïs._

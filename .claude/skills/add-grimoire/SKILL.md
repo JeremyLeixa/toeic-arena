@@ -110,17 +110,18 @@ Vite/Rolldown will throw a parse error.
 
 The `.grim-page-num` element MUST live INSIDE `.grim-page-content` with `margin-top:auto` (flex column with `min-height:100%`). Do NOT use `position:absolute; bottom:X` — it sticks to viewport, not to content, and breaks on shorter chapters.
 
-This is in App.jsx CSS — only relevant if extending the GrimoireReader styling. Stay away unless you have a specific reason.
+This is in `src/styles/appCss.js` (the `.grim-*` rules) — only relevant if extending the GrimoireReader styling (`src/components/GrimoireReader.jsx`). Stay away unless you have a specific reason.
 
-## Wiring into App.jsx
+## Wiring into the module
 
 After creating the grimoire data file :
 
-1. Import at top of App.jsx :
+1. Import at top of the module's feature file (e.g. `src/features/gauntlet/Gauntlet.jsx`) :
    ```js
-   import { GRIMOIRE_<MODID> } from "./data/<modId>Grimoire.js";
+   import { GRIMOIRE_<MODID> } from "../../data/<modId>Grimoire.js";
+   import { GrimoireReader } from "../../components/GrimoireReader.jsx";
    ```
-2. Render via shared component :
+2. Render via the shared component :
    ```js
    <GrimoireReader grimoire={GRIMOIRE_<MODID>} back={function(){...}}/>
    ```
