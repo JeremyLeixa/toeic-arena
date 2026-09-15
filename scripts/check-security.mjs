@@ -7,7 +7,8 @@
  *
  * CE QU'IL VÉRIFIE. Avec la clé publique (celle que tout visiteur possède, elle est dans
  * le bundle) :
- *   · aucune table n'est lisible en direct ;
+ *   · aucune table n'est lisible en direct — `groups` comprise, jusqu'à sa dernière
+ *     colonne, depuis que le client passe par la RPC group_public (P2-D5, 2026-09-16) ;
  *   · seules la vue de classement et les événements répondent, en lecture ;
  *   · les suppressions en lot sont refusées — c'était le vecteur le plus grave, capable
  *     de couper les notifications d'une promo entière sans laisser de trace ;
@@ -137,10 +138,18 @@ for (const rd of reads) {
       + '). RLS active sans policy SELECT ? (régression du 2026-09-15)');
   }
 }
-// Les colonnes sensibles de `groups` restent refusées (grant colonne par colonne, B4).
-for (const col of ['teacher_code', 'teacher_email']) {
-  const r = await get('groups?select=' + col + '&limit=1');
-  if (r.status === 200) fail('GET groups?select=' + col + ' → 200 : la colonne sensible est redevenue lisible.');
+// `groups` : plus aucune lecture directe dans le source depuis P2-D5 (2026-09-16, RPC
+// group_public), donc la table doit être fermée jusqu'à sa DERNIÈRE colonne. Le balayage 1
+// ne le prouve pas : `select=*` échoue dès qu'UNE colonne est refusée, et c'est resté vrai
+// pendant tout le temps où le grant colonne de B4 laissait lire tout le reste. Ici on
+// demande une colonne anodine, et on exige le refus.
+{
+  const r = await get('groups?select=code&limit=1');
+  if (r.status !== 401) {
+    fail('GET groups?select=code → HTTP ' + r.status + ', 401 attendu. Le client ne lit plus '
+      + '`groups` en direct : appliquer 2026-09-16_p2d5_lock_groups_full.sql (REVOKE des 7 '
+      + 'privilèges + DROP de la policy), sinon la table reste ouverte pour rien.');
+  }
 }
 
 // 4b. RPC. Chaque fonction appelée par le client est sondée avec des arguments factices
@@ -159,9 +168,10 @@ const rpcNames = collectRpcNames(SRC, ROOT);
 const defs = collectDefs(path.join(ROOT, 'supabase', 'migrations'));
 const isGuarded = (d) => /\bstudent_guard\s*\(|\bteacher_role_of\s*\(|\bauth\.(uid|jwt)\s*\(\)/.test(d.body);
 // Lectures sans garde (patron « classement », plus les deux lookups legacy de l'onboarding,
-// pur SELECT) : rien n'écrit, on peut les sonder. Vérifié corps par corps le 2026-09-15.
+// pur SELECT) : rien n'écrit, on peut les sonder. Vérifié corps par corps le 2026-09-15 ;
+// group_public (fiche publique d'une promo, P2-D5) ajoutée le 2026-09-16.
 const READ_ONLY = new Set(['class_median_xp', 'class_weekly_progress', 'class_week_podium', 'find_students_by_name',
-  'my_student_by_email', 'recover_student_row']);
+  'my_student_by_email', 'recover_student_row', 'group_public']);
 let probed = 0;
 const skipped = [];
 for (const [name, where] of [...rpcNames].sort()) {

@@ -1147,7 +1147,8 @@ export function TeacherDash(p){
         <input value={cgForm.code} onChange={function(e){
           var v=e.target.value.toLowerCase().replace(/\s/g,"");
           setCgForm(Object.assign({},cgForm,{code:v}));
-          if(v.length>=3){supabase.from('groups').select('code').eq('code',v).maybeSingle().then(function(res){setCgCodeErr(res.data?"Ce code existe d\u00e9j\u00e0":"");});}else{setCgCodeErr("");}
+          // Existence du code par RPC (`groups` n'est plus lisible en direct, verrou P2-D5).
+          if(v.length>=3){supabase.rpc('group_public',{p_code:v}).then(function(res){if(res.error)console.warn("[dash] group_public failed:",res.error.message);setCgCodeErr(res.data?"Ce code existe d\u00e9j\u00e0":"");});}else{setCgCodeErr("");}
 
         }} placeholder="ex: idrac2027" style={{width:"100%",padding:"12px 16px",background:"var(--bg2)",border:"1px solid "+(cgCodeErr?"var(--red)":"var(--bdr)"),borderRadius:12,color:"var(--t1)",fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",marginBottom:4,boxSizing:"border-box"}}/>
         {cgCodeErr&&<p style={{fontSize:11,color:"var(--red)",margin:"0 0 12px"}}>{cgCodeErr}</p>}

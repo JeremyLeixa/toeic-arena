@@ -82,10 +82,25 @@
 - Tout est mergé sur `main`, branche `refactor/split-app` supprimée. `npm run
   check:security` dérive désormais ses chemins légitimes du source.
 
+## Session 2026-09-16 — `groups` par RPC (P2-D5), fin de l'exception « grant colonne + policy »
+
+- Les 5 lectures directes de `groups` (fenêtre d'accès au chargement du profil, saisons de
+  la League, « Join a Group », picker d'homonymes, « ce code existe déjà » du dashboard)
+  passent par `group_public(p_code)` : une ligne par code exact, 7 colonnes figées (code,
+  name, type, start_date, end_date, seasons, grade_bonus_enabled), jamais
+  `teacher_code` / `teacher_email`. Le picker d'homonymes ne liste plus toutes les promos
+  pour en nommer une. Chaque site logue `res.error` (zéro catch muet).
+- Deux migrations : `2026-09-16_p2d5_group_public_rpc.sql` (additif) puis
+  `2026-09-16_p2d5_lock_groups_full.sql` (REVOKE des 7 privilèges + DROP de la policy).
+  **Ordre** : SQL 1 → déploiement client → `check:security` + login + Join a Group → SQL 2.
+- `check:security` exige désormais un 401 sur `groups?select=code` (table fermée jusqu'à
+  la dernière colonne) et sonde `group_public` (READ_ONLY). CLAUDE.md : deux objets
+  lisibles en direct (`students_public`, `events`), plus d'exception `groups`.
+- `BUILD_ID` = `2026-09-16-groups-rpc`.
+
 ### Pour la prochaine session
-- Hors refactor, petit lot : remplacer les 4 lectures directes de `groups` par une RPC
-  bornée (supprime l'exception « grant colonne + policy » qui a piégé la migration
-  d'hygiène).
+- Si ce n'est pas déjà fait : appliquer les deux SQL P2-D5 dans l'ordre ci-dessus, puis
+  `npm run check:security` au vert.
 - Phase 5 du refactor, optionnelle : lazy chunks (Teacher, Onboarding, exams), portes XP en
   fonctions pures testables (`lib/xp.js`), code mort (`speakAndWait`, `compScores`,
   `getModuleAccuracy`, `parseInlineStyle`, `_lastSync`, `SK`).
@@ -481,4 +496,4 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 
 ---
 
-_Last updated: 2026-09-15 (soir) · Découpage d'App.jsx terminé et en prod (18 589 → 1 493 lignes, lib/components/features/routes, docs et skills à jour). Sécurité : verrou RPC complet, régression `groups` corrigée, piège du claim corrigé (P2-D4), balayage dérivé du source. UX : toggle œil mdp, fiche de cours en place (Exam Simulation). Next: RPC `groups`, Phase 5 optionnelle, avatars Anaïs._
+_Last updated: 2026-09-16 · `groups` fermée au client (P2-D5) : 5 lectures directes → RPC `group_public`, deux migrations (additive puis verrou), balayage durci. Découpage d'App.jsx terminé et en prod (18 589 → 1 493 lignes). Sécurité : verrou RPC complet, plus aucune exception de table ; piège du claim corrigé (P2-D4). Next: appliquer SQL P2-D5 (1 puis 2), Phase 5 optionnelle, avatars Anaïs._

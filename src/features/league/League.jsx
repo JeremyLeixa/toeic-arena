@@ -29,10 +29,14 @@ var[progressionData,setProgressionData]=useState([]);
 var[progLoading,setProgLoading]=useState(false);
 var[groupData,setGroupData]=useState(null);
 
-// Fetch group seasons
+// Fetch group seasons — fiche publique par RPC (`groups` n'est plus lisible en direct,
+// verrou P2-D5 du 2026-09-16). null si le code est inconnu → repli SEASONS ci-dessous.
 useEffect(function(){
-  supabase.from('groups').select('seasons,type,start_date,end_date,grade_bonus_enabled').eq('code',leagueGroup).maybeSingle()
-    .then(function(res){if(res.data)setGroupData(res.data);else setGroupData(null);});
+  supabase.rpc('group_public',{p_code:leagueGroup})
+    .then(function(res){
+      if(res.error)console.warn("[league] group_public failed:",res.error.message);
+      if(res.data)setGroupData(res.data);else setGroupData(null);
+    });
 },[leagueGroup]);
 
 // Resolve seasons: dynamic from group, fallback to SEASONS for idrac2026

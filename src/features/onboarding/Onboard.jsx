@@ -144,11 +144,18 @@ var[step,sSt]=useState("name");
         sN(matches[0].name);
         var groupMap={};
         try {
-          var groupRes=await supabase.from('groups').select('code,name,type');
-          if(groupRes.error)console.warn("[LOOKUP] groups query error:",groupRes.error.message);
-          if(groupRes.data)groupRes.data.forEach(function(g){groupMap[g.code]={name:g.name,type:g.type};});
+          // `groups` n'est plus lisible en direct (verrou P2-D5, 2026-09-16) : une fiche
+          // publique par promo présente dans les matches — en pratique une seule, le
+          // lookup est scopé à cc. Fini le listing de TOUTES les promos pour en nommer une.
+          var codes=[];
+          matches.forEach(function(s){if(s.class_code&&codes.indexOf(s.class_code)<0)codes.push(s.class_code);});
+          var groupResList=await Promise.all(codes.map(function(c){return supabase.rpc('group_public',{p_code:c});}));
+          groupResList.forEach(function(gr){
+            if(gr.error)console.warn("[LOOKUP] group_public error:",gr.error.message);
+            if(gr.data)groupMap[gr.data.code]={name:gr.data.name,type:gr.data.type};
+          });
         } catch(e) {
-          console.warn("[LOOKUP] groups query threw:",e&&e.message);
+          console.warn("[LOOKUP] group_public threw:",e&&e.message);
         }
         var accounts=matches.map(function(s){
           var g=groupMap[s.class_code];
@@ -174,7 +181,10 @@ var[step,sSt]=useState("name");
   async function checkGroupCode(code){
     if(!code.trim()){setClassValid(null);setClassGroupName("");return;}
     setClassChecking(true);
-    var res=await supabase.from('groups').select('name,type').eq('code',code.trim().toLowerCase()).maybeSingle();
+    // Fiche publique par RPC (`groups` n'est plus lisible en direct, verrou P2-D5 du
+    // 2026-09-16). null = code inconnu → « Code not found », comme avant.
+    var res=await supabase.rpc('group_public',{p_code:code.trim().toLowerCase()});
+    if(res.error)console.warn("[onboard] group_public failed:",res.error.message);
     if(res.data){setClassValid(true);setClassGroupName(res.data.name);}
     else{setClassValid(false);setClassGroupName("");}
     setClassChecking(false);

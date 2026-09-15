@@ -59,7 +59,7 @@ import { renderRoute } from "./routes.jsx";
 
 
 
-var BUILD_ID="2026-09-15-split-phase1";
+var BUILD_ID="2026-09-16-groups-rpc";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -584,8 +584,11 @@ useEffect(function(){
     if(u.name==="Teacher"){setGroupType("school");setGroupAccess({status:"ok"});return;}
     var cc=u.classCode||'visitor';
     if(cc==="visitor"){setGroupType("visitor");setGroupAccess({status:"ok"});return;}
-    supabase.from('groups').select('start_date,end_date,name,type').eq('code',cc).maybeSingle()
+    // `groups` n'est plus lisible en direct (verrou P2-D5, 2026-09-16) : fiche publique
+    // bornée par RPC. null si le code est inconnu → mêmes replis qu'avant (school / ok).
+    supabase.rpc('group_public',{p_code:cc})
       .then(function(res){
+        if(res.error)console.warn("[groups] group_public failed:",res.error.message);
         if(!res.data){setGroupType("school");setGroupAccess({status:"ok"});return;}
         var g=res.data;
         setGroupType(g.type||"school");

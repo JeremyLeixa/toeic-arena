@@ -398,20 +398,24 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 
 ## Modèle d'accès Supabase — verrou complet du 2026-09-15
 
-**Le client n'a plus AUCUN privilège de table**, à trois exceptions près. `anon` et
-`authenticated` ne peuvent lire que : la vue `students_public` (classement), la table
-`events` (événements en cours), et les **colonnes non sensibles de `groups`** (tout sauf
-`teacher_code` / `teacher_email`, grant colonne par colonne de B4 + policy SELECT
-`USING true`). Tout le reste passe par des RPC `SECURITY DEFINER`.
+**Le client n'a plus AUCUN privilège de table**, à deux exceptions près. `anon` et
+`authenticated` ne peuvent lire que : la vue `students_public` (classement) et la table
+`events` (événements en cours). Tout le reste passe par des RPC `SECURITY DEFINER` —
+`groups` comprise depuis P2-D5 (2026-09-16) : la fiche publique d'une promo s'obtient par
+`group_public(p_code)`, une ligne par code exact, 7 colonnes figées (code, name, type,
+start_date, end_date, seasons, grade_bonus_enabled), jamais `teacher_code` /
+`teacher_email`.
 
-⚠️ Ces deux mécanismes vont **ensemble** sur `groups` : un grant colonne sans policy
-SELECT donne `200 []` sur tous les codes (RLS active, zéro ligne). C'est ce qui a cassé
-l'écran « Join a Group » pour toutes les promos le 2026-09-15, quand la migration
-d'hygiène a supprimé la policy en la croyant inerte (`2026-09-15_p2d3_restore_groups_read.sql`
-la recrée). `npm run check:security` vérifie désormais ce chemin.
+⚠️ Une lecture directe tient sur **deux mécanismes à la fois** : le privilège (GRANT) et
+une policy SELECT. Un grant sans policy donne `200 []` sur une table pleine (RLS active,
+zéro ligne). C'est ce qui a cassé « Join a Group » pour toutes les promos le 2026-09-15,
+quand la migration d'hygiène a supprimé la policy de `groups` en la croyant inerte.
+L'exception a été supprimée plutôt que documentée (P2-D5 : RPC, puis REVOKE + DROP
+POLICY) ; `events` reste la seule table dans ce régime (`GRANT SELECT` + policy « Events
+visible »), et `npm run check:security` sonde les deux mécanismes.
 
 Conséquence pour tout nouveau code : **un `supabase.from("<table>")` dans `src/` est un
-bug** hors ces trois objets, il renverra `42501 permission denied`. Écrire une RPC et
+bug** hors ces deux objets, il renverra `42501 permission denied`. Écrire une RPC et
 l'ajouter à `supabase/migrations/`.
 
 ### Les trois patrons d'autorisation
@@ -419,7 +423,7 @@ l'ajouter à `supabase/migrations/`.
 | Patron | Garde | Exemples |
 |---|---|---|
 | Données perso | `student_guard(p_name, p_class_code)` | `load_student`, `save_student`, `my_rewards`, `my_tokens`, `my_pending_chests`, `my_weekly_snapshots`, `upsert_push_subscription`, `open_pending_chest` |
-| Classement (public par nature) | aucune, mais **bornée** : colonnes figées, limite dure, `Teacher` exclu en SQL | `students_public`, `class_median_xp`, `class_weekly_progress`, `class_week_podium` |
+| Lecture publique (classement, fiche de promo) | aucune, mais **bornée** : colonnes figées, limite dure, `Teacher` exclu en SQL | `students_public`, `class_median_xp`, `class_weekly_progress`, `class_week_podium`, `group_public` |
 | Dashboard formateur | `teacher_role_of(p_code)` + propriété de cohorte | `teacher_students`, `teacher_weekly_snapshots`, `teacher_feedback`, `teacher_create_event` |
 
 `student_guard` a une **tolérance legacy** : une ligne sans `user_id` passe, faute de
@@ -448,10 +452,11 @@ silence.
   pendant des mois — et **TRUNCATE ignore la RLS**.
 - **Les policies PERMISSIVE sont OR'ées.** Une policy `USING true` à côté d'une policy
   de propriété annule la seconde. C'est pourquoi les 12 policies legacy ont été
-  supprimées : la protection vient des privilèges, pas de la RLS. **Exception : `groups`**,
-  seule table lue en direct par les élèves, vit sur les deux à la fois (grant colonne
-  par colonne + policy SELECT `USING true`). Retirer l'un des deux ne « nettoie » rien,
-  ça coupe la lecture (régression du 2026-09-15).
+  supprimées : la protection vient des privilèges, pas de la RLS. La seule policy
+  restante est « Events visible » sur `events` (lecture directe voulue : elle va avec le
+  `GRANT SELECT`, retirer l'un des deux coupe la lecture — régression vécue sur `groups`
+  le 2026-09-15). `groups` a quitté ce régime le 2026-09-16 (P2-D5) : plus de grant
+  colonne, plus de policy, RPC `group_public`.
 - **Ordre de déploiement** : fichier SQL 1 (les RPC, purement additif) → code déployé →
   vérification en prod → fichier SQL 2 (le REVOKE). Le SQL 2 brûle le filet : tant qu'il
   n'est pas passé, reverter le commit client suffit.
