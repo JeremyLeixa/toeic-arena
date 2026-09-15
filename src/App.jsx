@@ -442,6 +442,40 @@ function shufListeningItem(it){
   var s=shufListeningOpts(it.opts,it.c);
   return Object.assign({},it,{opts:s.opts,c:s.c,aud:s.aud,x:remapOptLetters(it.x,s.aud)});
 }
+
+// Variante DETERMINISTE, pour le Boss Test uniquement.
+// Le Boss persiste sa session en stockant les reponses PAR INDEX. Une permutation
+// tiree au hasard a chaque montage ferait donc correspondre les reponses deja
+// donnees a d'autres options au moment de la reprise. Derivee de l'id de l'item,
+// la permutation est identique a chaque montage : la reprise reste juste, et le
+// "toujours B" saute quand meme (BOSS_P2 etait a 14 bonnes reponses sur 25 en B,
+// et une seule en C — soit 56% en tapant B sans ecouter, sur une epreuve notee).
+// Contrairement au training, on NE peut PAS randomiser par session ici : ce serait
+// reintroduire le bug de reprise. Le prix a payer est qu'un eleve qui refait le
+// Boss plusieurs fois retrouve la meme disposition — c'est le comportement normal
+// d'un test fixe, et c'est deja le cas de l'ordre des questions.
+function seedFromId(id){
+  var h=0;
+  for(var i=0;i<id.length;i++){h=(h*31+id.charCodeAt(i))%100000;}
+  return h+1;
+}
+// 0.2 n'est pas arbitraire : c'est le pas qui, sur les 25 items de BOSS_P2, donne
+// la repartition la plus equilibree (A8/B9/C8, jamais plus de 2 fois la meme
+// lettre d'affilee). Le changer redistribue tout le Boss -> bumper BOSS_LAYOUT_V.
+var BOSS_SHUF_STEP=0.2;
+function detShufListeningItem(it){
+  var idx=[];for(var i=0;i<it.opts.length;i++)idx.push(i);
+  var sd=seedFromId(it.id);
+  for(var j=idx.length-1;j>0;j--){
+    var k=Math.floor(srand(sd+j*BOSS_SHUF_STEP)*(j+1));
+    var t=idx[j];idx[j]=idx[k];idx[k]=t;
+  }
+  return Object.assign({},it,{opts:idx.map(function(q){return it.opts[q];}),
+    c:idx.indexOf(it.c),aud:idx,x:remapOptLetters(it.x,idx)});
+}
+// Calcule une fois au chargement du module : pure fonction de donnees statiques.
+// BOSS_P2 reste brut pour l'Endless, qui applique sa propre permutation par run.
+var BOSS_P2_SHUF=BOSS_P2.map(detShufListeningItem);
 import { getLevel } from "./data/helpers.js";
 function getLeague(wxp){var l=LEAGUES[0];for(var i=0;i<LEAGUES.length;i++)if(wxp>=LEAGUES[i].min)l=LEAGUES[i];return l;}
 // Légende est conditionnelle : TOEIC estimé >= 400 requis
@@ -662,7 +696,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-09-15-listening-shuffle";
+var BUILD_ID="2026-09-15-boss-p2-layout";
 
 // ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
 // Each teacher logs in with their own teacher_code and sees ONLY the groups
@@ -8076,7 +8110,7 @@ function FalseFriends(p){
 
 // ─── BOSS TEST — The Final Arena (Full TOEIC 200Q) ───
 function BossTest(p){
-  var LP1=BOSS_P1,LP2=BOSS_P2,LP3=BOSS_P3,LP4=BOSS_P4;
+  var LP1=BOSS_P1,LP2=BOSS_P2_SHUF,LP3=BOSS_P3,LP4=BOSS_P4;
   var RP5=BOSS_P5,RP6=BOSS_P6,RP7=BOSS_P7;
   var p3QC=0;LP3.forEach(function(c){p3QC+=c.qs.length;});
   var p4QC=0;LP4.forEach(function(t){p4QC+=t.qs.length;});
@@ -8087,9 +8121,10 @@ function BossTest(p){
   var totalQ=lisQ+readQ;
   var TOTAL_TIME=120*60;
   var BOSS_STORAGE_KEY="bossTestSession";
+  var BOSS_LAYOUT_V=2; // bumper des que la disposition des options du Boss change
 
   // ── Restore saved session if any ──
-  var saved=useMemo(function(){try{var raw=localStorage.getItem(BOSS_STORAGE_KEY);if(!raw)return null;var d=JSON.parse(raw);if(d.date!==today())return null;if(!d.ans||!d.sec||d.timeLeft==null)return null;return d;}catch(e){return null;}},[]);
+  var saved=useMemo(function(){try{var raw=localStorage.getItem(BOSS_STORAGE_KEY);if(!raw)return null;var d=JSON.parse(raw);if(d.date!==today())return null;if(d.lay!==BOSS_LAYOUT_V)return null;if(!d.ans||!d.sec||d.timeLeft==null)return null;return d;}catch(e){console.warn("[BOSS] session restore caught:",e&&e.message);return null;}},[]);
 
   var freshAns=function(){return{
     p1:LP1.map(function(){return -1;}),p2:LP2.map(function(){return -1;}),
@@ -8107,7 +8142,7 @@ function BossTest(p){
   var[ans,setAns]=useState(function(){return saved?saved.ans:freshAns();});
   var[timeLeft,setTimeLeft]=useState(saved?saved.timeLeft:TOTAL_TIME);
 
-  function saveBossSession(a,s,q,sq,tl){try{localStorage.setItem(BOSS_STORAGE_KEY,JSON.stringify({date:today(),ans:a,sec:s,qi:q,sqi:sq,timeLeft:tl}));}catch(e){}}
+  function saveBossSession(a,s,q,sq,tl){try{localStorage.setItem(BOSS_STORAGE_KEY,JSON.stringify({date:today(),lay:BOSS_LAYOUT_V,ans:a,sec:s,qi:q,sqi:sq,timeLeft:tl}));}catch(e){console.warn("[BOSS] session save caught:",e&&e.message);}}
   function clearBossSession(){try{localStorage.removeItem(BOSS_STORAGE_KEY);}catch(e){}}
   var[result,setResult]=useState(null);
   var[aState,setAState]=useState("ready");
@@ -8145,7 +8180,7 @@ function BossTest(p){
 
   // ── Audio ──
   async function playP1(){if(aState!=="ready")return;setAState("playing");for(var i=0;i<LP1[qi].opts.length;i++){setCurOpt(i);await playAudioFile("/audio/boss/p1_"+pad(qi+1)+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
-  async function playP2(){if(aState!=="ready")return;setAState("playing");var id=pad(qi+1);await playAudioFile("/audio/boss/p2_"+id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+id+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,300);});}setCurOpt(-1);setAState("done");}
+  async function playP2(){if(aState!=="ready")return;setAState("playing");var id=pad(qi+1);var au=LP2[qi]&&LP2[qi].aud;await playAudioFile("/audio/boss/p2_"+id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+id+"_"+(au?au[i]:i)+".mp3");await new Promise(function(r){setTimeout(r,300);});}setCurOpt(-1);setAState("done");}
   async function playP3(){if(aState!=="ready")return;setAState("playing");await playAudioFile("/audio/boss/p3_"+pad(qi+1)+".mp3");setAState("done");}
   async function playP4(){if(aState!=="ready")return;setAState("playing");await playAudioFile("/audio/boss/p4_"+pad(qi+1)+".mp3");setAState("done");}
 

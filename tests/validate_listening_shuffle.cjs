@@ -29,14 +29,17 @@ function extract(startMarker, endMarker) {
 }
 const helperSrc =
   "function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}\n" +
+  "function srand(s){var x=Math.sin(s)*10000;return x-Math.floor(x);}\n" +
   extract("function shufListeningOpts(", "// Permute un item listening complet") +
   extract("function shufListeningItem(", "\n}\n", 1) +
   "\n}\n" +
-  "module.exports={shufListeningItem:shufListeningItem,remapOptLetters:remapOptLetters};";
+  extract("function seedFromId(", "// Calcule une fois au chargement du module") +
+  "module.exports={shufListeningItem:shufListeningItem,remapOptLetters:remapOptLetters," +
+  "detShufListeningItem:detShufListeningItem,BOSS_SHUF_STEP:BOSS_SHUF_STEP};";
 
 const mod = { exports: {} };
 new Function("module", "exports", helperSrc)(mod, mod.exports);
-const { shufListeningItem, remapOptLetters } = mod.exports;
+const { shufListeningItem, remapOptLetters, detShufListeningItem } = mod.exports;
 
 let fails = 0;
 function check(cond, msg) {
@@ -111,6 +114,50 @@ for (const orig of flat.P1) {
   }
 }
 console.log("  P1  " + artOk + " articles anglais preserves");
+
+// ── BOSS_P2 : permutation DETERMINISTE ──
+// Le Boss stocke les reponses de sa session par index : si la permutation variait
+// d'un montage a l'autre, reprendre une session scorerait les reponses deja
+// donnees contre d'autres options. Le layout doit donc etre 100% reproductible.
+console.log("\n=== BOSS_P2 : layout deterministe ===");
+const bossSrc = fs.readFileSync(path.join(ROOT, "src", "data", "bossTestFull.js"), "utf8")
+  .replace(/^export var /gm, "var ");
+const BOSS_P2 = new Function(bossSrc + ";return BOSS_P2;")();
+
+const layoutA = BOSS_P2.map(detShufListeningItem);
+const layoutB = BOSS_P2.map(detShufListeningItem);
+check(JSON.stringify(layoutA) === JSON.stringify(layoutB),
+  "BOSS_P2 : deux appels ne donnent pas le meme layout (permutation non deterministe)");
+
+for (let i = 0; i < BOSS_P2.length; i++) {
+  const orig = BOSS_P2[i], it = layoutA[i];
+  const seen = it.aud.slice().sort((a, b) => a - b);
+  check(seen.length === 3 && seen.every((v, k) => v === k), orig.id + ": aud invalide");
+  for (let k = 0; k < 3; k++) {
+    check(it.opts[k] === orig.opts[it.aud[k]],
+      orig.id + ": opts[" + k + "] ne correspond pas a l'audio aud[" + k + "]");
+  }
+  check(it.opts[it.c] === orig.opts[orig.c], orig.id + ": la bonne reponse a change de texte");
+  check(it.id === orig.id, orig.id + ": id altere (l'audio est indexe dessus)");
+}
+
+const bTally = [0, 0, 0];
+layoutA.forEach(it => bTally[it.c]++);
+const seq = layoutA.map(it => "ABC"[it.c]).join("");
+let run = 0, worstRun = 0, prev = "";
+for (const ch of seq) { run = ch === prev ? run + 1 : 1; prev = ch; if (run > worstRun) worstRun = run; }
+const before = [0, 0, 0]; BOSS_P2.forEach(it => before[it.c]++);
+console.log("  avant : A" + before[0] + " B" + before[1] + " C" + before[2] +
+  "   " + BOSS_P2.map(it => "ABC"[it.c]).join(""));
+console.log("  apres : A" + bTally[0] + " B" + bTally[1] + " C" + bTally[2] +
+  "   " + seq + "   (serie max " + worstRun + ")");
+// Sur 25 items on ne peut pas etre parfaitement uniforme ; on exige au moins que
+// taper toujours la meme lettre ne paie plus (<= 40%) et qu'aucune lettre ne soit
+// quasi absente comme le C d'avant (1 seul sur 25).
+check(Math.max.apply(null, bTally) <= 10, "BOSS_P2 : une lettre depasse 40% du test");
+check(Math.min.apply(null, bTally) >= 6, "BOSS_P2 : une lettre est sous-representee");
+check(worstRun <= 3, "BOSS_P2 : serie de " + worstRun + " fois la meme lettre d'affilee");
+check(layoutA.every(it => it.x && it.x.length > 0), "BOSS_P2 : explication vide apres remap");
 
 console.log("\n=== distribution apres permutation (attendu ~uniforme) ===");
 for (const name of Object.keys(flat)) {
