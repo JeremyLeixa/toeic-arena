@@ -54,7 +54,6 @@ src/
   App.jsx              — Main app (~10,700 lines, all components + inline CSS)
   main.jsx             — React entry point
   sounds.js            — Web Audio API synthesized SFX + jingles
-  chests.js            — Loot/reward system (imported from src/data/chests.js)
   supabase.js          — Supabase client init
   data/
     vocab.js           — 920 flashcards, 18 domains
