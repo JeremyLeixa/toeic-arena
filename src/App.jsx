@@ -74,6 +74,8 @@ import { SpeakBtn } from "./components/SpeakBtn.jsx";
 import { ListeningGraphic } from "./components/ListeningGraphic.jsx";
 import { PassageDocs } from "./components/PassageDocs.jsx";
 import { renderAv, AvatarMedal, TreasureChestSvg } from "./components/avatar.jsx";
+import { AchToast, MarksToast, DaricPill, XpToast } from "./components/toasts.jsx";
+import { Tabs } from "./components/Tabs.jsx";
 
 
 
@@ -1772,39 +1774,9 @@ function NarratorOverlay(props) {
   );
 }
 
-function AchToast(p){if(!p.v)return null;
-  return(<div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",zIndex:250,animation:"achPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
-    <div style={{background:"linear-gradient(135deg,#1a1610,#201a12)",border:"1px solid rgba(255,215,0,.3)",padding:"16px 28px",borderRadius:20,boxShadow:"0 8px 40px rgba(255,215,0,.25)",minWidth:220}}>
-      <div style={{fontSize:40,marginBottom:6,animation:"pulse 1s infinite"}}>{p.v.icon}</div>
-      <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--gold)",textTransform:"uppercase",letterSpacing:2,marginBottom:4}}>Achievement Unlocked!</div>
-      <div className="out" style={{fontWeight:800,fontSize:18,color:"var(--t1)",marginBottom:2}}>{p.v.name}</div>
-      <div style={{fontSize:12,color:"var(--t2)"}}>{p.v.desc}</div>
-    </div>
-  </div>);}
 
-// Arena Shop P1 (2026-05-29) — Daric grant toast. Sits below XpToast (top:118)
-// so both can coexist when a chest open or focus completion fires alongside XP.
-function MarksToast(p){if(!p.v)return null;
-  return(<div style={{position:"fixed",top:118,left:"50%",transform:"translateX(-50%)",zIndex:200,animation:"xpPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
-    <div style={{background:"linear-gradient(135deg,#e8c45a,#a8801f)",color:"#1a1208",padding:"8px 20px",borderRadius:99,fontWeight:800,fontSize:18,boxShadow:"0 4px 20px rgba(232,196,90,.4)",display:"inline-flex",alignItems:"center",gap:7}} className="out"><GIcon name="daric" size={18} color="#1a1208"/> +{p.v} Darics</div>
-  </div>);}
 
-// Arena Shop P1 (2026-05-29) — Daric wallet pill. Reusable in Profil hero now,
-// Shop sticky-header in P2. Gold palette, NOT skin-aware (currency is a fixed
-// brand element, like the XP gold, independent of equipped skin).
-function DaricPill(p){
-  return(<span style={{fontSize:12,display:"inline-flex",alignItems:"center",gap:5,background:"rgba(232,196,90,.1)",color:"#c9a23a",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(232,196,90,.25)",fontWeight:700}}><GIcon name="daric" size={13} color="#c9a23a"/> {p.marks||0}</span>);
-}
 
-function XpToast(p){if(!p.v)return null;
-  var info=typeof p.v==="object"?p.v:{total:p.v,base:p.v,bonuses:[]};
-  return(<div style={{position:"fixed",top:70,left:"50%",transform:"translateX(-50%)",zIndex:200,animation:"xpPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
-    <div style={{background:"linear-gradient(135deg,#ffd700,#ff8c42)",color:"#000",padding:"10px 24px",borderRadius:99,fontWeight:800,fontSize:22,boxShadow:"0 4px 20px rgba(255,215,0,.4)"}} className="out">+{info.total} XP</div>
-    {info.bonuses&&info.bonuses.length>0&&info.total!==info.base&&<div style={{fontSize:11,color:"var(--gold)",marginTop:4,fontWeight:600}} className="out">{info.base} base → {info.total} with bonuses</div>}
-    {info.bonuses&&info.bonuses.length>0&&<div style={{marginTop:6,display:"flex",flexDirection:"column",gap:3,alignItems:"center"}}>
-      {info.bonuses.map(function(b,i){return (<div key={i} style={{background:"rgba(0,0,0,.7)",padding:"3px 12px",borderRadius:99,fontSize:11,fontWeight:600,color:b.color||"var(--gold)"}} className="out">{b.label}</div>);})}
-    </div>}
-  </div>);}
 
 // ─── TUTORIAL TOUR — supprimé 2026-05-03 (absorbé par Verdict d'Aldric) ───
 // Le tour 3 popups (Daily / Progress & League / Train) a été absorbé dans le
@@ -1814,14 +1786,6 @@ function XpToast(p){if(!p.v)return null;
 // restent en place, lecture/écriture inertes dans supaToLocal/save/fresh, pour
 // éviter une migration BDD destructive. Nettoyage différé si le concept ne ressort pas.
 
-function Tabs(p){var tabs=[{id:"home",l:"Home",i:"castle"},{id:"mentor",l:"Mentor",i:"wizard-staff"},{id:"train",l:"Train",i:"bullseye"},{id:"games",l:"Games",i:"coliseum"},{id:"league",l:"League",i:"laurel-crown"},{id:"profile",l:"Profile",i:"visored-helm"}];
-var blocked=p.blocked||[];
-// 6 tabs : tighter container padding + per-button padding so "Profile" doesn't truncate
-// on narrow screens (≤375px). Icon stays 24px, label drops 11→10px.
-return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(var(--bg3-rgb),0) 0%,rgba(var(--bg3-rgb),.8) 15%,var(--bg3) 100%)",borderTop:"1px solid rgba(var(--cx),.15)",padding:"8px 4px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-between"}}>
-<div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>VERSE ARENA</span></div>
-{tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 4px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t1)",transform:a&&!dis?"scale(1.06)":"scale(1)",opacity:dis?.35:a?1:.55,transition:"all .2s",flex:1,minWidth:0}}>
-<svg viewBox="0 0 512 512" width="24" height="24" style={{display:"block",filter:a&&!dis?"drop-shadow(0 0 6px rgba(var(--cx),.55))":"none",transition:"filter .2s",flexShrink:0}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS[t.i]||""}}/></svg><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.3,whiteSpace:"nowrap"}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:2}}/>}</button>);})}</div>);}
 
 // ─── PRIVACY POLICY ───
 function PrivacyPolicy(p){
