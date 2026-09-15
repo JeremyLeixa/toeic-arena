@@ -14,7 +14,7 @@
  * l'ancien système renvoyait vers une adresse réelle, alors que le login visait l'adresse
  * synthétique. Symptôme : « mot de passe incorrect », quel que soit le mot de passe.
  *
- * Le second normaliseur, `normalizeName` (App.jsx), est le **miroir JS de `norm_name(text)`**
+ * Le second normaliseur, `normalizeName` (lib/util.js), est le **miroir JS de `norm_name(text)`**
  * en SQL, qui sert à retrouver une ligne `students`. S'ils divergent, le client cherche un
  * élève que la base ne trouve pas — ou l'inverse.
  *
@@ -29,7 +29,8 @@ let fails = 0;
 const fail = (msg) => { fails++; console.log('  FAIL ' + msg); };
 
 // ══════════════════════════════════════════════════════════════════════════
-// Extraction (auth.js et App.jsx importent supabase : non requérables)
+// Extraction (auth.js importe supabase : non requérable). normalizeName vit dans
+// lib/util.js, module pur : requis tel quel (découpage d'App.jsx, 2026-09-15).
 // ══════════════════════════════════════════════════════════════════════════
 function sliceFunction(src, name) {
   const a = src.indexOf('function ' + name + '(');
@@ -43,7 +44,6 @@ function sliceFunction(src, name) {
 }
 
 const AUTH = fs.readFileSync(path.join(ROOT, 'src', 'auth.js'), 'utf8').replace(/\r\n/g, '\n');
-const APP = fs.readFileSync(path.join(ROOT, 'src', 'App.jsx'), 'utf8').replace(/\r\n/g, '\n');
 
 const domLine = AUTH.match(/const SYNTH_EMAIL_DOMAIN\s*=\s*'[^']*';/);
 if (!domLine) throw new Error('SYNTH_EMAIL_DOMAIN introuvable dans auth.js');
@@ -52,8 +52,8 @@ const F = new Function([
   domLine[0],
   sliceFunction(AUTH, 'normNameForEmail'),
   sliceFunction(AUTH, 'synthEmail'),
-  sliceFunction(APP, 'normalizeName'),
-].join('\n') + '\nreturn {normNameForEmail, synthEmail, normalizeName, SYNTH_EMAIL_DOMAIN};')();
+].join('\n') + '\nreturn {normNameForEmail, synthEmail, SYNTH_EMAIL_DOMAIN};')();
+F.normalizeName = require(path.join(ROOT, 'src', 'lib', 'util.js')).normalizeName;
 
 console.log('Identité — normaliseurs de noms et adresse synthétique\n');
 

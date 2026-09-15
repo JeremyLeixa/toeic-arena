@@ -30,26 +30,13 @@ let fails = 0;
 const fail = (msg) => { fails++; console.log('  FAIL ' + msg); };
 
 // ══════════════════════════════════════════════════════════════════════════
-// Extraction depuis App.jsx (non importable : JSX + React + CSS inline)
+// Import natif de lib/profileSchema.js (découpage d'App.jsx, 2026-09-15)
 // ══════════════════════════════════════════════════════════════════════════
-// Découpage par comptage d'accolades plutôt que « jusqu'au prochain commentaire » :
-// insensible à la mise en forme et aux lignes qui bougent au-dessus.
-const APP = fs.readFileSync(path.join(ROOT, 'src', 'App.jsx'), 'utf8').replace(/\r\n/g, '\n');
-
-function sliceFunction(src, name) {
-  const a = src.indexOf('function ' + name + '(');
-  if (a < 0) throw new Error('fonction introuvable dans App.jsx : ' + name);
-  let i = src.indexOf('{', a), depth = 0;
-  for (; i < src.length; i++) {
-    if (src[i] === '{') depth++;
-    else if (src[i] === '}') { depth--; if (depth === 0) return src.slice(a, i + 1); }
-  }
-  throw new Error('accolades non refermées : ' + name);
-}
-
-const NAMES = ['today', 'weekId', 'fresh', 'buildSavePayload', 'supaToLocal'];
-const app = new Function(NAMES.map(n => sliceFunction(APP, n)).join('\n')
-  + '\nreturn {' + NAMES.join(',') + '};')();
+// fresh / supaToLocal / buildSavePayload vivent dans un module PUR (aucun import
+// Supabase, aucun JSX) précisément pour être requérables ici tels quels. Si ce require
+// casse, c'est que quelqu'un a rendu profileSchema.js impur : le remettre pur, pas
+// revenir au découpage de texte.
+const app = require(path.join(ROOT, 'src', 'lib', 'profileSchema.js'));
 
 // ══════════════════════════════════════════════════════════════════════════
 // Colonnes que le client n'a PAS le droit d'écrire (finding C3)
