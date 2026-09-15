@@ -35,8 +35,31 @@ The app is a **monolithic React application** — all UI logic lives in `src/App
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
+| `npm test` | Suite de tests (7 fichiers, ~1,3 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
-No test framework integrated — testing is manual.
+**Pas de framework de test** — tout est en Node natif, zéro dépendance. Les tests
+découpent le source d'`App.jsx` et l'évaluent (`new Function`), parce que le monolithe
+n'est pas importable (JSX + React + CSS inline). Patron : `sliceFunction()` par comptage
+d'accolades, dans `tests/check_profile_roundtrip.cjs`.
+
+Ce que la suite protège, et pourquoi :
+
+- **`check_rpc_contracts`** — depuis le verrou du 2026-09-15, tout passe par des RPC, et
+  le client et le SQL vivent dans deux fichiers que rien ne relie. Une clé de paramètre
+  invalide fait refuser l'appel **entier** par PostgREST.
+- **`check_profile_roundtrip`** — la règle « fresh() ET supaToLocal ET payload », plus la
+  liste blanche de `save_student`. Une colonne hors liste est ignorée **en silence**.
+- **`check_chest_drops`** — `open_pending_chest` ignore silencieusement tout type de
+  récompense hors liste blanche.
+- **`check_identity`** — `normNameForEmail` décide de l'adresse du compte Auth,
+  recalculée à chaque connexion. La changer enferme dehors les élèves déjà migrés.
+
+⚠️ **Un test qui échoue décrit un vrai problème.** Le corriger, ne pas l'ajuster pour le
+faire passer. Et tout nouveau test doit être **prouvé mordant** : introduire l'erreur
+qu'il doit attraper, vérifier qu'il rougit, annuler.
+
+Déclenchement manuel pour l'instant : ni hook pre-commit, ni CI.
 
 **À lancer après tout ajout de contenu listening.** Un MP3 manquant ne casse
 rien à l'exécution : `playAudioFile()` résout silencieusement sur `onerror`,
