@@ -160,17 +160,26 @@ check(worstRun <= 3, "BOSS_P2 : serie de " + worstRun + " fois la meme lettre d'
 check(layoutA.every(it => it.x && it.x.length > 0), "BOSS_P2 : explication vide apres remap");
 
 console.log("\n=== distribution apres permutation (attendu ~uniforme) ===");
+// La borne est DERIVEE de la taille d'echantillon, pas fixee a la main : une
+// tolerance en dur de 2 pts faisait echouer ce test environ une fois sur vingt
+// alors que le code etait bon (mesure sur 20 executions). 4 erreurs-types, c'est
+// environ 1 faux positif sur 16 000 par bucket, tout en attrapant largement le
+// biais qu'on corrige ici (B a 43-55% avant permutation).
 for (const name of Object.keys(flat)) {
   const n = flat[name][0].opts.length;
   const tally = new Array(n).fill(0);
   let total = 0;
   for (const orig of flat[name]) {
-    for (let t = 0; t < 40; t++) { tally[shufListeningItem(orig).c]++; total++; }
+    for (let t = 0; t < 100; t++) { tally[shufListeningItem(orig).c]++; total++; }
   }
+  const p = 1 / n;
+  const bound = 4 * Math.sqrt(p * (1 - p) / total);
   const pct = tally.map(v => (v / total * 100).toFixed(1) + "%");
-  const worst = Math.max.apply(null, tally.map(v => Math.abs(v / total - 1 / n)));
-  check(worst < 0.02, name + ": distribution non uniforme (" + pct.join(" ") + ")");
-  console.log("  " + name.padEnd(3) + " " + pct.join("  ") + "   (ecart max " + (worst * 100).toFixed(2) + " pts)");
+  const worst = Math.max.apply(null, tally.map(v => Math.abs(v / total - p)));
+  check(worst < bound, name + ": distribution non uniforme (" + pct.join(" ") +
+    ", ecart " + (worst * 100).toFixed(2) + " pts > borne " + (bound * 100).toFixed(2) + ")");
+  console.log("  " + name.padEnd(3) + " " + pct.join("  ") +
+    "   (ecart max " + (worst * 100).toFixed(2) + " pts, borne " + (bound * 100).toFixed(2) + ")");
 }
 
 console.log(fails === 0 ? "\nOK - tous les invariants tiennent" : "\n" + fails + " ECHEC(S)");
