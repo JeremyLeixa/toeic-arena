@@ -366,13 +366,21 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 
 ## Modèle d'accès Supabase — verrou complet du 2026-09-15
 
-**Le client n'a plus AUCUN privilège de table.** `anon` et `authenticated` ne peuvent
-lire que deux objets : la vue `students_public` (classement) et la table `events`
-(événements en cours). Tout le reste passe par des RPC `SECURITY DEFINER`.
+**Le client n'a plus AUCUN privilège de table**, à trois exceptions près. `anon` et
+`authenticated` ne peuvent lire que : la vue `students_public` (classement), la table
+`events` (événements en cours), et les **colonnes non sensibles de `groups`** (tout sauf
+`teacher_code` / `teacher_email`, grant colonne par colonne de B4 + policy SELECT
+`USING true`). Tout le reste passe par des RPC `SECURITY DEFINER`.
+
+⚠️ Ces deux mécanismes vont **ensemble** sur `groups` : un grant colonne sans policy
+SELECT donne `200 []` sur tous les codes (RLS active, zéro ligne). C'est ce qui a cassé
+l'écran « Join a Group » pour toutes les promos le 2026-09-15, quand la migration
+d'hygiène a supprimé la policy en la croyant inerte (`2026-09-15_p2d3_restore_groups_read.sql`
+la recrée). `npm run check:security` vérifie désormais ce chemin.
 
 Conséquence pour tout nouveau code : **un `supabase.from("<table>")` dans `src/` est un
-bug**, il renverra `42501 permission denied`. Écrire une RPC et l'ajouter à
-`supabase/migrations/`.
+bug** hors ces trois objets, il renverra `42501 permission denied`. Écrire une RPC et
+l'ajouter à `supabase/migrations/`.
 
 ### Les trois patrons d'autorisation
 

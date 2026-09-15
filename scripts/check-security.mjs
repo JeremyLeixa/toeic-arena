@@ -130,7 +130,23 @@ if (!guard || guard.ok !== false) {
   fail('rpc/my_rewards sur un compte inexistant devrait refuser, a répondu : '
     + JSON.stringify(guard) + '. La garde de propriété ne s\'applique plus.');
 }
-console.log('  4 chemins légitimes vérifiés');
+// La lecture élève de `groups` par code est VOULUE (B4 : grant SELECT colonne par
+// colonne + policy SELECT ; P2-D3 : la policy recréée). C'est le chemin de l'écran
+// « Join a Group », du chargement du profil (bornes de cohorte) et des saisons League.
+// Cassé le 2026-09-15 par la migration d'hygiène, invisible ici parce que `groups`
+// n'était vérifié QUE comme table verrouillée : `select=*` échoue toujours (colonnes
+// sensibles non accordées), une liste vide sur un code existant est le symptôme.
+const gr = await get('groups?select=name,type&code=eq.idrac2026');
+const grRows = gr.status === 200 ? await gr.json() : null;
+if (!grRows || grRows.length !== 1) {
+  fail('GET groups?code=eq.idrac2026 → HTTP ' + gr.status + ', ' + JSON.stringify(grRows)
+    + ' ; une ligne attendue. L\'onboarding par code de promo est cassé (policy SELECT sur groups ?).');
+}
+const gs = await get('groups?select=teacher_code&limit=1');
+if (gs.status === 200) {
+  fail('GET groups?select=teacher_code → 200 : la colonne sensible est redevenue lisible.');
+}
+console.log('  6 chemins légitimes vérifiés');
 
 console.log(fails === 0
   ? '\nOK — le verrou tient, et l\'application fonctionne toujours.'
