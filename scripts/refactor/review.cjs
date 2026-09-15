@@ -40,7 +40,10 @@ if (HEAD) {
   files = ns.map((x) => x[1]).filter((f) => /\.(js|jsx)$/.test(f));
   isNew = (f) => ns.some((x) => x[1] === f && x[0] === 'A');
 } else {
-  const status = git('status --porcelain -- src').split('\n').filter(Boolean);
+  // -uall : sans lui, un dossier entièrement nouveau (styles/, components/) sort comme
+  // « ?? src/components/ » et ses fichiers ne sont jamais relus → fausse alerte « N lignes
+  // hors déplacement » (vu sur les lots 14 et 15, le mode --head était propre).
+  const status = git('status --porcelain -uall -- src').split('\n').filter(Boolean);
   files = status.map((l) => l.slice(3).trim().replace(/^"|"$/g, '')).filter((f) => /\.(js|jsx)$/.test(f));
   isNew = (f) => git('ls-files -- "' + f + '"').trim() === '';
 }
