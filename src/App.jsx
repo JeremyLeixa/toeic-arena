@@ -696,7 +696,7 @@ function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
 var SK="toeic-arena-v2";
-var BUILD_ID="2026-09-15-endless-resume";
+var BUILD_ID="2026-09-15-toeic-shrinkage";
 
 // ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
 // Each teacher logs in with their own teacher_code and sees ONLY the groups
@@ -15077,6 +15077,8 @@ function estimateTOEICScore(ms,opts){
   //    preuve est insuffisante, au lieu d'un cold-start trompeur a 200.
   //  - Assiette Reading elargie aux modules transverses (A.2).
   //  - A.5 ponderation par confiance (volume de questions par module).
+  //    /!\ Cette version A.5 etait INOPERANTE : le facteur se simplifiait dans
+  //    wSum/wTot. Remplacee le 2026-09-15 par une retenue bayesienne (voir plus bas).
   //  - Bonus mock ASYMETRIQUE (Kamel-safe) : recompense la sur-perf mock,
   //    ne penalise jamais une mauvaise perf mock.
   //  - A.4 ancrage Boss 60% via opts.bossToeic (echelle 990, optionnel).
@@ -15088,7 +15090,22 @@ function estimateTOEICScore(ms,opts){
   //  - Exceptions assumées hors-score : Flashcards (0 XP) + jeux d'arcade (pas de précision).
   ms=ms||{};opts=opts||{};
   function rec(id){var d=ms[id];if(!d||!d.total)return null;return{acc:d.correct/d.total,q:d.total};}
-  function confW(q){if(q<10)return 0.3;if(q<30)return 0.6;if(q<100)return 0.85;return 1;}
+  // A.5 v2 (2026-09-15) — RETENUE BAYESIENNE, en remplacement de confW().
+  // confW ponderait les poids par le volume : ew = w*confW(q), puis la section
+  // renvoyait wSum/wTot. Le facteur apparaissait donc au numerateur ET au
+  // denominateur : il se SIMPLIFIAIT. Consequences mesurees avant correctif :
+  //   - 4 questions justes sur 4 donnaient le meme score que 300 questions a 100% ;
+  //   - un seul module sur les 23 du Reading suffisait a afficher 495/495.
+  // Desormais la masse de preuve ne disparait plus : elle est confrontee a une
+  // masse de prior. Peu de couverture ou peu de volume -> le score est tire vers
+  // PRIOR_ACC ; couverture large et volume eleve -> le prior s efface.
+  // Signale par un etudiant iabd2627 le 2026-09-15 (estimation a 990 sans etre
+  // a 100% partout).
+  var EVID_HALF=30;    // questions donnant une demi-confiance sur un module
+  var PRIOR_K=0.12;    // masse du prior, exprimee en poids de section
+  var PRIOR_ACC=0.60;  // precision supposee d un profil sans preuve
+  var MOCK_BONUS_MAX=40; // plafond du bonus mock, EN POINTS
+  function evidW(q){return q/(q+EVID_HALF);}
   function sumQ(ids){var s=0;ids.forEach(function(id){var r=rec(id);if(r)s+=r.q;});return s;}
   var READING_MODS=["drill","p6","p7","wordfam","connsort","prepdrill","gerinf","falsefr","pvdojo","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","tavern","clue","traps","modals_match","modals_sort","bforge","timesim","stratquiz","daily"];
   var LIS_MODS=["lisP1","lisP2","lisP3","lisP4","ablitz"];
@@ -15111,9 +15128,12 @@ function estimateTOEICScore(ms,opts){
   var lisParts=[{id:"lisP1",w:0.18},{id:"lisP2",w:0.27},{id:"lisP3",w:0.25},{id:"lisP4",w:0.22},{id:"ablitz",w:0.08}];
   function section(parts){
     var wSum=0,wTot=0,has=false;
-    parts.forEach(function(p){var r=p.val!==undefined?p.val:rec(p.id);if(r){var ew=p.w*confW(r.q);wSum+=r.acc*ew;wTot+=ew;has=true;}});
+    parts.forEach(function(p){var r=p.val!==undefined?p.val:rec(p.id);if(r){var ew=p.w*evidW(r.q);wSum+=r.acc*ew;wTot+=ew;has=true;}});
     if(!has)return null;
-    return wSum/wTot;
+    // NE PAS revenir a wSum/wTot : c est ce qui rendait la ponderation par
+    // confiance inoperante (elle se simplifie). Le +PRIOR_K est ce qui fait
+    // que la couverture et le volume comptent vraiment.
+    return (wSum+PRIOR_K*PRIOR_ACC)/(wTot+PRIOR_K);
   }
   var rawLis=section(lisParts),rawRd=section(rdParts);
   // Anti-trou : une section debloquee par un mock mais sans module propre est derivee de l'acc mock.
@@ -15129,8 +15149,14 @@ function estimateTOEICScore(ms,opts){
   var bothShown=lisScore!==null&&rdScore!==null;
   if(readingOK&&listeningOK&&bothShown){
     var total=lisScore+rdScore;
-    var bonus=0;mocksList.forEach(function(m){if(m.acc>0.60)bonus+=(m.acc-0.60)*0.30;});bonus=Math.min(0.20,bonus);
-    if(bonus>0)total=total*(1+bonus);
+    // Bonus mock ADDITIF plafonne en points. Il etait multiplicatif (+20% max)
+    // applique au total : +18% sur 843 donnait 995, donc 990 apres plafonnement.
+    // Autrement dit 82,5% de precision suffisaient a afficher un 990. En points,
+    // la sur-performance mock reste recompensee sans jamais saturer l echelle.
+    // Toujours ASYMETRIQUE (Kamel-safe) : une mauvaise perf mock ne retire rien.
+    var bonusPts=0;mocksList.forEach(function(m){if(m.acc>0.60)bonusPts+=(m.acc-0.60)*100;});
+    bonusPts=Math.min(MOCK_BONUS_MAX,bonusPts);
+    if(bonusPts>0)total=total+bonusPts;
     if(bossToeic!==null)total=0.60*bossToeic+0.40*total; // A.4
     total=Math.max(200,Math.min(990,total));
     return{total:Math.round(total/5)*5,listening:lisScore,reading:rdScore,estimable:true,evidence:evidence};
