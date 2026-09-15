@@ -397,4 +397,36 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   commité), `lintgate.cjs` (no-undef, imports inutilisés nouveaux, total qui ne monte pas).
   Leçon : une chaîne de lots doit s'arrêter à la première erreur (`set -e`), sinon un lot
   s'extrait par-dessus un lot non commité (vu sur 10-12, arbre remis à zéro et rejoué).
-  **Non mergé sur `main`** : smoke téléphone par Jérémy sur la preview Vercel d'abord.
+  Smoke téléphone validé par Jérémy, puis **mergé sur `main` le 2026-09-15 au soir**
+  (commit de merge `da011e1`, `--no-ff` : rollback = `git revert -m 1 da011e1`). Portes
+  finales sur `main` après merge : tests 9/9, lint 372, build 29,5 s, bundle 3 271 069 o.
+- 2026-09-15 — **Incident découvert pendant le smoke, sans lien avec le refactor** : la
+  migration d'hygiène du matin avait coupé la lecture élève de `groups` (« Code not found »
+  pour toutes les promos). Hotfix SQL `2026-09-15_p2d3_restore_groups_read.sql` appliqué
+  par Jérémy ; le balayage `check:security` dérive désormais ses chemins légitimes du
+  source (`scripts/clientPaths.cjs`) et deux règles sont ajoutées à `CLAUDE.md`. Le seul
+  effet sur le chantier : `groups` reste lue en direct (4 sites), à passer en RPC hors
+  refactor.
+- 2026-09-15 — **Phase 2 livrée** sur `refactor/split-app` (lots 15-21, 7 commits + 1
+  d'outillage). App.jsx **16 423 → 15 786 lignes**. 12 fichiers dans `src/components/`
+  (icons, Bar, SpeakBtn, ListeningGraphic, PassageDocs, avatar, toasts, Tabs,
+  GrimoireReader, NextStepReco, TokenCTAs, legal) + 3 helpers purs vers `lib/` (iconMaps,
+  passageDocs, rarityStyles). Les 7 lots relus en mode commité : déplacement pur. Lint 372
+  inchangé ; 1 erreur `react-refresh/only-export-components` comptée à part (`renderAv`,
+  fonction minuscule exportée depuis `avatar.jsx`, inévitable : elle et `AvatarMedal` se
+  référencent mutuellement, les séparer créerait un cycle). Règle apprise : un fichier
+  `.jsx` n'exporte que des composants → constantes vers `lib/`, helper de rendu privé
+  (`~nom` dans le manifeste). Jérémy a choisi d'enchaîner la Phase 3 sans smoke intermédiaire.
+- 2026-09-15 — **Phase 3 livrée** sur `refactor/split-app` (lots 31-43, 13 commits + 1
+  d'outillage). App.jsx **15 786 → 1 730 lignes**. 16 dossiers `src/features/` (train,
+  home, gauntlet, modals, games, listening, exams, mentor, league, chests, shop, profile,
+  narrator, onboarding, teacher). Les 13 lots relus en mode commité avec le vérificateur
+  par **multi-ensembles** : déplacement pur, zéro retouche manuelle. Lint 372 inchangé.
+  Deux leçons d'outillage : (1) `git diff` aligne mal deux composants au JSX voisin (74
+  fausses lignes sur le lot 31), d'où `review.cjs` réécrit en comparaison de
+  multi-ensembles de lignes ; (2) `set -e` sans `pipefail` laisse passer l'échec d'un
+  `| head`, d'où le lanceur `run_lot.sh` (arrêt si l'extraction est refusée ou si App.jsx
+  n'a pas changé). Le lot 37 (League) a été refusé une première fois, à raison :
+  `RankRow` et `loadProgressionData` sont internes à `League` et voyagent avec elle.
+  Les 3 `var` de CSS local (`DTL_CSS`, `SBD_CSS`) et `GRAMMAR_SHEETS` sont privées à
+  leur module. **Phases 2 et 3 non mergées** : smoke complet de Jérémy puis merge.
