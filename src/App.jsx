@@ -45,6 +45,7 @@ import { shufListeningItem, BOSS_P2_SHUF } from "./lib/listeningShuffle.js";
 import { FREE_FLASHCARD_DOMAINS, hasFullAccess, isModuleLocked, PREMIUM_UPGRADE_ENABLED, GHOST_NAME, isGhost } from "./lib/access.js";
 import { estimateToeic, partOfModule, partAccuracies, bsScanParts, computeTodayFocus, battleScanToToeic, estimateTOEICScore, generateInsight } from "./lib/toeic.js";
 import { getLeague, getEffectiveLeague, applyWeekTransition, generateSeasons, SEASONS, getCurrentSeason, getSeasonEndCountdown, computeRankings } from "./lib/league.js";
+import { _cachedUserId, _syncDirty, saveLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty } from "./lib/persistence.js";
 
 
 
@@ -369,7 +370,6 @@ function compScores(wk){var seed=0;for(var i=0;i<wk.length;i++)seed+=wk.charCode
 function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.max(1.3,e-0.2);}else if(r===2){iv=Math.max(1,Math.ceil(iv*1.2));e=Math.max(1.3,e-0.15);}else if(r===3){iv=iv===0?1:Math.ceil(iv*e);}else{iv=iv===0?3:Math.ceil(iv*e*1.3);e+=0.15;}var nx=new Date();nx.setDate(nx.getDate()+iv);return{ease:e,interval:iv,nextReview:nx.toISOString().split("T")[0],correct:(st.correct||0)+(r>=3?1:0),total:(st.total||0)+1};}
 function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 
-var SK="toeic-arena-v2";
 var BUILD_ID="2026-09-15-toeic-shrinkage";
 
 // ─── MULTI-CAMPUS TEACHER SCOPING (soft, UI-level — 2026-07-02) ───
@@ -438,132 +438,12 @@ import { getAuthUser, signOutCompletely, onAuthChange, createCheckout, openCusto
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
 
-// ─── localStorage-first persistence layer ───
-var _cachedUserId=null;
-var _syncDirty=false;
-var _lastSync=0;
-
-// Clean up dirty flag — no longer used, was causing cross-device overwrites
-try{localStorage.removeItem("toeic-arena-dirty");}catch(e){}
-
-function loadLocal(){
-  try{
-    var raw=localStorage.getItem("toeic-arena-profile");
-    if(raw){var d=JSON.parse(raw);if(d&&d.name)return d;}
-  }catch(e){}
-  return null;
-}
-
-function saveLocal(d){
-  try{
-    localStorage.setItem("toeic-arena-profile",JSON.stringify(d));
-    localStorage.setItem("toeic-arena-name",d.name);
-    localStorage.setItem("toeic-arena-class",d.classCode||"visitor");
-    _syncDirty=true;
-  }catch(e){}
-}
-
-// Lecture SYNCHRONE du JWT user depuis le storage supabase-js (clé sb-<ref>-auth-token).
-// P2 Phase B (B2) : le keepalive beforeunload ne peut pas await getSession(), donc il lit
-// le token ici pour l'envoyer en Bearer au lieu de la clé anon → sous RLS (Phase C),
-// auth.uid() est renseigné et l'UPDATE de sa PROPRE ligne passe (la clé anon donnerait
-// auth.uid()=NULL → refus). Retourne null si absent/illisible (fallback anon côté appelant).
-function getAccessTokenSync(){
-  try{
-    for(var i=0;i<localStorage.length;i++){
-      var k=localStorage.key(i);
-      if(k&&k.slice(0,3)==="sb-"&&k.indexOf("-auth-token")>0){
-        var raw=localStorage.getItem(k); if(!raw)continue;
-        var o=JSON.parse(raw);
-        var tok=o&&(o.access_token||(o.currentSession&&o.currentSession.access_token));
-        if(tok)return tok;
-      }
-    }
-  }catch(e){console.warn("[auth] getAccessTokenSync caught:",e&&e.message);}
-  return null;
-}
 
 
-// load() — always fetch from Supabase when online, use localStorage as fallback
-async function load(userId){
-  var local=loadLocal();
-  console.warn("[LOAD] start — userId:",userId?"yes":"no","local:",local?local.name:"null");
-  if(userId)_cachedUserId=userId;
-  // Try to fetch the freshest data from Supabase
-  if(userId){
-    try{
-      var cn=local?local.name:null;
-      if(!cn)try{cn=localStorage.getItem("toeic-arena-name");}catch(e){}
-      var cc=local?local.classCode:null;
-      if(!cc)try{cc=localStorage.getItem("toeic-arena-class");}catch(e){}
-      console.warn("[LOAD] querying Supabase for:",cn,cc);
-      var remote=null;
-      // Phase C-lite : plus de SELECT direct sur `students` (le rôle anon n'y a plus
-      // aucun privilège). La RPC renvoie la ligne COMPLÈTE, non aliasée — le garde
-      // stale-remote plus bas lit des clés DB brutes (remote.class_code, access_level…)
-      // avant que supaToLocal ne tourne, donc surtout pas de projection camelCase ici.
-      // La RPC applique la garde conditionnelle : ligne migrée → il faut être le
-      // propriétaire ; ligne legacy → tolérance. Un refus renvoie null, l'app repart
-      // alors sur l'onboarding, qui réclamera le mot de passe.
-      if(cn){
-        var res=await supabase.rpc("load_student",{p_name:cn,p_class_code:cc||"visitor"});
-        if(res.error)console.error("[LOAD] load_student error:",res.error.message);
-        if(res.data)remote=res.data;
-      }
-      // Chemin de secours : la ligne liée à la session courante (binding Phase A).
-      if(!remote){
-        console.warn("[LOAD] primary miss, trying fallback by user_id");
-        var res2=await supabase.rpc("load_student_by_uid");
-        // Cette erreur était totalement avalée : sous verrou de privilèges, l'app
-        // paraissait « hors ligne » au lieu de cassée, ce qui rend un incident
-        // indétectable. On la logge maintenant.
-        if(res2.error)console.error("[LOAD] load_student_by_uid error:",res2.error.message);
-        if(res2.data)remote=res2.data;
-      }
-      if(remote){
-        console.warn("[LOAD] got remote — xp:",remote.xp,"weekly_xp:",remote.weekly_xp,"streak:",remote.streak);
-        // ── Stale-remote guard ──
-        // Heuristic: if local has strictly more XP than remote AND was active more recently,
-        // the saves were probably failing (e.g. schema mismatch) and local holds the truth.
-        // Use local and mark _syncDirty so the next save() pushes it to Supabase.
-        // XP is monotonic (cumulative, never decreases), so local.xp > remote.xp is a
-        // reliable signal that local has progress that never reached Supabase.
-        var localXp=(local&&local.xp)||0;
-        var remoteXp=remote.xp||0;
-        var localLA=(local&&local.lastActive)||"";
-        var remoteLA=remote.last_active||"";
-        if(local&&localXp>remoteXp&&localLA>=remoteLA){
-          console.warn("[LOAD] local is fresher (xp "+localXp+">"+remoteXp+", lastActive "+localLA+">="+remoteLA+") — merging with remote server-side fields");
-          // CRITICAL: server-side fields (classCode, access_level, email) can be changed
-          // by Stripe webhooks, admin SQL, or group migration — never by client activity.
-          // Always trust remote for these, even when local is fresher for XP/streak/etc.
-          // Without this merge, a downgrade bug could flip a paying student or school member
-          // to visitor/free just because their local had more XP.
-          if(remote.class_code)local.classCode=remote.class_code;
-          if(remote.access_level)local.accessLevel=remote.access_level;
-          if(remote.access_expires_at!==undefined)local.accessExpiresAt=remote.access_expires_at;
-          if(remote.email)local.email=remote.email;
-          _syncDirty=true;
-          saveLocal(local); // persist the merged classCode/accessLevel so subsequent saves don't regress
-          // Fire-and-forget: push local to Supabase immediately so device-switching works.
-          save(local);
-          return local;
-        }
-        var d=supaToLocal(remote);
-        saveLocal(d);
-        _syncDirty=false;
-        return d;
-      }else{console.warn("[LOAD] no remote data found");}
-    }catch(e){
-      // Regle #1 (post-crise) : plus de catch muet sur un chemin critique. Sous le
-      // verrou de privileges, une erreur ici est indiscernable d'une panne reseau
-      // si on ne la logge pas.
-      console.warn("[LOAD] caught:",e&&e.message);
-    }
-  }
-  // Offline or no userId: use localStorage
-  return local||null;
-}
+
+
+
+
 
 
 // B3 (2026-09-14) — colonnes lues par le Teacher Dashboard.
@@ -582,84 +462,9 @@ async function load(userId){
 // lettres — c'est ce qui donnait "public-speaker Listening Part 4" dans le dashboard.
 function optIcon(ic){if(!ic)return"";for(var k=0;k<ic.length;k++){if(ic.charCodeAt(k)>127)return ic;}return"";}
 
-// Recover an auth session if the current one has been lost (refresh token expired,
-// tab backgrounded too long, etc). Returns a user object or null if recovery failed.
-async function ensureAuthSession(){
-  try{
-    var sess=await supabase.auth.getUser();
-    if(sess.data&&sess.data.user)return sess.data.user;
-  }catch(e){/* session missing — fall through to recovery */}
-  // Try to refresh first (session may exist in storage but JWT expired)
-  try{
-    var refreshed=await supabase.auth.refreshSession();
-    if(refreshed.data&&refreshed.data.user){console.warn("[AUTH] recovered via refreshSession");return refreshed.data.user;}
-  }catch(e){/* refresh failed — need a new session */}
-  // Last resort: new anonymous session. save()'s UPDATE matches by (name, class_code)
-  // not id, so the row stays reachable even though the user_id changed.
-  try{
-    var anon=await supabase.auth.signInAnonymously();
-    if(anon.data&&anon.data.user){console.warn("[AUTH] recovered via new anon session");return anon.data.user;}
-  }catch(e){/* fully stuck */}
-  return null;
-}
 
 
-// opts.allowInsert — autorise la création d'une ligne pour un prénom déjà présent
-// dans une AUTRE promo (homonyme légitime). Seul onboard() le passe. Voir le garde
-// anti-phantom plus bas.
-async function save(d,opts){
-  saveLocal(d);
-  if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
-  // Safety rail: never let a missing classCode fall through to the "visitor" fallback
-  // during an UPDATE — this could match (name, visitor) and either overwrite another
-  // student's row or create a phantom. Refuse to save instead; local keeps the state.
-  if(!d.classCode){console.error("[SAVE] BLOCKED: missing classCode for",d.name,"— refusing to sync to avoid corruption");return;}
-  // Teacher now syncs to Supabase (hidden from leaderboards via League/TeacherDash filters)
-  var user=await ensureAuthSession();
-  if(!user){console.error("[SAVE] BLOCKED: could not establish auth session");return;}
-  _cachedUserId=user.id;
-  var payload=buildSavePayload(d);
-  // Phase C-lite : le binding d'identité n'est plus injecté dans le payload. La RPC
-  // pose user_id AVEC auth.uid(), jamais avec une valeur fournie par le client — on ne
-  // fait plus confiance à l'appelant sur cette colonne. opts.bindAuth devient un simple
-  // drapeau (passé par onboard() lors d'un signup PASSWORD).
-  var cc=d.classCode||"visitor";
-  try{
-    // Phase C-lite : UPDATE, garde anti-phantom et INSERT sont désormais UNE seule
-    // transaction côté serveur. Trois gains :
-    //  · le rôle anon n'a plus aucun privilège sur `students` (fichier SQL 2) ;
-    //  · la liste blanche de colonnes est appliquée par le serveur, donc access_level,
-    //    access_expires_at et arena_marks deviennent inécrivables quoi qu'on envoie —
-    //    jusqu'ici ils n'étaient exclus que par ce fichier JS, un PATCH REST direct
-    //    passait outre (finding C3, à moitié fermé) ;
-    //  · la garde anti-phantom n'est plus contournable en sautant le client.
-    // La RPC fusionne : seules les clés présentes dans le payload sont écrites, ce qui
-    // rend le payload réduit du keepalive sans danger.
-    var r=await supabase.rpc("save_student",{
-      p_name:d.name,p_class_code:cc,p_payload:payload,
-      p_allow_insert:!!(opts&&opts.allowInsert),
-      p_bind_auth:!!(opts&&opts.bindAuth)
-    });
-    if(r.error){console.error("[SAVE] rpc error:",r.error.message);return;}
-    var dd=r.data||{};
-    if(!dd.ok){
-      // blocked_phantom : le prénom existe dans une AUTRE promo et l'appel ne vient pas
-      // d'onboard(). C'est le cas qui fabriquait les lignes fantômes quand le classCode
-      // local dérivait vers "visitor". not_owner : la ligne appartient à un compte migré
-      // qui n'est pas celui de la session.
-      console.error("[SAVE] refused:",dd.error,dd.codes?("| aussi dans: "+JSON.stringify(dd.codes)):"");
-      return;
-    }
-    console.warn("[SAVE] OK —",d.name,cc,dd.action);
-    _syncDirty=false;
-  }catch(e){console.warn("[SAVE] Exception:",e);}
-}
 
-// syncToCloud() — replaced by save(), kept as no-op for existing call sites
-async function syncToCloud(d,opts){
-  if(!d||!d.name||!_syncDirty)return;
-  return save(d,opts);
-}
 // ─── BIOMETRIC AUTH (WebAuthn) for Teacher Dashboard ───
 var BIOMETRIC_KEY="toeic-teacher-bio";
 async function biometricAvailable(){try{if(!window.PublicKeyCredential)return false;return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}}
@@ -16409,7 +16214,7 @@ useEffect(function(){
             // Week transition (load-time). Same logic as mid-session — delegates to
             // applyWeekTransition which also pushes the weekly_snapshots row.
             if(applyWeekTransition(d)){
-              _syncDirty=true;
+              setSyncDirty(true);
               saveLocal(d); // ensure localStorage reflects the transition so keepalive onUnload doesn't push stale data
             }
             if(!d.moduleScores)d.moduleScores={};
@@ -16849,7 +16654,7 @@ useEffect(function(){
         // (common on mobile PWAs). Without this, weekly_xp would accumulate across weeks
         // and week_id would stay stale until next full page load.
         var weekChanged=applyWeekTransition(c);
-        if(weekChanged){console.warn("[WEEK] transition detected mid-session —",c.weekId);_syncDirty=true;}
+        if(weekChanged){console.warn("[WEEK] transition detected mid-session —",c.weekId);setSyncDirty(true);}
         saveLocal(c);
         timeRef.current.ticks+=1;
         // Sync to cloud every 2 min — ONLY if tab is visible (prevents overwriting other devices)
@@ -16864,7 +16669,7 @@ useEffect(function(){
         sU(function(prev){
           if(!prev)return prev;
           var c=JSON.parse(JSON.stringify(prev));
-          if(applyWeekTransition(c))_syncDirty=true;
+          if(applyWeekTransition(c))setSyncDirty(true);
           saveLocal(c);
           syncToCloud(c);
           return c;
@@ -17341,7 +17146,7 @@ var prevLeague=getLeague(c.weeklyXp);
     // allowInsert: onboard() est le SEUL appelant autorisé à créer une ligne pour un
     // prénom déjà présent dans une autre promo (homonyme). Cf. garde anti-phantom
     // dans save() — ne pas propager ce flag aux syncs de routine.
-    _syncDirty=true;
+    setSyncDirty(true);
     // authBind (P2 Phase A) : signup PASSWORD → la ligne créée ici reçoit user_id +
     // password_set_at (via save/bindAuth). Absent pour visitor/legacy (session anonyme).
     syncToCloud(u,{allowInsert:true,bindAuth:!!authBind});
@@ -17399,7 +17204,7 @@ var prevLeague=getLeague(c.weeklyXp);
     // devices (same auth user recovering different students — each UPDATE hit the PK unique
     // constraint). Since the INSERT policy was relaxed (no more id = auth.uid() requirement)
     // and primary lookup uses (name, class_code) from localStorage, id rebinding is obsolete.
-    _cachedUserId=userId;
+    setCachedUserId(userId);
 
     try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     try { localStorage.setItem('toeic-arena-class', classCode); } catch(e) {}
@@ -17432,7 +17237,7 @@ var prevLeague=getLeague(c.weeklyXp);
     var sess=await supabase.auth.getSession();
     var userId=sess.data.session?sess.data.session.user.id:null;
     if(!userId){console.warn("[recoverByEmail] no session post signin");return false;}
-    _cachedUserId=userId;
+    setCachedUserId(userId);
     try{localStorage.setItem('toeic-arena-name',d.name);}catch(e){}
     try{localStorage.setItem('toeic-arena-class',d.class_code);}catch(e){}
     var u=supaToLocal(d);
@@ -17554,7 +17359,7 @@ var prevLeague=getLeague(c.weeklyXp);
     // To fully destroy the session use deleteAccount instead.
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
-    _cachedUserId=null;_syncDirty=false;
+    setCachedUserId(null);setSyncDirty(false);
     sU(null);sSP(null);sT("home");
   }
 
@@ -17597,7 +17402,7 @@ var prevLeague=getLeague(c.weeklyXp);
     try{await supabase.auth.signOut();}catch(e){console.warn("[deleteAccount] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
-    _cachedUserId=null;_syncDirty=false;
+    setCachedUserId(null);setSyncDirty(false);
     sU(null);sSP(null);sT("home");
   }
   async function reset(){
@@ -17607,7 +17412,7 @@ var prevLeague=getLeague(c.weeklyXp);
     try{await supabase.auth.signOut();}catch(e){console.warn("[reset] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
-    _cachedUserId=null;_syncDirty=false;
+    setCachedUserId(null);setSyncDirty(false);
     sU(null);sSP(null);sT("home");
   }
 
