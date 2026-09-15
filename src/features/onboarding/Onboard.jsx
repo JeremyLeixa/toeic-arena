@@ -388,7 +388,14 @@ var[step,sSt]=useState("name");
       setPwdErr("");setPwdBusy(true);
       try{
         await signInStudent(epName,epCc,pwd1);
-        try{await bindStudentUserId(epName,epCc);}catch(e){console.warn("[pwd] bind caught:",e&&e.message);}
+        // P2-D4 (2026-09-15) : une connexion réussie sur le compte synthétique prouve que le
+        // mot de passe existe → on le MARQUE (true). Sans ça, une ligne liée ici restait
+        // « legacy » (password_set_at NULL) et revoyait l'écran claim à chaque login.
+        // Un refus de liaison (ligne sécurisée liée à une autre identité) ne laisse pas
+        // entrer : student_guard refuserait ensuite chaque sauvegarde en silence.
+        var bound=false;
+        try{bound=await bindStudentUserId(epName,epCc,true);}catch(e){console.warn("[pwd] bind caught:",e&&e.message);}
+        if(!bound){setPwdErr("Ce compte est lié à une autre identité. Préviens ton formateur (liaison refusée).");return;}
         var ok=await p.recover(epName,epCc);
         if(!ok)setPwdErr("Compte introuvable. Réessaie.");
       }catch(err){
@@ -441,7 +448,13 @@ var[step,sSt]=useState("name");
       try{
         await signUpStudent(tName,tCc,pwd1);
         if(spClaim){
-          try{await bindStudentUserId(tName,tCc,true);}catch(e){console.warn("[pwd] claim bind caught:",e&&e.message);}
+          var bound=false;
+          try{bound=await bindStudentUserId(tName,tCc,true);}catch(e){console.warn("[pwd] claim bind caught:",e&&e.message);}
+          // P2-D4 : un refus ici = ligne déjà sécurisée par quelqu'un d'autre (le routage
+          // l'aurait envoyée vers « entre ton mot de passe ») ou session absente. Ne pas
+          // laisser entrer : student_guard refuserait ensuite chaque sauvegarde. Le compte
+          // synthétique vient d'être créé : au prochain essai, « me connecter » relie.
+          if(!bound){setPwdErr("Impossible de lier ce compte. Préviens ton formateur (liaison refusée).");return;}
           var ok=await p.recover(tName,tCc);
           if(!ok)setPwdErr("Compte introuvable.");
         }else{
