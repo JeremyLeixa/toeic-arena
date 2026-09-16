@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (10 fichiers, ~3 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (12 fichiers, ~6 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -61,6 +61,10 @@ Ce que la suite protège, et pourquoi :
 - **`check_xp_gates`** — les portes XP (`lib/xp.js` : seuil d'accuracy, trois courbes
   anti-farming, bypass, événements, Focus, boosts, streak, +10, planchers, ligue, coffres)
   sont celles de « XP System » ci-dessous. Un `<` devenu `<=` ne casse pas le build.
+- **`check_festivals`** — fenêtres des thèmes saisonniers (`lib/festivals.js`) : bornes
+  incluses en heure locale, Pâques, déc → jan, disjonction jour par jour, opt-out > forçage ;
+  un paquet `.fest-<id>` + `.light.fest-<id>` par fête dans `appCss.js`, animations existantes,
+  `themeColor` = `--bg` du CSS. Une fenêtre fausse change le thème de tous les élèves.
 - **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
   et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
 
@@ -100,7 +104,8 @@ src/
                           teacherSession, push, grimoireExport, feedbackModules,
                           chestLabels, shopCatalog, iconMaps, passageDocs, rarityStyles,
                           xp (gateXp/settleXp : les portes XP, pures — App.jsx n'orchestre
-                          que les effets ; tests/check_xp_gates.cjs)
+                          que les effets ; tests/check_xp_gates.cjs), festivals (thèmes
+                          saisonniers : fenêtres, opt-out, forçage, theme-color)
   components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
                           PassageDocs, avatar (renderAv, AvatarMedal), toasts, Tabs,
                           GrimoireReader, NextStepReco, TokenCTAs, legal, PasswordInput (œil),
@@ -198,7 +203,7 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 
 ### Architecture (découpage du 2026-09-15)
 - **Couches, dans un seul sens** : `data/` → `lib/` → `components/` → `features/` → `App.jsx` / `routes.jsx`. `lib/` n'importe jamais de JSX ; `components/` n'importe jamais `features/` ; une feature n'importe que son propre dossier. `tests/check_import_graph.cjs` refuse tout cycle et tout sens interdit (un cycle ESM donne `undefined` à l'init d'une constante, sans casser le build).
-- **`App()` reste le seul détenteur de l'état global** : 23 `useState`, 20 effets, 42 fonctions internes (`sv`, `addXp`, `applyXpGates`, `grantChestLocal`, `onboard`, `recover`, `logout`…). Les écrans sont **prop-driven** : ils reçoivent `u`, `done`, `back`, `nav`, `gate`… et ne touchent jamais l'état d'`App()` directement. Pas de contexte React, pas d'extraction des hooks (Phase 4b non retenue) sans décision explicite.
+- **`App()` reste le seul détenteur de l'état global** : 24 `useState`, 22 effets, 43 fonctions internes (`sv`, `addXp`, `applyXpGates`, `grantChestLocal`, `onboard`, `recover`, `logout`…). Les écrans sont **prop-driven** : ils reçoivent `u`, `done`, `back`, `nav`, `gate`… et ne touchent jamais l'état d'`App()` directement. Pas de contexte React, pas d'extraction des hooks (Phase 4b non retenue) sans décision explicite.
 - **Nouveau module = nouveau fichier** dans `src/features/<module>/`, route dans `src/routes.jsx` (voir le skill `add-module`). Ne pas remettre de composant dans `App.jsx`.
 - **Écrans chargés à la demande** (Phase 5, 2026-09-16 — bundle principal 3,28 → 1,15 Mo) : un écran lourd s'écrit `var X=lazyNamed(function(){return import("./features/…/X.jsx");},"X");` (`components/lazyNamed.js`), **jamais** avec un import statique à côté (le chunk ne sortirait pas, en silence : `check_import_graph` le refuse, comme un chemin ou un nom exporté faux). Dans `routes.jsx`, même nom local qu'avant (exempt du recensement de symboles) ; dans `App.jsx`, alias `XLazy` (le recensement refuse un `Profile` déclaré deux fois). Le fallback est fourni par `pg()` (`<Suspense fallback={<LoadingMark inline/>}>` + `LoadBoundary` à `key` = route) et par le shell Onboard ; ne pas en poser d'autre. Restent eager : Home (onglet par défaut), les onglets, NarratorOverlay, Chests, `train/grammar.jsx`. `main.jsx` recharge une fois sur `vite:preloadError` (chunk périmé après déploiement) ; `preloadLazyScreens` recharge tous les chunks à l'idle pour la parité hors-ligne.
 - **Un fichier `.jsx` n'exporte que des composants** (`react-refresh/only-export-components`, en erreur ici) : constantes → `lib/`, helper de rendu → privé au fichier. Exception connue, comptée à part par `lintgate` : `renderAv` dans `components/avatar.jsx`.
@@ -328,6 +333,16 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - 7 tiers: Bronze (0) → Silver (200) → Gold (600) → Platinum (1500) → Diamond (5000) → Champion (10000) → Légende (30000).
 - `getEffectiveLeague()` requires TOEIC estimated score ≥ 400 to display Légende.
 - Season structure S1-S4, weekly snapshots, 3 tabs: Semaine, Général, Progrès.
+
+### Festival themes 🎃 (2026-09-16)
+- **Mécanisme** : pendant une fenêtre, `App.jsx` pose `fest-<id>` **à la place** de `skin-<id>` sur `.app` (ligne `lc`). `u.equippedSkin` / `skin_id` jamais touchés, le skin revient seul. Jamais de superposition : 13 skins sur 16 tiennent `.crd::before/::after` en `!important`. Gardé par `u` comme le skin → l'onboarding reste canonique. Avatar, frame, titre intacts.
+- **Nom `festival`, jamais `season`** (la Ligue S1-S4 et `seasons` jsonb l'ont déjà).
+- **4 fêtes** (`FESTIVALS`, `src/lib/festivals.js`) : `halloween` 24/10→2/11 · `yule` 14/12→4/1 · `spring` Pâques −5→+1 (Meeus) · `solstice` 19→28/6. Dates **locales**, bornes incluses (pas `today()`, qui est UTC). `festId` (état primitif d'`App()`) relu par un tick horaire : la bascule arrive sans rechargement.
+- **CSS** : paquets `.fest-<id>` / `.light.fest-<id>` après les `.skin-*` dans `appCss.js`, collés tels quels depuis `prototypes/festival-themes/festivals.css` (palettes validées par Jérémy, ne pas les retoucher sans son feu vert). Aucun keyframe propre. En clair, fond pâle propre à la fête (contrairement aux skins).
+- **Opt-out** localStorage `toeic-festivals` = `off` (patron `toeic-sound`), pas de colonne Supabase. **L'opt-out gagne toujours**, forçage compris. Surfaces : lien « Turn off » du bandeau Home, toggle « Seasonal themes » dans Profil → Style (visible pendant la fenêtre même désactivé). `setFestivals(on)` dans `App()` relit tout de suite.
+- **Forçage de test** : `?fest=<id>` (ou localStorage `toeic-fest-force`) lève la fenêtre de dates ; `?fest=none` retire la fête pendant une vraie fenêtre. Hors fenêtre, dates et jours restants sont ceux de la prochaine occurrence.
+- **Surfaces** (anglais) : message d'accueil `greeting` au lieu de « Welcome back », bandeau Home sous les pastilles (fin, jours restants, Turn off), bandeau Profil → Style. `meta[name=theme-color]` (les 3 d'index.html) suit la fête et le mode, hors fête `#0f0c08` / `#f5f0e8` : `themeColor` recopie le `--bg` du CSS, le test vérifie l'égalité.
+- **Ajouter une fête** = une entrée `FESTIVALS` (icône dans `GAME_ICON_PATHS`, `themeColor`) + ses deux paquets CSS ; `check_festivals` refuse tout oubli et tout chevauchement. Lot 4 non décidé : BGM `bgm_home_<fest>`, coffre `fest_<id>_<année>`, cosmétique exclusif, mention Shop (un skin acheté pendant une fenêtre ne se voit qu'après).
 
 ### Haptic Feedback
 - `haptic(key)` dispatches to `navigator.vibrate()`. Silent on iOS.

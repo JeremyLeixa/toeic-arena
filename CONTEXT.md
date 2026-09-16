@@ -159,6 +159,34 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
 
 ---
 
+## Session 2026-09-16 (soir) — Thèmes saisonniers (festivals), lots 0 à 3 en prod
+
+- **Idée Jérémy, proto validé le matin** (`prototypes/festival-themes/`) : Halloween, Noël,
+  Pâques, été prennent le pas sur le skin équipé pendant une fenêtre, sans le modifier.
+  Objectif : Halloween (24/10) en prod avec de la marge.
+- **Lot 0** `01d1f61` : proto commité. **Lot 1** `51a996f` : `lib/festivals.js` (pur :
+  fenêtres locales, Meeus, wrap déc → jan, opt-out, forçage `?fest=`), `tests/check_festivals.cjs`,
+  `fest-<id>` remplace `skin-<id>` dans la ligne `lc`, tick horaire. **Lot 2** `bbaa389` :
+  `festivals.css` collé tel quel dans `appCss.js` + garde CSS du test. **Lot 3** `1a38195` :
+  message d'accueil + bandeau Home (Turn off), bandeau + toggle Profil → Style, `theme-color`.
+- Décisions de session : l'opt-out gagne toujours (forçage compris) ; `?fest=none` retire la
+  fête ; `theme-color` hors fête = `#0f0c08` sombre / `#f5f0e8` clair (avant : toujours sombre).
+- Vérifié en dev sur le compte Teacher : 4 fêtes en sombre et en clair (Home, Train, Profil,
+  Style, Drill, modale Daily Tip), Turn off + toggle, skin Aurora équipé masqué puis rendu,
+  `theme-color` sur les 3 meta. Compte remis dans son état (sombre, sans skin, fêtes actives).
+  Tests prouvés mordants (9 cassures). `BUILD_ID` = `2026-09-16-festivals`.
+- **Bugs antérieurs repérés en passant, non corrigés** : skin Aurora en mode clair = toutes les
+  `.crd` illisibles (fond forcé sombre, textes `.light` sombres) ; titre équipé et pastille de
+  ligue délavés en clair (couleurs codées en dur) ; Profil → Style affiche en littéral
+  `🗝️ Game Master — exclusive avatar` (Teacher, escape en texte JSX, Profile.jsx).
+
+### Pour la prochaine session
+- Lot 4 à décider : BGM `bgm_home_<fest>` (helper `homeTrack()`), coffre `fest_<id>_<année>`,
+  titre/frame exclusif filtré dans `pickRewards`, mention dans la fiche Shop.
+- Le 24/10 : vérifier en prod que Halloween s'applique seul, sans `?fest=`.
+
+---
+
 ## Earlier session: 2026-04-27 → 2026-04-28 (Chest redesign V2 — full sprint, ~30 commits)
 
 **Le plus gros sprint mono-chantier de S2.** Refonte complète du système de coffres + token actions + cosmétiques cohérents avec la DA shield + League extension + 5 cheat sheets pédagogiques inédites + 3 mémoires post-mortem capturées.
