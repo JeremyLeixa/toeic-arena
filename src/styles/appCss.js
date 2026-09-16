@@ -28,8 +28,8 @@ export var CSS=`
 .skin-amethyste{--cx:160,90,220;--cx-hex:#a05adc;--cx-dark:#7030aa;--cyan:#a05adc;--orange:#7030aa}
 .skin-corail{--cx:220,100,50;--cx-hex:#dc6432;--cx-dark:#c03018;--cyan:#dc6432;--orange:#c03018}
 .skin-jade{--cx:20,180,170;--cx-hex:#14b4aa;--cx-dark:#0a8880;--cyan:#14b4aa;--orange:#0a8880}
-.skin-obsidienne{--cx:180,160,220;--cx-hex:#b4a0dc;--cx-dark:#8870b0;--cyan:#b4a0dc;--orange:#8870b0;--bg:#080810;--bg2:#12101c;--bg3:#1c1a28;--t1:#e8e4f4;--t2:#807898;--bdr:rgba(160,128,224,.08)}
-.skin-aurore{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870;--bg:#08090e;--bg2:#10121c;--bg3:#18202c;--t1:#d8f0e8;--t2:#5898a0;--bdr:rgba(64,208,192,.08)}
+.skin-obsidienne:not(.light),.light.skin-obsidienne .crd{--cx:180,160,220;--cx-hex:#b4a0dc;--cx-dark:#8870b0;--cyan:#b4a0dc;--orange:#8870b0;--bg:#080810;--bg2:#12101c;--bg3:#1c1a28;--t1:#e8e4f4;--t2:#807898;--bdr:rgba(160,128,224,.08)}
+.skin-aurore:not(.light),.light.skin-aurore .crd{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870;--bg:#08090e;--bg2:#10121c;--bg3:#18202c;--t1:#d8f0e8;--t2:#5898a0;--bdr:rgba(64,208,192,.08)}
 .light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bg-rgb:245,240,232;--bg2-rgb:255,252,245;--bg3-rgb:232,224,210;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#6e6048;--cx:139,105,20;--cx-hex:#8b6914;--cx-dark:#6a4e10}
 .light.skin-argent{--cx:80,80,110;--cx-hex:#505070;--cx-dark:#383848;--cyan:#505070;--orange:#383848}
 .light.skin-emeraude{--cx:18,110,52;--cx-hex:#126e34;--cx-dark:#0c5228;--cyan:#126e34;--orange:#0c5228}
@@ -151,6 +151,21 @@ export var CSS=`
 .light.skin-molten_gold{--cx:150,100,8;--cyan:#946008;--orange:#7e5008}
 .light.skin-heraldic{--cx:40,68,150;--cyan:#2e4a98;--orange:#8a6c18}
 .light.skin-aldric_chamber{--cx:140,112,40;--cyan:#8a7028;--orange:#766020}
+/* ═══ MODE CLAIR DES SKINS À CARTES SOMBRES — « cartes-nuit » (bug 2026-09-16) ═══
+   Ces skins forcent un fond sombre sur .crd (!important). En clair, la page suit .light et la
+   palette sombre du skin ne vit que DANS ses cartes : sa règle de tokens s'écrit
+   « .skin-X:not(.light),.light.skin-X .crd{…} ». Aucune couleur nouvelle, les particules dessinées
+   pour la nuit restent sur fond de nuit. Ne pas revenir à « .skin-X{…} » seul : déclaré avant .light
+   (aurore, obsidienne), le texte redevient sombre sur carte sombre (contraste 1,05:1) ; déclaré
+   après, l'appli entière reste sombre avec l'accent, --t3 et vert/rouge/or du clair.
+   1. Tokens qu'aucun skin ne pose : valeurs de :root dans la carte. :where() ramène la règle à
+      0,2,0, sous « .light.skin-X .crd » (0,3,0) : le skin qui en pose un (--cx-hex d'aurore) gagne
+      quel que soit l'ordre. color : .app a calculé la couleur du texte avec le --t1 clair, la
+      carte doit la recalculer avec le sien.
+   2. .btn2 : ces skins posent une couleur claire en dur (#40d0c0…), illisible sur la page crème ;
+      var(--cyan) prend le retint .light.skin-X hors carte, l'accent vif dans la carte. */
+.light:where(.skin-obsidienne,.skin-aurore) .crd{--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--t3:#756b54;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--cx-hex:#d4943a;--cx-dark:#a06e20;color:var(--t1)}
+.light.skin-obsidienne .btn2,.light.skin-aurore .btn2{color:var(--cyan)!important}
 /* ═══ FESTIVAL THEMES — proto 2026-09-16 (prototypes/festival-themes/).
    Bloc destiné à src/styles/appCss.js, à coller APRÈS les paquets .skin-* (les
    festivals n'y coexistent jamais avec un skin : App.jsx pose fest-<id> À LA PLACE
