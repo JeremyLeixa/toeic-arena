@@ -455,6 +455,23 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
   disponible à la demande, hors de ce chantier. La branche `refactor/split-app` a été
   supprimée (local et origin) le soir même, entièrement mergée ; l'outillage
   `scripts/refactor/` reste dans le dépôt.
+- 2026-09-16 — **Phase 5 livrée** sur `refactor/phase5` (15 commits, plan
+  `.claude/plans/moonlit-roaming-sketch.md`, décision Jérémy le matin même). **A** code mort :
+  `speakAndWait`, `compScores`, `getModuleAccuracy`, `parseInlineStyle`, `_lastSync`, `SK` +
+  `COMPETITORS` — bundle identique à l'octet (déjà tree-shakés), lint 375 → 368. **B**
+  `lib/xp.js` : `gateXp`/`settleXp` et leurs briques, pures, la table des ligues injectée
+  (`lib/league.js` importe Supabase) ; `tests/check_xp_gates.cjs`, 79 vérifications, 5
+  mutations rouges ; App.jsx n'orchestre que les effets, `isModuleBoosted` supprimée ;
+  `scripts/refactor/xp_equivalence.cjs` (OLD `8f695c9` par `new Function` sur la tranche des
+  4 closures, NEW du disque, instant figé, effets journalisés) : **2 000/2 000 identiques,
+  8 813 effets dans le même ordre**. **C** lazy : filets d'abord (`check_import_graph` voit les
+  `import()` — existence, couche, cycle, nom exporté, non-joignabilité statique — 4 mutations
+  rouges ; `vite:preloadError` → reload une fois ; `LoadingMark`/`LoadBoundary` ; `lazyNamed`
+  + registre), puis 21 `import()` : TeacherDash, Onboard, Boss/Endless/Mock, Listening ×6 +
+  Reading ×3, Duel/Clue/Blitz/SBuilder/Gauntlet/ModalCouncil, ProfileCharts (recharts sort),
+  et préchauffage à l'idle. Principal **3 278 477 → 1 147 880 o (−65 %)**, 32 chunks,
+  3 293 131 o au total. Littéraux : 1 fragment de template renommé, 36 `import{}from`, rien
+  d'autre. Retouche unique hors plan : `util.today(d)` accepte un instant.
 
 ## 10. Bilan (2026-09-15)
 
@@ -468,3 +485,15 @@ Tant qu'on est en un seul chunk (Phases 0 à 4a), ce risque n'existe pas.
 | Lint src/ | 375 | 372 (+1 react-refresh à part) |
 | Bundle | 3 272 160 o | 3 271 093 o |
 | Vu par les étudiants | — | rien : aucun rechargement forcé, aucun incident lié au chantier |
+
+## 11. Phase 5 (2026-09-16)
+
+| | Avant | Après |
+|---|---|---|
+| Tests | 9 | **10** (`check_xp_gates`), `check_import_graph` étendu aux `import()` |
+| Portes XP | 4 closures dans `App()`, sans filet | `lib/xp.js` pur + test ; équivalence 2 000/2 000 |
+| Lint src/ | 372 | **368** |
+| Bundle principal | 3 278 477 o (1 chunk) | **1 147 880 o** (−65 %), 32 chunks, 3 293 131 o au total |
+| recharts, listening.js, bossTestFull, part7 | dans le principal | chunks à la demande |
+| Hors ligne | tout en cache au 2e lancement | idem, via préchauffage à l'idle |
+| Vu par les étudiants | — | un bref état de chargement à la 1re entrée d'un écran lazy, une fois par build |

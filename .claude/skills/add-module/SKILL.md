@@ -37,6 +37,7 @@ Touchpoints to wire (in rough order):
   ```
 - [ ] Every `App()`-scope name the line uses (`u`, `pg`, `miniDone`, `applyXpGates`, `sSP`, `sT`, `nav`…) must be in the destructuring at the top of `renderRoute` AND in the call literal `renderRoute({...})` in `App()`. `npx eslint src/routes.jsx src/App.jsx` must show no `no-undef`: that is the guarantee, a missing name is a runtime `ReferenceError` on that screen only.
 - [ ] If SELF_MANAGED : add to `SELF_MANAGED` array in `App()` AND don't call `playBGM` in the route line (component handles it)
+- [ ] **Heavy screen** (own data file, exam, hub with grimoires) → load it on demand instead of a static import: `var Name=lazyNamed(function(){return import("./features/<module>/<Name>.jsx");},"Name");` next to the other lazies in `routes.jsx` (import `lazyNamed` from `./components/lazyNamed.js`). Same local name, so the route line is unchanged; `pg()` already provides the fallback. Never keep a static import alongside — `npm test` (`check_import_graph`) refuses it, as well as a wrong path or export name.
 
 ### XP pipeline (in `App()`, `src/App.jsx` — reached from the route via the context)
 - [ ] `applyXpGates(baseXp, sc, tot, "<modId>")` — applies accuracy gate (<30% → 10%, 30-49% → 50%, ≥50% → 100%) + diminishing returns
