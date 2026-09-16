@@ -32,6 +32,7 @@ const SUITE = [
   ['check_listening_voices.cjs',   'la règle de voix des clips P1/P2 (deux locuteurs, lettres dans la voix de l\'item) n\'a pas bougé'],
   ['check_festivals.cjs',          'les fenêtres des thèmes saisonniers (bornes, Pâques, déc → jan, opt-out > forçage) n\'ont pas bougé'],
   ['check_skins_light.cjs',        'les skins à cartes sombres restent lisibles en mode clair (cartes-nuit)'],
+  ['check_tones.cjs',              'titres et pastilles de ligue gardent une variante lisible en mode clair (tone)'],
   ['validate_toeic_shrinkage.cjs','l\'estimateur TOEIC ne réintroduit pas les 3 pathologies'],
   ['check_symbol_census.cjs',      'aucun symbole d\'App.jsx perdu ni dédoublé par le découpage'],
   ['check_import_graph.cjs',       'aucun cycle d\'import dans src/, sens des couches respecté'],

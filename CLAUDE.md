@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (13 fichiers, ~6 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (14 fichiers, ~6 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -69,6 +69,10 @@ Ce que la suite protège, et pourquoi :
   `.skin-X:not(.light),.light.skin-X .crd`, présence dans `.light:where(…) .crd`, tout token de
   `.light` reposé dans la carte, `.btn2` et fonds translucides corrigés en clair). Un oubli ne
   casse pas le build : les cartes deviennent illisibles pour les élèves en mode clair.
+- **`check_tones`** — chaque couleur de ligue (`data/leagues.js`) et de titre (`TITLES`) a sa
+  variante `.light{--tone-<hex>}` à ≥ 4,5:1 sur `--bg/--bg2/--bg3`, aucune variante hors clair,
+  et aucune de ces couleurs affichée sans `tone()` dans `src/` (sauf fond sombre fixe `#1a1208`
+  sur la même ligne). Une couleur ajoutée sans variante se délave en clair, en silence.
 - **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
   et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
 
