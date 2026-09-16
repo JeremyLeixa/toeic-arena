@@ -732,7 +732,9 @@ useEffect(function(){
             body:JSON.stringify({p_name:d.name,p_class_code:cc,p_payload:payload,p_allow_insert:false,p_bind_auth:false})
           });}catch(e){console.warn("[UNLOAD] keepalive failed:",e&&e.message);}
         }
-      }catch(e){}
+      // Loggé (règle n°1) : JSON.parse, applyWeekTransition ou buildSavePayload qui lève ici
+      // perdait la sauvegarde de dernière chance sans trace (seul le fetch ci-dessus loggait).
+      }catch(e){console.warn("[UNLOAD] caught:",e&&e.message);}
     }
     document.addEventListener("visibilitychange",onVis);
     window.addEventListener("beforeunload",onUnload);
