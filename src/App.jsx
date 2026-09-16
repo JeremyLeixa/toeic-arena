@@ -24,6 +24,7 @@ import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
+import { appliedFestivalId } from "./lib/festivals.js";
 import { CSS } from "./styles/appCss.js";
 import { LoadingMark, LoadBoundary } from "./components/LoadingMark.jsx";
 
@@ -67,7 +68,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-16-letters";
+var BUILD_ID="2026-09-16-festivals";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -89,6 +90,9 @@ export default function App(){
   var[pendingChestCount,setPendingChestCount]=useState(0);var[chestModal,setChestModal]=useState(null);var[chestResult,setChestResult]=useState(null);var[chestPending,setChestPending]=useState([]);
   var[chestToastQueue,setChestToastQueue]=useState([]);var[activeChestToast,setActiveChestToast]=useState(null);var chestToastIdRef=useRef(0);
   var[showTip,setShowTip]=useState(false);
+  // ─── Festival themes (2026-09-16) ─── id de la fête appliquée à .app, ou null (lib/festivals.js :
+  // fenêtre de dates, forçage ?fest=, opt-out). Primitive : relue toutes les heures par un tick.
+  var[festId,setFestId]=useState(function(){return appliedFestivalId(new Date());});
   // ─── Narrator queue (Aldric narrative moments) ───
   var[narratorQueue,setNarratorQueue]=useState([]);
   var currentNarratorMoment=narratorQueue.length>0?NARRATOR_MOMENTS[narratorQueue[0]]:null;
@@ -624,6 +628,14 @@ useEffect(function(){
   // sv) ; preloadLazyScreens porte sa propre garde « une seule fois ».
   var hasUser=!!u;
   useEffect(function(){if(!ld&&hasUser)preloadLazyScreens();},[ld,hasUser]);
+
+  // ── Festival themes : tick horaire ── une PWA reste ouverte des jours : la fête doit arriver
+  // (24/10 à minuit) et repartir sans rechargement, au plus une heure après la borne. Même id
+  // → React ne re-rend pas, le tick ne coûte rien.
+  useEffect(function(){
+    var iv=setInterval(function(){setFestId(appliedFestivalId(new Date()));},3600000);
+    return function(){clearInterval(iv);};
+  },[]);
 
   // ── Centralized BGM control: silence on ANY sub-page (exercise/content), restore home BGM on return ──
   // Defensive rule (post-feedback 2026-05-11): any sp ≠ null with no self-managed BGM = exercise → stopBGM.
@@ -1275,7 +1287,11 @@ function sv(d){
     sU(null);sSP(null);sT("home");
   }
 
-  var lc="app"+(u&&u.theme==="light"?" light":"")+(u&&u.equippedSkin?" skin-"+u.equippedSkin:"");
+  // Festival themes : la fête REMPLACE la classe du skin, elle ne s'y superpose pas. 13 skins sur 16
+  // tiennent .crd::before/::after en !important : un paquet .fest-* posé en plus se battrait avec
+  // eux. u.equippedSkin n'est jamais modifié, le skin revient seul à la fin de la fenêtre. Gardé par
+  // `u` exactement comme le skin : l'onboarding (!u) reste sur l'identité canonique.
+  var lc="app"+(u&&u.theme==="light"?" light":"")+(u&&festId?" fest-"+festId:(u&&u.equippedSkin?" skin-"+u.equippedSkin:""));
   var isExpiredGroup=groupAccess&&groupAccess.status==="expired";
   var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
   var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);
