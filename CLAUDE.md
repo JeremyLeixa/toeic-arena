@@ -513,6 +513,12 @@ ne passe. Désormais :
   sauvegarde, 1 + 0 après ; le `getSession` restant est celui que supabase-js fait pour chaque
   requête). Chaque appel prend le verrou d'auth. Deps primitives, et `sU(prev => …)` quand une
   réponse asynchrone modifie le profil (recopier le `u` capturé écrase les `sv()` intermédiaires).
+- **Portées de déconnexion** (F4) : « Déconnexion complète » du Profil = `signOut({scope:'local'})`
+  (`auth.js` `signOutCompletely`, cet appareil seulement) ; `deleteAccount` et `reset` restent
+  `global` (compte supprimé ou vidé). Tout nouvel appel à `signOut()` choisit sa portée
+  explicitement : le défaut `global` coupe les autres appareils de l'élève. Appareil perdu →
+  « Réinitialiser l'accès » côté formateur. « Changer de profil » (`logout()`) **garde** la
+  session : pour un compte sécurisé, un rechargement y ré-entre (`load_student_by_uid`).
 Vérifié en dev le 2026-09-16 : session de l'onglet fermée en pleine utilisation, Daily joué
 (+154 XP locales, sauvegardes refusées), bandeau, reconnexion, XP relue depuis Supabase.
 

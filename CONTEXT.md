@@ -313,10 +313,22 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   Mesuré en dev avec des compteurs posés sur le client Supabase, sur un aller-retour du toggle
   Narrator : avant 4 `getSession` + 2 abonnements par sauvegarde, après 1 + 0 ; `[SAVE] OK`.
   Chemin de synchro d'email lui-même non rejoué (email Teacher déjà synchronisé).
+- **F4 livré** (`7dbc371`) : « Déconnexion complète » en `signOut({scope:'local'})` (vérifié dans
+  auth-js : `POST /logout?scope=local`, seule la session courante est révoquée) ; `deleteAccount` et
+  `reset` restent globaux (commentaires de garde) ; texte de confirmation réécrit (plus de lien
+  magique). **Non testé en direct** : le bouton passe par `confirm()`, bloqué dans le navigateur
+  intégré ; `scope:\`local\`` vérifié dans le bundle. **F6 livré** (`55a7f30`) : commentaires faux de
+  `ensureAuthSession` (« la ligne reste atteignable ») et de `logout()` (« accès RLS au lookup »)
+  réécrits. BUILD_ID `2026-09-16-f4f6` (`10ff6a9`).
 
 ### Pour la prochaine session (décisions de Jérémy)
-- **F4** : « Déconnexion complète » en portée `local` ? **F6** : commentaires faux
-  (`ensureAuthSession`, `logout`).
+- **« Changer de profil » garde la session** (`logout()`, trouvé en réécrivant F6) : pour un compte
+  sécurisé, un rechargement ré-entre sur ce compte sans onboarding. Sur un appareil partagé, l'élève
+  suivant retombe sur le compte du précédent. Piste : fermer aussi la session (portée locale), la
+  raison historique de la garder étant caduque. Non vérifié en direct, déduit du code.
+- **Catch muets de `ensureAuthSession`** (`/* … */` sans log, règle n°1) : les logger, avec la raison
+  d'échec du `refreshSession`, donnerait la preuve de l'hypothèse des verrous (« Invalid Refresh
+  Token: Already Used » attendu si deux rafraîchissements se chevauchent).
 - Logs d'événements d'auth (`SIGNED_OUT`, échec de refresh) pour confirmer l'hypothèse ci-dessus.
 - Supabase Logs Explorer : `load_student refused (not_owner)` pour compter les élèves touchés.
 - Détail visuel : le bandeau F2 recouvre le haut de l'écran (« ← Back », timer du Daily).
