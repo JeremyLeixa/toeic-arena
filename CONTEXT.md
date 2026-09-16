@@ -238,6 +238,42 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
 
 ---
 
+## Session 2026-09-16 (nuit, suite) — Lint, catch muets, audit identité, F1 + F2 (session perdue)
+
+- **Lint** : override ESLint Node pour `api/` et service worker pour `public/sw.js` (`aa7a717`,
+  −40 `no-undef` fictifs) ; catch muets loggés (`5f4c5d6` auth, `7f9fcfc` saveLocal, `988d58f`
+  onUnload) ; hook du timer de `Daily.jsx` avant le `return` anticipé (`635d2ba`). `src/` 368 → 359.
+  `pollEmailConfirmation` (auth.js) n'a plus d'appelant depuis le 2026-04-27 : code mort.
+- **Audit identité (lecture seule)** après un `[SAVE] refused: not_owner` en boucle sur l'onglet
+  Teacher. Le piège : session anonyme sur un compte sécurisé → `load()` rendait la copie locale,
+  `save()` échouait en console seulement. Portes d'entrée : session perdue (`signOut()` global
+  par défaut, rafraîchissement refusé → `ensureAuthSession` crée une session anonyme) ; lien
+  « Continuer sans pour l'instant » de l'écran mot de passe (`recover()` sans connexion) ; picker
+  d'homonymes. **Fuite en lecture** : `recover_student_row` rend la ligne complète d'un compte
+  sécurisé sur prénom + code (C4 fermé en écriture, pas en lecture).
+- **Livré** : `dc8c979` garde stale-remote extraite (`lib/staleRemote.js` + `check_fresher_local`) ;
+  `12fc02e` la reconnexion garde la progression locale plus fraîche (`fresherLocalFor`) ; `75dc790`
+  F1 (refus au chargement → écran mot de passe + bandeau FR, BUILD_ID `2026-09-16-reauth`) ;
+  `166d932` F2 (refus de sauvegarde → bandeau EN « Session expired » + « Log in again »).
+- **Vérifié en dev** : l'onglet est retombé seul dans le piège → F1 a affiché l'écran mot de passe ;
+  puis session de l'onglet fermée (portée locale) en pleine utilisation → `[AUTH] recovered via
+  new anon session` → `[SAVE] refused` → bandeau ; Daily joué (+154 XP locales) → Log in again →
+  `[recover] local is fresher` → `[SAVE] OK` → rechargement `[LOAD] got remote — xp: 102837`.
+- **Hypothèse non prouvée** sur la perte spontanée de session : verrous d'auth « volés » (deux
+  onglets, et l'effet de sync d'email en deps `[u]` qui rappelle `getSession()` à chaque `sv()`)
+  → deux rafraîchissements parallèles → jeton invalidé. À confirmer par des logs d'événements d'auth.
+
+### Pour la prochaine session (décisions de Jérémy)
+- **F3** : retirer « Continuer sans pour l'instant » et le recover du picker, puis `DROP` de
+  `recover_student_row` (client → vérif prod → SQL → retirer de `READ_ONLY` dans check-security).
+- **F4** : « Déconnexion complète » en portée `local` ? **F5** : deps primitives pour l'effet de
+  sync d'email (`App.jsx`). **F6** : commentaires faux (`ensureAuthSession`, `logout`).
+- Logs d'événements d'auth (`SIGNED_OUT`, échec de refresh) pour confirmer l'hypothèse ci-dessus.
+- Supabase Logs Explorer : `load_student refused (not_owner)` pour compter les élèves touchés.
+- Détail visuel : le bandeau F2 recouvre le haut de l'écran (« ← Back », timer du Daily).
+
+---
+
 ## Earlier session: 2026-04-27 → 2026-04-28 (Chest redesign V2 — full sprint, ~30 commits)
 
 **Le plus gros sprint mono-chantier de S2.** Refonte complète du système de coffres + token actions + cosmétiques cohérents avec la DA shield + League extension + 5 cheat sheets pédagogiques inédites + 3 mémoires post-mortem capturées.

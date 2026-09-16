@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (14 fichiers, ~6 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (15 fichiers, ~7 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -58,6 +58,11 @@ Ce que la suite protège, et pourquoi :
   récompense hors liste blanche.
 - **`check_identity`** — `normNameForEmail` décide de l'adresse du compte Auth,
   recalculée à chaque connexion. La changer enferme dehors les élèves déjà migrés.
+- **`check_fresher_local`** — la garde stale-remote (`lib/staleRemote.js`) : quand la copie
+  locale gagne sur Supabase (XP strictement supérieure et actif au moins aussi récemment), avec
+  les champs serveur (`class_code`, `access_level`, `access_expires_at`, `email`) toujours pris
+  au distant, et jamais pour un autre élève (`fresherLocalFor`). Trop stricte, une progression
+  jouée pendant une panne est écrasée ; trop large, un payant repasse free.
 - **`check_xp_gates`** — les portes XP (`lib/xp.js` : seuil d'accuracy, trois courbes
   anti-farming, bypass, événements, Focus, boosts, streak, +10, planchers, ligue, coffres)
   sont celles de « XP System » ci-dessous. Un `<` devenu `<=` ne casse pas le build.
@@ -212,7 +217,7 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 
 ### Architecture (découpage du 2026-09-15)
 - **Couches, dans un seul sens** : `data/` → `lib/` → `components/` → `features/` → `App.jsx` / `routes.jsx`. `lib/` n'importe jamais de JSX ; `components/` n'importe jamais `features/` ; une feature n'importe que son propre dossier. `tests/check_import_graph.cjs` refuse tout cycle et tout sens interdit (un cycle ESM donne `undefined` à l'init d'une constante, sans casser le build).
-- **`App()` reste le seul détenteur de l'état global** : 24 `useState`, 22 effets, 43 fonctions internes (`sv`, `addXp`, `applyXpGates`, `grantChestLocal`, `onboard`, `recover`, `logout`…). Les écrans sont **prop-driven** : ils reçoivent `u`, `done`, `back`, `nav`, `gate`… et ne touchent jamais l'état d'`App()` directement. Pas de contexte React, pas d'extraction des hooks (Phase 4b non retenue) sans décision explicite.
+- **`App()` reste le seul détenteur de l'état global** : 25 `useState`, 24 effets, 43 fonctions internes (`sv`, `addXp`, `applyXpGates`, `grantChestLocal`, `onboard`, `recover`, `logout`…). Les écrans sont **prop-driven** : ils reçoivent `u`, `done`, `back`, `nav`, `gate`… et ne touchent jamais l'état d'`App()` directement. Pas de contexte React, pas d'extraction des hooks (Phase 4b non retenue) sans décision explicite.
 - **Nouveau module = nouveau fichier** dans `src/features/<module>/`, route dans `src/routes.jsx` (voir le skill `add-module`). Ne pas remettre de composant dans `App.jsx`.
 - **Écrans chargés à la demande** (Phase 5, 2026-09-16 — bundle principal 3,28 → 1,15 Mo) : un écran lourd s'écrit `var X=lazyNamed(function(){return import("./features/…/X.jsx");},"X");` (`components/lazyNamed.js`), **jamais** avec un import statique à côté (le chunk ne sortirait pas, en silence : `check_import_graph` le refuse, comme un chemin ou un nom exporté faux). Dans `routes.jsx`, même nom local qu'avant (exempt du recensement de symboles) ; dans `App.jsx`, alias `XLazy` (le recensement refuse un `Profile` déclaré deux fois). Le fallback est fourni par `pg()` (`<Suspense fallback={<LoadingMark inline/>}>` + `LoadBoundary` à `key` = route) et par le shell Onboard ; ne pas en poser d'autre. Restent eager : Home (onglet par défaut), les onglets, NarratorOverlay, Chests, `train/grammar.jsx`. `main.jsx` recharge une fois sur `vite:preloadError` (chunk périmé après déploiement) ; `preloadLazyScreens` recharge tous les chunks à l'idle pour la parité hors-ligne.
 - **Un fichier `.jsx` n'exporte que des composants** (`react-refresh/only-export-components`, en erreur ici) : constantes → `lib/`, helper de rendu → privé au fichier. Exception connue, comptée à part par `lintgate` : `renderAv` dans `components/avatar.jsx`.
@@ -476,6 +481,27 @@ chaque login. `bind_student_user_id` n'oppose `not_owner` qu'à une ligne **séc
 ligne non sécurisée n'est la preuve de rien et se laisse relier. Le client refuse d'entrer
 si la liaison est refusée : sinon `student_guard` refuserait ensuite chaque sauvegarde en
 silence.
+
+**Session perdue = ligne illisible, pas « hors ligne »** (F1/F2, 2026-09-16, audit identité).
+Une session qui n'est pas celle d'un compte sécurisé (session révoquée par un `signOut()` —
+**portée `global` par défaut** dans supabase-js, donc sur tous les appareils —, rafraîchissement
+refusé, entrée sans mot de passe) : `ensureAuthSession()` recrée une session **anonyme**, puis
+`load_student` / `save_student` refusent (`not_owner`). Avant, `load()` rendait alors la copie
+locale et `save()` se contentait d'un `console.error` : l'élève jouait sans qu'aucune sauvegarde
+ne passe. Désormais :
+- `load()` distingue « la ligne n'existe pas » de « cette session ne peut pas la lire » par
+  `find_students_by_name` (seulement si les deux lectures ont répondu **sans erreur**) → rend
+  `null` et notifie `onAuthLost` ; hors ligne ou ligne absente → copie locale comme avant.
+- `save()` sur `not_owner` → `onAuthLost`.
+- `App()` : état `authLost` ; sans profil → `Onboard reauth` rejoue le lookup (écran « entre ton
+  mot de passe » + bandeau FR, lien « Continuer sans » masqué) ; en cours de session → bandeau EN
+  « Session expired » + « Log in again » (dans `pg()` et le retour principal), sans éjecter
+  d'un exercice.
+- **La copie locale n'est jamais effacée** : `recover()` / `recoverByEmail()` la gardent via
+  `fresherLocalFor` si elle est plus fraîche et la repoussent. Ne pas remettre un
+  `supaToLocal(d)` direct à la reconnexion : ce qui a été joué pendant la panne serait perdu.
+Vérifié en dev le 2026-09-16 : session de l'onglet fermée en pleine utilisation, Daily joué
+(+154 XP locales, sauvegardes refusées), bandeau, reconnexion, XP relue depuis Supabase.
 
 ### Règles à ne pas enfreindre
 
