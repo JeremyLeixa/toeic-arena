@@ -1090,14 +1090,13 @@ export function Profile(p){
           style={{fontSize:11,color:"var(--t3)",borderColor:"rgba(255,71,87,.15)",width:"100%",marginBottom:8}}>
           {"\uD83D\uDD04 R\u00e9initialiser (formateur)"}
         </button>
-        {/* Hard logout — invalide la session Supabase + purge localStorage.
-            Utile pour : créer un profil distinct avec un autre email, tester en
-            sandbox avec plusieurs alias, se débarrasser d'une session cachée
-            qui auto-relogue involontairement. Différent de "Changer de profil"
-            sur l'écran principal qui garde la session Supabase pour le Welcome
-            back. Les données côté Supabase ne sont PAS supprimées. */}
+        {/* Déconnexion complète — ferme la session Supabase de CET appareil (portée `local`, F4
+            2026-09-16 : `global` coupait aussi les autres appareils de l'élève et les faisait tomber
+            dans le piège « session perdue ») + purge du localStorage de l'app. Différent de « Changer
+            de profil », qui garde la session (voir logout() dans App.jsx). Les données côté Supabase
+            ne sont PAS supprimées. */}
         <button className="btn2" onClick={async function(){
-          if(!confirm("D\u00e9connexion compl\u00e8te ?\n\nCa vide la session d'authentification (tu devras retaper ton email et cliquer le lien magique pour revenir). Tes donn\u00e9es en base ne sont pas touch\u00e9es.\n\n\u00c0 utiliser si tu veux cr\u00e9er un profil distinct avec un autre email, ou si tu es auto-relogu\u00e9 sur une session pr\u00e9c\u00e9dente sans le vouloir."))return;
+          if(!confirm("Déconnexion complète ?\n\nTa session est fermée sur CET appareil et le profil local est vidé : il faudra retaper ton prénom, ton code de promo et ton mot de passe. Tes autres appareils restent connectés, et tes données en base ne sont pas touchées.\n\nÀ utiliser sur un appareil partagé, ou si tu veux te connecter avec un autre compte."))return;
           try{await signOutCompletely();}catch(e){console.warn("[logout] signOut failed:",e&&e.message);}
           try{
             // Nettoyage exhaustif des clés app ET Supabase auth côté localStorage.

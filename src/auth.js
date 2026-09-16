@@ -79,7 +79,13 @@ export async function getSession() {
 // et par le soft logout (App.jsx:13210). Avant le fix 2026-04-24, cette fonction effaçait
 // 'toeic-arena-local' (inexistante) et oubliait profile+name, rendant le hard logout partiel.
 export async function signOutCompletely() {
-  try { await supabase.auth.signOut(); } catch (e) { console.warn("[auth] signOut caught:", e && e.message); }
+  // F4 (2026-09-16) : portée LOCALE. supabase-js signe par défaut en `global`, qui révoque la
+  // session sur TOUS les appareils de l'élève : se déconnecter sur son téléphone coupait son PC,
+  // dont la sauvegarde suivante recréait une session anonyme → piège « session perdue » (voir
+  // CLAUDE.md). `local` = POST /logout?scope=local : seule la session de cet appareil est révoquée.
+  // Un appareil perdu ou compromis se règle par « Réinitialiser l'accès » côté formateur
+  // (api/teacher-reset-student.js supprime le compte auth, donc toutes ses sessions).
+  try { await supabase.auth.signOut({ scope: 'local' }); } catch (e) { console.warn("[auth] signOut caught:", e && e.message); }
   try {
     localStorage.removeItem('toeic-arena-profile');
     localStorage.removeItem('toeic-arena-name');

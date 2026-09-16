@@ -1324,6 +1324,8 @@ function sv(d){
     var sess=await supabase.auth.getSession();
     var uid=sess.data.session?sess.data.session.user.id:null;
     await purgeUserRows(uid,u.name,u.classCode);
+    // signOut GLOBAL voulu ici (F4) : le compte est supprimé, aucun appareil ne doit garder de session.
+    // La « Déconnexion complète » du Profil, elle, est en portée locale (auth.js signOutCompletely).
     try{await supabase.auth.signOut();}catch(e){console.warn("[deleteAccount] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
@@ -1334,6 +1336,8 @@ function sv(d){
     var sess=await supabase.auth.getSession();
     var uid=sess.data.session?sess.data.session.user.id:null;
     await purgeUserRows(uid,u.name,u.classCode);
+    // signOut GLOBAL voulu ici (F4) : les lignes du compte viennent d'être purgées, aucune session
+    // ne doit survivre ailleurs sur un compte vidé.
     try{await supabase.auth.signOut();}catch(e){console.warn("[reset] signOut caught:",e&&e.message);}
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
