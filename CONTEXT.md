@@ -177,8 +177,9 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   Tests prouvés mordants (9 cassures). `BUILD_ID` = `2026-09-16-festivals`.
 - **Bugs antérieurs repérés en passant, non corrigés** : skin Aurora en mode clair = toutes les
   `.crd` illisibles (fond forcé sombre, textes `.light` sombres) ; titre équipé et pastille de
-  ligue délavés en clair (couleurs codées en dur) ; Profil → Style affiche en littéral
-  `🗝️ Game Master — exclusive avatar` (Teacher, escape en texte JSX, Profile.jsx).
+  ligue délavés en clair (couleurs codées en dur). Le littéral `🗝️ Game Master`
+  de Profil → Style est corrigé (`de9b46a`). Même défaut (escapes en texte JSX) encore présent :
+  `App.jsx` bandeau « Accès expiré » et `UpgradeScreen.jsx` « Conditions Générales de Vente ».
 
 ### Pour la prochaine session
 - Lot 4 à décider : BGM `bgm_home_<fest>` (helper `homeTrack()`), coffre `fest_<id>_<année>`,
