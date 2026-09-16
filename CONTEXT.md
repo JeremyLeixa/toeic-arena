@@ -207,8 +207,8 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   = en sombre (Molten Gold, Heraldic < 5 % d'écart, fond `--bg2`), rien de pire que sans skin.
   Compte remis sombre, sans skin, relu après rechargement.
 - **Reste, préexistant, non traité** : couleurs codées en dur délavées en clair hors skin
-  (raretés or `#ffc020` des noms d'avatar/skin/cadre dans Style, « Convert duplicates »,
-  `+10 Login bonus`, « 990 » `#c9a23a` du Profil) ; les skins du Shop n'ont pas de `--cx-hex`
+  (« Convert duplicates », `+10 Login bonus`, « 990 » `#c9a23a` du Profil, « Premium » et
+  quantités premium des Consommables ; les noms de rareté sont corrigés, voir plus bas) ; les skins du Shop n'ont pas de `--cx-hex`
   propre (Doré partout où il sert, en sombre comme dans les cartes-nuit) ; `theme-color` ignore
   le skin.
 
@@ -227,6 +227,14 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   (Teacher en mode observateur, aucun joueur affiché), même appel `tone()`.
 - Piège : le basculement Mode par l'UI dans le panneau navigateur masqué est écrasé par le
   rechargement Supabase à chaque retour « visible » (`App.jsx` `onVis`) ; mesurer par classe.
+- **Noms de rareté** (`9a49ea7`) : Profil → Style (noms d'avatar/skin/cadre, « Tap to read » des
+  cheat sheets, bordures de rareté des vignettes et des cheat sheets) et bordure de rareté des
+  vignettes de skin du Shop passent par `tone()`. Deux variantes en plus : Common `#909090` →
+  `#626262`, Uncommon `#3ecc78` → `#1e703f`. Avant, en clair : Legendary 1,25:1, Uncommon 1,58:1,
+  Common 2,44:1. Mesuré en dev sur les 89 éléments de Style : texte 4,73-5,98:1, bordures
+  5,4-6:1 (clair, clair + Aurora, clair + Halloween) ; sombre inchangé. `check_tones` couvre
+  `RARITIES`, `rarity.color`, `shopRarColor()` (3 mutations). **Pas vu** : la vignette du Shop
+  (même appel). Coffres (`Chests.jsx`, variable `rarityColor`) : fonds sombres fixes, inchangés.
 
 ---
 

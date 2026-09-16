@@ -69,10 +69,11 @@ Ce que la suite protège, et pourquoi :
   `.skin-X:not(.light),.light.skin-X .crd`, présence dans `.light:where(…) .crd`, tout token de
   `.light` reposé dans la carte, `.btn2` et fonds translucides corrigés en clair). Un oubli ne
   casse pas le build : les cartes deviennent illisibles pour les élèves en mode clair.
-- **`check_tones`** — chaque couleur de ligue (`data/leagues.js`) et de titre (`TITLES`) a sa
-  variante `.light{--tone-<hex>}` à ≥ 4,5:1 sur `--bg/--bg2/--bg3`, aucune variante hors clair,
-  et aucune de ces couleurs affichée sans `tone()` dans `src/` (sauf fond sombre fixe `#1a1208`
-  sur la même ligne). Une couleur ajoutée sans variante se délave en clair, en silence.
+- **`check_tones`** — chaque couleur de ligue (`data/leagues.js`), de titre (`TITLES`) et de
+  rareté (`RARITIES`) a sa variante `.light{--tone-<hex>}` à ≥ 4,5:1 sur `--bg/--bg2/--bg3`,
+  aucune variante hors clair, et aucune de ces couleurs affichée sans `tone()` dans `src/`
+  (`lg/plLg/titleData/ti/rarity/TITLES[…].color`, `shopRarColor(…)` ; sauf fond sombre fixe
+  `#1a1208` sur la même ligne). Une couleur ajoutée sans variante se délave en clair, en silence.
 - **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
   et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
 
@@ -588,7 +589,7 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 - **`.crd` class** forces `background: var(--bg2)`. Override requires removing the class.
 - **Skin animations:** use `background-image:` NOT `background:` shorthand when animated.
 - **Skin à cartes sombres = cartes-nuit en clair** (2026-09-16) : un skin qui force un fond sombre sur `.crd` écrit sa règle de tokens `.skin-X:not(.light),.light.skin-X .crd{…}` (page claire, palette sombre dans les cartes), s'ajoute à `.light:where(…) .crd` et à la liste `.light.skin-X .btn2`, et remet un `background-color` opaque si son fond de carte est translucide. Jamais `.skin-X{…}` seul : selon sa place par rapport à `.light`, texte sombre sur carte sombre ou appli entière sombre avec les restes du clair. `check_skins_light` refuse l'oubli.
-- **Couleur de ligue ou de titre affichée = `tone(hex)`** (`lib/tone.js`, 2026-09-16) : les hex de `data/leagues.js` et `TITLES` sont clairs, pensés pour le sombre (Gold `#ffd700` à 1,07:1 en clair). `tone(hex)` → `var(--tone-<hex>,<hex>)` : en sombre le hex s'applique, en clair la variante de `.light{--tone-…}` dans `appCss.js` (même teinte, ≥ 4,6:1), remise à `initial` dans les cartes-nuit. Nouvelle couleur de ligue ou de titre = sa variante + son `initial` ; affichage brut permis seulement sur fond sombre fixe (`#1a1208`, carte de coffre, vignette du Shop). `check_tones` refuse l'oubli.
+- **Couleur de ligue, de titre ou de rareté affichée = `tone(hex)`** (`lib/tone.js`, 2026-09-16) : les hex de `data/leagues.js`, `TITLES` et `RARITIES` sont clairs, pensés pour le sombre (Gold `#ffd700` à 1,07:1 en clair, Legendary `#ffc020` à 1,25:1). `tone(hex)` → `var(--tone-<hex>,<hex>)` : en sombre le hex s'applique, en clair la variante de `.light{--tone-…}` dans `appCss.js` (même teinte, ≥ 4,6:1), remise à `initial` dans les cartes-nuit. Nouvelle couleur = sa variante + son `initial` ; affichage brut permis seulement sur fond sombre fixe (`#1a1208`, coffres, vignette de titre du Shop). `check_tones` refuse l'oubli.
 - **Shimmer overlays use `::after` pseudo-elements** with parent `position:relative!important;overflow:hidden!important`.
 - **`.app:not(.onboard-shell)`** selector allows onboarding to skip the desktop 200px sidebar margin.
 
