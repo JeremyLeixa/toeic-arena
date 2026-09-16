@@ -267,6 +267,15 @@ useEffect(function(){
           sL(false);
         });
       }else if(!session){
+        // Pas de session au démarrage : l'onboarding prend la main, et c'est LUI qui fait entrer
+        // (recover / recoverByEmail / onboard). Sans ce `loaded=true`, la session anonyme que
+        // lookupName ouvre pour sa recherche arrivait ici comme « première session » et lançait
+        // load() en plein onboarding, sur le profil local qui traînait : avant F1 l'app entrait
+        // d'un coup sur ce profil, depuis F1 elle sautait vers « Bon retour, <ce profil> ». Sur
+        // un appareil partagé, l'élève B tapant son prénom était détourné vers le compte de A
+        // (constaté le 2026-09-16 en vérifiant F3). Un rafraîchissement de jeton qui rétablirait
+        // la session arrive en TOKEN_REFRESHED, ignoré plus haut : aucun chargement perdu.
+        loaded=true;
         sL(false);
       }
     });
