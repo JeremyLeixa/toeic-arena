@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chest Opening v3 — Crack &amp; Cards</title>
+<style>
+@font-face{font-family:'Cinzel';font-weight:600 900;font-display:swap;src:url('../../public/fonts/cinzel-latin.woff2') format('woff2')}
+@font-face{font-family:'DM Sans';font-weight:400 700;font-display:swap;src:url('../../public/fonts/dmsans-latin.woff2') format('woff2')}
+@font-face{font-family:'Outfit';font-weight:400 900;font-display:swap;src:url('../../public/fonts/outfit-latin.woff2') format('woff2')}
+
+/* Variables typées : la couleur de rareté se fond d'un palier à l'autre, jusque dans les dégradés SVG */
+@property --tell{syntax:'<color>';inherits:true;initial-value:#ffdca8}
+@property --spin{syntax:'<angle>';inherits:false;initial-value:0deg}
+@property --hx{syntax:'<percentage>';inherits:true;initial-value:50%}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#050302;color:#ede4d4;font-family:'DM Sans',system-ui,sans-serif;overflow:hidden}
+body{display:flex;flex-direction:column}
+button{font:inherit}
+
+/* ── Barre du prototype (hors app) ── */
+.bar{flex:none;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:7px 10px;background:#120d08;border-bottom:1px solid #2a2016;font-size:12px;z-index:50}
+.bar b{font-family:Cinzel;color:#d4943a;letter-spacing:1px}
+.seg{display:flex;border:1px solid #3a2e20;border-radius:8px;overflow:hidden}
+.seg button{background:none;border:0;color:#8a7e6a;padding:6px 8px;cursor:pointer}
+.seg button.on{background:#d4943a;color:#0f0c08;font-weight:700}
+.bar select,.bar .pbtn{background:#1f1810;color:#ede4d4;border:1px solid #3a2e20;border-radius:8px;padding:5px 8px;cursor:pointer}
+.bar select:disabled{opacity:.4}
+.bar label{display:flex;gap:4px;align-items:center;color:#b8a888;cursor:pointer;white-space:nowrap}
+.bar .pbtn.primary{background:linear-gradient(135deg,#f0c850,#d4943a);color:#0f0c08;font-weight:700;border:0}
+
+/* ── Scène (le modal plein écran de l'app, fond sombre fixe) ── */
+.wrap{flex:1;min-height:0;display:flex;justify-content:center;background:#050302}
+/* clip et pas hidden : les rayons (1000px) débordent, et un conteneur hidden reste défilable par
+   programme (focus, scrollIntoView) → toute la scène glissait de ~190px au clic sur « Open now » */
+.stage{position:relative;width:100%;max-width:430px;height:100%;overflow:hidden;overflow:clip;isolation:isolate;
+  background:radial-gradient(ellipse 90% 70% at 50% 45%,#241407 0%,#0c0603 60%,#040201 100%);
+  --tell:#ffdca8;--cy:50%;transition:--tell .35s ease;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 38%,rgba(0,0,0,.78) 100%);pointer-events:none;z-index:4}
+.rays{position:absolute;left:50%;top:var(--cy);width:1000px;height:1000px;margin:-500px 0 0 -500px;pointer-events:none;z-index:1;opacity:0;mix-blend-mode:screen}
+.rays i{position:absolute;inset:0;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--tell) 60%,transparent) 0deg 3deg,transparent 3deg 15deg);
+  -webkit-mask:radial-gradient(circle,#000 0%,rgba(0,0,0,.45) 20%,transparent 44%);mask:radial-gradient(circle,#000 0%,rgba(0,0,0,.45) 20%,transparent 44%);animation:spin 20s linear infinite}
+.halo{position:absolute;left:50%;top:var(--cy);width:460px;height:460px;margin:-230px 0 0 -230px;border-radius:50%;pointer-events:none;z-index:1;opacity:0;
+  background:radial-gradient(circle,color-mix(in srgb,var(--tell) 50%,transparent),transparent 62%);mix-blend-mode:screen}
+.beam{position:absolute;left:50%;top:0;width:140px;margin-left:-70px;transform-origin:50% 100%;transform:scaleY(0);pointer-events:none;z-index:3;
+  background:linear-gradient(to top,#fff 0%,var(--tell) 16%,color-mix(in srgb,var(--tell) 35%,transparent) 55%,transparent 100%);filter:blur(9px);mix-blend-mode:screen}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:20}
+canvas#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10}
+.dim{position:absolute;inset:0;background:rgba(4,2,1,.8);opacity:0;pointer-events:none;z-index:8}
+.dim.on{pointer-events:auto}
+
+/* ── Coffre ── */
+.chest-area{position:absolute;inset:0;z-index:3;pointer-events:none;transform-origin:50% var(--cy)}
+.chest-label{position:absolute;left:0;right:0;top:calc(var(--cy) - 215px);text-align:center;font-family:Cinzel;font-weight:900;letter-spacing:5px;font-size:14px;color:#d9b868;opacity:0;text-transform:uppercase}
+.chest-label small{display:block;font-family:'DM Sans';letter-spacing:1.5px;font-size:11px;color:#8a7e6a;margin-top:6px;font-weight:600;text-transform:none}
+.chest{position:absolute;left:50%;top:var(--cy);width:230px;height:230px;margin:-130px 0 0 -115px;pointer-events:auto;cursor:pointer;outline:none;opacity:0}
+.chest:focus-visible{outline:2px solid #d4943a;outline-offset:6px;border-radius:12px}
+.chest-idle{width:100%;height:100%}
+.chest-idle.breathe{animation:breathe 2.4s ease-in-out infinite}
+.chest-svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 14px 16px rgba(0,0,0,.75))}
+.c-lid,.c-lid-int,.c-lock{transform-box:fill-box;transform-origin:50% 100%}
+.c-lock{transform-origin:50% 0%}
+.c-lid-int{transform:scaleY(0)}
+.c-mouth{opacity:0}
+.c-seam{opacity:0;transition:opacity .25s}
+.c-ray{opacity:0;transition:opacity .3s}
+.chest.lvl1 .c-seam{opacity:.45}
+.chest.lvl2 .c-seam{opacity:.75}.chest.lvl2 .c-ray{opacity:.35}
+.chest.lvl3 .c-seam{opacity:1}.chest.lvl3 .c-ray{opacity:.9}
+.c-rune{animation:runeGlow 1.8s ease-in-out infinite}
+.rune-wrap{position:absolute;left:50%;top:calc(var(--cy) + 75px);width:320px;height:92px;margin:-46px 0 0 -160px;opacity:0}
+.rune-circle{width:100%;height:100%;overflow:visible}
+.rune-circle ellipse{fill:none;stroke:#ffc84a;stroke-dasharray:300;stroke-dashoffset:300;transition:stroke-dashoffset .5s ease-out}
+.rc-outer{stroke-width:2.2}.rc-inner{stroke-width:1.1;opacity:.7}
+.rune-circle.on1 ellipse{stroke-dashoffset:200}.rune-circle.on2 ellipse{stroke-dashoffset:100}.rune-circle.on3 ellipse{stroke-dashoffset:0}
+.rc-glyph{fill:none;stroke:#ffd870;stroke-width:1.6;stroke-linecap:round;opacity:0;transition:opacity .3s}
+.rc-glyph.lit{opacity:1}
+.shock{position:absolute;left:50%;top:calc(var(--cy) + 72px);width:280px;height:64px;margin:-32px 0 0 -140px;border-radius:50%;border:2px solid var(--tell);opacity:0;pointer-events:none}
+.pips{position:absolute;left:50%;top:calc(var(--cy) + 130px);transform:translateX(-50%);display:flex;gap:12px;opacity:0}
+.pips i{width:11px;height:11px;border-radius:50%;border:1.5px solid #6a5638;transition:background .2s,box-shadow .2s,border-color .2s}
+.pips i.on{background:var(--tell);border-color:var(--tell);box-shadow:0 0 10px var(--tell)}
+.hint{position:absolute;left:0;right:0;text-align:center;font-family:Cinzel;font-weight:700;letter-spacing:3px;font-size:13px;color:#e8d4a8;opacity:0;text-transform:uppercase;pointer-events:none;z-index:6}
+.hint.chest-hint{top:calc(var(--cy) + 154px)}
+.hint small{display:block;font-family:'DM Sans';font-weight:500;letter-spacing:.5px;font-size:11px;color:#8a7e6a;text-transform:none;margin-top:5px}
+.tell-label{position:absolute;left:0;right:0;top:calc(var(--cy) - 150px);text-align:center;font-family:Cinzel;font-weight:900;letter-spacing:6px;font-size:16px;color:var(--tell);text-shadow:0 0 16px var(--tell);opacity:0;pointer-events:none;text-transform:uppercase}
+
+/* ── Cartes ── */
+.cards{position:absolute;inset:0;pointer-events:none}
+.card{position:absolute;left:50%;top:0;width:200px;height:280px;margin:-140px 0 0 -100px;z-index:5;pointer-events:auto;cursor:pointer;perspective:900px;outline:none;opacity:0}
+.card.inspect{z-index:9}
+.card:focus-visible .face{outline:2px solid #f0c850;outline-offset:3px}
+.card-tilt{width:100%;height:100%;transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .18s ease-out}
+.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d}
+.face{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.back{background:radial-gradient(circle at 50% 40%,#3c2a16,#1a1008 72%);border:2px solid color-mix(in srgb,var(--glow) 75%,#5a4428);
+  box-shadow:0 0 24px color-mix(in srgb,var(--glow) 60%,transparent),inset 0 0 30px rgba(0,0,0,.6)}
+.back::before{content:"";position:absolute;inset:10px;border:1px solid rgba(201,164,90,.4);border-radius:10px;background:repeating-linear-gradient(45deg,rgba(201,164,90,.06) 0 6px,transparent 6px 12px)}
+.back-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--glow) 80%,transparent))}
+.back.legend{border:3px solid transparent;background:radial-gradient(circle at 50% 40%,#3c2a16,#1a1008 72%) padding-box,conic-gradient(from var(--spin),#ffc020,#fff4c0,#ff9a20,#ffc020,#fff4c0,#ffc020) border-box;animation:spinBorder 2.2s linear infinite}
+.card.pulse .back{animation:backPulse 1.3s ease-in-out infinite}
+.card.pulse .back.legend{animation:spinBorder 2.2s linear infinite,backPulse 1.3s ease-in-out infinite}
+.front{transform:rotateY(180deg);background:linear-gradient(180deg,#2c2016 0%,#150e08 100%);border:2px solid var(--rc);
+  box-shadow:0 0 30px color-mix(in srgb,var(--rc) 60%,transparent),inset 0 0 26px rgba(0,0,0,.55);display:flex;flex-direction:column;align-items:center;padding:14px 12px;text-align:center}
+.badge{font-family:Cinzel;font-weight:900;font-size:10px;letter-spacing:3px;text-transform:uppercase;border:1px solid;border-radius:4px;padding:3px 9px;min-height:21px}
+.badge.none{border:0}
+.cf-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;width:100%}
+.cf-visual{display:flex;justify-content:center;align-items:center;min-height:112px;filter:drop-shadow(0 0 16px color-mix(in srgb,var(--rc) 70%,transparent))}
+.cf-name{font-family:Cinzel;font-weight:900;font-size:18px;color:#f3e9d6;letter-spacing:.5px;line-height:1.15}
+.cf-name.small{font-size:14px}
+.cf-cap{font-size:10.5px;color:#a89878;line-height:1.35;padding:0 4px}
+.coin{border-radius:50%;background:radial-gradient(circle at 35% 30%,#fce8a8,#e8c45a 50%,#8a6818);border:2px solid #6b4f10;box-shadow:0 0 16px rgba(232,196,90,.5),inset 0 -5px 10px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;flex:none}
+.gem{display:flex;filter:drop-shadow(0 0 10px rgba(120,210,255,.75))}
+.cur{display:flex;flex-direction:column;gap:14px;width:100%;padding:0 10px}
+.cur-row{display:flex;align-items:center;gap:14px}
+.cur-num{display:flex;flex-direction:column;align-items:flex-start;font-family:Outfit;font-weight:900;font-size:27px;color:#f7ecd6;line-height:1;font-variant-numeric:tabular-nums}
+.cur-num small{font-family:'DM Sans';font-weight:700;font-size:10px;letter-spacing:2px;color:#a89878;text-transform:uppercase;margin-top:4px}
+.tok-fan{position:relative;height:100px;width:100%;display:flex;justify-content:center;align-items:center}
+.tok{position:absolute;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#5a4428,#1c140a);border:2px solid #c9a45a;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.5)}
+.medal{border-radius:50%;background:radial-gradient(circle at 35% 30%,#5a3a1e,#1e1208);border:3px solid #c9a45a;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:inset 0 -6px 14px rgba(0,0,0,.5)}
+.ring{border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.ring .medal{border-width:0}
+.swatch{border-radius:22%;position:relative;overflow:hidden;border:2px solid rgba(255,255,255,.25);flex:none}
+.swatch i{position:absolute;left:16%;height:9%;border-radius:4px;background:rgba(0,0,0,.28)}
+.swatch i:nth-child(1){top:24%;right:16%}.swatch i:nth-child(2){top:45%;right:34%}.swatch i:nth-child(3){top:66%;right:24%}
+.plate{font-family:Cinzel;font-weight:900;letter-spacing:2px;text-transform:uppercase;border:2px solid;border-radius:10px;padding:14px 12px;background:linear-gradient(180deg,#1a1208,#0a0604);line-height:1.2}
+/* Reflet : bandes fines séparées de vide + point de lumière, en screen (color-dodge noyait la carte) */
+.holo{position:absolute;inset:0;border-radius:inherit;pointer-events:none;mix-blend-mode:screen;opacity:.5;
+  background-image:radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.16),transparent 38%),
+    repeating-linear-gradient(115deg,transparent 0%,transparent 7%,rgba(255,80,200,.2) 8.5%,rgba(80,200,255,.22) 10%,rgba(120,255,190,.18) 11.5%,transparent 13%,transparent 20%);
+  background-size:100% 100%,280% 280%;background-position:center,var(--hx) 50%;animation:holoSweep 3.6s ease-in-out infinite alternate}
+.foil.r4 .holo{background-image:radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,248,220,.18),transparent 38%),
+    repeating-linear-gradient(115deg,transparent 0%,transparent 7%,rgba(255,200,90,.22) 8.5%,rgba(255,250,215,.28) 10%,rgba(255,170,60,.18) 11.5%,transparent 13%,transparent 20%)}
+.tracking .holo{animation:none}
+
+/* ── Boutons et récap ── */
+.cta-row{position:absolute;left:16px;right:16px;bottom:calc(22px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;z-index:12;opacity:0;pointer-events:none}
+.cta-row.on{opacity:1;pointer-events:auto}
+.cta-row::before{content:"";position:absolute;left:-16px;right:-16px;bottom:-40px;height:150px;background:linear-gradient(to top,#040201 45%,transparent);z-index:-1;pointer-events:none}
+.b1{flex:1;max-width:280px;padding:14px;border:0;border-radius:12px;font-family:Cinzel;font-weight:900;font-size:15px;letter-spacing:1px;color:#1a0f04;background:linear-gradient(135deg,#ffe08a,#e0a830 55%,#b57a1c);box-shadow:0 6px 24px rgba(224,168,48,.35);cursor:pointer}
+.b2{padding:14px 16px;border-radius:12px;border:1px solid rgba(201,164,90,.4);background:rgba(20,12,6,.7);color:#d9c8a4;font-weight:600;font-size:13px;cursor:pointer}
+.skip{position:absolute;top:12px;right:12px;z-index:15;background:rgba(20,12,6,.6);border:1px solid rgba(201,164,90,.35);color:#c9b48c;border-radius:20px;padding:7px 14px;font-weight:600;font-size:12px;letter-spacing:1px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .3s}
+.skip.on{opacity:1;pointer-events:auto}
+.recap{position:absolute;inset:0;z-index:11;display:flex;flex-direction:column;align-items:center;padding:34px 16px 110px;overflow-y:auto;opacity:0;pointer-events:none}
+.recap.on{opacity:1;pointer-events:auto}
+.recap h2{font-family:Cinzel;font-weight:900;letter-spacing:6px;font-size:21px;color:#f0d890;margin:0 0 4px;text-shadow:0 0 18px rgba(240,200,80,.35)}
+.recap .sub{font-size:11px;letter-spacing:2px;color:#8a7e6a;text-transform:uppercase;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:380px}
+.tile{position:relative;overflow:hidden;border:1.5px solid var(--rc);border-radius:14px;background:linear-gradient(180deg,#261a10,#120a05);padding:10px 6px 9px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-height:104px}
+.tile.featured{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr 1fr;column-gap:16px;align-items:center;justify-items:start;padding:14px 18px;min-height:0;text-align:left;box-shadow:0 0 30px color-mix(in srgb,var(--rc) 45%,transparent)}
+.t-badge{font-family:Cinzel;font-weight:900;font-size:8.5px;letter-spacing:2px;text-transform:uppercase}
+.tile.featured .t-badge{position:absolute;top:10px;right:12px;font-size:10px}
+.t-vis{height:44px;display:flex;align-items:center;justify-content:center}
+.tile.featured .t-vis{grid-row:1/3;height:auto}
+.t-name{font-weight:700;font-size:12px;color:#efe4cf;line-height:1.2}
+.tile.featured .t-name{font-family:Cinzel;font-weight:900;font-size:19px;align-self:end}
+.t-sub{font-size:9.5px;letter-spacing:1px;color:#8a7e6a;text-transform:uppercase}
+.tile.featured .t-sub{align-self:start}
+
+/* ── Toast d'entrée (ChestEarnedToast) ── */
+.toast{position:absolute;left:12px;right:12px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:12;opacity:0;pointer-events:none}
+.toast.on{opacity:1;pointer-events:auto}
+.toast-card{background:linear-gradient(180deg,#1f1610,#120a04);border:1.5px solid var(--tc);border-radius:16px;padding:10px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 -6px 30px rgba(0,0,0,.6),0 0 40px color-mix(in srgb,var(--tc) 35%,transparent)}
+.toast .mini{width:64px;height:64px;flex:none;animation:wiggle 1.4s ease-in-out infinite}
+.toast .t1{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--tc)}
+.toast .t2{font-size:15px;font-weight:700;margin-top:2px}
+.toast .t3{font-size:11px;color:#8a7e6a;margin-top:1px}
+.toast .acts{display:flex;gap:6px;margin-top:6px}
+.idle-bg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#5a4e3a;font-size:12px;letter-spacing:1px;text-align:center;padding:0 30px;pointer-events:none}
+.idle-bg b{font-family:Cinzel;color:#8a7250;font-size:15px;letter-spacing:3px}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinBorder{to{--spin:360deg}}
+@keyframes holoSweep{from{--hx:0%}to{--hx:100%}}
+@keyframes breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.012)}}
+@keyframes runeGlow{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes backPulse{0%,100%{box-shadow:0 0 18px color-mix(in srgb,var(--glow) 50%,transparent),inset 0 0 30px rgba(0,0,0,.6)}50%{box-shadow:0 0 44px color-mix(in srgb,var(--glow) 90%,transparent),inset 0 0 30px rgba(0,0,0,.6)}}
+@keyframes hintPulse{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}15%{transform:rotate(-6deg)}30%{transform:rotate(6deg)}45%{transform:rotate(-4deg)}60%{transform:rotate(4deg)}75%{transform:rotate(0)}}
+.hint.pulse{animation:hintPulse 1.6s ease-in-out infinite}
+
+/* Mouvement réduit (S9) : aucune boucle ; le JS saute directement au récap */
+.stage.reduced *,.stage.reduced *::before,.stage.reduced *::after{animation:none!important;transition:none!important}
+</style>
+</head>
+<body>
+<header class="bar">
+  <b>Chest v3 · Crack &amp; Cards</b>
+  <div class="seg" id="tierSeg">
+    <button data-t="novice">Novice</button><button data-t="guerrier">Warrior</button><button data-t="champion">Champion</button><button data-t="legendaire" class="on">Legendary</button>
+  </div>
+  <label title="Warrior et Champion uniquement">Best <select id="forceR"><option value="">Auto</option><option value="2">Rare</option><option value="3">Epic</option><option value="4">Legendary</option></select></label>
+  <label><input type="checkbox" id="optSound" checked> Sound</label>
+  <label><input type="checkbox" id="optSlow"> Slow network</label>
+  <label><input type="checkbox" id="optReduced"> Reduced motion</label>
+  <button class="pbtn primary" id="btnReplay">Replay</button>
+</header>
+<main class="wrap">
+  <div class="stage" id="stage">
+    <div class="idle-bg" id="idleBg"><b>VERSE ARENA</b>Le coffre arrive par le toast, comme dans l'app.</div>
+    <div class="halo" id="halo"></div>
+    <div class="rays" id="rays"><i></i></div>
+    <div class="beam" id="beam"></div>
+    <div class="chest-area" id="chestArea">
+      <div class="chest-label" id="chestLabel"></div>
+      <div class="tell-label" id="tellLabel"></div>
+      <div class="rune-wrap" id="runeWrap"></div>
+      <div class="shock" id="shock"></div>
+      <div class="chest" id="chest" role="button" tabindex="0" aria-label="Open the chest"><div class="chest-idle" id="chestIdle"></div></div>
+      <div class="pips" id="pips"><i></i><i></i><i></i></div>
+      <div class="hint chest-hint" id="chestHint"></div>
+    </div>
+    <div class="vignette"></div>
+    <div class="cards" id="cards"></div>
+    <div class="hint" id="cardsHint"></div>
+    <div class="dim" id="dim"></div>
+    <canvas id="fx"></canvas>
+    <div class="recap" id="recap"></div>
+    <div class="cta-row" id="cta"></div>
+    <div class="toast" id="toast"></div>
+    <button class="skip" id="skip">Skip ›</button>
+    <div class="flash" id="flash"></div>
+  </div>
+</main>
+<script src="icons.js"></script>
+<script src="loot.js"></script>
+<script src="sfx.js"></script>
+<script src="particles.js"></script>
+<script src="chest-art.js"></script>
+<script src="cards.js"></script>
+<script src="open.js"></script>
+<script src="reveal.js"></script>
+</body>
+</html>
