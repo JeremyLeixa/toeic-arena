@@ -6,6 +6,7 @@ import { MODAL_MATCH_BOARDS, MODAL_SORT_ITEMS } from "../../data/modals.js";
 import { GRIMOIRE_MODALS } from "../../data/modalsGrimoire.js";
 import { haptic } from "../../lib/device.js";
 import { shuffle } from "../../lib/util.js";
+import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong, playBGM, stopBGM } from "../../sounds.js";
 import { useState, useRef, useEffect } from "react";
 
@@ -243,7 +244,7 @@ export function ModalMatch(p){
           {allResults.map(function(r,i){return(
             <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:4,color:"var(--t2)"}}>
               <span>Board {i+1}</span>
-              <strong style={{color:r.correct===r.total?"#22c55e":r.correct>=3?"#f59e0b":"#ef4444"}}>{r.correct} / {r.total}</strong>
+              <strong style={{color:r.correct===r.total?tone("#22c55e"):r.correct>=3?tone("#f59e0b"):tone("#ef4444")}}>{r.correct} / {r.total}</strong>
             </div>
           );})}
         </div>
@@ -407,9 +408,9 @@ export function ModalSort(p){
         <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Classify each modal sentence into one of four functions. Speed matters — but accuracy more.</p>
         <div className="crd" style={{maxWidth:380,margin:"0 auto 16px",padding:14,textAlign:"left",fontSize:13,color:"var(--t2)",lineHeight:1.7}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="templar-shield" size={18} color="#dc2626"/><strong style={{color:"#dc2626"}}>Obligation</strong> · must, have to, need to</div>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="quill-ink" size={18} color="#0891b2"/><strong style={{color:"#0891b2"}}>Advice</strong> · should, ought to, had better</div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="quill-ink" size={18} color={tone("#0891b2")}/><strong style={{color:tone("#0891b2")}}>Advice</strong> · should, ought to, had better</div>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="ink-swirl" size={18} color="#7c3aed"/><strong style={{color:"#7c3aed"}}>Possibility</strong> · can, could, may, might</div>
-          <div style={{display:"flex",alignItems:"center",gap:8}}><GIcon name="spyglass" size={18} color="#f59e0b"/><strong style={{color:"#f59e0b"}}>Deduction</strong> · must be, can't be, must have V3</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}><GIcon name="spyglass" size={18} color={tone("#f59e0b")}/><strong style={{color:tone("#f59e0b")}}>Deduction</strong> · must be, can't be, must have V3</div>
         </div>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:14,textAlign:"left",fontSize:13,color:"var(--t2)",lineHeight:1.7}}>
           <div>{"📜"} <strong>15 sentences</strong> per session</div>
@@ -437,7 +438,7 @@ export function ModalSort(p){
             var correctBucket=BUCKETS.find(function(b){return b.id===r.item.bucket;});
             return(<div key={i} style={{fontSize:12.5,marginBottom:8,color:"var(--t2)",lineHeight:1.5}}>
               <div style={{color:"var(--t1)"}}>{r.item.s}</div>
-              <div style={{fontSize:11,color:correctBucket.color,marginTop:2}}>{"→ "}{correctBucket.label}</div>
+              <div style={{fontSize:11,color:tone(correctBucket.color),marginTop:2}}>{"→ "}{correctBucket.label}</div>
             </div>);
           })}
         </div>}
@@ -479,7 +480,7 @@ export function ModalSort(p){
     {phase==="reveal"&&(<div className="crd enter" style={{padding:14,marginBottom:12,borderLeft:"3px solid "+correctBucket.color}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8,flexWrap:"wrap"}}>
         <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{results[results.length-1].ok?"✓ Correct verdict":"Explanation"}</span>
-        <span style={{fontSize:10,color:correctBucket.color,padding:"2px 8px",background:"rgba(0,0,0,.18)",border:"1px solid "+correctBucket.color,borderRadius:99,fontWeight:700,letterSpacing:.3}}>{correctBucket.label}</span>
+        <span style={{fontSize:10,color:tone(correctBucket.color),padding:"2px 8px",background:"rgba(0,0,0,.18)",border:"1px solid "+correctBucket.color,borderRadius:99,fontWeight:700,letterSpacing:.3}}>{correctBucket.label}</span>
       </div>
       <div style={{fontSize:12.5,color:"var(--t3)",fontStyle:"italic",marginBottom:6}}>Modal: <strong style={{color:"var(--t1)",fontStyle:"normal"}}>{item.modal}</strong></div>
       <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6}}>{item.x}</div>

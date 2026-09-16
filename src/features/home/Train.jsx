@@ -5,6 +5,7 @@ import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { hasFullAccess, isModuleLocked } from "../../lib/access.js";
 import { canUnlockMock, canUnlockBoss, getEndlessState } from "../../lib/progress.js";
 import { today } from "../../lib/util.js";
+import { tone } from "../../lib/tone.js";
 import { useState } from "react";
 
 // ─── TRAIN PAGE ───
@@ -139,13 +140,13 @@ import { useState } from "react";
                 </div>
                 {bossCompleted&&!bossLocked?<div style={{fontSize:12,color:"var(--gold)"}}>Best: TOEIC {p.u.mockResults.boss.toeicEstimate}/990 {"—"} Retake?</div>
                 :bossLocked?<div style={{fontSize:11,color:"var(--t3)"}}>{uBoss.reasons[0]}</div>
-                :<div style={{fontSize:12,color:"#cc8844"}}>Full TOEIC {"·"} 202 Q {"·"} 120 min</div>}
+                :<div style={{fontSize:12,color:/*fond local*/"#cc8844"}}>Full TOEIC {"·"} 202 Q {"·"} 120 min</div>}
                 <div style={{display:"flex",gap:4,marginTop:6}}>
                   {["Mock 1","Mock 2","Mock 3"].map(function(label,i){
                     var done=mocksDone[i];
                     return(<span key={i} style={{fontSize:9,padding:"2px 7px",borderRadius:99,fontWeight:600,
                       background:done?"rgba(34,197,94,.15)":"rgba(255,255,255,.06)",
-                      color:done?"#22c55e":"var(--t3)"}}>{done?"✓ ":""}{label}</span>);
+                      color:done?/*fond local*/"#22c55e":"var(--t3)"}}>{done?"✓ ":""}{label}</span>);
                   })}
                 </div>
               </div>
@@ -181,7 +182,7 @@ import { useState } from "react";
                   </div>
                   <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:11,color:"#8a7e6a"}}>the arena never sleeps</div>
                 </div>
-                {isReady?<span style={{fontSize:18,color:"#7fb8e8"}}>{"→"}</span>:<ResultIcon e={"🔒"} size={17} color="var(--t3)"/>}
+                {isReady?<span style={{fontSize:18,color:/*fond local*/"#7fb8e8"}}>{"→"}</span>:<ResultIcon e={"🔒"} size={17} color="var(--t3)"/>}
               </div>
 
               {/* Locked: progress bar toward 650 gate */}
@@ -190,26 +191,26 @@ import { useState } from "react";
                   <span>Your score</span><span>Gate</span>
                 </div>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                  <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:14,color:"#7fb8e8"}}>{bossScore}</span>
-                  <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:14,color:"#d4943a"}}>650</span>
+                  <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:14,color:/*fond local*/"#7fb8e8"}}>{bossScore}</span>
+                  <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:14,color:/*fond local*/"#d4943a"}}>650</span>
                 </div>
                 <div style={{height:6,background:"rgba(27,112,207,.18)",borderRadius:99}}>
                   <div style={{width:progressPct+"%",height:"100%",borderRadius:99,background:"linear-gradient(90deg,#0a3a6e,#1B70CF)"}}/>
                 </div>
-                <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:11,color:"#4a9fe0",textAlign:"center",marginTop:6}}>So close {"·"} {650-bossScore} points from glory</div>
+                <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:11,color:/*fond local*/"#4a9fe0",textAlign:"center",marginTop:6}}>So close {"·"} {650-bossScore} points from glory</div>
               </div>}
 
               {/* Ready: stats line */}
               {isReady&&endlessData&&endlessData.attempts>0&&<div style={{borderTop:"1px solid rgba(27,112,207,.3)",marginTop:10,paddingTop:10}}>
-                <div style={{fontSize:11,color:"#8a7e6a"}}>Runs: <span style={{color:"#7fb8e8"}}>{endlessData.attempts}</span>  {"·"}  Best: <span style={{color:"#7fb8e8"}}>{endlessData.best}</span>  {"·"}  <span style={{color:"#7fb8e8"}}>Ready to enter</span></div>
+                <div style={{fontSize:11,color:"#8a7e6a"}}>Runs: <span style={{color:/*fond local*/"#7fb8e8"}}>{endlessData.attempts}</span>  {"·"}  Best: <span style={{color:/*fond local*/"#7fb8e8"}}>{endlessData.best}</span>  {"·"}  <span style={{color:/*fond local*/"#7fb8e8"}}>Ready to enter</span></div>
               </div>}
               {isReady&&(!endlessData||endlessData.attempts===0)&&<div style={{marginTop:10,textAlign:"center"}}>
-                <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:12,color:"#7fb8e8"}}>First run awaits {"·"} enter the sanctuary</div>
+                <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:12,color:/*fond local*/"#7fb8e8"}}>First run awaits {"·"} enter the sanctuary</div>
               </div>}
 
               {/* Cooldown: stats with timer */}
               {isCooldown&&endlessData&&<div style={{borderTop:"1px solid rgba(27,112,207,.3)",marginTop:10,paddingTop:10}}>
-                <div style={{fontSize:11,color:"#8a7e6a"}}>Runs: <span style={{color:"#7fb8e8"}}>{endlessData.attempts}</span>  {"·"}  Best: <span style={{color:"#7fb8e8"}}>{endlessData.best}</span>  {"·"}  Ready in <span style={{color:"#7fb8e8"}}>{endlessCooldownH}h {endlessCooldownM}m</span></div>
+                <div style={{fontSize:11,color:"#8a7e6a"}}>Runs: <span style={{color:/*fond local*/"#7fb8e8"}}>{endlessData.attempts}</span>  {"·"}  Best: <span style={{color:/*fond local*/"#7fb8e8"}}>{endlessData.best}</span>  {"·"}  Ready in <span style={{color:/*fond local*/"#7fb8e8"}}>{endlessCooldownH}h {endlessCooldownM}m</span></div>
               </div>}
             </div>
           </div>);
@@ -259,10 +260,10 @@ import { useState } from "react";
       <div style={{display:"flex",alignItems:"center",gap:14}}>
         <div style={{width:50,height:50,borderRadius:14,background:"linear-gradient(135deg,rgba(var(--cx),.22),transparent)",border:"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}><GIcon name="scroll-unfurled" size={28} color="var(--cyan)"/></div>
         <div style={{flex:1}}>
-          <div className="out" style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:16,letterSpacing:1.5,color:"#f0c850"}}>MOCK EXAMS</div>
+          <div className="out" style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:16,letterSpacing:1.5,color:tone("#f0c850")}}>MOCK EXAMS</div>
           <div style={{fontSize:12,color:"#8a7e6a"}}>Real conditions {"·"} full tests</div>
         </div>
-        <span style={{fontSize:16,color:"#d4943a"}}>{"→"}</span>
+        <span style={{fontSize:16,color:tone("#d4943a")}}>{"→"}</span>
       </div>
       {/* Mock pills */}
       <div style={{display:"flex",gap:6,marginTop:14}}>
@@ -270,21 +271,21 @@ import { useState } from "react";
           var done=mocksDone[i];
           return(<span key={i} style={{fontSize:11,padding:"3px 9px",borderRadius:99,fontWeight:600,
             background:done?"rgba(74,190,96,0.15)":"rgba(255,255,255,0.05)",
-            color:done?"#4abe60":"#5a5040"}}>{done?"\u2713 ":""}{label}</span>);
+            color:done?tone("#4abe60"):"#5a5040"}}>{done?"\u2713 ":""}{label}</span>);
         })}
       </div>
       {/* Separator */}
       <div style={{height:1,background:"rgba(180,140,80,0.15)",margin:"10px -4px"}}/>
       {/* Event rows: Final Arena + Endless Arena */}
       <div style={{display:"flex",alignItems:"center",gap:11,padding:"7px 4px"}}>
-        <span style={{width:22,textAlign:"center",display:"inline-flex",justifyContent:"center"}}><GIcon name="dragon-spiral" size={19} color={bossCompleted?"#4abe60":bossLocked?"#8a7e6a":"#e8c88a"}/></span>
-        <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:13,fontWeight:700,color:bossCompleted?"#4abe60":bossLocked?"#8a7e6a":"#e8c88a",flex:1}}>Final Arena</span>
-        <span style={{fontSize:11,color:bossCompleted?"#4abe60":bossLocked?"#8a7e6a":"#f0c850"}}>{bossCompleted?"conquered \xb7 "+(p.u.mockResults.boss.toeicEstimate||""):bossLocked?"awaiting \xb7 finish mocks":"unlocked \xb7 enter \u2192"}</span>
+        <span style={{width:22,textAlign:"center",display:"inline-flex",justifyContent:"center"}}><GIcon name="dragon-spiral" size={19} color={bossCompleted?tone("#4abe60"):bossLocked?"#8a7e6a":tone("#e8c88a")}/></span>
+        <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:13,fontWeight:700,color:bossCompleted?tone("#4abe60"):bossLocked?"#8a7e6a":tone("#e8c88a"),flex:1}}>Final Arena</span>
+        <span style={{fontSize:11,color:bossCompleted?tone("#4abe60"):bossLocked?"#8a7e6a":tone("#f0c850")}}>{bossCompleted?"conquered \xb7 "+(p.u.mockResults.boss.toeicEstimate||""):bossLocked?"awaiting \xb7 finish mocks":"unlocked \xb7 enter \u2192"}</span>
       </div>
       {endlessState!=="hidden"&&<div style={{display:"flex",alignItems:"center",gap:11,padding:"8px 4px 6px",background:"rgba(27,112,207,0.08)",borderRadius:8,margin:"2px -4px 0"}}>
-        <span style={{width:22,textAlign:"center",display:"inline-flex",justifyContent:"center"}}><GIcon name="infinity" size={19} color="#7fb8e8"/></span>
-        <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:13,fontWeight:700,color:"#7fb8e8",flex:1}}>Endless Arena</span>
-        <span style={{fontSize:11,color:endlessState==="ready"?"#4a9fe0":endlessState==="cooldown"?"#8a7e6a":"#8a7e6a"}}>{endlessState==="locked"?"locked \xb7 requires 650+":endlessState==="ready"?"ready to enter":endlessState==="cooldown"?"ready in "+endlessCooldownH+"h":""}</span>
+        <span style={{width:22,textAlign:"center",display:"inline-flex",justifyContent:"center"}}><GIcon name="infinity" size={19} color={tone("#7fb8e8")}/></span>
+        <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:13,fontWeight:700,color:tone("#7fb8e8"),flex:1}}>Endless Arena</span>
+        <span style={{fontSize:11,color:endlessState==="ready"?tone("#4a9fe0"):endlessState==="cooldown"?"#8a7e6a":"#8a7e6a"}}>{endlessState==="locked"?"locked \xb7 requires 650+":endlessState==="ready"?"ready to enter":endlessState==="cooldown"?"ready in "+endlessCooldownH+"h":""}</span>
       </div>}
     </div>
 

@@ -13,6 +13,7 @@ import { GRIMOIRE_PHRASAL } from "../../data/phrasalGrimoire.js";
 import { PHRASAL_VERBS } from "../../data/phrasalVerbs.js";
 import { pickAdaptive } from "../../lib/progress.js";
 import { shuffle } from "../../lib/util.js";
+import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { GRAMMAR_SHEETS } from "../../data/grammarSheets.js";
@@ -599,7 +600,7 @@ export function GrammarSheet(p){
     {/* Patterns */}
     {g.patterns.map(function(pt,j){
       return(<div key={j} style={{marginBottom:10,paddingLeft:12,borderLeft:"3px solid "+g.color+"40"}}>
-        <div className="out" style={{fontSize:13,fontWeight:700,color:g.color,marginBottom:2}}>{pt.p}</div>
+        <div className="out" style={{fontSize:13,fontWeight:700,color:tone(g.color),marginBottom:2}}>{pt.p}</div>
         <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,marginBottom:4}}>{pt.d}</div>
         <div style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",lineHeight:1.5}}>"{pt.ex}"</div>
       </div>);

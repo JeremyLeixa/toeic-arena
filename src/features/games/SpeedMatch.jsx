@@ -2,6 +2,7 @@
 import { GIcon, ResultIcon } from "../../components/icons.jsx";
 import { VOCAB } from "../../data/vocab.js";
 import { shuffle } from "../../lib/util.js";
+import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
 
@@ -151,7 +152,7 @@ export function SpeedMatch(p){
           }}>
           {(isRevealed||isMatched)?(<span className="out" style={{
             fontSize:tile.type==="word"?14:11,fontWeight:tile.type==="word"?800:500,
-            color:isMatched?"#059669":tile.type==="word"?"var(--cyan)":"var(--t1)",
+            color:isMatched?tone("#059669"):tile.type==="word"?"var(--cyan)":"var(--t1)",
             textAlign:"center",lineHeight:1.35,wordBreak:"break-word"
           }}>{tile.content}</span>):(<span style={{fontSize:22,opacity:.25}}>?</span>)}
         </div>);

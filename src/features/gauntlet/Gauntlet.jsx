@@ -5,6 +5,7 @@ import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } from "../../data/grammarGauntlet.js";
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "../../data/grammarGauntletGrimoire.js";
 import { haptic } from "../../lib/device.js";
+import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong, playBGM, stopBGM } from "../../sounds.js";
 import { useState, useEffect } from "react";
 
@@ -104,7 +105,7 @@ export function IrregularCrypt(p){
           <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
           {missed.slice(0,10).map(function(r,i){return(
             <div key={i} style={{fontSize:13,marginBottom:6,color:"var(--t2)",lineHeight:1.5}}>
-              <strong style={{color:"var(--t1)"}}>{r.verb.base}</strong> {"\u2192"} <span style={{color:"#22c55e"}}>{r.verb.past}</span> / <span style={{color:"#22c55e"}}>{r.verb.pp}</span> <span style={{color:"var(--t3)",fontSize:12,fontStyle:"italic"}}>({r.verb.fr})</span>
+              <strong style={{color:"var(--t1)"}}>{r.verb.base}</strong> {"\u2192"} <span style={{color:tone("#22c55e")}}>{r.verb.past}</span> / <span style={{color:tone("#22c55e")}}>{r.verb.pp}</span> <span style={{color:"var(--t3)",fontSize:12,fontStyle:"italic"}}>({r.verb.fr})</span>
             </div>
           );})}
         </div>}
@@ -140,12 +141,12 @@ export function IrregularCrypt(p){
           <div style={{display:"flex",gap:12,marginBottom:12}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:10,color:"var(--t3)",marginBottom:3,letterSpacing:1,textTransform:"uppercase"}}>V2</div>
-              <div style={{fontSize:16,fontWeight:700,color:revealData.v2Ok?"#22c55e":"#ef4444",wordBreak:"break-word"}}>{revealData.verb.past} {revealData.v2Ok?"\u2713":"\u2717"}</div>
+              <div style={{fontSize:16,fontWeight:700,color:revealData.v2Ok?tone("#22c55e"):tone("#ef4444"),wordBreak:"break-word"}}>{revealData.verb.past} {revealData.v2Ok?"\u2713":"\u2717"}</div>
               {!revealData.v2Ok&&revealData.v2Input&&<div style={{fontSize:12,color:"var(--t3)",textDecoration:"line-through",marginTop:3,wordBreak:"break-word"}}>{revealData.v2Input}</div>}
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:10,color:"var(--t3)",marginBottom:3,letterSpacing:1,textTransform:"uppercase"}}>V3</div>
-              <div style={{fontSize:16,fontWeight:700,color:revealData.v3Ok?"#22c55e":"#ef4444",wordBreak:"break-word"}}>{revealData.verb.pp} {revealData.v3Ok?"\u2713":"\u2717"}</div>
+              <div style={{fontSize:16,fontWeight:700,color:revealData.v3Ok?tone("#22c55e"):tone("#ef4444"),wordBreak:"break-word"}}>{revealData.verb.pp} {revealData.v3Ok?"\u2713":"\u2717"}</div>
               {!revealData.v3Ok&&revealData.v3Input&&<div style={{fontSize:12,color:"var(--t3)",textDecoration:"line-through",marginTop:3,wordBreak:"break-word"}}>{revealData.v3Input}</div>}
             </div>
           </div>
@@ -261,7 +262,7 @@ export function Chronomancer(p){
           {missed.slice(0,8).map(function(r,i){return(
             <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
               <div style={{marginBottom:3}}>{renderSentence(r.q.s,r.q.marker)}</div>
-              <div style={{fontSize:11.5,color:"#86efac",marginTop:3}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></div>
+              <div style={{fontSize:11.5,color:tone("#86efac"),marginTop:3}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></div>
             </div>
           );})}
         </div>}
@@ -281,7 +282,7 @@ export function Chronomancer(p){
     </div>
     {/* Marker hint badge */}
     {q.marker&&<div style={{textAlign:"center",marginBottom:14}}>
-      <span style={{display:"inline-block",padding:"4px 12px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(192,38,211,.4)",borderRadius:99,color:"#d8b4fe",fontSize:12,fontWeight:700,letterSpacing:.3}}>{"\uD83D\uDD2E  Clue: "}<span style={{color:"#e9d5ff"}}>{q.marker}</span></span>
+      <span style={{display:"inline-block",padding:"4px 12px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(192,38,211,.4)",borderRadius:99,color:tone("#d8b4fe"),fontSize:12,fontWeight:700,letterSpacing:.3}}>{"\uD83D\uDD2E  Clue: "}<span style={{color:tone("#e9d5ff")}}>{q.marker}</span></span>
     </div>}
     {/* Sentence */}
     <div className="crd" style={{padding:"18px 16px",marginBottom:14,fontSize:16.5,lineHeight:1.7,color:"var(--t1)"}}>
@@ -297,7 +298,7 @@ export function Chronomancer(p){
           else cls+=" faded";
         }
         return(<button key={i} className={cls} disabled={phase==="reveal"} onClick={function(){pickAnswer(i);}}>
-          <span style={{display:"inline-block",width:22,fontWeight:800,color:phase==="reveal"&&i===q.c?"#22c55e":phase==="reveal"&&i===picked?"#ef4444":"var(--t3)"}}>{String.fromCharCode(65+i)}.</span>{opt}
+          <span style={{display:"inline-block",width:22,fontWeight:800,color:phase==="reveal"&&i===q.c?tone("#22c55e"):phase==="reveal"&&i===picked?tone("#ef4444"):"var(--t3)"}}>{String.fromCharCode(65+i)}.</span>{opt}
         </button>);
       })}
     </div>
@@ -407,14 +408,14 @@ export function PassiveForge(p){
       <div style={{textAlign:"center",padding:"20px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u2692\uFE0F"}</div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"FORGE MASTERED":isGood?"Forge victorious":"Session complete"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:"#f59e0b",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
+        <div style={{fontSize:44,fontWeight:800,color:tone("#f59e0b"),margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
         <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>correct answers</p>
         {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
           <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
           {missed.slice(0,8).map(function(r,i){return(
             <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
               <div style={{marginBottom:3}}>{renderWithBlank(r.q.prompt)}</div>
-              <div style={{fontSize:11.5,color:"#86efac",marginTop:3}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></div>
+              <div style={{fontSize:11.5,color:tone("#86efac"),marginTop:3}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></div>
             </div>
           );})}
         </div>}
@@ -433,7 +434,7 @@ export function PassiveForge(p){
     <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,color:"var(--t3)",marginBottom:4}}>
       <span>Question {idx+1} / {deck.length}</span>
-      {phase==="play"&&<span style={{fontWeight:700,color:timeLeft<10?"#ef4444":"#f59e0b"}}>{"\u23F1\uFE0F "+timeLeft+"s"}</span>}
+      {phase==="play"&&<span style={{fontWeight:700,color:timeLeft<10?tone("#ef4444"):tone("#f59e0b")}}>{"\u23F1\uFE0F "+timeLeft+"s"}</span>}
     </div>
     {/* progress bar */}
     <div style={{width:"100%",height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:8}}>
@@ -446,7 +447,7 @@ export function PassiveForge(p){
     {phase==="reveal"&&<div style={{marginBottom:16}}/>}
     {/* Mode badge */}
     <div style={{textAlign:"center",marginBottom:12}}>
-      <span style={{display:"inline-block",padding:"3px 11px",background:q.mode==="transform"?"rgba(220,38,38,.15)":"rgba(245,158,11,.15)",border:"1px solid "+(q.mode==="transform"?"rgba(220,38,38,.4)":"rgba(245,158,11,.4)"),borderRadius:99,color:q.mode==="transform"?"#fca5a5":"#fcd34d",fontSize:11,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>{q.mode==="transform"?"\uD83D\uDD04 Transform":"\u270D\uFE0F Fill in the blank"}</span>
+      <span style={{display:"inline-block",padding:"3px 11px",background:q.mode==="transform"?"rgba(220,38,38,.15)":"rgba(245,158,11,.15)",border:"1px solid "+(q.mode==="transform"?"rgba(220,38,38,.4)":"rgba(245,158,11,.4)"),borderRadius:99,color:q.mode==="transform"?tone("#fca5a5"):tone("#fcd34d"),fontSize:11,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>{q.mode==="transform"?"\uD83D\uDD04 Transform":"\u270D\uFE0F Fill in the blank"}</span>
     </div>
     {/* Active sentence (transform mode only) */}
     {q.mode==="transform"&&q.active&&<div style={{padding:"12px 14px",marginBottom:8,background:"rgba(255,255,255,.04)",border:"1px dashed var(--bg3)",borderRadius:10,fontSize:14,color:"var(--t3)",lineHeight:1.55}}>
@@ -469,13 +470,13 @@ export function PassiveForge(p){
           else cls+=" faded";
         }
         return(<button key={i} className={cls} disabled={phase==="reveal"} onClick={function(){pickAnswer(i);}}>
-          <span style={{display:"inline-block",width:22,fontWeight:800,color:phase==="reveal"&&i===q.c?"#22c55e":phase==="reveal"&&i===picked&&picked!==-1?"#ef4444":"var(--t3)"}}>{String.fromCharCode(65+i)}.</span>{opt}
+          <span style={{display:"inline-block",width:22,fontWeight:800,color:phase==="reveal"&&i===q.c?tone("#22c55e"):phase==="reveal"&&i===picked&&picked!==-1?tone("#ef4444"):"var(--t3)"}}>{String.fromCharCode(65+i)}.</span>{opt}
         </button>);
       })}
     </div>
     {/* Reveal card */}
     {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(lastResult&&lastResult.ok?"#22c55e":isTimedOut?"#ef4444":"#f59e0b")}}>
-      <div style={{fontSize:11,color:isTimedOut?"#fca5a5":"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":isTimedOut?"\u23F1 Time's up":"Explanation"}</div>
+      <div style={{fontSize:11,color:isTimedOut?tone("#fca5a5"):"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":isTimedOut?"\u23F1 Time's up":"Explanation"}</div>
       <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
       <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next question \u2192"}</button>
     </div>}
@@ -577,7 +578,7 @@ export function RelativeWeaver(p){
             <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
               <div style={{marginBottom:3}}>{renderWithBlank(r.q.s)}</div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginTop:4,flexWrap:"wrap"}}>
-                <span style={{fontSize:11.5,color:"#86efac"}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></span>
+                <span style={{fontSize:11.5,color:tone("#86efac")}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></span>
                 <span style={{fontSize:10,color:"var(--t3)",padding:"2px 7px",background:"rgba(124,58,237,.12)",borderRadius:99,fontWeight:700,letterSpacing:.3}}>{typeLabel(r.q.type)}</span>
               </div>
             </div>
@@ -612,7 +613,7 @@ export function RelativeWeaver(p){
           else cls+=" faded";
         }
         return(<button key={i} className={cls} disabled={phase==="reveal"} onClick={function(){pickAnswer(i);}}>
-          <span style={{display:"inline-block",width:22,fontWeight:800,color:phase==="reveal"&&i===q.c?"#22c55e":phase==="reveal"&&i===picked?"#ef4444":"var(--t3)"}}>{String.fromCharCode(65+i)}.</span>{opt}
+          <span style={{display:"inline-block",width:22,fontWeight:800,color:phase==="reveal"&&i===q.c?tone("#22c55e"):phase==="reveal"&&i===picked?tone("#ef4444"):"var(--t3)"}}>{String.fromCharCode(65+i)}.</span>{opt}
         </button>);
       })}
     </div>
@@ -620,7 +621,7 @@ export function RelativeWeaver(p){
     {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(lastResult&&lastResult.ok?"#22c55e":"#f59e0b")}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
         <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":"Explanation"}</span>
-        <span style={{fontSize:10,color:"#d8b4fe",padding:"2px 8px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(124,58,237,.3)",borderRadius:99,fontWeight:700,letterSpacing:.3}}>{typeLabel(q.type)}</span>
+        <span style={{fontSize:10,color:tone("#d8b4fe"),padding:"2px 8px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(124,58,237,.3)",borderRadius:99,fontWeight:700,letterSpacing:.3}}>{typeLabel(q.type)}</span>
       </div>
       <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
       <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next question \u2192"}</button>
@@ -679,7 +680,7 @@ export function GauntletHub(p){
         <div className="gauntlet-card-head">
           <div className="gauntlet-card-icon">{GAME_ICON_PATHS[c.icon]?<GIcon name={c.icon} size={32} color="currentColor"/>:c.icon}</div>
           <div style={{flex:1,minWidth:0}}>
-            <div className="gauntlet-card-name">{c.name}{!c.ready&&<span style={{fontSize:10,marginLeft:8,padding:"2px 7px",background:"rgba(245,223,170,.12)",color:"#f5dfaa",borderRadius:99,fontWeight:700,letterSpacing:.3,verticalAlign:"middle"}}>soon</span>}</div>
+            <div className="gauntlet-card-name">{c.name}{!c.ready&&<span style={{fontSize:10,marginLeft:8,padding:"2px 7px",background:"rgba(245,223,170,.12)",color:tone("#f5dfaa"),borderRadius:99,fontWeight:700,letterSpacing:.3,verticalAlign:"middle"}}>soon</span>}</div>
           </div>
         </div>
         <div className="gauntlet-card-desc">{c.desc}</div>

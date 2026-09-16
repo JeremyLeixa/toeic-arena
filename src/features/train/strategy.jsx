@@ -4,6 +4,7 @@ import { GIcon, ResultIcon } from "../../components/icons.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { STRATEGIES, STRAT_QUIZ } from "../../data/miniGames.js";
 import { shuffle } from "../../lib/util.js";
+import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useState, useMemo } from "react";
 
@@ -11,7 +12,7 @@ import { useState, useMemo } from "react";
 // ─── ABOUT TOEIC (info page for newcomers) ───
 export function AboutToeic(p){
   var cefrBands=[
-    {band:"120-220",cefr:"A1",label:"Basic user",col:"#888"},
+    {band:"120-220",cefr:"A1",label:"Basic user",col:"#888888"},
     {band:"225-545",cefr:"A2",label:"Elementary",col:"#c87a35"},
     {band:"550-780",cefr:"B1",label:"Intermediate",col:"#d4943a"},
     {band:"785-940",cefr:"B2",label:"Upper-intermediate \u2014 common pro target",col:"#4abe60"},
@@ -61,7 +62,7 @@ export function AboutToeic(p){
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
         <span style={{fontSize:26}}>{"\uD83D\uDCD6"}</span>
         <div>
-          <div className="out" style={{fontWeight:800,fontSize:15,color:"#7fa4d4"}}>Reading</div>
+          <div className="out" style={{fontWeight:800,fontSize:15,color:tone("#7fa4d4")}}>Reading</div>
           <div style={{fontSize:11,color:"var(--t3)"}}>75 minutes {"\u00B7"} 100 questions {"\u00B7"} Score 5-495</div>
         </div>
       </div>
@@ -83,8 +84,8 @@ export function AboutToeic(p){
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:6}}>
         {cefrBands.map(function(r,i){return(<div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"var(--bg3)",borderRadius:8}}>
-          <div className="out" style={{fontWeight:800,fontSize:12,color:r.col,minWidth:62}}>{r.band}</div>
-          <div className="out" style={{fontWeight:700,fontSize:11,color:r.col,minWidth:22,padding:"2px 6px",background:"rgba(255,255,255,.04)",borderRadius:4,textAlign:"center"}}>{r.cefr}</div>
+          <div className="out" style={{fontWeight:800,fontSize:12,color:tone(r.col),minWidth:62}}>{r.band}</div>
+          <div className="out" style={{fontWeight:700,fontSize:11,color:tone(r.col),minWidth:22,padding:"2px 6px",background:"rgba(255,255,255,.04)",borderRadius:4,textAlign:"center"}}>{r.cefr}</div>
           <div style={{fontSize:11,color:"var(--t2)",flex:1,minWidth:0}}>{r.label}</div>
         </div>);})}
       </div>
@@ -162,7 +163,7 @@ export function StratCards(p){
         var tipCount=s.tips.length;
         return(<div key={idx} className="crd" style={{padding:0,overflow:"hidden",borderColor:isOpen?"var(--cyan)44":"var(--bdr)",transition:"all .3s"}}>
           <button onClick={function(){sO(isOpen?null:idx);}} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
-            <div style={{flexShrink:0,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{GAME_ICON_PATHS[s.icon]?<GIcon name={s.icon} size={28} color={s.section==="Listening"?"#7fb8e8":s.section==="Reading"?"#c4587a":"var(--cyan)"}/>:s.icon}</div>
+            <div style={{flexShrink:0,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{GAME_ICON_PATHS[s.icon]?<GIcon name={s.icon} size={28} color={s.section==="Listening"?tone("#7fb8e8"):s.section==="Reading"?"#c4587a":"var(--cyan)"}/>:s.icon}</div>
             <div style={{flex:1}}>
               <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)"}}>{s.part} {"—"} {s.title}</div>
               <div style={{display:"flex",gap:8,marginTop:3}}>

@@ -43,7 +43,7 @@ return(
   // Event pills removed — each event has its own banner below, no need to duplicate
   if(pills.length===0)return null;
   return(<div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-    {pills.map(function(p,i){return (<div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:99,background:p.col+"15",border:"1px solid "+p.col+"30",fontSize:11,fontWeight:600,color:p.col}} className="out">{GAME_ICON_PATHS[p.gi]?<GIcon name={p.gi} size={12} color={p.col}/>:<span style={{fontSize:12}}>{p.icon}</span>}{p.label}</div>);})}
+    {pills.map(function(p,i){return (<div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:99,background:p.col+"15",border:"1px solid "+p.col+"30",fontSize:11,fontWeight:600,color:tone(p.col)}} className="out">{GAME_ICON_PATHS[p.gi]?<GIcon name={p.gi} size={12} color={tone(p.col)}/>:<span style={{fontSize:12}}>{p.icon}</span>}{p.label}</div>);})}
   </div>);
 }()}
 

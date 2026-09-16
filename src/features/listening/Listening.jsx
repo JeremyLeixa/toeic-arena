@@ -9,6 +9,7 @@ import { isModuleLocked } from "../../lib/access.js";
 import { resumeAudioSession, stopListenAudio, playAudioFile, playLetteredOption } from "../../lib/audio.js";
 import { shufListeningItem } from "../../lib/listeningShuffle.js";
 import { shuffle } from "../../lib/util.js";
+import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useEffect } from "react";
 
@@ -409,7 +410,7 @@ export function ListenP4(p){
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#06b6d4,#3b82f6)"/>
 
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:12}}>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(6,182,212,.1)",color:"#06b6d4",borderRadius:6,fontWeight:600}} className="out">{it.type}</span></div>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(6,182,212,.1)",color:tone("#06b6d4"),borderRadius:6,fontWeight:600}} className="out">{it.type}</span></div>
 
     <div className="out" style={{fontSize:11,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12}}>Preview the questions first</div>
     <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>

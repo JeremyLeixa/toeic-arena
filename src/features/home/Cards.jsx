@@ -18,21 +18,21 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {srsHelp&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,animation:"fadeIn .2s"}} onClick={closeSrsHelp}>
 <div style={{background:"linear-gradient(180deg,#1a1610,#0f0c08)",borderRadius:16,border:"1px solid rgba(180,140,80,.12)",padding:"28px 22px",maxWidth:380,width:"100%",animation:"fadeIn .3s ease-out",boxShadow:"0 12px 40px rgba(0,0,0,.5)"}} onClick={function(e){e.stopPropagation();}}>
 <div style={{fontSize:32,textAlign:"center",marginBottom:12}}>{"🧠"}</div>
-<h2 className="out" style={{fontWeight:800,fontSize:18,textAlign:"center",marginBottom:16,color:"#ede4d4"}}>How do Flashcards work?</h2>
-<p style={{fontSize:13,color:"#b0a890",lineHeight:1.7,marginBottom:14}}>Flashcards use <b style={{color:"#ede4d4"}}>spaced repetition</b>: you rate yourself after seeing each answer, and the app schedules your next review accordingly.</p>
+<h2 className="out" style={{fontWeight:800,fontSize:18,textAlign:"center",marginBottom:16,color:/*fond local*/"#ede4d4"}}>How do Flashcards work?</h2>
+<p style={{fontSize:13,color:/*fond local*/"#b0a890",lineHeight:1.7,marginBottom:14}}>Flashcards use <b style={{color:/*fond local*/"#ede4d4"}}>spaced repetition</b>: you rate yourself after seeing each answer, and the app schedules your next review accordingly.</p>
 <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
 <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(255,71,87,.08)"}}>
-<span style={{fontWeight:700,color:"#e05252",minWidth:52,fontSize:13}}>Again</span>
-<span style={{fontSize:12,color:"#b0a890"}}>I had no idea — show me again soon</span></div>
+<span style={{fontWeight:700,color:/*fond local*/"#e05252",minWidth:52,fontSize:13}}>Again</span>
+<span style={{fontSize:12,color:/*fond local*/"#b0a890"}}>I had no idea — show me again soon</span></div>
 <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(255,140,66,.08)"}}>
-<span style={{fontWeight:700,color:"#c87a35",minWidth:52,fontSize:13}}>Hard</span>
-<span style={{fontSize:12,color:"#b0a890"}}>I struggled but eventually remembered</span></div>
+<span style={{fontWeight:700,color:/*fond local*/"#c87a35",minWidth:52,fontSize:13}}>Hard</span>
+<span style={{fontSize:12,color:/*fond local*/"#b0a890"}}>I struggled but eventually remembered</span></div>
 <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(0,230,118,.08)"}}>
-<span style={{fontWeight:700,color:"#4abe60",minWidth:52,fontSize:13}}>Good</span>
-<span style={{fontSize:12,color:"#b0a890"}}>I remembered after a moment of thought</span></div>
+<span style={{fontWeight:700,color:/*fond local*/"#4abe60",minWidth:52,fontSize:13}}>Good</span>
+<span style={{fontSize:12,color:/*fond local*/"#b0a890"}}>I remembered after a moment of thought</span></div>
 <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(212,148,58,.08)"}}>
-<span style={{fontWeight:700,color:"#d4943a",minWidth:52,fontSize:13}}>Easy</span>
-<span style={{fontSize:12,color:"#b0a890"}}>Instant recall — I know this one well</span></div></div>
+<span style={{fontWeight:700,color:/*fond local*/"#d4943a",minWidth:52,fontSize:13}}>Easy</span>
+<span style={{fontSize:12,color:/*fond local*/"#b0a890"}}>Instant recall — I know this one well</span></div></div>
 <p style={{fontSize:12,color:"#8a7e6a",lineHeight:1.6,marginBottom:18}}>Be honest! Cards you mark "Again" come back sooner, while "Easy" cards are spaced further apart. The goal is long-term memorisation, not a high score.</p>
 <button className="btn1" onClick={closeSrsHelp} style={{width:"100%"}}>Got it!</button>
 </div></div>}

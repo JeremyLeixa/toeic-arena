@@ -277,7 +277,7 @@ export function Profile(p){
                       <div style={{width:(v/5*100)+"%",height:"100%",background:a.color,borderRadius:99}}/>
                     </div>
                   </div>
-                  <span className="out" style={{fontSize:10,fontWeight:700,color:a.color,minWidth:22,textAlign:"right"}}>{v}/5</span>
+                  <span className="out" style={{fontSize:10,fontWeight:700,color:tone(a.color),minWidth:22,textAlign:"right"}}>{v}/5</span>
                 </div>);})}
             </div>
           </div>
@@ -610,7 +610,7 @@ export function Profile(p){
                 {nonPremium.map(function(tt){return tokenCard(tt,false);})}
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                <span style={{fontSize:10,color:"#ffc020",fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Premium</span>
+                <span style={{fontSize:10,color:tone("#ffc020"),fontWeight:700,textTransform:"uppercase",letterSpacing:1.5}}>Premium</span>
                 <span style={{flex:1,height:1,background:"var(--bdr)"}}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
@@ -648,7 +648,7 @@ export function Profile(p){
             border:"1px solid rgba(255,192,32,.25)",display:"flex",alignItems:"center",gap:12}}>
           <span style={{fontSize:24,flexShrink:0}}>{"⚖️"}</span>
           <div style={{flex:1,minWidth:0}}>
-            <div className="out" style={{fontWeight:800,fontSize:14,color:"#ffc020"}}>Convert duplicates</div>
+            <div className="out" style={{fontWeight:800,fontSize:14,color:tone("#ffc020")}}>Convert duplicates</div>
             <div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>Dups → tokens · 5 tokens → premium · in the Shop</div>
           </div>
           <span style={{fontSize:18,color:"var(--t3)"}}>{"›"}</span>
@@ -1142,7 +1142,7 @@ export function Profile(p){
   {lg.locked&&<span style={{marginLeft:4,display:"inline-flex"}}><ResultIcon e={"🔒"} size={11} color="var(--t3)"/></span>}
 </span>
 {lg.locked&&<span style={{fontSize:11,color:"var(--t3)",padding:"3px 10px",borderRadius:20,background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.15)"}}>{lg.lockReason==="need_estimation"?"Legend tier: complete more modules or a Mock test":("Legend tier: reach TOEIC "+lg.lockedScore)}</span>}
-          <span style={{fontSize:12,background:"rgba(255,100,0,.1)",color:"#ff6428",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(255,100,0,.2)",display:"inline-flex",alignItems:"center",gap:4}}><GIcon name="flame" size={12} color="#ff6428"/>{u.streak}</span>
+          <span style={{fontSize:12,background:"rgba(255,100,0,.1)",color:tone("#ff6428"),padding:"3px 10px",borderRadius:20,border:"1px solid rgba(255,100,0,.2)",display:"inline-flex",alignItems:"center",gap:4}}><GIcon name="flame" size={12} color={tone("#ff6428")}/>{u.streak}</span>
           <DaricPill marks={u.arenaMarks}/>
         </div>
       </div>
@@ -1387,7 +1387,7 @@ export function FeedbackForm(p){
       <textarea value={message} onChange={function(e){setMessage(e.target.value.slice(0,4000));}} rows={6} placeholder="Décris ce que tu as constaté : ce que tu faisais, ce qui devait se passer, ce qui s'est passé. Plus c'est précis, plus c'est facile à corriger." style={{width:"100%",padding:"12px 13px",fontSize:14,background:"var(--bg2)",border:"1.5px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none",lineHeight:1.5,resize:"vertical",minHeight:120}}/>
     </div>
 
-    {err&&<div style={{padding:"10px 12px",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:10,color:"#ef4444",fontSize:13,marginBottom:14}}>{err}</div>}
+    {err&&<div style={{padding:"10px 12px",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:10,color:tone("#ef4444"),fontSize:13,marginBottom:14}}>{err}</div>}
 
     <button className="btn1" disabled={busy} style={{width:"100%",fontSize:15,padding:"14px",fontWeight:800,opacity:busy?.65:1}} onClick={submit}>{busy?"Envoi…":"Envoyer le feedback"}</button>
   </div>);

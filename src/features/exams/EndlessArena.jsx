@@ -7,6 +7,7 @@ import { haptic } from "../../lib/device.js";
 import { generateEndlessTest, endlessAnsFitsTest, freshAnsFor } from "../../lib/endless.js";
 import { estimateToeic } from "../../lib/toeic.js";
 import { today } from "../../lib/util.js";
+import { tone } from "../../lib/tone.js";
 import { stopBGM } from "../../sounds.js";
 import { useMemo, useState, useEffect, useRef } from "react";
 
@@ -427,12 +428,12 @@ export function EndlessArena(p){
 
       {/* PB Banner or First Run */}
       {attempts===1?(<div style={{background:"linear-gradient(135deg,#3a2810 0%,#0a1e35 50%,#3a2810 100%)",border:"1.5px solid #f0c850",borderRadius:12,padding:"11px 14px",marginBottom:14,textAlign:"center"}}>
-        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:13,color:"#f0c850",letterSpacing:2}}>{"⭐"} FIRST RUN COMPLETE {"⭐"}</div>
-        <div style={{fontSize:11,color:"#7fb8e8",marginTop:3}}>Welcome to the Endless Arena</div>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:13,color:/*fond local*/"#f0c850",letterSpacing:2}}>{"⭐"} FIRST RUN COMPLETE {"⭐"}</div>
+        <div style={{fontSize:11,color:/*fond local*/"#7fb8e8",marginTop:3}}>Welcome to the Endless Arena</div>
       </div>)
       :isNewPB?(<div style={{background:"linear-gradient(135deg,#3a2810 0%,#0a1e35 50%,#3a2810 100%)",border:"1.5px solid #f0c850",borderRadius:12,padding:"11px 14px",marginBottom:14,textAlign:"center"}}>
-        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:13,color:"#f0c850",letterSpacing:2}}>{"⭐"} NEW PERSONAL BEST {"⭐"}</div>
-        <div style={{fontSize:11,color:"#7fb8e8",marginTop:3}}>+{result.toeicEstimate-prevBest} vs previous best</div>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:13,color:/*fond local*/"#f0c850",letterSpacing:2}}>{"⭐"} NEW PERSONAL BEST {"⭐"}</div>
+        <div style={{fontSize:11,color:/*fond local*/"#7fb8e8",marginTop:3}}>+{result.toeicEstimate-prevBest} vs previous best</div>
       </div>)
       :null}
 
@@ -447,11 +448,11 @@ export function EndlessArena(p){
         <div style={{display:"flex",gap:8,marginTop:16}}>
           <div style={{flex:1,background:"rgba(180,140,80,.08)",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
             <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:.5}}>LISTENING</div>
-            <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:18,color:"#ede4d4"}}>{result.listening.toeic}<span style={{fontSize:11,color:"#5a5040"}}> / 495</span></div>
+            <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:18,color:/*fond local*/"#ede4d4"}}>{result.listening.toeic}<span style={{fontSize:11,color:"#5a5040"}}> / 495</span></div>
           </div>
           <div style={{flex:1,background:"rgba(180,140,80,.08)",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
             <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:.5}}>READING</div>
-            <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:18,color:"#ede4d4"}}>{result.reading.toeic}<span style={{fontSize:11,color:"#5a5040"}}> / 495</span></div>
+            <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:18,color:/*fond local*/"#ede4d4"}}>{result.reading.toeic}<span style={{fontSize:11,color:"#5a5040"}}> / 495</span></div>
           </div>
         </div>
       </div>
@@ -462,14 +463,14 @@ export function EndlessArena(p){
           <div style={{fontSize:11,color:"#8a7e6a"}}>XP EARNED</div>
           <div style={{fontSize:11,color:"#5a5040"}}>{pbBonus>0?"base "+baseXp+" + PB bonus "+pbBonus:"base "+baseXp}</div>
         </div>
-        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:22,color:"#f0c850"}}>+{totalXp}</div>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:22,color:tone("#f0c850")}}>+{totalXp}</div>
       </div>
 
       {/* Progression History */}
       <div style={{background:"var(--bg2)",border:"1px solid rgba(180,140,80,.12)",borderRadius:12,padding:"14px 16px",marginBottom:14}}>
         {history.length<=1?(<div>
           <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#8a7e6a",letterSpacing:2,marginBottom:8}}>PROGRESSION</div>
-          <div style={{fontSize:12,color:"#7fb8e8",fontStyle:"italic"}}>Your first Endless run {"·"} come back tomorrow to see your progress</div>
+          <div style={{fontSize:12,color:tone("#7fb8e8"),fontStyle:"italic"}}>Your first Endless run {"·"} come back tomorrow to see your progress</div>
         </div>):(<div>
           <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#8a7e6a",letterSpacing:2,marginBottom:12}}>PROGRESSION {"·"} LAST {history.length} RUNS</div>
           {history.map(function(run,ri){
@@ -477,11 +478,11 @@ export function EndlessArena(p){
             var barW=Math.max(5,Math.min(100,((run.toeicEstimate-500)/(990-500))*100));
             var barCol=isLast?"linear-gradient(90deg,#0a3a6e,#1B70CF)":run.toeicEstimate>=750?"#a07028":run.toeicEstimate>=700?"#8b6020":"#5a4225";
             return(<div key={ri} style={{display:"flex",gap:10,alignItems:"center",marginBottom:4}}>
-              <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,width:38,color:isLast?"#7fb8e8":"#5a5040",fontWeight:isLast?700:400}}>Run {ri+1}</span>
+              <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,width:38,color:isLast?tone("#7fb8e8"):"#5a5040",fontWeight:isLast?700:400}}>Run {ri+1}</span>
               <div style={{flex:1,height:8,borderRadius:99,background:isLast?"rgba(27,112,207,.15)":"rgba(180,140,80,.08)"}}>
                 <div style={{width:barW+"%",height:"100%",borderRadius:99,background:barCol}}/>
               </div>
-              <span style={{width:32,textAlign:"right",fontSize:11,fontWeight:isLast?700:600,color:isLast?"#7fb8e8":"#8a7e6a"}}>{run.toeicEstimate}</span>
+              <span style={{width:32,textAlign:"right",fontSize:11,fontWeight:isLast?700:600,color:isLast?tone("#7fb8e8"):"#8a7e6a"}}>{run.toeicEstimate}</span>
             </div>);
           })}
         </div>)}
@@ -489,11 +490,11 @@ export function EndlessArena(p){
 
       {/* Weakest Recommendation */}
       <div style={{background:"linear-gradient(135deg,#0a1828,#0f2038)",border:"1.5px solid rgba(27,112,207,.35)",borderRadius:12,padding:"14px 16px",marginBottom:16}}>
-        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#4a9fe0",letterSpacing:2,marginBottom:10}}>WEAKEST THIS RUN</div>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:/*fond local*/"#4a9fe0",letterSpacing:2,marginBottom:10}}>WEAKEST THIS RUN</div>
         <div style={{display:"flex",gap:12,alignItems:"center"}}>
           <div style={{width:42,height:42,borderRadius:12,background:"rgba(27,112,207,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{wp.icon}</div>
           <div>
-            <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:700,fontSize:14,color:"#ede4d4"}}>{wp.label}</div>
+            <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:700,fontSize:14,color:/*fond local*/"#ede4d4"}}>{wp.label}</div>
             <div style={{fontSize:11,color:"var(--red)",fontWeight:600}}>{wAcc}% accuracy — train this next</div>
           </div>
         </div>

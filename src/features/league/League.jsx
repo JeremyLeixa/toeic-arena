@@ -202,7 +202,7 @@ function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=pro
   // room and to let titles + frames have visual room on every tab.
   var titleData=pl.titleId&&TITLES[pl.titleId];
   return(<div style={{display:"flex",alignItems:"center",gap:14,padding:"16px 14px",background:isMe?"rgba(var(--cx),.08)":"var(--bg2)",border:isMe?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12}}>
-    <div className="out" style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?<GIcon name="medal" size={20} color={rank===1?"#ffd700":rank===2?"#c0c0c0":"#cd7f32"}/>:rank}</div>
+    <div className="out" style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,color:rank<=3?"var(--gold)":"var(--t3)"}}>{rank<=3?<GIcon name="medal" size={20} color={rank===1?tone("#ffd700"):rank===2?tone("#c0c0c0"):tone("#cd7f32")}/>:rank}</div>
     <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
     <div style={{flex:1,minWidth:0}}>
       <div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{isMe?pl.name+" (Toi)":pl.name}</div>
@@ -278,7 +278,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
           var plLg=getLeague(pl.xp);
           var titleData=pl.titleId&&TITLES[pl.titleId];
           return(<div key={pl.name} style={{display:"flex",alignItems:"center",gap:14,padding:"16px 14px",background:pl.me?"rgba(var(--cx),.08)":pl.inactive?"var(--bg1)":"var(--bg2)",border:pl.me?"1.5px solid rgba(var(--cx),.25)":"1px solid var(--bdr)",borderRadius:12,opacity:pl.inactive?0.55:1}}>
-            <div className="out" style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,color:(!pl.inactive&&i<3)?"var(--gold)":"var(--t3)"}}>{pl.inactive?"—":i<3?<GIcon name="medal" size={20} color={i===0?"#ffd700":i===1?"#c0c0c0":"#cd7f32"}/>:i+1}</div>
+            <div className="out" style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,color:(!pl.inactive&&i<3)?"var(--gold)":"var(--t3)"}}>{pl.inactive?"—":i<3?<GIcon name="medal" size={20} color={i===0?tone("#ffd700"):i===1?tone("#c0c0c0"):tone("#cd7f32")}/>:i+1}</div>
             <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
             <div style={{flex:1,minWidth:0}}>
               <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{pl.me?pl.name+" (Toi)":pl.name}</div>
@@ -388,7 +388,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
               border:pl.me?"1.5px solid rgba(var(--cx),.25)":isTop3?"1px solid rgba(74,190,96,.25)":"1px solid var(--bdr)",
               borderRadius:12}}>
               <div className="out" style={{width:28,textAlign:"center",fontWeight:800,fontSize:14,
-                color:rank===1?"var(--gold)":rank===2?"#c0c0c0":rank===3?"#cd7f32":"var(--t3)"}}>
+                color:rank===1?"var(--gold)":rank===2?tone("#c0c0c0"):rank===3?tone("#cd7f32"):"var(--t3)"}}>
                 {rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":rank}
               </div>
               <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>

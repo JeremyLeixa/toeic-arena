@@ -76,9 +76,9 @@ export function Shop(p){
     <p style={{fontSize:12,color:"var(--t2)",marginTop:0,marginBottom:18,lineHeight:1.5}}>Spend Darics earned from chests and progression. Shop cosmetics never drop in chests.</p>
 
     <button onClick={function(){setShopView("conversions");}} className="crd" style={{width:"100%",padding:"12px 14px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:18,background:"rgba(192,96,240,.05)",border:"1px solid rgba(192,96,240,.2)"}}>
-      <GIcon name="gem-necklace" size={22} color="#c060f0"/>
+      <GIcon name="gem-necklace" size={22} color={tone("#c060f0")}/>
       <div style={{flex:1,textAlign:"left"}}>
-        <div style={{fontSize:13,fontWeight:700,color:"#c060f0"}}>Conversions</div>
+        <div style={{fontSize:13,fontWeight:700,color:tone("#c060f0")}}>Conversions</div>
         <div style={{fontSize:10,color:"var(--t2)"}}>Duplicates {"→"} tokens · 5 tokens {"→"} premium</div>
       </div>
       <span style={{color:"var(--t3)",fontSize:18}}>{"›"}</span>

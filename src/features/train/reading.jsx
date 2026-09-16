@@ -7,6 +7,7 @@ import { QUESTIONS } from "../../data/grammar.js";
 import { PART6_TEXTS } from "../../data/part6.js";
 import { PART7_PASSAGES } from "../../data/part7.js";
 import { shuffle } from "../../lib/util.js";
+import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { GrammarSheet } from "./grammar.jsx";
@@ -133,7 +134,7 @@ export function TimeSim(p){
                 <div style={{width:22,height:22,borderRadius:"50%",border:"2px solid "+(isCor?"var(--green)":isPick?"var(--red)":"var(--t3)"),
                   display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,flexShrink:0,
                   background:isCor?"var(--green)":isPick&&!isCor?"var(--red)":"transparent",
-                  color:isCor||isPick?"#fff":"var(--t3)"}}>
+                  color:isCor||isPick?/*fond local*/"#fff":"var(--t3)"}}>
                   {isCor?"✓":isPick?"✗":String.fromCharCode(65+i)}</div>
                 <span style={{fontWeight:isCor||isPick?600:400}}>{opt}</span>
               </div>);
@@ -145,8 +146,8 @@ export function TimeSim(p){
           {sheetId&&<button onClick={function(){setSheetOpen(!sheetOpen);}} aria-expanded={sheetOpen}
             style={{marginTop:10,width:"100%",padding:"10px 14px",background:"rgba(59,130,246,.08)",border:"1px solid rgba(59,130,246,.2)",borderRadius:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontFamily:"'DM Sans',sans-serif"}}>
             <span style={{fontSize:14}}>📖</span>
-            <span className="out" style={{fontSize:12,fontWeight:600,color:"#3b82f6"}}>{sheetOpen?"Hide the lesson":"Review: "+q.cat}</span>
-            <span style={{fontSize:12,color:"#3b82f6",transition:"transform .2s",transform:sheetOpen?"rotate(90deg)":"rotate(0)"}}>{"›"}</span>
+            <span className="out" style={{fontSize:12,fontWeight:600,color:tone("#3b82f6")}}>{sheetOpen?"Hide the lesson":"Review: "+q.cat}</span>
+            <span style={{fontSize:12,color:tone("#3b82f6"),transition:"transform .2s",transform:sheetOpen?"rotate(90deg)":"rotate(0)"}}>{"›"}</span>
           </button>}
           {sheetId&&sheetOpen&&(function(){
             var g=GRAMMAR_SHEETS.find(function(s){return s.id===sheetId;});
@@ -365,7 +366,7 @@ export function Part7Read(p){
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Passage {pi+1}/{passages.length}</span></div>
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:12}}>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type}</span>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:tone("#3b82f6"),borderRadius:6,fontWeight:600}} className="out">{curPass.type}</span>
       <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(27,112,207,.15)":"var(--bg3)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions ▲":"Preview questions ▼"} ({curPass.questions.length})</button></div>
     {showQPreview&&<div className="crd" style={{padding:12,marginBottom:12,borderColor:"rgba(27,112,207,.2)",background:"rgba(27,112,207,.04)"}}>
       <div style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Read these first!</div>
@@ -381,7 +382,7 @@ export function Part7Read(p){
       <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Q {totalQ+1}/{totalQs}</span></div>
     <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
     <div style={{display:"flex",gap:6,marginTop:12,marginBottom:6}}>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:"#3b82f6",borderRadius:6,fontWeight:600}} className="out">{curPass.type} — Passage {pi+1}</span>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:tone("#3b82f6"),borderRadius:6,fontWeight:600}} className="out">{curPass.type} — Passage {pi+1}</span>
       <button onClick={function(){setShowText(!showText);}} style={{fontSize:10,padding:"3px 8px",background:showText?"rgba(6,182,212,.15)":"var(--bg3)",color:showText?"var(--cyan)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showText?"Hide text ▲":"Show text ▼"}</button></div>
     {showText&&<div className="crd read-scroll" style={{padding:14,marginBottom:12,maxHeight:200,overflowY:"auto",borderColor:"rgba(6,182,212,.2)"}}>
       <PassageDocs key={curPass.id+"-q"} text={curPass.text} fontSize={12} lineHeight={1.7}/></div>}

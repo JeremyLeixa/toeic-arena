@@ -86,7 +86,7 @@ export function ClueHunter(p){
           ].map(function(s){return(
             <div key={s.n} style={{display:"flex",gap:14,alignItems:"flex-start"}}>
               <div style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                <span className="out" style={{fontSize:13,fontWeight:800,color:"#fff"}}>{s.n}</span>
+                <span className="out" style={{fontSize:13,fontWeight:800,color:/*fond local*/"#fff"}}>{s.n}</span>
               </div>
               <div><div className="out" style={{fontWeight:700,fontSize:14,color:"var(--t1)"}}>{s.t}</div>
                 <div style={{fontSize:13,color:"var(--t2)",marginTop:3,lineHeight:1.5}}>{s.d}</div></div>

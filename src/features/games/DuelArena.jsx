@@ -344,8 +344,8 @@ export function DuelArena(p){
     {wagerPopup&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20,animation:"fadeIn .2s"}} onClick={function(){setWagerPopup(null);}}>
       <div style={{background:"linear-gradient(180deg,#1a1610,#0f0c08)",border:"1px solid rgba(180,140,80,.12)",borderRadius:16,padding:24,maxWidth:340,width:"100%",textAlign:"center",boxShadow:"0 12px 40px rgba(0,0,0,.5)"}} onClick={function(e){e.stopPropagation();}}>
         <div style={{fontSize:36,marginBottom:12}}>{"⚠️"}</div>
-        <div className="out" style={{fontWeight:700,fontSize:15,marginBottom:8,color:"#e05252"}}>Wager denied</div>
-        <p style={{fontSize:13,color:"#b0a890",lineHeight:1.6,marginBottom:4}}>{wagerPopup}</p>
+        <div className="out" style={{fontWeight:700,fontSize:15,marginBottom:8,color:/*fond local*/"#e05252"}}>Wager denied</div>
+        <p style={{fontSize:13,color:/*fond local*/"#b0a890",lineHeight:1.6,marginBottom:4}}>{wagerPopup}</p>
         <p style={{fontSize:11,color:"#8a7e6a",lineHeight:1.5,marginBottom:16}}>You can only bet XP you have earned this week. Keep training to increase your weekly XP!</p>
         <button className="btn1" onClick={function(){setWagerPopup(null);}} style={{width:"100%"}}>Got it</button>
       </div>

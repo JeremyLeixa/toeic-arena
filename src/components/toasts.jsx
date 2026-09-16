@@ -1,5 +1,6 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { GIcon } from "./icons.jsx";
+import { tone } from "../lib/tone.js";
 
 export function AchToast(p){if(!p.v)return null;
   return(<div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",zIndex:250,animation:"achPop 3.5s ease-out forwards",pointerEvents:"none",textAlign:"center"}}>
@@ -20,7 +21,7 @@ export function MarksToast(p){if(!p.v)return null;
 // Shop sticky-header in P2. Gold palette, NOT skin-aware (currency is a fixed
 // brand element, like the XP gold, independent of equipped skin).
 export function DaricPill(p){
-  return(<span style={{fontSize:12,display:"inline-flex",alignItems:"center",gap:5,background:"rgba(232,196,90,.1)",color:"#c9a23a",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(232,196,90,.25)",fontWeight:700}}><GIcon name="daric" size={13} color="#c9a23a"/> {p.marks||0}</span>);
+  return(<span style={{fontSize:12,display:"inline-flex",alignItems:"center",gap:5,background:"rgba(232,196,90,.1)",color:tone("#c9a23a"),padding:"3px 10px",borderRadius:20,border:"1px solid rgba(232,196,90,.25)",fontWeight:700}}><GIcon name="daric" size={13} color={tone("#c9a23a")}/> {p.marks||0}</span>);
 }
 export function XpToast(p){if(!p.v)return null;
   var info=typeof p.v==="object"?p.v:{total:p.v,base:p.v,bonuses:[]};
