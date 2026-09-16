@@ -74,11 +74,15 @@ Ce que la suite protège, et pourquoi :
   `.skin-X:not(.light),.light.skin-X .crd`, présence dans `.light:where(…) .crd`, tout token de
   `.light` reposé dans la carte, `.btn2` et fonds translucides corrigés en clair). Un oubli ne
   casse pas le build : les cartes deviennent illisibles pour les élèves en mode clair.
-- **`check_tones`** — chaque couleur de ligue (`data/leagues.js`), de titre (`TITLES`) et de
-  rareté (`RARITIES`) a sa variante `.light{--tone-<hex>}` à ≥ 4,5:1 sur `--bg/--bg2/--bg3`,
-  aucune variante hors clair, et aucune de ces couleurs affichée sans `tone()` dans `src/`
-  (`lg/plLg/titleData/ti/rarity/TITLES[…].color`, `shopRarColor(…)` ; sauf fond sombre fixe
-  `#1a1208` sur la même ligne). Une couleur ajoutée sans variante se délave en clair, en silence.
+- **`check_tones`** — **aucune couleur hex en dur sous 3:1 sur les fonds clairs** dans une
+  expression `color:` / `color=` du JSX, sauf passée par `tone()`, sur un fond posé sur la même
+  ligne qui la rend lisible (ternaires et jetons résolus en clair), ou précédée de `/*fond local*/`
+  (fond sombre en dur posé ailleurs). Plus : une variante `.light{--tone-<hex>}` (≥ 4,5:1) pour
+  chaque couleur de ligue, titre, rareté et chaque couleur passée à `tone()` (littérale ou issue
+  d'une source déclarée dans `DATA_SOURCES` : pastilles de Home, CECRL, fiches de grammaire,
+  jauges du Profil, familles du Modal Council) sous 4,5:1 ; aucune variante orpheline ni hors
+  clair ; `lg/ti/rarity….color` et `shopRarColor(…)` jamais bruts. Hors périmètre : Onboard,
+  TeacherDash, Chests. Une couleur délavée ne casse pas le build, elle disparaît en clair.
 - **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
   et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
 
@@ -615,7 +619,8 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 - **`.crd` class** forces `background: var(--bg2)`. Override requires removing the class.
 - **Skin animations:** use `background-image:` NOT `background:` shorthand when animated.
 - **Skin à cartes sombres = cartes-nuit en clair** (2026-09-16) : un skin qui force un fond sombre sur `.crd` écrit sa règle de tokens `.skin-X:not(.light),.light.skin-X .crd{…}` (page claire, palette sombre dans les cartes), s'ajoute à `.light:where(…) .crd` et à la liste `.light.skin-X .btn2`, et remet un `background-color` opaque si son fond de carte est translucide. Jamais `.skin-X{…}` seul : selon sa place par rapport à `.light`, texte sombre sur carte sombre ou appli entière sombre avec les restes du clair. `check_skins_light` refuse l'oubli.
-- **Couleur de ligue, de titre ou de rareté affichée = `tone(hex)`** (`lib/tone.js`, 2026-09-16) : les hex de `data/leagues.js`, `TITLES` et `RARITIES` sont clairs, pensés pour le sombre (Gold `#ffd700` à 1,07:1 en clair, Legendary `#ffc020` à 1,25:1). `tone(hex)` → `var(--tone-<hex>,<hex>)` : en sombre le hex s'applique, en clair la variante de `.light{--tone-…}` dans `appCss.js` (même teinte, ≥ 4,6:1), remise à `initial` dans les cartes-nuit. Nouvelle couleur = sa variante + son `initial` ; affichage brut permis seulement sur fond sombre fixe (`#1a1208`, coffres, vignette de titre du Shop). `check_tones` refuse l'oubli.
+- **Toute couleur de texte ou d'icône écrite en dur = `tone("#rrggbb")`** (`lib/tone.js`, 2026-09-16) : ligues, titres, raretés, mais aussi les couleurs d'accent en dur du JSX et des données (pastilles de Home, CECRL, fiches de grammaire, Gauntlet…). Pensées pour le sombre, elles tombaient à 1,0-2,9:1 en clair. `tone(hex)` → `var(--tone-<hex>,<hex>)` : en sombre le hex s'applique, en clair la variante de `.light{--tone-…}` dans `appCss.js` (même teinte, ≥ 4,6:1), remise à `initial` dans les cartes-nuit. Nouvelle couleur = sa variante + son `initial` (la garde les réclame). Couleur rendue depuis des données (`color:x.col`) : `tone(x.col)` + déclarer la source dans `DATA_SOURCES` du test. Texte clair **sur un fond sombre écrit en dur** (fenêtre, bannière, tuile Boss/Endless) : garder le hex et le préfixer `/*fond local*/` ; **jamais de jeton de thème (`var(--gold)`, `--t3`…) dans un tel bloc**, il suit le mode clair alors que le fond ne change pas (régression vécue sur la tuile Boss : figer la valeur du sombre). `check_tones` refuse l'oubli.
+- **Texte posé sur un aplat d'accent = `var(--on-cx)`** (2026-09-16) : sombre en sombre, `#fffcf5` en clair (l'accent y est assombri), remis sombre dans les cartes-nuit. `.btn1`, `.gauntlet-btn-enter`, médaille de niveau, pastille ✎. Jamais `#0f0c08` en dur sur `--cx-hex` / `--cyan` : 1,6 à 2,5:1 en clair.
 - **Shimmer overlays use `::after` pseudo-elements** with parent `position:relative!important;overflow:hidden!important`.
 - **`.app:not(.onboard-shell)`** selector allows onboarding to skip the desktop 200px sidebar margin.
 

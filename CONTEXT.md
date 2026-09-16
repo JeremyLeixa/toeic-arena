@@ -236,6 +236,26 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   `RARITIES`, `rarity.color`, `shopRarColor()` (3 mutations). **Pas vu** : la vignette du Shop
   (même appel). Coffres (`Chests.jsx`, variable `rarityColor`) : fonds sombres fixes, inchangés.
 
+### Balayage du mode clair + lots A et B (même jour)
+- **Balayage** : 49 écrans mesurés en dev (contraste sombre vs clair par élément, fonds composés,
+  opacité ; compte Teacher, aucune écriture) + inventaire statique. Faux positifs écartés : glyphes
+  des médailles d'avatar (bouclier `#0a0608`). Onboarding hors périmètre (toujours sombre).
+- **Lot A** (palettes choisies par Jérémy, variantes B) : `c130645` jeton `--on-cx` (texte des
+  `.btn1` en clair : 1,6-3,8:1 → 6-12:1 ; médaille de niveau 2,66 → 4,41 sombre / 6,94 clair) ;
+  `0f5ec95` `--gold` clair `#a67c00` → `#7c5d0e` (83 usages, noms de succès…) ; `02cf262` accent
+  Doré clair `#8b6914` → `#6f5410` (+ `--cx`, `--cx-hex`, `--cx-dark` `#55400c`).
+- **Lot B** : `6061292` couleurs en dur via `tone()` (34 variantes, 109 littéraux + 6 rendus de
+  données ; textes clairs sur fonds sombres en dur marqués `/*fond local*/`) et `check_tones` étendu
+  à toute couleur hex du JSX (5 mutations) ; `67b5048` jetons figés dans les tuiles Boss/Endless (la
+  tuile Boss affichait « Best TOEIC » à 2,93:1 après le lot A).
+- **Vérifié en dev après coup** : Home, Shop, Strategy Cards, fiche Tenses, Grammar & Vocab →
+  Modal Council à 0 défaut propre au clair ; Profil, Train, What is the TOEIC? : seuls restent des
+  jetons limites. **Pas vu en live** (sessions et résultats : Gauntlet en jeu, résultats Endless,
+  session Flashcards, Duel) : couverts par la garde statique seulement.
+- **Reste, limite (3-4,5:1), non traité** : `--orange` clair (« Lv. 79 » 4,05), `--green` sur fond
+  teinté (4,1-4,2), `#8a7e6a` en dur (« ULTIMATE TRIALS » 3,51), onglets inactifs grisés (3,8).
+  Grisés voulus dans les deux modes (succès verrouillés, Owned, mocks faits) laissés tels quels.
+
 ---
 
 ## Session 2026-09-16 (nuit, suite) — Lint, catch muets, audit identité, F1 + F2 (session perdue)
