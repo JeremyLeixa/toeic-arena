@@ -23,7 +23,10 @@ export function saveLocal(d){
     localStorage.setItem("toeic-arena-name",d.name);
     localStorage.setItem("toeic-arena-class",d.classCode||"visitor");
     _syncDirty=true;
-  }catch(e){}
+  // Loggé (règle n°1) : quota plein (photo d'avatar en data URL, navigation privée iOS) → la
+  // copie locale n'est pas écrite ET _syncDirty reste false, donc onUnload saute la sauvegarde
+  // de dernière chance. save() vers Supabase n'en dépend pas.
+  }catch(e){console.warn("[saveLocal] caught:",e&&e.message);}
 }
 // Lecture SYNCHRONE du JWT user depuis le storage supabase-js (clé sb-<ref>-auth-token).
 // P2 Phase B (B2) : le keepalive beforeunload ne peut pas await getSession(), donc il lit
