@@ -12,14 +12,18 @@
 // L'opt-out gagne TOUJOURS, forçage compris : `?fest=<id>` ne fait que lever la fenêtre de
 // dates. Sinon un « Turn off » cliqué pendant un test forcé ne ferait rien de visible.
 
+// themeColor = `--bg` des paquets `.fest-<id>` / `.light.fest-<id>` d'appCss.js (barre d'état du
+// navigateur, meta theme-color). Recopié ici faute de lire le CSS calculé ; le test vérifie l'égalité.
 export var FESTIVALS=[
-  {id:"halloween",name:"Hallow's Eve",greeting:"Happy Halloween,",icon:"spider-web",from:"10-24",to:"11-02"},
+  {id:"halloween",name:"Hallow's Eve",greeting:"Happy Halloween,",icon:"spider-web",from:"10-24",to:"11-02",themeColor:{dark:"#0a0612",light:"#f4eefa"}},
   // Chevauche l'an : `to < from` → la fin tombe l'année suivante.
-  {id:"yule",name:"Yuletide",greeting:"Merry Yuletide,",icon:"ringing-bell",from:"12-14",to:"01-04"},
+  {id:"yule",name:"Yuletide",greeting:"Merry Yuletide,",icon:"ringing-bell",from:"12-14",to:"01-04",themeColor:{dark:"#06110b",light:"#f2f7f2"}},
   // Fête mobile : Pâques −5 → +1 (jours), jamais à cheval sur l'an.
-  {id:"spring",name:"Spring Bloom",greeting:"Happy Spring,",icon:"herbs-bundle",easter:[-5,1]},
-  {id:"solstice",name:"Summer Send-off",greeting:"Summer's calling,",icon:"sunrise",from:"06-19",to:"06-28"}
+  {id:"spring",name:"Spring Bloom",greeting:"Happy Spring,",icon:"herbs-bundle",easter:[-5,1],themeColor:{dark:"#0d1112",light:"#fbf6f8"}},
+  {id:"solstice",name:"Summer Send-off",greeting:"Summer's calling,",icon:"sunrise",from:"06-19",to:"06-28",themeColor:{dark:"#0c0a1e",light:"#fdf7f0"}}
 ];
+// Hors fête : `--bg` de `:root` et de `.light`.
+export var DEFAULT_THEME_COLOR={dark:"#0f0c08",light:"#f5f0e8"};
 
 var OPT_OUT_KEY="toeic-festivals";  // "off" = désactivé par l'élève (patron du mute `toeic-sound`)
 var FORCE_KEY="toeic-fest-force";    // id ou "none" : forçage de test sans barre d'URL (PWA installée)
@@ -118,3 +122,16 @@ export function festivalDaysLeft(fest,date){
 }
 
 export function formatFestivalDate(d){return MONTHS[d.getMonth()]+" "+d.getDate();}
+
+export function festivalThemeColor(festId,light){
+  var f=festivalById(festId),c=f&&f.themeColor?f.themeColor:DEFAULT_THEME_COLOR;
+  return light?c.light:c.dark;
+}
+// Met à jour TOUS les meta theme-color : index.html en déclare trois, le navigateur lit le premier
+// qui correspond, et un seul oublié laisserait l'ancienne couleur selon l'ordre retenu.
+export function applyThemeColor(festId,light){
+  if(typeof document==="undefined")return;
+  var color=festivalThemeColor(festId,light);
+  var metas=document.querySelectorAll('meta[name="theme-color"]');
+  for(var i=0;i<metas.length;i++)metas[i].setAttribute("content",color);
+}

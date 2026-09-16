@@ -6,6 +6,7 @@ import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { TITLES } from "../../data/chests.js";
 import { getLevel } from "../../data/helpers.js";
 import { STRATEGIES } from "../../data/miniGames.js";
+import { festivalById, festivalOccurrence, festivalDaysLeft, formatFestivalDate } from "../../lib/festivals.js";
 import { getEffectiveLeague } from "../../lib/league.js";
 import { getDailyMission, needsMockNudge } from "../../lib/progress.js";
 import { today } from "../../lib/util.js";
@@ -20,10 +21,15 @@ var _isMissionDoneHome=_missionReady&&(_missionHome.status==="completed"||_missi
 // Smart Daily Quest: active if Mission pending, OR if Challenge still pending (sequential reveal)
 var _dailyQuestActive=(_missionReady&&!_isMissionDoneHome)||!dd;
 var pulseSlot=p.pendingChests>0?"chest":needsMockNudge(u)?"mock":_dailyQuestActive?"daily":(p.events&&p.events.length>0)?"event":null;
+// Festival theme appliqué par App (p.festId, déjà filtré par l'opt-out). Hors fenêtre mais forcé
+// (?fest=), l'occurrence est la prochaine : dates et jours restants restent vrais.
+var fest=p.festId?festivalById(p.festId):null;
+var festOcc=fest?festivalOccurrence(fest,new Date()):null;
+var festLeft=fest?festivalDaysLeft(fest,new Date()):0;
 return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>Welcome back</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28,u.equippedFrame)}</h1>{u.equippedTitle&&TITLES[u.equippedTitle]&&<div className="out" style={{fontSize:10,fontWeight:800,color:TITLES[u.equippedTitle].color,letterSpacing:2,textTransform:"uppercase",marginTop:2}}>{TITLES[u.equippedTitle].name}</div>}</div>
+<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>{fest?fest.greeting:"Welcome back"}</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28,u.equippedFrame)}</h1>{u.equippedTitle&&TITLES[u.equippedTitle]&&<div className="out" style={{fontSize:10,fontWeight:800,color:TITLES[u.equippedTitle].color,letterSpacing:2,textTransform:"uppercase",marginTop:2}}>{TITLES[u.equippedTitle].name}</div>}</div>
 <div style={{textAlign:"center"}}><span className="fl" style={{fontSize:28,display:"inline-flex"}}>{u.streak>0?<GIcon name="flame" size={28} color="var(--orange)"/>:<span>{"❄️"}</span>}</span><div className="out" style={{fontSize:13,fontWeight:700,color:u.streak>0?"var(--orange)":"var(--t3)"}}>{u.streak}</div></div></div>
 
 {/* Active bonus indicators */}
@@ -39,6 +45,23 @@ return(
     {pills.map(function(p,i){return (<div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:99,background:p.col+"15",border:"1px solid "+p.col+"30",fontSize:11,fontWeight:600,color:p.col}} className="out">{GAME_ICON_PATHS[p.gi]?<GIcon name={p.gi} size={12} color={p.col}/>:<span style={{fontSize:12}}>{p.icon}</span>}{p.label}</div>);})}
   </div>);
 }()}
+
+{/* Festival theme banner (2026-09-16) — calqué sur l'Active Events Banner, validé dans
+    prototypes/festival-themes/. Pas de pulse : le thème se voit déjà partout. « Turn off » =
+    opt-out localStorage via App, réactivable dans Profile → Style. */}
+{fest&&festOcc&&<div className="crd" style={{marginBottom:12,padding:14,background:"rgba(var(--cx),.1)",border:"1px solid rgba(var(--cx),.25)"}}>
+  <div style={{display:"flex",alignItems:"center",gap:10}}>
+    <span style={{display:"flex",flexShrink:0}}><GIcon name={fest.icon} size={24} color="var(--cyan)"/></span>
+    <div style={{flex:1,minWidth:0}}>
+      <div className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{fest.name}</div>
+      <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>{"Seasonal theme · ends "+formatFestivalDate(festOcc.end)}</div>
+    </div>
+    <div style={{textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
+      <div className="out" style={{fontSize:12,fontWeight:700,color:"var(--cyan)"}}>{festLeft===0?"Last day":festLeft+"d left"}</div>
+      <button onClick={function(){p.onFestivalsOff();}} style={{background:"none",border:"none",padding:"6px 0 6px 12px",margin:"-6px 0",cursor:"pointer",fontSize:10,color:"var(--t3)",textDecoration:"underline",fontFamily:"inherit"}}>Turn off</button>
+    </div>
+  </div>
+</div>}
 
 {/* Pending Chests */}
 {p.pendingChests>0&&<button onClick={function(){p.onOpenChest();}} style={{width:"100%",marginBottom:14,padding:"14px 18px",background:"linear-gradient(135deg,rgba(255,192,32,.12),rgba(var(--cx),.08))",border:"1px solid rgba(255,192,32,.3)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:"'DM Sans',sans-serif",animation:pulseSlot==="chest"?"pulse 2s infinite":"none"}}>

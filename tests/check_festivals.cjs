@@ -8,6 +8,8 @@
  *   · la forme de FESTIVALS (ids uniques, dates valides, icône qui existe vraiment) ;
  *   · le CSS : un paquet .fest-<id> ET un retint .light.fest-<id> par fête, aucune classe
  *     .fest-* orpheline, chaque animation utilisée a son @keyframes ;
+ *   · la barre d'état : themeColor = --bg du paquet CSS, défaut = --bg de :root / .light, et
+ *     applyThemeColor écrit sur TOUTES les meta theme-color ;
  *   · Pâques (Meeus) sur des années connues ;
  *   · la disjonction des fenêtres, jour par jour, sur 21 ans ;
  *   · les bornes incluses, en heure LOCALE, et le chevauchement déc → jan ;
@@ -18,6 +20,8 @@
  * `occ.end>day` → rouge (bornes de fin) ; une 5ᵉ fête 10-30 → 11-05 → rouge (chevauchement) ;
  * appliedFestivalId qui ignore festivalsEnabled → rouge (opt-out). CSS : ligne
  * `.light.fest-spring{…}` retirée → rouge ; `skCandle` → `skCandel` → rouge ; `.fest-yuel` → rouge.
+ * Barre d'état : themeColor halloween décalé d'un chiffre → rouge ; applyThemeColor qui n'écrit
+ * que la première meta → rouge.
  *
  * Usage : node tests/check_festivals.cjs
  */
@@ -73,6 +77,31 @@ for (const line of cssLines.filter((l) => /^(\.light)?\.fest-/.test(l))) {
       check(keyframes.has(name), 'animation « ' + name + ' » utilisée par ' + line.slice(0, line.indexOf('{')) + ' sans @keyframes');
     }
   }
+}
+
+// ── Barre d'état : themeColor recopie le --bg du CSS ──
+// La meta theme-color ne lit pas le CSS : une palette retouchée sans recopier la couleur donnerait
+// une barre d'état d'une autre teinte que l'app, sans rien casser.
+const bgOf = (prefix) => { const l = cssLines.find((x) => x.startsWith(prefix)); const m = l && /--bg:(#[0-9a-fA-F]{3,8})/.exec(l); return m ? m[1].toLowerCase() : null; };
+for (const f of F.FESTIVALS) {
+  const dark = bgOf('.fest-' + f.id + '{'), light = bgOf('.light.fest-' + f.id + '{');
+  check(f.themeColor && f.themeColor.dark === dark, f.id + ' : themeColor.dark ' + (f.themeColor && f.themeColor.dark) + ' ≠ --bg de .fest-' + f.id + ' (' + dark + ')');
+  check(f.themeColor && f.themeColor.light === light, f.id + ' : themeColor.light ' + (f.themeColor && f.themeColor.light) + ' ≠ --bg de .light.fest-' + f.id + ' (' + light + ')');
+}
+check(F.DEFAULT_THEME_COLOR.dark === bgOf(':root{'), 'DEFAULT_THEME_COLOR.dark ≠ --bg de :root (' + bgOf(':root{') + ')');
+check(F.DEFAULT_THEME_COLOR.light === bgOf('.light{'), 'DEFAULT_THEME_COLOR.light ≠ --bg de .light (' + bgOf('.light{') + ')');
+{
+  const metas = [0, 1, 2].map(() => ({ content: '#0f0c08', setAttribute(k, v) { if (k === 'content') this.content = v; } }));
+  globalThis.document = { querySelectorAll: (sel) => (sel === 'meta[name="theme-color"]' ? metas : []) };
+  F.applyThemeColor('yule', false);
+  check(metas.every((m) => m.content === '#06110b'), 'applyThemeColor(yule, sombre) doit poser #06110b sur les 3 meta theme-color');
+  F.applyThemeColor('spring', true);
+  check(metas.every((m) => m.content === '#fbf6f8'), 'applyThemeColor(spring, clair) doit poser #fbf6f8 sur les 3 meta');
+  F.applyThemeColor(null, true);
+  check(metas.every((m) => m.content === F.DEFAULT_THEME_COLOR.light), 'applyThemeColor(null, clair) doit revenir à la couleur .light');
+  F.applyThemeColor(null, false);
+  check(metas.every((m) => m.content === '#0f0c08'), 'applyThemeColor(null, sombre) doit revenir à #0f0c08');
+  delete globalThis.document;
 }
 
 // ── Pâques ──

@@ -13,6 +13,7 @@ import { MISSION_MODULES } from "../../data/placement.js";
 import { PREMIUM_UPGRADE_ENABLED } from "../../lib/access.js";
 import { haptic } from "../../lib/device.js";
 import { findModuleLabel, FEEDBACK_MODULES } from "../../lib/feedbackModules.js";
+import { festivalById, festivalOccurrence, formatFestivalDate, windowFestivalId } from "../../lib/festivals.js";
 import { getEffectiveLeague } from "../../lib/league.js";
 import { isPushSubscribed, unsubscribePush, subscribePush } from "../../lib/push.js";
 import { getBioCredId, biometricAvailable, teacherAuth, bioAuthenticate, setDashSession } from "../../lib/teacherSession.js";
@@ -62,6 +63,11 @@ export function Profile(p){
   useEffect(function(){try{setTipOff(localStorage.getItem("toeic-tip-disabled")==="1");}catch(e){}},[]);
 
   var lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores);
+  // Festival theme (vue Style) : la fête de la fenêtre, MÊME désactivée par l'élève (c'est ici qu'il
+  // la réactive) ; p.festId = celle réellement appliquée par App, null si opt-out.
+  var festWin=festivalById(windowFestivalId(new Date()));
+  var festOn=!!p.festId;
+  var festEnd=festWin?formatFestivalDate(festivalOccurrence(festWin,new Date()).end):"";
   var acc=u.stats.totalQ>0?Math.round(u.stats.correct/u.stats.totalQ*100):0;
   var toeic=estimateTOEICScore(u.moduleScores||{});
   var uC=Object.assign({},u);
@@ -457,6 +463,24 @@ export function Profile(p){
             })}
           </div>
         </>}
+
+        {/* ── FESTIVAL THEME (2026-09-16) ── visible pendant une fenêtre (ou un forçage ?fest=), hors
+            fenêtre rien. La fête masque le skin équipé sans le modifier : la tuile garde « Equipped ». */}
+        {festWin&&<div className="crd" style={{padding:14,marginBottom:16,background:"rgba(var(--cx),.08)",border:"1px solid rgba(var(--cx),.22)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+            <span style={{display:"flex",flexShrink:0}}><GIcon name={festWin.icon} size={22} color="var(--cyan)"/></span>
+            <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,flex:1,minWidth:0}}>
+              <span className="out" style={{fontWeight:700,color:"var(--cyan)"}}>{festWin.name}</span>
+              {festOn
+                ?" is on until "+festEnd+". "+(u.equippedSkin&&SKINS[u.equippedSkin]?"Your "+SKINS[u.equippedSkin].name+" skin is kept and comes back after.":"Your usual theme comes back after.")
+                :" runs until "+festEnd+". Seasonal themes are off."}
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:10,borderTop:"1px solid var(--bdr)"}}>
+            <div className="out" style={{fontWeight:700,fontSize:13}}>Seasonal themes</div>
+            {Toggle(festOn,function(){p.setFestivals(!festOn);})}
+          </div>
+        </div>}
 
         {/* ── SKINS (equip) ── */}
         <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Skin</div>

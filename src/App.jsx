@@ -24,7 +24,7 @@ import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
-import { appliedFestivalId } from "./lib/festivals.js";
+import { appliedFestivalId, setFestivalsEnabled, applyThemeColor } from "./lib/festivals.js";
 import { CSS } from "./styles/appCss.js";
 import { LoadingMark, LoadBoundary } from "./components/LoadingMark.jsx";
 
@@ -636,6 +636,11 @@ useEffect(function(){
     var iv=setInterval(function(){setFestId(appliedFestivalId(new Date()));},3600000);
     return function(){clearInterval(iv);};
   },[]);
+  // ── Festival themes : barre d'état (meta theme-color) ── suit la fête appliquée et le mode
+  // clair/sombre. Hors fête : #0f0c08 en sombre, --bg de .light en clair. Deps primitives (u est
+  // recloné à chaque sv). Sans profil (onboarding), couleur canonique comme la classe .app.
+  var isLight=!!(u&&u.theme==="light");
+  useEffect(function(){applyThemeColor(hasUser?festId:null,isLight);},[festId,isLight,hasUser]);
 
   // ── Centralized BGM control: silence on ANY sub-page (exercise/content), restore home BGM on return ──
   // Defensive rule (post-feedback 2026-05-11): any sp ≠ null with no self-managed BGM = exercise → stopBGM.
@@ -1287,6 +1292,9 @@ function sv(d){
     sU(null);sSP(null);sT("home");
   }
 
+  // Opt-out des fêtes (Home « Turn off », Profil → Style) : écrit en localStorage, puis relu tout de
+  // suite pour ne pas attendre le tick horaire.
+  function setFestivals(on){setFestivalsEnabled(on);setFestId(appliedFestivalId(new Date()));}
   // Festival themes : la fête REMPLACE la classe du skin, elle ne s'y superpose pas. 13 skins sur 16
   // tiennent .crd::before/::after en !important : un paquet .fest-* posé en plus se battrait avec
   // eux. u.equippedSkin n'est jamais modifié, le skin revient seul à la fin de la fenêtre. Gardé par
@@ -1372,7 +1380,7 @@ function sv(d){
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0"} Acc\u00e8s expir\u00e9 le {groupAccess.endDate} — consultation uniquement</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} setUser={function(c){sv(c);}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} goShop={function(){sSP("shop");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} festId={festId} onFestivalsOff={function(){setFestivals(false);}} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} setUser={function(c){sv(c);}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} festId={festId} setFestivals={setFestivals} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} goShop={function(){sSP("shop");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
     {/* TutorialTour supprimé 2026-05-03 — absorbé dans le Verdict d'Aldric (cf. narrator.js). */}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
