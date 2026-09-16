@@ -167,3 +167,5 @@ If you used `var(--cyan)` and `var(--bg2)` correctly, all 18 variants Just Work.
 - **Hardcoded `rgba(15,12,8,...)`** in gradient overlays → broken in light mode. Use `rgba(var(--bg-rgb),...)`.
 - **Hardcoded `#d4943a`** anywhere → broken on every non-default skin. Use `var(--cyan)`.
 - **Shimmer overlays** use `::after` pseudo-elements with `position:relative!important; overflow:hidden!important` on parent.
+- **League / title colors from data** (`lg.color`, `TITLES[id].color`) are bright hexes tuned for dark mode : washed out in light mode (Gold `#ffd700` at 1.07:1). Always render them through `tone(hex)` from `src/lib/tone.js` (light variant defined in `.light{--tone-<hex>}`, `appCss.js`). A new league or title color needs its variant + an `initial` reset in the cartes-nuit rule. Raw hex only on a fixed dark background (`#1a1208`). Guarded by `tests/check_tones.cjs`.
+- **Skin forcing a dark `.crd` background** : token rule must be `.skin-X:not(.light),.light.skin-X .crd{…}` (« cartes-nuit »). See CLAUDE.md → CSS. Guarded by `tests/check_skins_light.cjs`.

@@ -177,7 +177,7 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   Tests prouvés mordants (9 cassures). `BUILD_ID` = `2026-09-16-festivals`.
 - **Bugs antérieurs repérés en passant** : skin Aurora en mode clair = toutes les `.crd`
   illisibles (**corrigé**, session suivante : « cartes-nuit ») ; titre équipé et pastille de
-  ligue délavés en clair (couleurs codées en dur, **non corrigé**). Escapes unicode affichés en
+  ligue délavés en clair (couleurs codées en dur, **corrigé** : `tone()`, voir plus bas). Escapes unicode affichés en
   littéral (texte ou attribut JSX) : 5 cas corrigés, `de9b46a` (Game Master, Profil → Style),
   `dd9fe16` (bandeau Accès expiré, lien CGV), puis infobulle du grimoire et « Final score
   10–990 ». Règle et vérification sur le bundle dans CLAUDE.md → « JSX encoding rule ».
@@ -207,9 +207,26 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   = en sombre (Molten Gold, Heraldic < 5 % d'écart, fond `--bg2`), rien de pire que sans skin.
   Compte remis sombre, sans skin, relu après rechargement.
 - **Reste, préexistant, non traité** : couleurs codées en dur délavées en clair hors skin
-  (titre équipé, pastille de ligue, raretés or `#ffc020` du Style, « Convert duplicates »,
-  `+10 Login bonus`) ; les skins du Shop n'ont pas de `--cx-hex` propre (Doré partout où il sert,
-  en sombre comme dans les cartes-nuit) ; `theme-color` ignore le skin.
+  (raretés or `#ffc020` des noms d'avatar/skin/cadre dans Style, « Convert duplicates »,
+  `+10 Login bonus`, « 990 » `#c9a23a` du Profil) ; les skins du Shop n'ont pas de `--cx-hex`
+  propre (Doré partout où il sert, en sombre comme dans les cartes-nuit) ; `theme-color` ignore
+  le skin.
+
+### Suite : titre équipé et pastille de ligue lisibles en clair (`tone`)
+- Les hex de `data/leagues.js` et `TITLES` sont pensés pour le sombre : en clair, Aldric's Chosen
+  à 1,28:1, pastille Gold à 1,07:1 (Home, Profil). `lib/tone.js` : `tone(hex)` →
+  `var(--tone-<hex>,<hex>)`. En sombre rien ne change ; en clair, 13 variantes de même teinte
+  (≥ 4,6:1 sur `--bg/--bg2/--bg3`, jaunes ramenés vers 43° pour éviter l'olive) dans
+  `.light{--tone-…}`, remises à `initial` dans les cartes-nuit. `545f2e0` (titre Home/Profil/
+  Ligue/Style, pastille et icône de ligue, en-tête Ligue, ✦ des doublons du Shop ; carte de coffre
+  et vignette du Shop gardent le hex, fond sombre fixe), `a7a84ac` test `check_tones` (4 mutations).
+- **Vérifié en dev** (compte Teacher, classes basculées, compte relu après rechargement : sombre,
+  sans skin) : en sombre hex d'origine inchangés ; en clair titre 5,45:1, pastille Gold 4,65-4,73:1
+  (icône 4,7), liste des titres de Style 4,8-6:1 ; en clair + Aurora la pastille dans la carte-nuit
+  reprend `#ffd700` (11,7:1) ; fête Halloween en clair 4,7-5,4:1. **Pas vu** : lignes de la Ligue
+  (Teacher en mode observateur, aucun joueur affiché), même appel `tone()`.
+- Piège : le basculement Mode par l'UI dans le panneau navigateur masqué est écrasé par le
+  rechargement Supabase à chaque retour « visible » (`App.jsx` `onVis`) ; mesurer par classe.
 
 ---
 
