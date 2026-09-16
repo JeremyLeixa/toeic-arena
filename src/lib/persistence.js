@@ -52,12 +52,15 @@ export function getAccessTokenSync(){
 // load() et save() découvrent qu'une ligne existe mais que la session courante ne peut ni la lire
 // ni l'écrire (not_owner). Ce module n'a pas accès à l'état React : il notifie, App décide
 // (reconnexion au démarrage, bandeau en cours de session). Cible = {name, classCode}.
+// Exporté pour les refus not_owner rencontrés hors de ce module (ouverture de coffre dans
+// doOpenChest) : un seul canal, donc la même garde « plus de profil local » et le même
+// dédoublonnage de cible côté App. data/chests.js ne peut pas l'importer (sens des couches).
 var _authLostListeners=[];
 export function onAuthLost(fn){
   _authLostListeners.push(fn);
   return function(){_authLostListeners=_authLostListeners.filter(function(f){return f!==fn;});};
 }
-function notifyAuthLost(target){
+export function notifyAuthLost(target){
   _authLostListeners.slice().forEach(function(fn){
     try{fn(target);}catch(e){console.warn("[authLost] listener caught:",e&&e.message);}
   });

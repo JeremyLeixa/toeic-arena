@@ -127,6 +127,8 @@ export function ChestOpenModal(p){
   // "Rolling..."); the phase effect below then clears the pending timer.
   var failed=!!(result&&result.ok===false);
   var alreadyOpened=failed&&result.error==="already_opened";
+  // not_owner: the session is not the account's (App shows the "Log in again" banner).
+  var sessionLost=failed&&result.error==="not_owner";
   var phase=failed?"error":animPhase;
   var ct=CHEST_TYPES[chest.chest_type]||CHEST_TYPES.novice;
   // Rarity color derived from chest type (fallback until result arrives)
@@ -220,7 +222,7 @@ export function ChestOpenModal(p){
           <TreasureChestSvg size={140} idSuffix="modal_error"/>
         </div>
         <div className="out" style={{fontSize:18,fontWeight:900,color:"#ede4d4",marginTop:18,letterSpacing:.5}}>{alreadyOpened?"This chest was already opened":"The chest is still waiting for you"}</div>
-        <p style={{color:"#8a7e6a",fontSize:12,marginTop:8,lineHeight:1.5}}>{alreadyOpened?"It has been removed from your queue.":"It could not be opened right now. Nothing was lost: try again in a moment."}</p>
+        <p style={{color:"#8a7e6a",fontSize:12,marginTop:8,lineHeight:1.5}}>{alreadyOpened?"It has been removed from your queue.":sessionLost?"Your session has expired. Log in again to open it: nothing was lost.":"It could not be opened right now. Nothing was lost: try again in a moment."}</p>
       </div>}
     </div>
 

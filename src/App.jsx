@@ -19,7 +19,7 @@ import { GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { NARRATOR_MOMENTS, hasHeardMoment, markMomentHeard } from "./narrator.js";
 import { estimateTOEICScore } from "./lib/toeic.js";
 import { getLeague, applyWeekTransition } from "./lib/league.js";
-import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost } from "./lib/persistence.js";
+import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost, notifyAuthLost } from "./lib/persistence.js";
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
@@ -929,6 +929,12 @@ useEffect(function(){
     if(!result||result.ok!==true){
       setChestResult(result||{ok:false,error:"empty_result"});
       if(result&&result.error==="already_opened")refreshPendingChests(chest.user_name,chest.class_code);
+      // not_owner = session qui n'est pas celle du compte (F1/F2) : réessayer ne sert à rien.
+      // Sans ce signal, rien ne le disait à l'élève tant qu'aucune sauvegarde n'était refusée,
+      // puisqu'un échec d'ouverture n'appelle pas sv(). Même cible que save() → même
+      // référence dans setAuthLost, pas de re-rendu si le bandeau est déjà là. Le bandeau
+      // passe sous le modal (z-index 9000 < 10000) et apparaît à la fermeture.
+      if(result&&result.error==="not_owner")notifyAuthLost({name:u.name,classCode:u.classCode||"visitor"});
       return;
     }
     // Update pity + aggregate XP from all reward slots
