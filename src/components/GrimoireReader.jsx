@@ -51,7 +51,7 @@ export function GrimoireReader(p){
       <button className="grim-btn-toc" onClick={function(){setShowToc(true);}}>{"\u2630"} Chapitres</button>
       <div className="grim-title">{grim.title}</div>
       <div style={{display:"flex",gap:6,alignItems:"center"}}>
-        <button className="grim-btn-toc" onClick={function(){downloadGrimoire(grim);}} title="T\u00e9l\u00e9charger / Imprimer">{"\u2913"}</button>
+        <button className="grim-btn-toc" onClick={function(){downloadGrimoire(grim);}} title={"T\u00e9l\u00e9charger / Imprimer"}>{"\u2913"}</button>
         <button className="grim-btn-close" onClick={closeGrim}>{"\u2715"}</button>
       </div>
     </div>

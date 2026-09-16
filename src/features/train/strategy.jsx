@@ -72,7 +72,7 @@ export function AboutToeic(p){
       </div>
     </div>
     <div style={{fontSize:11,color:"var(--t3)",textAlign:"center",marginBottom:18,fontStyle:"italic"}}>
-      Total: 200 multiple-choice questions {"\u00B7"} 2 hours {"\u00B7"} Final score 10\u2013990
+      Total: 200 multiple-choice questions {"\u00B7"} 2 hours {"\u00B7"} Final score {"10\u2013990"}
     </div>
 
     {/* CEFR Scoring */}
