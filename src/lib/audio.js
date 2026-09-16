@@ -1,4 +1,5 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
+import { letterClipUrl } from "./listeningVoices.js";
 
 // ─── TTS ENGINE (pre-generated MP3 → browser TTS fallback) ───
 export var _voices=null;
@@ -110,6 +111,17 @@ export function playAudioFile(url){
     audio.onerror=function(){console.warn("Audio not found: "+url);cleanup();};
     audio.play().catch(cleanup);
   });
+}
+// Joue « A. » / « B. » … (clip de lettre, MÊME voix que l'option — lib/listeningVoices.js)
+// puis l'option AFFICHÉE en position `pos`. Depuis le 2026-09-16 les clips d'options P1/P2
+// n'ont plus de lettre dedans : c'est ce qui rend la permutation des options (aud) libre —
+// quel que soit l'ordre des clips, l'élève entend A, B, C(, D) dans l'ordre affiché.
+// `part` = "p1" | "p2", `id` = l'id de l'item (bp… pour le Boss → voix Sarah).
+export async function playLetteredOption(part,id,pos,url){
+  await playAudioFile(letterClipUrl(part,id,pos));
+  if(_audioAborted)return;
+  await new Promise(function(r){setTimeout(r,150);});
+  await playAudioFile(url);
 }
 export function stopListenAudio(){
   _audioAborted=true;

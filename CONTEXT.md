@@ -126,11 +126,36 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   Flashcards du sélecteur Bypass (60/30 % au lieu de 50/15 %) — visible.
 - Abandonnés (décision 2026-09-16) : avatars Anaïs (« sauf cas exceptionnel »), backlog S2.
 
+- **Mergé sur `main` le 2026-09-16** : A+B (`d7dcddb`) puis C (`f019187`) après smoke de
+  Jérémy sur `vite preview` ; en prod, principal 1 147 883 o, 31 chunks référencés.
+
+## Session 2026-09-16 (fin) — Listening P1/P2 : lettres à part, clips regénérés sans lettre
+
+- **Bug** (signalé par Jérémy sur Train → Part 2) : les clips d'options P1/P2 avaient la
+  lettre cuite dedans (« B. It's on Thursday… », tous les scripts P2, le script d'origine
+  P1) ; la permutation des options du 15/09 jouait donc les clips dans l'ordre affiché et
+  l'élève entendait « B. » en première position. Dans l'Endless (P1/P2 en aveugle, items
+  d'entraînement mélangés aux items du Boss), cliquer la lettre entendue était compté faux.
+  Le Boss était sain (clips sans lettre). Biais réel des pools : P2 A 76 / B 100 / C 54.
+- **Décision Jérémy** : regénérer plutôt que corriger (300 000 crédits ElevenLabs). Clips
+  d'options P1 (232) et P2 (920, question comprise : deux locuteurs différents, comme au
+  TOEIC, ce que les lots précédents ne faisaient pas) **sans lettre** ; 24 clips de lettres
+  (6 voix × A-D) joués à part, dans la voix de l'item, à la position affichée
+  (`playLetteredOption`, `lib/audio.js`). La permutation `aud` est conservée et devient juste ;
+  le Boss gagne l'annonce des lettres qu'il n'avait jamais eue en aveugle.
+- Règle de voix unique app + script : `lib/listeningVoices.js` (numéro d'item → voix ; Voice A
+  = non-US masculine, Voice B = non-US féminine, confirmé à l'écoute). Script
+  `scripts/regen-listening-letterless.mjs` (reprenable). Lettres en `eleven_turbo_v2`
+  (anglais seul : le multilingue lisait « A » à la française), stabilité 0,75 (souffles sur
+  Voice B à 0,5). Échantillon validé à l'oreille par Jérémy avant le lot complet.
+- `check:assets` vérifie les 24 lettres ; `check_listening_voices` (test) garde la règle Q≠R
+  et la forme des URL de lettres. `BUILD_ID` = `2026-09-16-letters`.
+
 ### Pour la prochaine session
-- Merges `--no-ff` sur `main` : A+B (mono-chunk, invisible), puis C après smoke complet sur
-  `npm run preview` + téléphone (voir le plan, § Vérification). Le premier déploiement lazy
-  est sans risque pour les onglets ouverts (ancien bundle mono-chunk) ; c'est le **suivant**
-  qui périme des chunks — d'où `vite:preloadError`.
+- Vérifier en prod, après déploiement : Train → Part 2 (lettres dans l'ordre, texte affiché
+  = réponse entendue à la même lettre), Part 1, un Boss P2 (lettres annoncées), un Endless.
+- Hors périmètre, à décider : Profile.jsx:696 → `farmMult(m.id,cnt)` (ligne Flashcards du
+  sélecteur Bypass, visible).
 
 ---
 
@@ -522,4 +547,4 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 
 ---
 
-_Last updated: 2026-09-16 · Phase 5 du découpage livrée sur `refactor/phase5` (code mort, `lib/xp.js` pur + test + équivalence 2 000/2 000, lazy chunks : principal −65 %, préchauffage à l'idle). `groups` fermée au client (P2-D5, en prod). Next: merge A+B puis C sur `main` après smoke. Avatars Anaïs et backlog S2 abandonnés._
+_Last updated: 2026-09-16 · Phase 5 du découpage en prod (code mort, `lib/xp.js` pur + test + équivalence 2 000/2 000, lazy chunks : principal −65 %, préchauffage à l'idle). Listening P1/P2 : clips regénérés sans lettre + lettres à part dans la voix de l'item (permutation des options enfin juste, Endless corrigé). `groups` fermée au client (P2-D5). Next: vérif prod listening. Avatars Anaïs et backlog S2 abandonnés._

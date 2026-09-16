@@ -18,6 +18,11 @@ import { shuffle, srand } from "./util.js";
 //     reponse A pendant que l'app score la reponse C — c'est exactement le
 //     bug qui existait dans l'Endless Arena avant le 2026-09-15.
 //     P3/P4 ne sont pas concernes : l'audio est la conversation, pas les options.
+//     Et la LETTRE n'est plus dans le clip (2026-09-16) : jusque-la les clips
+//     d'options disaient « B. … » eux-memes, donc permuter les jouait avec la
+//     mauvaise lettre. Elle est un clip a part, joue par playLetteredOption
+//     (lib/audio.js) a la position AFFICHEE, dans la voix de l'item
+//     (lib/listeningVoices.js). Ne jamais regenerer un clip d'option avec sa lettre.
 //
 //  2. EXPLICATIONS (P1/P2 seulement). Elles citent les lettres ("Only B names
 //     someone"). Sans reecriture, l'explication designe la mauvaise option.

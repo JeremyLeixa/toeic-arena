@@ -29,6 +29,7 @@ const SUITE = [
   ['check_xp_gates.cjs',           'les portes XP (accuracy, anti-farming, Focus, boosts, bonus) sont celles du produit'],
   ['validate_endless_resume.cjs',  'la reprise d\'Endless rejoue le même test'],
   ['validate_listening_shuffle.cjs', 'la position des bonnes réponses est randomisée'],
+  ['check_listening_voices.cjs',   'la règle de voix des clips P1/P2 (deux locuteurs, lettres dans la voix de l\'item) n\'a pas bougé'],
   ['validate_toeic_shrinkage.cjs', 'l\'estimateur TOEIC ne réintroduit pas les 3 pathologies'],
   ['check_symbol_census.cjs',      'aucun symbole d\'App.jsx perdu ni dédoublé par le découpage'],
   ['check_import_graph.cjs',       'aucun cycle d\'import dans src/, sens des couches respecté'],

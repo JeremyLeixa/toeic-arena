@@ -2,7 +2,7 @@
 import { Bar } from "../../components/Bar.jsx";
 import { ResultIcon, GIcon } from "../../components/icons.jsx";
 import { ListeningGraphic } from "../../components/ListeningGraphic.jsx";
-import { resumeAudioSession, stopListenAudio, playAudioFile } from "../../lib/audio.js";
+import { resumeAudioSession, stopListenAudio, playAudioFile, playLetteredOption } from "../../lib/audio.js";
 import { haptic } from "../../lib/device.js";
 import { generateEndlessTest, endlessAnsFitsTest, freshAnsFor } from "../../lib/endless.js";
 import { estimateToeic } from "../../lib/toeic.js";
@@ -101,8 +101,10 @@ export function EndlessArena(p){
   function fmtT(s){var m=Math.floor(s/60);var sc2=s%60;return m+":"+(sc2<10?"0":"")+sc2;}
 
   // ── Audio — dynamic paths based on item origin ──
-  async function playP1(){if(aState!=="ready")return;setAState("playing");var it=LP1[qi];for(var i=0;i<it.opts.length;i++){setCurOpt(i);var ai=it.aud?it.aud[i]:i;if(isBoss(it.id)){await playAudioFile("/audio/boss/p1_"+String(bossIdx(it.id)).padStart(2,"0")+"_"+ai+".mp3");}else{await playAudioFile("/audio/p1/"+it.id+"_"+ai+".mp3");}await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
-  async function playP2(){if(aState!=="ready")return;setAState("playing");var it=LP2[qi];if(isBoss(it.id)){var bid=String(bossIdx(it.id)).padStart(2,"0");await playAudioFile("/audio/boss/p2_"+bid+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+bid+"_"+(it.aud?it.aud[i]:i)+".mp3");await new Promise(function(r){setTimeout(r,300);});};}else{await playAudioFile("/audio/p2/"+it.id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i2=0;i2<3;i2++){setCurOpt(i2);await playAudioFile("/audio/p2/"+it.id+"_"+(it.aud?it.aud[i2]:i2)+".mp3");await new Promise(function(r){setTimeout(r,300);});}}setCurOpt(-1);setAState("done");}
+  // Lettres annoncees a part (playLetteredOption) : les clips d'options n'en contiennent plus
+  // (2026-09-16), la permutation `aud` ne desaligne donc plus ce qu'on entend de ce qu'on clique.
+  async function playP1(){if(aState!=="ready")return;setAState("playing");var it=LP1[qi];for(var i=0;i<it.opts.length;i++){setCurOpt(i);var ai=it.aud?it.aud[i]:i;if(isBoss(it.id)){await playLetteredOption("p1",it.id,i,"/audio/boss/p1_"+String(bossIdx(it.id)).padStart(2,"0")+"_"+ai+".mp3");}else{await playLetteredOption("p1",it.id,i,"/audio/p1/"+it.id+"_"+ai+".mp3");}await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
+  async function playP2(){if(aState!=="ready")return;setAState("playing");var it=LP2[qi];if(isBoss(it.id)){var bid=String(bossIdx(it.id)).padStart(2,"0");await playAudioFile("/audio/boss/p2_"+bid+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playLetteredOption("p2",it.id,i,"/audio/boss/p2_"+bid+"_"+(it.aud?it.aud[i]:i)+".mp3");await new Promise(function(r){setTimeout(r,300);});};}else{await playAudioFile("/audio/p2/"+it.id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i2=0;i2<3;i2++){setCurOpt(i2);await playLetteredOption("p2",it.id,i2,"/audio/p2/"+it.id+"_"+(it.aud?it.aud[i2]:i2)+".mp3");await new Promise(function(r){setTimeout(r,300);});}}setCurOpt(-1);setAState("done");}
   // P3/P4 Endless mode (2026-05-05 V2) : TOEIC-faithful per-question playback.
   // Talk plays once → 800ms pause → q1 audio → done state (q1 options revealed).
   // Subsequent qN audio fired by nxt() when sqi increments. Boss-origin items

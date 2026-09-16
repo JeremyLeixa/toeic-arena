@@ -6,7 +6,7 @@ import { NextStepReco } from "../../components/NextStepReco.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "../../data/listening.js";
 import { isModuleLocked } from "../../lib/access.js";
-import { resumeAudioSession, stopListenAudio, playAudioFile } from "../../lib/audio.js";
+import { resumeAudioSession, stopListenAudio, playAudioFile, playLetteredOption } from "../../lib/audio.js";
 import { shufListeningItem } from "../../lib/listeningShuffle.js";
 import { shuffle } from "../../lib/util.js";
 import { playCorrect, playWrong } from "../../sounds.js";
@@ -49,9 +49,12 @@ export function ListenP2(p){
     await playAudioFile("/audio/p2/"+it.id+"_q.mp3");
     await new Promise(function(r){setTimeout(r,400);});
     // it.aud[i] : la reponse jouee en position i est celle que l'UI affiche en
-    // position i. Remettre "_"+i+" ici desaligne l'audio et le scoring.
+    // position i. Remettre "_"+i+" ici desaligne l'audio et le scoring. La lettre
+    // (« A. », « B. »…) est un clip a part, joue avant l'option, dans la voix de l'item :
+    // les clips d'options n'en contiennent plus (2026-09-16), l'ordre entendu est donc
+    // toujours A, B, C, quelle que soit la permutation.
     for(var i=0;i<3;i++){
-      await playAudioFile("/audio/p2/"+it.id+"_"+it.aud[i]+".mp3");
+      await playLetteredOption("p2",it.id,i,"/audio/p2/"+it.id+"_"+it.aud[i]+".mp3");
       await new Promise(function(r){setTimeout(r,i<2?300:200);});
     }
     setPlaying(false);setPlayed(true);
@@ -148,7 +151,8 @@ export function ListenP1(p){
     var it=items[ci];
     for(var i=0;i<it.opts.length;i++){
       setCurOpt(i);
-      await playAudioFile("/audio/p1/"+it.id+"_"+it.aud[i]+".mp3");
+      // Lettre a part puis enonce (clips sans lettre depuis le 2026-09-16, voir playLetteredOption).
+      await playLetteredOption("p1",it.id,i,"/audio/p1/"+it.id+"_"+it.aud[i]+".mp3");
       await new Promise(function(r){setTimeout(r,400);});
     }
     setCurOpt(-1);setPlaying(false);setPlayed(true);

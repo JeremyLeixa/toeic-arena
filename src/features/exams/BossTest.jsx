@@ -3,7 +3,7 @@ import { Bar } from "../../components/Bar.jsx";
 import { ResultIcon } from "../../components/icons.jsx";
 import { ListeningGraphic } from "../../components/ListeningGraphic.jsx";
 import { BOSS_P1, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "../../data/bossTestFull.js";
-import { resumeAudioSession, stopListenAudio, playAudioFile } from "../../lib/audio.js";
+import { resumeAudioSession, stopListenAudio, playAudioFile, playLetteredOption } from "../../lib/audio.js";
 import { BOSS_P2_SHUF } from "../../lib/listeningShuffle.js";
 import { estimateToeic } from "../../lib/toeic.js";
 import { today } from "../../lib/util.js";
@@ -81,8 +81,10 @@ export function BossTest(p){
   function pad(n){return String(n).padStart(2,"0");}
 
   // ── Audio ──
-  async function playP1(){if(aState!=="ready")return;setAState("playing");for(var i=0;i<LP1[qi].opts.length;i++){setCurOpt(i);await playAudioFile("/audio/boss/p1_"+pad(qi+1)+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
-  async function playP2(){if(aState!=="ready")return;setAState("playing");var id=pad(qi+1);var au=LP2[qi]&&LP2[qi].aud;await playAudioFile("/audio/boss/p2_"+id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playAudioFile("/audio/boss/p2_"+id+"_"+(au?au[i]:i)+".mp3");await new Promise(function(r){setTimeout(r,300);});}setCurOpt(-1);setAState("done");}
+  // Les lettres sont annoncees a part (playLetteredOption, voix Sarah pour le Boss) : les
+  // clips du Boss n'en ont jamais eu, et l'eleve en aveugle doit savoir ou il en est.
+  async function playP1(){if(aState!=="ready")return;setAState("playing");for(var i=0;i<LP1[qi].opts.length;i++){setCurOpt(i);await playLetteredOption("p1",LP1[qi].id,i,"/audio/boss/p1_"+pad(qi+1)+"_"+i+".mp3");await new Promise(function(r){setTimeout(r,400);});}setCurOpt(-1);setAState("done");}
+  async function playP2(){if(aState!=="ready")return;setAState("playing");var id=pad(qi+1);var au=LP2[qi]&&LP2[qi].aud;await playAudioFile("/audio/boss/p2_"+id+"_q.mp3");await new Promise(function(r){setTimeout(r,400);});for(var i=0;i<3;i++){setCurOpt(i);await playLetteredOption("p2",LP2[qi].id,i,"/audio/boss/p2_"+id+"_"+(au?au[i]:i)+".mp3");await new Promise(function(r){setTimeout(r,300);});}setCurOpt(-1);setAState("done");}
   async function playP3(){if(aState!=="ready")return;setAState("playing");await playAudioFile("/audio/boss/p3_"+pad(qi+1)+".mp3");setAState("done");}
   async function playP4(){if(aState!=="ready")return;setAState("playing");await playAudioFile("/audio/boss/p4_"+pad(qi+1)+".mp3");setAState("done");}
 

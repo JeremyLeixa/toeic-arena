@@ -5,7 +5,7 @@ import { BrandMark, GIcon } from "../../components/icons.jsx";
 import { PrivacyPolicy } from "../../components/legal.jsx";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
 import { SCAN_SECTION_ORDER, BATTLE_SCAN_V2 } from "../../data/placement.js";
-import { resumeAudioSession, stopListenAudio, getEnVoice, playAudioFile, isAudioAborted } from "../../lib/audio.js";
+import { resumeAudioSession, stopListenAudio, getEnVoice, playAudioFile, playLetteredOption, isAudioAborted } from "../../lib/audio.js";
 import { isStandalonePWA, isIOSDevice } from "../../lib/device.js";
 import { getBioCredId, biometricAvailable, bioAuthenticate, teacherAuth, setDashSession } from "../../lib/teacherSession.js";
 import { normalizeName } from "../../lib/util.js";
@@ -214,7 +214,9 @@ var[step,sSt]=useState("name");
       if(part==="p1"){
         for(var i=0;i<4;i++){
           setAudioStep(i);
-          await playAudioFile("/audio/p1/"+refId+"_"+i+".mp3");
+          // Lettre a part puis enonce : les clips P1 n'ont plus la lettre dedans (2026-09-16).
+          // Le scan ne permute pas les options : position i = clip i.
+          await playLetteredOption("p1",refId,i,"/audio/p1/"+refId+"_"+i+".mp3");
           if(isAudioAborted())break;
         }
         setAudioStep(-1);

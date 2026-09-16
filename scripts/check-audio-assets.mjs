@@ -28,6 +28,7 @@ import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "../src/data/listening.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4 } from "../src/data/bossTestFull.js";
+import { LISTENING_VOICES, LETTERS } from "../src/lib/listeningVoices.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -97,6 +98,10 @@ BOSS_P2.forEach((it, i) => {
 });
 BOSS_P3.forEach((_, i) => check(`/audio/boss/p3_${pad2(i + 1)}.mp3`, "BossP3"));
 BOSS_P4.forEach((_, i) => check(`/audio/boss/p4_${pad2(i + 1)}.mp3`, "BossP4"));
+
+// Lettres « A. » … par voix — lib/audio.js playLetteredOption → /audio/letters/{voix}_{L}.mp3
+// (2026-09-16 : les clips d'options P1/P2 n'ont plus de lettre, elle est jouée à part).
+for (const v of LISTENING_VOICES) for (const L of LETTERS) check(`/audio/letters/${v.key}_${L}.mp3`, "letters");
 
 // ═══ Rapport ═══
 const counts = [LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4].map(a => a.length);
