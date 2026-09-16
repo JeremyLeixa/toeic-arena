@@ -26,4 +26,17 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  // Les globales navigateur ci-dessus ne valent pas partout : sans ces deux blocs, ESLint
+  // signalait 40 `no-undef` fictifs (`process`, `Buffer`, `clients`). Le `no-undef` qui
+  // compte, celui de src/ (import manquant → ReferenceError au rendu), n'est pas concerné.
+  {
+    // Fonctions serverless Vercel : runtime Node.
+    files: ['api/**/*.js'],
+    languageOptions: { globals: globals.node },
+  },
+  {
+    // Service worker : `self`, `clients`, `caches`…
+    files: ['public/sw.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
 ])
