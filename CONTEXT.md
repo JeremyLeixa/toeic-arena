@@ -103,11 +103,34 @@
   verrouillées, `groups` refuse chaque colonne, 39 RPC vivantes). Il reste exactement une
   policy dans le schéma : « Events visible ».
 
+## Session 2026-09-16 (suite) — Phase 5 du découpage : code mort, `lib/xp.js`, lazy chunks
+
+Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketch.md`.
+- **A — code mort** (`cbe5857`) : 6 symboles + `COMPETITORS` supprimés ; bundle identique à
+  l'octet (le tree-shaking les éliminait déjà). Lint 375 → 368, référence refigée.
+- **B — `lib/xp.js`** (`8f695c9`, `ea79bd8`, `df79fe6`) : les portes XP en fonctions pures
+  (`gateXp`, `settleXp`…), `tests/check_xp_gates.cjs` (79 vérifications, prouvé mordant ×5),
+  App.jsx n'orchestre que les effets. **Équivalence prouvée** par
+  `scripts/refactor/xp_equivalence.cjs` : 2 000 profils seedés, 2 000 identiques, 8 813 effets
+  dans le même ordre. MockTest affiche la courbe via `farmMult`. `isModuleBoosted` → `removed`.
+- **C — lazy** (`9f66bc6` → `f99bfa0`) : filets d'abord (`check_import_graph` voit les
+  `import()` : chemin, nom exporté, non-joignabilité statique ; `vite:preloadError` → reload
+  une fois ; `LoadingMark`/`LoadBoundary` ; `lazyNamed`), puis TeacherDash + Onboard, exams,
+  Listening + Reading, jeux + Gauntlet + Modal Council, graphique Profil (recharts sort), et
+  préchauffage à l'idle (décision Jérémy : parité hors-ligne). **Principal 3 278 477 →
+  1 147 880 o (−65 %)**, 32 chunks, 3 293 131 o au total (+0,4 % de colle). Littéraux de chaîne
+  : rien de perdu (1 fragment de template renommé, 36 `import{}from`).
+- Restent eager : Home, onglets, NarratorOverlay, Chests, grammar.jsx (vocab/grammar/
+  avatarIcons/miniGames/chests.js sont le plancher du principal).
+- Hors Phase 5, à décider : Profile.jsx:696 → `farmMult(m.id,cnt)` corrigerait la ligne
+  Flashcards du sélecteur Bypass (60/30 % au lieu de 50/15 %) — visible.
+- Abandonnés (décision 2026-09-16) : avatars Anaïs (« sauf cas exceptionnel »), backlog S2.
+
 ### Pour la prochaine session
-- Phase 5 du refactor, optionnelle : lazy chunks (Teacher, Onboarding, exams), portes XP en
-  fonctions pures testables (`lib/xp.js`), code mort (`speakAndWait`, `compScores`,
-  `getModuleAccuracy`, `parseInlineStyle`, `_lastSync`, `SK`).
-- Avatars Anaïs dès dispo. Sinon backlog S2 (re-engagement, Magic Link Phase 3).
+- Merges `--no-ff` sur `main` : A+B (mono-chunk, invisible), puis C après smoke complet sur
+  `npm run preview` + téléphone (voir le plan, § Vérification). Le premier déploiement lazy
+  est sans risque pour les onglets ouverts (ancien bundle mono-chunk) ; c'est le **suivant**
+  qui périme des chunks — d'où `vite:preloadError`.
 
 ---
 
@@ -499,4 +522,4 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 
 ---
 
-_Last updated: 2026-09-16 · `groups` fermée au client (P2-D5, livré et vérifié en prod) : 5 lectures directes → RPC `group_public`, deux migrations appliquées, balayage durci et au vert. Découpage d'App.jsx terminé et en prod (18 589 → 1 493 lignes). Sécurité : verrou RPC complet, plus aucune exception de table ; piège du claim corrigé (P2-D4). Next: Phase 5 optionnelle, avatars Anaïs, backlog S2._
+_Last updated: 2026-09-16 · Phase 5 du découpage livrée sur `refactor/phase5` (code mort, `lib/xp.js` pur + test + équivalence 2 000/2 000, lazy chunks : principal −65 %, préchauffage à l'idle). `groups` fermée au client (P2-D5, en prod). Next: merge A+B puis C sur `main` après smoke. Avatars Anaïs et backlog S2 abandonnés._

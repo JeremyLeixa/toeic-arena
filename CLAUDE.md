@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (9 fichiers, ~3 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (10 fichiers, ~3 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -58,6 +58,11 @@ Ce que la suite protège, et pourquoi :
   récompense hors liste blanche.
 - **`check_identity`** — `normNameForEmail` décide de l'adresse du compte Auth,
   recalculée à chaque connexion. La changer enferme dehors les élèves déjà migrés.
+- **`check_xp_gates`** — les portes XP (`lib/xp.js` : seuil d'accuracy, trois courbes
+  anti-farming, bypass, événements, Focus, boosts, streak, +10, planchers, ligue, coffres)
+  sont celles de « XP System » ci-dessous. Un `<` devenu `<=` ne casse pas le build.
+- **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
+  et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
 
 ⚠️ **Un test qui échoue décrit un vrai problème.** Le corriger, ne pas l'ajuster pour le
 faire passer. Et tout nouveau test doit être **prouvé mordant** : introduire l'erreur
@@ -81,8 +86,9 @@ src/
   App.jsx              — Root component App() only (~1,500 lines): state, effects, XP
                           pipeline (applyXpGates/addXp), session (onboard/recover/logout),
                           chest queue, BGM control, pg() wrapper. BUILD_ID just above it.
-  routes.jsx           — renderRoute(c): the 41 `sp` routes, context destructured from App()
-  main.jsx             — React entry point
+  routes.jsx           — renderRoute(c): the 41 `sp` routes, context destructured from App().
+                          Heavy screens are `lazyNamed(() => import(...), "Name")` (Phase 5)
+  main.jsx             — React entry point + `vite:preloadError` → reload once (stale chunk)
   sounds.js            — Web Audio API synthesized SFX + jingles + BGM
   supabase.js          — Supabase client init
   auth.js              — Supabase Auth (synthetic email, password, reset)
@@ -92,10 +98,13 @@ src/
                           profileSchema (fresh/supaToLocal/buildSavePayload), persistence
                           (load/save), progress (recordModule, missions, unlocks), endless,
                           teacherSession, push, grimoireExport, feedbackModules,
-                          chestLabels, shopCatalog, iconMaps, passageDocs, rarityStyles
+                          chestLabels, shopCatalog, iconMaps, passageDocs, rarityStyles,
+                          xp (gateXp/settleXp : les portes XP, pures — App.jsx n'orchestre
+                          que les effets ; tests/check_xp_gates.cjs)
   components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
                           PassageDocs, avatar (renderAv, AvatarMedal), toasts, Tabs,
-                          GrimoireReader, NextStepReco, TokenCTAs, legal, PasswordInput (œil)
+                          GrimoireReader, NextStepReco, TokenCTAs, legal, PasswordInput (œil),
+                          LoadingMark (+ LoadBoundary), lazyNamed (+ preloadLazyScreens)
   features/            — one folder per screen: train/ (grammar, reading, strategy),
                           home/ (Home, Train, Cards, Daily, DailyTip), gauntlet/, modals/,
                           games/, listening/, exams/ (Mock, Boss, Endless), mentor/,
@@ -191,6 +200,7 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 - **Couches, dans un seul sens** : `data/` → `lib/` → `components/` → `features/` → `App.jsx` / `routes.jsx`. `lib/` n'importe jamais de JSX ; `components/` n'importe jamais `features/` ; une feature n'importe que son propre dossier. `tests/check_import_graph.cjs` refuse tout cycle et tout sens interdit (un cycle ESM donne `undefined` à l'init d'une constante, sans casser le build).
 - **`App()` reste le seul détenteur de l'état global** : 23 `useState`, 20 effets, 42 fonctions internes (`sv`, `addXp`, `applyXpGates`, `grantChestLocal`, `onboard`, `recover`, `logout`…). Les écrans sont **prop-driven** : ils reçoivent `u`, `done`, `back`, `nav`, `gate`… et ne touchent jamais l'état d'`App()` directement. Pas de contexte React, pas d'extraction des hooks (Phase 4b non retenue) sans décision explicite.
 - **Nouveau module = nouveau fichier** dans `src/features/<module>/`, route dans `src/routes.jsx` (voir le skill `add-module`). Ne pas remettre de composant dans `App.jsx`.
+- **Écrans chargés à la demande** (Phase 5, 2026-09-16 — bundle principal 3,28 → 1,15 Mo) : un écran lourd s'écrit `var X=lazyNamed(function(){return import("./features/…/X.jsx");},"X");` (`components/lazyNamed.js`), **jamais** avec un import statique à côté (le chunk ne sortirait pas, en silence : `check_import_graph` le refuse, comme un chemin ou un nom exporté faux). Dans `routes.jsx`, même nom local qu'avant (exempt du recensement de symboles) ; dans `App.jsx`, alias `XLazy` (le recensement refuse un `Profile` déclaré deux fois). Le fallback est fourni par `pg()` (`<Suspense fallback={<LoadingMark inline/>}>` + `LoadBoundary` à `key` = route) et par le shell Onboard ; ne pas en poser d'autre. Restent eager : Home (onglet par défaut), les onglets, NarratorOverlay, Chests, `train/grammar.jsx`. `main.jsx` recharge une fois sur `vite:preloadError` (chunk périmé après déploiement) ; `preloadLazyScreens` recharge tous les chunks à l'idle pour la parité hors-ligne.
 - **Un fichier `.jsx` n'exporte que des composants** (`react-refresh/only-export-components`, en erreur ici) : constantes → `lib/`, helper de rendu → privé au fichier. Exception connue, comptée à part par `lintgate` : `renderAv` dans `components/avatar.jsx`.
 - **Une `var` de niveau module exportée est en lecture seule pour ses importateurs.** Écrire via un accesseur (`setSyncDirty`, `setCachedUserId`, `setListenAudio`, `isAudioAborted`), jamais assigner un import : Rolldown refuse au build.
 - **CSS dans `src/styles/appCss.js`** (le `CSS` template literal), toujours injecté par `<style>{CSS}</style>` dans App.jsx : cascade inchangée. Deux CSS locaux privés : `DTL_CSS` (ModalCouncil.jsx), `SBD_CSS` (SentenceBuilder.jsx). Class `.crd` has `background: var(--bg2)` which overrides inline styles.
@@ -207,6 +217,7 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 - **`mockResults`** stores `mock1`, `mock2`, `mock3`, `boss`. Boss Test saves best score but updates `date` on every attempt.
 
 ### XP System
+- **Le calcul des portes vit dans `src/lib/xp.js`** (pur : `accuracyGate`, `farmMult`, `isBoostedByEvents`, `spotlightMult`, `gateXp`, `settleXp`), testé par `tests/check_xp_gates.cjs`. `applyXpGates` / `addXp` dans `App.jsx` ne font qu'injecter l'état (`u`, événements, médiane, instant) et exécuter les effets rendus (Darics du Focus, jingles, haptique, toast, coffres). Toute règle ci-dessous se change **dans `xp.js` et dans le test**, jamais dans App.jsx. La table des ligues est injectée (`ctx.leagueOf`) : `lib/league.js` importe Supabase et n'est pas requérable en Node.
 - **No daily XP cap.** Diminishing returns per module per day are the anti-farming mechanism.
 - **Flashcards give 0 XP.** Reframed as memorization-only tool. Students earn XP on vocabulary via Word Tavern (15Q quiz) instead.
 - **Diminishing returns:** Mock tests 100/40/0% per day. Other modules follow standard gates.
@@ -559,6 +570,7 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 - **`index.html`** registers SW with `{updateViaCache:'none'}`.
 - **`controllerchange`** listener auto-reloads the page.
 - **Build ID** logged on startup for deployment verification.
+- **Chunks lazy (Phase 5)** : `main.jsx` écoute `vite:preloadError` (chunk dont le hash n'existe plus après un déploiement) → un reload, garde 60 s en sessionStorage ; au-delà, `LoadBoundary` affiche un bouton Reload. Hors ligne, un écran jamais visité depuis le dernier build n'a pas son chunk en cache : `preloadLazyScreens` (appelé une fois par App.jsx, à l'idle, 3 s après le premier affichage, sauté si `saveData`) recharge tous les chunks pour retrouver la parité du bundle unique.
 
 ---
 

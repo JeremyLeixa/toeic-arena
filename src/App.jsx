@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { playXP, playLevelUp, playCombo, playStreak, playTimer, playClick, playJingleEnter, playJingleAchieve, playJingleLeague, playJingleMock, playJingleMockOk, playJingleDaily, playBGM, stopBGM } from "./sounds.js";
 import { today, weekId, normalizeName } from "./lib/util.js";
 import { fresh, supaToLocal, buildSavePayload } from "./lib/profileSchema.js";
@@ -25,7 +25,7 @@ import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
 import { CSS } from "./styles/appCss.js";
-import { BrandMark } from "./components/icons.jsx";
+import { LoadingMark, LoadBoundary } from "./components/LoadingMark.jsx";
 
 
 
@@ -51,16 +51,23 @@ import { ChestEarnedToast, ChestOpenModal } from "./features/chests/Chests.jsx";
 import { Profile } from "./features/profile/Profile.jsx";
 import { ResetPasswordView } from "./features/profile/ResetPasswordView.jsx";
 import { NarratorOverlay } from "./features/narrator/NarratorOverlay.jsx";
-import { Onboard } from "./features/onboarding/Onboard.jsx";
-import { TeacherDash } from "./features/teacher/TeacherDash.jsx";
 import { League } from "./features/league/League.jsx";
 import { renderRoute } from "./routes.jsx";
+import { lazyNamed, preloadLazyScreens } from "./components/lazyNamed.js";
+
+// ── Écrans chargés à la demande (Phase 5, code-splitting) ──
+// Alias `…Lazy` obligatoires ici : le recensement (tests/check_symbol_census.cjs) compte les
+// déclarations top-level d'App.jsx, et TeacherDash / Onboard existent déjà comme exports de
+// leurs modules. Chemin, nom exporté et absence d'import statique résiduel sont vérifiés par
+// tests/check_import_graph.cjs. Fallbacks : LoadingMark via pg() et le shell Onboard.
+var TeacherDashLazy=lazyNamed(function(){return import("./features/teacher/TeacherDash.jsx");},"TeacherDash");
+var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboard.jsx");},"Onboard");
 
 
 
 
 
-var BUILD_ID="2026-09-16-groups-rpc";
+var BUILD_ID="2026-09-16-phase5-lazy";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -609,6 +616,14 @@ useEffect(function(){
     document.addEventListener("touchstart",startBGM,{once:true});
     return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
   },[ld]);
+
+  // ── Préchauffage des écrans chargés à la demande (Phase 5, C10) ── une fois le profil
+  // chargé, recharger à l'idle, l'un après l'autre, tous les chunks déclarés via lazyNamed :
+  // parité hors-ligne d'avant le découpage (le SW met en cache chaque chunk servi), mêmes
+  // octets qu'avant, mais APRÈS le premier affichage. Deps primitives (u est recloné à chaque
+  // sv) ; preloadLazyScreens porte sa propre garde « une seule fois ».
+  var hasUser=!!u;
+  useEffect(function(){if(!ld&&hasUser)preloadLazyScreens();},[ld,hasUser]);
 
   // ── Centralized BGM control: silence on ANY sub-page (exercise/content), restore home BGM on return ──
   // Defensive rule (post-feedback 2026-05-11): any sp ≠ null with no self-managed BGM = exercise → stopBGM.
@@ -1289,21 +1304,23 @@ function sv(d){
       </button>
     </div>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={sp||"root"}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  // ↑ Frontière des écrans chargés à la demande (Phase 5) : le fallback et le filet d'erreur
+  // n'enveloppent QUE le contenu de la sous-page — toasts, Narrator, Tabs et overlay premium
+  // sont frères, jamais cachés ni remontés. La key sur la route remet le filet à zéro quand
+  // l'élève change d'écran.
 
   // Reset password : bypass complet du flow normal si l'URL a ?reset=<token>.
   // Doit être AVANT loading/teacher/onboard parce que le user peut être complètement
   // déconnecté quand il clique le lien depuis son mail.
   if(resetToken)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><ResetPasswordView token={resetToken}/></div>);
-  if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}>
-    <div style={{animation:"pulse 1.6s ease-in-out infinite"}}>
-      <BrandMark size={94} style={{margin:"0 auto"}}/>
-    </div>
-    <p className="out" style={{color:"var(--t1)",marginTop:16,letterSpacing:"0.24em",textTransform:"uppercase",fontSize:15}}>Verse Arena</p>
-    <p style={{color:"var(--t3)",marginTop:5,letterSpacing:"0.3em",textTransform:"uppercase",fontSize:9}}>loading…</p>
-  </div></div></div>);
-  if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
-  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></div>);
+  // Écran de chargement : le bloc vit dans components/LoadingMark.jsx, qui sert aussi de
+  // fallback aux écrans chargés à la demande (même rendu, plein écran ou sous-page).
+  if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadingMark/></div>);
+  if(teacherMode)return pg(<TeacherDashLazy back={function(){setTeacher(false);}}/>);
+  // Le fallback plein écran est pixel-identique à l'écran `ld` : pour un nouvel élève, le
+  // chargement dure simplement un peu plus (le temps du chunk Onboard, une fois par build).
+  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadBoundary><Suspense fallback={<LoadingMark/>}><OnboardLazy go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></Suspense></LoadBoundary></div>);
 
   // ── Group access control ──
   if(groupAccess&&groupAccess.status==="not_started")return(<div className={lc}><style>{CSS}</style>
