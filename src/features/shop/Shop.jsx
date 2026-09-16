@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 
 export function ShopItemVisual(p){
   var item=p.item;
-  if(item.cat==="skin"){var sk=SKINS[item.ref]||{};return(<div style={{width:52,height:52,borderRadius:13,background:"linear-gradient(135deg,"+(sk.hex||"#888")+","+(sk.dark||"#555")+")",border:"2px solid "+shopRarColor(item.rarity),boxShadow:"0 0 14px "+(sk.hex||"#888")+"66"}}/>);}
+  if(item.cat==="skin"){var sk=SKINS[item.ref]||{};return(<div style={{width:52,height:52,borderRadius:13,background:"linear-gradient(135deg,"+(sk.hex||"#888")+","+(sk.dark||"#555")+")",border:"2px solid "+tone(shopRarColor(item.rarity)),boxShadow:"0 0 14px "+(sk.hex||"#888")+"66"}}/>);}
   if(item.cat==="frame")return <AvatarMedal avatarId="champion" size={50} frameId={item.ref}/>;
   if(item.cat==="title"){var ti=TITLES[item.ref]||{};return(<div style={{width:52,height:52,borderRadius:13,border:"2px solid "+(ti.color||"#888"),display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(180deg,#1a1208,#0a0604)"}}><span style={{fontSize:24,fontWeight:900,color:ti.color||"#888"}}>{"✦"}</span></div>);}
   if(item.cat==="token"){var tk=TOKEN_TYPES[item.ref]||{};return <span style={{fontSize:36}}>{tk.icon}</span>;}

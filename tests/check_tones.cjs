@@ -1,21 +1,25 @@
-/* Couleurs de ligue et de titre en mode clair : lib/tone.js + règle .light{--tone-…} d'appCss.js.
+/* Couleurs de ligue, de titre et de rareté en mode clair : lib/tone.js + règle .light{--tone-…}.
  *
- * POURQUOI CE TEST EXISTE. Les couleurs de ligue (data/leagues.js) et de titre (data/chests.js
- * TITLES) sont des hex clairs pensés pour le fond sombre. En mode clair, le titre équipé et la
- * pastille de ligue tombaient à 1,1-1,3:1 (Gold #ffd700, Aldric's Chosen #e8d4a8). tone(hex) les
- * remplace par une variante foncée, en clair seulement. Rien ne casse au build quand ce contrat se
- * perd : la couleur se délave, en silence. Ce test fige :
+ * POURQUOI CE TEST EXISTE. Les couleurs de ligue (data/leagues.js), de titre (data/chests.js
+ * TITLES) et de rareté (data/chests.js RARITIES) sont des hex clairs pensés pour le fond sombre.
+ * En mode clair, le titre équipé et la pastille de ligue tombaient à 1,1-1,3:1 (Gold #ffd700,
+ * Aldric's Chosen #e8d4a8), les noms de rareté de Profil → Style jusqu'à 1,25:1 (Legendary
+ * #ffc020). tone(hex) les remplace par une variante foncée, en clair seulement. Rien ne casse au
+ * build quand ce contrat se perd : la couleur se délave, en silence. Ce test fige :
  *   · tone() : forme « var(--tone-<hex>,<hex>) », hex d'origine en repli, le reste inchangé ;
- *   · chaque couleur de ligue et de titre a sa variante, aucune variante orpheline ;
+ *   · chaque couleur de ligue, de titre et de rareté a sa variante, aucune variante orpheline ;
  *   · chaque variante tient ≥ 4,5:1 sur --bg, --bg2 et --bg3 de .light ;
  *   · aucune variante hors mode clair (en sombre, le hex d'origine doit s'appliquer) ;
- *   · aucune couleur de ligue ou de titre affichée brute dans src/ (sans tone()), sauf sur un
- *     fond sombre fixe #1a1208 posé sur la même ligne (carte de coffre, vignette du Shop).
- * La remise à initial dans les cartes-nuit est gardée par check_skins_light.
+ *   · aucune de ces couleurs affichée brute dans src/ (sans tone()) : lg/plLg.color,
+ *     titleData/ti/TITLES[…].color, rarity.color, shopRarColor(…) ; sauf sur un fond sombre fixe
+ *     #1a1208 posé sur la même ligne (carte de coffre, vignette de titre du Shop).
+ * La remise à initial dans les cartes-nuit est gardée par check_skins_light. Les coffres
+ * (Chests.jsx) passent la rareté par une variable rarityColor sur fonds sombres fixes : hors garde.
  *
  * Prouvé mordant le 2026-09-16 : variante --tone-ffd700 retirée → rouge ; Gold passé à #9a8a40
  * (3,0:1) → rouge ; tone() retiré du titre de Home.jsx → rouge ; une couleur de titre #123456
- * ajoutée sans variante → rouge.
+ * ajoutée sans variante → rouge. Raretés : variante --tone-3ecc78 retirée → rouge ; tone() retiré
+ * d'un nom de rareté de Profile.jsx → rouge ; tone() retiré de shopRarColor dans Shop.jsx → rouge.
  *
  * Usage : node tests/check_tones.cjs
  */
@@ -47,8 +51,11 @@ const chests = fs.readFileSync(path.join(ROOT, 'src', 'data', 'chests.js'), 'utf
 const titlesBlock = (/export var TITLES\s*=\s*\{([\s\S]*?)\n\};/.exec(chests) || [])[1] || '';
 const titleColors = [...titlesBlock.matchAll(/color:\s*"(#[0-9a-fA-F]{6})"/g)].map((m) => m[1].toLowerCase());
 check(titleColors.length >= 10, 'bloc TITLES de data/chests.js introuvable ou vide (' + titleColors.length + ' couleurs lues)');
+const raritiesBlock = (/export var RARITIES\s*=\s*\[([\s\S]*?)\n\];/.exec(chests) || [])[1] || '';
+const rarityColors = [...raritiesBlock.matchAll(/color:\s*"(#[0-9a-fA-F]{6})"/g)].map((m) => m[1].toLowerCase());
+check(rarityColors.length >= 5, 'bloc RARITIES de data/chests.js introuvable ou incomplet (' + rarityColors.length + ' couleurs lues)');
 const leagueColors = LEAGUES.map((l) => (l.color || '').toLowerCase());
-const needed = new Set([...leagueColors, ...titleColors]);
+const needed = new Set([...leagueColors, ...titleColors, ...rarityColors]);
 
 // ── Les variantes du CSS ──
 const lines = CSS.split(/\r?\n/);
@@ -62,10 +69,10 @@ for (const l of lines.filter((x) => x.startsWith('.light{'))) {
 }
 check(tones.size > 0, 'aucune variante --tone-* dans une règle .light{…}');
 for (const hex of needed) {
-  check(tones.has(hex), 'couleur ' + hex + ' (ligue ou titre) sans variante claire « --tone-' + hex.slice(1) + ' » dans .light{…} : elle se délave en mode clair');
+  check(tones.has(hex), 'couleur ' + hex + ' (ligue, titre ou rareté) sans variante claire « --tone-' + hex.slice(1) + ' » dans .light{…} : elle se délave en mode clair');
 }
 for (const [hex, dark] of tones) {
-  check(needed.has(hex), 'variante --tone-' + hex.slice(1) + ' orpheline : aucune ligue ni aucun titre n\'utilise ' + hex);
+  check(needed.has(hex), 'variante --tone-' + hex.slice(1) + ' orpheline : aucune ligue, aucun titre ni aucune rareté n\'utilise ' + hex);
   for (const [n, bg] of lightBgs) {
     if (!bg) continue;
     const c = contrast(dark, bg);
@@ -80,9 +87,9 @@ for (const l of lines) {
   check(l.startsWith('.light:where(') && onlyInitial, 'variante --tone-* posée hors mode clair : « ' + l.slice(0, 80) + '… » (en sombre le hex d\'origine doit s\'appliquer)');
 }
 
-// ── Aucune couleur de ligue ou de titre affichée brute ──
+// ── Aucune couleur de ligue, de titre ou de rareté affichée brute ──
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]);
-const RAW = /\b(lg|plLg|titleData|ti|TITLES\[[^\]]+\])\.color\b/g;
+const RAW = /\b(?:(?:lg|plLg|titleData|ti|rarity|TITLES\[[^\]]+\])\.color\b|shopRarColor\([^)]*\))/g;
 for (const file of walk(path.join(ROOT, 'src')).filter((f) => f.endsWith('.jsx'))) {
   fs.readFileSync(file, 'utf8').split(/\r?\n/).forEach((line, i) => {
     for (const m of line.matchAll(RAW)) {
@@ -93,6 +100,6 @@ for (const file of walk(path.join(ROOT, 'src')).filter((f) => f.endsWith('.jsx')
   });
 }
 
-console.log('  ' + checks + ' vérifications, ' + needed.size + ' couleurs de ligue et de titre, ' + tones.size + ' variantes claires');
-if (fails) { console.log('\n' + fails + ' problème(s). Rien ne casse au build : titres et pastilles de ligue se délavent en mode clair.'); process.exit(1); }
+console.log('  ' + checks + ' vérifications, ' + needed.size + ' couleurs de ligue, de titre et de rareté, ' + tones.size + ' variantes claires');
+if (fails) { console.log('\n' + fails + ' problème(s). Rien ne casse au build : titres, pastilles de ligue et noms de rareté se délavent en mode clair.'); process.exit(1); }
 console.log('  ok');

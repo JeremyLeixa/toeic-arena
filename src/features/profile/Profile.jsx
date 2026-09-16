@@ -457,7 +457,7 @@ export function Profile(p){
               return(<button key={r.reward_id} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.avatar=r.reward_id;p.setAvatar(c);}}
                 style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:8,borderRadius:12,cursor:"pointer",background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",border:isEquipped?"2px solid var(--cx-hex)":"1px solid var(--bdr)",fontFamily:"'DM Sans',sans-serif"}}>
                 <AvatarMedal avatarId={r.reward_id} size={40}/>
-                <div style={{fontSize:9,fontWeight:700,color:rarity.color,textAlign:"center"}}>{av.name}</div>
+                <div style={{fontSize:9,fontWeight:700,color:tone(rarity.color),textAlign:"center"}}>{av.name}</div>
                 {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
                 {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
               </button>);
@@ -493,8 +493,8 @@ export function Profile(p){
             var isEquipped=u.equippedSkin===r.reward_id;
             return(<button key={r.reward_id} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedSkin=isEquipped?null:r.reward_id;p.setAvatar(c);}}
               style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:10,borderRadius:14,cursor:"pointer",background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",border:isEquipped?"2px solid "+sk.hex:"1px solid var(--bdr)",fontFamily:"'DM Sans',sans-serif"}}>
-              <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+rarity.color}}/>
-              <div style={{fontSize:10,fontWeight:700,color:rarity.color}}>{sk.name}</div>
+              <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,"+sk.hex+","+sk.dark+")",border:"2px solid "+tone(rarity.color)}}/>
+              <div style={{fontSize:10,fontWeight:700,color:tone(rarity.color)}}>{sk.name}</div>
               {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
               {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
             </button>);
@@ -516,7 +516,7 @@ export function Profile(p){
                 return(<button key={r.reward_id} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedFrame=isEquipped?null:r.reward_id;p.setAvatar(c);}}
                   style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:10,borderRadius:14,cursor:"pointer",background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",border:isEquipped?"2px solid var(--cyan)":"1px solid var(--bdr)",fontFamily:"'DM Sans',sans-serif"}}>
                   <AvatarMedal avatarId="champion" size={48} frameId={r.reward_id}/>
-                  <div style={{fontSize:10,fontWeight:700,color:rarity.color,textAlign:"center"}}>{fr.name}</div>
+                  <div style={{fontSize:10,fontWeight:700,color:tone(rarity.color),textAlign:"center"}}>{fr.name}</div>
                   {isEquipped&&<div style={{fontSize:7,color:"var(--cyan)",fontWeight:700,textTransform:"uppercase"}}>Equipped</div>}
                   {grp.count>1&&<span style={{position:"absolute",top:4,right:4,fontSize:9,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.75)",padding:"2px 5px",borderRadius:8,letterSpacing:.5}}>{"×"+grp.count}</span>}
                 </button>);
@@ -628,10 +628,10 @@ export function Profile(p){
               {Object.keys(CHEAT_SHEETS).map(function(csid){
                 var cs=CHEAT_SHEETS[csid];var owned=ownedCS.some(function(r){return r.reward_id===csid;});
                 var rarity=RARITIES.find(function(rt){return rt.id===cs.rarity;})||RARITIES[0];
-                return(<button key={csid} disabled={!owned} onClick={function(){if(owned)setCsOpen(csid);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:14,borderRadius:12,cursor:owned?"pointer":"default",opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)",border:"1px solid "+(owned?rarity.color:"var(--bdr)")}}>
+                return(<button key={csid} disabled={!owned} onClick={function(){if(owned)setCsOpen(csid);}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:14,borderRadius:12,cursor:owned?"pointer":"default",opacity:owned?1:0.3,background:owned?"rgba(var(--cx),.04)":"var(--bg3)",border:"1px solid "+(owned?tone(rarity.color):"var(--bdr)")}}>
                   <div style={{fontSize:32}}>{cs.icon||"📜"}</div>
                   <div style={{fontSize:11,fontWeight:700,color:owned?"var(--t1)":"var(--t3)",textAlign:"center",lineHeight:1.3}}>{cs.name}</div>
-                  {owned&&<div style={{fontSize:8,color:rarity.color,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Tap to read</div>}
+                  {owned&&<div style={{fontSize:8,color:tone(rarity.color),fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Tap to read</div>}
                 </button>);
               })}
             </div>
