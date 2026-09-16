@@ -51,10 +51,17 @@ import { ChestEarnedToast, ChestOpenModal } from "./features/chests/Chests.jsx";
 import { Profile } from "./features/profile/Profile.jsx";
 import { ResetPasswordView } from "./features/profile/ResetPasswordView.jsx";
 import { NarratorOverlay } from "./features/narrator/NarratorOverlay.jsx";
-import { Onboard } from "./features/onboarding/Onboard.jsx";
-import { TeacherDash } from "./features/teacher/TeacherDash.jsx";
 import { League } from "./features/league/League.jsx";
 import { renderRoute } from "./routes.jsx";
+import { lazyNamed } from "./components/lazyNamed.js";
+
+// ── Écrans chargés à la demande (Phase 5, code-splitting) ──
+// Alias `…Lazy` obligatoires ici : le recensement (tests/check_symbol_census.cjs) compte les
+// déclarations top-level d'App.jsx, et TeacherDash / Onboard existent déjà comme exports de
+// leurs modules. Chemin, nom exporté et absence d'import statique résiduel sont vérifiés par
+// tests/check_import_graph.cjs. Fallbacks : LoadingMark via pg() et le shell Onboard.
+var TeacherDashLazy=lazyNamed(function(){return import("./features/teacher/TeacherDash.jsx");},"TeacherDash");
+var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboard.jsx");},"Onboard");
 
 
 
@@ -1302,10 +1309,10 @@ function sv(d){
   // Écran de chargement : le bloc vit dans components/LoadingMark.jsx, qui sert aussi de
   // fallback aux écrans chargés à la demande (même rendu, plein écran ou sous-page).
   if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadingMark/></div>);
-  if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
+  if(teacherMode)return pg(<TeacherDashLazy back={function(){setTeacher(false);}}/>);
   // Le fallback plein écran est pixel-identique à l'écran `ld` : pour un nouvel élève, le
   // chargement dure simplement un peu plus (le temps du chunk Onboard, une fois par build).
-  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadBoundary><Suspense fallback={<LoadingMark/>}><Onboard go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></Suspense></LoadBoundary></div>);
+  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadBoundary><Suspense fallback={<LoadingMark/>}><OnboardLazy go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></Suspense></LoadBoundary></div>);
 
   // ── Group access control ──
   if(groupAccess&&groupAccess.status==="not_started")return(<div className={lc}><style>{CSS}</style>
