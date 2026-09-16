@@ -30,7 +30,7 @@ export var CSS=`
 .skin-jade{--cx:20,180,170;--cx-hex:#14b4aa;--cx-dark:#0a8880;--cyan:#14b4aa;--orange:#0a8880}
 .skin-obsidienne:not(.light),.light.skin-obsidienne .crd{--cx:180,160,220;--cx-hex:#b4a0dc;--cx-dark:#8870b0;--cyan:#b4a0dc;--orange:#8870b0;--bg:#080810;--bg2:#12101c;--bg3:#1c1a28;--t1:#e8e4f4;--t2:#807898;--bdr:rgba(160,128,224,.08)}
 .skin-aurore:not(.light),.light.skin-aurore .crd{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870;--bg:#08090e;--bg2:#10121c;--bg3:#18202c;--t1:#d8f0e8;--t2:#5898a0;--bdr:rgba(64,208,192,.08)}
-.light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bg-rgb:245,240,232;--bg2-rgb:255,252,245;--bg3-rgb:232,224,210;--bdr:rgba(120,90,50,0.1);--cyan:#6f5410;--orange:#a05a10;--gold:#7c5d0e;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#6e6048;--cx:111,84,16;--cx-hex:#6f5410;--cx-dark:#55400c;--on-cx:#fffcf5}
+.light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bg-rgb:245,240,232;--bg2-rgb:255,252,245;--bg3-rgb:232,224,210;--bdr:rgba(120,90,50,0.1);--cyan:#6f5410;--orange:#834a0d;--gold:#7c5d0e;--green:#106430;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#6e6048;--cx:111,84,16;--cx-hex:#6f5410;--cx-dark:#55400c;--on-cx:#fffcf5}
 /* --on-cx : texte posé sur un aplat d'accent (--cx-hex → --cx-dark : .btn1, .gauntlet-btn-enter,
    médaille de niveau de Home, pastille ✎ du Profil). Sombre sur l'accent vif du mode sombre, clair
    sur l'accent assombri du clair : avec #0f0c08 partout, le bouton principal tombait à 2,5:1 en
