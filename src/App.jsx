@@ -915,7 +915,22 @@ useEffect(function(){
       tokens:tokensMap,
     };
     var pity=(u&&u.gameScores?u.gameScores.pityCount:0)||0;
-    var result=await openChestFromPending(chest,pity,owned);
+    var result;
+    try{result=await openChestFromPending(chest,pity,owned);}
+    catch(e){console.warn("[CHEST] doOpenChest exception (nothing credited):",e&&e.message);result={ok:false,error:(e&&e.message)||"exception"};}
+    // Garde anti-farm (2026-09-16) : tant que le serveur n'a pas consommé le pending
+    // (ok:true), on ne crédite RIEN — ni XP, ni Darics, ni pity, ni narrateur. Avant,
+    // un refus d'open_pending_chest rendait quand même le butin, créditait tout, et
+    // laissait le coffre dans la file : rouvrable, donc re-créditable à volonté.
+    // Le modal affiche sa phase "error" ; le coffre reste en attente. Seul
+    // already_opened (ligne déjà consommée, autre appareil ou double appel) resynchronise
+    // la file : getPendingChests rend [] sur erreur réseau, on ne l'appelle donc pas
+    // pour les autres échecs, sinon le coffre disparaîtrait de la file sans avoir été ouvert.
+    if(!result||result.ok!==true){
+      setChestResult(result||{ok:false,error:"empty_result"});
+      if(result&&result.error==="already_opened")refreshPendingChests(chest.user_name,chest.class_code);
+      return;
+    }
     // Update pity + aggregate XP from all reward slots
     var c=JSON.parse(JSON.stringify(u));
     if(!c.gameScores)c.gameScores={};
@@ -925,7 +940,8 @@ useEffect(function(){
     // Arena Shop P1 — grant Darics via RPC after sv(). silent=true because the
     // reveal modal already shows the Daric card ; no double-feedback toast.
     // unique=false because each chest opening is a distinct grant event (the
-    // chest_log + pending_chests delete pair already guarantees no double-open).
+    // chest_log + pending_chests delete pair already guarantees no double-open —
+    // which only holds because we returned above when open_pending_chest failed).
     if(result.totalDarics>0){
       grantMarks(result.totalDarics,"chest",chest.trigger_source,false,true);
     }

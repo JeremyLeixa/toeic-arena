@@ -805,6 +805,10 @@ export async function convertTokensToPremium(userName, classCode, sourceType, ow
 
 // V2 — Open a chest: roll multi-rewards, persist them, log, delete pending, return aggregate.
 // `owned` = {avatars, skins, frames, titles, cheatSheets, tokens:{type:qty}}
+// Returns {ok:true, rewards, totalXp, totalDarics, newPityCount, …} once the server has
+// consumed the pending row, or {ok:false, error, chestType, triggerSource} otherwise.
+// ⚠️ On ok:false the caller must credit NOTHING (XP, Darics, pity): the pending row still
+// exists, so crediting would let the same chest be opened — and paid — again.
 export async function openChestFromPending(pendingChest, pityCount, owned){
   // Rarity is now derived from chest_type itself (drop tables segmented per chest tier).
   // pityCount kept for backward signature compat — no longer used to roll rarity, but
@@ -820,31 +824,21 @@ export async function openChestFromPending(pendingChest, pityCount, owned){
   var totalXp=0;
   var totalDarics=0; // Arena Shop P1 — aggregated from {type:"daric"} reward slots
   var un=pendingChest.user_name, cc=pendingChest.class_code;
+  var opened=false, openError=null;
+
+  // Aggregate XP / Darics (pure). Both are credited by doOpenChest, and only if the
+  // RPC below consumed the pending row.
+  for(var i=0;i<rewards.length;i++){
+    var r=rewards[i];
+    if(r.type==="xp")totalXp+=r.xp||0;
+    // Granted server-side by doOpenChest via grantMarks RPC (atomic increment +
+    // marks_log entry). Source is "chest" + trigger_source.
+    else if(r.type==="daric")totalDarics+=r.amount||0;
+    // token → grant_token, APRÈS l'ouverture (voir plus bas)
+    // avatar / skin / frame / title / cheat_sheet → persistés par la RPC ci-dessous
+  }
 
   try{
-    // Persist each reward to the right table
-    for(var i=0;i<rewards.length;i++){
-      var r=rewards[i];
-      if(r.type==="xp"){
-        totalXp+=r.xp||0;
-        continue;
-      }
-      if(r.type==="daric"){
-        // Aggregated here, granted server-side by doOpenChest via grantMarks RPC
-        // (atomic increment + marks_log entry). Source is "chest" + trigger_source.
-        totalDarics+=r.amount||0;
-        continue;
-      }
-      if(r.type==="token"){
-        var tt=TOKEN_TYPES[r.id];
-        if(tt){
-          await grantTokenRPC(un,cc,r.id,1,tt.cap||1);
-        }
-        continue;
-      }
-      // avatar / skin / frame / title / cheat_sheet → persistés par la RPC ci-dessous
-    }
-
     // Les TROIS écritures (player_rewards, chest_log, suppression du pending)
     // tiennent maintenant dans UNE transaction SQL.
     //
@@ -864,11 +858,34 @@ export async function openChestFromPending(pendingChest, pityCount, owned){
       p_total_xp:totalXp||0,
       p_rarity:rarityId,
     });
-    if(op.error)console.warn("[CHEST] open_pending_chest error (pending kept):",op.error.message);
-    else if(op.data&&op.data.ok===false)console.warn("[CHEST] open_pending_chest refused (pending kept):",op.data.error);
-  }catch(e){console.warn("[CHEST] openChest exception:",e&&e.message);}
+    // Succès = ok:true explicite, rien d'autre. Avant le 2026-09-16, une erreur ou un
+    // refus ne faisait qu'un console.warn et la fonction rendait le butin complet :
+    // doOpenChest créditait XP, Darics et pity alors que le pending existait encore,
+    // donc le même coffre se rouvrait et se re-créditait (vecteur de farm).
+    if(op.error){openError=op.error.message||"rpc_error";console.warn("[CHEST] open_pending_chest error (nothing credited):",openError);}
+    else if(!(op.data&&op.data.ok===true)){openError=(op.data&&op.data.error)||"empty_response";console.warn("[CHEST] open_pending_chest refused (nothing credited):",openError);}
+    else opened=true;
+  }catch(e){openError=(e&&e.message)||"exception";console.warn("[CHEST] openChest exception (nothing credited):",openError);}
+
+  if(!opened){
+    return{ok:false,error:openError,chestType:ct,triggerSource:pendingChest.trigger_source};
+  }
+
+  // Jetons APRÈS l'ouverture, pas avant : accordés avant la RPC, ils restaient acquis
+  // quand elle échouait, et chaque nouvelle tentative sur le même coffre en redonnait.
+  // Le prix de cet ordre : si grant_token échoue alors que le coffre est consommé, le
+  // jeton est perdu (sous-crédit, loggé par grantTokenRPC) — jamais un double crédit.
+  // Les faire entrer dans la transaction d'open_pending_chest demanderait de changer le
+  // contrat SQL (et HANDLED_ELSEWHERE dans tests/check_chest_drops.cjs).
+  for(var k=0;k<rewards.length;k++){
+    var rt=rewards[k];
+    if(rt.type!=="token")continue;
+    var tt=TOKEN_TYPES[rt.id];
+    if(tt)await grantTokenRPC(un,cc,rt.id,1,tt.cap||1);
+  }
 
   return{
+    ok:true,
     chestType:ct,
     triggerSource:pendingChest.trigger_source,
     rarityTier:tier,

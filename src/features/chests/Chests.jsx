@@ -119,9 +119,15 @@ export function ChestRewardCard(p){
   </>);
 }
 export function ChestOpenModal(p){
-  var[phase,setPhase]=useState("build"); // build → explode → reveal
+  var[animPhase,setPhase]=useState("build"); // build → explode → reveal
   var[revealIdx,setRevealIdx]=useState(0);
   var chest=p.chest;var result=p.result;
+  // open_pending_chest failed or refused (see doOpenChest): nothing was credited.
+  // "error" overrides whatever the animation reached (explode, or reveal's
+  // "Rolling..."); the phase effect below then clears the pending timer.
+  var failed=!!(result&&result.ok===false);
+  var alreadyOpened=failed&&result.error==="already_opened";
+  var phase=failed?"error":animPhase;
   var ct=CHEST_TYPES[chest.chest_type]||CHEST_TYPES.novice;
   // Rarity color derived from chest type (fallback until result arrives)
   var defaultColor=chest.chest_type==="legendaire"?"#ffc020":chest.chest_type==="champion"?"#d4943a":chest.chest_type==="guerrier"?"#3a8ee0":"#909090";
@@ -207,9 +213,19 @@ export function ChestOpenModal(p){
         <div style={{fontSize:48,animation:"pulse 1s infinite"}}>{"\u231B"}</div>
         <p style={{color:"#8a7e6a",fontSize:13,marginTop:12}}>Rolling...</p>
       </div>}
+
+      {/* Error — the chest could not be opened, nothing credited */}
+      {phase==="error"&&<div role="alert" style={{position:"absolute",width:280,maxWidth:"100%",textAlign:"center",zIndex:5}}>
+        <div style={{display:"flex",justifyContent:"center",opacity:.8,filter:"drop-shadow(0 12px 20px rgba(0,0,0,.8))"}}>
+          <TreasureChestSvg size={140} idSuffix="modal_error"/>
+        </div>
+        <div className="out" style={{fontSize:18,fontWeight:900,color:"#ede4d4",marginTop:18,letterSpacing:.5}}>{alreadyOpened?"This chest was already opened":"The chest is still waiting for you"}</div>
+        <p style={{color:"#8a7e6a",fontSize:12,marginTop:8,lineHeight:1.5}}>{alreadyOpened?"It has been removed from your queue.":"It could not be opened right now. Nothing was lost: try again in a moment."}</p>
+      </div>}
     </div>
 
     {/* Collect button (only in reveal phase) */}
     {phase==="reveal"&&result&&currentReward&&<button className="btn1" onClick={nextOrCollect} style={{marginTop:20,width:240,maxWidth:"100%",fontSize:15,zIndex:20,background:"linear-gradient(135deg,"+rarityColor+","+rarityColor+"99)"}}>{isLastReward?"Collect":"Next"}</button>}
+    {phase==="error"&&<button className="btn1" onClick={p.onClose} style={{marginTop:20,width:240,maxWidth:"100%",fontSize:15,zIndex:20,background:"linear-gradient(135deg,"+rarityColor+","+rarityColor+"99)"}}>Close</button>}
   </div>);
 }
