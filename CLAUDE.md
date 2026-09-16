@@ -507,6 +507,11 @@ ne passe. Désormais :
   premier événement sans session. Sinon la session anonyme que `lookupName` ouvre pour sa
   recherche lance `load()` en plein onboarding, sur le profil local d'un AUTRE élève d'un
   appareil partagé (détournement vers son écran mot de passe, ou entrée directe avant F1).
+- **Aucun effet qui appelle l'auth avec `[u]` en deps** (F5) : l'effet de sync d'email relançait
+  `getSession()` et se réabonnait à l'auth à chaque `sv()` (4 `getSession` + 2 abonnements par
+  sauvegarde, 1 + 0 après ; le `getSession` restant est celui que supabase-js fait pour chaque
+  requête). Chaque appel prend le verrou d'auth. Deps primitives, et `sU(prev => …)` quand une
+  réponse asynchrone modifie le profil (recopier le `u` capturé écrase les `sv()` intermédiaires).
 Vérifié en dev le 2026-09-16 : session de l'onglet fermée en pleine utilisation, Daily joué
 (+154 XP locales, sauvegardes refusées), bandeau, reconnexion, XP relue depuis Supabase.
 

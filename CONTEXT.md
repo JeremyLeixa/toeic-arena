@@ -299,10 +299,15 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   sans session : aucun `load()` parasite), BUILD_ID vérifié en prod, **SQL appliqué par Jérémy**,
   `check:security` vert (19 tables, 38 RPC, `recover_student_row` en 404). Non testé en direct :
   claim d'un compte legacy, doublon de nom dans une promo.
+- **F5 livré** (`9322f65`) : effet de sync d'email d'`App.jsx` en deps primitives (nom, promo,
+  email) + `sU` fonctionnel à la réponse de `sync_my_student_email` (recopiait un `u` périmé).
+  Mesuré en dev avec des compteurs posés sur le client Supabase, sur un aller-retour du toggle
+  Narrator : avant 4 `getSession` + 2 abonnements par sauvegarde, après 1 + 0 ; `[SAVE] OK`.
+  Chemin de synchro d'email lui-même non rejoué (email Teacher déjà synchronisé).
 
 ### Pour la prochaine session (décisions de Jérémy)
-- **F4** : « Déconnexion complète » en portée `local` ? **F5** : deps primitives pour l'effet de
-  sync d'email (`App.jsx`). **F6** : commentaires faux (`ensureAuthSession`, `logout`).
+- **F4** : « Déconnexion complète » en portée `local` ? **F6** : commentaires faux
+  (`ensureAuthSession`, `logout`).
 - Logs d'événements d'auth (`SIGNED_OUT`, échec de refresh) pour confirmer l'hypothèse ci-dessus.
 - Supabase Logs Explorer : `load_student refused (not_owner)` pour compter les élèves touchés.
 - Détail visuel : le bandeau F2 recouvre le haut de l'écran (« ← Back », timer du Daily).
