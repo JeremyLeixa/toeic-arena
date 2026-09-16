@@ -531,29 +531,40 @@ useEffect(function(){
   // Runs on mount AND on future auth events to handle the magic link callback timing:
   // the callback event often fires BEFORE this useEffect mounts (during initial page
   // load after the redirect), so we also proactively read the current session on mount.
+  // F5 (2026-09-16) : deps PRIMITIVES — nom, promo, email, c'est tout ce que l'effet lit. Avec
+  // [u], recloné à chaque sv(), il relançait getSession() et se réabonnait à l'auth à CHAQUE
+  // sauvegarde (mesuré : 4 getSession + 2 abonnements par sv). Chaque appel prend le verrou d'auth
+  // de supabase-js ; les « Lock … Forcefully acquiring » vus en console sont soupçonnés de
+  // provoquer des rafraîchissements parallèles et des pertes de session (voir « Session perdue »,
+  // CLAUDE.md). Ne pas revenir à [u].
+  var emailSyncName=u?u.name:null;
+  var emailSyncClass=u?(u.classCode||'visitor'):null;
+  var emailSyncEmail=u?(u.email||null):null;
   useEffect(function(){
-    if(!u)return;
+    if(!emailSyncName)return;
 
     function syncEmailFromSession(session){
       if(!session||!session.user)return;
       if(!session.user.email)return;
       if(!session.user.email_confirmed_at)return;
-      if(u.email===session.user.email)return; // already synced
+      if(emailSyncEmail===session.user.email)return; // already synced
       var newEmail=session.user.email;
       // Phase C-lite : l'email n'est plus fourni par le client. La RPC le lit dans le
       // JWT de la session, donc on ne peut coller sur son profil que l'adresse de SA
       // propre session — et plus celle qu'on veut.
-      supabase.rpc('sync_my_student_email',{p_name:u.name,p_class_code:u.classCode||'visitor'})
+      supabase.rpc('sync_my_student_email',{p_name:emailSyncName,p_class_code:emailSyncClass})
         .then(function(res){
           if(res.error){console.error('[auth] email sync failed:',res.error.message);return;}
           if(!res.data||!res.data.ok||!res.data.rows){
             // No students row matched — probably not yet written to DB (onboarding still in progress).
             // Don't claim "email linked" in local state, otherwise the Profile UI would show
             // "Compte sécurisé" while the DB has no record of it.
-            console.warn('[auth] email confirmed but no students row to update yet for',u.name,'— waiting for next save');
+            console.warn('[auth] email confirmed but no students row to update yet for',emailSyncName,'— waiting for next save');
             return;
           }
-          var c=JSON.parse(JSON.stringify(u));c.email=newEmail;sU(c);
+          // Mise à jour FONCTIONNELLE : la réponse arrive après d'éventuels autres sv(). Recopier
+          // le u capturé (l'ancien `JSON.parse(JSON.stringify(u))`) écrasait ces changements.
+          sU(function(prev){if(!prev)return prev;var c=JSON.parse(JSON.stringify(prev));c.email=newEmail;return c;});
           console.log('[auth] email linked:',newEmail);
         });
     }
@@ -569,8 +580,8 @@ useEffect(function(){
       if(event==="TOKEN_REFRESHED"||event==="PASSWORD_RECOVERY")return;
       syncEmailFromSession(session);
     });
-    return function(){try{sub.data.subscription.unsubscribe();}catch(e){}};
-  },[u]);
+    return function(){try{sub.data.subscription.unsubscribe();}catch(e){console.warn("[auth] email sync unsubscribe caught:",e&&e.message);}};
+  },[emailSyncName,emailSyncClass,emailSyncEmail]);
 
   // ── Load active events from Supabase (once + every 5 min) ──
   useEffect(function(){
