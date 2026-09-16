@@ -1,6 +1,5 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { QUESTIONS } from "../data/grammar.js";
-import { COMPETITORS } from "../data/leagues.js";
 import { MISSION_MODULES } from "../data/placement.js";
 import { srand, today, shuffle } from "./util.js";
 
@@ -111,7 +110,6 @@ export function dailyQs(date,u){
 
   return seededPick(picked,seed+300);
 }
-export function compScores(wk){var seed=0;for(var i=0;i<wk.length;i++)seed+=wk.charCodeAt(i);return COMPETITORS.map(function(c,idx){return{name:c.n,avatar:c.a,xp:Math.floor(srand(seed+idx*137)*600+50+srand(seed+idx*53+Math.floor(Date.now()/864e5))*100)};});}
 export function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.max(1.3,e-0.2);}else if(r===2){iv=Math.max(1,Math.ceil(iv*1.2));e=Math.max(1.3,e-0.15);}else if(r===3){iv=iv===0?1:Math.ceil(iv*e);}else{iv=iv===0?3:Math.ceil(iv*e*1.3);e+=0.15;}var nx=new Date();nx.setDate(nx.getDate()+iv);return{ease:e,interval:iv,nextReview:nx.toISOString().split("T")[0],correct:(st.correct||0)+(r>=3?1:0),total:(st.total||0)+1};}
 export function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 // ─── MODULE SCORE TRACKING ───
@@ -202,12 +200,6 @@ export function checkMission(u,modId){
     u.mission.lastDoneDate=today();
   }
   return u;
-}
-export function getModuleAccuracy(u,modId){
-  if(!u.moduleScores||!u.moduleScores[modId])return null;
-  var m=u.moduleScores[modId];
-  if(m.total===0)return null;
-  return Math.round(m.correct/m.total*100);
 }
 // ─── RECOMMENDATION ENGINE ───
 export var MISSION_THRESHOLD=10; // min sessions before recommending

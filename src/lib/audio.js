@@ -73,36 +73,6 @@ export async function speak(text,rate,audioPath){
   var v=getEnVoice();if(v)u.voice=v;
   window.speechSynthesis.speak(u);
 }
-export function speakAndWait(text,rate,audioPath){
-  return new Promise(function(resolve){
-    if(_audioAborted){resolve();return;}
-    if(audioPath&&!_mp3Failed[audioPath]){
-      if(_audioCache[audioPath]){
-        var a=_audioCache[audioPath].cloneNode();
-        a.playbackRate=rate||0.9;
-        a.onended=resolve;a.onerror=resolve;
-        if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-        _listenAudio=a;
-        a.play().catch(resolve);
-        return;
-      }
-      var audio=new Audio(audioPath);
-      audio.oncanplaythrough=function(){
-        if(_audioAborted){resolve();return;}
-        audio.playbackRate=rate||0.9;
-        _audioCache[audioPath]=audio;
-        audio.onended=resolve;audio.onerror=resolve;
-        if(_listenAudio){try{_listenAudio.pause();_listenAudio.src="";}catch(e){}}
-        _listenAudio=audio;
-        audio.play().catch(resolve);
-      };
-      audio.onerror=function(){_mp3Failed[audioPath]=true;speakBrowserTTS(text,rate,resolve);};
-      audio.load();
-      return;
-    }
-    speakBrowserTTS(text,rate,resolve);
-  });
-}
 export function speakBrowserTTS(text,rate,cb){
   if(!window.speechSynthesis){cb();return;}
   window.speechSynthesis.cancel();

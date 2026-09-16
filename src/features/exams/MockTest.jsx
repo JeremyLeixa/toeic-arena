@@ -3,6 +3,7 @@ import { ResultIcon } from "../../components/icons.jsx";
 import { MOCK1_P5, MOCK1_P6, MOCK1_P7, MOCK2_P5, MOCK2_P6, MOCK2_P7, MOCK3_P5, MOCK3_P6, MOCK3_P7 } from "../../data/mockTests.js";
 import { estimateToeic } from "../../lib/toeic.js";
 import { today } from "../../lib/util.js";
+import { farmMult } from "../../lib/xp.js";
 import { useState, useRef, useEffect } from "react";
 
 export function MockTest(p){
@@ -70,7 +71,8 @@ export function MockTest(p){
     var tgOk=timeUsed>=300;
     var dms0=p.u.dailyModSessions||{};
     var sc0=dms0["mock"+mockId+"_"+today()]||0;
-    var mult0=sc0===0?1:sc0===1?0.40:0;
+    // Même courbe que la porte réelle (lib/xp.js), au lieu d'une copie locale à maintenir.
+    var mult0=farmMult("mock"+mockId,sc0);
     setXpGrant({gxp:tgOk?Math.round(resXp*mult0):0,mult:mult0,timeGateOk:tgOk});
     try{p.done(res,resXp);}catch(e){console.warn("[MockTest] persist failed:",e&&e.message);}
   }

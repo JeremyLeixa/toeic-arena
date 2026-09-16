@@ -17,10 +17,11 @@ import { ACHIEVEMENTS } from "./data/achievements.js";
 import { UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, consumeToken, spendMarks } from "./data/chests.js";
 import { GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { NARRATOR_MOMENTS, hasHeardMoment, markMomentHeard } from "./narrator.js";
-import { partOfModule, computeTodayFocus, estimateTOEICScore } from "./lib/toeic.js";
+import { estimateTOEICScore } from "./lib/toeic.js";
 import { getLeague, applyWeekTransition } from "./lib/league.js";
 import { _cachedUserId, _syncDirty, saveLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty } from "./lib/persistence.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
+import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
 import { CSS } from "./styles/appCss.js";
@@ -896,171 +897,31 @@ function sv(d){
     saveLocal(d);
     save(d);
   }
-  // Phase 2 brainstorm 2026-04-27 — Diminishing returns × event multipliers fix.
-  // Sans ce relèvement de cap, un event "XP×3 sur drill 2 jours" devient inutile dès la
-  // 4e session du jour (gate = 0% → 0×3 = 0 XP). Quand un event boost le module :
-  //  - sessionCount est divisé par 2 (Math.floor) pour le calcul du diminishing
-  //  - effet : chaque palier dure 2 sessions au lieu d'1, donc cap effectif × 2
-  // L'event multiplier (×2/×3) reste appliqué après, comme avant. Pas de bypass de
-  // l'accuracy gate (anti-farm de mauvaises sessions toujours actif).
-  function isModuleBoosted(modId){
-    if(!activeEvents||!activeEvents.length)return false;
-    return activeEvents.some(function(ev){
-      if(ev.type==="spotlight"&&ev.config&&ev.config.module===modId)return true;
-      if(ev.type==="flash_hour")return true; // boost global
-      if(ev.type==="underdog")return true;   // boost conditionnel — on relève le cap pour tous, le multiplier reste sélectif
-      return false;
-    });
-  }
+  // ── Portes XP ── Le CALCUL vit dans lib/xp.js (pur, testé par tests/check_xp_gates.cjs :
+  // seuil d'accuracy, courbes anti-farming, bypass, événements, Focus, boosts Daric, streak,
+  // week-end, +10, planchers, ligue, niveau, coffres). Ici on ne fait que deux choses :
+  // injecter l'état d'App() (u, activeEvents, classMedianXp, l'instant) et exécuter les
+  // EFFETS que le module rend (Darics, sons, haptique, toast, coffres). Équivalence avec
+  // l'ancien code prouvée par scripts/refactor/xp_equivalence.cjs (Phase 5, 2026-09-16).
+  // (isModuleBoosted, qui vivait ici, est devenue isBoostedByEvents dans lib/xp.js.)
   function applyXpGates(baseXp,sc,tot,modId){
-    // ── PILIER 1 : seuil d'accuracy ──
-    var gatedXp=baseXp;
-    if(tot>0){
-      var acc=sc/tot;
-      if(acc<0.30)gatedXp=Math.max(5,Math.round(baseXp*0.10));
-      else if(acc<0.50)gatedXp=Math.round(baseXp*0.50);
-      // ≥50% : formule normale, pas de pénalité
-    }
-    // ── PILIER 2 : diminishing returns anti-farming ──
-    // Skipped entirely when (a) the user has armed a Bypass Token for THIS module,
-    // OR (b) an active event boosts this module — events are explicit invitations
-    // to farm, students should never hit the ceiling during a Spotlight / Flash Hour
-    // / Underdog window. Changed 2026-05-12 after student feedback (previous behavior
-    // doubled the cap via floor(sessionCount/2) — not full disable as intended).
-    if(modId){
-      // V2 — Bypass Token : if armed for THIS module, skip the diminishing curve entirely.
-      // The flag is cleared in recordModule(u, modId) after the round so consumption is
-      // tied to module completion (not just XP application).
-      if(u&&u.bypassArmedModule===modId){
-        return Math.max(0,gatedXp);
-      }
-      var boosted=isModuleBoosted(modId);
-      if(!boosted){
-        var dms=u.dailyModSessions||{};
-        var key=modId+"_"+today();
-        var sessionCount=dms[key]||0;
-        // Flashcards : 100% / 60% / 30% / 0%
-        // Mock Tests  : 100% / 40% / 0%
-        // Autres      : 100% / 50% / 15% / 0%
-        var farmMult;
-        if(modId==="csess"){
-          farmMult=sessionCount===0?1:sessionCount===1?0.60:sessionCount===2?0.30:0;
-        } else if(modId==="mock1"||modId==="mock2"||modId==="mock3"){
-          farmMult=sessionCount===0?1:sessionCount===1?0.40:0;
-        } else {
-          farmMult=sessionCount===0?1:sessionCount===1?0.5:sessionCount===2?0.15:0;
-        }
-        gatedXp=Math.round(gatedXp*farmMult);
-      }
-    }
-    // ── PILIER 3 : Today's Focus boost (Personalization Phase 1, 2026-05-05) ──
-    // +25% XP when the module the user just finished maps to their weakest part
-    // (computed live via computeTodayFocus). Soft incentive to follow the daily
-    // recommendation. Anti-farming layered ON TOP : if the user grinds the focus
-    // module 4× in a day, the diminishing returns above already cap their gain.
-    if(modId&&u){
-      try{
-        var focus=computeTodayFocus(u);
-        if(focus&&partOfModule(modId)===focus.partId){
-          gatedXp=Math.round(gatedXp*1.25);
-          // Arena Shop P1 — 30 Darics for following the Mentor reco, 1×/day.
-          // source_detail="focus_"+today() → applyXpGates re-firing the same
-          // day on another focus module hits the server dedup, silent no-op.
-          grantMarks(30,"focus","focus_"+today(),true);
-        }
-      }catch(e){console.warn("[focus-boost] computation failed:",e&&e.message);}
-    }
-    // ── Arena Shop P2.5 — XP Boosts (purchased with Darics, armed by the player) ──
-    // Primary ranking metric (TOEIC Progression) is accuracy-based → immune. These
-    // only scale XP (level + XP Overall + League weeklyXp), per design decision.
-    if(modId&&u&&u.boosts){
-      var bst=u.boosts;
-      // Module Booster : +50% on the armed module (flag cleared in recordModule)
-      if(bst.moduleBoostArmed===modId){gatedXp=Math.round(gatedXp*1.5);}
-      // Mock Multiplier : ×1.5 on any mock (flag cleared in mockDone)
-      if(bst.mockMultArmed&&(modId==="mock1"||modId==="mock2"||modId==="mock3"||modId==="boss")){gatedXp=Math.round(gatedXp*1.5);}
-    }
-    return Math.max(0,gatedXp);
+    var r=gateXp(baseXp,sc,tot,modId,{u:u,now:new Date(),events:activeEvents});
+    // Arena Shop P1 — 30 Darics pour avoir suivi la reco du Mentor, 1×/jour : le
+    // source_detail "focus_<date>" est dédupliqué côté serveur (re-tir le même jour = no-op).
+    if(r.focusHit)grantMarks(30,"focus","focus_"+today(),true);
+    return r.xp;
   }
   function addXp(baseAmt){if(baseAmt>0)try{playXP();}catch(e){}
-    var c=JSON.parse(JSON.stringify(u));var td=today();var bonuses=[];var isFirstToday=c.lastActive!==td;
-
-    // Update streak
-    if(isFirstToday){var yd=new Date();yd.setDate(yd.getDate()-1);c.streak=c.lastActive===yd.toISOString().split("T")[0]?c.streak+1:1;c.lastActive=td;}
-
-    // Calculate multipliers (only on positive XP — losses are never multiplied)
-    var mult=1;var amt=baseAmt;
-
-    if(baseAmt>0){
-      // Weekend bonus (Saturday=6, Sunday=0)
-      var dow=new Date().getDay();
-      if(dow===0||dow===6){mult*=2;bonuses.push({label:"Weekend x2",color:"#ff6bff"});}
-
-      // Streak multiplier
-      if(c.streak>=7){mult*=1.5;bonuses.push({label:"Streak x1.5 ("+c.streak+"d)",color:"#ff8c42"});}
-      else if(c.streak>=3){mult*=1.2;bonuses.push({label:"Streak x1.2 ("+c.streak+"d)",color:"#ff8c42"});}
-
-      // Event multipliers
-      if(activeEvents&&activeEvents.length>0){
-        activeEvents.forEach(function(ev){
-          var cfg=ev.config||{};var m=cfg.multiplier||2;
-          if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"⚡ Flash Hour x"+m,color:"#f0c850"});}
-          if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"💪 Underdog x"+m,color:"#4abe60"});}
-        });
-      }
-
-      // Arena Shop P2.5 — Daily Doubler (×2 on all modules for 24h, purchased with Darics)
-      if(c.boosts&&c.boosts.dailyDoublerUntil&&Date.now()<c.boosts.dailyDoublerUntil){
-        mult*=2;bonuses.push({label:"⏫ Daily Doubler x2",color:"#f0c850"});
-      }
-
-      amt=Math.round(baseAmt*mult);
-
-      // Daily login bonus (first activity of the day)
-      if(isFirstToday){amt+=10;bonuses.push({label:"+10 daily login",color:"#00e676"});}
-    }
-
-var prevLeague=getLeague(c.weeklyXp);
-    c.xp+=amt;c.weeklyXp+=amt;
-    // Floor: never go below 0 XP
-    if(c.xp<0)c.xp=0;
-    if(c.weeklyXp<0)c.weeklyXp=0;
-    var newLeague=getLeague(c.weeklyXp);
-    if(newLeague.id!==prevLeague.id&&c.weeklyXp>prevLeague.min){try{playJingleLeague();}catch(e){}haptic("league");}
-    // ── Level up detection ──
-    if(amt>0){var _pl=getLevel(c.xp-amt).level,_nl=getLevel(c.xp).level;if(_nl>_pl){try{playLevelUp();}catch(e){}haptic("levelUp");}}
-    var toastInfo={total:amt,base:baseAmt,bonuses:bonuses};
-    sXpt(toastInfo);
-
-    // ── Coffres : paliers XP ──
-    if(amt>0){
-      var prevXp=c.xp-amt;
-      var xpMilestones=[[1000,"novice"],[3000,"novice"],[5000,"novice"],[10000,"guerrier"],[20000,"guerrier"],[30000,"champion"],[50000,"champion"]];
-      xpMilestones.forEach(function(m){
-        if(prevXp<m[0]&&c.xp>=m[0])grantChestLocal("xp_"+(m[0]>=1000?(m[0]/1000)+"k":m[0]),m[1]);
-      });
-    }
-    // ── Coffres : streaks ──
-    if(isFirstToday){
-      if(c.streak===7){grantChestLocal("streak_7","novice");haptic("streak");}
-      if(c.streak===30){grantChestLocal("streak_30","guerrier");haptic("streak");}
-      if(c.streak===100){grantChestLocal("streak_100","champion");haptic("streak");}
-    }
-    // ── Coffres : passage de league ──
-    if(newLeague.id!==prevLeague.id&&c.weeklyXp>prevLeague.min){
-      grantChestLocal("league_up_"+newLeague.id,"guerrier");
-    }
-
-    return c;
+    var r=settleXp(u,baseAmt,{now:new Date(),events:activeEvents,classMedianXp:classMedianXp,leagueOf:getLeague});
+    // Ordre des effets = celui d'avant l'extraction : jingle de ligue, level-up, toast, puis
+    // les coffres (paliers XP, streak avec haptique, passage de ligue).
+    if(r.leagueUp){try{playJingleLeague();}catch(e){}haptic("league");}
+    if(r.levelUp){try{playLevelUp();}catch(e){}haptic("levelUp");}
+    sXpt(r.toast);
+    r.chests.forEach(function(ch){grantChestLocal(ch.trigger,ch.type);if(ch.haptic)haptic(ch.haptic);});
+    return r.c;
   }
-  function getSpotlightMult(modId){
-    if(!activeEvents)return 1;
-    var m=1;
-    activeEvents.forEach(function(ev){
-      if(ev.type==="spotlight"&&ev.config&&ev.config.module===modId)m=ev.config.multiplier||2;
-    });
-    return m;
-  }
+  function getSpotlightMult(modId){return spotlightMult(modId,activeEvents);}
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
   async function onboard(name,classCode,bsScores,firstNav,bsV2Results,authBind){
     classCode=classCode||'visitor';
