@@ -151,15 +151,20 @@ export async function load(userId){
 // Recover an auth session if the current one has been lost (refresh token expired,
 // tab backgrounded too long, etc). Returns a user object or null if recovery failed.
 export async function ensureAuthSession(){
+  // Chaque échec est loggé avec sa raison (règle n°1, 2026-09-16) : c'est ici qu'un compte
+  // sécurisé bascule en session anonyme, et la raison dit pourquoi (session absente, jeton déjà
+  // utilisé, révoqué…). Voir aussi authTrace dans supabase.js.
   try{
     var sess=await supabase.auth.getUser();
     if(sess.data&&sess.data.user)return sess.data.user;
-  }catch(e){/* session missing — fall through to recovery */}
+    if(sess.error)console.warn("[AUTH] getUser: no usable session —",sess.error.message);
+  }catch(e){console.warn("[AUTH] getUser caught:",e&&e.message);}
   // Try to refresh first (session may exist in storage but JWT expired)
   try{
     var refreshed=await supabase.auth.refreshSession();
     if(refreshed.data&&refreshed.data.user){console.warn("[AUTH] recovered via refreshSession");return refreshed.data.user;}
-  }catch(e){/* refresh failed — need a new session */}
+    if(refreshed.error)console.warn("[AUTH] refreshSession failed —",refreshed.error.message);
+  }catch(e){console.warn("[AUTH] refreshSession caught:",e&&e.message);}
   // Dernier recours : nouvelle session ANONYME. ⚠️ F6 (2026-09-16) : l'ancien commentaire disait
   // que la ligne « reste atteignable » par (nom, promo) malgré le changement d'user_id. Faux depuis
   // le verrou du 2026-09-15 pour tout compte SÉCURISÉ : student_guard exige auth.uid() = user_id,
@@ -170,7 +175,8 @@ export async function ensureAuthSession(){
   try{
     var anon=await supabase.auth.signInAnonymously();
     if(anon.data&&anon.data.user){console.warn("[AUTH] recovered via new anon session");return anon.data.user;}
-  }catch(e){/* fully stuck */}
+    if(anon.error)console.warn("[AUTH] signInAnonymously failed —",anon.error.message);
+  }catch(e){console.warn("[AUTH] signInAnonymously caught:",e&&e.message);}
   return null;
 }
 // opts.allowInsert — autorise la création d'une ligne pour un prénom déjà présent
