@@ -1357,7 +1357,17 @@ function sv(d){
       </button>
     </div>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={sp||"root"}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  // Session perdue en cours de session (F2, 2026-09-16) : Supabase refuse les sauvegardes de ce
+  // compte à la session courante. Rendu dans pg() ET dans le retour principal (même patron que
+  // premiumOverlay), sans éjecter l'élève d'un exercice en cours. « Log in again » → sU(null) :
+  // Onboard reprend au mot de passe (prop reauth, F1) ; la copie locale n'est PAS effacée, elle est
+  // récupérée à la reconnexion (recover → fresherLocalFor). Bouton sans .btn2 : skins et fêtes
+  // forcent sa couleur en !important, le rouge du signal serait perdu.
+  var authBanner=u&&authLost&&<div role="alert" style={{position:"fixed",top:0,left:0,right:0,zIndex:9000,padding:"calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px",background:"var(--bg2)",borderBottom:"1px solid rgba(255,71,87,.35)",boxShadow:"0 4px 18px rgba(0,0,0,.25)",display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
+    <span style={{fontSize:13,fontWeight:600,color:"var(--red)"}}>{"Session expired — your progress isn't being saved."}</span>
+    <button onClick={function(){sSP(null);sT("home");sU(null);}} style={{background:"transparent",border:"1px solid rgba(255,71,87,.45)",borderRadius:10,padding:"7px 14px",color:"var(--red)",fontFamily:"'Cinzel','Outfit',serif",fontWeight:600,fontSize:12,cursor:"pointer"}}>{"Log in again"}</button>
+  </div>;
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={sp||"root"}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
   // ↑ Frontière des écrans chargés à la demande (Phase 5) : le fallback et le filet d'erreur
   // n'enveloppent QUE le contenu de la sous-page — toasts, Narrator, Tabs et overlay premium
   // sont frères, jamais cachés ni remontés. La key sur la route remet le filet à zéro quand
@@ -1403,7 +1413,7 @@ function sv(d){
   var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, miniDone, mockDone, nav, pg, rateCard, sSP, sSPA, sT, setPremiumPrompt, shopBuy, sp, spA, sv, trackModSession, u});
   if(routed)return routed;
 
-  return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}
+  return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}
     {!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>

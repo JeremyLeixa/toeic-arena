@@ -212,6 +212,10 @@ export async function save(d,opts){
       // local dérivait vers "visitor". not_owner : la ligne appartient à un compte migré
       // qui n'est pas celui de la session.
       console.error("[SAVE] refused:",dd.error,dd.codes?("| aussi dans: "+JSON.stringify(dd.codes)):"");
+      // F2 (2026-09-16) : not_owner ne se résout pas en réessayant — la session n'est pas celle du
+      // compte. Le console.error seul laissait l'élève jouer sans aucune sauvegarde : App affiche
+      // un bandeau « Log in again ».
+      if(dd.error==="not_owner")notifyAuthLost({name:d.name,classCode:cc});
       return;
     }
     console.warn("[SAVE] OK —",d.name,cc,dd.action);
