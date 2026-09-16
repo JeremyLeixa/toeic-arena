@@ -113,10 +113,11 @@ export function pollEmailConfirmation(onConfirmed, opts) {
       const user = data && data.user;
       if (user && user.email && user.email_confirmed_at) {
         cancelled = true;
-        try { onConfirmed(user.email); } catch (e) {}
+        // Loggé (règle n°1) : un callback qui plante (setter mal nommé…) arrêtait le poll en silence.
+        try { onConfirmed(user.email); } catch (e) { console.warn('[pollEmailConfirmation] onConfirmed caught:', e && e.message); }
         return;
       }
-    } catch (e) {}
+    } catch (e) { console.warn('[pollEmailConfirmation] refreshSession caught:', e && e.message); }
     timer = setTimeout(tick, intervalMs);
   }
   timer = setTimeout(tick, intervalMs);
