@@ -167,11 +167,11 @@ const rpc = async (name, body) => fetch(URL_ + '/rest/v1/rpc/' + name, {
 const rpcNames = collectRpcNames(SRC, ROOT);
 const defs = collectDefs(path.join(ROOT, 'supabase', 'migrations'));
 const isGuarded = (d) => /\bstudent_guard\s*\(|\bteacher_role_of\s*\(|\bauth\.(uid|jwt)\s*\(\)/.test(d.body);
-// Lectures sans garde (patron « classement », plus les deux lookups legacy de l'onboarding,
-// pur SELECT) : rien n'écrit, on peut les sonder. Vérifié corps par corps le 2026-09-15 ;
-// group_public (fiche publique d'une promo, P2-D5) ajoutée le 2026-09-16.
+// Lectures sans garde (patron « classement », plus le lookup de l'onboarding, pur SELECT) :
+// rien n'écrit, on peut les sonder. Vérifié corps par corps le 2026-09-15 ; group_public (fiche
+// publique d'une promo, P2-D5) ajoutée le 2026-09-16 ; recover_student_row retirée (F3).
 const READ_ONLY = new Set(['class_median_xp', 'class_weekly_progress', 'class_week_podium', 'find_students_by_name',
-  'my_student_by_email', 'recover_student_row', 'group_public']);
+  'my_student_by_email', 'group_public']);
 let probed = 0;
 const skipped = [];
 for (const [name, where] of [...rpcNames].sort()) {
@@ -197,7 +197,23 @@ if (!guard || guard.ok !== false) {
   fail('rpc/my_rewards sur un compte inexistant devrait refuser, a répondu : '
     + JSON.stringify(guard) + '. La garde de propriété ne s\'applique plus.');
 }
-console.log('  ' + reads.length + ' lectures directes et ' + probed + ' RPC du client vérifiées'
+// 4c. RPC RETIRÉES : supprimées parce qu'elles ouvraient une donnée sans garde. Elles doivent
+// répondre 404. Une migration rejouée (ou un CREATE OR REPLACE copié d'un vieux fichier) les
+// ferait revenir sans rien casser côté client, qui ne les appelle plus : seule cette sonde le
+// verrait. Arguments factices : une fonction revenue répondrait 200 sans rien écrire.
+//   recover_student_row — ligne students COMPLÈTE sur prénom + code promo (finding C4 en
+//   lecture), retirée par 2026-09-16_f3_drop_recover_student_row.sql.
+const RETIRED = [['recover_student_row', { p_name: 'ZZPersonne', p_class_code: 'zz-inexistant' }]];
+for (const [name, args] of RETIRED) {
+  const r = await rpc(name, args);
+  if (r.status !== 404) {
+    fail('rpc/' + name + ' → HTTP ' + r.status + ' : cette fonction retirée existe encore (attendu 404). '
+      + 'Appliquer ou rejouer sa migration de suppression.');
+  }
+}
+
+console.log('  ' + reads.length + ' lectures directes et ' + probed + ' RPC du client vérifiées, '
+  + RETIRED.length + ' RPC retirée(s) contrôlée(s)'
   + (skipped.length ? '\n  non sondées (aucune garde reconnue dans leur corps) : ' + skipped.join(', ') : ''));
 
 console.log(fails === 0
