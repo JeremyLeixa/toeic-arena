@@ -1130,7 +1130,7 @@ export function Profile(p){
           style={{background:"none",border:"none",cursor:"pointer",padding:0,marginBottom:12,display:"inline-block",position:"relative"}}>
           {renderAvatar(88,44)}
           <div style={{position:"absolute",bottom:0,right:0,width:26,height:26,borderRadius:"50%",
-            background:"var(--cyan)",border:"2px solid var(--bg)",display:"flex",alignItems:"center",
+            background:"var(--cyan)",color:"var(--on-cx)",border:"2px solid var(--bg)",display:"flex",alignItems:"center",
             justifyContent:"center",fontSize:12}}>✎</div>
         </button>
         <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:4}}>{u.name}</h1>

@@ -20,7 +20,7 @@ export var CSS=`
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
 }
-:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#756b54;--cx:212,148,58;--cx-hex:#d4943a;--cx-dark:#a06e20;--endless:#1B70CF;--endless-dark:#0a3a6e;--endless-light:#7fb8e8;--endless-mid:#4a9fe0;--endless-muted:#7a9ac0}
+:root{--bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--bdr:rgba(180,140,80,0.08);--cyan:#d4943a;--orange:#c87a35;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--t1:#ede4d4;--t2:#8a7e6a;--t3:#756b54;--cx:212,148,58;--cx-hex:#d4943a;--cx-dark:#a06e20;--endless:#1B70CF;--endless-dark:#0a3a6e;--endless-light:#7fb8e8;--endless-mid:#4a9fe0;--endless-muted:#7a9ac0;--on-cx:#0f0c08}
 .skin-argent{--cx:180,180,200;--cx-hex:#b4b4c8;--cx-dark:#888898;--cyan:#b4b4c8;--orange:#888898}
 .skin-emeraude{--cx:46,180,100;--cx-hex:#2eb464;--cx-dark:#1a8a46;--cyan:#2eb464;--orange:#1a8a46}
 .skin-saphir{--cx:58,148,220;--cx-hex:#3a94dc;--cx-dark:#1a6aaa;--cyan:#3a94dc;--orange:#1a6aaa}
@@ -30,7 +30,12 @@ export var CSS=`
 .skin-jade{--cx:20,180,170;--cx-hex:#14b4aa;--cx-dark:#0a8880;--cyan:#14b4aa;--orange:#0a8880}
 .skin-obsidienne:not(.light),.light.skin-obsidienne .crd{--cx:180,160,220;--cx-hex:#b4a0dc;--cx-dark:#8870b0;--cyan:#b4a0dc;--orange:#8870b0;--bg:#080810;--bg2:#12101c;--bg3:#1c1a28;--t1:#e8e4f4;--t2:#807898;--bdr:rgba(160,128,224,.08)}
 .skin-aurore:not(.light),.light.skin-aurore .crd{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870;--bg:#08090e;--bg2:#10121c;--bg3:#18202c;--t1:#d8f0e8;--t2:#5898a0;--bdr:rgba(64,208,192,.08)}
-.light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bg-rgb:245,240,232;--bg2-rgb:255,252,245;--bg3-rgb:232,224,210;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#6e6048;--cx:139,105,20;--cx-hex:#8b6914;--cx-dark:#6a4e10}
+.light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bg-rgb:245,240,232;--bg2-rgb:255,252,245;--bg3-rgb:232,224,210;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#6e6048;--cx:139,105,20;--cx-hex:#8b6914;--cx-dark:#6a4e10;--on-cx:#fffcf5}
+/* --on-cx : texte posé sur un aplat d'accent (--cx-hex → --cx-dark : .btn1, .gauntlet-btn-enter,
+   médaille de niveau de Home, pastille ✎ du Profil). Sombre sur l'accent vif du mode sombre, clair
+   sur l'accent assombri du clair : avec #0f0c08 partout, le bouton principal tombait à 2,5:1 en
+   clair (1,6:1 sur Amethyst). Les cartes-nuit le remettent sombre (accent vif dans la carte) ; les
+   skins nuit et les fêtes gardent leur couleur de .btn1 en !important. */
 /* Variantes claires des couleurs de ligue, de titre et de rareté codées en dur (lib/tone.js :
    tone(hex) → var(--tone-<hex>,<hex>)). Même teinte, ≥ 4,6:1 sur --bg, --bg2, --bg3 ; les jaunes
    ramenés vers 43° (un jaune assombri vire à l'olive). Hors clair la variable n'existe pas et le
@@ -175,7 +180,7 @@ export var CSS=`
    3. Fond de carte translucide sans couleur opaque (abyssal : shorthand ; molten_gold, heraldic :
       background-image seul, et 78 .crd ont un fond inline translucide) : en sombre la page sombre
       passe dessous, en clair la page crème délavait la carte. On remet ce qui est dessous en sombre. */
-.light:where(.skin-obsidienne,.skin-aurore,.skin-frostbite,.skin-emberheart,.skin-cosmic_void,.skin-abyssal,.skin-molten_gold,.skin-heraldic,.skin-aldric_chamber) .crd{--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--t3:#756b54;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--cx-hex:#d4943a;--cx-dark:#a06e20;--tone-cd7f32:initial;--tone-c0c0c0:initial;--tone-ffd700:initial;--tone-00d4ff:initial;--tone-ff6bff:initial;--tone-ff4757:initial;--tone-ffae00:initial;--tone-3a8ee0:initial;--tone-c060f0:initial;--tone-ffc020:initial;--tone-e8d4a8:initial;--tone-c9a23a:initial;--tone-e8c45a:initial;--tone-909090:initial;--tone-3ecc78:initial;color:var(--t1)}
+.light:where(.skin-obsidienne,.skin-aurore,.skin-frostbite,.skin-emberheart,.skin-cosmic_void,.skin-abyssal,.skin-molten_gold,.skin-heraldic,.skin-aldric_chamber) .crd{--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--t3:#756b54;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--cx-hex:#d4943a;--cx-dark:#a06e20;--tone-cd7f32:initial;--tone-c0c0c0:initial;--tone-ffd700:initial;--tone-00d4ff:initial;--tone-ff6bff:initial;--tone-ff4757:initial;--tone-ffae00:initial;--tone-3a8ee0:initial;--tone-c060f0:initial;--tone-ffc020:initial;--tone-e8d4a8:initial;--tone-c9a23a:initial;--tone-e8c45a:initial;--tone-909090:initial;--tone-3ecc78:initial;--on-cx:#0f0c08;color:var(--t1)}
 .light.skin-obsidienne .btn2,.light.skin-aurore .btn2,.light.skin-frostbite .btn2,.light.skin-emberheart .btn2,.light.skin-cosmic_void .btn2,.light.skin-abyssal .btn2,.light.skin-molten_gold .btn2,.light.skin-heraldic .btn2,.light.skin-aldric_chamber .btn2{color:var(--cyan)!important}
 .light.skin-abyssal .crd{background-color:var(--bg)!important}
 .light.skin-molten_gold .crd,.light.skin-heraldic .crd{background-color:var(--bg2)!important}
@@ -375,7 +380,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
    later → wins the tie. Keep AFTER the skin block. (bug 2026-06-25) */
 .crd.read-scroll{overflow-y:auto!important;-webkit-overflow-scrolling:touch}
 .glo{box-shadow:0 0 30px rgba(var(--cx),.06)}
-.btn1{background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));color:#0f0c08;border:none;border-radius:12px;padding:14px 28px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:all .2s}
+.btn1{background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));color:var(--on-cx);border:none;border-radius:12px;padding:14px 28px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:all .2s}
 .btn1:active{transform:scale(.97)}
 .btn2{background:var(--bg2);border:1px solid var(--bdr);color:var(--t1);border-radius:12px;padding:12px 24px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:14px;cursor:pointer}
 .fl{animation:flame 1.5s ease-in-out infinite;display:inline-block}
@@ -433,7 +438,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .gauntlet-card-desc{font-size:13px;color:var(--t3);margin-bottom:10px;line-height:1.5}
 .gauntlet-card-stats{display:flex;gap:10px;font-size:11px;color:var(--t3);margin-bottom:12px;opacity:.85}
 .gauntlet-card-actions{display:flex;gap:8px}
-.gauntlet-btn-enter{flex:1;background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));color:#0f0c08;border:none;border-radius:12px;padding:12px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:14px;cursor:pointer;letter-spacing:.3px}
+.gauntlet-btn-enter{flex:1;background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));color:var(--on-cx);border:none;border-radius:12px;padding:12px;font-family:'Cinzel','Outfit',serif;font-weight:700;font-size:14px;cursor:pointer;letter-spacing:.3px}
 .gauntlet-btn-grim{background:rgba(var(--cx),.1);color:var(--cyan);border:1px solid rgba(var(--cx),.3);border-radius:12px;padding:12px 14px;font-family:'Cinzel','Outfit',serif;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
 .gauntlet-btn-grim:active{background:rgba(var(--cx),.22)}
 .icrypt-input:focus{border-color:#c026d3!important;box-shadow:0 0 0 3px rgba(192,38,211,.2)}
