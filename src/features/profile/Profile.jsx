@@ -977,7 +977,7 @@ export function Profile(p){
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)",padding:"12px 16px"}}>
         {"⚙️ Gestion du compte"}
       </button>
-      <button className="btn2" onClick={function(){if(confirm("Changer de profil ? Vos données restent sauvegardées. Tapez votre nom au prochain écran pour vous reconnecter."))p.logout();}}
+      <button className="btn2" onClick={function(){if(confirm("Changer de profil ? Tes données restent sauvegardées. Pour revenir sur ce compte, il faudra retaper ton prénom, ton code de promo et ton mot de passe."))p.logout();}}
         style={{fontSize:13,width:"100%",marginBottom:8,borderColor:"rgba(var(--cx),.2)",color:"var(--cyan)"}}>
         {"🔄 Changer de profil"}
       </button>
@@ -1092,9 +1092,10 @@ export function Profile(p){
         </button>
         {/* Déconnexion complète — ferme la session Supabase de CET appareil (portée `local`, F4
             2026-09-16 : `global` coupait aussi les autres appareils de l'élève et les faisait tomber
-            dans le piège « session perdue ») + purge du localStorage de l'app. Différent de « Changer
-            de profil », qui garde la session (voir logout() dans App.jsx). Les données côté Supabase
-            ne sont PAS supprimées. */}
+            dans le piège « session perdue ») + purge de TOUT le localStorage de l'app, puis
+            rechargement. « Changer de profil » ferme aussi la session de l'appareil mais garde les
+            préférences locales (voir logout() dans App.jsx). Les données côté Supabase ne sont PAS
+            supprimées. */}
         <button className="btn2" onClick={async function(){
           if(!confirm("Déconnexion complète ?\n\nTa session est fermée sur CET appareil et le profil local est vidé : il faudra retaper ton prénom, ton code de promo et ton mot de passe. Tes autres appareils restent connectés, et tes données en base ne sont pas touchées.\n\nÀ utiliser sur un appareil partagé, ou si tu veux te connecter avec un autre compte."))return;
           try{await signOutCompletely();}catch(e){console.warn("[logout] signOut failed:",e&&e.message);}

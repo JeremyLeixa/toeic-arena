@@ -660,6 +660,11 @@ useEffect(function(){
   // Abonnement monté avant tout load() : les notifications arrivent après des allers-retours RPC.
   useEffect(function(){
     return onAuthLost(function(t){
+      // Plus aucun profil local (« Changer de profil » vient de le vider) : c'est un refus arrivé
+      // en retard (sauvegarde partie avant la déconnexion). L'ignorer, sinon l'élève suivant
+      // serait renvoyé vers « Bon retour, <ancien compte> ». La petite clé toeic-arena-name est
+      // présente dans tous les vrais cas : démarrage piégé (F1) comme session en cours (F2).
+      try{if(!localStorage.getItem("toeic-arena-name")){console.warn("[authLost] ignored: no local profile (after logout) —",t.name);return;}}catch(e){console.warn("[authLost] storage read caught:",e&&e.message);}
       setAuthLost(function(prev){return prev&&prev.name===t.name&&prev.classCode===t.classCode?prev:t;});
     });
   },[]);
@@ -1277,19 +1282,20 @@ function sv(d){
     sv(c);sSP(null);
   }
   async function logout(){
-    // « Changer de profil » : déconnexion DOUCE. Vide le profil local et l'état React mais GARDE la
-    // session Supabase de l'appareil ; seule la « Déconnexion complète » du Profil la ferme (portée
-    // locale, auth.js signOutCompletely), et deleteAccount supprime le compte.
-    // ⚠️ F6 (2026-09-16) : l'ancienne justification (« la session anonyme donne l'accès RLS au
-    // lookup ; sans elle, Welcome back casse ») est caduque. Le lookup passe par une RPC publique
-    // (find_students_by_name) et lookupName ouvre lui-même une session anonyme s'il n'y en a pas.
-    // Conséquence à connaître : si la session gardée est celle d'un compte SÉCURISÉ, un
-    // rechargement de la page y ré-entre sans repasser par l'onboarding (démarrage → load() →
-    // load_student_by_uid). Sur un appareil partagé, c'est la Déconnexion complète qu'il faut.
-    try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
+    // « Changer de profil » (2026-09-16) : vide le profil local et l'état React, et FERME la session
+    // Supabase de cet appareil (portée locale). Avant, la session était gardée : pour un compte
+    // SÉCURISÉ, un simple rechargement ré-entrait sur ce compte sans onboarding (démarrage → load()
+    // → load_student_by_uid), et sur un appareil partagé l'élève suivant retombait sur le compte du
+    // précédent. La raison historique de la garder (« la session anonyme donne l'accès RLS au
+    // lookup ») est caduque : le lookup est une RPC publique et lookupName ouvre sa propre session
+    // anonyme. Différence avec la « Déconnexion complète » du Profil : préférences locales (son,
+    // conseils, fêtes) conservées, pas de rechargement.
+    try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){console.warn("[logout] storage caught:",e&&e.message);}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
     setCachedUserId(null);setSyncDirty(false);
     sU(null);sSP(null);sT("home");
+    // Après le changement d'écran : l'attente réseau (et le verrou d'auth) ne fige pas l'interface.
+    try{await supabase.auth.signOut({scope:'local'});}catch(e){console.warn("[logout] signOut caught:",e&&e.message);}
   }
 
   // RGPD erasure (P2 Phase B, B6). L'ancien delete `.eq('id',uid)` ne matchait JAMAIS
