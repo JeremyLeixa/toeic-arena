@@ -18,6 +18,7 @@ import { getEffectiveLeague } from "../../lib/league.js";
 import { isPushSubscribed, unsubscribePush, subscribePush } from "../../lib/push.js";
 import { getBioCredId, biometricAvailable, teacherAuth, bioAuthenticate, setDashSession } from "../../lib/teacherSession.js";
 import { estimateTOEICScore, generateInsight } from "../../lib/toeic.js";
+import { tone } from "../../lib/tone.js";
 import { today } from "../../lib/util.js";
 import { NARRATOR_ORDER, NARRATOR_MOMENTS } from "../../narrator.js";
 import { isSoundEnabled, setSoundEnabled, playCorrect, stopBGM } from "../../sounds.js";
@@ -536,8 +537,8 @@ export function Profile(p){
                 var r=grp.row;var ti=TITLES[r.reward_id];if(!ti)return null;
                 var isEquipped=u.equippedTitle===r.reward_id;
                 return(<button key={r.reward_id} onClick={function(){var c=JSON.parse(JSON.stringify(u));c.equippedTitle=isEquipped?null:r.reward_id;p.setAvatar(c);}}
-                  style={{padding:"10px 14px",borderRadius:10,cursor:"pointer",textAlign:"left",background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",border:isEquipped?"2px solid "+ti.color:"1px solid var(--bdr)",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-                  <span style={{fontSize:14,fontWeight:800,color:ti.color,letterSpacing:1,textTransform:"uppercase",flex:1,minWidth:0}}>{ti.name}</span>
+                  style={{padding:"10px 14px",borderRadius:10,cursor:"pointer",textAlign:"left",background:isEquipped?"rgba(var(--cx),.1)":"var(--bg2)",border:isEquipped?"2px solid "+tone(ti.color):"1px solid var(--bdr)",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                  <span style={{fontSize:14,fontWeight:800,color:tone(ti.color),letterSpacing:1,textTransform:"uppercase",flex:1,minWidth:0}}>{ti.name}</span>
                   <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
                     {grp.count>1&&<span style={{fontSize:10,fontWeight:800,color:"#ffc020",background:"rgba(0,0,0,.5)",padding:"2px 6px",borderRadius:8}}>{"×"+grp.count}</span>}
                     {isEquipped&&<span style={{fontSize:8,color:"var(--cyan)",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Equipped</span>}
@@ -1133,10 +1134,10 @@ export function Profile(p){
             justifyContent:"center",fontSize:12}}>✎</div>
         </button>
         <h1 className="out" style={{fontWeight:800,fontSize:22,marginBottom:4}}>{u.name}</h1>
-        {u.equippedTitle&&TITLES[u.equippedTitle]&&<div className="out" style={{fontSize:11,fontWeight:800,color:TITLES[u.equippedTitle].color,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{TITLES[u.equippedTitle].name}</div>}
+        {u.equippedTitle&&TITLES[u.equippedTitle]&&<div className="out" style={{fontSize:11,fontWeight:800,color:tone(TITLES[u.equippedTitle].color),letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{TITLES[u.equippedTitle].name}</div>}
         <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap",marginTop:4}}>
           <span style={{fontSize:12,background:"rgba(var(--cx),.1)",color:"var(--orange)",padding:"3px 10px",borderRadius:20,border:"1px solid rgba(var(--cx),.2)"}}>Lv. {lv.level}</span>
-          <span style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"1px solid rgba(27,112,207,.2)",background:"rgba(27,112,207,.1)",color:lg.color}}>
+          <span style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"1px solid rgba(27,112,207,.2)",background:"rgba(27,112,207,.1)",color:tone(lg.color)}}>
   <LeagueIcon lg={lg} size={13} style={{marginRight:4,verticalAlign:"-2px"}}/>{lg.name}
   {lg.locked&&<span style={{marginLeft:4,display:"inline-flex"}}><ResultIcon e={"🔒"} size={11} color="var(--t3)"/></span>}
 </span>

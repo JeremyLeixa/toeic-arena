@@ -6,6 +6,7 @@ import { TITLES } from "../../data/chests.js";
 import { LEAGUES } from "../../data/leagues.js";
 import { getEffectiveLeague, SEASONS, getCurrentSeason, computeRankings, getLeague, getSeasonEndCountdown } from "../../lib/league.js";
 import { estimateTOEICScore, battleScanToToeic } from "../../lib/toeic.js";
+import { tone } from "../../lib/tone.js";
 import { weekId } from "../../lib/util.js";
 import { supabase } from "../../supabase.js";
 import { useState, useEffect, useMemo } from "react";
@@ -205,7 +206,7 @@ function RankRow(props){var pl=props.pl,rank=props.rank,isMe=props.isMe,unit=pro
     <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
     <div style={{flex:1,minWidth:0}}>
       <div className="out" style={{fontWeight:isMe?700:500,fontSize:14,color:isMe?"var(--cyan)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{isMe?pl.name+" (Toi)":pl.name}</div>
-      {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
+      {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:tone(titleData.color),marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
       {bonus&&<div style={{fontSize:10,color:bonusColor,fontWeight:700,marginTop:2}}>{bonus}</div>}
     </div>
     <div className="out" style={{fontWeight:700,fontSize:14,color:isMe?"var(--cyan)":"var(--t2)",flexShrink:0}}>{pl.pts!==undefined?pl.pts:pl.xp} {unit}</div>
@@ -260,7 +261,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 {tab==="week"&&(<div>
   {u.name!=="Teacher"&&<div className="crd glo" style={{textAlign:"center",marginBottom:16,padding:20}}>
     <div style={{marginBottom:6,animation:"glow 3s infinite",display:"flex",justifyContent:"center"}}><LeagueIcon lg={lg} size={40}/></div>
-    <div className="out" style={{fontWeight:800,fontSize:20,color:lg.color}}>Ligue {lg.name}</div>
+    <div className="out" style={{fontWeight:800,fontSize:20,color:tone(lg.color)}}>Ligue {lg.name}</div>
     <div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Rang #{weekRank} cette semaine</div>
     {nx&&<div style={{marginTop:10}}><div style={{fontSize:10,color:"var(--t3)",marginBottom:4}}>{nx.min-u.weeklyXp} XP pour atteindre {nx.name}</div><Bar value={u.weeklyXp-lg.min} max={nx.min-lg.min} h={4} color={nx.color}/></div>}
   </div>}
@@ -281,9 +282,9 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
             <div style={{width:40,display:"flex",justifyContent:"center",flexShrink:0}}>{renderAv(pl.avatar,34,pl.frameId)}</div>
             <div style={{flex:1,minWidth:0}}>
               <div className="out" style={{fontWeight:pl.me?700:500,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{pl.me?pl.name+" (Toi)":pl.name}</div>
-              {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
+              {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:tone(titleData.color),marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
               {pl.inactive&&<div style={{fontSize:10,color:"var(--t3)",fontWeight:500,marginTop:2}}>{"⏸ Inactif(ve) cette semaine"}</div>}
-              {!pl.inactive&&isTeacher&&<div style={{fontSize:10,color:plLg.color,fontWeight:600,marginTop:2,display:"flex",alignItems:"center",gap:3}}><LeagueIcon lg={plLg} size={11}/>{plLg.name}</div>}
+              {!pl.inactive&&isTeacher&&<div style={{fontSize:10,color:tone(plLg.color),fontWeight:600,marginTop:2,display:"flex",alignItems:"center",gap:3}}><LeagueIcon lg={plLg} size={11}/>{plLg.name}</div>}
             </div>
             <div className="out" style={{fontWeight:700,fontSize:14,color:pl.me?"var(--cyan)":pl.inactive?"var(--t3)":"var(--t2)",flexShrink:0}}>{pl.inactive?"—":pl.xp+" XP"}</div>
           </div>);
@@ -396,7 +397,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
                   color:pl.me?"var(--cyan)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                   {pl.me?pl.name+" (Toi)":pl.name}
                 </div>
-                {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
+                {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:tone(titleData.color),marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
                 <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>
                   {pl.baseline} → {pl.currentToeic!==null?pl.currentToeic:"\u2014"} pts TOEIC
                   {bonusLabel&&<span style={{marginLeft:6,color:"var(--gold)",fontWeight:700}}>{bonusLabel}</span>}
@@ -430,7 +431,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
                   color:pl.me?"var(--cyan)":"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                   {pl.me?pl.name+" (Toi)":pl.name}
                 </div>
-                {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:titleData.color,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
+                {titleData&&<div className="out" style={{fontSize:9,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",color:tone(titleData.color),marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titleData.name}</div>}
                 <div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>{reason}</div>
               </div>
               <div style={{fontSize:12,color:"var(--t3)"}}>⏳</div>

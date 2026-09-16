@@ -16,7 +16,8 @@
  *
  * Prouvé mordant le 2026-09-16 : « .skin-heraldic{ » rétabli → rouge ; aurore retiré du :where
  * → rouge ; --t3 retiré de la règle par défaut → rouge ; frostbite retiré de la liste .btn2 →
- * rouge ; molten_gold retiré de la règle background-color → rouge.
+ * rouge ; molten_gold retiré de la règle background-color → rouge. Le 2026-09-16 (tones) : règle
+ * .light{--tone-…} ajoutée sans remise à initial dans la règle par défaut → rouge sur les 9 skins.
  *
  * Usage : node tests/check_skins_light.cjs
  */
@@ -56,9 +57,11 @@ const night = skinIds.filter((id) => forcesCardBg(id) || setsBg2(id));
 check(night.length > 0, 'aucun skin à cartes sombres trouvé : le test ne lit plus appCss.js correctement');
 
 // ── Les règles partagées du bloc « cartes-nuit » ──
-const lightRule = lines.find((l) => l.startsWith('.light{'));
-check(!!lightRule, 'règle .light{…} introuvable');
-const lightTokens = lightRule ? tokensOf(bodyOf(lightRule)) : new Set();
+// Toutes les règles « .light{…} », pas seulement la première : les variantes claires des couleurs
+// de ligue et de titre (--tone-*, lib/tone.js) vivent dans une règle à part.
+const lightRules = lines.filter((l) => l.startsWith('.light{'));
+check(lightRules.length > 0, 'règle .light{…} introuvable');
+const lightTokens = new Set(lightRules.flatMap((l) => [...tokensOf(bodyOf(l))]));
 const defaultsRule = lines.find((l) => l.startsWith('.light:where(') && selectorOf(l).endsWith(') .crd'));
 check(!!defaultsRule, 'règle par défaut .light:where(…) .crd{…} introuvable (tokens que les skins ne posent pas, dans la carte)');
 const defaultsIds = defaultsRule ? (selectorOf(defaultsRule).match(/\.skin-[a-z_]+/g) || []).map((s) => s.slice(6)) : [];

@@ -1,6 +1,7 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { GAME_ICON_PATHS } from "../data/avatarIcons.js";
 import { SEASON_GI, RESULT_GI } from "../lib/iconMaps.js";
+import { tone } from "../lib/tone.js";
 
 // ─── BRAND MARK ───
 // Verse Arena logo ("plume & épée"): steel sword crossed with a gold quill.
@@ -45,7 +46,7 @@ export function GIcon(p){
 // 🥇🥈🥉💎👑🏆⚡ tier emojis app-wide.)
 export function LeagueIcon(p){
   var lg=p.lg||{};var sz=p.size||20;
-  if(GAME_ICON_PATHS[lg.gi])return(<GIcon name={lg.gi} size={sz} color={p.color||lg.color||"var(--gold)"} style={p.style}/>);
+  if(GAME_ICON_PATHS[lg.gi])return(<GIcon name={lg.gi} size={sz} color={p.color||tone(lg.color)||"var(--gold)"} style={p.style}/>);
   return(<span style={Object.assign({fontSize:sz,lineHeight:1},p.style||{})}>{lg.icon}</span>);
 }
 export function SeasonIcon(p){

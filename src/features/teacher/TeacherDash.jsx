@@ -9,6 +9,7 @@ import { isGhost } from "../../lib/access.js";
 import { generateSeasons } from "../../lib/league.js";
 import { getDashTeacher, getBioCredId, biometricAvailable, isDashAdmin, teacherAuth, optIcon, bioRegister, BIOMETRIC_KEY, clearDashSession } from "../../lib/teacherSession.js";
 import { estimateTOEICScore } from "../../lib/toeic.js";
+import { tone } from "../../lib/tone.js";
 import { today, weekId } from "../../lib/util.js";
 import { supabase } from "../../supabase.js";
 import { useState, useEffect } from "react";
@@ -1557,7 +1558,7 @@ export function TeacherDash(p){
                     return(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0"}}>
                       <span style={{width:20,textAlign:"center",fontSize:medal?14:11,fontWeight:700,color:medal?"var(--gold)":"var(--t3)"}}>{medal||i+1}</span>
                       <span style={{flex:1,fontSize:12,color:"var(--t1)"}}>{r.name}</span>
-                      <span style={{fontSize:10,color:lg.color,fontWeight:600}}>{lg.icon}</span>
+                      <span style={{fontSize:10,color:tone(lg.color),fontWeight:600}}>{lg.icon}</span>
                       <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--t2)",width:55,textAlign:"right"}}>{r.xp} XP</span>
                     </div>);
                   })}

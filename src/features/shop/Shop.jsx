@@ -4,6 +4,7 @@ import { GIcon } from "../../components/icons.jsx";
 import { DaricPill } from "../../components/toasts.jsx";
 import { SKINS, TITLES, TOKEN_TYPES, CHEAT_SHEETS, getOwnedRewards, getOwnedTokens, SHOP_CATALOG, AVATARS, FRAMES, convertCosmeticDups, convertTokensToPremium } from "../../data/chests.js";
 import { shopRarColor, shopItemName, SHOP_SECTIONS, shopItemDesc } from "../../lib/shopCatalog.js";
+import { tone } from "../../lib/tone.js";
 import { weekId } from "../../lib/util.js";
 import { useState, useEffect } from "react";
 
@@ -259,7 +260,7 @@ export function ConversionsView(p){
             if(g.type==="avatar"&&AVATARS[g.id])visual=<AvatarMedal avatarId={g.id} size={32}/>;
             else if(g.type==="skin"&&SKINS[g.id])visual=<div style={{width:32,height:32,borderRadius:8,background:"linear-gradient(135deg,"+SKINS[g.id].hex+","+SKINS[g.id].dark+")"}}/>;
             else if(g.type==="frame"&&FRAMES[g.id])visual=<AvatarMedal avatarId="champion" size={28} frameId={g.id}/>;
-            else if(g.type==="title"&&TITLES[g.id])visual=<span style={{fontSize:18,color:TITLES[g.id].color}}>{"✦"}</span>;
+            else if(g.type==="title"&&TITLES[g.id])visual=<span style={{fontSize:18,color:tone(TITLES[g.id].color)}}>{"✦"}</span>;
             return(<div key={g.type+g.id} className="crd" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{flexShrink:0,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center"}}>{visual}</div>
               <div style={{flex:1,minWidth:0,overflow:"hidden"}}>

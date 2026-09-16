@@ -31,6 +31,12 @@ export var CSS=`
 .skin-obsidienne:not(.light),.light.skin-obsidienne .crd{--cx:180,160,220;--cx-hex:#b4a0dc;--cx-dark:#8870b0;--cyan:#b4a0dc;--orange:#8870b0;--bg:#080810;--bg2:#12101c;--bg3:#1c1a28;--t1:#e8e4f4;--t2:#807898;--bdr:rgba(160,128,224,.08)}
 .skin-aurore:not(.light),.light.skin-aurore .crd{--cx:64,208,192;--cx-hex:#40d0c0;--cx-dark:#3a9870;--cyan:#40d0c0;--orange:#3a9870;--bg:#08090e;--bg2:#10121c;--bg3:#18202c;--t1:#d8f0e8;--t2:#5898a0;--bdr:rgba(64,208,192,.08)}
 .light{--bg:#f5f0e8;--bg2:#fffcf5;--bg3:#e8e0d2;--bg-rgb:245,240,232;--bg2-rgb:255,252,245;--bg3-rgb:232,224,210;--bdr:rgba(120,90,50,0.1);--cyan:#8b6914;--orange:#a05a10;--gold:#a67c00;--green:#15803d;--red:#b82020;--purple:#6b3d62;--t1:#1a1510;--t2:#5a5040;--t3:#6e6048;--cx:139,105,20;--cx-hex:#8b6914;--cx-dark:#6a4e10}
+/* Variantes claires des couleurs de ligue et de titre codées en dur (lib/tone.js : tone(hex) →
+   var(--tone-<hex>,<hex>)). Même teinte, ≥ 4,6:1 sur --bg, --bg2, --bg3 ; les jaunes ramenés
+   vers 43° (un jaune assombri vire à l'olive). Hors clair la variable n'existe pas et le hex
+   s'applique ; les cartes-nuit la remettent à initial. Une couleur de ligue ou de titre ajoutée
+   sans sa variante ici : tests/check_tones.cjs rougit. */
+.light{--tone-cd7f32:#8b5622;--tone-c0c0c0:#626262;--tone-ffd700:#7d5d0e;--tone-00d4ff:#0e6c7f;--tone-ff6bff:#ad13ad;--tone-ff4757:#c21625;--tone-ffae00:#815c0e;--tone-3a8ee0:#1b64ab;--tone-c060f0:#9818d8;--tone-ffc020:#7c5d0e;--tone-e8d4a8:#795d20;--tone-c9a23a:#785f21;--tone-e8c45a:#7b5d11}
 .light.skin-argent{--cx:80,80,110;--cx-hex:#505070;--cx-dark:#383848;--cyan:#505070;--orange:#383848}
 .light.skin-emeraude{--cx:18,110,52;--cx-hex:#126e34;--cx-dark:#0c5228;--cyan:#126e34;--orange:#0c5228}
 .light.skin-saphir{--cx:20,80,150;--cx-hex:#145096;--cx-dark:#0e3a78;--cyan:#145096;--orange:#0e3a78}
@@ -162,13 +168,14 @@ export var CSS=`
    1. Tokens qu'aucun skin ne pose : valeurs de :root dans la carte. :where() ramène la règle à
       0,2,0, sous « .light.skin-X .crd » (0,3,0) : le skin qui en pose un (--cx-hex d'aurore) gagne
       quel que soit l'ordre. color : .app a calculé la couleur du texte avec le --t1 clair, la
-      carte doit la recalculer avec le sien.
+      carte doit la recalculer avec le sien. --tone-* : initial = valeur invalide garantie, donc
+      var(--tone-x,<hex>) retombe sur le hex vif d'origine dans la carte sombre.
    2. .btn2 : ces skins posent une couleur claire en dur (#40d0c0…), illisible sur la page crème ;
       var(--cyan) prend le retint .light.skin-X hors carte, l'accent vif dans la carte.
    3. Fond de carte translucide sans couleur opaque (abyssal : shorthand ; molten_gold, heraldic :
       background-image seul, et 78 .crd ont un fond inline translucide) : en sombre la page sombre
       passe dessous, en clair la page crème délavait la carte. On remet ce qui est dessous en sombre. */
-.light:where(.skin-obsidienne,.skin-aurore,.skin-frostbite,.skin-emberheart,.skin-cosmic_void,.skin-abyssal,.skin-molten_gold,.skin-heraldic,.skin-aldric_chamber) .crd{--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--t3:#756b54;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--cx-hex:#d4943a;--cx-dark:#a06e20;color:var(--t1)}
+.light:where(.skin-obsidienne,.skin-aurore,.skin-frostbite,.skin-emberheart,.skin-cosmic_void,.skin-abyssal,.skin-molten_gold,.skin-heraldic,.skin-aldric_chamber) .crd{--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--t3:#756b54;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--cx-hex:#d4943a;--cx-dark:#a06e20;--tone-cd7f32:initial;--tone-c0c0c0:initial;--tone-ffd700:initial;--tone-00d4ff:initial;--tone-ff6bff:initial;--tone-ff4757:initial;--tone-ffae00:initial;--tone-3a8ee0:initial;--tone-c060f0:initial;--tone-ffc020:initial;--tone-e8d4a8:initial;--tone-c9a23a:initial;--tone-e8c45a:initial;color:var(--t1)}
 .light.skin-obsidienne .btn2,.light.skin-aurore .btn2,.light.skin-frostbite .btn2,.light.skin-emberheart .btn2,.light.skin-cosmic_void .btn2,.light.skin-abyssal .btn2,.light.skin-molten_gold .btn2,.light.skin-heraldic .btn2,.light.skin-aldric_chamber .btn2{color:var(--cyan)!important}
 .light.skin-abyssal .crd{background-color:var(--bg)!important}
 .light.skin-molten_gold .crd,.light.skin-heraldic .crd{background-color:var(--bg2)!important}

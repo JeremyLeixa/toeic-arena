@@ -9,6 +9,7 @@ import { STRATEGIES } from "../../data/miniGames.js";
 import { festivalById, festivalOccurrence, festivalDaysLeft, formatFestivalDate } from "../../lib/festivals.js";
 import { getEffectiveLeague } from "../../lib/league.js";
 import { getDailyMission, needsMockNudge } from "../../lib/progress.js";
+import { tone } from "../../lib/tone.js";
 import { today } from "../../lib/util.js";
 
 export function Home(p){
@@ -29,7 +30,7 @@ var festLeft=fest?festivalDaysLeft(fest,new Date()):0;
 return(
 <div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>{fest?fest.greeting:"Welcome back"}</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28,u.equippedFrame)}</h1>{u.equippedTitle&&TITLES[u.equippedTitle]&&<div className="out" style={{fontSize:10,fontWeight:800,color:TITLES[u.equippedTitle].color,letterSpacing:2,textTransform:"uppercase",marginTop:2}}>{TITLES[u.equippedTitle].name}</div>}</div>
+<div><p style={{color:"var(--t2)",fontSize:13,marginBottom:2}}>{fest?fest.greeting:"Welcome back"}</p><h1 className="out" style={{fontWeight:800,fontSize:24,display:"flex",alignItems:"center",gap:8}}>{u.name} {renderAv(u.avatar,28,u.equippedFrame)}</h1>{u.equippedTitle&&TITLES[u.equippedTitle]&&<div className="out" style={{fontSize:10,fontWeight:800,color:tone(TITLES[u.equippedTitle].color),letterSpacing:2,textTransform:"uppercase",marginTop:2}}>{TITLES[u.equippedTitle].name}</div>}</div>
 <div style={{textAlign:"center"}}><span className="fl" style={{fontSize:28,display:"inline-flex"}}>{u.streak>0?<GIcon name="flame" size={28} color="var(--orange)"/>:<span>{"❄️"}</span>}</span><div className="out" style={{fontSize:13,fontWeight:700,color:u.streak>0?"var(--orange)":"var(--t3)"}}>{u.streak}</div></div></div>
 
 {/* Active bonus indicators */}
@@ -119,7 +120,7 @@ return(
 <div><div className="out" style={{fontSize:13,fontWeight:700}}>Level {lv.level}</div><div style={{fontSize:11,color:"var(--t2)"}}>{lv.cur} / {lv.next} XP{u.weeklyXp>0?" · "+u.weeklyXp+" this week":""}</div></div></div>
 <div style={{display:"flex",alignItems:"center",gap:8}}>
 <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",background:"var(--bg3)",borderRadius:99}}>
-<LeagueIcon lg={lg} size={16} style={{marginRight:4,verticalAlign:"-2px"}}/><span className="out" style={{fontSize:12,fontWeight:600,color:lg.color}}>{lg.name}</span></div>
+<LeagueIcon lg={lg} size={16} style={{marginRight:4,verticalAlign:"-2px"}}/><span className="out" style={{fontSize:12,fontWeight:600,color:tone(lg.color)}}>{lg.name}</span></div>
 <span style={{fontSize:18,color:"var(--t3)",lineHeight:1}}>{"›"}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
