@@ -37,6 +37,18 @@ var[step,sSt]=useState("name");
   var[bioAvail,setBioAvail]=useState(false);var[bioRegistered,setBioRegistered]=useState(!!getBioCredId());
   useEffect(function(){biometricAvailable().then(function(v){setBioAvail(v);});},[]);
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
+  // Session perdue (F1, 2026-09-16) : App passe p.reauth={name,classCode} quand Supabase refuse la
+  // ligne locale à la session courante. On rejoue le routage normal du lookup (compte sécurisé →
+  // « entre ton mot de passe », legacy → claim) au lieu de l'écran « Your arena name », qui
+  // laissait l'élève se croire déconnecté sans raison. Clé primitive : l'effet ne rejoue que si la
+  // cible change (pas au retour « ← Back »).
+  var reauthKey=p.reauth?(p.reauth.name+"|"+p.reauth.classCode):"";
+  useEffect(function(){
+    if(!p.reauth)return;
+    sN(p.reauth.name);setClassCode(p.reauth.classCode);
+    lookupName(p.reauth.name,p.reauth.classCode);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[reauthKey]);
   var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
   var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
   // SECURITY (2026-09-11) — confinement cross-promo : detectMode=true quand on arrive
@@ -428,6 +440,7 @@ var[step,sSt]=useState("name");
           <div style={{fontSize:44,marginBottom:10}}>{"👋"}</div>
           <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6,color:"var(--gold)"}}>{"Bon retour, "+epName+" !"}</h1>
           <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Entre ton mot de passe pour retrouver ta progression"+(classGroupName?" ("+classGroupName+")":"")+"."}</p>
+          {p.reauth&&<div style={{marginTop:14,padding:"10px 12px",borderRadius:10,background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.25)",color:"var(--t1)",fontSize:12,lineHeight:1.5,textAlign:"left"}}>{"Ta session a expiré. Entre ton mot de passe pour reprendre : ta progression récente sur cet appareil sera récupérée."}</div>}
         </div>
         <PasswordInput value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}}
           placeholder={"Mot de passe"} autoComplete="current-password"
@@ -438,9 +451,12 @@ var[step,sSt]=useState("name");
           style={{width:"100%",fontSize:15,padding:"13px 20px",opacity:pwdBusy?.6:1}}>
           {pwdBusy?"Connexion...":"Se connecter"}
         </button>
-        <div style={{marginTop:20,textAlign:"center"}}>
+        {/* Masqué en reprise de session (F1) : entrer sans mot de passe redonne une session qui ne
+            peut pas écrire la ligne, c'est-à-dire exactement le piège dont on sort. Le lien reste
+            ailleurs tant que la décision F3 (retrait de recover legacy) n'est pas prise. */}
+        {!p.reauth&&<div style={{marginTop:20,textAlign:"center"}}>
           <button onClick={signInLater} disabled={pwdBusy} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"Mot de passe oublié ? Continuer sans pour l'instant"}</button>
-        </div>
+        </div>}
       </div>
     </div>);
   }

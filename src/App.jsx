@@ -19,7 +19,7 @@ import { GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { NARRATOR_MOMENTS, hasHeardMoment, markMomentHeard } from "./narrator.js";
 import { estimateTOEICScore } from "./lib/toeic.js";
 import { getLeague, applyWeekTransition } from "./lib/league.js";
-import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty } from "./lib/persistence.js";
+import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost } from "./lib/persistence.js";
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
@@ -69,7 +69,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-16-festivals";
+var BUILD_ID="2026-09-16-reauth";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -94,6 +94,9 @@ export default function App(){
   // ─── Festival themes (2026-09-16) ─── id de la fête appliquée à .app, ou null (lib/festivals.js :
   // fenêtre de dates, forçage ?fest=, opt-out). Primitive : relue toutes les heures par un tick.
   var[festId,setFestId]=useState(function(){return appliedFestivalId(new Date());});
+  // ─── Session perdue (F1/F2, 2026-09-16) ─── {name, classCode} de la ligne que Supabase refuse à
+  // la session courante (signalé par load()/save() via onAuthLost), ou null.
+  var[authLost,setAuthLost]=useState(null);
   // ─── Narrator queue (Aldric narrative moments) ───
   var[narratorQueue,setNarratorQueue]=useState([]);
   var currentNarratorMoment=narratorQueue.length>0?NARRATOR_MOMENTS[narratorQueue[0]]:null;
@@ -629,6 +632,19 @@ useEffect(function(){
   // sv) ; preloadLazyScreens porte sa propre garde « une seule fois ».
   var hasUser=!!u;
   useEffect(function(){if(!ld&&hasUser)preloadLazyScreens();},[ld,hasUser]);
+
+  // ── Session perdue (F1/F2, 2026-09-16) ── load()/save() signalent une ligne que la session ne
+  // peut ni lire ni écrire. Sans profil (démarrage) → Onboard reprend au mot de passe (prop
+  // reauth) ; en cours de session → bandeau. Mise à jour par fonction : même cible → même
+  // référence → pas de re-rendu à chaque sauvegarde refusée (save() est appelé à chaque sv()).
+  // Abonnement monté avant tout load() : les notifications arrivent après des allers-retours RPC.
+  useEffect(function(){
+    return onAuthLost(function(t){
+      setAuthLost(function(prev){return prev&&prev.name===t.name&&prev.classCode===t.classCode?prev:t;});
+    });
+  },[]);
+  // Un profil entre (reconnexion réussie, ou un autre compte) : la cible est périmée.
+  useEffect(function(){if(hasUser)setAuthLost(null);},[hasUser]);
 
   // ── Festival themes : tick horaire ── une PWA reste ouverte des jours : la fête doit arriver
   // (24/10 à minuit) et repartir sans rechargement, au plus une heure après la borne. Même id
@@ -1357,7 +1373,7 @@ function sv(d){
   if(teacherMode)return pg(<TeacherDashLazy back={function(){setTeacher(false);}}/>);
   // Le fallback plein écran est pixel-identique à l'écran `ld` : pour un nouvel élève, le
   // chargement dure simplement un peu plus (le temps du chunk Onboard, une fois par build).
-  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadBoundary><Suspense fallback={<LoadingMark/>}><OnboardLazy go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></Suspense></LoadBoundary></div>);
+  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadBoundary><Suspense fallback={<LoadingMark/>}><OnboardLazy go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail} reauth={authLost}/></Suspense></LoadBoundary></div>);
 
   // ── Group access control ──
   if(groupAccess&&groupAccess.status==="not_started")return(<div className={lc}><style>{CSS}</style>

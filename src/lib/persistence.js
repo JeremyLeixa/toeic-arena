@@ -48,6 +48,20 @@ export function getAccessTokenSync(){
   }catch(e){console.warn("[auth] getAccessTokenSync caught:",e&&e.message);}
   return null;
 }
+// ── Session perdue : canal vers App (F1/F2, 2026-09-16) ──
+// load() et save() découvrent qu'une ligne existe mais que la session courante ne peut ni la lire
+// ni l'écrire (not_owner). Ce module n'a pas accès à l'état React : il notifie, App décide
+// (reconnexion au démarrage, bandeau en cours de session). Cible = {name, classCode}.
+var _authLostListeners=[];
+export function onAuthLost(fn){
+  _authLostListeners.push(fn);
+  return function(){_authLostListeners=_authLostListeners.filter(function(f){return f!==fn;});};
+}
+function notifyAuthLost(target){
+  _authLostListeners.slice().forEach(function(fn){
+    try{fn(target);}catch(e){console.warn("[authLost] listener caught:",e&&e.message);}
+  });
+}
 // load() — always fetch from Supabase when online, use localStorage as fallback
 export async function load(userId){
   var local=loadLocal();
@@ -67,11 +81,12 @@ export async function load(userId){
       // stale-remote plus bas lit des clés DB brutes (remote.class_code, access_level…)
       // avant que supaToLocal ne tourne, donc surtout pas de projection camelCase ici.
       // La RPC applique la garde conditionnelle : ligne migrée → il faut être le
-      // propriétaire ; ligne legacy → tolérance. Un refus renvoie null, l'app repart
-      // alors sur l'onboarding, qui réclamera le mot de passe.
+      // propriétaire ; ligne legacy → tolérance. Un refus renvoie null SANS erreur, comme
+      // une ligne inexistante : c'est le bloc « no remote » plus bas qui les distingue.
+      var rpcFailed=false; // une RPC en erreur (hors ligne…) → on ne conclut rien, copie locale
       if(cn){
         var res=await supabase.rpc("load_student",{p_name:cn,p_class_code:cc||"visitor"});
-        if(res.error)console.error("[LOAD] load_student error:",res.error.message);
+        if(res.error){console.error("[LOAD] load_student error:",res.error.message);rpcFailed=true;}
         if(res.data)remote=res.data;
       }
       // Chemin de secours : la ligne liée à la session courante (binding Phase A).
@@ -81,7 +96,7 @@ export async function load(userId){
         // Cette erreur était totalement avalée : sous verrou de privilèges, l'app
         // paraissait « hors ligne » au lieu de cassée, ce qui rend un incident
         // indétectable. On la logge maintenant.
-        if(res2.error)console.error("[LOAD] load_student_by_uid error:",res2.error.message);
+        if(res2.error){console.error("[LOAD] load_student_by_uid error:",res2.error.message);rpcFailed=true;}
         if(res2.data)remote=res2.data;
       }
       if(remote){
@@ -102,7 +117,27 @@ export async function load(userId){
         saveLocal(d);
         _syncDirty=false;
         return d;
-      }else{console.warn("[LOAD] no remote data found");}
+      }else{
+        console.warn("[LOAD] no remote data found");
+        // ── Session perdue (F1, 2026-09-16) ── Les deux lectures ont RÉPONDU mais rien rendu.
+        // Si la ligne existe pourtant (lookup public de l'onboarding), c'est que CETTE session ne
+        // peut pas la lire : compte sécurisé, session révoquée (signOut global sur un autre
+        // appareil → ensureAuthSession a recréé une session anonyme) ou entrée sans mot de passe.
+        // Rendre la copie locale ici faisait jouer l'élève sans qu'aucune sauvegarde ne passe,
+        // sans rien lui dire (vécu le 2026-09-16). On rend null et on signale : App renvoie vers
+        // « entre ton mot de passe », et la copie locale, laissée intacte, est récupérée à la
+        // reconnexion (recover → fresherLocalFor). Ligne inexistante (0 résultat) ou RPC en
+        // erreur : comportement d'avant, copie locale.
+        if(cn&&!rpcFailed){
+          var fr=await supabase.rpc("find_students_by_name",{p_name:cn,p_class_code:cc||"visitor"});
+          if(fr.error)console.warn("[LOAD] find_students_by_name error:",fr.error.message);
+          else if((fr.data||[]).length>0){
+            console.error("[LOAD] refused: row exists but this session cannot read it (not_owner) —",cn,cc||"visitor","→ re-authentication");
+            notifyAuthLost({name:cn,classCode:cc||"visitor"});
+            return null;
+          }
+        }
+      }
     }catch(e){
       // Regle #1 (post-crise) : plus de catch muet sur un chemin critique. Sous le
       // verrou de privileges, une erreur ici est indiscernable d'une panne reseau
