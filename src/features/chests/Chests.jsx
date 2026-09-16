@@ -52,12 +52,12 @@ export function ChestEarnedToast(p){
         {/* Text */}
         <div style={{flex:1,minWidth:0,position:"relative",zIndex:2}}>
           <div className="out" style={{fontSize:10,fontWeight:700,color:rarityColor,letterSpacing:1.5,textTransform:"uppercase"}}>Treasure earned</div>
-          <div style={{fontSize:14,fontWeight:700,color:"var(--t1)",marginTop:2}}>{ct.label} Chest</div>
-          <div style={{fontSize:11,color:"var(--t2)",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.reason}</div>
+          <div style={{fontSize:14,fontWeight:700,color:/*fond local*/"#ede4d4",marginTop:2}}>{ct.label} Chest</div>
+          <div style={{fontSize:11,color:/*fond local*/"#8a7e6a",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.reason}</div>
         </div>
 
         {/* Close X */}
-        <button onClick={doDismiss} aria-label="Dismiss" style={{background:"none",border:"none",color:"var(--t3)",fontSize:18,cursor:"pointer",padding:0,lineHeight:1,flexShrink:0,marginTop:-22,alignSelf:"flex-start",position:"relative",zIndex:2}}>{String.fromCharCode(215)}</button>
+        <button onClick={doDismiss} aria-label="Dismiss" style={{background:"none",border:"none",color:/*fond local*/"#756b54",fontSize:18,cursor:"pointer",padding:0,lineHeight:1,flexShrink:0,marginTop:-22,alignSelf:"flex-start",position:"relative",zIndex:2}}>{String.fromCharCode(215)}</button>
       </div>
 
       {/* Actions */}
