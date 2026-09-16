@@ -517,8 +517,18 @@ ne passe. Désormais :
   (`auth.js` `signOutCompletely`, cet appareil seulement) ; `deleteAccount` et `reset` restent
   `global` (compte supprimé ou vidé). Tout nouvel appel à `signOut()` choisit sa portée
   explicitement : le défaut `global` coupe les autres appareils de l'élève. Appareil perdu →
-  « Réinitialiser l'accès » côté formateur. « Changer de profil » (`logout()`) **garde** la
-  session : pour un compte sécurisé, un rechargement y ré-entre (`load_student_by_uid`).
+  « Réinitialiser l'accès » côté formateur. « Changer de profil » (`logout()`) ferme aussi la
+  session de l'appareil (portée locale, préférences locales gardées, pas de rechargement) :
+  l'ancienne version la gardait, et un compte sécurisé ré-entrait au rechargement
+  (`load_student_by_uid`), donc l'élève suivant d'un appareil partagé retombait sur le compte du
+  précédent. Un refus de sauvegarde arrivé après la déconnexion est ignoré (plus de
+  `toeic-arena-name` en local → pas de reprise vers l'ancien compte).
+- **Trace des pertes de session** : auth-js supprime la session **en silence** quand un
+  rafraîchissement est refusé. `src/supabase.js` branche l'option `debug` sur `authTrace`, qui ne
+  logge que `[AUTH] refresh token failed: <raison>` et `[AUTH] session removed from storage` ;
+  `ensureAuthSession` logge chaque échec avec sa raison. Ne jamais logger le nom du message debug
+  tel quel (il contient le début du refresh token). But : confirmer ou écarter l'hypothèse des
+  verrous d'auth (« Already Used » attendu si deux rafraîchissements se chevauchent).
 Vérifié en dev le 2026-09-16 : session de l'onglet fermée en pleine utilisation, Daily joué
 (+154 XP locales, sauvegardes refusées), bandeau, reconnexion, XP relue depuis Supabase.
 

@@ -320,16 +320,19 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   intégré ; `scope:\`local\`` vérifié dans le bundle. **F6 livré** (`55a7f30`) : commentaires faux de
   `ensureAuthSession` (« la ligne reste atteignable ») et de `logout()` (« accès RLS au lookup »)
   réécrits. BUILD_ID `2026-09-16-f4f6` (`10ff6a9`).
+- **« Changer de profil » ferme la session** (`8e6a21f`) : `logout()` fait aussi
+  `signOut({scope:'local'})` ; un refus de sauvegarde arrivé après la déconnexion est ignoré (pas de
+  reprise vers l'ancien compte). **Vérifié en dev** (`confirm()` remplacé pour le seul clic) :
+  jeton supprimé, profil vidé, `[AUTH] session removed from storage`, et après rechargement l'app
+  reste sur l'écran d'accueil (avant : ré-entrée sur Teacher). **Traces de pertes de session**
+  (`55cdc24`) : `authTrace` (option `debug` d'auth-js, `src/supabase.js`) + échecs
+  d'`ensureAuthSession` loggés avec leur raison ; aucun bruit en fonctionnement normal. BUILD_ID
+  `2026-09-16-logout` (`c6c9e2f`).
 
 ### Pour la prochaine session (décisions de Jérémy)
-- **« Changer de profil » garde la session** (`logout()`, trouvé en réécrivant F6) : pour un compte
-  sécurisé, un rechargement ré-entre sur ce compte sans onboarding. Sur un appareil partagé, l'élève
-  suivant retombe sur le compte du précédent. Piste : fermer aussi la session (portée locale), la
-  raison historique de la garder étant caduque. Non vérifié en direct, déduit du code.
-- **Catch muets de `ensureAuthSession`** (`/* … */` sans log, règle n°1) : les logger, avec la raison
-  d'échec du `refreshSession`, donnerait la preuve de l'hypothèse des verrous (« Invalid Refresh
-  Token: Already Used » attendu si deux rafraîchissements se chevauchent).
-- Logs d'événements d'auth (`SIGNED_OUT`, échec de refresh) pour confirmer l'hypothèse ci-dessus.
+- **Lire les traces `[AUTH]`** en usage réel (élèves, onglets multiples, PWA + navigateur) : un
+  `[AUTH] refresh token failed: Invalid Refresh Token: Already Used` suivi de `session removed`
+  confirmerait l'hypothèse des verrous ; une autre raison l'écarterait. Pas encore observé.
 - Supabase Logs Explorer : `load_student refused (not_owner)` pour compter les élèves touchés.
 - Détail visuel : le bandeau F2 recouvre le haut de l'écran (« ← Back », timer du Daily).
 
