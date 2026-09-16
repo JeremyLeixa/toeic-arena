@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { playXP, playLevelUp, playCombo, playStreak, playTimer, playClick, playJingleEnter, playJingleAchieve, playJingleLeague, playJingleMock, playJingleMockOk, playJingleDaily, playBGM, stopBGM } from "./sounds.js";
 import { today, weekId, normalizeName } from "./lib/util.js";
 import { fresh, supaToLocal, buildSavePayload } from "./lib/profileSchema.js";
@@ -25,7 +25,7 @@ import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
 import { CSS } from "./styles/appCss.js";
-import { LoadingMark } from "./components/LoadingMark.jsx";
+import { LoadingMark, LoadBoundary } from "./components/LoadingMark.jsx";
 
 
 
@@ -1289,7 +1289,11 @@ function sv(d){
       </button>
     </div>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap">{content}</div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={sp||"root"}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  // ↑ Frontière des écrans chargés à la demande (Phase 5) : le fallback et le filet d'erreur
+  // n'enveloppent QUE le contenu de la sous-page — toasts, Narrator, Tabs et overlay premium
+  // sont frères, jamais cachés ni remontés. La key sur la route remet le filet à zéro quand
+  // l'élève change d'écran.
 
   // Reset password : bypass complet du flow normal si l'URL a ?reset=<token>.
   // Doit être AVANT loading/teacher/onboard parce que le user peut être complètement
@@ -1299,7 +1303,9 @@ function sv(d){
   // fallback aux écrans chargés à la demande (même rendu, plein écran ou sous-page).
   if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadingMark/></div>);
   if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
-  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></div>);
+  // Le fallback plein écran est pixel-identique à l'écran `ld` : pour un nouvel élève, le
+  // chargement dure simplement un peu plus (le temps du chunk Onboard, une fois par build).
+  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadBoundary><Suspense fallback={<LoadingMark/>}><Onboard go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></Suspense></LoadBoundary></div>);
 
   // ── Group access control ──
   if(groupAccess&&groupAccess.status==="not_started")return(<div className={lc}><style>{CSS}</style>
