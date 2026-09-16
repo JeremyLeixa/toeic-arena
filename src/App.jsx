@@ -69,7 +69,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-16-reauth";
+var BUILD_ID="2026-09-16-f3";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 

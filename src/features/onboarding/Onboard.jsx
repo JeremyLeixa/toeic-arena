@@ -49,8 +49,7 @@ var[step,sSt]=useState("name");
     lookupName(p.reauth.name,p.reauth.classCode);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[reauthKey]);
-  var[recName,setRecName]=useState("");var[recCode,setRecCode]=useState("");var[recMsg,setRecMsg]=useState(null);var[recLoading,setRecLoading]=useState(false);
-  var[foundAccounts,setFoundAccounts]=useState([]);var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
+  var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
   // SECURITY (2026-09-11) — confinement cross-promo : detectMode=true quand on arrive
   // sur l'écran classcode depuis l'écran name (détection "welcome back"). Il déclenche
   // la recherche de compte SCOPÉE au class_code saisi (lookupName(name,cc)). false =
@@ -69,11 +68,6 @@ var[step,sSt]=useState("name");
   // password_set_at raté à la création, ou pré-claim par un tiers), on propose "me connecter"
   // → enterPassword, au lieu de laisser l'user coincé sur l'écran claim.
   var[pwdExistsDup,setPwdExistsDup]=useState(false);
-  // typedName — ce que l'user a RÉELLEMENT tapé, avant que lookupName n'écrase `name`
-  // avec la casse stockée en base (nécessaire pour recover, cf. commentaire dans
-  // lookupName). Sert à restaurer sa saisie s'il repart en création de compte : sans
-  // ça, un nouveau "Romain" s'inscrirait sous la casse du "romain" existant.
-  var[typedName,setTypedName]=useState("");
   // PIN state removed 2026-04-20 — auth is now handled via Supabase magic link
   var[pendingNav,setPendingNav]=useState(null);
   var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
@@ -101,7 +95,6 @@ var[step,sSt]=useState("name");
 
   async function lookupName(n,cc){
     setLookingUp(true);
-    setTypedName((n||"").trim());
     try{
       // Ensure anon auth exists before querying
       var sess=await supabase.auth.getSession();
@@ -128,58 +121,33 @@ var[step,sSt]=useState("name");
       var matches=(res.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
       console.warn("[LOOKUP] matches filtered:",matches.length);
       // P2 Phase A (2026-09-11) — routing par mot de passe (email synthétique).
-      // 0 match → nouvel élève (poser un mot de passe). 1 match → password_set_at ? "entre ton
-      // mot de passe" : "sécurise ton compte" (claim). >1 (ne devrait plus arriver : 0 collision
-      // + index unique) → picker legacy de désambiguïsation.
+      // 0 match → nouvel élève (poser un mot de passe). Sinon → password_set_at ? « entre ton mot
+      // de passe » : « sécurise ton compte » (claim).
+      // >1 (F3, 2026-09-16) : plus de sélecteur. Le lookup est scopé à la promo, et deux lignes
+      // d'une même promo au nom normalisé identique partagent le même email synthétique
+      // (normNameForEmail) : le modèle d'identité ne sait pas les distinguer. Même règle que
+      // student_guard, bind_student_user_id et load_student : l'XP la plus haute (ordre de la RPC).
+      // L'ancien sélecteur ouvrait le profil choisi SANS mot de passe (recover legacy).
       setPwd1("");setPwd2("");setPwdErr("");setPwdExistsDup(false);
       if(matches.length===0){
         console.warn("[LOOKUP] no match in cohort → setPassword (new)");
-        setFoundAccounts([]);
         setDetectMode(false); // nouvel inscrit : quitte le mode détection
         setPwdMode("new");
         sSt("setPassword");
-      } else if(matches.length===1){
-        // Cas normal. Casing DB nécessaire pour synthEmail + recover.
+      } else {
+        if(matches.length>1)console.warn("[LOOKUP] "+matches.length+" rows share this normalized name in",cc,"→ highest XP (same rule as the server)");
+        // Casing DB nécessaire pour synthEmail + recover.
         var m=matches[0];
         sN(m.name);
         setPwdTarget({name:m.name,class_code:m.class_code,password_set_at:m.password_set_at||null});
         if(m.password_set_at){
-          console.warn("[LOOKUP] 1 match, secured → enterPassword");
+          console.warn("[LOOKUP] match, secured → enterPassword");
           sSt("enterPassword");
         }else{
-          console.warn("[LOOKUP] 1 match, legacy (no pwd) → claim");
+          console.warn("[LOOKUP] match, legacy (no pwd) → claim");
           setPwdMode("claim");
           sSt("setPassword");
         }
-      } else {
-        // >1 homonyme même promo — filet : picker de désambiguïsation (legacy recover()).
-        sN(matches[0].name);
-        var groupMap={};
-        try {
-          // `groups` n'est plus lisible en direct (verrou P2-D5, 2026-09-16) : une fiche
-          // publique par promo présente dans les matches — en pratique une seule, le
-          // lookup est scopé à cc. Fini le listing de TOUTES les promos pour en nommer une.
-          var codes=[];
-          matches.forEach(function(s){if(s.class_code&&codes.indexOf(s.class_code)<0)codes.push(s.class_code);});
-          var groupResList=await Promise.all(codes.map(function(c){return supabase.rpc('group_public',{p_code:c});}));
-          groupResList.forEach(function(gr){
-            if(gr.error)console.warn("[LOOKUP] group_public error:",gr.error.message);
-            if(gr.data)groupMap[gr.data.code]={name:gr.data.name,type:gr.data.type};
-          });
-        } catch(e) {
-          console.warn("[LOOKUP] group_public threw:",e&&e.message);
-        }
-        var accounts=matches.map(function(s){
-          var g=groupMap[s.class_code];
-          return{class_code:s.class_code,xp:s.xp||0,
-            lastActive:s.last_active||null,joinedAt:s.joined_at||null,
-            groupName:g?g.name:(s.class_code==="visitor"?"Visitor / Free Access":s.class_code),
-            groupType:g?g.type:"visitor",
-            typeIcon:g?(g.type==="school"?"🏫":g.type==="pro"?"💼":"🌍"):"🌍"};
-        });
-        console.warn("[LOOKUP] >1 → recognize picker, accounts:",accounts.length);
-        setFoundAccounts(accounts);
-        sSt("recognize");
       }
     }catch(e){
       console.warn("[LOOKUP] outer catch → setPassword (new), err:",e&&e.message);
@@ -316,7 +284,7 @@ var[step,sSt]=useState("name");
           <input type="text" value={name} onChange={function(e){sN(e.target.value);}} placeholder="Enter your name..."
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
-        <button className="btn1" onClick={function(){if(name.trim()&&!lookingUp){setDetectMode(true);setTypedName(name.trim());sSt("classcode");}}} disabled={lookingUp}
+        <button className="btn1" onClick={function(){if(name.trim()&&!lookingUp){setDetectMode(true);sSt("classcode");}}} disabled={lookingUp}
           style={{opacity:name.trim()&&!lookingUp?1:.4,pointerEvents:name.trim()&&!lookingUp?"auto":"none",fontSize:18,padding:"16px 32px"}}>{lookingUp?"Checking...":"Next"}</button>
         <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:20}}>
           <button onClick={function(){sSt("emailLogin");setEmailInput("");setEmailErr("");setEmailSent(false);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"D\u00e9j\u00e0 un compte ? Me connecter"}</button>
@@ -402,7 +370,8 @@ var[step,sSt]=useState("name");
 
   // ─ P2 Phase A (2026-09-11) : entre ton mot de passe (retour, compte sécurisé) ─
   // Atteint depuis lookupName quand la ligne a password_set_at. Login via compte synthétique
-  // (signInStudent) puis hydratation via recover(). Filet soft : "continuer sans" → recover legacy.
+  // (signInStudent), liaison, puis hydratation via recover() (lecture gardée, F3). Aucune
+  // entrée sans mot de passe : le « Continuer sans pour l'instant » a été retiré le 2026-09-16.
   if(step==="enterPassword"){
     var epName=(pwdTarget&&pwdTarget.name)||name.trim();
     var epCc=(pwdTarget&&pwdTarget.class_code)||classCode;
@@ -427,11 +396,6 @@ var[step,sSt]=useState("name");
         setPwdErr("Mot de passe incorrect.");
       }finally{setPwdBusy(false);}
     }
-    async function signInLater(){
-      if(pwdBusy)return;setPwdBusy(true);setPwdErr("");
-      try{var ok=await p.recover(epName,epCc);if(!ok)setPwdErr("Compte introuvable.");}
-      catch(e){setPwdErr("Erreur");}finally{setPwdBusy(false);}
-    }
     return(
     <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
       <button className="back-btn" onClick={function(){setPwdErr("");sSt("classcode");}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"←"} Back</button>
@@ -451,20 +415,20 @@ var[step,sSt]=useState("name");
           style={{width:"100%",fontSize:15,padding:"13px 20px",opacity:pwdBusy?.6:1}}>
           {pwdBusy?"Connexion...":"Se connecter"}
         </button>
-        {/* Masqué en reprise de session (F1) : entrer sans mot de passe redonne une session qui ne
-            peut pas écrire la ligne, c'est-à-dire exactement le piège dont on sort. Le lien reste
-            ailleurs tant que la décision F3 (retrait de recover legacy) n'est pas prise. */}
-        {!p.reauth&&<div style={{marginTop:20,textAlign:"center"}}>
-          <button onClick={signInLater} disabled={pwdBusy} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"Mot de passe oublié ? Continuer sans pour l'instant"}</button>
-        </div>}
+        {/* F3 (2026-09-16) : l'ancien lien « Mot de passe oublié ? Continuer sans pour l'instant »
+            ouvrait le compte SANS mot de passe (recover legacy) : lecture de la ligne complète
+            par n'importe qui connaissant prénom + code promo, puis une session incapable de
+            sauvegarder (le piège de F1/F2). Le mot de passe oublié passe par le formateur :
+            « Réinitialiser l'accès » (api/teacher-reset-student.js) remet le compte à sécuriser. */}
+        <p style={{marginTop:20,textAlign:"center",color:"var(--t3)",fontSize:12,lineHeight:1.5}}>{"Mot de passe oublié ? Demande à ton formateur de réinitialiser ton accès : tu en choisiras un nouveau à ta prochaine connexion."}</p>
       </div>
     </div>);
   }
 
   // ─ P2 Phase A (2026-09-11) : pose un mot de passe (nouvel élève OU claim d'un compte legacy) ─
   // pwdMode="new" → signUpStudent puis onboarding normal (ligne créée avec authBind).
-  // pwdMode="claim" → signUpStudent puis bind user_id + password_set_at + recover(). "Plus tard"
-  // → recover legacy (migration soft, jusqu'à la date butoir).
+  // pwdMode="claim" → signUpStudent puis bind user_id + password_set_at + recover(). Pas de
+  // « plus tard » (retiré le 2026-09-14, voir DATE BUTOIR plus bas).
   if(step==="setPassword"){
     var spClaim=(pwdMode==="claim");
     async function doStudentSignUp(){
@@ -500,11 +464,6 @@ var[step,sSt]=useState("name");
         }
       }finally{setPwdBusy(false);}
     }
-    async function claimLater(){
-      if(pwdBusy)return;setPwdBusy(true);setPwdErr("");
-      try{var ok=await p.recover(name.trim(),classCode);if(!ok)setPwdErr("Compte introuvable.");}
-      catch(e){setPwdErr("Erreur");}finally{setPwdBusy(false);}
-    }
     return(
     <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
       <button className="back-btn" onClick={function(){setPwdErr("");sSt("classcode");}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"←"} Back</button>
@@ -537,10 +496,10 @@ var[step,sSt]=useState("name");
               qui revient DOIT desormais choisir un mot de passe ; le claim est de toute
               facon le chemin, sa progression est conservee et il n'est bloque nulle part.
               S'il oublie ensuite ce mot de passe : bouton "Reinitialiser l'acces" cote
-              formateur (fiche eleve du dashboard). La fonction claimLater() et recover()
-              restent en place le temps de verifier que la migration se passe bien — c'est
-              ce qui rend ce retrait revertable d'un seul commit. Elles disparaissent avec
-              l'activation de la RLS, en meme temps que recover_student_row. */}
+              formateur (fiche eleve du dashboard). F3 (2026-09-16) : claimLater(), le
+              « Continuer sans » de l'ecran mot de passe et le selecteur d'homonymes sont
+              retires ; recover() ne lit plus que par load_student (gardee), et
+              recover_student_row est supprimee cote SQL. */}
           {spClaim
             ?null
             :<button onClick={function(){setPwdErr("");setPwdTarget({name:name.trim(),class_code:classCode,password_set_at:true});sSt("enterPassword");}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"J'ai déjà un mot de passe — me connecter"}</button>}
@@ -618,64 +577,6 @@ var[step,sSt]=useState("name");
       </div>
     </div>);
     }
-
-  // ─ Account recognition ─
-  if(step==="recognize"){
-    // Un prénom trouvé en base ne veut PAS dire "c'est la même personne" : deux promos
-    // successives peuvent avoir chacune leur Romain. D'où la formulation neutre — l'ancien
-    // "Welcome back, Romain!" poussait l'homonyme à cliquer sur la carte de l'autre, et
-    // son premier save() écrasait alors les données de l'étudiant existant.
-    function fmtWhen(s){
-      if(!s)return null;
-      var dt=new Date(s);
-      if(isNaN(dt.getTime()))return null;
-      return dt.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
-    }
-    var multi=foundAccounts.length>1;
-    return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:48,marginBottom:12}}>👋</div>
-        <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6}}>{multi?"Which account is yours?":"Is this you?"}</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>
-          {(multi?"Several accounts already use the name ":"An account already uses the name ")+"“"+name.trim()+"”. Pick your group to continue — or create your own account below."}
-        </p>
-        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-          {foundAccounts.map(function(acc){
-            var when=fmtWhen(acc.lastActive)||fmtWhen(acc.joinedAt);
-            var whenLabel=when?((acc.lastActive?"Last active ":"Joined ")+when):null;
-            return(<button key={acc.class_code} onClick={async function(){
-              var ok=await p.recover(name.trim(),acc.class_code);
-              if(!ok){sSt("classcode");}
-            }} className="crd" style={{display:"flex",alignItems:"center",gap:14,padding:"16px 18px",cursor:"pointer",
-              border:"1px solid var(--bdr)",background:"var(--bg2)",borderRadius:16,textAlign:"left",
-              transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
-              <div style={{width:44,height:44,borderRadius:12,
-                background:acc.groupType==="school"?"rgba(var(--cx),.1)":acc.groupType==="pro"?"rgba(200,122,53,.1)":"rgba(27,112,207,.1)",
-                display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{acc.typeIcon}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div className="out" style={{fontWeight:700,fontSize:15,color:"var(--t1)",marginBottom:2}}>{acc.groupName}</div>
-                <div style={{fontSize:11,color:"var(--t3)"}}>{acc.class_code} · {acc.xp} XP</div>
-                {whenLabel&&<div style={{fontSize:10,color:"var(--t3)",marginTop:2}}>{whenLabel}</div>}
-              </div>
-              <div style={{color:"var(--cyan)",fontSize:16}}>→</div>
-            </button>);
-          })}
-        </div>
-        <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
-          <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
-          <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">none of these?</span>
-          <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
-        </div>
-        {/* Route vers emailPassword (et non classcode) : l'homonyme est un nouvel user
-            comme les autres, il doit se voir proposer email+mot de passe pour le
-            cross-device. sN(typedName) restaure SA casse, écrasée par lookupName. */}
-        <button className="btn2" onClick={function(){setFoundAccounts([]);setDetectMode(false);if(typedName)sN(typedName);sSt("emailPassword");}}
-          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(var(--cx),.35)",color:"var(--cyan)"}}>Not me — create my own account</button>
-        <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
-      </div>
-    </div>);
-  }
 
   // ─ Class code selection ─
   if(step==="classcode")return(
@@ -759,36 +660,6 @@ var[step,sSt]=useState("name");
       </div>}
     </div>);
 
-// ─ Account recovery ─
-  if(step==="recover")return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      <div style={{animation:"fadeIn .5s"}}>
-        <div style={{fontSize:48,marginBottom:16}}>🔑</div>
-        <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Recover My Account</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>Enter your exact name and class code to recover your progress.</p>
-        <div style={{marginBottom:16,textAlign:"left"}}>
-          <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Your name (exact)</label>
-          <input type="text" value={recName} onChange={function(e){setRecName(e.target.value);setRecMsg(null);}} placeholder="Enter your name..."
-            style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-        </div>
-        <div style={{marginBottom:20,textAlign:"left"}}>
-          <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Class code</label>
-          <input type="text" value={recCode} onChange={function(e){setRecCode(e.target.value);setRecMsg(null);}} placeholder="Class code"
-            style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
-        </div>
-        <button className="btn1" onClick={async function(){
-          if(!recName.trim())return;
-          setRecLoading(true);setRecMsg(null);
-          var ok=await p.recover(recName.trim(),recCode.trim());
-          setRecLoading(false);
-          if(!ok)setRecMsg("No account found with that name and class code. Check spelling and try again.");
-        }} disabled={recLoading}
-          style={{opacity:recName.trim()&&!recLoading?1:.4,pointerEvents:recName.trim()&&!recLoading?"auto":"none"}}>
-          {recLoading?"Searching...":"Recover Account"}</button>
-        {recMsg&&<p style={{color:"var(--red)",fontSize:12,marginTop:12,lineHeight:1.5}}>{recMsg}</p>}
-        <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>Back to sign up</button>
-      </div>
-    </div>);
   // ─ Teacher login ─
   if(step==="teacher")return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
