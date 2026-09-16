@@ -25,7 +25,7 @@ import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
 import { CSS } from "./styles/appCss.js";
-import { BrandMark } from "./components/icons.jsx";
+import { LoadingMark } from "./components/LoadingMark.jsx";
 
 
 
@@ -1295,13 +1295,9 @@ function sv(d){
   // Doit être AVANT loading/teacher/onboard parce que le user peut être complètement
   // déconnecté quand il clique le lien depuis son mail.
   if(resetToken)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><ResetPasswordView token={resetToken}/></div>);
-  if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh"}}><div style={{textAlign:"center"}}>
-    <div style={{animation:"pulse 1.6s ease-in-out infinite"}}>
-      <BrandMark size={94} style={{margin:"0 auto"}}/>
-    </div>
-    <p className="out" style={{color:"var(--t1)",marginTop:16,letterSpacing:"0.24em",textTransform:"uppercase",fontSize:15}}>Verse Arena</p>
-    <p style={{color:"var(--t3)",marginTop:5,letterSpacing:"0.3em",textTransform:"uppercase",fontSize:9}}>loading…</p>
-  </div></div></div>);
+  // Écran de chargement : le bloc vit dans components/LoadingMark.jsx, qui sert aussi de
+  // fallback aux écrans chargés à la demande (même rendu, plein écran ou sous-page).
+  if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadingMark/></div>);
   if(teacherMode)return pg(<TeacherDash back={function(){setTeacher(false);}}/>);
   if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><Onboard go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail}/></div>);
 
