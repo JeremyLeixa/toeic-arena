@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chest v3 · banc de test (vrais composants)</title>
+<style>
+  html,body{margin:0;background:#0f0c08}
+  .hb{position:fixed;top:0;left:0;right:0;z-index:20000;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;padding:4px 8px;background:#120d08ee;font:12px system-ui;color:#b8a888}
+  .hb button,.hb select{font:inherit;background:#1f1810;color:#ede4d4;border:1px solid #3a2e20;border-radius:6px;padding:3px 7px;cursor:pointer}
+  .hb label{display:flex;gap:3px;align-items:center}
+</style>
+</head>
+<body>
+<!-- Banc de test de l'ouverture de coffre v3 : monte les VRAIS ChestEarnedToast et ChestOpenModal
+     (src/features/chests/Chests.jsx) avec un onOpen simulé. Aucun accès base, aucun compte.
+     Servi par Vite à la racine du dépôt (config « festival-proto » de .claude/launch.json) :
+     http://localhost:5606/prototypes/chest-animations-v3/app-harness.html
+     Hors build (seul index.html est une entrée de production). -->
+<div id="root"></div>
+<script type="module">
+import { createElement as h, useState, StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { CSS } from "../../src/styles/appCss.js";
+import { pickRewards } from "../../src/data/chests.js";
+import { ChestEarnedToast, ChestOpenModal } from "../../src/features/chests/Chests.jsx";
+
+var realMatchMedia = window.matchMedia.bind(window);
+var TRIGGERS = { novice: "streak_login_2026-09-16", guerrier: "weekly_toeic_2026-W38", champion: "mastery_drill", legendaire: "boss_test" };
+
+function Harness() {
+  var [tier, setTier] = useState("legendaire");
+  var [net, setNet] = useState("normal"); // normal | slow | hang | fail | already
+  var [reduced, setReduced] = useState(false);
+  var [light, setLight] = useState(false);
+  var [toast, setToast] = useState(0);
+  var [modal, setModal] = useState(null);
+  var [result, setResult] = useState(null);
+  var [opens, setOpens] = useState(0);
+
+  function open() {
+    window.matchMedia = function (q) { return /reduced-motion/.test(q) ? { matches: reduced, media: q, addEventListener: function () {}, removeEventListener: function () {} } : realMatchMedia(q); };
+    setResult(null);
+    setModal({ id: "demo-" + Date.now(), chest_type: tier, trigger_source: TRIGGERS[tier], user_name: "Demo", class_code: "demo" });
+  }
+  function onOpen() {
+    setOpens(function (n) { return n + 1; });
+    return new Promise(function (res) {
+      if (net === "hang") return; // jamais de réponse → message « slow » à 15 s
+      setTimeout(function () {
+        if (net === "fail") setResult({ ok: false, error: "rpc_error" });
+        else if (net === "already") setResult({ ok: false, error: "already_opened" });
+        else {
+          var rewards = pickRewards(tier, {});
+          setResult({ ok: true, rewards: rewards, totalXp: 0, totalDarics: 0 });
+        }
+        res();
+      }, net === "slow" ? 3400 : 380);
+    });
+  }
+
+  var bar = h("div", { className: "hb" },
+    h("b", null, "chest v3"),
+    h("select", { value: tier, onChange: function (e) { setTier(e.target.value); } },
+      ["novice", "guerrier", "champion", "legendaire"].map(function (t) { return h("option", { key: t, value: t }, t); })),
+    h("select", { value: net, onChange: function (e) { setNet(e.target.value); } },
+      ["normal", "slow", "hang", "fail", "already"].map(function (t) { return h("option", { key: t, value: t }, "net: " + t); })),
+    h("label", null, h("input", { type: "checkbox", checked: reduced, onChange: function (e) { setReduced(e.target.checked); } }), "reduced"),
+    h("label", null, h("input", { type: "checkbox", checked: light, onChange: function (e) { setLight(e.target.checked); } }), "light"),
+    h("button", { id: "hbToast", onClick: function () { setToast(function (n) { return n + 1; }); } }, "Toast"),
+    h("button", { id: "hbOpen", onClick: open }, "Open"),
+    h("span", { id: "hbOpens" }, "onOpen×" + opens)
+  );
+
+  return h("div", { className: "app" + (light ? " light" : "") },
+    h("style", null, CSS),
+    bar,
+    toast > 0 && !modal && h(ChestEarnedToast, { key: "t" + toast, toastId: toast, chestType: tier, reason: "Module mastery: Grammar Drill",
+      onDismiss: function () { setToast(0); }, onOpenNow: function () { setToast(0); open(); } }),
+    modal && h(ChestOpenModal, { key: modal.id, chest: modal, result: result, onOpen: onOpen, onClose: function () { setModal(null); setResult(null); } })
+  );
+}
+
+// StrictMode comme main.jsx : vérifie que onOpen (donc la RPC) ne part qu'une fois par ouverture
+createRoot(document.getElementById("root")).render(h(StrictMode, null, h(Harness)));
+</script>
+</body>
+</html>

@@ -232,6 +232,7 @@
     "parseInlineStyle": "code mort : aucun appelant — supprimé 2026-09-16, Phase 5",
     "_lastSync": "code mort : jamais lu ni assigné après son init — supprimé 2026-09-16, Phase 5",
     "SK": "code mort : clé localStorage pré-v2 ; loadLocal/saveLocal utilisent toeic-arena-profile/name/class — supprimé 2026-09-16, Phase 5",
-    "isModuleBoosted": "devenue isBoostedByEvents(modId, events) dans lib/xp.js (pure) ; plus aucun appelant dans App.jsx — 2026-09-16, Phase 5 B2"
+    "isModuleBoosted": "devenue isBoostedByEvents(modId, events) dans lib/xp.js (pure) ; plus aucun appelant dans App.jsx — 2026-09-16, Phase 5 B2",
+    "ChestRewardCard": "remplacé par ChestCard / ChestLootTile (features/chests/ChestCards.jsx) : ouverture de coffre v3, révélation par cartes groupées — 2026-09-16"
   }
 }

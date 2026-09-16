@@ -305,19 +305,6 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes countUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
 @keyframes tipSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes tipFade{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(20px)}}
-/* ── Chest V2 (Boss Loot) animations ── */
-@keyframes chestV2Zoom{0%{opacity:0;transform:scale(.3)}60%{transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
-@keyframes chestV2Trembor{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-5px,-3px) rotate(-4deg)}75%{transform:translate(5px,-3px) rotate(4deg)}}
-@keyframes chestV2LidFly{0%{transform:translateY(0) rotate(0deg);opacity:1}40%{transform:translateY(-80px) rotate(-30deg);opacity:1}100%{transform:translateY(-200px) rotate(-80deg);opacity:0}}
-@keyframes chestV2BodyCollapse{0%{transform:scale(1,1) translateY(0);opacity:1;filter:brightness(1)}40%{transform:scale(1.1,.85) translateY(8px);filter:brightness(2)}100%{transform:scale(.4,.2) translateY(30px);opacity:0;filter:brightness(4)}}
-@keyframes chestV2ScreenFlash{0%,100%{opacity:0}50%{opacity:.85}}
-@keyframes chestV2BurstExpand{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(80)}}
-@keyframes chestV2DustExpand{0%{opacity:0;transform:translate(-50%,-50%) scale(0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(3.5)}}
-@keyframes chestV2ShardFly{0%{opacity:1;transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(0) rotate(0deg)}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateY(var(--dist,200px)) rotate(720deg)}}
-@keyframes chestV2BeamGrow{0%{height:0;opacity:.4}100%{height:100vh;opacity:1}}
-@keyframes chestV2BeamShrink{to{opacity:0}}
-@keyframes chestV2RewardFall{0%{opacity:0;transform:translateY(-220px) scale(.6) rotate(-8deg)}30%{opacity:1}100%{transform:translateY(0) scale(1) rotate(0deg);opacity:1}}
-@keyframes chestV2RewardSettle{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-10px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
 @keyframes frame-cosmic{0%,100%{filter:drop-shadow(0 0 14px #ff40c0) drop-shadow(0 0 22px #40c0ff)}50%{filter:drop-shadow(0 0 20px #ffc040) drop-shadow(0 0 28px #ff40c0)}}
 @keyframes frame-dragon{0%,100%{filter:drop-shadow(0 0 14px #ff4020) drop-shadow(0 0 22px #ffd060)}50%{filter:drop-shadow(0 0 22px #ff4020) drop-shadow(0 0 30px #ffd060)}}
 /* ═══ SHOP-EXCLUSIVE FRAMES (Arena Shop P2, 2026-06-01) — CSS-overlay ring effects, ported
@@ -352,9 +339,126 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .aframe-gilded_halo{border:2px solid #f0c850;box-shadow:0 0 4px #f0c850,0 0 18px rgba(240,200,80,.7),0 0 34px rgba(240,200,80,.4);animation:afrPulse 2.6s ease-in-out infinite}
 .aframe-prismatic{background:conic-gradient(from 0deg,#ff4040,#ffd000,#40ff60,#40d0ff,#a040ff,#ff4040);animation:afrSpin 5s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);mask:radial-gradient(farthest-side,transparent calc(100% - 16px),rgba(0,0,0,.3) calc(100% - 12px),#000 calc(100% - 7px),#000 calc(100% - 4px),transparent 100%);filter:saturate(1.25) drop-shadow(0 0 8px rgba(255,255,255,.4)) blur(.3px)}
 .aframe-prismatic::after{content:'';position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle,transparent 62%,rgba(200,160,255,.14) 80%,transparent 94%);animation:afrPulse 2.2s ease-in-out infinite}
-@keyframes chestV2ImpactRing{0%{opacity:1;transform:translate(-50%,-50%) scaleY(.4) scaleX(.3)}100%{opacity:0;transform:translate(-50%,-50%) scaleY(.4) scaleX(2.5)}}
-@keyframes chestV2SpeedLine{0%{opacity:0;transform:translateY(-100px)}30%{opacity:1}100%{opacity:0;transform:translateY(200px)}}
-@keyframes chestV2IconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* ── Chest opening v3 (2026-09-16) — Chests.jsx, porté de prototypes/chest-animations-v3 ──
+   Plein écran à fond sombre FIXE : couleurs en dur voulues, aucun jeton de thème à l'intérieur
+   (un var(--t1) suivrait le mode clair sur un fond qui, lui, ne le suit pas).
+   @property : --chx-tell se fond d'une rareté à l'autre jusque dans les dégradés SVG ; sans
+   support, la couleur change d'un coup, rien ne casse. */
+@property --chx-tell{syntax:'<color>';inherits:true;initial-value:#ffdca8}
+@property --chx-spin{syntax:'<angle>';inherits:false;initial-value:0deg}
+@property --chx-hx{syntax:'<percentage>';inherits:true;initial-value:50%}
+.chx-modal{position:fixed;inset:0;z-index:10000;display:flex;justify-content:center;background:#050302;color:#ede4d4;font-family:'DM Sans',sans-serif}
+/* clip et pas seulement hidden : les rayons (1000px) débordent, et un conteneur hidden reste
+   défilable par programme (focus, scrollIntoView) : toute la scène glissait de ~190px (proto) */
+.chx-stage{position:relative;width:100%;max-width:430px;height:100%;overflow:hidden;overflow:clip;isolation:isolate;background:radial-gradient(ellipse 90% 70% at 50% 45%,#241407 0%,#0c0603 60%,#040201 100%);--chx-tell:#ffdca8;--chx-cy:50%;transition:--chx-tell .35s ease;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.chx-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 38%,rgba(0,0,0,.78) 100%);pointer-events:none;z-index:4}
+.chx-rays{position:absolute;left:50%;top:var(--chx-cy);width:1000px;height:1000px;margin:-500px 0 0 -500px;pointer-events:none;z-index:1;opacity:0;mix-blend-mode:screen}
+.chx-rays i{position:absolute;inset:0;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--chx-tell) 60%,transparent) 0deg 3deg,transparent 3deg 15deg);-webkit-mask:radial-gradient(circle,#000 0%,rgba(0,0,0,.45) 20%,transparent 44%);mask:radial-gradient(circle,#000 0%,rgba(0,0,0,.45) 20%,transparent 44%);animation:chxSpin 20s linear infinite}
+.chx-halo{position:absolute;left:50%;top:var(--chx-cy);width:460px;height:460px;margin:-230px 0 0 -230px;border-radius:50%;pointer-events:none;z-index:1;opacity:0;background:radial-gradient(circle,color-mix(in srgb,var(--chx-tell) 50%,transparent),transparent 62%);mix-blend-mode:screen}
+.chx-beam{position:absolute;left:50%;top:0;width:140px;margin-left:-70px;transform-origin:50% 100%;transform:scaleY(0);pointer-events:none;z-index:3;background:linear-gradient(to top,#fff 0%,var(--chx-tell) 16%,color-mix(in srgb,var(--chx-tell) 35%,transparent) 55%,transparent 100%);filter:blur(9px);mix-blend-mode:screen}
+.chx-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:20}
+.chx-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10}
+.chx-dim{position:absolute;inset:0;background:rgba(4,2,1,.8);opacity:0;pointer-events:none;z-index:8}
+.chx-dim.on{pointer-events:auto}
+.chx-area{position:absolute;inset:0;z-index:3;pointer-events:none;transform-origin:50% var(--chx-cy)}
+.chx-label{position:absolute;left:0;right:0;top:calc(var(--chx-cy) - 215px);text-align:center;font-family:'Cinzel',serif;font-weight:900;letter-spacing:5px;font-size:14px;color:#d9b868;opacity:0;text-transform:uppercase;padding:0 16px}
+.chx-label small{display:block;font-family:'DM Sans',sans-serif;letter-spacing:1.5px;font-size:11px;color:#8a7e6a;margin-top:6px;font-weight:600;text-transform:none}
+.chx-chest{position:absolute;left:50%;top:var(--chx-cy);width:230px;height:230px;margin:-130px 0 0 -115px;pointer-events:auto;cursor:pointer;outline:none;opacity:0;background:none;border:0;padding:0}
+.chx-chest:focus-visible{outline:2px solid #d4943a;outline-offset:6px;border-radius:12px}
+.chx-idle{width:100%;height:100%}
+.chx-idle.breathe{animation:chxBreathe 2.4s ease-in-out infinite}
+.chx-svg{display:block;overflow:visible;filter:drop-shadow(0 14px 16px rgba(0,0,0,.75))}
+.chx-lid,.chx-lid-int,.chx-lock{transform-box:fill-box;transform-origin:50% 100%}
+.chx-lock{transform-origin:50% 0%}
+.chx-lid-int{transform:scaleY(0)}
+.chx-mouth{opacity:0}
+.chx-seam{opacity:0;transition:opacity .25s;mix-blend-mode:screen}
+.chx-ray{opacity:0;transition:opacity .3s}
+.chx-lvl1 .chx-seam{opacity:.45}
+.chx-lvl2 .chx-seam{opacity:.75}.chx-lvl2 .chx-ray{opacity:.35}
+.chx-lvl3 .chx-seam{opacity:1}.chx-lvl3 .chx-ray{opacity:.9}
+.chx-modal .chx-rune{animation:chxRuneGlow 1.8s ease-in-out infinite}
+.chx-runes{position:absolute;left:50%;top:calc(var(--chx-cy) + 75px);width:320px;height:92px;margin:-46px 0 0 -160px;opacity:0}
+.chx-runes svg{width:100%;height:100%;overflow:visible}
+.chx-runes ellipse{fill:none;stroke:#ffc84a;stroke-dasharray:300;stroke-dashoffset:300;transition:stroke-dashoffset .5s ease-out}
+.chx-runes .outer{stroke-width:2.2}.chx-runes .inner{stroke-width:1.1;opacity:.7}
+.chx-runes.on1 ellipse{stroke-dashoffset:200}.chx-runes.on2 ellipse{stroke-dashoffset:100}.chx-runes.on3 ellipse{stroke-dashoffset:0}
+.chx-runes path{fill:none;stroke:#ffd870;stroke-width:1.6;stroke-linecap:round;opacity:0;transition:opacity .3s}
+.chx-runes path.lit{opacity:1}
+.chx-shock{position:absolute;left:50%;top:calc(var(--chx-cy) + 72px);width:280px;height:64px;margin:-32px 0 0 -140px;border-radius:50%;border:2px solid var(--chx-tell);opacity:0;pointer-events:none}
+.chx-pips{position:absolute;left:50%;top:calc(var(--chx-cy) + 130px);transform:translateX(-50%);display:flex;gap:12px;opacity:0}
+.chx-pips i{width:11px;height:11px;border-radius:50%;border:1.5px solid #6a5638;transition:background .2s,box-shadow .2s,border-color .2s}
+.chx-pips i.on{background:var(--chx-tell);border-color:var(--chx-tell);box-shadow:0 0 10px var(--chx-tell)}
+.chx-hint{position:absolute;left:0;right:0;text-align:center;font-family:'Cinzel',serif;font-weight:700;letter-spacing:3px;font-size:13px;color:#e8d4a8;opacity:0;text-transform:uppercase;pointer-events:none;z-index:6;padding:0 16px}
+.chx-hint.chest{top:calc(var(--chx-cy) + 154px)}
+.chx-hint small{display:block;font-family:'DM Sans',sans-serif;font-weight:500;letter-spacing:.5px;font-size:11px;color:#8a7e6a;text-transform:none;margin-top:5px}
+.chx-hint.pulse{animation:chxHintPulse 1.6s ease-in-out infinite}
+.chx-tell{position:absolute;left:0;right:0;top:calc(var(--chx-cy) - 150px);text-align:center;font-family:'Cinzel',serif;font-weight:900;letter-spacing:6px;font-size:16px;color:var(--chx-tell);text-shadow:0 0 16px var(--chx-tell);opacity:0;pointer-events:none;text-transform:uppercase}
+.chx-card{position:absolute;left:50%;top:0;width:200px;height:280px;margin:-140px 0 0 -100px;z-index:5;pointer-events:auto;cursor:pointer;perspective:900px;outline:none;opacity:0;background:none;border:0;padding:0;color:inherit;font:inherit}
+.chx-card.inspect{z-index:9}
+.chx-card:focus-visible .chx-face{outline:2px solid #f0c850;outline-offset:3px}
+.chx-tilt{width:100%;height:100%;transform-style:preserve-3d;transform:rotateX(var(--chx-rx,0deg)) rotateY(var(--chx-ry,0deg));transition:transform .18s ease-out}
+.chx-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d}
+.chx-face{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.chx-back{background:radial-gradient(circle at 50% 40%,#3c2a16,#1a1008 72%);border:2px solid color-mix(in srgb,var(--chx-glow) 75%,#5a4428);box-shadow:0 0 24px color-mix(in srgb,var(--chx-glow) 60%,transparent),inset 0 0 30px rgba(0,0,0,.6)}
+.chx-back::before{content:"";position:absolute;inset:10px;border:1px solid rgba(201,164,90,.4);border-radius:10px;background:repeating-linear-gradient(45deg,rgba(201,164,90,.06) 0 6px,transparent 6px 12px)}
+.chx-back-in{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--chx-glow) 80%,transparent))}
+.chx-back.legend{border:3px solid transparent;background:radial-gradient(circle at 50% 40%,#3c2a16,#1a1008 72%) padding-box,conic-gradient(from var(--chx-spin),#ffc020,#fff4c0,#ff9a20,#ffc020,#fff4c0,#ffc020) border-box;animation:chxSpinBorder 2.2s linear infinite}
+.chx-card.pulse .chx-back{animation:chxBackPulse 1.3s ease-in-out infinite}
+.chx-card.pulse .chx-back.legend{animation:chxSpinBorder 2.2s linear infinite,chxBackPulse 1.3s ease-in-out infinite}
+.chx-front{transform:rotateY(180deg);background:linear-gradient(180deg,#2c2016 0%,#150e08 100%);border:2px solid var(--chx-rc);box-shadow:0 0 30px color-mix(in srgb,var(--chx-rc) 60%,transparent),inset 0 0 26px rgba(0,0,0,.55);display:flex;flex-direction:column;align-items:center;padding:14px 12px;text-align:center}
+.chx-badge{font-family:'Cinzel',serif;font-weight:900;font-size:10px;letter-spacing:3px;text-transform:uppercase;border:1px solid;border-radius:4px;padding:3px 9px;min-height:21px}
+.chx-badge.none{border:0}
+.chx-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;width:100%}
+.chx-visual{display:flex;justify-content:center;align-items:center;min-height:112px;filter:drop-shadow(0 0 16px color-mix(in srgb,var(--chx-rc) 70%,transparent))}
+.chx-name{font-family:'Cinzel',serif;font-weight:900;font-size:18px;color:#f3e9d6;letter-spacing:.5px;line-height:1.15}
+.chx-name.small{font-size:14px}
+.chx-cap{font-size:10.5px;color:#a89878;line-height:1.35;padding:0 4px}
+.chx-coin{border-radius:50%;background:radial-gradient(circle at 35% 30%,#fce8a8,#e8c45a 50%,#8a6818);border:2px solid #6b4f10;box-shadow:0 0 16px rgba(232,196,90,.5),inset 0 -5px 10px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;flex:none}
+.chx-gem{display:flex;filter:drop-shadow(0 0 10px rgba(120,210,255,.75))}
+.chx-cur{display:flex;flex-direction:column;gap:14px;width:100%;padding:0 10px}
+.chx-cur-row{display:flex;align-items:center;gap:14px}
+.chx-cur-num{display:flex;flex-direction:column;align-items:flex-start;font-family:'Outfit',sans-serif;font-weight:900;font-size:27px;color:#f7ecd6;line-height:1;font-variant-numeric:tabular-nums}
+.chx-cur-num small{font-family:'DM Sans',sans-serif;font-weight:700;font-size:10px;letter-spacing:2px;color:#a89878;text-transform:uppercase;margin-top:4px}
+.chx-tok-fan{position:relative;height:100px;width:100%;display:flex;justify-content:center;align-items:center}
+.chx-tok{position:absolute;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#5a4428,#1c140a);border:2px solid #c9a45a;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.5);font-size:26px;line-height:1}
+.chx-swatch{border-radius:22%;position:relative;overflow:hidden;border:2px solid rgba(255,255,255,.25);flex:none}
+.chx-swatch i{position:absolute;left:16%;height:9%;border-radius:4px;background:rgba(0,0,0,.28)}
+.chx-swatch i:nth-child(1){top:24%;right:16%}.chx-swatch i:nth-child(2){top:45%;right:34%}.chx-swatch i:nth-child(3){top:66%;right:24%}
+.chx-plate{font-family:'Cinzel',serif;font-weight:900;letter-spacing:2px;text-transform:uppercase;border:2px solid;border-radius:10px;padding:14px 12px;background:linear-gradient(180deg,#1a1208,#0a0604);line-height:1.2}
+.chx-holo{position:absolute;inset:0;border-radius:inherit;pointer-events:none;mix-blend-mode:screen;opacity:.5;background-image:radial-gradient(circle at var(--chx-mx,50%) var(--chx-my,30%),rgba(255,255,255,.16),transparent 38%),repeating-linear-gradient(115deg,transparent 0%,transparent 7%,rgba(255,80,200,.2) 8.5%,rgba(80,200,255,.22) 10%,rgba(120,255,190,.18) 11.5%,transparent 13%,transparent 20%);background-size:100% 100%,280% 280%;background-position:center,var(--chx-hx) 50%;animation:chxHoloSweep 3.6s ease-in-out infinite alternate}
+.chx-foil4 .chx-holo{background-image:radial-gradient(circle at var(--chx-mx,50%) var(--chx-my,30%),rgba(255,248,220,.18),transparent 38%),repeating-linear-gradient(115deg,transparent 0%,transparent 7%,rgba(255,200,90,.22) 8.5%,rgba(255,250,215,.28) 10%,rgba(255,170,60,.18) 11.5%,transparent 13%,transparent 20%)}
+.chx-tracking .chx-holo{animation:none}
+.chx-cta{position:absolute;left:16px;right:16px;bottom:calc(22px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;z-index:12}
+.chx-cta::before{content:"";position:absolute;left:-16px;right:-16px;bottom:-40px;height:150px;background:linear-gradient(to top,#040201 45%,transparent);z-index:-1;pointer-events:none}
+.chx-b1{flex:1;max-width:280px;min-height:48px;padding:14px;border:0;border-radius:12px;font-family:'Cinzel',serif;font-weight:900;font-size:15px;letter-spacing:1px;color:#1a0f04;background:linear-gradient(135deg,#ffe08a,#e0a830 55%,#b57a1c);box-shadow:0 6px 24px rgba(224,168,48,.35);cursor:pointer}
+.chx-b2{min-height:48px;padding:14px 16px;border-radius:12px;border:1px solid rgba(201,164,90,.4);background:rgba(20,12,6,.7);color:#d9c8a4;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer}
+.chx-skip{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:15;min-height:36px;background:rgba(20,12,6,.6);border:1px solid rgba(201,164,90,.35);color:#c9b48c;border-radius:20px;padding:7px 14px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:12px;letter-spacing:1px;cursor:pointer}
+.chx-recap{position:absolute;inset:0;z-index:11;display:flex;flex-direction:column;align-items:center;padding:calc(34px + env(safe-area-inset-top)) 16px 110px;overflow-y:auto}
+/* Invisibles jusqu'à l'animation d'entrée du moteur (sinon une image de flash au montage) */
+.chx-recap h2,.chx-recap .sub,.chx-recap .chx-tile{opacity:0}
+.chx-recap h2{font-family:'Cinzel',serif;font-weight:900;letter-spacing:6px;font-size:21px;color:#f0d890;margin:0 0 4px;text-shadow:0 0 18px rgba(240,200,80,.35)}
+.chx-recap .sub{font-size:11px;letter-spacing:2px;color:#8a7e6a;text-transform:uppercase;margin-bottom:14px}
+.chx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:380px}
+.chx-tile{position:relative;overflow:hidden;border:1.5px solid var(--chx-rc);border-radius:14px;background:linear-gradient(180deg,#261a10,#120a05);padding:10px 6px 9px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-height:104px}
+.chx-tile.featured{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr 1fr;column-gap:16px;align-items:center;justify-items:start;padding:14px 18px;min-height:0;text-align:left;box-shadow:0 0 30px color-mix(in srgb,var(--chx-rc) 45%,transparent)}
+.chx-t-badge{font-family:'Cinzel',serif;font-weight:900;font-size:8.5px;letter-spacing:2px;text-transform:uppercase}
+.chx-tile.featured .chx-t-badge{position:absolute;top:10px;right:12px;font-size:10px}
+.chx-t-vis{height:44px;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1}
+.chx-tile.featured .chx-t-vis{grid-row:1/3;height:auto}
+.chx-t-name{font-weight:700;font-size:12px;color:#efe4cf;line-height:1.2}
+.chx-tile.featured .chx-t-name{font-family:'Cinzel',serif;font-weight:900;font-size:19px;align-self:end}
+.chx-t-sub{font-size:9.5px;letter-spacing:1px;color:#8a7e6a;text-transform:uppercase}
+.chx-tile.featured .chx-t-sub{align-self:start}
+.chx-error{position:absolute;inset:0;z-index:16;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:rgba(4,2,1,.86)}
+.chx-error p{margin:0;font-size:14px;color:#d9c8a4;line-height:1.5}
+@keyframes chxSpin{to{transform:rotate(360deg)}}
+@keyframes chxSpinBorder{to{--chx-spin:360deg}}
+@keyframes chxHoloSweep{from{--chx-hx:0%}to{--chx-hx:100%}}
+@keyframes chxBreathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.012)}}
+@keyframes chxRuneGlow{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes chxBackPulse{0%,100%{box-shadow:0 0 18px color-mix(in srgb,var(--chx-glow) 50%,transparent),inset 0 0 30px rgba(0,0,0,.6)}50%{box-shadow:0 0 44px color-mix(in srgb,var(--chx-glow) 90%,transparent),inset 0 0 30px rgba(0,0,0,.6)}}
+@keyframes chxHintPulse{0%,100%{opacity:.55}50%{opacity:1}}
 /* ── Chest Earned Toast ── */
 @keyframes toastSlideUp{from{opacity:0;transform:translate(-50%,40px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes toastFadeOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-10px)}}

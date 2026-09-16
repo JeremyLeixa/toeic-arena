@@ -69,7 +69,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-16-chest-authlost";
+var BUILD_ID="2026-09-16-chest-v3";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -951,7 +951,9 @@ useEffect(function(){
     if(result.totalDarics>0){
       grantMarks(result.totalDarics,"chest",chest.trigger_source,false,true);
     }
-    setChestResult(result);haptic("chestOpen");
+    // Pas de haptic ici : le résultat arrive pendant la chute du coffre (onOpen part au
+    // montage du modal v3), c'est chestSequence.js qui vibre au moment de l'ouverture.
+    setChestResult(result);
     // Narrator triggers on chest open. Both push to the queue but DON'T render
     // immediately — the overlay is gated on !chestModal (see main return +
     // pg()), so it only appears after the student closes the chest reveal.

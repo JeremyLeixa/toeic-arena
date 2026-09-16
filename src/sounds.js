@@ -628,3 +628,271 @@ export function playJingleWithDuck(name) {
     if (bgmAudio) bgmAudio.volume = prevVol;
   };
 }
+
+// ═══════════════════════════════════════════════════════════
+// CHEST OPENING v3 — sons de l'ouverture de coffre (2026-09-16)
+// Portés de prototypes/chest-animations-v3/sfx.js. Même principe que les jingles
+// (oscillateurs + bruit filtré, Ré majeur comme playJingleEnter), mais sur un bus à
+// part : compresseur + vraie réverb (ConvolverNode, IR générée). Sans compresseur,
+// les couches du légendaire (cuivres + chœur + cloche + boum) saturent.
+// Chaque export vérifie isMuted() au moment de l'appel : couper le son pendant une
+// ouverture coupe la suite.
+// ═══════════════════════════════════════════════════════════
+var _chx = null; // {c, bus, verb, noise, lastTick}
+var CHX_N = {
+  D3: 146.83, A3: 220, D4: 293.66, Fs4: 369.99, A4: 440, Cs5: 554.37, D5: 587.33, E5: 659.26,
+  Fs5: 739.99, A5: 880, Cs6: 1108.73, D6: 1174.66, E6: 1318.51, Fs6: 1479.98, A6: 1760, D7: 2349.32,
+};
+
+function chx() {
+  if (isMuted()) return null;
+  try {
+    var c = ctx();
+    if (_chx && _chx.c === c) return _chx;
+    var comp = c.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.2;
+    var master = c.createGain(); master.gain.value = 0.8;
+    comp.connect(master); master.connect(c.destination);
+    var len = Math.floor(c.sampleRate * 2.4), ir = c.createBuffer(2, len, c.sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var d = ir.getChannelData(ch);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    }
+    var verb = c.createConvolver(); verb.buffer = ir;
+    var vg = c.createGain(); vg.gain.value = 0.5; verb.connect(vg); vg.connect(comp);
+    var noise = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), nd = noise.getChannelData(0);
+    for (var k = 0; k < nd.length; k++) nd[k] = Math.random() * 2 - 1;
+    _chx = { c: c, bus: comp, verb: verb, noise: noise, lastTick: 0 };
+    return _chx;
+  } catch (e) { console.warn("[sounds] chest bus:", e && e.message); return null; }
+}
+function chxNow(x) { return x.c.currentTime + 0.005; }
+function chxOut(x, node, wet) {
+  node.connect(x.bus);
+  if (wet) { var s = x.c.createGain(); s.gain.value = wet; node.connect(s); s.connect(x.verb); }
+}
+function chxEnv(g, t, a, d, v) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(v, t + a);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+}
+// o = {type,f,f2,glide,t,a,d,v,lp,q,detune,wet}
+function chxTone(x, o) {
+  var c = x.c, t = o.t, a = o.a || 0.005, osc = c.createOscillator(), g = c.createGain();
+  osc.type = o.type || "sine";
+  osc.frequency.setValueAtTime(o.f, t);
+  if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + (o.glide || o.d));
+  if (o.detune) osc.detune.value = o.detune;
+  chxEnv(g, t, a, o.d, o.v);
+  if (o.lp) {
+    var f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = o.lp; f.Q.value = o.q || 0.7;
+    osc.connect(f); f.connect(g);
+  } else osc.connect(g);
+  chxOut(x, g, o.wet);
+  osc.start(t); osc.stop(t + a + o.d + 0.05);
+}
+// o = {t,d,a,v,ft,f,f2,q,wet}
+function chxNoise(x, o) {
+  var c = x.c, t = o.t, a = o.a || 0.003, src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+  src.buffer = x.noise;
+  f.type = o.ft || "bandpass"; f.Q.value = o.q || 1;
+  f.frequency.setValueAtTime(o.f, t);
+  if (o.f2) f.frequency.exponentialRampToValueAtTime(o.f2, t + a + o.d);
+  chxEnv(g, t, a, o.d, o.v);
+  src.connect(f); f.connect(g); chxOut(x, g, o.wet);
+  src.start(t, Math.random() * 1.2); src.stop(t + a + o.d + 0.05);
+}
+function chxPluck(x, f, t, v, wet) {
+  chxTone(x, { type: "triangle", f: f, t: t, d: 0.55, v: v, wet: wet });
+  chxTone(x, { type: "sine", f: f * 2, t: t, d: 0.25, v: v * 0.3, wet: wet });
+}
+function chxArp(x, notes, t, gap, v, wet) { notes.forEach(function (f, i) { chxPluck(x, f, t + i * gap, v, wet); }); }
+function chxPad(x, freqs, t, dur, v, lp, wet) {
+  freqs.forEach(function (f) {
+    [-8, 0, 8].forEach(function (dt) {
+      chxTone(x, { type: "sawtooth", f: f, t: t, a: dur * 0.35, d: dur * 0.65, v: v / (freqs.length * 2), lp: lp, detune: dt, wet: wet });
+    });
+  });
+}
+function chxBell(x, f, t, v) {
+  [[1, 1], [2.76, 0.45], [5.4, 0.25], [8.93, 0.12]].forEach(function (p, i) {
+    chxTone(x, { type: "sine", f: f * p[0], t: t, d: 2.2 / (i + 1), v: v * p[1], wet: 0.6 });
+  });
+}
+function chxBrass(x, f, t, d, v) {
+  chxTone(x, { type: "sawtooth", f: f, t: t, a: 0.04, d: d, v: v, lp: 1900, q: 1.4, wet: 0.35 });
+  chxTone(x, { type: "sawtooth", f: f, t: t, a: 0.04, d: d, v: v * 0.6, lp: 1900, q: 1.4, detune: 7, wet: 0.35 });
+  chxTone(x, { type: "triangle", f: f / 2, t: t, a: 0.04, d: d, v: v * 0.5 });
+}
+function chxBoom(x, t, v) {
+  chxTone(x, { type: "sine", f: 110, f2: 32, glide: 0.35, t: t, d: 0.7, v: v, wet: 0.15 });
+}
+function chxPlay(fn) {
+  var x = chx();
+  if (!x) return;
+  try { fn(x, chxNow(x)); } catch (e) { console.warn("[sounds] chest:", e && e.message); }
+}
+
+// Le coffre touche le sol (tier 0 Novice … 3 Légendaire)
+export function playChestLand(tier) {
+  chxPlay(function (x, t) {
+    chxBoom(x, t, 0.9);
+    chxNoise(x, { t: t, d: 0.2, v: 0.5, ft: "lowpass", f: 520, q: 0.5 });
+    chxNoise(x, { t: t, d: 0.07, v: 0.35, f: 900, q: 2 });
+    if (tier >= 2) chxTone(x, { type: "triangle", f: 196, t: t + 0.01, d: 1.1, v: 0.07, wet: 0.6 });
+    if (tier >= 3) { chxBoom(x, t + 0.02, 0.5); chxBell(x, CHX_N.D4, t + 0.03, 0.05); }
+  });
+}
+// Un tap : bois + ferraille + note qui monte (D5 → F5 → A5)
+export function playChestKnock(step) {
+  chxPlay(function (x, t) {
+    chxNoise(x, { t: t, d: 0.06, v: 0.45, f: 700 + step * 180, q: 3 });
+    chxTone(x, { type: "triangle", f: 170 + step * 25, f2: 90, glide: 0.08, t: t, d: 0.12, v: 0.35 });
+    [0.03, 0.06, 0.1].forEach(function (dt, i) { chxNoise(x, { t: t + dt, d: 0.025, v: 0.1, f: 3800 + i * 500, q: 6 }); });
+    var f = CHX_N.D5 * Math.pow(2, ([0, 3, 7][step] || 0) / 12);
+    chxTone(x, { type: "sine", f: f, t: t + 0.02, a: 0.01, d: 0.6, v: 0.14, wet: 0.5 });
+    chxTone(x, { type: "triangle", f: f * 2, t: t + 0.02, d: 0.3, v: 0.04, wet: 0.5 });
+  });
+}
+// La lumière monte d'une rareté (1 uncommon … 4 legend)
+export function playChestSting(r) {
+  if (r < 1) return;
+  chxPlay(function (x, t0) {
+    var t = t0 + 0.04, N = CHX_N;
+    var sets = [null, [N.A5, N.D6], [N.Fs5, N.A5, N.D6], [N.D6, N.Fs6, N.A6], [N.D6, N.Fs6, N.A6, N.D7]];
+    chxArp(x, sets[r], t, 0.055, 0.09 + r * 0.015, 0.55);
+    if (r >= 3) chxNoise(x, { t: t, a: 0.05, d: 0.5, v: 0.05, ft: "highpass", f: 6000, wet: 0.5 });
+    if (r === 4) chxBell(x, N.D6, t + 0.2, 0.06);
+  });
+}
+// Le coffre résiste (résultat réseau pas encore là) : grondement en boucle + craquements.
+// Renvoie {stop} ; toujours appeler stop() (démontage compris).
+export function playChestStrain() {
+  var x = chx();
+  if (!x) return { stop: function () {} };
+  try {
+    var c = x.c, t = chxNow(x), src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    var lfo = c.createOscillator(), lg = c.createGain();
+    src.buffer = x.noise; src.loop = true;
+    f.type = "lowpass"; f.frequency.value = 170;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.3);
+    lfo.frequency.value = 9; lg.gain.value = 0.12; lfo.connect(lg); lg.connect(g.gain);
+    src.connect(f); f.connect(g); g.connect(x.bus);
+    src.start(t); lfo.start(t);
+    var iv = setInterval(function () {
+      if (!isMuted()) chxNoise(x, { t: chxNow(x), d: 0.05, v: 0.12, f: 500 + Math.random() * 400, q: 4 });
+    }, 340);
+    var stopped = false;
+    return {
+      stop: function () {
+        if (stopped) return; stopped = true;
+        clearInterval(iv);
+        try {
+          var s = chxNow(x);
+          g.gain.cancelScheduledValues(s); g.gain.setTargetAtTime(0.0001, s, 0.06);
+          src.stop(s + 0.4); lfo.stop(s + 0.4);
+        } catch (e) { console.warn("[sounds] strain stop:", e && e.message); }
+      },
+    };
+  } catch (e) { console.warn("[sounds] strain:", e && e.message); return { stop: function () {} }; }
+}
+export function playChestRiser(dur) {
+  chxPlay(function (x, t) {
+    chxNoise(x, { t: t, a: dur * 0.9, d: dur * 0.15, v: 0.22, f: 300, f2: 5000, q: 1.5, wet: 0.3 });
+    chxTone(x, { type: "sawtooth", f: 110, f2: 440, glide: dur, t: t, a: dur * 0.9, d: dur * 0.15, v: 0.07, lp: 1400 });
+  });
+}
+export function playChestUnlock() {
+  chxPlay(function (x, t) {
+    chxNoise(x, { t: t, d: 0.012, v: 0.5, ft: "highpass", f: 3000 });
+    chxNoise(x, { t: t + 0.05, d: 0.015, v: 0.4, ft: "highpass", f: 2500 });
+    chxTone(x, { type: "sine", f: 2200, t: t + 0.05, d: 0.25, v: 0.07, wet: 0.4 });
+    chxTone(x, { type: "sine", f: 3300, t: t + 0.05, d: 0.18, v: 0.03, wet: 0.4 });
+  });
+}
+// Couvercle ouvert : boum + souffle + grincement + accord selon la meilleure rareté (-1…4)
+export function playChestOpen(r) {
+  chxPlay(function (x, t) {
+    var N = CHX_N;
+    chxBoom(x, t, 1);
+    chxNoise(x, { t: t, a: 0.08, d: 0.6, v: 0.35, f: 300, f2: 3000, q: 1, wet: 0.4 });
+    chxTone(x, { type: "sawtooth", f: 70, f2: 115, glide: 0.35, t: t, d: 0.35, v: 0.05, lp: 900, q: 8 });
+    var notes = r < 2 ? [N.D5, N.Fs5, N.A5, N.D6] : r < 3 ? [N.D5, N.Fs5, N.A5, N.D6, N.Fs6] : [N.D5, N.Fs5, N.A5, N.Cs6, N.D6, N.Fs6, N.A6];
+    chxArp(x, notes, t + 0.08, 0.06, 0.11, 0.5);
+    if (r >= 2) chxPad(x, [N.D4, N.A4, N.D5], t + 0.05, 1.8, 0.2, 2200, 0.6);
+    if (r >= 3) { chxPad(x, [N.D3, N.A3, N.D4, N.Fs4, N.A4], t + 0.05, 2.6, 0.3, 1800, 0.6); chxBell(x, N.D6, t + 0.1, 0.07); }
+    if (r >= 4) { chxBoom(x, t + 0.45, 0.6); chxBell(x, N.D7, t + 0.5, 0.05); chxArp(x, [N.D6, N.E6, N.Fs6, N.A6, N.D7], t + 0.6, 0.05, 0.07, 0.6); }
+  });
+}
+export function playCardFly(i) {
+  chxPlay(function (x, t) { chxNoise(x, { t: t, a: 0.02, d: 0.2, v: 0.12, f: 1200 + i * 120, f2: 2800, q: 1.2, wet: 0.2 }); });
+}
+export function playCardLift() {
+  chxPlay(function (x, t) { chxNoise(x, { t: t, a: 0.05, d: 0.22, v: 0.09, f: 500, f2: 1600, q: 1, wet: 0.2 }); });
+}
+export function playCardFlip() {
+  chxPlay(function (x, t) {
+    chxNoise(x, { t: t, d: 0.03, v: 0.2, ft: "highpass", f: 2500 });
+    chxNoise(x, { t: t + 0.09, d: 0.03, v: 0.15, ft: "highpass", f: 2200 });
+    chxTone(x, { type: "sine", f: 900, f2: 1400, t: t, d: 0.08, v: 0.04 });
+  });
+}
+// Battement de cœur avant de retourner une carte Epic ou Legendary
+export function playCardHeartbeat() {
+  chxPlay(function (x, t) {
+    chxTone(x, { type: "sine", f: 75, f2: 42, glide: 0.18, t: t, d: 0.22, v: 0.6 });
+    chxTone(x, { type: "sine", f: 70, f2: 40, glide: 0.18, t: t + 0.24, d: 0.2, v: 0.4 });
+  });
+}
+// Carte retournée : r = null (monnaies, tokens) ou 0…4
+export function playCardReveal(r) {
+  chxPlay(function (x, t) {
+    var N = CHX_N;
+    if (r === null || r === undefined || r < 0) {
+      chxTone(x, { type: "sine", f: 2400, t: t, d: 0.3, v: 0.06, wet: 0.3 });
+      chxTone(x, { type: "sine", f: 3150, t: t + 0.03, d: 0.25, v: 0.04, wet: 0.3 });
+      chxArp(x, [N.A5, N.D6], t + 0.05, 0.07, 0.09, 0.4);
+      return;
+    }
+    if (r === 0) { chxArp(x, [N.D5, N.A5], t, 0.08, 0.1, 0.4); return; }
+    if (r === 1) { chxArp(x, [N.D5, N.Fs5, N.A5], t, 0.07, 0.1, 0.45); return; }
+    if (r === 2) { chxArp(x, [N.D5, N.Fs5, N.A5, N.D6], t, 0.06, 0.11, 0.5); chxPad(x, [N.D4, N.A4], t, 1.4, 0.15, 2000, 0.5); return; }
+    if (r === 3) {
+      chxArp(x, [N.D5, N.Fs5, N.A5, N.Cs6, N.D6], t, 0.055, 0.11, 0.55);
+      chxPad(x, [N.D4, N.Fs4, N.A4, N.Cs5], t, 2, 0.24, 2000, 0.6);
+      chxNoise(x, { t: t, a: 0.1, d: 0.8, v: 0.04, ft: "highpass", f: 6500, wet: 0.6 });
+      return;
+    }
+    // Légendaire : fanfare de cuivres + chœur + cloche + étincelles
+    chxBoom(x, t, 0.8);
+    chxBrass(x, N.D4, t, 0.25, 0.12); chxBrass(x, N.A4, t + 0.13, 0.25, 0.12); chxBrass(x, N.D5, t + 0.26, 1.1, 0.14);
+    chxPad(x, [N.D3, N.A3, N.D4, N.Fs4, N.A4, N.D5], t + 0.2, 3, 0.34, 1700, 0.7);
+    chxBell(x, N.D6, t + 0.3, 0.07);
+    chxArp(x, [N.D6, N.E6, N.Fs6, N.A6, N.D7], t + 0.55, 0.05, 0.07, 0.6);
+    chxNoise(x, { t: t + 0.2, a: 0.2, d: 1.2, v: 0.05, ft: "highpass", f: 7000, wet: 0.7 });
+  });
+}
+// Compteur qui défile : un tic toutes les 45 ms au plus
+export function playLootTick() {
+  chxPlay(function (x, t) {
+    if (t - x.lastTick < 0.045) return;
+    x.lastTick = t;
+    chxTone(x, { type: "sine", f: 1900 + Math.random() * 200, t: t, d: 0.03, v: 0.04 });
+  });
+}
+export function playLootCollect() {
+  chxPlay(function (x, t) {
+    var N = CHX_N;
+    chxArp(x, [N.D6, N.Fs6, N.A6, N.D7], t, 0.045, 0.08, 0.5);
+    chxNoise(x, { t: t, a: 0.05, d: 0.5, v: 0.05, ft: "highpass", f: 6000, wet: 0.5 });
+    chxPad(x, [N.D5, N.Fs5, N.A5], t + 0.05, 1, 0.1, 2400, 0.5);
+  });
+}
+
+// Baisse la musique de fond pendant l'ouverture d'un coffre, puis la remet.
+// Best-effort : iOS ignore les écritures de volume (voir _stopBGMInternal). On ne RELIT
+// jamais .volume pour décider quoi que ce soit ; 0.25 = le volume cible de playBGM.
+export function duckBGM(on) {
+  try { if (bgmAudio) bgmAudio.volume = on ? 0.06 : 0.25; }
+  catch (e) { console.warn("[sounds] duckBGM:", e && e.message); }
+}
