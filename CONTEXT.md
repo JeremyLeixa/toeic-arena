@@ -175,17 +175,41 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   Style, Drill, modale Daily Tip), Turn off + toggle, skin Aurora équipé masqué puis rendu,
   `theme-color` sur les 3 meta. Compte remis dans son état (sombre, sans skin, fêtes actives).
   Tests prouvés mordants (9 cassures). `BUILD_ID` = `2026-09-16-festivals`.
-- **Bugs antérieurs repérés en passant, non corrigés** : skin Aurora en mode clair = toutes les
-  `.crd` illisibles (fond forcé sombre, textes `.light` sombres) ; titre équipé et pastille de
-  ligue délavés en clair (couleurs codées en dur). Escapes unicode affichés en littéral
-  (texte ou attribut JSX) : 5 cas corrigés, `de9b46a` (Game Master, Profil → Style), `dd9fe16`
-  (bandeau Accès expiré, lien CGV), puis infobulle du grimoire et « Final score 10–990 ». Règle et
-  vérification sur le bundle dans CLAUDE.md → « JSX encoding rule ».
+- **Bugs antérieurs repérés en passant** : skin Aurora en mode clair = toutes les `.crd`
+  illisibles (**corrigé**, session suivante : « cartes-nuit ») ; titre équipé et pastille de
+  ligue délavés en clair (couleurs codées en dur, **non corrigé**). Escapes unicode affichés en
+  littéral (texte ou attribut JSX) : 5 cas corrigés, `de9b46a` (Game Master, Profil → Style),
+  `dd9fe16` (bandeau Accès expiré, lien CGV), puis infobulle du grimoire et « Final score
+  10–990 ». Règle et vérification sur le bundle dans CLAUDE.md → « JSX encoding rule ».
 
 ### Pour la prochaine session
 - Lot 4 à décider : BGM `bgm_home_<fest>` (helper `homeTrack()`), coffre `fest_<id>_<année>`,
   titre/frame exclusif filtré dans `pickRewards`, mention dans la fiche Shop.
 - Le 24/10 : vérifier en prod que Halloween s'applique seul, sans `?fest=`.
+
+---
+
+## Session 2026-09-16 (nuit) — Skins à cartes sombres lisibles en mode clair (« cartes-nuit »)
+
+- **Deux bugs, une cause** : l'ordre des règles de tokens dans `appCss.js`. 9 skins forcent un
+  fond sombre sur `.crd`. Aurora et Obsidian, déclarés **avant** `.light` : page claire, cartes
+  sombres, texte sombre (1,05:1). Les 7 skins du Shop, déclarés **après** : appli entière sombre
+  en clair, avec l'accent retinté foncé (2,3:1), vert/rouge/or, `--t3` et `--bg*-rgb` du clair
+  (barre d'onglets à moitié pâle). Le commentaire « bg stays light via .light » était faux.
+- **Décision Jérémy** (comparatif dans le proto des fêtes) : cartes-nuit sur les 9, plutôt que
+  cartes pâles façon fêtes. Page claire, palette sombre du skin **dans** ses cartes, aucune
+  couleur nouvelle. `bcb4494` Aurora/Obsidian, `b766325` Shop (+ fond opaque sous les cartes
+  translucides abyssal/molten_gold/heraldic), `f5b589b` test `check_skins_light` (rouge sur la
+  feuille d'avant : 41 problèmes, et sur 5 mutations).
+- **Vérifié** : ancienne vs nouvelle feuille sur 17 skins × 2 modes (8 976 valeurs calculées),
+  0 écart en sombre, 0 écart en clair hors des 9. En dev sur le compte Teacher (mode clair +
+  Aurora par l'UI, 8 autres par classe) : Home, Profil, Profil → Style ; textes de carte en clair
+  = en sombre (Molten Gold, Heraldic < 5 % d'écart, fond `--bg2`), rien de pire que sans skin.
+  Compte remis sombre, sans skin, relu après rechargement.
+- **Reste, préexistant, non traité** : couleurs codées en dur délavées en clair hors skin
+  (titre équipé, pastille de ligue, raretés or `#ffc020` du Style, « Convert duplicates »,
+  `+10 Login bonus`) ; les skins du Shop n'ont pas de `--cx-hex` propre (Doré partout où il sert,
+  en sombre comme dans les cartes-nuit) ; `theme-color` ignore le skin.
 
 ---
 

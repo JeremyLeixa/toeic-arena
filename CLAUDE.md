@@ -583,6 +583,7 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 ### CSS
 - **`.crd` class** forces `background: var(--bg2)`. Override requires removing the class.
 - **Skin animations:** use `background-image:` NOT `background:` shorthand when animated.
+- **Skin à cartes sombres = cartes-nuit en clair** (2026-09-16) : un skin qui force un fond sombre sur `.crd` écrit sa règle de tokens `.skin-X:not(.light),.light.skin-X .crd{…}` (page claire, palette sombre dans les cartes), s'ajoute à `.light:where(…) .crd` et à la liste `.light.skin-X .btn2`, et remet un `background-color` opaque si son fond de carte est translucide. Jamais `.skin-X{…}` seul : selon sa place par rapport à `.light`, texte sombre sur carte sombre ou appli entière sombre avec les restes du clair. `check_skins_light` refuse l'oubli.
 - **Shimmer overlays use `::after` pseudo-elements** with parent `position:relative!important;overflow:hidden!important`.
 - **`.app:not(.onboard-shell)`** selector allows onboarding to skip the desktop 200px sidebar margin.
 
