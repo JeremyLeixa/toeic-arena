@@ -1,6 +1,7 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { supabase } from "../supabase.js";
 import { supaToLocal, buildSavePayload } from "./profileSchema.js";
+import { pickFresherLocal } from "./staleRemote.js";
 
 // ─── localStorage-first persistence layer ───
 // Clés réelles : "toeic-arena-profile" / "toeic-arena-name" / "toeic-arena-class" (loadLocal,
@@ -85,32 +86,17 @@ export async function load(userId){
       }
       if(remote){
         console.warn("[LOAD] got remote — xp:",remote.xp,"weekly_xp:",remote.weekly_xp,"streak:",remote.streak);
-        // ── Stale-remote guard ──
-        // Heuristic: if local has strictly more XP than remote AND was active more recently,
-        // the saves were probably failing (e.g. schema mismatch) and local holds the truth.
-        // Use local and mark _syncDirty so the next save() pushes it to Supabase.
-        // XP is monotonic (cumulative, never decreases), so local.xp > remote.xp is a
-        // reliable signal that local has progress that never reached Supabase.
-        var localXp=(local&&local.xp)||0;
-        var remoteXp=remote.xp||0;
-        var localLA=(local&&local.lastActive)||"";
-        var remoteLA=remote.last_active||"";
-        if(local&&localXp>remoteXp&&localLA>=remoteLA){
-          console.warn("[LOAD] local is fresher (xp "+localXp+">"+remoteXp+", lastActive "+localLA+">="+remoteLA+") — merging with remote server-side fields");
-          // CRITICAL: server-side fields (classCode, access_level, email) can be changed
-          // by Stripe webhooks, admin SQL, or group migration — never by client activity.
-          // Always trust remote for these, even when local is fresher for XP/streak/etc.
-          // Without this merge, a downgrade bug could flip a paying student or school member
-          // to visitor/free just because their local had more XP.
-          if(remote.class_code)local.classCode=remote.class_code;
-          if(remote.access_level)local.accessLevel=remote.access_level;
-          if(remote.access_expires_at!==undefined)local.accessExpiresAt=remote.access_expires_at;
-          if(remote.email)local.email=remote.email;
+        // ── Stale-remote guard ── (lib/staleRemote.js : règle, champs serveur et raisons)
+        // Local plus frais que le distant → on garde le local fusionné avec les champs serveur
+        // et on le repousse tout de suite.
+        var fresher=pickFresherLocal(remote,local);
+        if(fresher){
+          console.warn("[LOAD] local is fresher (xp "+(local.xp||0)+">"+(remote.xp||0)+", lastActive "+(local.lastActive||"")+">="+(remote.last_active||"")+") — merging with remote server-side fields");
           _syncDirty=true;
-          saveLocal(local); // persist the merged classCode/accessLevel so subsequent saves don't regress
+          saveLocal(fresher); // persist the merged classCode/accessLevel so subsequent saves don't regress
           // Fire-and-forget: push local to Supabase immediately so device-switching works.
-          save(local);
-          return local;
+          save(fresher);
+          return fresher;
         }
         var d=supaToLocal(remote);
         saveLocal(d);
