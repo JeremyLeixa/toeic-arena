@@ -20,9 +20,13 @@ import { estimateTOEICScore, generateInsight } from "../../lib/toeic.js";
 import { today } from "../../lib/util.js";
 import { NARRATOR_ORDER, NARRATOR_MOMENTS } from "../../narrator.js";
 import { isSoundEnabled, setSoundEnabled, playCorrect, stopBGM } from "../../sounds.js";
-import { useState, useRef, useEffect } from "react";
-import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar as RBar, Cell } from "recharts";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { PasswordInput } from "../../components/PasswordInput.jsx";
+import { lazyNamed } from "../../components/lazyNamed.js";
+
+// Le graphique recharts (« Accuracy by module ») est chargé à la demande (Phase 5, C9) : c'est
+// lui, avec TeacherDash, qui fait sortir recharts du bundle principal. L'onglet reste eager.
+var ProfileChartsLazy=lazyNamed(function(){return import("./ProfileCharts.jsx");},"ProfileCharts");
 
 export function Profile(p){
   var u=p.u;
@@ -308,20 +312,8 @@ export function Profile(p){
         return(
         <div className="crd" style={{marginTop:16,padding:"16px 8px 8px"}}>
           <h3 className="out" style={{fontWeight:700,fontSize:13,marginBottom:12,color:"var(--t2)",paddingLeft:8}}>📊 Accuracy by module</h3>
-          <ResponsiveContainer width="100%" height={Math.max(160,active.length*32)}>
-            <BarChart data={active} layout="vertical" margin={{top:0,right:16,left:4,bottom:0}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--bdr)" horizontal={false}/>
-              <XAxis type="number" domain={[0,100]} tick={{fill:"var(--t3)",fontSize:10}} axisLine={{stroke:"var(--bdr)"}} tickLine={false} unit="%"/>
-              <YAxis type="category" dataKey="name" width={100} tick={{fill:"var(--t2)",fontSize:10}} axisLine={false} tickLine={false}/>
-              <Tooltip formatter={function(v){return v+"%";}} contentStyle={{background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:8,fontSize:12}} labelStyle={{color:"var(--t1)",fontWeight:700}} itemStyle={{color:"var(--t1)"}} cursor={{fill:"rgba(180,140,80,0.06)"}}/>
-              <RBar dataKey="accuracy" radius={[0,6,6,0]} barSize={18}>
-                {active.map(function(entry,i){
-                  var col=entry.accuracy>=70?"#4abe60":entry.accuracy>=50?"#ff8c42":"#e05252";
-                  return(<Cell key={i} fill={col}/>);
-                })}
-              </RBar>
-            </BarChart>
-          </ResponsiveContainer>
+          {/* Hauteur réservée pendant le chargement du chunk : aucun saut de layout. */}
+          <Suspense fallback={<div style={{height:Math.max(160,active.length*32)}}/>}><ProfileChartsLazy active={active}/></Suspense>
           {notStarted.length>0&&<div style={{paddingLeft:8,paddingRight:8,paddingTop:8,paddingBottom:4}}>
             <p style={{fontSize:11,color:"var(--t3)",margin:0}}>{notStarted.length} module{notStarted.length>1?"s":""} not yet started: {notStarted.map(function(d){return d.icon;}).join(" ")}</p>
           </div>}
