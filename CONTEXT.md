@@ -97,10 +97,13 @@
   la dernière colonne) et sonde `group_public` (READ_ONLY). CLAUDE.md : deux objets
   lisibles en direct (`students_public`, `events`), plus d'exception `groups`.
 - `BUILD_ID` = `2026-09-16-groups-rpc`.
+- **Livré et vérifié le 2026-09-16** : SQL 1 appliqué → push (`45658fb` SQL, `503fd70`
+  client) → « Join a Group » en prod (code valide et code inconnu) + login + League avec
+  saisons résolues par la RPC → SQL 2 appliqué → `check:security` au vert (19 tables
+  verrouillées, `groups` refuse chaque colonne, 39 RPC vivantes). Il reste exactement une
+  policy dans le schéma : « Events visible ».
 
 ### Pour la prochaine session
-- Si ce n'est pas déjà fait : appliquer les deux SQL P2-D5 dans l'ordre ci-dessus, puis
-  `npm run check:security` au vert.
 - Phase 5 du refactor, optionnelle : lazy chunks (Teacher, Onboarding, exams), portes XP en
   fonctions pures testables (`lib/xp.js`), code mort (`speakAndWait`, `compScores`,
   `getModuleAccuracy`, `parseInlineStyle`, `_lastSync`, `SK`).
@@ -496,4 +499,4 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
 
 ---
 
-_Last updated: 2026-09-16 · `groups` fermée au client (P2-D5) : 5 lectures directes → RPC `group_public`, deux migrations (additive puis verrou), balayage durci. Découpage d'App.jsx terminé et en prod (18 589 → 1 493 lignes). Sécurité : verrou RPC complet, plus aucune exception de table ; piège du claim corrigé (P2-D4). Next: appliquer SQL P2-D5 (1 puis 2), Phase 5 optionnelle, avatars Anaïs._
+_Last updated: 2026-09-16 · `groups` fermée au client (P2-D5, livré et vérifié en prod) : 5 lectures directes → RPC `group_public`, deux migrations appliquées, balayage durci et au vert. Découpage d'App.jsx terminé et en prod (18 589 → 1 493 lignes). Sécurité : verrou RPC complet, plus aucune exception de table ; piège du claim corrigé (P2-D4). Next: Phase 5 optionnelle, avatars Anaïs, backlog S2._
