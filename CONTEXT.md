@@ -257,9 +257,18 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   4,24 → 6,14). `34d930b` toasts de succès et de coffre : cartes sombres en dur dont les textes
   suivaient les jetons clairs (illisibles en clair, invisibles au balayage car éphémères), figés
   sur les valeurs du sombre.
-- **Reste, limite (3-4,5:1), non traité** : `#8a7e6a` en dur (« ULTIMATE TRIALS » 3,51), onglets
-  inactifs grisés (3,8). Grisés voulus dans les deux modes (succès verrouillés, Owned, mocks faits)
-  laissés tels quels.
+- **Gris en dur** : `3135826` `#8a7e6a` (le `--t2` du sombre écrit en dur, 3,0-3,9:1 en clair) via
+  `tone()`, variante = `--t2` clair `#5a5040` (6,0-7,7:1) ; Train (« ULTIMATE TRIALS », Mock Exams,
+  lignes Final Arena/Endless) et résultats Endless sur `var(--bg2)`. Blocs sombres en dur (tuile
+  Endless, carte de score Endless, aide Cards, popup Duel) marqués `/*fond local*/`.
+- **Garde AA** : `2de1f3f` `check_tones` refuse toute couleur en dur sous **4,5:1** en clair (au lieu
+  de 3:1), fond de même ligne compris. 12 cas corrigés : scores et marqueur du Gauntlet
+  (`#c026d3` → variante `#a421b5`, `#7c3aed`), Obligation/Possibility du Modal Council, icône Reading
+  des Strategy Cards (`#c4587a` → `#a83b5e`) ; parchemin du narrateur marqué `/*fond local*/`.
+  5 mutations qui passaient à 3:1.
+- **Reste, non traité** : onglets inactifs grisés (3,8). Parchemin du narrateur : `#8a6530` y tient
+  2,8-3,6:1 dans **les deux** modes (fond fixe), choix de palette. Grisés voulus dans les deux modes
+  (succès verrouillés, Owned, mocks faits) laissés tels quels.
 
 ---
 

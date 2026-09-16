@@ -74,10 +74,11 @@ Ce que la suite protège, et pourquoi :
   `.skin-X:not(.light),.light.skin-X .crd`, présence dans `.light:where(…) .crd`, tout token de
   `.light` reposé dans la carte, `.btn2` et fonds translucides corrigés en clair). Un oubli ne
   casse pas le build : les cartes deviennent illisibles pour les élèves en mode clair.
-- **`check_tones`** — **aucune couleur hex en dur sous 3:1 sur les fonds clairs** dans une
+- **`check_tones`** — **aucune couleur hex en dur sous 4,5:1 (AA) sur les fonds clairs** dans une
   expression `color:` / `color=` du JSX, sauf passée par `tone()`, sur un fond posé sur la même
-  ligne qui la rend lisible (ternaires et jetons résolus en clair), ou précédée de `/*fond local*/`
-  (fond sombre en dur posé ailleurs). Plus : une variante `.light{--tone-<hex>}` (≥ 4,5:1) pour
+  ligne qui la rend lisible à 4,5:1 (ternaires et jetons résolus en clair), ou précédée de
+  `/*fond local*/` (fond sombre ou fixe en dur posé ailleurs : tuiles Boss/Endless, parchemin du
+  narrateur). Plus : une variante `.light{--tone-<hex>}` (≥ 4,5:1) pour
   chaque couleur de ligue, titre, rareté et chaque couleur passée à `tone()` (littérale ou issue
   d'une source déclarée dans `DATA_SOURCES` : pastilles de Home, CECRL, fiches de grammaire,
   jauges du Profil, familles du Modal Council) sous 4,5:1 ; aucune variante orpheline ni hors
