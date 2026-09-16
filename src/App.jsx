@@ -1277,11 +1277,15 @@ function sv(d){
     sv(c);sSP(null);
   }
   async function logout(){
-    // Soft logout: clears local profile identity but KEEPS the Supabase session alive.
-    // Rationale: the anon auth session is what grants RLS access to students lookup;
-    // signing out forces a fresh anon user on next login, which breaks the "Welcome back"
-    // path (lookupName returns empty → user re-goes through full onboarding incl. Battle Scan).
-    // To fully destroy the session use deleteAccount instead.
+    // « Changer de profil » : déconnexion DOUCE. Vide le profil local et l'état React mais GARDE la
+    // session Supabase de l'appareil ; seule la « Déconnexion complète » du Profil la ferme (portée
+    // locale, auth.js signOutCompletely), et deleteAccount supprime le compte.
+    // ⚠️ F6 (2026-09-16) : l'ancienne justification (« la session anonyme donne l'accès RLS au
+    // lookup ; sans elle, Welcome back casse ») est caduque. Le lookup passe par une RPC publique
+    // (find_students_by_name) et lookupName ouvre lui-même une session anonyme s'il n'y en a pas.
+    // Conséquence à connaître : si la session gardée est celle d'un compte SÉCURISÉ, un
+    // rechargement de la page y ré-entre sans repasser par l'onboarding (démarrage → load() →
+    // load_student_by_uid). Sur un appareil partagé, c'est la Déconnexion complète qu'il faut.
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
     setCachedUserId(null);setSyncDirty(false);

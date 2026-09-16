@@ -160,8 +160,13 @@ export async function ensureAuthSession(){
     var refreshed=await supabase.auth.refreshSession();
     if(refreshed.data&&refreshed.data.user){console.warn("[AUTH] recovered via refreshSession");return refreshed.data.user;}
   }catch(e){/* refresh failed — need a new session */}
-  // Last resort: new anonymous session. save()'s UPDATE matches by (name, class_code)
-  // not id, so the row stays reachable even though the user_id changed.
+  // Dernier recours : nouvelle session ANONYME. ⚠️ F6 (2026-09-16) : l'ancien commentaire disait
+  // que la ligne « reste atteignable » par (nom, promo) malgré le changement d'user_id. Faux depuis
+  // le verrou du 2026-09-15 pour tout compte SÉCURISÉ : student_guard exige auth.uid() = user_id,
+  // donc load_student / save_student refusent (not_owner) avec cette session. Seules les lignes
+  // legacy (sans user_id) restent lisibles et écrivables. Le refus remonte à App par onAuthLost
+  // (F1/F2) : reconnexion par mot de passe, copie locale récupérée. Cette session anonyme sert
+  // donc surtout aux comptes legacy et aux RPC publiques, pas à « réparer » un compte sécurisé.
   try{
     var anon=await supabase.auth.signInAnonymously();
     if(anon.data&&anon.data.user){console.warn("[AUTH] recovered via new anon session");return anon.data.user;}
