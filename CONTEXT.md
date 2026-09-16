@@ -252,9 +252,14 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   Modal Council à 0 défaut propre au clair ; Profil, Train, What is the TOEIC? : seuls restent des
   jetons limites. **Pas vu en live** (sessions et résultats : Gauntlet en jeu, résultats Endless,
   session Flashcards, Duel) : couverts par la garde statique seulement.
-- **Reste, limite (3-4,5:1), non traité** : `--orange` clair (« Lv. 79 » 4,05), `--green` sur fond
-  teinté (4,1-4,2), `#8a7e6a` en dur (« ULTIMATE TRIALS » 3,51), onglets inactifs grisés (3,8).
-  Grisés voulus dans les deux modes (succès verrouillés, Owned, mocks faits) laissés tels quels.
+- **Jetons limites** : `a271495` `--orange` clair `#a05a10` → `#834a0d`, `--green` clair `#15803d` →
+  `#106430` (≥ 4,6:1 même sur encart teinté de leur couleur ; « Lv. 79 » 4,05 → 5,44, « Listening »
+  4,24 → 6,14). `34d930b` toasts de succès et de coffre : cartes sombres en dur dont les textes
+  suivaient les jetons clairs (illisibles en clair, invisibles au balayage car éphémères), figés
+  sur les valeurs du sombre.
+- **Reste, limite (3-4,5:1), non traité** : `#8a7e6a` en dur (« ULTIMATE TRIALS » 3,51), onglets
+  inactifs grisés (3,8). Grisés voulus dans les deux modes (succès verrouillés, Owned, mocks faits)
+  laissés tels quels.
 
 ---
 
