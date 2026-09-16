@@ -1073,19 +1073,7 @@ function sv(d){
     // Find the best row (highest XP) for this student
     // Accent + case insensitive lookup
     var rnorm=normalizeName(name);
-    // B3 : idem onboard() — la cohorte entière partait en select('*') pour retrouver UNE
-    // ligne. La RPC renvoie directement la meilleure correspondance (XP décroissant), en
-    // ligne complète car supaToLocal() hydrate tout le profil avec.
-    // ⚠️ recover_student_row rend un profil complet à partir d'un simple prénom, sans
-    // secret : c'est le finding C4. Elle n'ajoute rien (le client pouvait déjà faire pire)
-    // mais elle DOIT être supprimée en même temps que ce chemin recover() legacy, à la
-    // date butoir de la migration soft — sinon elle devient le trou de la Phase C.
-    var rr=await supabase.rpc('recover_student_row',{p_name:name,p_class_code:classCode});
-    if(rr.error)console.warn("[recover] rpc failed:",rr.error.message);
-    var d=rr.data||null;
-    if(!d||normalizeName(d.name||"")!==rnorm){console.warn("[recover] no row for",name,classCode);return false;}
-
-    // Get or create auth session
+    // Session D'ABORD : la lecture ci-dessous est gardée par auth.uid().
     var sess=await supabase.auth.getSession();
     var userId=sess.data.session?sess.data.session.user.id:null;
     if(!userId){
@@ -1093,6 +1081,18 @@ function sv(d){
       if(!authRes.data.user)return false;
       userId=authRes.data.user.id;
     }
+
+    // F3 (2026-09-16) : lecture par load_student, la RPC GARDÉE (student_guard), comme load().
+    // Ligne sécurisée → seul son propriétaire la lit : doStudentSignIn et le claim lient la
+    // session (bind_student_user_id) AVANT d'appeler recover(). Ligne legacy (visitor, non
+    // migrée) → tolérance, comme partout. Avant, recover_student_row rendait la ligne COMPLÈTE
+    // (email, access_level, progression) sur un simple prénom + code promo (finding C4, côté
+    // lecture), et « Continuer sans pour l'instant » faisait entrer sur un compte sécurisé avec
+    // une session qui ne pouvait rien sauvegarder. Ne pas revenir à une lecture sans garde.
+    var rr=await supabase.rpc('load_student',{p_name:name,p_class_code:classCode});
+    if(rr.error)console.warn("[recover] rpc failed:",rr.error.message);
+    var d=rr.data||null;
+    if(!d||normalizeName(d.name||"")!==rnorm){console.warn("[recover] no readable row for",name,classCode,"(absent, or secured and not owned by this session)");return false;}
 
     // id rebinding removed: previously we tried to UPDATE students.id = currentAuthUid so
     // load()'s fallback-by-id would find the row. This caused 409 conflicts on multi-profile
