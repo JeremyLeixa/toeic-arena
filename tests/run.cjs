@@ -26,6 +26,7 @@ const SUITE = [
   ['check_profile_roundtrip.cjs',  'aucun champ du profil ne se perd entre client, payload et base'],
   ['check_chest_drops.cjs',        'tout butin tiré est persistable et connu'],
   ['check_identity.cjs',           'le normaliseur de noms et l\'adresse synthétique n\'ont pas bougé'],
+  ['check_xp_gates.cjs',           'les portes XP (accuracy, anti-farming, Focus, boosts, bonus) sont celles du produit'],
   ['validate_endless_resume.cjs',  'la reprise d\'Endless rejoue le même test'],
   ['validate_listening_shuffle.cjs', 'la position des bonnes réponses est randomisée'],
   ['validate_toeic_shrinkage.cjs', 'l\'estimateur TOEIC ne réintroduit pas les 3 pathologies'],
