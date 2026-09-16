@@ -53,7 +53,7 @@ import { ResetPasswordView } from "./features/profile/ResetPasswordView.jsx";
 import { NarratorOverlay } from "./features/narrator/NarratorOverlay.jsx";
 import { League } from "./features/league/League.jsx";
 import { renderRoute } from "./routes.jsx";
-import { lazyNamed } from "./components/lazyNamed.js";
+import { lazyNamed, preloadLazyScreens } from "./components/lazyNamed.js";
 
 // ── Écrans chargés à la demande (Phase 5, code-splitting) ──
 // Alias `…Lazy` obligatoires ici : le recensement (tests/check_symbol_census.cjs) compte les
@@ -616,6 +616,14 @@ useEffect(function(){
     document.addEventListener("touchstart",startBGM,{once:true});
     return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
   },[ld]);
+
+  // ── Préchauffage des écrans chargés à la demande (Phase 5, C10) ── une fois le profil
+  // chargé, recharger à l'idle, l'un après l'autre, tous les chunks déclarés via lazyNamed :
+  // parité hors-ligne d'avant le découpage (le SW met en cache chaque chunk servi), mêmes
+  // octets qu'avant, mais APRÈS le premier affichage. Deps primitives (u est recloné à chaque
+  // sv) ; preloadLazyScreens porte sa propre garde « une seule fois ».
+  var hasUser=!!u;
+  useEffect(function(){if(!ld&&hasUser)preloadLazyScreens();},[ld,hasUser]);
 
   // ── Centralized BGM control: silence on ANY sub-page (exercise/content), restore home BGM on return ──
   // Defensive rule (post-feedback 2026-05-11): any sp ≠ null with no self-managed BGM = exercise → stopBGM.
