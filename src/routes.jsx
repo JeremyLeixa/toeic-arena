@@ -1,7 +1,4 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, Phase 4a). Les 41 routes `sp` déplacées telles quelles.
-import { BossTest } from "./features/exams/BossTest.jsx";
-import { EndlessArena } from "./features/exams/EndlessArena.jsx";
-import { MockTest } from "./features/exams/MockTest.jsx";
 import { AudioBlitz } from "./features/games/AudioBlitz.jsx";
 import { ClueHunter } from "./features/games/ClueHunter.jsx";
 import { DuelArena } from "./features/games/DuelArena.jsx";
@@ -21,6 +18,16 @@ import { Part6Drill, Part7Read, TimeSim } from "./features/train/reading.jsx";
 import { AboutToeic, StratCards, StratQuizPage } from "./features/train/strategy.jsx";
 import { checkMission, recordModule } from "./lib/progress.js";
 import { playBGM, stopBGM } from "./sounds.js";
+import { lazyNamed } from "./components/lazyNamed.js";
+
+// ── Écrans chargés à la demande (Phase 5, code-splitting) ── mêmes noms locaux qu'avant :
+// les lignes de route ci-dessous ne bougent pas. routes.jsx est exempt du recensement de
+// symboles ; tests/check_import_graph.cjs vérifie chemin, nom exporté et absence d'import
+// statique résiduel. Fallback : LoadingMark inline via pg(). `playBGM` part pendant que le
+// chunk se charge (idempotent par piste) : la musique précède l'écran d'un instant, c'est tout.
+var BossTest=lazyNamed(function(){return import("./features/exams/BossTest.jsx");},"BossTest");
+var EndlessArena=lazyNamed(function(){return import("./features/exams/EndlessArena.jsx");},"EndlessArena");
+var MockTest=lazyNamed(function(){return import("./features/exams/MockTest.jsx");},"MockTest");
 
 /* La table sp → écran, sortie d'App() (REFACTOR_PLAN.md §5, Phase 4a).
  * Chaque ligne est identique à ce qu'elle était dans App(). Les noms de la portée
