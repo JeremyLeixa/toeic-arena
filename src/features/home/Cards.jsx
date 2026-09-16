@@ -33,7 +33,7 @@ return(<div className="enter" style={{padding:"20px 16px 100px"}}>
 <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(212,148,58,.08)"}}>
 <span style={{fontWeight:700,color:/*fond local*/"#d4943a",minWidth:52,fontSize:13}}>Easy</span>
 <span style={{fontSize:12,color:/*fond local*/"#b0a890"}}>Instant recall — I know this one well</span></div></div>
-<p style={{fontSize:12,color:"#8a7e6a",lineHeight:1.6,marginBottom:18}}>Be honest! Cards you mark "Again" come back sooner, while "Easy" cards are spaced further apart. The goal is long-term memorisation, not a high score.</p>
+<p style={{fontSize:12,color:/*fond local*/"#8a7e6a",lineHeight:1.6,marginBottom:18}}>Be honest! Cards you mark "Again" come back sooner, while "Easy" cards are spaced further apart. The goal is long-term memorisation, not a high score.</p>
 <button className="btn1" onClick={closeSrsHelp} style={{width:"100%"}}>Got it!</button>
 </div></div>}
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:0}}>Flashcards</h1>

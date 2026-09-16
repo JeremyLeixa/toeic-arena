@@ -346,7 +346,7 @@ export function DuelArena(p){
         <div style={{fontSize:36,marginBottom:12}}>{"⚠️"}</div>
         <div className="out" style={{fontWeight:700,fontSize:15,marginBottom:8,color:/*fond local*/"#e05252"}}>Wager denied</div>
         <p style={{fontSize:13,color:/*fond local*/"#b0a890",lineHeight:1.6,marginBottom:4}}>{wagerPopup}</p>
-        <p style={{fontSize:11,color:"#8a7e6a",lineHeight:1.5,marginBottom:16}}>You can only bet XP you have earned this week. Keep training to increase your weekly XP!</p>
+        <p style={{fontSize:11,color:/*fond local*/"#8a7e6a",lineHeight:1.5,marginBottom:16}}>You can only bet XP you have earned this week. Keep training to increase your weekly XP!</p>
         <button className="btn1" onClick={function(){setWagerPopup(null);}} style={{width:"100%"}}>Got it</button>
       </div>
     </div>}

@@ -424,7 +424,7 @@ export function EndlessArena(p){
     return(<div className="enter" style={{padding:"20px 16px 100px",minHeight:"100vh"}}>
       {/* Breadcrumb */}
       {/* Résultat déjà persisté au submit (GARDE doSubmit) — les boutons ne font que naviguer. */}
-      <div style={{fontSize:13,color:"#8a7e6a",marginBottom:14,cursor:"pointer"}} onClick={p.back}>{"← ⏳ Endless Arena"}</div>
+      <div style={{fontSize:13,color:tone("#8a7e6a"),marginBottom:14,cursor:"pointer"}} onClick={p.back}>{"← ⏳ Endless Arena"}</div>
 
       {/* PB Banner or First Run */}
       {attempts===1?(<div style={{background:"linear-gradient(135deg,#3a2810 0%,#0a1e35 50%,#3a2810 100%)",border:"1.5px solid #f0c850",borderRadius:12,padding:"11px 14px",marginBottom:14,textAlign:"center"}}>
@@ -440,18 +440,18 @@ export function EndlessArena(p){
       {/* Score Hero Card */}
       <div style={{background:"linear-gradient(135deg,#1a1610,#0f1a2a)",border:"1px solid rgba(27,112,207,0.25)",borderRadius:16,padding:"22px 16px 18px",textAlign:"center",position:"relative",overflow:"hidden",marginBottom:14}}>
         <div style={{position:"absolute",top:-4,right:10,fontSize:46,opacity:.06}}>{"⏳"}</div>
-        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#8a7e6a",letterSpacing:2,marginBottom:6}}>RUN #{attempts} {"·"} COMPLETE</div>
+        <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:/*fond local*/"#8a7e6a",letterSpacing:2,marginBottom:6}}>RUN #{attempts} {"·"} COMPLETE</div>
         <div style={{position:"relative"}}>
           <span className="out" style={{fontWeight:900,fontSize:56,lineHeight:1,background:"linear-gradient(180deg,#f0c850,#d4943a)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{result.toeicEstimate}</span>
-          <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:16,color:"#8a7e6a",marginLeft:4}}>/ 990</span>
+          <span style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:16,color:/*fond local*/"#8a7e6a",marginLeft:4}}>/ 990</span>
         </div>
         <div style={{display:"flex",gap:8,marginTop:16}}>
           <div style={{flex:1,background:"rgba(180,140,80,.08)",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-            <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:.5}}>LISTENING</div>
+            <div style={{fontSize:11,color:/*fond local*/"#8a7e6a",letterSpacing:.5}}>LISTENING</div>
             <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:18,color:/*fond local*/"#ede4d4"}}>{result.listening.toeic}<span style={{fontSize:11,color:"#5a5040"}}> / 495</span></div>
           </div>
           <div style={{flex:1,background:"rgba(180,140,80,.08)",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-            <div style={{fontSize:11,color:"#8a7e6a",letterSpacing:.5}}>READING</div>
+            <div style={{fontSize:11,color:/*fond local*/"#8a7e6a",letterSpacing:.5}}>READING</div>
             <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:800,fontSize:18,color:/*fond local*/"#ede4d4"}}>{result.reading.toeic}<span style={{fontSize:11,color:"#5a5040"}}> / 495</span></div>
           </div>
         </div>
@@ -460,7 +460,7 @@ export function EndlessArena(p){
       {/* XP Earned */}
       <div style={{background:"var(--bg2)",border:"1px solid rgba(180,140,80,.12)",borderRadius:12,padding:"12px 16px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
-          <div style={{fontSize:11,color:"#8a7e6a"}}>XP EARNED</div>
+          <div style={{fontSize:11,color:tone("#8a7e6a")}}>XP EARNED</div>
           <div style={{fontSize:11,color:"#5a5040"}}>{pbBonus>0?"base "+baseXp+" + PB bonus "+pbBonus:"base "+baseXp}</div>
         </div>
         <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:900,fontSize:22,color:tone("#f0c850")}}>+{totalXp}</div>
@@ -469,10 +469,10 @@ export function EndlessArena(p){
       {/* Progression History */}
       <div style={{background:"var(--bg2)",border:"1px solid rgba(180,140,80,.12)",borderRadius:12,padding:"14px 16px",marginBottom:14}}>
         {history.length<=1?(<div>
-          <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#8a7e6a",letterSpacing:2,marginBottom:8}}>PROGRESSION</div>
+          <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:tone("#8a7e6a"),letterSpacing:2,marginBottom:8}}>PROGRESSION</div>
           <div style={{fontSize:12,color:tone("#7fb8e8"),fontStyle:"italic"}}>Your first Endless run {"·"} come back tomorrow to see your progress</div>
         </div>):(<div>
-          <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:"#8a7e6a",letterSpacing:2,marginBottom:12}}>PROGRESSION {"·"} LAST {history.length} RUNS</div>
+          <div style={{fontFamily:"'Cinzel','Outfit',serif",fontSize:11,color:tone("#8a7e6a"),letterSpacing:2,marginBottom:12}}>PROGRESSION {"·"} LAST {history.length} RUNS</div>
           {history.map(function(run,ri){
             var isLast=ri===history.length-1;
             var barW=Math.max(5,Math.min(100,((run.toeicEstimate-500)/(990-500))*100));
@@ -482,7 +482,7 @@ export function EndlessArena(p){
               <div style={{flex:1,height:8,borderRadius:99,background:isLast?"rgba(27,112,207,.15)":"rgba(180,140,80,.08)"}}>
                 <div style={{width:barW+"%",height:"100%",borderRadius:99,background:barCol}}/>
               </div>
-              <span style={{width:32,textAlign:"right",fontSize:11,fontWeight:isLast?700:600,color:isLast?tone("#7fb8e8"):"#8a7e6a"}}>{run.toeicEstimate}</span>
+              <span style={{width:32,textAlign:"right",fontSize:11,fontWeight:isLast?700:600,color:isLast?tone("#7fb8e8"):tone("#8a7e6a")}}>{run.toeicEstimate}</span>
             </div>);
           })}
         </div>)}
@@ -508,7 +508,7 @@ export function EndlessArena(p){
 
       {/* Secondary Button */}
       <button onClick={p.back}
-        style={{width:"100%",padding:12,background:"transparent",border:"1px solid rgba(180,140,80,.25)",borderRadius:12,fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13,color:"#8a7e6a",cursor:"pointer",marginBottom:16}}>
+        style={{width:"100%",padding:12,background:"transparent",border:"1px solid rgba(180,140,80,.25)",borderRadius:12,fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13,color:tone("#8a7e6a"),cursor:"pointer",marginBottom:16}}>
         Back to the training grounds
       </button>
 
