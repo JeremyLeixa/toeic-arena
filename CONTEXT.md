@@ -177,9 +177,10 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
   Tests prouvés mordants (9 cassures). `BUILD_ID` = `2026-09-16-festivals`.
 - **Bugs antérieurs repérés en passant, non corrigés** : skin Aurora en mode clair = toutes les
   `.crd` illisibles (fond forcé sombre, textes `.light` sombres) ; titre équipé et pastille de
-  ligue délavés en clair (couleurs codées en dur). Le littéral `🗝️ Game Master`
-  de Profil → Style est corrigé (`de9b46a`). Même défaut (escapes en texte JSX) encore présent :
-  `App.jsx` bandeau « Accès expiré » et `UpgradeScreen.jsx` « Conditions Générales de Vente ».
+  ligue délavés en clair (couleurs codées en dur). Escapes unicode affichés en littéral
+  (texte ou attribut JSX) : 5 cas corrigés, `de9b46a` (Game Master, Profil → Style), `dd9fe16`
+  (bandeau Accès expiré, lien CGV), puis infobulle du grimoire et « Final score 10–990 ». Règle et
+  vérification sur le bundle dans CLAUDE.md → « JSX encoding rule ».
 
 ### Pour la prochaine session
 - Lot 4 à décider : BGM `bgm_home_<fest>` (helper `homeTrack()`), coffre `fest_<id>_<année>`,

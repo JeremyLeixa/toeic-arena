@@ -547,7 +547,9 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 ### JSX encoding rule
 - Unicode escapes (`\u00e9`, etc.) in JSX TEXT content don't decode — render as literal `\u00e9`.
 - **Fix**: wrap in `{"..."}` JS string expression, OR use real UTF-8 characters.
-- Works fine in JS string literals (array items, attribute values).
+- **Same trap in JSX attribute strings**: `title="T\u00e9l\u00e9charger"` renders the literal too (JSX attribute strings are HTML-like, no JS escapes). Write `title={"T\u00e9l\u00e9charger"}`.
+- Works fine in real JS string literals: array items, object values, `{"..."}` expressions.
+- **Check that catches every case** (source greps miss mixed lines): after `npm run build`, `grep -oE '.{3}\\\\u[0-9A-Fa-f]{4}.{3}' dist/assets/*.js` — a doubly escaped `\\u00e9` in the bundle is a literal on screen. Only library regex ranges (`\\u00C0-\\u00D6`…) should remain. Last full sweep: 2026-09-16, 5 cases fixed.
 
 ---
 
