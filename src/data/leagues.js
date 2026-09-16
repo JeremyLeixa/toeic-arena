@@ -7,9 +7,3 @@ export var LEAGUES = [
   { id: "champion", name: "Champion", icon: "🏆", gi: "trophy-cup", color: "#ff4757", min: 10000 },
   { id: "legend", name: "Légende", icon: "⚡", gi: "lightning-storm", color: "#ffae00", min: 30000 },
 ];
-
-export var COMPETITORS = [
-  {n:"Léa M.",a:"🦊"},{n:"Hugo D.",a:"🐺"},{n:"Chloé R.",a:"🦁"},{n:"Théo B.",a:"🐯"},
-  {n:"Emma L.",a:"🦅"},{n:"Lucas P.",a:"🐻"},{n:"Manon F.",a:"🦋"},{n:"Nathan V.",a:"🐲"},
-  {n:"Jade K.",a:"🦄"},{n:"Enzo S.",a:"🐬"},{n:"Camille T.",a:"🌸"},{n:"Raphaël G.",a:"⚡"},
-];

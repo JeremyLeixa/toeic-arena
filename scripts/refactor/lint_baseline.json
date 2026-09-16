@@ -1,6 +1,6 @@
 {
-  "frozenAt": "2026-09-15",
-  "totalSrc": 375,
+  "frozenAt": "2026-09-16",
+  "totalSrc": 368,
   "unusedImports": [
     "src/App.jsx 'getAuthUser'",
     "src/App.jsx 'onAuthChange'",

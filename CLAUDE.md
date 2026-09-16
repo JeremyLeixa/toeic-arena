@@ -368,7 +368,7 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - `stopListenAudio()` sets the flag + pauses current audio + cancels `speechSynthesis` (audio-leak fix 2026-04-22).
 - `resumeAudioSession()` clears the flag. Call it on component mount: `useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);`.
 - Without this pattern, the async sequence keeps creating new Audio objects after the user navigates away (bug fixed 2026-04-22, regression risk).
-- **User-initiated speak() must call resumeAudioSession() first**: `speak()` / `speakAndWait()` bail out early if `_audioAborted` is true. Components that play audio on click WITHOUT mounting a `resumeAudioSession` useEffect (SpeakBtn, Flashcards, Word Tavern) need to reset the flag themselves at click time — otherwise any prior Listen unmount leaves the flag set and they stay silent. `SpeakBtn.go()` handles this centrally.
+- **User-initiated speak() must call resumeAudioSession() first**: `speak()` bails out early if `_audioAborted` is true. Components that play audio on click WITHOUT mounting a `resumeAudioSession` useEffect (SpeakBtn, Flashcards, Word Tavern) need to reset the flag themselves at click time — otherwise any prior Listen unmount leaves the flag set and they stay silent. `SpeakBtn.go()` handles this centrally.
 
 ### Icon system (2026-04-22)
 - **`<GIcon name size color block style/>`** — inline SVG helper in `src/components/icons.jsx` (with LeagueIcon, SeasonIcon, ResultIcon, BrandMark). Renders an Iconify `game-icons:` path from `GAME_ICON_PATHS`. `color` defaults to `currentColor`. Use skin-aware `var(--cyan)` for module content; specific hex for signaling (e.g. gold for achievements).

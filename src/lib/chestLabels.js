@@ -71,15 +71,3 @@ export function getTriggerLabel(trigger){
   }
   return"Milestone reached";
 }
-// Convert "k:v;k:v" inline CSS string to a React style object
-export function parseInlineStyle(s){
-  var out={};if(!s)return out;
-  s.split(";").forEach(function(part){
-    var ix=part.indexOf(":");if(ix<0)return;
-    var k=part.slice(0,ix).trim(), v=part.slice(ix+1).trim();
-    if(!k)return;
-    var jsKey=k.replace(/-([a-z])/g,function(_,c){return c.toUpperCase();});
-    out[jsKey]=v;
-  });
-  return out;
-}

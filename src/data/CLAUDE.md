@@ -114,11 +114,11 @@ All content is imported at build time. No dynamic fetching. Files use `export va
 ```
 58 achievements (incl. 16 Gauntlet, 4 Word Tavern, 4 Duel). `check` is a predicate function on student profile.
 
-### leagues.js — `LEAGUES`, `COMPETITORS`
+### leagues.js — `LEAGUES`
 ```js
 { id: "bronze", name: "Bronze", icon: "🥉", color: "#cd7f32", min: 0 }
 ```
-7 tiers (Bronze→Légende). 12 bot competitors (`{ n: "Léa M.", a: "🦊" }`).
+7 tiers (Bronze→Légende). (`COMPETITORS`, 12 bots fictifs, supprimé le 2026-09-16 : son seul consommateur `compScores` était du code mort.)
 
 ---
 

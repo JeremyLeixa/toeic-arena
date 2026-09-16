@@ -2,11 +2,12 @@
 import { supabase } from "../supabase.js";
 import { supaToLocal, buildSavePayload } from "./profileSchema.js";
 
-export var SK="toeic-arena-v2";
 // ─── localStorage-first persistence layer ───
+// Clés réelles : "toeic-arena-profile" / "toeic-arena-name" / "toeic-arena-class" (loadLocal,
+// saveLocal). L'ancienne clé SK="toeic-arena-v2" (schéma mono-clé pré-v2) a été supprimée le
+// 2026-09-16 : plus aucun lecteur.
 export var _cachedUserId=null;
 export var _syncDirty=false;
-export var _lastSync=0;
 // Clean up dirty flag — no longer used, was causing cross-device overwrites
 try{localStorage.removeItem("toeic-arena-dirty");}catch(e){}
 export function loadLocal(){

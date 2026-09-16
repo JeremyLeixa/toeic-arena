@@ -225,5 +225,12 @@
     "ResetPasswordView",
     "App"
   ],
-  "removed": {}
+  "removed": {
+    "speakAndWait": "code mort : aucun appelant (speak/playAudioFile sont ses frères, pas ses clients) — supprimé 2026-09-16, Phase 5",
+    "compScores": "code mort : aucun appelant ; seul consommateur de COMPETITORS (data/leagues.js), supprimé avec — 2026-09-16, Phase 5",
+    "getModuleAccuracy": "code mort : aucun appelant, le calcul est fait inline partout (toeic.js) — supprimé 2026-09-16, Phase 5",
+    "parseInlineStyle": "code mort : aucun appelant — supprimé 2026-09-16, Phase 5",
+    "_lastSync": "code mort : jamais lu ni assigné après son init — supprimé 2026-09-16, Phase 5",
+    "SK": "code mort : clé localStorage pré-v2 ; loadLocal/saveLocal utilisent toeic-arena-profile/name/class — supprimé 2026-09-16, Phase 5"
+  }
 }
