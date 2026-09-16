@@ -39,3 +39,10 @@ export function isSameStudent(local,remote){
   return normalizeName(local.name||"")===normalizeName(remote.name||"")
     &&(local.classCode||"visitor")===(remote.class_code||"visitor");
 }
+
+// Pour une reconnexion (recover / recoverByEmail) : la fusion n'a lieu que si le local est celui
+// de CETTE ligne et plus frais. load() n'en a pas besoin : il interroge Supabase avec le nom et la
+// promo du local lui-même.
+export function fresherLocalFor(remote,local){
+  return isSameStudent(local,remote)?pickFresherLocal(remote,local):null;
+}

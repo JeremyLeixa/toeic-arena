@@ -10,7 +10,8 @@
  * jamais être fusionnée dans la ligne d'un autre. Aucune de ces erreurs ne casse le build.
  *
  * Prouvé mordant le 2026-09-16 : `localXp>remoteXp` → `>=` → rouge (XP égale) ; ligne
- * access_level retirée → rouge ; isSameStudent qui ignore le class_code → rouge.
+ * access_level retirée → rouge ; isSameStudent qui ignore le class_code → rouge ;
+ * fresherLocalFor qui saute isSameStudent → rouge.
  *
  * Usage : node tests/check_fresher_local.cjs
  */
@@ -61,6 +62,13 @@ check(!S.isSameStudent({ name: 'Chloé', classCode: 'cesi2026' }, remote), 'mêm
 check(!S.isSameStudent({ name: 'Clara', classCode: 'idrac2026' }, remote), 'autre prénom, même promo : pas le même élève');
 check(S.isSameStudent({ name: 'Zoé', classCode: undefined }, { name: 'zoe', class_code: 'visitor' }), 'classCode absent = visitor des deux côtés');
 check(!S.isSameStudent(null, remote) && !S.isSameStudent(local, null), 'argument manquant : false');
+
+// ── fresherLocalFor (reconnexion) : même élève ET plus frais ──
+const sameFresh = { name: 'chloe', classCode: 'idrac2026', xp: 1200, lastActive: '2026-09-16' };
+check(S.fresherLocalFor(remote, sameFresh) !== null, 'reconnexion, même élève, local plus frais : fusion attendue');
+check(S.fresherLocalFor(remote, Object.assign({}, sameFresh, { name: 'Clara' })) === null, 'reconnexion, AUTRE élève plus frais sur l\'appareil : jamais de fusion');
+check(S.fresherLocalFor(remote, Object.assign({}, sameFresh, { xp: 1000 })) === null, 'reconnexion, même élève pas plus frais : pas de fusion');
+check(S.fresherLocalFor(remote, null) === null, 'reconnexion sans profil local : null');
 
 console.log('  ' + checks + ' vérifications');
 if (fails) { console.log('\n' + fails + ' problème(s). Une fusion fausse perd une progression ou rétrograde un accès, sans rien casser.'); process.exit(1); }

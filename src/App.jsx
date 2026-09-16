@@ -19,7 +19,8 @@ import { GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
 import { NARRATOR_MOMENTS, hasHeardMoment, markMomentHeard } from "./narrator.js";
 import { estimateTOEICScore } from "./lib/toeic.js";
 import { getLeague, applyWeekTransition } from "./lib/league.js";
-import { _cachedUserId, _syncDirty, saveLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty } from "./lib/persistence.js";
+import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty } from "./lib/persistence.js";
+import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
 import { clearDashSession } from "./lib/teacherSession.js";
@@ -1086,9 +1087,16 @@ function sv(d){
 
     try { localStorage.setItem('toeic-arena-name', name); } catch(e) {}
     try { localStorage.setItem('toeic-arena-class', classCode); } catch(e) {}
-    var u=supaToLocal(d);
+    // Reconnexion après une session perdue (2026-09-16) : ce qui a été joué pendant la panne
+    // n'existe QUE dans la copie locale (chaque save était refusé). Écraser le local par la ligne
+    // distante le perdait. Si le local est celui de CET élève et plus frais, on le garde (fusionné
+    // avec les champs serveur) et on le repousse maintenant que la session est la bonne.
+    // Même règle que load() : lib/staleRemote.js, tests/check_fresher_local.cjs.
+    var fresher=fresherLocalFor(d,loadLocal());
+    var u=fresher||supaToLocal(d);
     sU(u);
     saveLocal(u);
+    if(fresher){console.warn("[recover] local is fresher (xp "+(fresher.xp||0)+">"+(d.xp||0)+") — keeping it and pushing");setSyncDirty(true);save(fresher);}
     return true;
   }
 
@@ -1118,9 +1126,12 @@ function sv(d){
     setCachedUserId(userId);
     try{localStorage.setItem('toeic-arena-name',d.name);}catch(e){}
     try{localStorage.setItem('toeic-arena-class',d.class_code);}catch(e){}
-    var u=supaToLocal(d);
+    // Même garde que recover() ci-dessus : ne pas écraser une progression locale plus fraîche.
+    var fresher=fresherLocalFor(d,loadLocal());
+    var u=fresher||supaToLocal(d);
     sU(u);
     saveLocal(u);
+    if(fresher){console.warn("[recoverByEmail] local is fresher (xp "+(fresher.xp||0)+">"+(d.xp||0)+") — keeping it and pushing");setSyncDirty(true);save(fresher);}
     return true;
   }
 
