@@ -14,11 +14,12 @@
  *   · aucune variante hors mode clair (en sombre, le hex d'origine doit s'appliquer) ;
  *   · lg/plLg.color, titleData/ti/TITLES[…].color, rarity.color, shopRarColor(…) jamais bruts ;
  *   · AUCUNE couleur hex écrite en dur dans une expression color: / color= du JSX qui tienne moins
- *     de 3:1 sur les fonds clairs, sauf : passée par tone() ; fond posé sur la même ligne qui la rend
- *     lisible (≥ 3:1, ternaires et jetons du mode clair compris : lettre blanche sur la pastille
+ *     de 4,5:1 (AA) sur les fonds clairs, sauf : passée par tone() ; fond posé sur la même ligne qui la
+ *     rend lisible (≥ 4,5:1, ternaires et jetons du mode clair compris : lettre blanche sur la pastille
  *     verte/rouge d'une réponse, icône blanche sur tuile dégradée, badge sur noir) ; ou précédée du
  *     marqueur « /*fond local*\/ » (fond sombre ou coloré en dur posé sur une autre ligne : aide des
- *     Flashcards, popup du Duel, bannières Endless, tuile Boss de Train). Les lignes de données
+ *     Flashcards, popup du Duel, bannières Endless, tuile Boss de Train, parchemin du narrateur).
+ *     Les lignes de données
  *     déclarées (DATA_SOURCES) sont lues comme sources, pas comme styles.
  * Hors périmètre : Onboard.jsx (l'onboarding reste sombre, le thème s'applique après connexion),
  * TeacherDash.jsx (interface interne), Chests.jsx (coffres sur fonds sombres fixes). La remise à
@@ -32,6 +33,11 @@
  * rouge ; marqueur /*fond local*\/ retiré de l'aide des Flashcards (Cards.jsx) → rouge ; variante
  * --tone-7fb8e8 retirée → rouge ; « color:tone(p.col) » des pastilles de Home remis brut → rouge ;
  * fond conditionnel vert/rouge retiré sous la lettre blanche d'une réponse (ClueHunter.jsx) → rouge.
+ * Seuil des couleurs en dur monté de 3:1 à 4,5:1 (même jour), mutations qui passaient à 3:1 :
+ * tone() retiré du score du Weaver #7c3aed (4,35:1, Gauntlet.jsx) → rouge ; marqueur retiré du
+ * sous-titre du parchemin #8a6530 (4,02:1, NarratorOverlay.jsx) → rouge ; fond de même ligne à
+ * 3,59:1 (#c026d3 sur #e8e0d2) → rouge ; tone() retiré de la propriété color= d'un GIcon
+ * (ModalCouncil.jsx) → rouge ; variante --tone-c4587a retirée → rouge.
  *
  * Usage : node tests/check_tones.cjs
  */
@@ -197,8 +203,8 @@ for (const file of jsxFiles) {
       const seg = stripTone(segmentAfter(line, m.index + m[0].length, m[1] !== ':'));
       for (const h of seg.matchAll(/(\/\*fond local\*\/\s*)?["'](#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})["']/g)) {
         literalCount++;
-        if (h[1] || worstLight(h[2]) >= 3) continue;
-        const onLocalBg = lineBackgrounds(line).some((bg) => contrastRgb(rgb(h[2]), bg) >= 3);
+        if (h[1] || worstLight(h[2]) >= 4.5) continue;
+        const onLocalBg = lineBackgrounds(line).some((bg) => contrastRgb(rgb(h[2]), bg) >= 4.5);
         check(onLocalBg, rel(file) + ':' + (i + 1) + ' : couleur en dur ' + h[2] + ' à ' + worstLight(h[2]).toFixed(2) + ':1 sur les fonds clairs (passer par tone("' + hex6(h[2]) + '") ; fond sombre ou coloré posé sur une autre ligne : marqueur /*fond local*/)');
       }
     }

@@ -98,7 +98,7 @@ export function IrregularCrypt(p){
       <div style={{textAlign:"center",padding:"20px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83E\uDEA6"}</div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"PERFECT RAID":isGood?"Raid victorious":"Raid complete"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:"#c026d3",margin:"14px 0 2px"}}>{totalFull}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
+        <div style={{fontSize:44,fontWeight:800,color:tone("#c026d3"),margin:"14px 0 2px"}}>{totalFull}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
         <p style={{color:"var(--t3)",fontSize:13,marginBottom:6}}>verbs mastered (V2 + V3)</p>
         {totalPartial>0&&<p style={{color:"var(--t3)",fontSize:12,marginBottom:18}}>{totalPartial} partially correct</p>}
         {missed.length>0&&<div className="crd" style={{maxWidth:380,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
@@ -238,7 +238,7 @@ export function Chronomancer(p){
         <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Master the storm of verb tenses. Each question hides a temporal clue.</p>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:16,textAlign:"left",fontSize:13.5,color:"var(--t2)",lineHeight:1.7}}>
           <div>{"\uD83D\uDD2E"} <strong>15 questions</strong>, no timer</div>
-          <div>{"\uD83D\uDD8D\uFE0F"} Temporal marker in <span style={{color:"#c026d3",fontWeight:700}}>purple</span></div>
+          <div>{"\uD83D\uDD8D\uFE0F"} Temporal marker in <span style={{color:tone("#c026d3"),fontWeight:700}}>purple</span></div>
           <div>{"\uD83C\uDFC6"} <strong>3 XP</strong> per correct answer · perfect bonus</div>
         </div>
         <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={startSession}>{"\u2694\uFE0F Start"}</button>
@@ -255,7 +255,7 @@ export function Chronomancer(p){
       <div style={{textAlign:"center",padding:"20px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u231B"}</div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"TIME MASTERED":isGood?"Chronomancer victorious":"Session complete"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:"#c026d3",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
+        <div style={{fontSize:44,fontWeight:800,color:tone("#c026d3"),margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
         <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>correct answers</p>
         {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
           <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
@@ -570,7 +570,7 @@ export function RelativeWeaver(p){
       <div style={{textAlign:"center",padding:"20px 16px"}}>
         <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83D\uDD78\uFE0F"}</div>
         <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"WEB MASTERED":isGood?"Weaver victorious":"Session complete"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:"#7c3aed",margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
+        <div style={{fontSize:44,fontWeight:800,color:tone("#7c3aed"),margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
         <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>correct answers</p>
         {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
           <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>

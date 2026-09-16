@@ -165,7 +165,7 @@ export function NarratorOverlay(props) {
 
         <div style={{display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 14}}>
           <div style={{ flex: 1, maxWidth: 80, height: 1, background: "linear-gradient(90deg,transparent,#8a6530 50%,transparent)" }}/>
-          <span style={{ color: "#8a6530", fontSize: 10 }}>{"\u2756"}</span>
+          <span style={{ color: /*fond local*/"#8a6530", fontSize: 10 }}>{"\u2756"}</span>
           <div style={{ flex: 1, maxWidth: 80, height: 1, background: "linear-gradient(90deg,transparent,#8a6530 50%,transparent)" }}/>
         </div>
 
@@ -202,7 +202,7 @@ export function NarratorOverlay(props) {
           letterSpacing: 3, margin: "6px 0 2px"
         }}>{moment.title.toUpperCase()}</h2>
         <div style={{
-          textAlign: "center", fontSize: 11, color: "#8a6530",
+          textAlign: "center", fontSize: 11, color: /*fond local*/"#8a6530",
           fontStyle: "italic", letterSpacing: 1.5, marginBottom: 14
         }}>{"\u2014 " + moment.subtitle + " \u2014"}</div>
 
@@ -219,7 +219,7 @@ export function NarratorOverlay(props) {
           borderBottom: "1px solid rgba(90,58,20,0.25)"
         }}>
           <div className="out" style={{
-            fontSize: 8, letterSpacing: 2.5, color: "#8a6530",
+            fontSize: 8, letterSpacing: 2.5, color: /*fond local*/"#8a6530",
             textTransform: "uppercase", marginBottom: 6, textAlign: "center", fontWeight: 700,
             flexShrink: 0
           }}>{"\u25c6 His words \u25c6"}</div>

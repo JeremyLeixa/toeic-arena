@@ -407,9 +407,9 @@ export function ModalSort(p){
         <h2 className="out" style={{fontSize:24,fontWeight:800,marginBottom:8}}>The Verdict</h2>
         <p style={{color:"var(--t3)",fontSize:14,marginBottom:20,lineHeight:1.5}}>Classify each modal sentence into one of four functions. Speed matters — but accuracy more.</p>
         <div className="crd" style={{maxWidth:380,margin:"0 auto 16px",padding:14,textAlign:"left",fontSize:13,color:"var(--t2)",lineHeight:1.7}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="templar-shield" size={18} color="#dc2626"/><strong style={{color:"#dc2626"}}>Obligation</strong> · must, have to, need to</div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="templar-shield" size={18} color={tone("#dc2626")}/><strong style={{color:tone("#dc2626")}}>Obligation</strong> · must, have to, need to</div>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="quill-ink" size={18} color={tone("#0891b2")}/><strong style={{color:tone("#0891b2")}}>Advice</strong> · should, ought to, had better</div>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="ink-swirl" size={18} color="#7c3aed"/><strong style={{color:"#7c3aed"}}>Possibility</strong> · can, could, may, might</div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><GIcon name="ink-swirl" size={18} color={tone("#7c3aed")}/><strong style={{color:tone("#7c3aed")}}>Possibility</strong> · can, could, may, might</div>
           <div style={{display:"flex",alignItems:"center",gap:8}}><GIcon name="spyglass" size={18} color={tone("#f59e0b")}/><strong style={{color:tone("#f59e0b")}}>Deduction</strong> · must be, can't be, must have V3</div>
         </div>
         <div className="crd" style={{maxWidth:340,margin:"0 auto 22px",padding:14,textAlign:"left",fontSize:13,color:"var(--t2)",lineHeight:1.7}}>
