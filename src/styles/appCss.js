@@ -87,7 +87,7 @@ export var CSS=`
    prototypes/shop-cosmetics/skins-global.html. Same model as aurore/obsidienne:
    override CSS vars + animate .crd/.btn1/.bar-fill/.tab-bar via background-image keyframes.
    Keyframes skSheen/skTwinkle/skFlicker + reused aurora are defined below near the others. ═══ */
-.skin-frostbite{--cx:90,180,232;--cyan:#5ab4e8;--orange:#4a90c0;--bg:#070b12;--bg2:#0e1622;--bg3:#16202e;--t1:#dcefff;--t2:#6a92b4;--bdr:rgba(120,190,240,.12)}
+.skin-frostbite:not(.light),.light.skin-frostbite .crd{--cx:90,180,232;--cyan:#5ab4e8;--orange:#4a90c0;--bg:#070b12;--bg2:#0e1622;--bg3:#16202e;--t1:#dcefff;--t2:#6a92b4;--bdr:rgba(120,190,240,.12)}
 .skin-frostbite .crd{position:relative!important;overflow:hidden!important;border-color:rgba(120,190,240,.24)!important;background-image:linear-gradient(160deg,#0e2030,#081420)!important;transition:none!important;box-shadow:inset 0 0 36px rgba(120,200,255,.12)!important}
 .skin-frostbite .crd::before{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;z-index:1!important;pointer-events:none!important;background:radial-gradient(1.4px 1.4px at 30% 0%,#fff,transparent),radial-gradient(1px 1px at 64% 0%,#dffaff,transparent),radial-gradient(1.2px 1.2px at 48% 0%,#fff,transparent),radial-gradient(1px 1px at 82% 0%,#dffaff,transparent)!important;animation:skSnowFall 5.5s linear infinite!important}
 .skin-frostbite .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:linear-gradient(100deg,transparent 40%,rgba(200,240,255,.3) 50%,transparent 60%)!important;background-size:250% 100%!important;animation:skSheen 5s linear infinite!important}
@@ -95,7 +95,7 @@ export var CSS=`
 .skin-frostbite .bar-fill{background-image:linear-gradient(90deg,#5ab4e8,#bfeaff,#5ab4e8)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 3s linear infinite!important;transition:none!important}
 .skin-frostbite .btn2{border-color:rgba(90,180,232,.3)!important;color:#5ab4e8!important}
 .skin-frostbite .tab-bar{box-shadow:0 -40px 70px rgba(90,180,232,.14)}
-.skin-emberheart{--cx:230,110,40;--cyan:#e87a28;--orange:#d04818;--bg:#0e0705;--bg2:#1c0f08;--bg3:#2a160c;--t1:#ffe4d0;--t2:#b08068;--bdr:rgba(230,120,50,.14)}
+.skin-emberheart:not(.light),.light.skin-emberheart .crd{--cx:230,110,40;--cyan:#e87a28;--orange:#d04818;--bg:#0e0705;--bg2:#1c0f08;--bg3:#2a160c;--t1:#ffe4d0;--t2:#b08068;--bdr:rgba(230,120,50,.14)}
 .skin-emberheart .crd{position:relative!important;overflow:hidden!important;border-color:rgba(230,120,50,.26)!important;background:radial-gradient(ellipse 120% 80% at 50% 125%,rgba(255,180,50,.3),rgba(255,110,20,.1) 45%,transparent 65%),#160805!important;animation:skEdgeGlowAmber 2.8s ease-in-out infinite!important;transition:none!important}
 .skin-emberheart .crd::before,.skin-emberheart .crd::after{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;pointer-events:none!important;z-index:1!important}
 .skin-emberheart .crd::before{background:radial-gradient(1.6px 1.6px at 20% 100%,#ffd060,transparent),radial-gradient(1.2px 1.2px at 55% 100%,#ff8030,transparent),radial-gradient(1.6px 1.6px at 82% 100%,#ffb040,transparent)!important;animation:skEmberRise 3.2s linear infinite!important}
@@ -104,7 +104,7 @@ export var CSS=`
 .skin-emberheart .bar-fill{background-image:linear-gradient(90deg,#ffb030,#ff6020,#ffb030)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3s ease infinite!important;transition:none!important}
 .skin-emberheart .btn2{border-color:rgba(230,120,50,.3)!important;color:#e87a28!important}
 .skin-emberheart .tab-bar{box-shadow:0 -40px 70px rgba(255,90,20,.16)}
-.skin-cosmic_void{--cx:150,110,240;--cyan:#9a6ef0;--orange:#7048c0;--bg:#06040f;--bg2:#0e0a1e;--bg3:#16102c;--t1:#e8e0fb;--t2:#8878b0;--bdr:rgba(150,110,240,.14)}
+.skin-cosmic_void:not(.light),.light.skin-cosmic_void .crd{--cx:150,110,240;--cyan:#9a6ef0;--orange:#7048c0;--bg:#06040f;--bg2:#0e0a1e;--bg3:#16102c;--t1:#e8e0fb;--t2:#8878b0;--bdr:rgba(150,110,240,.14)}
 .skin-cosmic_void .crd{position:relative!important;overflow:hidden!important;border-color:rgba(150,110,240,.22)!important;background:radial-gradient(circle at 65% 35%,#1a0f2e,#06040f)!important;box-shadow:inset 0 0 40px rgba(0,0,0,.6)!important}
 .skin-cosmic_void .crd>*{position:relative!important;z-index:2!important}
 .skin-cosmic_void .crd::before{content:''!important;position:absolute!important;inset:-20%!important;z-index:0!important;pointer-events:none!important;background:radial-gradient(circle at 35% 40%,rgba(150,80,255,.38),transparent 55%),radial-gradient(circle at 72% 66%,rgba(255,80,160,.30),transparent 55%)!important;animation:skMesh 14s ease-in-out infinite!important}
@@ -113,14 +113,14 @@ export var CSS=`
 .skin-cosmic_void .bar-fill{background-image:linear-gradient(90deg,#a060f0,#d060e0,#a060f0)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3s ease infinite!important;transition:none!important}
 .skin-cosmic_void .btn2{border-color:rgba(150,110,240,.3)!important;color:#9a6ef0!important}
 .skin-cosmic_void .tab-bar{box-shadow:0 -40px 70px rgba(150,90,255,.16)}
-.skin-abyssal{--cx:42,154,140;--cyan:#2a9a8c;--orange:#177064;--bg:#051512;--bg2:#0a221e;--bg3:#103029;--t1:#d2eae4;--t2:#5e8e86;--bdr:rgba(60,180,160,.12)}
+.skin-abyssal:not(.light),.light.skin-abyssal .crd{--cx:42,154,140;--cyan:#2a9a8c;--orange:#177064;--bg:#051512;--bg2:#0a221e;--bg3:#103029;--t1:#d2eae4;--t2:#5e8e86;--bdr:rgba(60,180,160,.12)}
 .skin-abyssal .crd{position:relative!important;overflow:hidden!important;border-color:rgba(60,180,160,.3);background:linear-gradient(#0a2a24,rgba(6,24,20,.5))!important;animation:skBPulseTeal 2.6s ease-in-out infinite!important;transition:none!important}
 .skin-abyssal .crd::after{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;z-index:1!important;pointer-events:none!important;background:radial-gradient(4px 4px at 22% 100%,transparent 40%,rgba(120,230,210,.5) 42%,transparent 52%),radial-gradient(6px 6px at 55% 100%,transparent 40%,rgba(120,230,210,.42) 42%,transparent 52%),radial-gradient(3px 3px at 82% 100%,transparent 40%,rgba(120,230,210,.5) 42%,transparent 52%)!important;animation:skMoteRise 6s linear infinite!important}
 .skin-abyssal .btn1{background-image:linear-gradient(135deg,#2a9a8c,#157064,#5ec8b8,#157064)!important;background-color:transparent!important;background-size:250%!important;color:#051512!important;animation:aurora 5s ease infinite!important;transition:none!important;box-shadow:0 4px 22px rgba(42,154,140,.38)}
 .skin-abyssal .bar-fill{background-image:linear-gradient(90deg,#2a9a8c,#5ec8b8,#2a9a8c)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 5s ease infinite!important;transition:none!important}
 .skin-abyssal .btn2{border-color:rgba(42,154,140,.3)!important;color:#2a9a8c!important}
 .skin-abyssal .tab-bar{box-shadow:0 -40px 70px rgba(42,154,140,.12)}
-.skin-molten_gold{--cx:238,158,36;--cyan:#f0a020;--orange:#d07010;--bg:#0e0903;--bg2:#1e1206;--bg3:#2e1d09;--t1:#fff0cc;--t2:#b89858;--bdr:rgba(244,178,50,.18)}
+.skin-molten_gold:not(.light),.light.skin-molten_gold .crd{--cx:238,158,36;--cyan:#f0a020;--orange:#d07010;--bg:#0e0903;--bg2:#1e1206;--bg3:#2e1d09;--t1:#fff0cc;--t2:#b89858;--bdr:rgba(244,178,50,.18)}
 .skin-molten_gold .crd{position:relative!important;overflow:hidden!important;border-color:rgba(244,178,50,.30)!important;background-image:linear-gradient(135deg,rgba(120,80,12,.5),rgba(240,190,60,.3),rgba(80,50,8,.5))!important;background-size:250% 250%!important;animation:aurora 6s ease-in-out infinite!important;transition:none!important;box-shadow:inset 0 0 30px rgba(0,0,0,.4)!important}
 .skin-molten_gold .crd::before{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;padding:2px!important;background:linear-gradient(90deg,#f0c860,#fff4c0,#f0c860)!important;background-size:200% 100%!important;animation:skSheen 4s linear infinite!important;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;-webkit-mask-composite:xor!important;mask-composite:exclude!important;z-index:1!important;pointer-events:none!important}
 .skin-molten_gold .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:radial-gradient(1.7px 1.7px at 25% 100%,#fff0a0,transparent),radial-gradient(1.4px 1.4px at 65% 100%,#ffd860,transparent),radial-gradient(1.7px 1.7px at 85% 100%,#ffe890,transparent)!important;animation:skMoteRise 5.5s linear infinite!important}
@@ -128,14 +128,14 @@ export var CSS=`
 .skin-molten_gold .bar-fill{background-image:linear-gradient(90deg,#f0a020,#fff2b0,#f0a020)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 2.4s linear infinite!important;transition:none!important}
 .skin-molten_gold .btn2{border-color:rgba(240,160,32,.34)!important;color:#f0a020!important}
 .skin-molten_gold .tab-bar{box-shadow:0 -40px 70px rgba(244,150,30,.18)}
-.skin-heraldic{--cx:74,108,210;--cyan:#5a7ce0;--orange:#c8a032;--bg:#05070f;--bg2:#0c1020;--bg3:#141a30;--t1:#dce4fb;--t2:#7888b0;--bdr:rgba(90,124,224,.14)}
+.skin-heraldic:not(.light),.light.skin-heraldic .crd{--cx:74,108,210;--cyan:#5a7ce0;--orange:#c8a032;--bg:#05070f;--bg2:#0c1020;--bg3:#141a30;--t1:#dce4fb;--t2:#7888b0;--bdr:rgba(90,124,224,.14)}
 .skin-heraldic .crd{position:relative!important;border-color:rgba(90,124,224,.22)!important;background-image:linear-gradient(135deg,rgba(74,108,210,.12),rgba(200,160,50,.07),rgba(40,60,140,.10))!important;background-size:250% 100%!important;animation:skSheen 5s linear infinite!important;transition:none!important}
 .skin-heraldic .crd::after{content:''!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;border-radius:inherit!important;background:linear-gradient(105deg,transparent 40%,rgba(220,190,90,.18) 50%,transparent 60%)!important;background-size:250% 100%!important;animation:skSheen 4s linear infinite!important}
 .skin-heraldic .btn1{background-image:linear-gradient(135deg,#5a7ce0,#3a52a8,#c8a032,#3a52a8)!important;background-color:transparent!important;background-size:250%!important;color:#05070f!important;animation:aurora 3.5s ease infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(90,124,224,.45)}
 .skin-heraldic .bar-fill{background-image:linear-gradient(90deg,#5a7ce0,#c8a032,#5a7ce0)!important;background-color:transparent!important;background-size:200%!important;animation:aurora 3.5s ease infinite!important;transition:none!important}
 .skin-heraldic .btn2{border-color:rgba(90,124,224,.3)!important;color:#5a7ce0!important}
 .skin-heraldic .tab-bar{box-shadow:0 -40px 70px rgba(90,124,224,.14)}
-.skin-aldric_chamber{--cx:206,176,108;--cyan:#cdb06a;--orange:#9a8246;--bg:#0b0a08;--bg2:#15140f;--bg3:#1e1c15;--t1:#ece4d2;--t2:#8c8472;--bdr:rgba(206,176,108,.16)}
+.skin-aldric_chamber:not(.light),.light.skin-aldric_chamber .crd{--cx:206,176,108;--cyan:#cdb06a;--orange:#9a8246;--bg:#0b0a08;--bg2:#15140f;--bg3:#1e1c15;--t1:#ece4d2;--t2:#8c8472;--bdr:rgba(206,176,108,.16)}
 .skin-aldric_chamber .crd{position:relative!important;overflow:hidden!important;border-color:rgba(206,176,108,.22)!important;background-color:#191510!important;background-image:radial-gradient(circle at 82% 14%,rgba(232,196,120,.16),transparent 55%),radial-gradient(rgba(150,115,55,.16) 1px,transparent 1px),radial-gradient(rgba(110,85,40,.11) 1px,transparent 1px)!important;background-size:100% 100%,7px 7px,11px 11px!important;background-position:0 0,0 0,3px 4px!important;animation:skCandle 5.5s ease-in-out infinite!important;transition:none!important;box-shadow:inset 0 0 0 1px rgba(240,210,140,.26),inset 0 0 0 6px rgba(0,0,0,.4),inset 0 0 0 7px rgba(240,210,140,.15)!important}
 .skin-aldric_chamber .crd::before{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;z-index:1!important;pointer-events:none!important;background:linear-gradient(105deg,transparent 40%,rgba(244,228,160,.26) 50%,transparent 60%)!important;background-size:250% 100%!important;animation:skSheen 6.5s linear infinite!important}
 .skin-aldric_chamber .btn1{background-image:linear-gradient(135deg,#2e2820,#b89a52,#e8d49a,#b89a52,#4a4030)!important;background-color:transparent!important;background-size:240%!important;color:#14110a!important;animation:aurora 5s ease infinite!important;transition:none!important;box-shadow:0 4px 24px rgba(180,154,82,.32),inset 0 1px 0 rgba(244,228,170,.25)}
@@ -143,7 +143,8 @@ export var CSS=`
 .skin-aldric_chamber .btn2{border-color:rgba(206,176,108,.3)!important;color:#cdb06a!important}
 .skin-aldric_chamber .tab-bar{box-shadow:0 -40px 70px rgba(180,154,82,.12)}
 .skin-aldric_chamber .out{text-shadow:0 0 16px rgba(206,176,108,.16)}
-/* Light-mode accent retints (mirror .light.skin-aurore pattern — bg stays light via .light) */
+/* Light-mode accent retints (mirror .light.skin-aurore pattern). Hors carte seulement : la page
+   suit .light, les cartes gardent la palette sombre du skin (bloc « cartes-nuit » ci-dessous). */
 .light.skin-frostbite{--cx:30,110,170;--cyan:#1e6ea8;--orange:#185888}
 .light.skin-emberheart{--cx:180,70,20;--cyan:#b84810;--orange:#963810}
 .light.skin-cosmic_void{--cx:100,60,180;--cyan:#5a30a8;--orange:#48289a}
@@ -163,9 +164,14 @@ export var CSS=`
       quel que soit l'ordre. color : .app a calculé la couleur du texte avec le --t1 clair, la
       carte doit la recalculer avec le sien.
    2. .btn2 : ces skins posent une couleur claire en dur (#40d0c0…), illisible sur la page crème ;
-      var(--cyan) prend le retint .light.skin-X hors carte, l'accent vif dans la carte. */
-.light:where(.skin-obsidienne,.skin-aurore) .crd{--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--t3:#756b54;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--cx-hex:#d4943a;--cx-dark:#a06e20;color:var(--t1)}
-.light.skin-obsidienne .btn2,.light.skin-aurore .btn2{color:var(--cyan)!important}
+      var(--cyan) prend le retint .light.skin-X hors carte, l'accent vif dans la carte.
+   3. Fond de carte translucide sans couleur opaque (abyssal : shorthand ; molten_gold, heraldic :
+      background-image seul, et 78 .crd ont un fond inline translucide) : en sombre la page sombre
+      passe dessous, en clair la page crème délavait la carte. On remet ce qui est dessous en sombre. */
+.light:where(.skin-obsidienne,.skin-aurore,.skin-frostbite,.skin-emberheart,.skin-cosmic_void,.skin-abyssal,.skin-molten_gold,.skin-heraldic,.skin-aldric_chamber) .crd{--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--t3:#756b54;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--cx-hex:#d4943a;--cx-dark:#a06e20;color:var(--t1)}
+.light.skin-obsidienne .btn2,.light.skin-aurore .btn2,.light.skin-frostbite .btn2,.light.skin-emberheart .btn2,.light.skin-cosmic_void .btn2,.light.skin-abyssal .btn2,.light.skin-molten_gold .btn2,.light.skin-heraldic .btn2,.light.skin-aldric_chamber .btn2{color:var(--cyan)!important}
+.light.skin-abyssal .crd{background-color:var(--bg)!important}
+.light.skin-molten_gold .crd,.light.skin-heraldic .crd{background-color:var(--bg2)!important}
 /* ═══ FESTIVAL THEMES — proto 2026-09-16 (prototypes/festival-themes/).
    Bloc destiné à src/styles/appCss.js, à coller APRÈS les paquets .skin-* (les
    festivals n'y coexistent jamais avec un skin : App.jsx pose fest-<id> À LA PLACE
