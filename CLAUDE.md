@@ -498,14 +498,29 @@ ne passe. Désormais :
   `null` et notifie `onAuthLost` ; hors ligne ou ligne absente → copie locale comme avant.
 - `save()` sur `not_owner` → `onAuthLost`.
 - `App()` : état `authLost` ; sans profil → `Onboard reauth` rejoue le lookup (écran « entre ton
-  mot de passe » + bandeau FR, lien « Continuer sans » masqué) ; en cours de session → bandeau EN
-  « Session expired » + « Log in again » (dans `pg()` et le retour principal), sans éjecter
-  d'un exercice.
+  mot de passe » + bandeau FR) ; en cours de session → bandeau EN « Session expired » + « Log in
+  again » (dans `pg()` et le retour principal), sans éjecter d'un exercice.
 - **La copie locale n'est jamais effacée** : `recover()` / `recoverByEmail()` la gardent via
   `fresherLocalFor` si elle est plus fraîche et la repoussent. Ne pas remettre un
   `supaToLocal(d)` direct à la reconnexion : ce qui a été joué pendant la panne serait perdu.
+- **Démarrage sans session** (`App.jsx`, gestionnaire `onAuthStateChange`) : `loaded=true` dès le
+  premier événement sans session. Sinon la session anonyme que `lookupName` ouvre pour sa
+  recherche lance `load()` en plein onboarding, sur le profil local d'un AUTRE élève d'un
+  appareil partagé (détournement vers son écran mot de passe, ou entrée directe avant F1).
 Vérifié en dev le 2026-09-16 : session de l'onglet fermée en pleine utilisation, Daily joué
 (+154 XP locales, sauvegardes refusées), bandeau, reconnexion, XP relue depuis Supabase.
+
+**Aucune entrée sans mot de passe sur un compte sécurisé** (F3, 2026-09-16). `recover()` lit par
+`load_student` (gardée), jamais par une lecture sans garde : ligne sécurisée → seul son
+propriétaire, d'où l'ordre `signInStudent` → `bind_student_user_id` → `recover()` ; ligne
+legacy/visitor → tolérance. Retirés : « Continuer sans pour l'instant » (remplacé par « demande à
+ton formateur de réinitialiser ton accès », `api/teacher-reset-student.js`), `claimLater`, le
+sélecteur d'homonymes (plusieurs lignes au même nom normalisé dans une promo partagent l'email
+synthétique : on suit l'XP la plus haute, comme `student_guard`), l'écran mort « Recover My
+Account ». `recover_student_row` (ligne complète sur prénom + code promo) est **supprimée** en
+prod (`2026-09-16_f3_drop_recover_student_row.sql`) ; `check:security` exige un 404 sur la liste
+`RETIRED` : toute fonction retirée pour fuite s'y ajoute, et ne doit jamais revenir par un vieux
+`CREATE OR REPLACE`.
 
 ### Règles à ne pas enfreindre
 

@@ -282,10 +282,20 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
 - **Hypothèse non prouvée** sur la perte spontanée de session : verrous d'auth « volés » (deux
   onglets, et l'effet de sync d'email en deps `[u]` qui rappelle `getSession()` à chaque `sv()`)
   → deux rafraîchissements parallèles → jeton invalidé. À confirmer par des logs d'événements d'auth.
+  Nouvel indice pendant F3 : trois « Lock … not released within 5000ms … Forcefully acquiring »
+  lors d'une simple connexion par mot de passe.
+- **F3 livré** : `3e2c37e` `recover()` lit par `load_student` (gardée) ; `4671b91` onboarding sans
+  entrée sans mot de passe (« Continuer sans » → « demande à ton formateur », `claimLater`,
+  sélecteur d'homonymes et écran mort « Recover My Account » retirés, −157 lignes, BUILD_ID
+  `2026-09-16-f3`) ; `28c0e22` migration DROP + sonde `RETIRED` (404) dans check-security ;
+  `e20b979` pas de `load()` en plein onboarding quand le démarrage n'avait pas de session (trouvé
+  en vérifiant : faux bandeau d'expiration, détournement possible sur appareil partagé).
+  Vérifié en dev (prénom → code → mot de passe → entrée par `load_student`, `[SAVE] OK` ; démarrage
+  sans session : aucun `load()` parasite), BUILD_ID vérifié en prod, **SQL appliqué par Jérémy**,
+  `check:security` vert (19 tables, 38 RPC, `recover_student_row` en 404). Non testé en direct :
+  claim d'un compte legacy, doublon de nom dans une promo.
 
 ### Pour la prochaine session (décisions de Jérémy)
-- **F3** : retirer « Continuer sans pour l'instant » et le recover du picker, puis `DROP` de
-  `recover_student_row` (client → vérif prod → SQL → retirer de `READ_ONLY` dans check-security).
 - **F4** : « Déconnexion complète » en portée `local` ? **F5** : deps primitives pour l'effet de
   sync d'email (`App.jsx`). **F6** : commentaires faux (`ensureAuthSession`, `logout`).
 - Logs d'événements d'auth (`SIGNED_OUT`, échec de refresh) pour confirmer l'hypothèse ci-dessus.
