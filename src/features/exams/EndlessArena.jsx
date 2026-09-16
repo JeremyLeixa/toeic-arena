@@ -495,7 +495,7 @@ export function EndlessArena(p){
           <div style={{width:42,height:42,borderRadius:12,background:"rgba(27,112,207,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{wp.icon}</div>
           <div>
             <div style={{fontFamily:"'Cinzel','Outfit',serif",fontWeight:700,fontSize:14,color:/*fond local*/"#ede4d4"}}>{wp.label}</div>
-            <div style={{fontSize:11,color:"var(--red)",fontWeight:600}}>{wAcc}% accuracy — train this next</div>
+            <div style={{fontSize:11,color:/*fond local*/"#e05252",fontWeight:600}}>{wAcc}% accuracy — train this next</div>
           </div>
         </div>
       </div>

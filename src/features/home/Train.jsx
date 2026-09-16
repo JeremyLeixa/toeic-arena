@@ -138,19 +138,19 @@ import { useState } from "react";
                 <div style={{marginBottom:2}}>
                   <span className="out" style={{fontWeight:900,fontSize:16,background:"linear-gradient(90deg,#ff4444,#ff8c42,#ffd700)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>THE FINAL ARENA</span>
                 </div>
-                {bossCompleted&&!bossLocked?<div style={{fontSize:12,color:"var(--gold)"}}>Best: TOEIC {p.u.mockResults.boss.toeicEstimate}/990 {"—"} Retake?</div>
-                :bossLocked?<div style={{fontSize:11,color:"var(--t3)"}}>{uBoss.reasons[0]}</div>
+                {bossCompleted&&!bossLocked?<div style={{fontSize:12,color:/*fond local*/"#f0c850"}}>Best: TOEIC {p.u.mockResults.boss.toeicEstimate}/990 {"—"} Retake?</div>
+                :bossLocked?<div style={{fontSize:11,color:/*fond local*/"#756b54"}}>{uBoss.reasons[0]}</div>
                 :<div style={{fontSize:12,color:/*fond local*/"#cc8844"}}>Full TOEIC {"·"} 202 Q {"·"} 120 min</div>}
                 <div style={{display:"flex",gap:4,marginTop:6}}>
                   {["Mock 1","Mock 2","Mock 3"].map(function(label,i){
                     var done=mocksDone[i];
                     return(<span key={i} style={{fontSize:9,padding:"2px 7px",borderRadius:99,fontWeight:600,
                       background:done?"rgba(34,197,94,.15)":"rgba(255,255,255,.06)",
-                      color:done?/*fond local*/"#22c55e":"var(--t3)"}}>{done?"✓ ":""}{label}</span>);
+                      color:done?/*fond local*/"#22c55e":/*fond local*/"#756b54"}}>{done?"✓ ":""}{label}</span>);
                   })}
                 </div>
               </div>
-              {bossLocked?<ResultIcon e={"🔒"} size={17} color="var(--t3)"/>:<span style={{fontSize:18,color:"rgba(220,38,38,.6)"}}>{"➔"}</span>}
+              {bossLocked?<ResultIcon e={"🔒"} size={17} color={/*fond local*/"#756b54"}/>:<span style={{fontSize:18,color:"rgba(220,38,38,.6)"}}>{"➔"}</span>}
             </div>
           </div>
         </div>
@@ -182,7 +182,7 @@ import { useState } from "react";
                   </div>
                   <div style={{fontFamily:"'Cinzel','Outfit',serif",fontStyle:"italic",fontSize:11,color:"#8a7e6a"}}>the arena never sleeps</div>
                 </div>
-                {isReady?<span style={{fontSize:18,color:/*fond local*/"#7fb8e8"}}>{"→"}</span>:<ResultIcon e={"🔒"} size={17} color="var(--t3)"/>}
+                {isReady?<span style={{fontSize:18,color:/*fond local*/"#7fb8e8"}}>{"→"}</span>:<ResultIcon e={"🔒"} size={17} color={/*fond local*/"#756b54"}/>}
               </div>
 
               {/* Locked: progress bar toward 650 gate */}
