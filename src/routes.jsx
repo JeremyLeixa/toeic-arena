@@ -1,15 +1,9 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, Phase 4a). Les 41 routes `sp` déplacées telles quelles.
-import { AudioBlitz } from "./features/games/AudioBlitz.jsx";
-import { ClueHunter } from "./features/games/ClueHunter.jsx";
-import { DuelArena } from "./features/games/DuelArena.jsx";
-import { SentenceBuilder } from "./features/games/SentenceBuilder.jsx";
 import { SpeedMatch } from "./features/games/SpeedMatch.jsx";
 import { WordFall } from "./features/games/WordFall.jsx";
 import { WordTavern } from "./features/games/WordTavern.jsx";
-import { GauntletHub } from "./features/gauntlet/Gauntlet.jsx";
 import { CardSess } from "./features/home/Cards.jsx";
 import { Daily } from "./features/home/Daily.jsx";
-import { ModalCouncilHub } from "./features/modals/ModalCouncil.jsx";
 import { Shop } from "./features/shop/Shop.jsx";
 import { UpgradeScreen } from "./features/shop/UpgradeScreen.jsx";
 import { ConnSort, Drill, FalseFriends, GerInf, GrammarRef, LinkingBridge, PhrasalDojo, PrepDrill, TrapsQuiz, WordFam } from "./features/train/grammar.jsx";
@@ -37,6 +31,16 @@ var ReadingHub=lazyNamed(function(){return import("./features/listening/Listenin
 var Part6Drill=lazyNamed(function(){return import("./features/train/reading.jsx");},"Part6Drill");
 var Part7Read=lazyNamed(function(){return import("./features/train/reading.jsx");},"Part7Read");
 var TimeSim=lazyNamed(function(){return import("./features/train/reading.jsx");},"TimeSim");
+// Jeux et hubs lourds, chacun seul importateur de son fichier de données (audioBlitz,
+// clueHunter, sentences, grammarGauntlet + grimoires, modals + grimoire). SpeedMatch,
+// WordFall et WordTavern restent statiques : leurs données (vocab, grammar) sont de toute
+// façon dans le principal via Cards et lib/progress.
+var AudioBlitz=lazyNamed(function(){return import("./features/games/AudioBlitz.jsx");},"AudioBlitz");
+var ClueHunter=lazyNamed(function(){return import("./features/games/ClueHunter.jsx");},"ClueHunter");
+var DuelArena=lazyNamed(function(){return import("./features/games/DuelArena.jsx");},"DuelArena");
+var SentenceBuilder=lazyNamed(function(){return import("./features/games/SentenceBuilder.jsx");},"SentenceBuilder");
+var GauntletHub=lazyNamed(function(){return import("./features/gauntlet/Gauntlet.jsx");},"GauntletHub");
+var ModalCouncilHub=lazyNamed(function(){return import("./features/modals/ModalCouncil.jsx");},"ModalCouncilHub");
 
 /* La table sp → écran, sortie d'App() (REFACTOR_PLAN.md §5, Phase 4a).
  * Chaque ligne est identique à ce qu'elle était dans App(). Les noms de la portée
