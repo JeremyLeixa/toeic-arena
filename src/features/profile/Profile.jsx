@@ -440,7 +440,7 @@ export function Profile(p){
             {"\ud83d\udddd\ufe0f"}</button>);
         })()}
       </div>
-      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:16,fontStyle:"italic"}}>\ud83d\udddd\ufe0f Game Master \u2014 exclusive avatar</div>}
+      {u.name==="Teacher"&&<div style={{fontSize:11,color:"var(--gold)",marginBottom:16,fontStyle:"italic"}}>{"\ud83d\udddd\ufe0f Game Master \u2014 exclusive avatar"}</div>}
 
       {invLoading&&<p style={{color:"var(--t3)",textAlign:"center",padding:40}}>Loading...</p>}
 
