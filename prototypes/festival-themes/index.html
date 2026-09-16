@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Festival themes — proto</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- 1. La feuille de PROD, injectée telle quelle par le module ci-dessous (import ESM via Vite).
+        Tokens, .crd, .btn1, skins de référence, keyframes : zéro copie, zéro dérive. -->
+<style id="appcss"></style>
+<!-- 2. Le bloc candidat pour appCss.js -->
+<link rel="stylesheet" href="./festivals.css">
+<!-- 3. Chrome de la page de proto : cadres de téléphone, barre d'outils. Vient en dernier pour gagner. -->
+<style>
+html,body{margin:0;padding:0}
+body{background:#141414!important;color:#ddd;font-family:'DM Sans',sans-serif;padding:0 0 60px}
+.bar-top{position:sticky;top:0;z-index:50;background:#1c1c1c;border-bottom:1px solid #2c2c2c;padding:12px 20px;display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+.bar-top h1{font-size:15px;font-weight:800;margin:0 14px 0 0;color:#fff;font-family:'Cinzel',serif;letter-spacing:.5px}
+.bar-top label{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#bbb;cursor:pointer;user-select:none}
+.bar-top select{background:#262626;color:#eee;border:1px solid #3a3a3a;border-radius:6px;padding:4px 8px;font-size:12px}
+.bar-top input[type=checkbox]{accent-color:#d4943a}
+.bar-top .hint{margin-left:auto;font-size:11px;color:#777;font-style:italic}
+.intro{max-width:1100px;margin:18px auto 6px;padding:0 20px;font-size:12px;color:#999;line-height:1.6}
+.intro b{color:#ddd}
+.slots{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;padding:18px 20px 0;align-items:flex-start}
+.slot{width:calc(390px * var(--ph-scale,1));display:flex;flex-direction:column;gap:10px}
+.cap{min-height:96px}
+.cap b{display:block;font-size:14px;color:#fff;font-family:'Cinzel',serif}
+.cap span{display:block;font-size:11px;color:#d4943a;margin:2px 0 6px;font-weight:600}
+.cap p{margin:0;font-size:11px;color:#8a8a8a;line-height:1.5}
+.cap select{background:#262626;color:#eee;border:1px solid #3a3a3a;border-radius:6px;padding:4px 8px;font-size:12px;margin-top:6px}
+.phone{width:390px;height:780px;border-radius:44px;border:9px solid #0a0a0a;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px #2a2a2a;overflow:hidden;position:relative;background:#000;zoom:var(--ph-scale,1)}
+.phone::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#0a0a0a;border-radius:0 0 18px 18px;z-index:20}
+/* Le .app de prod veut max-width:430 + min-height:100vh : ici il remplit le cadre. */
+.phone .app{max-width:none!important;min-height:0!important;height:100%!important;position:relative!important;overflow:hidden!important}
+.phone .scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.phone .scroll::-webkit-scrollbar{display:none}
+.phone .enter{padding-top:40px!important}
+/* Tab bar : même markup inline que Tabs.jsx, mais ancrée au cadre au lieu du viewport. */
+.phone .tab-bar{position:absolute;left:0;right:0;bottom:0;width:100%;max-width:none;transform:none;background:linear-gradient(180deg,rgba(var(--bg3-rgb),0) 0%,rgba(var(--bg3-rgb),.8) 15%,var(--bg3) 100%);border-top:1px solid rgba(var(--cx),.15);padding:8px 4px 14px;z-index:10;display:flex;justify-content:space-between}
+.phone .tab-bar button{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 4px;border-radius:12px;color:var(--t1);opacity:.55;flex:1;min-width:0;transition:all .2s;font-family:inherit}
+.phone .tab-bar button.on{color:var(--cyan);opacity:1;transform:scale(1.06)}
+.phone .tab-bar button.on svg{filter:drop-shadow(0 0 6px rgba(var(--cx),.55))}
+.phone .tab-bar button span{font-size:10px;font-weight:500;letter-spacing:.3px;white-space:nowrap}
+.phone .tab-bar button.on span{font-weight:700}
+.phone .tab-bar button i{width:4px;height:4px;border-radius:50%;background:var(--cyan);margin-top:2px}
+.av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#0f0c08;font-family:'Cinzel',serif}
+.pill{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.cta{width:100%;margin-bottom:14px;padding:14px 18px;border-radius:14px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;font-family:inherit}
+.sw{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sw i{display:inline-flex;flex-direction:column;align-items:center;gap:3px;font-style:normal}
+.sw i b{width:34px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.12);display:block}
+.sw i code{font-size:9px;color:#888;font-family:ui-monospace,Consolas,monospace}
+.sw i small{font-size:9px;color:#666}
+body.no-motion .app *,body.no-motion .app *::before,body.no-motion .app *::after{animation:none!important}
+.legend{max-width:1100px;margin:34px auto 0;padding:0 20px;font-size:12px;color:#999;line-height:1.7}
+.legend h2{font-size:13px;color:#fff;font-family:'Cinzel',serif;margin:0 0 6px}
+.legend ul{margin:0;padding-left:18px}
+.legend code{background:#222;padding:1px 5px;border-radius:4px;color:#d4943a;font-size:11px}
+</style>
+</head>
+<body>
+
+<div class="bar-top">
+  <h1>FESTIVAL THEMES</h1>
+  <label><input type="checkbox" id="light"> Mode clair</label>
+  <label><input type="checkbox" id="motion" checked> Animations</label>
+  <label>Échelle
+    <select id="scale">
+      <option value="auto">Auto</option>
+      <option value="1">100 %</option>
+      <option value="0.85">85 %</option>
+      <option value="0.7">70 %</option>
+    </select>
+  </label>
+  <label>Skin équipé (référence)
+    <select id="refskin">
+      <option value="">Aucun (canonique)</option>
+      <option value="aurore">Aurora Borealis</option>
+      <option value="frostbite">Frostbite</option>
+      <option value="emberheart">Emberheart</option>
+      <option value="molten_gold">Molten Gold</option>
+      <option value="aldric_chamber">Aldric's Chamber</option>
+      <option value="obsidienne">Obsidian</option>
+    </select>
+  </label>
+  <span class="hint">Le 1er téléphone = l'app aujourd'hui (skin équipé). Les 4 autres = ce que l'élève verrait pendant la fenêtre, skin conservé mais non rendu.</span>
+</div>
+
+<p class="intro"><b>Ce qui est réel :</b> la feuille de style de prod est importée telle quelle (cartes, boutons, barre, skins de référence, keyframes, reduced-motion). <b>Ce qui est nouveau :</b> <code>festivals.css</code>, 4 paquets écrits dans la grammaire des skins, sans aucun keyframe neuf, plus le bandeau « Seasonal theme » sous les pastilles de bonus. Le Home est un décalque statique de <code>Home.jsx</code>, faites défiler chaque téléphone.</p>
+
+<div class="slots" id="slots"></div>
+
+<div class="legend">
+  <h2>À valider</h2>
+  <ul>
+    <li><b>Les 4 palettes</b>, en sombre et en clair (case « Mode clair »). En clair, les fêtes gardent leurs particules mais passent sur fond pâle, contrairement aux skins qui forcent leur fond sombre.</li>
+    <li><b>La distance aux skins payants</b> : mettez Frostbite en référence à côté de Yuletide, Molten Gold à côté de Summer Send-off, Emberheart à côté de Hallow's Eve.</li>
+    <li><b>Le bandeau « Seasonal theme »</b> : position (sous les pastilles, au-dessus du coffre), texte, lien « Turn off ».</li>
+    <li><b>La lisibilité</b> : les particules et voiles passent sous le contenu (<code>.crd&gt;*</code> en z-index 2, patron Aurora), vérifiez les petits textes en <code>--t2</code>.</li>
+  </ul>
+</div>
+
+<script type="module">
+import { CSS } from "../../src/styles/appCss.js";
+import { GAME_ICON_PATHS as P } from "../../src/data/avatarIcons.js";
+
+// ── Retire le bloc desktop (@media min-width:768px) : sur un grand écran il transformerait
+//    chaque tab-bar en sidebar fixe de 200px et décalerait .app. Le mock est du mobile pur.
+function stripBlock(css, marker){
+  let out = css, i;
+  while((i = out.indexOf(marker)) !== -1){
+    const open = out.indexOf("{", i);
+    let depth = 0, j = open;
+    for(; j < out.length; j++){
+      const ch = out[j];
+      if(ch === "{") depth++;
+      else if(ch === "}"){ depth--; if(depth === 0) break; }
+    }
+    out = out.slice(0, i) + out.slice(j + 1);
+  }
+  return out;
+}
+document.getElementById("appcss").textContent = stripBlock(CSS, "@media(min-width:768px)");
+
+const SKIN_NAMES = {aurore:"Aurora Borealis",frostbite:"Frostbite",emberheart:"Emberheart",molten_gold:"Molten Gold",aldric_chamber:"Aldric's Chamber",obsidienne:"Obsidian"};
+
+const FESTS = [
+  {id:"halloween", name:"Hallow's Eve",   window:"24 oct → 2 nov",  greeting:"Happy Halloween,", icon:"spider-web",   left:"5d left",
+   note:"Citrouille sur violet profond. Feux follets qui montent, brume qui dérive, chandelle. Aucune parenté avec un skin vendu."},
+  {id:"yule",      name:"Yuletide",       window:"14 déc → 4 jan",  greeting:"Merry Yuletide,",  icon:"ringing-bell", left:"12d left",
+   note:"Sapin, rouge, or. Neige lente, guirlande qui clignote sur le bord haut, barre sucre d'orge. Chaud, pour ne pas mordre sur Frostbite."},
+  {id:"spring",    name:"Spring Bloom",   window:"Pâques −5 → +1 · 2027 : 23 → 29 mars", greeting:"Happy Spring,", icon:"herbs-bundle", left:"3d left",
+   note:"Sakura et menthe. Pétales qui tombent, voile menthe. C'est celui qui gagne le plus en mode clair."},
+  {id:"solstice",  name:"Summer Send-off", window:"19 → 28 juin",   greeting:"Summer's calling,", icon:"sunrise",     left:"7d left",
+   note:"Ciel de crépuscule avec soleil bas, lagon en accent, lucioles. Volontairement pas doré-métal, Molten Gold est un skin payant."},
+];
+
+const TABS = [["home","Home","castle"],["mentor","Mentor","wizard-staff"],["train","Train","bullseye"],["games","Games","coliseum"],["league","League","laurel-crown"],["profile","Profile","visored-helm"]];
+
+function icon(name, size, color, extra){
+  return `<svg viewBox="0 0 512 512" width="${size}" height="${size}" style="color:${color};display:block;flex-shrink:0;${extra||""}"><g fill="currentColor">${P[name]||""}</g></svg>`;
+}
+function pill(label, col, inner){
+  return `<div class="pill" style="background:${col}15;border:1px solid ${col}30;color:${col}">${inner}<span>${label}</span></div>`;
+}
+function festBanner(f, skinId){
+  const kept = skinId ? `your ${SKIN_NAMES[skinId]} skin is kept` : "ends automatically";
+  return `<div class="crd" style="margin-bottom:12px;padding:14px;background:rgba(var(--cx),.1);border:1px solid rgba(var(--cx),.25)">
+    <div style="display:flex;align-items:center;gap:10px">
+      ${icon(f.icon,24,"var(--cyan)")}
+      <div style="flex:1;min-width:0">
+        <div class="out" style="font-weight:700;font-size:14px;color:var(--cyan)">${f.name}</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">Seasonal theme · ${kept}</div>
+      </div>
+      <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+        <div class="out" style="font-size:12px;font-weight:700;color:var(--cyan)">${f.left}</div>
+        <div style="font-size:10px;color:var(--t3);text-decoration:underline;cursor:pointer">Turn off</div>
+      </div>
+    </div></div>`;
+}
+function home(f, skinId){
+  const greet = f ? f.greeting : "Welcome back";
+  return `<div class="scroll"><div class="enter" style="padding:20px 16px 100px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+    <div><p style="color:var(--t2);font-size:13px;margin-bottom:2px">${greet}</p>
+      <h1 class="out" style="font-weight:800;font-size:24px;display:flex;align-items:center;gap:8px">Jérémy <span class="av">J</span></h1></div>
+    <div style="text-align:center"><span class="fl" style="font-size:28px;display:inline-flex">${icon("flame",28,"var(--orange)")}</span><div style="font-size:11px;color:var(--t2);font-weight:600">12 days</div></div>
+  </div>
+
+  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+    ${pill("x2 Weekend","#ff6bff","<span>🎉</span>")}${pill("x1.5 Streak","#ff8c42",icon("flame",12,"#ff8c42"))}${pill("+10 Login bonus","#00e676","<span>🎁</span>")}
+  </div>
+
+  ${f ? festBanner(f, skinId) : ""}
+
+  <button class="cta" style="background:linear-gradient(135deg,rgba(255,192,32,.12),rgba(var(--cx),.08));border:1px solid rgba(255,192,32,.3)">
+    <span style="font-size:28px">📦</span>
+    <div style="flex:1"><div class="out" style="font-weight:800;font-size:14px;color:var(--gold)">Treasure Chest Available!</div>
+    <div style="font-size:11px;color:var(--t2)">1 chest waiting to be opened</div></div>
+    <span style="font-size:20px;color:var(--gold)">&gt;</span>
+  </button>
+
+  <div class="crd glo" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="out" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#0f0c08">12</div>
+        <div><div class="out" style="font-size:13px;font-weight:700">Level 12</div><div style="font-size:11px;color:var(--t2)">1 240 / 2 000 XP · 385 this week</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px;padding:4px 12px;background:var(--bg3);border-radius:99px">${icon("laurel-crown",16,"#f0c850")}<span class="out" style="font-size:12px;font-weight:600;color:#f0c850">Gold</span></div>
+        <span style="font-size:18px;color:var(--t3);line-height:1">›</span>
+      </div>
+    </div>
+    <div style="width:100%;height:6px;background:var(--bg3);border-radius:99px;overflow:hidden"><div class="bar-fill" style="width:62%;height:100%;background:linear-gradient(90deg,var(--cx-hex),var(--cx-dark));border-radius:99px"></div></div>
+  </div>
+
+  <div class="crd" style="margin-bottom:16px;cursor:pointer;padding:14px 16px;background:linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12));border:1px solid rgba(var(--cx),.2);box-shadow:0 0 20px rgba(var(--cx),.18)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+        ${icon("lightning-bow",22,"var(--cyan)")}
+        <div style="min-width:0;flex:1">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span class="out" style="font-weight:800;font-size:15px;color:var(--t1)">Daily Challenge</span><span class="out" style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(var(--cx),.15);color:var(--cyan);font-weight:700">+100 XP</span></div>
+          <div style="font-size:12px;color:var(--t2);line-height:1.4">5 grammar questions · 30s each</div>
+        </div>
+      </div>
+      <span style="font-size:18px;color:var(--cyan);margin-left:8px">›</span>
+    </div>
+  </div>
+
+  <h2 class="out" style="font-weight:700;font-size:16px;margin-bottom:12px;color:var(--t2)">Quick Start</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="crd" style="cursor:pointer;padding:16px;text-align:center">${icon("scroll-unfurled",32,"var(--cyan)","margin:0 auto 8px")}<div class="out" style="font-weight:700;font-size:13px">Vocabulary</div><div style="font-size:11px;color:var(--t2);margin-top:2px">18 due today</div></div>
+    <div class="crd" style="cursor:pointer;padding:16px;text-align:center">${icon("bullseye",32,"var(--cyan)","margin:0 auto 8px")}<div class="out" style="font-weight:700;font-size:13px">Grammar Drill</div><div style="font-size:11px;color:var(--t2);margin-top:2px">Part 5 · 10 Q</div></div>
+  </div>
+
+  <div style="margin-top:20px">
+    <div class="crd" style="padding:0;overflow:hidden;border:1px solid rgba(180,140,80,.12);background:linear-gradient(160deg,rgba(180,140,80,.06) 0%,rgba(27,112,207,.04) 100%)">
+      <div style="padding:16px 18px 14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">${icon("scales",18,"var(--cyan)")}<span class="out" style="font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px">Tip of the day — Part 5</span></div>
+          ${icon("candle-flame",14,"var(--t3)")}
+        </div>
+        <p class="out" style="font-weight:700;font-size:14px;color:var(--t1);line-height:1.5;margin-bottom:6px">Read the whole sentence before the options.</p>
+        <p style="font-size:12px;color:var(--t2);line-height:1.5">The blank's part of speech is decided by the words around it, not by the choices.</p>
+      </div>
+      <div style="width:100%;padding:10px 18px;background:rgba(180,140,80,.06);border-top:1px solid rgba(180,140,80,.08);display:flex;align-items:center;justify-content:center;gap:6px"><span class="out" style="font-size:12px;color:var(--cyan);font-weight:600">All 63 strategies</span><span style="font-size:12px;color:var(--cyan)">→</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top:22px;display:flex;flex-direction:column;gap:10px">
+    <button class="btn1">Start Daily Challenge</button>
+    <button class="btn2" style="width:100%">Later</button>
+  </div>
+  </div></div>
+  <div class="tab-bar">${TABS.map((t,i)=>`<button class="${i===0?"on":""}">${icon(t[2],24,"currentColor")}<span class="out">${t[1]}</span>${i===0?"<i></i>":""}</button>`).join("")}</div>`;
+}
+
+const slotsEl = document.getElementById("slots");
+const state = {light:false, skin:"", motion:true, scale:"auto"};
+
+function build(){
+  slotsEl.innerHTML = "";
+  const refSlot = document.createElement("section");
+  refSlot.className = "slot";
+  refSlot.innerHTML = `<header class="cap"><b>Aujourd'hui (référence)</b><span>Hors fenêtre</span><p>Le skin équipé par l'élève, tel qu'il le voit toute l'année. Choisissez-le dans la barre du haut.</p></header>
+    <div class="phone"><div class="app${state.skin?" skin-"+state.skin:""}">${home(null, state.skin)}</div></div><footer class="sw"></footer>`;
+  slotsEl.appendChild(refSlot);
+  FESTS.forEach(f=>{
+    const s = document.createElement("section");
+    s.className = "slot";
+    s.innerHTML = `<header class="cap"><b>${f.name}</b><span>${f.window}</span><p>${f.note}</p></header>
+      <div class="phone"><div class="app fest-${f.id}">${home(f, state.skin)}</div></div><footer class="sw"></footer>`;
+    slotsEl.appendChild(s);
+  });
+  applyLight();
+  swatches();
+}
+function applyLight(){
+  document.querySelectorAll(".phone .app").forEach(a=>a.classList.toggle("light", state.light));
+}
+function swatches(){
+  document.querySelectorAll(".slot").forEach(slot=>{
+    const app = slot.querySelector(".app"), cs = getComputedStyle(app);
+    const rows = [["--bg","bg"],["--bg2","bg2"],["--bg3","bg3"],["--cx-hex","accent"],["--orange","orange"],["--t1","t1"],["--t2","t2"]];
+    slot.querySelector(".sw").innerHTML = rows.map(([v,l])=>{const val=cs.getPropertyValue(v).trim();return `<i><b style="background:${val}"></b><code>${val}</code><small>${l}</small></i>`;}).join("");
+  });
+}
+function applyScale(){
+  let s = state.scale;
+  if(s === "auto"){ s = Math.min(1, (window.innerWidth - 40 - 26*4) / (390*5)); s = Math.max(0.55, Math.round(s*100)/100); }
+  document.documentElement.style.setProperty("--ph-scale", s);
+}
+
+document.getElementById("light").addEventListener("change", e=>{state.light=e.target.checked;applyLight();swatches();});
+document.getElementById("motion").addEventListener("change", e=>{state.motion=e.target.checked;document.body.classList.toggle("no-motion",!state.motion);});
+document.getElementById("scale").addEventListener("change", e=>{state.scale=e.target.value;applyScale();});
+document.getElementById("refskin").addEventListener("change", e=>{state.skin=e.target.value;build();});
+window.addEventListener("resize", ()=>{ if(state.scale==="auto") applyScale(); });
+
+// Fenêtres et skin de référence pilotables par l'URL : ?light=1&skin=frostbite
+const q = new URLSearchParams(location.search);
+if(q.get("light")==="1"){state.light=true;document.getElementById("light").checked=true;}
+if(q.get("skin")){state.skin=q.get("skin");document.getElementById("refskin").value=state.skin;}
+if(q.get("scale")){state.scale=q.get("scale");document.getElementById("scale").value=state.scale;}
+
+applyScale();
+build();
+</script>
+</body>
+</html>

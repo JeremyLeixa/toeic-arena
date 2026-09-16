@@ -1,0 +1,85 @@
+/* ═══ FESTIVAL THEMES — proto 2026-09-16 (prototypes/festival-themes/).
+   Bloc destiné à src/styles/appCss.js, à coller APRÈS les paquets .skin-* (les
+   festivals n'y coexistent jamais avec un skin : App.jsx pose fest-<id> À LA PLACE
+   de skin-<id>, le skin équipé reste en base et revient à la fin de la fenêtre).
+   Même anatomie qu'un skin global : tokens → .crd + ::before/::after → .btn1 →
+   .bar-fill → .btn2 → .tab-bar → .out → retint .light. AUCUN keyframe neuf, tout
+   vient des skins : skSnowFall skMoteRise skCandle skFlicker skSheen skTwinkle
+   skDrift aurora. Le prefers-reduced-motion global les neutralise déjà. ═══ */
+
+/* ── Hallow's Eve · 24 oct → 2 nov ─────────────────────────────────────────
+   Citrouille sur violet profond. Feux follets (motes vert pâle + orange qui
+   montent), brume violette qui dérive, chandelle (skCandle). */
+.fest-halloween{--cx:255,122,26;--cx-hex:#ff7a1a;--cx-dark:#b8480c;--cyan:#ff7a1a;--orange:#d85a10;--bg:#0a0612;--bg2:#140b1f;--bg3:#1f1230;--bg-rgb:10,6,18;--bg2-rgb:20,11,31;--bg3-rgb:31,18,48;--t1:#f3e6ff;--t2:#9c86b8;--bdr:rgba(255,122,26,.14)}
+.fest-halloween .crd{position:relative!important;overflow:hidden!important;border-color:rgba(255,122,26,.22)!important;background:radial-gradient(ellipse 90% 60% at 50% 120%,rgba(255,122,26,.16),transparent 60%),linear-gradient(160deg,#190e2a,#0e0718)!important;transition:none!important;box-shadow:inset 0 0 32px rgba(130,70,220,.16),0 0 18px rgba(255,122,26,.06)!important;animation:skCandle 6s ease-in-out infinite!important}
+.fest-halloween .crd>*{position:relative!important;z-index:2!important}
+.fest-halloween .crd::before,.fest-halloween .crd::after{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;pointer-events:none!important;z-index:1!important}
+.fest-halloween .crd::before{background:radial-gradient(1.8px 1.8px at 18% 100%,#b6ff7a,transparent),radial-gradient(1.4px 1.4px at 46% 100%,#ffb060,transparent),radial-gradient(1.8px 1.8px at 74% 100%,#b6ff7a,transparent),radial-gradient(1.3px 1.3px at 90% 100%,#ff8a3a,transparent)!important;animation:skMoteRise 5.2s linear infinite!important}
+.fest-halloween .crd::after{background:linear-gradient(90deg,transparent 10%,rgba(160,110,240,.10) 45%,rgba(160,110,240,.05) 60%,transparent 90%)!important;animation:skDrift 7s ease-in-out infinite!important}
+.fest-halloween .btn1{background-image:linear-gradient(135deg,#ffb347,#ff7a1a,#c2410c,#ff7a1a)!important;background-color:transparent!important;background-size:250%!important;color:#140b1f!important;animation:aurora 3s ease infinite,skFlicker 1.6s ease-in-out infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(255,122,26,.45),0 0 40px rgba(130,70,220,.18)!important}
+.fest-halloween .bar-fill{background-image:linear-gradient(90deg,#ff7a1a,#ffc46b,#ff7a1a)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 3s linear infinite!important;transition:none!important}
+.fest-halloween .btn2{border-color:rgba(255,122,26,.3)!important;color:#ff7a1a!important}
+.fest-halloween .tab-bar{box-shadow:0 -40px 70px rgba(130,70,220,.18)}
+.fest-halloween .out{text-shadow:0 0 16px rgba(160,110,240,.18)}
+.light.fest-halloween{--cx:190,80,10;--cx-hex:#be500a;--cx-dark:#8a3808;--cyan:#be500a;--orange:#9a3c08;--bg:#f4eefa;--bg2:#fffcfd;--bg3:#e9e0f2;--bg-rgb:244,238,250;--bg2-rgb:255,252,253;--bg3-rgb:233,224,242;--t1:#22122e;--t2:#6a5680;--bdr:rgba(190,80,10,.14)}
+.light.fest-halloween .crd{background:radial-gradient(ellipse 90% 60% at 50% 120%,rgba(255,150,60,.18),transparent 60%),linear-gradient(160deg,#ffffff,#f6eefa)!important;box-shadow:inset 0 0 26px rgba(160,110,240,.10)!important}
+.light.fest-halloween .crd::before{background:radial-gradient(1.8px 1.8px at 18% 100%,#4caf1a,transparent),radial-gradient(1.4px 1.4px at 46% 100%,#e0701a,transparent),radial-gradient(1.8px 1.8px at 74% 100%,#4caf1a,transparent),radial-gradient(1.3px 1.3px at 90% 100%,#e0701a,transparent)!important}
+.light.fest-halloween .btn1{color:#fff8f0!important;box-shadow:0 4px 20px rgba(190,80,10,.35)!important}
+.light.fest-halloween .out{text-shadow:none}
+
+/* ── Yuletide · 14 déc → 4 jan ─────────────────────────────────────────────
+   Sapin + rouge + or. Neige lente (flocons plus gros que Frostbite), guirlande
+   qui clignote sur le bord haut, barre sucre d'orge. Chaud, pas bleu : Frostbite
+   est un skin payant, on s'en écarte. */
+.fest-yule{--cx:245,215,110;--cx-hex:#f5d76e;--cx-dark:#b8862a;--cyan:#f5d76e;--orange:#d9a13a;--bg:#06110b;--bg2:#0c1d13;--bg3:#132a1c;--bg-rgb:6,17,11;--bg2-rgb:12,29,19;--bg3-rgb:19,42,28;--t1:#f2efe4;--t2:#8fae98;--bdr:rgba(245,215,110,.14)}
+.fest-yule .crd{position:relative!important;overflow:hidden!important;border-color:rgba(245,215,110,.22)!important;background:linear-gradient(165deg,#12301e,#0a1a11)!important;transition:none!important;box-shadow:inset 0 0 30px rgba(60,160,90,.14),inset 0 1px 0 rgba(245,215,110,.14)!important}
+.fest-yule .crd>*{position:relative!important;z-index:2!important}
+.fest-yule .crd::before,.fest-yule .crd::after{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;pointer-events:none!important;z-index:1!important}
+.fest-yule .crd::before{background:radial-gradient(1.8px 1.8px at 22% 0%,#fff,transparent),radial-gradient(1.3px 1.3px at 41% 0%,#fff8e8,transparent),radial-gradient(1.6px 1.6px at 58% 0%,#fff,transparent),radial-gradient(1.2px 1.2px at 77% 0%,#fff8e8,transparent),radial-gradient(1.8px 1.8px at 92% 0%,#fff,transparent)!important;animation:skSnowFall 7s linear infinite!important}
+.fest-yule .crd::after{background:radial-gradient(2.4px 2.4px at 8% 0%,#ff4d4d,transparent),radial-gradient(2.4px 2.4px at 20% 0%,#ffd84d,transparent),radial-gradient(2.4px 2.4px at 32% 0%,#4dff88,transparent),radial-gradient(2.4px 2.4px at 44% 0%,#4dc3ff,transparent),radial-gradient(2.4px 2.4px at 56% 0%,#ff4d4d,transparent),radial-gradient(2.4px 2.4px at 68% 0%,#ffd84d,transparent),radial-gradient(2.4px 2.4px at 80% 0%,#4dff88,transparent),radial-gradient(2.4px 2.4px at 92% 0%,#4dc3ff,transparent)!important;animation:skTwinkle 1.8s ease-in-out infinite!important}
+.fest-yule .btn1{background-image:linear-gradient(135deg,#d42b2b,#f5d76e,#d42b2b,#f5d76e)!important;background-color:transparent!important;background-size:250%!important;color:#1a0808!important;animation:aurora 3s ease infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(212,43,43,.4),0 0 30px rgba(245,215,110,.18)!important}
+.fest-yule .bar-fill{background-image:repeating-linear-gradient(135deg,#e03c3c 0 6px,#fff4e0 6px 12px)!important;background-color:transparent!important;background-size:200% 100%!important;animation:skSheen 6s linear infinite!important;transition:none!important}
+.fest-yule .btn2{border-color:rgba(245,215,110,.3)!important;color:#f5d76e!important}
+.fest-yule .tab-bar{box-shadow:0 -40px 70px rgba(60,160,90,.18)}
+.fest-yule .out{text-shadow:0 0 14px rgba(245,215,110,.14)}
+.light.fest-yule{--cx:184,134,42;--cx-hex:#b8862a;--cx-dark:#8a6018;--cyan:#b8862a;--orange:#9a6a1c;--bg:#f2f7f2;--bg2:#ffffff;--bg3:#e1ece2;--bg-rgb:242,247,242;--bg2-rgb:255,255,255;--bg3-rgb:225,236,226;--t1:#12241a;--t2:#4f6b58;--bdr:rgba(184,134,42,.16)}
+.light.fest-yule .crd{background:linear-gradient(165deg,#ffffff,#edf5ee)!important;box-shadow:inset 0 0 24px rgba(60,160,90,.08)!important}
+.light.fest-yule .crd::before{background:radial-gradient(1.8px 1.8px at 22% 0%,#9fc8ff,transparent),radial-gradient(1.3px 1.3px at 41% 0%,#b8d8ff,transparent),radial-gradient(1.6px 1.6px at 58% 0%,#9fc8ff,transparent),radial-gradient(1.2px 1.2px at 77% 0%,#b8d8ff,transparent),radial-gradient(1.8px 1.8px at 92% 0%,#9fc8ff,transparent)!important}
+.light.fest-yule .btn1{color:#fff8f0!important;background-image:linear-gradient(135deg,#b81e1e,#d9a13a,#b81e1e,#d9a13a)!important}
+.light.fest-yule .out{text-shadow:none}
+
+/* ── Spring Bloom · Pâques −5 → +1 (fête mobile, algorithme de Meeus) ──────
+   Sakura + menthe. Pétales roses qui tombent, voile menthe. C'est celui qui
+   gagne le plus en mode clair. */
+.fest-spring{--cx:255,158,196;--cx-hex:#ff9ec4;--cx-dark:#c25a84;--cyan:#ff9ec4;--orange:#e07aa0;--bg:#0d1112;--bg2:#141b19;--bg3:#1c2622;--bg-rgb:13,17,18;--bg2-rgb:20,27,25;--bg3-rgb:28,38,34;--t1:#f4eef1;--t2:#93a59a;--bdr:rgba(255,158,196,.14)}
+.fest-spring .crd{position:relative!important;overflow:hidden!important;border-color:rgba(255,158,196,.22)!important;background:radial-gradient(ellipse 70% 50% at 85% -10%,rgba(168,240,208,.16),transparent 60%),linear-gradient(160deg,#182622,#0f1614)!important;transition:none!important;box-shadow:inset 0 0 30px rgba(168,240,208,.08),inset 0 1px 0 rgba(255,158,196,.12)!important}
+.fest-spring .crd>*{position:relative!important;z-index:2!important}
+.fest-spring .crd::before,.fest-spring .crd::after{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;pointer-events:none!important;z-index:1!important}
+.fest-spring .crd::before{background:radial-gradient(2.2px 2.2px at 14% 0%,#ffb3d1,transparent),radial-gradient(1.6px 1.6px at 37% 0%,#fff0f6,transparent),radial-gradient(2.2px 2.2px at 61% 0%,#ff9ec4,transparent),radial-gradient(1.6px 1.6px at 84% 0%,#fff0f6,transparent)!important;animation:skSnowFall 8s linear infinite!important}
+.fest-spring .crd::after{background:linear-gradient(105deg,transparent 40%,rgba(168,240,208,.16) 50%,transparent 60%)!important;background-size:250% 100%!important;animation:skSheen 7s linear infinite!important}
+.fest-spring .btn1{background-image:linear-gradient(135deg,#ffb3d1,#ff9ec4,#a8f0d0,#ff9ec4)!important;background-color:transparent!important;background-size:250%!important;color:#1a0f14!important;animation:aurora 4s ease infinite!important;transition:none!important;box-shadow:0 4px 24px rgba(255,158,196,.4)!important}
+.fest-spring .bar-fill{background-image:linear-gradient(90deg,#ff9ec4,#a8f0d0,#ff9ec4)!important;background-color:transparent!important;background-size:200%!important;animation:skSheen 4s linear infinite!important;transition:none!important}
+.fest-spring .btn2{border-color:rgba(255,158,196,.3)!important;color:#ff9ec4!important}
+.fest-spring .tab-bar{box-shadow:0 -40px 70px rgba(255,158,196,.14)}
+.light.fest-spring{--cx:214,70,130;--cx-hex:#d64682;--cx-dark:#a02e60;--cyan:#d64682;--orange:#b0386a;--bg:#fbf6f8;--bg2:#ffffff;--bg3:#f0e4ec;--bg-rgb:251,246,248;--bg2-rgb:255,255,255;--bg3-rgb:240,228,236;--t1:#2a1a22;--t2:#7a6270;--bdr:rgba(214,70,130,.14)}
+.light.fest-spring .crd{background:radial-gradient(ellipse 70% 50% at 85% -10%,rgba(120,220,170,.22),transparent 60%),linear-gradient(160deg,#ffffff,#fbeef4)!important;box-shadow:inset 0 0 24px rgba(214,70,130,.05)!important}
+.light.fest-spring .crd::before{background:radial-gradient(2.2px 2.2px at 14% 0%,#f06aa0,transparent),radial-gradient(1.6px 1.6px at 37% 0%,#ffb3d1,transparent),radial-gradient(2.2px 2.2px at 61% 0%,#e0508a,transparent),radial-gradient(1.6px 1.6px at 84% 0%,#ffb3d1,transparent)!important}
+.light.fest-spring .btn1{color:#fff8fb!important;background-image:linear-gradient(135deg,#e26a9e,#d64682,#4fc79a,#d64682)!important}
+
+/* ── Summer Send-off · 19 → 28 juin ────────────────────────────────────────
+   Ciel de crépuscule (indigo → corail) avec un soleil bas, lagon en accent,
+   lucioles. Volontairement pas doré-métal : Molten Gold est un skin payant. */
+.fest-solstice{--cx:56,214,224;--cx-hex:#38d6e0;--cx-dark:#1a9aa4;--cyan:#38d6e0;--orange:#ff8a5c;--bg:#0c0a1e;--bg2:#161234;--bg3:#211a45;--bg-rgb:12,10,30;--bg2-rgb:22,18,52;--bg3-rgb:33,26,69;--t1:#f6f0ff;--t2:#9a90c4;--bdr:rgba(56,214,224,.14)}
+.fest-solstice .crd{position:relative!important;overflow:hidden!important;border-color:rgba(56,214,224,.22)!important;background:radial-gradient(ellipse 80% 50% at 50% 118%,rgba(255,170,80,.42),transparent 62%),linear-gradient(180deg,#1a1440 0%,#2e1a50 55%,#5e2a48 100%)!important;transition:none!important;box-shadow:inset 0 0 30px rgba(255,140,90,.10),inset 0 1px 0 rgba(56,214,224,.14)!important}
+.fest-solstice .crd>*{position:relative!important;z-index:2!important}
+.fest-solstice .crd::before,.fest-solstice .crd::after{content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;pointer-events:none!important;z-index:1!important}
+.fest-solstice .crd::before{background:radial-gradient(1.7px 1.7px at 16% 100%,#ffe08a,transparent),radial-gradient(1.3px 1.3px at 44% 100%,#ffd060,transparent),radial-gradient(1.7px 1.7px at 70% 100%,#fff0b0,transparent),radial-gradient(1.3px 1.3px at 88% 100%,#ffd060,transparent)!important;animation:skMoteRise 6s linear infinite!important}
+.fest-solstice .crd::after{background:linear-gradient(100deg,transparent 40%,rgba(255,200,120,.14) 50%,transparent 60%)!important;background-size:250% 100%!important;animation:skSheen 7s linear infinite!important}
+.fest-solstice .btn1{background-image:linear-gradient(135deg,#38d6e0,#ffd166,#ff8a5c,#38d6e0)!important;background-color:transparent!important;background-size:280%!important;color:#0c0a1e!important;animation:aurora 3.5s ease infinite!important;transition:none!important;box-shadow:0 4px 26px rgba(255,138,92,.4),0 0 30px rgba(56,214,224,.2)!important}
+.fest-solstice .bar-fill{background-image:linear-gradient(90deg,#38d6e0,#ffd166,#ff8a5c,#38d6e0)!important;background-color:transparent!important;background-size:300%!important;animation:aurora 3s ease infinite!important;transition:none!important}
+.fest-solstice .btn2{border-color:rgba(56,214,224,.3)!important;color:#38d6e0!important}
+.fest-solstice .tab-bar{box-shadow:0 -40px 70px rgba(255,138,92,.16)}
+.light.fest-solstice{--cx:18,140,150;--cx-hex:#128c96;--cx-dark:#0c6670;--cyan:#128c96;--orange:#c8562a;--bg:#fdf7f0;--bg2:#ffffff;--bg3:#f5e8da;--bg-rgb:253,247,240;--bg2-rgb:255,255,255;--bg3-rgb:245,232,218;--t1:#241a30;--t2:#6f6280;--bdr:rgba(18,140,150,.14)}
+.light.fest-solstice .crd{background:radial-gradient(ellipse 80% 50% at 50% 118%,rgba(255,170,80,.30),transparent 62%),linear-gradient(180deg,#ffffff 0%,#fff3e8 60%,#ffe4d4 100%)!important;box-shadow:inset 0 0 24px rgba(255,140,90,.08)!important}
+.light.fest-solstice .crd::before{background:radial-gradient(1.7px 1.7px at 16% 100%,#e0a020,transparent),radial-gradient(1.3px 1.3px at 44% 100%,#d09020,transparent),radial-gradient(1.7px 1.7px at 70% 100%,#e0a020,transparent),radial-gradient(1.3px 1.3px at 88% 100%,#d09020,transparent)!important}
+.light.fest-solstice .btn1{color:#fff8f0!important;background-image:linear-gradient(135deg,#128c96,#d9a13a,#c8562a,#128c96)!important}
