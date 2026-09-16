@@ -160,7 +160,7 @@ export function UpgradeScreen(p){
         <input type="checkbox" checked={acceptCGV} onChange={function(e){setAcceptCGV(e.target.checked);setErr("");}}
           style={{marginTop:2,width:18,height:18,flexShrink:0,accentColor:"var(--cx-hex)"}}/>
         <span style={{fontSize:12,color:"var(--t2)",lineHeight:1.5}}>
-          {"J'ai lu et j'accepte les "}<button type="button" onClick={function(e){e.preventDefault();setShowCGV(true);}} style={{background:"none",border:"none",padding:0,color:"var(--cyan)",textDecoration:"underline",cursor:"pointer",fontFamily:"inherit",fontSize:"inherit"}}>Conditions G\u00e9n\u00e9rales de Vente</button>{" de Verse Arena."}
+          {"J'ai lu et j'accepte les "}<button type="button" onClick={function(e){e.preventDefault();setShowCGV(true);}} style={{background:"none",border:"none",padding:0,color:"var(--cyan)",textDecoration:"underline",cursor:"pointer",fontFamily:"inherit",fontSize:"inherit"}}>{"Conditions G\u00e9n\u00e9rales de Vente"}</button>{" de Verse Arena."}
         </span>
       </label>
 
