@@ -6,6 +6,8 @@
  * le thème arrive un jour trop tôt, ne part jamais, ou la mauvaise fête gagne. Et un opt-out
  * que le forçage contourne rend le « Turn off » inopérant. Ce test fige :
  *   · la forme de FESTIVALS (ids uniques, dates valides, icône qui existe vraiment) ;
+ *   · le CSS : un paquet .fest-<id> ET un retint .light.fest-<id> par fête, aucune classe
+ *     .fest-* orpheline, chaque animation utilisée a son @keyframes ;
  *   · Pâques (Meeus) sur des années connues ;
  *   · la disjonction des fenêtres, jour par jour, sur 21 ans ;
  *   · les bornes incluses, en heure LOCALE, et le chevauchement déc → jan ;
@@ -14,7 +16,8 @@
  *
  * Prouvé mordant le 2026-09-16 : `+114` → `+113` dans easterDate → rouge ; `occ.end>=day` →
  * `occ.end>day` → rouge (bornes de fin) ; une 5ᵉ fête 10-30 → 11-05 → rouge (chevauchement) ;
- * appliedFestivalId qui ignore festivalsEnabled → rouge (opt-out).
+ * appliedFestivalId qui ignore festivalsEnabled → rouge (opt-out). CSS : ligne
+ * `.light.fest-spring{…}` retirée → rouge ; `skCandle` → `skCandel` → rouge ; `.fest-yuel` → rouge.
  *
  * Usage : node tests/check_festivals.cjs
  */
@@ -24,6 +27,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const F = require(path.join(ROOT, 'src', 'lib', 'festivals.js'));
 const { GAME_ICON_PATHS } = require(path.join(ROOT, 'src', 'data', 'avatarIcons.js'));
+const { CSS } = require(path.join(ROOT, 'src', 'styles', 'appCss.js'));
 
 let fails = 0, checks = 0;
 const fail = (m) => { fails++; console.log('  FAIL ' + m); };
@@ -44,6 +48,30 @@ for (const f of F.FESTIVALS) {
     check(!f.from && !f.to, f.id + ' : easter ET from/to');
   } else {
     check(MMDD.test(f.from || '') && MMDD.test(f.to || ''), f.id + ' : from/to doivent être en MM-DD (' + f.from + ' → ' + f.to + ')');
+  }
+}
+
+// ── CSS : chaque fête a ses paquets, et rien d'autre ne s'appelle .fest-* ──
+// App.jsx pose `fest-<id>` pour tout id de FESTIVALS : sans paquet, l'élève perd son skin ET
+// n'a aucun thème (retour au canonique, en silence). Sans retint .light, les tokens sombres
+// de la fête restent en mode clair.
+const cssLines = CSS.split(/\r?\n/);
+const ids = new Set(F.FESTIVALS.map((f) => f.id));
+for (const f of F.FESTIVALS) {
+  check(cssLines.some((l) => l.startsWith('.fest-' + f.id + '{')), f.id + ' : paquet .fest-' + f.id + '{…} absent de styles/appCss.js');
+  check(cssLines.some((l) => l.startsWith('.light.fest-' + f.id + '{')), f.id + ' : retint .light.fest-' + f.id + '{…} absent de styles/appCss.js');
+}
+for (const m of new Set(CSS.match(/\.fest-[a-z_]+/g) || [])) {
+  check(ids.has(m.slice(6)), 'classe ' + m + ' dans appCss.js sans fête correspondante dans FESTIVALS (jamais posée)');
+}
+// Un nom d'animation fautif ne casse rien : l'animation est juste morte.
+const keyframes = new Set((CSS.match(/@keyframes\s+[\w-]+/g) || []).map((k) => k.split(/\s+/)[1]));
+for (const line of cssLines.filter((l) => /^(\.light)?\.fest-/.test(l))) {
+  for (const decl of line.match(/animation:[^;}]+/g) || []) {
+    for (const part of decl.slice('animation:'.length).replace(/!important/g, '').split(',')) {
+      const name = part.trim().split(/\s+/)[0];
+      check(keyframes.has(name), 'animation « ' + name + ' » utilisée par ' + line.slice(0, line.indexOf('{')) + ' sans @keyframes');
+    }
   }
 }
 
