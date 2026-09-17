@@ -1,5 +1,6 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { QUESTIONS } from "../../data/grammar.js";
 import { shuffle } from "../../lib/util.js";
 import { playCorrect, playWrong } from "../../sounds.js";
@@ -38,6 +39,7 @@ var progressBarRef = useRef(null);
   // toujours sur le handleMiss du dernier rendu.
   var missRef = useRef(null);
   missRef.current = handleMiss;
+  var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);var[result,setResult]=useState(null);
 
   function getDuration(idx){
     var d=SPEED_TIERS[0].dur;
@@ -67,7 +69,7 @@ function animateFall(){
   if(progressBarRef.current) progressBarRef.current.style.height = Math.round(pct * 100) + "%";
   if(pct >= 1){
     answeredRef.current = true;
-    missRef.current();
+    missRef.current(-1);
   } else {
     fallRef.current = requestAnimationFrame(animateFall);
   }
@@ -88,11 +90,12 @@ function animateFall(){
       setFeedback({type:"ok",text:newCombo>=3?newCombo+"-combo! x"+mult:"Correct!"});
       setTimeout(nextQuestion,600);
     } else {
-      handleMiss();
+      handleMiss(i);
     }
   }
 
-  function handleMiss(){
+  // pickIdx : option choisie, -1 si la phrase est tombée.
+  function handleMiss(pickIdx){
     var newLives=lives-1;
     setLives(newLives);
     setCombo(0);
@@ -100,6 +103,7 @@ function animateFall(){
     setShake(true);
     setTimeout(function(){setShake(false);},400);
     var q=allQs[qi];
+    mistakesRef.current.push({tag:q.cat,prompt:q.s,yours:pickIdx>=0?q.o[pickIdx]:"(too slow)",correct:q.o[q.c],why:q.x});
     setFeedback({type:"miss",text:q.x||"The answer was: "+q.o[q.c]});
     if(newLives<=0){
       setTimeout(function(){setPhase("done");},1500);
@@ -127,6 +131,18 @@ function animateFall(){
   // Cleanup
   useEffect(function(){return function(){cancelAnimationFrame(fallRef.current);};}, []);
 
+  // Fin de partie (dernière vie ou plus de questions, depuis un minuteur) : l'XP part ici avec l'état
+  // du dernier rendu, au lieu d'attendre « Collect XP ». Record lu avant l'envoi (sv() l'écrit).
+  useEffect(function(){
+    if(phase!=="done"||sentRef.current)return;
+    sentRef.current=true;
+    cancelAnimationFrame(fallRef.current);
+    var xp=score*8+(maxCombo>=6?30:maxCombo>=3?15:0);
+    var prev=p.u.gameScores&&p.u.gameScores.wordFall;
+    setResult({record:!prev||prev.score==null||score>prev.score});
+    sidRef.current=p.done("wordFall",{score:score,maxCombo:maxCombo,questions:qi+1},xp);
+  },[phase]);
+
   // ── INTRO ──
   if(phase==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="meteor-impact" size={60} color="var(--cyan)"/></div>
@@ -149,26 +165,16 @@ function animateFall(){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   // ── DONE ──
-  if(phase==="done"){
-    var xp=score*8+(maxCombo>=6?30:maxCombo>=3?15:0);
-    var grade=score>=20?"Legendary!":score>=12?"Great run!":score>=6?"Not bad!":"Keep practicing!";
-    var gradeIcon=score>=20?"👑":score>=12?"⚔️":score>=6?"🛡️":"📖";
-    var prev=p.u.gameScores&&p.u.gameScores.wordFall;
-    var isRecord=!prev||score>prev.score;
-
-    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{marginBottom:12,display:"flex",justifyContent:"center",animation:"countUp .6s"}}><ResultIcon e={gradeIcon} size={56}/></div>
-      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>{grade}</h1>
-      {isRecord&&<div style={{fontSize:14,color:"var(--gold)",fontWeight:700,marginBottom:8,animation:"pulse 1s infinite"}}>🏅 NEW RECORD!</div>}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:20,maxWidth:320,margin:"0 auto 20px"}}>
-        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--cyan)"}}>{score}</div><div style={{fontSize:10,color:"var(--t3)"}}>Score</div></div>
-        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--orange)"}}>{qi+1}</div><div style={{fontSize:10,color:"var(--t3)"}}>Questions</div></div>
-        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--purple)"}}>{maxCombo>1?"x"+maxCombo:"—"}</div><div style={{fontSize:10,color:"var(--t3)"}}>Max combo</div></div>
+  if(phase==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Word Fall" mode="points" points={score} pointsLabel="points"
+    mistakes={mistakesRef.current} onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+    <div className="crd" style={{padding:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,textAlign:"center"}}>
+        <div><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--orange)"}}>{qi+1}</div><div style={{fontSize:11,color:"var(--t2)"}}>Questions</div></div>
+        <div><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--purple)"}}>{maxCombo>1?"x"+maxCombo:"—"}</div><div style={{fontSize:11,color:"var(--t2)"}}>Max combo</div></div>
       </div>
-      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:24}}>+{xp} XP</div>
-      <button className="btn1" onClick={function(){p.done("wordFall",{score:score,maxCombo:maxCombo,questions:qi+1},xp);}}>Collect XP</button>
-    </div>);
-  }
+      {result&&result.record&&<div className="out" style={{fontSize:14,fontWeight:700,color:"var(--gold)",textAlign:"center",marginTop:10}}>New record!</div>}
+    </div>
+  </SessionResult>);
 
   // ── PLAY ──
   var q=allQs[qi];

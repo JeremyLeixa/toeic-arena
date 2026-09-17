@@ -304,7 +304,7 @@ function Verdict(p) {
           <div className="sr-roll" />
         </div>
         {done && s.chests.length > 0 && <ChestList chests={s.chests} sid={s.id} />}
-        {/* Jeux au score ou au temps (Speed Match, Word Fall) : pas de liste, pas de carte. */}
+        {/* Jeu sans liste d'erreurs (Speed Match) : pas de carte. */}
         {p.mistakes && <div className={"crd sr-card" + (done ? " on" : "")}><Mistakes items={p.mistakes} /></div>}
         {done && <div className="sr-extras" onClick={stop}>{p.children}</div>}
       </div>
