@@ -252,6 +252,31 @@ eq('settle : déjà actif, pas de bonus → aucune étape', s(base({ lastActive:
 eq('settle : négatif → aucune étape', s(base(), -30).steps, []);
 eq('settle : underdog et Daily Doubler', ids(s(base({ lastActive: TD, boosts: { dailyDoublerUntil: NOW.getTime() + 1000 } }), 50, { events: [{ type: 'underdog' }], classMedianXp: 500 }).steps), ['underdog', 'daily_doubler']);
 
+// ══════════════════════════════════════════════════════════════════════════
+// 7. nextRunMult (tuiles des hubs) = le multiplicateur « farm » que gateSteps appliquera
+//    à la partie suivante, bypass et événements compris.
+// ══════════════════════════════════════════════════════════════════════════
+(() => {
+  let n = 0;
+  const evs = [[], [{ type: 'flash_hour' }], [spotDrill], [spotP6]];
+  for (const modId of ['drill', 'p6', 'mock1', 'csess', 'boss', 'gauntlet_tense', 'game_wordFall']) {
+    for (let run = 0; run <= 4; run++) {
+      for (const events of evs) {
+        for (const bypass of [null, modId, 'other']) {
+          const u = base({ dailyModSessions: { [modId + '_' + TD]: run }, bypassArmedModule: bypass });
+          const st = XP.gateSteps(1000, 10, 10, modId, { u, now: NOW, events }).steps;
+          const farm = st.find((x) => x.id === 'farm');
+          eq('nextRunMult ' + modId + ' run ' + run + ' ev ' + JSON.stringify(events) + ' bypass ' + bypass,
+            XP.nextRunMult(u, modId, { now: NOW, events }), farm ? farm.mult : 1);
+          n++;
+        }
+      }
+    }
+  }
+  eq('nextRunMult : cas couverts', n, 7 * 5 * 4 * 3);
+  eq('nextRunMult : autre jour → plein tarif', XP.nextRunMult(base({ dailyModSessions: { 'drill_2026-09-14': 3 } }), 'drill', { now: NOW }), 1);
+})();
+
 console.log('  ' + checks + ' vérifications, ' + fails + ' échec(s)');
 if (fails) { console.log('\nLes portes XP ont bougé : c\'est une décision produit (CLAUDE.md, XP System), pas un ajustement de test.'); process.exit(1); }
 console.log('  ok');

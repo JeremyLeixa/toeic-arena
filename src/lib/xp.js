@@ -127,6 +127,18 @@ export function gateSteps(baseXp,sc,tot,modId,ctx){
   return out();
 }
 
+// Multiplicateur anti-farming qu'aurait la PROCHAINE partie de ce module (tuiles des hubs :
+// « Full XP / ½ XP / Low XP / No XP »). Mêmes règles que gateSteps, dans le même ordre : Bypass
+// Token armé pour ce module → 1 ; module boosté par un événement → 1 ; sinon farmMult sur le
+// nombre de parties du jour. tests/check_xp_gates.cjs vérifie l'égalité avec l'étape « farm ».
+export function nextRunMult(u,modId,ctx){
+  ctx=ctx||{};
+  if(u&&u.bypassArmedModule===modId)return 1;
+  if(isBoostedByEvents(modId,ctx.events))return 1;
+  var dms=(u&&u.dailyModSessions)||{};
+  return farmMult(modId,dms[modId+"_"+today(ctx.now||new Date())]||0);
+}
+
 // Le calcul seul : même implémentation que gateSteps, forme de retour historique {xp, focusHit}.
 export function gateXp(baseXp,sc,tot,modId,ctx){
   var r=gateSteps(baseXp,sc,tot,modId,ctx);
