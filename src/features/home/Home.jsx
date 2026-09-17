@@ -1,5 +1,5 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { renderAv } from "../../components/avatar.jsx";
+import { renderAv, TreasureChestSvg } from "../../components/avatar.jsx";
 import { Bar } from "../../components/Bar.jsx";
 import { GIcon, ResultIcon, LeagueIcon } from "../../components/icons.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
@@ -21,6 +21,7 @@ var _missionReady=_missionHome&&_missionHome.status!=="calibrating"&&_missionHom
 var _isMissionDoneHome=_missionReady&&(_missionHome.status==="completed"||_missionHome.done);
 // Smart Daily Quest: active if Mission pending, OR if Challenge still pending (sequential reveal)
 var _dailyQuestActive=(_missionReady&&!_isMissionDoneHome)||!dd;
+var chestTier=Math.max(0,Math.min(3,p.pendingChestTier||0));
 var pulseSlot=p.pendingChests>0?"chest":needsMockNudge(u)?"mock":_dailyQuestActive?"daily":(p.events&&p.events.length>0)?"event":null;
 // Festival theme appliqué par App (p.festId, déjà filtré par l'opt-out). Hors fenêtre mais forcé
 // (?fest=), l'occurrence est la prochaine : dates et jours restants restent vrais.
@@ -64,9 +65,11 @@ return(
   </div>
 </div>}
 
-{/* Pending Chests */}
-{p.pendingChests>0&&<button onClick={function(){p.onOpenChest();}} style={{width:"100%",marginBottom:14,padding:"14px 18px",background:"linear-gradient(135deg,rgba(255,192,32,.12),rgba(var(--cx),.08))",border:"1px solid rgba(255,192,32,.3)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:"'DM Sans',sans-serif",animation:pulseSlot==="chest"?"pulse 2s infinite":"none"}}>
-  <span style={{fontSize:28}}>{"\uD83D\uDCE6"}</span>
+{/* Pending Chests \u2014 m\u00EAme coffre SVG que le toast et le modal (palier le plus \u00E9lev\u00E9 de la file,
+    pendingChestTier calcul\u00E9 par App), couleurs du palier dans .home-chest.tN (appCss.js). */}
+{p.pendingChests>0&&<button className={"home-chest t"+chestTier} onClick={function(){p.onOpenChest();}} style={{animation:pulseSlot==="chest"?"pulse 2s infinite":"none"}}>
+  <span className="home-chest-art"><TreasureChestSvg size={60} tier={chestTier} idSuffix="home"/></span>
+  {p.pendingChests>1&&<b className="home-chest-count">{"\u00D7"+p.pendingChests}</b>}
   <div style={{flex:1,textAlign:"left"}}><div className="out" style={{fontWeight:800,fontSize:14,color:"var(--gold)"}}>Treasure Chest{p.pendingChests>1?"s":""} Available!</div>
   <div style={{fontSize:11,color:"var(--t2)"}}>{p.pendingChests} chest{p.pendingChests>1?"s":""} waiting to be opened</div></div>
   <span style={{fontSize:20,color:"var(--gold)"}}>{">"}</span>

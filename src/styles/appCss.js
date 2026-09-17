@@ -459,6 +459,20 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes chxRuneGlow{0%,100%{opacity:.5}50%{opacity:1}}
 @keyframes chxBackPulse{0%,100%{box-shadow:0 0 18px color-mix(in srgb,var(--chx-glow) 50%,transparent),inset 0 0 30px rgba(0,0,0,.6)}50%{box-shadow:0 0 44px color-mix(in srgb,var(--chx-glow) 90%,transparent),inset 0 0 30px rgba(0,0,0,.6)}}
 @keyframes chxHintPulse{0%,100%{opacity:.55}50%{opacity:1}}
+/* ── Coffres en attente sur Home (2026-09-17, proto prototypes/ambiance/) : le coffre du palier le
+   plus élevé de la file (tN = CHEST_TIER), bordure et lueur à la couleur du palier. Mêmes teintes
+   que CHEST_TOAST_COLOR (features/chests/chestTheme.js), en triplets rgb : un color-mix() avec
+   var() invalide au calcul n'a pas de repli (propriété unset, bouton sans bordure sur un vieux
+   Safari). Couleurs de bordure et de fond, pas de texte : hors check_tones. La pastille ×N garde
+   un texte sombre fixe sur la teinte vive (≥ 5,6:1 pour les 4 paliers, dans les deux modes). ── */
+.home-chest{--chest-rgb:144,144,144;position:relative;width:100%;margin-bottom:14px;padding:14px 18px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:'DM Sans',sans-serif;border:1px solid rgba(var(--chest-rgb),.62);background:radial-gradient(80% 170% at 0% 50%,rgba(var(--chest-rgb),.28),transparent 64%),linear-gradient(135deg,rgba(var(--bg3-rgb),.7),rgba(var(--bg2-rgb),.5));box-shadow:0 0 24px rgba(var(--chest-rgb),.24),inset 0 1px 0 rgba(255,255,255,.04)}
+.home-chest.t1{--chest-rgb:58,142,224}
+.home-chest.t2{--chest-rgb:212,148,58}
+.home-chest.t3{--chest-rgb:255,192,32}
+.home-chest-art{display:flex;align-items:center;justify-content:center;width:60px;height:50px;margin:-12px 0 -6px -6px;flex-shrink:0}
+.home-chest-art .chx-svg{overflow:visible;filter:drop-shadow(0 3px 5px rgba(0,0,0,.45));transform-origin:50% 88%;animation:homeChestIdle 3.4s ease-in-out infinite}
+@keyframes homeChestIdle{0%,60%,100%{transform:rotate(0)}64%{transform:rotate(-7deg) translateY(-2px)}70%{transform:rotate(6deg)}76%{transform:rotate(-4deg)}82%{transform:rotate(2deg)}88%{transform:rotate(0)}}
+.home-chest-count{position:absolute;left:44px;top:6px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:rgb(var(--chest-rgb));color:#140e06;font:800 11px/20px 'Outfit',sans-serif;text-align:center;box-shadow:0 0 0 2px var(--bg2)}
 /* ── Chest Earned Toast ── */
 @keyframes toastSlideUp{from{opacity:0;transform:translate(-50%,40px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes toastFadeOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-10px)}}
