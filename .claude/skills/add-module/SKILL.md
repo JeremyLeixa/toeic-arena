@@ -79,6 +79,7 @@ Touchpoints to wire (in rough order):
   ```
   Add icon path to `GAME_ICON_PATHS` in `src/data/avatarIcons.js` if missing (`https://api.iconify.design/game-icons/NAME.svg`).
 - [ ] If freemium-locked : add modId to `FREE_MODULES` list in `src/lib/access.js` (or leave out). Visitor-locked tiles use `var(--bdr)` border + `var(--t3)` icon.
+- [ ] **Hub lists render `HubTile` (live tiles, 2026-09-17)** : the item object needs no extra code for a plain scored module (its `id` = the `moduleScores` key gives last score, mastery chest progress and next-run XP). Hub with sub-trials → `subs:[...]` + `unit:"trials"`; score-less game → `game:"<gameScores key>"`; tool without score → `plain:true`. Never re-implement the 50 Q / 80 % rule: `lib/hubStatus.js`.
 
 ### BUILD_ID
 - [ ] Bump `BUILD_ID` constant in `src/App.jsx` (line ~62, just above `App()`) — date of significant change. Otherwise console logs lie about deployment.

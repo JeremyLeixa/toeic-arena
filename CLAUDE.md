@@ -289,6 +289,21 @@ Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
   que `ExamCeremonies` (`components/Ceremonies.jsx`) affiche 1,4 s après, avec son propre jingle.
 - Banc sans base : `prototypes/victory/real.html` (vrai composant, scénarios, clair/sombre).
 
+### Hubs vivants (tuiles « Coffre », 2026-09-17)
+Proto `prototypes/living-hubs/`, choix de Jérémy **C « Coffre »**. Les listes de Train (Exercises,
+Grammar & Vocab, Tips), Games, Listening et Reading rendent `HubTile` + `HubShelf` (`components/HubTile.jsx`).
+- **État pur** `lib/hubStatus.js` (`hubItemStatus`, `hubSummary`, `tests/check_hub_status.cjs`) : dernier score
+  (`moduleScores[id].history`), progression vers le coffre de maîtrise (50 Q à 80 %), tarif de la prochaine
+  partie par `nextRunMult` (`lib/xp.js` : Bypass Token, événements, `farmMult`, testé égal à l'étape « farm »
+  de `gateSteps`). Étiquette « ½ XP / Low XP / No XP » seulement quand le tarif baisse.
+- **Déclarer l'item** dans la liste du hub : module simple = son `id` suffit ; hub à épreuves = `subs:[…]` +
+  `unit:"trials"|"parts"` (Gauntlet, Modal, Listening et Reading dans Exercises : maîtrise agrégée, meilleur
+  tarif encore disponible) ; jeu sans précision = `game:"matchEasy"|"wordFall"|"duel"` (record, pas de coffre) ;
+  outil sans score = `plain:true`. Liste noire (mocks, boss, daily, csess) → tuile simple.
+- Les hubs reçoivent `events` (`activeEvents` d'`App()`, via le contexte des routes pour Listening/Reading) :
+  sans, un Flash Hour afficherait « ½ XP » à tort. Étagère à partir de 3 coffres. Précision sous 80 % en gris
+  pointillé (l'orange se confond avec l'accent du skin Doré). Banc des vrais écrans : `prototypes/living-hubs/real.html`.
+
 ### TOEIC Score Estimator (Chantier A — refonte V2, 2026-06-09)
 - `estimateToeic(raw, total)` — piecewise curve, harder to gain at the top. Échelle **section** (5-495), pas un total.
 - `estimateTOEICScore(ms, opts)` — **retour structuré** `{total, listening, reading, estimable, evidence, reason?}`.
@@ -355,7 +370,7 @@ Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
 - `weekly_toeic_<wkId>` (Guerrier) — +25 pts TOEIC vs last weekly_snapshot (recomputed via `estimateTOEICScore`)
 - `podium_<prevWk>` (Guerrier) — top 3 of class_code on the just-finished week (from `weekly_snapshots.xp_this_week`)
 - `mission_streak_<n>` (Guerrier) — when `u.mission.streak` (in jsonb) crosses a multiple of 7. Reset on missed day at load.
-- `mastery_<modId>` (Champion) — once per module at total ≥ 50 Q && correct/total ≥ 0.8. **Blacklist** : `mock1/2/3, boss, daily, csess` (already covered by other triggers or non-progressive activities).
+- `mastery_<modId>` (Champion) — once per module at total ≥ 50 Q && correct/total ≥ 0.8. **Blacklist** : `mock1/2/3, boss, daily, csess` (already covered by other triggers or non-progressive activities). Seuils et liste noire vivent dans `lib/hubStatus.js` (`MASTERY_Q`, `MASTERY_ACC`, `MASTERY_BLACKLIST`, `isMastered`), lus par le watcher d'`App.jsx` ET par les tuiles des hubs : ne jamais les recopier ailleurs.
 
 #### V2 useEffect anti-loop pattern (CRITICAL — see `feedback_useeffect_dep_by_ref.md`)
 The Module Mastery watcher used `[u && u.moduleScores]` as deps, which changes reference on every `sv()` (because `u` is JSON-cloned each save). Each chest opening triggered `sv` → re-fire → 10+ parallel `grantChestLocal` calls → race against `hasUniqueTrigger` before `chest_log` writes were visible → duplicate `pending_chests` rows, runaway loop, +37k phantom XP. **Fix** : per-modId `useRef` guard so each module is attempted at most once per mount. Apply this pattern to any V2 watcher that depends on a JSON-cloned object.
