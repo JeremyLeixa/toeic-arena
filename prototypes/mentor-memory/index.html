@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mémoire du Mentor · storyboard</title>
+<style>
+  :root{--bg:#0b0906;--panel:#15110b;--line:#2c2418;--t1:#ede4d4;--t2:#a89a80;--t3:#7a6e58;--acc:#d4943a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--t1);font:13px/1.45 system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#120e09f2;border-bottom:1px solid var(--line);padding:10px 14px}
+  .bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  header h1{font-size:14px;margin:0 8px 0 0;color:var(--acc);letter-spacing:.5px}
+  label{display:flex;gap:5px;align-items:center;color:var(--t2)}
+  select,button{font:inherit;background:#1f1810;color:var(--t1);border:1px solid #3a2e20;border-radius:6px;padding:4px 8px;cursor:pointer}
+  .who{display:flex;gap:4px}
+  .who button.on{border-color:var(--acc);color:var(--acc)}
+  .story{margin-top:8px;color:var(--t2);font-size:12px;max-width:1100px}
+  .story b{color:var(--t1)}
+  main{display:grid;grid-template-columns:repeat(var(--cols),var(--w));gap:26px 18px;justify-content:center;padding:20px 12px 40px}
+  .cell{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .cap b{color:var(--acc);font-size:13px}
+  .cap span{color:var(--t3);font-size:11px;margin-right:auto;margin-left:6px}
+  .cap a{color:var(--t2);font-size:11px;white-space:nowrap}
+  .desc{color:var(--t2);font-size:11.5px}
+  .phone{width:var(--w);height:var(--h);border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 40px #000a;background:#000}
+  .phone iframe{width:375px;height:812px;border:0;transform:scale(var(--s));transform-origin:0 0;display:block}
+  .ev{margin:2px 0 0;padding:8px 10px 8px 22px;border-radius:8px;background:var(--panel);border:1px solid var(--line);color:var(--t2);font-size:11px;line-height:1.5}
+  .ev li{margin:2px 0}
+  .ev:empty{display:none}
+  body.noev .ev{display:none}
+  footer{color:var(--t2);font-size:12px;max-width:980px;margin:0 auto;padding:0 16px 30px}
+  footer b{color:var(--t1)}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Mémoire du Mentor</h1>
+    <span class="who" id="who"></span>
+    <label>Mode <select id="mode"><option value="dark">Sombre</option><option value="light">Clair</option></select></label>
+    <label>Skin <select id="skin">
+      <option value="">Doré (défaut)</option><option>argent</option><option>emeraude</option><option>saphir</option><option>rubis</option><option>amethyste</option><option>obsidienne</option><option>aurore</option><option>frostbite</option><option>aldric_chamber</option>
+    </select></label>
+    <label>Question <select id="ans"><option value="auto">Comme simulée</option><option value="right">Réussie</option><option value="wrong">Ratée</option><option value="none">Pas encore répondue</option></select></label>
+    <label>Par ligne <select id="cols"><option>2</option><option>3</option><option selected>4</option><option>8</option></select></label>
+    <label><input type="checkbox" id="ev" checked> Preuves</label>
+    <label><input type="checkbox" id="rm"> Mouvement réduit</label>
+  </div>
+  <div class="story" id="story"></div>
+</header>
+<main id="grid"></main>
+<footer>
+  <b>Lundi 21 septembre 2026, une journée dans l'Arène.</b> Les trois élèves sont <b>simulés jour par jour</b>
+  depuis leur arrivée (vraies questions, erreurs tirées dans les vraies banques, chasses selon leur assiduité),
+  puis <b>tout ce qui s'affiche est calculé</b> : aucun texte n'est écrit pour un élève en particulier. Sous chaque
+  écran, les <b>preuves</b> : les chiffres et la règle qui autorisent Aldric à dire sa phrase. Écran de fin, carte
+  du Mentor, barre d'onglets et XP : vrais composants et vraies portes de <code>src/</code>.
+  Détails, réglages et ce qu'il faudrait au câblage : <code>README.md</code>.
+</footer>
+<script type="module">
+import { SPECS, PERSONA_IDS } from "./personas.js";
+
+var MOMENTS = [
+  { id: "letter", time: "08:30", name: "La lettre du lundi", desc: "Push puis lettre d'Aldric : la semaine écoulée, ce qui a bougé (seulement si c'est prouvé), l'allure vers l'objectif, le cap." },
+  { id: "home", time: "08:31", name: "Le plan du jour", desc: "Remplace Daily Mission et Today's Focus : trois quêtes, chacune avec sa raison. « Why this order? » explique l'ordre." },
+  { id: "brief", time: "08:32", name: "Avant la session", desc: "Aldric dit comment il a composé la session, et pourquoi. « Begin » lance les questions." },
+  { id: "question", time: "08:34", name: "Pendant", desc: "La question porte sa mémoire (ratée quand, combien de fois) et la réponse a une conséquence visible." },
+  { id: "result", time: "08:45", name: "L'écran de fin", desc: "Le vrai SessionResult, plus la carte « Aldric remembers » : ce qui a changé par rapport à avant la session." },
+  { id: "ceremony", time: "08:45", name: "Faiblesse devenue force", desc: "Cérémonie quand une faiblesse mesurée devient une force mesurée. Seuils stricts : sinon, rien." },
+  { id: "bestiary", time: "", name: "Le bestiaire", desc: "Chaque erreur est une créature. Ratée : demain. Réussie : 3 jours, puis 7. Trois réussites espacées : vaincue." },
+  { id: "chronicle", time: "", name: "La Chronique", desc: "Dans le Mentor : l'histoire du parcours, reconstruite depuis les données existantes." },
+];
+var ids = ["mode", "skin", "ans", "cols", "ev", "rm"];
+var who = "lea";
+try {
+  var saved = JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}");
+  ids.forEach(function (k) { if (saved[k] != null) { var el = document.getElementById(k); if (el.type === "checkbox") el.checked = saved[k]; else el.value = saved[k]; } });
+  if (saved.who && SPECS[saved.who]) who = saved.who;
+} catch (e) { console.warn("[mentor-memory] hash illisible:", e && e.message); }
+
+var whoEl = document.getElementById("who");
+PERSONA_IDS.forEach(function (id) {
+  var b = document.createElement("button");
+  b.textContent = SPECS[id].name;
+  b.addEventListener("click", function () { who = id; render(); });
+  whoEl.appendChild(b);
+});
+
+function state() {
+  var s = { who: who };
+  ids.forEach(function (k) { var el = document.getElementById(k); s[k] = el.type === "checkbox" ? el.checked : el.value; });
+  return s;
+}
+function render() {
+  var s = state();
+  location.replace("#" + encodeURIComponent(JSON.stringify(s)));
+  Array.prototype.forEach.call(whoEl.children, function (b, i) { b.className = PERSONA_IDS[i] === who ? "on" : ""; });
+  var sp = SPECS[who];
+  document.getElementById("story").innerHTML = "<b>" + sp.name + "</b> · " + sp.story;
+  document.body.classList.toggle("noev", !s.ev);
+  var cols = +s.cols, avail = Math.min(window.innerWidth - 24, 3000);
+  var sc = Math.min(1, Math.max(0.3, (avail - 18 * (cols - 1)) / (cols * 375)));
+  var grid = document.getElementById("grid");
+  grid.style.setProperty("--cols", cols);
+  grid.style.setProperty("--s", sc);
+  grid.style.setProperty("--w", Math.floor(375 * sc) + "px");
+  grid.style.setProperty("--h", Math.floor(812 * sc) + "px");
+  grid.innerHTML = "";
+  MOMENTS.forEach(function (m, i) {
+    var p = new URLSearchParams({ m: m.id, p: who, mode: s.mode, skin: s.skin, rm: s.rm ? "1" : "0", ans: s.ans });
+    var url = "frame.html?" + p.toString();
+    var cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerHTML = '<div class="cap"><b>' + (i + 1) + ". " + m.name + "</b><span>" + m.time + '</span><a href="' + url + '" target="_blank">Ouvrir seul ↗</a></div>' +
+      '<div class="phone"><iframe loading="eager" src="' + url + '&still=1"></iframe></div>' +
+      '<div class="desc">' + m.desc + '</div><ul class="ev" id="ev-' + m.id + '"></ul>';
+    grid.appendChild(cell);
+  });
+}
+window.addEventListener("message", function (e) {
+  var d = e.data;
+  if (!d || d.type !== "mm-ev" || d.p !== who) return;
+  var ul = document.getElementById("ev-" + d.m);
+  if (!ul) return;
+  ul.innerHTML = "";
+  (d.lines || []).forEach(function (l) { var li = document.createElement("li"); li.textContent = l; ul.appendChild(li); });
+});
+ids.forEach(function (k) { document.getElementById(k).addEventListener("change", render); });
+var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(render, 200); });
+render();
+</script>
+</body>
+</html>
