@@ -129,21 +129,20 @@ export function WordFam(p){
   var catColors={Noun:"var(--cyan)",Verb:"var(--green)",Adjective:"var(--orange)",Adverb:"var(--purple)"};
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[pick,sPk]=useState(null);var[sk,sSk]=useState(false);
 
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
   function doAns(cat){
     sPk(cat);
+    var itW=items[ci];
+    if(itW.validAnswers.indexOf(cat)===-1){var fm=itW.family;mistakesRef.current.push({tag:"Word families",prompt:itW.word,noBlank:true,yours:cat,correct:itW.validAnswers.join(" / "),why:[fm.v&&"Verb: "+fm.v,fm.n&&"Noun: "+fm.n,fm.adj&&"Adjective: "+fm.adj,fm.adv&&"Adverb: "+fm.adv].filter(Boolean).join(" · ")});}
     // Accept any valid POS for this word (handles homographs)
     if(items[ci].validAnswers.indexOf(cat)!==-1){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
   }
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5);sP("done");}}
 
-  if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=12?"🏆":sc>=8?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Classifier Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Word Families" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];var fam=it.family;var isMulti=it.validAnswers.length>1;
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
@@ -190,8 +189,9 @@ export function ConnSort(p){
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(null);var[sk,sSk]=useState(false);
   var[openGrim,setOpenGrim]=useState(false);
 
-  function doAns(rule){sPk(rule);if(rule===items[ci].rule){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
+  function doAns(rule){sPk(rule);if(rule!==items[ci].rule){var lab=function(id){var r=rules.find(function(x){return x.id===id;});return r?r.label:id;};mistakesRef.current.push({tag:"Connectors",prompt:items[ci].word,noBlank:true,yours:lab(rule),correct:lab(items[ci].rule),why:items[ci].tip+(items[ci].ex?" — “"+items[ci].ex+"”":"")});}if(rule===items[ci].rule){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
     <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
@@ -204,12 +204,8 @@ export function ConnSort(p){
     {openGrim&&<GrimoireReader grimoire={GRIMOIRE_CONNECTORS} back={function(){setOpenGrim(false);}}/>}
   </div>);
 
-  if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=10?"🏆":sc>=7?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Sorting Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Connectors Sorting" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
@@ -255,10 +251,12 @@ export function LinkingBridge(p){
   var[sk,sSk]=useState(false);
   var[openGrim,setOpenGrim]=useState(false);
 
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
   function doAns(idx){
     if(pickIdx!==-1)return;
     sPk(idx);
     var correctOpt=items[ci].opts[idx];
+    if(!correctOpt.correct){var goodOpt=items[ci].opts.find(function(o){return o.correct;});mistakesRef.current.push({tag:"Linking words",prompt:items[ci].prompt,yours:correctOpt.w,correct:goodOpt?goodOpt.w:"",why:items[ci].exp});}
     if(correctOpt.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
@@ -268,8 +266,8 @@ export function LinkingBridge(p){
     else{
       // XP de BASE : miniDone applique les portes. Elle était déjà réduite ici, donc deux fois (2026-09-17).
       var xp=15+sc*5+(sc===items.length?35:0);
+      sidRef.current=p.done(sc,items.length,xp);
       sP("done");
-      p.done(sc,items.length,xp);
     }
   }
 
@@ -284,12 +282,8 @@ export function LinkingBridge(p){
     {openGrim&&<GrimoireReader grimoire={GRIMOIRE_CONNECTORS} back={function(){setOpenGrim(false);}}/>}
   </div>);
 
-  if(ph==="done"){var xp=15+sc*5+(sc===items.length?35:0);if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=13?"🏆":sc>=9?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Bridge Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=13?"var(--green)":sc>=9?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Linking Bridge" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];
   var showFb=ph==="fb";
@@ -340,8 +334,9 @@ export function PrepDrill(p){
   },[]);
   var prepLabels={for:"Responsibility, eligibility, purpose",in:"Involvement, interest, results",with:"Compliance, familiarity, association",on:"Dependence, reliance",of:"Composition, charge, capability",to:"Relation, addition, attribution"};
 
-  function doAns(pr){sPk(pr);var it=items[ci];var ok=pr===it.prep||(it.alts&&it.alts.indexOf(pr)>=0);if(ok){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sP("done");p.done(sc,items.length,15+sc*5);}}
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
+  function doAns(pr){sPk(pr);var it=items[ci];var ok=pr===it.prep||(it.alts&&it.alts.indexOf(pr)>=0);if(!ok)mistakesRef.current.push({tag:"Prepositions",prompt:it.base+" _____",yours:pr,correct:it.prep+(it.alts&&it.alts.length?" / "+it.alts.join(" / "):""),why:it.ex});if(ok){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5);sP("done");}}
 
   if(ph==="menu")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
     <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
@@ -364,12 +359,8 @@ export function PrepDrill(p){
     </div>
     <button className="btn1" onClick={function(){sP("q");}} style={{marginTop:24}}>Ready! Start Drill</button></div>);
 
-  if(ph==="done"){var xp=15+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=10?"🏆":sc>=7?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Prep Drill Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Preposition Collocations" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
@@ -535,8 +526,9 @@ export function TrapsQuiz(p){
   var traps=useMemo(function(){return shuffle(TOEIC_TRAPS).slice(0,10);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
-  function doAns(i){sPk(i);if(i===traps[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
-  function nxt(){if(ci<traps.length-1){sC(ci+1);sPk(-1);sP("q");}else{sP("done");p.done(sc,traps.length,25+sc*6);}}
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
+  function doAns(i){sPk(i);if(i!==traps[ci].correct){var tr=traps[ci];mistakesRef.current.push({tag:"Trap #"+tr.id+" · "+tr.part,prompt:tr.scenario,noBlank:true,yours:tr.options[i],correct:tr.options[tr.correct],why:tr.tip});}if(i===traps[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function nxt(){if(ci<traps.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,traps.length,25+sc*6);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:56,marginBottom:16}}>🪤</div>
@@ -546,12 +538,8 @@ export function TrapsQuiz(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start Quiz</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,traps.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=8?"🏆":sc>=5?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Traps Mastered!</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{traps.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="TOEIC Traps Quiz" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var t=traps[ci];
   return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
@@ -865,13 +853,15 @@ export function FalseFriends(p){
   var items=useMemo(function(){return shuffle(FALSE_FRIENDS).slice(0,12);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
   function doAns(i){
     sPk(i);
+    if(i!==items[ci].correct){var ff=items[ci];mistakesRef.current.push({tag:"False friend · "+ff.en,prompt:ff.ex,noBlank:true,yours:ff.opts[i],correct:ff.opts[ff.correct],why:ff.trap+(ff.realFr?" (FR: "+ff.realFr+")":"")});}
     if(i===items[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
   }
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);sP("q");}else{sP("done");p.done(sc,items.length,20+sc*5);}}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,items.length,20+sc*5);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
     <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
@@ -881,12 +871,8 @@ export function FalseFriends(p){
     <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Can you avoid the francophone traps?</p>
     <button className="btn1" onClick={function(){sP("q");}}>Start</button></div>);
 
-  if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=10?"🏆":sc>=7?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>False Friends Defeated!</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="False Friends" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];
 

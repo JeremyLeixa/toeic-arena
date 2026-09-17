@@ -1383,6 +1383,8 @@ function sv(d){
   // Drill : premier module sur l'écran de fin commun (pilote, 2026-09-17). Rend le sid de la session.
   function drillDone(sc,tot,xp,catStats){var s=settleSession("drill",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);checkMission(c,"drill");sealSession(c,s.sid);sv(c);return s.sid;}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);gxp=Math.round(gxp*getSpotlightMult(modId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
+  // Écran de fin commun : même chaîne que miniDone (Spotlight compris), avec la session. Rend le sid.
+  function miniSession(sc,tot,xp){var modId=sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
   function cardsDone(xp,ok,tot){
     // XP arrives already gated (CardSession applies diminishing returns locally)
@@ -1562,7 +1564,7 @@ function sv(d){
     </div>
   </div>);
 
-  var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, setPremiumPrompt, shopBuy, sp, spA, sv, trackModSession, u});
+  var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, setPremiumPrompt, shopBuy, sp, spA, sv, trackModSession, u});
   if(routed)return routed;
 
   return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}
