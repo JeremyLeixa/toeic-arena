@@ -69,23 +69,42 @@ export function spotlightMult(modId,events){
   return m;
 }
 
-// Les trois piliers + boosts, dans l'ordre historique. ctx = {u, now, events}.
-// Retour : {xp, focusHit}. focusHit=true ⇔ le bonus Focus s'est appliqué : App.jsx doit
+// Les trois piliers + boosts, dans l'ordre historique, AVEC le détail de chaque étape
+// (écran de fin de session, 2026-09-17). ctx = {u, now, events, spotlight}.
+// Retour : {xp, focusHit, steps}. focusHit=true ⇔ le bonus Focus s'est appliqué : App.jsx doit
 // alors créditer les 30 Darics (grantMarks, dédupliqué côté serveur par "focus_<date>").
-export function gateXp(baseXp,sc,tot,modId,ctx){
+// steps = [{id, kind:"base"|"malus"|"bonus", mult?, run?, value}] ; la valeur de la DERNIÈRE
+// étape vaut toujours `xp` (tests/check_xp_gates.cjs, section 6). Les libellés affichés sont
+// construits par l'écran (lib/sessionText.js), pas ici.
+// ctx.spotlight=true applique aussi le multiplicateur Spotlight (miniDone et les hubs le
+// faisaient à la main après applyXpGates ; drill, daily et les jeux ne l'appliquent pas).
+export function gateSteps(baseXp,sc,tot,modId,ctx){
   ctx=ctx||{};var u=ctx.u;var now=ctx.now||new Date();var events=ctx.events;
+  var steps=[{id:"base",kind:"base",value:baseXp}];
   var gatedXp=accuracyGate(baseXp,sc,tot);
+  if(gatedXp!==baseXp)steps.push({id:"accuracy",kind:"malus",mult:sc/tot<0.30?0.1:0.5,value:gatedXp});
   var focusHit=false;
+  function out(){
+    if(gatedXp<0){gatedXp=0;steps.push({id:"floor",kind:"malus",value:0});}
+    if(ctx.spotlight&&modId){
+      var sm=spotlightMult(modId,events);
+      if(sm!==1){gatedXp=Math.round(gatedXp*sm);steps.push({id:"spotlight",kind:"bonus",mult:sm,value:gatedXp});}
+    }
+    return{xp:gatedXp,focusHit:focusHit,steps:steps};
+  }
   if(modId){
     // Bypass Token armé pour CE module : on saute la courbe ET tout ce qui suit (retour
     // anticipé historique). Le flag est consommé par recordModule après la manche.
     if(u&&u.bypassArmedModule===modId){
-      return{xp:Math.max(0,gatedXp),focusHit:false};
+      steps.push({id:"bypass",kind:"bonus",value:gatedXp});
+      return out();
     }
     if(!isBoostedByEvents(modId,events)){
       var dms=(u&&u.dailyModSessions)||{};
       var key=modId+"_"+today(now);
-      gatedXp=Math.round(gatedXp*farmMult(modId,dms[key]||0));
+      var run=dms[key]||0;var fm=farmMult(modId,run);
+      gatedXp=Math.round(gatedXp*fm);
+      if(fm!==1)steps.push({id:"farm",kind:"malus",mult:fm,run:run+1,value:gatedXp});
     }
   }
   // ── PILIER 3 : Today's Focus +25 % ── l'anti-farming ci-dessus plafonne déjà le gain.
@@ -95,16 +114,23 @@ export function gateXp(baseXp,sc,tot,modId,ctx){
       if(focus&&partOfModule(modId)===focus.partId){
         gatedXp=Math.round(gatedXp*1.25);
         focusHit=true;
+        steps.push({id:"focus",kind:"bonus",mult:1.25,value:gatedXp});
       }
     }catch(e){console.warn("[focus-boost] computation failed:",e&&e.message);}
   }
   // ── Boosts Daric (Arena Shop P2.5) ── ne touchent que l'XP, jamais la précision.
   if(modId&&u&&u.boosts){
     var bst=u.boosts;
-    if(bst.moduleBoostArmed===modId){gatedXp=Math.round(gatedXp*1.5);}
-    if(bst.mockMultArmed&&(modId==="mock1"||modId==="mock2"||modId==="mock3"||modId==="boss")){gatedXp=Math.round(gatedXp*1.5);}
+    if(bst.moduleBoostArmed===modId){gatedXp=Math.round(gatedXp*1.5);steps.push({id:"module_boost",kind:"bonus",mult:1.5,value:gatedXp});}
+    if(bst.mockMultArmed&&(modId==="mock1"||modId==="mock2"||modId==="mock3"||modId==="boss")){gatedXp=Math.round(gatedXp*1.5);steps.push({id:"mock_mult",kind:"bonus",mult:1.5,value:gatedXp});}
   }
-  return{xp:Math.max(0,gatedXp),focusHit:focusHit};
+  return out();
+}
+
+// Le calcul seul : même implémentation que gateSteps, forme de retour historique {xp, focusHit}.
+export function gateXp(baseXp,sc,tot,modId,ctx){
+  var r=gateSteps(baseXp,sc,tot,modId,ctx);
+  return{xp:r.xp,focusHit:r.focusHit};
 }
 
 // Créditer un montant : streak, multiplicateurs (week-end, streak, événements, Daily
@@ -122,32 +148,37 @@ export function settleXp(u,baseAmt,ctx){
   if(isFirstToday){var yd=new Date(now.getTime());yd.setDate(yd.getDate()-1);c.streak=c.lastActive===yd.toISOString().split("T")[0]?c.streak+1:1;c.lastActive=td;}
 
   // Multiplicateurs — seulement sur l'XP positive, une perte n'est jamais multipliée
-  var mult=1;var amt=baseAmt;
+  // steps : même détail que gateSteps (écran de fin). settleXp n'arrondit qu'UNE fois, sur le
+  // multiplicateur cumulé : la valeur de chaque étape est round(base × cumul jusque-là), et
+  // la dernière vaut `amt` (tests/check_xp_gates.cjs, section 6).
+  var mult=1;var amt=baseAmt;var steps=[];
   if(baseAmt>0){
     // Week-end (samedi=6, dimanche=0) — jour LOCAL, alors que today() est en UTC : historique, conservé
     var dow=now.getDay();
-    if(dow===0||dow===6){mult*=2;bonuses.push({label:"Weekend x2",color:"#ff6bff"});}
+    if(dow===0||dow===6){mult*=2;bonuses.push({label:"Weekend x2",color:"#ff6bff"});steps.push({id:"weekend",kind:"bonus",mult:2});}
 
-    if(c.streak>=7){mult*=1.5;bonuses.push({label:"Streak x1.5 ("+c.streak+"d)",color:"#ff8c42"});}
-    else if(c.streak>=3){mult*=1.2;bonuses.push({label:"Streak x1.2 ("+c.streak+"d)",color:"#ff8c42"});}
+    if(c.streak>=7){mult*=1.5;bonuses.push({label:"Streak x1.5 ("+c.streak+"d)",color:"#ff8c42"});steps.push({id:"streak",kind:"bonus",mult:1.5,days:c.streak});}
+    else if(c.streak>=3){mult*=1.2;bonuses.push({label:"Streak x1.2 ("+c.streak+"d)",color:"#ff8c42"});steps.push({id:"streak",kind:"bonus",mult:1.2,days:c.streak});}
 
     if(events&&events.length>0){
       events.forEach(function(ev){
         var cfg=ev.config||{};var m=cfg.multiplier||2;
-        if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"⚡ Flash Hour x"+m,color:"#f0c850"});}
-        if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"💪 Underdog x"+m,color:"#4abe60"});}
+        if(ev.type==="flash_hour"){mult*=m;bonuses.push({label:"⚡ Flash Hour x"+m,color:"#f0c850"});steps.push({id:"flash_hour",kind:"bonus",mult:m});}
+        if(ev.type==="underdog"&&c.xp<classMedianXp){mult*=m;bonuses.push({label:"💪 Underdog x"+m,color:"#4abe60"});steps.push({id:"underdog",kind:"bonus",mult:m});}
       });
     }
 
     // Daily Doubler (×2 pendant 24 h, acheté en Darics)
     if(c.boosts&&c.boosts.dailyDoublerUntil&&now.getTime()<c.boosts.dailyDoublerUntil){
-      mult*=2;bonuses.push({label:"⏫ Daily Doubler x2",color:"#f0c850"});
+      mult*=2;bonuses.push({label:"⏫ Daily Doubler x2",color:"#f0c850"});steps.push({id:"daily_doubler",kind:"bonus",mult:2});
     }
 
     amt=Math.round(baseAmt*mult);
+    var cum=1;
+    steps.forEach(function(st){cum*=st.mult;st.value=Math.round(baseAmt*cum);});
 
     // Première activité du jour
-    if(isFirstToday){amt+=10;bonuses.push({label:"+10 daily login",color:"#00e676"});}
+    if(isFirstToday){amt+=10;bonuses.push({label:"+10 daily login",color:"#00e676"});steps.push({id:"first_today",kind:"bonus",add:10,value:amt});}
   }
 
   var prevLeague=leagueOf(c.weeklyXp);
@@ -176,5 +207,5 @@ export function settleXp(u,baseAmt,ctx){
   if(leagueChanged)chests.push({trigger:"league_up_"+newLeague.id,type:"guerrier"});
 
   return{c:c,amt:amt,isFirstToday:isFirstToday,toast:{total:amt,base:baseAmt,bonuses:bonuses},
-    leagueUp:leagueChanged?{from:prevLeague.id,to:newLeague.id}:null,levelUp:levelUp,chests:chests};
+    leagueUp:leagueChanged?{from:prevLeague.id,to:newLeague.id}:null,levelUp:levelUp,chests:chests,steps:steps};
 }

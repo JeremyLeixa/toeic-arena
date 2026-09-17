@@ -18,6 +18,8 @@
  * Prouvé mordant le 2026-09-16 : `acc<0.30` → `<=0.30` rouge ; mock `0.40` → `0.5` rouge ;
  * `focusHit` figé à false rouge ; plancher `Math.max(0,…)` retiré rouge ; `settleXp` mutant
  * `u` au lieu du clone rouge.
+ * Section 6 (détail des étapes, 2026-09-17) : valeur de l'étape de courbe décalée de 1 rouge ;
+ * valeurs de settleXp sans le cumul des multiplicateurs rouge ; plancher sans étape rouge.
  *
  * Usage : node tests/check_xp_gates.cjs
  */
@@ -178,6 +180,77 @@ eq('streak 29 → 30 : guerrier', s(base({ streak: 29 }), 10).chests, [{ trigger
   eq('ordre des coffres', r.chests.map((c) => c.trigger), ['xp_1k', 'streak_7', 'league_up_b']);
   eq('montant du cas combiné', [r.amt, r.c.xp, r.c.weeklyXp], [310, 1210, 500]);
 })();
+
+// ══════════════════════════════════════════════════════════════════════════
+// 6. Détail des étapes (gateSteps, settleXp.steps) — ce que l'écran de fin affiche ligne à
+//    ligne. Invariant : la dernière étape vaut le total réellement versé. Si le calcul et le
+//    détail divergent, l'élève lit un chiffre faux (bug vécu : l'XP affichée par les anciens
+//    écrans de fin n'était pas celle versée).
+// ══════════════════════════════════════════════════════════════════════════
+const lastVal = (steps) => steps[steps.length - 1].value;
+const ids = (steps) => steps.map((st) => st.id);
+const gs = (baseXp, sc, tot, modId, u, events, extra) => XP.gateSteps(baseXp, sc, tot, modId, Object.assign({ u, now: NOW, events }, extra || {}));
+
+// Toutes les entrées de la section 4 : gateSteps rend le même xp/focusHit que gateXp, et la
+// dernière étape vaut xp.
+const GATE_CASES = [
+  [33, 4, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 1 } })],
+  [100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } })],
+  [100, 10, 10, 'drill', base({ dailyModSessions: { 'drill_2026-09-14': 3 } })],
+  [100, 10, 10, 'mock1', base({ dailyModSessions: { ['mock1_' + TD]: 1 } })],
+  [100, 2, 10, 'drill', base({ bypassArmedModule: 'drill', dailyModSessions: { ['drill_' + TD]: 3 } })],
+  [100, 10, 10, 'drill', base({ bypassArmedModule: 'drill', boosts: { moduleBoostArmed: 'drill' } })],
+  [100, 10, 10, 'drill', base({ bypassArmedModule: 'p6', dailyModSessions: { ['drill_' + TD]: 3 } })],
+  [100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [spotDrill]],
+  [100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [spotP6]],
+  [100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [{ type: 'flash_hour' }]],
+  [40, 0, 10, null, base()],
+  [-20, 10, 10, 'drill', base()],
+  [40, 10, 10, 'lisP2', uFocus],
+  [40, 10, 10, 'lisP2', Object.assign({}, uFocus, { dailyModSessions: { ['lisP2_' + TD]: 1 } })],
+  [40, 10, 10, 'drill', uFocus],
+  [40, 10, 10, 'drill', base({ boosts: { moduleBoostArmed: 'drill' } })],
+  [40, 10, 10, 'mock1', base({ boosts: { mockMultArmed: true } })],
+  [40, 10, 10, 'boss', base({ boosts: { mockMultArmed: true } })],
+];
+GATE_CASES.forEach((a, i) => {
+  const r = gs(a[0], a[1], a[2], a[3], a[4], a[5]);
+  eq('gateSteps ≡ gateXp, cas ' + i, { xp: r.xp, focusHit: r.focusHit }, g(a[0], a[1], a[2], a[3], a[4], a[5]));
+  eq('gateSteps : dernière étape = xp, cas ' + i, lastVal(r.steps), r.xp);
+});
+
+eq('étapes : 2e session, accuracy 40 %', gs(33, 4, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 1 } })).steps,
+  [{ id: 'base', kind: 'base', value: 33 }, { id: 'accuracy', kind: 'malus', mult: 0.5, value: 17 }, { id: 'farm', kind: 'malus', mult: 0.5, run: 2, value: 9 }]);
+eq('étapes : accuracy < 30 % → mult 0.1', gs(100, 2, 10, 'drill', base()).steps[1], { id: 'accuracy', kind: 'malus', mult: 0.1, value: 10 });
+eq('étapes : bypass = retour anticipé, pas de courbe ni de booster', ids(gs(100, 10, 10, 'drill', base({ bypassArmedModule: 'drill', boosts: { moduleBoostArmed: 'drill' }, dailyModSessions: { ['drill_' + TD]: 3 } })).steps), ['base', 'bypass']);
+eq('étapes : spotlight sur le module = pas d\'étape de courbe', ids(gs(100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [spotDrill]).steps), ['base']);
+eq('étapes : 1re session du jour = pas d\'étape de courbe (×1)', ids(gs(100, 10, 10, 'drill', base()).steps), ['base']);
+eq('étapes : plancher 0', gs(-20, 10, 10, 'drill', base()).steps, [{ id: 'base', kind: 'base', value: -20 }, { id: 'floor', kind: 'malus', value: 0 }]);
+eq('étapes : Focus', gs(40, 10, 10, 'lisP2', uFocus).steps[1], { id: 'focus', kind: 'bonus', mult: 1.25, value: 50 });
+eq('étapes : Module Booster puis Mock Multiplier', ids(gs(40, 10, 10, 'mock1', base({ boosts: { mockMultArmed: true } })).steps), ['base', 'mock_mult']);
+(() => {
+  const withSpot = gs(40, 10, 10, 'drill', base(), [spotDrill], { spotlight: true });
+  eq('ctx.spotlight : ×3 appliqué en dernière étape', [withSpot.xp, withSpot.steps[withSpot.steps.length - 1]], [120, { id: 'spotlight', kind: 'bonus', mult: 3, value: 120 }]);
+  eq('sans ctx.spotlight : gateXp inchangé (miniDone l\'appliquait à part)', g(40, 10, 10, 'drill', base(), [spotDrill]).xp, 40);
+  const bypassSpot = gs(40, 10, 10, 'drill', base({ bypassArmedModule: 'drill' }), [spotDrill], { spotlight: true });
+  eq('ctx.spotlight : appliqué aussi après un bypass (comme miniDone)', [bypassSpot.xp, ids(bypassSpot.steps)], [120, ['base', 'bypass', 'spotlight']]);
+})();
+
+// settleXp.steps
+(() => {
+  const r = s(base(), 50);
+  eq('settle : streak 3 ×1.2 puis +10', r.steps, [{ id: 'streak', kind: 'bonus', mult: 1.2, days: 3, value: 60 }, { id: 'first_today', kind: 'bonus', add: 10, value: 70 }]);
+  eq('settle : dernière étape = amt', lastVal(r.steps), r.amt);
+})();
+(() => {
+  const r = s(base({ streak: 6, lastActive: '2026-09-18' }), 50, { now: SAT, events: [{ type: 'flash_hour' }] });
+  eq('settle : cumul week-end, streak 7, flash, +10', r.steps.map((st) => [st.id, st.value]), [['weekend', 100], ['streak', 150], ['flash_hour', 300], ['first_today', 310]]);
+  eq('settle cumul : dernière étape = amt', lastVal(r.steps), r.amt);
+})();
+eq('settle : arrondi une seule fois sur le cumul (33 × 1.2 × 2 = 79.2 → 79)', (() => { const r = s(base({ lastActive: '2026-09-19', streak: 3 }), 33, { now: SAT }); return [r.amt, lastVal(r.steps)]; })(), [79, 79]);
+eq('settle : déjà actif, pas de bonus → aucune étape', s(base({ lastActive: TD }), 50).steps, []);
+eq('settle : négatif → aucune étape', s(base(), -30).steps, []);
+eq('settle : underdog et Daily Doubler', ids(s(base({ lastActive: TD, boosts: { dailyDoublerUntil: NOW.getTime() + 1000 } }), 50, { events: [{ type: 'underdog' }], classMedianXp: 500 }).steps), ['underdog', 'daily_doubler']);
 
 console.log('  ' + checks + ' vérifications, ' + fails + ' échec(s)');
 if (fails) { console.log('\nLes portes XP ont bougé : c\'est une décision produit (CLAUDE.md, XP System), pas un ajustement de test.'); process.exit(1); }
