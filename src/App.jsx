@@ -43,6 +43,7 @@ import { LoadingMark, LoadBoundary } from "./components/LoadingMark.jsx";
 
 import { getLevel } from "./data/helpers.js";
 import { AchToast, MarksToast, XpToast } from "./components/toasts.jsx";
+import { ExamCeremonies } from "./components/Ceremonies.jsx";
 import { Tabs } from "./components/Tabs.jsx";
 import { Cards } from "./features/home/Cards.jsx";
 import { DailyTip } from "./features/home/DailyTip.jsx";
@@ -101,6 +102,9 @@ export default function App(){
   // runKey : « Play again » remonte la route (clé du LoadBoundary de pg()).
   var[lastSession,setLastSession]=useState(null);var[runKey,setRunKey]=useState(0);
   var sessionSeqRef=useRef(0);var openSessionRef=useRef(0);var openSessionSpRef=useRef(null);
+  // Examens (Mock, Boss, Endless) : ils gardent leur écran de résultats ; niveau et ligue gagnés
+  // passent en cérémonie plein écran par-dessus ({id, items}, id = clé de remontage).
+  var[examCeremony,setExamCeremony]=useState(null);var ceremonySeqRef=useRef(0);
   var[showTip,setShowTip]=useState(false);
   // ─── Festival themes (2026-09-16) ─── id de la fête appliquée à .app, ou null (lib/festivals.js :
   // fenêtre de dates, forçage ?fest=, opt-out). Primitive : relue toutes les heures par un tick.
@@ -184,6 +188,7 @@ export default function App(){
   // Darics confirmés ensuite repartent en toast. Dépendance primitive (sp) uniquement.
   useEffect(function(){
     if(openSessionRef.current&&openSessionSpRef.current!==sp){openSessionRef.current=0;openSessionSpRef.current=null;setLastSession(null);}
+    setExamCeremony(null); // une cérémonie d'examen n'appartient qu'à l'écran de résultats qui l'a déclenchée
   },[sp]);
   // ── Chest toast dispatcher: show next queued toast when conditions allow ──
   useEffect(function(){
@@ -1057,12 +1062,22 @@ function sv(d){
     if(r.focusHit)grantMarks(30,"focus","focus_"+today(),true);
     return r.xp;
   }
-  function addXp(baseAmt){if(baseAmt>0)try{playXP();}catch(e){}
+  // opts.ceremony (examens) : niveau et ligue en cérémonie plein écran, qui joue elle-même son jingle
+  // et son haptique ; sans, les sons partent ici comme avant.
+  function addXp(baseAmt,opts){if(baseAmt>0)try{playXP();}catch(e){}
     var r=settleXp(u,baseAmt,{now:new Date(),events:activeEvents,classMedianXp:classMedianXp,leagueOf:getLeague});
     // Ordre des effets = celui d'avant l'extraction : jingle de ligue, level-up, toast, puis
     // les coffres (paliers XP, streak avec haptique, passage de ligue).
-    if(r.leagueUp){try{playJingleLeague();}catch(e){}haptic("league");}
-    if(r.levelUp){try{playLevelUp();}catch(e){}haptic("levelUp");}
+    if(opts&&opts.ceremony&&(r.levelUp||r.leagueUp)){
+      var items=[];
+      if(r.levelUp)items.push({kind:"level",level:r.levelUp.to,toXp:r.c.xp});
+      if(r.leagueUp){var lgChest=r.chests.find(function(ch){return /^league_up_/.test(ch.trigger);});
+        items.push({kind:"league",fromId:r.leagueUp.from,toId:r.leagueUp.to,weekly:r.c.weeklyXp||0,chestTier:lgChest?(CHEST_TIER[lgChest.type]||0):null});}
+      setExamCeremony({id:++ceremonySeqRef.current,items:items});
+    }else{
+      if(r.leagueUp){try{playJingleLeague();}catch(e){}haptic("league");}
+      if(r.levelUp){try{playLevelUp();}catch(e){}haptic("levelUp");}
+    }
     sXpt(r.toast);
     r.chests.forEach(function(ch){grantChestLocal(ch.trigger,ch.type);if(ch.haptic)haptic(ch.haptic);});
     return r.c;
@@ -1289,12 +1304,12 @@ function sv(d){
 
   function goTeacher(){setTeacher(true);}
 
-  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp);c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.bossResetArmed)c.bossResetArmed=false;if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);
+  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp,{ceremony:true});c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.bossResetArmed)c.bossResetArmed=false;if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);
     // Pas de navigation ici : bossDone est appelé depuis doSubmit() pendant que
     // l'écran de résultats reste affiché (même GARDE que mockDone / bug Yannou).
   }
   function endlessDone(result,xp,meta){
-    var c=addXp(xp);
+    var c=addXp(xp,{ceremony:true});
     c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;
     if(!c.mockResults)c.mockResults={};
     var prev=c.mockResults.endless||{attempts:0,best:0,bestDate:null,lastAttempt:null,history:[]};
@@ -1318,7 +1333,7 @@ function sv(d){
     var modId="mock"+result.mockId;
     var timeGateOk=(result.timeUsed||0)>=300;
     var gxp=timeGateOk?applyXpGates(xp,result.score,result.total,modId):0;
-    var c=addXp(gxp);
+    var c=addXp(gxp,{ceremony:true});
     c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;
     if(!c.mockResults)c.mockResults={};
     c.mockResults["mock"+result.mockId]=result;
@@ -1529,7 +1544,7 @@ function sv(d){
     <span style={{fontSize:13,fontWeight:600,color:"var(--red)"}}>{"Session expired — your progress isn't being saved."}</span>
     <button onClick={function(){sSP(null);sT("home");sU(null);}} style={{background:"transparent",border:"1px solid rgba(255,71,87,.45)",borderRadius:10,padding:"7px 14px",color:"var(--red)",fontFamily:"'Cinzel','Outfit',serif",fontWeight:600,fontSize:12,cursor:"pointer"}}>{"Log in again"}</button>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&!lastSession&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={(sp||"root")+":"+runKey}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&!lastSession&&!examCeremony&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={(sp||"root")+":"+runKey}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}{examCeremony&&<ExamCeremonies key={examCeremony.id} items={examCeremony.items} onDone={function(){setExamCeremony(null);}}/>}</div>);}
   // ↑ Frontière des écrans chargés à la demande (Phase 5) : le fallback et le filet d'erreur
   // n'enveloppent QUE le contenu de la sous-page — toasts, Narrator, Tabs et overlay premium
   // sont frères, jamais cachés ni remontés. La key sur la route remet le filet à zéro quand

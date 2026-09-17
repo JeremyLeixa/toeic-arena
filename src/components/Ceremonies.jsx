@@ -6,7 +6,7 @@
 //     la montrent dans le parchemin de SessionResult).
 // Fond sombre fixe, lisible dans les deux modes : hex bruts + /*fond local*/, jamais de jeton de
 // thème. Chaque cérémonie a son propre <canvas> de particules (autonome, détruit au démontage).
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GIcon } from "./icons.jsx";
 import { TreasureChestSvg } from "./avatar.jsx";
 import { createChestFx, burstAt } from "./particles.js";
@@ -65,6 +65,23 @@ export function LevelUpOverlay(p) {
       <canvas ref={canvas} className="cer-fx" />
     </div>
   );
+}
+
+// Examens : file posée par App() (addXp avec ceremony), niveau d'abord puis ligue, par-dessus
+// l'écran de résultats de l'examen. Le délai laisse d'abord apparaître le score et passer le jingle.
+// items : [{kind:"level", level, toXp} | {kind:"league", fromId, toId, weekly, chestTier}].
+export function ExamCeremonies(p) {
+  var [idx, setIdx] = useState(-1);
+  useEffect(function () {
+    var t = setTimeout(function () { setIdx(0); }, 1400);
+    return function () { clearTimeout(t); };
+  }, []);
+  var items = p.items || [];
+  if (idx < 0 || idx >= items.length) return null;
+  var it = items[idx];
+  function next() { if (idx + 1 >= items.length) p.onDone(); else setIdx(idx + 1); }
+  if (it.kind === "level") return <LevelUpOverlay key={idx} level={it.level} toXp={it.toXp} onClose={next} />;
+  return <LeaguePromotion key={idx} fromId={it.fromId} toId={it.toId} weekly={it.weekly} chestTier={it.chestTier} onClose={next} />;
 }
 
 export function LeaguePromotion(p) {
