@@ -1351,25 +1351,35 @@ function sv(d){
       // Chest triggers: duel win + 3 consecutive wins
       if(result.won){grantWeeklyChest("duel_win","guerrier");
         if(result.winStreak>=3)grantWeeklyChest("duel_win3","champion");}
-    } else {
-      // Defensive: if prev2 exists but the relevant field is missing/null (corrupted
-       // record after a partial save or tab-race overwrite), treat as no record and
-       // accept the new result. Without this, a malformed prev2 traps the student
-       // forever in a non-recordable state (Baptiste C / Speed Match incident 2026-05-26).
-       var prev2=c.gameScores[modeKey];
-       var prev2Stale=prev2&&(result.time!==undefined?(prev2.time==null):(prev2.score==null));
-       var dominated=!prev2||prev2Stale||(result.time!==undefined?result.time<prev2.time:(result.score>prev2.score||(result.score===prev2.score&&result.maxCombo>(prev2.maxCombo||0))));
-       if(dominated){c.gameScores[modeKey]=result;}else if(prev2&&result.maxCombo!==undefined&&result.maxCombo>(prev2.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev2,{maxCombo:result.maxCombo});}
-      // Chest triggers: WordFall combos
-      if(modeKey==="wordFall"&&result.maxCombo){
-        if(result.maxCombo>=30)grantWeeklyChest("wfall_combo30","champion");
-        else if(result.maxCombo>=20)grantWeeklyChest("wfall_combo20","guerrier");
-        else if(result.maxCombo>=10)grantWeeklyChest("wfall_combo10","novice");
-      }
-      // SpeedMatch
-      if(modeKey==="matchEasy"&&result.time){var starsE=result.time<24?3:result.time<42?2:1;if(starsE>=2)grantWeeklyChest("smatch_easy_good","novice");}
-    }
+    } else recordGame(c,modeKey,result);
     c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sv(c);sSP(null);sT("games");}
+  // Record et coffres des jeux au score ou au temps (partagé par gameDone et gameSession).
+  function recordGame(c,modeKey,result){
+    // Defensive: if prev2 exists but the relevant field is missing/null (corrupted
+    // record after a partial save or tab-race overwrite), treat as no record and
+    // accept the new result. Without this, a malformed prev2 traps the student
+    // forever in a non-recordable state (Baptiste C / Speed Match incident 2026-05-26).
+    var prev2=c.gameScores[modeKey];
+    var prev2Stale=prev2&&(result.time!==undefined?(prev2.time==null):(prev2.score==null));
+    var dominated=!prev2||prev2Stale||(result.time!==undefined?result.time<prev2.time:(result.score>prev2.score||(result.score===prev2.score&&result.maxCombo>(prev2.maxCombo||0))));
+    if(dominated){c.gameScores[modeKey]=result;}else if(prev2&&result.maxCombo!==undefined&&result.maxCombo>(prev2.maxCombo||0)){c.gameScores[modeKey]=Object.assign({},prev2,{maxCombo:result.maxCombo});}
+    // Chest triggers: WordFall combos
+    if(modeKey==="wordFall"&&result.maxCombo){
+      if(result.maxCombo>=30)grantWeeklyChest("wfall_combo30","champion");
+      else if(result.maxCombo>=20)grantWeeklyChest("wfall_combo20","guerrier");
+      else if(result.maxCombo>=10)grantWeeklyChest("wfall_combo10","novice");
+    }
+    // SpeedMatch
+    if(modeKey==="matchEasy"&&result.time){var starsE=result.time<24?3:result.time<42?2:1;if(starsE>=2)grantWeeklyChest("smatch_easy_good","novice");}
+  }
+  // Speed Match et Word Fall sur l'écran de fin commun : même chaîne que gameDone (pas d'accuracy
+  // sans correct/total, pas de Spotlight), sans navigation. Rend le sid. Le Duel reste sur gameDone.
+  function gameSession(modeKey,result,xp){
+    var hasAccuracy=result.correct!==undefined&&result.total!==undefined;
+    var s=settleSession("game_"+modeKey,hasAccuracy?result.correct:1,hasAccuracy?result.total:1,xp);
+    var c=s.c;if(!c.gameScores)c.gameScores={};
+    recordGame(c,modeKey,result);
+    c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sealSession(c,s.sid);sv(c);return s.sid;}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
   // Daily sur l'écran de fin commun : xpE garde désormais l'XP réellement versée (bonus du jour compris),
   // affichée ensuite par « Already completed » et sur Home. Pas de Spotlight (comme avant).
@@ -1566,7 +1576,7 @@ function sv(d){
     </div>
   </div>);
 
-  var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u});
+  var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u});
   if(routed)return routed;
 
   return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}

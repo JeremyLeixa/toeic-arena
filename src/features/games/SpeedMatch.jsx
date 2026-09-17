@@ -1,5 +1,6 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { VOCAB } from "../../data/vocab.js";
 import { shuffle } from "../../lib/util.js";
 import { tone } from "../../lib/tone.js";
@@ -35,6 +36,7 @@ export function SpeedMatch(p){
   var[phase,setPhase]=useState("intro");
   var[lastWrong,setLastWrong]=useState(false);
   var timerRef=useRef(null);
+  var sentRef=useRef(false);var sidRef=useRef(0);var[result,setResult]=useState(null);
 
   // Timer
   useEffect(function(){
@@ -68,9 +70,19 @@ export function SpeedMatch(p){
 
   // Check win
   var won=matched.length===pairCount;
+  // Victoire : l'XP part ici (elle attendait « Collect XP », perdue si l'élève quittait l'écran).
+  // Le record est lu AVANT l'envoi : sv() l'écrit tout de suite dans u.gameScores.
   useEffect(function(){
-    if(won&&phase==="play"){
+    if(won&&phase==="play"&&!sentRef.current){
+      sentRef.current=true;
       clearInterval(timerRef.current);
+      var finalTime=elapsed;
+      var stars=finalTime<(pairCount*4)?3:finalTime<(pairCount*7)?2:1;
+      var xp=Math.round((pairCount*10)+(stars*15)+(pairCount*30/Math.max(1,finalTime))*10);
+      var modeKey=p.mode==="hard"?"matchHard":"matchEasy";
+      var prev=p.u.gameScores&&p.u.gameScores[modeKey];
+      setResult({time:finalTime,moves:moves,stars:stars,record:!prev||prev.time==null||finalTime<prev.time});
+      sidRef.current=p.done(modeKey,{time:finalTime,moves:moves},xp);
       setPhase("done");
     }
   },[won]);
@@ -100,25 +112,15 @@ export function SpeedMatch(p){
 
   // ── DONE ──
   if(phase==="done"){
-    var finalTime=elapsed;
-    var stars=finalTime<(pairCount*4)?3:finalTime<(pairCount*7)?2:1;
-    var xp=Math.round((pairCount*10)+(stars*15)+(pairCount*30/Math.max(1,finalTime))*10);
-    var modeKey=p.mode==="hard"?"matchHard":"matchEasy";
-    var prev=p.u.gameScores&&p.u.gameScores[modeKey];
-    var isRecord=!prev||finalTime<prev.time;
-
-    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{marginBottom:16,display:"flex",justifyContent:"center",animation:"countUp .6s"}}><ResultIcon e={stars===3?"⚡":stars===2?"🎯":"✅"} size={56}/></div>
-      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>{stars===3?"Lightning Fast!":stars===2?"Well Done!":"Completed!"}</h1>
-      {isRecord&&<div style={{fontSize:14,color:"var(--gold)",fontWeight:700,marginBottom:8,animation:"pulse 1s infinite"}}>🏅 NEW RECORD!</div>}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20,maxWidth:280,margin:"0 auto 20px"}}>
-        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--cyan)"}}>{finalTime}s</div><div style={{fontSize:10,color:"var(--t3)"}}>Time</div></div>
-        <div className="crd" style={{padding:12,textAlign:"center"}}><div className="out" style={{fontSize:24,fontWeight:800,color:"var(--purple)"}}>{moves}</div><div style={{fontSize:10,color:"var(--t3)"}}>Moves</div></div>
+    var r=result||{time:elapsed,moves:moves,stars:1,record:false};
+    return(<SessionResult session={p.session} sid={sidRef.current} name={"Speed Match · "+(p.mode==="hard"?"Hard":"Easy")}
+      mode="time" points={r.time+"s"} pointsLabel={r.moves+" moves"}
+      onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+      <div className="crd" style={{padding:14,display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
+        <span className="out" style={{fontSize:22,letterSpacing:2}}>{[1,2,3].map(function(k){return <span key={k} style={{color:k<=r.stars?"var(--gold)":"var(--t3)"}}>{"★"}</span>;})}</span>
+        {r.record&&<span className="out" style={{fontSize:14,fontWeight:700,color:"var(--gold)"}}>New record!</span>}
       </div>
-      <div style={{fontSize:28,marginBottom:4}}>{["","⭐","⭐⭐","⭐⭐⭐"][stars]}</div>
-      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:24}}>+{xp} XP</div>
-      <button className="btn1" onClick={function(){p.done(modeKey,{time:finalTime,moves:moves},xp);}}>Collect XP</button>
-    </div>);
+    </SessionResult>);
   }
 
 // ── PLAY ──
