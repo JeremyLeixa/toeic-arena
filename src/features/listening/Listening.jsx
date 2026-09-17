@@ -63,7 +63,7 @@ export function ListenP2(p){
   }
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(i){sPk(i);if(i!==items[ci].c){var q2=items[ci];mistakesRef.current.push({tag:"Part 2 — Question-Response",prompt:q2.q,yours:q2.opts[i],correct:q2.opts[q2.c],why:q2.x});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
+  function doAns(i){sPk(i);if(i!==items[ci].c){var q2=items[ci];mistakesRef.current.push({tag:"Part 2 — Question-Response",prompt:q2.q,yours:q2.opts[i],correct:q2.opts[q2.c],why:q2.xq});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);sP("listen");}else{sidRef.current=p.done(sc,items.length,25+sc*6);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -158,7 +158,7 @@ export function ListenP1(p){
   }
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(i){sPk(i);if(i!==items[ci].c){var q1=items[ci];mistakesRef.current.push({tag:"Part 1 — Photographs",prompt:"Photo "+(ci+1)+": which statement describes it?",yours:q1.opts[i],correct:q1.opts[q1.c],why:q1.x});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
+  function doAns(i){sPk(i);if(i!==items[ci].c){var q1=items[ci];mistakesRef.current.push({tag:"Part 1 — Photographs",prompt:"Photo "+(ci+1)+": which statement describes it?",yours:q1.opts[i],correct:q1.opts[q1.c],why:q1.xq});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);setCurOpt(-1);sP("listen");}else{sidRef.current=p.done(sc,items.length,20+sc*5);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>

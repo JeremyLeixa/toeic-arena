@@ -41,21 +41,36 @@ export function shufListeningOpts(opts,correct){
 // remappe tout le reste. Si un jour un item ecrit "A business card is..." (nom
 // en -s apres l'article) il faudra reformuler l'explication, pas la regle.
 export var A_IS_OPT_LABEL=/^(?:$|[.,;:)/]|\s*[([]|\s+(?:is|are|was|were|will|would|cannot|can't|and|or)\b|\s+[a-z]+(?:s|n't)\b)/;
-export function remapOptLetters(x,aud){
+// Detection UNIQUE des lettres d'option d'une explication (remappage et citation la partagent).
+// fn(index d'option) rend le remplacement, ou null pour laisser la lettre telle quelle.
+function mapOptLetters(x,fn){
   if(!x)return x;
-  var map={};
-  for(var i=0;i<aud.length;i++)map[String.fromCharCode(65+aud[i])]=String.fromCharCode(65+i);
   return x.replace(/(^|[^A-Za-z'])([A-D])(?![A-Za-z'])/g,function(m,pre,L,off,str){
-    if(!map[L])return m;
     if(L==="A"&&!A_IS_OPT_LABEL.test(str.slice(off+m.length)))return m;
-    return pre+map[L];
+    var r=fn(L.charCodeAt(0)-65);
+    return r==null?m:pre+r;
+  });
+}
+export function remapOptLetters(x,aud){
+  var inv={};
+  for(var i=0;i<aud.length;i++)inv[aud[i]]=i;
+  return mapOptLetters(x,function(k){return inv[k]==null?null:String.fromCharCode(65+inv[k]);});
+}
+// Lecons de l'ecran de fin (SessionResult) : la carte ne montre ni les lettres ni toutes les
+// options, donc « C confirms... B gives... » n'y designe rien. Chaque lettre devient le texte de
+// l'option, cite (point final retire). TOUJOURS sur l'item d'ORIGINE (x et opts non permutes) :
+// un x deja remappe ne se relit pas (« B and C trap » peut devenir « ... and A trap », et ce A
+// suivi d'un nom passe pour un article). D'ou xq, calcule une fois a la permutation.
+export function quoteOptLetters(x,opts){
+  return mapOptLetters(x,function(k){
+    return k<opts.length?"\u201C"+String(opts[k]).replace(/\.$/,"")+"\u201D":null;
   });
 }
 // Permute un item listening complet (options + bonne reponse + explication).
 // `withAudio` a true seulement pour P1/P2, ou `aud` doit survivre jusqu'au lecteur.
 export function shufListeningItem(it){
   var s=shufListeningOpts(it.opts,it.c);
-  return Object.assign({},it,{opts:s.opts,c:s.c,aud:s.aud,x:remapOptLetters(it.x,s.aud)});
+  return Object.assign({},it,{opts:s.opts,c:s.c,aud:s.aud,x:remapOptLetters(it.x,s.aud),xq:quoteOptLetters(it.x,it.opts)});
 }
 // Variante DETERMINISTE, pour le Boss Test uniquement.
 // Le Boss persiste sa session en stockant les reponses PAR INDEX. Une permutation
@@ -85,7 +100,7 @@ export function detShufListeningItem(it){
     var t=idx[j];idx[j]=idx[k];idx[k]=t;
   }
   return Object.assign({},it,{opts:idx.map(function(q){return it.opts[q];}),
-    c:idx.indexOf(it.c),aud:idx,x:remapOptLetters(it.x,idx)});
+    c:idx.indexOf(it.c),aud:idx,x:remapOptLetters(it.x,idx),xq:quoteOptLetters(it.x,it.opts)});
 }
 // Calcule une fois au chargement du module : pure fonction de donnees statiques.
 // BOSS_P2 reste brut pour l'Endless, qui applique sa propre permutation par run.

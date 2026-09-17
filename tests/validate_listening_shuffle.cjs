@@ -20,7 +20,7 @@ const ROOT = path.join(__dirname, "..");
 // ── On requiert le VRAI module lib/listeningShuffle.js (découpage d'App.jsx, 2026-09-15) ──
 // require(esm) : Node >= 22.12 et package.json "type": "module". Le module tire util.js et
 // data/bossTestFull.js, tous purs. Plus aucun découpage de texte.
-const { shufListeningItem, remapOptLetters, detShufListeningItem } =
+const { shufListeningItem, remapOptLetters, quoteOptLetters, detShufListeningItem } =
   require(path.join(ROOT, "src", "lib", "listeningShuffle.js"));
 
 let fails = 0;
@@ -96,6 +96,43 @@ for (const orig of flat.P1) {
   }
 }
 console.log("  P1  " + artOk + " articles anglais preserves");
+
+console.log("\n=== I3 : lecons de l'ecran de fin (lettres citees en texte) ===");
+// La carte des lecons (SessionResult) ne montre ni les lettres ni toutes les options : chaque
+// lettre d'option devient le texte cite, calcule sur l'item d'ORIGINE (xq). Invariants :
+//  - xq ne depend pas de la permutation (le module permute, la lecon reste la meme) ;
+//  - aucune lettre d'option ne subsiste dans xq (sauf les articles « A ») ;
+//  - les articles « A » de P1 restent intacts ;
+//  - chaque option citee est une vraie option de l'item.
+let quoted = 0;
+for (const name of ["P1", "P2"]) {
+  for (const orig of flat[name]) {
+    const ref = quoteOptLetters(orig.x, orig.opts);
+    for (let trial = 0; trial < 5; trial++) {
+      const it = shufListeningItem(orig);
+      check(it.xq === ref, name + " " + orig.id + ": xq depend de la permutation\n      got: " + it.xq + "\n      exp: " + ref);
+    }
+    // Une lettre restante serait remappee par une permutation sans point fixe : ref doit en sortir intact.
+    const derange = orig.opts.map((_, k) => (k + 1) % orig.opts.length);
+    const leftover = remapOptLetters(ref.replace(/“[^”]*”/g, "“”"), derange);
+    check(leftover === ref.replace(/“[^”]*”/g, "“”"),
+      name + " " + orig.id + ": une lettre d'option n'a pas ete citee : " + ref);
+    for (const art of ARTICLES) {
+      if (orig.x.indexOf(art) >= 0) check(ref.indexOf(art) >= 0, name + " " + orig.id + ": article \"" + art + "\" cite a tort");
+    }
+    for (const m of ref.match(/“[^”]*”/g) || []) {
+      const txt = m.slice(1, -1);
+      check(orig.opts.some(o => o.replace(/\.$/, "") === txt), name + " " + orig.id + ": citation qui n'est pas une option : " + m);
+    }
+    quoted++;
+  }
+}
+const mgr = flat.P2.find(it => /regional manager yet/.test(it.q));
+check(quoteOptLetters(mgr.x, mgr.opts) ===
+  "Negative tag question. “No, but I've heard great things about her” confirms (haven't met) with additional info. " +
+  "“The regional office is in Boston” gives office location and “We had a manager's meeting last week” talks about a past meeting.",
+  "P2 regional manager : citation inattendue : " + quoteOptLetters(mgr.x, mgr.opts));
+console.log("  P1+P2  " + quoted + " explications citees, invariantes par permutation");
 
 // ── BOSS_P2 : permutation DETERMINISTE ──
 // Le Boss stocke les reponses de sa session par index : si la permutation variait
