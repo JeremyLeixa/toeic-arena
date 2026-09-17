@@ -4,7 +4,8 @@
 // Règle d'or : Aldric ne dit que ce que les données prouvent, et ne parle que quand c'est notable.
 import {
   NOW, day, addDays, daysBetween, fmtDay, weekdayName, PART_LABEL, PART_SHORT, PART_ICON, TOEIC_Q, PTS_PER_Q,
-  BOX_DAYS, HALF_LIFE, PRIOR_Q, PRIOR_ACC, TURN, HUNT_MIN, WYRM_MISS, catSeries, catState, recentWindow, turnaround,
+  BOX_DAYS, HALF_LIFE, PRIOR_Q, PRIOR_ACC, TURN, HUNT_MIN, WYRM_MISS, HUNT_BASE, HUNT_PER_SLAIN, DARICS_PER_SLAIN,
+  DRILL_XP_PER_Q, huntReward, estimateAt, catSeries, catState, recentWindow, turnaround,
   slainOn, weekFacts, goalPace, chronicle, bestiary, lookupItem, tierOf, TIERS, trainedSessions, allCats, MODULE_NAME,
   planToday,
 } from "./model.js";
@@ -43,20 +44,32 @@ export function greeting(x) {
   return { text: "Welcome back", ev: ["Rien de notable hier : Aldric ne force pas la conversation."] };
 }
 
-// ═══ Le plan du jour ═══
-export function questView(q, x) {
+// ═══ Le plan du jour (dans le Mentor : « Today's Path ») ═══
+// L'étiquette porte la récompense : la 1re quête EST la mission du jour (+15 XP, décision du
+// 2026-09-17), la quête « enjeu » porte le +25 % de l'ancien Today's Focus.
+function questTag(q, i, info) {
+  var r = [];
+  if (i === 0) r.push("+15 XP");
+  if (q.kind === "stake") r.push(i === 0 ? "+25%" : "+25% XP");
+  return r.length ? r.join(" · ") : info;
+}
+export function questView(q, x, i) {
   var u = x.before, goal = u.targetToeic;
+  i = i || 0;
   if (q.kind === "hunt") return {
     icon: "broadsword", title: "Hunt " + q.n + " old mistakes",
-    why: q.due > q.n ? q.due + " are due. The oldest ten first, the rest can wait a day." : "They're due today. Beat them before they settle in.",
-    tag: "~" + Math.max(5, q.n) + " min",
+    why: (q.due > q.n ? q.due + " are due. The oldest ten first, the rest can wait a day." : "They're due today. Beat them before they settle in.")
+      + " About " + Math.max(5, q.n) + " minutes.",
+    tag: questTag(q, i, "~" + Math.max(5, q.n) + " min"),
     ev: [q.due + " créature(s) à échéance aujourd'hui (intervalles " + BOX_DAYS.join("-") + " j) ; chasse plafonnée à 10.",
-      "En tête du plan à partir de " + HUNT_MIN + " échéances (en dessous, elles sont glissées dans la session suivante) : c'est court, et l'espacement ne supporte pas l'attente."],
+      "En tête du plan à partir de " + HUNT_MIN + " échéances (en dessous, elles sont glissées dans la session suivante) : c'est court, et l'espacement ne supporte pas l'attente.",
+      "XP de la chasse : " + HUNT_BASE + " de base + " + HUNT_PER_SLAIN + " par créature vaincue, rien pour une simple réussite (voir huntReward)."],
   };
   if (q.kind === "stake") {
     var t = PART_LABEL[q.part], why, ev = [];
     if (q.part === "p5" && q.cat) t = "Part 5 · " + q.cat.cat;
-    why = goal ? "Where you lose the most points toward " + goal + ": about " + q.pts + " on the table." : "Your biggest source of lost points right now: about " + q.pts + ".";
+    why = (goal ? "Where you lose the most points toward " + goal + ": about " + q.pts + " on the table." : "Your biggest source of lost points right now: about " + q.pts + ".")
+      + " You're at " + pct(q.acc) + "% there.";
     if (q.part === "p5" && q.cat) {
       var w = recentWindow(q.cat.series, 12);
       why += " " + q.cat.cat + " " + be(q.cat.cat) + " the weakest link: " + w.c + " of your last " + w.t + ".";
@@ -66,28 +79,59 @@ export function questView(q, x) {
       goal ? "Cible par section tirée de l'objectif : (" + goal + " / 2 − 5) / 490 = " + pct(q.tgt) + " %." : "Pas d'objectif : cible par défaut 85 %.",
       "Maîtrise récente : demi-vie " + HALF_LIFE + " j + prior " + PRIOR_Q + " Q à " + pct(PRIOR_ACC) + " %. À vie : " + pct(q.life.acc) + " % sur " + q.life.t + " Q.",
       "Autres enjeux : " + x.plan.stakes.filter(function (s) { return s.part !== q.part && s.pts; }).slice(0, 3).map(function (s) { return PART_SHORT[s.part] + " " + s.pts + " pts (" + (s.source === "scan" ? "scan" : pct(s.acc) + " %") + ")"; }).join(", ") + ".");
-    return { icon: PART_ICON[q.part], title: t, why: why, tag: pct(q.acc) + "% now", ev: ev };
+    ev.push("Cette quête porte le +25 % d'XP (l'ancien Today's Focus, désormais expliqué).");
+    return { icon: PART_ICON[q.part], title: t, why: why, tag: questTag(q, i, pct(q.acc) + "% now"), ev: ev };
   }
   if (q.kind === "keep") return {
     icon: PART_ICON[q.part], title: "Keep " + PART_SHORT[q.part] + " sharp",
-    why: "Your strongest part, but " + q.days + " days without practice. Memory fades.", tag: q.days + " days",
+    why: "Your strongest part, but " + q.days + " days without practice. Memory fades.", tag: questTag(q, i, q.days + " days"),
     ev: [PART_SHORT[q.part] + " à " + pct(q.acc) + " % (≥ 75 %) sans session depuis " + q.days + " jours (seuil : 7)."],
   };
   if (q.kind === "confirm") {
     var label = q.macro ? "Part 5 · " + q.macro.label : PART_LABEL[q.part];
     return {
       icon: q.macro ? q.macro.icon : PART_ICON[q.part], title: label,
-      why: "Your Battle Scan flagged this (" + pct(q.scanAcc) + "%). Let's check it with real questions.", tag: "from your scan",
+      why: "Your Battle Scan flagged this (" + pct(q.scanAcc) + "%). Let's check it with real questions.", tag: questTag(q, i, "from your scan"),
       ev: ["Élève neuve : " + trainedSessions(u) + " session(s) d'entraînement (< 5), aucune maîtrise fiable. Le plan part du Battle Scan.",
         "Point le plus faible du scan : " + (q.macro ? "macro " + q.macro.label + " (" + q.macro.subcats.join(", ") + ")" : PART_SHORT[q.part]) + " à " + pct(q.scanAcc) + " %."],
     };
   }
   if (q.kind === "explore") return {
     icon: PART_ICON[q.part], title: "Try " + PART_LABEL[q.part],
-    why: "Not measured yet. One session and I'll know where you stand.", tag: "new",
+    why: "Not measured yet. One session and I'll know where you stand.", tag: questTag(q, i, "new"),
     ev: [PART_SHORT[q.part] + " jamais jouée ; la plus lourde au TOEIC (" + TOEIC_Q[q.part] + " Q) parmi les parties non mesurées."],
   };
   return { icon: "info", title: q.kind, why: "", tag: "", ev: [] };
+}
+// Les cinq repères de la carte du Mentor (le plan, le bestiaire et la Chronique y vivent).
+export function mapBadges(x) {
+  var u = x.before, p = x.plan, b = bestiary(u, NOW), ev = [];
+  var daysLeft = u.targetToeic ? daysBetween(day(NOW), u.targetDate) : null;
+  var est = estimateAt(u);
+  var missionDone = u.mission && u.mission.date === day(NOW) && u.mission.done;
+  ev.push("Peak : objectif du profil (targetToeic / targetDate).",
+    "Path : " + p.quests.length + " quête(s) du plan ; la 1re est la mission du jour (+15 XP).",
+    "Lair : " + b.due + " à échéance sur " + b.lurking + " créatures.",
+    "Camp : estimation TOEIC " + (est === null ? "non estimable" : est) + " (inchangé).",
+    "Aldric : ouvre la Chronique ; la rediffusion du chapitre passe au pied de la Chronique.",
+    "« The Crossroads » disparaît : le Today's Focus est devenu la quête « enjeu » du plan, avec son +25 %.");
+  return {
+    goal: { label: u.targetToeic ? "The Distant Peak" : "Set destination", value: u.targetToeic ? u.targetToeic + " · " + (daysLeft >= 0 ? daysLeft + "d" : "past") : "?", tone: u.targetToeic ? "active" : "muted" },
+    path: { label: "Today's Path", value: missionDone ? "Complete ✓" : p.quests.length + " quests · +15 XP", tone: missionDone ? "done" : "active" },
+    lair: { label: "The Lair", value: b.due > 0 ? b.due + " due" : b.lurking > 0 ? b.lurking + " lurking" : "Clear", tone: b.due > 0 ? "active" : "muted" },
+    camp: { label: "Your Camp", value: (est === null ? "—" : est) + " TOEIC", tone: "active" },
+    ev: ev,
+  };
+}
+// Ce que rapporte une chasse, et pourquoi on ne peut pas la farmer.
+export function huntXpNote(slain) {
+  var r = huntReward(slain);
+  return {
+    xp: r.xp, darics: r.darics,
+    ev: ["Chasse : " + HUNT_BASE + " XP de base + " + HUNT_PER_SLAIN + " par créature vaincue (" + slain + " aujourd'hui = " + r.xp + " XP), rien pour une simple réussite.",
+      "Anti-ferme : rater exprès une question de Drill coûte " + DRILL_XP_PER_Q + " XP tout de suite ; vaincre la créature rapporte " + HUNT_PER_SLAIN + " XP au mieux " + (BOX_DAYS[0] + BOX_DAYS[1] + BOX_DAYS[2]) + " jours plus tard, après trois réussites espacées.",
+      "Le multiplicateur anti-farming habituel s'applique à une 2e chasse le même jour ; " + DARICS_PER_SLAIN + " Daric par créature vaincue (hors XP, donc hors classement de ligue)."],
+  };
 }
 export function planWhy(x) {
   if (x.plan.cold) return "I don't know you well yet. First we check what your Battle Scan suspects, then we measure what it couldn't see.";

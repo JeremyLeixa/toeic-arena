@@ -8,7 +8,7 @@ import { LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "../../src/data/listeni
 import { PART7_PASSAGES } from "../../src/data/part7.js";
 import {
   NOW, day, addDays, newReview, reviewMiss, reviewHit, dueItems, planToday, composeSession,
-  partSeries, catSeries, windowAcc, lifetime, estimateAt, turnaround, allCats,
+  partSeries, catSeries, windowAcc, lifetime, estimateAt, turnaround, allCats, huntReward,
 } from "./model.js";
 
 function rng(seed) {
@@ -231,7 +231,8 @@ function playToday(before, comp, rnd) {
   record(u, { d: d, mod: modId, c: sc, t: results.length, cs: Object.keys(cs).length ? cs : null });
   u.lastActive = d; u.streak++;
   out.modId = modId; out.sc = sc; out.tot = results.length;
-  out.base = comp.kind === "hunt" ? 10 + 5 * sc : 20 + 7 * sc;
+  out.base = comp.kind === "hunt" ? huntReward(out.slain.length).xp : 20 + 7 * sc;
+  out.darics = comp.kind === "hunt" ? huntReward(out.slain.length).darics : 0;
   // Cérémonie : un retournement devenu éligible aujourd'hui, sur une catégorie jouée dans la session.
   out.ceremony = null;
   Object.keys(cs).forEach(function (c) {

@@ -6,6 +6,7 @@ import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { CSS } from "../../src/styles/appCss.js";
 import { Tabs } from "../../src/components/Tabs.jsx";
+import { TabsBadge } from "./mentorHub.jsx";
 import { buildPersona } from "./personas.js";
 import * as Mo from "./moments.jsx";
 import * as V from "./voice.js";
@@ -20,7 +21,9 @@ var noop = function () {};
 
 var MOMENTS = {
   letter: { C: Mo.LetterMoment, tab: null },
-  home: { C: Mo.HomeMoment, tab: "home" },
+  home: { C: Mo.HomeMoment, tab: "home", badge: "mentor" },
+  mentor: { C: Mo.MentorMoment, tab: "mentor" },
+  plan: { C: Mo.PlanMoment, tab: "mentor" },
   brief: { C: Mo.BriefMoment, tab: null },
   question: { C: Mo.QuestionMoment, tab: null },
   result: { C: Mo.ResultMoment, tab: null },
@@ -32,13 +35,21 @@ var MOMENTS = {
 function evidence(m, x) {
   if (m === "letter") return V.letter(x).ev;
   if (m === "home") {
-    var e = V.greeting(x).ev.slice();
+    return V.greeting(x).ev.concat([
+      "Home ne gagne AUCUNE carte : le plan vit dans le Mentor (décision du 2026-09-17). Seule la ligne « Welcome back » devient une ligne qui se souvient.",
+      "Pastille sur l'onglet Mentor quand une quête attend ou qu'une erreur est à échéance : à trancher au câblage.",
+    ]);
+  }
+  if (m === "mentor") return V.mapBadges(x).ev;
+  if (m === "plan") {
+    var e = [];
     x.plan.quests.forEach(function (qq, i) {
-      var v = V.questView(qq, x);
+      var v = V.questView(qq, x, i);
       e.push("Quête " + (i + 1) + " « " + v.title + " » :");
       v.ev.forEach(function (l) { e.push("— " + l); });
     });
-    e.push("Remplace Daily Mission et Today's Focus ; NextStepReco et l'Insight Token liraient le même plan.");
+    e.push("La 1re quête EST la mission du jour (+15 XP, streak et coffre mission_streak conservés) ; la quête « enjeu » porte le +25 % de l'ancien Today's Focus.");
+    e.push("NextStepReco et l'Insight Token liraient le même plan.");
     return e;
   }
   if (m === "brief") return V.briefing(x).ev;
@@ -50,7 +61,11 @@ function evidence(m, x) {
     out.push("Simulation : " + (r.ok ? "réussie" : "ratée") + (ANS !== "auto" && ANS !== "none" ? " ; affichage forcé : " + (ok ? "réussie" : "ratée") : "") + ".");
     return f ? out.concat(f.ev) : out;
   }
-  if (m === "result") return V.remember(x).ev.concat(["XP et étapes : vraies portes (gateSteps + settleXp de lib/xp.js), module « " + x.outcome.modId + " ».", "Au câblage, la carte irait juste sous le parchemin, avant « Lessons to keep »."]);
+  if (m === "result") {
+    var lines = V.remember(x).ev.concat(["XP et étapes : vraies portes (gateSteps + settleXp de lib/xp.js), module « " + x.outcome.modId + " ».", "Au câblage, la carte irait juste sous le parchemin, avant « Lessons to keep »."]);
+    if (x.outcome.modId === "review") lines = lines.concat(V.huntXpNote(x.outcome.slain.length).ev);
+    return lines;
+  }
   if (m === "ceremony") { var c = V.ceremony(x); return c.none ? ["Aucune catégorie ne remplit la règle aujourd'hui : pas de cérémonie."] : c.ev; }
   if (m === "bestiary") return V.bestiaryView(x).ev;
   if (m === "chronicle") return V.chronicleView(x).ev;
@@ -71,7 +86,7 @@ function Frame() {
       <style>{MEMORY}</style>
       {RM && <style>{RM_CSS}</style>}
       <C x={x} qi={x.qIndex} ans={ANS} still={STILL} />
-      {mo.tab && <Tabs cur={mo.tab} go={noop} />}
+      {mo.tab && (mo.badge ? <TabsBadge cur={mo.tab} badge={mo.badge} /> : <Tabs cur={mo.tab} go={noop} />)}
     </div>
   );
 }

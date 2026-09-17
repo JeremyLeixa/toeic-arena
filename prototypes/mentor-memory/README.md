@@ -26,18 +26,57 @@ Barre : élève (Léa, Karim, Inès), mode clair/sombre, skin, état de la quest
 ratée, pas encore répondue), écrans par ligne, **preuves** (sous chaque écran, en français : les chiffres
 et la règle qui autorisent la phrase d'Aldric), mouvement réduit.
 
+## Décisions de Jérémy (2026-09-17)
+
+Les 8 moments sont validés. Quatre décisions prises, une tranchée par le calcul :
+
+1. **Le plan ne va pas sur Home** (risque de surcharge) : il vit dans le Mentor, feuille « Today's Path ».
+   Home ne gagne **aucune carte** — seul « Welcome back » devient une ligne qui se souvient. Ça tombe
+   juste : la Daily Mission habitait déjà le Mentor depuis le 2026-05-05.
+2. **La Daily Mission devient la 1re quête du plan** : ses +15 XP, sa série et le coffre `mission_streak`
+   sont conservés, l'étiquette de la 1re quête les affiche.
+3. **La cérémonie reste symbolique** (aucune récompense) : elle entre dans la Chronique, c'est tout.
+4. **Bestiaire et Chronique vivent dans le Mentor** : la carte passe à cinq repères. « The Crossroads »
+   (Today's Focus) disparaît en tant que repère — le Focus est devenu la quête « enjeu » du plan, et son
+   **+25 % d'XP** s'affiche enfin avec sa raison.
+
+| Repère de la carte | Contenu | Badge |
+|---|---|---|
+| Peak | objectif (inchangé) | `785 · 46d` |
+| Path | **le plan du jour** (3 quêtes, la 1re est la mission) | `3 quests · +15 XP` |
+| Lair | **le bestiaire** (à la place de The Crossroads) | `21 due` / `12 lurking` / `Clear` |
+| Camp | où j'en suis (inchangé) | `735 TOEIC` |
+| Aldric | **la Chronique** (la rediffusion du chapitre passe au pied) | `Your chronicle` |
+
+### XP de la chasse (proposition calculée, à valider)
+
+**5 XP de base + 5 XP par créature vaincue, rien pour une simple réussite** (`huntReward`), plus
+**1 Daric par créature vaincue** (hors XP, donc hors classement de ligue), et le multiplicateur
+anti-farming habituel sur une 2e chasse le même jour.
+
+Pourquoi ces chiffres : rater exprès une question de Drill coûte **7 XP tout de suite** (20 + 7 × justes) ;
+vaincre la créature ainsi créée rapporte **5 XP au mieux 11 jours plus tard** (1 + 3 + 7), après trois
+réussites espacées. **Farmer est toujours perdant**, sans plafond ni règle spéciale. La vraie récompense
+reste le compteur du bestiaire, la Chronique et le score qui bouge. À l'écran de fin de Léa : 2 créatures
+vaincues → base 15, +33 XP avec la série et le bonus du jour, +2 Darics.
+
+Reste à trancher : la **pastille sur l'onglet Mentor** quand une quête attend (montrée dans le proto) —
+c'est ce qui appelle l'élève vers le Mentor maintenant que le plan n'est plus sur Home.
+
 ## Une journée : lundi 21 septembre 2026
 
 | | Moment | Ce que l'élève voit |
 |---|---|---|
 | 1 | **Lettre du lundi** (08:30) | Push puis lettre : semaine écoulée, ce qui a bougé (≥ +10 points sur ≥ 10 Q par semaine, sinon rien), créatures vaincues, allure vers l'objectif, cap de la semaine. Élève neuve : « trop tôt pour parler de tendance ». |
-| 2 | **Plan du jour** (Home) | Remplace Daily Mission + Today's Focus. Trois quêtes, chacune avec sa raison et son étiquette. « Why this order? » explique l'ordre. Ligne d'accueil qui se souvient (« Yesterday you slew 1 old mistake », « Day 4 in the Arena »). |
-| 3 | **Avant la session** | Parchemin : comment Aldric a composé la session (« Relative Pronouns are your weak spot now: 6 of your last 13. I've put 4 in this drill. Conditionals get only 2 today: 13 of your last 15. You've earned it. »). |
-| 4 | **Pendant** | La question porte sa mémoire (« Missed on 13 Sept · 3 times ») ; la réponse a une conséquence dite (« Revenge. It comes back in 3 days, weaker. », « Noted. This one comes back tomorrow. », « Conditionals: 14 of your last 16. It holds. »). |
-| 5 | **Écran de fin** | Le vrai `SessionResult` (vraies portes XP) + carte « Aldric remembers » : créatures vaincues ou échappées, nouvelles erreurs, chemin parcouru sur une catégorie (seulement s'il est prouvé), compte rendu de la visée annoncée, record. |
-| 6 | **Faiblesse devenue force** | Cérémonie plein écran quand une faiblesse mesurée devient une force mesurée. Seuils stricts ; sinon rien (la note du proto dit pourquoi). |
-| 7 | **Bestiaire** | Chaque erreur est une créature. Compteurs, bouton de chasse, créatures par catégorie ou par partie, force (Trickster / Stalker / Wyrm), réussites espacées en pastilles. |
-| 8 | **Chronique** (Mentor) | L'histoire du parcours dans la feuille du Mentor, sur la vraie carte : arrivée, faiblesses repérées, parties passées à 80 %, Mock, première estimation, créatures vaincues, retournements, page suivante. |
+| 2 | **Home** | Ne gagne aucune carte : seule la ligne d'accueil se souvient (« Yesterday you slew 1 old mistake », « Day 4 in the Arena »), plus une pastille sur l'onglet Mentor. |
+| 3 | **Carte du Mentor** | Cinq repères, badges à jour (voir le tableau ci-dessus). |
+| 4 | **Plan du jour** (feuille « Today's Path ») | Trois quêtes, chacune avec sa raison et son étiquette de récompense. « Why this order? » explique l'ordre. |
+| 5 | **Avant la session** | Parchemin : comment Aldric a composé la session (« Relative Pronouns are your weak spot now: 6 of your last 13. I've put 4 in this drill. Conditionals get only 2 today: 13 of your last 15. You've earned it. »). |
+| 6 | **Pendant** | La question porte sa mémoire (« Missed on 13 Sept · 3 times ») ; la réponse a une conséquence dite (« Revenge. It comes back in 3 days, weaker. », « Noted. This one comes back tomorrow. », « Conditionals: 14 of your last 16. It holds. »). |
+| 7 | **Écran de fin** | Le vrai `SessionResult` (vraies portes XP) + carte « Aldric remembers » : créatures vaincues ou échappées, nouvelles erreurs, chemin parcouru sur une catégorie (seulement s'il est prouvé), compte rendu de la visée annoncée, record. |
+| 8 | **Faiblesse devenue force** | Cérémonie plein écran quand une faiblesse mesurée devient une force mesurée. Seuils stricts ; sinon rien (la note du proto dit pourquoi). Symbolique : aucune récompense. |
+| 9 | **Bestiaire** | Repère « The Lair ». Compteurs, bouton de chasse, créatures par catégorie ou par partie, force (Trickster / Stalker / Wyrm), réussites espacées en pastilles. |
+| 10 | **Chronique** | Repère Aldric : arrivée, faiblesses repérées, parties passées à 80 %, Mock, première estimation, créatures vaincues, retournements, page suivante, rediffusion du chapitre au pied. |
 
 ## Les trois élèves (simulés, pas écrits)
 
@@ -114,19 +153,20 @@ Dans l'ordre, un commit par changement logique :
 1. `lib/learnerModel.js` + `lib/planner.js` + `lib/mentorVoice.js` (depuis `model.js` et `voice.js`), avec
    des tests Node prouvés mordants (les trois élèves deviennent des fixtures).
 2. `cs` par session dans `recordModule` ; les modules passent déjà leurs catStats (Drill) ou les passeront.
-3. Le plan remplace Daily Mission + Today's Focus sur Home ; `NextStepReco` et l'Insight Token lisent le
-   même plan. Le boost +25 % du Focus suit la première quête « enjeu ».
-4. Bestiaire : champ `review`, `k` dans `mistakesRef`, route de chasse (skill `add-module`), écran.
+3. Le plan dans le Mentor : la carte passe à cinq repères, la feuille « Today's Path » remplace la Daily
+   Mission (qui en devient la 1re quête, +15 XP conservés) et le repère du Focus disparaît (son +25 % suit
+   la quête « enjeu »). `NextStepReco` et l'Insight Token lisent le même plan. Home : la ligne d'accueil.
+4. Bestiaire : champ `review`, `k` dans `mistakesRef`, route de chasse (skill `add-module`), écran,
+   `stepLabel`/`stepDetail` de `lib/sessionText.js` à compléter pour la chasse (« Base · 2 slain » au lieu
+   de « 7 correct »).
 5. Briefing, mémoire dans la question, carte « Aldric remembers » (sous le parchemin, avant « Lessons to
    keep »), cérémonie.
 6. Lettre du lundi : Edge Function `weekly-results` (push) + écran de lettre ; Chronique dans le Mentor.
 
-## Questions ouvertes pour Jérémy
+## Reste à trancher
 
-- Le plan **remplace** la Daily Mission (et ses +15 XP, et le coffre `mission_streak`), ou la Mission
-  devient « la première quête » ?
-- Quelle XP pour la chasse (le proto : 10 + 5 par réussite) sans en faire une ferme (rater exprès pour
-  recréer des créatures) ?
-- La cérémonie rapporte-t-elle quelque chose (Darics, coffre) ou reste-t-elle symbolique ?
-- Le bestiaire vit-il dans le Mentor (nouveau repère sur la carte) ou dans Train ?
-- Chronique : la feuille du Mentor (touche Aldric sur la carte), ou un écran à part ?
+- La **pastille sur l'onglet Mentor** (montrée dans le proto) : c'est le seul appel vers le Mentor
+  maintenant que le plan n'est plus sur Home. Sinon, un élève peut ne jamais ouvrir l'onglet.
+- Les **XP de la chasse** (proposition calculée ci-dessus) : 5 + 5 par créature vaincue, 1 Daric.
+- Les erreurs de **Part 7** : une créature par question de passage, donc relire le passage à chaque
+  chasse. Regrouper par passage, ou les sortir de la chasse et les garder pour les sessions de Part 7 ?

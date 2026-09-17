@@ -7,7 +7,8 @@ import { Bar } from "../../src/components/Bar.jsx";
 import { renderAv } from "../../src/components/avatar.jsx";
 import { SessionResult } from "../../src/components/SessionResult.jsx";
 import { createChestFx, burstAt } from "../../src/components/particles.js";
-import { MentorMap, MentorSheet } from "../../src/features/mentor/Mentor.jsx";
+import { MentorSheet } from "../../src/features/mentor/Mentor.jsx";
+import { MentorMapV2 } from "./mentorHub.jsx";
 import { getLevel } from "../../src/data/helpers.js";
 import { getEffectiveLeague, getLeague } from "../../src/lib/league.js";
 import { getTriggerLabel } from "../../src/lib/chestLabels.js";
@@ -50,11 +51,10 @@ export function LetterMoment(p) {
   );
 }
 
-// ═══ 2. Home : le plan d'Aldric (remplace Daily Mission + Today's Focus) ═══
+// ═══ 2. Home : une seule ligne change (le plan vit dans le Mentor, décision du 2026-09-17) ═══
 export function HomeMoment(p) {
   var x = p.x, u = x.before, lv = getLevel(u.xp), lg = getEffectiveLeague(u.weeklyXp, u.moduleScores);
   var g = V.greeting(x);
-  var [open, setOpen] = useState(false);
   return (
     <div className="enter" style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -66,22 +66,6 @@ export function HomeMoment(p) {
           <span className="fl" style={{ fontSize: 28, display: "inline-flex" }}><GIcon name="flame" size={28} color="var(--orange)" /></span>
           <div className="out" style={{ fontSize: 13, fontWeight: 700, color: "var(--orange)" }}>{u.streak}</div>
         </div>
-      </div>
-
-      <div className="crd mm-plan">
-        <div className="mm-plan-head"><GIcon name="wizard-staff" size={18} color="var(--cyan)" /><b className="out">{"Aldric's plan for today"}</b><small>Monday</small></div>
-        {x.plan.quests.map(function (q, i) {
-          var v = V.questView(q, x);
-          return (
-            <button key={i} className={"mm-quest" + (i === 0 ? " first" : "")}>
-              <span className="mm-q-ic"><GIcon name={v.icon} size={18} color={i === 0 ? "var(--cyan)" : "var(--t2)"} /></span>
-              <span className="mm-q-body"><span className="mm-q-title out">{v.title}</span><span className="mm-q-why">{v.why}</span></span>
-              <span className="mm-q-tag out">{v.tag}</span>
-            </button>
-          );
-        })}
-        <button className="mm-why-btn" onClick={function () { setOpen(!open); }}>{open ? "Hide" : "Why this order?"}</button>
-        {open && <p className="mm-why">{V.planWhy(x)}</p>}
       </div>
 
       <div className="crd glo" style={{ marginBottom: 16 }}>
@@ -112,7 +96,50 @@ export function HomeMoment(p) {
   );
 }
 
-// ═══ 3. Avant la session : Aldric dit comment il l'a composée ═══
+// ═══ 2 bis. Le Mentor : cinq repères sur la carte ═══
+function MentorScreen(p) {
+  var x = p.x, badges = V.mapBadges(x);
+  return (
+    <>
+      <div className="enter" style={{ padding: "20px 16px 100px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <GIcon name="wizard-staff" size={28} color="var(--cyan)" /><h1 className="out" style={{ fontWeight: 900, fontSize: 24 }}>Mentor</h1>
+        </div>
+        <p style={{ color: "var(--t2)", fontSize: 12, marginBottom: 14, lineHeight: 1.5, fontStyle: "italic" }}>Tap a sigil on the map to act on it.</p>
+        <MentorMapV2 badges={badges} onHotspotTap={noop} onAldricTap={noop} />
+      </div>
+      {p.children}
+    </>
+  );
+}
+export function MentorMoment(p) { return <MentorScreen x={p.x} />; }
+
+// ═══ 3. Le plan du jour : la feuille « Today's Path » ═══
+export function PlanMoment(p) {
+  var x = p.x;
+  var [open, setOpen] = useState(false);
+  return (
+    <MentorScreen x={x}>
+      <MentorSheet open={true} onClose={noop} title="Today's Path">
+        <p style={{ color: "var(--t2)", fontSize: 12, margin: "0 2px 12px", lineHeight: 1.5, fontStyle: "italic" }}>{"Aldric's plan for Monday. The first one is today's mission."}</p>
+        {x.plan.quests.map(function (q, i) {
+          var v = V.questView(q, x, i);
+          return (
+            <button key={i} className={"mm-quest" + (i === 0 ? " first" : "")}>
+              <span className="mm-q-ic"><GIcon name={v.icon} size={18} color={i === 0 ? "var(--cyan)" : "var(--t2)"} /></span>
+              <span className="mm-q-body"><span className="mm-q-title out">{v.title}</span><span className="mm-q-why">{v.why}</span></span>
+              <span className="mm-q-tag out">{v.tag}</span>
+            </button>
+          );
+        })}
+        <button className="mm-why-btn" onClick={function () { setOpen(!open); }}>{open ? "Hide" : "Why this order?"}</button>
+        {open && <p className="mm-why">{V.planWhy(x)}</p>}
+      </MentorSheet>
+    </MentorScreen>
+  );
+}
+
+// ═══ 4. Avant la session : Aldric dit comment il l'a composée ═══
 export function BriefMoment(p) {
   var x = p.x, b = V.briefing(x), n = x.comp.questions.length;
   var [go, setGo] = useState(false);
@@ -195,7 +222,9 @@ function buildSession(x) {
     steps: g.steps.concat(st.steps), total: st.amt, fromXp: u.xp, toXp: st.c.xp,
     levelUp: st.levelUp, leagueUp: st.leagueUp, weekly: { from: u.weeklyXp, to: st.c.weeklyXp }, streak: st.c.streak,
     chests: st.chests.map(function (ch) { return { trigger: ch.trigger, type: ch.type, tier: CHEST_TIER[ch.type] || 0, label: getTriggerLabel(ch.trigger) }; }),
-    achievements: [], marks: [],
+    achievements: [],
+    // Darics de la chasse : hors XP, donc hors classement de ligue (voir huntXpNote).
+    marks: o.darics ? [{ amount: o.darics, label: "Creatures slain" }] : [],
   };
 }
 export function ResultMoment(p) {
@@ -283,7 +312,7 @@ export function CeremonyMoment(p) {
   );
 }
 
-// ═══ 7. Bestiaire des erreurs ═══
+// ═══ 8. Bestiaire des erreurs (repère « The Lair » sur la carte du Mentor) ═══
 export function BestiaryMoment(p) {
   var x = p.x, B = V.bestiaryView(x), isNew = B.slain === 0;
   return (
@@ -328,18 +357,11 @@ export function BestiaryMoment(p) {
   );
 }
 
-// ═══ 8. Mentor : la Chronique ═══
+// ═══ 9. Mentor : la Chronique (repère Aldric sur la carte) ═══
 export function ChronicleMoment(p) {
   var x = p.x, C = V.chronicleView(x);
   return (
-    <>
-      <div className="enter" style={{ padding: "20px 16px 100px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <GIcon name="wizard-staff" size={28} color="var(--cyan)" /><h1 className="out" style={{ fontWeight: 900, fontSize: 24 }}>Mentor</h1>
-        </div>
-        <p style={{ color: "var(--t2)", fontSize: 12, marginBottom: 14, lineHeight: 1.5, fontStyle: "italic" }}>Tap a sigil on the map to act on it.</p>
-        <MentorMap u={x.after} onHotspotTap={noop} onAldricTap={noop} />
-      </div>
+    <MentorScreen x={x}>
       <MentorSheet open={true} onClose={noop} title="The Chronicle of your journey">
         <div className="mm-chron">
           {C.entries.map(function (e, i) {
@@ -355,7 +377,8 @@ export function ChronicleMoment(p) {
             );
           })}
         </div>
+        <button className="btn2 out" style={{ marginTop: 12 }}>{"Hear Aldric again"}</button>
       </MentorSheet>
-    </>
+    </MentorScreen>
   );
 }

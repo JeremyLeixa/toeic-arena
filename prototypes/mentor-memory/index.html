@@ -64,13 +64,15 @@ import { SPECS, PERSONA_IDS } from "./personas.js";
 
 var MOMENTS = [
   { id: "letter", time: "08:30", name: "La lettre du lundi", desc: "Push puis lettre d'Aldric : la semaine écoulée, ce qui a bougé (seulement si c'est prouvé), l'allure vers l'objectif, le cap." },
-  { id: "home", time: "08:31", name: "Le plan du jour", desc: "Remplace Daily Mission et Today's Focus : trois quêtes, chacune avec sa raison. « Why this order? » explique l'ordre." },
-  { id: "brief", time: "08:32", name: "Avant la session", desc: "Aldric dit comment il a composé la session, et pourquoi. « Begin » lance les questions." },
-  { id: "question", time: "08:34", name: "Pendant", desc: "La question porte sa mémoire (ratée quand, combien de fois) et la réponse a une conséquence visible." },
+  { id: "home", time: "08:31", name: "Home : une ligne change", desc: "Home ne gagne aucune carte. Seul « Welcome back » devient une ligne qui se souvient. Pastille sur l'onglet Mentor (à trancher)." },
+  { id: "mentor", time: "08:31", name: "La carte du Mentor", desc: "Cinq repères : objectif, le plan du jour, le bestiaire (à la place de « The Crossroads »), où j'en suis, et Aldric pour la Chronique." },
+  { id: "plan", time: "08:32", name: "Le plan du jour", desc: "Feuille « Today's Path » : trois quêtes avec leur raison. La 1re EST la mission du jour (+15 XP) ; la quête « enjeu » porte le +25 %." },
+  { id: "brief", time: "08:33", name: "Avant la session", desc: "Aldric dit comment il a composé la session, et pourquoi. « Begin » lance les questions." },
+  { id: "question", time: "08:35", name: "Pendant", desc: "La question porte sa mémoire (ratée quand, combien de fois) et la réponse a une conséquence visible." },
   { id: "result", time: "08:45", name: "L'écran de fin", desc: "Le vrai SessionResult, plus la carte « Aldric remembers » : ce qui a changé par rapport à avant la session." },
   { id: "ceremony", time: "08:45", name: "Faiblesse devenue force", desc: "Cérémonie quand une faiblesse mesurée devient une force mesurée. Seuils stricts : sinon, rien." },
-  { id: "bestiary", time: "", name: "Le bestiaire", desc: "Chaque erreur est une créature. Ratée : demain. Réussie : 3 jours, puis 7. Trois réussites espacées : vaincue." },
-  { id: "chronicle", time: "", name: "La Chronique", desc: "Dans le Mentor : l'histoire du parcours, reconstruite depuis les données existantes." },
+  { id: "bestiary", time: "", name: "Le bestiaire", desc: "Repère « The Lair » du Mentor. Ratée : demain. Réussie : 3 jours, puis 7. Trois réussites espacées : vaincue." },
+  { id: "chronicle", time: "", name: "La Chronique", desc: "Repère Aldric du Mentor : l'histoire du parcours, reconstruite depuis les données existantes, rediffusion au pied." },
 ];
 var ids = ["mode", "skin", "ans", "cols", "ev", "rm"];
 var who = "lea";

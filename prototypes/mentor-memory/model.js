@@ -38,6 +38,11 @@ export var PRIOR_Q = 6;      // masse du prior en questions (même idée que PRI
 export var PRIOR_ACC = 0.6;
 export var MIN_EVID = 8;     // questions « effectives » avant de parler d'une partie ou d'une catégorie
 export var BOX_DAYS = [1, 3, 7]; // bestiaire : ratée → demain ; puis 3 jours, 7 jours ; 3e réussite espacée = vaincue
+// XP de la chasse (décision à valider, voir README) : payer la créature VAINCUE, rien pour une simple
+// réussite. Rater exprès une question de Drill coûte 7 XP tout de suite ; la vaincre rapporte 5 XP au
+// mieux 11 jours plus tard, après trois réussites espacées. Rater pour farmer est donc toujours perdant.
+export var HUNT_BASE = 5, HUNT_PER_SLAIN = 5, DARICS_PER_SLAIN = 1, DRILL_XP_PER_Q = 7;
+export function huntReward(slain) { return { xp: HUNT_BASE + HUNT_PER_SLAIN * slain, darics: DARICS_PER_SLAIN * slain }; }
 export var HUNT_MIN = 4;     // erreurs à échéance à partir desquelles la chasse devient une quête (sinon glissées dans la session)
 export var TURN = { thenMax: 0.55, nowMin: 0.75, thenQ: 10, nowQ: 12, gapDays: 10 };
 
