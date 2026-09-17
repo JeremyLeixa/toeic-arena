@@ -3,6 +3,7 @@ import { Bar } from "../../components/Bar.jsx";
 import { GrimoireReader } from "../../components/GrimoireReader.jsx";
 import { ResultIcon, GIcon } from "../../components/icons.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { SpeakBtn } from "../../components/SpeakBtn.jsx";
 import { GRIMOIRE_CONNECTORS } from "../../data/connectorsGrimoire.js";
 import { GRIMOIRE_GERUND } from "../../data/gerundGrimoire.js";
@@ -26,24 +27,28 @@ var qs=useMemo(function(){return pickAdaptive(p.u,QUESTIONS,"drill",10);},[]);
 var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[sk,sSk]=useState(false);
 // Per-cat counter populated through the round, persisted via p.done → drillDone → recordModule.
 var catStatsRef=useRef({});
+// Écran de fin commun (2026-09-17) : erreurs gardées pour « Lessons to keep », sid de la session
+// rendu par p.done (drillDone) pour n'afficher que CETTE session.
+var mistakesRef=useRef([]);var sidRef=useRef(0);
 function doAns(i){
   sS(i);
   var q=qs[ci];var cat=q.cat||"Other";
   var prev=catStatsRef.current[cat]||{correct:0,total:0};
   var correct=i===q.c;
   catStatsRef.current[cat]={correct:prev.correct+(correct?1:0),total:prev.total+1};
+  if(!correct)mistakesRef.current.push({tag:q.cat,prompt:q.s,yours:q.o[i],correct:q.o[q.c],why:q.x});
   if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}
   else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},500);}
   sP("fb");
 }
-function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sP("done");p.done(sc,qs.length,20+sc*7,catStatsRef.current);}}
+// Fin de manche : la session est calculée et sauvegardée ICI (p.done), l'écran l'affiche ensuite.
+// Plus de p.gate() au rendu : il relisait les compteurs du jour déjà incrémentés (XP affichée ≠ versée).
+function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sidRef.current=p.done(sc,qs.length,20+sc*7,catStatsRef.current);sP("done");}}
 
-if(ph==="done"){var fx=20+sc*7;if(p.gate)fx=p.gate(fx,sc,qs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-<div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=8?"🏆":sc>=5?"⚔️":"🛡️"} size={52}/>)}</div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Drill Complete</h1>
-<div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{qs.length}</div>
-<div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{fx} XP</div><button className="btn1" onClick={p.back}>Back to Training</button>
-<NextStepReco u={p.u} fromMod="drill" nav={p.nav}/>
-</div>);}
+if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Grammar Drill" mistakes={mistakesRef.current}
+  onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+  <NextStepReco u={p.u} fromMod="drill" nav={function(m,a){p.closeSession();p.nav(m,a);}}/>
+</SessionResult>);
 
 var q=qs[ci];return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>

@@ -90,3 +90,9 @@ export function stepHint(steps) {
 }
 
 export var CHEST_TIER_NAMES = ["Novice", "Warrior", "Champion", "Legendary"];
+
+// Origine d'un gain de Darics affiché dans le parchemin (source de grantMarks côté App.jsx).
+export function marksLabel(source) {
+  var L = { focus: "Today's Focus", daily: "Daily Challenge", achievement: "Achievement", mastery: "Module mastery", login: "Daily login", toeic_weekly: "Weekly TOEIC progress", podium: "Weekly podium" };
+  return L[source] || "";
+}

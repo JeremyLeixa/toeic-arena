@@ -22,7 +22,8 @@ import { getLeague, applyWeekTransition } from "./lib/league.js";
 import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost, notifyAuthLost } from "./lib/persistence.js";
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
-import { gateXp, settleXp, spotlightMult } from "./lib/xp.js";
+import { gateXp, gateSteps, settleXp, spotlightMult } from "./lib/xp.js";
+import { marksLabel } from "./lib/sessionText.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
 import { appliedFestivalId, setFestivalsEnabled, applyThemeColor } from "./lib/festivals.js";
@@ -91,6 +92,15 @@ export default function App(){
   var[u,sU]=useState(null);var[ld,sL]=useState(true);var[tab,sT]=useState("home");var[sp,sSP]=useState(null);var[spA,sSPA]=useState(null);var[xpt,sXpt]=useState(null);var[teacherMode,setTeacher]=useState(false);var[achToast,setAchToast]=useState(null);var[marksToast,setMarksToast]=useState(null);
   var[pendingChestCount,setPendingChestCount]=useState(0);var[chestModal,setChestModal]=useState(null);var[chestResult,setChestResult]=useState(null);var[chestPending,setChestPending]=useState([]);
   var[chestToastQueue,setChestToastQueue]=useState([]);var[activeChestToast,setActiveChestToast]=useState(null);var chestToastIdRef=useRef(0);
+  // ─── Session de fin (écran « Verdict d'Aldric », 2026-09-17, components/SessionResult.jsx) ───
+  // lastSession : ce qui vient d'être réellement versé (étapes XP, niveau, ligue, coffres, trophées,
+  // Darics), construit par settleSession. openSessionRef : id de la session affichée (0 = aucune),
+  // lu par les octrois ASYNCHRONES (coffres, Darics) et par sv() (trophées) pour les verser dans
+  // l'écran au lieu des toasts. Une ref et jamais un effet sur l'objet : `u` et lastSession sont
+  // reclonés à chaque sauvegarde (boucles vécues, voir feedback_useeffect_dep_by_ref).
+  // runKey : « Play again » remonte la route (clé du LoadBoundary de pg()).
+  var[lastSession,setLastSession]=useState(null);var[runKey,setRunKey]=useState(0);
+  var sessionSeqRef=useRef(0);var openSessionRef=useRef(0);var openSessionSpRef=useRef(null);
   var[showTip,setShowTip]=useState(false);
   // ─── Festival themes (2026-09-16) ─── id de la fête appliquée à .app, ou null (lib/festivals.js :
   // fenêtre de dates, forçage ?fest=, opt-out). Primitive : relue toutes les heures par un tick.
@@ -169,6 +179,12 @@ export default function App(){
     var t=setTimeout(function(){sXpt(null);},4000);
     return function(){clearTimeout(t);};
   },[xpt,sp]);
+  // Garde-fou des sessions de fin : une session n'appartient qu'à sa route. Quitter la route par un
+  // autre chemin que « Continue » (tab bar, bandeau de session perdue…) la ferme ; un coffre ou des
+  // Darics confirmés ensuite repartent en toast. Dépendance primitive (sp) uniquement.
+  useEffect(function(){
+    if(openSessionRef.current&&openSessionSpRef.current!==sp){openSessionRef.current=0;openSessionSpRef.current=null;setLastSession(null);}
+  },[sp]);
   // ── Chest toast dispatcher: show next queued toast when conditions allow ──
   useEffect(function(){
     if(activeChestToast)return; // one toast at a time
@@ -805,6 +821,9 @@ useEffect(function(){
     if(u.classCode==="visitor")return; // visitors are shop-blocked, no marks accrual
     if(!delta||delta<=0)return;
     var un=u.name,cc=u.classCode||"visitor";
+    // Session de fin ouverte au moment de l'octroi : les Darics s'affichent dans le parchemin
+    // (réponse encore attendue sur CETTE session) au lieu du toast.
+    var sid=openSessionRef.current;
     supabase.rpc("grant_marks",{
       p_user_name:un,p_class_code:cc,p_delta:delta,
       p_source:source,p_source_detail:sourceDetail,p_unique:!!unique,
@@ -819,7 +838,10 @@ useEffect(function(){
         saveLocal(c);
         return c;
       });
-      if(!silent){
+      if(sid&&openSessionRef.current===sid){
+        var mk={amount:applied,label:marksLabel(source)};
+        setLastSession(function(s){return s&&s.id===sid?Object.assign({},s,{marks:s.marks.concat([mk])}):s;});
+      }else if(!silent){
         setMarksToast(applied);
         setTimeout(function(){setMarksToast(null);},3500);
       }
@@ -885,17 +907,29 @@ useEffect(function(){
   function grantChestLocal(trigger,chestType){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"visitor";
+    var sid=openSessionRef.current;
     grantChest(un,cc,chestType,trigger,null).then(function(r){
-      if(r&&r.granted){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}
+      if(r&&r.granted){refreshPendingChests(un,cc);deliverChest(sid,trigger,chestType);}
     }).catch(function(e){console.error("[CHEST] grant error:",e&&e.message);});
   }
   // Fire-and-forget: grant a weekly chest (7-day cooldown per trigger)
   function grantWeeklyChest(trigger,chestType){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"visitor";
+    var sid=openSessionRef.current;
     grantChest(un,cc,chestType,trigger,7).then(function(r){
-      if(r&&r.granted){refreshPendingChests(un,cc);enqueueChestToast(trigger,chestType);}
+      if(r&&r.granted){refreshPendingChests(un,cc);deliverChest(sid,trigger,chestType);}
     }).catch(function(e){console.error("[CHEST] grant error:",e&&e.message);});
+  }
+  // Coffre CONFIRMÉ par le serveur. Si la session de fin qui l'a gagné est toujours à l'écran, il
+  // s'affiche dedans (le toast n'est rendu que sur les onglets : dans un module, il restait
+  // invisible) ; sinon toast, avec sa file et son anti-interruption habituelles. `sid` est capturé à
+  // l'appel : une réponse arrivée après « Continue » ne peut pas atterrir dans une autre session.
+  function deliverChest(sid,trigger,chestType){
+    if(sid&&openSessionRef.current===sid){
+      var item={trigger:trigger,type:chestType,tier:CHEST_TIER[chestType]||0,label:getTriggerLabel(trigger)};
+      setLastSession(function(s){return s&&s.id===sid?Object.assign({},s,{chests:s.chests.concat([item])}):s;});
+    }else enqueueChestToast(trigger,chestType);
   }
   async function refreshPendingChests(un,cc){
     var list=await getPendingChests(un,cc);
@@ -970,14 +1004,22 @@ useEffect(function(){
   }
 
 function sv(d){
+    // Session de fin à l'écran : les trophées débloqués par cette sauvegarde s'affichent dans le
+    // parchemin (jingle joué par l'écran) au lieu du toast. Coffres et Darics toujours accordés.
+    // Le handler de session appelle settleSession (ref posée, setLastSession mis en file) AVANT
+    // sv : l'updater ci-dessous passe donc après la création de la session.
+    var sessionSid=openSessionRef.current;var honors=[];
     // Check for new achievements
     if(d&&d.unlockedAch){
       ACHIEVEMENTS.forEach(function(a){
         if(a.check(d)&&d.unlockedAch.indexOf(a.id)===-1){
           d.unlockedAch.push(a.id);
-          try{playJingleAchieve();}catch(e){}haptic("achieve");
-          setAchToast({name:a.name,icon:a.icon,desc:a.desc});
-          setTimeout(function(){setAchToast(null);},3500);
+          if(sessionSid){honors.push({name:a.name,desc:a.desc});}
+          else{
+            try{playJingleAchieve();}catch(e){console.warn("[ACH] jingle caught:",e&&e.message);}haptic("achieve");
+            setAchToast({name:a.name,icon:a.icon,desc:a.desc});
+            setTimeout(function(){setAchToast(null);},3500);
+          }
           // Coffre légendaire pour les achievements rares
           if(LEGENDARY_ACHIEVEMENTS.indexOf(a.id)!==-1){
             grantChestLocal("ach_legendary_"+a.id,"legendaire");
@@ -993,6 +1035,9 @@ function sv(d){
           grantMarks(30,"achievement","ach_marks_"+a.id,true);
         }
       });
+    }
+    if(honors.length){
+      setLastSession(function(s){return s&&s.id===sessionSid?Object.assign({},s,{achievements:s.achievements.concat(honors)}):s;});
     }
     sU(d);
     saveLocal(d);
@@ -1023,6 +1068,48 @@ function sv(d){
     return r.c;
   }
   function getSpotlightMult(modId){return spotlightMult(modId,activeEvents);}
+  // ── Sessions de fin (2026-09-17) ── remplace applyXpGates + addXp pour les modules qui rendent
+  // SessionResult. Même calcul (gateSteps ≡ gateXp, testé) et mêmes octrois (Darics du Focus,
+  // coffres de settleXp), mais : le détail des étapes est gardé pour l'écran, et ni toast d'XP ni
+  // son ici (l'écran joue le compteur, le niveau et la ligue au bon moment). La ref est posée AVANT
+  // les octrois pour qu'ils sachent vers quelle session aller. opts.spotlight : comme miniDone et
+  // les hubs (drill, daily et jeux ne l'appliquaient pas). Rend {c, sid} : le module garde le sid et
+  // n'affiche QUE cette session.
+  function settleSession(modId,sc,tot,baseXp,opts){
+    opts=opts||{};
+    var sid=++sessionSeqRef.current;
+    openSessionRef.current=sid;openSessionSpRef.current=sp;
+    var now=new Date();
+    var g=gateSteps(baseXp,sc,tot,modId,{u:u,now:now,events:activeEvents,spotlight:!!opts.spotlight});
+    if(g.focusHit)grantMarks(30,"focus","focus_"+today(),true);
+    var r=settleXp(u,g.xp,{now:now,events:activeEvents,classMedianXp:classMedianXp,leagueOf:getLeague});
+    setLastSession({id:sid,sp:sp,modId:modId,sc:sc,tot:tot,userName:u.name,steps:g.steps.concat(r.steps),total:r.amt,
+      fromXp:u.xp,toXp:r.c.xp,levelUp:r.levelUp,leagueUp:r.leagueUp,weekly:{from:u.weeklyXp||0,to:r.c.weeklyXp},
+      streak:r.c.streak,chests:[],achievements:[],marks:[]});
+    r.chests.forEach(function(ch){grantChestLocal(ch.trigger,ch.type);if(ch.haptic)haptic(ch.haptic);});
+    return{c:r.c,sid:sid};
+  }
+  // À appeler juste avant sv(c) : checkMission crédite ses +15 XP directement dans c (hors
+  // settleXp). On les ajoute comme étape et on recalcule niveau et ligue, qu'ils peuvent franchir.
+  function sealSession(c,sid){
+    var toXp=c.xp,weeklyTo=c.weeklyXp||0;
+    setLastSession(function(s){
+      if(!s||s.id!==sid)return s;
+      var extra=toXp-s.toXp;
+      if(extra<=0)return s;
+      var L0=getLevel(s.fromXp).level,L1=getLevel(toXp).level;
+      var lg0=getLeague(s.weekly.from),lg1=getLeague(weeklyTo);
+      return Object.assign({},s,{
+        steps:s.steps.concat([{id:"mission",kind:"bonus",add:extra,value:s.total+extra}]),
+        total:s.total+extra,toXp:toXp,weekly:{from:s.weekly.from,to:weeklyTo},
+        levelUp:L1>L0?{from:L0,to:L1}:null,
+        leagueUp:(lg1.id!==lg0.id&&weeklyTo>lg0.min)?{from:lg0.id,to:lg1.id}:null});
+    });
+  }
+  // « Continue » : ferme l'écran (les octrois encore en vol repartiront en toast). « Play again » :
+  // ferme et remonte la route (nouvelles questions : les modules les tirent au montage).
+  function closeSession(){openSessionRef.current=0;openSessionSpRef.current=null;setLastSession(null);}
+  function replaySession(){closeSession();setRunKey(function(k){return k+1;});}
   function nav(pg,arg){stopBGM();sSP(pg);sSPA(arg||null);}
   async function onboard(name,classCode,bsScores,firstNav,bsV2Results,authBind){
     classCode=classCode||'visitor';
@@ -1293,7 +1380,8 @@ function sv(d){
     var pruneDate=new Date();pruneDate.setDate(pruneDate.getDate()-45);var pruneStr=pruneDate.toISOString().slice(0,10);
     c.dailySeen=c.dailySeen.filter(function(entry){return entry.date>=pruneStr;});
     sv(c);}
-  function drillDone(sc,tot,xp,catStats){var gxp=applyXpGates(xp,sc,tot,"drill");var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);checkMission(c,"drill");sv(c);}
+  // Drill : premier module sur l'écran de fin commun (pilote, 2026-09-17). Rend le sid de la session.
+  function drillDone(sc,tot,xp,catStats){var s=settleSession("drill",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);checkMission(c,"drill");sealSession(c,s.sid);sv(c);return s.sid;}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);gxp=Math.round(gxp*getSpotlightMult(modId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
   function cardsDone(xp,ok,tot){
@@ -1429,11 +1517,13 @@ function sv(d){
     <span style={{fontSize:13,fontWeight:600,color:"var(--red)"}}>{"Session expired — your progress isn't being saved."}</span>
     <button onClick={function(){sSP(null);sT("home");sU(null);}} style={{background:"transparent",border:"1px solid rgba(255,71,87,.45)",borderRadius:10,padding:"7px 14px",color:"var(--red)",fontFamily:"'Cinzel','Outfit',serif",fontWeight:600,fontSize:12,cursor:"pointer"}}>{"Log in again"}</button>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={sp||"root"}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&!lastSession&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={(sp||"root")+":"+runKey}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}</div>);}
   // ↑ Frontière des écrans chargés à la demande (Phase 5) : le fallback et le filet d'erreur
   // n'enveloppent QUE le contenu de la sous-page — toasts, Narrator, Tabs et overlay premium
   // sont frères, jamais cachés ni remontés. La key sur la route remet le filet à zéro quand
-  // l'élève change d'écran.
+  // l'élève change d'écran, et runKey la change aussi pour « Play again » (remontage du module).
+  // Aldric est retenu tant qu'un écran de fin est ouvert (sa file est gardée : il parle après
+  // « Continue », au lieu de recouvrir le parchemin).
 
   // Reset password : bypass complet du flow normal si l'URL a ?reset=<token>.
   // Doit être AVANT loading/teacher/onboard parce que le user peut être complètement
@@ -1472,7 +1562,7 @@ function sv(d){
     </div>
   </div>);
 
-  var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, miniDone, mockDone, nav, pg, rateCard, sSP, sSPA, sT, setPremiumPrompt, shopBuy, sp, spA, sv, trackModSession, u});
+  var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, setPremiumPrompt, shopBuy, sp, spA, sv, trackModSession, u});
   if(routed)return routed;
 
   return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}

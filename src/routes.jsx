@@ -49,11 +49,11 @@ var ModalCouncilHub=lazyNamed(function(){return import("./features/modals/ModalC
  * manque, ici comme dans le littéral d'appel côté App(). Retourne l'écran rendu, ou
  * undefined si `sp` n'est pas une sous-page (App() enchaîne alors sur les onglets). */
 export function renderRoute(c){
-  var {addXp, applyXpGates, bossDone, cardsDone, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, miniDone, mockDone, nav, pg, rateCard, sSP, sSPA, sT, setPremiumPrompt, shopBuy, sp, spA, sv, trackModSession, u}=c;
+  var {addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, setPremiumPrompt, shopBuy, sp, spA, sv, trackModSession, u}=c;
   if(sp==="daily")return pg(<Daily u={u} done={dailyDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"daily");}} back={function(){sSP(null);}}/>);
   if(sp==="csess")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
-  if(sp==="drill")return pg(<Drill u={u} nav={nav} done={drillDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"drill");}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="drill")return pg(<Drill u={u} nav={nav} done={drillDone} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="wordfam")return pg(<WordFam u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"wordfam");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="connsort")return pg(<ConnSort u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"connsort");}} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="bforge"){playBGM("bgm_bridge");return pg(<LinkingBridge u={u} done={function(sc,tot,xp){stopBGM();miniDone(sc,tot,xp);}} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"bforge");}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);}

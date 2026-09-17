@@ -23,7 +23,7 @@ import { LeaguePromotion } from "./Ceremonies.jsx";
 import { createChestFx, burstAt } from "./particles.js";
 import { getLevel } from "../data/helpers.js";
 import { verdictText, epilogueText, stepLabel, stepDetail, stepHint, CHEST_TIER_NAMES } from "../lib/sessionText.js";
-import { playLootTick, playXP, playLevelUp, playChestLand } from "../sounds.js";
+import { playLootTick, playXP, playLevelUp, playChestLand, playJingleAchieve } from "../sounds.js";
 import { haptic } from "../lib/device.js";
 
 function sound(fn) { try { fn(); } catch (e) { console.warn("[session] sound:", e && e.message); } }
@@ -245,6 +245,16 @@ function Verdict(p) {
     totalDone.current = true;
     if (!skip) sound(playXP);
   }, [total, stage, skip, s.total, ST_TOTAL]);
+
+  // Trophées débloqués pendant la session : sv() ne joue plus leur jingle (pas de toast), l'écran le
+  // joue quand ils apparaissent dans le parchemin.
+  var honorsPlayed = useRef(false), honorCount = (s.achievements || []).length;
+  useEffect(function () {
+    if (!done || honorCount === 0 || honorsPlayed.current) return;
+    honorsPlayed.current = true;
+    sound(playJingleAchieve);
+    haptic("achieve");
+  }, [done, honorCount]);
 
   function skipAll() { if (!skip) { setSkip(true); setCeremony(false); } }
 
