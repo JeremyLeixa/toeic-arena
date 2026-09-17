@@ -1,0 +1,90 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Hubs vivants — variantes candidates (proto 2026-09-17, audit visuel lot 3)
+   Chargé APRÈS le CSS de l'appli (frame.jsx). Tout en jetons (--cyan, --gold, --orange,
+   --green, --red, --t3, --bdr, --bg3…) : suit le skin, la fête et le mode clair.
+   La variante retenue part dans src/styles/appCss.js (préfixe à renommer).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.lh-ic{background:linear-gradient(135deg,rgba(var(--cx),.22),transparent);border:1.5px solid var(--cyan);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box}
+.lh-tile{display:flex;align-items:center;gap:14px;cursor:pointer;position:relative}
+.lh-sub{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lh-meta{font-size:10.5px;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lh-meta.gold{color:var(--gold);font-weight:700}
+.lh-warn{color:var(--red);font-weight:700}
+.lh-best{font-size:10px;color:var(--gold);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+
+/* ── B · Anneau ── */
+.lh-ringbox{position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lh-ring{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.lh-ring rect{fill:none;stroke-width:3}
+.lh-ring .trk{stroke:var(--bdr)}
+.lh-ring .fill{stroke:var(--cyan);stroke-linecap:round;animation:lhRingIn 1s cubic-bezier(.2,.8,.2,1) .15s both}
+@keyframes lhRingIn{from{stroke-dasharray:0 100}}
+.lh-ringbox.low .fill{stroke:var(--t3);stroke-dasharray:4 3}
+/* précision sous 80 % : anneau éteint et pointillé (l'orange se confond avec l'accent du skin Doré) */
+.lh-ringbox.won .fill{stroke:var(--gold);filter:drop-shadow(0 0 4px rgba(212,160,60,.55))}
+.lh-ringbox .lh-ic{position:relative}
+.lh-badge{position:absolute;right:-8px;bottom:-8px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.lh-pips{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;min-width:30px}
+.lh-pipset{display:flex;gap:3px}
+.lh-pips i{width:5px;height:14px;border-radius:3px;background:var(--bdr)}
+.lh-pips small{font-size:9px;font-weight:700;letter-spacing:.3px;color:var(--t3);text-transform:uppercase}
+.lh-pips.full i.on{background:var(--green)}
+.lh-pips.full small{color:var(--green)}
+.lh-pips.half i.on{background:var(--orange)}
+.lh-pips.half small{color:var(--orange)}
+.lh-pips.low i.on{background:var(--red)}
+.lh-pips.low small{color:var(--red)}
+
+/* ── C · Coffre ── */
+.lh-bar{height:4px;border-radius:99px;background:var(--bg3);margin-top:6px;overflow:hidden;max-width:180px}
+.lh-bar i{display:block;height:100%;border-radius:99px;background:var(--cyan);animation:lhGrow 1s cubic-bezier(.2,.8,.2,1) .15s both}
+@keyframes lhGrow{from{width:0}}
+.lh-bar.low i{background:repeating-linear-gradient(90deg,var(--t3) 0 5px,transparent 5px 8px)}
+.lh-bar.won i{background:var(--gold)}
+.lh-chest{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;min-width:42px}
+.lh-chest small{font-size:10px;font-weight:700;color:var(--t3)}
+.lh-chest svg{filter:grayscale(.55) brightness(.85);opacity:.8}
+.lh-chest.idle svg{opacity:.45}
+.lh-chest.won svg{filter:drop-shadow(0 0 8px rgba(230,180,70,.6));opacity:1;animation:lhBob 3.4s ease-in-out infinite}
+.lh-chest.won small{color:var(--gold)}
+@keyframes lhBob{0%,86%,100%{transform:translateY(0)}90%{transform:translateY(-3px) rotate(-3deg)}95%{transform:translateY(0) rotate(2deg)}}
+.lh-namerow{display:flex;align-items:center;gap:6px;min-width:0}
+.lh-namerow .out{min-width:0}
+.lh-hint{font-size:11px;color:var(--t3)}
+.lh-chip{flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;
+  padding:1px 6px;border-radius:99px;border:1px solid currentColor;background:rgba(var(--bg3-rgb),.6)}
+.lh-chip.half{color:var(--orange)}
+.lh-chip.low{color:var(--red)}
+.lh-chip.none{color:var(--t3)}
+.lh-shelf{padding:12px 14px!important;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
+.lh-shelf-row{display:flex;gap:4px;flex-wrap:wrap}
+.lh-shelf-row span svg{filter:grayscale(1) brightness(.7);opacity:.45}
+.lh-shelf-row span.won svg{filter:drop-shadow(0 0 5px rgba(230,180,70,.55));opacity:1}
+.lh-shelf-txt{font-size:12px;color:var(--t2);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
+.lh-shelf-txt b{color:var(--gold);font-size:14px}
+.lh-shelf-txt em{font-style:normal;color:var(--t3);margin-left:auto;font-size:11px}
+
+/* ── D · Registre ── */
+.lh-d{display:block;overflow:hidden}
+.lh-ledger{display:flex;flex-wrap:wrap;gap:3px 10px;margin:8px 0 0 56px;font-size:10.5px;color:var(--t3)}
+.lh-ledger span+span::before{content:"·";margin-right:10px;color:var(--t3);opacity:.6}
+.lh-ledger .gold{color:var(--gold);font-weight:700}
+.lh-dot{display:inline-flex;align-items:center;gap:4px}
+.lh-dot.full{color:var(--green)}
+.lh-dot.half{color:var(--orange)}
+.lh-dot.low{color:var(--red)}
+.lh-dot.none{color:var(--t3)}
+.lh-edge{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(var(--bg3-rgb),.8)}
+.lh-edge i{display:block;height:100%;background:var(--cyan);animation:lhGrow 1s cubic-bezier(.2,.8,.2,1) .15s both}
+.lh-edge.low i{background:repeating-linear-gradient(90deg,var(--t3) 0 5px,transparent 5px 8px)}
+.lh-edge.won i{background:var(--gold)}
+
+/* Résumés de hub (B, D) */
+.lh-sum{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--t2);margin:-6px 0 12px}
+.lh-sum span{display:inline-flex;align-items:center;gap:5px}
+.lh-sum.d{justify-content:flex-start;gap:10px;color:var(--t3)}
+.lh-seg{display:inline-flex;gap:2px}
+.lh-seg i{width:10px;height:4px;border-radius:2px;background:var(--bg3)}
+.lh-seg i.won{background:var(--gold)}

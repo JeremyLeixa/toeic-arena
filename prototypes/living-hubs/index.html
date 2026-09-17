@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hubs vivants · comparateur</title>
+<style>
+  :root{--bg:#0b0906;--panel:#15110b;--line:#2c2418;--t1:#ede4d4;--t2:#a89a80;--acc:#d4943a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--t1);font:13px/1.4 system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#120e09f2;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  header h1{font-size:14px;margin:0 8px 0 0;color:var(--acc);letter-spacing:.5px}
+  label{display:flex;gap:5px;align-items:center;color:var(--t2)}
+  select,button{font:inherit;background:#1f1810;color:var(--t1);border:1px solid #3a2e20;border-radius:6px;padding:4px 8px;cursor:pointer}
+  .vs{display:flex;gap:4px}
+  .vs label{background:#1f1810;border:1px solid #3a2e20;border-radius:6px;padding:3px 7px;color:var(--t1)}
+  main{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:18px 12px 40px}
+  .cell{display:flex;flex-direction:column;gap:6px}
+  .cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .cap b{color:var(--acc);font-size:14px}
+  .cap a{color:var(--t2);font-size:11px}
+  .desc{color:var(--t2);font-size:11.5px;max-width:var(--w)}
+  .phone{width:var(--w);height:var(--h);border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 40px #000a;background:#000}
+  .phone iframe{width:375px;height:812px;border:0;transform:scale(var(--s));transform-origin:0 0;display:block}
+  footer{color:var(--t2);font-size:12px;max-width:900px;margin:0 auto;padding:0 16px 30px}
+  footer b{color:var(--t1)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hubs vivants</h1>
+  <label>Hub <select id="screen"><option value="gv">Train · Grammar &amp; Vocab</option><option value="games">Games</option><option value="reading">Reading Practice</option></select></label>
+  <label>Profil <select id="profile"><option value="mix">En cours (états variés)</option><option value="new">Nouvel élève</option></select></label>
+  <label>Mode <select id="mode"><option value="dark">Sombre</option><option value="light">Clair</option></select></label>
+  <label>Skin <select id="skin">
+    <option value="">Doré (défaut)</option><option>argent</option><option>emeraude</option><option>saphir</option><option>rubis</option><option>amethyste</option><option>corail</option><option>jade</option><option>obsidienne</option><option>aurore</option><option>frostbite</option><option>abyssal</option><option>emberheart</option><option>cosmic_void</option><option>molten_gold</option><option>heraldic</option><option>aldric_chamber</option>
+  </select></label>
+  <label><input type="checkbox" id="rm"> Mouvement réduit</label>
+  <label>Taille <select id="size"><option value="fit">Ajustée</option><option value="1">100 %</option></select></label>
+  <span class="vs" id="vs"></span>
+</header>
+<main id="grid"></main>
+<footer>
+  Trois informations par tuile, toutes tirées du profil tel qu'il existe : <b>progression vers le coffre de
+  maîtrise</b> (Champion + 50 Darics à 50 questions et 80 % de réussite, une fois par module),
+  <b>dernier score</b> (<code>moduleScores.history</code>, ou le record des jeux sans précision) et
+  <b>XP du jour</b> (<code>dailyModSessions</code> → <code>farmMult</code> : plein, moitié, 15 %, rien).
+  Profil « En cours » : Word Families en route (34/50, 85 %), False Friends bloqué par la précision (71 %),
+  Connectors maîtrisé, Linking Bridge jamais joué, Gerund 2 parties aujourd'hui, Phrasal Dojo 3 (plus d'XP).
+  Hubs recopiés de <code>src/</code> (A = rendu actuel à l'identique), CSS et composants réels, aucun appel réseau.
+</footer>
+<script>
+var VARIANTS = [
+  { id: "A", name: "Actuel", desc: "Les tuiles d'aujourd'hui : nom, description, flèche." },
+  { id: "B", name: "Anneau", desc: "Anneau autour de l'icône qui se remplit vers le coffre (éteint et pointillé si la précision est sous 80 %, or une fois maîtrisé, coffre en médaillon). Dernier score à la place de la description. Crans d'XP du jour à droite." },
+  { id: "C", name: "Coffre", desc: "Le coffre Champion à droite est l'objectif : terne et jaugé en %, il brille et frétille une fois gagné. Barre fine sous le texte. Étiquette seulement quand l'XP du jour est réduite. Étagère de coffres en tête de hub." },
+  { id: "D", name: "Registre", desc: "Tuile d'aujourd'hui intacte + une ligne de registre (dernier score, progression, XP du jour) et un liseré de progression au pied de la carte. Le plus discret." },
+];
+var ids = ["screen", "profile", "mode", "skin", "rm", "size"];
+var shown = { A: true, B: true, C: true, D: true };
+
+try {
+  var saved = JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}");
+  ids.forEach(function (k) { if (saved[k] != null) { var el = document.getElementById(k); if (el.type === "checkbox") el.checked = saved[k]; else el.value = saved[k]; } });
+  if (saved.shown) shown = saved.shown;
+} catch (e) { console.warn("[living-hubs] hash illisible:", e && e.message); }
+
+var vs = document.getElementById("vs");
+VARIANTS.forEach(function (v) {
+  var l = document.createElement("label");
+  l.innerHTML = '<input type="checkbox" ' + (shown[v.id] ? "checked" : "") + "> " + v.id;
+  l.firstChild.addEventListener("change", function (e) { shown[v.id] = e.target.checked; render(); });
+  vs.appendChild(l);
+});
+
+function state() {
+  var s = {};
+  ids.forEach(function (k) { var el = document.getElementById(k); s[k] = el.type === "checkbox" ? el.checked : el.value; });
+  return s;
+}
+function frameUrl(v, s) {
+  var p = new URLSearchParams({ v: v, screen: s.screen, profile: s.profile, mode: s.mode, skin: s.skin, rm: s.rm ? "1" : "0" });
+  return "frame.html?" + p.toString();
+}
+function render() {
+  var s = state();
+  location.replace("#" + encodeURIComponent(JSON.stringify(Object.assign({ shown: shown }, s))));
+  var list = VARIANTS.filter(function (v) { return shown[v.id]; });
+  var avail = Math.min(window.innerWidth - 24, 2400);
+  var sc = s.size === "1" ? 1 : Math.min(1, Math.max(0.34, (avail - 18 * (list.length - 1)) / (list.length * 375)));
+  var grid = document.getElementById("grid");
+  grid.style.setProperty("--s", sc);
+  grid.style.setProperty("--w", Math.round(375 * sc) + "px");
+  grid.style.setProperty("--h", Math.round(812 * sc) + "px");
+  grid.innerHTML = "";
+  list.forEach(function (v) {
+    var url = frameUrl(v.id, s);
+    var cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerHTML = '<div class="cap"><b>' + v.id + " · " + v.name + '</b><a href="' + url + '" target="_blank">Ouvrir seul ↗</a></div>' +
+      '<div class="phone"><iframe loading="eager" src="' + url + '"></iframe></div>' +
+      '<div class="desc">' + v.desc + "</div>";
+    grid.appendChild(cell);
+  });
+}
+ids.forEach(function (k) { document.getElementById(k).addEventListener("change", render); });
+var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(render, 200); });
+render();
+</script>
+</body>
+</html>
