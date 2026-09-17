@@ -359,8 +359,40 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
 ### Pour la prochaine session
 - Proto **moments de victoire** (lot 1 de l'audit) : cérémonie de montée de niveau/ligue sur le
   moteur du coffre v3 + écran de fin commun (`<SessionResult>`), puis hubs vivants.
-- Question ouverte : la League en français côté élève, voulu (bonus de note) ou à passer en anglais ?
+- ~~Question ouverte : la League en français côté élève~~ → voulu (réponse de Jérémy, 2026-09-17).
 - Contenu : le conseil du jour « When guessing, pick B or C » est faux depuis le mélange des options.
+
+## Session 2026-09-17 (après-midi) — Écran de fin commun « Verdict d'Aldric », lots 0 à 5
+
+- **Proto `prototypes/victory/`** (`c961ce8`), choix de Jérémy : **V3 « Verdict d'Aldric »**, niveau dans le
+  parchemin, promotion « Ascension », examens gardés + cérémonies. Plan en lots, un commit par
+  changement logique, vérification en vrai sur le compte Teacher à chaque lot (dev = base de prod).
+- **Lot 0-1** : `gateSteps` + `settleXp.steps` + test (`02d9d23`), `lib/sessionText.js`, particules →
+  `components/particles.js`, `SessionResult` + `Ceremonies` + CSS `sr-`/`cer-`, banc
+  `prototypes/victory/real.html`, infra `App()` (sessions, diversion des coffres/Darics/trophées), pilote Drill.
+- **Lot 2 (bugs)** : XP réduite deux fois sur bforge/tavern/clue (`1d8ea56`), total +1 sur P3/P4 (`e59678f`).
+- **Lot 3** (BUILD_ID `2026-09-17-session-lot3`) : mini-modules grammaire, GerInf, PhrasalDojo, Listening
+  P1-P4, P6, P7, Strategy Quiz, Daily, Sentence Builder, Audio Blitz.
+- **Lot 4** (BUILD_ID `2026-09-17-session-lot4`) : Word Tavern, Clue Hunter, Speed Match, Word Fall
+  (`gameSession`), Gauntlet (4 épreuves), Modal Council, Part 5 Exam Simulation ; `miniDone` et
+  `getSpotlightMult` retirés. Correctifs : XP de Clue Hunter / Speed Match / Word Fall / Gauntlet / Modal
+  versée à la fin et plus derrière « Collect XP » / « OK, back » ; Word Fall lisait vies et question du
+  coup précédent sur une chute (`148da1d`) ; leçons à deux trous ; sceau de Clue Hunter en points.
+- **Lot 5** : cérémonies niveau/ligue par-dessus Mock/Boss/Endless (`fdeccb9`), vérifiées en posant l'état
+  localement (aucun examen joué par script : `mockResults`, estimation TOEIC, cooldown du Boss).
+- **Explications P1/P2** : les leçons citent le texte des options (`xq`, `4235065`) ; l'exercice gardait
+  des lettres justes, mais la carte de leçon ne les montre pas.
+- **Vérifié en vrai sur Teacher** : chaque famille jouée (souvent par script, pane masqué : ticks
+  MessageChannel, stub audio), XP affichée = profil = `load_student`, coffres et trophées dans le
+  parchemin, Continue / Play again. Effet de bord : Speed Match fini en 2,6 s par script → 956 XP
+  (formule en 1/temps), niveau 81 et Diamond sur Teacher (masqué des classements).
+- Décision : **la League reste en français** (voulu).
+
+### Pour la prochaine session
+- Jérémy joue un **Mock** pour valider les cérémonies d'examen en vrai.
+- Audit visuel, lot suivant : hubs vivants (anneau vers le coffre mastery, dernier score, XP du jour).
+- Contenu : le conseil du jour « When guessing, pick B or C » est faux depuis le mélange des options.
+- Speed Match : la formule d'XP en 1/temps se farme par script (plancher 1 s), à borner si besoin.
 
 ## Session 2026-09-17 (suite) — Dashboard formateur bloqué sur « Loading groups... » (smartphone)
 

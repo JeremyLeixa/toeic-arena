@@ -107,7 +107,8 @@ pas l'audio. Le check couvre aussi les chemins **dérivés** dans App.jsx
 ```
 src/
   App.jsx              — Root component App() only (~1,500 lines): state, effects, XP
-                          pipeline (applyXpGates/addXp), session (onboard/recover/logout),
+                          pipeline (settleSession/sealSession, applyXpGates/addXp pour examens
+                          et Duel), session (onboard/recover/logout),
                           chest queue, BGM control, pg() wrapper. BUILD_ID just above it.
   routes.jsx           — renderRoute(c): the 41 `sp` routes, context destructured from App().
                           Heavy screens are `lazyNamed(() => import(...), "Name")` (Phase 5)
@@ -222,7 +223,7 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 
 ### Architecture (découpage du 2026-09-15)
 - **Couches, dans un seul sens** : `data/` → `lib/` → `components/` → `features/` → `App.jsx` / `routes.jsx`. `lib/` n'importe jamais de JSX ; `components/` n'importe jamais `features/` ; une feature n'importe que son propre dossier. `tests/check_import_graph.cjs` refuse tout cycle et tout sens interdit (un cycle ESM donne `undefined` à l'init d'une constante, sans casser le build).
-- **`App()` reste le seul détenteur de l'état global** : 25 `useState`, 24 effets, 43 fonctions internes (`sv`, `addXp`, `applyXpGates`, `grantChestLocal`, `onboard`, `recover`, `logout`…). Les écrans sont **prop-driven** : ils reçoivent `u`, `done`, `back`, `nav`, `gate`… et ne touchent jamais l'état d'`App()` directement. Pas de contexte React, pas d'extraction des hooks (Phase 4b non retenue) sans décision explicite.
+- **`App()` reste le seul détenteur de l'état global** : 28 `useState`, 26 effets, une quarantaine de fonctions internes (`sv`, `settleSession`, `addXp`, `grantChestLocal`, `onboard`, `recover`, `logout`…). Les écrans sont **prop-driven** : ils reçoivent `u`, `done`, `back`, `nav`, `gate`… et ne touchent jamais l'état d'`App()` directement. Pas de contexte React, pas d'extraction des hooks (Phase 4b non retenue) sans décision explicite.
 - **Nouveau module = nouveau fichier** dans `src/features/<module>/`, route dans `src/routes.jsx` (voir le skill `add-module`). Ne pas remettre de composant dans `App.jsx`.
 - **Écrans chargés à la demande** (Phase 5, 2026-09-16 — bundle principal 3,28 → 1,15 Mo) : un écran lourd s'écrit `var X=lazyNamed(function(){return import("./features/…/X.jsx");},"X");` (`components/lazyNamed.js`), **jamais** avec un import statique à côté (le chunk ne sortirait pas, en silence : `check_import_graph` le refuse, comme un chemin ou un nom exporté faux). Dans `routes.jsx`, même nom local qu'avant (exempt du recensement de symboles) ; dans `App.jsx`, alias `XLazy` (le recensement refuse un `Profile` déclaré deux fois). Le fallback est fourni par `pg()` (`<Suspense fallback={<LoadingMark inline/>}>` + `LoadBoundary` à `key` = route) et par le shell Onboard ; ne pas en poser d'autre. Restent eager : Home (onglet par défaut), les onglets, NarratorOverlay, Chests, `train/grammar.jsx`. `main.jsx` recharge une fois sur `vite:preloadError` (chunk périmé après déploiement) ; `preloadLazyScreens` recharge tous les chunks à l'idle pour la parité hors-ligne.
 - **Un fichier `.jsx` n'exporte que des composants** (`react-refresh/only-export-components`, en erreur ici) : constantes → `lib/`, helper de rendu → privé au fichier. Exception connue, comptée à part par `lintgate` : `renderAv` dans `components/avatar.jsx`.
@@ -241,12 +242,52 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 - **`mockResults`** stores `mock1`, `mock2`, `mock3`, `boss`. Boss Test saves best score but updates `date` on every attempt.
 
 ### XP System
-- **Le calcul des portes vit dans `src/lib/xp.js`** (pur : `accuracyGate`, `farmMult`, `isBoostedByEvents`, `spotlightMult`, `gateXp`, `settleXp`), testé par `tests/check_xp_gates.cjs`. `applyXpGates` / `addXp` dans `App.jsx` ne font qu'injecter l'état (`u`, événements, médiane, instant) et exécuter les effets rendus (Darics du Focus, jingles, haptique, toast, coffres). Toute règle ci-dessous se change **dans `xp.js` et dans le test**, jamais dans App.jsx. La table des ligues est injectée (`ctx.leagueOf`) : `lib/league.js` importe Supabase et n'est pas requérable en Node.
+- **Le calcul des portes vit dans `src/lib/xp.js`** (pur : `accuracyGate`, `farmMult`, `isBoostedByEvents`, `spotlightMult`, `gateSteps`, `gateXp`, `settleXp`), testé par `tests/check_xp_gates.cjs`. `settleSession`, `applyXpGates` / `addXp` dans `App.jsx` ne font qu'injecter l'état (`u`, événements, médiane, instant) et exécuter les effets rendus (Darics du Focus, jingles, haptique, toast, coffres). Toute règle ci-dessous se change **dans `xp.js` et dans le test**, jamais dans App.jsx. La table des ligues est injectée (`ctx.leagueOf`) : `lib/league.js` importe Supabase et n'est pas requérable en Node.
 - **No daily XP cap.** Diminishing returns per module per day are the anti-farming mechanism.
 - **Flashcards give 0 XP.** Reframed as memorization-only tool. Students earn XP on vocabulary via Word Tavern (15Q quiz) instead.
 - **Diminishing returns:** Mock tests 100/40/0% per day. Other modules follow standard gates.
 - **Accuracy gate:** <30% accuracy → 10% XP, 30-49% → 50%, ≥50% → 100%.
 - **TOEIC Progression ranking is the primary bonification metric.** XP Overall is secondary.
+
+### Écran de fin de session commun (`SessionResult`, 2026-09-17)
+Proto `prototypes/victory/`, choix de Jérémy **V3 « Verdict d'Aldric »** (tient en mode clair), niveau
+dans le parchemin, promotion de ligue en cérémonie « Ascension », examens gardés + cérémonies.
+Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
+`components/SessionResult.jsx` ; le skill `add-module` en tient la liste de contrôle.
+- **Chiffres réellement versés, étape par étape.** `lib/xp.js` : `gateSteps(base,sc,tot,modId,ctx)` rend
+  `{xp, focusHit, steps}` et `gateXp` lui délègue (même calcul, testé : dernière étape = XP versée) ;
+  `settleXp` rend aussi ses `steps` (weekend, streak, flash hour, underdog, daily doubler, +10). Libellés,
+  verdict et épilogue d'Aldric dans `lib/sessionText.js` (pur). Avant, les écrans rappelaient
+  `p.gate()` au rendu, après l'incrément des compteurs du jour : XP affichée ≠ versée.
+- **Chaîne dans `App()`** : `settleSession(modId,sc,tot,baseXp,{spotlight})` (portes + settleXp + coffres,
+  sans toast ni son, pose `lastSession` et ouvre la session) → stats, `recordModule`, `checkMission`… →
+  `sealSession(c,sid)` (ajoute la mission du jour, recalcule niveau et ligue) → `sv(c)` → rend le `sid`.
+  Handlers : `miniSession` (mini-modules, Spotlight compris), `drillDone`, `dailyDone`, `gameSession`
+  (Speed Match, Word Fall : record et coffres dans `recordGame`, partagé avec `gameDone` du Duel), et
+  les handlers en ligne de `routes.jsx` (sbuild, ablitz, clue, hubs Gauntlet/Modal). **Base XP** en
+  entrée : les portes ne s'appliquent qu'une fois (bforge, tavern et clue les appliquaient deux fois).
+- **Le module** : `mistakesRef` (erreurs à la réponse : `{tag, prompt, yours, correct, why, noBlank?}`,
+  `_____` dans `prompt` pour le trou, « … » dans `correct` pour deux trous), `sidRef.current=p.done(…)`
+  **à la fin de la manche, jamais derrière un bouton** (« Collect XP » perdait l'XP si l'élève quittait),
+  puis `<SessionResult session sid name mistakes onContinue onReplay>{extras}</SessionResult>`. Le
+  composant n'affiche QUE `session.id===sid` (sinon parchemin « sealing », Continue au bout de 2 s).
+  Fin sur minuteur (dernière vie, auto-submit) : envoi dans `useEffect([phase])` + `sentRef`, **placé
+  avant tout `return`** (`lintgate` ne fait pas échouer un rules-of-hooks : `npx eslint <fichier>`).
+  Record lu dans `p.u` AVANT `p.done` (`sv()` l'écrit tout de suite). Jeux au score : `mode="points"`
+  ou `"time"` + `points`/`pointsLabel` ; sans liste d'erreurs (Speed Match), ne pas passer `mistakes`.
+- **Hubs internes** (Gauntlet, Modal Council) : `subDone` RENVOIE `onModuleDone(...)` et ne ferme plus
+  l'épreuve ; Continue = `closeSession` + retour au hub, Play again = `closeSession` + `playBGM` + `subRun++`
+  (clé de l'épreuve). GerInf / PhrasalDojo : Continue → mode hub, Play again → reset (erreurs comprises).
+  Ailleurs, Play again = `replaySession` (`runKey` dans la clé du `LoadBoundary` de `pg()`).
+- **Tant qu'une session est ouverte** (`openSessionRef`, capturé à l'octroi) : coffres confirmés
+  (`deliverChest`), Darics (`grantMarks`) et trophées (`sv`) vont **dans le parchemin**, pas en toast
+  (le toast n'est rendu que sur les onglets) ; Aldric attend (`pg()`) ; la route ne relance pas sa
+  musique (`if(!lastSession)playBGM(…)`). Quitter la route autrement que par Continue ferme la session
+  (effet sur `[sp]`). Plein écran fixe z 150, **jamais dans un `.enter`** (translateY).
+- **Examens** (Mock, Boss, Endless) : gardent leur écran de résultats et le toast d'XP ;
+  `addXp(gxp,{ceremony:true})` pose une file `examCeremony` (niveau puis ligue, coffre de promotion)
+  que `ExamCeremonies` (`components/Ceremonies.jsx`) affiche 1,4 s après, avec son propre jingle.
+- Banc sans base : `prototypes/victory/real.html` (vrai composant, scénarios, clair/sombre).
 
 ### TOEIC Score Estimator (Chantier A — refonte V2, 2026-06-09)
 - `estimateToeic(raw, total)` — piecewise curve, harder to gain at the top. Échelle **section** (5-495), pas un total.
@@ -279,7 +320,7 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 - BGM: `bgm_tavern.mp3`.
 
 ### Chest System
-- **`ChestEarnedToast`** at grant moment (bottom-center, above tab bar). Queue (FIFO) + anti-interruption during tests (boss/endless/mock) + queue dispatcher useEffect.
+- **`ChestEarnedToast`** at grant moment (bottom-center, above tab bar). Queue (FIFO) + anti-interruption during tests (boss/endless/mock) + queue dispatcher useEffect. **Exception** : un coffre gagné pendant qu'un écran de fin est ouvert s'affiche dans le parchemin (`deliverChest`, voir « Écran de fin de session commun »).
 - **`ChestOpenModal` v3 « Crack & Cards »** (2026-09-16, proto `prototypes/chest-animations-v3/`) — chute du coffre, **3 taps** (appui long = ouverture directe) dont la lumière annonce la **meilleure rareté du butin** (peut sauter d'un palier), couvercle qui bascule, puis récompenses en **cartes face cachée** à retourner (inspection + flip 3D, reflet holo Epic/Legendary), « Reveal all », **récap** (meilleur objet en vedette) → Collect all. Skip à tout moment.
   - **Découpage** : `Chests.jsx` rend le squelette et relaie les événements ; `chestSequence.js` = moteur impératif (Web Animations API sur refs, garde `gen` contre les séquences périmées) ; `ChestCards.jsx` (cartes, tuiles) ; `components/particles.js` (particules canvas `createChestFx`, une instance par modal ; partagé avec l'écran de fin de session) ; `chestTheme.js` (couleurs, fond sombre fixe : hex bruts + marqueurs `/*fond local*/`, jamais `tone()`) ; sons `playChest*/playCard*/playLoot*` + `duckBGM` dans `sounds.js`.
   - **Ordre et regroupement** dans `lib/chestReveal.js` (pur, `tests/check_chest_reveal.cjs`) : monnaies sur une carte, tokens sur une carte, puis chaque objet à rareté seul, du moins au plus rare. Badge = rareté de l'**objet** (les cheat sheets en ont une), jamais celle du coffre.
@@ -377,12 +418,13 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 ### BGM Control (centralized)
 - Central useEffect in main App watches `sp` and `tab`. Stops BGM on entry to audio routes (lis, lisP1-P4, ablitz). Restores `bgm_home` on return to home/league/profile without subpage.
 - `SELF_MANAGED` routes that handle their own BGM: boss, endless, matchE, wfall, duel, sbuild, clue, tavern, **gauntlet**. These are excluded from centralized control.
+- Routes à écran de fin commun : `if(!lastSession)playBGM(…)`, sinon la musique repart sous le parchemin à chaque rendu.
 - Auto-start on first user interaction: only triggers `bgm_home` if `tab==="home" && !sp`.
 
 ### Grammar Gauntlet 🛡️ (S2 major feature, delivered 2026-04-22)
 - Route `sp==="gauntlet"` → `GauntletHub` component.
 - 4 sub-modules rendered via internal `subMode` state: `"irregular"` (IrregularCrypt), `"tense"` (Chronomancer), `"passive"` (PassiveForge), `"relative"` (RelativeWeaver).
-- `onModuleDone(subId, sc, tot, xp)` prop bubbles completion to App, which runs the standard XP pipeline: `applyXpGates` → `addXp` → `recordModule("gauntlet_"+subId)` → `grantWeeklyChest` if perfect.
+- `onModuleDone(subId, sc, tot, xp)` prop bubbles completion to App, which runs `settleSession("gauntlet_"+subId, …, {spotlight:true})` → stats → `recordModule` → `checkMission` → `grantWeeklyChest` if perfect → `sealSession` → `sv`, and **returns the session id**. The sub-module shows `SessionResult` itself (Continue → hub, Play again → `subRun` key).
 - Each sub-module has its own BGM: `bgm_crypt` / `bgm_chrono` / `bgm_forge` / `bgm_weaver`.
 - Content pool: 270 items total (80/70/60/60). Session size 15 everywhere.
 - TOEIC estimator: reading section has a new `gauntlet` weight of 0.15 (avg accuracy across the 4 sub-modules).
@@ -390,7 +432,7 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 ### Modal Council ⚖️ (S2 module, delivered 2026-04-30)
 - Route `sp==="modals"` → `ModalCouncilHub` component.
 - 2 sub-modules : `"match"` (ModalMatch — tap-to-pair, 3 boards × 5 pairs = 15 items) + `"sort"` (ModalSort — tap-to-bucket among 4 functions: Obligation / Advice / Possibility / Deduction).
-- Same `onModuleDone(subId, sc, tot, xp)` pipeline as Gauntlet → `recordModule("modals_"+subId)`.
+- Same `onModuleDone(subId, sc, tot, xp)` pipeline as Gauntlet (session id returned, `SessionResult` in the sub-module) → `recordModule("modals_"+subId)`.
 - **First app-wide use of the tap-to-pair UX pattern** (precedent for future drag/drop-style activities without HTML5 DnD lib — mobile-first, zero dependency).
 - BGM **placeholder**: both sub-modules currently wired to `bgm_chrono`. Generate 2 dedicated Mureka tracks and replace in `ModalCouncilHub` `cards` config.
 - Content pool: 15 boards × 5 pairs (75 Match items) + 50 Sort items in `src/data/modals.js`. Session: 15 items everywhere (Tier B XP).
@@ -438,6 +480,7 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - `<XpToast>` and `<AchToast>` MUST be rendered inside `pg()` (the wrapper for `sp===X` sub-page routes), not only in the main return.
 - Rationale: if a module earns XP without navigating back to the main return (e.g. Gauntlet sub-module → GauntletHub stays on `sp==="gauntlet"`), the toast is set by `addXp()` but never reaches the DOM until the user manually navigates home, by which time the 4s timer has expired.
 - The fix landed 2026-04-22 alongside the icon refactor.
+- Since 2026-09-17 only exams, Duel and Flashcards still raise `XpToast` (via `addXp`) : modules on `SessionResult` show their XP in the parchment, never as a toast.
 
 ### Gauntlet XP tier (2026-04-22 rebalance)
 - 15 Q per sub-module, base 15 + 5 × correct + 35 perfect bonus → max 125 XP per run.
@@ -619,7 +662,8 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 - **Onboarding** (name, classcode, GDPR, Battle Scan, push opt-in): **French** — trust/consent flow, students need native language
 - **Battle Report**: **English** (except explicit French labels like "Notification push" in privacy section)
 - **langBridge transition screen**: **English** — signals language shift to students
-- **Main app** (Home, Train, Games, League, Profile, modules): **English**
+- **Main app** (Home, Train, Games, Profile, modules): **English**
+- **League** : **French** where it already is (tabs Semaine / Général / Progrès, labels) — **voulu**, confirmé par Jérémy le 2026-09-17 ; ne pas « corriger » en anglais
 - **Push notifications** (all 3 Edge Functions): **English**
 - **Chests** (labels, rarities, avatar/skin names in chests.js): **English** (keys unchanged for DB compat)
 - **Privacy Policy**: **French** (legal document, FR audience)
@@ -683,6 +727,7 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 - **P1 training:** `public/audio/p1/{id}_{0-3}.mp3`
 - **P2 training:** `public/audio/p2/{id}_q.mp3` + `{id}_{0-2}.mp3`
 - **Lettres (depuis le 2026-09-16) :** `public/audio/letters/{voix}_{A|B|C|D}.mp3`, 6 voix × 4 lettres. **Les clips d'options P1/P2 ne contiennent plus la lettre** : `playLetteredOption(part,id,pos,url)` (`lib/audio.js`) joue « B. » dans la voix de l'item puis l'option **affichée** en position `pos`. C'est ce qui rend la permutation des options (`aud`, `lib/listeningShuffle.js`) libre : l'élève entend toujours A, B, C(, D) dans l'ordre. La voix d'un item se déduit de son numéro (`lib/listeningVoices.js`, règle partagée avec le script) ; **ne jamais regénérer un clip d'option avec sa lettre dedans**, et ne pas changer la règle de voix sans regénérer les clips concernés.
+- **Explications P1/P2 et leurs lettres** : l'exercice affiche `x` remappé aux lettres affichées (`remapOptLetters`) ; les leçons de l'écran de fin, qui ne montrent pas les lettres, affichent `xq` (`quoteOptLetters` : chaque lettre devient le texte de l'option cité), calculé sur l'item **d'origine** au moment de la permutation. Un `x` déjà remappé ne se relit pas (« and A trap » passe pour un article). Test `validate_listening_shuffle` (I2, I3).
 - **P3 training:** `public/audio/p3/{id}_line{0-3}.mp3` + `{id}.mp3` (stitched)
 - **P4 training:** `public/audio/p4/{id}.mp3`
 - **Boss test:** `public/audio/boss/p1_XX_Y.mp3`, etc.
@@ -700,7 +745,7 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 ### BGM Wiring Pattern
 ```javascript
 // In the router (src/routes.jsx, renderRoute — les noms d'App() viennent du contexte c) :
-if(sp==="moduleName"){playBGM("bgm_name");return pg(<Component done={function(...){stopBGM();handler(...);}} back={function(){stopBGM();sSP(null);sT("tab");}}/>);}
+if(sp==="moduleName"){if(!lastSession)playBGM("bgm_name");return pg(<Component u={u} done={function(sc,tot,xp){stopBGM();return miniSession(sc,tot,xp);}} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){stopBGM();sSP(null);sT("tab");}}/>);}
 ```
 
 ---
