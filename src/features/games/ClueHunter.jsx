@@ -1,10 +1,11 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { Bar } from "../../components/Bar.jsx";
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { CLUE_HUNTER } from "../../data/clueHunter.js";
 import { shuffle } from "../../lib/util.js";
 import { playCorrect, playWrong } from "../../sounds.js";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 // ─── CLUE HUNTER ───
 export function ClueHunter(p){
@@ -15,6 +16,7 @@ export function ClueHunter(p){
   var[selected,setSel]=useState([]);
   var[pick,sPk]=useState(-1);
   var[scores,setSc]=useState([]);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
  
   function toggleChip(idx){
     if(phase!=="q")return;
@@ -30,13 +32,22 @@ export function ClueHunter(p){
     var clueOK=selected.length>0&&selected.every(function(s){return item.chips[s].c;})&&selected.some(function(s){return item.chips[s].c;});
     var ansOK=i===item.ans;
     var pts=clueOK&&ansOK?10:clueOK&&!ansOK?4:!clueOK&&ansOK?3:0;
+    // Mauvaise réponse : la phrase à trou. Bonne réponse sur un mauvais indice : la phrase complète et les indices.
+    if(!ansOK)mistakesRef.current.push({tag:"Clue Hunter · "+item.cat,prompt:item.sentence,yours:item.opts[i],correct:item.opts[item.ans],why:item.exp});
+    else if(!clueOK)mistakesRef.current.push({tag:"Clue Hunter · "+item.cat+" · clue",prompt:item.sentence.replace("___",item.opts[item.ans]),noBlank:true,yours:selected.map(function(k){return item.chips[k].w;}).join(" + "),correct:item.chips.filter(function(ch){return ch.c;}).map(function(ch){return ch.w;}).join(" + "),why:item.clue});
     setSc(function(prev){return prev.concat([{clue:clueOK,ans:ansOK,pts:pts}]);});try{if(ansOK)playCorrect();else playWrong();}catch(e){}
     sPk(i);sP("ans_fb");
   }
  
+  // Fin de partie : XP versée ici, plus derrière « Collect XP » (quitter l'écran de fin la perdait).
   function next(){
     if(ci<items.length-1){sC(ci+1);setSel([]);sPk(-1);sP("q");}
-    else sP("done");
+    else{
+      var ptsTotal=scores.reduce(function(a,x){return a+x.pts;},0);
+      var correct=scores.filter(function(x){return x.clue||x.ans;}).length;
+      sidRef.current=p.done(correct,TOTAL,20+Math.round(ptsTotal*2.5));
+      sP("done");
+    }
   }
  
   // ── shared sentence renderer ──
@@ -103,32 +114,21 @@ export function ClueHunter(p){
  
   // ── DONE ──
   if(phase==="done"){
-    var total=scores.reduce(function(s,x){return s+x.pts;},0);
-    // baseXp part à la route (qui applique les portes) ; xp, réduite, n'est qu'affichée. Avant le
-    // 2026-09-17 « Collect XP » envoyait xp déjà réduite : portes appliquées deux fois.
-    var baseXp=20+Math.round(total*2.5);var xp=baseXp;
-    var perfect=scores.filter(function(s){return s.clue&&s.ans;}).length;
-    var correct=scores.filter(function(s){return s.clue||s.ans;}).length;
-    if(p.gate)xp=p.gate(xp,correct,TOTAL);
-    var clueOnly=scores.filter(function(s){return s.clue&&!s.ans;}).length;
-    var ansOnly=scores.filter(function(s){return !s.clue&&s.ans;}).length;
-    var pct=Math.round(total/(TOTAL*10)*100);
-    var emoji=pct>=80?"🏆":pct>=60?"⚔️":pct>=40?"🧭":"📚";
-    return(
-      <div className="enter" style={{padding:"32px 24px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-        <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><ResultIcon e={emoji} size={60}/></div>
-        <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:6}}>Case Closed!</h1>
-        <div className="out" style={{fontSize:52,fontWeight:900,color:pct>=70?"var(--green)":pct>=40?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{pct}%</div>
-        <div className="out" style={{fontSize:22,fontWeight:800,color:"var(--gold)",marginBottom:36}}>+{xp} XP</div>
-        <div className="crd" style={{marginBottom:28,padding:24}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-            <div><div className="out" style={{fontSize:32,fontWeight:900,color:"var(--green)"}}>{perfect}</div><div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Perfect{"\n"}(clue + answer)</div></div>
-            <div><div className="out" style={{fontSize:32,fontWeight:900,color:"var(--cyan)"}}>{clueOnly}</div><div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Clue only{"\n"}(right clue)</div></div>
-            <div><div className="out" style={{fontSize:32,fontWeight:900,color:"var(--orange)"}}>{ansOnly}</div><div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Answer only{"\n"}(lucky!)</div></div>
-          </div>
+    var total=scores.reduce(function(a,x){return a+x.pts;},0);
+    var perfect=scores.filter(function(x){return x.clue&&x.ans;}).length;
+    var clueOnly=scores.filter(function(x){return x.clue&&!x.ans;}).length;
+    var ansOnly=scores.filter(function(x){return !x.clue&&x.ans;}).length;
+    return(<SessionResult session={p.session} sid={sidRef.current} name="Clue Hunter" mistakes={mistakesRef.current}
+      onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+      <div className="crd" style={{padding:16}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
+          <div><div className="out" style={{fontSize:26,fontWeight:900,color:"var(--green)"}}>{perfect}</div><div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>Clue + answer</div></div>
+          <div><div className="out" style={{fontSize:26,fontWeight:900,color:"var(--cyan)"}}>{clueOnly}</div><div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>Clue only</div></div>
+          <div><div className="out" style={{fontSize:26,fontWeight:900,color:"var(--orange)"}}>{ansOnly}</div><div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>Answer only</div></div>
         </div>
-        <button className="btn1" onClick={function(){var correct=scores.filter(function(s){return s.clue||s.ans;}).length;p.done(correct,TOTAL,baseXp);}}>Collect XP</button>
-      </div>);
+        <div style={{fontSize:12,color:"var(--t3)",marginTop:10,textAlign:"center"}}>{total+" / "+(TOTAL*10)+" pts"}</div>
+      </div>
+    </SessionResult>);
   }
  
   var item=items[ci];
