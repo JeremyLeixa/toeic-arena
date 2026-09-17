@@ -23,6 +23,7 @@ import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, lo
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
+import { MASTERY_BLACKLIST, isMastered } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
@@ -369,7 +370,7 @@ useEffect(function(){
   // Modules excluded from Mastery : mock1/2/3/boss already have dedicated Champion triggers
   // (mock_1, etc.), and "daily" / "csess" are not real practice modules.
   var masteryRef=useRef({});
-  var MASTERY_BLACKLIST={mock1:1,mock2:1,mock3:1,boss:1,daily:1,csess:1};
+  // Seuils (50 Q, 80 %) et liste noire : lib/hubStatus.js, lus aussi par les tuiles des hubs.
   useEffect(function(){
     if(!u||!u.moduleScores)return;
     if(u.classCode==="visitor")return;
@@ -378,7 +379,7 @@ useEffect(function(){
       if(masteryRef.current[modId])return; // session dedup — anti boucle
       var m=u.moduleScores[modId];
       if(!m||!m.total)return;
-      if(m.total>=50&&(m.correct/m.total)>=0.8){
+      if(isMastered(m)){
         masteryRef.current[modId]=true;
         grantChestLocal("mastery_"+modId,"champion");
         // Arena Shop P1 — 50 Darics, one-shot per module ever.
