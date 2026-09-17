@@ -266,8 +266,8 @@ export function LinkingBridge(p){
   function nxt(){
     if(ci<items.length-1){sC(ci+1);sPk(-1);sP("q");}
     else{
+      // XP de BASE : miniDone applique les portes. Elle était déjà réduite ici, donc deux fois (2026-09-17).
       var xp=15+sc*5+(sc===items.length?35:0);
-      if(p.gate)xp=p.gate(xp,sc,items.length);
       sP("done");
       p.done(sc,items.length,xp);
     }

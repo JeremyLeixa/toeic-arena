@@ -104,7 +104,9 @@ export function ClueHunter(p){
   // ── DONE ──
   if(phase==="done"){
     var total=scores.reduce(function(s,x){return s+x.pts;},0);
-    var xp=20+Math.round(total*2.5);
+    // baseXp part à la route (qui applique les portes) ; xp, réduite, n'est qu'affichée. Avant le
+    // 2026-09-17 « Collect XP » envoyait xp déjà réduite : portes appliquées deux fois.
+    var baseXp=20+Math.round(total*2.5);var xp=baseXp;
     var perfect=scores.filter(function(s){return s.clue&&s.ans;}).length;
     var correct=scores.filter(function(s){return s.clue||s.ans;}).length;
     if(p.gate)xp=p.gate(xp,correct,TOTAL);
@@ -125,7 +127,7 @@ export function ClueHunter(p){
             <div><div className="out" style={{fontSize:32,fontWeight:900,color:"var(--orange)"}}>{ansOnly}</div><div style={{fontSize:12,color:"var(--t2)",marginTop:4}}>Answer only{"\n"}(lucky!)</div></div>
           </div>
         </div>
-        <button className="btn1" onClick={function(){var correct=scores.filter(function(s){return s.clue||s.ans;}).length;p.done(correct,TOTAL,xp);}}>Collect XP</button>
+        <button className="btn1" onClick={function(){var correct=scores.filter(function(s){return s.clue||s.ans;}).length;p.done(correct,TOTAL,baseXp);}}>Collect XP</button>
       </div>);
   }
  

@@ -79,10 +79,10 @@ export function WordTavern(p){
     if(ci<qs.length-1){sC(ci+1);sSel(-1);}
     else{
       var finalSc=sc;
+      // XP de BASE : miniDone applique les portes. Elle était déjà réduite ici, donc deux fois (2026-09-17).
       var baseXp=20+finalSc*6;
-      var gxp=p.gate?p.gate(baseXp,finalSc,TOTAL):baseXp;
       sP("done");
-      p.done(finalSc,TOTAL,gxp);
+      p.done(finalSc,TOTAL,baseXp);
     }
   }
 
