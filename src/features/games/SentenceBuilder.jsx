@@ -1,6 +1,7 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { Bar } from "../../components/Bar.jsx";
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { SpeakBtn } from "../../components/SpeakBtn.jsx";
 import { SENTENCES } from "../../data/sentences.js";
 import { shuffle } from "../../lib/util.js";
@@ -41,6 +42,7 @@ export function SentenceBuilder(p){
   var dragRef=useRef(null); // {chunk, source:"bank"|"placed", startX, startY, x, y, insertIdx, zone:"answer"|"bank"|"outside", started, originalIdx}
   var answerRef=useRef(null);
   var bankRef=useRef(null);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
 
   var items=useMemo(function(){return shuffle(SENTENCES.slice()).slice(0,TOTAL);},[]);
 
@@ -89,9 +91,12 @@ export function SentenceBuilder(p){
     }
   },[ph]);
 
+  // Erreur enregistrée au clic « Next » : phrase incomplète au temps écoulé ou ordre faux.
   function next(){
+    var sit=items[ci];var ok=placed.length===sit.chunks.length&&placed.every(function(pc,k){return pc.idx===k;});
+    if(!ok)mistakesRef.current.push({tag:"Sentence order"+(sit.cat?" · "+sit.cat:""),prompt:"Put the blocks in the right order",yours:placed.length?placed.map(function(pc){return pc.text;}).join(" "):"(time's up)",correct:sit.chunks.join(" ")});
     if(ci<items.length-1){sC(ci+1);sP("q");}
-    else{sP("done");p.done(sc,TOTAL,20+sc*5);}
+    else{sidRef.current=p.done(sc,TOTAL,20+sc*5);sP("done");}
   }
 
   // ── DRAG MECHANICS ───────────────────────────────────────────────
@@ -220,13 +225,8 @@ export function SentenceBuilder(p){
   </div>);
 
   // ═══ DONE ═══
-  if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,TOTAL);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=12?"🏆":sc>=8?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Builder Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button>
-  </div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Sentence Builder" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   // ═══ PLAY + FEEDBACK ═══
   var it=items[ci];

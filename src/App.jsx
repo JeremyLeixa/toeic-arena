@@ -1087,7 +1087,7 @@ function sv(d){
       fromXp:u.xp,toXp:r.c.xp,levelUp:r.levelUp,leagueUp:r.leagueUp,weekly:{from:u.weeklyXp||0,to:r.c.weeklyXp},
       streak:r.c.streak,chests:[],achievements:[],marks:[]});
     r.chests.forEach(function(ch){grantChestLocal(ch.trigger,ch.type);if(ch.haptic)haptic(ch.haptic);});
-    return{c:r.c,sid:sid};
+    return{c:r.c,sid:sid,total:r.amt};
   }
   // À appeler juste avant sv(c) : checkMission crédite ses +15 XP directement dans c (hors
   // settleXp). On les ajoute comme étape et on recalcule niveau et ligue, qu'ils peuvent franchir.
@@ -1371,7 +1371,9 @@ function sv(d){
     }
     c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sv(c);sSP(null);sT("games");}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
-  function dailyDone(sc,xp){var gxp=applyXpGates(xp,sc,5,"daily");var c=addXp(gxp);c.daily={date:today(),done:true,score:sc,xpE:gxp};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");grantMarks(10,"daily","daily_marks_"+today(),true);try{playJingleDaily();}catch(e){}
+  // Daily sur l'écran de fin commun : xpE garde désormais l'XP réellement versée (bonus du jour compris),
+  // affichée ensuite par « Already completed » et sur Home. Pas de Spotlight (comme avant).
+  function dailyDone(sc,xp){var ss=settleSession("daily",sc,5,xp);var c=ss.c;c.daily={date:today(),done:true,score:sc,xpE:ss.total};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");grantMarks(10,"daily","daily_marks_"+today(),true);try{playJingleDaily();}catch(e){}
     // Track seen questions for anti-repetition
     if(!c.dailySeen)c.dailySeen=[];
     var todayQsArr=dailyQs(today(),c);
@@ -1379,7 +1381,7 @@ function sv(d){
     // Prune entries older than 45 days
     var pruneDate=new Date();pruneDate.setDate(pruneDate.getDate()-45);var pruneStr=pruneDate.toISOString().slice(0,10);
     c.dailySeen=c.dailySeen.filter(function(entry){return entry.date>=pruneStr;});
-    sv(c);}
+    sealSession(c,ss.sid);sv(c);return ss.sid;}
   // Drill : premier module sur l'écran de fin commun (pilote, 2026-09-17). Rend le sid de la session.
   function drillDone(sc,tot,xp,catStats){var s=settleSession("drill",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);checkMission(c,"drill");sealSession(c,s.sid);sv(c);return s.sid;}
   function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);gxp=Math.round(gxp*getSpotlightMult(modId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
@@ -1564,7 +1566,7 @@ function sv(d){
     </div>
   </div>);
 
-  var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, setPremiumPrompt, shopBuy, sp, spA, sv, trackModSession, u});
+  var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u});
   if(routed)return routed;
 
   return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}

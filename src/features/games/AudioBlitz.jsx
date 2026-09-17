@@ -1,6 +1,7 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { Bar } from "../../components/Bar.jsx";
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { AUDIO_BLITZ } from "../../data/audioBlitz.js";
 import { stopCurrentListenAudio, setListenAudio, speak, stopListenAudio } from "../../lib/audio.js";
 import { shuffle } from "../../lib/util.js";
@@ -16,6 +17,7 @@ export function AudioBlitz(p){
   var[timer,setTimer]=useState(TIMER_SEC);var[played,setPlayed]=useState(0); // 0=not yet, 1=playing, 2=ready
   var[replays,setReplays]=useState(0);
   var timerRef=useRef(null);var answeredRef=useRef(false);var bufferRef=useRef(null);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
 
   var items=useMemo(function(){return shuffle(AUDIO_BLITZ.slice()).slice(0,TOTAL);},[]);
 
@@ -92,9 +94,11 @@ export function AudioBlitz(p){
     sP("fb");
   }
 
+  // Erreur enregistrée au clic « Next » : réponse fausse ou temps écoulé (pick=-1).
   function next(){
+    var bq=items[ci];if(pick!==bq.c)mistakesRef.current.push({tag:"Audio Blitz",prompt:bq.q,yours:pick>=0?bq.opts[pick]:"(time's up)",correct:bq.opts[bq.c],why:"Transcript: “"+bq.text+"”"});
     if(ci<items.length-1){sC(ci+1);sP("q");}
-    else{sP("done");p.done(sc,TOTAL,25+sc*6);}
+    else{sidRef.current=p.done(sc,TOTAL,25+sc*6);sP("done");}
   }
 
   // ═══ INTRO ═══
@@ -112,13 +116,8 @@ export function AudioBlitz(p){
   </div>);
 
   // ═══ DONE ═══
-  if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,TOTAL);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=10?"🏆":sc>=7?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Blitz Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=10?"var(--green)":sc>=7?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{TOTAL}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button>
-  </div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Audio Blitz" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   // ═══ PLAY ═══
   var it=items[ci];
