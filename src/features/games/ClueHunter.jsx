@@ -118,7 +118,9 @@ export function ClueHunter(p){
     var perfect=scores.filter(function(x){return x.clue&&x.ans;}).length;
     var clueOnly=scores.filter(function(x){return x.clue&&!x.ans;}).length;
     var ansOnly=scores.filter(function(x){return !x.clue&&x.ans;}).length;
-    return(<SessionResult session={p.session} sid={sidRef.current} name="Clue Hunter" mistakes={mistakesRef.current}
+    // Sceau en points (10 / 4 / 3) : « correct » compte indice OU réponse, un 10 of 10 « flawless » mentait
+    // dès qu'un indice ou une réponse manquait. Les portes d'XP gardent correct/TOTAL.
+    return(<SessionResult session={p.session} sid={sidRef.current} name="Clue Hunter" mode="points" points={total} pointsLabel={"of "+(TOTAL*10)+" pts"} mistakes={mistakesRef.current}
       onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
       <div className="crd" style={{padding:16}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
@@ -126,7 +128,6 @@ export function ClueHunter(p){
           <div><div className="out" style={{fontSize:26,fontWeight:900,color:"var(--cyan)"}}>{clueOnly}</div><div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>Clue only</div></div>
           <div><div className="out" style={{fontSize:26,fontWeight:900,color:"var(--orange)"}}>{ansOnly}</div><div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>Answer only</div></div>
         </div>
-        <div style={{fontSize:12,color:"var(--t3)",marginTop:10,textAlign:"center"}}>{total+" / "+(TOTAL*10)+" pts"}</div>
       </div>
     </SessionResult>);
   }
