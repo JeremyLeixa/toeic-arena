@@ -782,4 +782,38 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .cer-chest b{display:block;font-size:13px;color:#f0c850}
 .cer-chest small{font-size:11px;color:#a8997c}
 .cer-cta{margin-top:22px;padding:13px 46px;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:800;color:#1a1208;background:linear-gradient(135deg,#e8c060,#a8801f);animation:cerUp .5s 2.4s both}
+/* ═══ HUBS VIVANTS (components/HubTile.jsx, 2026-09-17) ═══ proto prototypes/living-hubs/, variante C
+   « Coffre ». Tout en jetons : suit le skin, la fête et le mode clair. Précision sous 80 % = gris
+   pointillé, pas orange (l'orange se confond avec l'accent du skin Doré). */
+.hub-namerow{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:1px}
+.hub-namerow .out{min-width:0}
+.hub-sub{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hub-meta{font-size:10.5px;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hub-meta.gold{color:var(--gold);font-weight:700}
+.hub-warn{color:var(--red);font-weight:700}
+.hub-chip{flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:1px 6px;border-radius:99px;border:1px solid currentColor;background:rgba(var(--bg3-rgb),.6)}
+.hub-chip.half{color:var(--orange)}
+.hub-chip.low{color:var(--red)}
+.hub-chip.none{color:var(--t3)}
+.hub-bar{height:4px;border-radius:99px;background:var(--bg3);margin-top:6px;overflow:hidden;max-width:180px}
+.hub-bar i{display:block;height:100%;border-radius:99px;background:var(--cyan);animation:hubGrow 1s cubic-bezier(.2,.8,.2,1) .15s both}
+@keyframes hubGrow{from{width:0}}
+.hub-bar.low i{background:repeating-linear-gradient(90deg,var(--t3) 0 5px,transparent 5px 8px)}
+.hub-bar.won i{background:var(--gold)}
+.hub-chest{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;min-width:42px}
+.hub-chest small{font-size:10px;font-weight:700;color:var(--t3)}
+.hub-chest svg{filter:grayscale(.55) brightness(.85);opacity:.8}
+.hub-chest.idle svg{opacity:.45}
+.hub-chest.won svg{filter:drop-shadow(0 0 8px rgba(230,180,70,.6));opacity:1;animation:hubBob 3.4s ease-in-out infinite}
+.hub-chest.won small{color:var(--gold)}
+@keyframes hubBob{0%,86%,100%{transform:translateY(0)}90%{transform:translateY(-3px) rotate(-3deg)}95%{transform:translateY(0) rotate(2deg)}}
+.hub-shelf{padding:12px 14px!important;margin-bottom:12px;display:flex;flex-direction:column;gap:8px;text-align:left}
+.hub-shelf-row{display:flex;gap:4px;flex-wrap:wrap}
+.hub-shelf-row span svg{filter:grayscale(1) brightness(.7);opacity:.45}
+.hub-shelf-row span.won svg{filter:drop-shadow(0 0 5px rgba(230,180,70,.55));opacity:1}
+.hub-shelf-txt{font-size:12px;color:var(--t2);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
+.hub-shelf-txt b{color:var(--gold);font-size:14px}
+.hub-shelf-txt em{font-style:normal;color:var(--t3);margin-left:auto;font-size:11px}
+.hub-hint{font-size:11px;color:var(--t3)}
+@media(prefers-reduced-motion:reduce){.hub-chest.won svg,.hub-bar i{animation:none}}
 `;
