@@ -30,6 +30,7 @@ const SUITE = [
   ['check_identity.cjs',          'le normaliseur de noms et l\'adresse synthétique n\'ont pas bougé'],
   ['check_xp_gates.cjs',           'les portes XP (accuracy, anti-farming, Focus, boosts, bonus) sont celles du produit'],
   ['check_hub_status.cjs',         'les tuiles des hubs annoncent le vrai coffre de maîtrise et le vrai tarif de la prochaine partie'],
+  ['check_mimic_items.cjs',        'les items de Mimic Hunt gardent leurs fragments surlignables, un Mimic par item et une bonne réponse répartie'],
   ['check_session_hud.cjs',        'le combo de session tombe sur ses paliers et le fil d\'encre colore la bonne case'],
   ['validate_endless_resume.cjs',  'la reprise d\'Endless rejoue le même test'],
   ['validate_listening_shuffle.cjs', 'la position des bonnes réponses est randomisée'],

@@ -84,6 +84,7 @@ export function GamesHub(p){
     {id:"sbuild",n:"Sentence Builder",d:"Tap blocks in the right order!",i:"brick-pile",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     {id:"ablitz",n:"Audio Blitz",d:"Listen once, answer fast!",i:"lyre",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
     {id:"clue",n:"Clue Hunter",d:"Find the clue, fill the blank!",i:"spyglass",bg:"linear-gradient(135deg,var(--cx-hex),#4abe60)"},
+    {id:"mimic",n:"Mimic Hunt",d:"Same meaning — or just the same words?",i:"mimic-chest",bg:"linear-gradient(135deg,#8b5e83,#c84040)",tag:"NEW"},
     {id:"duel",n:"Vocabulary Arena",d:"Real-time 1v1 — challenge a classmate!",i:"swords-emblem",bg:"linear-gradient(135deg,#c84040,#8b5e83)",tag:"NEW",game:"duel"},
   ];
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>

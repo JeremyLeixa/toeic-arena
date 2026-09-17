@@ -73,7 +73,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-17-session-hud-drill";
+var BUILD_ID="2026-09-17-mimic-hunt";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 

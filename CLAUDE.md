@@ -146,6 +146,7 @@ src/
     miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps
     audioBlitz.js      — 60 Audio Blitz items
     clueHunter.js      — 80 Clue Hunter items
+    mimicHunt.js       — 12 items Mimic Hunt (reformulation) + MIMIC_TIERS (3 paliers)
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
     placement.js       — 85 Battle Scan questions + tier levels + mission modules
@@ -454,6 +455,33 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - Single grimoire (`GRIMOIRE_MODALS`, 7 chapters FR) accessed from the hub.
 - 4 achievements added (council_initiate / oracle_voice / verdict_sworn / council_crowned).
 - TOEIC estimator: NOT wired in yet (deliberate — no rebalance until next pass).
+
+### Mimic Hunt 🪤 (2026-09-17)
+Route `sp==="mimic"` (Games). Entraîne **la reformulation** : la bonne réponse dit la même chose avec
+d'autres mots, le **Mimic** recopie des mots de la source pour dire autre chose. Le Traps Quiz et une
+Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alors qu'elle porte les Parts 3,
+4 et 7 (123 questions sur 200) — et la Part 7 n'avait aucun jeu. Proto et comparateur des mécaniques
+écartées : `prototypes/mimic-hunt/` (variante 2 « double marque » retenue par Jérémy), banc du vrai
+module sans compte : `prototypes/mimic-hunt/real.html`.
+- **Une manche** : l'élève pose **deux marques** (outils Answer / Mimic, l'outil bascule tout seul) puis
+  Check. Justifier son choix contre un distracteur est ce qui sépare ce module d'un QCM.
+- **Au retour** : un tap sur une option allume ses liens dans la source — vert = même sens/autres mots
+  (le pont), rouge ondulé = mots recopiés, gris = mot gardé faute de synonyme. Puis « The paraphrase »
+  (pont, explication, ce que les Mimics ont recopié). Le Mimic choisi comme réponse « mord ».
+- **Paliers** annoncés avant leurs items (I Synonyms → II Reshaped → III Big picture) : la progression
+  est la pédagogie, elle ne se mélange pas. Les items sont mélangés **dans** leur palier et les 4 options
+  permutées à chaque partie (sinon on rejoue « la réponse C »).
+- **Rédaction des items** (`src/data/mimicHunt.js`, gardée par `tests/check_mimic_items.cjs`) : tout tient
+  sur des **fragments** retrouvés en mots entiers, sans casse (`bridge`, `echo`, `mimics`) — un mot réécrit
+  et le surlignage disparaît en silence. 2 Mimics par item sauf deux items (un seul), des distracteurs
+  neutres qui ressemblent à des reformulations, et **l'item 12 garde un mot de la source dans la bonne
+  réponse** : la règle n'est pas « mot repris = faux » mais « mot repris qui dit autre chose ».
+- **XP** : `15 + 5×bonne réponse + 2×Mimic démasqué`, +25 sans faute (max 124 pour 12 items, palier des
+  15 Q). **Estimateur** : Reading support `.04`, `part:null` dans `MODULE_TOEIC_MAP` (la reformulation sert
+  P3/P4/P7 : la ranger dans p7 fausserait le diagnostic du Mentor).
+- **BGM placeholder** `bgm_clue`. À faire : volume de contenu (60-90 items visés), piste Mureka dédiée,
+  achievements, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
+  direct vers les Parts 3 et 4, et un poids Listening).
 
 ### Grimoire pattern (applies to Gauntlet + G&V grimoires)
 - **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.

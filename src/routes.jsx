@@ -37,6 +37,7 @@ var TimeSim=lazyNamed(function(){return import("./features/train/reading.jsx");}
 // façon dans le principal via Cards et lib/progress.
 var AudioBlitz=lazyNamed(function(){return import("./features/games/AudioBlitz.jsx");},"AudioBlitz");
 var ClueHunter=lazyNamed(function(){return import("./features/games/ClueHunter.jsx");},"ClueHunter");
+var MimicHunt=lazyNamed(function(){return import("./features/games/MimicHunt.jsx");},"MimicHunt");
 var DuelArena=lazyNamed(function(){return import("./features/games/DuelArena.jsx");},"DuelArena");
 var SentenceBuilder=lazyNamed(function(){return import("./features/games/SentenceBuilder.jsx");},"SentenceBuilder");
 var GauntletHub=lazyNamed(function(){return import("./features/gauntlet/Gauntlet.jsx");},"GauntletHub");
@@ -76,6 +77,8 @@ export function renderRoute(c){
   if(sp==="duel"){playBGM("bgm_duel");return pg(<DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="sbuild"){if(!lastSession)playBGM("bgm_build");return pg(<SentenceBuilder u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp){stopBGM();var s=settleSession("sbuild",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"sbuild");recordModule(c,"sbuild",sc,tot);if(tot>0&&sc/tot>=0.9)grantWeeklyChest("sbuild_90","novice");sealSession(c,s.sid);sv(c);return s.sid;}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="clue"){if(!lastSession)playBGM("bgm_clue");return pg(<ClueHunter u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp){stopBGM();var s=settleSession("clue",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);checkMission(c,"clue");if(sc===tot&&tot>0)grantWeeklyChest("clue_perfect","guerrier");sealSession(c,s.sid);sv(c);return s.sid;}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  // Mimic Hunt : BGM placeholder sur bgm_clue (même registre « enquête ») en attendant une piste Mureka.
+  if(sp==="mimic"){if(!lastSession)playBGM("bgm_clue");return pg(<MimicHunt session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp){stopBGM();return miniSession(sc,tot,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="ablitz")return pg(<AudioBlitz u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp){var s=settleSession("ablitz",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);if(tot>0){var abPct=sc/tot;if(abPct>=0.9)grantWeeklyChest("ablitz_90","guerrier");else if(abPct>=0.7)grantWeeklyChest("ablitz_70","novice");}sealSession(c,s.sid);sv(c);return s.sid;}} back={function(){sSP(null);sT("games");}}/>);
   if(sp==="upgrade")return pg(<UpgradeScreen u={u} back={function(){sSP(null);sT("profile");}}/>);
   if(sp==="shop"){playBGM("bgm_shop");return pg(<Shop u={u} buy={shopBuy} setAvatar={function(c){sv(c);}} back={function(){stopBGM();sSP(null);sT("profile");}}/>);}
