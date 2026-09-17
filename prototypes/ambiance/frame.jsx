@@ -87,9 +87,10 @@ function Screen() {
   </div>;
   return <>
     <Home u={u} nav={noop} tabGo={noop} festId={FEST || null} onFestivalsOff={noop} events={[]} medianXp={0}
-      pendingChests={N} onOpenChest={noop} onMount={noop} onLeave={noop} />
+      pendingChests={N} pendingChestTier={TIER} onOpenChest={noop} onMount={noop} onLeave={noop} />
     <Tabs cur="home" go={noop} />
-    {CHEST !== "emoji" && N > 0 && <ChestSwap />}
+    {/* Câblé le 2026-09-17 (style « glow ») : Home rend le coffre lui-même, la greffe ne sert plus. */}
+    {false && CHEST !== "emoji" && N > 0 && <ChestSwap />}
   </>;
 }
 

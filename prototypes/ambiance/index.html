@@ -34,7 +34,7 @@
     <option value="">Doré (défaut)</option><option>argent</option><option>emeraude</option><option>saphir</option><option>rubis</option><option>amethyste</option><option>corail</option><option>jade</option><option>obsidienne</option><option>aurore</option><option>frostbite</option><option>abyssal</option><option>emberheart</option><option>cosmic_void</option><option>molten_gold</option><option>heraldic</option><option>aldric_chamber</option>
   </select></label>
   <label>Fête <select id="fest"><option value="">Aucune</option><option>halloween</option><option>yule</option><option>spring</option><option>solstice</option></select></label>
-  <label>Coffre Home <select id="chest"><option value="emoji">📦 actuel</option><option value="svg">SVG simple</option><option value="glow" selected>SVG + teinte du palier</option></select></label>
+  <label>Coffre Home <select id="chest"><option value="glow" selected>SVG + teinte du palier (câblé)</option></select></label>
   <label>Palier <select id="tier"><option value="0">Novice</option><option value="1">Warrior</option><option value="2">Champion</option><option value="3" selected>Legendary</option></select></label>
   <label>En attente <select id="n"><option>0</option><option selected>1</option><option>3</option></select></label>
   <label><input type="checkbox" id="rm"> Mouvement réduit</label>
@@ -49,7 +49,7 @@
 </footer>
 <script>
 var VARIANTS = [
-  { id: "A", name: "Actuel", desc: "Fond uni --bg." },
+  { id: "A", name: "Avant", desc: "Fond uni --bg (avant le câblage de C)." },
   { id: "B", name: "Torche", desc: "Halo de la couleur du skin en haut + vignettage. Statique." },
   { id: "C", name: "Parchemin", desc: "Torche + grain de papier (5-9 %). Statique." },
   { id: "D", name: "Braises", desc: "Parchemin + 12 braises qui montent lentement. Coupé en mouvement réduit." },

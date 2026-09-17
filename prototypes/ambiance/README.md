@@ -37,3 +37,7 @@ Dans le proto, le SVG est greffé dans le vrai bouton par le DOM (`ChestSwap` da
 Calques `position:fixed` en `::before` / `::after` de `.app`, avec `isolation:isolate` sur `.app` : un `z-index` négatif passe devant le fond de `.app` mais derrière les cartes. `isolation` ne crée pas de bloc conteneur, donc tab bar, toasts et modals fixes restent calés sur l'écran. Tout est en jetons : le fond suit le skin, la fête et le mode clair sans règle par skin.
 
 À vérifier au câblage : mode clair des cartes-nuit, bureau (sidebar 200 px), perf sur un Android d'entrée de gamme pour D.
+
+## Décision (2026-09-17)
+
+**C « Parchemin » + coffre « SVG + teinte du palier »**, câblés dans `src/` (`appCss.js` : `.app::before/::after`, `.home-chest` ; `Home.jsx` ; palier calculé dans `App()`). Depuis, le banc affiche le vrai bouton de Home, et `ambiance.css` neutralise les calques intégrés pour que A (avant) et B restent fidèles.

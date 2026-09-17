@@ -10,6 +10,10 @@
    Tout est en jetons (--cx, --bg…) : suit le skin, la fête et le mode clair.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Depuis le câblage de C dans appCss.js (2026-09-17), l'appli a déjà ses calques : on les retire
+   pour A (fond uni d'avant) et on retire le grain intégré pour B, sinon les colonnes mentent. */
+.app:not(.amb)::before,.app:not(.amb)::after{content:none}
+.app.amb-B::after{background:none}
 .app.amb{isolation:isolate}
 .app.amb::before,.app.amb::after{content:"";position:fixed;inset:0;pointer-events:none}
 
