@@ -7,7 +7,7 @@ import { LEAGUES } from "../../data/leagues.js";
 import { MISSION_MODULES } from "../../data/placement.js";
 import { isGhost } from "../../lib/access.js";
 import { generateSeasons } from "../../lib/league.js";
-import { getDashTeacher, getBioCredId, biometricAvailable, isDashAdmin, teacherAuth, optIcon, bioRegister, BIOMETRIC_KEY, clearDashSession } from "../../lib/teacherSession.js";
+import { getDashTeacher, getBioCredId, biometricAvailable, isDashAdmin, teacherAuth, optIcon, bioRegister, BIOMETRIC_KEY, clearDashSession, setDashSession } from "../../lib/teacherSession.js";
 import { estimateTOEICScore } from "../../lib/toeic.js";
 import { tone } from "../../lib/tone.js";
 import { today, weekId } from "../../lib/util.js";
@@ -403,6 +403,9 @@ export function TeacherDash(p){
   var[rcBusy,setRcBusy]=useState(false);var[rcMsg,setRcMsg]=useState(null);
   var[chartMod,setChartMod]=useState("all"); // for student detail time chart
   var[groups,setGroups]=useState([]);
+  // "loading" | "ok" | "invalid_code" | "rpc_error". Avant, le sélecteur affichait « Loading
+  // groups... » dès que la liste était vide : un code refusé ou une panne restaient invisibles.
+  var[groupsStatus,setGroupsStatus]=useState("loading");var[groupsSlow,setGroupsSlow]=useState(false);
   var[dashPhase,setDashPhase]=useState("picker"); // "picker" | "dashboard" | "create-group"
   var[cgForm,setCgForm]=useState({name:"",code:"",teacherCode:isDashAdmin()?"":getDashTeacher(),type:"school",startDate:"",endDate:"",teacherEmail:"",reportOptin:true});
   var[cgCodeErr,setCgCodeErr]=useState("");var[cgSaving,setCgSaving]=useState(false);
@@ -501,12 +504,31 @@ export function TeacherDash(p){
     // est révoquée) ni de filtre client sur teacher_code. La RPC renvoie déjà la
     // liste scopée, teacher_code retiré, et le rôle qui fait autorité.
     teacherAuth(getDashTeacher()).then(function(r){
-      if(!r.ok){console.warn("[teacher] loadGroups refused:",r.error);setGroups([]);return;}
+      if(!r.ok){console.warn("[teacher] loadGroups refused:",r.error);setGroups([]);setGroupsStatus(r.error==="rpc_error"?"rpc_error":"invalid_code");return;}
       try{localStorage.setItem('toeic-dash-role',r.role);}catch(e){console.warn("[teacher] role store failed:",e&&e.message);}
-      setGroups(r.groups);
+      setGroups(r.groups);setGroupsStatus("ok");
     });
   }
+  function retryGroups(){setGroupsStatus("loading");loadGroups();}
+  // Code absent (purgé par un logout) ou refusé : on le redemande sur place plutôt que de
+  // renvoyer l'enseignant à l'onboarding. Même validation serveur que les écrans d'entrée.
+  async function reenterTeacherCode(){
+    var code=prompt("Code formateur :");if(!code)return;
+    setGroupsStatus("loading");
+    var r=await teacherAuth(code);
+    if(!r.ok){setGroupsStatus(r.error==="rpc_error"?"rpc_error":"invalid_code");if(r.error!=="rpc_error")alert("Code invalide");return;}
+    setDashSession(code,r.role);
+    setGroups(r.groups);setGroupsStatus("ok");
+    // L'effet [groups] recharge les événements d'un formateur, pas ceux de l'admin (non filtrés).
+    if(r.role==="admin")loadEvents();
+  }
   useEffect(function(){loadGroups();loadEvents();},[]);
+  // Une RPC qui ne répond jamais (réseau mobile, verrou d'auth) laissait le même « Loading » muet.
+  useEffect(function(){
+    if(groupsStatus!=="loading"){setGroupsSlow(false);return;}
+    var t=setTimeout(function(){setGroupsSlow(true);},12000);
+    return function(){clearTimeout(t);};
+  },[groupsStatus]);
   // Guard-rail: if the remembered group isn't in the scoped set (stale localStorage
   // or a group belonging to another teacher), snap to the teacher's first group.
   useEffect(function(){
@@ -1023,7 +1045,15 @@ export function TeacherDash(p){
         <span style={{fontSize:12,color:"var(--green)"}}>Biometric unlock enabled</span>
         <button onClick={function(){try{localStorage.removeItem(BIOMETRIC_KEY);setTdBioReg(false);}catch(e){}}} style={{marginLeft:"auto",background:"none",border:"none",color:"var(--t3)",fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Disable</button>
       </div>}
-      {groups.length===0&&<div style={{textAlign:"center",padding:20}}><p style={{color:"var(--t3)",fontSize:13}}>Loading groups...</p></div>}
+      {groupsStatus==="loading"&&<div style={{textAlign:"center",padding:20}}>
+        <p style={{color:"var(--t3)",fontSize:13}}>Loading groups...</p>
+        {groupsSlow&&<button onClick={retryGroups} className="btn2" style={{marginTop:10,padding:"10px 20px",fontSize:13}}>{"Toujours en cours : réessayer"}</button>}
+      </div>}
+      {groupsStatus==="ok"&&groups.length===0&&<div style={{textAlign:"center",padding:20}}><p style={{color:"var(--t3)",fontSize:13}}>{"Aucun groupe rattaché à ce code formateur."}</p></div>}
+      {(groupsStatus==="invalid_code"||groupsStatus==="rpc_error")&&<div className="crd" style={{textAlign:"center",padding:20,marginBottom:10}}>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:12}}>{groupsStatus==="invalid_code"?"Code formateur absent ou refusé : saisis-le à nouveau.":"Impossible de charger les groupes (réseau ?)."}</p>
+        <button onClick={groupsStatus==="invalid_code"?reenterTeacherCode:retryGroups} className="btn1" style={{padding:"12px 24px",fontSize:14}}>{groupsStatus==="invalid_code"?"Saisir le code formateur":"Réessayer"}</button>
+      </div>}
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {groups.map(function(g){
           var typeIcon=g.type==="school"?"\uD83C\uDFEB":g.type==="pro"?"\uD83D\uDCBC":"\uD83C\uDF0D";
