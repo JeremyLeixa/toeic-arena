@@ -1,7 +1,7 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { Bar } from "../../components/Bar.jsx";
 import { GrimoireReader } from "../../components/GrimoireReader.jsx";
-import { ResultIcon, GIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { SpeakBtn } from "../../components/SpeakBtn.jsx";
@@ -422,13 +422,14 @@ export function StudyGroup(p){
 // Same pattern as the Gauntlet grimoires — same reader, same look.
 export function GerInf(p){
   var[mode,setMode]=useState("hub"); // hub | quiz
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
   var[openGrim,setOpenGrim]=useState(false);
 
   // Quiz items — context sentences, shuffled
   var quizItems=useMemo(function(){return shuffle(GERUND_INF.slice());},[]);
 
-  function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");}
+  function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");mistakesRef.current=[];}
 
   // ═══ HUB ═══
   if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -460,15 +461,10 @@ export function GerInf(p){
   if(mode==="quiz"){
     var q=quizItems[ci];
 
-    if(ph==="done"){var xp=20+sc*4;if(p.gate)xp=p.gate(xp,sc,quizItems.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=25?"🏆":sc>=18?"⚔️":"🛡️"} size={52}/>)}</div>
-      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Quiz Complete</h1>
-      <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=25?"var(--green)":sc>=18?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{quizItems.length}</div>
-      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-      <button className="btn1" onClick={function(){resetQuiz();sP("q");}}>Play Again</button>
-      <button className="btn2" onClick={function(){setMode("hub");setOpenGrim(true);}} style={{marginTop:10,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="bookmarklet" size={18} color="currentColor"/>Open Grimoire</button>
-      <button className="btn2" onClick={function(){setMode("hub");}} style={{marginTop:10,width:"100%"}}>Back</button>
-    </div>);}
+    if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Gerund vs Infinitive" mistakes={mistakesRef.current}
+      onContinue={function(){p.closeSession();setMode("hub");}} onReplay={function(){p.closeSession();resetQuiz();}}>
+      <button className="btn2" onClick={function(){p.closeSession();setMode("hub");setOpenGrim(true);}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="bookmarklet" size={18} color="currentColor"/>Open Grimoire</button>
+    </SessionResult>);
 
     return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
@@ -489,6 +485,7 @@ export function GerInf(p){
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
           return(<button key={i} onClick={function(){
             if(ph!=="q")return;sPk(i);
+            if(i!==q.c)mistakesRef.current.push({tag:"Gerund vs infinitive · "+q.verb,prompt:q.ctx,yours:opt,correct:q.opts[q.c],why:q.tip+(q.ex?" — “"+q.ex+"”":"")});
             if(i===q.c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
             sP("fb");
           }} disabled={show}
@@ -513,7 +510,7 @@ export function GerInf(p){
         <button className="btn1" onClick={function(){
           sPk(-1);
           if(ci<quizItems.length-1){sC(ci+1);sP("q");}
-          else{sP("done");p.done(sc,quizItems.length,20+sc*4);}
+          else{sidRef.current=p.done(sc,quizItems.length,20+sc*4);sP("done");}
         }} style={{marginTop:12}}>{ci<quizItems.length-1?"Next":"See Results"}</button>
       </div>}
     </div>);
@@ -646,6 +643,7 @@ export function PhrasalDojo(p){
   var[timer,setTimer]=useState(0);var[streak,setStreak]=useState(0);var[bestStreak,setBest]=useState(0);
   var[openGrim,setOpenGrim]=useState(false);
   var timerRef=useRef(null);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
 
   var matchQs=useMemo(function(){return shuffle(PHRASAL_VERBS.slice()).slice(0,15);},[]);
   var pickerQs=useMemo(function(){return shuffle(PHRASAL_VERBS.slice()).slice(0,15);},[]);
@@ -690,7 +688,7 @@ export function PhrasalDojo(p){
     return function(){clearInterval(timerRef.current);};
   },[ci,mode,ph]);
 
-  function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");setTimer(0);setStreak(0);setBest(0);clearInterval(timerRef.current);}
+  function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");setTimer(0);setStreak(0);setBest(0);clearInterval(timerRef.current);mistakesRef.current=[];}
 
   // ═══ HUB ═══
   if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -727,14 +725,8 @@ export function PhrasalDojo(p){
   if(mode==="match"){
     var mq=matchQs[ci];var mOpts=matchAllOpts[ci];
 
-    if(ph==="done"){var mxp=20+sc*4;if(p.gate)mxp=p.gate(mxp,sc,matchQs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=12?"🏆":sc>=8?"⚔️":"🛡️"} size={52}/>)}</div>
-      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Meaning Match</h1>
-      <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{matchQs.length}</div>
-      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{mxp} XP</div>
-      <button className="btn1" onClick={function(){resetQuiz();sP("q");}}>Play Again</button>
-      <button className="btn2" onClick={function(){setMode("hub");}} style={{marginTop:10,width:"100%"}}>Back to Dojo</button>
-    </div>);}
+    if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Phrasal Dojo · Meaning Match" mistakes={mistakesRef.current}
+      onContinue={function(){p.closeSession();setMode("hub");}} onReplay={function(){p.closeSession();resetQuiz();}}/>);
 
     return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
@@ -755,7 +747,7 @@ export function PhrasalDojo(p){
           var bg="var(--bg2)";var bd="var(--bdr)";
           if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-          return(<button key={i} onClick={function(){if(ph!=="q")return;sPk(i);if(i===mOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;sPk(i);if(i!==mOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:mq.pv,noBlank:true,yours:opt,correct:mOpts.opts[mOpts.c],why:(mq.fr?mq.fr+" — ":"")+"“"+mq.ex+"”"});if(i===mOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
             style={{padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",
               fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s",lineHeight:1.5}}>
             {opt}</button>);
@@ -773,7 +765,7 @@ export function PhrasalDojo(p){
             <SpeakBtn text={mq.ex} size={20} rate={0.85} audio={"/audio/phrasal/"+mq.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
           </div>
         </div>
-        <button className="btn1" onClick={function(){sPk(-1);if(ci<matchQs.length-1){sC(ci+1);sP("q");}else{sP("done");p.done(sc,matchQs.length,20+sc*4);}}} style={{marginTop:12}}>{ci<matchQs.length-1?"Next":"See Results"}</button>
+        <button className="btn1" onClick={function(){sPk(-1);if(ci<matchQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,matchQs.length,20+sc*4);sP("done");}}} style={{marginTop:12}}>{ci<matchQs.length-1?"Next":"See Results"}</button>
       </div>}
     </div>);
   }
@@ -782,15 +774,10 @@ export function PhrasalDojo(p){
   if(mode==="picker"){
     var pq=pickerQs[ci];var pOpts=pickerAllOpts[ci];
 
-    if(ph==="done"){var pxp=25+sc*5;if(p.gate)pxp=p.gate(pxp,sc,pickerQs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=12?"⚡":sc>=8?"🔥":"💪"} size={52}/>)}</div>
-      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Particle Picker</h1>
-      <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=12?"var(--green)":sc>=8?"var(--cyan)":"var(--orange)",marginBottom:4}}>{sc}/{pickerQs.length}</div>
-      {bestStreak>=3&&<div style={{fontSize:14,color:"var(--gold)",fontWeight:700,marginBottom:8}}>Best streak: {bestStreak} {"🔥"}</div>}
-      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{pxp} XP</div>
-      <button className="btn1" onClick={function(){resetQuiz();sP("q");}}>Play Again</button>
-      <button className="btn2" onClick={function(){setMode("hub");}} style={{marginTop:10,width:"100%"}}>Back to Dojo</button>
-    </div>);}
+    if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Phrasal Dojo · Particle Picker" mistakes={mistakesRef.current}
+      onContinue={function(){p.closeSession();setMode("hub");}} onReplay={function(){p.closeSession();resetQuiz();}}>
+      {bestStreak>=3&&<div className="crd" style={{padding:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="flame" size={18} color="var(--orange)"/><span className="out" style={{fontWeight:700,color:"var(--gold)"}}>{"Best streak: "+bestStreak}</span></div>}
+    </SessionResult>);
 
     var timerPct=timer/8*100;
     var timerCol=timer<=2?"var(--red)":timer<=4?"var(--orange)":"var(--cyan)";
@@ -821,7 +808,7 @@ export function PhrasalDojo(p){
           var bg="var(--bg2)";var bd="var(--bdr)";var col="var(--t1)";
           if(show&&isCor){bg="rgba(0,230,118,.15)";bd="var(--green)";col="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
-          return(<button key={i} onClick={function(){if(ph!=="q")return;clearInterval(timerRef.current);sPk(i);if(i===pOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;clearInterval(timerRef.current);sPk(i);if(i!==pOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:opt,correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":"")});if(i===pOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
             style={{padding:"18px 12px",background:bg,border:"2px solid "+bd,borderRadius:14,cursor:ph==="q"?"pointer":"default",
               fontSize:20,fontWeight:800,color:col,fontFamily:"'DM Sans',sans-serif",transition:"all .15s",textAlign:"center"}}>
             {opt}</button>);
@@ -841,7 +828,7 @@ export function PhrasalDojo(p){
             <SpeakBtn text={pq.ex} size={20} rate={0.85} audio={"/audio/phrasal/"+pq.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
           </div>
         </div>
-        <button className="btn1" onClick={function(){sPk(-1);if(ci<pickerQs.length-1){sC(ci+1);sP("q");}else{sP("done");p.done(sc,pickerQs.length,25+sc*5);}}} style={{marginTop:12}}>{ci<pickerQs.length-1?"Next":"See Results"}</button>
+        <button className="btn1" onClick={function(){if(pick===-1)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:"(time's up)",correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":"")});sPk(-1);if(ci<pickerQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,pickerQs.length,25+sc*5);sP("done");}}} style={{marginTop:12}}>{ci<pickerQs.length-1?"Next":"See Results"}</button>
       </div>}
     </div>);
   }
