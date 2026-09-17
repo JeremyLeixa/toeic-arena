@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mimic Hunt · comparateur</title>
+<style>
+  :root{--bg:#0b0906;--line:#2c2418;--t1:#ede4d4;--t2:#a89a80;--acc:#d4943a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--t1);font:13px/1.4 system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#120e09f2;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  header h1{font-size:14px;margin:0 8px 0 0;color:var(--acc);letter-spacing:.5px}
+  label{display:flex;gap:5px;align-items:center;color:var(--t2)}
+  select,button{font:inherit;background:#1f1810;color:var(--t1);border:1px solid #3a2e20;border-radius:6px;padding:4px 8px;cursor:pointer}
+  button.go{background:#d4943a;color:#140e06;border-color:#d4943a;font-weight:700}
+  main{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:18px 12px 30px}
+  .cell{display:flex;flex-direction:column;gap:6px}
+  .cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .cap b{color:var(--acc);font-size:14px}
+  .cap a{color:var(--t2);font-size:11px}
+  .desc{color:var(--t2);font-size:11.5px;max-width:var(--w)}
+  .phone{width:var(--w);height:var(--h);border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 40px #000a;background:#000}
+  .phone iframe{width:375px;height:812px;border:0;transform:scale(var(--s));transform-origin:0 0;display:block}
+  footer{color:var(--t2);font-size:12px;max-width:980px;margin:0 auto;padding:0 16px 34px;line-height:1.55}
+  footer b{color:var(--t1)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Mimic Hunt</h1>
+  <label>Départ <select id="start">
+    <option value="intro">Intro</option>
+    <option value="0">Palier I (item 1)</option>
+    <option value="4">Palier II (item 5)</option>
+    <option value="8">Palier III (item 9)</option>
+    <option value="11">Item 12 (mot gardé)</option>
+    <option value="end">Écran de fin</option>
+  </select></label>
+  <label>Mode <select id="mode"><option value="dark">Sombre</option><option value="light">Clair</option></select></label>
+  <label>Skin <select id="skin">
+    <option value="">Doré (défaut)</option><option>saphir</option><option>rubis</option><option>emeraude</option><option>obsidienne</option><option>aurore</option><option>molten_gold</option>
+  </select></label>
+  <label><input type="checkbox" id="rm"> Mouvement réduit</label>
+  <label>Taille <select id="size"><option value="fit">Ajustée</option><option value="1">100 %</option></select></label>
+  <button class="go" id="replay">↻ Recommencer</button>
+</header>
+<main id="grid"></main>
+<footer>
+  <b>Les trois écrans se jouent indépendamment</b> : même contenu (les 12 items de <code>items.js</code>), seule la mécanique de démasquage change.
+  <b>Au retour</b>, tape une option : la source s'allume sur ses liens (vert = même sens, autres mots ; rouge ondulé = mots recopiés).
+  <b>Son</b> : actif au premier tap dans un écran. La fin de partie ouvre le vrai écran de fin (<code>SessionResult</code>).
+</footer>
+<script>
+var VARIANTS = [
+  { id: "1", name: "Chasse bonus", desc: "Bonne réponse → « tap the Mimic » parmi les options restantes (passable). Mauvaise réponse → tout se révèle, le Mimic mord si c'est lui qu'on a pris." },
+  { id: "2", name: "Double marque", desc: "Deux outils (Answer / Mimic) : on marque la réponse ET le piège avant de valider. Le plus exigeant : l'élève justifie son choix contre un distracteur." },
+  { id: "3", name: "Révélation seule", desc: "Un tap, retour immédiat : les Mimics se démasquent tout seuls. Le plus rapide ; l'analyse du piège est montrée, pas demandée." },
+];
+var ids = ["start", "mode", "skin", "rm", "size"];
+try {
+  var saved = JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}");
+  ids.forEach(function (k) { if (saved[k] != null) { var el = document.getElementById(k); if (el.type === "checkbox") el.checked = saved[k]; else el.value = saved[k]; } });
+} catch (e) { console.warn("[mimic] hash illisible:", e && e.message); }
+
+function state() {
+  var s = {};
+  ids.forEach(function (k) { var el = document.getElementById(k); s[k] = el.type === "checkbox" ? el.checked : el.value; });
+  return s;
+}
+function url(v, s) {
+  return "frame.html?" + new URLSearchParams({ v: v, start: s.start, mode: s.mode, skin: s.skin, rm: s.rm ? "1" : "0" }).toString();
+}
+function render() {
+  var s = state();
+  location.replace("#" + encodeURIComponent(JSON.stringify(s)));
+  var avail = Math.min(window.innerWidth - 24, 2400);
+  var sc = s.size === "1" ? 1 : Math.min(1, Math.max(0.4, (avail - 18 * 2 - 40) / (3 * 375)));
+  var grid = document.getElementById("grid");
+  grid.style.setProperty("--s", sc);
+  grid.style.setProperty("--w", Math.round(375 * sc) + "px");
+  grid.style.setProperty("--h", Math.round(812 * sc) + "px");
+  grid.innerHTML = "";
+  VARIANTS.forEach(function (v) {
+    var cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerHTML = '<div class="cap"><b>V' + v.id + " · " + v.name + '</b><a href="' + url(v.id, s) + '" target="_blank">Ouvrir seul ↗</a></div>' +
+      '<div class="phone"><iframe src="' + url(v.id, s) + '"></iframe></div>' +
+      '<div class="desc">' + v.desc + "</div>";
+    grid.appendChild(cell);
+  });
+}
+ids.forEach(function (k) { document.getElementById(k).addEventListener("change", render); });
+document.getElementById("replay").addEventListener("click", render);
+var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(render, 200); });
+render();
+</script>
+</body>
+</html>

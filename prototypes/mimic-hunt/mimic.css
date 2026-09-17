@@ -1,0 +1,133 @@
+/* Proto « Mimic Hunt » (2026-09-17). Tout en jetons : suit skin et mode clair/sombre.
+   Teintes de surlignage par color-mix() sur --green / --red (déjà assombris en clair). */
+
+.mh-mimic{display:block;flex-shrink:0;fill:currentColor}
+
+/* ── Intro ── */
+.mh-intro{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:56px 22px 28px}
+.mh-intro-back{position:absolute;top:10px;left:16px}
+.mh-hero{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:22px;color:var(--cyan)}
+.mh-hero h1{font-size:32px;font-weight:900;margin:12px 0 6px;color:var(--t1)}
+.mh-hero p{margin:0;font-size:15px;color:var(--t2)}
+.mh-def{padding:16px 18px!important;margin-bottom:12px}
+.mh-def-t{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--t1);margin-bottom:6px}
+.mh-def p{margin:0;font-size:14px;line-height:1.6;color:var(--t2)}
+.mh-def b{color:var(--t1)}
+.mh-steps{padding:16px 18px!important;margin-bottom:22px;display:flex;flex-direction:column;gap:14px}
+.mh-step{display:flex;gap:12px;align-items:flex-start}
+.mh-step-n{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--cyan);color:var(--on-cx)}
+.mh-step-t{font-size:14px;font-weight:700;color:var(--t1)}
+.mh-step-d{font-size:13px;line-height:1.5;color:var(--t2);margin-top:2px}
+
+/* ── Palier ── */
+.mh-tier{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:stretch;padding:32px 24px;text-align:center}
+.mh-roman{font-size:68px;font-weight:900;line-height:1;color:var(--cyan)}
+.mh-tier-name{font-size:26px;font-weight:900;color:var(--t1);margin:8px 0 4px}
+.mh-tier-lead{font-size:16px;color:var(--t2);margin:0 0 22px}
+.mh-ex{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px!important;margin-bottom:18px;font-size:17px;color:var(--t1)}
+.mh-tip{font-size:14px;line-height:1.6;color:var(--t2);margin:0 0 26px}
+
+/* ── Écran de jeu ── */
+.mh{padding:8px 16px 118px;min-height:100vh;display:flex;flex-direction:column}
+.mh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.mh-tally{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;color:var(--t2)}
+.mh-tally>span{display:inline-flex;align-items:center;gap:4px}
+.mh-ok{color:var(--green)}
+.mh-count{font-weight:600}
+.mh-chip{margin:12px 0 8px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cyan)}
+
+.mh-src{padding:16px 16px 14px!important;margin-bottom:12px}
+.mh-src-ctx{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);margin-bottom:6px}
+.mh-src-text{margin:0;font-size:17px;line-height:1.7;color:var(--t1)}
+.mh-spk{font-weight:700;color:var(--cyan);margin-right:6px}
+.mh-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);font-size:12px;font-weight:600;color:var(--t2)}
+.mh-leg{display:inline-flex;align-items:center;gap:6px}
+.mh-dot{display:inline-block;width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+.mh-q{font-size:15px;font-weight:700;color:var(--t1);margin:2px 2px 10px}
+.mh-q-small{font-size:13px;font-weight:600;color:var(--t2);margin-top:-4px}
+.mh-verdict{font-size:18px;font-weight:900;margin:2px 2px 6px}
+.mh-verdict.ok{color:var(--green)}
+.mh-verdict.bit{color:var(--red)}
+.mh-verdict.no{color:var(--orange)}
+
+/* Surlignages : pont (vert plein), mot gardé (gris), mots recopiés (rouge ondulé) */
+.mh-mk{color:inherit;background-color:transparent;border-radius:4px;padding:0 2px;margin:0 -1px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.mh-mk-bridge{background-color:color-mix(in srgb,var(--green) 22%,transparent);box-shadow:inset 0 -2px 0 var(--green)}
+.mh-mk-echo{background-color:color-mix(in srgb,var(--t3) 20%,transparent);box-shadow:inset 0 -2px 0 var(--t3)}
+.mh-mk-copy{background-color:color-mix(in srgb,var(--red) 16%,transparent);text-decoration:underline wavy var(--red);text-decoration-thickness:1.5px;text-underline-offset:4px;text-decoration-skip-ink:none}
+.mh-dot.mh-mk-copy{box-shadow:inset 0 -2px 0 var(--red)}
+.mh-src-text .mh-mk,.mh-opt-text .mh-mk{animation:mhInk .35s ease-out both}
+
+/* Options */
+.mh-opts{display:flex;flex-direction:column;gap:9px}
+.mh-opt{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:56px;text-align:left;padding:11px 12px 11px 12px;border-radius:14px;border:1.5px solid var(--bdr);background-color:var(--bg2);color:var(--t1);font:500 15px/1.4 'DM Sans',sans-serif;cursor:pointer;transition:border-color .15s,background-color .15s,opacity .2s,transform .12s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.mh-opt:active{transform:scale(.985)}
+.mh-let{width:28px;height:28px;border-radius:50%;border:2px solid var(--t3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--t2)}
+.mh-opt-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.mh-tags{display:flex;flex-wrap:wrap;gap:6px}
+.mh-tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+.mh-tag.good{color:var(--green)}
+.mh-tag.bad{color:var(--red)}
+.mh-tag.ans{color:var(--cyan)}
+.mh-tag.dim{color:var(--t2)}
+
+.mh-opt.is-correct{border-color:var(--green);background-color:color-mix(in srgb,var(--green) 10%,var(--bg2))}
+.mh-opt.is-correct .mh-let{background:var(--green);border-color:var(--green);color:var(--bg2)}
+.mh-opt.is-wrong{border-color:var(--red);background-color:color-mix(in srgb,var(--red) 9%,var(--bg2))}
+.mh-opt.is-wrong .mh-let{background:var(--red);border-color:var(--red);color:var(--bg2)}
+.mh-opt.is-mimic{border-style:dashed}
+.mh-opt.is-mimic:not(.is-wrong){border-color:color-mix(in srgb,var(--red) 60%,transparent)}
+.mh-opt.is-dim{opacity:.6}
+.mh-opt.is-focus{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--cyan);opacity:1}
+.mh-opt.is-locked{cursor:default}
+.mh-opt.is-huntable{border-style:dashed;animation:mhLure 1.6s ease-in-out infinite}
+.mh-opt.mark-ans{border-color:var(--cyan);background-color:rgba(var(--cx),.1)}
+.mh-opt.mark-ans .mh-let{border-color:var(--cyan);color:var(--cyan)}
+.mh-opt.mark-mim{border-style:dashed;border-color:var(--red);background-color:color-mix(in srgb,var(--red) 7%,var(--bg2))}
+.mh-opt.mark-mim .mh-let{border-color:var(--red);color:var(--red)}
+.mh-face{color:var(--red);animation:mhPop .5s cubic-bezier(.3,1.7,.5,1) both}
+.mh-face.chomp{animation:mhPop .45s cubic-bezier(.3,1.7,.5,1) both,mhChomp .42s .45s ease-in-out 2}
+.mh-bite{animation:mhBite .5s .1s ease both}
+.mh-caught{position:absolute;top:-8px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.25);animation:mhPop .45s .25s cubic-bezier(.3,1.7,.5,1) both}
+.mh-caught::after{content:"✓"}
+.mh-hint{margin:10px 2px 0;font-size:12px;color:var(--t2);text-align:center}
+
+/* V1 : bandeau de chasse */
+.mh-banner{display:flex;align-items:center;gap:10px;padding:9px 8px 9px 12px;margin:0 0 10px;border-radius:12px;border:1px solid rgba(var(--cx),.4);background-color:rgba(var(--cx),.09);font-size:14px;font-weight:700;color:var(--t1)}
+.mh-skip{margin-left:auto;min-height:36px;padding:4px 10px;background:none;border:none;color:var(--t2);font:600 13px 'DM Sans',sans-serif;text-decoration:underline;cursor:pointer}
+
+/* V2 : outils de marquage */
+.mh-tools{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-bottom:10px;border-radius:14px;background-color:var(--bg3)}
+.mh-tool{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;border:none;border-radius:10px;background:transparent;color:var(--t2);font:700 14px 'DM Sans',sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mh-tool-ic{font-size:16px}
+.mh-tool.on{background-color:var(--bg2);box-shadow:0 1px 5px rgba(0,0,0,.18)}
+.mh-tool.on.ans{color:var(--cyan)}
+.mh-tool.on.mim{color:var(--red)}
+
+/* Explication */
+.mh-why{margin-top:14px;padding:16px!important}
+.mh-why h4{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cyan)}
+.mh-pairs{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.mh-pair{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;color:var(--t1)}
+.mh-arrow{color:var(--t2);font-weight:700}
+.mh-note{font-size:12px;color:var(--t2)}
+.mh-exp{margin:0;font-size:14px;line-height:1.6;color:var(--t2)}
+.mh-trap{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);font-size:13.5px;line-height:1.55;color:var(--t2)}
+
+/* Barre du bas (fixed : .app défile, sticky y est inerte) */
+.mh-bar{position:fixed;left:0;right:0;bottom:0;z-index:4;padding:18px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 70%,rgba(var(--bg-rgb),0))}
+.mh-bar .btn1{width:100%}
+.mh-bar .btn1:disabled{opacity:.5;pointer-events:none}
+
+/* Stats de fin (dans SessionResult) */
+.mh-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px!important;text-align:center}
+.mh-stat{font-size:26px;font-weight:900}
+.mh-stat-l{font-size:11px;color:var(--t2);margin-top:2px}
+
+@keyframes mhInk{from{background-color:transparent;box-shadow:none}}
+@keyframes mhPop{0%{transform:scale(.2) rotate(-25deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes mhChomp{0%,100%{transform:scale(1)}45%{transform:scale(1.3) rotate(-10deg)}}
+@keyframes mhBite{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+@keyframes mhLure{0%,100%{border-color:rgba(var(--cx),.25)}50%{border-color:rgba(var(--cx),.85)}}
+@media (prefers-reduced-motion:reduce){.mh-opt.is-huntable{animation:none;border-color:rgba(var(--cx),.6)}}
