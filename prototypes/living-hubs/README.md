@@ -53,3 +53,13 @@ aujourd'hui, Phrasal Dojo 3 fois (plus d'XP) ; Gauntlet 1 épreuve sur 4 maîtri
 `statusOf` part en fonction pure dans `src/lib/` (testée : seuils de maîtrise, `farmMult`, hubs à
 épreuves), les tuiles dans `components/` pour être partagées par Train, GamesHub, Listening/ReadingHub.
 Les constantes 50 / 0,8 remontent dans `lib/` et le watcher de `App.jsx` les lit aussi (une seule source).
+
+## Décision (2026-09-17)
+
+**C « Coffre »**, câblée dans `src/` : état pur `lib/hubStatus.js` (seuils partagés avec le watcher du
+coffre de maîtrise d'`App.jsx`, `tests/check_hub_status.cjs`), tarif de la prochaine partie par
+`nextRunMult` (`lib/xp.js`, bypass et événements compris), composants `components/HubTile.jsx`
+(`HubTile`, `HubShelf`), CSS `.hub-*` dans `appCss.js`. Branchée sur Train (Exercises, Grammar & Vocab,
+Tips), Games, Listening et Reading. Le Gauntlet et le Modal Council gardent leurs cartes internes.
+
+Banc des vrais écrans câblés : `real.html?screen=gv|ex|tips|games|listening|reading&profile=mix|new&mode=dark|light&ev=flash`.
