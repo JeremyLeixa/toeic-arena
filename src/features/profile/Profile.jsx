@@ -1059,9 +1059,13 @@ export function Profile(p){
       {/* ─── SECTION MES DONNÉES ─── */}
       <div style={{fontSize:10,color:"var(--t3)",fontWeight:600,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{"\uD83D\uDCC2 Mes donn\u00e9es"}</div>
       <button className="btn2" onClick={function(){
+        // Liste écrite à la main : tout champ ajouté au profil doit être ajouté ICI aussi, sinon
+        // l'export de l'article 20 est incomplet (le bestiaire des erreurs l'a rejointe le 2026-09-17).
         var data={nom:u.name,classe:u.classCode,xp:u.xp,xpHebdo:u.weeklyXp,serie:u.streak,derniereActivite:u.lastActive,
           stats:u.stats,scoresModules:u.moduleScores,resultatsTests:u.mockResults,scoresJeux:u.gameScores,
           succes:u.unlockedAch,avatar:u.avatar,theme:u.theme,tempsTotal:u.totalTime,
+          objectifToeic:u.targetToeic,objectifDate:u.targetDate,
+          bestiaireErreurs:u.review,battleScan:u.battleScan,mission:u.mission,
           consentementRGPD:u.gdprConsent,exportDate:new Date().toISOString()};
         var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
         var a=document.createElement("a");a.href=URL.createObjectURL(blob);

@@ -49,6 +49,11 @@ export function supaToLocal(data){
     arenaMarks: data.arena_marks || 0,
     // Arena Shop P2.5 — XP boost state (client-authoritative, travels in save()).
     boosts: data.boosts || {},
+    // Mémoire du Mentor (2026-09-17) — bestiaire des erreurs : des références de questions, jamais
+    // leur texte. La file est bornée par lib/review.js AVANT la sauvegarde : ne JAMAIS tronquer ici
+    // (check_profile_roundtrip verrait un champ « ALTÉRÉ »).
+    review: data.review || {},
+    letterSeen: data.letter_seen || null,
   };
 }
 // Construit le payload de persistance. EXTRAIT de save() en Phase C-lite pour que le
@@ -98,6 +103,9 @@ export function buildSavePayload(d){
     target_date:d.targetDate||null,
     // Arena Shop P2.5 (2026-06-02) — XP boost state (client-authoritative, persisted).
     boosts:d.boosts||{},
+    // Mémoire du Mentor (2026-09-17) — bestiaire des erreurs + semaine de la dernière lettre lue.
+    review:d.review||{},
+    letter_seen:d.letterSeen||null,
     // Arena Shop P1 (2026-05-29) — DELIBERATELY NO arena_marks HERE.
     // The currency is server-authoritative: only grant_marks/spend_marks RPCs
     // mutate students.arena_marks via atomic increments. save() does a full-row
@@ -106,4 +114,4 @@ export function buildSavePayload(d){
     // this (adding arena_marks to the payload) silently erases earned Darics.
   };
 }
-export function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null,targetToeic:null,targetDate:null,arenaMarks:0,boosts:{}};}
+export function fresh(name,classCode){return{name:name,classCode:classCode||'visitor',xp:0,streak:0,lastActive:null,weeklyXp:0,weekId:weekId(),weeklyHistory:[],cardStates:{},daily:{date:null,done:false,score:0,xpE:0},stats:{totalQ:0,correct:0,sessions:0,cardsRev:0,perfects:0,drills:0},moduleScores:{},mockResults:{},gameScores:{pityCount:0},mission:{date:null,actId:null,done:false,streak:0,lastDoneDate:null},unlockedAch:[],avatar:"⚔️",theme:"dark",equippedSkin:null,equippedFrame:null,equippedTitle:null,totalTime:0,dailyModSessions:{},weeklyDailyCount:0,battleScan:null,tipsShown:[],dailySeen:[],gdprConsent:null,joinedAt:today(),tutorialPending:true,email:null,accessLevel:'free',accessExpiresAt:null,narrator:{heard:[],muted:false},cgvAcceptedAt:null,cgvVersion:null,retractationWaivedAt:null,targetToeic:null,targetDate:null,arenaMarks:0,boosts:{},review:{},letterSeen:null};}

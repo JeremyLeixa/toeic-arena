@@ -73,7 +73,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-17-mimic-hunt";
+var BUILD_ID="2026-09-17-mentor-memory-lot2";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 

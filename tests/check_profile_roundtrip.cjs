@@ -115,11 +115,20 @@ for (const col of SERVER_OWNED_SQL) {
 // ══════════════════════════════════════════════════════════════════════════
 // Une clé envoyée hors liste blanche est ignorée en silence par la RPC : aucune erreur
 // remontée, aucune persistance. C'est le mode d'échec le plus sournois du verrou.
-const MIG = path.join(ROOT, 'supabase', 'migrations', '2026-09-14_p2c_student_rpc.sql');
-const sql = fs.readFileSync(MIG, 'utf8').replace(/\r\n/g, '\n');
+// La liste blanche est lue dans la DERNIÈRE migration qui (re)définit save_student : un
+// `CREATE OR REPLACE` ultérieur écrase le précédent en base, donc lire un fichier figé ferait
+// mentir ce test dès la migration suivante (c'était le cas jusqu'au 2026-09-17, où l'ajout de la
+// colonne `review` passait par un nouveau fichier). Même règle que check_rpc_contracts.
+const MIG_DIR = path.join(ROOT, 'supabase', 'migrations');
+const MIG = fs.readdirSync(MIG_DIR).filter((f) => /\.sql$/.test(f)).sort()
+  .filter((f) => /CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.save_student/i.test(fs.readFileSync(path.join(MIG_DIR, f), 'utf8')))
+  .pop();
+const sql = MIG ? fs.readFileSync(path.join(MIG_DIR, MIG), 'utf8').replace(/\r\n/g, '\n') : '';
 const m = sql.match(/v_cols\s+text\[\]\s*:=\s*ARRAY\[([\s\S]*?)\]/);
-if (!m) {
-  fail('liste blanche v_cols introuvable dans ' + path.basename(MIG)
+if (!MIG) {
+  fail('aucune migration ne définit save_student — le test ne peut plus vérifier la liste blanche.');
+} else if (!m) {
+  fail('liste blanche v_cols introuvable dans ' + MIG
     + ' — le test ne peut plus vérifier la correspondance (parseur à corriger).');
 } else {
   const white = (m[1].match(/'([a-z_]+)'/g) || []).map(s => s.replace(/'/g, ''));
@@ -136,7 +145,21 @@ if (!m) {
         + 'soit le client a cessé de la sauvegarder, soit la liste blanche est trop large.');
     }
   }
-  console.log('  liste blanche SQL : ' + white.length + ' colonnes, payload : ' + sent.length);
+  console.log('  liste blanche SQL (' + MIG + ') : ' + white.length + ' colonnes, payload : ' + sent.length);
+  // Une colonne présente dans v_cols mais absente du SET de l'UPDATE (ou de l'INSERT) passe le
+  // filtre puis n'est jamais écrite : la donnée disparaît sans erreur. Quatre listes à tenir.
+  const upd = (sql.match(/UPDATE students SET([\s\S]*?)WHERE id = v_row\.id/) || [])[1] || '';
+  const insCols = (sql.match(/INSERT INTO students\(([\s\S]*?)\)\s*VALUES/) || [])[1] || '';
+  for (const k of white) {
+    if (upd.indexOf(k + ' = v_new.' + k) < 0) {
+      fail('colonne « ' + k + ' » dans la liste blanche mais absente du SET de l\'UPDATE : '
+        + 'la RPC accepte la clé et ne l\'écrit jamais.');
+    }
+    if (!new RegExp('(^|[\\s,(])' + k + '([\\s,)]|$)').test(insCols)) {
+      fail('colonne « ' + k + ' » dans la liste blanche mais absente de l\'INSERT : '
+        + 'elle serait perdue à la création du profil.');
+    }
+  }
 }
 
 console.log(fails === 0
