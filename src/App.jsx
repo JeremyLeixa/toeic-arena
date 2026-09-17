@@ -22,7 +22,7 @@ import { getLeague, applyWeekTransition } from "./lib/league.js";
 import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost, notifyAuthLost } from "./lib/persistence.js";
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
-import { gateXp, gateSteps, settleXp, spotlightMult } from "./lib/xp.js";
+import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { marksLabel } from "./lib/sessionText.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
@@ -1067,12 +1067,11 @@ function sv(d){
     r.chests.forEach(function(ch){grantChestLocal(ch.trigger,ch.type);if(ch.haptic)haptic(ch.haptic);});
     return r.c;
   }
-  function getSpotlightMult(modId){return spotlightMult(modId,activeEvents);}
   // ── Sessions de fin (2026-09-17) ── remplace applyXpGates + addXp pour les modules qui rendent
   // SessionResult. Même calcul (gateSteps ≡ gateXp, testé) et mêmes octrois (Darics du Focus,
   // coffres de settleXp), mais : le détail des étapes est gardé pour l'écran, et ni toast d'XP ni
   // son ici (l'écran joue le compteur, le niveau et la ligue au bon moment). La ref est posée AVANT
-  // les octrois pour qu'ils sachent vers quelle session aller. opts.spotlight : comme miniDone et
+  // les octrois pour qu'ils sachent vers quelle session aller. opts.spotlight : comme l'ancien miniDone et
   // les hubs (drill, daily et jeux ne l'appliquaient pas). Rend {c, sid} : le module garde le sid et
   // n'affiche QUE cette session.
   function settleSession(modId,sc,tot,baseXp,opts){
@@ -1394,8 +1393,7 @@ function sv(d){
     sealSession(c,ss.sid);sv(c);return ss.sid;}
   // Drill : premier module sur l'écran de fin commun (pilote, 2026-09-17). Rend le sid de la session.
   function drillDone(sc,tot,xp,catStats){var s=settleSession("drill",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);checkMission(c,"drill");sealSession(c,s.sid);sv(c);return s.sid;}
-  function miniDone(sc,tot,xp){var modId=sp||"unknown";var gxp=applyXpGates(xp,sc,tot,modId);gxp=Math.round(gxp*getSpotlightMult(modId));var c=addXp(gxp);c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sv(c);}
-  // Écran de fin commun : même chaîne que miniDone (Spotlight compris), avec la session. Rend le sid.
+  // Mini-modules sur l'écran de fin commun (Spotlight compris), avec la session. Rend le sid.
   function miniSession(sc,tot,xp){var modId=sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
   function cardsDone(xp,ok,tot){
@@ -1576,7 +1574,7 @@ function sv(d){
     </div>
   </div>);
 
-  var routed=renderRoute({addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u});
+  var routed=renderRoute({bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u});
   if(routed)return routed;
 
   return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}

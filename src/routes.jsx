@@ -49,7 +49,7 @@ var ModalCouncilHub=lazyNamed(function(){return import("./features/modals/ModalC
  * manque, ici comme dans le littéral d'appel côté App(). Retourne l'écran rendu, ou
  * undefined si `sp` n'est pas une sous-page (App() enchaîne alors sur les onglets). */
 export function renderRoute(c){
-  var {addXp, applyXpGates, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, getSpotlightMult, grantWeeklyChest, groupType, lastSession, miniDone, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u}=c;
+  var {bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u}=c;
   if(sp==="daily")return pg(<Daily u={u} done={dailyDone} session={lastSession} closeSession={closeSession} back={function(){sSP(null);}}/>);
   if(sp==="csess")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
