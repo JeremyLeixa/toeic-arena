@@ -1,6 +1,7 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { GrimoireReader } from "../../components/GrimoireReader.jsx";
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { MODAL_MATCH_BOARDS, MODAL_SORT_ITEMS } from "../../data/modals.js";
 import { GRIMOIRE_MODALS } from "../../data/modalsGrimoire.js";
@@ -66,6 +67,7 @@ export function ModalMatch(p){
   var draftRef=useRef(null); // {sIdx, x, y, color, hit}
   var boardRef=useRef(null);
   var activeAnchorRef=useRef(null);
+  var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
 
   function startSession(){
     var picked=shuffle(MODAL_MATCH_BOARDS.slice()).slice(0,BOARDS_PER_SESSION);
@@ -86,13 +88,17 @@ export function ModalMatch(p){
     var totalQ=BOARDS_PER_SESSION*PAIRS_PER_BOARD;
     var baseXp=15+totalCorrect*5;
     if(totalCorrect===totalQ)baseXp+=35;
-    p.done(totalCorrect,totalQ,baseXp);
+    return p.done(totalCorrect,totalQ,baseXp);
   }
 
   function commitLock(){
     if(pairs.length!==PAIRS_PER_BOARD)return;
     var board=boards[boardIdx];var correct=0;
-    pairs.forEach(function(pp){if(board.modals[pp.mIdx].originalIdx===pp.sIdx)correct++;});
+    pairs.forEach(function(pp){
+      if(board.modals[pp.mIdx].originalIdx===pp.sIdx){correct++;return;}
+      var good=board.modals.find(function(m){return m.originalIdx===pp.sIdx;});
+      mistakesRef.current.push({tag:"Modals · "+board.theme,prompt:board.situations[pp.sIdx],noBlank:true,yours:board.modals[pp.mIdx].text,correct:good?good.text:""});
+    });
     if(correct===PAIRS_PER_BOARD){try{playCorrect();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
     setAllResults(allResults.concat([{boardId:board.id,correct:correct,total:PAIRS_PER_BOARD}]));
@@ -209,6 +215,14 @@ export function ModalMatch(p){
   },[]);
 
   // ── INTRO ──────────────────────────────────────────────────────────
+  // Fin de session : l'XP part ici, avec l'état du dernier rendu, au lieu d'attendre « OK, back »
+  // (quitter l'écran la perdait). Un seul envoi.
+  useEffect(function(){
+    if(phase!=="end"||sentRef.current)return;
+    sentRef.current=true;
+    sidRef.current=finishSession();
+  },[phase]);
+
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
       <button className="back-btn" onClick={p.back}>{"←"} Back</button>
@@ -228,30 +242,16 @@ export function ModalMatch(p){
   }
 
   // ── END ────────────────────────────────────────────────────────────
-  if(phase==="end"){
-    var totalCorrect=allResults.reduce(function(s,r){return s+r.correct;},0);
-    var totalQ=BOARDS_PER_SESSION*PAIRS_PER_BOARD;
-    var isPerfect=totalCorrect===totalQ;
-    var isGood=totalCorrect>=Math.ceil(totalQ*0.7);
-    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
-      <div style={{textAlign:"center",padding:"20px 16px"}}>
-        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><ResultIcon e={isPerfect?"👑":isGood?"🏆":"📜"} size={58}/></div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"PERFECT ORACLE":isGood?"Oracle answers":"Audience adjourned"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:"var(--cyan)",margin:"14px 0 2px"}}>{totalCorrect}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {totalQ}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>pairs correctly matched</p>
-        <div className="crd" style={{maxWidth:340,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:8,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Boards</div>
-          {allResults.map(function(r,i){return(
-            <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:4,color:"var(--t2)"}}>
-              <span>Board {i+1}</span>
-              <strong style={{color:r.correct===r.total?tone("#22c55e"):r.correct>=3?tone("#f59e0b"):tone("#ef4444")}}>{r.correct} / {r.total}</strong>
-            </div>
-          );})}
+  if(phase==="end")return(<SessionResult session={p.session} sid={sidRef.current} name="The Oracle" mistakes={mistakesRef.current} onContinue={p.onContinue} onReplay={p.onReplay}>
+    <div className="crd" style={{padding:14}}>
+      {allResults.map(function(r,i){return(
+        <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:i<allResults.length-1?4:0,color:"var(--t2)"}}>
+          <span>Board {i+1}</span>
+          <strong style={{color:r.correct===r.total?tone("#22c55e"):r.correct>=3?tone("#f59e0b"):tone("#ef4444")}}>{r.correct} / {r.total}</strong>
         </div>
-        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
-      </div>
-    </div>);
-  }
+      );})}
+    </div>
+  </SessionResult>);
 
   // ── PLAY / REVEAL ─────────────────────────────────────────────────
   var board=boards[boardIdx];
@@ -370,6 +370,7 @@ export function ModalSort(p){
   var [idx,setIdx]=useState(0);
   var [picked,setPicked]=useState(null);
   var [results,setResults]=useState([]);
+  var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
 
   function startSession(){
     var shuffled=shuffle(MODAL_SORT_ITEMS.slice()).slice(0,SESSION_SIZE);
@@ -379,6 +380,7 @@ export function ModalSort(p){
   function pickBucket(bid){
     if(phase!=="play"||!deck)return;
     var item=deck[idx];var ok=bid===item.bucket;
+    if(!ok){var lab=function(id){var b=BUCKETS.find(function(x){return x.id===id;});return b?b.label:id;};mistakesRef.current.push({tag:"Modals · "+item.modal,prompt:item.s,noBlank:true,yours:lab(bid),correct:lab(item.bucket),why:item.x});}
     if(ok){try{playCorrect();}catch(e){console.warn("[msort] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[msort] sfx:",e&&e.message);}}
     setPicked(bid);
@@ -396,8 +398,16 @@ export function ModalSort(p){
     var correct=results.filter(function(r){return r.ok;}).length;
     var baseXp=15+correct*5;
     if(correct===deck.length)baseXp+=35;
-    p.done(correct,deck.length,baseXp);
+    return p.done(correct,deck.length,baseXp);
   }
+
+  // Fin de session : l'XP part ici, avec l'état du dernier rendu, au lieu d'attendre « OK, back »
+  // (quitter l'écran la perdait). Un seul envoi.
+  useEffect(function(){
+    if(phase!=="end"||sentRef.current)return;
+    sentRef.current=true;
+    sidRef.current=finishSession();
+  },[phase]);
 
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
@@ -421,31 +431,7 @@ export function ModalSort(p){
     </div>);
   }
 
-  if(phase==="end"){
-    var correct=results.filter(function(r){return r.ok;}).length;
-    var isPerfect=correct===deck.length;
-    var isGood=correct>=Math.ceil(deck.length*0.7);
-    var missed=results.filter(function(r){return!r.ok;});
-    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
-      <div style={{textAlign:"center",padding:"20px 16px"}}>
-        <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><ResultIcon e={isPerfect?"👑":isGood?"🏆":"⚖️"} size={58}/></div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"FLAWLESS VERDICT":isGood?"Verdict delivered":"Bench adjourned"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:"var(--cyan)",margin:"14px 0 2px"}}>{correct}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>verdicts upheld</p>
-        {missed.length>0&&<div className="crd" style={{maxWidth:380,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>To review</div>
-          {missed.slice(0,8).map(function(r,i){
-            var correctBucket=BUCKETS.find(function(b){return b.id===r.item.bucket;});
-            return(<div key={i} style={{fontSize:12.5,marginBottom:8,color:"var(--t2)",lineHeight:1.5}}>
-              <div style={{color:"var(--t1)"}}>{r.item.s}</div>
-              <div style={{fontSize:11,color:tone(correctBucket.color),marginTop:2}}>{"→ "}{correctBucket.label}</div>
-            </div>);
-          })}
-        </div>}
-        <button className="btn1" style={{fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
-      </div>
-    </div>);
-  }
+  if(phase==="end")return(<SessionResult session={p.session} sid={sidRef.current} name="The Verdict" mistakes={mistakesRef.current} onContinue={p.onContinue} onReplay={p.onReplay}/>);
 
   // phase === "play" or "reveal"
   var item=deck[idx];
@@ -499,6 +485,7 @@ export function ModalSort(p){
 export function ModalCouncilHub(p){
   var [openGrim,setOpenGrim]=useState(null);
   var [subMode,setSubMode]=useState(null); // null | "match" | "sort"
+  var [subRun,setSubRun]=useState(0); // Play again : remonte l'épreuve par sa clé
   var scores=(p.u&&p.u.moduleScores)||{};
   var cards=[
     {id:"match",name:"The Oracle",icon:"spell-book",desc:"Pair situations with the right modal response. 3 boards × 5 pairs per session.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_oracle",stats:scores["modals_match"],ready:true},
@@ -513,15 +500,23 @@ export function ModalCouncilHub(p){
   function subDone(sc,tot,xp){
     try{stopBGM();}catch(e){console.warn("[council] bgm stop:",e&&e.message);}
     try{haptic("complete");}catch(e){console.warn("[council] haptic:",e&&e.message);}
-    if(p.onModuleDone)p.onModuleDone(subMode,sc,tot,xp);
-    setSubMode(null);
+    // L'épreuve reste affichée : elle montre l'écran de fin commun, dont Continue ramène au hub.
+    return p.onModuleDone?p.onModuleDone(subMode,sc,tot,xp):0;
+  }
+  function subContinue(){p.closeSession();setSubMode(null);}
+  function subReplay(){
+    p.closeSession();
+    var card=cards.find(function(c){return c.id===subMode;});
+    if(card){try{playBGM(card.bgm);}catch(e){console.warn("[council] bgm:",e&&e.message);}}
+    setSubRun(function(k){return k+1;});
   }
   function subAbort(){
     try{stopBGM();}catch(e){console.warn("[council] bgm stop:",e&&e.message);}
     setSubMode(null);
   }
-  if(subMode==="match")return(<ModalMatch u={p.u} done={subDone} back={subAbort}/>);
-  if(subMode==="sort")return(<ModalSort u={p.u} done={subDone} back={subAbort}/>);
+  var subKey=subMode+":"+subRun;
+  if(subMode==="match")return(<ModalMatch key={subKey} u={p.u} done={subDone} back={subAbort} session={p.session} onContinue={subContinue} onReplay={subReplay}/>);
+  if(subMode==="sort")return(<ModalSort key={subKey} u={p.u} done={subDone} back={subAbort} session={p.session} onContinue={subContinue} onReplay={subReplay}/>);
 
   return(<div className="gauntlet-hub enter">
     <button className="back-btn" onClick={p.back}>{"←"} Back</button>
