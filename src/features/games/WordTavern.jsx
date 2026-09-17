@@ -1,11 +1,12 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { Bar } from "../../components/Bar.jsx";
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { VOCAB } from "../../data/vocab.js";
 import { shuffle, today } from "../../lib/util.js";
 import { playCorrect, playWrong } from "../../sounds.js";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 
 // ─── WORD TAVERN ───
 export function WordTavern(p){
@@ -55,6 +56,7 @@ export function WordTavern(p){
   var[phase,sP]=useState("intro");
   var[sel,sSel]=useState(-1);
   var[missed,setMissed]=useState([]);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
 
   function answer(idx){
     if(sel!==-1)return;
@@ -63,6 +65,10 @@ export function WordTavern(p){
     if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{
       try{playWrong();}catch(e){}
+      var wq=qs[ci];
+      mistakesRef.current.push(wq.type==="fillBlank"
+        ?{tag:"Vocabulary · fill the blank",prompt:wq.prompt,yours:wq.opts[idx].text,correct:wq.card.w,why:wq.card.d}
+        :{tag:wq.type==="defToWord"?"Vocabulary · definition → word":"Vocabulary · word → meaning",prompt:wq.prompt,noBlank:true,yours:wq.opts[idx].text,correct:wq.type==="defToWord"?wq.card.w:wq.card.d,why:"“"+wq.card.e+"”"});
       // SRS reset: send missed word back to review
       var cardId=qs[ci].card.id;
       setMissed(function(prev){return prev.concat([cardId]);});
@@ -79,10 +85,10 @@ export function WordTavern(p){
     if(ci<qs.length-1){sC(ci+1);sSel(-1);}
     else{
       var finalSc=sc;
-      // XP de BASE : miniDone applique les portes. Elle était déjà réduite ici, donc deux fois (2026-09-17).
+      // XP de BASE : la route (miniSession) applique les portes. Elle était déjà réduite ici, donc deux fois (2026-09-17).
       var baseXp=20+finalSc*6;
+      sidRef.current=p.done(finalSc,TOTAL,baseXp);
       sP("done");
-      p.done(finalSc,TOTAL,baseXp);
     }
   }
 
@@ -96,23 +102,11 @@ export function WordTavern(p){
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
   // ── DONE ──
-  if(phase==="done"){
-    var pct=TOTAL>0?sc/TOTAL:0;
-    var emoji=pct>=0.8?"\uD83C\uDFC6":pct>=0.5?"\u2694\uFE0F":"\uD83D\uDEE1\uFE0F";
-    var title=pct>=0.8?"Excellent!":pct>=0.5?"Well done!":"Keep studying!";
-    var baseXp=20+sc*6;
-    var gxp=p.gate?p.gate(baseXp,sc,TOTAL):baseXp;
-    var missedCount=missed.length;
-    return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-      <div style={{marginBottom:16,display:"flex",justifyContent:"center",animation:"countUp .6s"}}><ResultIcon e={emoji} size={56}/></div>
-      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>{title}</h1>
-      <p style={{color:"var(--t2)",fontSize:16,marginBottom:4}}>{sc} / {TOTAL}</p>
-      <p className="out" style={{color:"var(--gold)",fontWeight:700,fontSize:20,marginBottom:16}}>+{gxp} XP</p>
-      {missedCount>0&&<p style={{fontSize:12,color:"var(--red)",marginBottom:16}}>{missedCount} word{missedCount>1?"s":""} sent back to flashcard review</p>}
-      <button className="btn1" onClick={p.back} style={{marginTop:8}}>Back to Games</button>
-      <NextStepReco u={p.u} fromMod="tavern" nav={p.nav}/>
-    </div>);
-  }
+  if(phase==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Word Tavern" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+    {missed.length>0&&<div className="crd" style={{padding:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="card-pick" size={18} color="var(--cyan)"/><span style={{fontSize:13,color:"var(--t2)"}}>{missed.length+" word"+(missed.length>1?"s":"")+" sent back to flashcard review"}</span></div>}
+    <NextStepReco u={p.u} fromMod="tavern" nav={function(m,a){p.closeSession();p.nav(m,a);}}/>
+  </SessionResult>);
 
   // ── QUESTION ──
   var q=qs[ci];

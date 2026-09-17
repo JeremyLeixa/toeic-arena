@@ -70,7 +70,7 @@ export function renderRoute(c){
   if(sp==="boss"){playBGM("bgm_final");return pg(<BossTest u={u} done={function(r,xp){stopBGM();bossDone(r,xp);}} back={function(){stopBGM();sSP(null);sSPA("mocks");sT("train");}}/>);}
   if(sp==="endless"){playBGM("bgm_endless");return pg(<EndlessArena u={u} nav={nav} done={function(r,xp,meta){stopBGM();endlessDone(r,xp,meta);}} back={function(){stopBGM();sSP(null);sSPA("mocks");sT("train");}}/>);}
   if(sp==="mock3")return pg(<MockTest mockId={3} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
-  if(sp==="tavern"){playBGM("bgm_tavern");return pg(<WordTavern u={u} nav={nav} done={function(sc,tot,xp){stopBGM();miniDone(sc,tot,xp);}} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"tavern");}} resetCard={function(c){sv(c);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  if(sp==="tavern"){if(!lastSession)playBGM("bgm_tavern");return pg(<WordTavern u={u} nav={nav} done={function(sc,tot,xp){stopBGM();return miniSession(sc,tot,xp);}} session={lastSession} closeSession={closeSession} replaySession={replaySession} resetCard={function(c){sv(c);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="matchE"){playBGM("bgm_speed");return pg(<SpeedMatch mode="easy" u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="wfall"){playBGM("bgm_wfall");return pg(<WordFall u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   if(sp==="duel"){playBGM("bgm_duel");return pg(<DuelArena u={u} done={function(mk,res,xp){stopBGM();gameDone(mk,res,xp);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
