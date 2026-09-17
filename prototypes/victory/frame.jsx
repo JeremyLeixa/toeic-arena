@@ -4,7 +4,7 @@
 import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { CSS } from "../../src/styles/appCss.js";
-import { createChestFx } from "../../src/features/chests/chestFx.js";
+import { createChestFx } from "../../src/components/particles.js";
 import { setSoundEnabled, playLootTick, playXP, playLevelUp, playJingleLeague, playChestLand, playChestKnock, playLootCollect } from "../../src/sounds.js";
 import VX from "./victory.css?raw";
 import { SCENARIOS, explainXp, NOW } from "./scenarios.js";

@@ -23,7 +23,7 @@ import {
   playChestLand, playChestKnock, playChestSting, playChestStrain, playChestRiser, playChestUnlock, playChestOpen,
   playCardFly, playCardLift, playCardFlip, playCardHeartbeat, playCardReveal, playLootTick, playLootCollect,
 } from "../../sounds.js";
-import { createChestFx } from "./chestFx.js";
+import { createChestFx } from "../../components/particles.js";
 import { tellColor, groupGlow, fmtNum } from "./chestTheme.js";
 
 var STOP = { chestStop: true };

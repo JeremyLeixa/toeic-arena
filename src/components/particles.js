@@ -1,5 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// Particules de l'ouverture de coffre v3 : un seul <canvas> pour tout.
+// Particules de l'ouverture de coffre v3 : un seul <canvas> pour tout. Déplacé de
+// features/chests/chestFx.js le 2026-09-17 (components/) : l'écran de fin de session s'en sert aussi,
+// et une feature ne peut pas importer le dossier d'une autre (tests/check_import_graph.cjs).
 // Porté de prototypes/chest-animations-v3/particles.js, en fabrique : une instance par
 // modal, détruite au démontage (sinon la boucle rAF survit à la fermeture).
 // DPR plafonné à 2, quantités divisées par ~2 sur les appareils à ≤ 4 cœurs, boucle
