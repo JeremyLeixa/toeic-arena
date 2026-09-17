@@ -362,6 +362,28 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
 - Question ouverte : la League en français côté élève, voulu (bonus de note) ou à passer en anglais ?
 - Contenu : le conseil du jour « When guessing, pick B or C » est faux depuis le mélange des options.
 
+## Session 2026-09-17 (suite) — Dashboard formateur bloqué sur « Loading groups... » (smartphone)
+
+- **Symptôme** : sur le téléphone de Jérémy, le sélecteur de groupes restait sur « Loading
+  groups... » ; sur le laptop, rien à signaler.
+- **Cause** : le déverrouillage biométrique (WebAuthn) ne vérifie que l'empreinte, en local, puis
+  rouvre le code formateur gardé en localStorage (`toeic-dash-teacher`). Tout logout le purge
+  (`clearDashSession` : « Changer de profil », « Déconnexion complète », reset), mais la clé
+  biométrique (`toeic-teacher-bio`) survit. L'empreinte ouvrait donc le dashboard avec un code vide :
+  `teacherAuth("")` refuse sans appeler le serveur, liste vide, et le sélecteur affichait
+  « Loading groups... » pour **toute** liste vide, refus compris. Le laptop passait par la saisie du
+  code. Rendu visible par les déconnexions des 16-17/09 (F4, « Changer de profil »). Le verrou
+  d'auth n'y était pour rien.
+- **Livré** : `6c0ac43` biométrie proposée seulement si un code est mémorisé (`hasDashSession()`
+  dans `lib/teacherSession.js`, Onboard + Profil), sinon saisie du code avec « Enter your code once:
+  biometric unlock will work again afterwards. » ; `bb67f11` le sélecteur distingue chargement /
+  code refusé (saisie du code sur place) / panne (Réessayer) / 12 s sans réponse (« Toujours en
+  cours : réessayer ») ; BUILD_ID `2026-09-17-teacher-bio` (`4e5840b`).
+- **Vérifié** : 16/16 tests, lint sans nouvelle erreur (lintgate 346/368). En dev : clé biométrique
+  factice sans code → plus de bouton biométrique ; code bidon + empreinte simulée → écran « Code
+  formateur absent ou refusé », nouvelle saisie → « Code invalide ». **Confirmé en prod par
+  Jérémy** sur son téléphone : code redemandé une fois, groupes affichés immédiatement.
+
 ---
 
 ## Earlier session: 2026-04-27 → 2026-04-28 (Chest redesign V2 — full sprint, ~30 commits)
