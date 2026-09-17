@@ -16,7 +16,7 @@ import { findModuleLabel, FEEDBACK_MODULES } from "../../lib/feedbackModules.js"
 import { festivalById, festivalOccurrence, formatFestivalDate, windowFestivalId } from "../../lib/festivals.js";
 import { getEffectiveLeague } from "../../lib/league.js";
 import { isPushSubscribed, unsubscribePush, subscribePush } from "../../lib/push.js";
-import { getBioCredId, biometricAvailable, teacherAuth, bioAuthenticate, setDashSession } from "../../lib/teacherSession.js";
+import { getBioCredId, biometricAvailable, teacherAuth, bioAuthenticate, setDashSession, hasDashSession } from "../../lib/teacherSession.js";
 import { estimateTOEICScore, generateInsight } from "../../lib/toeic.js";
 import { tone } from "../../lib/tone.js";
 import { today } from "../../lib/util.js";
@@ -1219,8 +1219,10 @@ export function Profile(p){
           for students/visitors. Access via the onboarding "Teacher access" link is
           still possible with a valid teacher_code. */}
       {u.classCode==="teacher-internal"&&<button className="btn2" onClick={async function(){
-        // Try biometric first if registered
-        if(bioAvail&&bioRegistered){try{var ok=await bioAuthenticate();if(ok){p.goTeacher();return;}}catch(e){console.warn("[teacher] biometric auth failed:",e&&e.message);}}
+        // Biométrie d'abord, mais seulement si un code formateur est mémorisé (hasDashSession) :
+        // elle rouvre la session, elle n'en crée pas. Sans code (purgé par un logout), elle ouvrait
+        // le dashboard sur une liste de groupes vide pour toujours.
+        if(bioAvail&&bioRegistered&&hasDashSession()){try{var ok=await bioAuthenticate();if(ok){p.goTeacher();return;}}catch(e){console.warn("[teacher] biometric auth failed:",e&&e.message);}}
         // Fall back to password prompt
         var code=prompt("Code formateur :");if(!code)return;
         var r=await teacherAuth(code);

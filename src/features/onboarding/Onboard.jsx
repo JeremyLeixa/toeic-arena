@@ -7,7 +7,7 @@ import { PassageDocs } from "../../components/PassageDocs.jsx";
 import { SCAN_SECTION_ORDER, BATTLE_SCAN_V2 } from "../../data/placement.js";
 import { resumeAudioSession, stopListenAudio, getEnVoice, playAudioFile, playLetteredOption, isAudioAborted } from "../../lib/audio.js";
 import { isStandalonePWA, isIOSDevice } from "../../lib/device.js";
-import { getBioCredId, biometricAvailable, bioAuthenticate, teacherAuth, setDashSession } from "../../lib/teacherSession.js";
+import { getBioCredId, biometricAvailable, bioAuthenticate, teacherAuth, setDashSession, hasDashSession } from "../../lib/teacherSession.js";
 import { normalizeName } from "../../lib/util.js";
 import { createCatController, computeScanResult } from "../../scanEngine.js";
 import { playCorrect, playWrong, playArenaCall } from "../../sounds.js";
@@ -666,10 +666,13 @@ var[step,sSt]=useState("name");
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>👨‍🏫</div>
         <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:20}}>Teacher Dashboard</h2>
-        {bioAvail&&bioRegistered&&<button className="btn1" style={{marginBottom:20,display:"flex",alignItems:"center",justifyContent:"center",gap:10,width:"100%"}} onClick={async function(){
-          try{var ok=await bioAuthenticate();if(ok)p.goTeacher();}catch(e){setTeacherErr(true);}
+        {/* Biométrie proposée seulement si un code formateur est mémorisé (hasDashSession) : elle
+            rouvre la session, elle n'en crée pas. Après un logout, le code a été purgé. */}
+        {bioAvail&&bioRegistered&&hasDashSession()&&<button className="btn1" style={{marginBottom:20,display:"flex",alignItems:"center",justifyContent:"center",gap:10,width:"100%"}} onClick={async function(){
+          try{var ok=await bioAuthenticate();if(ok)p.goTeacher();}catch(e){console.warn("[teacher] biometric auth failed:",e&&e.message);setTeacherErr(true);}
         }}><GIcon name="padlock" size={14} color="var(--cyan)" style={{marginRight:6,verticalAlign:"-2px"}}/>Unlock with biometrics</button>}
-        {bioAvail&&bioRegistered&&<div style={{fontSize:12,color:"var(--t3)",marginBottom:16}}>or enter code manually</div>}
+        {bioAvail&&bioRegistered&&hasDashSession()&&<div style={{fontSize:12,color:"var(--t3)",marginBottom:16}}>or enter code manually</div>}
+        {bioAvail&&bioRegistered&&!hasDashSession()&&<div style={{fontSize:12,color:"var(--t3)",marginBottom:16}}>Enter your code once: biometric unlock will work again afterwards.</div>}
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Access code</label>
           <PasswordInput labelShow="Show code" labelHide="Hide code" value={teacherCode} onChange={function(e){sTC(e.target.value);}} placeholder="Enter teacher code..."

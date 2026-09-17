@@ -42,6 +42,13 @@ export function setDashSession(code,role){try{localStorage.setItem('toeic-dash-t
 // App.jsx + signOutCompletely (auth.js) + le bouton de déconnexion du dashboard.
 export function clearDashSession(){try{localStorage.removeItem('toeic-dash-teacher');localStorage.removeItem('toeic-dash-role');localStorage.removeItem('toeic-dash-group');}catch(e){console.warn("[teacher] session clear failed:",e&&e.message);}}
 export function isDashAdmin(){return getDashRole()==="admin";}
+// Le déverrouillage biométrique ne vérifie que le doigt, EN LOCAL (WebAuthn, aucun contrôle
+// serveur) : il rouvre la session formateur mémorisée, il ne peut pas en créer une. Or tout
+// logout la purge (clearDashSession, B4) alors que la clé biométrique, elle, survit. Sans ce
+// test, la biométrie ouvrait le dashboard avec un code vide : teacherAuth("") refuse sans
+// appeler le serveur, liste de groupes vide, « Loading groups... » à vie (smartphone,
+// 2026-09-17). Sans code mémorisé → saisie du code, et la biométrie resservira ensuite.
+export function hasDashSession(){return !!getDashTeacher();}
 // Valide un code formateur ET renvoie ses cohortes, côté serveur.
 // → {ok:true, role:"teacher"|"admin", groups:[…sans teacher_code…]}
 // → {ok:false, error:"invalid_code"|"rpc_error"}
