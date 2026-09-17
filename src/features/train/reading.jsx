@@ -2,6 +2,7 @@
 import { Bar } from "../../components/Bar.jsx";
 import { GIcon, ResultIcon } from "../../components/icons.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
 import { QUESTIONS } from "../../data/grammar.js";
 import { PART6_TEXTS } from "../../data/part6.js";
@@ -207,6 +208,7 @@ export function Part6Drill(p){
   var texts=useMemo(function(){return shuffle(PART6_TEXTS).slice(0,4);},[]);
   var[ti,sTi]=useState(0);var[bi,sBi]=useState(0);var[sc,sSc]=useState(0);var[totalB,sTB]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
 
   // Count total blanks
   var totalBlanks=useMemo(function(){var c=0;texts.forEach(function(t){t.parts.forEach(function(p){if(p.blank)c++;});});return c;},[]);
@@ -232,6 +234,7 @@ export function Part6Drill(p){
 
   function doAns(i){
     sPk(i);
+    if(i!==curBlank.correct){var bIdx=curText.parts.map(function(pt,k){return pt.blank?k:-1;}).filter(function(k){return k>=0;})[bi];var bef=((curText.parts[bIdx-1]||{}).text||"").slice(-90);var aft=((curText.parts[bIdx+1]||{}).text||"").slice(0,70);mistakesRef.current.push({tag:"Part 6 — "+(curText.type||"Text"),prompt:"…"+bef+"_____"+aft+"…",yours:curBlank.options[i],correct:curBlank.options[curBlank.correct],why:curBlank.x});}
     if(i===curBlank.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sTB(totalB+1);sP("fb");
@@ -240,7 +243,7 @@ export function Part6Drill(p){
     sPk(-1);
     if(bi<blanks.length-1){sBi(bi+1);sP("q");}
     else if(ti<texts.length-1){sTi(ti+1);sBi(0);sP("text");}
-    else{sP("done");p.done(sc,totalBlanks,25+sc*5);}
+    else{sidRef.current=p.done(sc,totalBlanks,25+sc*5);sP("done");}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -251,14 +254,10 @@ export function Part6Drill(p){
     <button className="btn1" onClick={function(){sP("text");}}>Start</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=25+sc*5;if(p.gate)xp=p.gate(xp,sc,totalBlanks);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalBlanks*0.8?"🏆":sc>=totalBlanks*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 6 Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalBlanks*0.8?"var(--green)":sc>=totalBlanks*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalBlanks}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button>
-    <NextStepReco u={p.u} fromMod="p6" nav={p.nav}/>
-    </div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Part 6 — Text Completion" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+    <NextStepReco u={p.u} fromMod="p6" nav={function(m,a){p.closeSession();p.nav(m,a);}}/>
+  </SessionResult>);
 
   // Build text display with blanks highlighted
   function renderText(){
@@ -323,6 +322,7 @@ export function Part7Read(p){
   var[pi,sPi]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
   var[showQPreview,setShowQPreview]=useState(false);var[showText,setShowText]=useState(false);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
 
   var totalQs=useMemo(function(){var c=0;passages.forEach(function(p){if(p&&p.questions)c+=p.questions.length;});return c;},[]);
   var shuffledQMap=useMemo(function(){var m={};passages.forEach(function(ps){if(!ps||!ps.questions)return;m[ps.id]=ps.questions.map(function(q){var idx=[0,1,2,3];for(var i=idx.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=idx[i];idx[i]=idx[j];idx[j]=tmp;}return{options:idx.map(function(k){return q.options[k];}),correct:idx.indexOf(q.correct),x:q.x,q:q.q};});});return m;},[]);
@@ -331,6 +331,7 @@ export function Part7Read(p){
 
   function doAns(i){
     sPk(i);
+    if(i!==curQ.correct)mistakesRef.current.push({tag:"Part 7 — "+(curPass.type||"Passage"),prompt:curQ.q,yours:curQ.options[i],correct:curQ.options[curQ.correct],why:curQ.x});
     if(i===curQ.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sTQ(totalQ+1);sP("fb");
@@ -339,7 +340,7 @@ export function Part7Read(p){
     sPk(-1);
     if(qi<curPass.questions.length-1){sQi(qi+1);sP("q");}
     else if(pi<passages.length-1){sPi(pi+1);sQi(0);sP("read");}
-    else{sP("done");p.done(sc,totalQs,30+sc*5);}
+    else{sidRef.current=p.done(sc,totalQs,30+sc*5);sP("done");}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -350,14 +351,10 @@ export function Part7Read(p){
     <button className="btn1" onClick={function(){sP("read");}}>Start</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQs);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Reading Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back to Training</button>
-    <NextStepReco u={p.u} fromMod="p7" nav={p.nav}/>
-    </div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Part 7 — Reading" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+    <NextStepReco u={p.u} fromMod="p7" nav={function(m,a){p.closeSession();p.nav(m,a);}}/>
+  </SessionResult>);
 
 // Reading view — show passage with question preview toggle
   if(ph==="read")return(<div className="enter" style={{padding:"20px 16px 100px"}}>

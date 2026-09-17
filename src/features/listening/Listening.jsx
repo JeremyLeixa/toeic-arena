@@ -3,6 +3,7 @@ import { Bar } from "../../components/Bar.jsx";
 import { GIcon, ResultIcon } from "../../components/icons.jsx";
 import { ListeningGraphic } from "../../components/ListeningGraphic.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "../../data/listening.js";
 import { isModuleLocked } from "../../lib/access.js";
@@ -11,7 +12,7 @@ import { shufListeningItem } from "../../lib/listeningShuffle.js";
 import { shuffle } from "../../lib/util.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 
 // ─── LISTENING HUB ───
 export function ListenHub(p){
@@ -61,8 +62,9 @@ export function ListenP2(p){
     setPlaying(false);setPlayed(true);
   }
 
-  function doAns(i){sPk(i);if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);sP("listen");}else{sP("done");p.done(sc,items.length,25+sc*6);}}
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
+  function doAns(i){sPk(i);if(i!==items[ci].c){var q2=items[ci];mistakesRef.current.push({tag:"Part 2 — Question-Response",prompt:q2.q,yours:q2.opts[i],correct:q2.opts[q2.c],why:q2.x});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);sP("listen");}else{sidRef.current=p.done(sc,items.length,25+sc*6);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="chat-bubble" size={60} color="var(--cyan)"/></div>
@@ -72,12 +74,8 @@ export function ListenP2(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=25+sc*6;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=8?"🏆":sc>=5?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Listening Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button></div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Listening · Part 2" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];
 
@@ -159,8 +157,9 @@ export function ListenP1(p){
     setCurOpt(-1);setPlaying(false);setPlayed(true);
   }
 
-  function doAns(i){sPk(i);if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);setCurOpt(-1);sP("listen");}else{sP("done");p.done(sc,items.length,20+sc*5);}}
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
+  function doAns(i){sPk(i);if(i!==items[ci].c){var q1=items[ci];mistakesRef.current.push({tag:"Part 1 — Photographs",prompt:"Photo "+(ci+1)+": which statement describes it?",yours:q1.opts[i],correct:q1.opts[q1.c],why:q1.x});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);setCurOpt(-1);sP("listen");}else{sidRef.current=p.done(sc,items.length,20+sc*5);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="eye-target" size={60} color="var(--cyan)"/></div>
@@ -170,12 +169,8 @@ export function ListenP1(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,items.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=8?"🏆":sc>=5?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 1 Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=8?"var(--green)":sc>=5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{items.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button></div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Listening · Part 1" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];
 
@@ -248,6 +243,7 @@ export function ListenP3(p){
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);var[curLine,setCurLine]=useState(-1);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
   useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
 
   var totalQs=useMemo(function(){var c=0;items.forEach(function(it){c+=it.qs.length;});return c;},[]);
@@ -268,14 +264,14 @@ export function ListenP3(p){
   async function playQuestion(idx){try{await playAudioFile("/audio/p3/"+items[ci].id+"_q"+(idx+1)+".mp3");}catch(e){console.warn("[P3] question audio failed:",e&&e.message);}}
 
   function doAns(i){
-    sPk(i);if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
+    sPk(i);if(i!==items[ci].qs[qi].c){var q34=items[ci].qs[qi];mistakesRef.current.push({tag:"Part 3 — Conversation"+" "+(ci+1),prompt:q34.q,yours:q34.opts[i],correct:q34.opts[q34.c],why:q34.x});}if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
   }
   function nxt(){
     sPk(-1);
     if(qi<items[ci].qs.length-1){var ni=qi+1;sQi(ni);sP("q");playQuestion(ni);}
     else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);setCurLine(-1);sP("listen");}
     // totalQ est déjà incrémenté au clic de réponse : +1 comptait une question de trop (2026-09-17).
-    else{sP("done");p.done(sc,totalQ,30+sc*5);}
+    else{sidRef.current=p.done(sc,totalQ,30+sc*5);sP("done");}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -286,14 +282,10 @@ export function ListenP3(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 3 Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button>
-    <NextStepReco u={p.u} fromMod="lisP3" nav={p.nav}/>
-    </div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Listening · Part 3" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+    <NextStepReco u={p.u} fromMod="lisP3" nav={function(m,a){p.closeSession();p.nav(m,a);}}/>
+  </SessionResult>);
 
   var it=items[ci];
 
@@ -361,6 +353,7 @@ export function ListenP4(p){
   var[ci,sC]=useState(0);var[qi,sQi]=useState(0);var[sc,sSc]=useState(0);var[totalQ,sTQ]=useState(0);
   var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);
   var[playing,setPlaying]=useState(false);var[played,setPlayed]=useState(false);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
   useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
 
   var totalQs=useMemo(function(){var c=0;items.forEach(function(it){c+=it.qs.length;});return c;},[]);
@@ -376,14 +369,14 @@ export function ListenP4(p){
   async function playQuestion(idx){try{await playAudioFile("/audio/p4/"+items[ci].id+"_q"+(idx+1)+".mp3");}catch(e){console.warn("[P4] question audio failed:",e&&e.message);}}
 
   function doAns(i){
-    sPk(i);if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
+    sPk(i);if(i!==items[ci].qs[qi].c){var q34=items[ci].qs[qi];mistakesRef.current.push({tag:"Part 4 — Talk"+" "+(ci+1),prompt:q34.q,yours:q34.opts[i],correct:q34.opts[q34.c],why:q34.x});}if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
   }
   function nxt(){
     sPk(-1);
     if(qi<items[ci].qs.length-1){var ni=qi+1;sQi(ni);sP("q");playQuestion(ni);}
     else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);sP("listen");}
     // totalQ est déjà incrémenté au clic de réponse : +1 comptait une question de trop (2026-09-17).
-    else{sP("done");p.done(sc,totalQ,30+sc*5);}
+    else{sidRef.current=p.done(sc,totalQ,30+sc*5);sP("done");}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -394,14 +387,10 @@ export function ListenP4(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 4 Complete</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:32}}>+{xp} XP</div>
-    <button className="btn1" onClick={p.back}>Back</button>
-    <NextStepReco u={p.u} fromMod="lisP4" nav={p.nav}/>
-    </div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Listening · Part 4" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+    <NextStepReco u={p.u} fromMod="lisP4" nav={function(m,a){p.closeSession();p.nav(m,a);}}/>
+  </SessionResult>);
 
   var it=items[ci];
 

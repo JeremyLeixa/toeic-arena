@@ -1,12 +1,13 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { Bar } from "../../components/Bar.jsx";
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { STRATEGIES, STRAT_QUIZ } from "../../data/miniGames.js";
 import { shuffle } from "../../lib/util.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 
 // ─── STRATEGY CARDS (enriched) ───
 // ─── ABOUT TOEIC (info page for newcomers) ───
@@ -198,8 +199,9 @@ export function StratQuizPage(p){
   var qs=useMemo(function(){return shuffle(STRAT_QUIZ).slice(0,10);},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
-  function doAns(i){sPk(i);if(i===qs[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
-  function nxt(){if(ci<qs.length-1){sC(ci+1);sPk(-1);sP("q");}else{sP("done");p.done(sc,qs.length,20+sc*5);}}
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
+  function doAns(i){sPk(i);if(i!==qs[ci].correct){var sq=qs[ci];mistakesRef.current.push({tag:"Strategy · "+sq.part,prompt:sq.scenario,noBlank:true,yours:sq.options[i],correct:sq.options[sq.correct],why:sq.explain});}if(i===qs[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function nxt(){if(ci<qs.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,qs.length,20+sc*5);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:56,marginBottom:16}}>🧠</div>
@@ -209,13 +211,8 @@ export function StratQuizPage(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start Quiz</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=20+sc*5;if(p.gate)xp=p.gate(xp,sc,qs.length);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=13?"🏆":sc>=9?"⚔️":"🛡️"} size={52}/>)}</div>
-    <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Quiz Complete!</h1>
-    <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=13?"var(--green)":sc>=9?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{qs.length}</div>
-    <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:12}}>+{xp} XP</div>
-    <p style={{fontSize:13,color:"var(--t2)",marginBottom:32}}>Strategy knowledge is just as important as English skills for the TOEIC!</p>
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Strategy Quiz" mistakes={mistakesRef.current}
+    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var q=qs[ci];
   var partColors={"Part 1":"#22c55e","Part 2":"#f59e0b","Part 3":"#06b6d4","Part 4":"#8b5cf6","Part 5":"#ef4444","Part 6":"#ec4899","Part 7":"#3b82f6","General":"#64748b"};
