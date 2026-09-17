@@ -83,7 +83,7 @@ export function renderRoute(c){
   if(sp==="strats")return pg(<StratCards back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="gramref")return pg(<GrammarRef initial={spA} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="stratquiz")return pg(<StratQuizPage u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
-  if(sp==="timesim")return pg(<TimeSim u={u} done={miniDone} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"timesim");}} nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="timesim")return pg(<TimeSim u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="p6")return pg(<Part6Drill u={u} nav={nav} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="p7")return pg(<Part7Read u={u} nav={nav} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="lis")return pg(<ListenHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);

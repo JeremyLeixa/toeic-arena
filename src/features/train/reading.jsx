@@ -1,6 +1,6 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { Bar } from "../../components/Bar.jsx";
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
@@ -19,6 +19,7 @@ export function TimeSim(p){
   var qs=useMemo(function(){return shuffle(QUESTIONS).slice(0,30);},[]);
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");
   var[elapsed,sEl]=useState(0);var[answers,sAn]=useState([]);var timerRef=useRef(null);
+  var mistakesRef=useRef([]);var sidRef=useRef(0);
   var[showReview,setShowReview]=useState(false);var[revIdx,setRevIdx]=useState(null);
   // Fiche de cours ouverte EN PLACE sous l'erreur relue (retour étudiant 2026-09-15) : avant,
   // « Review » naviguait vers Grammar Reference, ce qui démontait cette revue, et « Back »
@@ -31,8 +32,8 @@ export function TimeSim(p){
     if(ph==="q"){timerRef.current=setInterval(function(){sEl(function(e){return e+1;});},1000);return function(){clearInterval(timerRef.current);};}
   },[ph]);
 
-  function doAns(i){sS(i);var correct=i===qs[ci].c;if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sAn(answers.concat([{q:ci,pick:i,correct:correct,time:elapsed}]));sP("next");}
-  function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{clearInterval(timerRef.current);sP("done");p.done(sc,qs.length,30+sc*5);}}
+  function doAns(i){sS(i);var correct=i===qs[ci].c;if(!correct){var tq=qs[ci];mistakesRef.current.push({tag:tq.cat,prompt:tq.s,yours:tq.o[i],correct:tq.o[tq.c],why:tq.x});}if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sAn(answers.concat([{q:ci,pick:i,correct:correct,time:elapsed}]));sP("next");}
+  function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{clearInterval(timerRef.current);sidRef.current=p.done(sc,qs.length,30+sc*5);sP("done");}}
 
   function fmtTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
   var paceStatus=ph==="q"?elapsed/(ci+1):0;
@@ -48,18 +49,14 @@ export function TimeSim(p){
     <button className="btn1" onClick={function(){sP("q");}}>Start Exam</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,qs.length);var totalTime=elapsed;
+  // Écran de fin commun ; l'analyse de l'examen (temps, grille, fiches) reste dessous en extra.
+  if(ph==="done"){var totalTime=elapsed;
 
-    return(<div className="enter" style={{padding:"20px 16px 100px"}}>
-    <div style={{textAlign:"center",marginBottom:24}}>
-      <div style={{fontSize:48,marginBottom:12,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=25?"🏆":sc>=18?"⚔️":"🛡️"} size={52}/>)}</div>
-      <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Exam Complete</h1>
-      <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=25?"var(--green)":sc>=18?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/30</div>
-      <div className="out" style={{fontSize:20,fontWeight:800,color:"var(--gold)",marginBottom:8}}>+{xp} XP</div>
-      <div style={{fontSize:14,color:"var(--t2)"}}>Total time: <strong style={{color:totalTime<=TARGET?"var(--green)":"var(--red)"}}>{fmtTime(totalTime)}</strong> / {fmtTime(TARGET)}</div>
-      <div style={{fontSize:14,color:"var(--t2)",marginTop:4}}>Avg per question: <strong>{(totalTime/30).toFixed(1)}s</strong> (target: {Math.round(perQ)}s)</div>
-    </div>
+    return(<SessionResult session={p.session} sid={sidRef.current} name="Part 5 Exam Simulation" mistakes={mistakesRef.current}
+      onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
     <div className="crd" style={{padding:16,marginBottom:16}}>
+      <div style={{fontSize:14,color:"var(--t2)"}}>Total time: <strong style={{color:totalTime<=TARGET?"var(--green)":"var(--red)"}}>{fmtTime(totalTime)}</strong> / {fmtTime(TARGET)}</div>
+      <div style={{fontSize:14,color:"var(--t2)",marginTop:4,marginBottom:14}}>Avg per question: <strong>{(totalTime/30).toFixed(1)}s</strong> (target: {Math.round(perQ)}s)</div>
       <p className="out" style={{fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:8}}>Performance Breakdown</p>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
         <span style={{fontSize:13,color:"var(--t2)"}}>Accuracy</span>
@@ -156,7 +153,7 @@ export function TimeSim(p){
             return(<div style={{marginTop:10,padding:"12px 14px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,animation:"fadeIn .2s"}}>
               <div className="out" style={{fontSize:13,fontWeight:700,marginBottom:10}}>{g.icon} {g.title}</div>
               <GrammarSheet g={g}/>
-              <button className="btn2" onClick={function(){p.nav("gramref",sheetId);}} style={{width:"100%",marginTop:10,fontSize:12}}>Open the full Grammar Reference</button>
+              <button className="btn2" onClick={function(){p.closeSession();p.nav("gramref",sheetId);}} style={{width:"100%",marginTop:10,fontSize:12}}>Open the full Grammar Reference</button>
             </div>);
           })()}
           <div style={{display:"flex",gap:8,marginTop:12}}>
@@ -169,7 +166,7 @@ export function TimeSim(p){
       }()}
     </div>}
 
-    <button className="btn1" onClick={p.back}>Back to Training</button></div>);}
+    </SessionResult>);}
 
   // Active quiz (no feedback, exam mode)
   var q=qs[ci];var timeColor=elapsed>TARGET?"var(--red)":elapsed>TARGET*0.8?"var(--orange)":"var(--t2)";
