@@ -32,6 +32,12 @@ export function WordFall(p){
   var answeredRef=useRef(false);
   var falDivRef = useRef(null);
 var progressBarRef = useRef(null);
+  // La chute (animateFall) tourne dans la closure du rendu qui l'a lancée, celui de la réponse
+  // PRÉCÉDENTE : son handleMiss lisait lives et qi d'un coup en retard (une vie perdue juste avant
+  // revenait, et l'explication affichée était celle de la question d'avant). La ref pointe
+  // toujours sur le handleMiss du dernier rendu.
+  var missRef = useRef(null);
+  missRef.current = handleMiss;
 
   function getDuration(idx){
     var d=SPEED_TIERS[0].dur;
@@ -61,7 +67,7 @@ function animateFall(){
   if(progressBarRef.current) progressBarRef.current.style.height = Math.round(pct * 100) + "%";
   if(pct >= 1){
     answeredRef.current = true;
-    handleMiss();
+    missRef.current();
   } else {
     fallRef.current = requestAnimationFrame(animateFall);
   }
