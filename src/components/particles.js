@@ -122,3 +122,12 @@ export function createChestFx(canvas) {
     },
   };
 }
+
+// Éclat centré sur un élément (écran de fin de session, cérémonies) : étincelles + braises.
+// fx = instance de createChestFx ; sans fx ou sans élément, ne fait rien.
+export function burstAt(fx, el, colors, big) {
+  if (!fx || !el) return;
+  var r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+  fx.emit({ x: x, y: y, count: big ? 60 : 34, color: colors, speed: [2, big ? 9 : 6.5], spread: 180, life: [26, 58], size: [1, 2.8], gravity: 0.05, drag: 0.95 });
+  fx.emit({ x: x, y: y, count: big ? 26 : 14, color: colors, kind: "ember", speed: [0.6, 2.4], spread: 180, life: [50, 90], size: [1, 2.4], gravity: -0.01, drag: 0.98 });
+}
