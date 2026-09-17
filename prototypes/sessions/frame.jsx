@@ -1,7 +1,7 @@
 // Proto sessions (2026-09-17, audit visuel lot 4) — une manche de Drill jouable (vraies questions,
 // vrais sons) et l'écran d'écoute de la Part 2, dans une variante. CSS de l'appli + sessions.css.
 // Paramètres d'URL :
-//   v=A|B|C|D  screen=drill|p2  st=live|q|ok|combo|ko (drill) · idle|playing|answer (p2)
+//   v=A|B|C|D|E  screen=drill|p2  st=live|q|ok|combo|ko (drill) · idle|playing|answer (p2)
 //   mode=dark|light  skin=<id>  rm=1
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -152,7 +152,8 @@ function DrillB() {
 
 // ═══ C · Arène ═══ tab bar masquée ; pastilles de progression ; bannière COMBO au centre ;
 // retour intégré sous les options (bandeau verdict + « Why ») ; Next toujours en bas de l'écran.
-function DrillC() {
+// p.seg : « pips » (C) ou « ink » (E : l'environnement de C avec le fil d'encre d'Aldric).
+function DrillC(p) {
   var x = useSession(), s = x.s, qq = QS[s.ci], ok = s.ph === "fb" && s.sel === qq.c;
   var [quit, setQuit] = useState(false);
   var [showBurst, setShowBurst] = useState(false);
@@ -166,7 +167,7 @@ function DrillC() {
   return <div>
     <div className="ss-top c">
       <button className="back-btn" style={{ marginBottom: 0 }} onClick={function () { setQuit(true); }}>{"←"}</button>
-      <Segments n={QS.length} res={s.res} ci={s.ci} kind="pips" />
+      <Segments n={QS.length} res={s.res} ci={s.ci} kind={p.seg || "pips"} />
       <span className="out ss-count">{s.ci + 1}/{QS.length}</span>
     </div>
     {x.streak >= 3 && <div className="ss-flame"><GIcon name="flame" size={13} color="currentColor" />{x.streak + " in a row"}</div>}
@@ -278,9 +279,9 @@ function P2B() {
     </div></div>;
 }
 // C : anneau runique qui tourne pendant la lecture, cloche au centre.
-function P2C() {
+function P2C(p) {
   var l = useListen(), playing = l.ph === "playing";
-  return <div><P2Top kind="c" seg="pips" />
+  return <div><P2Top kind="c" seg={p.seg || "pips"} />
     <div style={{ padding: "24px 16px", textAlign: "center" }}>
       <div className="out" style={{ fontSize: 11, color: "var(--cyan)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, marginBottom: 24 }}>Part 2 — Question-Response</div>
       {l.ph !== "answer" ? <>
@@ -309,7 +310,9 @@ function P2D() {
     </div></div>;
 }
 
-var SCREENS = { drill: { A: DrillA, B: DrillB, C: DrillC, D: DrillD }, p2: { A: P2A, B: P2B, C: P2C, D: P2D } };
+function DrillE() { return <DrillC seg="ink" />; }
+function P2E() { return <P2C seg="ink" />; }
+var SCREENS = { drill: { A: DrillA, B: DrillB, C: DrillC, D: DrillD, E: DrillE }, p2: { A: P2A, B: P2B, C: P2C, D: P2D, E: P2E } };
 
 function Frame() {
   var lc = "app" + (MODE === "light" ? " light" : "") + (SKIN ? " skin-" + SKIN : "") + " ss-" + V;

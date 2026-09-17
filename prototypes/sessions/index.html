@@ -56,13 +56,14 @@ var VARIANTS = [
   { id: "B", name: "Focus", desc: "Tab bar masquée, ✕ avec confirmation. Une case par question. Combo en flamme ×N à la place du compteur. Retour en panneau fixe en bas : verdict, bonne réponse, explication en grand, Next sous le pouce. Part 2 : disque aux couleurs du skin, égaliseur." },
   { id: "C", name: "Arène", desc: "Tab bar masquée. Pastilles de progression. Bannière « Combo ×N » au centre + rappel « N in a row ». Retour intégré sous les options (bandeau Correct / Wrong + « Why »), Next fixé en bas. Part 2 : anneau runique qui tourne." },
   { id: "D", name: "Aldric", desc: "Tab bar masquée. Fil d'encre. Le verdict est une note d'Aldric sur parchemin, comme l'écran de fin. Combo en sceau de cire. Part 2 : sceau de cire avec ondes." },
+  { id: "E", name: "Arène + fil d'encre", desc: "C (bannière combo, carte « Why », Next fixé, anneau runique) avec la progression de D : fil d'encre segmenté, question courante plus épaisse et lumineuse." },
 ];
 var STATES = {
   drill: [["live", "Jouer (interactif)"], ["q", "Question"], ["ok", "Bonne réponse"], ["combo", "Combo ×3"], ["ko", "Mauvaise réponse (explication longue)"]],
   p2: [["idle", "Avant l'écoute"], ["playing", "Écoute en cours"], ["answer", "Choix de la réponse"]],
 };
 var ids = ["screen", "st", "mode", "skin", "rm", "size"];
-var shown = { A: true, B: true, C: true, D: true };
+var shown = { A: true, B: true, C: true, D: true, E: true };
 
 function fillStates(keep) {
   var sel = document.getElementById("st"), scr = document.getElementById("screen").value;
@@ -74,7 +75,7 @@ try { saved = JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}"); } 
 if (saved.screen) document.getElementById("screen").value = saved.screen;
 fillStates(saved.st);
 ids.forEach(function (k) { if (k !== "screen" && k !== "st" && saved[k] != null) { var el = document.getElementById(k); if (el.type === "checkbox") el.checked = saved[k]; else el.value = saved[k]; } });
-if (saved.shown) shown = saved.shown;
+if (saved.shown) shown = Object.assign({ A: true, B: true, C: true, D: true, E: true }, saved.shown);
 
 var vs = document.getElementById("vs");
 VARIANTS.forEach(function (v) {

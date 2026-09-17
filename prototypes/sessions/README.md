@@ -27,6 +27,7 @@ l'explication la plus longue du pool ; avant / pendant / après l'écoute), mode
 | B | Focus | masquée, ✕ + confirmation | une case par question (verte / rouge) | flamme ×N à la place du compteur | panneau fixe en bas : verdict, bonne réponse, explication en grand, Next sous le pouce | disque aux couleurs du skin, égaliseur |
 | C | Arène | masquée | pastilles | bannière « Combo ×N » au centre + « N in a row » | carte sous les options (bandeau Correct / Wrong, « Why »), Next fixé en bas | anneau runique qui tourne |
 | D | Aldric | masquée | fil d'encre | sceau de cire ×N | note d'Aldric sur parchemin (comme l'écran de fin) | sceau de cire, ondes |
+| E | Arène + fil d'encre | masquée | fil d'encre (de D) | bannière « Combo ×N » + « N in a row » (de C) | carte « Why » sous les options, Next fixé (de C) | anneau runique (de C) |
 
 Combo : paliers 3, 5, 7 et 10 bonnes réponses d'affilée ; `playCombo` à 3 et 5, `playStreak` à partir de 7.
 
