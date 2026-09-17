@@ -1,13 +1,14 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { GrimoireReader } from "../../components/GrimoireReader.jsx";
 import { GIcon } from "../../components/icons.jsx";
+import { SessionResult } from "../../components/SessionResult.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } from "../../data/grammarGauntlet.js";
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "../../data/grammarGauntletGrimoire.js";
 import { haptic } from "../../lib/device.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong, playBGM, stopBGM } from "../../sounds.js";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ─── IRREGULAR CRYPT — sub-module 1/4 of Grammar Gauntlet ───
 // Speed drill: 15 verbs per session, V2 + V3 text input, 15s per question.
@@ -25,6 +26,7 @@ export function IrregularCrypt(p){
   var [results,setResults]=useState([]);
   var [timeLeft,setTimeLeft]=useState(TIME_PER_Q);
 
+  var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
   function startSession(){
     var shuffled=[].concat(IRREGULAR_VERBS).sort(function(){return Math.random()-0.5;});
     var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
@@ -37,6 +39,7 @@ export function IrregularCrypt(p){
     var verb=deck[idx];
     var v2Ok=normalize(v2In)===normalize(verb.past);
     var v3Ok=normalize(v3In)===normalize(verb.pp);
+    if(!(v2Ok&&v3Ok))mistakesRef.current.push({tag:"Irregular verbs",prompt:verb.base,noBlank:true,yours:(v2In.trim()||"—")+" · "+(v3In.trim()||"—"),correct:verb.past+" · "+verb.pp,why:verb.fr+(verb.ex?" — "+verb.ex:"")});
     if(v2Ok&&v3Ok){try{playCorrect();}catch(e){console.warn("[icrypt] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[icrypt] sfx:",e&&e.message);}}
     var newResults=results.concat([{v2Ok:v2Ok,v3Ok:v3Ok,verb:verb}]);
@@ -68,8 +71,16 @@ export function IrregularCrypt(p){
     // Preserves the partial-credit granularity unique to Irregular Crypt.
     var baseXp=totalFull*5+totalPartial*2+15;
     if(totalFull===deck.length)baseXp+=35;
-    p.done(totalFull,deck.length,baseXp);
+    return p.done(totalFull,deck.length,baseXp);
   }
+
+  // Fin du raid (souvent depuis le minuteur du dernier verbe) : l'XP part ici, avec l'état du dernier rendu, au lieu d'attendre « OK, back »
+  // (quitter l'écran la perdait). Un seul envoi.
+  useEffect(function(){
+    if(phase!=="end"||sentRef.current)return;
+    sentRef.current=true;
+    sidRef.current=finishSession();
+  },[phase]);
 
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
@@ -89,29 +100,10 @@ export function IrregularCrypt(p){
   }
 
   if(phase==="end"){
-    var totalFull=results.filter(function(r){return r.v2Ok&&r.v3Ok;}).length;
     var totalPartial=results.filter(function(r){return(r.v2Ok||r.v3Ok)&&!(r.v2Ok&&r.v3Ok);}).length;
-    var isPerfect=totalFull===deck.length;
-    var isGood=totalFull>=Math.ceil(deck.length*0.7);
-    var missed=results.filter(function(r){return!(r.v2Ok&&r.v3Ok);});
-    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:480,margin:"0 auto"}}>
-      <div style={{textAlign:"center",padding:"20px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83E\uDEA6"}</div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"PERFECT RAID":isGood?"Raid victorious":"Raid complete"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:tone("#c026d3"),margin:"14px 0 2px"}}>{totalFull}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:6}}>verbs mastered (V2 + V3)</p>
-        {totalPartial>0&&<p style={{color:"var(--t3)",fontSize:12,marginBottom:18}}>{totalPartial} partially correct</p>}
-        {missed.length>0&&<div className="crd" style={{maxWidth:380,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
-          {missed.slice(0,10).map(function(r,i){return(
-            <div key={i} style={{fontSize:13,marginBottom:6,color:"var(--t2)",lineHeight:1.5}}>
-              <strong style={{color:"var(--t1)"}}>{r.verb.base}</strong> {"\u2192"} <span style={{color:tone("#22c55e")}}>{r.verb.past}</span> / <span style={{color:tone("#22c55e")}}>{r.verb.pp}</span> <span style={{color:"var(--t3)",fontSize:12,fontStyle:"italic"}}>({r.verb.fr})</span>
-            </div>
-          );})}
-        </div>}
-        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
-      </div>
-    </div>);
+    return(<SessionResult session={p.session} sid={sidRef.current} name="Irregular Crypt" mistakes={mistakesRef.current} onContinue={p.onContinue} onReplay={p.onReplay}>
+      {totalPartial>0&&<div className="crd" style={{padding:14,textAlign:"center",fontSize:13,color:"var(--t2)"}}>{totalPartial+" verb"+(totalPartial>1?"s":"")+" half right (V2 or V3 only)"}</div>}
+    </SessionResult>);
   }
 
   // phase === "play" or "reveal"
@@ -171,6 +163,7 @@ export function Chronomancer(p){
   var [picked,setPicked]=useState(null);
   var [results,setResults]=useState([]);
 
+  var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
   function startSession(){
     var shuffled=[].concat(TENSE_CHRONOMANCER).sort(function(){return Math.random()-0.5;});
     var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
@@ -180,6 +173,7 @@ export function Chronomancer(p){
     if(phase!=="play"||!deck)return;
     var q=deck[idx];
     var ok=optIdx===q.c;
+    if(!ok)mistakesRef.current.push({tag:"Tenses · "+String(q.tense||"").replace(/_/g," "),prompt:q.s,yours:q.o[optIdx],correct:q.o[q.c],why:q.x});
     if(ok){try{playCorrect();}catch(e){console.warn("[chrono] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[chrono] sfx:",e&&e.message);}}
     setPicked(optIdx);
@@ -198,7 +192,7 @@ export function Chronomancer(p){
     // to match the difficulty of the module (typed answers, strict timer).
     var baseXp=correct*5+15;
     if(correct===deck.length)baseXp+=35;
-    p.done(correct,deck.length,baseXp);
+    return p.done(correct,deck.length,baseXp);
   }
 
   // Render sentence: highlight marker if literal substring match; replace blank with styled span
@@ -229,6 +223,14 @@ export function Chronomancer(p){
     });
   }
 
+  // Fin de session : l'XP part ici, avec l'état du dernier rendu, au lieu d'attendre « OK, back »
+  // (quitter l'écran la perdait). Un seul envoi.
+  useEffect(function(){
+    if(phase!=="end"||sentRef.current)return;
+    sentRef.current=true;
+    sidRef.current=finishSession();
+  },[phase]);
+
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
       <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
@@ -247,28 +249,7 @@ export function Chronomancer(p){
   }
 
   if(phase==="end"){
-    var correctCount=results.filter(function(r){return r.ok;}).length;
-    var isPerfect=correctCount===deck.length;
-    var isGood=correctCount>=Math.ceil(deck.length*0.7);
-    var missed=results.filter(function(r){return!r.ok;});
-    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-      <div style={{textAlign:"center",padding:"20px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u231B"}</div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"TIME MASTERED":isGood?"Chronomancer victorious":"Session complete"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:tone("#c026d3"),margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>correct answers</p>
-        {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
-          {missed.slice(0,8).map(function(r,i){return(
-            <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
-              <div style={{marginBottom:3}}>{renderSentence(r.q.s,r.q.marker)}</div>
-              <div style={{fontSize:11.5,color:tone("#86efac"),marginTop:3}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></div>
-            </div>
-          );})}
-        </div>}
-        <button className="btn1" style={{background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
-      </div>
-    </div>);
+    return(<SessionResult session={p.session} sid={sidRef.current} name="Chronomancer" mistakes={mistakesRef.current} onContinue={p.onContinue} onReplay={p.onReplay}/>);
   }
 
   // phase "play" or "reveal"
@@ -325,6 +306,7 @@ export function PassiveForge(p){
   var [results,setResults]=useState([]);
   var [timeLeft,setTimeLeft]=useState(TIME_PER_Q);
 
+  var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
   function startSession(){
     var shuffled=[].concat(PASSIVE_FORGE).sort(function(){return Math.random()-0.5;});
     var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
@@ -335,6 +317,7 @@ export function PassiveForge(p){
     if(phase!=="play"||!deck)return;
     var q=deck[idx];
     var ok=optIdx===q.c;
+    if(!ok)mistakesRef.current.push({tag:"Passive voice",prompt:q.prompt,yours:q.o[optIdx],correct:q.o[q.c],why:(q.active?"Active: “"+q.active+"” — ":"")+q.x});
     if(ok){try{playCorrect();}catch(e){console.warn("[forge] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[forge] sfx:",e&&e.message);}}
     setPicked(optIdx);
@@ -345,6 +328,7 @@ export function PassiveForge(p){
     if(phase!=="play"||!deck)return;
     try{playWrong();}catch(e){console.warn("[forge] sfx:",e&&e.message);}
     var q=deck[idx];
+    mistakesRef.current.push({tag:"Passive voice",prompt:q.prompt,yours:"(time's up)",correct:q.o[q.c],why:(q.active?"Active: “"+q.active+"” — ":"")+q.x});
     setPicked(-1);
     setResults(results.concat([{q:q,picked:-1,ok:false,timedOut:true}]));
     setPhase("reveal");
@@ -361,7 +345,7 @@ export function PassiveForge(p){
     // to match the difficulty of the module (typed answers, strict timer).
     var baseXp=correct*5+15;
     if(correct===deck.length)baseXp+=35;
-    p.done(correct,deck.length,baseXp);
+    return p.done(correct,deck.length,baseXp);
   }
   // Timer — reset is handled in startSession + nextQ (above). Do NOT add a
   // useEffect that resets timeLeft on [idx,phase] : if the previous question
@@ -382,6 +366,14 @@ export function PassiveForge(p){
     });
   }
 
+  // Fin de session : l'XP part ici, avec l'état du dernier rendu, au lieu d'attendre « OK, back »
+  // (quitter l'écran la perdait). Un seul envoi.
+  useEffect(function(){
+    if(phase!=="end"||sentRef.current)return;
+    sentRef.current=true;
+    sidRef.current=finishSession();
+  },[phase]);
+
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
       <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
@@ -400,28 +392,7 @@ export function PassiveForge(p){
   }
 
   if(phase==="end"){
-    var correctCount=results.filter(function(r){return r.ok;}).length;
-    var isPerfect=correctCount===deck.length;
-    var isGood=correctCount>=Math.ceil(deck.length*0.7);
-    var missed=results.filter(function(r){return!r.ok;});
-    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-      <div style={{textAlign:"center",padding:"20px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\u2692\uFE0F"}</div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"FORGE MASTERED":isGood?"Forge victorious":"Session complete"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:tone("#f59e0b"),margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>correct answers</p>
-        {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
-          {missed.slice(0,8).map(function(r,i){return(
-            <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
-              <div style={{marginBottom:3}}>{renderWithBlank(r.q.prompt)}</div>
-              <div style={{fontSize:11.5,color:tone("#86efac"),marginTop:3}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></div>
-            </div>
-          );})}
-        </div>}
-        <button className="btn1" style={{background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
-      </div>
-    </div>);
+    return(<SessionResult session={p.session} sid={sidRef.current} name="Passive Forge" mistakes={mistakesRef.current} onContinue={p.onContinue} onReplay={p.onReplay}/>);
   }
 
   // phase "play" or "reveal"
@@ -495,6 +466,7 @@ export function RelativeWeaver(p){
   var [picked,setPicked]=useState(null);
   var [results,setResults]=useState([]);
 
+  var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
   function startSession(){
     var shuffled=[].concat(RELATIVE_WEAVER).sort(function(){return Math.random()-0.5;});
     var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
@@ -504,6 +476,7 @@ export function RelativeWeaver(p){
     if(phase!=="play"||!deck)return;
     var q=deck[idx];
     var ok=optIdx===q.c;
+    if(!ok)mistakesRef.current.push({tag:"Relative clauses · "+typeLabel(q.type),prompt:q.s,yours:q.o[optIdx],correct:q.o[q.c],why:q.x});
     if(ok){try{playCorrect();}catch(e){console.warn("[weaver] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[weaver] sfx:",e&&e.message);}}
     setPicked(optIdx);
@@ -522,7 +495,7 @@ export function RelativeWeaver(p){
     // to match the difficulty of the module (typed answers, strict timer).
     var baseXp=correct*5+15;
     if(correct===deck.length)baseXp+=35;
-    p.done(correct,deck.length,baseXp);
+    return p.done(correct,deck.length,baseXp);
   }
   function renderWithBlank(s){
     var segs=s.split(/_{3,}/);
@@ -544,6 +517,14 @@ export function RelativeWeaver(p){
     return t.replace(/_/g," ");
   }
 
+  // Fin de session : l'XP part ici, avec l'état du dernier rendu, au lieu d'attendre « OK, back »
+  // (quitter l'écran la perdait). Un seul envoi.
+  useEffect(function(){
+    if(phase!=="end"||sentRef.current)return;
+    sentRef.current=true;
+    sidRef.current=finishSession();
+  },[phase]);
+
   if(phase==="intro"){
     return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
       <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
@@ -562,31 +543,7 @@ export function RelativeWeaver(p){
   }
 
   if(phase==="end"){
-    var correctCount=results.filter(function(r){return r.ok;}).length;
-    var isPerfect=correctCount===deck.length;
-    var isGood=correctCount>=Math.ceil(deck.length*0.7);
-    var missed=results.filter(function(r){return!r.ok;});
-    return(<div className="enter" style={{padding:"20px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-      <div style={{textAlign:"center",padding:"20px 16px"}}>
-        <div style={{fontSize:60,marginBottom:14}}>{isPerfect?"\uD83D\uDC51":isGood?"\uD83C\uDFC6":"\uD83D\uDD78\uFE0F"}</div>
-        <h2 className="out" style={{fontSize:22,fontWeight:800,marginBottom:6}}>{isPerfect?"WEB MASTERED":isGood?"Weaver victorious":"Session complete"}</h2>
-        <div style={{fontSize:44,fontWeight:800,color:tone("#7c3aed"),margin:"14px 0 2px"}}>{correctCount}<span style={{color:"var(--t3)",fontSize:24,fontWeight:600}}> / {deck.length}</span></div>
-        <p style={{color:"var(--t3)",fontSize:13,marginBottom:18}}>correct answers</p>
-        {missed.length>0&&<div className="crd" style={{maxWidth:420,margin:"8px auto 20px",padding:14,textAlign:"left"}}>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{"To review"}</div>
-          {missed.slice(0,8).map(function(r,i){return(
-            <div key={i} style={{fontSize:12.5,marginBottom:10,color:"var(--t2)",lineHeight:1.5,paddingBottom:8,borderBottom:i<Math.min(missed.length,8)-1?"1px dashed var(--bg3)":"none"}}>
-              <div style={{marginBottom:3}}>{renderWithBlank(r.q.s)}</div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginTop:4,flexWrap:"wrap"}}>
-                <span style={{fontSize:11.5,color:tone("#86efac")}}>{"\u2192 "}<strong>{r.q.o[r.q.c]}</strong></span>
-                <span style={{fontSize:10,color:"var(--t3)",padding:"2px 7px",background:"rgba(124,58,237,.12)",borderRadius:99,fontWeight:700,letterSpacing:.3}}>{typeLabel(r.q.type)}</span>
-              </div>
-            </div>
-          );})}
-        </div>}
-        <button className="btn1" style={{background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:16,padding:"14px 32px",fontWeight:800}} onClick={finishSession}>OK, back</button>
-      </div>
-    </div>);
+    return(<SessionResult session={p.session} sid={sidRef.current} name="Relative Weaver" mistakes={mistakesRef.current} onContinue={p.onContinue} onReplay={p.onReplay}/>);
   }
 
   // play / reveal
@@ -638,6 +595,7 @@ export function RelativeWeaver(p){
 export function GauntletHub(p){
   var [openGrim,setOpenGrim]=useState(null);
   var [subMode,setSubMode]=useState(null); // null | "irregular" | "tense" | "passive" | "relative"
+  var [subRun,setSubRun]=useState(0); // Play again : remonte l'épreuve par sa clé
   var scores=(p.u&&p.u.moduleScores)||{};
   var cards=[
     {id:"irregular",name:"Irregular Crypt",icon:"tombstone",desc:"Exhume the sleeping irregular verbs. 15 items per raid, type V2 and V3 by hand.",accent:"linear-gradient(90deg,#6b7280,#9ca3af)",bgm:"bgm_crypt",grimoire:null,stats:scores["gauntlet_irregular"],ready:true},
@@ -654,18 +612,26 @@ export function GauntletHub(p){
   function subDone(sc,tot,xp){
     try{stopBGM();}catch(e){console.warn("[gauntlet] bgm stop:",e&&e.message);}
     try{haptic("complete");}catch(e){console.warn("[gauntlet] haptic:",e&&e.message);}
-    if(p.onModuleDone)p.onModuleDone(subMode,sc,tot,xp);
-    setSubMode(null);
+    // L'épreuve reste affichée : elle montre l'écran de fin commun, dont Continue ramène au hub.
+    return p.onModuleDone?p.onModuleDone(subMode,sc,tot,xp):0;
+  }
+  function subContinue(){p.closeSession();setSubMode(null);}
+  function subReplay(){
+    p.closeSession();
+    var card=cards.find(function(c){return c.id===subMode;});
+    if(card){try{playBGM(card.bgm);}catch(e){console.warn("[gauntlet] bgm:",e&&e.message);}}
+    setSubRun(function(k){return k+1;});
   }
   function subAbort(){
     try{stopBGM();}catch(e){console.warn("[gauntlet] bgm stop:",e&&e.message);}
     setSubMode(null);
   }
   // ── Sub-module rendering ──
-  if(subMode==="irregular")return(<IrregularCrypt u={p.u} done={subDone} back={subAbort}/>);
-  if(subMode==="tense")return(<Chronomancer u={p.u} done={subDone} back={subAbort}/>);
-  if(subMode==="passive")return(<PassiveForge u={p.u} done={subDone} back={subAbort}/>);
-  if(subMode==="relative")return(<RelativeWeaver u={p.u} done={subDone} back={subAbort}/>);
+  var subKey=subMode+":"+subRun;
+  if(subMode==="irregular")return(<IrregularCrypt key={subKey} u={p.u} done={subDone} back={subAbort} session={p.session} onContinue={subContinue} onReplay={subReplay}/>);
+  if(subMode==="tense")return(<Chronomancer key={subKey} u={p.u} done={subDone} back={subAbort} session={p.session} onContinue={subContinue} onReplay={subReplay}/>);
+  if(subMode==="passive")return(<PassiveForge key={subKey} u={p.u} done={subDone} back={subAbort} session={p.session} onContinue={subContinue} onReplay={subReplay}/>);
+  if(subMode==="relative")return(<RelativeWeaver key={subKey} u={p.u} done={subDone} back={subAbort} session={p.session} onContinue={subContinue} onReplay={subReplay}/>);
 
   return(<div className="gauntlet-hub enter">
     <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
