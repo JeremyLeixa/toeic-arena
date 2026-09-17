@@ -1,7 +1,8 @@
 // Banc du HUD de session câblé (2026-09-17) : les VRAIS composants de src/components/SessionHud.jsx et
 // useSessionTrack, dans un faux pg() (.app > .pg-wrap + vraie tab bar), pour vérifier le masquage de la
 // tab bar, le fixe en haut et en bas, le bureau, le clair/sombre, les skins et le mouvement réduit.
-// Paramètres : sc=live|intro|q|ok|ko|combo|timeout|exam|tight|p3|listen  mode=dark|light  skin=<id>  fest=<id>  rm=1
+// Paramètres : sc=drill (le VRAI module Drill de src/)|live|intro|q|ok|ko|combo|timeout|exam|tight|p3|listen
+//              mode=dark|light  skin=<id>  fest=<id>  rm=1
 import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { CSS } from "../../src/styles/appCss.js";
@@ -9,6 +10,8 @@ import { Tabs } from "../../src/components/Tabs.jsx";
 import { SessionTop, ComboBanner, AnswerCard, NextBar, ListenDisc } from "../../src/components/SessionHud.jsx";
 import { useSessionTrack } from "../../src/components/useSessionTrack.js";
 import { QUESTIONS } from "../../src/data/grammar.js";
+import { Drill as RealDrill } from "../../src/features/train/grammar.jsx";
+import { fresh } from "../../src/lib/profileSchema.js";
 import { playCorrect, playWrong } from "../../src/sounds.js";
 
 var q = new URLSearchParams(location.search);
@@ -96,7 +99,7 @@ function Intro() {
 
 function Frame() {
   var lc = "app" + (MODE === "light" ? " light" : "") + (FEST ? " fest-" + FEST : SKIN ? " skin-" + SKIN : "");
-  var body = SC === "intro" ? <Intro /> : SC === "listen" ? <Listen /> : <Drill />;
+  var body = SC === "intro" ? <Intro /> : SC === "listen" ? <Listen /> : SC === "drill" ? <RealDrill u={fresh("Camille", "visitor")} done={function () { return 1; }} back={function () { alert("Back → hub"); }} nav={noop} session={null} closeSession={noop} replaySession={noop} /> : <Drill />;
   return <div className={lc}>
     <style>{CSS}</style>
     {RM && <style>{RM_CSS}</style>}
