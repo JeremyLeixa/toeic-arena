@@ -45,3 +45,15 @@ Combo : paliers 3, 5, 7 et 10 bonnes réponses d'affilée ; `playCombo` à 3 et 
   à trancher). Sur bureau (≥ 768 px) la tab bar est une barre latérale : la garder ou non.
 - Le composant partagé (haut de session, segments, combo, panneau de retour) sert ensuite au Drill, aux
   mini-modules, au Listening, à Part 6/7, aux jeux et aux examens, module par module.
+
+## Décision (2026-09-17) et banc du câblage
+
+**Variante E** retenue (l'Arène avec le fil d'encre d'Aldric), tab bar masquée **pendant les questions
+seulement**, barre latérale gardée sur bureau. Câblage : `src/lib/sessionHud.js` (pur, `tests/check_session_hud.cjs`),
+`src/components/useSessionTrack.js`, `src/components/SessionHud.jsx` (`SessionTop`, `ComboBanner`,
+`AnswerCard`, `NextBar`, `ListenDisc`), CSS `.ss-*` dans `appCss.js`. La tab bar est masquée par
+`@media(max-width:767px){.app:has(.ss-top) .tab-bar{display:none!important}}` : aucun état, rien à remettre
+à zéro (la barre disparaît avec le composant).
+
+Banc des vrais composants dans un faux `pg()` (avec la vraie tab bar) :
+`real.html?sc=live|intro|q|ok|ko|combo|timeout|exam|tight|p3|listen&mode=dark|light&skin=<id>&fest=<id>&rm=1`.
