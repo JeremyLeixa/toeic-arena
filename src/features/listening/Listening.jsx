@@ -3,10 +3,12 @@ import { Bar } from "../../components/Bar.jsx";
 import { GIcon, ResultIcon } from "../../components/icons.jsx";
 import { ListeningGraphic } from "../../components/ListeningGraphic.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
+import { HubTile, HubShelf } from "../../components/HubTile.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "../../data/listening.js";
 import { isModuleLocked } from "../../lib/access.js";
+import { hubItemStatus, hubSummary } from "../../lib/hubStatus.js";
 import { resumeAudioSession, stopListenAudio, playAudioFile, playLetteredOption } from "../../lib/audio.js";
 import { shufListeningItem } from "../../lib/listeningShuffle.js";
 import { shuffle } from "../../lib/util.js";
@@ -27,12 +29,10 @@ export function ListenHub(p){
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Listening Practice</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train your ear for the TOEIC Listening section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
+      <HubShelf id={"listening"} summary={hubSummary(p.u,parts.filter(function(m){return !isModuleLocked(m.id,p.u,p.groupType);}),{events:p.events})}/>
       {parts.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
-        <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
-          <div style={{width:42,height:42,borderRadius:12,background:vl?"transparent":"linear-gradient(135deg,rgba(var(--cx),.22),transparent)",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
-          <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
-          {vl?<ResultIcon e={"🔒"} size={14} color="var(--gold)"/>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
-        </div>);})}
+        <HubTile key={m.id} item={m} locked={vl} status={vl?null:hubItemStatus(p.u,m,{events:p.events})}
+          onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}}/>);})}
     </div>
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
   </div>);
@@ -465,12 +465,10 @@ export function ReadingHub(p){
     <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>Reading Practice</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:32,lineHeight:1.6}}>Train for the TOEIC Reading section</p>
     <div style={{display:"flex",flexDirection:"column",gap:12,textAlign:"left"}}>
+      <HubShelf id={"reading"} summary={hubSummary(p.u,parts.filter(function(m){return !isModuleLocked(m.id,p.u,p.groupType);}),{events:p.events})}/>
       {parts.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);return(
-        <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",opacity:vl?.55:1}}>
-          <div style={{width:42,height:42,borderRadius:12,background:vl?"transparent":"linear-gradient(135deg,rgba(var(--cx),.22),transparent)",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
-          <div style={{flex:1}}><div className="out" style={{fontWeight:700,fontSize:14}}>{m.n}</div><div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div></div>
-          {vl?<ResultIcon e={"🔒"} size={14} color="var(--gold)"/>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
-        </div>);})}
+        <HubTile key={m.id} item={m} locked={vl} status={vl?null:hubItemStatus(p.u,m,{events:p.events})}
+          onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}}/>);})}
     </div>
     <button className="btn2" onClick={p.back} style={{marginTop:24,width:"100%"}}>Back</button>
   </div>);

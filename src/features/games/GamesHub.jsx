@@ -1,6 +1,6 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
-import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
+import { HubTile, HubShelf } from "../../components/HubTile.jsx";
+import { hubItemStatus, hubSummary } from "../../lib/hubStatus.js";
 import { GHOST_NAME, isModuleLocked } from "../../lib/access.js";
 import { supabase } from "../../supabase.js";
 import { useState, useEffect } from "react";
@@ -79,26 +79,24 @@ export function GamesHub(p){
 
   var games=[
     {id:"tavern",n:"Word Tavern",d:"Prove your vocabulary!",i:"beer-stein",bg:"linear-gradient(135deg,#c87a35,#8b5e83)",tag:"NEW"},
-    {id:"matchE",n:"Speed Match",d:"Match words with definitions!",i:"chained-arrow-heads",bg:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"},
-    {id:"wfall",n:"Word Fall",d:"Catch the falling sentences!",i:"meteor-impact",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
+    {id:"matchE",n:"Speed Match",d:"Match words with definitions!",i:"chained-arrow-heads",bg:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",game:"matchEasy"},
+    {id:"wfall",n:"Word Fall",d:"Catch the falling sentences!",i:"meteor-impact",bg:"linear-gradient(135deg,#ef4444,#f59e0b)",game:"wordFall"},
     {id:"sbuild",n:"Sentence Builder",d:"Tap blocks in the right order!",i:"brick-pile",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     {id:"ablitz",n:"Audio Blitz",d:"Listen once, answer fast!",i:"lyre",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
     {id:"clue",n:"Clue Hunter",d:"Find the clue, fill the blank!",i:"spyglass",bg:"linear-gradient(135deg,var(--cx-hex),#4abe60)"},
-    {id:"duel",n:"Vocabulary Arena",d:"Real-time 1v1 — challenge a classmate!",i:"swords-emblem",bg:"linear-gradient(135deg,#c84040,#8b5e83)",tag:"NEW"},
+    {id:"duel",n:"Vocabulary Arena",d:"Real-time 1v1 — challenge a classmate!",i:"swords-emblem",bg:"linear-gradient(135deg,#c84040,#8b5e83)",tag:"NEW",game:"duel"},
   ];
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:4}}>Arena Games</h1>
     <p style={{color:"var(--t2)",fontSize:13,marginBottom:20}}>Train your reflexes, earn XP</p>
+    <HubShelf id="games" summary={hubSummary(p.u,games.filter(function(m){return !isModuleLocked(m.id,p.u,p.groupType);}),{events:p.events})}/>
     <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:12}}>
       {games.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);var lb=classBests[m.id];return(
-        <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}} style={{cursor:vl?"default":"pointer",display:"flex",alignItems:"center",gap:14,padding:"16px",opacity:vl?.55:1}}>
-          <div style={{width:48,height:48,borderRadius:14,background:vl?"transparent":"linear-gradient(135deg,rgba(var(--cx),.22),transparent)",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={28} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
-          <div style={{flex:1,minWidth:0}}><div className="out" style={{fontWeight:700,fontSize:15}}>{m.n}</div>
-            <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
-            {!vl&&lb&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{"🏆 "}{lb.name}{" · "}{lb.label}</div>}
-            {!vl&&m.tag&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{m.tag}</div>}</div>
-          {vl?<ResultIcon e={"🔒"} size={14} color="var(--gold)"/>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
-        </div>);})}
+        <HubTile key={m.id} item={m} size="lg" locked={vl} status={vl?null:hubItemStatus(p.u,m,{events:p.events})}
+          onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}}>
+          {lb&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{"🏆 "}{lb.name}{" · "}{lb.label}</div>}
+          {m.tag&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{m.tag}</div>}
+        </HubTile>);})}
     </div>
   </div>);
 }

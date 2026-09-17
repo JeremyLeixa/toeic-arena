@@ -49,7 +49,7 @@ var ModalCouncilHub=lazyNamed(function(){return import("./features/modals/ModalC
  * manque, ici comme dans le littéral d'appel côté App(). Retourne l'écran rendu, ou
  * undefined si `sp` n'est pas une sous-page (App() enchaîne alors sur les onglets). */
 export function renderRoute(c){
-  var {bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u}=c;
+  var {activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u}=c;
   if(sp==="daily")return pg(<Daily u={u} done={dailyDone} session={lastSession} closeSession={closeSession} back={function(){sSP(null);}}/>);
   if(sp==="csess")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
@@ -86,9 +86,9 @@ export function renderRoute(c){
   if(sp==="timesim")return pg(<TimeSim u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} nav={nav} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="p6")return pg(<Part6Drill u={u} nav={nav} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="p7")return pg(<Part7Read u={u} nav={nav} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
-  if(sp==="lis")return pg(<ListenHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="lis")return pg(<ListenHub u={u} nav={nav} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="lisP1")return pg(<ListenP1 u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP("lis");}}/>);
-  if(sp==="read")return pg(<ReadingHub u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  if(sp==="read")return pg(<ReadingHub u={u} nav={nav} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
   if(sp==="lisP2")return pg(<ListenP2 u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP("lis");}}/>);
   if(sp==="lisP3")return pg(<ListenP3 u={u} nav={nav} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP("lis");}}/>);
   if(sp==="lisP4")return pg(<ListenP4 u={u} nav={nav} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP("lis");}}/>);

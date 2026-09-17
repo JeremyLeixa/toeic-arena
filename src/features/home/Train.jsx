@@ -1,10 +1,12 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { GIcon, ResultIcon } from "../../components/icons.jsx";
 import { MockResetCTA, BossResetCTA, EndlessResetCTA } from "../../components/TokenCTAs.jsx";
+import { HubTile, HubShelf } from "../../components/HubTile.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { hasFullAccess, isModuleLocked } from "../../lib/access.js";
 import { canUnlockMock, canUnlockBoss, getEndlessState } from "../../lib/progress.js";
 import { today } from "../../lib/util.js";
+import { hubItemStatus, hubSummary } from "../../lib/hubStatus.js";
 import { tone } from "../../lib/tone.js";
 import { useState } from "react";
 
@@ -17,13 +19,13 @@ import { useState } from "react";
   var sections=[
     {key:"exercises",title:"Exercises",sub:"TOEIC Parts training",icon:"crossed-swords",count:"Parts 1-7",items:[
       {id:"daily",n:"Daily Challenge",d:dd?"Completed today ✓":"5 daily questions, timed",i:"sunrise",bg:dd?"var(--bg3)":"linear-gradient(135deg,var(--cx-hex),#8b5e83)",lock:dd},
-      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"ringing-bell",bg:"linear-gradient(135deg,#22c55e,#f59e0b)"},
-      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"bookmarklet",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+      {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"ringing-bell",bg:"linear-gradient(135deg,#22c55e,#f59e0b)",subs:["lisP1","lisP2","lisP3","lisP4"],unit:"parts"},
+      {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"bookmarklet",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)",subs:["drill","timesim","p6","p7"],unit:"parts"},
     ]},
     {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"bookshelf",count:"10 modules",items:[
       {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"card-joker",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
-      {id:"gauntlet",n:"Grammar Gauntlet",d:"4 trials · Irregulars, Tenses, Passive, Relatives",i:"gauntlet",bg:"linear-gradient(135deg,#7c3aed,#c026d3)"},
-      {id:"modals",n:"Modal Council",d:"2 trials · Pair situations, classify verdicts",i:"throne-king",bg:"linear-gradient(135deg,#0891b2,#7c3aed)"},
+      {id:"gauntlet",n:"Grammar Gauntlet",d:"4 trials · Irregulars, Tenses, Passive, Relatives",i:"gauntlet",bg:"linear-gradient(135deg,#7c3aed,#c026d3)",subs:["gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative"],unit:"trials"},
+      {id:"modals",n:"Modal Council",d:"2 trials · Pair situations, classify verdicts",i:"throne-king",bg:"linear-gradient(135deg,#0891b2,#7c3aed)",subs:["modals_match","modals_sort"],unit:"trials"},
       {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"family-tree",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
       {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"duality-mask",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
       {id:"connsort",n:"Connectors Sorting",d:"Clause, Noun, or New sentence?",i:"knot",bg:"linear-gradient(135deg,#8b5e83,#c4587a)"},
@@ -49,11 +51,11 @@ import { useState } from "react";
       return items;
     })()},
     {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"treasure-map",count:"5 tools",items:[
-      {id:"abouttoeic",n:"What is the TOEIC?",d:"Format, score, levels — the quick guide",i:"info",bg:"linear-gradient(135deg,#8b5e83,#5a7a9a)"},
-      {id:"strats",n:"Strategy Cards",d:"63 expert tips, all Parts",i:"card-pick",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)"},
+      {id:"abouttoeic",n:"What is the TOEIC?",d:"Format, score, levels — the quick guide",i:"info",bg:"linear-gradient(135deg,#8b5e83,#5a7a9a)",plain:true},
+      {id:"strats",n:"Strategy Cards",d:"63 expert tips, all Parts",i:"card-pick",bg:"linear-gradient(135deg,#6a8a50,#4a7a5a)",plain:true},
       {id:"stratquiz",n:"Strategy Quiz",d:"Test your exam IQ",i:"brain",bg:"linear-gradient(135deg,#8b5e83,#5a5c8a)"},
       {id:"traps",n:"TOEIC Traps Quiz",d:"Spot the 20 classic traps",i:"trap-mask",bg:"linear-gradient(135deg,#ef4444,#f59e0b)"},
-      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"book-aura",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
+      {id:"gramref",n:"Grammar Reference",d:"12 essential grammar sheets",i:"book-aura",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)",plain:true},
     ]},
   ];
 
@@ -229,20 +231,17 @@ import { useState } from "react";
         <button onClick={function(){setTrainView(null);}} style={{background:"none",border:"none",color:"var(--t2)",cursor:"pointer",fontSize:14,marginBottom:16,padding:0}}>{"←"} Training Grounds</button>
         <h2 className="out" style={{fontWeight:800,fontSize:20,marginBottom:4}}>{sec.title}</h2>
         <p style={{color:"var(--t3)",fontSize:12,marginBottom:16}}>{sec.sub}</p>
+        {/* Hubs vivants (variante C « Coffre ») : étagère de coffres, puis tuiles avec dernier score,
+            barre vers le coffre de maîtrise et tarif de la prochaine partie (lib/hubStatus.js). */}
+        <HubShelf id={sec.key} summary={hubSummary(p.u,sec.items.filter(function(m){return !m.visitorLocked&&!m.lock;}),{events:p.events})}/>
         <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:8}}>
           {sec.items.map(function(m){
             var ai=animIdx++;
             var vl=m.visitorLocked;
-            return(
-              <div key={m.id} className="crd" onClick={function(){if(vl){p.onPremium(m.n);return;}if(!m.lock)p.nav(m.id);}}
-                style={{display:"flex",alignItems:"center",gap:14,cursor:(m.lock||vl)?"default":"pointer",opacity:m.lock?.4:vl?.55:1,padding:"14px 16px",animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}>
-                <div style={{width:42,height:42,borderRadius:12,background:vl?"transparent":"linear-gradient(135deg,rgba(var(--cx),.22),transparent)",border:vl?"1.5px solid var(--bdr)":"1.5px solid var(--cyan)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} size={22} color={vl?"var(--t3)":"var(--cyan)"}/>:m.i}</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div className="out" style={{fontWeight:700,fontSize:14,marginBottom:1}}>{m.n}</div>
-                  <div style={{fontSize:11,color:vl?"var(--gold)":"var(--t3)"}}>{vl?"Arena Premium":m.d}</div>
-                </div>
-                {vl?<ResultIcon e={"🔒"} size={14} color="var(--gold)"/>:m.lock?<ResultIcon e={"🔒"} size={15} color="var(--t3)"/>:<span style={{fontSize:16,color:"var(--cyan)"}}>{"→"}</span>}
-              </div>);
+            return(<HubTile key={m.id} item={m} unit={m.unit} locked={vl} disabled={m.lock}
+              status={vl||m.lock?null:hubItemStatus(p.u,m,{events:p.events})}
+              onClick={function(){if(vl){p.onPremium(m.n);return;}if(!m.lock)p.nav(m.id);}}
+              style={{animation:"fadeIn .3s ease-out",animationDelay:(ai*.04)+"s",animationFillMode:"both"}}/>);
           })}
         </div>
       </div>);

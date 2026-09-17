@@ -24,7 +24,8 @@ function Mastery(p) {
   if (s.hub) return <div className={"hub-meta" + (s.allMastered ? " gold" : "")}>{s.allMastered ? "All " + p.unit + " mastered" : s.mastered + "/" + s.n + " " + p.unit + " mastered"}</div>;
   if (s.mastered) return <div className="hub-meta gold">Mastered</div>;
   if (!s.total) return <div className="hub-meta">Not started</div>;
-  return <div className="hub-meta">{s.total + "/" + MASTERY_Q + " Q · "}<span className={s.accLow ? "hub-warn" : ""}>{pct(s.acc)}</span>{s.accLow ? " (80% needed)" : ""}</div>;
+  // Au-delà de 50 questions, le volume est acquis : « 160 Q », pas « 160/50 Q ».
+  return <div className="hub-meta">{(s.total >= MASTERY_Q ? s.total : s.total + "/" + MASTERY_Q) + " Q · "}<span className={s.accLow ? "hub-warn" : ""}>{pct(s.acc)}</span>{s.accLow ? " (80% needed)" : ""}</div>;
 }
 
 // p.item {id, n, d, i} · p.status (hubItemStatus) · p.size "md" (Train, Listening, Reading) | "lg" (Games)
@@ -43,7 +44,7 @@ export function HubTile(p) {
     <div className="crd hub-tile" onClick={p.onClick} style={style}>
       <div style={{ width: box, height: box, borderRadius: lg ? 14 : 12, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: lg ? 24 : 20,
         background: vl ? "transparent" : "linear-gradient(135deg,rgba(var(--cx),.22),transparent)", border: vl ? "1.5px solid var(--bdr)" : "1.5px solid var(--cyan)" }}>
-        {GAME_ICON_PATHS[it.i] ? <GIcon name={it.i} size={lg ? 26 : 22} color={vl ? "var(--t3)" : "var(--cyan)"} /> : it.i}
+        {GAME_ICON_PATHS[it.i] ? <GIcon name={it.i} size={lg ? 28 : 22} color={vl ? "var(--t3)" : "var(--cyan)"} /> : it.i}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="hub-namerow">
