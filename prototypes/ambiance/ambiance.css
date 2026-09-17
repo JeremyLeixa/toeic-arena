@@ -1,0 +1,98 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Ambiance de fond — variantes candidates (proto 2026-09-17, audit visuel lot 2)
+   Chargé APRÈS le CSS de l'appli (frame.jsx). Une seule variante sera retenue et
+   recopiée dans src/styles/appCss.js, sans le préfixe .amb-X.
+
+   Principe : calques fixes derrière le contenu de .app. .app devient un contexte
+   d'empilement (isolation:isolate) pour que z-index négatif passe DEVANT le fond
+   de .app mais DERRIÈRE les cartes. isolation ne crée pas de bloc conteneur :
+   tab bar, toasts et modals en position:fixed restent calés sur l'écran.
+   Tout est en jetons (--cx, --bg…) : suit le skin, la fête et le mode clair.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.app.amb{isolation:isolate}
+.app.amb::before,.app.amb::after{content:"";position:fixed;inset:0;pointer-events:none}
+
+/* ── B · Torche : halo de la couleur du skin en haut d'écran + vignettage ── */
+.app.amb-B::before,.app.amb-C::before,.app.amb-D::before,.app.amb-E::before{
+  z-index:-2;
+  background:
+    radial-gradient(ellipse 95% 40% at 50% -6%,rgba(var(--cx),.18),rgba(var(--cx),.05) 55%,transparent 78%),
+    radial-gradient(ellipse 135% 100% at 50% 40%,transparent 56%,rgba(0,0,0,.55) 100%);
+}
+/* Clair : halo plus discret, bords « papier bruni » au lieu du noir */
+.app.light.amb-B::before,.app.light.amb-C::before,.app.light.amb-D::before,.app.light.amb-E::before{
+  background:
+    radial-gradient(ellipse 95% 40% at 50% -6%,rgba(var(--cx),.13),transparent 74%),
+    radial-gradient(ellipse 135% 100% at 50% 40%,transparent 60%,rgba(110,78,36,.16) 100%);
+}
+
+/* ── C · Parchemin : B + grain (bruit SVG en data-URI, tuile 220 px, aucune image à charger) ── */
+.app.amb-C::after,.app.amb-D::after,.app.amb-E::after{
+  z-index:-1;
+  opacity:.06;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:220px 220px;
+}
+.app.light.amb-C::after,.app.light.amb-D::after,.app.light.amb-E::after{opacity:.09}
+
+/* ── D · Braises : C + 12 braises qui montent lentement ──
+   Seul transform/opacity est animé (compositeur, pas de repeint plein écran).
+   Mouvement réduit : la règle globale de l'appli ramène l'animation à une
+   itération de .001 ms → la braise finit à opacity 0, donc invisible. */
+.amb-embers{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.amb-embers i{position:absolute;bottom:-12px;width:3px;height:3px;border-radius:50%;
+  background:rgba(var(--cx),.95);box-shadow:0 0 6px 1px rgba(var(--cx),.55);
+  opacity:0;will-change:transform,opacity;animation:ambRise 18s linear infinite}
+.light .amb-embers i{background:rgba(var(--cx),.6);box-shadow:none}
+.amb-embers i:nth-child(1){left:6%;animation-duration:19s;animation-delay:-3s}
+.amb-embers i:nth-child(2){left:15%;width:2px;height:2px;animation-duration:23s;animation-delay:-11s}
+.amb-embers i:nth-child(3){left:24%;animation-duration:17s;animation-delay:-7s}
+.amb-embers i:nth-child(4){left:33%;width:2px;height:2px;animation-duration:26s;animation-delay:-19s}
+.amb-embers i:nth-child(5){left:44%;animation-duration:21s;animation-delay:-1s}
+.amb-embers i:nth-child(6){left:52%;width:4px;height:4px;animation-duration:24s;animation-delay:-14s}
+.amb-embers i:nth-child(7){left:61%;width:2px;height:2px;animation-duration:18s;animation-delay:-9s}
+.amb-embers i:nth-child(8){left:69%;animation-duration:22s;animation-delay:-16s}
+.amb-embers i:nth-child(9){left:77%;width:2px;height:2px;animation-duration:20s;animation-delay:-5s}
+.amb-embers i:nth-child(10){left:85%;animation-duration:25s;animation-delay:-21s}
+.amb-embers i:nth-child(11){left:92%;width:2px;height:2px;animation-duration:19s;animation-delay:-12s}
+.amb-embers i:nth-child(12){left:38%;width:2px;height:2px;animation-duration:28s;animation-delay:-24s}
+@keyframes ambRise{
+  0%{transform:translate3d(0,0,0);opacity:0}
+  12%{opacity:.55}
+  50%{transform:translate3d(14px,-52vh,0)}
+  75%{opacity:.3}
+  100%{transform:translate3d(-8px,-104vh,0);opacity:0}
+}
+
+/* ── E · Fresque : C + la carte du Mentor en filigrane en haut d'écran ──
+   Réutilise public/images/mentor/map.jpg (déjà en cache pour qui a ouvert le Mentor).
+   Fondu vers le bas par masque, teinte sépia pour rester dans les ors. */
+.amb-fresco{position:fixed;left:0;right:0;top:0;height:64vh;z-index:-3;pointer-events:none;
+  background:url(/images/mentor/map.jpg) center 18%/cover no-repeat;
+  opacity:.14;filter:sepia(.75) saturate(.9);
+  -webkit-mask-image:linear-gradient(#000 12%,transparent 100%);mask-image:linear-gradient(#000 12%,transparent 100%)}
+.light .amb-fresco{opacity:.16;filter:sepia(.55);mix-blend-mode:multiply}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Coffre en attente sur Home (audit n°11) — remplace l'emoji 📦 par le vrai
+   TreasureChestSvg du palier le plus élevé en attente.
+   svg  : échange simple, même bouton.
+   glow : bouton teinté par le palier, coffre plus grand qui déborde et frétille.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.amb-chestbtn{position:relative}
+.amb-chestbtn>span:first-child{display:flex!important;align-items:center;justify-content:center;width:48px;height:42px;flex-shrink:0;font-size:0!important}
+.amb-chesthost{display:flex;align-items:center;justify-content:center}
+.amb-chestbtn .chx-svg{overflow:visible;filter:drop-shadow(0 3px 5px rgba(0,0,0,.45))}
+.amb-chestbtn.glow{
+  border-color:color-mix(in srgb,var(--amb-tier) 62%,transparent)!important;
+  background:
+    radial-gradient(80% 170% at 0% 50%,color-mix(in srgb,var(--amb-tier) 28%,transparent),transparent 64%),
+    linear-gradient(135deg,rgba(var(--bg3-rgb),.7),rgba(var(--bg2-rgb),.5))!important;
+  box-shadow:0 0 24px color-mix(in srgb,var(--amb-tier) 24%,transparent),inset 0 1px 0 rgba(255,255,255,.04)}
+.amb-chestbtn.glow>span:first-child{width:60px;height:50px;margin:-12px 0 -6px -6px}
+.amb-chestbtn.glow .chx-svg{transform-origin:50% 88%;animation:ambChestIdle 3.4s ease-in-out infinite}
+@keyframes ambChestIdle{0%,60%,100%{transform:rotate(0)}64%{transform:rotate(-7deg) translateY(-2px)}70%{transform:rotate(6deg)}76%{transform:rotate(-4deg)}82%{transform:rotate(2deg)}88%{transform:rotate(0)}}
+.amb-count{position:absolute;left:44px;top:6px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;
+  background:var(--amb-tier);color:#140e06;font:800 11px/20px 'Outfit',sans-serif;text-align:center;
+  box-shadow:0 0 0 2px var(--bg2)}

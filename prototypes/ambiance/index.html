@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambiance · comparateur</title>
+<style>
+  :root{--bg:#0b0906;--panel:#15110b;--line:#2c2418;--t1:#ede4d4;--t2:#a89a80;--acc:#d4943a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--t1);font:13px/1.4 system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#120e09f2;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  header h1{font-size:14px;margin:0 8px 0 0;color:var(--acc);letter-spacing:.5px}
+  label{display:flex;gap:5px;align-items:center;color:var(--t2)}
+  select,button{font:inherit;background:#1f1810;color:var(--t1);border:1px solid #3a2e20;border-radius:6px;padding:4px 8px;cursor:pointer}
+  .vs{display:flex;gap:4px}
+  .vs label{background:#1f1810;border:1px solid #3a2e20;border-radius:6px;padding:3px 7px;color:var(--t1)}
+  main{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:18px 12px 40px}
+  .cell{display:flex;flex-direction:column;gap:6px}
+  .cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .cap b{color:var(--acc);font-size:14px}
+  .cap a{color:var(--t2);font-size:11px}
+  .desc{color:var(--t2);font-size:11.5px;max-width:var(--w)}
+  .phone{width:var(--w);height:var(--h);border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 40px #000a;background:#000}
+  .phone iframe{width:375px;height:812px;border:0;transform:scale(var(--s));transform-origin:0 0;display:block}
+  footer{color:var(--t2);font-size:12px;max-width:900px;margin:0 auto;padding:0 16px 30px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Ambiance de fond</h1>
+  <label>Écran <select id="screen"><option value="home">Home</option><option value="train">Train · Grammar &amp; Vocab</option><option value="drill">Drill (question)</option></select></label>
+  <label>Mode <select id="mode"><option value="dark">Sombre</option><option value="light">Clair</option></select></label>
+  <label>Skin <select id="skin">
+    <option value="">Doré (défaut)</option><option>argent</option><option>emeraude</option><option>saphir</option><option>rubis</option><option>amethyste</option><option>corail</option><option>jade</option><option>obsidienne</option><option>aurore</option><option>frostbite</option><option>abyssal</option><option>emberheart</option><option>cosmic_void</option><option>molten_gold</option><option>heraldic</option><option>aldric_chamber</option>
+  </select></label>
+  <label>Fête <select id="fest"><option value="">Aucune</option><option>halloween</option><option>yule</option><option>spring</option><option>solstice</option></select></label>
+  <label>Coffre Home <select id="chest"><option value="emoji">📦 actuel</option><option value="svg">SVG simple</option><option value="glow" selected>SVG + teinte du palier</option></select></label>
+  <label>Palier <select id="tier"><option value="0">Novice</option><option value="1">Warrior</option><option value="2">Champion</option><option value="3" selected>Legendary</option></select></label>
+  <label>En attente <select id="n"><option>0</option><option selected>1</option><option>3</option></select></label>
+  <label><input type="checkbox" id="rm"> Mouvement réduit</label>
+  <label>Taille <select id="size"><option value="fit">Ajustée</option><option value="1">100 %</option></select></label>
+  <span class="vs" id="vs"></span>
+</header>
+<main id="grid"></main>
+<footer>
+  Vrais composants de <code>src/</code> (Home, Train, Drill, Tabs) avec un profil fictif local, aucun appel réseau.
+  Variante retenue → une règle dans <code>src/styles/appCss.js</code> (voir <code>ambiance.css</code>).
+  « Ouvrir seul » = l'écran en 375 px, à passer en vue mobile.
+</footer>
+<script>
+var VARIANTS = [
+  { id: "A", name: "Actuel", desc: "Fond uni --bg." },
+  { id: "B", name: "Torche", desc: "Halo de la couleur du skin en haut + vignettage. Statique." },
+  { id: "C", name: "Parchemin", desc: "Torche + grain de papier (5-9 %). Statique." },
+  { id: "D", name: "Braises", desc: "Parchemin + 12 braises qui montent lentement. Coupé en mouvement réduit." },
+  { id: "E", name: "Fresque", desc: "Parchemin + la carte du Mentor en filigrane en haut d'écran." },
+];
+var ids = ["screen", "mode", "skin", "fest", "chest", "tier", "n", "rm", "size"];
+var shown = { A: true, B: true, C: true, D: true, E: true };
+
+// État dans le hash : un rechargement garde les choix.
+try {
+  var saved = JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}");
+  ids.forEach(function (k) { if (saved[k] != null) { var el = document.getElementById(k); if (el.type === "checkbox") el.checked = saved[k]; else el.value = saved[k]; } });
+  if (saved.shown) shown = saved.shown;
+} catch (e) { console.warn("[ambiance] hash illisible:", e && e.message); }
+
+var vs = document.getElementById("vs");
+VARIANTS.forEach(function (v) {
+  var l = document.createElement("label");
+  l.innerHTML = '<input type="checkbox" ' + (shown[v.id] ? "checked" : "") + "> " + v.id;
+  l.firstChild.addEventListener("change", function (e) { shown[v.id] = e.target.checked; render(); });
+  vs.appendChild(l);
+});
+
+function state() {
+  var s = {};
+  ids.forEach(function (k) { var el = document.getElementById(k); s[k] = el.type === "checkbox" ? el.checked : el.value; });
+  return s;
+}
+function frameUrl(v, s) {
+  var p = new URLSearchParams({ v: v, screen: s.screen, mode: s.mode, skin: s.skin, fest: s.fest, chest: s.chest, tier: s.tier, n: s.n, rm: s.rm ? "1" : "0" });
+  return "frame.html?" + p.toString();
+}
+function render() {
+  var s = state();
+  location.replace("#" + encodeURIComponent(JSON.stringify(Object.assign({ shown: shown }, s))));
+  var list = VARIANTS.filter(function (v) { return shown[v.id]; });
+  var avail = Math.min(window.innerWidth - 24, 2400);
+  var sc = s.size === "1" ? 1 : Math.min(1, Math.max(0.34, (avail - 18 * (list.length - 1)) / (list.length * 375)));
+  var grid = document.getElementById("grid");
+  grid.style.setProperty("--s", sc);
+  grid.style.setProperty("--w", Math.round(375 * sc) + "px");
+  grid.style.setProperty("--h", Math.round(812 * sc) + "px");
+  grid.innerHTML = "";
+  list.forEach(function (v) {
+    var url = frameUrl(v.id, s);
+    var cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerHTML = '<div class="cap"><b>' + v.id + " · " + v.name + '</b><a href="' + url + '" target="_blank">Ouvrir seul ↗</a></div>' +
+      '<div class="phone"><iframe loading="eager" src="' + url + '"></iframe></div>' +
+      '<div class="desc">' + v.desc + "</div>";
+    grid.appendChild(cell);
+  });
+}
+ids.forEach(function (k) { document.getElementById(k).addEventListener("change", render); });
+var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(render, 200); });
+render();
+</script>
+</body>
+</html>
