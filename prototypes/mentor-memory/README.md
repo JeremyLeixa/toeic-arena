@@ -68,11 +68,11 @@ c'est ce qui appelle l'élève vers le Mentor maintenant que le plan n'est plus 
 | | Moment | Ce que l'élève voit |
 |---|---|---|
 | 1 | **Lettre du lundi** (08:30) | Push puis lettre : semaine écoulée, ce qui a bougé (≥ +10 points sur ≥ 10 Q par semaine, sinon rien), créatures vaincues, allure vers l'objectif, cap de la semaine. Élève neuve : « trop tôt pour parler de tendance ». |
-| 2 | **Home** | Ne gagne aucune carte : seule la ligne d'accueil se souvient (« Yesterday you slew 1 old mistake », « Day 4 in the Arena »), plus une pastille sur l'onglet Mentor. |
+| 2 | **Home** | Ne gagne qu'un **bandeau d'une ligne** (« 21 mistakes due · 3 quests › ») qui ouvre « Today's Path » dans le Mentor, plus une pastille sur l'onglet Mentor. La phrase qui se souvient (« Yesterday you slew 1 old mistake », « Day 4 in the Arena ») a déménagé en tête du plan : au-dessus du pseudo, elle ne convainquait pas. |
 | 3 | **Carte du Mentor** | Cinq repères, badges à jour (voir le tableau ci-dessus). |
 | 4 | **Plan du jour** (feuille « Today's Path ») | Trois quêtes, chacune avec sa raison et son étiquette de récompense. « Why this order? » explique l'ordre. |
 | 5 | **Avant la session** | Parchemin : comment Aldric a composé la session (« Relative Pronouns are your weak spot now: 6 of your last 13. I've put 4 in this drill. Conditionals get only 2 today: 13 of your last 15. You've earned it. »). |
-| 6 | **Pendant** | La question porte sa mémoire (« Missed on 13 Sept · 3 times ») ; la réponse a une conséquence dite (« Revenge. It comes back in 3 days, weaker. », « Noted. This one comes back tomorrow. », « Conditionals: 14 of your last 16. It holds. »). |
+| 6 | **Pendant** | Sur le **HUD de session** livré le 2026-09-17 (`SessionTop`, `AnswerCard`, `NextBar`, `ListenDisc`) : la mémoire de la question dans le slot `sub` de la barre du haut (« Missed on 13 Sept · 3 times ») ; la réponse a une conséquence dite dans la carte de réponse (« Revenge. It comes back in 3 days, weaker. », « Noted. This one comes back tomorrow. », « Conditionals: 14 of your last 16. It holds. »). |
 | 7 | **Écran de fin** | Le vrai `SessionResult` (vraies portes XP) + carte « Aldric remembers » : créatures vaincues ou échappées, nouvelles erreurs, chemin parcouru sur une catégorie (seulement s'il est prouvé), compte rendu de la visée annoncée, record. |
 | 8 | **Faiblesse devenue force** | Cérémonie plein écran quand une faiblesse mesurée devient une force mesurée. Seuils stricts ; sinon rien (la note du proto dit pourquoi). Symbolique : aucune récompense. |
 | 9 | **Bestiaire** | Repère « The Lair ». Compteurs, bouton de chasse, créatures par catégorie ou par partie, force (Trickster / Stalker / Wyrm), réussites espacées en pastilles. |
@@ -160,7 +160,8 @@ Dans l'ordre, un commit par changement logique :
    `stepLabel`/`stepDetail` de `lib/sessionText.js` à compléter pour la chasse (« Base · 2 slain » au lieu
    de « 7 correct »).
 5. Briefing, mémoire dans la question, carte « Aldric remembers » (sous le parchemin, avant « Lessons to
-   keep »), cérémonie.
+   keep »), cérémonie. Le proto détourne le `label` de l'`AnswerCard` pour loger la phrase d'Aldric :
+   demander plutôt un slot `note` (entre le bandeau et « Why ») au chantier HUD, qui possède le fichier.
 6. Lettre du lundi : Edge Function `weekly-results` (push) + écran de lettre ; Chronique dans le Mentor.
 
 ## Reste à trancher

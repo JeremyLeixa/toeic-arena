@@ -2,7 +2,11 @@
    Cartes et textes : jetons de l'appli (suivent skin et mode clair).
    Parchemins et cérémonie : palette fixe, comme SessionResult et Ceremonies (fond local). */
 
-/* ── Home : plan d'Aldric ── */
+/* ── Home : le bandeau d'une ligne vers « Today's Path » (rien d'autre n'est ajouté à Home) ── */
+.mm-strip{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:16px;padding:11px 14px;border-radius:14px;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;background:rgba(var(--cx),.07);border:1px solid rgba(var(--cx),.22)}
+.mm-strip.due{background:linear-gradient(135deg,rgba(240,200,80,.12),rgba(var(--cx),.05));border-color:rgba(240,200,80,.3)}
+.mm-strip-t{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mm-strip-go{font-size:18px;color:var(--t3);line-height:1}
 .mm-greet{color:var(--t2);font-size:13px;margin-bottom:2px;display:flex;align-items:center;gap:6px}
 .mm-plan{margin-bottom:16px;padding:14px 14px 10px!important;border:1px solid rgba(var(--cx),.28)!important;background:linear-gradient(160deg,rgba(var(--cx),.10),rgba(var(--cx),.02) 60%)!important}
 .mm-plan-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
@@ -40,6 +44,11 @@
 .mm-fb.bite{color:var(--red);background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.3)}
 .mm-fb.note{color:var(--t1);background:var(--bg2);border:1px solid var(--bdr)}
 .mm-audio{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 12px;border-radius:99px;font-size:12px;color:var(--cyan);border:1px solid rgba(var(--cx),.35);background:rgba(var(--cx),.08)}
+
+/* Phrase d'Aldric dans la carte de réponse du HUD (slot `note` à demander au câblage). */
+.mm-aldric{margin:0 0 10px;font-size:14px;font-weight:700;line-height:1.5;color:var(--t1)}
+.mm-aldric.win{color:var(--green)}
+.mm-aldric.bite{color:var(--red)}
 
 /* ── Écran de fin : « Aldric remembers » ── */
 .mm-remember{max-width:400px;margin:0 auto 12px;padding:14px 14px 8px!important;animation:fadeIn .5s ease both}

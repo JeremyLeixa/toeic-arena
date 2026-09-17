@@ -35,9 +35,9 @@ var MOMENTS = {
 function evidence(m, x) {
   if (m === "letter") return V.letter(x).ev;
   if (m === "home") {
-    return V.greeting(x).ev.concat([
-      "Home ne gagne AUCUNE carte : le plan vit dans le Mentor (décision du 2026-09-17). Seule la ligne « Welcome back » devient une ligne qui se souvient.",
-      "Pastille sur l'onglet Mentor quand une quête attend ou qu'une erreur est à échéance : à trancher au câblage.",
+    return V.homeStrip(x).ev.concat([
+      "Home garde tout le reste : Daily Challenge, Quick Start (Review Cards, Grammar Drill), Tip of the day.",
+      "Pastille sur l'onglet Mentor dès qu'une quête attend : l'onglet reste accessible en permanence, la pastille n'est jamais un verrou.",
     ]);
   }
   if (m === "mentor") return V.mapBadges(x).ev;
@@ -59,6 +59,7 @@ function evidence(m, x) {
     if (r.q.item) out.push("Créature " + r.q.k + " : ratée " + r.q.item.fails + " fois depuis le " + fmtDay(r.q.item.first) + ", " + r.q.item.box + " réussite(s) espacée(s), échéance " + fmtDay(r.q.item.due) + ".");
     else out.push("Question « " + r.q.role + " » (" + (r.q.cat || r.q.label) + ").");
     out.push("Simulation : " + (r.ok ? "réussie" : "ratée") + (ANS !== "auto" && ANS !== "none" ? " ; affichage forcé : " + (ok ? "réussie" : "ratée") : "") + ".");
+    out.push("Rendu sur le HUD de session livré aujourd'hui : pastille de mémoire dans le slot `sub` de SessionTop, phrase d'Aldric dans l'AnswerCard, NextBar en pied. Au câblage : demander un slot `note` à l'AnswerCard.");
     return f ? out.concat(f.ev) : out;
   }
   if (m === "result") {

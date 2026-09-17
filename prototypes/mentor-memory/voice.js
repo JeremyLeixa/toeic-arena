@@ -31,7 +31,27 @@ function aimPhrase(q, x) {
   return q.kind;
 }
 
-// ═══ Home : la ligne d'accueil ═══
+// ═══ Home : le bandeau d'une ligne (choix de Jérémy du 2026-09-17) ═══
+// Home ne gagne QUE cette ligne : elle dit ce qui attend et ouvre « Today's Path » dans le Mentor.
+// La phrase qui se souvient (« Yesterday you slew… ») a déménagé en tête du plan : sur Home, au-dessus
+// du pseudo, elle ne convainquait pas.
+export function homeStrip(x) {
+  var p = x.plan, n = p.quests.length, due = p.due.length, ev = [];
+  var parts = [];
+  if (due) parts.push(plural(due, "mistake") + " due");
+  parts.push(n + " quest" + (n === 1 ? "" : "s") + (due ? "" : " today"));
+  ev.push("Une seule ligne, tirée du plan : " + due + " échéance(s), " + n + " quête(s). Aucune autre carte n'est ajoutée à Home.",
+    "Tap → onglet Mentor, feuille « Today's Path » (le plan n'est pas dupliqué sur Home).");
+  if (p.cold) ev.push("Élève neuve : le plan vient du Battle Scan, la ligne le dit.");
+  return { text: parts.join(" · ") + (p.cold ? " · from your scan" : ""), tone: due ? "due" : "plain", ev: ev };
+}
+// Tête de la feuille « Today's Path » : c'est là que la mémoire de la veille est dite.
+export function planIntro(x) {
+  var g = greeting(x);
+  return g.text.replace(/\.$/, "") + ". Here's today.";
+}
+
+// ═══ La ligne d'accueil (déplacée dans la tête du plan) ═══
 export function greeting(x) {
   var u = x.before, d = day(NOW), yd = addDays(d, -1), dayN = daysBetween(u.joinedAt, d) + 1;
   var slainY = slainOn(u, yd).length, seed = u.name + d + "greet";

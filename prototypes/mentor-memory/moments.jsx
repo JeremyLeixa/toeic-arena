@@ -6,6 +6,8 @@ import { GIcon, LeagueIcon } from "../../src/components/icons.jsx";
 import { Bar } from "../../src/components/Bar.jsx";
 import { renderAv } from "../../src/components/avatar.jsx";
 import { SessionResult } from "../../src/components/SessionResult.jsx";
+import { SessionTop, AnswerCard, NextBar, ListenDisc } from "../../src/components/SessionHud.jsx";
+import { streakOf } from "../../src/lib/sessionHud.js";
 import { createChestFx, burstAt } from "../../src/components/particles.js";
 import { MentorSheet } from "../../src/features/mentor/Mentor.jsx";
 import { MentorMapV2 } from "./mentorHub.jsx";
@@ -54,12 +56,12 @@ export function LetterMoment(p) {
 // ═══ 2. Home : une seule ligne change (le plan vit dans le Mentor, décision du 2026-09-17) ═══
 export function HomeMoment(p) {
   var x = p.x, u = x.before, lv = getLevel(u.xp), lg = getEffectiveLeague(u.weeklyXp, u.moduleScores);
-  var g = V.greeting(x);
+  var strip = V.homeStrip(x);
   return (
     <div className="enter" style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <p className="mm-greet">{g.text}</p>
+          <p style={{ color: "var(--t2)", fontSize: 13, marginBottom: 2 }}>{"Welcome back"}</p>
           <h1 className="out" style={{ fontWeight: 800, fontSize: 24, display: "flex", alignItems: "center", gap: 8 }}>{u.name} {renderAv(u.avatar, 28, u.equippedFrame)}</h1>
         </div>
         <div style={{ textAlign: "center" }}>
@@ -80,6 +82,13 @@ export function HomeMoment(p) {
         </div>
         <Bar value={lv.cur} max={lv.next} h={6} />
       </div>
+
+      {/* Le bandeau : une ligne, qui ouvre « Today's Path » dans le Mentor. */}
+      <button className={"mm-strip" + (strip.tone === "due" ? " due" : "")}>
+        <GIcon name="wizard-staff" size={18} color={strip.tone === "due" ? "var(--gold)" : "var(--cyan)"} />
+        <span className="mm-strip-t out">{strip.text}</span>
+        <span className="mm-strip-go">{"›"}</span>
+      </button>
 
       <div className="crd" style={{ marginBottom: 16, padding: "14px 16px", background: "linear-gradient(135deg,rgba(var(--cx),.12),rgba(27,112,207,.12))", border: "1px solid rgba(var(--cx),.2)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -121,7 +130,7 @@ export function PlanMoment(p) {
   return (
     <MentorScreen x={x}>
       <MentorSheet open={true} onClose={noop} title="Today's Path">
-        <p style={{ color: "var(--t2)", fontSize: 12, margin: "0 2px 12px", lineHeight: 1.5, fontStyle: "italic" }}>{"Aldric's plan for Monday. The first one is today's mission."}</p>
+        <p style={{ color: "var(--t2)", fontSize: 12.5, margin: "0 2px 12px", lineHeight: 1.5, fontStyle: "italic" }}>{V.planIntro(x) + " The first quest is today's mission."}</p>
         {x.plan.quests.map(function (q, i) {
           var v = V.questView(q, x, i);
           return (
@@ -145,12 +154,9 @@ export function BriefMoment(p) {
   var [go, setGo] = useState(false);
   if (go) return <QuestionMoment x={x} qi={0} ans="none" />;
   return (
-    <div style={{ padding: "20px 16px", minHeight: "100vh" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <button className="back-btn">{"←"} Back</button>
-        <span className="out" style={{ fontSize: 13, color: "var(--t2)", fontWeight: 600 }}>{"0/" + n}</span>
-      </div>
-      <Bar value={0} max={n} h={4} />
+    <>
+      <SessionTop n={n} cur={0} results={[]} streak={0} onQuit={noop} />
+      <div style={{ padding: "0 16px" }}>
       <div className="mm-brief">
         <div className="mm-brief-head"><GIcon name="wizard-staff" size={20} color={/*fond local*/"#6b3410"} /><b className="out">{x.comp.kind === "hunt" ? "Mistake Hunt" : "Aldric's drill"}</b></div>
         {b.lines.map(function (t, i) { return <p key={i}>{t}</p>; })}
@@ -158,12 +164,16 @@ export function BriefMoment(p) {
           {b.chips.map(function (c, i) { return <span key={i} className="mm-chip"><GIcon name={c.icon} size={12} color={/*fond local*/"#6b3410"} />{c.text}</span>; })}
         </div>
       </div>
-      <button className="btn1 out" onClick={function () { setGo(true); }}>{x.comp.kind === "hunt" ? "Start the hunt" : "Begin"}</button>
-    </div>
+      </div>
+      <NextBar onNext={function () { setGo(true); }} label={x.comp.kind === "hunt" ? "Start the hunt" : "Begin"} />
+    </>
   );
 }
 
-// ═══ 4. Pendant : la question porte sa mémoire ═══
+// ═══ 5. Pendant : la question porte sa mémoire, sur le HUD de session livré aujourd'hui ═══
+// La pastille de mémoire vit dans le slot `sub` de SessionTop, la conséquence dans l'AnswerCard.
+// Au câblage : demander un slot `note` à l'AnswerCard (entre le bandeau et « Why ») plutôt que de
+// détourner son `label` comme ici — le fichier appartient au chantier HUD.
 export function QuestionMoment(p) {
   var x = p.x, qs = x.comp.questions, start = p.qi || 0;
   function initialSel(i) {
@@ -176,39 +186,42 @@ export function QuestionMoment(p) {
   var [sel, setSel] = useState(function () { return initialSel(start); });
   var q = qs[ci], fb = sel >= 0, ok = sel === q.c;
   var badge = V.questionBadge(q), feed = fb ? V.questionFeedback(x, q, ok) : null;
+  // Fil d'encre : les réponses déjà données dans la manche simulée, jusqu'à la question montrée.
+  var results = x.outcome.results.slice(0, ci).map(function (r) { return r.ok ? 1 : 0; });
+  if (fb) results = results.concat([ok ? 1 : 0]);
   function next() { if (ci < qs.length - 1) { setCi(ci + 1); setSel(-1); } }
   return (
-    <div style={{ padding: "20px 16px", minHeight: "100vh" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <button className="back-btn">{"←"} Back</button>
-        <span className="out" style={{ fontSize: 13, color: "var(--t2)", fontWeight: 600 }}>{(ci + 1) + "/" + qs.length}</span>
+    <>
+      <SessionTop n={qs.length} cur={ci} results={results} streak={streakOf(results)} onQuit={noop}
+        sub={badge ? <><GIcon name={TIERS[badge.tier].icon} size={12} color="currentColor" style={{ verticalAlign: "-2px", marginRight: 5 }} />{"Missed " + badge.text.replace(/^Missed /, "")}</> : null} />
+      <div style={{ padding: "4px 16px 0" }}>
+        <span className="out" style={{ fontSize: 11, fontWeight: 600, color: "var(--cyan)", textTransform: "uppercase", letterSpacing: 1, display: "block" }}>{q.mod === "drill" ? q.cat : q.label}</span>
+        {q.audio
+          ? <ListenDisc playing={false} onPlay={noop} hint="Tap to hear it again" />
+          : null}
+        <h2 className="qstem" style={{ fontWeight: 700, fontSize: 19, lineHeight: 1.5, marginBottom: 24, marginTop: 8 }}>{q.prompt}</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {q.options.map(function (opt, i) {
+            var iS = sel === i, iC = i === q.c, bg = "var(--bg2)", bd = "var(--bdr)";
+            if (fb && iC) { bg = "rgba(0,230,118,.12)"; bd = "var(--green)"; } else if (fb && iS && !iC) { bg = "rgba(255,71,87,.12)"; bd = "var(--red)"; }
+            return (
+              <button key={i} onClick={function () { if (!fb) setSel(i); }} disabled={fb}
+                style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: bg, border: "1px solid " + bd, borderRadius: 12, cursor: fb ? "default" : "pointer", fontSize: 15, color: "var(--t1)", textAlign: "left", fontFamily: "'DM Sans',sans-serif" }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid " + (fb && iC ? "var(--green)" : fb && iS ? "var(--red)" : "var(--t3)"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0, background: fb && iC ? "var(--green)" : fb && iS && !iC ? "var(--red)" : "transparent", color: fb && (iC || iS) ? "#fff" : "var(--t3)" }}>
+                  {fb && iC ? "✓" : fb && iS ? "✗" : String.fromCharCode(65 + i)}
+                </div>
+                <span>{opt}</span>
+              </button>
+            );
+          })}
+        </div>
+        {fb && <AnswerCard ok={ok} answer={String.fromCharCode(65 + q.c) + ". " + q.options[q.c]} label={feed ? "Aldric" : "Why"}>
+          {feed && <p className={"mm-aldric " + feed.tone}><GIcon name={feed.icon} size={16} color="currentColor" style={{ verticalAlign: "-3px", marginRight: 6 }} />{feed.text}</p>}
+          {q.why && <p className="ss-why">{q.why}</p>}
+        </AnswerCard>}
       </div>
-      <Bar value={ci} max={qs.length} h={4} />
-      <span className="out" style={{ fontSize: 11, fontWeight: 600, color: "var(--cyan)", textTransform: "uppercase", letterSpacing: 1, marginTop: 8, display: "block" }}>{q.mod === "drill" ? q.cat : q.label}</span>
-      {badge && <div><span className="mm-badge"><GIcon name={TIERS[badge.tier].icon} size={14} color="var(--purple)" />{badge.text}</span></div>}
-      {q.audio && <div><span className="mm-audio"><GIcon name="public-speaker" size={14} color="var(--cyan)" />Replay the audio</span></div>}
-      <h2 className="qstem" style={{ fontWeight: 700, fontSize: 19, lineHeight: 1.5, marginBottom: 24, marginTop: 10 }}>{q.prompt}</h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {q.options.map(function (opt, i) {
-          var iS = sel === i, iC = i === q.c, bg = "var(--bg2)", bd = "var(--bdr)";
-          if (fb && iC) { bg = "rgba(0,230,118,.12)"; bd = "var(--green)"; } else if (fb && iS && !iC) { bg = "rgba(255,71,87,.12)"; bd = "var(--red)"; }
-          return (
-            <button key={i} onClick={function () { if (!fb) setSel(i); }} disabled={fb}
-              style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: bg, border: "1px solid " + bd, borderRadius: 12, cursor: fb ? "default" : "pointer", fontSize: 15, color: "var(--t1)", textAlign: "left", fontFamily: "'DM Sans',sans-serif" }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid " + (fb && iC ? "var(--green)" : fb && iS ? "var(--red)" : "var(--t3)"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0, background: fb && iC ? "var(--green)" : fb && iS && !iC ? "var(--red)" : "transparent", color: fb && (iC || iS) ? "#fff" : "var(--t3)" }}>
-                {fb && iC ? "✓" : fb && iS ? "✗" : String.fromCharCode(65 + i)}
-              </div>
-              <span>{opt}</span>
-            </button>
-          );
-        })}
-      </div>
-      {fb && <div style={{ marginTop: 20, animation: "fadeIn .3s" }}>
-        {feed && <div className={"mm-fb " + feed.tone}><GIcon name={feed.icon} size={20} color={feed.tone === "win" ? "var(--green)" : feed.tone === "bite" ? "var(--red)" : "var(--t2)"} /><span>{feed.text}</span></div>}
-        {q.why && <div className="crd" style={{ background: "rgba(var(--cx),.06)", borderColor: "rgba(var(--cx),.15)", padding: 16 }}><p style={{ fontSize: 13, color: "var(--t2)", lineHeight: 1.6 }}>{q.why}</p></div>}
-        <button className="btn1" onClick={next} style={{ marginTop: 16 }}>{ci < qs.length - 1 ? "Next" : "See Results"}</button>
-      </div>}
-    </div>
+      {fb && <NextBar onNext={next} last={ci === qs.length - 1} />}
+    </>
   );
 }
 
