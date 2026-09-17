@@ -31,22 +31,25 @@ Touchpoints to wire (in rough order):
 - [ ] Create `src/features/<module>/<Name>.jsx` exporting the component (PascalCase). A `.jsx` file exports components only: helpers → `src/lib/`, a private render helper stays unexported. Imports from `../../lib/…`, `../../components/…`, `../../data/…` only.
 
 ### Routing (`src/routes.jsx`)
-- [ ] Import the component at the top of `routes.jsx` and add the `sp==="<id>"` line inside `renderRoute`. Pattern :
+- [ ] Import the component at the top of `routes.jsx` and add the `sp==="<id>"` line inside `renderRoute`. Pattern (end-of-session screen, since 2026-09-17) :
   ```js
-  if(sp==="<id>"){playBGM("bgm_<name>");return pg(<Component u={u} done={function(sc,tot,xp){stopBGM();miniDone(sc,tot,xp);}} gate={function(xp,sc,tot){return applyXpGates(xp,sc,tot,"<id>");}} back={function(){stopBGM();sSP(null);sT("<tab>");}}/>);}
+  if(sp==="<id>"){if(!lastSession)playBGM("bgm_<name>");return pg(<Component u={u} nav={nav} done={function(sc,tot,xp){stopBGM();return miniSession(sc,tot,xp);}} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){stopBGM();sSP(null);sT("<tab>");}}/>);}
   ```
+  No `gate` prop any more: the module never computes gated XP itself. `playBGM` guarded by `!lastSession` so the music doesn't restart under the result screen.
 - [ ] Every `App()`-scope name the line uses (`u`, `pg`, `miniDone`, `applyXpGates`, `sSP`, `sT`, `nav`…) must be in the destructuring at the top of `renderRoute` AND in the call literal `renderRoute({...})` in `App()`. `npx eslint src/routes.jsx src/App.jsx` must show no `no-undef`: that is the guarantee, a missing name is a runtime `ReferenceError` on that screen only.
 - [ ] If SELF_MANAGED : add to `SELF_MANAGED` array in `App()` AND don't call `playBGM` in the route line (component handles it)
 - [ ] **Heavy screen** (own data file, exam, hub with grimoires) → load it on demand instead of a static import: `var Name=lazyNamed(function(){return import("./features/<module>/<Name>.jsx");},"Name");` next to the other lazies in `routes.jsx` (import `lazyNamed` from `./components/lazyNamed.js`). Same local name, so the route line is unchanged; `pg()` already provides the fallback. Never keep a static import alongside — `npm test` (`check_import_graph`) refuses it, as well as a wrong path or export name.
 
 ### XP pipeline (in `App()`, `src/App.jsx` — reached from the route via the context)
-- [ ] `applyXpGates(baseXp, sc, tot, "<modId>")` — applies accuracy gate (<30% → 10%, 30-49% → 50%, ≥50% → 100%) + diminishing returns
-- [ ] `addXp(gatedXp)` — applies XP, triggers level up, plays SFX
-- [ ] `recordModule(u, "<modId>", sc, tot, catStats)` (`src/lib/progress.js`) — updates `u.moduleScores[modId]` + cumulative stats
-- [ ] `grantWeeklyChest(trigger, "novice"|"guerrier"|"champion")` if perfect / milestone
+- [ ] Standard module: route calls **`miniSession(sc, tot, baseXp)`** (spotlight applied) and RETURNS its value (the session id). It runs `settleSession` (gateSteps + settleXp, detail kept for the screen) → stats → `trackModSession` → `recordModule` → `checkMission` → `sealSession` → `sv`. Pass the **base** XP: gates are applied once, in App (passing already-gated XP applied them twice, bug fixed 2026-09-17).
+- [ ] Custom handler (own stats, chests…): same order — `var s=settleSession(modId,sc,tot,baseXp,{spotlight:true}); var c=s.c; …; sealSession(c,s.sid); sv(c); return s.sid;`. Never `applyXpGates`+`addXp` for a module that shows `SessionResult` (no step detail, toast over the screen).
+- [ ] `grantWeeklyChest(trigger, "novice"|"guerrier"|"champion")` if perfect / milestone — while the screen is open, the confirmed chest appears IN it (not as a toast).
 
-### Toast rendering (CRITICAL — past bug)
-- [ ] `<XpToast/>` and `<AchToast/>` MUST render inside the component's `pg()` wrapper, not only in main return. Otherwise XP earned without nav back to home leaves toast undisplayed until 4s timer expires.
+### End-of-session screen (CRITICAL — `components/SessionResult.jsx`, CLAUDE.md « écran de fin »)
+- [ ] Keep `var sidRef=useRef(0), mistakesRef=useRef([]);`. On a wrong answer: `mistakesRef.current.push({tag, prompt, yours, correct, why})` (`prompt` with `_____` for the blank; `noBlank:true` for a definition/transcript).
+- [ ] At the end of the round, in the same handler: `sidRef.current=p.done(sc,tot,baseXp); sP("done");` — persist at submit, never behind a button.
+- [ ] `if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="<Module name>" mistakes={mistakesRef.current} onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>{extras}</SessionResult>);` — module-specific info (NextStepReco, records…) goes in `children`. Never wrap it in `.enter`. No `p.gate()` in render.
+- [ ] Score-less games: `mode="points"` (or `"time"`) + `points` / `pointsLabel`.
 
 ### Audio (if listening module)
 - [ ] On mount : `useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);`
@@ -90,7 +93,7 @@ Touchpoints to wire (in rough order):
 1. `npm run build` — must pass clean, and `npm test` (symbol census, import graph, TOEIC estimator)
 2. Test locally on `npm run dev`
 3. Check console for `[BUILD] <BUILD_ID>` log on load
-4. Verify XpToast appears in-context (test : earn XP without navigating back)
+4. Verify the end-of-session screen: XP shown = XP in the profile after reload, Continue returns to the right screen, Play again gives new questions
 5. Verify BGM stops on back, restarts on home if SELF_MANAGED
 6. **Don't `git add public/`** files implicitly — explicitly add new MP3s, the `bgm_tavern.mp3` regression cost 30min
 
