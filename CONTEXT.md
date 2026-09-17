@@ -338,6 +338,32 @@ Branche `refactor/phase5`, 15 commits, plan `.claude/plans/moonlit-roaming-sketc
 
 ---
 
+## Session 2026-09-17 — Audit visuel, puis ambiance « Parchemin » et coffre SVG sur Home
+
+- **Audit visuel** (lecture seule, écrans parcourus sur le compte Teacher en 375 px + code) : 15
+  propositions en 6 lots — moments de victoire (montée de niveau/ligue sans rien à l'écran, 32
+  écrans de fin écrits à la main), ambiance, hubs vivants (progression vers le coffre mastery),
+  sessions (tab bar visible, retour de réponse, `playCombo` jamais appelé), cohérence (League en
+  français, Profil mixte, 62 trophées en emoji), Shop/League/trophées. **Règle posée par Jérémy :
+  tout le chantier visuel passe par des protos**, variantes côte à côte.
+- **Proto `prototypes/ambiance/`** (`496f614`) : vrais Home/Train/Drill avec un profil fictif local,
+  5 fonds (Avant, Torche, Parchemin, Braises, Fresque), 16 skins, 4 fêtes, clair/sombre, 3 styles
+  de coffre. Choix de Jérémy : **C « Parchemin » + coffre SVG teinté du palier**.
+- **Câblé** : `e2b5e8a` fond (`.app::before/::after`, `isolation:isolate`, règle dans CLAUDE.md →
+  CSS) ; `86390a2` bouton de Home (`pendingChestTier` dans `App()`, `.home-chest.tN`, règle dans
+  CLAUDE.md → Chest System) ; `c0b61c2` banc aligné ; BUILD_ID `2026-09-17-ambiance` (`fa8a5ef`).
+  16/16 tests, lintgate 347/368, build OK. Vérifié sur le banc (sombre/clair, Novice → Legendary,
+  ×N, Halloween) et sur l'onboarding du serveur de dev ; **Home connecté pas vu en live** (session
+  du panneau fermée), bureau ≥ 768 px pas vu.
+
+### Pour la prochaine session
+- Proto **moments de victoire** (lot 1 de l'audit) : cérémonie de montée de niveau/ligue sur le
+  moteur du coffre v3 + écran de fin commun (`<SessionResult>`), puis hubs vivants.
+- Question ouverte : la League en français côté élève, voulu (bonus de note) ou à passer en anglais ?
+- Contenu : le conseil du jour « When guessing, pick B or C » est faux depuis le mélange des options.
+
+---
+
 ## Earlier session: 2026-04-27 → 2026-04-28 (Chest redesign V2 — full sprint, ~30 commits)
 
 **Le plus gros sprint mono-chantier de S2.** Refonte complète du système de coffres + token actions + cosmétiques cohérents avec la DA shield + League extension + 5 cheat sheets pédagogiques inédites + 3 mémoires post-mortem capturées.

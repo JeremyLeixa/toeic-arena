@@ -141,6 +141,8 @@ Fixed 200px left sidebar on desktop. Don't touch unless you're refactoring the n
 ### `.app` — root wrapper
 Centers content max-width 430px. `.app:not(.onboard-shell)` allows onboarding to skip the desktop sidebar margin.
 
+**Ambiance « Parchemin » (2026-09-17)** : `.app::before` (halo `rgba(var(--cx))` + vignettage) et `.app::after` (grain) sont des calques fixes à `z-index` négatif, rendus visibles par `.app{isolation:isolate}`. Ces deux pseudo-éléments sont réservés. Le fond suit déjà skin, fête et mode : un nouveau skin ou une nouvelle fête n'a rien à écrire pour l'ambiance. Pour tester une variante d'ambiance, passer par `prototypes/ambiance/` (le banc neutralise les calques intégrés).
+
 ### `.onboard-shell` — onboarding override
 Required on wrapper AND every Onboard phase div to skip the desktop sidebar margin.
 
