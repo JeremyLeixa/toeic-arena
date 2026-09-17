@@ -124,7 +124,17 @@ function Stem(p) {
   if (p.m.noBlank) return <span>{"“" + p.m.prompt + "”"}</span>;
   var parts = String(p.m.prompt || "").split(/_{3,}/);
   if (parts.length < 2) return <span>{p.m.prompt}</span>;
-  return <span>{parts[0]}<mark className="sr-blank">{p.m.correct}</mark>{parts.slice(1).join("_____")}</span>;
+  // Question à deux trous (« is … being renovated », « is...being renovated ») : chaque morceau de la
+  // réponse dans son trou. Sinon la réponse entière dans le premier, les autres restent vides.
+  var fills = String(p.m.correct || "").split(/\s*(?:…|\.\.\.)\s*/);
+  if (fills.length !== parts.length - 1) fills = [p.m.correct];
+  return (
+    <span>
+      {parts.map(function (part, i) {
+        return <span key={i}>{part}{i < parts.length - 1 && (i < fills.length ? <mark className="sr-blank">{fills[i]}</mark> : "_____")}</span>;
+      })}
+    </span>
+  );
 }
 function Mistakes(p) {
   var [open, setOpen] = useState(false);
