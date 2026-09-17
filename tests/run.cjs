@@ -29,6 +29,7 @@ const SUITE = [
   ['check_fresher_local.cjs',      'la copie locale plus fraîche gagne sur Supabase, avec les champs serveur, et jamais pour un autre élève'],
   ['check_identity.cjs',          'le normaliseur de noms et l\'adresse synthétique n\'ont pas bougé'],
   ['check_xp_gates.cjs',           'les portes XP (accuracy, anti-farming, Focus, boosts, bonus) sont celles du produit'],
+  ['check_hub_status.cjs',         'les tuiles des hubs annoncent le vrai coffre de maîtrise et le vrai tarif de la prochaine partie'],
   ['validate_endless_resume.cjs',  'la reprise d\'Endless rejoue le même test'],
   ['validate_listening_shuffle.cjs', 'la position des bonnes réponses est randomisée'],
   ['check_listening_voices.cjs',   'la règle de voix des clips P1/P2 (deux locuteurs, lettres dans la voix de l\'item) n\'a pas bougé'],
