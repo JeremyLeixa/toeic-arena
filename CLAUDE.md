@@ -66,6 +66,19 @@ Ce que la suite protège, et pourquoi :
 - **`check_xp_gates`** — les portes XP (`lib/xp.js` : seuil d'accuracy, trois courbes
   anti-farming, bypass, événements, Focus, boosts, streak, +10, planchers, ligue, coffres)
   sont celles de « XP System » ci-dessous. Un `<` devenu `<=` ne casse pas le build.
+- **`check_learner_model`** — le modèle de l'apprenant (`lib/learnerModel.js`) : maîtrise **récente**
+  (demi-vie 14 j + prior 6 Q à 60 %), priorité aux **points en jeu** (6 questions de Part 1 contre 54 de
+  Part 7) et non à la précision la plus basse, retournement prouvé (deux fenêtres mesurables + 10 jours
+  d'écart), chasse exclue de la maîtrise, `cs` posées par `recordModule`. Revenir à `correct/total` à vie
+  remet Today's Focus sur une faiblesse déjà corrigée, sans rien casser au build.
+- **`check_review`** — le bestiaire (`lib/review.js`) : intervalles 1-3-7 et mort à la 3e réussite
+  espacée, force qui ne monte que sur une retombée (sinon l'assiduité est punie), repos des questions
+  ratées 3 fois, regroupement par support (un passage Part 7 lu une fois), XP de chasse toujours sous le
+  coût d'une erreur volontaire, et **le module `hunt` jamais dans l'estimation TOEIC**.
+- **`check_planner`** — le plan du jour (`lib/planner.js`) : seuil de la chasse (4 échéances), démarrage
+  à froid (< 5 sessions → Battle Scan), quête d'enjeu réservée aux parties mesurées, composition du Drill
+  (catégorie visée, catégorie méritée allégée, erreurs dues glissées, **aucune créature tirée au hasard**),
+  tendances hebdomadaires seulement au-dessus de 10 questions par semaine.
 - **`check_festivals`** — fenêtres des thèmes saisonniers (`lib/festivals.js`) : bornes
   incluses en heure locale, Pâques, déc → jan, disjonction jour par jour, opt-out > forçage ;
   un paquet `.fest-<id>` + `.light.fest-<id>` par fête dans `appCss.js`, animations existantes,
@@ -125,7 +138,12 @@ src/
                           chestLabels, shopCatalog, iconMaps, passageDocs, rarityStyles,
                           xp (gateXp/settleXp : les portes XP, pures — App.jsx n'orchestre
                           que les effets ; tests/check_xp_gates.cjs), festivals (thèmes
-                          saisonniers : fenêtres, opt-out, forçage, theme-color)
+                          saisonniers : fenêtres, opt-out, forçage, theme-color),
+                          sessionHud (combo, fil d'encre), learnerModel (maîtrise récente,
+                          points en jeu, retournements), review (bestiaire des erreurs :
+                          boîtes 1-3-7, force, chasse), planner (plan du jour, composition
+                          des sessions, semaine, allure, Chronique), mentorVoice (les
+                          phrases d'Aldric, anglais, à côté de sessionText)
   components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
                           PassageDocs, avatar (renderAv, AvatarMedal), toasts, Tabs,
                           GrimoireReader, NextStepReco, TokenCTAs, legal, PasswordInput (œil),

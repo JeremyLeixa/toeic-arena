@@ -39,11 +39,17 @@ export var MISSION_MODULES=[
 //   hard   = inversions, formal register, multi-step inference, advanced cohesion
 // ═══════════════════════════════════════════════════════════════════════
 
+// SOURCE UNIQUE des 4 macros de grammaire : le Battle Scan (par macroId), le Mentor et
+// lib/learnerModel.js (par `subcats`) lisent cette table. Les 15 catégories de QUESTIONS
+// doivent TOUTES y figurer : Pronouns, Quantifiers & Determiners et Parallel Structure
+// (108 des 564 questions) manquaient depuis leur ajout, donc elles étaient invisibles au
+// Mentor — ajoutées le 2026-09-17. Le scan n'utilise que les `id` : élargir `subcats` ne
+// change rien à ses pools (scanEngine.js lit section.pool[macroId]).
 export var SCAN_GRAMMAR_MACROS = [
   {id:"verbs",     label:"Verbs",     icon:"crossed-swords", subcats:["Tenses","Gerunds vs Infinitives","Passive Voice","Conditionals","Subject-Verb Agreement"]},
-  {id:"linking",   label:"Linking",   icon:"linked-rings",   subcats:["Connectors","Prepositions","Collocations"]},
-  {id:"forms",     label:"Forms",     icon:"quill-ink",      subcats:["Word Families","Comparatives","Articles"]},
-  {id:"reference", label:"Reference", icon:"family-tree",    subcats:["Relative Pronouns"]}
+  {id:"linking",   label:"Linking",   icon:"linked-rings",   subcats:["Connectors","Prepositions","Collocations","Parallel Structure"]},
+  {id:"forms",     label:"Forms",     icon:"quill-ink",      subcats:["Word Families","Comparatives","Articles","Quantifiers & Determiners"]},
+  {id:"reference", label:"Reference", icon:"family-tree",    subcats:["Relative Pronouns","Pronouns"]}
 ];
 
 // CAT scoring: hard correct = 1.5x, medium = 1.0x, easy = 0.7x.

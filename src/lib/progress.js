@@ -117,7 +117,16 @@ export function recordModule(u,modId,sc,tot,catStats){
   if(!u.moduleScores)u.moduleScores={};
   var prev=u.moduleScores[modId]||{correct:0,total:0,sessions:0,lastDate:null,history:[],catStats:{}};
   var hist=prev.history||[];
-  hist.push({date:today(),correct:sc,total:tot});
+  var entry={date:today(),correct:sc,total:tot};
+  // Les catStats DE LA SESSION, en plus du cumul (2026-09-17, lib/learnerModel.js) : sans elles, on ne
+  // peut dire « 6 sur tes 13 dernières » ni dater un retournement, seulement une moyenne à vie. Format
+  // compact {cat:{c,t}} : l'history est déjà bornée à 100 entrées, donc le jsonb ne dérive pas.
+  if(catStats){
+    var cs={},any=false;
+    Object.keys(catStats).forEach(function(c){var s=catStats[c];if(!s||!s.total)return;cs[c]={c:s.correct||0,t:s.total};any=true;});
+    if(any)entry.cs=cs;
+  }
+  hist.push(entry);
   if(hist.length>100)hist=hist.slice(-100);
   // Personalization Phase 2 (2026-05-06) — merge per-category stats when provided.
   // Used by the adaptive picker (pickAdaptive) to weight question selection toward
