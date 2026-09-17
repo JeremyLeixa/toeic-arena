@@ -274,7 +274,8 @@ export function ListenP3(p){
     sPk(-1);
     if(qi<items[ci].qs.length-1){var ni=qi+1;sQi(ni);sP("q");playQuestion(ni);}
     else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);setCurLine(-1);sP("listen");}
-    else{sP("done");p.done(sc,totalQ+1,30+sc*5);}
+    // totalQ est déjà incrémenté au clic de réponse : +1 comptait une question de trop (2026-09-17).
+    else{sP("done");p.done(sc,totalQ,30+sc*5);}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -285,7 +286,7 @@ export function ListenP3(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ+1);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 3 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
@@ -381,7 +382,8 @@ export function ListenP4(p){
     sPk(-1);
     if(qi<items[ci].qs.length-1){var ni=qi+1;sQi(ni);sP("q");playQuestion(ni);}
     else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);sP("listen");}
-    else{sP("done");p.done(sc,totalQ+1,30+sc*5);}
+    // totalQ est déjà incrémenté au clic de réponse : +1 comptait une question de trop (2026-09-17).
+    else{sP("done");p.done(sc,totalQ,30+sc*5);}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -392,7 +394,7 @@ export function ListenP4(p){
     <button className="btn1" onClick={function(){sP("listen");}}>Start Listening</button>
     <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button></div>);
 
-  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ+1);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
+  if(ph==="done"){var xp=30+sc*5;if(p.gate)xp=p.gate(xp,sc,totalQ);return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:48,marginBottom:16,animation:"countUp .6s"}}>{(<ResultIcon e={sc>=totalQs*0.8?"🏆":sc>=totalQs*0.5?"⚔️":"🛡️"} size={52}/>)}</div>
     <h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Part 4 Complete</h1>
     <div className="out" style={{fontSize:44,fontWeight:900,color:sc>=totalQs*0.8?"var(--green)":sc>=totalQs*0.5?"var(--cyan)":"var(--orange)",marginBottom:4,animation:"countUp .8s"}}>{sc}/{totalQs}</div>
