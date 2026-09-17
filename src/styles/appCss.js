@@ -467,6 +467,21 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes legendShimmer{0%{background-position:-150% 50%}50%{background-position:250% 50%}100%{background-position:-150% 50%}}
 .app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
 @supports(height:100dvh){.app{min-height:100dvh}}
+/* Ambiance de fond « Parchemin » (2026-09-17, proto prototypes/ambiance/, variante C choisie par
+   Jérémy). Deux calques fixes derrière le contenu : ::before = halo de la couleur du skin en haut
+   + vignettage, ::after = grain de papier (bruit SVG en data-URI, aucune image à charger).
+   isolation:isolate fait de .app un contexte d'empilement : le z-index négatif passe DEVANT le
+   fond de .app et DERRIÈRE les cartes. Sans isolation, les calques tombent sous le fond de .app
+   et disparaissent en silence. isolation ne crée pas de bloc conteneur : tab bar, toasts et
+   modals fixes restent calés sur l'écran. .app::before et .app::after sont pris : ne pas les
+   réutiliser. Tout en jetons (--cx) : suit skin, fête et mode clair sans règle par skin. Statique,
+   donc rien à couper en mouvement réduit. */
+.app{isolation:isolate}
+.app::before,.app::after{content:"";position:fixed;inset:0;pointer-events:none}
+.app::before{z-index:-2;background:radial-gradient(ellipse 95% 40% at 50% -6%,rgba(var(--cx),.18),rgba(var(--cx),.05) 55%,transparent 78%),radial-gradient(ellipse 135% 100% at 50% 40%,transparent 56%,rgba(0,0,0,.55) 100%)}
+.app.light::before{background:radial-gradient(ellipse 95% 40% at 50% -6%,rgba(var(--cx),.13),transparent 74%),radial-gradient(ellipse 135% 100% at 50% 40%,transparent 60%,rgba(110,78,36,.16) 100%)}
+.app::after{z-index:-1;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:220px 220px}
+.app.light::after{opacity:.09}
 .pg-wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px))}
 .rev-nav{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom, 0px));display:flex;gap:10px;padding:14px 16px 10px;z-index:6;background:linear-gradient(to top,var(--bg) 62%,rgba(var(--bg-rgb),0))}
 .rev-nav>*{flex:1;margin:0}
