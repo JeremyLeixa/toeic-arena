@@ -80,10 +80,10 @@ export function lookupRef(k) {
     var blanks = t6.parts.filter(function (x) { return x.blank; });
     var b = blanks[qi];
     if (!b) return null;
-    var txt = p6Text(t6, qi), at = txt.indexOf("_____"), pb = perm(b.options, b.correct);
+    var txt = p6Text(t6, qi), pb = perm(b.options, b.correct);
     return { k: k, mod: r.mod, kind: "passage", part: "p6", label: "Part 6 — " + t6.type,
       // `title` : l'extrait autour du trou, pour reconnaître la créature dans le bestiaire.
-      title: "…" + txt.slice(Math.max(0, at - 50), at).replace(/\s+/g, " ").trimStart() + "_____" + txt.slice(at + 5, at + 35).replace(/\s+/g, " ") + "…",
+      title: aroundBlank(txt),
       // Pas de « blank 3 » : les autres trous sont rendus remplis, il n'en reste qu'un à l'écran.
       prompt: "Choose the best option to fill the blank.", options: pb.options, c: pb.c, why: b.x,
       passage: { id: t6.id, type: t6.type, text: txt } };
@@ -243,6 +243,44 @@ function lookupModule(k, r) {
   }
   return null;
 }
+// L'extrait autour du trou, coupé aux mots entiers (« …er commercial rents » ne se lisait pas).
+export function aroundBlank(txt) {
+  var at = txt.indexOf("_____"), a = Math.max(0, at - 50), z = Math.min(txt.length, at + 35);
+  var before = txt.slice(a, at).replace(/\s+/g, " "), after = txt.slice(at + 5, z).replace(/\s+/g, " ");
+  if (a > 0) before = before.replace(/^\S*\s/, "");
+  if (z < txt.length) after = after.replace(/\s\S*$/, "");
+  return (a > 0 ? "…" : "") + before.trimStart() + "_____" + after.trimEnd() + (z < txt.length ? "…" : "");
+}
+// Coupe à `n` caractères au plus, sur un mot entier.
+function clip(s, n) {
+  s = String(s).replace(/\s+/g, " ").trim();
+  if (s.length <= n) return s;
+  var cut = s.slice(0, n), sp = cut.lastIndexOf(" ");
+  return (sp > n / 2 ? cut.slice(0, sp) : cut).replace(/[\s,.;:—–-]+$/, "") + "…";
+}
+// Le titre d'un passage Part 7 : l'objet d'un email, sinon la première ligne qui n'est ni un en-tête
+// (From, To, Date, Dear…) ni un séparateur ni le seul mot MEMO.
+function headline(text) {
+  var m = String(text).match(/^Subject:\s*(.+)$/m);
+  if (m) return m[1];
+  var lines = String(text).split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+  return lines.find(function (l) { return !/^(From|To|Date|Dear|Re|Cc|Sent)\b|^-{2,}|^(MEMO|MEMORANDUM|NOTICE)$/i.test(l); }) || null;
+}
+// Nom court d'un document, pour distinguer dans le Lair deux groupes du même type (deux « Part 6 ·
+// Article » pour deux textes différents). Un sujet, un titre ou une première réplique : jamais la réponse.
+function docName(r) {
+  var d;
+  if (r.mod === "p6") { d = byId(PART6_TEXTS, r.id); return d && d.subject ? clip(d.subject, 44) : null; }
+  if (r.mod === "p7") { d = byId(PART7_PASSAGES, r.id); var h = d && headline(d.text); return h ? clip(h, 44) : null; }
+  if (r.mod === "lisP3") { d = byId(LISTENING_P3, r.id); return d && d.lines && d.lines[0] ? "“" + clip(d.lines[0].t, 32) + "”" : null; }
+  if (r.mod === "lisP4") { d = byId(LISTENING_P4, r.id); return d && d.text ? "“" + clip(skipGreeting(d.text), 32) + "”" : null; }
+  return null;
+}
+// « Good morning, everyone. » ouvre la moitié des exposés de Part 4 : le nom commence après.
+function skipGreeting(t) {
+  var rest = String(t).replace(/^\s*(good (morning|afternoon|evening)|hello|hi|welcome|attention)\b[^.!?]*[.!?]\s+/i, "");
+  return rest.length > 20 ? rest : t;
+}
 // Le texte d'un Part 6 avec ses trous, celui qu'on repose marqué.
 function p6Text(t6, target) {
   var n = -1;
@@ -260,7 +298,8 @@ export function groupLabel(g) {
     var doc = r.mod === "p7" ? byId(PART7_PASSAGES, r.id) : r.mod === "p6" ? byId(PART6_TEXTS, r.id)
       : r.mod === "lisP3" ? byId(LISTENING_P3, r.id) : r.mod === "lisP4" ? byId(LISTENING_P4, r.id) : null;
     var part = r.mod === "p7" ? "Part 7" : r.mod === "p6" ? "Part 6" : r.mod === "lisP3" ? "Part 3" : "Part 4";
-    return part + (doc && doc.type ? " · " + doc.type : "");
+    var name = docName(r);
+    return part + (doc && doc.type ? " · " + doc.type : "") + (name ? " — " + name : "");
   }
   var p = g.part || "";
   return { p1: "Part 1", p2: "Part 2", p3: "Part 3", p4: "Part 4", p5: "Grammar", p6: "Part 6", p7: "Part 7" }[p] || "Other";

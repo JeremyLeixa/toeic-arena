@@ -906,7 +906,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .mm-rules ol{margin:6px 0 0 18px;padding:0;font-size:12px;line-height:1.6;color:var(--t2)}
 .mm-group{margin-bottom:12px;padding:12px 12px 6px!important}
 .mm-group-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.mm-group-head b{font-size:13px;font-weight:800;color:var(--t1)}
+.mm-group-head b{min-width:0;font-size:13px;font-weight:800;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mm-group-head small{font-size:11px;color:var(--t3)}
 .mm-group-head .mm-due{margin-left:auto}
 .mm-due{padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;color:var(--orange);background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);white-space:nowrap}
@@ -916,8 +916,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .mm-crea-q{font-size:12px;line-height:1.35;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mm-crea-meta{margin-top:2px;font-size:10.5px;color:var(--t3)}
 .mm-pips{display:flex;gap:3px;flex-shrink:0}
-.mm-pips i{width:7px;height:7px;border-radius:50%;background:var(--bdr)}
-.mm-pips i.on{background:var(--green)}
+.mm-pips i{box-sizing:border-box;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--t3);background:transparent}
+.mm-pips i.on{background:var(--green);border-color:var(--green)}
 .mm-more{display:block;width:100%;padding:8px 0 4px;text-align:left;background:none;border:none;border-top:1px solid var(--bdr);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;color:var(--cyan)}
 /* ── Lot 5 : la narration de session (proto prototypes/mentor-memory/memory.css) ── */
 /* Briefing : parchemin court, palette FIXE comme le parchemin de fin (lisible en clair et sur tout skin). */

@@ -136,6 +136,29 @@ const spread = (k) => { const s = new Set(); for (let i = 0; i < 40; i++) s.add(
   .forEach((k) => ok(spread(k) > 1, k + ' : la bonne réponse change de place d\'une chasse à l\'autre'));
 eq('Word Families : la grille garde l\'ordre du module', lookupRef('wordfam:success:Noun').options, ['Noun', 'Verb', 'Adjective', 'Adverb']);
 
+// ── Le Lair : groupes distincts, extraits coupés aux mots ─────────────────────────────────────────
+// Deux textes du même type s'affichaient sous le même nom (« Part 6 · Article » deux fois).
+const { groupLabel, aroundBlank } = require(src('lib', 'reviewLookup.js'));
+const LI = require(src('data', 'listening.js'));
+[['p6', P6T], ['p7', P7P], ['lisP3', LI.LISTENING_P3], ['lisP4', LI.LISTENING_P4]].forEach(([mod, docs]) => {
+  const labels = docs.map((d) => groupLabel({ key: 'doc:' + mod + ':' + d.id, items: [{ k: mod + ':' + d.id + ':0' }] }));
+  const dup = labels.filter((l, i) => labels.indexOf(l) !== i);
+  ok(dup.length === 0, 'Lair ' + mod + ' : chaque document a son propre nom de groupe' + (dup.length ? ' — en double : ' + dup.slice(0, 3).join(' | ') : ''));
+  ok(labels.every((l) => l.length <= 72), 'Lair ' + mod + ' : noms de groupe courts (72 caractères au plus)');
+});
+// Extrait autour du trou (ligne d'une créature Part 6) : jamais un mot coupé à l'entrée ni à la sortie.
+let cut = [];
+P6T.forEach((t) => t.parts.filter((p) => p.blank).forEach((b, qi) => {
+  const q = lookupRef('p6:' + t.id + ':' + qi), txt = q.passage.text.replace(/\s+/g, ' ');
+  const title = q.title, core = title.replace(/^…/, '').replace(/…$/, '');
+  const at = txt.indexOf(core);
+  if (at < 0) { cut.push(t.id + ':' + qi + ' (extrait introuvable)'); return; }
+  if (/^…/.test(title) && /[A-Za-z0-9]/.test(txt[at - 1] || '')) cut.push(t.id + ':' + qi + ' début « ' + core.slice(0, 12) + ' »');
+  if (/…$/.test(title) && /[A-Za-z0-9]/.test(txt[at + core.length] || '')) cut.push(t.id + ':' + qi + ' fin « ' + core.slice(-12) + ' »');
+}));
+ok(cut.length === 0, 'Lair : les extraits Part 6 commencent et finissent sur un mot entier' + (cut.length ? ' — ' + cut.slice(0, 4).join(', ') : ''));
+eq('aroundBlank : texte court, ni coupe ni points de suspension', aroundBlank('We _____ you.'), 'We _____ you.');
+
 // ── Briefing de la chasse : le côté du test ────────────────────────────────────────────────────
 eq('côtés du test', ['drill:g1', 'gauntlet:td01', 'mimic:mh01', 'ablitz:ab_01', 'lisP3:x:0', 'tavern:f1:fillBlank', 'traps:3', 'p7:x:1'].map(huntSide),
   ['grammar', 'grammar', 'reading', 'listening', 'listening', 'vocabulary', 'strategy', 'reading']);
