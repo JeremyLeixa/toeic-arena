@@ -5,6 +5,7 @@ import { NextStepReco } from "../../components/NextStepReco.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { VOCAB } from "../../data/vocab.js";
 import { shuffle, today } from "../../lib/util.js";
+import { moduleRef } from "../../lib/reviewRefs.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef } from "react";
 
@@ -67,8 +68,8 @@ export function WordTavern(p){
       try{playWrong();}catch(e){}
       var wq=qs[ci];
       mistakesRef.current.push(wq.type==="fillBlank"
-        ?{tag:"Vocabulary · fill the blank",prompt:wq.prompt,yours:wq.opts[idx].text,correct:wq.card.w,why:wq.card.d}
-        :{tag:wq.type==="defToWord"?"Vocabulary · definition → word":"Vocabulary · word → meaning",prompt:wq.prompt,noBlank:true,yours:wq.opts[idx].text,correct:wq.type==="defToWord"?wq.card.w:wq.card.d,why:"“"+wq.card.e+"”"});
+        ?{tag:"Vocabulary · fill the blank",prompt:wq.prompt,yours:wq.opts[idx].text,correct:wq.card.w,why:wq.card.d,ref:moduleRef("tavern",wq.card.id,wq.type)}
+        :{tag:wq.type==="defToWord"?"Vocabulary · definition → word":"Vocabulary · word → meaning",prompt:wq.prompt,noBlank:true,yours:wq.opts[idx].text,correct:wq.type==="defToWord"?wq.card.w:wq.card.d,why:"“"+wq.card.e+"”",ref:moduleRef("tavern",wq.card.id,wq.type)});
       // SRS reset: send missed word back to review
       var cardId=qs[ci].card.id;
       setMissed(function(prev){return prev.concat([cardId]);});
@@ -87,7 +88,7 @@ export function WordTavern(p){
       var finalSc=sc;
       // XP de BASE : la route (miniSession) applique les portes. Elle était déjà réduite ici, donc deux fois (2026-09-17).
       var baseXp=20+finalSc*6;
-      sidRef.current=p.done(finalSc,TOTAL,baseXp);
+      sidRef.current=p.done(finalSc,TOTAL,baseXp,mistakesRef.current);
       sP("done");
     }
   }

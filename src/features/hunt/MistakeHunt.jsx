@@ -188,7 +188,8 @@ export function MistakeHunt(p) {
         </div>}
         {q.img && <img src={q.img} alt="Part 1 photograph" style={{ width: "100%", borderRadius: 12, margin: "10px 0", display: "block" }} />}
         {needsAudio && !fb && <ListenDisc playing={playing} onPlay={playIt} hint={played ? "Tap to hear it again" : "Tap to listen"} />}
-        <h2 className="qstem" style={{ fontWeight: 700, fontSize: 18, lineHeight: 1.5, margin: "10px 0 20px" }}>{q.prompt}</h2>
+        {/* pre-line : les scénarios du Traps Quiz tiennent sur deux lignes (« You hear: … » puis la question). */}
+        <h2 className="qstem" style={{ fontWeight: 700, fontSize: 18, lineHeight: 1.5, margin: "10px 0 20px", whiteSpace: "pre-line" }}>{q.prompt}</h2>
         {showOptions || fb
           ? <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {q.options.map(function (opt, i) {

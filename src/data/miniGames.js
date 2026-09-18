@@ -1,3 +1,6 @@
+// Les trois familles du tri des connecteurs (ConnSort) : ce qui suit le mot. Ici plutôt que dans le
+// module depuis le 2026-09-18 : la chasse aux erreurs (lib/reviewLookup.js) repose la question.
+export var CONNECTOR_RULES = [{id:"clause",label:"+ Clause",desc:"subject + verb",col:"var(--cyan)"},{id:"noun",label:"+ Noun / -ing",desc:"no subject + verb",col:"var(--orange)"},{id:"sentence",label:"New sentence",desc:"after . or ;",col:"var(--purple)"}];
 // ─── CONNECTORS DATA (32 items) ───
 export var CONNECTORS = [
   // ── Contrast: clause connectors ──

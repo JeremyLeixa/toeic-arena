@@ -4,6 +4,7 @@
 // La session de fin est construite comme settleSession dans App() : gateSteps puis settleXp (lib/xp.js),
 // avec `slain` en extra.
 //   mode=dark|light  skin=<id>  empty=1 (rien d'échu)  box=1|2 (réussites espacées déjà acquises ; 2 = la prochaine tue)
+//   mods=1 (créatures des autres modules : Gauntlet, Clue, Audio Blitz, Mimic, Modal Council, Tavern, Traps, Phrasal Dojo)
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { CSS } from "../../src/styles/appCss.js";
@@ -15,6 +16,7 @@ import { today } from "../../src/lib/util.js";
 import { QUESTIONS } from "../../src/data/grammar.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3 } from "../../src/data/listening.js";
 import { MistakeHunt } from "../../src/features/hunt/MistakeHunt.jsx";
+import { moduleRef } from "../../src/lib/reviewRefs.js";
 
 var q = new URLSearchParams(location.search);
 var MODE = q.get("mode") || "dark", SKIN = q.get("skin") || "";
@@ -37,6 +39,15 @@ var ITEMS = [
   item("p7:p7p1:0", { part: "p7" }),
   item("p7:p7p1:1", { part: "p7" }),
 ];
+// mods=1 : des créatures des autres modules (2026-09-18), avec la `ref` que chaque module pose
+// (lib/reviewRefs.js) : Gauntlet, Clue, Audio Blitz, Mimic, Modal Council, Tavern, Traps, Phrasal Dojo.
+if (q.get("mods") === "1") {
+  ITEMS = [["gauntlet", "irr01"], ["clue", "ch04", null, "Present Perfect"], ["ablitz", "ab_01"], ["mimic", "mh01"], ["modals_match", "mb_01", 1],
+    ["tavern", "f1", "fillBlank"], ["traps", 1], ["pvdojo", "work on", "picker"]].map(function (a) {
+    var r = moduleRef(a[0], a[1], a[2], a[3]);
+    return item(r.k, { cat: r.cat, part: r.part });
+  });
+}
 var U = Object.assign(fresh("Camille", "visitor"), { xp: 640, weeklyXp: 120, streak: 3, lastActive: addDays(D, -1),
   review: { items: ITEMS, slain: 4, log: [] } });
 

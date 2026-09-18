@@ -5,6 +5,7 @@ import { SessionResult } from "../../components/SessionResult.jsx";
 import { AUDIO_BLITZ } from "../../data/audioBlitz.js";
 import { stopCurrentListenAudio, setListenAudio, speak, stopListenAudio } from "../../lib/audio.js";
 import { shuffle } from "../../lib/util.js";
+import { moduleRef } from "../../lib/reviewRefs.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useState, useRef, useMemo, useEffect } from "react";
 
@@ -96,9 +97,9 @@ export function AudioBlitz(p){
 
   // Erreur enregistrée au clic « Next » : réponse fausse ou temps écoulé (pick=-1).
   function next(){
-    var bq=items[ci];if(pick!==bq.c)mistakesRef.current.push({tag:"Audio Blitz",prompt:bq.q,yours:pick>=0?bq.opts[pick]:"(time's up)",correct:bq.opts[bq.c],why:"Transcript: “"+bq.text+"”"});
+    var bq=items[ci];if(pick!==bq.c)mistakesRef.current.push({tag:"Audio Blitz",prompt:bq.q,yours:pick>=0?bq.opts[pick]:"(time's up)",correct:bq.opts[bq.c],why:"Transcript: “"+bq.text+"”",ref:moduleRef("ablitz",bq.id)});
     if(ci<items.length-1){sC(ci+1);sP("q");}
-    else{sidRef.current=p.done(sc,TOTAL,25+sc*6);sP("done");}
+    else{sidRef.current=p.done(sc,TOTAL,25+sc*6,mistakesRef.current);sP("done");}
   }
 
   // ═══ INTRO ═══

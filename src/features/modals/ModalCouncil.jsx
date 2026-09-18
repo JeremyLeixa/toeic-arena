@@ -6,6 +6,7 @@ import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { MODAL_MATCH_BOARDS, MODAL_SORT_ITEMS } from "../../data/modals.js";
 import { GRIMOIRE_MODALS } from "../../data/modalsGrimoire.js";
 import { haptic } from "../../lib/device.js";
+import { moduleRef } from "../../lib/reviewRefs.js";
 import { shuffle } from "../../lib/util.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong, playBGM, stopBGM } from "../../sounds.js";
@@ -88,7 +89,7 @@ export function ModalMatch(p){
     var totalQ=BOARDS_PER_SESSION*PAIRS_PER_BOARD;
     var baseXp=15+totalCorrect*5;
     if(totalCorrect===totalQ)baseXp+=35;
-    return p.done(totalCorrect,totalQ,baseXp);
+    return p.done(totalCorrect,totalQ,baseXp,mistakesRef.current);
   }
 
   function commitLock(){
@@ -97,7 +98,7 @@ export function ModalMatch(p){
     pairs.forEach(function(pp){
       if(board.modals[pp.mIdx].originalIdx===pp.sIdx){correct++;return;}
       var good=board.modals.find(function(m){return m.originalIdx===pp.sIdx;});
-      mistakesRef.current.push({tag:"Modals · "+board.theme,prompt:board.situations[pp.sIdx],noBlank:true,yours:board.modals[pp.mIdx].text,correct:good?good.text:""});
+      mistakesRef.current.push({tag:"Modals · "+board.theme,prompt:board.situations[pp.sIdx],noBlank:true,yours:board.modals[pp.mIdx].text,correct:good?good.text:"",ref:moduleRef("modals_match",board.id,pp.sIdx)});
     });
     if(correct===PAIRS_PER_BOARD){try{playCorrect();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[mmatch] sfx:",e&&e.message);}}
@@ -380,7 +381,7 @@ export function ModalSort(p){
   function pickBucket(bid){
     if(phase!=="play"||!deck)return;
     var item=deck[idx];var ok=bid===item.bucket;
-    if(!ok){var lab=function(id){var b=BUCKETS.find(function(x){return x.id===id;});return b?b.label:id;};mistakesRef.current.push({tag:"Modals · "+item.modal,prompt:item.s,noBlank:true,yours:lab(bid),correct:lab(item.bucket),why:item.x});}
+    if(!ok){var lab=function(id){var b=BUCKETS.find(function(x){return x.id===id;});return b?b.label:id;};mistakesRef.current.push({tag:"Modals · "+item.modal,prompt:item.s,noBlank:true,yours:lab(bid),correct:lab(item.bucket),why:item.x,ref:moduleRef("modals_sort",item.id)});}
     if(ok){try{playCorrect();}catch(e){console.warn("[msort] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[msort] sfx:",e&&e.message);}}
     setPicked(bid);
@@ -398,7 +399,7 @@ export function ModalSort(p){
     var correct=results.filter(function(r){return r.ok;}).length;
     var baseXp=15+correct*5;
     if(correct===deck.length)baseXp+=35;
-    return p.done(correct,deck.length,baseXp);
+    return p.done(correct,deck.length,baseXp,mistakesRef.current);
   }
 
   // Fin de session : l'XP part ici, avec l'état du dernier rendu, au lieu d'attendre « OK, back »
@@ -497,11 +498,12 @@ export function ModalCouncilHub(p){
     try{playBGM(card.bgm);}catch(e){console.warn("[council] bgm:",e&&e.message);}
     setSubMode(card.id);
   }
-  function subDone(sc,tot,xp){
+  // `mistakes` : la liste de l'épreuve, ses `ref` entrent au bestiaire (route, onModuleDone).
+  function subDone(sc,tot,xp,mistakes){
     try{stopBGM();}catch(e){console.warn("[council] bgm stop:",e&&e.message);}
     try{haptic("complete");}catch(e){console.warn("[council] haptic:",e&&e.message);}
     // L'épreuve reste affichée : elle montre l'écran de fin commun, dont Continue ramène au hub.
-    return p.onModuleDone?p.onModuleDone(subMode,sc,tot,xp):0;
+    return p.onModuleDone?p.onModuleDone(subMode,sc,tot,xp,mistakes):0;
   }
   function subContinue(){p.closeSession();setSubMode(null);}
   function subReplay(){

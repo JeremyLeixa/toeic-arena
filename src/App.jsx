@@ -76,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-18-mentor-memory-lot6";
+var BUILD_ID="2026-09-18-mentor-memory-refs";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1417,12 +1417,13 @@ function sv(d){
   }
   // Speed Match et Word Fall sur l'écran de fin commun : même chaîne que gameDone (pas d'accuracy
   // sans correct/total, pas de Spotlight), sans navigation. Rend le sid. Le Duel reste sur gameDone.
-  function gameSession(modeKey,result,xp){
+  // `mistakes` (Word Fall) : ses mauvaises réponses entrent au bestiaire, comme dans miniSession.
+  function gameSession(modeKey,result,xp,mistakes){
     var hasAccuracy=result.correct!==undefined&&result.total!==undefined;
     var s=settleSession("game_"+modeKey,hasAccuracy?result.correct:1,hasAccuracy?result.total:1,xp);
     var c=s.c;if(!c.gameScores)c.gameScores={};
     recordGame(c,modeKey,result);
-    c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);sealSession(c,s.sid);sv(c);return s.sid;}
+    c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);c.review=recordMisses(c.review,mistakes,new Date());sealSession(c,s.sid);sv(c);return s.sid;}
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
   // Daily sur l'écran de fin commun : xpE garde désormais l'XP réellement versée (bonus du jour compris),
   // affichée ensuite par « Already completed » et sur Home. Pas de Spotlight (comme avant).

@@ -31,6 +31,7 @@ const SUITE = [
   ['check_xp_gates.cjs',           'les portes XP (accuracy, anti-farming, Focus, boosts, bonus) sont celles du produit'],
   ['check_learner_model.cjs',      'la maîtrise reste récente, les points en jeu priment sur la précision la plus basse, un retournement se prouve'],
   ['check_review.cjs',             'le bestiaire garde ses intervalles, ne punit pas l\'assiduité, et la chasse ne gonfle pas le score TOEIC'],
+  ['check_review_lookup.cjs',      'chaque erreur des 16 autres modules entre au bestiaire, sous sa catégorie, et la chasse sait la reposer (options permutées)'],
   ['check_planner.cjs',            'le plan du jour : seuil de la chasse, démarrage à froid, quête d\'enjeu, composition du Drill, journée figée'],
   ['check_mentor_voice.cjs',       'Aldric dit le plan figé : quêtes restantes, +15 XP sur la mission, +25 % sur l\'enjeu payé, icônes existantes'],
   ['check_hub_status.cjs',         'les tuiles des hubs annoncent le vrai coffre de maîtrise et le vrai tarif de la prochaine partie'],

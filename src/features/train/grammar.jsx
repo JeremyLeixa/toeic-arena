@@ -11,7 +11,7 @@ import { GRIMOIRE_CONNECTORS } from "../../data/connectorsGrimoire.js";
 import { GRIMOIRE_GERUND } from "../../data/gerundGrimoire.js";
 import { WORD_FAMILIES } from "../../data/grammar.js";
 import { LINKING_BRIDGE } from "../../data/linkingBridge.js";
-import { CONNECTORS, PREP_COLLOCATIONS, GERUND_INF, TOEIC_TRAPS, FALSE_FRIENDS } from "../../data/miniGames.js";
+import { CONNECTORS, CONNECTOR_RULES, PREP_COLLOCATIONS, GERUND_INF, TOEIC_TRAPS, FALSE_FRIENDS } from "../../data/miniGames.js";
 import { GRIMOIRE_PHRASAL } from "../../data/phrasalGrimoire.js";
 import { PHRASAL_VERBS } from "../../data/phrasalVerbs.js";
 import { drillComposition } from "../../lib/planner.js";
@@ -19,6 +19,7 @@ import { briefing, questionBadge, questionFeedback, drillRemember } from "../../
 import { AldricBrief, AldricRemembers } from "../../components/MentorMemory.jsx";
 import { GrammarSheet } from "../../components/GrammarSheet.jsx";
 import { shuffle, today } from "../../lib/util.js";
+import { moduleRef } from "../../lib/reviewRefs.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { GRAMMAR_SHEETS, CAT_SHEET } from "../../data/grammarSheets.js";
@@ -175,13 +176,13 @@ export function WordFam(p){
   function doAns(cat){
     sPk(cat);
     var itW=items[ci];
-    if(itW.validAnswers.indexOf(cat)===-1){var fm=itW.family;mistakesRef.current.push({tag:"Word families",prompt:itW.word,noBlank:true,yours:cat,correct:itW.validAnswers.join(" / "),why:[fm.v&&"Verb: "+fm.v,fm.n&&"Noun: "+fm.n,fm.adj&&"Adjective: "+fm.adj,fm.adv&&"Adverb: "+fm.adv].filter(Boolean).join(" · ")});}
+    if(itW.validAnswers.indexOf(cat)===-1){var fm=itW.family;mistakesRef.current.push({tag:"Word families",prompt:itW.word,noBlank:true,yours:cat,correct:itW.validAnswers.join(" / "),why:[fm.v&&"Verb: "+fm.v,fm.n&&"Noun: "+fm.n,fm.adj&&"Adjective: "+fm.adj,fm.adv&&"Adverb: "+fm.adv].filter(Boolean).join(" · "),ref:itW.validAnswers.length===1?moduleRef("wordfam",itW.word,itW.validAnswers[0]):null});}
     // Accept any valid POS for this word (handles homographs)
     if(items[ci].validAnswers.indexOf(cat)!==-1){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
   }
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5);sP("done");}}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5,mistakesRef.current);sP("done");}}
 
   if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Word Families" mistakes={mistakesRef.current}
     onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
@@ -227,13 +228,13 @@ export function WordFam(p){
 // ─── CONNECTORS SORTING ───
 export function ConnSort(p){
   var items=useMemo(function(){return shuffle(CONNECTORS).slice(0,12);},[]);
-  var rules=[{id:"clause",label:"+ Clause",desc:"subject + verb",col:"var(--cyan)"},{id:"noun",label:"+ Noun / -ing",desc:"no subject + verb",col:"var(--orange)"},{id:"sentence",label:"New sentence",desc:"after . or ;",col:"var(--purple)"}];
+  var rules=CONNECTOR_RULES;
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(null);var[sk,sSk]=useState(false);
   var[openGrim,setOpenGrim]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(rule){sPk(rule);if(rule!==items[ci].rule){var lab=function(id){var r=rules.find(function(x){return x.id===id;});return r?r.label:id;};mistakesRef.current.push({tag:"Connectors",prompt:items[ci].word,noBlank:true,yours:lab(rule),correct:lab(items[ci].rule),why:items[ci].tip+(items[ci].ex?" — “"+items[ci].ex+"”":"")});}if(rule===items[ci].rule){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5);sP("done");}}
+  function doAns(rule){sPk(rule);if(rule!==items[ci].rule){var lab=function(id){var r=rules.find(function(x){return x.id===id;});return r?r.label:id;};mistakesRef.current.push({tag:"Connectors",prompt:items[ci].word,noBlank:true,yours:lab(rule),correct:lab(items[ci].rule),why:items[ci].tip+(items[ci].ex?" — “"+items[ci].ex+"”":""),ref:moduleRef("connsort",items[ci].word)});}if(rule===items[ci].rule){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5,mistakesRef.current);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
     <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
@@ -298,7 +299,7 @@ export function LinkingBridge(p){
     if(pickIdx!==-1)return;
     sPk(idx);
     var correctOpt=items[ci].opts[idx];
-    if(!correctOpt.correct){var goodOpt=items[ci].opts.find(function(o){return o.correct;});mistakesRef.current.push({tag:"Linking words",prompt:items[ci].prompt,yours:correctOpt.w,correct:goodOpt?goodOpt.w:"",why:items[ci].exp});}
+    if(!correctOpt.correct){var goodOpt=items[ci].opts.find(function(o){return o.correct;});mistakesRef.current.push({tag:"Linking words",prompt:items[ci].prompt,yours:correctOpt.w,correct:goodOpt?goodOpt.w:"",why:items[ci].exp,ref:moduleRef("bforge",items[ci].id)});}
     if(correctOpt.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
@@ -308,7 +309,7 @@ export function LinkingBridge(p){
     else{
       // XP de BASE : miniDone applique les portes. Elle était déjà réduite ici, donc deux fois (2026-09-17).
       var xp=15+sc*5+(sc===items.length?35:0);
-      sidRef.current=p.done(sc,items.length,xp);
+      sidRef.current=p.done(sc,items.length,xp,mistakesRef.current);
       sP("done");
     }
   }
@@ -377,8 +378,8 @@ export function PrepDrill(p){
   var prepLabels={for:"Responsibility, eligibility, purpose",in:"Involvement, interest, results",with:"Compliance, familiarity, association",on:"Dependence, reliance",of:"Composition, charge, capability",to:"Relation, addition, attribution"};
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(pr){sPk(pr);var it=items[ci];var ok=pr===it.prep||(it.alts&&it.alts.indexOf(pr)>=0);if(!ok)mistakesRef.current.push({tag:"Prepositions",prompt:it.base+" _____",yours:pr,correct:it.prep+(it.alts&&it.alts.length?" / "+it.alts.join(" / "):""),why:it.ex});if(ok){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5);sP("done");}}
+  function doAns(pr){sPk(pr);var it=items[ci];var ok=pr===it.prep||(it.alts&&it.alts.indexOf(pr)>=0);if(!ok)mistakesRef.current.push({tag:"Prepositions",prompt:it.base+" _____",yours:pr,correct:it.prep+(it.alts&&it.alts.length?" / "+it.alts.join(" / "):""),why:it.ex,ref:moduleRef("prepdrill",it.base)});if(ok){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5,mistakesRef.current);sP("done");}}
 
   if(ph==="menu")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
     <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
@@ -527,7 +528,7 @@ export function GerInf(p){
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
           return(<button key={i} onClick={function(){
             if(ph!=="q")return;sPk(i);
-            if(i!==q.c)mistakesRef.current.push({tag:"Gerund vs infinitive · "+q.verb,prompt:q.ctx,yours:opt,correct:q.opts[q.c],why:q.tip+(q.ex?" — “"+q.ex+"”":"")});
+            if(i!==q.c)mistakesRef.current.push({tag:"Gerund vs infinitive · "+q.verb,prompt:q.ctx,yours:opt,correct:q.opts[q.c],why:q.tip+(q.ex?" — “"+q.ex+"”":""),ref:moduleRef("gerinf",q.verb)});
             if(i===q.c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
             sP("fb");
           }} disabled={show}
@@ -552,7 +553,7 @@ export function GerInf(p){
         <button className="btn1" onClick={function(){
           sPk(-1);
           if(ci<quizItems.length-1){sC(ci+1);sP("q");}
-          else{sidRef.current=p.done(sc,quizItems.length,20+sc*4);sP("done");}
+          else{sidRef.current=p.done(sc,quizItems.length,20+sc*4,mistakesRef.current);sP("done");}
         }} style={{marginTop:12}}>{ci<quizItems.length-1?"Next":"See Results"}</button>
       </div>}
     </div>);
@@ -566,8 +567,8 @@ export function TrapsQuiz(p){
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(i){sPk(i);if(i!==traps[ci].correct){var tr=traps[ci];mistakesRef.current.push({tag:"Trap #"+tr.id+" · "+tr.part,prompt:tr.scenario,noBlank:true,yours:tr.options[i],correct:tr.options[tr.correct],why:tr.tip});}if(i===traps[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
-  function nxt(){if(ci<traps.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,traps.length,25+sc*6);sP("done");}}
+  function doAns(i){sPk(i);if(i!==traps[ci].correct){var tr=traps[ci];mistakesRef.current.push({tag:"Trap #"+tr.id+" · "+tr.part,prompt:tr.scenario,noBlank:true,yours:tr.options[i],correct:tr.options[tr.correct],why:tr.tip,ref:moduleRef("traps",tr.id)});}if(i===traps[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function nxt(){if(ci<traps.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,traps.length,25+sc*6,mistakesRef.current);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:56,marginBottom:16}}>🪤</div>
@@ -763,7 +764,7 @@ export function PhrasalDojo(p){
           var bg="var(--bg2)";var bd="var(--bdr)";
           if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-          return(<button key={i} onClick={function(){if(ph!=="q")return;sPk(i);if(i!==mOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:mq.pv,noBlank:true,yours:opt,correct:mOpts.opts[mOpts.c],why:(mq.fr?mq.fr+" — ":"")+"“"+mq.ex+"”"});if(i===mOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;sPk(i);if(i!==mOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:mq.pv,noBlank:true,yours:opt,correct:mOpts.opts[mOpts.c],why:(mq.fr?mq.fr+" — ":"")+"“"+mq.ex+"”",ref:moduleRef("pvdojo",mq.pv,"match")});if(i===mOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
             style={{padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",
               fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s",lineHeight:1.5}}>
             {opt}</button>);
@@ -781,7 +782,7 @@ export function PhrasalDojo(p){
             <SpeakBtn text={mq.ex} size={20} rate={0.85} audio={"/audio/phrasal/"+mq.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
           </div>
         </div>
-        <button className="btn1" onClick={function(){sPk(-1);if(ci<matchQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,matchQs.length,20+sc*4);sP("done");}}} style={{marginTop:12}}>{ci<matchQs.length-1?"Next":"See Results"}</button>
+        <button className="btn1" onClick={function(){sPk(-1);if(ci<matchQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,matchQs.length,20+sc*4,mistakesRef.current);sP("done");}}} style={{marginTop:12}}>{ci<matchQs.length-1?"Next":"See Results"}</button>
       </div>}
     </div>);
   }
@@ -824,7 +825,7 @@ export function PhrasalDojo(p){
           var bg="var(--bg2)";var bd="var(--bdr)";var col="var(--t1)";
           if(show&&isCor){bg="rgba(0,230,118,.15)";bd="var(--green)";col="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
-          return(<button key={i} onClick={function(){if(ph!=="q")return;clearInterval(timerRef.current);sPk(i);if(i!==pOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:opt,correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":"")});if(i===pOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;clearInterval(timerRef.current);sPk(i);if(i!==pOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:opt,correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":""),ref:moduleRef("pvdojo",pq.pv,"picker")});if(i===pOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
             style={{padding:"18px 12px",background:bg,border:"2px solid "+bd,borderRadius:14,cursor:ph==="q"?"pointer":"default",
               fontSize:20,fontWeight:800,color:col,fontFamily:"'DM Sans',sans-serif",transition:"all .15s",textAlign:"center"}}>
             {opt}</button>);
@@ -844,7 +845,7 @@ export function PhrasalDojo(p){
             <SpeakBtn text={pq.ex} size={20} rate={0.85} audio={"/audio/phrasal/"+pq.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
           </div>
         </div>
-        <button className="btn1" onClick={function(){if(pick===-1)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:"(time's up)",correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":"")});sPk(-1);if(ci<pickerQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,pickerQs.length,25+sc*5);sP("done");}}} style={{marginTop:12}}>{ci<pickerQs.length-1?"Next":"See Results"}</button>
+        <button className="btn1" onClick={function(){if(pick===-1)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:"(time's up)",correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":""),ref:moduleRef("pvdojo",pq.pv,"picker")});sPk(-1);if(ci<pickerQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,pickerQs.length,25+sc*5,mistakesRef.current);sP("done");}}} style={{marginTop:12}}>{ci<pickerQs.length-1?"Next":"See Results"}</button>
       </div>}
     </div>);
   }
@@ -859,12 +860,12 @@ export function FalseFriends(p){
   var mistakesRef=useRef([]);var sidRef=useRef(0);
   function doAns(i){
     sPk(i);
-    if(i!==items[ci].correct){var ff=items[ci];mistakesRef.current.push({tag:"False friend · "+ff.en,prompt:ff.ex,noBlank:true,yours:ff.opts[i],correct:ff.opts[ff.correct],why:ff.trap+(ff.realFr?" (FR: "+ff.realFr+")":"")});}
+    if(i!==items[ci].correct){var ff=items[ci];mistakesRef.current.push({tag:"False friend · "+ff.en,prompt:ff.ex,noBlank:true,yours:ff.opts[i],correct:ff.opts[ff.correct],why:ff.trap+(ff.realFr?" (FR: "+ff.realFr+")":""),ref:moduleRef("falsefr",ff.en)});}
     if(i===items[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
   }
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,items.length,20+sc*5);sP("done");}}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,items.length,20+sc*5,mistakesRef.current);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
     <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>

@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (15 fichiers, ~7 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (24 fichiers, ~9 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -75,6 +75,11 @@ Ce que la suite protège, et pourquoi :
   espacée, force qui ne monte que sur une retombée (sinon l'assiduité est punie), repos des questions
   ratées 3 fois, regroupement par support (un passage Part 7 lu une fois), XP de chasse toujours sous le
   coût d'une erreur volontaire, et **le module `hunt` jamais dans l'estimation TOEIC**.
+- **`check_review_lookup`** — les références des 16 autres modules (`lib/reviewRefs.js`, `lib/reviewLookup.js`) :
+  chaque item de chaque banque se relit avec la réponse que le module compte juste, même catégorie à la
+  capture et à la résolution, options permutées, énoncé qui ne dit pas la réponse, et le câblage (`ref`,
+  `mistakesRef.current` jusqu'à `recordMisses`) lu dans le source. Une clé que la chasse ne sait pas relire
+  laisse une créature « due » pour toujours, sans erreur nulle part.
 - **`check_planner`** — le plan du jour (`lib/planner.js`) : seuil de la chasse (4 échéances), démarrage
   à froid (< 5 sessions → Battle Scan), quête d'enjeu réservée aux parties mesurées, composition du Drill
   (catégorie visée, catégorie méritée allégée, erreurs dues glissées, **aucune créature tirée au hasard**),
@@ -141,7 +146,8 @@ src/
                           saisonniers : fenêtres, opt-out, forçage, theme-color),
                           sessionHud (combo, fil d'encre), learnerModel (maîtrise récente,
                           points en jeu, retournements), review (bestiaire des erreurs :
-                          boîtes 1-3-7, force, chasse), planner (plan du jour, composition
+                          boîtes 1-3-7, force, chasse), reviewRefs (clé et catégorie des
+                          erreurs des jeux et mini-modules), planner (plan du jour, composition
                           des sessions, semaine, allure, Chronique), mentorVoice (les
                           phrases d'Aldric, anglais, à côté de sessionText)
   components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
@@ -289,7 +295,8 @@ Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
 - **Le module** : `mistakesRef` (erreurs à la réponse : `{tag, prompt, yours, correct, why, noBlank?, ref?}`,
   `_____` dans `prompt` pour le trou, « … » dans `correct` pour deux trous). **`ref:{k,cat,part}`** fait
   entrer l'erreur au bestiaire (voir « Mentor qui se souvient ») : le module passe alors `mistakesRef.current`
-  en **dernier argument** de `p.done` (`drillDone` 5e, `dailyDone` 3e, `miniSession` 4e). `sidRef.current=p.done(…)`
+  en **dernier argument** de `p.done` (`drillDone` 5e, `dailyDone` 3e, `miniSession` 4e, `gameSession` 4e,
+  `onModuleDone` des hubs 5e). `sidRef.current=p.done(…)`
   **à la fin de la manche, jamais derrière un bouton** (« Collect XP » perdait l'XP si l'élève quittait),
   puis `<SessionResult session sid name mistakes onContinue onReplay>{extras}</SessionResult>` (`memory` :
   la carte « Aldric remembers », rendue AVANT les leçons ; `session.turn` : cérémonie, voir « Mentor qui se souvient »). Le
@@ -515,15 +522,31 @@ la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la pro
   ou là, même créature), `lisP1:<id>`, `lisP2:<id>`, `lisP3:<id>:<qi>`, `lisP4:<id>:<qi>`, `p6:<texte>:<trou>`,
   `p7:<passage>:<qi>`. **Jamais un indice d'option** (toutes les options sont permutées), jamais l'index d'un
   tableau. Une référence que `lib/reviewLookup.js` ne sait pas résoudre est sautée par la chasse : un module qui
-  se met à poser des `ref` y ajoute sa résolution. Couverts : Drill, Daily, Exam Simulation, Part 6, Part 7,
-  Listening P1-P4 ; pas encore Gauntlet, Clue, Tavern, Mimic et les mini-modules (clés prévues dans le plan).
+  se met à poser des `ref` y ajoute sa résolution. Couverts : Drill, Daily, Exam Simulation, Word Fall (mauvaise
+  réponse seulement, pas une phrase tombée), Part 6, Part 7, Listening P1-P4.
+- **Les 16 autres modules** (2026-09-18) : la `ref` vient de `lib/reviewRefs.js moduleRef(mod, id, sub, label)`,
+  **une table** lue à la capture ET par `reviewLookup` (même catégorie dans le Lair et dans la chasse). Clés :
+  `gauntlet:<id>` (irr/td/pf/rw), `clue:<id>`, `ablitz:<id>`, `mimic:<id>`, `bforge:<id>`, `traps:<id>`,
+  `stratquiz:<id>`, `modals_sort:<id>`, `modals_match:<plateau>:<paire>`, `tavern:<carte>:<type>`,
+  `connsort:<mot>`, `prepdrill:<base>`, `gerinf:<verbe>`, `falsefr:<mot>`, `pvdojo:<verbe>:match|picker`,
+  `wordfam:<mot>:<nature>`. Catégories = celles de la banque de grammaire quand elles existent (Gauntlet
+  Chronomancer → Tenses, Clue ramené par `clueCat`, Linking Bridge → Connectors…) : la fiche de grammaire
+  s'ouvre au 3e échec. **Toute `ref` à sous-partie porte une catégorie**, sinon `groupKey` la range comme un
+  passage (« Part 4 » dans le Lair). Tout revient en **QCM permuté** (ces banques mettent la bonne réponse en
+  B ou C huit fois sur dix ; seules les grilles natures / règles / fonctions gardent l'ordre du module) ;
+  Irregular Crypt (tapé) revient en QCM « prétérit · participe » avec les confusions classiques. Hors
+  bestiaire : Sentence Builder, l'indice du Clue Hunter, le Mimic manqué, les mots à deux natures, Speed Match.
+  Transport : `miniSession` 4e argument, `onModuleDone` 5e (hubs Gauntlet / Modal Council, `subDone` le relaie),
+  `gameSession` 4e, handlers en ligne de `routes.jsx` (clue, ablitz). Test : `check_review_lookup` (chaque item
+  de chaque banque se relit avec la bonne réponse, catégories, permutation, câblage lu dans le source).
+  Banc : `hunt.html?mods=1`.
 - **Chasse** `sp==="hunt"` (`features/hunt/MistakeHunt.jsx`, lazy, gratuite, sans coffre de maîtrise, hors
   estimateur) : file figée au montage (`huntQueue`, 10 au plus, un passage Part 7 d'un seul tenant), vrai HUD.
   Écoute : P1/P2 se répondent pendant l'audio (la réponse coupe la chaîne : génération `genRef`), P3/P4
   montrent question et options avant l'audio mais ne se répondent qu'après. XP `5 + 5 × vaincues` **sans
   porte de précision** (courbe anti-farming gardée), 1 Daric par vaincue (`grantMarks`, unique par jour).
   `huntDone` reçoit le bestiaire mis à jour : le module travaille sur une copie.
-- `lib/reviewLookup.js` importe listening, part6 et part7 : **jamais d'import statique hors d'un écran lazy**
+- `lib/reviewLookup.js` importe listening, part6, part7 et les banques des jeux : **jamais d'import statique hors d'un écran lazy**
   (le bundle principal les tirerait) ; `lib/review.js`, lui, reste sans données.
 - **Plan du jour FIGÉ dans `u.mission`** (lot 4, 2026-09-18 ; jsonb existant, aucune migration) : `App()` le
   pose une fois par jour dans un effet (`lib/planner.js dayMission`, deps primitives, jamais pendant le
@@ -585,8 +608,7 @@ la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la pro
   `u.insights` (mappé dans aucune colonne, perdu au rechargement) sont supprimés.
 - Bancs : `prototypes/mentor-memory/app.html?v=letter` et `?v=chronicle`.
 - `weekly-results` déployée le 2026-09-18 (version 19, JWT vérifié) : elle portait encore les textes français
-  d'avant la passe anglaise du 2026-04-17, jamais déployée. Reste : les `ref` des modules non couverts
-  (Gauntlet, Clue, Tavern, Mimic, mini-modules).
+  d'avant la passe anglaise du 2026-04-17, jamais déployée.
 
 ### Grimoire pattern (applies to Gauntlet + G&V grimoires)
 - **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.

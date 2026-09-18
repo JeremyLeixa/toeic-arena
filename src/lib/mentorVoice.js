@@ -120,16 +120,22 @@ export function aimPhrase(q, u) {
   return "";
 }
 
+// Le côté du test d'une créature, d'après le préfixe de sa référence (lib/reviewRefs.js), pour le
+// briefing de la chasse. Le reste (Drill, Gauntlet, Clue, modaux, mini-modules de grammaire) : grammar.
+var HUNT_SIDE = { p6: "reading", p7: "reading", mimic: "reading", ablitz: "listening", tavern: "vocabulary", falsefr: "vocabulary", pvdojo: "vocabulary", traps: "strategy", stratquiz: "strategy" };
+var HUNT_SIDES = ["grammar", "vocabulary", "listening", "reading", "strategy"];
+export function huntSide(k) {
+  var mod = String(k).split(":")[0];
+  return HUNT_SIDE[mod] || (/^lis/.test(mod) ? "listening" : "grammar");
+}
+
 // ═══ Avant la session : comment elle a été composée ═══
 export function briefing(comp, u, now) {
   var seed = (u.name || "") + today(now), lines = [], chips = [];
   if (comp.kind === "hunt") {
-    var groups = { grammar: 0, listening: 0, reading: 0 };
-    comp.items.forEach(function (it) {
-      var mod = it.k.split(":")[0];
-      groups[mod === "p7" || mod === "p6" ? "reading" : /^lis/.test(mod) || mod === "ablitz" ? "listening" : "grammar"]++;
-    });
-    var parts = ["grammar", "listening", "reading"].filter(function (g) { return groups[g]; }).map(function (g) { return groups[g] + " " + g; });
+    var groups = {};
+    comp.items.forEach(function (it) { var s = huntSide(it.k); groups[s] = (groups[s] || 0) + 1; });
+    var parts = HUNT_SIDES.filter(function (g) { return groups[g]; }).map(function (g) { return groups[g] + " " + g; });
     var beaten = comp.items.filter(function (it) { return it.box > 0; }).length;
     var worst = comp.items.slice().sort(function (a, b) { return b.fails - a.fails; })[0];
     lines.push(plural(comp.items.length, "mistake") + " " + (comp.items.length === 1 ? "is" : "are") + " due today: " + listJoin(parts) + ".");

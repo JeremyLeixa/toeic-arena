@@ -4,6 +4,7 @@ import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { CLUE_HUNTER } from "../../data/clueHunter.js";
 import { shuffle } from "../../lib/util.js";
+import { moduleRef } from "../../lib/reviewRefs.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useState, useRef } from "react";
 
@@ -33,7 +34,7 @@ export function ClueHunter(p){
     var ansOK=i===item.ans;
     var pts=clueOK&&ansOK?10:clueOK&&!ansOK?4:!clueOK&&ansOK?3:0;
     // Mauvaise réponse : la phrase à trou. Bonne réponse sur un mauvais indice : la phrase complète et les indices.
-    if(!ansOK)mistakesRef.current.push({tag:"Clue Hunter · "+item.cat,prompt:item.sentence,yours:item.opts[i],correct:item.opts[item.ans],why:item.exp});
+    if(!ansOK)mistakesRef.current.push({tag:"Clue Hunter · "+item.cat,prompt:item.sentence,yours:item.opts[i],correct:item.opts[item.ans],why:item.exp,ref:moduleRef("clue",item.id,null,item.cat)});
     else if(!clueOK)mistakesRef.current.push({tag:"Clue Hunter · "+item.cat+" · clue",prompt:item.sentence.replace("___",item.opts[item.ans]),noBlank:true,yours:selected.map(function(k){return item.chips[k].w;}).join(" + "),correct:item.chips.filter(function(ch){return ch.c;}).map(function(ch){return ch.w;}).join(" + "),why:item.clue});
     setSc(function(prev){return prev.concat([{clue:clueOK,ans:ansOK,pts:pts}]);});try{if(ansOK)playCorrect();else playWrong();}catch(e){}
     sPk(i);sP("ans_fb");
@@ -45,7 +46,7 @@ export function ClueHunter(p){
     else{
       var ptsTotal=scores.reduce(function(a,x){return a+x.pts;},0);
       var correct=scores.filter(function(x){return x.clue||x.ans;}).length;
-      sidRef.current=p.done(correct,TOTAL,20+Math.round(ptsTotal*2.5));
+      sidRef.current=p.done(correct,TOTAL,20+Math.round(ptsTotal*2.5),mistakesRef.current);
       sP("done");
     }
   }

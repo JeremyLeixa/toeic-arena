@@ -6,6 +6,7 @@ import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } from "../../data/grammarGauntlet.js";
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "../../data/grammarGauntletGrimoire.js";
 import { haptic } from "../../lib/device.js";
+import { moduleRef } from "../../lib/reviewRefs.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong, playBGM, stopBGM } from "../../sounds.js";
 import { useState, useEffect, useRef } from "react";
@@ -39,7 +40,7 @@ export function IrregularCrypt(p){
     var verb=deck[idx];
     var v2Ok=normalize(v2In)===normalize(verb.past);
     var v3Ok=normalize(v3In)===normalize(verb.pp);
-    if(!(v2Ok&&v3Ok))mistakesRef.current.push({tag:"Irregular verbs",prompt:verb.base,noBlank:true,yours:(v2In.trim()||"—")+" · "+(v3In.trim()||"—"),correct:verb.past+" · "+verb.pp,why:verb.fr+(verb.ex?" — "+verb.ex:"")});
+    if(!(v2Ok&&v3Ok))mistakesRef.current.push({tag:"Irregular verbs",prompt:verb.base,noBlank:true,yours:(v2In.trim()||"—")+" · "+(v3In.trim()||"—"),correct:verb.past+" · "+verb.pp,why:verb.fr+(verb.ex?" — "+verb.ex:""),ref:moduleRef("gauntlet",verb.id)});
     if(v2Ok&&v3Ok){try{playCorrect();}catch(e){console.warn("[icrypt] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[icrypt] sfx:",e&&e.message);}}
     var newResults=results.concat([{v2Ok:v2Ok,v3Ok:v3Ok,verb:verb}]);
@@ -71,7 +72,7 @@ export function IrregularCrypt(p){
     // Preserves the partial-credit granularity unique to Irregular Crypt.
     var baseXp=totalFull*5+totalPartial*2+15;
     if(totalFull===deck.length)baseXp+=35;
-    return p.done(totalFull,deck.length,baseXp);
+    return p.done(totalFull,deck.length,baseXp,mistakesRef.current);
   }
 
   // Fin du raid (souvent depuis le minuteur du dernier verbe) : l'XP part ici, avec l'état du dernier rendu, au lieu d'attendre « OK, back »
@@ -173,7 +174,7 @@ export function Chronomancer(p){
     if(phase!=="play"||!deck)return;
     var q=deck[idx];
     var ok=optIdx===q.c;
-    if(!ok)mistakesRef.current.push({tag:"Tenses · "+String(q.tense||"").replace(/_/g," "),prompt:q.s,yours:q.o[optIdx],correct:q.o[q.c],why:q.x});
+    if(!ok)mistakesRef.current.push({tag:"Tenses · "+String(q.tense||"").replace(/_/g," "),prompt:q.s,yours:q.o[optIdx],correct:q.o[q.c],why:q.x,ref:moduleRef("gauntlet",q.id)});
     if(ok){try{playCorrect();}catch(e){console.warn("[chrono] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[chrono] sfx:",e&&e.message);}}
     setPicked(optIdx);
@@ -192,7 +193,7 @@ export function Chronomancer(p){
     // to match the difficulty of the module (typed answers, strict timer).
     var baseXp=correct*5+15;
     if(correct===deck.length)baseXp+=35;
-    return p.done(correct,deck.length,baseXp);
+    return p.done(correct,deck.length,baseXp,mistakesRef.current);
   }
 
   // Render sentence: highlight marker if literal substring match; replace blank with styled span
@@ -317,7 +318,7 @@ export function PassiveForge(p){
     if(phase!=="play"||!deck)return;
     var q=deck[idx];
     var ok=optIdx===q.c;
-    if(!ok)mistakesRef.current.push({tag:"Passive voice",prompt:q.prompt,yours:q.o[optIdx],correct:q.o[q.c],why:(q.active?"Active: “"+q.active+"” — ":"")+q.x});
+    if(!ok)mistakesRef.current.push({tag:"Passive voice",prompt:q.prompt,yours:q.o[optIdx],correct:q.o[q.c],why:(q.active?"Active: “"+q.active+"” — ":"")+q.x,ref:moduleRef("gauntlet",q.id)});
     if(ok){try{playCorrect();}catch(e){console.warn("[forge] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[forge] sfx:",e&&e.message);}}
     setPicked(optIdx);
@@ -328,7 +329,7 @@ export function PassiveForge(p){
     if(phase!=="play"||!deck)return;
     try{playWrong();}catch(e){console.warn("[forge] sfx:",e&&e.message);}
     var q=deck[idx];
-    mistakesRef.current.push({tag:"Passive voice",prompt:q.prompt,yours:"(time's up)",correct:q.o[q.c],why:(q.active?"Active: “"+q.active+"” — ":"")+q.x});
+    mistakesRef.current.push({tag:"Passive voice",prompt:q.prompt,yours:"(time's up)",correct:q.o[q.c],why:(q.active?"Active: “"+q.active+"” — ":"")+q.x,ref:moduleRef("gauntlet",q.id)});
     setPicked(-1);
     setResults(results.concat([{q:q,picked:-1,ok:false,timedOut:true}]));
     setPhase("reveal");
@@ -345,7 +346,7 @@ export function PassiveForge(p){
     // to match the difficulty of the module (typed answers, strict timer).
     var baseXp=correct*5+15;
     if(correct===deck.length)baseXp+=35;
-    return p.done(correct,deck.length,baseXp);
+    return p.done(correct,deck.length,baseXp,mistakesRef.current);
   }
   // Timer — reset is handled in startSession + nextQ (above). Do NOT add a
   // useEffect that resets timeLeft on [idx,phase] : if the previous question
@@ -476,7 +477,7 @@ export function RelativeWeaver(p){
     if(phase!=="play"||!deck)return;
     var q=deck[idx];
     var ok=optIdx===q.c;
-    if(!ok)mistakesRef.current.push({tag:"Relative clauses · "+typeLabel(q.type),prompt:q.s,yours:q.o[optIdx],correct:q.o[q.c],why:q.x});
+    if(!ok)mistakesRef.current.push({tag:"Relative clauses · "+typeLabel(q.type),prompt:q.s,yours:q.o[optIdx],correct:q.o[q.c],why:q.x,ref:moduleRef("gauntlet",q.id)});
     if(ok){try{playCorrect();}catch(e){console.warn("[weaver] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[weaver] sfx:",e&&e.message);}}
     setPicked(optIdx);
@@ -495,7 +496,7 @@ export function RelativeWeaver(p){
     // to match the difficulty of the module (typed answers, strict timer).
     var baseXp=correct*5+15;
     if(correct===deck.length)baseXp+=35;
-    return p.done(correct,deck.length,baseXp);
+    return p.done(correct,deck.length,baseXp,mistakesRef.current);
   }
   function renderWithBlank(s){
     var segs=s.split(/_{3,}/);
@@ -609,11 +610,12 @@ export function GauntletHub(p){
     try{playBGM(card.bgm);}catch(e){console.warn("[gauntlet] bgm:",e&&e.message);}
     setSubMode(card.id);
   }
-  function subDone(sc,tot,xp){
+  // `mistakes` : la liste de l'épreuve, ses `ref` entrent au bestiaire (route, onModuleDone).
+  function subDone(sc,tot,xp,mistakes){
     try{stopBGM();}catch(e){console.warn("[gauntlet] bgm stop:",e&&e.message);}
     try{haptic("complete");}catch(e){console.warn("[gauntlet] haptic:",e&&e.message);}
     // L'épreuve reste affichée : elle montre l'écran de fin commun, dont Continue ramène au hub.
-    return p.onModuleDone?p.onModuleDone(subMode,sc,tot,xp):0;
+    return p.onModuleDone?p.onModuleDone(subMode,sc,tot,xp,mistakes):0;
   }
   function subContinue(){p.closeSession();setSubMode(null);}
   function subReplay(){

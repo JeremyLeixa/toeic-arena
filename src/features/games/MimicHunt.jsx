@@ -13,6 +13,7 @@ import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { MIMIC_ITEMS, MIMIC_TIERS } from "../../data/mimicHunt.js";
 import { shuffle } from "../../lib/util.js";
+import { moduleRef } from "../../lib/reviewRefs.js";
 import { playChestKnock, playChestLand, playCorrect, playWrong } from "../../sounds.js";
 import { useEffect, useRef, useState } from "react";
 
@@ -206,7 +207,7 @@ export function MimicHunt(p){
     // Une leçon par item : la réponse d'abord, sinon le Mimic manqué (le vrai apprentissage
     // quand la réponse est juste mais le piège pas vu).
     if(!ok)mistakesRef.current.push({tag:"Mimic Hunt · Tier "+tier.roman,prompt:item.src,noBlank:true,
-      yours:item.opts[pick],correct:item.opts[item.c],why:item.exp});
+      yours:item.opts[pick],correct:item.opts[item.c],why:item.exp,ref:moduleRef("mimic",item.id)});
     else if(!caught)mistakesRef.current.push({tag:"Mimic Hunt · Tier "+tier.roman+" · Mimic",prompt:item.src,noBlank:true,
       yours:item.opts[mark],correct:item.opts[Number(Object.keys(item.mimics)[0])],why:item.trap});
     sR(function(r){return r.concat([{ok:ok,bitten:bitten,caught:caught}]);});
@@ -218,7 +219,7 @@ export function MimicHunt(p){
     if(idx+1<TOTAL){sPk(-1);sMk(-1);sTl("ans");sF(-1);sI(idx+1);sP(openingOf(idx+1));return;}
     var sc=results.filter(function(r){return r.ok;}).length;
     var caught=results.filter(function(r){return r.caught;}).length;
-    sidRef.current=p.done(sc,TOTAL,15+5*sc+2*caught+(sc===TOTAL?25:0));
+    sidRef.current=p.done(sc,TOTAL,15+5*sc+2*caught+(sc===TOTAL?25:0),mistakesRef.current);
     sP("done");
   }
 

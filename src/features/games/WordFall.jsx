@@ -103,7 +103,9 @@ function animateFall(){
     setShake(true);
     setTimeout(function(){setShake(false);},400);
     var q=allQs[qi];
-    mistakesRef.current.push({tag:q.cat,prompt:q.s,yours:pickIdx>=0?q.o[pickIdx]:"(too slow)",correct:q.o[q.c],why:q.x});
+    // Au bestiaire (même créature que le Drill) seulement sur une mauvaise réponse : une phrase tombée
+    // sans réponse n'a peut-être pas été lue.
+    mistakesRef.current.push({tag:q.cat,prompt:q.s,yours:pickIdx>=0?q.o[pickIdx]:"(too slow)",correct:q.o[q.c],why:q.x,ref:pickIdx>=0?{k:"drill:"+q.id,cat:q.cat,part:"p5"}:null});
     setFeedback({type:"miss",text:q.x||"The answer was: "+q.o[q.c]});
     if(newLives<=0){
       setTimeout(function(){setPhase("done");},1500);
@@ -140,7 +142,7 @@ function animateFall(){
     var xp=score*8+(maxCombo>=6?30:maxCombo>=3?15:0);
     var prev=p.u.gameScores&&p.u.gameScores.wordFall;
     setResult({record:!prev||prev.score==null||score>prev.score});
-    sidRef.current=p.done("wordFall",{score:score,maxCombo:maxCombo,questions:qi+1},xp);
+    sidRef.current=p.done("wordFall",{score:score,maxCombo:maxCombo,questions:qi+1},xp,mistakesRef.current);
   },[phase]);
 
   // ── INTRO ──

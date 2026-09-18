@@ -5,6 +5,7 @@ import { SessionResult } from "../../components/SessionResult.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { STRATEGIES, STRAT_QUIZ } from "../../data/miniGames.js";
 import { shuffle } from "../../lib/util.js";
+import { moduleRef } from "../../lib/reviewRefs.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useState, useMemo, useRef } from "react";
@@ -200,8 +201,8 @@ export function StratQuizPage(p){
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(i){sPk(i);if(i!==qs[ci].correct){var sq=qs[ci];mistakesRef.current.push({tag:"Strategy · "+sq.part,prompt:sq.scenario,noBlank:true,yours:sq.options[i],correct:sq.options[sq.correct],why:sq.explain});}if(i===qs[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
-  function nxt(){if(ci<qs.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,qs.length,20+sc*5);sP("done");}}
+  function doAns(i){sPk(i);if(i!==qs[ci].correct){var sq=qs[ci];mistakesRef.current.push({tag:"Strategy · "+sq.part,prompt:sq.scenario,noBlank:true,yours:sq.options[i],correct:sq.options[sq.correct],why:sq.explain,ref:moduleRef("stratquiz",sq.id)});}if(i===qs[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  function nxt(){if(ci<qs.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,qs.length,20+sc*5,mistakesRef.current);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{fontSize:56,marginBottom:16}}>🧠</div>

@@ -335,7 +335,7 @@ function Lair(p){
       <div className="out" style={{fontWeight:800,fontSize:13}}>{"How the hunt works"}</div>
       <ol>{BESTIARY_RULES.map(function(r,i){return <li key={i}>{r}</li>;})}</ol>
     </div>}
-    {b.lurking===0&&<p style={{color:"var(--t3)",fontSize:12,lineHeight:1.6,fontStyle:"italic",textAlign:"center",margin:"18px 8px"}}>{"No creature yet. Every mistake you make in the Grammar Drill, the Daily Challenge, the Exam Simulation, Part 6, Part 7 or Listening lands here."}</p>}
+    {b.lurking===0&&<p style={{color:"var(--t3)",fontSize:12,lineHeight:1.6,fontStyle:"italic",textAlign:"center",margin:"18px 8px"}}>{"No creature yet. Your mistakes land here: in the drills, the Gauntlet, the Modal Council, the games, Listening and Reading."}</p>}
     {b.groups.map(function(g){
       var all=!!open[g.key],shown=all?g.items:g.items.slice(0,3),more=g.items.length-shown.length;
       return(<div key={g.key} className="crd mm-group">
