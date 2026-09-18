@@ -8,7 +8,8 @@ import { getLevel } from "../../data/helpers.js";
 import { STRATEGIES } from "../../data/miniGames.js";
 import { festivalById, festivalOccurrence, festivalDaysLeft, formatFestivalDate } from "../../lib/festivals.js";
 import { getEffectiveLeague } from "../../lib/league.js";
-import { getDailyMission, needsMockNudge } from "../../lib/progress.js";
+import { needsMockNudge } from "../../lib/progress.js";
+import { homeStrip } from "../../lib/mentorVoice.js";
 import { tone } from "../../lib/tone.js";
 import { today } from "../../lib/util.js";
 
@@ -16,13 +17,12 @@ export function Home(p){
 var u=p.u,lv=getLevel(u.xp),lg=getEffectiveLeague(u.weeklyXp,u.moduleScores),dd=u.daily&&u.daily.date===today()&&u.daily.done;
 // ── Single-pulse priority (UX focus): chest > mock > daily > event ──
 // Only ONE CTA animates at a time so the eye isn't pulled in multiple directions.
-var _missionHome=getDailyMission(u);
-var _missionReady=_missionHome&&_missionHome.status!=="calibrating"&&_missionHome.mod;
-var _isMissionDoneHome=_missionReady&&(_missionHome.status==="completed"||_missionHome.done);
-// Smart Daily Quest: active if Mission pending, OR if Challenge still pending (sequential reveal)
-var _dailyQuestActive=(_missionReady&&!_isMissionDoneHome)||!dd;
+// Bandeau d'une ligne vers « Today's Path » (lot 4 du Mentor, 2026-09-18) : le plan du jour vit dans le
+// Mentor, Home n'en garde que cette ligne (décision de Jérémy : pas de carte de plan sur Home). Il pulse
+// tant que la mission du jour attend — c'est lui, avec la pastille de l'onglet, qui crée le réflexe.
+var strip=homeStrip(u,new Date());
 var chestTier=Math.max(0,Math.min(3,p.pendingChestTier||0));
-var pulseSlot=p.pendingChests>0?"chest":needsMockNudge(u)?"mock":_dailyQuestActive?"daily":(p.events&&p.events.length>0)?"event":null;
+var pulseSlot=p.pendingChests>0?"chest":needsMockNudge(u)?"mock":strip&&strip.pending?"path":!dd?"daily":(p.events&&p.events.length>0)?"event":null;
 // Festival theme appliqué par App (p.festId, déjà filtré par l'opt-out). Hors fenêtre mais forcé
 // (?fest=), l'occurrence est la prochaine : dates et jours restants restent vrais.
 var fest=p.festId?festivalById(p.festId):null;
@@ -127,9 +127,14 @@ return(
 <span style={{fontSize:18,color:"var(--t3)",lineHeight:1}}>{"›"}</span></div></div>
 <Bar value={lv.cur} max={lv.next} h={6}/></div>
 
-{/* Personalization moved to its own Mentor tab (2026-05-05). Home stays
-    focused on "playing-now" : daily quest, chests, events. The Mentor hub
-    hosts goal progress + Today's Focus + per-part weakness list. */}
+{/* Personalization lives in its own Mentor tab (2026-05-05). Home stays focused on "playing-now" :
+    daily quest, chests, events. From the plan of the day it only keeps this one line (2026-09-18). */}
+{strip&&<button className={"mm-strip"+(strip.tone==="due"?" due":"")} onClick={function(){p.openPath();}}
+  style={{animation:pulseSlot==="path"?"pulse 3s infinite":"none"}}>
+  <GIcon name="wizard-staff" size={18} color={strip.tone==="due"?"var(--gold)":"var(--cyan)"}/>
+  <span className="mm-strip-t out">{strip.text}</span>
+  <span className="mm-strip-go">{"›"}</span>
+</button>}
 
 {/* ═══ Daily Challenge — generic 5-question warm-up. Adaptive Daily Mission
      was relocated to the Mentor tab (2026-05-05 PM). The two are now

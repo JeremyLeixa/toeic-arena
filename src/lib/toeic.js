@@ -17,9 +17,9 @@ export function estimateToeic(raw,total){
 // ═══════════════════════════════════════════════════════════════════════
 // Personalization Phase 1 commit 4 (2026-05-05) — Today's Focus + reco
 // Maps a module id to a "part bucket" (p1-p7 + vocab), used by:
-//   - computeTodayFocus(u) → finds the user's weakest part with enough data.
-//   - applyXpGates → applies a +25% XP boost when modId maps to focus part.
-//   - <NextStepReco/> → suggests the next module on done screens.
+//   - lib/xp.js → applies the +25% Focus boost when modId maps to the part of today's
+//     « stake » quest (lib/planner.js, since 2026-09-18 ; computeTodayFocus is gone).
+//   - lib/learnerModel.js → partSeries, the dated series behind the plan of the day.
 // Modules that don't fit a single part (mocks, boss, daily, games) are not
 // mapped and therefore not boosted — those have their own incentive layers.
 // ═══════════════════════════════════════════════════════════════════════
@@ -97,29 +97,6 @@ export function partAccuracies(ms,bsParts){
 }
 // Helper: get the scan parts baseline from a user. Returns null if no scan ran.
 export function bsScanParts(u){return u&&u.battleScan&&u.battleScan.subScores&&u.battleScan.subScores.parts||null;}
-// Find the weakest part with enough data. Returns {partId, acc, n, recoModId, label} or null.
-// Phase D (scan-v2): the gate is now totalQ>=20 OR a Battle Scan baseline exists. The scan
-// provides a per-part baseline (n=5, source:"scan") that lets the banner light up from day 1
-// of the post-onboarding journey. Once real training data accumulates, it overrides the scan.
-export function computeTodayFocus(u){
-  if(!u||!u.moduleScores)return null;
-  var totalQ=(u.stats&&u.stats.totalQ)||0;
-  var hasScan=!!bsScanParts(u);
-  if(totalQ<20&&!hasScan)return null;
-  var pa=partAccuracies(u.moduleScores,bsScanParts(u));
-  var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
-  var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
-  var weakest=null;
-  // Min sample size: 10 if trained, 5 if scan-derived.
-  Object.keys(pa).forEach(function(k){
-    var d=pa[k];if(!d)return;
-    var minN=d.source==="scan"?5:10;
-    if(d.n<minN)return;
-    if(!weakest||d.acc<weakest.acc)weakest={partId:k,acc:d.acc,n:d.n,source:d.source};
-  });
-  if(!weakest||weakest.acc>=0.85)return null;
-  return Object.assign(weakest,{recoModId:reco[weakest.partId],label:labels[weakest.partId]});
-}
 // ─── PROFILE ───
 // ── Battle Scan → TOEIC baseline ──
 // Converts the 20-Q diagnostic Battle Scan into an approximate initial

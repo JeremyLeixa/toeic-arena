@@ -871,4 +871,53 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .app:not(.onboard-shell) .ss-burst{left:calc(50% + 100px)}
 }
 @media(prefers-reduced-motion:reduce){.ss-burst,.ss-card,.ss-quit,.ss-play.on .ss-rune,.ss-wave i{animation:none}}
+/* ═══ Mentor qui se souvient (lot 4, 2026-09-18) — proto prototypes/mentor-memory/memory.css ═══
+   Uniquement des jetons de l'appli : suit skins, fêtes et mode clair. */
+/* Home : le bandeau d'une ligne vers « Today's Path » (seul ajout à Home, décision du 2026-09-17). */
+.mm-strip{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:16px;padding:11px 14px;border-radius:14px;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;background:rgba(var(--cx),.07);border:1px solid rgba(var(--cx),.22)}
+.mm-strip.due{background:linear-gradient(135deg,rgba(240,200,80,.12),rgba(var(--cx),.05));border-color:rgba(240,200,80,.3)}
+.mm-strip-t{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mm-strip-go{font-size:18px;color:var(--t3);line-height:1}
+/* Pastille de l'onglet Mentor : la mission du jour attend (l'onglet reste toujours ouvert). */
+.mm-tabdot{position:absolute;top:4px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+@media(min-width:768px){.app:not(.onboard-shell) .tab-bar .mm-tabdot{right:auto;left:36px;top:8px}}
+/* Today's Path : les quêtes du jour figé, cochées au lieu de disparaître. */
+.mm-intro{margin:0 2px 12px;font-size:12.5px;line-height:1.5;font-style:italic;color:var(--t2)}
+.mm-quest{display:flex;align-items:flex-start;gap:10px;width:100%;padding:10px;margin-bottom:6px;border-radius:12px;border:1px solid var(--bdr);background:var(--bg2);text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--t1)}
+.mm-quest.first{border-color:rgba(var(--cx),.55);background:rgba(var(--cx),.08);box-shadow:0 0 16px rgba(var(--cx),.12)}
+.mm-quest.done{opacity:.72;box-shadow:none}
+.mm-q-ic{flex-shrink:0;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--cyan);background:linear-gradient(135deg,rgba(var(--cx),.22),transparent)}
+.mm-quest:not(.first) .mm-q-ic,.mm-quest.done .mm-q-ic{border-color:var(--bdr);background:transparent}
+.mm-q-body{flex:1;min-width:0}
+.mm-q-title{display:block;font-size:13.5px;font-weight:800;line-height:1.3}
+.mm-q-why{display:block;margin-top:3px;font-size:11.5px;line-height:1.45;color:var(--t2)}
+.mm-q-tag{flex-shrink:0;margin-top:2px;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap;color:var(--cyan);background:rgba(var(--cx),.12)}
+.mm-quest:not(.first) .mm-q-tag{color:var(--t2);background:var(--bg3)}
+.mm-quest.done .mm-q-tag{color:var(--green);background:rgba(74,190,96,.12)}
+.mm-why-btn{display:block;margin:4px auto 2px;padding:6px 10px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--t3);text-decoration:underline;font-family:inherit}
+.mm-why{margin:2px 4px 6px;font-size:11.5px;line-height:1.5;color:var(--t2);font-style:italic}
+/* The Lair : le bestiaire. */
+.mm-best-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.mm-stat{padding:10px 6px!important;text-align:center}
+.mm-stat b{display:block;font-size:22px;font-weight:900;line-height:1.1}
+.mm-stat small{display:block;margin-top:3px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--t3)}
+.mm-stat em{display:block;margin-top:2px;font-style:normal;font-size:10px;color:var(--green)}
+.mm-rules{margin-bottom:12px;padding:12px 14px!important}
+.mm-rules ol{margin:6px 0 0 18px;padding:0;font-size:12px;line-height:1.6;color:var(--t2)}
+.mm-group{margin-bottom:12px;padding:12px 12px 6px!important}
+.mm-group-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.mm-group-head b{font-size:13px;font-weight:800;color:var(--t1)}
+.mm-group-head small{font-size:11px;color:var(--t3)}
+.mm-group-head .mm-due{margin-left:auto}
+.mm-due{padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;color:var(--orange);background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);white-space:nowrap}
+.mm-crea{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--bdr)}
+.mm-crea-ic{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
+.mm-crea-body{flex:1;min-width:0}
+.mm-crea-q{font-size:12px;line-height:1.35;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mm-crea-meta{margin-top:2px;font-size:10.5px;color:var(--t3)}
+.mm-pips{display:flex;gap:3px;flex-shrink:0}
+.mm-pips i{width:7px;height:7px;border-radius:50%;background:var(--bdr)}
+.mm-pips i.on{background:var(--green)}
+.mm-more{display:block;width:100%;padding:8px 0 4px;text-align:left;background:none;border:none;border-top:1px solid var(--bdr);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;color:var(--cyan)}
+@media(prefers-reduced-motion:reduce){.mm-strip{animation:none!important}}
 `;

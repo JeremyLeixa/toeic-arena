@@ -23,7 +23,7 @@ import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, lo
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { boundReview, recordMisses } from "./lib/review.js";
-import { dayMission, stakePart } from "./lib/planner.js";
+import { dayMission, stakePart, todayMission } from "./lib/planner.js";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { MASTERY_BLACKLIST, isMastered } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
@@ -1546,6 +1546,9 @@ function sv(d){
   // L'ouverture reste dans l'ordre de la file (chestPending[0]), la pastille ×N dit qu'il y en a d'autres.
   var pendingChestTier=chestPending.reduce(function(m,c){return Math.max(m,(c&&CHEST_TIER[c.chest_type])||0);},0);
   var expBlocked=isExpiredGroup?["home","train","cards","games"]:[];
+  // Pastille de l'onglet Mentor : la mission du jour (1re quête du plan figé) attend. Jamais un verrou.
+  var mentorMission=u?todayMission(u,new Date()):null;
+  var mentorBadge=mentorMission&&mentorMission.quests.length&&!mentorMission.done?"mentor":null;
   var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);
     // Mentor shares bgm_home with Home/League/Profile. The narrator-watcher
     // useEffect below will fade it out automatically when Aldric speaks
@@ -1582,7 +1585,7 @@ function sv(d){
     <span style={{fontSize:13,fontWeight:600,color:"var(--red)"}}>{"Session expired — your progress isn't being saved."}</span>
     <button onClick={function(){sSP(null);sT("home");sU(null);}} style={{background:"transparent",border:"1px solid rgba(255,71,87,.45)",borderRadius:10,padding:"7px 14px",color:"var(--red)",fontFamily:"'Cinzel','Outfit',serif",fontWeight:600,fontSize:12,cursor:"pointer"}}>{"Log in again"}</button>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&!lastSession&&!examCeremony&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={(sp||"root")+":"+runKey}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked}/>{premiumOverlay}{examCeremony&&<ExamCeremonies key={examCeremony.id} items={examCeremony.items} onDone={function(){setExamCeremony(null);}}/>}</div>);}
+  function pg(content){return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&!lastSession&&!examCeremony&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={(sp||"root")+":"+runKey}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked} badge={mentorBadge}/>{premiumOverlay}{examCeremony&&<ExamCeremonies key={examCeremony.id} items={examCeremony.items} onDone={function(){setExamCeremony(null);}}/>}</div>);}
   // ↑ Frontière des écrans chargés à la demande (Phase 5) : le fallback et le filet d'erreur
   // n'enveloppent QUE le contenu de la sous-page — toasts, Narrator, Tabs et overlay premium
   // sont frères, jamais cachés ni remontés. La key sur la route remet le filet à zéro quand
@@ -1636,7 +1639,7 @@ function sv(d){
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0 Acc\u00e8s expir\u00e9 le "}{groupAccess.endDate}{" — consultation uniquement"}</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} festId={festId} onFestivalsOff={function(){setFestivals(false);}} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} pendingChestTier={pendingChestTier} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} setUser={function(c){sv(c);}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} festId={festId} setFestivals={setFestivals} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} goShop={function(){sSP("shop");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} festId={festId} onFestivalsOff={function(){setFestivals(false);}} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} pendingChestTier={pendingChestTier} openPath={function(){tabGo("mentor");sSPA("path");}} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} initialSheet={spA} setUser={function(c){sv(c);}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} festId={festId} setFestivals={setFestivals} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} goShop={function(){sSP("shop");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
     {/* TutorialTour supprimé 2026-05-03 — absorbé dans le Verdict d'Aldric (cf. narrator.js). */}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
@@ -1650,5 +1653,5 @@ function sv(d){
       onOpenNow={function(){setActiveChestToast(null);if(chestPending.length>0)setChestModal(chestPending[0]);}}/>}
 
     {premiumOverlay}
-    <Tabs cur={tab} go={tabGo} blocked={expBlocked}/></div>);
+    <Tabs cur={tab} go={tabGo} blocked={expBlocked} badge={mentorBadge}/></div>);
 }

@@ -31,7 +31,9 @@ export function lookupRef(k) {
     var p1 = byId(LISTENING_P1, r.id);
     if (!p1) return null;
     var s1 = shufListeningItem(p1);
+    // `title` : la ligne du bestiaire (Mentor, « The Lair »). Jamais la bonne phrase : elle gâcherait la chasse.
     return { k: k, mod: r.mod, kind: "photo", part: "p1", label: "Part 1 — Photographs",
+      title: "Photograph no. " + p1.id.replace(/^p1_/, ""),
       prompt: "Which statement describes the photo?", img: p1.img, blind: true,
       options: s1.opts, c: s1.c, why: s1.x, audio: { kind: "p1", id: p1.id, aud: s1.aud } };
   }
@@ -39,7 +41,9 @@ export function lookupRef(k) {
     var p2 = byId(LISTENING_P2, r.id);
     if (!p2) return null;
     var s2 = shufListeningItem(p2);
+    // `title` : la question entendue (elle ne dit pas la réponse), pour reconnaître la créature.
     return { k: k, mod: r.mod, kind: "audio", part: "p2", label: "Part 2 — Question-Response",
+      title: p2.q ? "“" + p2.q + "”" : "A Part 2 question",
       prompt: "Choose the best response.", blind: true,
       options: s2.opts, c: s2.c, why: s2.x, audio: { kind: "p2", id: p2.id, aud: s2.aud } };
   }
@@ -61,10 +65,13 @@ export function lookupRef(k) {
     var blanks = t6.parts.filter(function (x) { return x.blank; });
     var b = blanks[qi];
     if (!b) return null;
+    var txt = p6Text(t6, qi), at = txt.indexOf("_____");
     return { k: k, mod: r.mod, kind: "passage", part: "p6", label: "Part 6 — " + t6.type,
+      // `title` : l'extrait autour du trou, pour reconnaître la créature dans le bestiaire.
+      title: "…" + txt.slice(Math.max(0, at - 50), at).replace(/\s+/g, " ").trimStart() + "_____" + txt.slice(at + 5, at + 35).replace(/\s+/g, " ") + "…",
       // Pas de « blank 3 » : les autres trous sont rendus remplis, il n'en reste qu'un à l'écran.
       prompt: "Choose the best option to fill the blank.", options: b.options, c: b.correct, why: b.x,
-      passage: { id: t6.id, type: t6.type, text: p6Text(t6, qi) } };
+      passage: { id: t6.id, type: t6.type, text: txt } };
   }
   if (r.mod === "p7") {
     var ps = byId(PART7_PASSAGES, r.id), pq = ps && ps.questions[qi];

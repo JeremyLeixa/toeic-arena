@@ -1,6 +1,5 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { QUESTIONS } from "../data/grammar.js";
-import { MISSION_MODULES } from "../data/placement.js";
 import { srand, today, shuffle } from "./util.js";
 
 export function dailyQs(date,u){
@@ -209,41 +208,6 @@ export function checkMission(u,modId){
     u.mission.lastDoneDate=today();
   }
   return u;
-}
-// ─── RECOMMENDATION ENGINE ───
-export var MISSION_THRESHOLD=10; // min sessions before recommending
-export function getDailyMission(u){
-  if(!u.moduleScores)return null;
-  if((u.stats.sessions||0)<MISSION_THRESHOLD)return{status:"calibrating",remaining:MISSION_THRESHOLD-(u.stats.sessions||0)};
-
-  // Already have a mission for today?
-  if(u.mission&&u.mission.date===today())return{status:u.mission.done?"completed":"active",actId:u.mission.actId,mod:MISSION_MODULES.find(function(m){return m.id===u.mission.actId;}),done:u.mission.done};
-
-  // Generate new mission: find weakest module
-  var candidates=[];
-  for(var i=0;i<MISSION_MODULES.length;i++){
-    var m=MISSION_MODULES[i];
-    var ms=u.moduleScores[m.id];
-    if(!ms){
-      // Never tried — high priority
-      candidates.push({mod:m,priority:100,reason:"You haven't tried this yet!"});
-    } else {
-      var acc=ms.total>0?ms.correct/ms.total:0;
-      var daysSince=ms.lastDate?Math.floor((new Date()-new Date(ms.lastDate))/(864e5)):999;
-      // Score: lower accuracy + more days since last = higher priority
-      var score=((1-acc)*70)+(Math.min(daysSince,14)*2);
-      var reasonText=acc<0.5?"Accuracy is low — let's improve!":acc<0.7?"Room for improvement here.":daysSince>5?"It's been a while — keep it fresh!":"Maintain your level.";
-      candidates.push({mod:m,priority:score,reason:reasonText});
-    }
-  }
-  // Sort by priority descending, pick top
-  candidates.sort(function(a,b){return b.priority-a.priority;});
-  // Add some variety: pick from top 3 using day seed + reroll counter (so Daily Reroll
-  // tokens actually change the pick instead of re-selecting the same deterministic slot).
-  var seed=0;var d=today();for(var j=0;j<d.length;j++)seed+=d.charCodeAt(j);
-  seed+=(u.mission&&u.mission.rerollCount)||0;
-  var pick=candidates[seed%Math.min(3,candidates.length)];
-  return{status:"new",actId:pick.mod.id,mod:pick.mod,reason:pick.reason};
 }
 export function canUnlockMock(u,mockId){
   if(!u||!u.stats)return{ok:false,reasons:[]};

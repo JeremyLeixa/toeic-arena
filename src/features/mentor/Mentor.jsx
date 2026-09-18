@@ -1,11 +1,13 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
+// Lot 4 du Mentor qui se souvient (2026-09-18, proto prototypes/mentor-memory/) : la carte porte cinq
+// repères, le plan du jour figé vit dans la feuille « Today's Path », le bestiaire dans « The Lair ».
 import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
-import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
-import { save } from "../../lib/persistence.js";
-import { getDailyMission } from "../../lib/progress.js";
-import { estimateTOEICScore, computeTodayFocus, partAccuracies, bsScanParts } from "../../lib/toeic.js";
-import { today } from "../../lib/util.js";
+import { estimateTOEICScore } from "../../lib/toeic.js";
+import { MACROS, PART_LABEL, PART_MOD, stakes } from "../../lib/learnerModel.js";
+import { todayMission, thawQuest, questDone, stakePart } from "../../lib/planner.js";
+import { bestiary, TIERS, tierOf, HUNT_CAP } from "../../lib/review.js";
+import { mapBadges, planIntro, planWhy, questView, creatureMeta, BESTIARY_INTRO, BESTIARY_RULES } from "../../lib/mentorVoice.js";
 import { hasHeardMoment } from "../../narrator.js";
 import { supabase } from "../../supabase.js";
 import { useState, useEffect } from "react";
@@ -161,28 +163,19 @@ export function MentorGoalCard(p){
 }
 // ═══════════════════════════════════════════════════════════════════════
 // MentorMap — illustrated map UX for the Mentor tab (2026-05-05 PM).
-// Replaces the vertical tile stack with an immersive Doré-style B&W map.
-// 4 hotspots overlay the image at fixed %-coords :
-//   - Peak  → Your Goal
-//   - Trail → Today's Daily Mission
-//   - Stone → Today's Focus
-//   - Camp  → Where You Stand
-// Tap → bottom sheet (~70vh) slides up while the map stays visible above.
-// Each sheet renders the existing component (MentorGoalCard, MentorDailyMission,
-// TodayFocusBanner, the per-part list) so logic stays single-sourced.
-// Cold states : faded sigil + "?" / "Train more" hint when data is absent.
+// Cinq repères depuis le lot 4 du Mentor qui se souvient (2026-09-18) :
+//   - Peak  → l'objectif (MentorGoalCard)
+//   - Path  → le plan du jour FIGÉ (u.mission, lib/planner.js) ; sa mission porte « +15 XP »
+//   - Lair  → le bestiaire des erreurs. Remplace « The Crossroads » : le Today's Focus est devenu la
+//             quête « enjeu » du plan, où son +25 % est enfin expliqué
+//   - Camp  → où j'en suis, partie par partie
+//   - Aldric → rediffusion de son chapitre (la Chronique viendra au lot 6)
+// Badges : lib/mentorVoice.js mapBadges. Mêmes images et coordonnées qu'avant ; « lair » reprend la
+// place de « focus ». Tap → bottom sheet (~70vh), sauf le Lair qui ouvre une vue pleine page.
 // ═══════════════════════════════════════════════════════════════════════
 export function MentorMap(p){
   var u=p.u;
-  var hasGoal=!!u.targetToeic&&!!u.targetDate;
-  var current=estimateTOEICScore(u.moduleScores||{}).total;
-  var totalQ=(u.stats&&u.stats.totalQ)||0;
-  var calibrated=totalQ>=20;
-  var focus=calibrated?computeTodayFocus(u):null;
-  var mission=getDailyMission(u);
-  var missionReady=mission&&mission.status!=="calibrating"&&mission.mod;
-  var missionDone=missionReady&&(mission.status==="completed"||mission.done);
-  var daysLeft=hasGoal?Math.round((new Date(u.targetDate).getTime()-Date.now())/86400000):null;
+  var badges=mapBadges(u,new Date(),estimateTOEICScore(u.moduleScores||{}).total);
 
   // Desktop / mobile swap : different illustration, different hotspot coords.
   // Listens to viewport width (matchMedia 768px breakpoint, same as the
@@ -201,45 +194,12 @@ export function MentorMap(p){
   },[]);
 
   // Hotspots — coords aligned to the 2026-05-06 PM "arena-at-peak" map regen.
-  // Mobile (portrait 2:3) : peak top-center, arena carved into mountain side mid,
-  // standing stone left, camp right, Aldric center foreground.
-  // Desktop (landscape 3:2) : peak top-left, arena left, mid-trail center, standing
-  // stone right, camp center-right, Aldric center foreground.
-  var hotspots=isDesktop?[
-    {id:"goal", x:30, y:30, side:"left",
-     label:hasGoal?"The Distant Peak":"Set destination",
-     value:hasGoal?(u.targetToeic+" · "+(daysLeft>=0?daysLeft+"d":"past")):"?",
-     tone:hasGoal?"active":"muted"},
-    {id:"mission", x:43, y:55, side:"right",
-     label:"Today's Path",
-     value:!missionReady?"Train more":missionDone?"Complete ✓":"+15 XP",
-     tone:!missionReady?"muted":missionDone?"done":"active"},
-    {id:"focus", x:84, y:60, side:"right",
-     label:"The Crossroads",
-     value:focus?focus.label.replace(/ — .*/,"")+" · +25%":calibrated?"All steady":"Train more",
-     tone:focus?"active":"muted"},
-    {id:"camp", x:67, y:75, side:"right",
-     label:"Your Camp",
-     value:(current!==null?current+" TOEIC":"\u2014 TOEIC"),
-     tone:"active"}
-  ]:[
-    {id:"goal", x:48, y:22, side:"left",
-     label:hasGoal?"The Distant Peak":"Set destination",
-     value:hasGoal?(u.targetToeic+" · "+(daysLeft>=0?daysLeft+"d":"past")):"?",
-     tone:hasGoal?"active":"muted"},
-    {id:"mission", x:50, y:50, side:"right",
-     label:"Today's Path",
-     value:!missionReady?"Train more":missionDone?"Complete ✓":"+15 XP",
-     tone:!missionReady?"muted":missionDone?"done":"active"},
-    {id:"focus", x:14, y:60, side:"left",
-     label:"The Crossroads",
-     value:focus?focus.label.replace(/ — .*/,"")+" · +25%":calibrated?"All steady":"Train more",
-     tone:focus?"active":"muted"},
-    {id:"camp", x:83, y:68, side:"right",
-     label:"Your Camp",
-     value:(current!==null?current+" TOEIC":"\u2014 TOEIC"),
-     tone:"active"}
-  ];
+  // Mobile (portrait 2:3) : peak top-center, path mid, lair left (the old standing stone), camp right,
+  // Aldric center foreground. Desktop (landscape 3:2) : peak top-left, path center, lair right.
+  var coords=isDesktop
+    ?{goal:{x:30,y:30,side:"left"},path:{x:43,y:55,side:"right"},lair:{x:84,y:60,side:"right"},camp:{x:67,y:75,side:"right"}}
+    :{goal:{x:48,y:22,side:"left"},path:{x:50,y:50,side:"right"},lair:{x:14,y:60,side:"left"},camp:{x:83,y:68,side:"right"}};
+  var hotspots=["goal","path","lair","camp"].map(function(id){return Object.assign({id:id},coords[id],badges[id]);});
 
   // Aldric position differs per layout — both new images put him center-foreground.
   var aldricCoords=isDesktop?{x:48,y:85,w:48,h:120,side:"left"}:{x:52,y:88,w:64,h:120,side:"left"};
@@ -276,12 +236,12 @@ export function MentorMap(p){
       var badgeStyle={position:"absolute",top:"50%",transform:"translateY(-50%)",
         background:"linear-gradient(135deg,rgba(245,235,205,.95),rgba(228,212,170,.92))",
         color:"#3d2814",border:"1px solid rgba(90,58,20,.4)",borderRadius:6,
-        padding:"4px 8px",minWidth:80,maxWidth:140,whiteSpace:"nowrap",
+        padding:"4px 8px",minWidth:80,maxWidth:150,whiteSpace:"nowrap",
         fontFamily:"'DM Sans',sans-serif",fontSize:10,fontWeight:600,lineHeight:1.3,
         boxShadow:"0 2px 8px rgba(0,0,0,.4)",textAlign:"left"};
       if(h.side==="left")badgeStyle.left="calc(100% + 10px)";
       else badgeStyle.right="calc(100% + 10px)";
-      return(<button key={h.id} onClick={function(){p.onHotspotTap&&p.onHotspotTap(h.id);}}
+      return(<button key={h.id} onClick={function(){p.onHotspotTap&&p.onHotspotTap(h.id);}} aria-label={h.label+": "+h.value}
         style={{position:"absolute",left:h.x+"%",top:h.y+"%",transform:"translate(-50%,-50%)",
           width:36,height:36,borderRadius:"50%",border:"2px solid "+sigilColor,
           background:sigilBg,cursor:"pointer",
@@ -312,99 +272,189 @@ export function MentorSheet(p){
   </div>);
 }
 // ═══════════════════════════════════════════════════════════════════════
-// MentorDailyMission — adaptive daily mission relocated from Home (2026-05-05 PM).
-// Daily Challenge (5 random Q) stays on Home as a generic "warm-up reflex" ;
-// the personalized adaptive Mission lives here in Mentor where the
-// "where I'm headed" mode lives. No bonus link to Daily Challenge anymore —
-// the two are now autonomous.
+// TodayPath — la feuille du repère « Path » (lot 4, 2026-09-18). Rend la journée FIGÉE (u.mission,
+// posée par App() une fois par jour depuis lib/planner.js) : les quêtes se cochent au lieu de
+// disparaître. La mémoire de la veille est dite en tête (décision de Jérémy : pas au-dessus du pseudo).
+// Remplace MentorDailyMission (qui écrivait u.mission pendant le rendu) et TodayFocusBanner.
 // ═══════════════════════════════════════════════════════════════════════
-export function MentorDailyMission(p){
-  var u=p.u;
-  var mission=getDailyMission(u);
-  var ready=mission&&mission.status!=="calibrating"&&mission.mod;
-  var done=ready&&(mission.status==="completed"||mission.done);
-
-  // Initialize mission record on first display so the rest of the app sees it
-  if(ready&&mission.status==="new"&&(!u.mission||u.mission.date!==today())){
-    u.mission={date:today(),actId:mission.actId,done:false};
-    save(u);
-  }
-
-  // Calibrating user : friendly hint, no CTA
-  if(mission&&mission.status==="calibrating"){
-    return(<div className="crd" style={{marginBottom:14,padding:"12px 14px",background:"var(--bg2)",border:"1px solid var(--bdr)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <GIcon name="sands-of-time" size={20} color="var(--t2)"/>
-        <div style={{flex:1}}>
-          <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--t2)"}}>{"Daily Mission"}</div>
-          <div style={{fontSize:11,color:"var(--t3)",marginTop:2,lineHeight:1.4}}>{"Train "+(mission.remaining||"a few")+" more sessions to unlock adaptive missions."}</div>
-        </div>
-      </div>
-    </div>);
-  }
-
-  if(!ready)return null;
-
-  if(done){
-    return(<div className="crd" style={{marginBottom:14,padding:"12px 14px",background:"var(--bg2)",border:"1px solid var(--bdr)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <GIcon name="trophy-cup" size={20} color="var(--green)"/>
-        <div style={{flex:1}}>
-          <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--green)"}}>{"Daily Mission complete"}</div>
-          <div style={{fontSize:11,color:"var(--green)",marginTop:2,lineHeight:1.4}}>{"See you tomorrow for the next mission."}</div>
-        </div>
-      </div>
-    </div>);
-  }
-
-  var m=mission.mod;
-  return(<div className="crd" onClick={function(){if(p.nav)p.nav(mission.actId);}}
-    style={{marginBottom:14,cursor:"pointer",padding:"14px 16px",
-      background:"linear-gradient(135deg,rgba(255,215,0,.10),rgba(139,92,246,.08))",
-      border:"1px solid rgba(255,215,0,.25)",
-      boxShadow:"0 0 18px rgba(255,215,0,.12)"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-        <span style={{width:26,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{GAME_ICON_PATHS[m.icon]?<GIcon name={m.icon} size={22} color="var(--gold)"/>:<span style={{fontSize:22}}>{m.icon}</span>}</span>
-        <div style={{minWidth:0,flex:1}}>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-            <span className="out" style={{fontWeight:800,fontSize:14,color:"var(--t1)"}}>{"Daily Mission"}</span>
-            <span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(255,215,0,.15)",color:"var(--gold)",fontWeight:700}} className="out">{"+15 XP"}</span>
-          </div>
-          <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis"}}>
-            {m.name+" — "+mission.reason}
-          </div>
-        </div>
-      </div>
-      <span style={{fontSize:18,color:"var(--gold)",marginLeft:8}}>{"›"}</span>
-    </div>
+function TodayPath(p){
+  var u=p.u,now=new Date(),m=todayMission(u,now);
+  var[why,setWhy]=useState(false);
+  if(!m)return(<p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5,padding:"4px 2px"}}>{"Aldric is drawing today's path…"}</p>);
+  var n=m.quests.length;
+  return(<div>
+    <p className="mm-intro">{planIntro(u,m,now)+(!n?"":m.done?" Today's mission is done"+(n>1?": the rest is a bonus.":"."):n>1?" The quest marked +15 XP is today's mission.":" It's today's mission.")}</p>
+    {n===0&&<p className="mm-why" style={{fontStyle:"normal"}}>{"Nothing pressing: every part you've trained is on target. Train what you like, or visit the Lair."}</p>}
+    {m.quests.map(function(fq,i){
+      var q=thawQuest(fq,u,now),v=questView(q,u,i===m.pick),done=questDone(u,m,i,now);
+      return(<button key={i} className={"mm-quest"+(i===m.pick?" first":"")+(done?" done":"")} onClick={function(){p.go(q.mod);}}>
+        <span className="mm-q-ic"><GIcon name={done?"check-mark":v.icon} size={18} color={done?"var(--green)":i===m.pick?"var(--cyan)":"var(--t2)"}/></span>
+        <span className="mm-q-body"><span className="mm-q-title out">{v.title}</span><span className="mm-q-why">{v.why}</span></span>
+        <span className="mm-q-tag out">{done?"Done":v.tag}</span>
+      </button>);
+    })}
+    {n>0&&<button className="mm-why-btn" onClick={function(){setWhy(!why);}}>{why?"Hide":"Why this order?"}</button>}
+    {why&&<p className="mm-why">{planWhy(m,u)}</p>}
   </div>);
 }
 // ═══════════════════════════════════════════════════════════════════════
-// Mentor tab — Personalization Phase 1 hub (2026-05-05)
-// Dedicated space for everything personalized : goal progress, today's
-// focus, weakness next-step. Removes the "headed-where" cards from Home so
-// Home stays focused on "playing-now". Phase 2 will add a per-topic radar
-// chart, smart review module, and weekly insight history into this hub.
-// First-open trigger fires the Aldric "mentor_intro" narrator moment via
-// the parent App's narratorQueue (passed as prop).
+// Lair — le bestiaire des erreurs, vue pleine page du Mentor (pas de route). Les énoncés viennent de
+// lib/reviewLookup.js, chargé À LA DEMANDE : il tire les banques d'écoute et de lecture, qui n'ont rien
+// à faire dans le bundle principal (check_import_graph refuse tout import statique résiduel).
+// ═══════════════════════════════════════════════════════════════════════
+function Lair(p){
+  var u=p.u,now=new Date(),b=bestiary(u,now);
+  var[lk,setLk]=useState(null);
+  var[open,setOpen]=useState({});
+  useEffect(function(){
+    var sc=document.querySelector(".app");if(sc)sc.scrollTop=0;
+    var live=true;
+    import("../../lib/reviewLookup.js").then(function(mod){if(live)setLk(mod);})
+      .catch(function(e){console.warn("[mentor] bestiary lookup:",e&&e.message);});
+    return function(){live=false;};
+  },[]);
+  function title(k){var q=lk&&lk.lookupRef(k);return q?(q.title||q.prompt):lk?"(no longer in the question bank)":"…";}
+  var hunt=Math.min(HUNT_CAP,b.due);
+  return(<div className="enter" style={{padding:"20px 16px 100px"}}>
+    <button className="back-btn" onClick={p.back}>{"← Mentor"}</button>
+    <div style={{display:"flex",alignItems:"center",gap:10,marginTop:10}}>
+      <GIcon name="dragon-head" size={28} color="var(--cyan)"/>
+      <h1 className="out" style={{fontWeight:900,fontSize:24}}>{"The Lair"}</h1>
+    </div>
+    <p style={{color:"var(--t2)",fontSize:12,marginTop:4,lineHeight:1.5}}>{BESTIARY_INTRO}</p>
+    <div className="mm-best-stats">
+      <div className="crd mm-stat"><b className="out" style={{color:"var(--t1)"}}>{b.lurking}</b><small>{"Lurking"}</small></div>
+      <div className="crd mm-stat"><b className="out" style={{color:"var(--orange)"}}>{b.due}</b><small>{"Due today"}</small></div>
+      <div className="crd mm-stat"><b className="out" style={{color:"var(--green)"}}>{b.slain}</b><small>{"Slain"}</small>{b.slainWeek>0&&<em>{"+"+b.slainWeek+" this week"}</em>}</div>
+    </div>
+    {b.due>0&&<button className="btn1 out" style={{marginBottom:14}} onClick={function(){p.go("hunt");}}>{"Hunt "+hunt+" due creature"+(hunt>1?"s":"")}</button>}
+    {b.slain===0&&<div className="crd mm-rules">
+      <div className="out" style={{fontWeight:800,fontSize:13}}>{"How the hunt works"}</div>
+      <ol>{BESTIARY_RULES.map(function(r,i){return <li key={i}>{r}</li>;})}</ol>
+    </div>}
+    {b.lurking===0&&<p style={{color:"var(--t3)",fontSize:12,lineHeight:1.6,fontStyle:"italic",textAlign:"center",margin:"18px 8px"}}>{"No creature yet. Every mistake you make in the Grammar Drill, the Daily Challenge, the Exam Simulation, Part 6, Part 7 or Listening lands here."}</p>}
+    {b.groups.map(function(g){
+      var all=!!open[g.key],shown=all?g.items:g.items.slice(0,3),more=g.items.length-shown.length;
+      return(<div key={g.key} className="crd mm-group">
+        <div className="mm-group-head"><b className="out">{lk?lk.groupLabel(g):(g.cat||"…")}</b><small>{g.items.length}</small>{g.due>0&&<span className="mm-due out">{g.due+" due"}</span>}</div>
+        {shown.map(function(it){
+          var tier=tierOf(it);
+          return(<div key={it.k} className="mm-crea">
+            <span className="mm-crea-ic"><GIcon name={TIERS[tier].icon} size={17} color={tier==="wyrm"?"var(--red)":tier==="stalker"?"var(--orange)":"var(--t2)"}/></span>
+            <div className="mm-crea-body"><div className="mm-crea-q">{title(it.k)}</div><div className="mm-crea-meta">{creatureMeta(it,now)}</div></div>
+            <span className="mm-pips" title="Spaced hits">{[0,1,2].map(function(i){return <i key={i} className={i<it.box?"on":""}/>;})}</span>
+          </div>);
+        })}
+        {more>0&&<button className="mm-more" onClick={function(){setOpen(Object.assign({},open,{[g.key]:true}));}}>{"and "+more+" more"}</button>}
+      </div>);
+    })}
+  </div>);
+}
+// ═══════════════════════════════════════════════════════════════════════
+// Camp — où j'en suis (lot 4) : la maîtrise RÉCENTE par partie (lib/learnerModel.js, demi-vie 14 j),
+// triée par points en jeu, comme le plan. Avant, la précision cumulée à vie : un élève passé de 45 à
+// 80 % lisait 68 % ici pendant que sa quête lui disait autre chose.
+// ═══════════════════════════════════════════════════════════════════════
+function Camp(p){
+  var u=p.u,now=new Date(),focusPart=stakePart(u,now);
+  var st=stakes(u,now),measured=st.filter(function(s){return s.acc!=null;}),unmeasured=st.length-measured.length;
+  var est=estimateTOEICScore(u.moduleScores||{}).total;
+  return(<div>
+    <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:14}}>
+      <div className="out" style={{fontSize:30,fontWeight:900,color:"var(--cyan)"}}>{est!==null?est:"—"}</div>
+      <div style={{fontSize:11,color:"var(--t2)"}}>{"estimated TOEIC"}</div>
+    </div>
+    {measured.length===0
+      ?<p style={{color:"var(--t2)",fontSize:12,lineHeight:1.5}}>{"Train a few sessions to unlock the Mentor's diagnosis."}</p>
+      :measured.map(function(s){
+        var pct=Math.round(s.acc*100);
+        var col=pct>=85?"var(--green)":pct>=70?"var(--cyan)":pct>=50?"var(--orange)":"var(--red)";
+        var isFocus=focusPart===s.part;
+        var sub=s.source==="scan"?"From your Battle Scan: train it to measure it."
+          :s.pts>0?"About "+s.pts+" points to gain"+(u.targetToeic?" toward "+u.targetToeic:"")+"."
+          :"On target.";
+        return(<button key={s.part} onClick={function(){p.go(PART_MOD[s.part]);}}
+          style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:6,width:"100%",background:isFocus?"rgba(245,158,11,.08)":"var(--bg2)",border:"1px solid "+(isFocus?"rgba(245,158,11,.35)":"var(--bdr)"),borderRadius:10,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>{PART_LABEL[s.part]}{isFocus&&<span style={{marginLeft:6,fontSize:10,color:"var(--orange)"}}>{"· +25% today"}</span>}</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
+              <div style={{flex:1,height:4,borderRadius:2,background:"rgba(0,0,0,.15)",overflow:"hidden"}}>
+                <div style={{width:Math.min(100,pct)+"%",height:"100%",background:col,transition:"width .3s"}}/>
+              </div>
+              <span className="out" style={{fontSize:11,fontWeight:700,color:col,minWidth:30,textAlign:"right"}}>{pct+"%"}</span>
+            </div>
+            <div style={{fontSize:10,color:"var(--t3)",marginTop:3}}>{sub}</div>
+          </div>
+          <span style={{fontSize:14,color:"var(--t3)"}}>{"›"}</span>
+        </button>);
+      })
+    }
+    {unmeasured>0&&measured.length>0&&<div style={{fontSize:11,color:"var(--t3)",marginTop:8,fontStyle:"italic"}}>{unmeasured+" part"+(unmeasured>1?"s":"")+" not yet measured — train them to unlock their score."}</div>}
+
+    {/* ─── Grammar deep dive — Personalization Phase 2 (2026-05-06) ───
+       Les 4 macros de data/placement.js (source unique depuis le lot 1, avec Pronouns, Quantifiers &
+       Determiners et Parallel Structure qui manquaient ici). Chiffres cumulés (catStats du Drill) : la
+       série par catégorie (`cs`) n'existe que depuis le 2026-09-17, elle laisserait la liste vide. */}
+    {(function(){
+      var ds=u.moduleScores&&u.moduleScores.drill;
+      var cs=(ds&&ds.catStats)||{};
+      var hasGrammar=Object.keys(cs).some(function(k){return cs[k]&&cs[k].total>=5;});
+      // Phase D (scan-v2): fall back to Battle Scan grammar macros when no drill data exists.
+      var scanMacros=u.battleScan&&u.battleScan.subScores&&u.battleScan.subScores.grammarMacros;
+      if(!hasGrammar&&!scanMacros)return null;
+      var macroData=MACROS.map(function(m){
+        var sumC=0,sumT=0;
+        var subs=m.subcats.map(function(c){var s=cs[c];if(!s||s.total<1)return{cat:c,acc:null,n:0};sumC+=s.correct;sumT+=s.total;return{cat:c,acc:s.correct/s.total,n:s.total};});
+        if(sumT===0){
+          if(scanMacros&&typeof scanMacros[m.id]==="number")return{key:m.label,icon:m.icon,acc:scanMacros[m.id],n:2,weakest:null,source:"scan"};
+          return null;
+        }
+        var weakest=subs.filter(function(s){return s.acc!==null&&s.n>=3;}).sort(function(a,b){return a.acc-b.acc;})[0];
+        return{key:m.label,icon:m.icon,acc:sumC/sumT,n:sumT,weakest:weakest,source:"trained"};
+      }).filter(Boolean).sort(function(a,b){return a.acc-b.acc;});
+      if(macroData.length===0)return null;
+      return(<div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--bdr)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <GIcon name="scroll-quill" size={16} color="var(--purple)"/>
+          <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{"Grammar deep dive"}</div>
+        </div>
+        <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,lineHeight:1.5}}>{"Tap a topic to drill it. The picker weights toward your weaknesses."}</div>
+        {macroData.map(function(m){
+          var pct=Math.round(m.acc*100);
+          var col=pct>=85?"var(--green)":pct>=70?"var(--cyan)":pct>=50?"var(--orange)":"var(--red)";
+          return(<button key={m.key} onClick={function(){p.go("drill");}}
+            style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:6,width:"100%",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+            <GIcon name={m.icon} size={18} color={col}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>{m.key}</span>
+                <span className="out" style={{fontSize:11,fontWeight:700,color:col}}>{pct+"%"}</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
+                <div style={{flex:1,height:4,borderRadius:2,background:"rgba(0,0,0,.15)",overflow:"hidden"}}>
+                  <div style={{width:Math.min(100,pct)+"%",height:"100%",background:col,transition:"width .3s"}}/>
+                </div>
+              </div>
+              {m.weakest&&<div style={{fontSize:10,color:"var(--t3)",marginTop:3}}>{"weakest : "+m.weakest.cat+" ("+Math.round(m.weakest.acc*100)+"%)"}</div>}
+              {m.source==="scan"&&<div style={{fontSize:10,color:"var(--t3)",marginTop:3,fontStyle:"italic"}}>{"from your Battle Scan — train Drill to refine"}</div>}
+            </div>
+          </button>);
+        })}
+      </div>);
+    })()}
+  </div>);
+}
+// ═══════════════════════════════════════════════════════════════════════
+// Mentor tab — Personalization Phase 1 hub (2026-05-05), la mémoire depuis le 2026-09-18.
+// First-open trigger fires the Aldric "mentor_intro" narrator moment via the parent App's
+// narratorQueue (passed as prop). `initialSheet` : "path" quand on arrive du bandeau de Home.
 // ═══════════════════════════════════════════════════════════════════════
 export function Mentor(p){
   var u=p.u;
-  var[sheet,setSheet]=useState(null); // null | "goal" | "mission" | "focus" | "camp"
-  // Per-part data — used for the Camp sheet ("Where you stand" breakdown).
-  var focus=computeTodayFocus(u);
-  var pa=partAccuracies(u.moduleScores||{},bsScanParts(u));
-  var labels={p1:"Part 1 — Photographs",p2:"Part 2 — Q&R",p3:"Part 3 — Conversations",p4:"Part 4 — Talks",p5:"Part 5 — Grammar & Vocab",p6:"Part 6 — Text Completion",p7:"Part 7 — Reading",vocab:"Vocabulary"};
-  var reco={p1:"lisP1",p2:"lisP2",p3:"lisP3",p4:"lisP4",p5:"drill",p6:"p6",p7:"p7",vocab:"tavern"};
-  var measured=[],unmeasured=[];
-  Object.keys(pa).forEach(function(k){
-    var d=pa[k];
-    if(d&&d.n>=10)measured.push({k:k,acc:d.acc,n:d.n});
-    else unmeasured.push({k:k,n:(d&&d.n)||0});
-  });
-  measured.sort(function(a,b){return a.acc-b.acc;});
-
+  var[sheet,setSheet]=useState(p.initialSheet==="path"?"path":null); // null | "goal" | "path" | "camp"
+  var[lair,setLair]=useState(false);
+  function go(modId){setSheet(null);if(p.nav)p.nav(modId);}
+  if(lair)return <Lair u={u} go={go} back={function(){setLair(false);}}/>;
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
       <GIcon name="wizard-staff" size={28} color="var(--cyan)"/>
@@ -412,137 +462,22 @@ export function Mentor(p){
     </div>
     <p style={{color:"var(--t2)",fontSize:12,marginBottom:14,lineHeight:1.5,fontStyle:"italic"}}>{"Tap a sigil on the map to act on it."}</p>
 
-    {/* The illustrated map with 4 hotspots + Aldric (clickable replay).
-        The bottom replay button was dropped : Aldric on the map IS the replay
-        affordance, no need for a duplicate CTA below the tab bar. */}
+    {/* The illustrated map with 4 sigils + Aldric (clickable replay). */}
     <MentorMap u={u}
-      onHotspotTap={function(id){setSheet(id);}}
+      onHotspotTap={function(id){if(id==="lair")setLair(true);else setSheet(id);}}
       onAldricTap={p.replayNarrator?function(){p.replayNarrator("mentor_intro");}:null}/>
 
-    {/* ── Bottom sheets per hotspot ─────────────────────────────────────── */}
+    {/* ── Bottom sheets per sigil ─────────────────────────────────────── */}
     <MentorSheet open={sheet==="goal"} onClose={function(){setSheet(null);}} title="The Distant Peak — your goal">
       <MentorGoalCard u={u} setUser={p.setUser}/>
     </MentorSheet>
 
-    <MentorSheet open={sheet==="mission"} onClose={function(){setSheet(null);}} title="Today's Path — your daily mission">
-      <MentorDailyMission u={u} nav={function(modId){setSheet(null);if(p.nav)p.nav(modId);}}/>
-    </MentorSheet>
-
-    <MentorSheet open={sheet==="focus"} onClose={function(){setSheet(null);}} title="The Crossroads — today's focus">
-      {focus
-        ?<TodayFocusBanner u={u} nav={function(modId){setSheet(null);if(p.nav)p.nav(modId);}}/>
-        :<p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5,padding:"4px 2px"}}>{measured.length===0?"Train at least 20 questions to unlock today's focus.":"All your areas look steady — no clear weak spot to surface today. Keep training !"}</p>}
+    <MentorSheet open={sheet==="path"} onClose={function(){setSheet(null);}} title="Today's Path">
+      <TodayPath u={u} go={go}/>
     </MentorSheet>
 
     <MentorSheet open={sheet==="camp"} onClose={function(){setSheet(null);}} title="Your Camp — where you stand">
-      <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:14}}>
-        <div className="out" style={{fontSize:30,fontWeight:900,color:"var(--cyan)"}}>{(function(){var tt=estimateTOEICScore(u.moduleScores||{}).total;return tt!==null?tt:"\u2014";})()}</div>
-        <div style={{fontSize:11,color:"var(--t2)"}}>{"estimated TOEIC"}</div>
-      </div>
-      {measured.length===0
-        ?<p style={{color:"var(--t2)",fontSize:12,lineHeight:1.5}}>{"Train a few sessions to unlock the Mentor's diagnosis. We need at least 10 questions per area."}</p>
-        :measured.map(function(it){
-          var pct=Math.round(it.acc*100);
-          var col=pct>=85?"var(--green)":pct>=70?"var(--cyan)":pct>=50?"var(--orange)":"var(--red)";
-          var isFocus=focus&&focus.partId===it.k;
-          return(<button key={it.k} onClick={function(){setSheet(null);if(p.nav)p.nav(reco[it.k]);}}
-            style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:6,width:"100%",background:isFocus?"rgba(245,158,11,.08)":"var(--bg2)",border:"1px solid "+(isFocus?"rgba(245,158,11,.35)":"var(--bdr)"),borderRadius:10,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>{labels[it.k]}{isFocus&&<span style={{marginLeft:6,fontSize:10,color:"var(--orange)"}}>{"· focus"}</span>}</div>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
-                <div style={{flex:1,height:4,borderRadius:2,background:"rgba(0,0,0,.15)",overflow:"hidden"}}>
-                  <div style={{width:Math.min(100,pct)+"%",height:"100%",background:col,transition:"width .3s"}}/>
-                </div>
-                <span className="out" style={{fontSize:11,fontWeight:700,color:col,minWidth:30,textAlign:"right"}}>{pct+"%"}</span>
-              </div>
-            </div>
-            <span style={{fontSize:14,color:"var(--t3)"}}>{"›"}</span>
-          </button>);
-        })
-      }
-      {unmeasured.length>0&&measured.length>0&&<div style={{fontSize:11,color:"var(--t3)",marginTop:8,fontStyle:"italic"}}>{unmeasured.length+" area"+(unmeasured.length>1?"s":"")+" not yet measured — train them to unlock their score."}</div>}
-
-      {/* ─── Grammar deep dive — Personalization Phase 2 (2026-05-06) ───
-         Aggregates the 12 P5 sub-cats into 4 macros (Verbs / Linking / Forms /
-         Reference). Sorted weakest-first. Each row taps to launch Drill where
-         pickAdaptive will weight the question selection toward that macro. */}
-      {(function(){
-        var ds=u.moduleScores&&u.moduleScores.drill;
-        var cs=(ds&&ds.catStats)||{};
-        var hasGrammar=Object.keys(cs).some(function(k){return cs[k]&&cs[k].total>=5;});
-        // Phase D (scan-v2): fall back to Battle Scan grammar macros when no drill data exists.
-        // Maps macro key (capitalized) to scan macroId (lowercase), populated from u.battleScan.subScores.grammarMacros.
-        var scanMacros=u.battleScan&&u.battleScan.subScores&&u.battleScan.subScores.grammarMacros;
-        if(!hasGrammar&&!scanMacros)return null;
-        var macros=[
-          {key:"Verbs",icon:"crossed-swords",scanId:"verbs",subcats:["Tenses","Gerunds vs Infinitives","Passive Voice","Conditionals","Subject-Verb Agreement"]},
-          {key:"Linking",icon:"linked-rings",scanId:"linking",subcats:["Connectors","Prepositions","Collocations"]},
-          {key:"Forms",icon:"quill-ink",scanId:"forms",subcats:["Word Families","Comparatives","Articles"]},
-          {key:"Reference",icon:"family-tree",scanId:"reference",subcats:["Relative Pronouns"]}
-        ];
-        var macroData=macros.map(function(m){
-          var sumC=0,sumT=0;
-          var subs=m.subcats.map(function(c){var s=cs[c];if(!s||s.total<1)return{cat:c,acc:null,n:0};sumC+=s.correct;sumT+=s.total;return{cat:c,acc:s.correct/s.total,n:s.total};});
-          if(sumT===0){
-            // Trained data missing for this macro — fall back to scan baseline if present.
-            if(scanMacros&&typeof scanMacros[m.scanId]==="number"){
-              return{key:m.key,icon:m.icon,acc:scanMacros[m.scanId],n:2,weakest:null,source:"scan"};
-            }
-            return null;
-          }
-          var weakest=subs.filter(function(s){return s.acc!==null&&s.n>=3;}).sort(function(a,b){return a.acc-b.acc;})[0];
-          return{key:m.key,icon:m.icon,acc:sumC/sumT,n:sumT,weakest:weakest,source:"trained"};
-        }).filter(Boolean).sort(function(a,b){return a.acc-b.acc;});
-        if(macroData.length===0)return null;
-        return(<div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--bdr)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-            <GIcon name="scroll-quill" size={16} color="var(--purple)"/>
-            <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{"Grammar deep dive"}</div>
-          </div>
-          <div style={{fontSize:11,color:"var(--t3)",marginBottom:10,lineHeight:1.5}}>{"Tap a topic to drill it. The picker weights toward your weaknesses."}</div>
-          {macroData.map(function(m){
-            var pct=Math.round(m.acc*100);
-            var col=pct>=85?"var(--green)":pct>=70?"var(--cyan)":pct>=50?"var(--orange)":"var(--red)";
-            return(<button key={m.key} onClick={function(){setSheet(null);if(p.nav)p.nav("drill");}}
-              style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:6,width:"100%",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
-              <GIcon name={m.icon} size={18} color={col}/>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--t1)"}}>{m.key}</span>
-                  <span className="out" style={{fontSize:11,fontWeight:700,color:col}}>{pct+"%"}</span>
-                </div>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
-                  <div style={{flex:1,height:4,borderRadius:2,background:"rgba(0,0,0,.15)",overflow:"hidden"}}>
-                    <div style={{width:Math.min(100,pct)+"%",height:"100%",background:col,transition:"width .3s"}}/>
-                  </div>
-                </div>
-                {m.weakest&&<div style={{fontSize:10,color:"var(--t3)",marginTop:3}}>{"weakest : "+m.weakest.cat+" ("+Math.round(m.weakest.acc*100)+"%)"}</div>}
-                {m.source==="scan"&&<div style={{fontSize:10,color:"var(--t3)",marginTop:3,fontStyle:"italic"}}>{"from your Battle Scan — train Drill to refine"}</div>}
-              </div>
-            </button>);
-          })}
-        </div>);
-      })()}
+      <Camp u={u} go={go}/>
     </MentorSheet>
   </div>);
-}
-// ═══════════════════════════════════════════════════════════════════════
-// TodayFocusBanner — Mentor banner that surfaces the user's weakest part with
-// a CTA + a +25% XP today badge. Hidden if no focus available (cold start
-// or already strong everywhere).
-// ═══════════════════════════════════════════════════════════════════════
-export function TodayFocusBanner(p){
-  var u=p.u;
-  var focus=computeTodayFocus(u);
-  if(!focus)return null;
-  var accPct=Math.round(focus.acc*100);
-  return(<button onClick={function(){p.nav&&p.nav(focus.recoModId);}}
-    style={{width:"100%",marginBottom:14,padding:"12px 16px",background:"linear-gradient(135deg,rgba(245,158,11,.12),rgba(139,92,246,.08))",border:"1px solid rgba(245,158,11,.3)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:12,fontFamily:"'DM Sans',sans-serif",textAlign:"left"}}>
-    <GIcon name="eye-target" size={24} color="var(--orange)"/>
-    <div style={{flex:1,minWidth:0}}>
-      <div className="out" style={{fontWeight:800,fontSize:13,color:"var(--orange)"}}>{"Today's focus: "+focus.label}</div>
-      <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>{"Your weakest area ("+accPct+"%) — train it now for "}<span className="out" style={{color:"var(--gold)",fontWeight:700}}>{"+25% XP"}</span></div>
-    </div>
-    <span style={{fontSize:18,color:"var(--orange)"}}>{"›"}</span>
-  </button>);
 }

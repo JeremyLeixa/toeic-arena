@@ -78,7 +78,7 @@ Ce que la suite protège, et pourquoi :
 - **`check_planner`** — le plan du jour (`lib/planner.js`) : seuil de la chasse (4 échéances), démarrage
   à froid (< 5 sessions → Battle Scan), quête d'enjeu réservée aux parties mesurées, composition du Drill
   (catégorie visée, catégorie méritée allégée, erreurs dues glissées, **aucune créature tirée au hasard**),
-  tendances hebdomadaires seulement au-dessus de 10 questions par semaine.
+  tendances hebdomadaires seulement au-dessus de 10 questions par semaine, et la **journée figée** (`u.mission` : mission sur la quête 1, série gardée, +25 % sur l'enjeu figé, re-tirage).
 - **`check_festivals`** — fenêtres des thèmes saisonniers (`lib/festivals.js`) : bornes
   incluses en heure locale, Pâques, déc → jan, disjonction jour par jour, opt-out > forçage ;
   un paquet `.fest-<id>` + `.light.fest-<id>` par fête dans `appCss.js`, animations existantes,
@@ -374,7 +374,7 @@ Grammar & Vocab, Tips), Games, Listening et Reading rendent `HubTile` + `HubShel
 - **Frames** : avatar borders/glow CSS (player_rewards `reward_type='frame'`, equipped via `students.frame_id` / `u.equippedFrame`). 8 entries in FRAMES.
 - **Titles** : text label under name (player_rewards `reward_type='title'`, equipped via `students.title_id` / `u.equippedTitle`). 12 entries in TITLES.
 - **Cheat Sheets** : codex pages rendered via GrimoireReader wrapping (player_rewards `reward_type='cheat_sheet'`). 3 stubs in CHEAT_SHEETS V1, more content authoring deferred.
-- **Tokens** (stackable consumables) : 7 types in TOKEN_TYPES, stored in dedicated `player_tokens` table (composite PK user×class×type, qty, cap-aware via `grant_token` / `consume_token` SQL helpers). `diminishing_bypass` (cap 5), `streak_shield` (cap 3, **passive auto-consume** at load if 1-day gap detected), `daily_reroll` (cap 1, clickable from Collection → resets `u.mission`), `mock_reset` (cap 2 — semantic deferred), `boss_reset` (cap 1, in-context CTA on Train Mocks → arms `u.bossResetArmed` → bypasses canUnlockBoss 24h cooldown), `endless_resurrect` (cap 2, in-context CTA → arms `u.endlessResetArmed` → bypasses getEndlessState cooldown), `insight_token` (cap 3, parking slot — drops 30% on Légendaire only, no consumption logic yet).
+- **Tokens** (stackable consumables) : 7 types in TOKEN_TYPES, stored in dedicated `player_tokens` table (composite PK user×class×type, qty, cap-aware via `grant_token` / `consume_token` SQL helpers). `diminishing_bypass` (cap 5), `streak_shield` (cap 3, **passive auto-consume** at load if 1-day gap detected), `daily_reroll` (cap 1, clickable from Collection → moves the mission to the next quest of the frozen plan, see « Mentor qui se souvient »), `mock_reset` (cap 2 — semantic deferred), `boss_reset` (cap 1, in-context CTA on Train Mocks → arms `u.bossResetArmed` → bypasses canUnlockBoss 24h cooldown), `endless_resurrect` (cap 2, in-context CTA → arms `u.endlessResetArmed` → bypasses getEndlessState cooldown), `insight_token` (cap 3, parking slot — drops 30% on Légendaire only, no consumption logic yet).
 
 #### V2 segmented drop tables (DROP_TABLES in chests.js)
 - **Novice** : 50-150 XP + 1 token (Bypass/Shield/Reroll)
@@ -503,7 +503,7 @@ module sans compte : `prototypes/mimic-hunt/real.html`.
   achievements, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
   direct vers les Parts 3 et 4, et un poids Listening).
 
-### Mentor qui se souvient : bestiaire et chasse aux erreurs (2026-09-17/18, lots 1-3)
+### Mentor qui se souvient : bestiaire, chasse, plan du jour (2026-09-17/18, lots 1-4)
 Proto `prototypes/mentor-memory/` (storyboard des 8 moments, décisions de Jérémy dans son README) ; banc de
 la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la prochaine réussite tue, `empty=1`).
 - **Colonne `students.review` jsonb** (`2026-09-17_mentor_memory.sql`, avec `letter_seen`) :
@@ -523,8 +523,30 @@ la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la pro
   `huntDone` reçoit le bestiaire mis à jour : le module travaille sur une copie.
 - `lib/reviewLookup.js` importe listening, part6 et part7 : **jamais d'import statique hors d'un écran lazy**
   (le bundle principal les tirerait) ; `lib/review.js`, lui, reste sans données.
-- Reste (lots 4-6) : l'entrée (repère « Lair » du Mentor, plan du jour, pastille d'onglet), la mémoire dans la
-  question du Drill, la cérémonie « faiblesse devenue force », la lettre du lundi, la Chronique.
+- **Plan du jour FIGÉ dans `u.mission`** (lot 4, 2026-09-18 ; jsonb existant, aucune migration) : `App()` le
+  pose une fois par jour dans un effet (`lib/planner.js dayMission`, deps primitives, jamais pendant le
+  chargement), avec `quests` (primitives, `thawQuest` réhydrate catégorie et macro), `pick` (la quête qui
+  porte la mission, 0 sauf re-tirage), `actId = quests[pick].mod`, et garde `streak`/`lastDoneDate` (coffre
+  `mission_streak`). Recalculé à chaque ouverture, le plan bougeait sous les yeux de l'élève. **Tout le lit** :
+  feuille « Today's Path » (quêtes cochées par `questDone` : la quête-mission quand `mission.done`, les autres
+  quand leur module a été joué aujourd'hui), bandeau de Home (`homeStrip`), pastille de l'onglet Mentor,
+  `NextStepReco` (prochaine quête non faite), et le **+25 % du Focus** : `stakePart` → `ctx.focusPart` de
+  `gateSteps` (`computeTodayFocus`, précision la plus basse, est supprimé). `checkMission` inchangé.
+- **Mentor** : cinq repères (Peak, Path, Lair, Camp, Aldric). « The Crossroads » disparaît (le Focus est la quête
+  « enjeu »). Le **Lair** est une vue pleine page du Mentor (pas de route) qui charge `reviewLookup.js` par
+  `import()` ; `lookupRef(k).title` = la ligne du bestiaire (question entendue en P2, extrait autour du trou en
+  P6, numéro de photo en P1 — jamais la bonne réponse). Le Camp montre la maîtrise **récente** par partie, triée
+  par points en jeu ; la liste de grammaire garde les `catStats` cumulées (la série `cs` n'existe que depuis le
+  2026-09-17). Home : un seul bandeau d'une ligne sous la carte Niveau/Ligue (créneau `path` de `pulseSlot`),
+  qui ouvre la feuille (`openPath` → `sSPA("path")` → `Mentor initialSheet`). `Tabs badge="mentor"` tant que la
+  mission attend ; jamais un verrou.
+- **Jeton `daily_reroll`** : `rerollMission` déplace la mission sur la quête suivante (l'ordre ne bouge pas) ;
+  mission faite ou quête unique → le jeton n'est pas consommé.
+- Banc des vrais écrans : `prototypes/mentor-memory/app.html` (Home, Mentor, onglets ; `p=lea|karim|ines`,
+  `v=home|mentor|path|camp`, `done=1`, `reroll=1`, `mode=light`), horloge figée au 21/09/2026 (`clock.js`).
+- Reste (lots 5-6) : la mémoire dans la question du Drill et le Drill composé par le plan (les échéances < 4
+  n'y sont pas encore glissées : seule la chasse les repose), la cérémonie « faiblesse devenue force », la lettre
+  du lundi, la Chronique, et l'Insight Token (`generateInsight` lit encore la précision cumulée).
 
 ### Grimoire pattern (applies to Gauntlet + G&V grimoires)
 - **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.

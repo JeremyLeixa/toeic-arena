@@ -1,5 +1,5 @@
 // La voix d'Aldric (2026-09-17, proto prototypes/mentor-memory/). PUR, à côté de lib/sessionText.js.
-// Testé par tests/check_mentor_voice.cjs. Textes en ANGLAIS (politique de langue : l'appli principale).
+// Testé par tests/check_mentor_voice.cjs (lot 4). Textes en ANGLAIS (politique de langue : l'appli principale).
 //
 // RÈGLE D'OR : Aldric ne dit que ce que les données prouvent, et ne parle que quand c'est notable.
 // Chaque phrase d'ici n'est produite que si son seuil (lib/learnerModel.js, lib/planner.js) est
@@ -7,7 +7,8 @@
 // stable (nom + jour) : deux élèves de la même promo ne lisent pas la même phrase le même jour.
 import { today } from "./util.js";
 import { PART_LABEL, PART_SHORT, PART_ICON, addDays, daysBetween, fmtDay, weekdayName, recentWindow } from "./learnerModel.js";
-import { BOX_DAYS, WYRM_MISS, TIERS, tierOf, slainOn, huntReward } from "./review.js";
+import { BOX_DAYS, WYRM_MISS, TIERS, tierOf, slainOn, huntReward, bestiary, dueItems } from "./review.js";
+import { todayMission, questDone } from "./planner.js";
 
 function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 export function pickLine(arr, seed) { return arr[hash(String(seed)) % arr.length]; }
@@ -18,11 +19,32 @@ function listJoin(a) { return a.length <= 1 ? a.join("") : a.slice(0, -1).join("
 function be(name) { return /s$/.test(name) ? "are" : "is"; }
 
 // ═══ Home : le bandeau d'une ligne (Home ne gagne rien d'autre, décision du 2026-09-17) ═══
-export function homeStrip(plan) {
-  var n = plan.quests.length, due = plan.due.length, parts = [];
+// Lu sur la journée FIGÉE (u.mission, lib/planner.js) : il compte les quêtes qui restent, pas un plan
+// recalculé. null tant que la mission du jour n'est pas posée (App() la pose au chargement).
+export function homeStrip(u, now) {
+  var m = todayMission(u, now);
+  if (!m) return null;
+  var due = dueItems(u, now).length, n = m.quests.length, parts = [];
+  var left = m.quests.filter(function (q, i) { return !questDone(u, m, i, now); }).length;
   if (due) parts.push(plural(due, "mistake") + " due");
-  parts.push(n + " quest" + (n === 1 ? "" : "s") + (due ? "" : " today"));
-  return { text: parts.join(" · ") + (plan.cold ? " · from your scan" : ""), tone: due ? "due" : "plain" };
+  if (!n) parts.push("All steady today");
+  else if (!left) parts.push("Today's path complete");
+  else parts.push(plural(left, "quest") + (left < n ? " left" : due ? "" : " today"));
+  return { text: parts.join(" · ") + (m.cold && left ? " · from your scan" : ""), tone: due ? "due" : "plain", pending: !!n && !m.done };
+}
+// Les repères de la carte du Mentor (Peak, Path, Lair, Camp). `est` : l'estimation TOEIC (App/Mentor la
+// calculent déjà, lib/toeic.js), null si non estimable.
+export function mapBadges(u, now, est) {
+  var d = today(now), m = todayMission(u, now), b = bestiary(u, now), n = m ? m.quests.length : 0;
+  var left = m ? m.quests.filter(function (q, i) { return !questDone(u, m, i, now); }).length : 0;
+  var daysLeft = u.targetToeic && u.targetDate ? daysBetween(d, u.targetDate) : null;
+  return {
+    goal: { label: u.targetToeic ? "The Distant Peak" : "Set destination", value: u.targetToeic ? u.targetToeic + " · " + (daysLeft >= 0 ? daysLeft + "d" : "past") : "?", tone: u.targetToeic ? "active" : "muted" },
+    // « Complete » seulement quand tout le chemin est fait ; la mission seule faite, on le dit tel quel.
+    path: { label: "Today's Path", value: !m ? "…" : !n ? "All steady" : !left ? "Complete ✓" : m.done ? "Mission done ✓" : plural(n, "quest") + " · +15 XP", tone: !n ? "muted" : m.done ? "done" : "active" },
+    lair: { label: "The Lair", value: b.due > 0 ? b.due + " due" : b.lurking > 0 ? b.lurking + " lurking" : "Empty", tone: b.due > 0 ? "active" : "muted" },
+    camp: { label: "Your Camp", value: (est == null ? "—" : est) + " TOEIC", tone: "active" },
+  };
 }
 // Tête de la feuille « Today's Path » : c'est là que la mémoire de la veille est dite (au-dessus du
 // pseudo sur Home, elle ne convainquait pas).
@@ -38,22 +60,22 @@ export function planIntro(u, plan, now) {
 }
 
 // ═══ Les quêtes ═══
-// L'étiquette porte la récompense : la 1re quête EST la mission du jour (+15 XP), la quête « enjeu »
-// porte le +25 % de l'ancien Today's Focus.
-function questTag(q, i, info) {
+// L'étiquette porte la récompense : la quête qui porte la mission du jour (la 1re, sauf re-tirage)
+// dit « +15 XP », la quête « enjeu » porte le +25 % de l'ancien Today's Focus.
+function questTag(q, mission, info) {
   var r = [];
-  if (i === 0) r.push("+15 XP");
-  if (q.kind === "stake") r.push(i === 0 ? "+25%" : "+25% XP");
+  if (mission) r.push("+15 XP");
+  if (q.kind === "stake") r.push(mission ? "+25%" : "+25% XP");
   return r.length ? r.join(" · ") : info;
 }
-export function questView(q, u, i) {
-  i = i || 0;
+// `mission` : true pour la quête qui porte la mission du jour (u.mission.pick).
+export function questView(q, u, mission) {
   var goal = u && u.targetToeic;
   if (q.kind === "hunt") return {
     icon: "broadsword", title: "Hunt " + q.n + " old mistakes",
     why: (q.due > q.n ? q.due + " are due. The oldest " + q.n + " first, the rest can wait a day." : "They're due today. Beat them before they settle in.")
       + " About " + Math.max(5, q.n) + " minutes.",
-    tag: questTag(q, i, "~" + Math.max(5, q.n) + " min"),
+    tag: questTag(q, mission, "~" + Math.max(5, q.n) + " min"),
   };
   if (q.kind === "stake") {
     var t = q.part === "p5" && q.cat ? "Part 5 · " + q.cat.cat : PART_LABEL[q.part];
@@ -63,21 +85,21 @@ export function questView(q, u, i) {
       var w = recentWindow(q.cat.series, 12);
       why += " " + q.cat.cat + " " + be(q.cat.cat) + " the weakest link: " + w.c + " of your last " + w.t + ".";
     }
-    return { icon: PART_ICON[q.part], title: t, why: why, tag: questTag(q, i, toPct(q.acc) + "% now") };
+    return { icon: PART_ICON[q.part], title: t, why: why, tag: questTag(q, mission, toPct(q.acc) + "% now") };
   }
   if (q.kind === "keep") return {
     icon: PART_ICON[q.part], title: "Keep " + PART_SHORT[q.part] + " sharp",
     why: "Your strongest part, but " + q.days + " days without practice. Memory fades.",
-    tag: questTag(q, i, q.days + " days"),
+    tag: questTag(q, mission, q.days + " days"),
   };
   if (q.kind === "confirm") return {
     icon: q.macro ? q.macro.icon : PART_ICON[q.part], title: q.macro ? "Part 5 · " + q.macro.label : PART_LABEL[q.part],
     why: "Your Battle Scan flagged this (" + toPct(q.scanAcc) + "%). Let's check it with real questions.",
-    tag: questTag(q, i, "from your scan"),
+    tag: questTag(q, mission, "from your scan"),
   };
   if (q.kind === "explore") return {
     icon: PART_ICON[q.part], title: "Try " + PART_LABEL[q.part],
-    why: "Not measured yet. One session and I'll know where you stand.", tag: questTag(q, i, "new"),
+    why: "Not measured yet. One session and I'll know where you stand.", tag: questTag(q, mission, "new"),
   };
   return { icon: "info", title: q.kind, why: "", tag: "" };
 }

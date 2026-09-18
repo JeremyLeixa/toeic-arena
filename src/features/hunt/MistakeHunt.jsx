@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GIcon } from "../../components/icons.jsx";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
+import { NextStepReco } from "../../components/NextStepReco.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { SessionTop, AnswerCard, NextBar, ListenDisc, ComboBanner } from "../../components/SessionHud.jsx";
 import { useSessionTrack } from "../../components/useSessionTrack.js";
@@ -152,6 +153,7 @@ export function MistakeHunt(p) {
             );
           })}
         </div>
+        <NextStepReco u={p.u} fromMod="hunt" nav={function (m, a) { p.closeSession(); p.nav(m, a); }} />
       </SessionResult>
     );
   }
