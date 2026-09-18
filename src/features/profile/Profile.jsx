@@ -17,8 +17,10 @@ import { festivalById, festivalOccurrence, formatFestivalDate, windowFestivalId 
 import { getEffectiveLeague } from "../../lib/league.js";
 import { isPushSubscribed, unsubscribePush, subscribePush } from "../../lib/push.js";
 import { getBioCredId, biometricAvailable, teacherAuth, bioAuthenticate, setDashSession, hasDashSession } from "../../lib/teacherSession.js";
-import { estimateTOEICScore, generateInsight } from "../../lib/toeic.js";
+import { estimateTOEICScore } from "../../lib/toeic.js";
 import { todayMission, rerollMission } from "../../lib/planner.js";
+import { insightText } from "../../lib/mentorVoice.js";
+import { addInsight } from "../../lib/review.js";
 import { tone } from "../../lib/tone.js";
 import { today } from "../../lib/util.js";
 import { NARRATOR_ORDER, NARRATOR_MOMENTS } from "../../narrator.js";
@@ -786,12 +788,12 @@ export function Profile(p){
         // Step 1 : confirm consume
         function doInsight(){
           applyConsume("insight_token",function(){
-            // Generate the insight (heuristic on moduleScores)
-            var insight=generateInsight(u);
-            // Persist insight history on the profile so the user can reread later (V2.1 viewer)
+            // Lot 6 du Mentor (2026-09-18) : le même modèle que le plan du jour (points en jeu, catégorie
+            // la plus faible, bestiaire), et l'insight rangé dans le bestiaire (review.insights), relu dans
+            // la Chronique. Avant : u.insights, mappé dans aucune colonne, perdu au rechargement.
+            var insight=insightText(u,new Date());
             var c=JSON.parse(JSON.stringify(u));
-            c.insights=(c.insights||[]).concat([{date:today(),text:insight}]);
-            if(c.insights.length>20)c.insights=c.insights.slice(-20);
+            c.review=addInsight(c.review,insight,new Date());
             p.setAvatar(c);
             setInsightResult(insight);
           });

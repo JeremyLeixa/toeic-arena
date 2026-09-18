@@ -97,8 +97,23 @@ eq('Aldric remembers (Drill)', V.drillRemember(comp5, res).map((l) => l.text + '
 const wyrm = { role: 'due', ok: false, item: it('drill:g9', 0, 2), cat: 'Pronouns' };
 eq('3e échec : fiche promise seulement si elle existe', [V.questionFeedback(Object.assign({ hasSheet: true }, wyrm, { cat: 'Tenses' })).sheet, V.questionFeedback(wyrm).sheet, /sheet/.test(V.questionFeedback(wyrm).text)], [true, undefined, false]);
 
+// ── 3 ter. La lettre, l'insight, la Chronique (lot 6) ─────────────────────────────────────────
+const WED = new Date('2026-09-23T10:00:00Z');
+const lettered = { name: 'Léa', joinedAt: '2026-08-20', targetToeic: 785, targetDate: '2026-11-06', stats: {},
+  moduleScores: { p7: mod(1, '2026-09-08', 4, 10) } };
+lettered.moduleScores.p7.history.push({ date: '2026-09-15', correct: 6, total: 10 }, { date: '2026-09-17', correct: 8, total: 10 }, { date: '2026-09-09', correct: 5, total: 10 });
+const L6 = V.mondayLetter(lettered, WED, [{ d: '2026-09-07', toeic: 640 }, { d: '2026-09-14', toeic: 662 }]);
+eq('lue un mercredi, la lettre est datée du lundi et raconte la semaine d\'avant', [L6.date, L6.paragraphs[0]], ['Monday, 21 Sept', 'Last week you trained 2 days out of 7: 2 sessions, 20 questions.']);
+eq('… avec l\'allure vers l\'objectif, chiffrée', /To reach 785 by 6 Nov you need about 20 points a week; last week you made \+22\. You're on track\./.test(L6.paragraphs.join(' ')), true);
+const quiet = V.mondayLetter({ name: 'Q', joinedAt: '2026-08-01', stats: {}, moduleScores: { p7: mod(3, '2026-09-01', 5, 10) } }, WED, []);
+eq('semaine sans entraînement : pas de « 0 days out of 7 »', quiet.paragraphs[0], 'Last week the Arena was quiet. It happens: what counts is the next session.');
+const ins6 = V.insightText({ targetToeic: 785, moduleScores: { p7: mod(2, '2026-09-20', 5, 10) } }, NOW);
+eq('insight : la partie où l\'élève perd le plus de points, chiffrée', /^Where you lose the most points: Part 7 — Reading, about \d+ points toward 785\. You're at \d+% there; your goal needs about 79%\./.test(ins6), true);
+eq('insight : aucun trou dans le texte', /undefined|NaN/.test(ins6 + V.insightText({ moduleScores: {} }, NOW)), false);
+eq('Chronique : un insight se lit comme un jalon', V.chronicleEntry({ d: '2026-09-20', kind: 'insight', icon: 'crystal-ball', facts: { text: 'Part 7 first.' } }).title + ' | ' + V.chronicleEntry({ d: '2026-09-20', kind: 'insight', icon: 'crystal-ball', facts: { text: 'Part 7 first.' } }).text, 'Aldric\'s insight | Part 7 first.');
+
 // ── 4. Toutes les icônes existent ──────────────────────────────────────────────────────────────
-const names = new Set();
+const names = new Set(); names.add('crystal-ball'); names.add('quill-ink'); // Chronique (lot 6)
 const cold = withMission({ name: 'C', joinedAt: '2026-09-19', stats: {}, moduleScores: { drill: mod(2, '2026-09-20', 5, 10) },
   battleScan: { subScores: { grammarMacros: { verbs: 0.4, linking: 0.7 }, parts: { p3: 0.5, p7: 0.52 } } } });
 [u1, cold].forEach((u) => u.mission.quests.forEach((fq, i) => names.add(V.questView(P.thawQuest(fq, u, NOW), u, i === 0).icon)));

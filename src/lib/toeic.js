@@ -1,5 +1,4 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { MISSION_MODULES } from "../data/placement.js";
 
 // ─── MOCK TEST HELPERS ───
 export function estimateToeic(raw,total){
@@ -227,29 +226,4 @@ export function estimateTOEICScore(ms,opts){
   }
   // A.1 — cas partiel : une seule section calculable.
   return{total:null,listening:(listeningOK&&lisScore!==null)?lisScore:null,reading:(readingOK&&rdScore!==null)?rdScore:null,estimable:"partial",evidence:evidence};
-}
-// V2 — Insight Token heuristic. Picks the module with the lowest accuracy (≥ 20 Q
-// to filter noise) and returns a personalized weakness paragraph. Used by the Insight
-// Token consume flow ; the result is persisted to u.insights for later review.
-export function generateInsight(u){
-  if(!u||!u.moduleScores)return"Not enough data yet. Keep training and come back later.";
-  var weak=null,weakAcc=1.01;
-  Object.keys(u.moduleScores).forEach(function(modId){
-    var m=u.moduleScores[modId];
-    if(!m||(m.total||0)<20)return; // need a meaningful sample
-    var acc=m.correct/m.total;
-    if(acc<weakAcc){weakAcc=acc;weak={modId:modId,acc:acc,total:m.total,sessions:m.sessions||0};}
-  });
-  if(!weak){
-    return"Not enough questions on any single module yet to pinpoint a weak spot (need at least 20 Q per module). Keep mixing exercises and come back to spend this token later.";
-  }
-  var modMeta=MISSION_MODULES.find(function(m){return m.id===weak.modId;});
-  var label=modMeta?modMeta.name:weak.modId;
-  var pct=Math.round(weak.acc*100);
-  var advice;
-  if(pct<40)advice="This is your weakest area — aim for 2-3 targeted sessions this week to close the gap.";
-  else if(pct<60)advice="You're improving, but this module still has room. One focused session a day for 3 days and you'll feel the difference.";
-  else if(pct<75)advice="You know the basics, the leftovers are pure traps. Re-read the explanation after every miss.";
-  else advice="No real measurable weakness here. Move to Mock Tests for a harder format challenge.";
-  return"Weakest spot: "+label+" — "+pct+"% accuracy on "+weak.total+" questions ("+weak.sessions+" sessions). "+advice;
 }

@@ -4,10 +4,13 @@
 import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { estimateTOEICScore } from "../../lib/toeic.js";
-import { MACROS, PART_LABEL, PART_MOD, stakes } from "../../lib/learnerModel.js";
-import { todayMission, thawQuest, questDone, stakePart } from "../../lib/planner.js";
+import { MACROS, PART_LABEL, PART_MOD, stakes, fmtDay } from "../../lib/learnerModel.js";
+import { todayMission, thawQuest, questDone, stakePart, chronicle, letterWeek } from "../../lib/planner.js";
 import { bestiary, TIERS, tierOf, HUNT_CAP } from "../../lib/review.js";
-import { mapBadges, planIntro, planWhy, questView, creatureMeta, BESTIARY_INTRO, BESTIARY_RULES } from "../../lib/mentorVoice.js";
+import { mapBadges, planIntro, planWhy, questView, creatureMeta, chronicleEntry, nextPageLine, BESTIARY_INTRO, BESTIARY_RULES } from "../../lib/mentorVoice.js";
+import { today } from "../../lib/util.js";
+import { MondayLetter } from "./MondayLetter.jsx";
+import { useWeeklySnaps } from "./useWeeklySnaps.js";
 import { hasHeardMoment } from "../../narrator.js";
 import { supabase } from "../../supabase.js";
 import { useState, useEffect } from "react";
@@ -215,19 +218,19 @@ export function MentorMap(p){
         Mentor screen without a hard rectangular border. Stronger on edges,
         clear in the center where the hotspots live. */}
     <div style={{position:"absolute",inset:0,background:"linear-gradient(to right, var(--bg) 0%, transparent 8%, transparent 92%, var(--bg) 100%), linear-gradient(to bottom, var(--bg) 0%, transparent 8%, transparent 92%, var(--bg) 100%)",pointerEvents:"none"}}/>
-    {/* Aldric figure — clickable to replay his Side Chronicle. Position + badge
-        side adapt to the active map layout. */}
-    {p.onAldricTap&&hasHeardMoment(u,"mentor_intro")&&<button onClick={p.onAldricTap}
+    {/* Aldric figure — opens the Chronicle of the student's journey (lot 6, 2026-09-18) ; the replay of
+        his Side Chronicle moved to the foot of that sheet. Position + badge side adapt to the layout. */}
+    {p.onAldricTap&&<button onClick={p.onAldricTap}
       style={{position:"absolute",left:aldricCoords.x+"%",top:aldricCoords.y+"%",transform:"translate(-50%,-50%)",
         width:aldricCoords.w,height:aldricCoords.h,background:"transparent",border:"none",cursor:"pointer",padding:0,
-        borderRadius:8}} aria-label="Replay Aldric's introduction">
+        borderRadius:8}} aria-label="Open your chronicle">
       <span style={Object.assign({position:"absolute",top:"50%",transform:"translateY(-50%)",
         background:"linear-gradient(135deg,rgba(245,235,205,.92),rgba(228,212,170,.88))",
         color:"#3d2814",border:"1px solid rgba(90,58,20,.35)",borderRadius:6,
         padding:"4px 8px",whiteSpace:"nowrap",
         fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:.5,fontWeight:700,textTransform:"uppercase",
         boxShadow:"0 2px 8px rgba(0,0,0,.4)"},aldricBadgePos)}>
-        {"Aldric speaks"}
+        {"Your chronicle"}
       </span>
     </button>}
     {hotspots.map(function(h){
@@ -445,15 +448,61 @@ function Camp(p){
   </div>);
 }
 // ═══════════════════════════════════════════════════════════════════════
+// Chronicle — la feuille du repère Aldric (lot 6, 2026-09-18 ; proto moment 9). Les jalons DATÉS du
+// parcours : rangés dans le bestiaire par sealSession (review.chronicle, history étant bornée) et fusionnés
+// avec ceux qu'on recalcule (lib/planner.js chronicle), les insights du jeton, puis « The next page » : la
+// prochaine quête non faite du plan figé. En pied : la lettre de la semaine et la rediffusion d'Aldric.
+// ═══════════════════════════════════════════════════════════════════════
+function Chronicle(p){
+  var u=p.u,now=new Date(),d=today(now),snaps=useWeeklySnaps(u);
+  var entries=chronicle(u,now,snaps||[]).map(chronicleEntry);
+  var m=todayMission(u,now),ni=m?m.quests.findIndex(function(q,k){return !questDone(u,m,k,now);}):-1;
+  var next=nextPageLine(ni>=0?thawQuest(m.quests[ni],u,now):null,u);
+  return(<div>
+    {entries.length===0&&<p className="mm-intro">{"Your chronicle starts with your first session. I write down what matters, with the date."}</p>}
+    <div className="mm-chron">
+      {entries.map(function(e,i){
+        return(<div key={i} className={"mm-ch"+(e.kind==="turn"?" turn":"")+(e.d===d?" now":"")}>
+          <span className="mm-ch-dot"><GIcon name={e.icon} size={16} color={e.kind==="turn"?"var(--gold)":e.d===d?"var(--cyan)":"var(--t2)"}/></span>
+          <div className="mm-ch-body">
+            <div className="mm-ch-date out">{fmtDay(e.d)}</div>
+            <div className="mm-ch-title out">{e.title}</div>
+            {e.text&&<div className="mm-ch-text">{e.text}</div>}
+          </div>
+        </div>);
+      })}
+      <div className="mm-ch now">
+        <span className="mm-ch-dot"><GIcon name="quill-ink" size={16} color="var(--cyan)"/></span>
+        <div className="mm-ch-body">
+          <div className="mm-ch-date out">{"Today"}</div>
+          <div className="mm-ch-title out">{"The next page"}</div>
+          <div className="mm-ch-text">{next}</div>
+        </div>
+      </div>
+    </div>
+    <div style={{display:"flex",gap:8,marginTop:14}}>
+      <button className="btn2 out" style={{flex:1,fontSize:12}} onClick={p.onLetter}>{"This week's letter"}</button>
+      {p.onReplay&&<button className="btn2 out" style={{flex:1,fontSize:12}} onClick={p.onReplay}>{"Hear Aldric again"}</button>}
+    </div>
+  </div>);
+}
+// ═══════════════════════════════════════════════════════════════════════
 // Mentor tab — Personalization Phase 1 hub (2026-05-05), la mémoire depuis le 2026-09-18.
 // First-open trigger fires the Aldric "mentor_intro" narrator moment via the parent App's
 // narratorQueue (passed as prop). `initialSheet` : "path" quand on arrive du bandeau de Home.
 // ═══════════════════════════════════════════════════════════════════════
 export function Mentor(p){
   var u=p.u;
-  var[sheet,setSheet]=useState(p.initialSheet==="path"?"path":null); // null | "goal" | "path" | "camp"
+  var[sheet,setSheet]=useState(p.initialSheet==="path"||p.initialSheet==="chronicle"?p.initialSheet:null); // null | "goal" | "path" | "camp" | "chronicle"
   var[lair,setLair]=useState(false);
+  var[letter,setLetter]=useState(false);
   function go(modId){setSheet(null);if(p.nav)p.nav(modId);}
+  // Relire la lettre depuis la Chronique la marque lue pour la semaine (App ne la montrera plus sur Home).
+  function closeLetter(action){
+    setLetter(false);
+    if(u.letterSeen!==letterWeek(new Date())&&p.setUser){var c=JSON.parse(JSON.stringify(u));c.letterSeen=letterWeek(new Date());p.setUser(c);}
+    if(action==="plan")setSheet("path");
+  }
   if(lair)return <Lair u={u} go={go} back={function(){setLair(false);}}/>;
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
@@ -465,7 +514,7 @@ export function Mentor(p){
     {/* The illustrated map with 4 sigils + Aldric (clickable replay). */}
     <MentorMap u={u}
       onHotspotTap={function(id){if(id==="lair")setLair(true);else setSheet(id);}}
-      onAldricTap={p.replayNarrator?function(){p.replayNarrator("mentor_intro");}:null}/>
+      onAldricTap={function(){setSheet("chronicle");}}/>
 
     {/* ── Bottom sheets per sigil ─────────────────────────────────────── */}
     <MentorSheet open={sheet==="goal"} onClose={function(){setSheet(null);}} title="The Distant Peak — your goal">
@@ -479,5 +528,12 @@ export function Mentor(p){
     <MentorSheet open={sheet==="camp"} onClose={function(){setSheet(null);}} title="Your Camp — where you stand">
       <Camp u={u} go={go}/>
     </MentorSheet>
+
+    <MentorSheet open={sheet==="chronicle"} onClose={function(){setSheet(null);}} title="The Chronicle of your journey">
+      <Chronicle u={u} onLetter={function(){setSheet(null);setLetter(true);}}
+        onReplay={p.replayNarrator&&hasHeardMoment(u,"mentor_intro")?function(){setSheet(null);p.replayNarrator("mentor_intro");}:null}/>
+    </MentorSheet>
+
+    {letter&&<MondayLetter u={u} reread onClose={closeLetter}/>}
   </div>);
 }

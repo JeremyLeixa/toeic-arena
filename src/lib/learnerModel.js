@@ -21,6 +21,9 @@ export function addDays(d, n) { return new Date(Date.parse(d) + n * 864e5).toISO
 export function daysBetween(a, b) { return Math.round((Date.parse(b) - Date.parse(a)) / 864e5); }
 var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
 var WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+// Le lundi de la semaine de `d` (dates ISO en UTC, comme today()). Clé de la lettre du lundi
+// (letter_seen) et des compteurs hebdomadaires du bestiaire.
+export function mondayOf(d) { return addDays(d, -((new Date(Date.parse(d)).getUTCDay() + 6) % 7)); }
 export function fmtDay(d) { var x = new Date(Date.parse(d)); return x.getUTCDate() + " " + MONTHS[x.getUTCMonth()]; }
 export function weekdayName(d) { return WEEKDAYS[new Date(Date.parse(d)).getUTCDay()]; }
 

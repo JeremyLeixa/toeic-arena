@@ -15,7 +15,7 @@
 // Pas de données ici (le texte des questions vit dans lib/reviewLookup.js, chargé à la demande) : le
 // Mentor et App() n'ont pas à tirer listening.js et part7.js dans le bundle principal.
 import { today } from "./util.js";
-import { addDays } from "./learnerModel.js";
+import { addDays, mondayOf } from "./learnerModel.js";
 
 // Ratée → demain ; réussie → 3 jours, puis 7 ; 3e réussite espacée = vaincue.
 export var BOX_DAYS = [1, 3, 7];
@@ -59,6 +59,7 @@ export function reviewMiss(rv, ref, now) {
     it.box = 0; it.last = d; it.due = addDays(d, it.fails >= WYRM_MISS ? 2 : BOX_DAYS[0]);
   } else {
     rv.items.push({ k: k, cat: ref.cat || null, part: ref.part || null, first: d, last: d, miss: 1, fails: 1, box: 0, due: addDays(d, BOX_DAYS[0]) });
+    tally(rv, d, "caught");
   }
   rv.log.push({ d: d, k: k, e: "miss" });
   return rv;
@@ -69,7 +70,7 @@ export function reviewHit(rv, k, now) {
   if (i < 0) return null;
   var it = rv.items[i];
   if (it.box + 1 >= BOX_DAYS.length) {
-    rv.items.splice(i, 1); rv.slain++;
+    rv.items.splice(i, 1); rv.slain++; tally(rv, d, "slain");
     rv.log.push({ d: d, k: k, e: "slain" });
     return "slain";
   }
@@ -136,19 +137,40 @@ export function bestiary(u, now) {
 }
 // La file est bornée avant la sauvegarde (jamais dans supaToLocal : une troncature à la lecture ferait
 // échouer check_profile_roundtrip). Les plus anciennes vaincues partent en premier.
-export var MAX_ITEMS = 120, MAX_LOG = 60;
+// Lot 6 : la même sauvegarde porte aussi les compteurs par semaine (`weeks`, 5 semaines), les jalons
+// datés de la Chronique (`chronicle`, 60) et les insights du jeton (`insights`, 10).
+export var MAX_ITEMS = 120, MAX_LOG = 60, MAX_WEEKS = 5, MAX_CHRONICLE = 60, MAX_INSIGHTS = 10;
 export function boundReview(rv) {
   if (!rv) return newReview();
   if (rv.items.length > MAX_ITEMS) {
     rv.items = rv.items.slice().sort(function (a, b) { return a.due < b.due ? -1 : a.due > b.due ? 1 : 0; }).slice(0, MAX_ITEMS);
   }
   if (rv.log.length > MAX_LOG) rv.log = rv.log.slice(-MAX_LOG);
+  if (rv.weeks) {
+    var keep = Object.keys(rv.weeks).sort().slice(-MAX_WEEKS), w = {};
+    keep.forEach(function (k) { w[k] = rv.weeks[k]; });
+    rv.weeks = w;
+  }
+  if (rv.chronicle && rv.chronicle.length > MAX_CHRONICLE) rv.chronicle = rv.chronicle.slice(-MAX_CHRONICLE);
+  if (rv.insights && rv.insights.length > MAX_INSIGHTS) rv.insights = rv.insights.slice(-MAX_INSIGHTS);
   return rv;
 }
-// Les erreurs d'une session entrent au bestiaire (App() : drillDone, dailyDone, miniSession). `mistakes`
-// est la liste mistakesRef du module, celle de l'écran de fin : seules les entrées qui portent
-// `ref:{k,cat,part}` entrent, les autres (module que la chasse ne sait pas encore reposer) sont ignorées.
-// Modifie `rv` sur place (App() travaille sur une copie du profil) et le rend borné.
+// Compteurs par semaine (clé = le lundi) : créatures attrapées (NOUVELLES seulement) et vaincues. La
+// lettre du lundi les cite ; le journal (MAX_LOG lignes) ne tient pas une semaine active.
+function tally(rv, d, key) {
+  var w = mondayOf(d);
+  if (!rv.weeks) rv.weeks = {};
+  if (!rv.weeks[w]) rv.weeks[w] = { caught: 0, slain: 0 };
+  rv.weeks[w][key]++;
+}
+export function weekTally(u, monday) { return (((u && u.review) || {}).weeks || {})[monday] || null; }
+// Un insight du jeton (lot 6) : rangé dans le bestiaire, relu dans la Chronique. Avant, `u.insights`
+// n'allait dans aucune colonne et disparaissait au rechargement.
+export function addInsight(rv, text, now) {
+  if (!rv || !rv.items) rv = newReview();
+  rv.insights = (rv.insights || []).concat([{ d: today(now), text: text }]);
+  return boundReview(rv);
+}
 // Les créatures battues DANS une autre session (le Drill y glisse les échéances, lot 5) : même effet
 // qu'une réussite en chasse (boîte suivante, vaincue à la 3e). `keys` : les références battues.
 export function recordHits(rv, keys, now) {
@@ -156,6 +178,10 @@ export function recordHits(rv, keys, now) {
   (keys || []).forEach(function (k) { if (k) reviewHit(rv, k, now); });
   return boundReview(rv);
 }
+// Les erreurs d'une session entrent au bestiaire (App() : drillDone, dailyDone, miniSession). `mistakes`
+// est la liste mistakesRef du module, celle de l'écran de fin : seules les entrées qui portent
+// `ref:{k,cat,part}` entrent, les autres (module que la chasse ne sait pas encore reposer) sont ignorées.
+// Modifie `rv` sur place (App() travaille sur une copie du profil) et le rend borné.
 export function recordMisses(rv, mistakes, now) {
   if (!rv || !rv.items) rv = newReview();
   (mistakes || []).forEach(function (m) { if (m && m.ref && m.ref.k) reviewMiss(rv, m.ref, now); });

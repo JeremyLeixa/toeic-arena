@@ -2,7 +2,7 @@
 // et src/components/Tabs.jsx, sans base ni compte, sur un élève simulé du proto. La mission du jour est
 // posée comme dans App() (lib/planner.js dayMission). Les onglets Home ↔ Mentor marchent ; un tap sur une
 // quête ou « Hunt » affiche la destination au lieu de naviguer.
-//   p=lea|karim|ines  v=home|mentor|path|camp  mode=dark|light  skin=<id>
+//   p=lea|karim|ines  v=home|mentor|path|camp|chronicle|letter  mode=dark|light  skin=<id>
 //   done=1 (mission faite)  reroll=1 (mission déplacée sur la quête 2)
 import "./clock.js";
 import { StrictMode, useState } from "react";
@@ -11,6 +11,7 @@ import { CSS } from "../../src/styles/appCss.js";
 import { Tabs } from "../../src/components/Tabs.jsx";
 import { Home } from "../../src/features/home/Home.jsx";
 import { Mentor } from "../../src/features/mentor/Mentor.jsx";
+import { MondayLetter } from "../../src/features/mentor/MondayLetter.jsx";
 import { dayMission, rerollMission, todayMission } from "../../src/lib/planner.js";
 import { today } from "../../src/lib/util.js";
 import { buildPersona } from "./personas.js";
@@ -32,8 +33,9 @@ function makeUser() {
 
 function Bench() {
   var [u, setU] = useState(makeUser);
-  var [tab, setTab] = useState(V0 === "home" ? "home" : "mentor");
-  var [sheet, setSheet] = useState(V0 === "path" ? "path" : null);
+  var [tab, setTab] = useState(V0 === "home" || V0 === "letter" ? "home" : "mentor");
+  var [sheet, setSheet] = useState(V0 === "path" || V0 === "chronicle" ? V0 : null);
+  var [letter, setLetter] = useState(V0 === "letter");
   var [went, setWent] = useState(null);
   var m = todayMission(u, new Date());
   var badge = m && m.quests.length && !m.done ? "mentor" : null;
@@ -49,6 +51,7 @@ function Bench() {
         {tab === "mentor" && <Mentor key={sheet || "none"} u={u} nav={nav} tabGo={setTab} initialSheet={sheet}
           setUser={setU} replayNarrator={function () {}} />}
       </div>
+      {letter && tab === "home" && <MondayLetter u={u} onClose={function (a) { setLetter(false); if (a === "plan") { setSheet("path"); setTab("mentor"); } }} />}
       {went && <div id="bench-went" style={{ position: "fixed", top: 8, left: 8, right: 8, zIndex: 99999, padding: "8px 12px", borderRadius: 10, background: "#111", color: "#fff", fontSize: 12 }}
         onClick={function () { setWent(null); }}>{"→ nav(\"" + went + "\") — tap to dismiss"}</div>}
       <Tabs cur={tab} go={function (t) { setSheet(null); setTab(t); }} badge={badge} />

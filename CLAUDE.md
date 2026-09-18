@@ -376,7 +376,7 @@ Grammar & Vocab, Tips), Games, Listening et Reading rendent `HubTile` + `HubShel
 - **Frames** : avatar borders/glow CSS (player_rewards `reward_type='frame'`, equipped via `students.frame_id` / `u.equippedFrame`). 8 entries in FRAMES.
 - **Titles** : text label under name (player_rewards `reward_type='title'`, equipped via `students.title_id` / `u.equippedTitle`). 12 entries in TITLES.
 - **Cheat Sheets** : codex pages rendered via GrimoireReader wrapping (player_rewards `reward_type='cheat_sheet'`). 3 stubs in CHEAT_SHEETS V1, more content authoring deferred.
-- **Tokens** (stackable consumables) : 7 types in TOKEN_TYPES, stored in dedicated `player_tokens` table (composite PK user×class×type, qty, cap-aware via `grant_token` / `consume_token` SQL helpers). `diminishing_bypass` (cap 5), `streak_shield` (cap 3, **passive auto-consume** at load if 1-day gap detected), `daily_reroll` (cap 1, clickable from Collection → moves the mission to the next quest of the frozen plan, see « Mentor qui se souvient »), `mock_reset` (cap 2 — semantic deferred), `boss_reset` (cap 1, in-context CTA on Train Mocks → arms `u.bossResetArmed` → bypasses canUnlockBoss 24h cooldown), `endless_resurrect` (cap 2, in-context CTA → arms `u.endlessResetArmed` → bypasses getEndlessState cooldown), `insight_token` (cap 3, parking slot — drops 30% on Légendaire only, no consumption logic yet).
+- **Tokens** (stackable consumables) : 7 types in TOKEN_TYPES, stored in dedicated `player_tokens` table (composite PK user×class×type, qty, cap-aware via `grant_token` / `consume_token` SQL helpers). `diminishing_bypass` (cap 5), `streak_shield` (cap 3, **passive auto-consume** at load if 1-day gap detected), `daily_reroll` (cap 1, clickable from Collection → moves the mission to the next quest of the frozen plan, see « Mentor qui se souvient »), `mock_reset` (cap 2 — semantic deferred), `boss_reset` (cap 1, in-context CTA on Train Mocks → arms `u.bossResetArmed` → bypasses canUnlockBoss 24h cooldown), `endless_resurrect` (cap 2, in-context CTA → arms `u.endlessResetArmed` → bypasses getEndlessState cooldown), `insight_token` (cap 3, drops 30% on Légendaire ; consumed from Collection → `insightText`, stored in `review.insights`, reread in the Mentor's Chronicle).
 
 #### V2 segmented drop tables (DROP_TABLES in chests.js)
 - **Novice** : 50-150 XP + 1 token (Bypass/Shield/Reroll)
@@ -505,7 +505,7 @@ module sans compte : `prototypes/mimic-hunt/real.html`.
   achievements, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
   direct vers les Parts 3 et 4, et un poids Listening).
 
-### Mentor qui se souvient : bestiaire, chasse, plan du jour, narration (2026-09-17/18, lots 1-5)
+### Mentor qui se souvient : bestiaire, chasse, plan du jour, narration, lettre, Chronique (2026-09-17/18, lots 1-6)
 Proto `prototypes/mentor-memory/` (storyboard des 8 moments, décisions de Jérémy dans son README) ; banc de
 la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la prochaine réussite tue, `empty=1`).
 - **Colonne `students.review` jsonb** (`2026-09-17_mentor_memory.sql`, avec `letter_seen`) :
@@ -566,8 +566,26 @@ la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la pro
   Impossible avant ~le 27/09 : la règle exige 10 jours entre deux fenêtres de la série `cs`.
 - Bancs : `prototypes/mentor-memory/drill.html` (vrai Drill ; `p=lea|karim|ines`, `fold=1` deux échéances
   glissées dont un 3e échec, `turn=1` cérémonie de démonstration).
-- Reste (lot 6) : la lettre du lundi, la Chronique, l'Insight Token (`generateInsight` lit encore la précision
-  cumulée), et les `ref` des modules non couverts (Gauntlet, Clue, Tavern, Mimic, mini-modules).
+- **Lettre du lundi** (lot 6, 2026-09-18 ; `features/mentor/MondayLetter.jsx`, `mentorVoice.mondayLetter`) :
+  calculée **côté client**, rendue par `App()` au premier passage sur Home de la semaine (`planner.letterDue` :
+  `letterSeen` ≠ le lundi courant, et inscrit avant ce lundi ; jamais par-dessus une session, un coffre, Aldric,
+  une session perdue). Datée du lundi même lue un mercredi, elle raconte la semaine lundi → dimanche d'avant
+  (`weekFacts`, compteurs `review.weeks` : le journal borné à 60 lignes ne tient pas une semaine active),
+  l'allure vers l'objectif depuis les instantanés (`useWeeklySnaps` → RPC `my_weekly_snapshots` →
+  `snapshotSeries` ; échec loggé, la lettre part sans au bout de 2,5 s) et les buts du plan figé. « Later » ou
+  « See today's plan » → `letterSeen` = le lundi (colonne `letter_seen`). Le push `weekly-results` n'en est
+  que l'**accroche** (titre « Aldric's Monday letter ») : ne jamais recalculer la lettre en Deno.
+- **Chronique** (repère Aldric ; la rediffusion de son chapitre passe au pied de la feuille, avec « This
+  week's letter ») : jalons datés **rangés par `sealSession`** (`recordChronicle` → `review.chronicle`, 60)
+  avant que `history`, bornée à 100 sessions, ne les efface ; la vue (`planner.chronicle`) fusionne rangés et
+  recalculés (la date rangée gagne), les insights, puis « The next page ». Créatures vaincues par le compteur
+  total (`review.slain`), pas par le journal.
+- **Jeton Insight** : `mentorVoice.insightText` (points en jeu, catégorie la plus faible, bestiaire) rangé par
+  `addInsight` dans `review.insights` (10), relu dans la Chronique. `generateInsight` (précision cumulée) et
+  `u.insights` (mappé dans aucune colonne, perdu au rechargement) sont supprimés.
+- Bancs : `prototypes/mentor-memory/app.html?v=letter` et `?v=chronicle`.
+- Reste : les `ref` des modules non couverts (Gauntlet, Clue, Tavern, Mimic, mini-modules), et le déploiement
+  de la fonction `weekly-results` modifiée (`supabase functions deploy weekly-results`).
 
 ### Grimoire pattern (applies to Gauntlet + G&V grimoires)
 - **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.
@@ -934,7 +952,7 @@ Visitor mode (no class code) locks premium modules. All content unlocks with a v
 | Function | Schedule | Target |
 |----------|----------|--------|
 | `streak-reminder` | Daily 20h CET | Streak ≥ 2, inactive today |
-| `weekly-results` | Monday 08h CET | Personalized weekly ranking |
+| `weekly-results` | Monday 08h CET | Personalized weekly ranking + teaser of Aldric's Monday letter (computed client-side) |
 | `inactive-reminder` | Every 3d 17h CET | Inactive 7-30d, active classes only |
 
 Anti-spam on `inactive-reminder` via `students.inactivity_push_sent` (max 1 per 14d).

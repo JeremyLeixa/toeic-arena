@@ -23,7 +23,8 @@ import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, lo
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { boundReview, recordMisses, recordHits } from "./lib/review.js";
-import { dayMission, stakePart, todayMission, celebrateTurn } from "./lib/planner.js";
+import { dayMission, stakePart, todayMission, celebrateTurn, recordChronicle, letterDue, letterWeek } from "./lib/planner.js";
+import { MondayLetter } from "./features/mentor/MondayLetter.jsx";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { MASTERY_BLACKLIST, isMastered } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
@@ -75,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-18-mentor-memory-lot5";
+var BUILD_ID="2026-09-18-mentor-memory-lot6";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1132,6 +1133,9 @@ function sv(d){
     // prouvable, jamais célébrée → marquée dans c.review.celebrated (sauvée par le sv() qui suit) et
     // passée à l'écran de fin, qui ouvre la cérémonie. Symbolique : aucune récompense.
     var turn=celebrateTurn(c,new Date());
+    // Chronique (lot 6) : les jalons nouveaux sont rangés dans c.review.chronicle AVANT que history (bornée
+    // à 100 sessions par module) ne les efface ou n'en décale la date.
+    recordChronicle(c,new Date());
     setLastSession(function(s){
       if(!s||s.id!==sid)return s;
       var extra=toXp-s.toXp;
@@ -1554,6 +1558,14 @@ function sv(d){
   // Pastille de l'onglet Mentor : la mission du jour (1re quête du plan figé) attend. Jamais un verrou.
   var mentorMission=u?todayMission(u,new Date()):null;
   var mentorBadge=mentorMission&&mentorMission.quests.length&&!mentorMission.done?"mentor":null;
+  // Lettre du lundi (lot 6) : au premier passage sur Home de la semaine, jamais par-dessus une session, un
+  // coffre, Aldric ou un bandeau de session perdue. Lue (ou remise à plus tard), elle ne revient pas
+  // avant lundi prochain ; elle reste relisible dans la Chronique du Mentor.
+  var showLetter=!!u&&!ld&&!lastSession&&tab==="home"&&!sp&&!chestModal&&!currentNarratorMoment&&!authLost&&!teacherMode&&!isExpiredGroup&&letterDue(u,new Date());
+  function closeLetter(action){
+    var c=JSON.parse(JSON.stringify(u));c.letterSeen=letterWeek(new Date());sv(c);
+    if(action==="plan"){tabGo("mentor");sSPA("path");}
+  }
   var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);
     // Mentor shares bgm_home with Home/League/Profile. The narrator-watcher
     // useEffect below will fade it out automatically when Aldric speaks
@@ -1658,5 +1670,6 @@ function sv(d){
       onOpenNow={function(){setActiveChestToast(null);if(chestPending.length>0)setChestModal(chestPending[0]);}}/>}
 
     {premiumOverlay}
+    {showLetter&&<MondayLetter u={u} onClose={closeLetter}/>}
     <Tabs cur={tab} go={tabGo} blocked={expBlocked} badge={mentorBadge}/></div>);
 }

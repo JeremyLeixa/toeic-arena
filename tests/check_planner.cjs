@@ -224,5 +224,31 @@ const tooSoon = JSON.parse(JSON.stringify(turnedUser));
 tooSoon.moduleScores.drill.history.forEach((h, i) => { h.date = ['2026-09-14', '2026-09-15', '2026-09-18', '2026-09-20'][i]; });
 eq('écart de moins de 10 jours : rien', P.newTurn(tooSoon, NOW), null);
 
+// ── 11. La lettre du lundi (lot 6) ─────────────────────────────────────────────────────────────
+const WED = new Date('2026-09-23T10:00:00Z');
+eq('la semaine d\'un mercredi est celle de son lundi', [P.letterWeek(WED), P.letterWeek(NOW)], ['2026-09-21', '2026-09-21']);
+const lu = { name: 'Léa', joinedAt: '2026-09-01' };
+eq('lettre due : jamais lue cette semaine', P.letterDue(lu, WED), true);
+eq('… lue ce lundi : plus rien jusqu\'à lundi prochain', [P.letterDue(Object.assign({}, lu, { letterSeen: '2026-09-21' }), WED), P.letterDue(Object.assign({}, lu, { letterSeen: '2026-09-21' }), new Date('2026-09-28T09:00:00Z'))], [false, true]);
+eq('inscrite cette semaine : pas de lettre (rien à raconter)', P.letterDue({ name: 'New', joinedAt: '2026-09-22' }, WED), false);
+eq('instantanés : du plus ancien au plus récent, estimés', P.snapshotSeries([{ week_start: '2026-09-14', module_scores_snapshot: {} }, { week_start: '2026-09-07', module_scores_snapshot: {} }]).map((s) => s.d), ['2026-09-07', '2026-09-14']);
+// Les créatures de la semaine : le compteur hebdomadaire, pas le journal (borné à 60 lignes).
+const busy = R.newReview();
+for (let i = 0; i < 70; i++) R.reviewMiss(busy, { k: 'drill:g' + (200 + i) }, D('2026-09-15'));
+R.boundReview(busy);
+eq('70 nouvelles la semaine passée : comptées toutes', P.weekFacts({ review: busy, moduleScores: {} }, NOW, []).caught, 70);
+eq('sans compteur (semaine ancienne) : repli sur le journal', P.weekFacts({ review: { items: [], slain: 0, log: [{ d: '2026-09-15', k: 'a', e: 'miss' }, { d: '2026-09-16', k: 'b', e: 'slain' }] }, moduleScores: {} }, NOW, []).slain, 1);
+
+// ── 12. La Chronique gardée (lot 6) ─────────────────────────────────────────────────────────────
+const chU = JSON.parse(JSON.stringify(warm({ moduleScores: { p7: mod(sessions(3, '2026-09-10', 9, 10)) }, review: Object.assign(R.newReview(), { slain: 12 }) })));
+const added = P.recordChronicle(chU, NOW);
+eq('jalons rangés : Part 7 à 80 %, 1re et 10e créatures vaincues (par le compteur)', chU.review.chronicle.map((e) => e.key), ['part80:p7', 'slain:1', 'slain:10']);
+eq('… une seule fois', [added, P.recordChronicle(chU, NOW)], [3, 0]);
+// history tronquée plus tard : le passage à 80 % se recalculerait à une autre date ; la date rangée gagne.
+chU.moduleScores.p7.history = sessions(3, '2026-09-19', 9, 10);
+eq('la date rangée gagne sur le recalcul', P.chronicle(chU, NOW, []).find((e) => e.kind === 'part80').d, '2026-09-10');
+chU.review.insights = [{ d: '2026-09-20', text: 'Part 7 first.' }];
+eq('les insights du jeton entrent dans la Chronique', P.chronicle(chU, NOW, []).filter((e) => e.kind === 'insight').map((e) => e.facts.text), ['Part 7 first.']);
+
 console.log(fails === 0 ? '  OK ' + checks + ' vérifications' : '  ' + fails + ' échec(s) sur ' + checks);
 process.exit(fails === 0 ? 0 : 1);

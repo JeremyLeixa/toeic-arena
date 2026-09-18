@@ -962,5 +962,22 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes mmFall{to{opacity:0;transform:translateY(60px) rotate(18deg) scale(.8)}}
 @keyframes mmRise{to{opacity:1;transform:none}}
 @keyframes mmDiscTurn{to{border-color:#f0c850;box-shadow:0 0 60px rgba(255,200,60,.5),inset 0 0 30px rgba(0,0,0,.5)}}
+/* ── Lot 6 : la lettre du lundi (parchemin de l'écran de fin, palette fixe) et la Chronique ── */
+.mm-letter{text-align:left!important}
+.mm-letter .sr-sigil,.mm-letter .sr-chron,.mm-letter .sr-date{text-align:center;display:block}
+.mm-lp{margin:12px 0 0;font-size:14.5px;line-height:1.6;color:#3d2817;opacity:0;animation:mmInk .9s ease forwards}
+.mm-sign{margin-top:16px;text-align:right;font-style:italic;font-size:14px;color:#6b3410;opacity:0;animation:mmInk .9s ease forwards}
+@keyframes mmInk{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:none}}
+.mm-chron{position:relative;margin:4px 0 0;padding-left:6px}
+.mm-chron::before{content:"";position:absolute;left:22px;top:8px;bottom:8px;width:2px;background:linear-gradient(var(--bdr),rgba(var(--cx),.5))}
+.mm-ch{position:relative;display:flex;gap:12px;padding:8px 0}
+.mm-ch-dot{position:relative;z-index:1;flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg);border:1.5px solid var(--bdr)}
+.mm-ch.now .mm-ch-dot{border-color:var(--cyan);box-shadow:0 0 12px rgba(var(--cx),.35)}
+.mm-ch.turn .mm-ch-dot{border-color:var(--gold)}
+.mm-ch-body{flex:1;min-width:0;padding-top:1px}
+.mm-ch-date{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t3)}
+.mm-ch-title{font-size:13px;font-weight:800;color:var(--t1);line-height:1.3}
+.mm-ch-text{margin-top:2px;font-size:11.5px;line-height:1.45;color:var(--t2)}
+@media(prefers-reduced-motion:reduce){.mm-lp,.mm-sign{animation:none!important;opacity:1!important}}
 @media(prefers-reduced-motion:reduce){.mm-strip,.mm-brief,.mm-remember{animation:none!important}.mm-cer-disc,.mm-cer-old,.mm-cer-new,.mm-cer-wave,.mm-cer .cer-kicker,.mm-cer-title,.mm-cer-sub,.mm-cer-line,.mm-cer-spark{animation-duration:.001ms!important;animation-delay:0s!important}}
 `;

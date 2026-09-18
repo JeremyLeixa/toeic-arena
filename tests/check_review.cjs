@@ -127,6 +127,24 @@ R.recordHits(hitRv, ['drill:g7'], D('2026-09-21'));
 eq('3e réussite espacée : vaincue', [item(hitRv, 'drill:g7'), hitRv.slain], [undefined, 1]);
 eq('clé inconnue ou liste absente : rien ne casse', R.recordHits(R.newReview(), ['drill:nope', null], D('2026-09-21')).items, []);
 
+// ── 7 quater. Compteurs de la semaine et insights (lot 6) ────────────────────────────────────────
+// La lettre du lundi cite les créatures NOUVELLES et vaincues de la semaine : une créature ratée de
+// nouveau n'est pas une nouvelle, et le compteur survit au journal borné.
+const wk = R.newReview();
+R.reviewMiss(wk, { k: 'drill:g1' }, D('2026-09-15'));
+R.reviewMiss(wk, { k: 'drill:g1' }, D('2026-09-16'));
+R.reviewMiss(wk, { k: 'drill:g2' }, D('2026-09-16'));
+wk.items.find((x) => x.k === 'drill:g2').box = 2;
+R.reviewHit(wk, 'drill:g2', D('2026-09-17'));
+eq('semaine du 14 : 2 nouvelles (pas 3), 1 vaincue', R.weekTally({ review: wk }, '2026-09-14'), { caught: 2, slain: 1 });
+for (let w = 0; w < 8; w++) R.reviewMiss(wk, { k: 'drill:w' + w }, new Date(Date.parse('2026-10-05T10:00:00Z') + w * 7 * 864e5));
+eq('9 semaines comptées avant la borne', Object.keys(wk.weeks).length, 9);
+R.boundReview(wk);
+eq('5 semaines gardées au plus, les plus récentes', [Object.keys(wk.weeks).length, Object.keys(wk.weeks).sort()[0]], [R.MAX_WEEKS, '2026-10-26']);
+let ins = R.newReview();
+for (let i = 0; i < 13; i++) ins = R.addInsight(ins, 'insight ' + i, D('2026-09-21'));
+eq('insights rangés, 10 au plus, les derniers', [ins.insights.length, ins.insights[9].text, ins.insights[0].d], [R.MAX_INSIGHTS, 'insight 12', '2026-09-21']);
+
 // ── 8. La chasse ne touche jamais l'estimation TOEIC ───────────────────────────────────────────
 // Reposer des questions déjà vues, avec leur explication, gonflerait le score sans rien prouver.
 const base = {

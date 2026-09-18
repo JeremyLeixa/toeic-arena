@@ -14,9 +14,10 @@ import { QUESTIONS } from "../data/grammar.js";
 import {
   PARTS, PART_MOD, PART_ICON, TOEIC_Q, MACROS, addDays, daysBetween, stakes, targetAcc, weakestCat,
   catState, catSeries, partSeries, windowAcc, allCats, trainedSessions, PART_SHORT, firstCross,
-  weakestLifetimeCat, turnaround,
+  weakestLifetimeCat, turnaround, mondayOf,
 } from "./learnerModel.js";
-import { dueItems, huntQueue, HUNT_CAP, newReview } from "./review.js";
+import { dueItems, huntQueue, HUNT_CAP, newReview, weekTally, slainBetween, caughtBetween } from "./review.js";
+import { estimateTOEICScore } from "./toeic.js";
 
 export var HUNT_MIN = 4;   // échéances à partir desquelles la chasse devient une quête à part
 export var COLD_SESSIONS = 5; // sessions d'entraînement sous lesquelles on part du Battle Scan
@@ -213,8 +214,12 @@ export function weekFacts(u, now, snaps) {
   var all = moves(function (p) { return partSeries(u, p); }, PARTS, function (p) { return PART_SHORT[p]; })
     .concat(moves(function (c) { return catSeries(u, c); }, allCats(), function (c) { return c; }));
   var sn = (snaps || []).filter(function (s) { return s.toeic != null; });
+  // Créatures de la semaine : le compteur hebdomadaire du bestiaire (lot 6) ; pour une semaine antérieure
+  // à ce compteur, le journal (borné à MAX_LOG lignes, donc au mieux un minimum).
+  var tl = weekTally(u, mondayOf(from));
   return {
     from: from, to: to, sessions: sessions, questions: q, activeDays: Object.keys(days).length,
+    slain: tl ? tl.slain : slainBetween(u, from, to).length, caught: tl ? tl.caught : caughtBetween(u, from, to).length,
     up: all.filter(function (x) { return x.delta >= 0.1; }).sort(function (a, b) { return b.delta - a.delta; }),
     down: all.filter(function (x) { return x.delta <= -0.1; }).sort(function (a, b) { return a.delta - b.delta; }),
     est: sn.length >= 2 ? { from: sn[sn.length - 2].toeic, to: sn[sn.length - 1].toeic } : sn.length === 1 ? { from: null, to: sn[0].toeic } : null,
@@ -230,6 +235,62 @@ export function goalPace(u, now, snaps) {
   var last = sn.length >= 2 ? sn[sn.length - 1].toeic - sn[sn.length - 2].toeic : null;
   var needed = (u.targetToeic - cur) / weeksLeft;
   return { target: u.targetToeic, date: u.targetDate, current: cur, weeksLeft: Math.round(weeksLeft), needed: needed, last: last, onTrack: last != null && last >= needed };
+}
+
+// ── La lettre du lundi (lot 6, 2026-09-18) ──
+// Calculée côté client, une fois par semaine : `letter_seen` (colonne du lot 2) garde le lundi de la
+// dernière lettre lue. Pas de lettre la semaine de l'inscription : il n'y a encore rien à raconter.
+export function letterWeek(now) { return mondayOf(today(now)); }
+export function letterDue(u, now) {
+  if (!u || !u.name || !u.joinedAt) return false;
+  var mon = letterWeek(now);
+  return u.letterSeen !== mon && String(u.joinedAt).slice(0, 10) < mon;
+}
+// Les instantanés hebdomadaires (RPC my_weekly_snapshots, du plus récent au plus ancien) en série
+// d'estimations TOEIC datées, du plus ancien au plus récent (goalPace, weekFacts, Chronique).
+export function snapshotSeries(rows) {
+  return (rows || []).map(function (s) { return { d: s.week_start, toeic: estimateTOEICScore(s.module_scores_snapshot || {}).total }; })
+    .filter(function (s) { return s.d; })
+    .sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+}
+
+// ── La Chronique gardée (lot 6) ──
+// Les jalons se reconstruisent depuis `history`, mais celle-ci est bornée à 100 sessions par module : un
+// premier passage à 80 % finirait par changer de date, puis disparaître. sealSession les RANGE donc dans
+// le bestiaire (review.chronicle) dès qu'ils apparaissent, et la vue fusionne : la date rangée gagne.
+// Pas de jalon d'objectif (daté du jour) ni d'estimation (issue des instantanés, qui durent).
+var SLAIN_STEPS = [1, 10, 25, 50, 100];
+function milestoneKey(e) { var f = e.facts || {}; return e.kind + ":" + (f.part || f.cat || f.id || f.n || ""); }
+export function recordChronicle(u, now) {
+  var rv = (u && u.review) || {}, stored = rv.chronicle || [], have = {};
+  stored.forEach(function (e) { have[e.key] = 1; });
+  var add = [];
+  chronicleMilestones(u, now, []).forEach(function (e) {
+    var k = milestoneKey(e);
+    if (e.kind === "goal" || e.kind === "estimate" || have[k]) return;
+    have[k] = 1;
+    add.push({ d: e.d, kind: e.kind, icon: e.icon, facts: e.facts, key: k });
+  });
+  // Créatures vaincues : par le COMPTEUR total (le journal, borné, perd les anciennes).
+  SLAIN_STEPS.forEach(function (n) {
+    var k = "slain:" + n;
+    if ((rv.slain || 0) >= n && !have[k]) { have[k] = 1; add.push({ d: today(now), kind: "slain", icon: "broadsword", facts: { n: n }, key: k }); }
+  });
+  if (!add.length) return 0;
+  if (!u.review || !u.review.items) u.review = newReview();
+  u.review.chronicle = stored.concat(add).sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  return add.length;
+}
+// La Chronique à l'écran : jalons rangés + jalons recalculés (instantanés compris) + insights du jeton.
+export function chronicle(u, now, snaps) {
+  var d = today(now), byKey = {}, rv = (u && u.review) || {};
+  (rv.chronicle || []).forEach(function (e) { byKey[e.key] = e; });
+  chronicleMilestones(u, now, snaps).forEach(function (e) { var k = milestoneKey(e); if (!byKey[k]) byKey[k] = e; });
+  var out = Object.keys(byKey).map(function (k) { return byKey[k]; });
+  (rv.insights || []).forEach(function (x) { out.push({ d: x.d, kind: "insight", icon: "crystal-ball", facts: { text: x.text } }); });
+  var order = { scan: 0, weak: 1, part80: 2, mock: 3, estimate: 4, slain: 5, turn: 6, insight: 7, goal: 8 };
+  return out.filter(function (e) { return e.d && e.d <= d; })
+    .sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : (order[a.kind] || 0) - (order[b.kind] || 0); });
 }
 
 // ── La Chronique : des jalons DATÉS, tous reconstruits depuis les données déjà là (un élève actuel

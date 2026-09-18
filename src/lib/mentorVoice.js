@@ -6,9 +6,9 @@
 // atteint — pas de « tu progresses ! » sur quatre questions. Les variantes sont tirées par une graine
 // stable (nom + jour) : deux élèves de la même promo ne lisent pas la même phrase le même jour.
 import { today } from "./util.js";
-import { PART_LABEL, PART_SHORT, PART_ICON, addDays, daysBetween, fmtDay, weekdayName, recentWindow } from "./learnerModel.js";
+import { PART_LABEL, PART_SHORT, PART_ICON, addDays, daysBetween, fmtDay, weekdayName, recentWindow, stakes, weakestCat, weakestLifetimeCat, mondayOf } from "./learnerModel.js";
 import { BOX_DAYS, WYRM_MISS, TIERS, tierOf, slainOn, huntReward, bestiary, dueItems } from "./review.js";
-import { todayMission, questDone } from "./planner.js";
+import { todayMission, questDone, thawQuest, weekFacts, goalPace } from "./planner.js";
 
 function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 export function pickLine(arr, seed) { return arr[hash(String(seed)) % arr.length]; }
@@ -272,7 +272,9 @@ export function letter(u, now, facts, pace, plan) {
     ps.push("Next Monday I'll write you a real letter.");
     push = "Your first days in the Arena. Read the letter.";
   } else {
-    ps.push("Last week you trained " + facts.activeDays + " days out of 7: " + plural(facts.sessions, "session") + ", " + facts.questions + " questions.");
+    // Semaine sans entraînement : Aldric ne fait pas les comptes d'une absence (« 0 days out of 7 »).
+    if (!facts.sessions) ps.push("Last week the Arena was quiet. It happens: what counts is the next session.");
+    else ps.push("Last week you trained " + facts.activeDays + " day" + (facts.activeDays > 1 ? "s" : "") + " out of 7: " + plural(facts.sessions, "session") + ", " + facts.questions + " questions.");
     var turningNames = (facts.turning || []).filter(function (s) { return s.turn.near; }).map(function (s) { return s.cat; });
     var up = (facts.up || []).filter(function (m) { return turningNames.indexOf(m.label) < 0; });
     if (up.length) ps.push(up[0].label + " " + be(up[0].label) + " moving: " + toPct(up[0].before.acc) + "% the week before, " + toPct(up[0].now.acc) + "% last week.");
@@ -300,6 +302,15 @@ export function letter(u, now, facts, pace, plan) {
   return { date: weekdayName(d) + ", " + fmtDay(d), paragraphs: ps, push: { title: "Aldric's Monday letter", body: push } };
 }
 
+// La lettre de la semaine en cours, prête à afficher (lot 6). Datée du LUNDI même si l'élève ouvre
+// l'appli un mercredi : la semaine racontée est toujours celle d'avant (lundi → dimanche). Les buts de la
+// semaine viennent du plan figé du jour (u.mission), réhydraté.
+export function mondayLetter(u, now, snaps) {
+  var mon = new Date(mondayOf(today(now)) + "T12:00:00Z");
+  var m = todayMission(u, now), quests = m ? m.quests.map(function (q) { return thawQuest(q, u, now); }) : [];
+  return letter(u, mon, weekFacts(u, mon, snaps), goalPace(u, now, snaps), { quests: quests });
+}
+
 // ═══ Chronique ═══
 var SECTION_NAME = { grammar: "grammar", vocab: "vocabulary", reading: "reading", listening: "listening" };
 var MOCK_NAME = { mock1: "Mock Test 1", mock2: "Mock Test 2", mock3: "Mock Test 3", boss: "The Final Arena", endless: "Endless Arena" };
@@ -315,7 +326,30 @@ export function chronicleEntry(e) {
   else if (e.kind === "estimate") { title = "Your TOEIC estimate appeared"; text = "First estimate: " + f.toeic + "."; }
   else if (e.kind === "slain") { title = f.n === 1 ? "First mistake slain" : f.n + " mistakes slain"; text = f.n === 1 ? "The first creature to fall." : f.n + " creatures down."; }
   else if (e.kind === "goal") { title = "On the road to " + f.target; text = "Destination: " + f.target + " by " + fmtDay(f.date) + "."; }
+  else if (e.kind === "insight") { title = "Aldric's insight"; text = f.text; }
   return { d: e.d, icon: e.icon, kind: e.kind, title: title, text: text };
+}
+// ═══ Jeton Insight (lot 6) : le même modèle que le plan ═══
+// Avant : le module à la précision CUMULÉE la plus basse (≥ 20 Q), un 4e avis qui pouvait contredire le
+// Mentor, et un texte perdu au rechargement (u.insights n'allait dans aucune colonne). Désormais : la
+// partie où l'élève perd le plus de points, la catégorie de grammaire la plus faible, l'état du bestiaire,
+// et le texte est rangé dans review.insights (relu dans la Chronique).
+export function insightText(u, now) {
+  var st = stakes(u, now), top = st.find(function (s) { return s.source === "trained" && s.pts > 0; });
+  var trained = st.some(function (s) { return s.source === "trained"; });
+  var wc = weakestCat(u, now) || weakestLifetimeCat(u, now), b = bestiary(u, now), ps = [];
+  if (!trained) return "I don't know you well enough yet. Train a few sessions in different parts of the test, then spend this token: I'll have something real to tell you.";
+  if (top) {
+    ps.push("Where you lose the most points: " + PART_LABEL[top.part] + ", about " + top.pts + " points" + (u.targetToeic ? " toward " + u.targetToeic : "") + ". You're at "
+      + toPct(top.acc) + "% there; " + (u.targetToeic ? "your goal needs about " : "a strong score needs about ") + toPct(top.tgt) + "%.");
+  } else ps.push("Every part you've trained is on target" + (u.targetToeic ? " for " + u.targetToeic : "") + ". Time to test yourself on a full Mock.");
+  if (wc) {
+    var w = wc.source === "lifetime" ? wc.life : recentWindow(wc.series, 12);
+    ps.push("Your weakest grammar category: " + wc.cat + " (" + w.c + " of " + (wc.source === "lifetime" ? w.t + " so far" : "your last " + w.t) + ").");
+  }
+  if (b.lurking) ps.push("Your bestiary holds " + plural(b.lurking, "creature") + (b.wyrms ? ", " + b.wyrms + " of them Wyrms (missed 3 times or more)" : "") + "." + (b.due ? " " + b.due + " due today." : ""));
+  if (top) ps.push("Two focused sessions of " + PART_SHORT[top.part] + " this week will move your score more than anything else.");
+  return ps.join(" ");
 }
 export function nextPageLine(quest, u) {
   var aim = aimPhrase(quest, u);
