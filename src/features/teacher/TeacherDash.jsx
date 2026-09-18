@@ -736,7 +736,8 @@ export function TeacherDash(p){
       {id:"modals_match",name:"Modal Council Oracle"},
       {id:"modals_sort",name:"Modal Council Verdict"},
       {id:"daily",name:"Daily Challenge"},
-      {id:"endless",name:"Endless Arena"}
+      {id:"endless",name:"Endless Arena"},
+      {id:"hunt",name:"Mistake Hunt"}
     ]);
     var headers=[
       "Nom","Classe","XP Total","XP Semaine","Niveau","Ligue","Streak","Derniere activite",

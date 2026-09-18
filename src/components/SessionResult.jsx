@@ -290,7 +290,7 @@ function Verdict(p) {
               {s.steps.map(function (st, i) {
                 return (
                   <div key={i} className={"sr-iline sr-" + st.kind + (i < shown ? " on" : "")}>
-                    <span>{stepLabel(st)}<em>{stepDetail(st, { sc: s.sc, mode: mode })}</em></span>
+                    <span>{stepLabel(st)}<em>{stepDetail(st, { sc: s.sc, mode: mode, modId: s.modId, slain: s.slain })}</em></span>
                     <span>{st.value}</span>
                   </div>
                 );

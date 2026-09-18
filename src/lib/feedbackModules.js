@@ -37,6 +37,7 @@ export var FEEDBACK_MODULES = [
   {group:"Vocabulary",items:[
     {id:"csess",label:"Flashcard Review"},
     {id:"tavern",label:"Word Tavern"},
+    {id:"hunt",label:"Mistake Hunt"},
     {id:"sbuild",label:"Sentence Builder"}
   ]},
   {group:"Games",items:[

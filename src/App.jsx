@@ -22,7 +22,7 @@ import { getLeague, applyWeekTransition } from "./lib/league.js";
 import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost, notifyAuthLost } from "./lib/persistence.js";
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
-import { recordMisses } from "./lib/review.js";
+import { boundReview, recordMisses } from "./lib/review.js";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { MASTERY_BLACKLIST, isMastered } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
@@ -1099,9 +1099,11 @@ function sv(d){
     var g=gateSteps(baseXp,sc,tot,modId,{u:u,now:now,events:activeEvents,spotlight:!!opts.spotlight});
     if(g.focusHit)grantMarks(30,"focus","focus_"+today(),true);
     var r=settleXp(u,g.xp,{now:now,events:activeEvents,classMedianXp:classMedianXp,leagueOf:getLeague});
-    setLastSession({id:sid,sp:sp,modId:modId,sc:sc,tot:tot,userName:u.name,steps:g.steps.concat(r.steps),total:r.amt,
+    // opts.extra : ce que le module ajoute à la session pour que l'écran de fin le dise juste
+    // (la chasse y met `slain` : sa base d'XP paie les créatures vaincues, pas les bonnes réponses).
+    setLastSession(Object.assign({id:sid,sp:sp,modId:modId,sc:sc,tot:tot,userName:u.name,steps:g.steps.concat(r.steps),total:r.amt,
       fromXp:u.xp,toXp:r.c.xp,levelUp:r.levelUp,leagueUp:r.leagueUp,weekly:{from:u.weeklyXp||0,to:r.c.weeklyXp},
-      streak:r.c.streak,chests:[],achievements:[],marks:[]});
+      streak:r.c.streak,chests:[],achievements:[],marks:[]},opts.extra||{}));
     r.chests.forEach(function(ch){grantChestLocal(ch.trigger,ch.type);if(ch.haptic)haptic(ch.haptic);});
     return{c:r.c,sid:sid,total:r.amt};
   }
@@ -1415,6 +1417,20 @@ function sv(d){
   // entrées qui portent `ref` entrent au bestiaire (lib/review.js recordMisses), file bornée ICI, à
   // l'écriture, jamais dans supaToLocal (une troncature à la lecture ferait échouer le round-trip).
   function miniSession(sc,tot,xp,mistakes){var modId=sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
+  // Chasse aux erreurs (2026-09-17, lot 3). La base d'XP vient du module (5 + 5 par créature vaincue,
+  // lib/review.js huntReward) : on ne paie QUE les créatures vaincues, jamais une simple réussite —
+  // rater exprès une question de Drill coûte 7 XP tout de suite contre 5 XP onze jours plus tard.
+  // Le bestiaire mis à jour arrive dans payload.review (le module a travaillé sur une copie).
+  function huntDone(sc,tot,xp,payload){
+    var s=settleSession("hunt",sc,tot,xp,{extra:{slain:(payload&&payload.slain)||0}});var c=s.c;
+    c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;
+    if(payload&&payload.review)c.review=boundReview(payload.review);
+    trackModSession(c,"hunt");recordModule(c,"hunt",sc,tot);checkMission(c,"hunt");
+    sealSession(c,s.sid);sv(c);
+    // Darics hors XP, donc hors classement de ligue. Unique par jour : une 2e chasse ne les redonne pas.
+    if(payload&&payload.darics>0)grantMarks(payload.darics,"hunt","hunt_"+today(),false);
+    return s.sid;
+  }
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
   function cardsDone(xp,ok,tot){
     // XP arrives already gated (CardSession applies diminishing returns locally)
@@ -1594,7 +1610,7 @@ function sv(d){
     </div>
   </div>);
 
-  var routed=renderRoute({activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u});
+  var routed=renderRoute({activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, huntDone, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u});
   if(routed)return routed;
 
   return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}

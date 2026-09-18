@@ -9,7 +9,8 @@ import { today } from "./util.js";
 export var MASTERY_Q = 50;
 export var MASTERY_ACC = 0.8;
 // Sans coffre de maîtrise : déjà couverts par d'autres coffres, ou pas progressifs.
-export var MASTERY_BLACKLIST = { mock1: 1, mock2: 1, mock3: 1, boss: 1, daily: 1, csess: 1 };
+// "hunt" : la chasse repose des questions déjà vues, sa précision ne mesure rien de progressif.
+export var MASTERY_BLACKLIST = { mock1: 1, mock2: 1, mock3: 1, boss: 1, daily: 1, csess: 1, hunt: 1 };
 
 export function isMastered(ms) {
   return !!ms && ms.total >= MASTERY_Q && ms.correct / ms.total >= MASTERY_ACC;

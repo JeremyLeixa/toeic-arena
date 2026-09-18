@@ -48,7 +48,9 @@ eq('50 Q à 80 % pile → maîtrisé', H.isMastered(ms(50, 40)), true);
 eq('49 Q à 100 % → non', H.isMastered(ms(49, 49)), false);
 eq('50 Q à 78 % → non', H.isMastered(ms(50, 39)), false);
 eq('absent → non', H.isMastered(undefined), false);
-eq('liste noire = mocks, boss, daily, flashcards', Object.keys(H.MASTERY_BLACKLIST).sort(), ['boss', 'csess', 'daily', 'mock1', 'mock2', 'mock3']);
+// hunt (2026-09-18) : la chasse repose des questions déjà ratées, sa précision ne mesure rien de
+// progressif — un coffre de maîtrise y récompenserait d'avoir beaucoup raté ailleurs.
+eq('liste noire = mocks, boss, daily, flashcards, chasse', Object.keys(H.MASTERY_BLACKLIST).sort(), ['boss', 'csess', 'daily', 'hunt', 'mock1', 'mock2', 'mock3']);
 
 // 2. Module
 const wf = st({ id: 'wordfam' });

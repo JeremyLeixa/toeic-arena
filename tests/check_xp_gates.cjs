@@ -92,6 +92,12 @@ eq('spotlight ailleurs : courbe appliquée', g(100, 10, 10, 'drill', base({ dail
 eq('flash_hour : courbe sautée', g(100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [{ type: 'flash_hour' }]), { xp: 100, focusHit: false });
 eq('modId absent : accuracy seule', g(40, 0, 10, null, base()), { xp: 5, focusHit: false });
 eq('plancher 0 sur base négative', g(-20, 10, 10, 'drill', base()), { xp: 0, focusHit: false });
+// Chasse aux erreurs : la base ne paie que les créatures vaincues (5 + 5 × vaincues, lib/review.js),
+// donc AUCUNE porte de précision (elle punirait deux fois l'élève qui affronte ses questions les plus
+// dures). La courbe anti-farming, elle, reste : une 2e chasse du jour paie moitié.
+eq('hunt : 2/10 justes, 1 vaincue (base 10) → pas de porte de précision', g(10, 2, 10, 'hunt', base()), { xp: 10, focusHit: false });
+eq('hunt : 2e chasse du jour → courbe ×0.5', g(10, 2, 10, 'hunt', base({ dailyModSessions: { ['hunt_' + TD]: 1 } })), { xp: 5, focusHit: false });
+eq('drill au même score : la porte de précision s\'applique toujours', g(10, 2, 10, 'drill', base()), { xp: 5, focusHit: false });
 
 // Focus : u dont la Part 2 est la plus faible (n≥10, acc<.85) → lisP2 vise p2.
 const uFocus = base({ stats: { totalQ: 40 }, moduleScores: { lisP2: { correct: 2, total: 10 }, drill: { correct: 9, total: 10 } } });

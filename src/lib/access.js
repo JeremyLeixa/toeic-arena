@@ -1,7 +1,10 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 
 // ─── FREEMIUM: modules available in visitor/free mode ───
-export var FREE_MODULES = ["daily","drill","csess","lisP2","stratquiz","strats","gramref","wfall","tavern"];
+// "hunt" (chasse aux erreurs) est gratuite : elle ne repose que des questions déjà rencontrées par
+// l'élève, dans des modules auxquels il avait déjà droit. La verrouiller reviendrait à lui interdire
+// de revoir ses propres erreurs.
+export var FREE_MODULES = ["daily","drill","csess","lisP2","stratquiz","strats","gramref","wfall","tavern","hunt"];
 export var FREE_FLASHCARD_DOMAINS = ["finance","travel","office","linking"];
 // Returns true if the user has unrestricted access to all premium modules.
 // Reasons: active Stripe subscription, active 3-month pass, or active institutional group.

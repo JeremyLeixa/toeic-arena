@@ -70,6 +70,9 @@ export function stepLabel(st) {
 // Petit détail à côté du libellé : "8 correct", "×0.5", "+25%", "+10".
 export function stepDetail(st, o) {
   o = o || {};
+  // Chasse aux erreurs : la base ne vient pas des bonnes réponses mais des créatures VAINCUES
+  // (5 + 5 par créature). Dire « 7 correct » ici mentirait sur ce qui a été payé.
+  if (st.id === "base" && o.modId === "hunt") return o.slain != null ? o.slain + " slain" : "";
   if (st.id === "base") return o.mode === "points" || o.mode === "time" ? "" : (o.sc != null ? o.sc + " correct" : "");
   if (st.id === "bypass") return "no daily limit";
   if (st.id === "floor") return "min 0";
@@ -93,6 +96,6 @@ export var CHEST_TIER_NAMES = ["Novice", "Warrior", "Champion", "Legendary"];
 
 // Origine d'un gain de Darics affiché dans le parchemin (source de grantMarks côté App.jsx).
 export function marksLabel(source) {
-  var L = { focus: "Today's Focus", daily: "Daily Challenge", achievement: "Achievement", mastery: "Module mastery", login: "Daily login", toeic_weekly: "Weekly TOEIC progress", podium: "Weekly podium" };
+  var L = { focus: "Today's Focus", daily: "Daily Challenge", achievement: "Achievement", mastery: "Module mastery", login: "Daily login", toeic_weekly: "Weekly TOEIC progress", podium: "Weekly podium", hunt: "Creatures slain" };
   return L[source] || "";
 }

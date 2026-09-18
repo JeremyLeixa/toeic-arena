@@ -41,6 +41,7 @@ var MimicHunt=lazyNamed(function(){return import("./features/games/MimicHunt.jsx
 var DuelArena=lazyNamed(function(){return import("./features/games/DuelArena.jsx");},"DuelArena");
 var SentenceBuilder=lazyNamed(function(){return import("./features/games/SentenceBuilder.jsx");},"SentenceBuilder");
 var GauntletHub=lazyNamed(function(){return import("./features/gauntlet/Gauntlet.jsx");},"GauntletHub");
+var MistakeHunt=lazyNamed(function(){return import("./features/hunt/MistakeHunt.jsx");},"MistakeHunt");
 var ModalCouncilHub=lazyNamed(function(){return import("./features/modals/ModalCouncil.jsx");},"ModalCouncilHub");
 
 /* La table sp → écran, sortie d'App() (REFACTOR_PLAN.md §5, Phase 4a).
@@ -50,11 +51,13 @@ var ModalCouncilHub=lazyNamed(function(){return import("./features/modals/ModalC
  * manque, ici comme dans le littéral d'appel côté App(). Retourne l'écran rendu, ou
  * undefined si `sp` n'est pas une sous-page (App() enchaîne alors sur les onglets). */
 export function renderRoute(c){
-  var {activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u}=c;
+  var {activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, huntDone, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u}=c;
   if(sp==="daily")return pg(<Daily u={u} done={dailyDone} session={lastSession} closeSession={closeSession} back={function(){sSP(null);}}/>);
   if(sp==="csess")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
   if(sp==="drill")return pg(<Drill u={u} nav={nav} done={drillDone} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(0);sT("train");}}/>);
+  // Chasse aux erreurs : pas de Play again (la file du jour est vidée), retour au Mentor où vit le bestiaire.
+  if(sp==="hunt")return pg(<MistakeHunt u={u} nav={nav} done={huntDone} session={lastSession} closeSession={closeSession} back={function(){sSP(null);sT("mentor");}}/>);
   if(sp==="wordfam")return pg(<WordFam u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="connsort")return pg(<ConnSort u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="bforge"){if(!lastSession)playBGM("bgm_bridge");return pg(<LinkingBridge u={u} done={function(sc,tot,xp){stopBGM();return miniSession(sc,tot,xp);}} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);}

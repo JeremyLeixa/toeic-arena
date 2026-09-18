@@ -285,8 +285,10 @@ Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
   (Speed Match, Word Fall : record et coffres dans `recordGame`, partagé avec `gameDone` du Duel), et
   les handlers en ligne de `routes.jsx` (sbuild, ablitz, clue, hubs Gauntlet/Modal). **Base XP** en
   entrée : les portes ne s'appliquent qu'une fois (bforge, tavern et clue les appliquaient deux fois).
-- **Le module** : `mistakesRef` (erreurs à la réponse : `{tag, prompt, yours, correct, why, noBlank?}`,
-  `_____` dans `prompt` pour le trou, « … » dans `correct` pour deux trous), `sidRef.current=p.done(…)`
+- **Le module** : `mistakesRef` (erreurs à la réponse : `{tag, prompt, yours, correct, why, noBlank?, ref?}`,
+  `_____` dans `prompt` pour le trou, « … » dans `correct` pour deux trous). **`ref:{k,cat,part}`** fait
+  entrer l'erreur au bestiaire (voir « Mentor qui se souvient ») : le module passe alors `mistakesRef.current`
+  en **dernier argument** de `p.done` (`drillDone` 5e, `dailyDone` 3e, `miniSession` 4e). `sidRef.current=p.done(…)`
   **à la fin de la manche, jamais derrière un bouton** (« Collect XP » perdait l'XP si l'élève quittait),
   puis `<SessionResult session sid name mistakes onContinue onReplay>{extras}</SessionResult>`. Le
   composant n'affiche QUE `session.id===sid` (sinon parchemin « sealing », Continue au bout de 2 s).
@@ -500,6 +502,29 @@ module sans compte : `prototypes/mimic-hunt/real.html`.
 - **BGM placeholder** `bgm_clue`. À faire : volume de contenu (60-90 items visés), piste Mureka dédiée,
   achievements, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
   direct vers les Parts 3 et 4, et un poids Listening).
+
+### Mentor qui se souvient : bestiaire et chasse aux erreurs (2026-09-17/18, lots 1-3)
+Proto `prototypes/mentor-memory/` (storyboard des 8 moments, décisions de Jérémy dans son README) ; banc de
+la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la prochaine réussite tue, `empty=1`).
+- **Colonne `students.review` jsonb** (`2026-09-17_mentor_memory.sql`, avec `letter_seen`) :
+  `{items:[{k,cat,part,first,last,miss,fails,box,due}], slain, log}`. Des **références**, jamais le texte des
+  questions. Bornée à l'écriture (`boundReview` : 120 créatures, 60 lignes), jamais dans `supaToLocal`.
+- **Références** : `drill:<id>` pour toute la banque de grammaire (Drill, Daily, Exam Simulation : ratée ici
+  ou là, même créature), `lisP1:<id>`, `lisP2:<id>`, `lisP3:<id>:<qi>`, `lisP4:<id>:<qi>`, `p6:<texte>:<trou>`,
+  `p7:<passage>:<qi>`. **Jamais un indice d'option** (toutes les options sont permutées), jamais l'index d'un
+  tableau. Une référence que `lib/reviewLookup.js` ne sait pas résoudre est sautée par la chasse : un module qui
+  se met à poser des `ref` y ajoute sa résolution. Couverts : Drill, Daily, Exam Simulation, Part 6, Part 7,
+  Listening P1-P4 ; pas encore Gauntlet, Clue, Tavern, Mimic et les mini-modules (clés prévues dans le plan).
+- **Chasse** `sp==="hunt"` (`features/hunt/MistakeHunt.jsx`, lazy, gratuite, sans coffre de maîtrise, hors
+  estimateur) : file figée au montage (`huntQueue`, 10 au plus, un passage Part 7 d'un seul tenant), vrai HUD.
+  Écoute : P1/P2 se répondent pendant l'audio (la réponse coupe la chaîne : génération `genRef`), P3/P4
+  montrent question et options avant l'audio mais ne se répondent qu'après. XP `5 + 5 × vaincues` **sans
+  porte de précision** (courbe anti-farming gardée), 1 Daric par vaincue (`grantMarks`, unique par jour).
+  `huntDone` reçoit le bestiaire mis à jour : le module travaille sur une copie.
+- `lib/reviewLookup.js` importe listening, part6 et part7 : **jamais d'import statique hors d'un écran lazy**
+  (le bundle principal les tirerait) ; `lib/review.js`, lui, reste sans données.
+- Reste (lots 4-6) : l'entrée (repère « Lair » du Mentor, plan du jour, pastille d'onglet), la mémoire dans la
+  question du Drill, la cérémonie « faiblesse devenue force », la lettre du lundi, la Chronique.
 
 ### Grimoire pattern (applies to Gauntlet + G&V grimoires)
 - **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.

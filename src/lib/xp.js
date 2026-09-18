@@ -81,7 +81,10 @@ export function spotlightMult(modId,events){
 export function gateSteps(baseXp,sc,tot,modId,ctx){
   ctx=ctx||{};var u=ctx.u;var now=ctx.now||new Date();var events=ctx.events;
   var steps=[{id:"base",kind:"base",value:baseXp}];
-  var gatedXp=accuracyGate(baseXp,sc,tot);
+  // Chasse aux erreurs : pas de porte de précision. La base ne paie QUE les créatures vaincues
+  // (5 + 5 par créature, lib/review.js) : appliquer en plus la porte punirait deux fois l'élève qui
+  // affronte ses questions les plus dures — exactement celui qu'on veut voir revenir.
+  var gatedXp=modId==="hunt"?baseXp:accuracyGate(baseXp,sc,tot);
   if(gatedXp!==baseXp)steps.push({id:"accuracy",kind:"malus",mult:sc/tot<0.30?0.1:0.5,value:gatedXp});
   var focusHit=false;
   function out(){

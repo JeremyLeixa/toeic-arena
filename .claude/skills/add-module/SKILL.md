@@ -46,7 +46,7 @@ Touchpoints to wire (in rough order):
 - [ ] `grantWeeklyChest(trigger, "novice"|"guerrier"|"champion")` if perfect / milestone — while the screen is open, the confirmed chest appears IN it (not as a toast).
 
 ### End-of-session screen (CRITICAL — `components/SessionResult.jsx`, CLAUDE.md « écran de fin »)
-- [ ] Keep `var sidRef=useRef(0), mistakesRef=useRef([]);`. On a wrong answer: `mistakesRef.current.push({tag, prompt, yours, correct, why})` (`prompt` with `_____` for the blank; `noBlank:true` for a definition/transcript).
+- [ ] Keep `var sidRef=useRef(0), mistakesRef=useRef([]);`. On a wrong answer: `mistakesRef.current.push({tag, prompt, yours, correct, why})` (`prompt` with `_____` for the blank; `noBlank:true` for a definition/transcript). If the Mistake Hunt can replay the item, add `ref:{k,cat,part}` (item reference, never an option index — see CLAUDE.md « Mentor qui se souvient »), pass `mistakesRef.current` as the last argument of `p.done`, and teach `lib/reviewLookup.js` to resolve the new prefix.
 - [ ] At the end of the round, in the same handler: `sidRef.current=p.done(sc,tot,baseXp); sP("done");` — persist at submit, never behind a button.
 - [ ] `if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="<Module name>" mistakes={mistakesRef.current} onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>{extras}</SessionResult>);` — module-specific info (NextStepReco, records…) goes in `children`. Never wrap it in `.enter`. No `p.gate()` in render.
 - [ ] Score-less games: `mode="points"` (or `"time"`) + `points` / `pointsLabel`. No mistakes list to show (Speed Match): omit `mistakes`, the card is hidden.

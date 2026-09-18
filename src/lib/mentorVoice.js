@@ -179,7 +179,12 @@ export function rememberLines(o) {
       sub: Object.keys(names).map(function (n) { return names[n] > 1 ? n + " ×" + names[n] : n; }).join(" · ") });
   }
   if (o.hits && o.hits.length) lines.push({ icon: "crossed-swords", tone: "win", text: plural(o.hits.length, "mistake") + " beaten again", sub: "They'll be back, weaker." });
-  if (o.escaped && o.escaped.length) lines.push({ icon: "trap-mask", tone: "note", text: o.escaped.length + " escaped", sub: "Back tomorrow." });
+  if (o.escaped && o.escaped.length) {
+    // Une question ratée 3 fois se repose 2 jours (lib/review.js WYRM_MISS) : « demain » serait faux.
+    var rest = o.escaped.filter(function (e) { return e.rest; }).length, soon = o.escaped.length - rest;
+    lines.push({ icon: "trap-mask", tone: "note", text: o.escaped.length + " escaped",
+      sub: !rest ? "Back tomorrow." : !soon ? "Back in 2 days: they need a rest." : soon + " back tomorrow, " + rest + " in 2 days." });
+  }
   if (o.fresh && o.fresh.length) lines.push({ icon: "spider-web", tone: "note", text: plural(o.fresh.length, "new mistake") + " for your bestiary", sub: "First return tomorrow." });
   (o.turns || []).forEach(function (t) {
     lines.push({ icon: "star-formation", tone: "win", text: t.cat + ": " + toPct(t.turn.then.acc) + "% at first, " + toPct(t.turn.now.acc) + "% lately",
