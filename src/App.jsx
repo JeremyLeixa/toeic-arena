@@ -76,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-18-option-shuffle";
+var BUILD_ID="2026-09-18-mimic-v3";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 

@@ -505,24 +505,26 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 Route `sp==="mimic"` (Games). Entraîne **la reformulation** : la bonne réponse dit la même chose avec
 d'autres mots, le **Mimic** recopie des mots de la source pour dire autre chose. Le Traps Quiz et une
 Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alors qu'elle porte les Parts 3,
-4 et 7 (123 questions sur 200) — et la Part 7 n'avait aucun jeu. Proto et comparateur des mécaniques
-écartées : `prototypes/mimic-hunt/` (variante 2 « double marque » retenue par Jérémy), banc du vrai
-module sans compte : `prototypes/mimic-hunt/real.html`.
-- **Une manche** : l'élève pose **deux marques** (outils Answer / Mimic, l'outil bascule tout seul) puis
-  Check. Justifier son choix contre un distracteur est ce qui sépare ce module d'un QCM.
+4 et 7 (123 questions sur 200) — et la Part 7 n'avait aucun jeu. Proto et comparateur des mécaniques :
+`prototypes/mimic-hunt/` ; banc du vrai module sans compte : `prototypes/mimic-hunt/real.html`.
+- **Une manche = un tap** (variante 3 « révélation », choix de Jérémy le 2026-09-18 ; la variante 2
+  « double marque », réponse ET Mimic puis Check, livrée le 2026-09-17, était trop lente) : la réponse
+  part au tap, les Mimics se démasquent d'office au retour.
 - **Au retour** : un tap sur une option allume ses liens dans la source — vert = même sens/autres mots
   (le pont), rouge ondulé = mots recopiés, gris = mot gardé faute de synonyme. Puis « The paraphrase »
   (pont, explication, ce que les Mimics ont recopié). Le Mimic choisi comme réponse « mord ».
 - **Paliers** annoncés avant leurs items (I Synonyms → II Reshaped → III Big picture) : la progression
-  est la pédagogie, elle ne se mélange pas. Les items sont mélangés **dans** leur palier et les 4 options
-  permutées à chaque partie (sinon on rejoue « la réponse C »).
+  est la pédagogie, elle ne se mélange pas. Les items sont mélangés **dans** leur palier (5 tirés par
+  palier au plus, `PER_TIER` : 15 par partie quand la banque le permet) et les 4 options permutées à
+  chaque partie (sinon on rejoue « la réponse C ») — donc **aucun texte ne cite une lettre** : les pièges
+  citent l'option (`check_option_shuffle` scanne `MIMIC_ITEMS` depuis que 11 pièges disaient « A recycles… »).
 - **Rédaction des items** (`src/data/mimicHunt.js`, gardée par `tests/check_mimic_items.cjs`) : tout tient
   sur des **fragments** retrouvés en mots entiers, sans casse (`bridge`, `echo`, `mimics`) — un mot réécrit
   et le surlignage disparaît en silence. 2 Mimics par item sauf deux items (un seul), des distracteurs
   neutres qui ressemblent à des reformulations, et **l'item 12 garde un mot de la source dans la bonne
   réponse** : la règle n'est pas « mot repris = faux » mais « mot repris qui dit autre chose ».
-- **XP** : `15 + 5×bonne réponse + 2×Mimic démasqué`, +25 sans faute (max 124 pour 12 items, palier des
-  15 Q). **Estimateur** : Reading support `.04`, `part:null` dans `MODULE_TOEIC_MAP` (la reformulation sert
+- **XP** : `15 + 5×bonne réponse`, +25 sans faute (115 pour 15 items, palier des 15 Q ; le `+2×Mimic
+  démasqué` de la variante 2 a disparu avec elle). **Estimateur** : Reading support `.04`, `part:null` dans `MODULE_TOEIC_MAP` (la reformulation sert
   P3/P4/P7 : la ranger dans p7 fausserait le diagnostic du Mentor).
 - **Coffre de maîtrise exclu tant que la banque a moins de 45 items** (`MASTERY_BLACKLIST.mimic`,
   `lib/hubStatus.js`, 2026-09-18) : chaque partie rejoue toute la banque, 5 parties apprises par cœur

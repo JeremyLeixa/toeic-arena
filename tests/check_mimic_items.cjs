@@ -6,8 +6,8 @@
  * réécrit dans la source, un index de Mimic décalé après une réécriture d'options : rien ne
  * casse au build, le surlignage disparaît simplement — et c'est là que se trouve toute la
  * leçon (« voilà ce que le Mimic a recopié »). Le reste protège l'équilibre de rédaction :
- * position de la bonne réponse, au moins un Mimic par item (la variante 2 exige d'en marquer
- * un), jamais de Mimic déclaré sur la bonne réponse, une explication et un piège partout.
+ * position de la bonne réponse, au moins un Mimic par item (le retour en démasque un : c'est la
+ * leçon), jamais de Mimic déclaré sur la bonne réponse, une explication et un piège partout.
  *
  * Usage : node tests/check_mimic_items.cjs
  */
@@ -57,7 +57,7 @@ ITEMS.forEach(function (it) {
   });
 
   const keys = Object.keys(it.mimics || {});
-  ok(keys.length > 0, L + ': au moins un Mimic (la variante 2 en fait marquer un)');
+  ok(keys.length > 0, L + ': au moins un Mimic (le retour en démasque un : c\'est la leçon)');
   ok(keys.indexOf(String(it.c)) === -1, L + ': aucun Mimic déclaré sur la bonne réponse');
   keys.forEach(function (k) {
     const i = Number(k);
