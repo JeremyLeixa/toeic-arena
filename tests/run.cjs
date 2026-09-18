@@ -39,6 +39,7 @@ const SUITE = [
   ['check_session_hud.cjs',        'le combo de session tombe sur ses paliers et le fil d\'encre colore la bonne case'],
   ['validate_endless_resume.cjs',  'la reprise d\'Endless rejoue le même test'],
   ['validate_listening_shuffle.cjs', 'la position des bonnes réponses est randomisée'],
+  ['check_option_shuffle.cjs',     'les QCM des modules permutent leurs options sous les bonnes clés, et aucun texte ne désigne une option par sa lettre'],
   ['check_listening_voices.cjs',   'la règle de voix des clips P1/P2 (deux locuteurs, lettres dans la voix de l\'item) n\'a pas bougé'],
   ['check_festivals.cjs',          'les fenêtres des thèmes saisonniers (bornes, Pâques, déc → jan, opt-out > forçage) n\'ont pas bougé'],
   ['check_skins_light.cjs',        'les skins à cartes sombres restent lisibles en mode clair (cartes-nuit)'],

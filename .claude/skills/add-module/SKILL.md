@@ -29,6 +29,7 @@ Touchpoints to wire (in rough order):
 
 ### Component file
 - [ ] Create `src/features/<module>/<Name>.jsx` exporting the component (PascalCase). A `.jsx` file exports components only: helpers → `src/lib/`, a private render helper stays unexported. Imports from `../../lib/…`, `../../components/…`, `../../data/…` only.
+- [ ] **Multiple-choice with authored options** : permute each item once at deck build (`useMemo` / `startSession`) with `shuffleOpts(it.<opts>, it.<correct>)` from `lib/util.js`, store the result under the SAME keys (`Object.assign({},it,{opts:s.opts,c:s.c})`), and read answer, highlight, `mistakesRef` and score from that copy. Hand-written banks put the answer in B or C ~80 % of the time. Add the module to `MODULES` in `tests/check_option_shuffle.cjs` (and its bank to `BANKS`): the test then checks the wiring and that no text names an option by its letter.
 
 ### Routing (`src/routes.jsx`)
 - [ ] Import the component at the top of `routes.jsx` and add the `sp==="<id>"` line inside `renderRoute`. Pattern (end-of-session screen, since 2026-09-17) :

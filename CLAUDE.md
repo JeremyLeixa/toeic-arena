@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (24 fichiers, ~9 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (25 fichiers, ~9 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -80,6 +80,13 @@ Ce que la suite protège, et pourquoi :
   capture et à la résolution, options permutées, énoncé qui ne dit pas la réponse, et le câblage (`ref`,
   `mistakesRef.current` jusqu'à `recordMisses`) lu dans le source. Une clé que la chasse ne sait pas relire
   laisse une créature « due » pour toujours, sans erreur nulle part.
+- **`check_option_shuffle`** — les QCM des modules (3 épreuves du Gauntlet, Clue Hunter, Audio Blitz, False
+  Friends, Traps, Strategy, Gerund/Infinitive) permutent leurs options au montage du deck par
+  `lib/util.js shuffleOpts`, sous les clés que le module lit (`o/c`, `opts/ans`, `options/correct`…), et
+  GerInf retire son deck à chaque partie. Aucun texte de ces banques ne désigne une option par sa lettre
+  ou par « of the above » (exceptions listées avec les lettres permises). Les banques mettent la bonne
+  réponse en B ou C huit fois sur dix : un module qui ne permute pas s'apprend par la position. Nouveau
+  module QCM → l'ajouter à `MODULES` du test.
 - **`check_planner`** — le plan du jour (`lib/planner.js`) : seuil de la chasse (4 échéances), démarrage
   à froid (< 5 sessions → Battle Scan), quête d'enjeu réservée aux parties mesurées, composition du Drill
   (catégorie visée, catégorie méritée allégée, erreurs dues glissées, **aucune créature tirée au hasard**),

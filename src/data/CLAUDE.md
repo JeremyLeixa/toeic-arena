@@ -149,3 +149,4 @@ public/audio/
 5. **Use real emoji characters** — never `\uXXXX` escapes (Windows encoding issues)
 6. **No trailing commas** after the last item in arrays (Vite parse errors)
 7. **Nested quotes** — use `String.fromCharCode(34)` if needed inside template strings
+8. **Never point at an option by its letter or position** in any text (`x`, `exp`, `tip`, `trap`, options…) : options are permuted at runtime, « answer B » then names a random option. Quote the option itself. `tests/check_option_shuffle.cjs` scans the module QCM banks; `validate_listening_shuffle` handles the listening letters (remapped, not forbidden).
