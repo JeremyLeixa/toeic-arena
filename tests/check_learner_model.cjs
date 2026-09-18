@@ -136,5 +136,13 @@ eq('daysBetween', L.daysBetween('2026-09-10', '2026-09-21'), 11);
 eq('libellé de date', L.fmtDay('2026-09-13'), '13 Sept');
 eq('jour de la semaine', L.weekdayName('2026-09-21'), 'Monday');
 
+// ── Entrées d'historique abîmées ──────────────────────────────────────────────────────────────
+// Seul recordModule écrit l'historique, avec une date ; mais une entrée sans date (format ancien)
+// donnerait un NaN dans la maîtrise, donc dans tout le plan du jour de l'élève. Elle est ignorée.
+const broken = { moduleScores: { drill: hist([{ correct: 5, total: 10 }, { date: '2026-09-20', correct: 8, total: 10, cs: { Tenses: { c: 8, t: 10 } } }, { date: '2026-09-19', correct: 0, total: 0 }]) } };
+eq('entrée sans date ou vide ignorée', L.partSeries(broken, 'p5').map((e) => e.d), ['2026-09-20']);
+ok('maîtrise calculable malgré elle', Number.isFinite(L.mastery(L.partSeries(broken, 'p5'), NOW).acc));
+eq('catégorie : idem', L.catSeries({ moduleScores: { drill: hist([{ cs: { Tenses: { c: 1, t: 2 } } }]) } }, 'Tenses'), []);
+
 console.log(fails === 0 ? '  OK ' + checks + ' vérifications' : '  ' + fails + ' échec(s) sur ' + checks);
 process.exit(fails === 0 ? 0 : 1);

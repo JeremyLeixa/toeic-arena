@@ -56,7 +56,8 @@ export function partSeries(u, part) {
   Object.keys(ms).forEach(function (id) {
     var m = MODULE_TOEIC_MAP[id];
     if (!m || m.part !== part) return;
-    (ms[id].history || []).forEach(function (h) { out.push({ d: h.date, c: h.correct, t: h.total, mod: id }); });
+    // Une entrée sans date (format ancien, profil abîmé) donnerait un NaN dans tout le plan : ignorée.
+    (ms[id].history || []).forEach(function (h) { if (h && h.date && h.total) out.push({ d: h.date, c: h.correct || 0, t: h.total, mod: id }); });
   });
   return out.sort(byDate);
 }
@@ -68,7 +69,7 @@ export function catSeries(u, cat) {
   var ms = (u && u.moduleScores) || {}, out = [];
   Object.keys(ms).forEach(function (id) {
     if (id === "hunt") return;
-    (ms[id].history || []).forEach(function (e) { var s = e.cs && e.cs[cat]; if (s && s.t) out.push({ d: e.date, c: s.c, t: s.t }); });
+    (ms[id].history || []).forEach(function (e) { var s = e && e.date && e.cs && e.cs[cat]; if (s && s.t) out.push({ d: e.date, c: s.c || 0, t: s.t }); });
   });
   return out.sort(byDate);
 }
