@@ -4,7 +4,7 @@ import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { AUDIO_BLITZ } from "../../data/audioBlitz.js";
 import { stopCurrentListenAudio, setListenAudio, speak, stopListenAudio } from "../../lib/audio.js";
-import { shuffle } from "../../lib/util.js";
+import { shuffle, shuffleOpts } from "../../lib/util.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useState, useRef, useMemo, useEffect } from "react";
@@ -20,7 +20,9 @@ export function AudioBlitz(p){
   var timerRef=useRef(null);var answeredRef=useRef(false);var bufferRef=useRef(null);
   var mistakesRef=useRef([]);var sidRef=useRef(0);
 
-  var items=useMemo(function(){return shuffle(AUDIO_BLITZ.slice()).slice(0,TOTAL);},[]);
+  // Options permutées par item (bonne réponse en B ou C 80 fois sur 90). L'audio ne lit que la
+  // phrase (`text`), jamais les options : rien à transporter jusqu'au lecteur.
+  var items=useMemo(function(){return shuffle(AUDIO_BLITZ.slice()).slice(0,TOTAL).map(function(it){var s=shuffleOpts(it.opts,it.c);return Object.assign({},it,{opts:s.opts,c:s.c});});},[]);
 
   // Auto-play audio when entering question phase
   useEffect(function(){

@@ -7,6 +7,7 @@ import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } f
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "../../data/grammarGauntletGrimoire.js";
 import { haptic } from "../../lib/device.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
+import { shuffleOpts } from "../../lib/util.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong, playBGM, stopBGM } from "../../sounds.js";
 import { useState, useEffect, useRef } from "react";
@@ -151,6 +152,9 @@ export function IrregularCrypt(p){
     )}
   </div>);
 }
+// Chronomancer, Passive Forge, Relative Weaver : options permutées au montage du deck (la bonne
+// réponse était en B ou C pour 156 items sur 190). Tout se lit ensuite sur la copie : q.o, q.c.
+function permuteQ(q){var s=shuffleOpts(q.o,q.c);return Object.assign({},q,{o:s.opts,c:s.c});}
 // ─── CHRONOMANCER — sub-module 2/4 of Grammar Gauntlet ───
 // Contextual QCM: 15 tense questions, no timer (reflection). Temporal
 // marker highlighted in the sentence when a literal match is found, and
@@ -167,7 +171,7 @@ export function Chronomancer(p){
   var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
   function startSession(){
     var shuffled=[].concat(TENSE_CHRONOMANCER).sort(function(){return Math.random()-0.5;});
-    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
+    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length)).map(permuteQ);
     setDeck(d);setIdx(0);setResults([]);setPicked(null);setPhase("play");
   }
   function pickAnswer(optIdx){
@@ -310,7 +314,7 @@ export function PassiveForge(p){
   var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
   function startSession(){
     var shuffled=[].concat(PASSIVE_FORGE).sort(function(){return Math.random()-0.5;});
-    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
+    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length)).map(permuteQ);
     setDeck(d);setIdx(0);setResults([]);setPicked(null);
     setTimeLeft(TIME_PER_Q);setPhase("play");
   }
@@ -470,7 +474,7 @@ export function RelativeWeaver(p){
   var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
   function startSession(){
     var shuffled=[].concat(RELATIVE_WEAVER).sort(function(){return Math.random()-0.5;});
-    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
+    var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length)).map(permuteQ);
     setDeck(d);setIdx(0);setResults([]);setPicked(null);setPhase("play");
   }
   function pickAnswer(optIdx){

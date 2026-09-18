@@ -18,7 +18,7 @@ import { drillComposition } from "../../lib/planner.js";
 import { briefing, questionBadge, questionFeedback, drillRemember } from "../../lib/mentorVoice.js";
 import { AldricBrief, AldricRemembers } from "../../components/MentorMemory.jsx";
 import { GrammarSheet } from "../../components/GrammarSheet.jsx";
-import { shuffle, today } from "../../lib/util.js";
+import { shuffle, shuffleOpts, today } from "../../lib/util.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
@@ -469,10 +469,12 @@ export function GerInf(p){
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
   var[openGrim,setOpenGrim]=useState(false);
 
-  // Quiz items — context sentences, shuffled
-  var quizItems=useMemo(function(){return shuffle(GERUND_INF.slice());},[]);
+  // Quiz items — context sentences, shuffled, options permutées par item. Deck neuf à chaque entrée
+  // dans le quiz : « Play again » (resetQuiz) rejouait le même ordre, donc les mêmes positions.
+  function buildQuiz(){return shuffle(GERUND_INF).map(function(it){var s=shuffleOpts(it.opts,it.c);return Object.assign({},it,{opts:s.opts,c:s.c});});}
+  var[quizItems,setQuizItems]=useState(buildQuiz);
 
-  function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");mistakesRef.current=[];}
+  function resetQuiz(){setQuizItems(buildQuiz());sC(0);sSc(0);sPk(-1);sP("q");mistakesRef.current=[];}
 
   // ═══ HUB ═══
   if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -563,7 +565,8 @@ export function GerInf(p){
 }
 // ─── TOEIC TRAPS QUIZ ───
 export function TrapsQuiz(p){
-  var traps=useMemo(function(){return shuffle(TOEIC_TRAPS).slice(0,10);},[]);
+  // Options permutées par item (bonne réponse en B 44 fois sur 60, jamais en D).
+  var traps=useMemo(function(){return shuffle(TOEIC_TRAPS).slice(0,10).map(function(it){var s=shuffleOpts(it.options,it.correct);return Object.assign({},it,{options:s.opts,correct:s.c});});},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
@@ -854,7 +857,8 @@ export function PhrasalDojo(p){
 }
 // ─── FALSE FRIENDS ───
 export function FalseFriends(p){
-  var items=useMemo(function(){return shuffle(FALSE_FRIENDS).slice(0,12);},[]);
+  // Options permutées par item (bonne réponse en B ou C 47 fois sur 51).
+  var items=useMemo(function(){return shuffle(FALSE_FRIENDS).slice(0,12).map(function(it){var s=shuffleOpts(it.opts,it.correct);return Object.assign({},it,{opts:s.opts,correct:s.c});});},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);

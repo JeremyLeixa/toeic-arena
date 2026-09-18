@@ -4,7 +4,7 @@ import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { STRATEGIES, STRAT_QUIZ } from "../../data/miniGames.js";
-import { shuffle } from "../../lib/util.js";
+import { shuffle, shuffleOpts } from "../../lib/util.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
@@ -197,7 +197,9 @@ export function StratCards(p){
 }
 // ─── STRATEGY QUIZ ───
 export function StratQuizPage(p){
-  var qs=useMemo(function(){return shuffle(STRAT_QUIZ).slice(0,10);},[]);
+  // Options permutées par item (bonne réponse en B 36 fois sur 51). Les « B » des situations et des
+  // options désignent la réponse d'une question TOEIC imaginée, pas une option du quiz : ils ne bougent pas.
+  var qs=useMemo(function(){return shuffle(STRAT_QUIZ).slice(0,10).map(function(it){var s=shuffleOpts(it.options,it.correct);return Object.assign({},it,{options:s.opts,correct:s.c});});},[]);
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);

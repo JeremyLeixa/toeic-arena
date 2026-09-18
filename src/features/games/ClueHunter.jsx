@@ -3,7 +3,7 @@ import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { CLUE_HUNTER } from "../../data/clueHunter.js";
-import { shuffle } from "../../lib/util.js";
+import { shuffle, shuffleOpts } from "../../lib/util.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useState, useRef } from "react";
@@ -13,7 +13,9 @@ export function ClueHunter(p){
   var TOTAL=10;
   var[phase,sP]=useState("intro");
   var[ci,sC]=useState(0);
-  var[items]=useState(function(){return shuffle(CLUE_HUNTER.slice()).slice(0,TOTAL);});
+  // Options permutées par item (bonne réponse en B ou C 62 fois sur 80 dans la banque). Les indices
+  // (chips) suivent l'ordre de la phrase et ne bougent pas.
+  var[items]=useState(function(){return shuffle(CLUE_HUNTER.slice()).slice(0,TOTAL).map(function(it){var s=shuffleOpts(it.opts,it.ans);return Object.assign({},it,{opts:s.opts,ans:s.c});});});
   var[selected,setSel]=useState([]);
   var[pick,sPk]=useState(-1);
   var[scores,setSc]=useState([]);
