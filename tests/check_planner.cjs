@@ -212,5 +212,17 @@ const coldM = Object.assign({}, cold, { mission: P.dayMission(cold, NOW) });
 const dcc = P.drillComposition(coldM, NOW, seeded(4));
 eq('quête de confirmation : la macro du scan', [dcc.macro && dcc.macro.id, dcc.items.filter((x) => x.role === 'focus').every((x) => dcc.macro.subcats.indexOf(x.q.cat) >= 0)], ['verbs', true]);
 
+// ── 10. Cérémonie « faiblesse devenue force » : une fois par catégorie ─────────────────────────
+const t10 = P.newTurn(turnedUser, NOW);
+eq('le retournement prouvé est célébré', [t10.cat, t10.then, t10.now], ['Passive Voice', { c: 2, t: 10 }, { c: 12, t: 12 }]);
+eq('le petit graphique marque la fenêtre récente', t10.spark.map((s) => s.up), [false, false, true, true]);
+const cu = JSON.parse(JSON.stringify(turnedUser));
+eq('célébrée : marquée dans le bestiaire', [P.celebrateTurn(cu, NOW).cat, cu.review.celebrated], ['Passive Voice', ['Passive Voice']]);
+eq('… et plus jamais', P.celebrateTurn(cu, NOW), null);
+// Écart trop court entre « au début » et « dernièrement » (< 10 jours) : pas prouvé, pas célébré.
+const tooSoon = JSON.parse(JSON.stringify(turnedUser));
+tooSoon.moduleScores.drill.history.forEach((h, i) => { h.date = ['2026-09-14', '2026-09-15', '2026-09-18', '2026-09-20'][i]; });
+eq('écart de moins de 10 jours : rien', P.newTurn(tooSoon, NOW), null);
+
 console.log(fails === 0 ? '  OK ' + checks + ' vérifications' : '  ' + fails + ' échec(s) sur ' + checks);
 process.exit(fails === 0 ? 0 : 1);

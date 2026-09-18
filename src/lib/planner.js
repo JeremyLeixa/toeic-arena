@@ -14,9 +14,9 @@ import { QUESTIONS } from "../data/grammar.js";
 import {
   PARTS, PART_MOD, PART_ICON, TOEIC_Q, MACROS, addDays, daysBetween, stakes, targetAcc, weakestCat,
   catState, catSeries, partSeries, windowAcc, allCats, trainedSessions, PART_SHORT, firstCross,
-  weakestLifetimeCat,
+  weakestLifetimeCat, turnaround,
 } from "./learnerModel.js";
-import { dueItems, huntQueue, HUNT_CAP } from "./review.js";
+import { dueItems, huntQueue, HUNT_CAP, newReview } from "./review.js";
 
 export var HUNT_MIN = 4;   // échéances à partir desquelles la chasse devient une quête à part
 export var COLD_SESSIONS = 5; // sessions d'entraînement sous lesquelles on part du Battle Scan
@@ -169,6 +169,34 @@ export function drillComposition(u, now, rnd) {
   return comp;
 }
 
+// ── Cérémonie « faiblesse devenue force » (lot 5) ──
+// Une catégorie dont le retournement devient ÉLIGIBLE (learnerModel.turnaround : sous 55 % sur ses
+// premières questions, au-dessus de 75 % dernièrement, 10 jours d'écart au moins) et pas encore célébrée.
+// Une fois par catégorie : la liste vit dans le bestiaire (review.celebrated), dans la sauvegarde
+// existante. Le plus grand écart d'abord. `spark` : les dernières sessions de la catégorie, pour le
+// petit graphique de la cérémonie (up = dans la fenêtre « dernièrement »).
+export function newTurn(u, now) {
+  var done = ((u && u.review) || {}).celebrated || [], best = null;
+  allCats().forEach(function (c) {
+    if (done.indexOf(c) >= 0) return;
+    var s = catSeries(u, c), t = turnaround(s);
+    if (t && t.eligible && (!best || t.delta > best.turn.delta)) best = { cat: c, turn: t, series: s };
+  });
+  if (!best) return null;
+  return {
+    cat: best.cat, then: { c: best.turn.then.c, t: best.turn.then.t }, now: { c: best.turn.now.c, t: best.turn.now.t },
+    spark: best.series.slice(-14).map(function (e) { return { acc: e.t ? e.c / e.t : 0, up: e.d >= best.turn.now.start }; }),
+  };
+}
+// Marque la catégorie célébrée sur `u` (App() travaille sur une copie du profil) et rend la cérémonie.
+export function celebrateTurn(u, now) {
+  var t = newTurn(u, now);
+  if (!t) return null;
+  if (!u.review || !u.review.items) u.review = newReview();
+  u.review.celebrated = (u.review.celebrated || []).concat([t.cat]);
+  return t;
+}
+
 // ── La semaine écoulée (lettre du lundi) ──
 export function weekFacts(u, now, snaps) {
   var d = today(now), from = addDays(d, -7), to = addDays(d, -1), prevFrom = addDays(d, -14), prevTo = addDays(d, -8);
@@ -223,7 +251,8 @@ export function chronicleMilestones(u, now, snaps) {
     var weak = firstCross(s, 10, function (a) { return a < 0.5; });
     if (weak) out.push({ d: weak.d, kind: "weak", icon: "spider-web", facts: { cat: c, c: weak.c, t: weak.t } });
     var st = catState(u, c, now);
-    if (st.turn && st.turn.eligible && u.celebrated && u.celebrated.indexOf(c) >= 0) {
+    var celebrated = ((u && u.review) || {}).celebrated || [];
+    if (st.turn && st.turn.eligible && celebrated.indexOf(c) >= 0) {
       out.push({ d: st.turn.now.end, kind: "turn", icon: "laurel-crown", facts: { cat: c, then: st.turn.then, now: st.turn.now } });
     }
   });

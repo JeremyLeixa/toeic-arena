@@ -12,7 +12,8 @@
 // session, sinon un parchemin « scellage »), name (nom du module), mode "score" | "points" | "time"
 // (+ points, pointsLabel), mistakes [{tag, prompt, yours, correct, why, noBlank?}], onContinue,
 // onReplay (bouton caché si absent), children (extras du module, sous le parchemin), memory (la carte
-// « Aldric remembers », AVANT les leçons — Mentor qui se souvient, lot 5).
+// « Aldric remembers », AVANT les leçons — Mentor qui se souvient, lot 5). session.turn (posé par
+// sealSession) ouvre la cérémonie « faiblesse devenue force » (Ceremonies.jsx TurnCeremony).
 //
 // ⚠️ Plein écran fixe (z 150, au-dessus de la tab bar) : ne JAMAIS le rendre dans un `.enter`
 // (translateY → la barre du bas serait positionnée par rapport au bloc animé).
@@ -20,7 +21,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GIcon } from "./icons.jsx";
 import { TreasureChestSvg } from "./avatar.jsx";
-import { LeaguePromotion } from "./Ceremonies.jsx";
+import { LeaguePromotion, TurnCeremony } from "./Ceremonies.jsx";
 import { createChestFx, burstAt } from "./particles.js";
 import { getLevel } from "../data/helpers.js";
 import { verdictText, epilogueText, stepLabel, stepDetail, stepHint, CHEST_TIER_NAMES } from "../lib/sessionText.js";
@@ -210,13 +211,13 @@ function Verdict(p) {
   var s = p.session, mode = p.mode || "score", n = s.steps.length;
   var canvasRef = useRef(null), medalRef = useRef(null), fxRef = useRef(null);
   var [skip, setSkip] = useState(prefersReducedMotion);
-  var [ceremony, setCeremony] = useState(null); // null | "league"
-  var hasLeague = !!s.leagueUp;
+  var [ceremony, setCeremony] = useState(null); // null | "league" | "turn"
+  var hasLeague = !!s.leagueUp, hasTurn = !!s.turn;
   var durs = useMemo(function () {
     var d = [300, 1300, 700];
     for (var i = 1; i < n; i++) d.push(380);
-    return d.concat([420, 1000, 1800, hasLeague ? 700 : 60]);
-  }, [n, hasLeague]);
+    return d.concat([420, 1000, 1800, hasLeague || hasTurn ? 700 : 60]);
+  }, [n, hasLeague, hasTurn]);
   var ST_TOTAL = n + 3, ST_LEVEL = n + 4, ST_LEAGUE = n + 5;
   var stage = useStages(durs, skip, ceremony);
   var done = stage >= durs.length;
@@ -250,6 +251,16 @@ function Verdict(p) {
     ceremonyFired.current = true;
     setCeremony("league");
   }, [stage, skip, hasLeague, ST_LEAGUE]);
+  // « Faiblesse devenue force » (lot 5 du Mentor) : après la promotion de ligue s'il y en a une, à la fin
+  // du parchemin. Contrairement à la ligue, elle s'affiche MÊME si l'élève a passé l'animation (ou en
+  // mouvement réduit) : c'est un moment unique par catégorie, il ne doit pas se perdre.
+  var turnFired = useRef(false);
+  useEffect(function () {
+    if (!hasTurn || turnFired.current || ceremony || !done) return;
+    if (hasLeague && !skip && !ceremonyFired.current) return;
+    turnFired.current = true;
+    setCeremony("turn");
+  }, [done, skip, ceremony, hasTurn, hasLeague]);
   var totalDone = useRef(false);
   useEffect(function () {
     if (totalDone.current || stage < ST_TOTAL || total !== s.total || s.total <= 0) return;
@@ -326,6 +337,7 @@ function Verdict(p) {
         <button className="btn1 out" onClick={p.onContinue}>Continue</button>
       </div>
       <canvas ref={canvasRef} className="sr-fx" />
+      {ceremony === "turn" && <TurnCeremony turn={s.turn} seed={(s.userName || "") + s.id} onClose={function () { setCeremony(null); }} />}
       {ceremony === "league" && <LeaguePromotion fromId={s.leagueUp.from} toId={s.leagueUp.to} weekly={s.weekly ? s.weekly.to : 0}
         chestTier={leagueChest ? leagueChest.tier : null} onClose={function () { setCeremony(false); }} />}
     </div>

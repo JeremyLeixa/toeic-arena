@@ -23,7 +23,7 @@ import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, lo
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { boundReview, recordMisses, recordHits } from "./lib/review.js";
-import { dayMission, stakePart, todayMission } from "./lib/planner.js";
+import { dayMission, stakePart, todayMission, celebrateTurn } from "./lib/planner.js";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { MASTERY_BLACKLIST, isMastered } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
@@ -1128,13 +1128,17 @@ function sv(d){
   // settleXp). On les ajoute comme étape et on recalcule niveau et ligue, qu'ils peuvent franchir.
   function sealSession(c,sid){
     var toXp=c.xp,weeklyTo=c.weeklyXp||0;
+    // « Faiblesse devenue force » (lot 5 du Mentor) : une catégorie dont le retournement vient de devenir
+    // prouvable, jamais célébrée → marquée dans c.review.celebrated (sauvée par le sv() qui suit) et
+    // passée à l'écran de fin, qui ouvre la cérémonie. Symbolique : aucune récompense.
+    var turn=celebrateTurn(c,new Date());
     setLastSession(function(s){
       if(!s||s.id!==sid)return s;
       var extra=toXp-s.toXp;
-      if(extra<=0)return s;
+      if(extra<=0)return turn?Object.assign({},s,{turn:turn}):s;
       var L0=getLevel(s.fromXp).level,L1=getLevel(toXp).level;
       var lg0=getLeague(s.weekly.from),lg1=getLeague(weeklyTo);
-      return Object.assign({},s,{
+      return Object.assign({},s,turn?{turn:turn}:{},{
         steps:s.steps.concat([{id:"mission",kind:"bonus",add:extra,value:s.total+extra}]),
         total:s.total+extra,toXp:toXp,weekly:{from:s.weekly.from,to:weeklyTo},
         levelUp:L1>L0?{from:L0,to:L1}:null,

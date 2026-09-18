@@ -943,5 +943,24 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .mm-rem-line:first-of-type{border-top:none}
 .mm-rem-line b{display:block;font-size:13px;font-weight:700;color:var(--t1);line-height:1.35}
 .mm-rem-line small{display:block;margin-top:2px;font-size:11px;color:var(--t2)}
-@media(prefers-reduced-motion:reduce){.mm-strip,.mm-brief,.mm-remember{animation:none!important}}
+/* Cérémonie « faiblesse devenue force » (components/Ceremonies.jsx TurnCeremony) : fond sombre FIXE,
+   comme LeaguePromotion (.cer-ov). Symbolique : aucune récompense, décision du 2026-09-17. */
+.mm-cer{background:radial-gradient(ellipse 65% 45% at 50% 36%,rgba(160,120,30,.38),transparent 72%),rgba(5,3,2,.97)}
+.mm-cer-stage{position:relative;width:170px;height:170px;display:flex;align-items:center;justify-content:center}
+.mm-cer-disc{position:absolute;inset:10px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#2a1e10,#0a0604);border:3px solid #7a2a22;box-shadow:0 0 40px rgba(160,40,30,.45),inset 0 0 30px rgba(0,0,0,.6);animation:mmDiscTurn 1.1s .9s ease forwards}
+.mm-cer-old{position:absolute;display:flex;animation:mmCrack .5s .15s,mmFall .6s .75s cubic-bezier(.5,0,.8,.4) forwards}
+.mm-cer-new{position:absolute;display:flex;opacity:0;transform:scale(.4) rotate(-20deg);animation:mmRise .6s 1.25s cubic-bezier(.2,1.5,.4,1) forwards}
+.mm-cer-wave{position:absolute;inset:10px;border-radius:50%;border:3px solid #f0c850;opacity:0;animation:cerWave .9s 1.3s ease-out}
+.mm-cer .cer-kicker{margin-top:22px;animation:cerUp .5s 1.6s both}
+.mm-cer-title{font-size:34px;font-weight:900;color:#ffe9a8;text-shadow:0 0 26px rgba(255,200,60,.4);animation:cerUp .5s 1.7s both;text-align:center;padding:0 16px}
+.mm-cer-sub{margin-top:8px;font-size:14px;color:#cbbd9f;animation:cerUp .5s 1.85s both;text-align:center}
+.mm-cer-line{margin-top:6px;font-size:13px;font-style:italic;color:#a8997c;animation:cerUp .5s 2s both;text-align:center;padding:0 24px}
+.mm-cer-spark{display:flex;align-items:flex-end;gap:5px;height:44px;margin-top:18px;animation:cerUp .5s 2.1s both}
+.mm-cer-spark i{display:block;width:9px;border-radius:3px 3px 0 0;background:#7a2a22}
+.mm-cer-spark i.up{background:linear-gradient(#ffe9a8,#c9962a)}
+@keyframes mmCrack{0%,100%{transform:none}20%{transform:translateX(-3px) rotate(-3deg)}40%{transform:translateX(3px) rotate(3deg)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+@keyframes mmFall{to{opacity:0;transform:translateY(60px) rotate(18deg) scale(.8)}}
+@keyframes mmRise{to{opacity:1;transform:none}}
+@keyframes mmDiscTurn{to{border-color:#f0c850;box-shadow:0 0 60px rgba(255,200,60,.5),inset 0 0 30px rgba(0,0,0,.5)}}
+@media(prefers-reduced-motion:reduce){.mm-strip,.mm-brief,.mm-remember{animation:none!important}.mm-cer-disc,.mm-cer-old,.mm-cer-new,.mm-cer-wave,.mm-cer .cer-kicker,.mm-cer-title,.mm-cer-sub,.mm-cer-line,.mm-cer-spark{animation-duration:.001ms!important;animation-delay:0s!important}}
 `;

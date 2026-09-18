@@ -147,6 +147,7 @@ src/
   components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
                           PassageDocs, avatar (renderAv, AvatarMedal), toasts, Tabs,
                           GrimoireReader, NextStepReco, TokenCTAs, legal, PasswordInput (œil),
+                          MentorMemory (AldricBrief, AldricRemembers), GrammarSheet,
                           LoadingMark (+ LoadBoundary), lazyNamed (+ preloadLazyScreens)
   features/            — one folder per screen: train/ (grammar, reading, strategy),
                           home/ (Home, Train, Cards, Daily, DailyTip), gauntlet/, modals/,
@@ -290,7 +291,8 @@ Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
   entrer l'erreur au bestiaire (voir « Mentor qui se souvient ») : le module passe alors `mistakesRef.current`
   en **dernier argument** de `p.done` (`drillDone` 5e, `dailyDone` 3e, `miniSession` 4e). `sidRef.current=p.done(…)`
   **à la fin de la manche, jamais derrière un bouton** (« Collect XP » perdait l'XP si l'élève quittait),
-  puis `<SessionResult session sid name mistakes onContinue onReplay>{extras}</SessionResult>`. Le
+  puis `<SessionResult session sid name mistakes onContinue onReplay>{extras}</SessionResult>` (`memory` :
+  la carte « Aldric remembers », rendue AVANT les leçons ; `session.turn` : cérémonie, voir « Mentor qui se souvient »). Le
   composant n'affiche QUE `session.id===sid` (sinon parchemin « sealing », Continue au bout de 2 s).
   Fin sur minuteur (dernière vie, auto-submit) : envoi dans `useEffect([phase])` + `sentRef`, **placé
   avant tout `return`** (`lintgate` ne fait pas échouer un rules-of-hooks : `npx eslint <fichier>`).
@@ -503,7 +505,7 @@ module sans compte : `prototypes/mimic-hunt/real.html`.
   achievements, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
   direct vers les Parts 3 et 4, et un poids Listening).
 
-### Mentor qui se souvient : bestiaire, chasse, plan du jour (2026-09-17/18, lots 1-4)
+### Mentor qui se souvient : bestiaire, chasse, plan du jour, narration (2026-09-17/18, lots 1-5)
 Proto `prototypes/mentor-memory/` (storyboard des 8 moments, décisions de Jérémy dans son README) ; banc de
 la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la prochaine réussite tue, `empty=1`).
 - **Colonne `students.review` jsonb** (`2026-09-17_mentor_memory.sql`, avec `letter_seen`) :
@@ -544,9 +546,28 @@ la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la pro
   mission faite ou quête unique → le jeton n'est pas consommé.
 - Banc des vrais écrans : `prototypes/mentor-memory/app.html` (Home, Mentor, onglets ; `p=lea|karim|ines`,
   `v=home|mentor|path|camp`, `done=1`, `reroll=1`, `mode=light`), horloge figée au 21/09/2026 (`clock.js`).
-- Reste (lots 5-6) : la mémoire dans la question du Drill et le Drill composé par le plan (les échéances < 4
-  n'y sont pas encore glissées : seule la chasse les repose), la cérémonie « faiblesse devenue force », la lettre
-  du lundi, la Chronique, et l'Insight Token (`generateInsight` lit encore la précision cumulée).
+- **Drill composé par le plan** (lot 5, 2026-09-18 ; `lib/planner.js drillComposition`, `pickAdaptive`
+  supprimé) : 4 questions sur la catégorie visée (quête Part 5 du plan figé, sinon `weakestCat` récente, sinon
+  **`weakestLifetimeCat`** sur les `catStats` cumulées ≥ 5 Q — sans ce repli le Drill serait aléatoire pour
+  presque tous, la série `cs` datant du 2026-09-17), 2 sur une catégorie « méritée », jusqu'à 2 échéances
+  glissées (quand il y en a moins de 4, sinon la chasse les prend), le reste mêlé, **jamais une créature tirée
+  au hasard**. Les échéances ne comptent pas dans les `catStats` de la manche ; battues, elles remontent en
+  6e argument de `p.done` → `drillDone` → `recordHits`.
+- **Narration de session** (Drill et chasse) : briefing en parchemin (`components/MentorMemory.jsx AldricBrief`,
+  `mentorVoice.briefing` — sur le cumul il dit « so far », jamais « your last N »), mémoire de la question due
+  dans `SessionTop sub`, conséquence d'Aldric dans les `children` d'`AnswerCard` (pas de slot à ajouter au
+  HUD), et au **3e échec** la fiche de grammaire en place (`data/grammarSheets.js CAT_SHEET`,
+  `components/GrammarSheet.jsx`, déplacé de `features/train/` pour la chasse) — seulement si la fiche existe
+  (`hasSheet`). Fin : `SessionResult memory={<AldricRemembers/>}`, rendu **avant** « Lessons to keep ».
+- **Cérémonie « faiblesse devenue force »** (`Ceremonies.jsx TurnCeremony`) : `sealSession` appelle
+  `celebrateTurn` (retournement `eligible` de `learnerModel.turnaround`, jamais célébré) → marque
+  `review.celebrated` (une fois par catégorie) et pose `session.turn`. L'écran de fin l'ouvre après une
+  éventuelle promotion de ligue, **même si l'élève a passé l'animation** (moment unique). Symbolique.
+  Impossible avant ~le 27/09 : la règle exige 10 jours entre deux fenêtres de la série `cs`.
+- Bancs : `prototypes/mentor-memory/drill.html` (vrai Drill ; `p=lea|karim|ines`, `fold=1` deux échéances
+  glissées dont un 3e échec, `turn=1` cérémonie de démonstration).
+- Reste (lot 6) : la lettre du lundi, la Chronique, l'Insight Token (`generateInsight` lit encore la précision
+  cumulée), et les `ref` des modules non couverts (Gauntlet, Clue, Tavern, Mimic, mini-modules).
 
 ### Grimoire pattern (applies to Gauntlet + G&V grimoires)
 - **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.

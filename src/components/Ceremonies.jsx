@@ -2,6 +2,7 @@
 //   LeaguePromotion « Ascension » (choix de Jérémy) : l'écusson de l'ancienne ligue se fend et tombe,
 //     le nouveau descend dans une colonne de lumière à sa couleur. Rendue par l'écran de fin de
 //     session, et par-dessus les écrans d'examen (qui gardent leurs propres résultats).
+//   TurnCeremony « faiblesse devenue force » (lot 5 du Mentor) : une catégorie retournée, une fois.
 //   LevelUpOverlay : montée de niveau plein écran, SEULEMENT pour les examens (les autres sessions
 //     la montrent dans le parchemin de SessionResult).
 // Fond sombre fixe, lisible dans les deux modes : hex bruts + /*fond local*/, jamais de jeton de
@@ -12,9 +13,10 @@ import { TreasureChestSvg } from "./avatar.jsx";
 import { createChestFx, burstAt } from "./particles.js";
 import { getLevel } from "../data/helpers.js";
 import { LEAGUES } from "../data/leagues.js";
-import { playLevelUp, playJingleLeague, playChestLand } from "../sounds.js";
+import { playLevelUp, playJingleLeague, playChestLand, playJingleAchieve } from "../sounds.js";
 import { haptic } from "../lib/device.js";
 import { CHEST_TIER_NAMES } from "../lib/sessionText.js";
+import { ceremonyText } from "../lib/mentorVoice.js";
 
 function stop(e) { e.stopPropagation(); }
 function sound(fn) { try { fn(); } catch (e) { console.warn("[ceremony] sound:", e && e.message); } }
@@ -82,6 +84,46 @@ export function ExamCeremonies(p) {
   function next() { if (idx + 1 >= items.length) p.onDone(); else setIdx(idx + 1); }
   if (it.kind === "level") return <LevelUpOverlay key={idx} level={it.level} toXp={it.toXp} onClose={next} />;
   return <LeaguePromotion key={idx} fromId={it.fromId} toId={it.toId} weekly={it.weekly} chestTier={it.chestTier} onClose={next} />;
+}
+
+// « Faiblesse devenue force » (Mentor qui se souvient, lot 5, 2026-09-18 ; proto prototypes/mentor-memory/,
+// validée « top » par Jérémy). La toile d'araignée — l'ancienne faiblesse — se fend et tombe, la couronne
+// de laurier monte. SYMBOLIQUE : aucune récompense (décision du 2026-09-17). `turn` : lib/planner.js
+// celebrateTurn ({cat, then:{c,t}, now:{c,t}, spark:[{acc, up}]}), posé par sealSession, une fois par
+// catégorie. Rendue par l'écran de fin, après une éventuelle promotion de ligue.
+export function TurnCeremony(p) {
+  var stage = useRef(null), canvas = useRef(null);
+  var fx = useFx(canvas);
+  var t = p.turn, txt = ceremonyText(t.cat, t, p.seed || "");
+  useEffect(function () {
+    sound(playJingleAchieve);
+    haptic("achieve");
+    var t1 = setTimeout(function () {
+      burstAt(fx.current, stage.current, [/*fond local*/"#ffe9a8", /*fond local*/"#f0c850", /*fond local*/"#ffffff"], true);
+      if (fx.current) fx.current.rain({ count: 40, color: [/*fond local*/"#ffd65a", /*fond local*/"#ffe9a8"] });
+    }, 1300);
+    return function () { clearTimeout(t1); };
+  }, [fx]);
+  return (
+    <div className="cer-ov mm-cer" onClick={stop}>
+      <div className="cer-rays" />
+      <div className="mm-cer-stage" ref={stage}>
+        <span className="mm-cer-disc" />
+        <span className="mm-cer-wave" />
+        <span className="mm-cer-old"><GIcon name="spider-web" size={70} color={/*fond local*/"#c0503a"} /></span>
+        <span className="mm-cer-new"><GIcon name="laurel-crown" size={82} color={/*fond local*/"#f0c850"} /></span>
+      </div>
+      <div className="cer-kicker out">{txt.kicker}</div>
+      <div className="mm-cer-title out">{txt.title}</div>
+      <div className="mm-cer-sub">{txt.sub}</div>
+      <div className="mm-cer-line">{txt.line}</div>
+      {t.spark && t.spark.length > 0 && <div className="mm-cer-spark" aria-hidden="true">
+        {t.spark.map(function (s, i) { return <i key={i} className={s.up ? "up" : ""} style={{ height: Math.max(4, Math.round(40 * s.acc)) + "px" }} />; })}
+      </div>}
+      <button className="cer-cta out" onClick={function (e) { stop(e); p.onClose(); }}>Onward</button>
+      <canvas ref={canvas} className="cer-fx" />
+    </div>
+  );
 }
 
 export function LeaguePromotion(p) {
