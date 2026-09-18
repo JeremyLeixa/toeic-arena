@@ -9,58 +9,87 @@ import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { SpeakBtn } from "../../components/SpeakBtn.jsx";
 import { GRIMOIRE_CONNECTORS } from "../../data/connectorsGrimoire.js";
 import { GRIMOIRE_GERUND } from "../../data/gerundGrimoire.js";
-import { QUESTIONS, WORD_FAMILIES } from "../../data/grammar.js";
+import { WORD_FAMILIES } from "../../data/grammar.js";
 import { LINKING_BRIDGE } from "../../data/linkingBridge.js";
 import { CONNECTORS, PREP_COLLOCATIONS, GERUND_INF, TOEIC_TRAPS, FALSE_FRIENDS } from "../../data/miniGames.js";
 import { GRIMOIRE_PHRASAL } from "../../data/phrasalGrimoire.js";
 import { PHRASAL_VERBS } from "../../data/phrasalVerbs.js";
-import { pickAdaptive } from "../../lib/progress.js";
-import { shuffle } from "../../lib/util.js";
-import { tone } from "../../lib/tone.js";
+import { drillComposition } from "../../lib/planner.js";
+import { briefing, questionBadge, questionFeedback, drillRemember } from "../../lib/mentorVoice.js";
+import { AldricBrief, AldricRemembers } from "../../components/MentorMemory.jsx";
+import { GrammarSheet } from "../../components/GrammarSheet.jsx";
+import { shuffle, today } from "../../lib/util.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
-import { GRAMMAR_SHEETS } from "../../data/grammarSheets.js";
+import { GRAMMAR_SHEETS, CAT_SHEET } from "../../data/grammarSheets.js";
 
 // ─── DRILL SESSION ───
+// Mentor qui se souvient, lot 5 (2026-09-18) : la manche est COMPOSÉE par le plan (lib/planner.js
+// drillComposition) au lieu du tirage pondéré aveugle 60/40 de l'ancien pickAdaptive : 4 questions sur la
+// catégorie visée (quête Part 5 du plan figé, sinon la plus faible, récente ou cumulée), 2 sur une
+// catégorie « méritée » (allégée), jusqu'à 2 erreurs dues glissées, le reste mêlé — et jamais une
+// créature du bestiaire tirée au hasard (elle revient par sa dette, sinon l'espacement est cassé).
+// Aldric l'annonce (briefing), chaque question due porte sa mémoire (SessionTop sub) et sa conséquence
+// (AnswerCard, avec la fiche de grammaire au 3e échec), et l'écran de fin dit ce qui a changé.
 export function Drill(p){
-// Personalization Phase 2 (2026-05-06) : adaptive picker driven by u.moduleScores.drill.catStats.
-// Cold start (no cat ≥5 samples) falls back to pure shuffle inside pickAdaptive.
-var qs=useMemo(function(){return pickAdaptive(p.u,QUESTIONS,"drill",10);},[]);
-var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[sk,sSk]=useState(false);
-// Per-cat counter populated through the round, persisted via p.done → drillDone → recordModule.
+var comp=useMemo(function(){return drillComposition(p.u,new Date());},[]);
+var qs=comp.items; // [{role:"focus"|"eased"|"due"|"mixed", q, item?}]
+var brief=useMemo(function(){return briefing(comp,p.u,new Date());},[]);
+var seed=(p.u.name||"")+today();
+var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState(brief.lines.length?"brief":"q");var[sk,sSk]=useState(false);
+var[sheet,setSheet]=useState(false);
+// Per-cat counter populated through the round, persisted via p.done → drillDone → recordModule. Les
+// échéances n'y entrent pas : une question déjà vue, explication lue, prouve qu'on l'a retenue, pas
+// qu'on maîtrise la catégorie (même règle que la chasse, lib/learnerModel.js catSeries).
 var catStatsRef=useRef({});
 // Écran de fin commun (2026-09-17) : erreurs gardées pour « Lessons to keep », sid de la session
 // rendu par p.done (drillDone) pour n'afficher que CETTE session.
 var mistakesRef=useRef([]);var sidRef=useRef(0);
+// Bestiaire : réponses de la manche (carte « Aldric remembers ») et échéances battues (drillDone).
+var resultsRef=useRef([]);var hitsRef=useRef([]);
 // HUD de session (2026-09-17, variante E) : réponses de la manche pour le fil d'encre et le combo.
 var track=useSessionTrack();
 function doAns(i){
   sS(i);
-  var q=qs[ci];var cat=q.cat||"Other";
-  var prev=catStatsRef.current[cat]||{correct:0,total:0};
+  var it=qs[ci],q=it.q;var cat=q.cat||"Other";
   var correct=i===q.c;
-  catStatsRef.current[cat]={correct:prev.correct+(correct?1:0),total:prev.total+1};
+  if(it.role!=="due"){var prev=catStatsRef.current[cat]||{correct:0,total:0};catStatsRef.current[cat]={correct:prev.correct+(correct?1:0),total:prev.total+1};}
   // ref : la question entre au bestiaire (lib/review.js). Préfixe "drill:" pour toute la banque de
   // grammaire, quel que soit le module : ratée ici ou dans le Daily, c'est la même créature.
   if(!correct)mistakesRef.current.push({tag:q.cat,prompt:q.s,yours:q.o[i],correct:q.o[q.c],why:q.x,ref:{k:"drill:"+q.id,cat:q.cat,part:"p5"}});
+  else if(it.role==="due")hitsRef.current.push("drill:"+q.id);
+  resultsRef.current.push({role:it.role,ok:correct,q:q,item:it.item});
   track.record(correct);
-  if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}
-  else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},500);}
+  if(correct){sSc(sc+1);try{playCorrect();}catch(e){console.warn("[drill] son :",e&&e.message);}}
+  else{try{playWrong();}catch(e){console.warn("[drill] son :",e&&e.message);}sSk(true);setTimeout(function(){sSk(false);},500);}
   sP("fb");
 }
 // Fin de manche : la session est calculée et sauvegardée ICI (p.done), l'écran l'affiche ensuite.
 // Plus de p.gate() au rendu : il relisait les compteurs du jour déjà incrémentés (XP affichée ≠ versée).
-function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sidRef.current=p.done(sc,qs.length,20+sc*7,catStatsRef.current,mistakesRef.current);sP("done");}}
+function nxt(){setSheet(false);if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sidRef.current=p.done(sc,qs.length,20+sc*7,catStatsRef.current,mistakesRef.current,hitsRef.current);sP("done");}}
 
 if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Grammar Drill" mistakes={mistakesRef.current}
+  memory={<AldricRemembers lines={drillRemember(comp,resultsRef.current)}/>}
   onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
   <NextStepReco u={p.u} fromMod="drill" nav={function(m,a){p.closeSession();p.nav(m,a);}}/>
 </SessionResult>);
 
+// Avant la manche : Aldric dit comment il l'a composée (rien à dire → on commence directement).
+if(ph==="brief")return(<>
+<SessionTop n={qs.length} cur={0} results={[]} streak={0} onQuit={p.back}/>
+<div style={{padding:"4px 16px 0"}}><AldricBrief brief={brief} title="Aldric's drill"/></div>
+<NextBar onNext={function(){sP("q");}} label="Begin"/>
+</>);
+
 // La barre et le pied sont fixes : ils vivent HORS du bloc .sk (le shake anime transform, un fixed
 // suivrait le bloc). SessionTop masque aussi la tab bar sur mobile tant qu'il est à l'écran.
-var q=qs[ci];var isOk=sel===q.c;return(<>
-<SessionTop n={qs.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
+var it=qs[ci],q=it.q;var isOk=sel===q.c;
+var badge=it.role==="due"?questionBadge(it.item):null;
+var sheetId=CAT_SHEET[q.cat]||null;
+var feed=ph==="fb"?questionFeedback({role:it.role,item:it.item,cat:q.cat,ok:isOk,hasSheet:!!sheetId,series:comp.eased&&comp.eased.cat===q.cat?comp.eased.series:null,seed:seed,k:q.id}):null;
+return(<>
+<SessionTop n={qs.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}
+  sub={badge?<><GIcon name={badge.icon} size={12} color="currentColor" style={{verticalAlign:"-2px",marginRight:5}}/>{badge.text}</>:null}/>
 <ComboBanner combo={track.combo}/>
 <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
 <span className="out" style={{fontSize:11,fontWeight:600,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,display:"block"}}>{q.cat}</span>
@@ -70,7 +99,12 @@ if(sr&&iC){bg="rgba(0,230,118,.12)";bd="var(--green)";}else if(sr&&iS&&!iC){bg="
 return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={ph==="fb"} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
 <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(sr&&iC?"var(--green)":sr&&iS?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,background:sr&&iC?"var(--green)":sr&&iS&&!iC?"var(--red)":"transparent",color:sr&&(iC||iS)?"#fff":"var(--t3)"}}>
 {sr&&iC?"✓":sr&&iS?"✗":String.fromCharCode(65+i)}</div><span>{opt}</span></button>);})}</div>
-{ph==="fb"&&<AnswerCard ok={isOk} answer={String.fromCharCode(65+q.c)+". "+q.o[q.c]} why={q.x}/>}</div>
+{ph==="fb"&&<AnswerCard ok={isOk} answer={String.fromCharCode(65+q.c)+". "+q.o[q.c]} label={feed?"Aldric":undefined}>
+  {feed&&<p className={"mm-aldric "+feed.tone}><GIcon name={feed.icon} size={16} color="currentColor" style={{verticalAlign:"-3px",marginRight:6}}/>{feed.text}</p>}
+  {feed&&feed.sheet&&<button className="mm-sheet-btn out" onClick={function(){setSheet(!sheet);}} aria-expanded={sheet}>{sheet?"Hide the sheet":"Open the "+q.cat+" sheet"}</button>}
+  {feed&&feed.sheet&&sheet&&<div style={{margin:"10px 0"}}><GrammarSheet g={GRAMMAR_SHEETS.find(function(s){return s.id===sheetId;})}/></div>}
+  {q.x&&<p className="ss-why">{q.x}</p>}
+</AnswerCard>}</div>
 {ph==="fb"&&<NextBar onNext={nxt} last={ci===qs.length-1}/>}</>);}
 // ─── WORD FAMILIES CLASSIFIER ───
 export function WordFam(p){
@@ -583,34 +617,8 @@ export function TrapsQuiz(p){
   </div>);
 }
 // ─── GRAMMAR REFERENCE SHEETS ───
-// Le corps d'une fiche (règle, patterns, pièges TOEIC), sans chrome. Rendu par GrammarRef
-// et, depuis le retour d'un étudiant (2026-09-15), EN PLACE dans la revue des erreurs de
-// l'Exam Simulation (reading.jsx) : le lien vers le cours changeait d'écran, ce qui
-// démontait la liste des erreurs, et « Back » renvoyait au menu.
-export function GrammarSheet(p){
-  var g=p.g;
-  return(<div>
-    {/* Rule summary */}
-    <div style={{padding:"10px 14px",background:"rgba(var(--cx),.06)",border:"1px solid rgba(var(--cx),.12)",borderRadius:10,marginBottom:12}}>
-      <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,fontWeight:500}}>{g.rule}</p>
-    </div>
-
-    {/* Patterns */}
-    {g.patterns.map(function(pt,j){
-      return(<div key={j} style={{marginBottom:10,paddingLeft:12,borderLeft:"3px solid "+g.color+"40"}}>
-        <div className="out" style={{fontSize:13,fontWeight:700,color:tone(g.color),marginBottom:2}}>{pt.p}</div>
-        <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,marginBottom:4}}>{pt.d}</div>
-        <div style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",lineHeight:1.5}}>"{pt.ex}"</div>
-      </div>);
-    })}
-
-    {/* TOEIC Traps */}
-    <div style={{marginTop:8,padding:"10px 14px",background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.12)",borderRadius:10}}>
-      <p style={{fontSize:11,fontWeight:700,color:"var(--red)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>TOEIC Traps</p>
-      <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{g.traps}</p>
-    </div>
-  </div>);
-}
+// GrammarSheet (le corps d'une fiche) vit dans components/GrammarSheet.jsx depuis le 2026-09-18 :
+// la chasse aux erreurs l'ouvre aussi, au 3e échec d'une même question.
 export function GrammarRef(p){
   var[open,sO]=useState(p.initial||null);
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>

@@ -17,7 +17,10 @@ import { SessionTop, AnswerCard, NextBar, ListenDisc, ComboBanner } from "../../
 import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { huntQueue, reviewHit, reviewMiss, huntReward, newReview, TIERS, tierOf, WYRM_MISS } from "../../lib/review.js";
 import { lookupRef } from "../../lib/reviewLookup.js";
-import { questionBadge, questionFeedback, rememberLines, huntTotals } from "../../lib/mentorVoice.js";
+import { questionBadge, questionFeedback, rememberLines, huntTotals, briefing } from "../../lib/mentorVoice.js";
+import { AldricBrief, AldricRemembers } from "../../components/MentorMemory.jsx";
+import { GrammarSheet } from "../../components/GrammarSheet.jsx";
+import { GRAMMAR_SHEETS, CAT_SHEET } from "../../data/grammarSheets.js";
 import { playAudioFile, playLetteredOption, resumeAudioSession, stopCurrentListenAudio, stopListenAudio } from "../../lib/audio.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 
@@ -29,7 +32,8 @@ export function MistakeHunt(p) {
     return huntQueue(p.u, new Date()).map(function (it) { return { it: it, q: lookupRef(it.k) }; })
       .filter(function (x) { return x.q; });
   }, []);
-  var [ci, sC] = useState(0), [sel, sSel] = useState(-1), [ph, sP] = useState("intro");
+  var brief = useMemo(function () { return briefing({ kind: "hunt", items: queue.map(function (x) { return x.it; }) }, p.u, new Date()); }, []);
+  var [ci, sC] = useState(0), [sel, sSel] = useState(-1), [ph, sP] = useState("intro"), [sheet, setSheet] = useState(false);
   var [playing, setPlaying] = useState(false), [played, setPlayed] = useState(false);
   var track = useSessionTrack();
   // Copie de travail du bestiaire : App() la reçoit à la fin, via p.done.
@@ -118,7 +122,7 @@ export function MistakeHunt(p) {
     sP("fb");
   }
   function next() {
-    hush();
+    hush(); setSheet(false);
     if (ci < queue.length - 1) { sC(ci + 1); sSel(-1); setPlayed(false); sP("q"); return; }
     // La session est calculée et sauvegardée ICI (jamais derrière un bouton : l'élève qui quitte
     // l'écran de fin garderait sinon ses créatures vaincues sans rien en tirer).
@@ -134,25 +138,8 @@ export function MistakeHunt(p) {
     var lines = rememberLines({ slain: outRef.current.slain, hits: outRef.current.hits, escaped: outRef.current.escaped });
     return (
       <SessionResult session={p.session} sid={sidRef.current} name="Mistake Hunt" mistakes={mistakesRef.current}
+        memory={<AldricRemembers lines={lines} aside={totals.label} />}
         onContinue={function () { p.closeSession(); p.back(); }}>
-        <div className="crd" style={{ maxWidth: 400, margin: "0 auto 12px", padding: "14px 14px 8px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <GIcon name="wizard-staff" size={16} color="var(--purple)" />
-            <b className="out" style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--purple)" }}>Aldric remembers</b>
-            <small style={{ marginLeft: "auto", fontSize: 11, color: "var(--t3)" }}>{totals.label}</small>
-          </div>
-          {lines.map(function (l, i) {
-            return (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderTop: i ? "1px solid var(--bdr)" : "none" }}>
-                <GIcon name={l.icon} size={20} color={l.tone === "win" ? "var(--green)" : "var(--t2)"} />
-                <div>
-                  <b style={{ display: "block", fontSize: 13, fontWeight: 700, color: "var(--t1)", lineHeight: 1.35 }}>{l.text}</b>
-                  {l.sub && <small style={{ display: "block", marginTop: 2, fontSize: 11, color: "var(--t2)" }}>{l.sub}</small>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
         <NextStepReco u={p.u} fromMod="hunt" nav={function (m, a) { p.closeSession(); p.nav(m, a); }} />
       </SessionResult>
     );
@@ -169,24 +156,25 @@ export function MistakeHunt(p) {
     );
   }
 
+  // Avant la chasse : Aldric dit ce qui l'attend (lot 5 du Mentor) — combien, de quel côté du test,
+  // combien déjà battues une fois, et la question qui l'a battu le plus souvent.
   if (ph === "intro") {
-    var due = queue.length, beaten = queue.filter(function (x) { return x.it.box > 0; }).length;
     return (
-      <div className="enter" style={{ padding: "20px 16px", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", textAlign: "center" }}>
-        <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}><GIcon name="dragon-head" size={60} color="var(--cyan)" /></div>
-        <h1 className="out" style={{ fontWeight: 900, fontSize: 26, marginBottom: 8 }}>Mistake Hunt</h1>
-        <p style={{ color: "var(--t2)", fontSize: 13, marginBottom: 8, lineHeight: 1.6 }}>
-          {due + " mistake" + (due > 1 ? "s are" : " is") + " due today." + (beaten ? " You've already beaten " + beaten + " of them once." : "")}
-        </p>
-        <p style={{ color: "var(--gold)", fontWeight: 600, fontSize: 14, marginBottom: 30 }}>Beat one three times, spaced out, and it's gone for good.</p>
-        <button className="btn1" onClick={function () { sP("q"); }}>Start the hunt</button>
-        <button className="btn2" onClick={p.back} style={{ marginTop: 12, width: "100%" }}>Back</button>
-      </div>
+      <>
+        <SessionTop n={queue.length} cur={0} results={[]} streak={0} onQuit={p.back} />
+        <div style={{ padding: "4px 16px 0" }}>
+          <AldricBrief brief={brief} title="Mistake Hunt" />
+          <p style={{ color: "var(--t2)", fontSize: 12.5, lineHeight: 1.6, textAlign: "center", margin: "0 8px" }}>Beat one three times, a few days apart, and it's gone for good.</p>
+        </div>
+        <NextBar onNext={function () { sP("q"); }} label="Start the hunt" />
+      </>
     );
   }
 
   var badge = questionBadge(cur.it), fb = ph === "fb";
-  var feed = fb ? questionFeedback({ role: "due", item: cur.it, cat: q.cat, ok: sel === q.c }) : null;
+  // La fiche de grammaire au 3e échec (lot 5), seulement quand elle existe pour la catégorie.
+  var sheetId = q.cat ? CAT_SHEET[q.cat] || null : null;
+  var feed = fb ? questionFeedback({ role: "due", item: cur.it, cat: q.cat, ok: sel === q.c, hasSheet: !!sheetId }) : null;
   return (
     <>
       <SessionTop n={queue.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}
@@ -221,9 +209,9 @@ export function MistakeHunt(p) {
           </div>
           : <p style={{ color: "var(--t3)", fontSize: 13, textAlign: "center" }}>Listen first.</p>}
         {fb && <AnswerCard ok={sel === q.c} answer={String.fromCharCode(65 + q.c) + ". " + q.options[q.c]} label={feed ? "Aldric" : "Why"}>
-          {feed && <p style={{ margin: "0 0 10px", fontSize: 14, fontWeight: 700, lineHeight: 1.5, color: feed.tone === "win" ? "var(--green)" : feed.tone === "bite" ? "var(--red)" : "var(--t1)" }}>
-            <GIcon name={feed.icon} size={16} color="currentColor" style={{ verticalAlign: "-3px", marginRight: 6 }} />{feed.text}
-          </p>}
+          {feed && <p className={"mm-aldric " + feed.tone}><GIcon name={feed.icon} size={16} color="currentColor" style={{ verticalAlign: "-3px", marginRight: 6 }} />{feed.text}</p>}
+          {feed && feed.sheet && <button className="mm-sheet-btn out" onClick={function () { setSheet(!sheet); }} aria-expanded={sheet}>{sheet ? "Hide the sheet" : "Open the " + q.cat + " sheet"}</button>}
+          {feed && feed.sheet && sheet && <div style={{ margin: "10px 0" }}><GrammarSheet g={GRAMMAR_SHEETS.find(function (s) { return s.id === sheetId; })} /></div>}
           {q.why && <p className="ss-why">{q.why}</p>}
         </AnswerCard>}
       </div>

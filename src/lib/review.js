@@ -149,6 +149,13 @@ export function boundReview(rv) {
 // est la liste mistakesRef du module, celle de l'écran de fin : seules les entrées qui portent
 // `ref:{k,cat,part}` entrent, les autres (module que la chasse ne sait pas encore reposer) sont ignorées.
 // Modifie `rv` sur place (App() travaille sur une copie du profil) et le rend borné.
+// Les créatures battues DANS une autre session (le Drill y glisse les échéances, lot 5) : même effet
+// qu'une réussite en chasse (boîte suivante, vaincue à la 3e). `keys` : les références battues.
+export function recordHits(rv, keys, now) {
+  if (!rv || !rv.items) rv = newReview();
+  (keys || []).forEach(function (k) { if (k) reviewHit(rv, k, now); });
+  return boundReview(rv);
+}
 export function recordMisses(rv, mistakes, now) {
   if (!rv || !rv.items) rv = newReview();
   (mistakes || []).forEach(function (m) { if (m && m.ref && m.ref.k) reviewMiss(rv, m.ref, now); });

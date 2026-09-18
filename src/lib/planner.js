@@ -14,6 +14,7 @@ import { QUESTIONS } from "../data/grammar.js";
 import {
   PARTS, PART_MOD, PART_ICON, TOEIC_Q, MACROS, addDays, daysBetween, stakes, targetAcc, weakestCat,
   catState, catSeries, partSeries, windowAcc, allCats, trainedSessions, PART_SHORT, firstCross,
+  weakestLifetimeCat,
 } from "./learnerModel.js";
 import { dueItems, huntQueue, HUNT_CAP } from "./review.js";
 
@@ -123,7 +124,7 @@ export function composeSession(u, now, plan, quest, rnd) {
   var folded = plan.folded.filter(function (x) { return x.k.indexOf("drill:") === 0; }).slice(0, 2);
   var focus = null, focusCats;
   if (quest.kind === "confirm" && quest.macro) focusCats = quest.macro.subcats;
-  else { focus = quest.cat || weakestCat(u, now); focusCats = focus ? [focus.cat] : []; }
+  else { focus = quest.cat || weakestCat(u, now) || weakestLifetimeCat(u, now); focusCats = focus ? [focus.cat] : []; }
   // Catégorie « méritée » : un retournement confirmé ou presque → moins de questions, et on le dit.
   var eased = allCats().map(function (c) { return catState(u, c, now); })
     .filter(function (s) { return s.turn && (s.turn.eligible || s.turn.near) && focusCats.indexOf(s.cat) < 0; })[0] || null;
@@ -151,6 +152,21 @@ export function composeSession(u, now, plan, quest, rnd) {
   order.forEach(function (r) { if (out.length < 10 && slots[r].length) out.push(slots[r].shift()); });
   ["focus", "eased", "due", "mixed"].forEach(function (r) { while (out.length < 10 && slots[r].length) out.push(slots[r].shift()); });
   return { kind: "drill", quest: quest, focus: focus, focusCats: focusCats, macro: quest.macro || null, eased: eased, folded: folded, items: out };
+}
+
+// La manche du Drill (lot 5, 2026-09-18) : composée pour la quête du plan figé qui vise le Drill (enjeu
+// Part 5 ou confirmation du Battle Scan), sinon pour la catégorie la plus faible. Les échéances glissées
+// viennent du plan RECALCULÉ (dueItems du moment) : la chasse du matin a pu les faire tomber sous 4.
+// Chaque élément porte sa question (`q`) ; une échéance dont la question a disparu de la banque est
+// retirée plutôt que de casser la manche.
+export function drillComposition(u, now, rnd) {
+  var m = todayMission(u, now), fq = m && m.quests.find(function (q) { return q.mod === "drill"; });
+  var quest = fq ? thawQuest(fq, u, now) : { kind: "stake", mod: "drill", part: "p5" };
+  var comp = composeSession(u, now, planToday(u, now), quest, rnd);
+  comp.items = comp.items.map(function (it) {
+    return it.role === "due" ? Object.assign({}, it, { q: QUESTIONS.find(function (q) { return q.id === it.id; }) }) : it;
+  }).filter(function (it) { return it.q; });
+  return comp;
 }
 
 // ── La semaine écoulée (lettre du lundi) ──

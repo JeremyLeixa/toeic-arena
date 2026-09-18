@@ -1,6 +1,6 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { QUESTIONS } from "../data/grammar.js";
-import { srand, today, shuffle } from "./util.js";
+import { srand, today } from "./util.js";
 
 export function dailyQs(date,u){
   var seed=0;for(var i=0;i<date.length;i++)seed+=date.charCodeAt(i);
@@ -128,8 +128,8 @@ export function recordModule(u,modId,sc,tot,catStats){
   hist.push(entry);
   if(hist.length>100)hist=hist.slice(-100);
   // Personalization Phase 2 (2026-05-06) — merge per-category stats when provided.
-  // Used by the adaptive picker (pickAdaptive) to weight question selection toward
-  // the user's weakest sub-topics. Backward compatible : catStats arg is optional.
+  // Used by the Drill composition (lib/planner.js : repli sur le cumul quand la série récente manque)
+  // and the Mentor's grammar deep dive. Backward compatible : catStats arg is optional.
   var mergedCats=Object.assign({},prev.catStats||{});
   if(catStats){
     Object.keys(catStats).forEach(function(c){
@@ -143,55 +143,6 @@ export function recordModule(u,modId,sc,tot,catStats){
   if(u.bypassArmedModule===modId)u.bypassArmedModule=null;
   if(u.boosts&&u.boosts.moduleBoostArmed===modId)u.boosts.moduleBoostArmed=null; // P2.5 — consume Module Booster
   return u;
-}
-// ═══════════════════════════════════════════════════════════════════════
-// pickAdaptive — Personalization Phase 2 (2026-05-06)
-// Weighted question selection driven by per-category accuracy stored in
-// u.moduleScores[modId].catStats. Hybrid 60/40 formula (validated by
-// Jérémy) : 60% picks weighted by category weakness, 40% pure random.
-// Cold start (no cat with ≥5 samples) falls back to pure shuffle so new
-// users aren't penalized by a biased pool.
-// ═══════════════════════════════════════════════════════════════════════
-export function pickAdaptive(u,all,modId,target){
-  if(!target)target=10;
-  var cs=(u&&u.moduleScores&&u.moduleScores[modId]&&u.moduleScores[modId].catStats)||{};
-  var hasData=Object.keys(cs).some(function(k){return cs[k]&&cs[k].total>=5;});
-  if(!hasData)return shuffle(all).slice(0,target);
-
-  // Bucket items by cat (fall back to "Other" if missing)
-  var byCat={};
-  all.forEach(function(q){var c=q.cat||"Other";if(!byCat[c])byCat[c]=[];byCat[c].push(q);});
-
-  // Weight per cat : weakness = 1 - accuracy, floor 0.1 to keep some chance of being picked
-  // even for mastered topics. Cats with insufficient data get a neutral 0.5 weight.
-  var weights={};
-  Object.keys(byCat).forEach(function(c){
-    var s=cs[c];
-    if(!s||s.total<5)weights[c]=0.5;
-    else weights[c]=Math.max(0.1,1-(s.correct/s.total));
-  });
-
-  // 60% weighted picks : sample a cat by weights, then a random item in that cat.
-  // Each picked item is removed from the pool so we don't repeat.
-  var weightedN=Math.round(target*0.6);
-  var randomN=target-weightedN;
-  var available=JSON.parse(JSON.stringify(byCat));
-  var picked=[],pickedIds={};
-  for(var i=0;i<weightedN;i++){
-    var cats=Object.keys(available).filter(function(c){return available[c].length>0;});
-    if(cats.length===0)break;
-    var totalW=0;cats.forEach(function(c){totalW+=weights[c];});
-    var r=Math.random()*totalW,sumW=0,chosenCat=cats[0];
-    for(var j=0;j<cats.length;j++){sumW+=weights[cats[j]];if(r<=sumW){chosenCat=cats[j];break;}}
-    var pool=available[chosenCat];
-    var idx=Math.floor(Math.random()*pool.length);
-    var q=pool.splice(idx,1)[0];
-    picked.push(q);pickedIds[q.id]=true;
-  }
-  // 40% random picks from remaining items
-  var remaining=all.filter(function(q){return !pickedIds[q.id];});
-  var randomPicks=shuffle(remaining).slice(0,randomN);
-  return shuffle(picked.concat(randomPicks));
 }
 export function checkMission(u,modId){
   if(!u.mission)return u;

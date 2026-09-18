@@ -170,6 +170,22 @@ export function weakestCat(u, now, onlyCats) {
   });
   return best;
 }
+// Repli quand la série par catégorie est trop mince (elle n'existe que depuis le 2026-09-17) : la
+// catégorie la plus faible selon les statistiques CUMULÉES du Drill (≥ 5 questions, seuil de l'ancien
+// pickAdaptive). Sans lui, le Drill composé par le plan serait purement aléatoire pour presque tout le
+// monde, là où l'ancien tirage pondérait déjà vers les faiblesses. `source:"lifetime"` : le briefing
+// cite alors le cumul (« 12 of 30 so far »), jamais une fenêtre récente qu'on n'a pas.
+export function weakestLifetimeCat(u, now) {
+  var cs = (u && u.moduleScores && u.moduleScores.drill && u.moduleScores.drill.catStats) || {}, best = null;
+  Object.keys(cs).forEach(function (c) {
+    var s = cs[c];
+    if (!s || s.total < 5 || allCats().indexOf(c) < 0) return;
+    var acc = s.correct / s.total;
+    if (!best || acc < best.acc) best = { cat: c, acc: acc, c: s.correct, t: s.total };
+  });
+  if (!best) return null;
+  return Object.assign(catState(u, best.cat, now), { source: "lifetime", life: { c: best.c, t: best.t, acc: best.acc } });
+}
 // Sessions d'entraînement : les chasses ne comptent pas pour sortir du démarrage à froid.
 export function trainedSessions(u) {
   var ms = (u && u.moduleScores) || {}, n = 0;

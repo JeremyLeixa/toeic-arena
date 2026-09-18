@@ -144,5 +144,11 @@ eq('entrée sans date ou vide ignorée', L.partSeries(broken, 'p5').map((e) => e
 ok('maîtrise calculable malgré elle', Number.isFinite(L.mastery(L.partSeries(broken, 'p5'), NOW).acc));
 eq('catégorie : idem', L.catSeries({ moduleScores: { drill: hist([{ cs: { Tenses: { c: 1, t: 2 } } }]) } }, 'Tenses'), []);
 
+// ── Repli cumulé (lot 5) : la catégorie la plus faible des catStats du Drill, ≥ 5 questions ──────────
+const lifeU = { moduleScores: { drill: { history: [], catStats: { Conditionals: { correct: 4, total: 10 }, Articles: { correct: 0, total: 4 }, Tenses: { correct: 9, total: 10 }, Bogus: { correct: 0, total: 20 } } } } };
+const wl = L.weakestLifetimeCat(lifeU, NOW);
+eq('plus faible au cumul, ≥ 5 questions, catégorie connue de la banque', [wl.cat, wl.source, wl.life], ['Conditionals', 'lifetime', { c: 4, t: 10, acc: 0.4 }]);
+eq('rien sans catStats', L.weakestLifetimeCat({ moduleScores: {} }, NOW), null);
+
 console.log(fails === 0 ? '  OK ' + checks + ' vérifications' : '  ' + fails + ' échec(s) sur ' + checks);
 process.exit(fails === 0 ? 0 : 1);

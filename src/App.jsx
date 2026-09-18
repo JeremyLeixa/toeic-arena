@@ -22,7 +22,7 @@ import { getLeague, applyWeekTransition } from "./lib/league.js";
 import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost, notifyAuthLost } from "./lib/persistence.js";
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
-import { boundReview, recordMisses } from "./lib/review.js";
+import { boundReview, recordMisses, recordHits } from "./lib/review.js";
 import { dayMission, stakePart, todayMission } from "./lib/planner.js";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { MASTERY_BLACKLIST, isMastered } from "./lib/hubStatus.js";
@@ -75,7 +75,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-18-mentor-memory-lot4";
+var BUILD_ID="2026-09-18-mentor-memory-lot5";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1428,7 +1428,8 @@ function sv(d){
     c.dailySeen=c.dailySeen.filter(function(entry){return entry.date>=pruneStr;});
     sealSession(c,ss.sid);sv(c);return ss.sid;}
   // Drill : premier module sur l'écran de fin commun (pilote, 2026-09-17). Rend le sid de la session.
-  function drillDone(sc,tot,xp,catStats,mistakes){var s=settleSession("drill",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,"drill");sealSession(c,s.sid);sv(c);return s.sid;}
+  // `hits` (lot 5 du Mentor) : les échéances du bestiaire glissées dans la manche et battues (recordHits).
+  function drillDone(sc,tot,xp,catStats,mistakes,hits){var s=settleSession("drill",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);c.review=recordMisses(recordHits(c.review,hits,new Date()),mistakes,new Date());checkMission(c,"drill");sealSession(c,s.sid);sv(c);return s.sid;}
   // Mini-modules sur l'écran de fin commun (Spotlight compris), avec la session. Rend le sid.
   // `mistakes` (facultatif, aussi dans drillDone et dailyDone) : la liste mistakesRef du module. Ses
   // entrées qui portent `ref` entrent au bestiaire (lib/review.js recordMisses), file bornée ICI, à

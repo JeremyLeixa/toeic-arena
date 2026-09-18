@@ -134,7 +134,7 @@ export function briefing(comp, u, now) {
     var worst = comp.items.slice().sort(function (a, b) { return b.fails - a.fails; })[0];
     lines.push(plural(comp.items.length, "mistake") + " " + (comp.items.length === 1 ? "is" : "are") + " due today: " + listJoin(parts) + ".");
     if (beaten) lines.push(pickLine(["You've already beaten " + beaten + " of them once. Finish the job.", beaten + " of them have felt your blade before. Finish them."], seed));
-    if (worst && worst.fails >= 2) lines.push("One " + (worst.cat || PART_SHORT[worst.part] || "question") + " has beaten you " + worst.fails + " times. Read slowly.");
+    if (worst && worst.fails >= 2) lines.push("One " + (worst.cat || PART_SHORT[worst.part] ? (worst.cat || PART_SHORT[worst.part]) + " question" : "question") + " has beaten you " + worst.fails + " times. Read slowly.");
     chips.push({ icon: "broadsword", text: comp.items.length + " due" });
     parts.forEach(function (p) { chips.push({ icon: /grammar/.test(p) ? "ink-swirl" : /reading/.test(p) ? "eye-target" : "public-speaker", text: p }); });
     return { title: "Mistake Hunt", lines: lines, chips: chips };
@@ -146,9 +146,11 @@ export function briefing(comp, u, now) {
     lines.push(pickLine(["Prove the scan wrong.", "Let's see if the scan was right."], seed));
     lines.push("The rest is a mix, so I can learn where else you stand.");
     chips.push({ icon: comp.macro.icon, text: n("focus") + " " + comp.macro.label.toLowerCase() });
-  } else if (comp.focus) {
-    var w = recentWindow(comp.focus.series, 12);
-    lines.push(comp.focus.cat + " " + be(comp.focus.cat) + " your weak spot now: " + w.c + " of your last " + w.t + ". I've put " + n("focus") + " in this drill.");
+  } else if (comp.focus && n("focus")) {
+    // Série récente trop mince (elle n'existe que depuis le 2026-09-17) : on cite le cumul, et on le dit.
+    var life = comp.focus.source === "lifetime", w = life ? comp.focus.life : recentWindow(comp.focus.series, 12);
+    lines.push(comp.focus.cat + " " + be(comp.focus.cat) + " your weak spot" + (life ? ": " + w.c + " of " + w.t + " so far." : " now: " + w.c + " of your last " + w.t + ".")
+      + " I've put " + n("focus") + " in this drill.");
     chips.push({ icon: "eye-target", text: n("focus") + " " + comp.focus.cat });
   }
   if (comp.eased && n("eased")) {
@@ -177,7 +179,11 @@ export function questionFeedback(o) {
       if (item.box + 1 >= BOX_DAYS.length) return { tone: "win", icon: "broadsword", text: "Revenge! Slain for good." };
       return { tone: "win", icon: "crossed-swords", text: "Revenge. It comes back in " + BOX_DAYS[item.box + 1] + " days, weaker." };
     }
-    if (item.fails + 1 >= WYRM_MISS) return { tone: "bite", icon: "dragon-head", text: "It bites again. Back in 2 days: read the " + (o.cat || "grammar") + " sheet first." };
+    // `hasSheet` : une fiche de grammaire existe pour la catégorie (data/grammarSheets.js CAT_SHEET) ; sinon
+    // Aldric ne promet pas une fiche qui n'existe pas.
+    if (item.fails + 1 >= WYRM_MISS) return o.hasSheet
+      ? { tone: "bite", icon: "dragon-head", sheet: true, text: "It bites again. Back in 2 days: read the " + o.cat + " sheet first." }
+      : { tone: "bite", icon: "dragon-head", text: "It bites again. It rests 2 days: read the explanation twice." };
     return { tone: "bite", icon: "trap-mask", text: "It bites again. Back tomorrow." };
   }
   if (o.role === "eased" && o.cat && o.series) {
@@ -217,11 +223,27 @@ export function rememberLines(o) {
       sub: "Your weak spot gets the most questions until it holds." });
   }
   if (o.macro && o.macroT) {
-    lines.push({ icon: "compass", tone: "note", text: o.macro + " today: " + o.macroC + " of " + o.macroT + ". Your scan said " + toPct(o.scanAcc) + "%.",
+    lines.push({ icon: "compass", tone: "note", text: o.macro + " today: " + o.macroC + " of " + o.macroT + "." + (o.scanAcc != null ? " Your scan said " + toPct(o.scanAcc) + "%." : ""),
       sub: "Too early to judge. Two more sessions and I'll know." });
   }
   if (o.best) lines.push({ icon: "trophy-cup", tone: "win", text: "Your best " + o.best.name + " yet", sub: o.best.sc + " / " + o.best.tot });
   return lines;
+}
+// Fin d'un Drill composé (lot 5) : ce qui a changé dans le bestiaire et sur la cible du jour, depuis la
+// composition (`comp`, lib/planner.js drillComposition) et les réponses ([{role, ok, q, item?}]).
+// Une échéance réussie à sa dernière boîte tombe (« slain »), ratée 3 fois elle se repose 2 jours.
+export function drillRemember(comp, results) {
+  var o = { slain: [], hits: [], escaped: [], fresh: [] };
+  results.forEach(function (r) {
+    if (r.role === "due" && r.item) {
+      if (r.ok) (r.item.box + 1 >= BOX_DAYS.length ? o.slain : o.hits).push({ k: r.item.k, label: r.q.cat });
+      else o.escaped.push({ k: r.item.k, label: r.q.cat, rest: r.item.fails + 1 >= WYRM_MISS });
+    } else if (!r.ok) o.fresh.push({ k: "drill:" + r.q.id });
+  });
+  var foc = results.filter(function (r) { return r.role === "focus"; }), fc = foc.filter(function (r) { return r.ok; }).length;
+  if (foc.length && comp.macro) { o.macro = comp.macro.label; o.macroC = fc; o.macroT = foc.length; o.scanAcc = comp.quest && comp.quest.scanAcc; }
+  else if (foc.length && comp.focus) { o.focusCat = comp.focus.cat; o.focusC = fc; o.focusT = foc.length; }
+  return rememberLines(o);
 }
 export function huntTotals(slain) {
   var r = huntReward(slain);

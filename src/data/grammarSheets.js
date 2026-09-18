@@ -1,6 +1,9 @@
 // Fiches de la Grammar Reference (12 sujets : règle, patterns, pièges TOEIC).
 // Sorties de features/train/grammar.jsx le 2026-09-15 : c'est du contenu, et la fin de
 // l'Exam Simulation (reading.jsx) en affiche une fiche en place, sans changer d'écran.
+// Catégorie de question (data/grammar.js) → fiche. Partagée par la revue de l'Exam Simulation et par le
+// Drill, qui propose la fiche au 3e échec d'une même question (Mentor qui se souvient, lot 5).
+export var CAT_SHEET = {"Tenses":"tenses","Passive Voice":"passive","Subject-Verb Agreement":"subjverb","Word Families":"wordform","Connectors":"connectors","Prepositions":"prepositions","Gerunds vs Infinitives":"gerinf","Conditionals":"conditionals","Relative Pronouns":"relatives","Collocations":"collocations","Comparatives":"comparatives","Articles":"articles"};
 export var GRAMMAR_SHEETS = [
   {id:"tenses",title:"Tenses",icon:"⏰",color:"#3b82f6",
     rule:"The TOEIC tests your ability to choose the correct tense based on time markers and context.",

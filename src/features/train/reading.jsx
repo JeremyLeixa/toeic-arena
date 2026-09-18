@@ -11,8 +11,8 @@ import { shuffle } from "../../lib/util.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
-import { GrammarSheet } from "./grammar.jsx";
-import { GRAMMAR_SHEETS } from "../../data/grammarSheets.js";
+import { GrammarSheet } from "../../components/GrammarSheet.jsx";
+import { GRAMMAR_SHEETS, CAT_SHEET } from "../../data/grammarSheets.js";
 
 // ─── TIME MANAGEMENT SIMULATOR ───
 export function TimeSim(p){
@@ -114,8 +114,8 @@ export function TimeSim(p){
       {/* Detailed review for selected question */}
       {revIdx!==null&&function(){
         var a=answers[revIdx];var q=qs[a.q];
-        var catToSheet={"Tenses":"tenses","Passive Voice":"passive","Subject-Verb Agreement":"subjverb","Word Families":"wordform","Connectors":"connectors","Prepositions":"prepositions","Gerunds vs Infinitives":"gerinf","Conditionals":"conditionals","Relative Pronouns":"relatives","Collocations":"collocations","Comparatives":"comparatives","Articles":"articles"};
-        var sheetId=catToSheet[q.cat]||null;
+        
+        var sheetId=CAT_SHEET[q.cat]||null;
         return(<div className="crd" style={{padding:16,animation:"fadeIn .2s",borderColor:a.correct?"rgba(0,230,118,.2)":"rgba(255,71,87,.2)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{q.cat}</span>

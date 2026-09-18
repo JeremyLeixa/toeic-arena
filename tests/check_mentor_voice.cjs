@@ -69,6 +69,34 @@ eq('Path : mission faite, deux quêtes restent', [b2.path.value, b2.path.tone], 
 eq('Path : tout le chemin fait', V.mapBadges(u3, NOW, null).path.value, 'Complete ✓');
 eq('Lair vide, estimation absente', [b2.lair.value, b2.camp.value], ['Empty', '— TOEIC']);
 
+// ── 3 bis. La narration de session (lot 5) ─────────────────────────────────────────────────────
+// Briefing : sur le cumul (pas de série récente), Aldric dit « so far », jamais « your last N ».
+const legacy = { name: 'Old', joinedAt: '2026-06-01', stats: { sessions: 30 },
+  moduleScores: { drill: { sessions: 20, history: [{ date: '2026-09-19', correct: 7, total: 10 }], catStats: { Conditionals: { correct: 3, total: 12 } } } } };
+const bl = V.briefing(P.drillComposition(legacy, NOW, () => 0.5), legacy, NOW);
+eq('briefing sur le cumul', bl.lines[0], 'Conditionals are your weak spot: 3 of 12 so far. I\'ve put 4 in this drill.');
+// Carte de fin du Drill : échéances vaincues / battues / échappées (repos si 3e échec), nouvelles, cible.
+const comp5 = { focus: { cat: 'Tenses' }, macro: null, quest: {} };
+const it = (k, box, fails) => ({ k, box, fails });
+const res = [
+  { role: 'due', ok: true, q: { id: 'g1', cat: 'Articles' }, item: it('drill:g1', 2, 1) },
+  { role: 'due', ok: true, q: { id: 'g2', cat: 'Tenses' }, item: it('drill:g2', 0, 1) },
+  { role: 'due', ok: false, q: { id: 'g3', cat: 'Tenses' }, item: it('drill:g3', 0, 2) },
+  { role: 'focus', ok: true, q: { id: 'g4', cat: 'Tenses' } },
+  { role: 'focus', ok: false, q: { id: 'g5', cat: 'Tenses' } },
+  { role: 'mixed', ok: false, q: { id: 'g6', cat: 'Articles' } },
+];
+eq('Aldric remembers (Drill)', V.drillRemember(comp5, res).map((l) => l.text + ' | ' + (l.sub || '')), [
+  '1 old mistake slain for good | Articles',
+  '1 mistake beaten again | They\'ll be back, weaker.',
+  '1 escaped | Back in 2 days: they need a rest.',
+  '2 new mistakes for your bestiary | First return tomorrow.',
+  'Tenses, today\'s aim: 1 of 2 | Your weak spot gets the most questions until it holds.',
+]);
+// Au 3e échec, Aldric ne promet la fiche de grammaire que si elle existe pour la catégorie.
+const wyrm = { role: 'due', ok: false, item: it('drill:g9', 0, 2), cat: 'Pronouns' };
+eq('3e échec : fiche promise seulement si elle existe', [V.questionFeedback(Object.assign({ hasSheet: true }, wyrm, { cat: 'Tenses' })).sheet, V.questionFeedback(wyrm).sheet, /sheet/.test(V.questionFeedback(wyrm).text)], [true, undefined, false]);
+
 // ── 4. Toutes les icônes existent ──────────────────────────────────────────────────────────────
 const names = new Set();
 const cold = withMission({ name: 'C', joinedAt: '2026-09-19', stats: {}, moduleScores: { drill: mod(2, '2026-09-20', 5, 10) },
@@ -80,7 +108,11 @@ L.MACROS.forEach((x) => names.add(x.icon));
 V.rememberLines({ slain: [{ label: 'a' }], hits: [1], escaped: [{}], fresh: [1], focusCat: 'X', focusT: 3, focusC: 1, macro: 'Verbs', macroT: 2, macroC: 1, scanAcc: 0.5, best: { name: 'x', sc: 1, tot: 2 } })
   .forEach((l) => names.add(l.icon));
 // Les icônes écrites en dur dans les écrans du Mentor, de la chasse et du bandeau de Home.
-['src/features/mentor/Mentor.jsx', 'src/features/hunt/MistakeHunt.jsx', 'src/features/home/Home.jsx', 'src/components/NextStepReco.jsx'].forEach((rel) => {
+V.drillRemember(comp5, res).forEach((l) => names.add(l.icon));
+V.briefing({ kind: 'hunt', items: [it('lisP2:p2_01', 1, 2), it('p7:p7p1:0', 0, 1), it('drill:g1', 0, 1)] }, u1, NOW).chips.forEach((c) => names.add(c.icon));
+bl.chips.forEach((c) => names.add(c.icon));
+['src/features/mentor/Mentor.jsx', 'src/features/hunt/MistakeHunt.jsx', 'src/features/home/Home.jsx', 'src/components/NextStepReco.jsx',
+  'src/components/MentorMemory.jsx', 'src/components/Ceremonies.jsx', 'src/features/train/grammar.jsx'].forEach((rel) => {
   const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
   for (const mm of src.matchAll(/<GIcon name=\{?"([a-z0-9-]+)"/g)) names.add(mm[1]);
   for (const mm of src.matchAll(/\?"([a-z0-9-]+)":v\.icon/g)) names.add(mm[1]);

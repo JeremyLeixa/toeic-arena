@@ -919,5 +919,29 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .mm-pips i{width:7px;height:7px;border-radius:50%;background:var(--bdr)}
 .mm-pips i.on{background:var(--green)}
 .mm-more{display:block;width:100%;padding:8px 0 4px;text-align:left;background:none;border:none;border-top:1px solid var(--bdr);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;color:var(--cyan)}
-@media(prefers-reduced-motion:reduce){.mm-strip{animation:none!important}}
+/* ── Lot 5 : la narration de session (proto prototypes/mentor-memory/memory.css) ── */
+/* Briefing : parchemin court, palette FIXE comme le parchemin de fin (lisible en clair et sur tout skin). */
+.mm-brief{position:relative;margin:14px 0 18px;padding:16px 16px 14px;border-radius:6px;color:#3d2817;background:radial-gradient(ellipse at center,#f4e8cc 0%,#e8d5a8 88%,#d9c288 100%);box-shadow:inset 0 0 30px rgba(139,90,40,.2),0 8px 22px rgba(0,0,0,.3);animation:fadeIn .5s ease both}
+.mm-brief::before,.mm-brief::after{content:"";position:absolute;left:-5px;right:-5px;height:10px;border-radius:6px;background:linear-gradient(#c09a5e,#6b4a22 60%,#4a3014)}
+.mm-brief::before{top:-6px}.mm-brief::after{bottom:-6px}
+.mm-brief-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mm-brief-head b{font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#6b3410}
+.mm-brief p{margin:0 0 6px;font-size:14px;line-height:1.55;font-style:italic;color:#3d2817}
+.mm-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mm-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700;color:#5a3a1a;background:rgba(107,52,16,.1);border:1px solid rgba(107,52,16,.25)}
+/* La phrase d'Aldric dans la carte de réponse du HUD (children d'AnswerCard), et la fiche au 3e échec. */
+.mm-aldric{margin:0 0 10px;font-size:14px;font-weight:700;line-height:1.5;color:var(--t1)}
+.mm-aldric.win{color:var(--green)}
+.mm-aldric.bite{color:var(--red)}
+.mm-sheet-btn{display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;padding:6px 12px;border-radius:99px;cursor:pointer;font-size:12px;font-weight:700;color:var(--cyan);background:rgba(var(--cx),.1);border:1px solid rgba(var(--cx),.35);font-family:inherit}
+/* « Aldric remembers » : sous le parchemin, avant les leçons (prop « memory » de SessionResult). */
+.mm-remember{max-width:400px;margin:0 auto 12px;padding:14px 14px 8px!important;animation:fadeIn .5s ease both}
+.mm-rem-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mm-rem-head b{font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple)}
+.mm-rem-head small{margin-left:auto;font-size:11px;color:var(--t3)}
+.mm-rem-line{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--bdr)}
+.mm-rem-line:first-of-type{border-top:none}
+.mm-rem-line b{display:block;font-size:13px;font-weight:700;color:var(--t1);line-height:1.35}
+.mm-rem-line small{display:block;margin-top:2px;font-size:11px;color:var(--t2)}
+@media(prefers-reduced-motion:reduce){.mm-strip,.mm-brief,.mm-remember{animation:none!important}}
 `;

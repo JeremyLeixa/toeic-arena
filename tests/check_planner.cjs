@@ -194,5 +194,23 @@ const playedFirst = Object.assign({}, frozen, { dailyModSessions: { ['p7_2026-09
 eq('quête-mission : faite seulement quand la mission l\'est', [P.questDone(playedFirst, r1, 1, NOW), P.questDone(playedFirst, Object.assign({}, r1, { done: true }), 1, NOW)], [false, true]);
 eq('rien à re-tirer : mission faite, ou une seule quête', [P.rerollMission(Object.assign({}, m8, { done: true })), P.rerollMission(Object.assign({}, m8, { quests: m8.quests.slice(0, 1) }))], [null, null]);
 
+// ── 9. La manche du Drill composée par le plan (lot 5) ─────────────────────────────────────────
+// La série par catégorie (`cs`) n'existe que depuis le 2026-09-17 : sans le repli sur les catStats
+// CUMULÉES, le Drill composé serait aléatoire pour presque tous les élèves (régression sur pickAdaptive).
+const legacy = {
+  joinedAt: '2026-06-01', stats: { sessions: 30 },
+  moduleScores: { drill: { sessions: 20, history: sessions(6, '2026-09-19', 7, 10), catStats: { Conditionals: { correct: 3, total: 12 }, Tenses: { correct: 9, total: 10 }, Articles: { correct: 1, total: 3 } } } },
+  review: dueCreatures(2, '2026-09-19'),
+};
+const dc = P.drillComposition(legacy, NOW, seeded(9));
+eq('sans série récente : la catégorie cumulée la plus faible (≥ 5 questions)', [dc.focus.cat, dc.focus.source], ['Conditionals', 'lifetime']);
+eq('… quatre questions sur elle', dc.items.filter((x) => x.role === 'focus').map((x) => x.q.cat), ['Conditionals', 'Conditionals', 'Conditionals', 'Conditionals']);
+eq('les échéances glissées portent leur question', dc.items.filter((x) => x.role === 'due').map((x) => [x.q && x.q.id, x.item.k]), [['g100', 'drill:g100'], ['g101', 'drill:g101']]);
+eq('dix questions, toutes résolues', [dc.items.length, dc.items.every((x) => x.q)], [10, true]);
+// La quête Part 5 du plan figé commande la cible (ici une confirmation du Battle Scan sur les verbes).
+const coldM = Object.assign({}, cold, { mission: P.dayMission(cold, NOW) });
+const dcc = P.drillComposition(coldM, NOW, seeded(4));
+eq('quête de confirmation : la macro du scan', [dcc.macro && dcc.macro.id, dcc.items.filter((x) => x.role === 'focus').every((x) => dcc.macro.subcats.indexOf(x.q.cat) >= 0)], ['verbs', true]);
+
 console.log(fails === 0 ? '  OK ' + checks + ' vérifications' : '  ' + fails + ' échec(s) sur ' + checks);
 process.exit(fails === 0 ? 0 : 1);

@@ -238,6 +238,7 @@
     "MISSION_THRESHOLD": "seuil de getDailyMission, remplacé par le plan du jour figé (lib/planner.js dayMission/stakePart, lot 4 du Mentor) — supprimé 2026-09-18",
     "computeTodayFocus": "Focus par précision la plus basse, remplacé par le plan du jour figé (lib/planner.js dayMission/stakePart, lot 4 du Mentor) — supprimé 2026-09-18 ; le +25 % suit la quête « enjeu » (ctx.focusPart de lib/xp.js)",
     "MentorDailyMission": "carte de mission du Mentor, qui écrivait u.mission PENDANT le rendu ; remplacé par le plan du jour figé (lib/planner.js dayMission/stakePart, lot 4 du Mentor) — supprimé 2026-09-18 (feuille Today's Path)",
-    "TodayFocusBanner": "bannière du Focus, remplacé par le plan du jour figé (lib/planner.js dayMission/stakePart, lot 4 du Mentor) — supprimé 2026-09-18 (la quête « enjeu » porte son +25 %)"
+    "TodayFocusBanner": "bannière du Focus, remplacé par le plan du jour figé (lib/planner.js dayMission/stakePart, lot 4 du Mentor) — supprimé 2026-09-18 (la quête « enjeu » porte son +25 %)",
+    "pickAdaptive": "tirage pondéré 60/40 du Drill, remplacé par la manche composée par le plan (lib/planner.js drillComposition, lot 5 du Mentor) — supprimé 2026-09-18"
   }
 }

@@ -11,7 +11,8 @@
 // Props : session (lastSession d'App), sid (id rendu par p.done : l'écran ne montre QUE cette
 // session, sinon un parchemin « scellage »), name (nom du module), mode "score" | "points" | "time"
 // (+ points, pointsLabel), mistakes [{tag, prompt, yours, correct, why, noBlank?}], onContinue,
-// onReplay (bouton caché si absent), children (extras du module, sous le parchemin).
+// onReplay (bouton caché si absent), children (extras du module, sous le parchemin), memory (la carte
+// « Aldric remembers », AVANT les leçons — Mentor qui se souvient, lot 5).
 //
 // ⚠️ Plein écran fixe (z 150, au-dessus de la tab bar) : ne JAMAIS le rendre dans un `.enter`
 // (translateY → la barre du bas serait positionnée par rapport au bloc animé).
@@ -209,7 +210,7 @@ function Verdict(p) {
   var s = p.session, mode = p.mode || "score", n = s.steps.length;
   var canvasRef = useRef(null), medalRef = useRef(null), fxRef = useRef(null);
   var [skip, setSkip] = useState(prefersReducedMotion);
-  var [ceremony, setCeremony] = useState(false);
+  var [ceremony, setCeremony] = useState(null); // null | "league"
   var hasLeague = !!s.leagueUp;
   var durs = useMemo(function () {
     var d = [300, 1300, 700];
@@ -247,7 +248,7 @@ function Verdict(p) {
   useEffect(function () {
     if (skip || !hasLeague || stage < ST_LEAGUE || ceremonyFired.current) return;
     ceremonyFired.current = true;
-    setCeremony(true);
+    setCeremony("league");
   }, [stage, skip, hasLeague, ST_LEAGUE]);
   var totalDone = useRef(false);
   useEffect(function () {
@@ -315,6 +316,8 @@ function Verdict(p) {
         </div>
         {done && s.chests.length > 0 && <ChestList chests={s.chests} sid={s.id} />}
         {/* Jeu sans liste d'erreurs (Speed Match) : pas de carte. */}
+        {/* Mémoire d'Aldric (lot 5 du Mentor) : ce qui a changé, AVANT les leçons à garder. */}
+        {done && p.memory && <div className="sr-extras" onClick={stop}>{p.memory}</div>}
         {p.mistakes && <div className={"crd sr-card" + (done ? " on" : "")}><Mistakes items={p.mistakes} /></div>}
         {done && <div className="sr-extras" onClick={stop}>{p.children}</div>}
       </div>
@@ -323,7 +326,7 @@ function Verdict(p) {
         <button className="btn1 out" onClick={p.onContinue}>Continue</button>
       </div>
       <canvas ref={canvasRef} className="sr-fx" />
-      {ceremony && <LeaguePromotion fromId={s.leagueUp.from} toId={s.leagueUp.to} weekly={s.weekly ? s.weekly.to : 0}
+      {ceremony === "league" && <LeaguePromotion fromId={s.leagueUp.from} toId={s.leagueUp.to} weekly={s.weekly ? s.weekly.to : 0}
         chestTier={leagueChest ? leagueChest.tier : null} onClose={function () { setCeremony(false); }} />}
     </div>
   );

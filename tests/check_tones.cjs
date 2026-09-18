@@ -109,8 +109,8 @@ for (const s of DATA_SOURCES) {
   }
   if (s.render) check(s.render.test(text), s.what + ' : le rendu ' + s.render + ' a disparu de ' + s.file + ' (couleur affichée brute, délavée en clair)');
 }
-const grammarRender = [read('src/features/train/grammar.jsx'), read('src/features/train/reading.jsx')].join('\n');
-check(!/color:\s*g\.color\b/.test(grammarRender), 'fiches de grammaire : « color:g.color » brut dans grammar.jsx ou reading.jsx (passer par tone(g.color))');
+const grammarRender = [read('src/features/train/grammar.jsx'), read('src/features/train/reading.jsx'), read('src/components/GrammarSheet.jsx')].join('\n');
+check(!/color:\s*g\.color\b/.test(grammarRender), 'fiches de grammaire : « color:g.color » brut dans grammar.jsx, reading.jsx ou components/GrammarSheet.jsx (passer par tone(g.color))');
 // Toute couleur littérale passée à tone() dans src/.
 const srcFiles = walk(path.join(ROOT, 'src')).filter((f) => /\.(jsx?|mjs)$/.test(f));
 for (const f of srcFiles) {

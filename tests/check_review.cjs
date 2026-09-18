@@ -118,6 +118,15 @@ eq('liste absente : rien ne casse', R.recordMisses(undefined, undefined, D('2026
 const flood = R.recordMisses(R.newReview(), Array.from({ length: R.MAX_ITEMS + 10 }, (_, i) => ({ ref: { k: 'drill:g' + i } })), D('2026-09-18'));
 eq('bornée à l\'écriture', [flood.items.length, flood.log.length], [R.MAX_ITEMS, R.MAX_LOG]);
 
+// ── 7 ter. Les échéances battues DANS le Drill (lot 5) comptent comme en chasse ────────────────
+const hitRv = R.recordMisses({}, [{ ref: { k: 'drill:g7', cat: 'Tenses', part: 'p5' } }], D('2026-09-10'));
+R.recordHits(hitRv, ['drill:g7'], D('2026-09-11'));
+eq('réussie dans le Drill : boîte suivante', [item(hitRv, 'drill:g7').box, item(hitRv, 'drill:g7').due], [1, '2026-09-14']);
+R.recordHits(hitRv, ['drill:g7'], D('2026-09-14'));
+R.recordHits(hitRv, ['drill:g7'], D('2026-09-21'));
+eq('3e réussite espacée : vaincue', [item(hitRv, 'drill:g7'), hitRv.slain], [undefined, 1]);
+eq('clé inconnue ou liste absente : rien ne casse', R.recordHits(R.newReview(), ['drill:nope', null], D('2026-09-21')).items, []);
+
 // ── 8. La chasse ne touche jamais l'estimation TOEIC ───────────────────────────────────────────
 // Reposer des questions déjà vues, avec leur explication, gonflerait le score sans rien prouver.
 const base = {
