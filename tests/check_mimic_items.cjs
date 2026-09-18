@@ -86,6 +86,16 @@ ok(spread <= 1, 'bonne réponse répartie sur A/B/C/D (' + pos.join('/') + ')');
     'palier ' + t + ' : chiffre romain, nom, accroche, conseil et exemple');
 });
 
+// Coffre de maîtrise (lib/hubStatus.js MASTERY_BLACKLIST) : exclu tant que la banque est trop courte
+// pour ne pas s'apprendre par cœur (moins de 45 items, chaque partie rejoue tout), rendu dès qu'elle
+// l'est — sinon le module resterait sans coffre après l'arrivée du contenu.
+const { MASTERY_BLACKLIST } = require(path.join(ROOT, 'src', 'lib', 'hubStatus.js'));
+const BANK_MIN = 45;
+ok(ITEMS.length < BANK_MIN ? !!MASTERY_BLACKLIST.mimic : !MASTERY_BLACKLIST.mimic,
+  ITEMS.length < BANK_MIN
+    ? 'coffre de maîtrise : mimic doit rester dans MASTERY_BLACKLIST tant que la banque a moins de ' + BANK_MIN + ' items (' + ITEMS.length + ')'
+    : 'coffre de maîtrise : la banque a ' + ITEMS.length + ' items, retirer mimic de MASTERY_BLACKLIST (lib/hubStatus.js)');
+
 console.log(fails === 0
   ? '\n✅ ' + checks + ' vérifications, aucun problème.\n'
   : '\n❌ ' + fails + ' problème(s) sur ' + checks + ' vérifications.\n');

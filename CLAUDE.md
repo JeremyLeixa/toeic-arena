@@ -524,6 +524,10 @@ module sans compte : `prototypes/mimic-hunt/real.html`.
 - **XP** : `15 + 5×bonne réponse + 2×Mimic démasqué`, +25 sans faute (max 124 pour 12 items, palier des
   15 Q). **Estimateur** : Reading support `.04`, `part:null` dans `MODULE_TOEIC_MAP` (la reformulation sert
   P3/P4/P7 : la ranger dans p7 fausserait le diagnostic du Mentor).
+- **Coffre de maîtrise exclu tant que la banque a moins de 45 items** (`MASTERY_BLACKLIST.mimic`,
+  `lib/hubStatus.js`, 2026-09-18) : chaque partie rejoue toute la banque, 5 parties apprises par cœur
+  donnaient le coffre Champion. La tuile est rendue sans barre de coffre. `check_mimic_items` exige le
+  retrait de la ligne dès 45 items (et `check_hub_status` fige la liste : l'y retirer aussi).
 - **BGM placeholder** `bgm_clue`. À faire : volume de contenu (60-90 items visés), piste Mureka dédiée,
   achievements, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
   direct vers les Parts 3 et 4, et un poids Listening).
@@ -576,7 +580,10 @@ la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la pro
 - **Mentor** : cinq repères (Peak, Path, Lair, Camp, Aldric). « The Crossroads » disparaît (le Focus est la quête
   « enjeu »). Le **Lair** est une vue pleine page du Mentor (pas de route) qui charge `reviewLookup.js` par
   `import()` ; `lookupRef(k).title` = la ligne du bestiaire (question entendue en P2, extrait autour du trou en
-  P6, numéro de photo en P1 — jamais la bonne réponse). Le Camp montre la maîtrise **récente** par partie, triée
+  P6 coupé aux mots entiers par `aroundBlank`, numéro de photo en P1 — jamais la bonne réponse) ; un groupe de
+  document porte son nom (`docName` : sujet en P6, objet ou titre en P7, première réplique en P3/P4 sans la
+  formule d'accueil), sinon deux « Part 6 · Article » se confondaient ; pastilles de réussites espacées en
+  anneau `--t3` (3,4:1 en sombre). Le Camp montre la maîtrise **récente** par partie, triée
   par points en jeu ; la liste de grammaire garde les `catStats` cumulées (la série `cs` n'existe que depuis le
   2026-09-17). Home : un seul bandeau d'une ligne sous la carte Niveau/Ligue (créneau `path` de `pulseSlot`),
   qui ouvre la feuille (`openPath` → `sSPA("path")` → `Mentor initialSheet`). `Tabs badge="mentor"` tant que la

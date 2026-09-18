@@ -10,7 +10,10 @@ export var MASTERY_Q = 50;
 export var MASTERY_ACC = 0.8;
 // Sans coffre de maîtrise : déjà couverts par d'autres coffres, ou pas progressifs.
 // "hunt" : la chasse repose des questions déjà vues, sa précision ne mesure rien de progressif.
-export var MASTERY_BLACKLIST = { mock1: 1, mock2: 1, mock3: 1, boss: 1, daily: 1, csess: 1, hunt: 1 };
+// "mimic" (2026-09-18) : tant que Mimic Hunt a moins de 45 items, chaque partie rejoue toute la banque ;
+// 5 parties apprises par cœur donnaient le coffre Champion. tests/check_mimic_items.cjs exige le retrait
+// de cette ligne dès que la banque atteint 45 items.
+export var MASTERY_BLACKLIST = { mock1: 1, mock2: 1, mock3: 1, boss: 1, daily: 1, csess: 1, hunt: 1, mimic: 1 };
 
 export function isMastered(ms) {
   return !!ms && ms.total >= MASTERY_Q && ms.correct / ms.total >= MASTERY_ACC;
