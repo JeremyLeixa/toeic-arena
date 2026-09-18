@@ -2,6 +2,16 @@
 // supabase/functions/weekly-results/index.ts
 // Runs every Monday at 08:00 CET via pg_cron
 // Sends each student their weekly ranking + season position
+//
+// Depuis le 2026-09-18 (Mentor qui se souvient, lot 6), le push est aussi l'ACCROCHE de la lettre du
+// lundi d'Aldric. La lettre elle-même est calculée côté client (src/lib/mentorVoice.js mondayLetter) et
+// s'ouvre au premier passage sur Home de la semaine : la recalculer ici dupliquerait le modèle de
+// l'apprenant en Deno, une seconde source de vérité. On garde donc le classement, et on annonce la lettre.
+//
+// Depuis le 2026-09-18 (Mentor qui se souvient, lot 6), le push est aussi l'ACCROCHE de la lettre du
+// lundi d'Aldric. La lettre elle-même est calculée côté client (src/lib/mentorVoice.js mondayLetter) et
+// s'ouvre au premier passage sur Home de la semaine : la recalculer ici dupliquerait le modèle de
+// l'apprenant en Deno, une seconde source de vérité. On garde donc le classement, et on annonce la lettre.
 // ═══════════════════════════════════════════════════════════
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -101,8 +111,8 @@ serve(async (req: Request) => {
           },
           body: JSON.stringify({
             subscriptions: studentSubs,
-            title: "📊 Weekly results",
-            body,
+            title: "📜 Aldric's Monday letter",
+            body: body + " Your letter is waiting.",
             tag: "weekly-results",
             url: "/",
           }),
