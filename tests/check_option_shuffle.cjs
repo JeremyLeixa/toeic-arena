@@ -52,6 +52,9 @@ const BANKS = {
   TENSE_CHRONOMANCER: GG.TENSE_CHRONOMANCER, PASSIVE_FORGE: GG.PASSIVE_FORGE, RELATIVE_WEAVER: GG.RELATIVE_WEAVER,
   CLUE_HUNTER: CLUE.CLUE_HUNTER, AUDIO_BLITZ: AB.AUDIO_BLITZ, FALSE_FRIENDS: MG.FALSE_FRIENDS,
   TOEIC_TRAPS: MG.TOEIC_TRAPS, STRAT_QUIZ: MG.STRAT_QUIZ, GERUND_INF: MG.GERUND_INF,
+  // Mimic Hunt permute ses options avec son propre `prep` (les Mimics suivent) : pas dans MODULES, mais
+  // ses textes, eux, ne doivent pas plus citer de lettre (les 11 pièges « A recycles… » jusqu'au 2026-09-18).
+  MIMIC_ITEMS: require(path.join(SRC, 'data', 'mimicHunt.js')).MIMIC_ITEMS,
 };
 // fn = le composant exporté ; ok / ck = clés des options et de la bonne réponse dans la banque.
 const MODULES = [

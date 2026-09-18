@@ -43,7 +43,7 @@ export var MIMIC_ITEMS = [
     bridge: [["pushed back", "postponed"]],
     mimics: { 0: ["budget", ["quarterly", "quarter"], "next"], 1: ["pushed"] },
     exp: "Pushed back means postponed: moved to a later date. The review still has a date (next Thursday), so it isn't cancelled.",
-    trap: "A recycles 'budget', 'quarter' and 'next'. B recycles 'pushed'. Same words, but neither says what the memo says.",
+    trap: "'The budget will be cut next quarter' recycles 'budget', 'quarter' and 'next'. 'Pushed to another department' recycles 'pushed'. Same words, but neither says what the memo says.",
   },
   {
     id: "mh02", tier: 1, ctx: "Email from Accounting",
@@ -54,7 +54,7 @@ export var MIMIC_ITEMS = [
     bridge: [["reimbursed", "Refund"], ["Employees", "staff"], ["meals", "food"]],
     mimics: { 1: ["employees", "travel", "two weeks"], 2: ["employees", "travel", ["submitting", "submit"]] },
     exp: "Reimbursed = refunded, employees = staff, meals = food. Three swaps, one idea.",
-    trap: "B and C reuse 'employees', 'travel', 'two weeks' and 'submit', then build an idea the email never mentions.",
+    trap: "'Let employees travel for two weeks' and 'Ask employees to submit a travel request' reuse 'employees', 'travel', 'two weeks' and 'submit', then build an idea the email never mentions.",
   },
   {
     id: "mh03", tier: 1, ctx: "Announcement",
@@ -65,7 +65,7 @@ export var MIMIC_ITEMS = [
     bridge: [["shuttle service", "transportation option"], ["discontinued", "no longer offered"]],
     mimics: { 0: ["demand", "evening", "low"], 1: ["shuttle", "airport"] },
     exp: "Discontinued = no longer offered, and a shuttle service is a transportation option.",
-    trap: "A mixes 'low', 'demand' and 'evening' into a claim about flights. B keeps 'shuttle' and 'airport' but invents a new schedule.",
+    trap: "The answer about flights mixes 'low', 'demand' and 'evening' into a claim the text never makes. The one about the shuttle leaving earlier keeps 'shuttle' and 'airport' but invents a new schedule.",
   },
   {
     id: "mh04", tier: 1, ctx: "Job posting",
@@ -76,7 +76,7 @@ export var MIMIC_ITEMS = [
     bridge: [["experience", "Previous work"], ["similar role", "comparable job"]],
     mimics: { 0: ["three years of", "similar"] },
     exp: "Experience = previous work, and a similar role = a comparable job.",
-    trap: "A keeps 'three years of' and 'similar' but swaps work experience for study. That's exactly how a Mimic works.",
+    trap: "'Three years of study in a similar field' keeps 'three years of' and 'similar' but swaps work experience for study. That's exactly how a Mimic works.",
   },
 
   // ═══ TIER II · RESHAPED ═══
@@ -89,7 +89,7 @@ export var MIMIC_ITEMS = [
     bridge: [["short-staffed", "does not have enough employees"]],
     mimics: { 0: ["warehouse", "currently"], 2: ["orders", ["ship", "shipped"]] },
     exp: "Short-staffed = not enough staff. One adjective becomes a whole negative sentence.",
-    trap: "A copies 'warehouse' and 'currently' (and 'short' pushes you toward 'small'). C copies 'orders' and 'ship', but the problem is delay, not wrong addresses.",
+    trap: "'Its warehouse is currently too small' copies 'warehouse' and 'currently' (and 'short' pushes you toward 'small'). 'Orders were shipped to the wrong address' copies 'orders' and 'ship', but the problem is delay, not wrong addresses.",
   },
   {
     id: "mh06", tier: 2, ctx: "IT notice",
@@ -100,7 +100,7 @@ export var MIMIC_ITEMS = [
     bridge: [["cannot be installed until", "before installation"], ["approved", "authorized"]],
     mimics: { 0: ["IT department", "installed"], 1: ["cannot", "approved"] },
     exp: "Approved = authorized, and 'cannot be installed until…' becomes 'before installation': the verb turns into a noun.",
-    trap: "A says it's already installed. B says it can't be approved. Both reuse the notice's words to say something it doesn't.",
+    trap: "One trap says it's already installed, the other that it can't be approved. Both reuse the notice's words to say something it doesn't.",
   },
   {
     id: "mh07", tier: 2, ctx: "Email from a sales manager",
@@ -111,7 +111,7 @@ export var MIMIC_ITEMS = [
     bridge: [["signed the contract", "An agreement was reached"], ["on the spot", "right away"]],
     mimics: { 1: ["client", "presentation", "contract"], 2: ["contract", "signed"] },
     exp: "She signed the contract = an agreement was reached (active becomes passive). On the spot = right away.",
-    trap: "B and C reuse 'client', 'presentation', 'contract' and 'signed'. But the client didn't present anything, and the signing wasn't later.",
+    trap: "The two traps reuse 'client', 'presentation', 'contract' and 'signed'. But the client didn't present anything, and the signing wasn't later.",
   },
   {
     id: "mh08", tier: 2, ctx: "Conversation", speaker: "Woman",
@@ -135,7 +135,7 @@ export var MIMIC_ITEMS = [
     bridge: [["grab", "Buy"], ["a couple of lattes", "some beverages"]],
     mimics: { 0: ["grab", "a couple of"], 1: ["client", ["gets here", "get here"]] },
     exp: "Grab = buy (informal), and lattes are a kind of beverage. The answer zooms out from a specific drink to the general category.",
-    trap: "A keeps 'grab a couple of' but changes the object. B keeps 'client' and 'gets here': that happens later, it's not what he'll do next.",
+    trap: "'Grab a couple of documents' keeps 'grab a couple of' but changes the object. 'Wait for the client to get here' keeps 'client' and 'gets here': that happens later, it's not what he'll do next.",
   },
   {
     id: "mh10", tier: 3, ctx: "Voicemail",
@@ -146,7 +146,7 @@ export var MIMIC_ITEMS = [
     bridge: [["looks different from your sample", "a possible problem"], ["brochures you ordered", "an order"]],
     mimics: { 1: ["brochures", ["deliver", "delivered"]], 2: ["color", "sample"] },
     exp: "A color that 'looks different' is a possible problem, and 'the brochures you ordered' is simply an order. Purpose questions want the big picture.",
-    trap: "B reuses 'brochures' and 'deliver', but nothing has been delivered yet. C reuses 'color' and 'sample', but Dana asks for a call, not a sample.",
+    trap: "The delivery answer reuses 'brochures' and 'deliver', but nothing has been delivered yet. The sample answer reuses 'color' and 'sample', but Dana asks for a call, not a sample.",
   },
   {
     id: "mh11", tier: 3, ctx: "Notice",
@@ -157,7 +157,7 @@ export var MIMIC_ITEMS = [
     bridge: [["Starting March 1", "new"], ["sign in at the front desk and wear a badge", "security procedure"]],
     mimics: { 1: ["visitors", ["sign", "signing"]] },
     exp: "Signing in and wearing a badge are security steps, and 'starting March 1' tells you they're new. The answer names the category, not the details.",
-    trap: "B picks up 'visitors' and 'sign', but 'sign in' means register at a desk. Nobody is holding a signing ceremony.",
+    trap: "The ceremony answer picks up 'visitors' and 'sign', but 'sign in' means register at a desk. Nobody is holding a signing ceremony.",
   },
   {
     id: "mh12", tier: 3, ctx: "Email from a supplier",
@@ -169,6 +169,6 @@ export var MIMIC_ITEMS = [
     echo: ["invoice"],
     mimics: { 0: ["delivery"], 2: ["June 3"] },
     exp: "Attached = provided, corrected = updated. And yes, 'invoice' is in the email AND in the right answer: some words have no everyday synonym.",
-    trap: "A Mimic isn't just any repeated word. It's a repeated word that says something the text doesn't. C copies 'June 3', but that's when the wrong invoice was sent, not a payment deadline.",
+    trap: "A Mimic isn't just any repeated word. It's a repeated word that says something the text doesn't. The payment answer copies 'June 3', but that's when the wrong invoice was sent, not a payment deadline.",
   },
 ];
