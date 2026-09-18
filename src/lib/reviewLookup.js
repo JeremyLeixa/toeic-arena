@@ -3,9 +3,10 @@
 // des jeux et des mini-modules). À charger À LA DEMANDE — `lib/review.js`
 // reste sans données pour que le Mentor et App() ne tirent pas listening.js dans le bundle principal.
 //
-// Ce que ça garantit : la référence désigne l'ITEM, jamais une option. Les questions d'écoute sont
-// REPERMUTÉES à chaque résolution (shufListeningItem) — l'élève ne réapprend pas « c'était B », et
-// l'explication suit la permutation. La lettre entendue reste celle de la position affichée (`aud`).
+// Ce que ça garantit : la référence désigne l'ITEM, jamais une option. Toutes les questions sont
+// REPERMUTÉES à chaque résolution — l'élève ne réapprend pas « c'était B ». Écoute : shufListeningItem,
+// l'explication suit la permutation et la lettre entendue reste celle de la position affichée (`aud`).
+// Grammaire, Part 6, Part 7 et modules : `perm` (aucune de leurs explications ne cite de lettre).
 import { QUESTIONS, WORD_FAMILIES } from "../data/grammar.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "../data/listening.js";
 import { PART6_TEXTS } from "../data/part6.js";
@@ -37,8 +38,9 @@ export function lookupRef(k) {
   if (GRAMMAR_MODS[r.mod]) {
     var q = byId(QUESTIONS, r.id);
     if (!q) return null;
+    var pm = perm(q.o, q.c);
     return { k: k, mod: r.mod, kind: "text", part: "p5", cat: q.cat, label: q.cat,
-      prompt: q.s, options: q.o, c: q.c, why: q.x };
+      prompt: q.s, options: pm.options, c: pm.c, why: q.x };
   }
   if (r.mod === "lisP1") {
     var p1 = byId(LISTENING_P1, r.id);
@@ -78,19 +80,20 @@ export function lookupRef(k) {
     var blanks = t6.parts.filter(function (x) { return x.blank; });
     var b = blanks[qi];
     if (!b) return null;
-    var txt = p6Text(t6, qi), at = txt.indexOf("_____");
+    var txt = p6Text(t6, qi), at = txt.indexOf("_____"), pb = perm(b.options, b.correct);
     return { k: k, mod: r.mod, kind: "passage", part: "p6", label: "Part 6 — " + t6.type,
       // `title` : l'extrait autour du trou, pour reconnaître la créature dans le bestiaire.
       title: "…" + txt.slice(Math.max(0, at - 50), at).replace(/\s+/g, " ").trimStart() + "_____" + txt.slice(at + 5, at + 35).replace(/\s+/g, " ") + "…",
       // Pas de « blank 3 » : les autres trous sont rendus remplis, il n'en reste qu'un à l'écran.
-      prompt: "Choose the best option to fill the blank.", options: b.options, c: b.correct, why: b.x,
+      prompt: "Choose the best option to fill the blank.", options: pb.options, c: pb.c, why: b.x,
       passage: { id: t6.id, type: t6.type, text: txt } };
   }
   if (r.mod === "p7") {
     var ps = byId(PART7_PASSAGES, r.id), pq = ps && ps.questions[qi];
     if (!pq) return null;
+    var p7m = perm(pq.options, pq.correct);
     return { k: k, mod: r.mod, kind: "passage", part: "p7", label: "Part 7 — " + ps.type,
-      prompt: pq.q, options: pq.options, c: pq.correct, why: pq.x,
+      prompt: pq.q, options: p7m.options, c: p7m.c, why: pq.x,
       passage: { id: ps.id, type: ps.type, text: ps.text } };
   }
   return null;

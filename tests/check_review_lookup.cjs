@@ -44,6 +44,8 @@ const { MODAL_MATCH_BOARDS, MODAL_SORT_ITEMS } = require(src('data', 'modals.js'
 const MG = require(src('data', 'miniGames.js'));
 const { LINKING_BRIDGE } = require(src('data', 'linkingBridge.js'));
 const { PHRASAL_VERBS } = require(src('data', 'phrasalVerbs.js'));
+const { PART6_TEXTS: P6T } = require(src('data', 'part6.js'));
+const { PART7_PASSAGES: P7P } = require(src('data', 'part7.js'));
 
 let fails = 0, checks = 0;
 const fail = (m) => { fails++; if (fails <= 40) console.log('  FAIL ' + m); };
@@ -128,7 +130,9 @@ eq('Gauntlet : chaque épreuve dans sa catégorie', ['irr01', 'td01', 'pf01', 'r
 // ── 4. Options permutées à chaque résolution (sauf les grilles de catégories) ─────────────────────
 const spread = (k) => { const s = new Set(); for (let i = 0; i < 40; i++) s.add(lookupRef(k).c); return s.size; };
 ['gauntlet:td01', 'clue:' + CLUE_HUNTER[0].id, 'ablitz:' + AUDIO_BLITZ[0].id, 'traps:' + MG.TOEIC_TRAPS[0].id, 'stratquiz:' + MG.STRAT_QUIZ[0].id,
-  'falsefr:' + MG.FALSE_FRIENDS[0].en, 'bforge:' + LINKING_BRIDGE[0].id, 'mimic:' + MIMIC_ITEMS[0].id, 'gauntlet:irr01', 'tavern:' + VOCAB[0].cards[0].id + ':defToWord']
+  'falsefr:' + MG.FALSE_FRIENDS[0].en, 'bforge:' + LINKING_BRIDGE[0].id, 'mimic:' + MIMIC_ITEMS[0].id, 'gauntlet:irr01', 'tavern:' + VOCAB[0].cards[0].id + ':defToWord',
+  // Grammaire, Part 6 et Part 7 aussi (la grammaire met la bonne réponse en B 61 % du temps).
+  'drill:' + QUESTIONS[0].id, 'p6:' + P6T[0].id + ':0', 'p7:' + P7P[0].id + ':0']
   .forEach((k) => ok(spread(k) > 1, k + ' : la bonne réponse change de place d\'une chasse à l\'autre'));
 eq('Word Families : la grille garde l\'ordre du module', lookupRef('wordfam:success:Noun').options, ['Noun', 'Verb', 'Adjective', 'Adverb']);
 
