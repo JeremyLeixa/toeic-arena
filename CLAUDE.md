@@ -584,8 +584,9 @@ la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la pro
   `addInsight` dans `review.insights` (10), relu dans la Chronique. `generateInsight` (précision cumulée) et
   `u.insights` (mappé dans aucune colonne, perdu au rechargement) sont supprimés.
 - Bancs : `prototypes/mentor-memory/app.html?v=letter` et `?v=chronicle`.
-- Reste : les `ref` des modules non couverts (Gauntlet, Clue, Tavern, Mimic, mini-modules), et le déploiement
-  de la fonction `weekly-results` modifiée (`supabase functions deploy weekly-results`).
+- `weekly-results` déployée le 2026-09-18 (version 19, JWT vérifié) : elle portait encore les textes français
+  d'avant la passe anglaise du 2026-04-17, jamais déployée. Reste : les `ref` des modules non couverts
+  (Gauntlet, Clue, Tavern, Mimic, mini-modules).
 
 ### Grimoire pattern (applies to Gauntlet + G&V grimoires)
 - **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.
