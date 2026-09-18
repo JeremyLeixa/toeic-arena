@@ -18,6 +18,7 @@ import { getEffectiveLeague } from "../../lib/league.js";
 import { isPushSubscribed, unsubscribePush, subscribePush } from "../../lib/push.js";
 import { getBioCredId, biometricAvailable, teacherAuth, bioAuthenticate, setDashSession, hasDashSession } from "../../lib/teacherSession.js";
 import { estimateTOEICScore, generateInsight } from "../../lib/toeic.js";
+import { todayMission, rerollMission } from "../../lib/planner.js";
 import { tone } from "../../lib/tone.js";
 import { today } from "../../lib/util.js";
 import { NARRATOR_ORDER, NARRATOR_MOMENTS } from "../../narrator.js";
@@ -681,13 +682,21 @@ export function Profile(p){
       }
       // ── Flow 1 : Daily Reroll ──
       if(useTokenAsk==="daily_reroll"){
+        // Depuis le lot 4 du Mentor (2026-09-18), le plan du jour est figé et ordonné : re-tirer ne le
+        // recalcule pas (il retomberait sur la même 1re quête), la mission passe sur la quête SUIVANTE
+        // (lib/planner.js rerollMission). Rien à re-tirer (mission faite, une seule quête) → le jeton
+        // n'est pas consommé.
         function doDailyReroll(){
+          var next=rerollMission(todayMission(u,new Date()));
+          if(!next){
+            setTokenToast({err:true,msg:"Nothing to reroll today: your mission is done, or it's the only quest."});setTimeout(function(){setTokenToast(null);},3200);
+            closeAll();return;
+          }
           applyConsume("daily_reroll",function(){
             var c=JSON.parse(JSON.stringify(u));
-            var prevMission=c.mission||{};
-            c.mission=Object.assign({},prevMission,{date:null,actId:null,done:false,rerollCount:((prevMission.rerollCount)||0)+1});
+            c.mission=next;
             p.setAvatar(c);
-            setTokenToast({err:false,msg:"🎲 Mission rerolled!"});setTimeout(function(){setTokenToast(null);},2400);
+            setTokenToast({err:false,msg:"🎲 Mission moved to the next quest!"});setTimeout(function(){setTokenToast(null);},2400);
             closeAll();
           });
         }

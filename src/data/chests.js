@@ -150,7 +150,7 @@ export var TITLES = {
 export var TOKEN_TYPES = {
   diminishing_bypass:{name:"Bypass Token",      icon:"🔓", cap:5, premium:false, desc:"Skip diminishing returns on next session"},
   streak_shield:     {name:"Streak Shield",     icon:"🛡️",  cap:3, premium:false, desc:"Auto-protects streak on missed day"},
-  daily_reroll:      {name:"Daily Reroll",      icon:"🎲", cap:1, premium:false, desc:"Re-roll today's mission"},
+  daily_reroll:      {name:"Daily Reroll",      icon:"🎲", cap:1, premium:false, desc:"Move today's mission to the next quest of your path"},
   mock_reset:        {name:"Mock Reset",        icon:"📜", cap:2, premium:true,  desc:"Bypass 24h cooldown on Mock Test"},
   boss_reset:        {name:"Boss Reset",        icon:"🐲", cap:1, premium:true,  desc:"Bypass 24h cooldown on Boss Test"},
   endless_resurrect: {name:"Endless Resurrect", icon:"💎", cap:2, premium:true,  desc:"Continue Endless after 1 fatal mistake"},
