@@ -182,7 +182,7 @@ src/
     miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps
     audioBlitz.js      — 60 Audio Blitz items
     clueHunter.js      — 80 Clue Hunter items
-    mimicHunt.js       — 12 items Mimic Hunt (reformulation) + MIMIC_TIERS (3 paliers)
+    mimicHunt.js       — 60 items Mimic Hunt (reformulation, 20 par palier) + MIMIC_TIERS (3 paliers)
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
     placement.js       — 85 Battle Scan questions + tier levels + mission modules
@@ -520,23 +520,22 @@ Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alo
   citent l'option (`check_option_shuffle` scanne `MIMIC_ITEMS` depuis que 11 pièges disaient « A recycles… »).
 - **Rédaction des items** (`src/data/mimicHunt.js`, gardée par `tests/check_mimic_items.cjs`) : tout tient
   sur des **fragments** retrouvés en mots entiers, sans casse (`bridge`, `echo`, `mimics`) — un mot réécrit
-  et le surlignage disparaît en silence. 2 Mimics par item sauf deux items (un seul), des distracteurs
-  neutres qui ressemblent à des reformulations, et **l'item 12 garde un mot de la source dans la bonne
-  réponse** : la règle n'est pas « mot repris = faux » mais « mot repris qui dit autre chose ».
+  et le surlignage disparaît en silence. **60 items, 20 par palier** (12 pilotes + 48 relus par Jérémy le
+  2026-09-19), bonne réponse 15 fois en A, B, C et D. 2 Mimics par item sauf cinq (un seul), des
+  distracteurs neutres qui ressemblent à des reformulations, et **cinq items gardent un mot de la source
+  dans la bonne réponse** (mh12, mh18, mh22, mh35, mh59) : la règle n'est pas « mot repris = faux » mais
+  « mot repris qui dit autre chose ».
 - **XP** : `15 + 5×bonne réponse`, +25 sans faute (115 pour 15 items, palier des 15 Q ; le `+2×Mimic
   démasqué` de la variante 2 a disparu avec elle). **Estimateur** : Reading support `.04`, `part:null` dans `MODULE_TOEIC_MAP` (la reformulation sert
   P3/P4/P7 : la ranger dans p7 fausserait le diagnostic du Mentor).
-- **Coffre de maîtrise exclu tant que la banque a moins de 45 items** (`MASTERY_BLACKLIST.mimic`,
-  `lib/hubStatus.js`, 2026-09-18) : chaque partie rejoue toute la banque, 5 parties apprises par cœur
-  donnaient le coffre Champion. La tuile est rendue sans barre de coffre. `check_mimic_items` exige le
-  retrait de la ligne dès 45 items (et `check_hub_status` fige la liste : l'y retirer aussi).
-- **Contenu en projet** (2026-09-18/19) : 48 items (16 par palier, mh13-mh60) dans
-  `prototypes/mimic-hunt/drafts/lot1-3.js`, **hors jeu jusqu'à la relecture de Jérémy** ; page de
-  relecture `prototypes/mimic-hunt/review.html` (tout visible : pont, recopies, mot gardé ; `?only=lot2`),
-  en partie dans le vrai module `real.html?lot=1|2|3|all`, contrôle
-  `node tests/check_mimic_items.cjs <lot.js>…` (mêmes contrôles par item, identifiants distincts).
-  Validé → verser dans `src/data/mimicHunt.js`, retirer `mimic` de `MASTERY_BLACKLIST` (≥ 45 items).
-- **BGM placeholder** `bgm_clue`. À faire : volume de contenu (60-90 items visés), piste Mureka dédiée,
+- **Coffre de maîtrise lié à la taille de la banque** : exclu (`MASTERY_BLACKLIST.mimic`) du 2026-09-18 au
+  2026-09-19, quand chaque partie rejouait les 12 items (5 parties apprises par cœur donnaient le coffre
+  Champion), rendu à 60 items. `check_mimic_items` exige l'exclusion sous 45 items et son absence au-delà.
+- **Nouveaux items : toujours relus par Jérémy avant d'entrer au jeu.** Lot en projet dans
+  `prototypes/mimic-hunt/drafts/`, contrôlé par `node tests/check_mimic_items.cjs <lot.js>…` (mêmes
+  contrôles par item, identifiants distincts de la banque), relu sur `prototypes/mimic-hunt/review.html`
+  (tout visible : pont, recopies, mot gardé ; `?tier=2`), puis versé dans `src/data/mimicHunt.js`.
+- **BGM placeholder** `bgm_clue`. À faire : piste Mureka dédiée,
   achievements, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
   direct vers les Parts 3 et 4, et un poids Listening).
 

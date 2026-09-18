@@ -50,10 +50,9 @@ eq('50 Q à 78 % → non', H.isMastered(ms(50, 39)), false);
 eq('absent → non', H.isMastered(undefined), false);
 // hunt (2026-09-18) : la chasse repose des questions déjà ratées, sa précision ne mesure rien de
 // progressif — un coffre de maîtrise y récompenserait d'avoir beaucoup raté ailleurs.
-// mimic (2026-09-18) : provisoire, tant que la banque de Mimic Hunt fait moins de 45 items (chaque partie
-// la rejoue en entier, le coffre s'obtenait par cœur). tests/check_mimic_items.cjs en exige le retrait
-// dès 45 items : l'enlever alors ici aussi.
-eq('liste noire = mocks, boss, daily, flashcards, chasse, Mimic (provisoire)', Object.keys(H.MASTERY_BLACKLIST).sort(), ['boss', 'csess', 'daily', 'hunt', 'mimic', 'mock1', 'mock2', 'mock3']);
+// mimic y a été du 2026-09-18 au 2026-09-19, le temps que sa banque passe de 12 à 60 items
+// (tests/check_mimic_items.cjs lie sa présence à la taille de la banque).
+eq('liste noire = mocks, boss, daily, flashcards, chasse', Object.keys(H.MASTERY_BLACKLIST).sort(), ['boss', 'csess', 'daily', 'hunt', 'mock1', 'mock2', 'mock3']);
 
 // 2. Module
 const wf = st({ id: 'wordfam' });
