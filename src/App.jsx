@@ -23,6 +23,7 @@ import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, lo
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { boundReview, recordMisses } from "./lib/review.js";
+import { dayMission, stakePart } from "./lib/planner.js";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { MASTERY_BLACKLIST, isMastered } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
@@ -74,7 +75,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-18-mentor-memory-lot3";
+var BUILD_ID="2026-09-18-mentor-memory-lot4";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -354,6 +355,22 @@ useEffect(function(){
       grantChestLocal("mission_streak_"+s,"guerrier");
     }
   },[u&&u.mission&&u.mission.streak]);
+
+  // Mission du jour = 1re quête du plan (lot 4 du Mentor, 2026-09-18). Le plan est calculé puis FIGÉ une
+  // fois par jour dans u.mission (lib/planner.js dayMission) : Mentor, Home, onglets, NextStepReco et
+  // portes XP lisent cette copie. Remplace l'écriture PENDANT LE RENDU de l'ancien MentorDailyMission (un
+  // save(u) dans le render, qui perdait au passage streak et lastDoneDate). Deps primitives : u est
+  // recloné à chaque sv(). Rien pendant le chargement : une copie locale périmée écraserait la mission
+  // déjà posée sur un autre appareil. missionDay relu à chaque rendu : minuit passe sans rechargement.
+  var missionDay=today();
+  useEffect(function(){
+    if(ld||!u||!u.name)return;
+    if(u.mission&&u.mission.date===missionDay&&u.mission.quests)return;
+    var c=JSON.parse(JSON.stringify(u));
+    c.mission=dayMission(c,new Date());
+    sv(c);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[ld,u&&u.name,u&&u.mission&&u.mission.date,u&&u.mission&&!!u.mission.quests,missionDay]);
 
   // Module Mastery watcher — fires when any tracked module crosses 80% accuracy on 50+ Q.
   // Trigger per module → unique per module, granted once across the whole DB.
@@ -1058,7 +1075,7 @@ function sv(d){
   // l'ancien code prouvée par scripts/refactor/xp_equivalence.cjs (Phase 5, 2026-09-16).
   // (isModuleBoosted, qui vivait ici, est devenue isBoostedByEvents dans lib/xp.js.)
   function applyXpGates(baseXp,sc,tot,modId){
-    var r=gateXp(baseXp,sc,tot,modId,{u:u,now:new Date(),events:activeEvents});
+    var r=gateXp(baseXp,sc,tot,modId,{u:u,now:new Date(),events:activeEvents,focusPart:stakePart(u,new Date())});
     // Arena Shop P1 — 30 Darics pour avoir suivi la reco du Mentor, 1×/jour : le
     // source_detail "focus_<date>" est dédupliqué côté serveur (re-tir le même jour = no-op).
     if(r.focusHit)grantMarks(30,"focus","focus_"+today(),true);
@@ -1096,7 +1113,7 @@ function sv(d){
     var sid=++sessionSeqRef.current;
     openSessionRef.current=sid;openSessionSpRef.current=sp;
     var now=new Date();
-    var g=gateSteps(baseXp,sc,tot,modId,{u:u,now:now,events:activeEvents,spotlight:!!opts.spotlight});
+    var g=gateSteps(baseXp,sc,tot,modId,{u:u,now:now,events:activeEvents,spotlight:!!opts.spotlight,focusPart:stakePart(u,now)});
     if(g.focusHit)grantMarks(30,"focus","focus_"+today(),true);
     var r=settleXp(u,g.xp,{now:now,events:activeEvents,classMedianXp:classMedianXp,leagueOf:getLeague});
     // opts.extra : ce que le module ajoute à la session pour que l'écran de fin le dise juste

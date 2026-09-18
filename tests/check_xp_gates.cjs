@@ -78,7 +78,7 @@ eq('spotlightMult : autre module → 1', XP.spotlightMult('p7', [spotDrill, spot
 const NOW = new Date('2026-09-15T10:00:00Z'); // mardi
 const TD = '2026-09-15';
 const base = (extra) => Object.assign({ xp: 100, weeklyXp: 50, streak: 2, lastActive: '2026-09-14', stats: { totalQ: 0 }, moduleScores: {}, dailyModSessions: {} }, extra || {});
-const g = (baseXp, sc, tot, modId, u, events) => XP.gateXp(baseXp, sc, tot, modId, { u, now: NOW, events });
+const g = (baseXp, sc, tot, modId, u, events, extra) => XP.gateXp(baseXp, sc, tot, modId, Object.assign({ u, now: NOW, events }, extra || {}));
 
 eq('composition : base 33, acc 40 %, 2e session → round(round(16.5)×.5)=9', g(33, 4, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 1 } })), { xp: 9, focusHit: false });
 eq('4e session → 0', g(100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } })), { xp: 0, focusHit: false });
@@ -99,12 +99,17 @@ eq('hunt : 2/10 justes, 1 vaincue (base 10) → pas de porte de précision', g(1
 eq('hunt : 2e chasse du jour → courbe ×0.5', g(10, 2, 10, 'hunt', base({ dailyModSessions: { ['hunt_' + TD]: 1 } })), { xp: 5, focusHit: false });
 eq('drill au même score : la porte de précision s\'applique toujours', g(10, 2, 10, 'drill', base()), { xp: 5, focusHit: false });
 
-// Focus : u dont la Part 2 est la plus faible (n≥10, acc<.85) → lisP2 vise p2.
+// Focus (lot 4 du Mentor, 2026-09-18) : la partie visée est INJECTÉE (ctx.focusPart = partie de la quête
+// « enjeu » du plan figé du jour, lib/planner.js stakePart), jamais recalculée ici. uFocus a sa Part 2 la
+// plus faible en précision : l'ancien calcul l'aurait visée, c'est justement ce qui ne doit plus arriver.
 const uFocus = base({ stats: { totalQ: 40 }, moduleScores: { lisP2: { correct: 2, total: 10 }, drill: { correct: 9, total: 10 } } });
-eq('focus : lisP2 ×1.25 + focusHit', g(40, 10, 10, 'lisP2', uFocus), { xp: 50, focusHit: true });
-eq('focus : arrondi après la courbe (2e session : 20×1.25)', g(40, 10, 10, 'lisP2', Object.assign({}, uFocus, { dailyModSessions: { ['lisP2_' + TD]: 1 } })), { xp: 25, focusHit: true });
-eq('focus : module hors partie faible → rien', g(40, 10, 10, 'drill', uFocus), { xp: 40, focusHit: false });
-eq('focus : module sans partie (game_x) → rien', g(40, 10, 10, 'game_x', uFocus), { xp: 40, focusHit: false });
+const F2 = { focusPart: 'p2' };
+eq('focus : lisP2 ×1.25 + focusHit', g(40, 10, 10, 'lisP2', uFocus, null, F2), { xp: 50, focusHit: true });
+eq('focus : arrondi après la courbe (2e session : 20×1.25)', g(40, 10, 10, 'lisP2', Object.assign({}, uFocus, { dailyModSessions: { ['lisP2_' + TD]: 1 } }), null, F2), { xp: 25, focusHit: true });
+eq('focus : module hors partie visée → rien', g(40, 10, 10, 'drill', uFocus, null, F2), { xp: 40, focusHit: false });
+eq('focus : module sans partie (game_x) → rien', g(40, 10, 10, 'game_x', uFocus, null, F2), { xp: 40, focusHit: false });
+eq('focus : sans quête d\'enjeu, rien, même sur la partie la plus faible', g(40, 10, 10, 'lisP2', uFocus), { xp: 40, focusHit: false });
+eq('focus : l\'enjeu (p7) prime sur la précision la plus basse (p2)', [g(40, 10, 10, 'lisP2', uFocus, null, { focusPart: 'p7' }).focusHit, g(40, 10, 10, 'p7', uFocus, null, { focusPart: 'p7' }).focusHit], [false, true]);
 
 // Boosts Daric
 eq('Module Booster ×1.5 sur le module armé', g(40, 10, 10, 'drill', base({ boosts: { moduleBoostArmed: 'drill' } })), { xp: 60, focusHit: false });
@@ -212,16 +217,16 @@ const GATE_CASES = [
   [100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [{ type: 'flash_hour' }]],
   [40, 0, 10, null, base()],
   [-20, 10, 10, 'drill', base()],
-  [40, 10, 10, 'lisP2', uFocus],
-  [40, 10, 10, 'lisP2', Object.assign({}, uFocus, { dailyModSessions: { ['lisP2_' + TD]: 1 } })],
-  [40, 10, 10, 'drill', uFocus],
+  [40, 10, 10, 'lisP2', uFocus, null, F2],
+  [40, 10, 10, 'lisP2', Object.assign({}, uFocus, { dailyModSessions: { ['lisP2_' + TD]: 1 } }), null, F2],
+  [40, 10, 10, 'drill', uFocus, null, F2],
   [40, 10, 10, 'drill', base({ boosts: { moduleBoostArmed: 'drill' } })],
   [40, 10, 10, 'mock1', base({ boosts: { mockMultArmed: true } })],
   [40, 10, 10, 'boss', base({ boosts: { mockMultArmed: true } })],
 ];
 GATE_CASES.forEach((a, i) => {
-  const r = gs(a[0], a[1], a[2], a[3], a[4], a[5]);
-  eq('gateSteps ≡ gateXp, cas ' + i, { xp: r.xp, focusHit: r.focusHit }, g(a[0], a[1], a[2], a[3], a[4], a[5]));
+  const r = gs(a[0], a[1], a[2], a[3], a[4], a[5], a[6]);
+  eq('gateSteps ≡ gateXp, cas ' + i, { xp: r.xp, focusHit: r.focusHit }, g(a[0], a[1], a[2], a[3], a[4], a[5], a[6]));
   eq('gateSteps : dernière étape = xp, cas ' + i, lastVal(r.steps), r.xp);
 });
 
@@ -232,7 +237,7 @@ eq('étapes : bypass = retour anticipé, pas de courbe ni de booster', ids(gs(10
 eq('étapes : spotlight sur le module = pas d\'étape de courbe', ids(gs(100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [spotDrill]).steps), ['base']);
 eq('étapes : 1re session du jour = pas d\'étape de courbe (×1)', ids(gs(100, 10, 10, 'drill', base()).steps), ['base']);
 eq('étapes : plancher 0', gs(-20, 10, 10, 'drill', base()).steps, [{ id: 'base', kind: 'base', value: -20 }, { id: 'floor', kind: 'malus', value: 0 }]);
-eq('étapes : Focus', gs(40, 10, 10, 'lisP2', uFocus).steps[1], { id: 'focus', kind: 'bonus', mult: 1.25, value: 50 });
+eq('étapes : Focus', gs(40, 10, 10, 'lisP2', uFocus, null, F2).steps[1], { id: 'focus', kind: 'bonus', mult: 1.25, value: 50 });
 eq('étapes : Module Booster puis Mock Multiplier', ids(gs(40, 10, 10, 'mock1', base({ boosts: { mockMultArmed: true } })).steps), ['base', 'mock_mult']);
 (() => {
   const withSpot = gs(40, 10, 10, 'drill', base(), [spotDrill], { spotlight: true });

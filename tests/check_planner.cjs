@@ -161,5 +161,38 @@ eq('points nécessaires par semaine', Math.round(pace.needed), 16); // (785 − 
 eq('+30 la semaine passée : dans les temps', pace.onTrack, true);
 eq('sans objectif, pas d\'allure', P.goalPace({ moduleScores: {} }, NOW, []), null);
 
+// ── 8. La journée figée dans u.mission (lot 4) ─────────────────────────────────────────────────
+// Recalculé à chaque ouverture, le plan bougeait sous les yeux de l'élève : chasse finie → disparue,
+// « +15 XP » qui glisse sur une autre quête, +25 % qui change de partie. Figé, il se coche.
+const uM = warm({ review: dueCreatures(5), mission: { date: '2026-09-20', actId: 'p7', done: true, streak: 6, lastDoneDate: '2026-09-20' } });
+const m8 = P.dayMission(uM, NOW);
+eq('la mission porte la 1re quête', [m8.date, m8.pick, m8.actId, m8.done], ['2026-09-21', 0, 'hunt', false]);
+eq('la série du coffre mission_streak est gardée', [m8.streak, m8.lastDoneDate], [6, '2026-09-20']);
+eq('les quêtes figées', m8.quests.map((q) => q.kind), ['hunt', 'stake', 'keep']);
+ok('figées en primitives (jsonb léger, pas de séries)', JSON.stringify(m8.quests).length < 400);
+const frozen = Object.assign({}, uM, { mission: m8 });
+eq('le +25 % suit la quête d\'enjeu figée', P.stakePart(frozen, NOW), 'p7');
+// La chasse faite, le plan recalculé n'a plus de chasse : la copie figée, si.
+const afterHunt = Object.assign({}, frozen, { review: R.newReview(), dailyModSessions: { ['hunt_2026-09-21']: 1 }, mission: Object.assign({}, m8, { done: true }) });
+eq('plan recalculé : la chasse a disparu', P.planToday(afterHunt, NOW).quests[0].kind, 'stake');
+eq('plan figé : elle est cochée, à sa place', P.todayMission(afterHunt, NOW).quests.map((q, i) => [q.kind, P.questDone(afterHunt, afterHunt.mission, i, NOW)]),
+  [['hunt', true], ['stake', false], ['keep', false]]);
+// Jour du déploiement : l'ancienne mission (sans quêtes) déjà faite aujourd'hui ne se refait pas (+15 XP).
+eq('ancienne mission faite aujourd\'hui : reste faite', P.dayMission(warm({ mission: { date: '2026-09-21', actId: 'drill', done: true, streak: 2 } }), NOW).done, true);
+eq('une mission d\'hier n\'est pas celle du jour', [P.todayMission(uM, NOW), P.stakePart(uM, NOW)], [null, null]);
+// La catégorie visée se réhydrate (sa série) au lieu d'être stockée.
+const mP5 = P.dayMission(warm({ moduleScores: { drill: mod(sessions(6, '2026-09-19', 5, 10, { Conditionals: { c: 2, t: 6 }, Tenses: { c: 3, t: 4 } })) } }), NOW);
+eq('catégorie figée par son nom', mP5.quests[0].cat, 'Conditionals');
+ok('… et réhydratée avec sa série', P.thawQuest(mP5.quests[0], warm({ moduleScores: { drill: mod(sessions(6, '2026-09-19', 5, 10, { Conditionals: { c: 2, t: 6 } })) } }), NOW).cat.series.length === 6);
+// Jeton daily_reroll : la mission passe à la quête suivante, l'ordre ne bouge pas.
+const r1 = P.rerollMission(m8), r2 = P.rerollMission(r1), r3 = P.rerollMission(r2);
+eq('re-tirage : quête suivante', [r1.pick, r1.actId, r2.actId, r3.actId], [1, 'p7', 'lisP2', 'hunt']);
+eq('re-tirage : l\'ordre du plan ne bouge pas', r2.quests.map((q) => q.kind), ['hunt', 'stake', 'keep']);
+// Re-tirée sur une partie déjà jouée ce matin : la quête-mission n'est pas « faite » tant que la mission
+// ne l'est pas (checkMission attend une nouvelle session de ce module), sinon « Done » mentirait.
+const playedFirst = Object.assign({}, frozen, { dailyModSessions: { ['p7_2026-09-21']: 1 }, mission: r1 });
+eq('quête-mission : faite seulement quand la mission l\'est', [P.questDone(playedFirst, r1, 1, NOW), P.questDone(playedFirst, Object.assign({}, r1, { done: true }), 1, NOW)], [false, true]);
+eq('rien à re-tirer : mission faite, ou une seule quête', [P.rerollMission(Object.assign({}, m8, { done: true })), P.rerollMission(Object.assign({}, m8, { quests: m8.quests.slice(0, 1) }))], [null, null]);
+
 console.log(fails === 0 ? '  OK ' + checks + ' vérifications' : '  ' + fails + ' échec(s) sur ' + checks);
 process.exit(fails === 0 ? 0 : 1);

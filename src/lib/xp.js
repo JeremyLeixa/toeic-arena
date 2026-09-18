@@ -16,11 +16,12 @@
 //       générique 100/50/15/0 %, mock1-3 100/40/0 %, flashcards 100/60/30/0 % ;
 //       sauté si un Bypass Token est armé pour CE module (retour anticipé : ni Focus ni
 //       boosts ensuite, comme avant) ou si un événement actif booste le module ;
-//   · Today's Focus +25 % si le module vise la partie la plus faible (lib/toeic.js) ;
+//   · Today's Focus +25 % si le module vise la partie de la quête « enjeu » du plan figé du jour
+//     (ctx.focusPart, injecté par App() depuis lib/planner.js stakePart) ;
 //   · boosts Daric : Module Booster ×1.5 sur le module armé, Mock Multiplier ×1.5 sur
 //     mock1/2/3/boss ; plancher 0.
 import { today } from "./util.js";
-import { computeTodayFocus, partOfModule } from "./toeic.js";
+import { partOfModule } from "./toeic.js";
 import { getLevel } from "../data/helpers.js";
 
 // Paliers d'XP cumulée qui déclenchent un coffre (trigger "xp_<n>k").
@@ -70,7 +71,7 @@ export function spotlightMult(modId,events){
 }
 
 // Les trois piliers + boosts, dans l'ordre historique, AVEC le détail de chaque étape
-// (écran de fin de session, 2026-09-17). ctx = {u, now, events, spotlight}.
+// (écran de fin de session, 2026-09-17). ctx = {u, now, events, spotlight, focusPart}.
 // Retour : {xp, focusHit, steps}. focusHit=true ⇔ le bonus Focus s'est appliqué : App.jsx doit
 // alors créditer les 30 Darics (grantMarks, dédupliqué côté serveur par "focus_<date>").
 // steps = [{id, kind:"base"|"malus"|"bonus", mult?, run?, value}] ; la valeur de la DERNIÈRE
@@ -111,15 +112,14 @@ export function gateSteps(baseXp,sc,tot,modId,ctx){
     }
   }
   // ── PILIER 3 : Today's Focus +25 % ── l'anti-farming ci-dessus plafonne déjà le gain.
-  if(modId&&u){
-    try{
-      var focus=computeTodayFocus(u);
-      if(focus&&partOfModule(modId)===focus.partId){
-        gatedXp=Math.round(gatedXp*1.25);
-        focusHit=true;
-        steps.push({id:"focus",kind:"bonus",mult:1.25,value:gatedXp});
-      }
-    }catch(e){console.warn("[focus-boost] computation failed:",e&&e.message);}
+  // Depuis le lot 4 du Mentor (2026-09-18), la partie visée est celle de la quête « enjeu » du plan
+  // FIGÉ du jour (lib/planner.js stakePart), injectée par App() : c'est celle que le Mentor étiquette
+  // « +25% XP ». Recalculée ici (ancien computeTodayFocus, précision la plus basse), elle pouvait
+  // différer de ce que l'élève avait sous les yeux, et changer en cours de journée.
+  if(modId&&ctx.focusPart&&partOfModule(modId)===ctx.focusPart){
+    gatedXp=Math.round(gatedXp*1.25);
+    focusHit=true;
+    steps.push({id:"focus",kind:"bonus",mult:1.25,value:gatedXp});
   }
   // ── Boosts Daric (Arena Shop P2.5) ── ne touchent que l'XP, jamais la précision.
   if(modId&&u&&u.boosts){

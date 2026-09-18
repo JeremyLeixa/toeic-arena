@@ -7,6 +7,8 @@
 //   1. les erreurs arrivées à échéance d'abord (c'est court, et l'espacement ne supporte pas l'attente) ;
 //   2. l'entretien d'une partie forte laissée de côté (la mémoire s'efface).
 // La 1re quête EST la mission du jour (+15 XP) ; la quête « enjeu » porte le +25 % de l'ancien Focus.
+// Le plan est figé une fois par jour dans u.mission (dayMission) : c'est cette copie que lisent le
+// Mentor, Home, les onglets, NextStepReco et les portes XP, jamais un recalcul.
 import { today } from "./util.js";
 import { QUESTIONS } from "../data/grammar.js";
 import {
@@ -52,6 +54,60 @@ export function planToday(u, now) {
     if (keep) quests.push({ kind: "keep", mod: PART_MOD[keep.part], part: keep.part, days: daysBetween(keep.last, d), acc: keep.acc });
   }
   return { quests: quests.slice(0, 3), due: due, folded: due.length < HUNT_MIN ? due : [], stakes: st, cold: cold, tgt: targetAcc(u), date: d };
+}
+
+// ── La journée figée (lot 4, 2026-09-18) ──
+// Le plan est calculé UNE fois par jour et rangé dans u.mission (jsonb existant, aucune migration).
+// Recalculé à chaque ouverture, il bougeait sous les yeux de l'élève : une chasse finie disparaissait
+// du plan, l'étiquette « +15 XP » glissait sur une autre quête, le +25 % changeait de partie en cours de
+// journée. Figé, il se coche. `pick` = l'index de la quête qui porte la mission (0, sauf re-tirage).
+// On ne garde que des primitives : la catégorie et la macro se réhydratent à la lecture (thawQuest).
+function freezeQuest(q) {
+  var f = { kind: q.kind, mod: q.mod };
+  ["part", "n", "due", "pts", "acc", "days", "scanAcc"].forEach(function (k) { if (q[k] != null) f[k] = q[k]; });
+  if (q.cat) f.cat = q.cat.cat;
+  if (q.macro) f.macro = q.macro.id;
+  return f;
+}
+export function thawQuest(q, u, now) {
+  var t = Object.assign({}, q);
+  if (q.cat) t.cat = catState(u, q.cat, now);
+  if (q.macro) t.macro = MACROS.find(function (x) { return x.id === q.macro; }) || null;
+  return t;
+}
+// La mission du jour, depuis le plan. Garde la série (streak, lastDoneDate : coffre mission_streak).
+// Jour du déploiement : une mission de l'ancien système (sans `quests`) déjà faite aujourd'hui reste
+// faite, sinon ses +15 XP tomberaient une seconde fois.
+export function dayMission(u, now) {
+  var plan = planToday(u, now), quests = plan.quests.map(freezeQuest), prev = (u && u.mission) || {};
+  var doneToday = prev.date === plan.date && !!prev.done;
+  return Object.assign({}, prev, {
+    date: plan.date, quests: quests, pick: 0, cold: plan.cold,
+    actId: quests.length ? quests[0].mod : null, done: doneToday, rerollCount: 0,
+  });
+}
+// La mission de u si elle est d'aujourd'hui (et issue du plan), sinon null.
+export function todayMission(u, now) {
+  var m = u && u.mission;
+  return m && m.date === today(now) && m.quests ? m : null;
+}
+// Partie de la quête d'enjeu figée : c'est elle qui porte le +25 % (lib/xp.js, ctx.focusPart).
+export function stakePart(u, now) {
+  var m = todayMission(u, now), q = m && m.quests.find(function (x) { return x.kind === "stake"; });
+  return q ? q.part : null;
+}
+// Une quête est faite quand son module a été joué aujourd'hui ; celle qui porte la mission, quand la
+// mission est faite (checkMission, lib/progress.js).
+export function questDone(u, m, i, now) {
+  if (i === m.pick) return !!m.done;
+  return (((u && u.dailyModSessions) || {})[m.quests[i].mod + "_" + today(now)] || 0) > 0;
+}
+// Jeton daily_reroll : la mission passe sur la quête suivante, l'ordre du plan ne bouge pas. null
+// quand il n'y a rien à re-tirer (une seule quête, ou mission déjà faite) : le jeton n'est pas consommé.
+export function rerollMission(m) {
+  if (!m || m.done || !m.quests || m.quests.length < 2) return null;
+  var pick = ((m.pick || 0) + 1) % m.quests.length;
+  return Object.assign({}, m, { pick: pick, actId: m.quests[pick].mod, rerollCount: (m.rerollCount || 0) + 1 });
 }
 
 // Composition d'une session. `rnd` : générateur injecté (Math.random par défaut) pour des tests stables.
