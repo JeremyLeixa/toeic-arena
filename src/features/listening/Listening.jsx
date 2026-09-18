@@ -63,8 +63,8 @@ export function ListenP2(p){
   }
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(i){sPk(i);if(i!==items[ci].c){var q2=items[ci];mistakesRef.current.push({tag:"Part 2 — Question-Response",prompt:q2.q,yours:q2.opts[i],correct:q2.opts[q2.c],why:q2.xq});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);sP("listen");}else{sidRef.current=p.done(sc,items.length,25+sc*6);sP("done");}}
+  function doAns(i){sPk(i);if(i!==items[ci].c){var q2=items[ci];mistakesRef.current.push({tag:"Part 2 — Question-Response",prompt:q2.q,yours:q2.opts[i],correct:q2.opts[q2.c],why:q2.xq,ref:{k:"lisP2:"+q2.id,part:"p2"}});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);sP("listen");}else{sidRef.current=p.done(sc,items.length,25+sc*6,mistakesRef.current);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="chat-bubble" size={60} color="var(--cyan)"/></div>
@@ -158,8 +158,8 @@ export function ListenP1(p){
   }
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(i){sPk(i);if(i!==items[ci].c){var q1=items[ci];mistakesRef.current.push({tag:"Part 1 — Photographs",prompt:"Photo "+(ci+1)+": which statement describes it?",yours:q1.opts[i],correct:q1.opts[q1.c],why:q1.xq});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);setCurOpt(-1);sP("listen");}else{sidRef.current=p.done(sc,items.length,20+sc*5);sP("done");}}
+  function doAns(i){sPk(i);if(i!==items[ci].c){var q1=items[ci];mistakesRef.current.push({tag:"Part 1 — Photographs",prompt:"Photo "+(ci+1)+": which statement describes it?",yours:q1.opts[i],correct:q1.opts[q1.c],why:q1.xq,ref:{k:"lisP1:"+q1.id,part:"p1"}});}if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}sP("fb");}
+  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);setPlayed(false);setCurOpt(-1);sP("listen");}else{sidRef.current=p.done(sc,items.length,20+sc*5,mistakesRef.current);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
     <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="eye-target" size={60} color="var(--cyan)"/></div>
@@ -264,14 +264,14 @@ export function ListenP3(p){
   async function playQuestion(idx){try{await playAudioFile("/audio/p3/"+items[ci].id+"_q"+(idx+1)+".mp3");}catch(e){console.warn("[P3] question audio failed:",e&&e.message);}}
 
   function doAns(i){
-    sPk(i);if(i!==items[ci].qs[qi].c){var q34=items[ci].qs[qi];mistakesRef.current.push({tag:"Part 3 — Conversation"+" "+(ci+1),prompt:q34.q,yours:q34.opts[i],correct:q34.opts[q34.c],why:q34.x});}if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
+    sPk(i);if(i!==items[ci].qs[qi].c){var q34=items[ci].qs[qi];mistakesRef.current.push({tag:"Part 3 — Conversation"+" "+(ci+1),prompt:q34.q,yours:q34.opts[i],correct:q34.opts[q34.c],why:q34.x,ref:{k:"lisP3:"+items[ci].id+":"+qi,part:"p3"}});}if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
   }
   function nxt(){
     sPk(-1);
     if(qi<items[ci].qs.length-1){var ni=qi+1;sQi(ni);sP("q");playQuestion(ni);}
     else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);setCurLine(-1);sP("listen");}
     // totalQ est déjà incrémenté au clic de réponse : +1 comptait une question de trop (2026-09-17).
-    else{sidRef.current=p.done(sc,totalQ,30+sc*5);sP("done");}
+    else{sidRef.current=p.done(sc,totalQ,30+sc*5,mistakesRef.current);sP("done");}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -369,14 +369,14 @@ export function ListenP4(p){
   async function playQuestion(idx){try{await playAudioFile("/audio/p4/"+items[ci].id+"_q"+(idx+1)+".mp3");}catch(e){console.warn("[P4] question audio failed:",e&&e.message);}}
 
   function doAns(i){
-    sPk(i);if(i!==items[ci].qs[qi].c){var q34=items[ci].qs[qi];mistakesRef.current.push({tag:"Part 4 — Talk"+" "+(ci+1),prompt:q34.q,yours:q34.opts[i],correct:q34.opts[q34.c],why:q34.x});}if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
+    sPk(i);if(i!==items[ci].qs[qi].c){var q34=items[ci].qs[qi];mistakesRef.current.push({tag:"Part 4 — Talk"+" "+(ci+1),prompt:q34.q,yours:q34.opts[i],correct:q34.opts[q34.c],why:q34.x,ref:{k:"lisP4:"+items[ci].id+":"+qi,part:"p4"}});}if(i===items[ci].qs[qi].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sTQ(totalQ+1);sP("fb");
   }
   function nxt(){
     sPk(-1);
     if(qi<items[ci].qs.length-1){var ni=qi+1;sQi(ni);sP("q");playQuestion(ni);}
     else if(ci<items.length-1){sC(ci+1);sQi(0);setPlayed(false);sP("listen");}
     // totalQ est déjà incrémenté au clic de réponse : +1 comptait une question de trop (2026-09-17).
-    else{sidRef.current=p.done(sc,totalQ,30+sc*5);sP("done");}
+    else{sidRef.current=p.done(sc,totalQ,30+sc*5,mistakesRef.current);sP("done");}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>

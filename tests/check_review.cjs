@@ -100,6 +100,24 @@ eq('nombre de créatures plafonné', big.items.length, R.MAX_ITEMS);
 eq('journal plafonné', big.log.length, R.MAX_LOG);
 eq('les échéances les plus proches sont gardées', big.items[0].due, '2026-10-01');
 
+// ── 7 bis. Les erreurs d'une session entrent par leur référence (recordMisses) ─────────────────
+// Le module passe sa liste mistakesRef telle quelle : une entrée SANS `ref` (module que la chasse ne
+// sait pas reposer) ne doit rien créer, une entrée avec `ref` crée ou fait retomber sa créature.
+const ms = [
+  { tag: 'Conditionals', prompt: '…', ref: { k: 'drill:g326', cat: 'Conditionals', part: 'p5' } },
+  { tag: 'Trap #4', prompt: '…' },
+  { tag: 'Part 7 — Email', prompt: '…', ref: { k: 'p7:p7p12:2', part: 'p7' } },
+];
+const fromEmpty = R.recordMisses({}, ms, D('2026-09-18'));
+eq('profil sans bestiaire ({} de fresh) : créé', fromEmpty.items.map((x) => x.k), ['drill:g326', 'p7:p7p12:2']);
+eq('catégorie et partie gardées à la capture', [item(fromEmpty, 'drill:g326').cat, item(fromEmpty, 'p7:p7p12:2').part], ['Conditionals', 'p7']);
+eq('première échéance : le lendemain', item(fromEmpty, 'drill:g326').due, '2026-09-19');
+const again = R.recordMisses(fromEmpty, [ms[0]], D('2026-09-19'));
+eq('ratée de nouveau : même créature, pas un doublon', [again.items.length, item(again, 'drill:g326').fails], [2, 2]);
+eq('liste absente : rien ne casse', R.recordMisses(undefined, undefined, D('2026-09-18')).items, []);
+const flood = R.recordMisses(R.newReview(), Array.from({ length: R.MAX_ITEMS + 10 }, (_, i) => ({ ref: { k: 'drill:g' + i } })), D('2026-09-18'));
+eq('bornée à l\'écriture', [flood.items.length, flood.log.length], [R.MAX_ITEMS, R.MAX_LOG]);
+
 // ── 8. La chasse ne touche jamais l'estimation TOEIC ───────────────────────────────────────────
 // Reposer des questions déjà vues, avec leur explication, gonflerait le score sans rien prouver.
 const base = {

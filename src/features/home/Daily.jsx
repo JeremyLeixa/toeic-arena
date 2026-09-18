@@ -25,7 +25,8 @@ if(wasAlreadyDone.current)return(<div className="enter" style={{padding:"20px 16
 <button className="btn1" onClick={p.back}>Back</button></div>);
 function doAns(i){answered.current=true;clearTimeout(tr.current);sS(i);if(i===qs[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},500);}sP("fb");}
 // Erreur enregistrée au clic (couvre la réponse fausse ET le temps écoulé, sel=-1).
-function nxt(){var dq=qs[ci];if(sel!==dq.c)mistakesRef.current.push({tag:dq.cat,prompt:dq.s,yours:sel>=0?dq.o[sel]:"(time's up)",correct:dq.o[dq.c],why:dq.x});answered.current=false;if(ci<qs.length-1){sC(ci+1);sS(-1);sT(30);sP("q");}else{var xp=30+sc*14+(sc===5?20:0);sidRef.current=p.done(sc,xp);sP("done");}}
+// ref : la question entre au bestiaire, sous la même référence que dans le Drill (même banque).
+function nxt(){var dq=qs[ci];if(sel!==dq.c)mistakesRef.current.push({tag:dq.cat,prompt:dq.s,yours:sel>=0?dq.o[sel]:"(time's up)",correct:dq.o[dq.c],why:dq.x,ref:{k:"drill:"+dq.id,cat:dq.cat,part:"p5"}});answered.current=false;if(ci<qs.length-1){sC(ci+1);sS(-1);sT(30);sP("q");}else{var xp=30+sc*14+(sc===5?20:0);sidRef.current=p.done(sc,xp,mistakesRef.current);sP("done");}}
 
 if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
 <div style={{marginBottom:20,display:"flex",justifyContent:"center",animation:"pulse 2s infinite"}}><ResultIcon e={"⚡"} size={60}/></div><h1 className="out" style={{fontWeight:900,fontSize:28,marginBottom:8}}>Daily Challenge</h1>

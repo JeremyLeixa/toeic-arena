@@ -40,7 +40,9 @@ function doAns(i){
   var prev=catStatsRef.current[cat]||{correct:0,total:0};
   var correct=i===q.c;
   catStatsRef.current[cat]={correct:prev.correct+(correct?1:0),total:prev.total+1};
-  if(!correct)mistakesRef.current.push({tag:q.cat,prompt:q.s,yours:q.o[i],correct:q.o[q.c],why:q.x});
+  // ref : la question entre au bestiaire (lib/review.js). Préfixe "drill:" pour toute la banque de
+  // grammaire, quel que soit le module : ratée ici ou dans le Daily, c'est la même créature.
+  if(!correct)mistakesRef.current.push({tag:q.cat,prompt:q.s,yours:q.o[i],correct:q.o[q.c],why:q.x,ref:{k:"drill:"+q.id,cat:q.cat,part:"p5"}});
   track.record(correct);
   if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}
   else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},500);}
@@ -48,7 +50,7 @@ function doAns(i){
 }
 // Fin de manche : la session est calculée et sauvegardée ICI (p.done), l'écran l'affiche ensuite.
 // Plus de p.gate() au rendu : il relisait les compteurs du jour déjà incrémentés (XP affichée ≠ versée).
-function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sidRef.current=p.done(sc,qs.length,20+sc*7,catStatsRef.current);sP("done");}}
+function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{sidRef.current=p.done(sc,qs.length,20+sc*7,catStatsRef.current,mistakesRef.current);sP("done");}}
 
 if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Grammar Drill" mistakes={mistakesRef.current}
   onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>

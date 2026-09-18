@@ -22,6 +22,7 @@ import { getLeague, applyWeekTransition } from "./lib/league.js";
 import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost, notifyAuthLost } from "./lib/persistence.js";
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
+import { recordMisses } from "./lib/review.js";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { MASTERY_BLACKLIST, isMastered } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
@@ -73,7 +74,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-17-mentor-memory-lot2";
+var BUILD_ID="2026-09-18-mentor-memory-lot3";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1398,7 +1399,7 @@ function sv(d){
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
   // Daily sur l'écran de fin commun : xpE garde désormais l'XP réellement versée (bonus du jour compris),
   // affichée ensuite par « Already completed » et sur Home. Pas de Spotlight (comme avant).
-  function dailyDone(sc,xp){var ss=settleSession("daily",sc,5,xp);var c=ss.c;c.daily={date:today(),done:true,score:sc,xpE:ss.total};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);checkMission(c,"daily");grantMarks(10,"daily","daily_marks_"+today(),true);try{playJingleDaily();}catch(e){}
+  function dailyDone(sc,xp,mistakes){var ss=settleSession("daily",sc,5,xp);var c=ss.c;c.daily={date:today(),done:true,score:sc,xpE:ss.total};c.weeklyDailyCount=(c.weeklyDailyCount||0)+1;c.stats.totalQ+=5;c.stats.correct+=sc;c.stats.sessions+=1;if(sc===5)c.stats.perfects=(c.stats.perfects||0)+1;trackModSession(c,"daily");recordModule(c,"daily",sc,5);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,"daily");grantMarks(10,"daily","daily_marks_"+today(),true);try{playJingleDaily();}catch(e){}
     // Track seen questions for anti-repetition
     if(!c.dailySeen)c.dailySeen=[];
     var todayQsArr=dailyQs(today(),c);
@@ -1408,9 +1409,12 @@ function sv(d){
     c.dailySeen=c.dailySeen.filter(function(entry){return entry.date>=pruneStr;});
     sealSession(c,ss.sid);sv(c);return ss.sid;}
   // Drill : premier module sur l'écran de fin commun (pilote, 2026-09-17). Rend le sid de la session.
-  function drillDone(sc,tot,xp,catStats){var s=settleSession("drill",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);checkMission(c,"drill");sealSession(c,s.sid);sv(c);return s.sid;}
+  function drillDone(sc,tot,xp,catStats,mistakes){var s=settleSession("drill",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;c.stats.drills=(c.stats.drills||0)+1;trackModSession(c,"drill");recordModule(c,"drill",sc,tot,catStats);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,"drill");sealSession(c,s.sid);sv(c);return s.sid;}
   // Mini-modules sur l'écran de fin commun (Spotlight compris), avec la session. Rend le sid.
-  function miniSession(sc,tot,xp){var modId=sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
+  // `mistakes` (facultatif, aussi dans drillDone et dailyDone) : la liste mistakesRef du module. Ses
+  // entrées qui portent `ref` entrent au bestiaire (lib/review.js recordMisses), file bornée ICI, à
+  // l'écriture, jamais dans supaToLocal (une troncature à la lecture ferait échouer le round-trip).
+  function miniSession(sc,tot,xp,mistakes){var modId=sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
   function rateCard(id,r){var c=JSON.parse(JSON.stringify(u));var ex=c.cardStates[id]||{ease:2.5,interval:0,nextReview:today(),correct:0,total:0};c.cardStates[id]=srsUp(ex,r);c.stats.cardsRev=(c.stats.cardsRev||0)+1;sv(c);}
   function cardsDone(xp,ok,tot){
     // XP arrives already gated (CardSession applies diminishing returns locally)

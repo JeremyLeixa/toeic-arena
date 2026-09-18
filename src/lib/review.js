@@ -145,3 +145,12 @@ export function boundReview(rv) {
   if (rv.log.length > MAX_LOG) rv.log = rv.log.slice(-MAX_LOG);
   return rv;
 }
+// Les erreurs d'une session entrent au bestiaire (App() : drillDone, dailyDone, miniSession). `mistakes`
+// est la liste mistakesRef du module, celle de l'écran de fin : seules les entrées qui portent
+// `ref:{k,cat,part}` entrent, les autres (module que la chasse ne sait pas encore reposer) sont ignorées.
+// Modifie `rv` sur place (App() travaille sur une copie du profil) et le rend borné.
+export function recordMisses(rv, mistakes, now) {
+  if (!rv || !rv.items) rv = newReview();
+  (mistakes || []).forEach(function (m) { if (m && m.ref && m.ref.k) reviewMiss(rv, m.ref, now); });
+  return boundReview(rv);
+}

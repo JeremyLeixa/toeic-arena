@@ -32,8 +32,8 @@ export function TimeSim(p){
     if(ph==="q"){timerRef.current=setInterval(function(){sEl(function(e){return e+1;});},1000);return function(){clearInterval(timerRef.current);};}
   },[ph]);
 
-  function doAns(i){sS(i);var correct=i===qs[ci].c;if(!correct){var tq=qs[ci];mistakesRef.current.push({tag:tq.cat,prompt:tq.s,yours:tq.o[i],correct:tq.o[tq.c],why:tq.x});}if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sAn(answers.concat([{q:ci,pick:i,correct:correct,time:elapsed}]));sP("next");}
-  function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{clearInterval(timerRef.current);sidRef.current=p.done(sc,qs.length,30+sc*5);sP("done");}}
+  function doAns(i){sS(i);var correct=i===qs[ci].c;if(!correct){var tq=qs[ci];mistakesRef.current.push({tag:tq.cat,prompt:tq.s,yours:tq.o[i],correct:tq.o[tq.c],why:tq.x,ref:{k:"drill:"+tq.id,cat:tq.cat,part:"p5"}});}if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sAn(answers.concat([{q:ci,pick:i,correct:correct,time:elapsed}]));sP("next");}
+  function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{clearInterval(timerRef.current);sidRef.current=p.done(sc,qs.length,30+sc*5,mistakesRef.current);sP("done");}}
 
   function fmtTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
   var paceStatus=ph==="q"?elapsed/(ci+1):0;
@@ -231,7 +231,7 @@ export function Part6Drill(p){
 
   function doAns(i){
     sPk(i);
-    if(i!==curBlank.correct){var bIdx=curText.parts.map(function(pt,k){return pt.blank?k:-1;}).filter(function(k){return k>=0;})[bi];var bef=((curText.parts[bIdx-1]||{}).text||"").slice(-90);var aft=((curText.parts[bIdx+1]||{}).text||"").slice(0,70);mistakesRef.current.push({tag:"Part 6 — "+(curText.type||"Text"),prompt:"…"+bef+"_____"+aft+"…",yours:curBlank.options[i],correct:curBlank.options[curBlank.correct],why:curBlank.x});}
+    if(i!==curBlank.correct){var bIdx=curText.parts.map(function(pt,k){return pt.blank?k:-1;}).filter(function(k){return k>=0;})[bi];var bef=((curText.parts[bIdx-1]||{}).text||"").slice(-90);var aft=((curText.parts[bIdx+1]||{}).text||"").slice(0,70);mistakesRef.current.push({tag:"Part 6 — "+(curText.type||"Text"),prompt:"…"+bef+"_____"+aft+"…",yours:curBlank.options[i],correct:curBlank.options[curBlank.correct],why:curBlank.x,ref:{k:"p6:"+curText.id+":"+bi,part:"p6"}});}
     if(i===curBlank.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sTB(totalB+1);sP("fb");
@@ -240,7 +240,7 @@ export function Part6Drill(p){
     sPk(-1);
     if(bi<blanks.length-1){sBi(bi+1);sP("q");}
     else if(ti<texts.length-1){sTi(ti+1);sBi(0);sP("text");}
-    else{sidRef.current=p.done(sc,totalBlanks,25+sc*5);sP("done");}
+    else{sidRef.current=p.done(sc,totalBlanks,25+sc*5,mistakesRef.current);sP("done");}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -328,7 +328,8 @@ export function Part7Read(p){
 
   function doAns(i){
     sPk(i);
-    if(i!==curQ.correct)mistakesRef.current.push({tag:"Part 7 — "+(curPass.type||"Passage"),prompt:curQ.q,yours:curQ.options[i],correct:curQ.options[curQ.correct],why:curQ.x});
+    // ref : l'index de la question dans son passage (l'ordre n'est jamais permuté, seules les options le sont).
+    if(i!==curQ.correct)mistakesRef.current.push({tag:"Part 7 — "+(curPass.type||"Passage"),prompt:curQ.q,yours:curQ.options[i],correct:curQ.options[curQ.correct],why:curQ.x,ref:{k:"p7:"+curPass.id+":"+qi,part:"p7"}});
     if(i===curQ.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sTQ(totalQ+1);sP("fb");
@@ -337,7 +338,7 @@ export function Part7Read(p){
     sPk(-1);
     if(qi<curPass.questions.length-1){sQi(qi+1);sP("q");}
     else if(pi<passages.length-1){sPi(pi+1);sQi(0);sP("read");}
-    else{sidRef.current=p.done(sc,totalQs,30+sc*5);sP("done");}
+    else{sidRef.current=p.done(sc,totalQs,30+sc*5,mistakesRef.current);sP("done");}
   }
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
