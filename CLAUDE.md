@@ -86,7 +86,10 @@ Ce que la suite protège, et pourquoi :
   GerInf retire son deck à chaque partie. Aucun texte de ces banques ne désigne une option par sa lettre
   ou par « of the above » (exceptions listées avec les lettres permises). Les banques mettent la bonne
   réponse en B ou C huit fois sur dix : un module qui ne permute pas s'apprend par la position. Nouveau
-  module QCM → l'ajouter à `MODULES` du test.
+  module QCM → l'ajouter à `MODULES` du test. Section 2b : la banque de grammaire (Drill, Daily, Exam
+  Simulation, Word Fall — bonne réponse en B 61 %, en D 4 %), les Mock Tests (Part 6 en A 7 fois sur 8) et
+  le Boss (Parts 3-4 jamais en A) passent par `lib/optionShuffle.js` (`shufP5/P6/P7/Qs`) ; leurs explications
+  ne citent aucune lettre (exceptions : noms comme « Lot C », « Vitamin D »).
 - **`check_planner`** — le plan du jour (`lib/planner.js`) : seuil de la chasse (4 échéances), démarrage
   à froid (< 5 sessions → Battle Scan), quête d'enjeu réservée aux parties mesurées, composition du Drill
   (catégorie visée, catégorie méritée allégée, erreurs dues glissées, **aucune créature tirée au hasard**),
@@ -154,7 +157,8 @@ src/
                           sessionHud (combo, fil d'encre), learnerModel (maîtrise récente,
                           points en jeu, retournements), review (bestiaire des erreurs :
                           boîtes 1-3-7, force, chasse), reviewRefs (clé et catégorie des
-                          erreurs des jeux et mini-modules), planner (plan du jour, composition
+                          erreurs des jeux et mini-modules), optionShuffle (options permutées
+                          des questions de grammaire et d'examen), planner (plan du jour, composition
                           des sessions, semaine, allure, Chronique), mentorVoice (les
                           phrases d'Aldric, anglais, à côté de sessionText)
   components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
@@ -434,6 +438,11 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - **P5-P7:** Text + options, no audio.
 
 ### Boss Test — The Final Arena
+- **Options permutées de façon FIGÉE par item** (Part 2 : `BOSS_P2_SHUF` ; Parts 3 à 7 depuis le 2026-09-18 :
+  `lib/optionShuffle.js` avec `seedFromId`, `seededShuffleOpts` au pas 0.67) : la reprise de session relit des
+  réponses rangées par index, un tirage par ouverture les désalignerait. Toute nouvelle disposition → bumper
+  `BOSS_LAYOUT_V` (3 depuis le 2026-09-18), sinon une session reprise lit ses réponses de travers. Mock Tests :
+  tirage neuf à chaque passage (pas de reprise). Part 1 laissée dans l'ordre de ses clips (déjà répartie).
 - Unlocked after completing Mock Tests 1, 2, and 3.
 - 202 questions, 120 min timer, Listening first then Reading.
 - 24h cooldown. Best score preserved.

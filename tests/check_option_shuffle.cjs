@@ -16,6 +16,14 @@
  *      (article « A » en option, lettres d'une question TOEIC imaginée) sont listées avec leur
  *      raison, et une exception qui ne sert plus fait rougir.
  *
+ * Étendu le même jour (section 2b) à la banque de grammaire (Drill, Daily, Exam Simulation, Word Fall :
+ * bonne réponse en B 61 %, en D 4 %), aux Mock Tests (Part 6 en A 7 fois sur 8) et au Boss (Parts 3-4
+ * jamais en A), via lib/optionShuffle.js : tirage neuf, sauf au Boss, figé par identifiant parce que sa
+ * reprise de session relit des réponses rangées par index. Prouvé mordant (16 mutations) : bonne réponse
+ * non suivie en P5 ou P6, index de map pris pour une graine, tirage du Boss non figé ou à l'ancien pas,
+ * chacun des cinq écrans et le Boss qui relisent la banque brute, une explication qui cite « answer D »,
+ * une exception devenue orpheline (« Lot C » réécrit), et la chasse qui rend drill, P6 ou P7 dans l'ordre.
+ *
  * Nouveau module QCM : l'ajouter à MODULES (et ses textes à BANKS).
  * Prouvé mordant le 2026-09-18 (voir le commit) : retirer `.map(permuteQ)` du Chronomancer,
  * ranger la permutation du Clue Hunter sous `c`, un `shuffleOpts` qui ne suit pas la bonne
@@ -158,6 +166,86 @@ MODULES.forEach(function (m) {
 const gerinf = bodyOf(sources['features/train/grammar.jsx'], 'GerInf') || '';
 ok(/function resetQuiz\(\)\{[^\n]*setQuizItems\(buildQuiz\(\)\)/.test(gerinf), 'GerInf : resetQuiz retire un deck neuf (Play again)');
 
+// ── 2b. Banque de grammaire et examens (lib/optionShuffle.js, 2026-09-18) ────────────────────────
+// Grammaire en B 61 % (D 4 %), Part 6 des Mock Tests en A 7 fois sur 8, Parts 3-4 du Boss jamais en A.
+console.log('\n── 2b. Grammaire et examens ──');
+const OS = require(path.join(SRC, 'lib', 'optionShuffle.js'));
+const { seedFromId } = require(path.join(SRC, 'lib', 'listeningShuffle.js'));
+const GR = require(path.join(SRC, 'data', 'grammar.js'));
+const MK = require(path.join(SRC, 'data', 'mockTests.js'));
+const BS = require(path.join(SRC, 'data', 'bossTestFull.js'));
+const P6 = require(path.join(SRC, 'data', 'part6.js'));
+const P7 = require(path.join(SRC, 'data', 'part7.js'));
+// Chaque forme : où sont les options d'une question, pour vérifier que la bonne réponse suit.
+const SHAPES = {
+  p5: { fn: OS.shufP5, qs: (x) => [{ opts: x.o, c: x.c }] },
+  p6: { fn: OS.shufP6, qs: (x) => x.parts.filter((p) => p.blank).map((p) => ({ opts: p.options, c: p.correct })) },
+  p7: { fn: OS.shufP7, qs: (x) => x.questions.map((q) => ({ opts: q.options, c: q.correct })) },
+  qs: { fn: OS.shufQs, qs: (x) => x.qs.map((q) => ({ opts: q.opts, c: q.c })) },
+};
+const EXAM = [
+  // Part 6 et Part 7 d'entraînement : leurs modules permutent déjà ; la chasse les repose permutées aussi.
+  ['QUESTIONS', GR.QUESTIONS, 'p5'], ['PART6_TEXTS', P6.PART6_TEXTS, 'p6'], ['PART7_PASSAGES', P7.PART7_PASSAGES, 'p7'], ['MOCK1_P5', MK.MOCK1_P5, 'p5'], ['MOCK1_P6', MK.MOCK1_P6, 'p6'], ['MOCK1_P7', MK.MOCK1_P7, 'p7'],
+  ['MOCK2_P5', MK.MOCK2_P5, 'p5'], ['MOCK2_P6', MK.MOCK2_P6, 'p6'], ['MOCK2_P7', MK.MOCK2_P7, 'p7'],
+  ['MOCK3_P5', MK.MOCK3_P5, 'p5'], ['MOCK3_P6', MK.MOCK3_P6, 'p6'], ['MOCK3_P7', MK.MOCK3_P7, 'p7'],
+  ['BOSS_P3', BS.BOSS_P3, 'qs'], ['BOSS_P4', BS.BOSS_P4, 'qs'], ['BOSS_P5', BS.BOSS_P5, 'p5'], ['BOSS_P6', BS.BOSS_P6, 'p6'], ['BOSS_P7', BS.BOSS_P7, 'p7'],
+];
+EXAM.forEach(function ([name, bank, shape]) {
+  const S = SHAPES[shape], before = JSON.stringify(bank), bad = [], hits = [0, 0, 0, 0];
+  withSeed(11, function () {
+    [undefined, seedFromId].forEach(function (seed) {
+      bank.forEach(function (it) {
+        const out = S.fn(it, seed), a = S.qs(it), b = S.qs(out);
+        a.forEach(function (q, i) {
+          const r = b[i];
+          if (!r || r.opts[r.c] !== q.opts[q.c] || r.opts.slice().sort().join('|') !== q.opts.slice().sort().join('|')) bad.push(it.id + '#' + i);
+          if (r && !seed) hits[r.c]++;
+        });
+      });
+    });
+  });
+  ok(bad.length === 0, name + ' : chaque question garde ses options et sa bonne réponse après permutation' + (bad.length ? ' — ' + bad.slice(0, 5).join(', ') : ''));
+  ok(JSON.stringify(bank) === before, name + ' : la banque n\'est pas modifiée');
+  if (bank.length >= 30) ok(hits.every((h, i) => i > 3 || h > 0), name + ' : toutes les positions sortent (' + hits.join('/') + ')');
+});
+// `.map(shufP5)` : l'index que map passe en second ne doit pas être pris pour une graine.
+withSeed(3, function () {
+  let threw = null;
+  try { GR.QUESTIONS.slice(0, 5).map(OS.shufP5); } catch (e) { threw = e.message; }
+  ok(!threw, '.map(shufP5) ignore l\'index passé par map' + (threw ? ' (' + threw + ')' : ''));
+});
+// Boss : tirage FIGÉ (la reprise relit des réponses rangées par index) et réparti. Le pas de
+// seededShuffleOpts a été choisi pour ça ; le changer sans bumper BOSS_LAYOUT_V désaligne les reprises.
+[['BOSS_P3', BS.BOSS_P3, 'qs'], ['BOSS_P4', BS.BOSS_P4, 'qs'], ['BOSS_P5', BS.BOSS_P5, 'p5'], ['BOSS_P6', BS.BOSS_P6, 'p6'], ['BOSS_P7', BS.BOSS_P7, 'p7']].forEach(function ([name, bank, shape]) {
+  const S = SHAPES[shape];
+  const once = JSON.stringify(bank.map((it) => S.fn(it, seedFromId))), twice = JSON.stringify(bank.map((it) => S.fn(it, seedFromId)));
+  ok(once === twice, name + ' : même disposition à chaque ouverture (reprise de session)');
+  const pos = [0, 0, 0, 0];
+  bank.forEach((it) => S.qs(S.fn(it, seedFromId)).forEach((q) => pos[q.c]++));
+  const n = pos.reduce((a, b) => a + b, 0);
+  ok(pos.every((p) => Math.abs(p / n - 0.25) <= 0.10), name + ' : bonne réponse répartie à ±10 points de 25 % (' + pos.join('/') + ')');
+});
+// Câblage : chaque écran construit son deck à travers le helper, et le Boss ne lit plus ses banques brutes.
+const WIRED = [
+  ['features/train/grammar.jsx', 'Drill', /c\.items=c\.items\.map\(function\(it\)\{return Object\.assign\(\{\},it,\{q:shufP5\(it\.q\)\}\);\}\)/],
+  ['features/home/Daily.jsx', 'Daily', /dailyQs\(today\(\),p\.u\)\.map\(shufP5\)/],
+  ['features/train/reading.jsx', 'TimeSim', /shuffle\(QUESTIONS\)\.slice\(0,30\)\.map\(shufP5\)/],
+  ['features/games/WordFall.jsx', 'WordFall', /shuffle\(QUESTIONS\)\.map\(shufP5\)/],
+  ['features/exams/MockTest.jsx', 'MockTest', /\{p5:data\.p5\.map\(shufP5\),p6:data\.p6\.map\(shufP6\),p7:data\.p7\.map\(shufP7\)\}/],
+];
+WIRED.forEach(function ([file, fn, re]) {
+  const src = sources[file] || (sources[file] = fs.readFileSync(path.join(SRC, ...file.split('/')), 'utf8'));
+  const body = bodyOf(src, fn);
+  ok(!!body && re.test(body), fn + ' (' + file.split('/').pop() + ') : le deck passe par lib/optionShuffle.js');
+});
+const mock = bodyOf(fs.readFileSync(path.join(SRC, 'features', 'exams', 'MockTest.jsx'), 'utf8'), 'MockTest') || '';
+ok(!/=\s*data\.p[567]\s*;/.test(mock), 'MockTest : aucune partie lue brute dans la banque');
+const boss = fs.readFileSync(path.join(SRC, 'features', 'exams', 'BossTest.jsx'), 'utf8');
+['P3', 'P4', 'P5', 'P6', 'P7'].forEach(function (pt) {
+  ok(new RegExp('BOSS_' + pt + '_SHUF=BOSS_' + pt + '\\.map\\(function\\(\\w+\\)\\{return shuf\\w+\\(\\w+,seedFromId\\);\\}\\)').test(boss), 'BossTest : Part ' + pt.slice(1) + ' permutée, tirage figé par identifiant');
+  ok(!new RegExp('=BOSS_' + pt + '[,;]').test(boss), 'BossTest : la Part ' + pt.slice(1) + ' n\'est plus lue brute');
+});
+
 // ── 3. Aucun texte ne désigne une option par sa position ────────────────────────────────────────
 console.log('\n── 3. Textes des banques ──');
 // B, C, D isolés (ni lettre accentuée, ni chiffre, ni « R&D » autour) ; A seulement quand c'est
@@ -180,6 +268,17 @@ const ALLOWED = {
   'STRAT_QUIZ:sq5:options': ['BC', 'Fill in B or C : feuille de réponse TOEIC'],
   'STRAT_QUIZ:sq5:explain': ['BC', 'Random B/C : feuille de réponse TOEIC'],
   'STRAT_QUIZ:sq36:scenario': ['AB', 'Sentence A / Sentence B : phrases d\'un texte Part 6'],
+  // Explications des banques de grammaire et d'examen (section 3b) : des noms, pas des options.
+  'QUESTIONS:g438:x': ['B', 'formule « Not only A but also B »'],
+  'PART7_PASSAGES:p7p19:x': ['B', 'Line B, chaîne de montage du passage'],
+  'PART7_PASSAGES:p7p26:x': ['C', 'Building C, immeuble du passage'],
+  'PART7_PASSAGES:p7p42:x': ['B', 'Entrance B, entrée du passage'],
+  'PART7_PASSAGES:p7p54:x': ['C', 'Lot C, parking du passage'],
+  'PART7_PASSAGES:p7p62:x': ['ACD', 'Workshop A, C, D : ateliers du programme'],
+  'MOCK1_P7:m1p7_1:x': ['B', 'Conference Hall B'],
+  'MOCK1_P7:m1p7_4:x': ['AC', 'Building A, Lot C'],
+  'MOCK2_P7:m2p7_5:x': ['D', 'Vitamin D'],
+  'BOSS_P7:bp7_4:x': ['C', 'Series C (levée de fonds)'],
 };
 function strings(v, out) {
   if (typeof v === 'string') out.push(v);
@@ -208,8 +307,35 @@ Object.keys(BANKS).forEach(function (bank) {
     });
   });
 });
+// 3b. Banques de grammaire et d'examen : les EXPLICATIONS seulement (leurs textes et leurs options nomment
+// des salles, des lots, des usines — « Lot C » — sans rien désigner). Les options y sont permutées depuis
+// le 2026-09-18 (section 2b) : une explication qui dirait « B is wrong » désignerait n'importe quoi.
+function explanations(it) {
+  const out = [];
+  if (typeof it.x === 'string') out.push(it.x);
+  (it.parts || []).forEach((p) => { if (p.blank && p.x) out.push(p.x); });
+  (it.questions || []).concat(it.qs || []).forEach((q) => { if (q.x) out.push(q.x); });
+  return out;
+}
+EXAM.forEach(function ([bank, items]) {
+  items.forEach(function (it) {
+    const key = bank + ':' + it.id + ':x';
+    explanations(it).forEach(function (s) {
+      scanned++;
+      const hits = [];
+      s.replace(LETTER, function (m, pre, L, off, str) {
+        if (L !== 'A' || A_IS_OPT_LABEL.test(str.slice(off + m.length))) hits.push(L);
+        return m;
+      });
+      if (POSITIONAL.test(s)) hits.push('of the above');
+      if (!hits.length) return;
+      if (ALLOWED[key] && hits.every((h) => h.length === 1 && ALLOWED[key][0].indexOf(h) >= 0)) { used[key] = true; return; }
+      ok(false, key + ' désigne une option par sa position (' + hits.join(', ') + ') : « ' + (s.length > 90 ? s.slice(0, 90) + '…' : s) + ' ». Les options sont permutées : citer l\'option elle-même.');
+    });
+  });
+});
 Object.keys(ALLOWED).forEach((k) => ok(used[k], 'exception ' + k + ' orpheline (texte réécrit ?) : la retirer d\'ALLOWED'));
 
-console.log('\n' + checks + ' vérifications, ' + scanned + ' textes lus dans ' + Object.keys(BANKS).length + ' banques');
+console.log('\n' + checks + ' vérifications, ' + scanned + ' textes lus dans ' + (Object.keys(BANKS).length + EXAM.length) + ' banques');
 if (fails) { console.log(fails + ' échec(s)'); process.exit(1); }
 console.log('  ok');
