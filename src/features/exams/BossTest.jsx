@@ -4,16 +4,24 @@ import { ResultIcon } from "../../components/icons.jsx";
 import { ListeningGraphic } from "../../components/ListeningGraphic.jsx";
 import { BOSS_P1, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "../../data/bossTestFull.js";
 import { resumeAudioSession, stopListenAudio, playAudioFile, playLetteredOption } from "../../lib/audio.js";
-import { BOSS_P2_SHUF } from "../../lib/listeningShuffle.js";
+import { BOSS_P2_SHUF, seedFromId } from "../../lib/listeningShuffle.js";
+import { shufQs, shufP5, shufP6, shufP7 } from "../../lib/optionShuffle.js";
 import { estimateToeic } from "../../lib/toeic.js";
 import { today } from "../../lib/util.js";
 import { stopBGM } from "../../sounds.js";
 import { useMemo, useState, useEffect, useRef } from "react";
 
+// Options des Parts 3 à 7 permutées de façon FIGÉE par item (lib/optionShuffle.js, graine = identifiant),
+// comme la Part 2 : la reprise d'une session relit des réponses rangées par index, un tirage par ouverture
+// les désalignerait. Les Parts 3 et 4 ne mettaient jamais la bonne réponse en A. La Part 1 reste dans
+// l'ordre de ses clips (réponses déjà réparties, 2/2/2/0 sur 6).
+var BOSS_P3_SHUF=BOSS_P3.map(function(c){return shufQs(c,seedFromId);}),BOSS_P4_SHUF=BOSS_P4.map(function(c){return shufQs(c,seedFromId);});
+var BOSS_P5_SHUF=BOSS_P5.map(function(q){return shufP5(q,seedFromId);}),BOSS_P6_SHUF=BOSS_P6.map(function(t){return shufP6(t,seedFromId);}),BOSS_P7_SHUF=BOSS_P7.map(function(ps){return shufP7(ps,seedFromId);});
+
 // ─── BOSS TEST — The Final Arena (Full TOEIC 200Q) ───
 export function BossTest(p){
-  var LP1=BOSS_P1,LP2=BOSS_P2_SHUF,LP3=BOSS_P3,LP4=BOSS_P4;
-  var RP5=BOSS_P5,RP6=BOSS_P6,RP7=BOSS_P7;
+  var LP1=BOSS_P1,LP2=BOSS_P2_SHUF,LP3=BOSS_P3_SHUF,LP4=BOSS_P4_SHUF;
+  var RP5=BOSS_P5_SHUF,RP6=BOSS_P6_SHUF,RP7=BOSS_P7_SHUF;
   var p3QC=0;LP3.forEach(function(c){p3QC+=c.qs.length;});
   var p4QC=0;LP4.forEach(function(t){p4QC+=t.qs.length;});
   var lisQ=LP1.length+LP2.length+p3QC+p4QC;
@@ -23,7 +31,9 @@ export function BossTest(p){
   var totalQ=lisQ+readQ;
   var TOTAL_TIME=120*60;
   var BOSS_STORAGE_KEY="bossTestSession";
-  var BOSS_LAYOUT_V=2; // bumper des que la disposition des options du Boss change
+  // 3 depuis le 2026-09-18 (Parts 3 à 7 permutées) : une session sauvegardée avec l'ancienne disposition
+  // est écartée plutôt que relue de travers.
+  var BOSS_LAYOUT_V=3; // bumper des que la disposition des options du Boss change
 
   // ── Restore saved session if any ──
   var saved=useMemo(function(){try{var raw=localStorage.getItem(BOSS_STORAGE_KEY);if(!raw)return null;var d=JSON.parse(raw);if(d.date!==today())return null;if(d.lay!==BOSS_LAYOUT_V)return null;if(!d.ans||!d.sec||d.timeLeft==null)return null;return d;}catch(e){console.warn("[BOSS] session restore caught:",e&&e.message);return null;}},[]);
