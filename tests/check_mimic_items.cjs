@@ -9,13 +9,17 @@
  * position de la bonne réponse, au moins un Mimic par item (le retour en démasque un : c'est la
  * leçon), jamais de Mimic déclaré sur la bonne réponse, une explication et un piège partout.
  *
- * Usage : node tests/check_mimic_items.cjs
+ * Usage : node tests/check_mimic_items.cjs            (la banque du jeu)
+ *         node tests/check_mimic_items.cjs <lot.js>   (un lot en projet, `export var LOT`, avant
+ *         relecture : mêmes contrôles par item, identifiants distincts de la banque, sans les
+ *         contrôles de banque — paliers, coffre de maîtrise)
  */
 'use strict';
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const D = require(path.join(ROOT, 'src', 'data', 'mimicHunt.js'));
-const ITEMS = D.MIMIC_ITEMS, TIERS = D.MIMIC_TIERS;
+const LOT = process.argv[2] ? require(path.resolve(process.argv[2])).LOT : null;
+const ITEMS = LOT || D.MIMIC_ITEMS, TIERS = D.MIMIC_TIERS;
 
 let fails = 0, checks = 0;
 function ok(cond, label) { checks++; if (!cond) { fails++; console.log('  FAIL ' + label); } }
@@ -36,6 +40,9 @@ function pairOf(f) { return typeof f === 'string' ? [f, f] : f; }
 console.log('\n── Mimic Hunt : ' + ITEMS.length + ' items ──');
 
 const pos = [0, 0, 0, 0], ids = {};
+// Un lot ne réutilise pas un identifiant de la banque (la chasse range ses erreurs par identifiant).
+if (LOT) ok(Array.isArray(LOT) && LOT.length > 0, 'le lot exporte un tableau LOT non vide');
+if (LOT) D.MIMIC_ITEMS.forEach(function (it) { ids[it.id] = 1; });
 ITEMS.forEach(function (it) {
   const L = it.id + ' ';
   ok(!ids[it.id], L + ': id unique'); ids[it.id] = 1;
@@ -78,7 +85,7 @@ const spread = Math.max.apply(null, pos) - Math.min.apply(null, pos);
 ok(spread <= 1, 'bonne réponse répartie sur A/B/C/D (' + pos.join('/') + ')');
 
 // Les paliers sont la progression pédagogique : chacun doit exister et être servi.
-[1, 2, 3].forEach(function (t) {
+if (!LOT) [1, 2, 3].forEach(function (t) {
   const n = ITEMS.filter(function (it) { return it.tier === t; }).length;
   ok(n >= 3, 'palier ' + t + ' : au moins 3 items (' + n + ')');
   const T = TIERS[t] || {};
@@ -91,7 +98,7 @@ ok(spread <= 1, 'bonne réponse répartie sur A/B/C/D (' + pos.join('/') + ')');
 // l'est — sinon le module resterait sans coffre après l'arrivée du contenu.
 const { MASTERY_BLACKLIST } = require(path.join(ROOT, 'src', 'lib', 'hubStatus.js'));
 const BANK_MIN = 45;
-ok(ITEMS.length < BANK_MIN ? !!MASTERY_BLACKLIST.mimic : !MASTERY_BLACKLIST.mimic,
+if (!LOT) ok(ITEMS.length < BANK_MIN ? !!MASTERY_BLACKLIST.mimic : !MASTERY_BLACKLIST.mimic,
   ITEMS.length < BANK_MIN
     ? 'coffre de maîtrise : mimic doit rester dans MASTERY_BLACKLIST tant que la banque a moins de ' + BANK_MIN + ' items (' + ITEMS.length + ')'
     : 'coffre de maîtrise : la banque a ' + ITEMS.length + ' items, retirer mimic de MASTERY_BLACKLIST (lib/hubStatus.js)');
