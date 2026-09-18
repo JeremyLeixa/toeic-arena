@@ -53,7 +53,7 @@ export var PHRASAL_VERBS = [
 
   // ── WORK ──
   {v:"work",p:"out",pv:"work out",m:"to solve or calculate / to succeed",fr:"résoudre / fonctionner",ex:"We need to work out the logistics before launch."},
-  {v:"work",p:"on",pv:"work on",m:"to focus effort on improving",fr:"travailler sur",ex:"The team is working on a new marketing strategy."},
+  {v:"work",p:"on",pv:"work on",m:"to spend effort improving or developing something",fr:"travailler sur",ex:"The team is working on a new marketing strategy."},
 
   // ── PICK ──
   {v:"pick",p:"up",pv:"pick up",m:"to collect / to improve / to learn casually",fr:"récupérer / reprendre / apprendre",ex:"Sales picked up in the second half of the year."},

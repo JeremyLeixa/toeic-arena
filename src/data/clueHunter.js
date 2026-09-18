@@ -40,7 +40,7 @@ export var CLUE_HUNTER = [
   },
   {
     id:"ch04",
-    sentence:"I haven't received the signed contract yet, so I can't proceed with the payment.",
+    sentence:"I haven't ___ the signed contract yet, so I can't proceed with the payment.",
     chips:[{w:"haven't",c:true},{w:"yet",c:true},{w:"signed contract",c:false},{w:"can't",c:false}],
     opts:["receive","received","receiving","to receive"],ans:1,
     cat:"Present Perfect",
