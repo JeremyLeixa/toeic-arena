@@ -10,15 +10,17 @@
  * leçon), jamais de Mimic déclaré sur la bonne réponse, une explication et un piège partout.
  *
  * Usage : node tests/check_mimic_items.cjs            (la banque du jeu)
- *         node tests/check_mimic_items.cjs <lot.js>   (un lot en projet, `export var LOT`, avant
- *         relecture : mêmes contrôles par item, identifiants distincts de la banque, sans les
- *         contrôles de banque — paliers, coffre de maîtrise)
+ *         node tests/check_mimic_items.cjs <lot.js> [<lot.js>…]   (des lots en projet, `export var
+ *         LOT`, avant relecture : mêmes contrôles par item, identifiants distincts entre eux et de la
+ *         banque, sans les contrôles de banque — paliers, coffre de maîtrise)
  */
 'use strict';
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const D = require(path.join(ROOT, 'src', 'data', 'mimicHunt.js'));
-const LOT = process.argv[2] ? require(path.resolve(process.argv[2])).LOT : null;
+const LOT = process.argv.length > 2
+  ? process.argv.slice(2).reduce(function (all, f) { return all.concat(require(path.resolve(f)).LOT || []); }, [])
+  : null;
 const ITEMS = LOT || D.MIMIC_ITEMS, TIERS = D.MIMIC_TIERS;
 
 let fails = 0, checks = 0;

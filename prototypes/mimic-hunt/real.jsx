@@ -1,6 +1,7 @@
 // Banc du VRAI module Mimic Hunt (src/features/games/MimicHunt.jsx), sans base ni compte.
 // La session de fin est construite comme settleSession dans App() : gateSteps puis settleXp.
-//   mode=dark|light  skin=<id>  rm=1 (mouvement réduit)  lot=1 (banque + lot en projet drafts/lot1.js)
+//   mode=dark|light  skin=<id>  rm=1 (mouvement réduit)
+//   lot=1|2|3|all (banque + lot(s) en projet de drafts/ : 5 items tirés par palier, comme dans le jeu)
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { CSS } from "../../src/styles/appCss.js";
@@ -10,10 +11,13 @@ import { fresh } from "../../src/lib/profileSchema.js";
 import { MimicHunt } from "../../src/features/games/MimicHunt.jsx";
 import { MIMIC_ITEMS } from "../../src/data/mimicHunt.js";
 import { LOT as LOT1 } from "./drafts/lot1.js";
+import { LOT as LOT2 } from "./drafts/lot2.js";
+import { LOT as LOT3 } from "./drafts/lot3.js";
 
 var q = new URLSearchParams(location.search);
 var MODE = q.get("mode") || "dark", SKIN = q.get("skin") || "", RM = q.get("rm") === "1";
-var BANK = q.get("lot") === "1" ? MIMIC_ITEMS.concat(LOT1) : MIMIC_ITEMS;
+var LOTS = { 1: LOT1, 2: LOT2, 3: LOT3, all: LOT1.concat(LOT2, LOT3) };
+var BANK = MIMIC_ITEMS.concat(LOTS[q.get("lot")] || []);
 var RM_CSS = "*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}";
 var NOW = new Date(2026, 8, 17, 15, 0, 0);
 var TD = NOW.toISOString().split("T")[0];

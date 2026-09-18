@@ -530,6 +530,12 @@ Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alo
   `lib/hubStatus.js`, 2026-09-18) : chaque partie rejoue toute la banque, 5 parties apprises par cœur
   donnaient le coffre Champion. La tuile est rendue sans barre de coffre. `check_mimic_items` exige le
   retrait de la ligne dès 45 items (et `check_hub_status` fige la liste : l'y retirer aussi).
+- **Contenu en projet** (2026-09-18/19) : 48 items (16 par palier, mh13-mh60) dans
+  `prototypes/mimic-hunt/drafts/lot1-3.js`, **hors jeu jusqu'à la relecture de Jérémy** ; page de
+  relecture `prototypes/mimic-hunt/review.html` (tout visible : pont, recopies, mot gardé ; `?only=lot2`),
+  en partie dans le vrai module `real.html?lot=1|2|3|all`, contrôle
+  `node tests/check_mimic_items.cjs <lot.js>…` (mêmes contrôles par item, identifiants distincts).
+  Validé → verser dans `src/data/mimicHunt.js`, retirer `mimic` de `MASTERY_BLACKLIST` (≥ 45 items).
 - **BGM placeholder** `bgm_clue`. À faire : volume de contenu (60-90 items visés), piste Mureka dédiée,
   achievements, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
   direct vers les Parts 3 et 4, et un poids Listening).

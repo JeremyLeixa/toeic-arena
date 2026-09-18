@@ -2,12 +2,14 @@
 // montre qu'après la réponse : le pont (vert), ce que chaque Mimic recopie (rouge ondulé), le mot
 // gardé (gris). Le critère de Jérémy pour un Mimic : faux à la lecture attentive, tentant à la
 // lecture rapide. Les options sont dans l'ordre de rédaction (le jeu les permute).
-//   ?mode=light   ?only=lot1|bank
+//   ?mode=light   ?only=lot1|lot2|lot3|bank
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { CSS } from "../../src/styles/appCss.js";
 import { MIMIC_ITEMS, MIMIC_TIERS } from "../../src/data/mimicHunt.js";
 import { LOT as LOT1 } from "./drafts/lot1.js";
+import { LOT as LOT2 } from "./drafts/lot2.js";
+import { LOT as LOT3 } from "./drafts/lot3.js";
 
 var q = new URLSearchParams(location.search);
 var MODE = q.get("mode") || "dark", ONLY = q.get("only") || "";
@@ -116,8 +118,10 @@ function Review() {
           <span><mark className="mh-mk mh-mk-copy">recopié</mark> ce que le Mimic reprend</span>
           <span><mark className="mh-mk mh-mk-echo">gardé</mark> mot sans synonyme courant</span>
         </div>
-        {ONLY !== "bank" && <Section title={"Lot 1 en projet · palier I · " + LOT1.length + " items"} lead="Pas encore dans le jeu." items={LOT1} />}
-        {ONLY !== "lot1" && <Section title={"Banque en jeu · " + MIMIC_ITEMS.length + " items pilotes"} lead="Jamais relus depuis leur rédaction du 17/09 ; pièges réécrits le 18/09 pour citer l'option au lieu d'une lettre." items={MIMIC_ITEMS} />}
+        {(!ONLY || ONLY === "lot1") && <Section title={"Lot 1 en projet · palier I, Synonyms · " + LOT1.length + " items"} lead="Pas encore dans le jeu. Même idée, un autre mot." items={LOT1} />}
+        {(!ONLY || ONLY === "lot2") && <Section title={"Lot 2 en projet · palier II, Reshaped · " + LOT2.length + " items"} lead="Pas encore dans le jeu. La forme change : actif/passif, négation, comparaison retournée, condition, nominalisation. Plusieurs Mimics recopient presque tout et ne changent qu'un rôle ou une négation." items={LOT2} />}
+        {(!ONLY || ONLY === "lot3") && <Section title={"Lot 3 en projet · palier III, Big picture · " + LOT3.length + " items"} lead="Pas encore dans le jeu. Des détails vers une catégorie, un lieu, un métier ou le but du message." items={LOT3} />}
+        {(!ONLY || ONLY === "bank") && <Section title={"Banque en jeu · " + MIMIC_ITEMS.length + " items pilotes"} lead="Jamais relus depuis leur rédaction du 17/09 ; pièges réécrits le 18/09 pour citer l'option au lieu d'une lettre." items={MIMIC_ITEMS} />}
       </div>
     </div>
   );
