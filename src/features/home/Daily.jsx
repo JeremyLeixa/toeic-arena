@@ -3,12 +3,13 @@ import { ResultIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { dailyQs } from "../../lib/progress.js";
 import { today } from "../../lib/util.js";
+import { shufP5 } from "../../lib/optionShuffle.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
 
 // ─── DAILY CHALLENGE ───
 export function Daily(p){
-var qs=useMemo(function(){return dailyQs(today(),p.u);},[]);var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[tl,sT]=useState(30);var[sk,sSk]=useState(false);var tr=useRef(null);var answered=useRef(false);var mistakesRef=useRef([]);var sidRef=useRef(0);
+var qs=useMemo(function(){return dailyQs(today(),p.u).map(shufP5);},[]);var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[tl,sT]=useState(30);var[sk,sSk]=useState(false);var tr=useRef(null);var answered=useRef(false);var mistakesRef=useRef([]);var sidRef=useRef(0);
 // Guard: only block if daily was ALREADY done when component mounted (not if completed during this session)
 var wasAlreadyDone=useRef(p.u.daily&&p.u.daily.date===today()&&p.u.daily.done);
 // Timer des questions. AVANT le return anticipé ci-dessous (règle des hooks) : il était placé

@@ -3,12 +3,13 @@ import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { QUESTIONS } from "../../data/grammar.js";
 import { shuffle } from "../../lib/util.js";
+import { shufP5 } from "../../lib/optionShuffle.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
 
 // ─── WORD FALL ───
 export function WordFall(p){
-  var allQs=useMemo(function(){return shuffle(QUESTIONS);},[]);
+  var allQs=useMemo(function(){return shuffle(QUESTIONS).map(shufP5);},[]);
   var MAX_LIVES=3;
   var SPEED_TIERS=[
     {from:0,dur:8000},

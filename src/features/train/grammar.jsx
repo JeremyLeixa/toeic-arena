@@ -15,6 +15,7 @@ import { CONNECTORS, CONNECTOR_RULES, PREP_COLLOCATIONS, GERUND_INF, TOEIC_TRAPS
 import { GRIMOIRE_PHRASAL } from "../../data/phrasalGrimoire.js";
 import { PHRASAL_VERBS } from "../../data/phrasalVerbs.js";
 import { drillComposition } from "../../lib/planner.js";
+import { shufP5 } from "../../lib/optionShuffle.js";
 import { briefing, questionBadge, questionFeedback, drillRemember } from "../../lib/mentorVoice.js";
 import { AldricBrief, AldricRemembers } from "../../components/MentorMemory.jsx";
 import { GrammarSheet } from "../../components/GrammarSheet.jsx";
@@ -33,7 +34,8 @@ import { GRAMMAR_SHEETS, CAT_SHEET } from "../../data/grammarSheets.js";
 // Aldric l'annonce (briefing), chaque question due porte sa mémoire (SessionTop sub) et sa conséquence
 // (AnswerCard, avec la fiche de grammaire au 3e échec), et l'écran de fin dit ce qui a changé.
 export function Drill(p){
-var comp=useMemo(function(){return drillComposition(p.u,new Date());},[]);
+// Options permutées au montage (banque de grammaire : bonne réponse en B 61 % du temps, en D 4 %).
+var comp=useMemo(function(){var c=drillComposition(p.u,new Date());c.items=c.items.map(function(it){return Object.assign({},it,{q:shufP5(it.q)});});return c;},[]);
 var qs=comp.items; // [{role:"focus"|"eased"|"due"|"mixed", q, item?}]
 var brief=useMemo(function(){return briefing(comp,p.u,new Date());},[]);
 var seed=(p.u.name||"")+today();

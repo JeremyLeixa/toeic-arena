@@ -3,18 +3,24 @@ import { ResultIcon } from "../../components/icons.jsx";
 import { MOCK1_P5, MOCK1_P6, MOCK1_P7, MOCK2_P5, MOCK2_P6, MOCK2_P7, MOCK3_P5, MOCK3_P6, MOCK3_P7 } from "../../data/mockTests.js";
 import { estimateToeic } from "../../lib/toeic.js";
 import { today } from "../../lib/util.js";
+import { shufP5, shufP6, shufP7 } from "../../lib/optionShuffle.js";
 import { farmMult } from "../../lib/xp.js";
-import { useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 
 export function MockTest(p){
   var mockId=p.mockId;
-  var data=mockId===1?{p5:MOCK1_P5,p6:MOCK1_P6,p7:MOCK1_P7}:mockId===2?{p5:MOCK2_P5,p6:MOCK2_P6,p7:MOCK2_P7}:{p5:MOCK3_P5,p6:MOCK3_P6,p7:MOCK3_P7};
   var TOTAL_TIME=37*60; // 37 minutes
 
   // Build flat question map for scoring
-  var p5Qs=data.p5;
-  var p6Texts=data.p6;
-  var p7Passages=data.p7;
+  // Options permutées une fois par passage (Part 6 des mocks : bonne réponse en A 7 fois sur 8). Tout le
+  // test (score, revue) lit ces copies ; aucune reprise de session, donc un tirage neuf suffit.
+  var deck=useMemo(function(){
+    var data=mockId===1?{p5:MOCK1_P5,p6:MOCK1_P6,p7:MOCK1_P7}:mockId===2?{p5:MOCK2_P5,p6:MOCK2_P6,p7:MOCK2_P7}:{p5:MOCK3_P5,p6:MOCK3_P6,p7:MOCK3_P7};
+    return{p5:data.p5.map(shufP5),p6:data.p6.map(shufP6),p7:data.p7.map(shufP7)};
+  },[mockId]);
+  var p5Qs=deck.p5;
+  var p6Texts=deck.p6;
+  var p7Passages=deck.p7;
   var p6BlankCount=0;p6Texts.forEach(function(t){t.parts.forEach(function(pt){if(pt.blank)p6BlankCount++;});});
   var p7QCount=0;p7Passages.forEach(function(ps){p7QCount+=ps.questions.length;});
   var totalQ=p5Qs.length+p6BlankCount+p7QCount;

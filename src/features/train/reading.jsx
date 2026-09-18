@@ -8,6 +8,7 @@ import { QUESTIONS } from "../../data/grammar.js";
 import { PART6_TEXTS } from "../../data/part6.js";
 import { PART7_PASSAGES } from "../../data/part7.js";
 import { shuffle } from "../../lib/util.js";
+import { shufP5 } from "../../lib/optionShuffle.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useMemo, useState, useRef, useEffect } from "react";
@@ -16,7 +17,7 @@ import { GRAMMAR_SHEETS, CAT_SHEET } from "../../data/grammarSheets.js";
 
 // ─── TIME MANAGEMENT SIMULATOR ───
 export function TimeSim(p){
-  var qs=useMemo(function(){return shuffle(QUESTIONS).slice(0,30);},[]);
+  var qs=useMemo(function(){return shuffle(QUESTIONS).slice(0,30).map(shufP5);},[]);
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");
   var[elapsed,sEl]=useState(0);var[answers,sAn]=useState([]);var timerRef=useRef(null);
   var mistakesRef=useRef([]);var sidRef=useRef(0);
