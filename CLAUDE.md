@@ -510,9 +510,13 @@ Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alo
 - **Une manche = un tap** (variante 3 « révélation », choix de Jérémy le 2026-09-18 ; la variante 2
   « double marque », réponse ET Mimic puis Check, livrée le 2026-09-17, était trop lente) : la réponse
   part au tap, les Mimics se démasquent d'office au retour.
-- **Au retour** : un tap sur une option allume ses liens dans la source — vert = même sens/autres mots
-  (le pont), rouge ondulé = mots recopiés, gris = mot gardé faute de synonyme. Puis « The paraphrase »
-  (pont, explication, ce que les Mimics ont recopié). Le Mimic choisi comme réponse « mord ».
+- **Au retour, sobre** (variante C « au tap », choix de Jérémy le 2026-09-19, proto
+  `prototypes/mimic-hunt/calm.html` ; l'écran d'avant disait tout trois fois, avec fonds, ondulations,
+  bordures pointillées et une icône par Mimic) : **rien n'est souligné** — juste, faux, un mot « Mimic »,
+  l'icône seulement sur celui qui a mordu. Un tap sur une option souligne ses liens dans la source ET
+  dans cette option seulement (vert plein = même sens, pointillé rouge = mots recopiés, tirets gris = mot
+  gardé), un second tap efface. « The paraphrase » garde l'explication et le piège ; les reformulations
+  sont repliées (« Show the rewordings »). Soulignés seulement, jamais de fond coloré.
 - **Paliers** annoncés avant leurs items (I Synonyms → II Reshaped → III Big picture) : la progression
   est la pédagogie, elle ne se mélange pas. Les items sont mélangés **dans** leur palier (5 tirés par
   palier au plus, `PER_TIER` : 15 par partie quand la banque le permet) et les 4 options permutées à

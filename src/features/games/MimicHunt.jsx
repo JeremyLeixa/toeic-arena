@@ -5,8 +5,12 @@
 // 2026-09-18 (choix de Jérémy, après la variante 2 « double marque » à deux marques + Check) : un tap
 // répond, et les Mimics se démasquent d'office au retour.
 //
-// Au retour : un tap sur une option allume ses liens avec la source (vert = même sens, autres
-// mots ; rouge ondulé = mots recopiés ; gris = mot gardé faute de synonyme courant).
+// Retour sobre (variante C « au tap », choix de Jérémy du 2026-09-19, proto prototypes/mimic-hunt/calm.html) :
+// l'ancien écran disait tout trois fois — dans la source, dans CHAQUE option, puis dans la carte — avec
+// fonds colorés, ondulations, bordures pointillées et une icône par Mimic. Désormais rien n'est souligné
+// au retour (juste, faux, « Mimic ») ; un tap sur une option souligne ses liens, dans la source et dans
+// cette option seulement (vert plein = même sens, pointillé rouge = mots recopiés, tirets gris = mot
+// gardé) ; la carte garde l'explication et le piège, les reformulations sont repliées.
 import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
@@ -49,20 +53,19 @@ var MH_CSS=`
 .mh-src-ctx{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);margin-bottom:6px}
 .mh-src-text{margin:0;font-size:17px;line-height:1.7;color:var(--t1)}
 .mh-spk{font-weight:700;color:var(--cyan);margin-right:6px}
-.mh-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);font-size:12px;font-weight:600;color:var(--t2)}
-.mh-leg{display:inline-flex;align-items:center;gap:6px}
-.mh-dot{display:inline-block;width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.mh-key{margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);font-size:12px;line-height:1.5;color:var(--t2)}
+.mh-key .g{color:var(--green);font-weight:700}
+.mh-key .r{color:var(--red);font-weight:700}
 .mh-q{font-size:15px;font-weight:700;color:var(--t1);margin:2px 2px 10px}
 .mh-q-small{font-size:13px;font-weight:600;color:var(--t2);margin-top:-4px}
 .mh-verdict{font-size:18px;font-weight:900;margin:2px 2px 6px}
 .mh-verdict.ok{color:var(--green)}
 .mh-verdict.bit{color:var(--red)}
 .mh-verdict.no{color:var(--orange)}
-.mh-mk{color:inherit;background-color:transparent;border-radius:4px;padding:0 2px;margin:0 -1px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
-.mh-mk-bridge{background-color:color-mix(in srgb,var(--green) 22%,transparent);box-shadow:inset 0 -2px 0 var(--green)}
-.mh-mk-echo{background-color:color-mix(in srgb,var(--t3) 20%,transparent);box-shadow:inset 0 -2px 0 var(--t3)}
-.mh-mk-copy{background-color:color-mix(in srgb,var(--red) 16%,transparent);text-decoration:underline wavy var(--red);text-decoration-thickness:1.5px;text-underline-offset:4px;text-decoration-skip-ink:none}
-.mh-dot.mh-mk-copy{box-shadow:inset 0 -2px 0 var(--red)}
+.mh-mk{color:inherit;background-color:transparent;text-decoration-line:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-skip-ink:none}
+.mh-mk-bridge{text-decoration-style:solid;text-decoration-color:var(--green)}
+.mh-mk-copy{text-decoration-style:dotted;text-decoration-color:var(--red)}
+.mh-mk-echo{text-decoration-style:dashed;text-decoration-color:var(--t3)}
 .mh-opts{display:flex;flex-direction:column;gap:9px}
 .mh-opt{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:56px;text-align:left;padding:11px 12px;border-radius:14px;border:1.5px solid var(--bdr);background-color:var(--bg2);color:var(--t1);font:500 15px/1.4 'DM Sans',sans-serif;cursor:pointer;transition:border-color .15s,background-color .15s,opacity .2s,transform .12s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .mh-opt:active{transform:scale(.985)}
@@ -70,25 +73,22 @@ var MH_CSS=`
 .mh-opt-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
 .mh-tags{display:flex;flex-wrap:wrap;gap:6px}
 .mh-tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
-.mh-tag.good{color:var(--green)}
 .mh-tag.bad{color:var(--red)}
 .mh-opt.is-correct{border-color:var(--green);background-color:color-mix(in srgb,var(--green) 10%,var(--bg2))}
 .mh-opt.is-correct .mh-let{background:var(--green);border-color:var(--green);color:var(--bg2)}
 .mh-opt.is-wrong{border-color:var(--red);background-color:color-mix(in srgb,var(--red) 9%,var(--bg2))}
 .mh-opt.is-wrong .mh-let{background:var(--red);border-color:var(--red);color:var(--bg2)}
-.mh-opt.is-mimic{border-style:dashed}
-.mh-opt.is-mimic:not(.is-wrong){border-color:color-mix(in srgb,var(--red) 60%,transparent)}
-.mh-opt.is-dim{opacity:.6}
-.mh-opt.is-focus{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--cyan);opacity:1}
+.mh-opt.is-focus{box-shadow:0 0 0 1.5px var(--cyan)}
 .mh-face{display:flex;flex-shrink:0;color:var(--red);animation:mhPop .5s cubic-bezier(.3,1.7,.5,1) both}
 .mh-face.chomp{animation:mhPop .45s cubic-bezier(.3,1.7,.5,1) both,mhChomp .42s .45s ease-in-out 2}
-.mh-bite{animation:mhBite .5s .1s ease both}
 .mh-hint{margin:10px 2px 0;font-size:12px;color:var(--t2);text-align:center}
 .mh-why{margin-top:14px;padding:16px!important}
 .mh-why h4{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cyan)}
-.mh-pairs{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.mh-pair{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;color:var(--t1)}
-.mh-arrow{color:var(--t2);font-weight:700}
+.mh-pairs{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.mh-pair{font-size:14px;color:var(--t1)}
+.mh-pair .was{color:var(--t2)}
+.mh-arrow{color:var(--green);font-weight:800;margin:0 6px}
+.mh-toggle{display:block;background:none;border:none;padding:0;margin:0 0 10px;color:var(--cyan);font:700 13px 'DM Sans',sans-serif;cursor:pointer;min-height:32px}
 .mh-note{font-size:12px;color:var(--t2)}
 .mh-exp{margin:0;font-size:14px;line-height:1.6;color:var(--t2)}
 .mh-trap{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);font-size:13.5px;line-height:1.55;color:var(--t2)}
@@ -99,7 +99,6 @@ var MH_CSS=`
 .mh-stat-l{font-size:11px;color:var(--t2);margin-top:2px}
 @keyframes mhPop{0%{transform:scale(.2) rotate(-25deg);opacity:0}100%{transform:none;opacity:1}}
 @keyframes mhChomp{0%,100%{transform:scale(1)}45%{transform:scale(1.3) rotate(-10deg)}}
-@keyframes mhBite{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
 `;
 
 function sound(fn){try{fn();}catch(e){console.warn("[mimic] sound:",e&&e.message);}}
@@ -171,7 +170,8 @@ export function MimicHunt(p){
   var[phase,sP]=useState("intro");           // intro | tier | q | fb | done
   var[idx,sI]=useState(0);
   var[pick,sPk]=useState(-1);                // réponse choisie
-  var[focus,sF]=useState(-1);                // option dont on montre les liens au retour
+  var[focus,sF]=useState(-1);                // option dont on montre les liens (au tap, aucune au retour)
+  var[pairsOpen,sPO]=useState(false);        // reformulations dépliées dans la carte
   var[results,sR]=useState([]);
   var mistakesRef=useRef([]);var sidRef=useRef(0);
   var item=items[idx],tier=MIMIC_TIERS[item.tier];
@@ -192,13 +192,13 @@ export function MimicHunt(p){
     if(!ok)mistakesRef.current.push({tag:"Mimic Hunt · Tier "+tier.roman+(bitten?" · Mimic":""),prompt:item.src,noBlank:true,
       yours:item.opts[i],correct:item.opts[item.c],why:item.exp,ref:moduleRef("mimic",item.id)});
     sR(function(r){return r.concat([{ok:ok,bitten:bitten}]);});
-    sPk(i);sF(bitten?i:item.c);sP("fb");
+    sPk(i);sF(-1);sPO(false);sP("fb");
   }
 
   // Fin de partie : XP versée ici, jamais derrière un bouton (quitter l'écran de fin la perdait).
   // 15 + 5 par bonne réponse, +25 sans faute : 115 pour 15 items, le palier des modules à 15 questions.
   function next(){
-    if(idx+1<TOTAL){sPk(-1);sF(-1);sI(idx+1);sP(openingOf(idx+1));return;}
+    if(idx+1<TOTAL){sPk(-1);sF(-1);sPO(false);sI(idx+1);sP(openingOf(idx+1));return;}
     var sc=results.filter(function(r){return r.ok;}).length;
     sidRef.current=p.done(sc,TOTAL,15+5*sc+(sc===TOTAL?25:0),mistakesRef.current);
     sP("done");
@@ -206,7 +206,7 @@ export function MimicHunt(p){
 
   function tapOption(i){
     if(phase==="q"){answer(i);return;}
-    if(phase==="fb")sF(i);
+    if(phase==="fb")sF(focus===i?-1:i);
   }
 
   // ── DONE ──
@@ -269,13 +269,10 @@ export function MimicHunt(p){
   var focusKind=!reveal||focus<0?null:focus===item.c?"bridge":isMimic(item,focus)?"copy":"none";
   var focusMarks=reveal&&focus>=0?linksOf(item,focus).map(function(l){return{frag:l.src,kind:l.kind};}):[];
   var verdict=last?(last.ok?{cls:"ok",t:"Correct!"}:last.bitten?{cls:"bit",t:"The Mimic bit you!"}:{cls:"no",t:"Not quite."}):null;
-  var legend=null;
-  if(focusKind==="bridge")legend=(<div className="mh-legend">
-    <span className="mh-leg"><i className="mh-dot mh-mk-bridge"/>{"Answer "+letterOf(focus)+": same meaning, new words"}</span>
-    {item.echo&&<span className="mh-leg"><i className="mh-dot mh-mk-echo"/>{"same word, allowed"}</span>}
-  </div>);
-  if(focusKind==="copy")legend=<div className="mh-legend"><span className="mh-leg"><i className="mh-dot mh-mk-copy"/>{"Answer "+letterOf(focus)+": copied words, different meaning"}</span></div>;
-  if(focusKind==="none")legend=<div className="mh-legend"><span className="mh-leg">{"Answer "+letterOf(focus)+": nothing in the text says this"}</span></div>;
+  var key=null;
+  if(focusKind==="bridge")key=<div className="mh-key"><span className="g">{"Answer "+letterOf(focus)}</span>{" says the same thing with other words."}</div>;
+  if(focusKind==="copy")key=<div className="mh-key"><span className="r">{"Answer "+letterOf(focus)}</span>{" copies these words but changes the meaning."}</div>;
+  if(focusKind==="none")key=<div className="mh-key">{"Answer "+letterOf(focus)+": nothing in the text says this."}</div>;
 
   return(<>
     <style>{MH_CSS}</style>
@@ -290,13 +287,13 @@ export function MimicHunt(p){
       <Bar value={reveal?idx+1:idx} max={TOTAL} h={4}/>
       <div className="mh-chip out">{"Tier "+tier.roman+" · "+tier.name}</div>
 
-      <div className={"crd mh-src"+(reveal&&last&&last.bitten?" sk":"")}>
+      <div className="crd mh-src">
         <div className="mh-src-ctx">{item.ctx}</div>
         <p className="mh-src-text">
           {item.speaker&&<span className="mh-spk">{item.speaker+":"}</span>}
           <Marked text={item.src} marks={focusMarks}/>
         </p>
-        {legend}
+        {key}
       </div>
 
       {verdict?<div className={"mh-verdict out "+verdict.cls}>{verdict.t}</div>:<div className="mh-q">{item.q}</div>}
@@ -304,39 +301,39 @@ export function MimicHunt(p){
 
       <div className="mh-opts">
         {item.opts.map(function(o,i){
-          var mim=isMimic(item,i),cls="mh-opt",tags=[],letter=letterOf(i);
+          var mim=isMimic(item,i),cls="mh-opt",letter=letterOf(i);
           if(reveal){
-            if(i===item.c){cls+=" is-correct";letter="✓";tags.push(<span key="c" className="mh-tag good">Same meaning</span>);}
+            if(i===item.c){cls+=" is-correct";letter="✓";}
             else if(i===pick){cls+=" is-wrong";letter="✗";}
-            if(mim){cls+=" is-mimic";
-              tags.push(<span key="m" className="mh-tag bad"><MimicIcon size={13}/>{"Mimic"+(i===pick?" · it bit you":"")}</span>);}
-            if(!mim&&i!==item.c&&i!==pick)cls+=" is-dim";
             if(i===focus)cls+=" is-focus";
-            if(mim&&i===pick)cls+=" mh-bite";
           }
+          // Au retour, seule l'option regardée porte ses marques.
+          var marks=reveal&&i===focus?linksOf(item,i).map(function(l){return{frag:l.opt,kind:l.kind};}):[];
           return(
             <button key={item.id+i} className={cls} onClick={function(){tapOption(i);}} aria-pressed={reveal?i===focus:undefined}>
               <span className="mh-let out">{letter}</span>
               <span className="mh-opt-body">
-                <span>{reveal?<Marked text={o} marks={linksOf(item,i).map(function(l){return{frag:l.opt,kind:l.kind};})}/>:o}</span>
-                {tags.length>0&&<span className="mh-tags">{tags}</span>}
+                <span><Marked text={o} marks={marks}/></span>
+                {reveal&&mim&&<span className="mh-tags"><span className="mh-tag bad">{i===pick?"Mimic · it bit you":"Mimic"}</span></span>}
               </span>
-              {reveal&&mim&&<span className={"mh-face"+(i===pick?" chomp":"")}><MimicIcon size={30}/></span>}
+              {reveal&&mim&&i===pick&&<span className="mh-face chomp"><MimicIcon size={22}/></span>}
             </button>);
         })}
       </div>
-      {reveal&&<p className="mh-hint">Tap an answer to see how it links to the text.</p>}
+      {reveal&&<p className="mh-hint">Tap an answer to see what it takes from the text.</p>}
 
       {reveal&&(<div className="crd mh-why enter">
         <h4 className="out">The paraphrase</h4>
-        <div className="mh-pairs">
-          {item.bridge.map(function(b,k){return(
-            <div key={k} className="mh-pair"><mark className="mh-mk mh-mk-bridge">{b[0]}</mark><span className="mh-arrow">{"→"}</span><mark className="mh-mk mh-mk-bridge">{b[1]}</mark></div>);})}
-          {(item.echo||[]).map(function(w){return(
-            <div key={"e"+w} className="mh-pair"><mark className="mh-mk mh-mk-echo">{w}</mark><span className="mh-arrow">=</span><mark className="mh-mk mh-mk-echo">{w}</mark><span className="mh-note">no everyday synonym</span></div>);})}
-        </div>
+        {pairsOpen
+          ?<div className="mh-pairs">
+            {item.bridge.map(function(b,k){return(
+              <div key={k} className="mh-pair"><span className="was">{b[0]}</span><span className="mh-arrow">{"→"}</span><b>{b[1]}</b></div>);})}
+            {(item.echo||[]).map(function(w){return(
+              <div key={"e"+w} className="mh-pair"><span className="was">{w}</span><span className="mh-arrow">=</span><b>{w}</b><span className="mh-note">{" (no everyday synonym)"}</span></div>);})}
+          </div>
+          :<button className="mh-toggle" onClick={function(){sPO(true);}}>{"Show the rewordings"}</button>}
         <p className="mh-exp">{item.exp}</p>
-        <div className="mh-trap"><MimicIcon size={22} color="var(--red)"/><span>{item.trap}</span></div>
+        <div className="mh-trap"><MimicIcon size={18} color="var(--red)"/><span>{item.trap}</span></div>
       </div>)}
 
       {reveal&&<div className="mh-cta">

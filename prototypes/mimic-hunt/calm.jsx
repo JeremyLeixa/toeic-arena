@@ -3,6 +3,8 @@
 // CHAQUE option (les deux Mimics compris), puis dans la carte « The paraphrase » — avec des fonds, des
 // ondulations, des bordures pointillées et une grande icône par Mimic. Trois variantes côte à côte, sur le
 // même item et le même cas. Le CSS du module est lu dans src (MH_CSS) pour que A soit l'écran réel.
+// Jérémy a choisi C le 2026-09-19 et C est câblé : depuis, le CSS du module est celui de C, et la colonne
+// A ne reproduit plus fidèlement l'ancien écran (ses fonds et ondulations ont disparu du module).
 //   ?id=mh18  ?case=bit|ok|miss  ?mode=light
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
