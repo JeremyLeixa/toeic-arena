@@ -224,7 +224,7 @@ export var GERUND_INF = [
 
 // ─── TOEIC TRAPS DATA ───
 export var TOEIC_TRAPS = [
-  {id:1,name:"Similar-sounding words",part:"Listening",trap:"The audio says 'copy' but answer B says 'coffee'. Your brain hears what it expects.",
+  {id:1,name:"Similar-sounding words",part:"Listening",trap:"The audio says 'copy' but the answer 'A cup of coffee' sounds almost the same. Your brain hears what it expects.",
     scenario:"You hear: 'Could you make a copy of this report?'\nWhich did the speaker request?",
     options:["A cup of coffee","A copy of the report","A cover for the report","A receipt for the copy"],correct:1,
     tip:"Focus on the exact sounds. Don't let your brain auto-complete with familiar words."},
