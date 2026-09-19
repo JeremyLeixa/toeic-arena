@@ -26,11 +26,12 @@ function player() {
 
 function buildSession(sc, tot, xp, id, extra) {
   var u = player();
-  var g = gateSteps(xp, sc, tot, "mimic", { u: u, now: NOW, events: [], spotlight: true });
+  var modId = (extra && extra.modId) || "mimic"; // mimic_listen pour une partie à l'oreille (comme miniSession)
+  var g = gateSteps(xp, sc, tot, modId, { u: u, now: NOW, events: [], spotlight: true });
   var st = settleXp(u, g.xp, { now: NOW, events: [], classMedianXp: 0, leagueOf: getLeague });
   // `extra` (morsures, retenue) comme opts.extra de settleSession.
   return Object.assign({
-    id: id, sp: "mimic", modId: "mimic", sc: sc, tot: tot, userName: u.name,
+    id: id, sp: "mimic", modId: modId, sc: sc, tot: tot, userName: u.name,
     steps: g.steps.concat(st.steps), total: st.amt, fromXp: u.xp, toXp: st.c.xp,
     levelUp: st.levelUp, leagueUp: st.leagueUp, weekly: { from: u.weeklyXp, to: st.c.weeklyXp }, streak: st.c.streak,
     chests: [], achievements: [], marks: [],

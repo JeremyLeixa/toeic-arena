@@ -1,5 +1,9 @@
 import { getLevel } from "./helpers.js";
 
+// Mimic Hunt se joue en lecture (mimic) ou à l'oreille (mimic_listen, 2026-09-19) : ses trophées comptent les deux.
+function mimicModes(s){var ms=s.moduleScores||{};return [ms.mimic,ms.mimic_listen].filter(Boolean);}
+function mimicRuns(s){return mimicModes(s).reduce(function(a,m){return a.concat(m.history||[]);},[]);}
+
 export var ACHIEVEMENTS = [
   {id:"first_blood",name:"First Blood",desc:"Complete your first exercise",icon:"⚔️",check:function(s){return s.stats.sessions>=1;}},
   {id:"streak_3",name:"On Fire",desc:"3-day streak",icon:"🔥",check:function(s){return s.streak>=3;}},
@@ -54,7 +58,7 @@ export var ACHIEVEMENTS = [
   {id:"boss_complete",name:"Arena Conqueror",desc:"Complete The Final Arena",icon:"\ud83d\udc09",check:function(s){return s.mockResults&&s.mockResults.boss;}},
   {id:"boss_800",name:"Dragon Slayer",desc:"Score 800+ on The Final Arena",icon:"\ud83d\udd25",check:function(s){return s.mockResults&&s.mockResults.boss&&s.mockResults.boss.toeicEstimate>=800;}},
   // ─── GAME DIVERSITY ───
-  {id:"all_games",name:"Game Master",desc:"Play 6 different arena games",icon:"🎮",check:function(s){var count=0;if(s.gameScores){if(s.gameScores.matchEasy)count++;if(s.gameScores.wordFall)count++;if(s.gameScores.duel&&s.gameScores.duel.played>=1)count++;}if(s.moduleScores){if(s.moduleScores.tavern&&s.moduleScores.tavern.sessions>=1)count++;if(s.moduleScores.sbuild&&s.moduleScores.sbuild.sessions>=1)count++;if(s.moduleScores.ablitz&&s.moduleScores.ablitz.sessions>=1)count++;if(s.moduleScores.clue&&s.moduleScores.clue.sessions>=1)count++;if(s.moduleScores.mimic&&s.moduleScores.mimic.sessions>=1)count++;}return count>=6;}},
+  {id:"all_games",name:"Game Master",desc:"Play 6 different arena games",icon:"🎮",check:function(s){var count=0;if(s.gameScores){if(s.gameScores.matchEasy)count++;if(s.gameScores.wordFall)count++;if(s.gameScores.duel&&s.gameScores.duel.played>=1)count++;}if(s.moduleScores){if(s.moduleScores.tavern&&s.moduleScores.tavern.sessions>=1)count++;if(s.moduleScores.sbuild&&s.moduleScores.sbuild.sessions>=1)count++;if(s.moduleScores.ablitz&&s.moduleScores.ablitz.sessions>=1)count++;if(s.moduleScores.clue&&s.moduleScores.clue.sessions>=1)count++;if(mimicModes(s).some(function(m){return m.sessions>=1;}))count++;}return count>=6;}},
   // ─── GRAMMAR GAUNTLET ───
   {id:"irregular_master",name:"Irregular Master",desc:"Complete 10 Irregular Crypt sessions",icon:"🪦",check:function(s){return s.moduleScores&&s.moduleScores["gauntlet_irregular"]&&s.moduleScores["gauntlet_irregular"].sessions>=10;}},
   {id:"tense_sage",name:"Tense Sage",desc:"Chronomancer: 80%+ accuracy (min 30 Q)",icon:"🔮",check:function(s){if(!s.moduleScores||!s.moduleScores["gauntlet_tense"])return false;var m=s.moduleScores["gauntlet_tense"];return m.total>=30&&m.correct/m.total>=0.8;}},
@@ -82,9 +86,9 @@ export var ACHIEVEMENTS = [
   {id:"council_crowned",name:"Council Crowned",desc:"80%+ accuracy on both Modal sub-modules (min 30 Q each)",icon:"👑",check:function(s){if(!s.moduleScores)return false;var keys=["modals_match","modals_sort"];for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(!m||m.total<30||m.correct/m.total<0.8)return false;}return true;}},
   // ─── MIMIC HUNT ─── (2026-09-19) La reformulation : lire le sens, pas les mots recopiés. « Unbitten »
   // récompense LA compétence du module (se tromper sur un distracteur neutre est permis, jamais mordre) :
-  // il lit `bites` dans l'entrée d'history (posé par recordModule), absent des parties d'avant.
-  {id:"mimic_first",name:"Mimic Spotter",desc:"Complete your first Mimic Hunt",icon:"🪤",check:function(s){return !!(s.moduleScores&&s.moduleScores.mimic&&s.moduleScores.mimic.sessions>=1);}},
-  {id:"mimic_unbitten",name:"Unbitten",desc:"Finish a Mimic Hunt without a single bite",icon:"🛡️",check:function(s){var m=s.moduleScores&&s.moduleScores.mimic;if(!m||!m.history)return false;for(var i=0;i<m.history.length;i++){if(m.history[i].bites===0&&m.history[i].total>=15)return true;}return false;}},
-  {id:"mimic_perfect",name:"Paraphrase Master",desc:"Perfect 15/15 in one Mimic Hunt",icon:"🎭",check:function(s){var m=s.moduleScores&&s.moduleScores.mimic;if(!m||!m.history)return false;for(var i=0;i<m.history.length;i++){if(m.history[i].correct===m.history[i].total&&m.history[i].total>=15)return true;}return false;}},
-  {id:"mimic_slayer",name:"Mimic Slayer",desc:"Mimic Hunt: 80%+ accuracy (min 60 Q)",icon:"🗡️",check:function(s){var m=s.moduleScores&&s.moduleScores.mimic;return !!(m&&m.total>=60&&m.correct/m.total>=0.8);}},
+  // il lit `bites` dans l'entrée d'history (posé par recordModule), absent des parties d'avant. Les deux modes comptent.
+  {id:"mimic_first",name:"Mimic Spotter",desc:"Complete your first Mimic Hunt",icon:"🪤",check:function(s){return mimicModes(s).some(function(m){return m.sessions>=1;});}},
+  {id:"mimic_unbitten",name:"Unbitten",desc:"Finish a Mimic Hunt without a single bite",icon:"🛡️",check:function(s){return mimicRuns(s).some(function(h){return h.bites===0&&h.total>=15;});}},
+  {id:"mimic_perfect",name:"Paraphrase Master",desc:"Perfect 15/15 in one Mimic Hunt",icon:"🎭",check:function(s){return mimicRuns(s).some(function(h){return h.correct===h.total&&h.total>=15;});}},
+  {id:"mimic_slayer",name:"Mimic Slayer",desc:"Mimic Hunt: 80%+ accuracy (min 60 Q)",icon:"🗡️",check:function(s){var t=0,c=0;mimicModes(s).forEach(function(m){t+=m.total||0;c+=m.correct||0;});return t>=60&&c/t>=0.8;}},
 ];

@@ -11,14 +11,24 @@
 // au retour (juste, faux, « Mimic ») ; un tap sur une option souligne ses liens, dans la source et dans
 // cette option seulement (vert plein = même sens, pointillé rouge = mots recopiés, tirets gris = mot
 // gardé) ; la carte garde l'explication et le piège, les reformulations sont repliées.
+//
+// Mode écoute (variante A « aperçu », choix de Jérémy du 2026-09-19, proto prototypes/mimic-hunt/listen.html) :
+// la source d'un item `spoken` s'ENTEND au lieu de se lire — en Parts 3 et 4, le distracteur classique reprend
+// un mot de l'enregistrement. Question et réponses lisibles avant l'écoute (consigne des Parts 3 et 4), mais
+// verrouillées jusqu'à la fin de l'enregistrement : répondre au premier mot reconnu, c'est mordre. Une
+// réécoute. Au retour, la transcription apparaît avec le même retour qu'en lecture. Module `mimic_listen`
+// (compté en Listening) ; deux portes sur l'intro.
 import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
+import { ListenDisc } from "../../components/SessionHud.jsx";
 import { MIMIC_ITEMS, MIMIC_TIERS } from "../../data/mimicHunt.js";
 import { shuffle } from "../../lib/util.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
 import { mimicXp, MIMIC_XP } from "../../lib/mimicXp.js";
-import { playBGM, playChestLand, playCorrect, playWrong } from "../../sounds.js";
+import { mimicClipUrl } from "../../lib/listeningVoices.js";
+import { playAudioFile, resumeAudioSession, stopCurrentListenAudio, stopListenAudio } from "../../lib/audio.js";
+import { playBGM, stopBGM, playChestLand, playCorrect, playWrong } from "../../sounds.js";
 import { useEffect, useRef, useState } from "react";
 
 // Tout en jetons : suit le skin, la fête et le mode clair. Patron des CSS locaux
@@ -33,11 +43,6 @@ var MH_CSS=`
 .mh-def-t{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--t1);margin-bottom:6px}
 .mh-def p{margin:0;font-size:14px;line-height:1.6;color:var(--t2)}
 .mh-def b{color:var(--t1)}
-.mh-steps{padding:16px 18px!important;margin-bottom:22px;display:flex;flex-direction:column;gap:14px}
-.mh-step{display:flex;gap:12px;align-items:flex-start}
-.mh-step-n{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--cyan);color:var(--on-cx)}
-.mh-step-t{font-size:14px;font-weight:700;color:var(--t1)}
-.mh-step-d{font-size:13px;line-height:1.5;color:var(--t2);margin-top:2px}
 .mh-tier{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 24px 110px;text-align:center}
 .mh-roman{font-size:68px;font-weight:900;line-height:1;color:var(--cyan)}
 .mh-tier-name{font-size:26px;font-weight:900;color:var(--t1);margin:8px 0 4px}
@@ -93,6 +98,19 @@ var MH_CSS=`
 .mh-note{font-size:12px;color:var(--t2)}
 .mh-exp{margin:0;font-size:14px;line-height:1.6;color:var(--t2)}
 .mh-trap{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);font-size:13.5px;line-height:1.55;color:var(--t2)}
+.mh-doors{display:flex;flex-direction:column;gap:10px}
+.mh-door{display:flex;gap:12px;align-items:center;width:100%;padding:14px!important;margin:0;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--t1);border:1px solid var(--bdr)}
+.mh-door-i{width:44px;height:44px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--cyan);background:linear-gradient(135deg,rgba(var(--cx),.22),transparent);color:var(--cyan)}
+.mh-door-t{display:block;font-size:16px;font-weight:800;color:var(--t1)}
+.mh-door-d{display:block;font-size:13px;line-height:1.45;color:var(--t2);margin-top:2px}
+.mh-door-s{display:inline-block;margin-top:5px;font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--cyan)}
+.mh-src-ls{padding:14px 16px 16px!important}
+.mh-src-ls .ss-play{width:104px;height:104px}
+.mh-src-ls .ss-playlbl{font-size:13px}
+.mh-opt.is-locked{opacity:.5;cursor:default}
+.mh-opt.is-locked:active{transform:none}
+.mh-again{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 12px;min-height:32px;border-radius:999px;border:1px solid var(--bdr);background:none;color:var(--cyan);font:700 12px 'DM Sans',sans-serif;cursor:pointer}
+.mh-again[disabled]{opacity:.6;cursor:default}
 .mh-cta{margin-top:18px}
 .mh-cta .btn1{width:100%}
 .mh-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:16px!important;text-align:center}
@@ -140,6 +158,13 @@ function buildRound(bank){
   });
   return out;
 }
+// Banque d'un mode : l'écoute ne tire que les sources parlées (`spoken`).
+function bankOf(bank,mode){return mode==="listen"?bank.filter(function(it){return it.spoken;}):bank;}
+function roundSize(bank){return [1,2,3].reduce(function(n,t){return n+Math.min(PER_TIER,bank.filter(function(it){return it.tier===t;}).length);},0);}
+// « Play again » remonte le module (clé de pg()) : il repart dans le mode de la partie finie, sans repasser par
+// les portes. Lu à l'initialisation, effacé après le montage (le remontage simulé de StrictMode garde l'état).
+var replayMode=null;
+var REPLAYS=1; // réécoutes permises avant de répondre : le TOEIC n'en donne aucune, l'entraînement une
 
 // Texte avec surlignages. Chevauchement : le fragment le plus long garde la place.
 function Marked(p){
@@ -166,34 +191,59 @@ function MimicIcon(p){
 
 // `bank` : les items à jouer (MIMIC_ITEMS ; le banc de relecture passe un lot en projet).
 export function MimicHunt(p){
-  var[items]=useState(function(){return buildRound(p.bank||MIMIC_ITEMS);});
-  var TOTAL=items.length;
-  var[phase,sP]=useState("intro");           // intro | tier | q | fb | done
+  var bank=p.bank||MIMIC_ITEMS;
+  var[mode,sMode]=useState(replayMode);      // null (portes) | "read" | "listen"
+  var[items,sItems]=useState(function(){return replayMode?buildRound(bankOf(bank,replayMode)):null;});
+  var TOTAL=items?items.length:0;
+  var[phase,sP]=useState(replayMode?"tier":"intro"); // intro | tier | q | fb | done
   var[idx,sI]=useState(0);
   var[pick,sPk]=useState(-1);                // réponse choisie
   var[focus,sF]=useState(-1);                // option dont on montre les liens (au tap, aucune au retour)
   var[pairsOpen,sPO]=useState(false);        // reformulations dépliées dans la carte
   var[results,sR]=useState([]);
-  var mistakesRef=useRef([]);var sidRef=useRef(0);
-  var item=items[idx],tier=MIMIC_TIERS[item.tier];
+  var[playing,sPl]=useState(false);          // écoute : enregistrement en cours
+  var[plays,sPls]=useState(0);               // écoutes de cette question (1 + REPLAYS au plus avant de répondre)
+  var[heard,sH]=useState(false);             // écoute : entendu jusqu'au bout, les réponses se déverrouillent
+  var mistakesRef=useRef([]);var sidRef=useRef(0);var genRef=useRef(0);
+  var listenMode=mode==="listen";
+  var item=items?items[idx]:null,tier=item?MIMIC_TIERS[item.tier]:null;
 
+  useEffect(function(){replayMode=null;},[]);
   useEffect(function(){
     var app=document.querySelector(".app");
     if(app)app.scrollTop=0;
   },[idx,phase]);
   // Musique pilotée ici (module SELF_MANAGED dans App) : la route n'y touche plus. playBGM ne relance pas
   // une piste déjà en cours ; à la fin, le done de la route l'arrête, et rien ne la relance sous le parchemin.
-  useEffect(function(){if(phase!=="done")playBGM("bgm_mimic");},[phase]);
+  // En mode écoute, silence : une voix sous la musique ne s'entend pas.
+  useEffect(function(){if(phase==="done")return;if(listenMode)stopBGM();else playBGM("bgm_mimic");},[phase,listenMode]);
+  // Règle « audio abort flag » (CLAUDE.md) : sans elle, un clip lancé continue après la sortie du module.
+  useEffect(function(){resumeAudioSession();return stopListenAudio;},[]);
 
   function openingOf(i){return i===0||items[i].tier!==items[i-1].tier?"tier":"q";}
+  function start(m){sMode(m);sItems(buildRound(bankOf(bank,m)));sI(0);sP("tier");}
+
+  // Écoute : `genRef` écarte la fin d'un clip coupé (réponse, question suivante). Un clip absent résout aussi
+  // (playAudioFile) : check_mimic_items et check:assets exigent donc chaque /audio/mimic/<id>.mp3.
+  function listen(){
+    if(playing||!item)return;
+    if(phase==="q"&&plays>=1+REPLAYS)return;
+    var gen=++genRef.current;
+    sPl(true);
+    if(phase==="q")sPls(plays+1);
+    playAudioFile(mimicClipUrl(item.id)).then(function(){if(genRef.current!==gen)return;sPl(false);sH(true);});
+  }
+  function hush(){genRef.current++;stopCurrentListenAudio();sPl(false);}
 
   // Un tap répond (variante 3 « révélation », choix de Jérémy du 2026-09-18) : les Mimics se
-  // démasquent d'office au retour, l'élève n'a pas à les chercher.
+  // démasquent d'office au retour, l'élève n'a pas à les chercher. À l'écoute, pas avant la fin du clip.
   function answer(i){
+    if(listenMode&&!heard)return;
+    hush();
     var ok=i===item.c,bitten=!ok&&isMimic(item,i);
     sound(ok?playCorrect:playWrong);
     if(bitten)sound(function(){playChestLand(1);});
-    if(!ok)mistakesRef.current.push({tag:"Mimic Hunt · Tier "+tier.roman+(bitten?" · Mimic":""),prompt:item.src,noBlank:true,
+    if(!ok)mistakesRef.current.push({tag:"Mimic Hunt · "+(listenMode?"Listen · ":"")+"Tier "+tier.roman+(bitten?" · Mimic":""),prompt:item.src,noBlank:true,
       yours:item.opts[i],correct:item.opts[item.c],why:item.exp,ref:moduleRef("mimic",item.id)});
     sR(function(r){return r.concat([{ok:ok,bitten:bitten}]);});
     sPk(i);sF(-1);sPO(false);sP("fb");
@@ -202,11 +252,13 @@ export function MimicHunt(p){
   // Fin de partie : XP versée ici, jamais derrière un bouton (quitter l'écran de fin la perdait).
   // 15 + 5 par bonne réponse, −3 par morsure, +25 sans faute (lib/mimicXp.js) : 115 pour 15 items.
   // Morsures et retenue voyagent avec la session : le parchemin dit « 9 correct · 5 bites −15 ».
+  // `modId` : l'écoute compte à part (mimic_listen, section Listening), miniSession le lit dans extra.
   function next(){
-    if(idx+1<TOTAL){sPk(-1);sF(-1);sPO(false);sI(idx+1);sP(openingOf(idx+1));return;}
+    hush();
+    if(idx+1<TOTAL){sPk(-1);sF(-1);sPO(false);sPls(0);sH(false);sI(idx+1);sP(openingOf(idx+1));return;}
     var sc=results.filter(function(r){return r.ok;}).length;
     var bites=results.filter(function(r){return r.bitten;}).length,x=mimicXp(sc,TOTAL,bites);
-    sidRef.current=p.done(sc,TOTAL,x.xp,mistakesRef.current,{bites:bites,bitePenalty:x.bitePenalty});
+    sidRef.current=p.done(sc,TOTAL,x.xp,mistakesRef.current,{bites:bites,bitePenalty:x.bitePenalty,modId:listenMode?"mimic_listen":"mimic"});
     sP("done");
   }
 
@@ -220,8 +272,8 @@ export function MimicHunt(p){
     var nOk=results.filter(function(r){return r.ok;}).length;
     var nBit=results.filter(function(r){return r.bitten;}).length;
     return(<><style>{MH_CSS}</style>
-      <SessionResult session={p.session} sid={sidRef.current} name="Mimic Hunt" mistakes={mistakesRef.current}
-        onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>
+      <SessionResult session={p.session} sid={sidRef.current} name={listenMode?"Mimic Hunt · Listen":"Mimic Hunt"} mistakes={mistakesRef.current}
+        onContinue={function(){p.closeSession();p.back();}} onReplay={function(){replayMode=mode;p.replaySession();}}>
         <div className="crd mh-stats">
           <div><div className="out mh-stat" style={{color:"var(--green)"}}>{nOk}</div><div className="mh-stat-l">Right answers</div></div>
           <div><div className="out mh-stat" style={{color:"var(--red)"}}>{nBit}</div><div className="mh-stat-l">Mimic bites</div></div>
@@ -242,16 +294,22 @@ export function MimicHunt(p){
         <div className="mh-def-t out"><MimicIcon size={22} color="var(--red)"/>{"What's a Mimic?"}</div>
         <p>An answer that <b>copies words from the text</b> but says something the text doesn{"'"}t. It{"'"}s the TOEIC{"'"}s favourite trap: each bite costs you {MIMIC_XP.perBite} XP.</p>
       </div>
-      <div className="crd mh-steps">
-        {[{t:"Read the text",d:"An email, a notice, a line from a conversation."},
-          {t:"Pick the answer that means the same",d:"Same idea, not the same words."},
-          {t:"See what the Mimics copied",d:"Every trap is unmasked after your answer."}].map(function(s,k){return(
-          <div key={k} className="mh-step">
-            <span className="mh-step-n out">{k+1}</span>
-            <div><div className="mh-step-t out">{s.t}</div><div className="mh-step-d">{s.d}</div></div>
-          </div>);})}
+      {/* Deux portes (proto listen.html) : lire ou écouter. Chaque porte a ses statistiques et son poids
+          dans l'estimation (mimic en Reading, mimic_listen en Listening). */}
+      <div className="mh-doors">
+        <button className="crd mh-door" onClick={function(){start("read");}}>
+          <span className="mh-door-i"><GIcon name="scroll-unfurled" size={24} color="currentColor"/></span>
+          <span><span className="mh-door-t out">Read</span>
+            <span className="mh-door-d">Emails, notices, messages. Pick the answer that says the same thing with other words.</span>
+            <span className="mh-door-s">{"Reading · Part 7 · "+roundSize(bankOf(bank,"read"))+" questions"}</span></span>
+        </button>
+        <button className="crd mh-door" onClick={function(){start("listen");}}>
+          <span className="mh-door-i"><GIcon name="ringing-bell" size={24} color="currentColor"/></span>
+          <span><span className="mh-door-t out">Listen</span>
+            <span className="mh-door-d">Voicemails, announcements, a line from a conversation. The Mimic repeats a word you heard.</span>
+            <span className="mh-door-s">{"Listening · Parts 3 & 4 · "+roundSize(bankOf(bank,"listen"))+" questions"}</span></span>
+        </button>
       </div>
-      <button className="btn1 out" onClick={function(){sP(openingOf(0));}}>{"Start — "+TOTAL+" questions"}</button>
     </div></>);
 
   // ── PALIER ──
@@ -277,8 +335,11 @@ export function MimicHunt(p){
   var verdict=last?(last.ok?{cls:"ok",t:"Correct!"}:last.bitten?{cls:"bit",t:"The Mimic bit you!"}:{cls:"no",t:"Not quite."}):null;
   var key=null;
   if(focusKind==="bridge")key=<div className="mh-key"><span className="g">{"Answer "+letterOf(focus)}</span>{" says the same thing with other words."}</div>;
-  if(focusKind==="copy")key=<div className="mh-key"><span className="r">{"Answer "+letterOf(focus)}</span>{" copies these words but changes the meaning."}</div>;
-  if(focusKind==="none")key=<div className="mh-key">{"Answer "+letterOf(focus)+": nothing in the text says this."}</div>;
+  if(focusKind==="copy")key=<div className="mh-key"><span className="r">{"Answer "+letterOf(focus)}</span>{listenMode?" repeats words you heard but changes the meaning.":" copies these words but changes the meaning."}</div>;
+  if(focusKind==="none")key=<div className="mh-key">{"Answer "+letterOf(focus)+(listenMode?": nothing in the recording says this.":": nothing in the text says this.")}</div>;
+  var who=item.speaker?item.ctx+" · "+item.speaker:item.ctx;
+  var left=1+REPLAYS-plays,locked=listenMode&&!reveal&&!heard;
+  var discHint=!heard?"Tap to listen":left<=0?"No more replays":"Tap to hear it once more";
 
   return(<>
     <style>{MH_CSS}</style>
@@ -293,21 +354,27 @@ export function MimicHunt(p){
       <Bar value={reveal?idx+1:idx} max={TOTAL} h={4}/>
       <div className="mh-chip out">{"Tier "+tier.roman+" · "+tier.name}</div>
 
-      <div className="crd mh-src">
-        <div className="mh-src-ctx">{item.ctx}</div>
-        <p className="mh-src-text">
-          {item.speaker&&<span className="mh-spk">{item.speaker+":"}</span>}
-          <Marked text={item.src} marks={focusMarks}/>
-        </p>
-        {key}
-      </div>
+      {listenMode&&!reveal
+        ?<div className="crd mh-src mh-src-ls">
+          <div className="mh-src-ctx">{who}</div>
+          <ListenDisc playing={playing} onPlay={listen} disabled={heard&&left<=0} hint={discHint}/>
+        </div>
+        :<div className="crd mh-src">
+          <div className="mh-src-ctx">{listenMode?who+" · what you heard":item.ctx}</div>
+          <p className="mh-src-text">
+            {item.speaker&&<span className="mh-spk">{item.speaker+":"}</span>}
+            <Marked text={item.src} marks={focusMarks}/>
+          </p>
+          {listenMode&&<button className="mh-again" onClick={listen} disabled={playing}>{playing?"Playing…":"▶ Hear it again"}</button>}
+          {key}
+        </div>}
 
       {verdict?<div className={"mh-verdict out "+verdict.cls}>{verdict.t}</div>:<div className="mh-q">{item.q}</div>}
       {reveal&&<div className="mh-q mh-q-small">{item.q}</div>}
 
       <div className="mh-opts">
         {item.opts.map(function(o,i){
-          var mim=isMimic(item,i),cls="mh-opt",letter=letterOf(i);
+          var mim=isMimic(item,i),cls="mh-opt"+(locked?" is-locked":""),letter=letterOf(i);
           if(reveal){
             if(i===item.c){cls+=" is-correct";letter="✓";}
             else if(i===pick){cls+=" is-wrong";letter="✗";}
@@ -316,7 +383,7 @@ export function MimicHunt(p){
           // Au retour, seule l'option regardée porte ses marques.
           var marks=reveal&&i===focus?linksOf(item,i).map(function(l){return{frag:l.opt,kind:l.kind};}):[];
           return(
-            <button key={item.id+i} className={cls} onClick={function(){tapOption(i);}} aria-pressed={reveal?i===focus:undefined}>
+            <button key={item.id+i} className={cls} onClick={function(){tapOption(i);}} aria-pressed={reveal?i===focus:undefined} aria-disabled={locked||undefined}>
               <span className="mh-let out">{letter}</span>
               <span className="mh-opt-body">
                 <span><Marked text={o} marks={marks}/></span>
@@ -326,7 +393,8 @@ export function MimicHunt(p){
             </button>);
         })}
       </div>
-      {reveal&&<p className="mh-hint">Tap an answer to see what it takes from the text.</p>}
+      {locked&&<p className="mh-hint">{playing?"The answers unlock when the recording ends.":"Read the question, then listen."}</p>}
+      {reveal&&<p className="mh-hint">{listenMode?"Tap an answer to see what it takes from the recording.":"Tap an answer to see what it takes from the text."}</p>}
 
       {reveal&&(<div className="crd mh-why enter">
         <h4 className="out">The paraphrase</h4>

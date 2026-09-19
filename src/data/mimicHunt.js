@@ -13,6 +13,11 @@
 //   echo     mots gardés tels quels par la bonne réponse (faute de synonyme courant)
 //   mimics   {index: [fragment | [dans la source, dans l'option]], …} : ce que le Mimic recopie
 //   exp      pourquoi la bonne réponse est juste     trap  ce que les Mimics ont recopié
+//   spoken   la source SE DIT (conversation, messagerie, annonce…) : elle sert aussi au mode écoute, lue par
+//            une voix de lib/listeningVoices.js (mimicVoice) dans /audio/mimic/<id>.mp3 (2026-09-19). Un e-mail
+//            ou une notice lus à voix haute ne ressemblent à rien du TOEIC : pas de `spoken`.
+//   voice    "m" | "f" quand la source parlée se présente (« Hi, it's Dana… ») : la voix suit ce genre
+//            (sinon `speaker` Man / Woman, sinon l'une des six)
 //
 // Fragments : sans casse, en mots entiers. tests/check_mimic_items.cjs vérifie que chacun se
 // trouve bien là où il est annoncé — sinon le surlignage disparaît en silence, et avec lui la leçon.
@@ -62,7 +67,7 @@ export var MIMIC_ITEMS = [
     trap: "'Let employees travel for two weeks' and 'Ask employees to submit a travel request' reuse 'employees', 'travel', 'two weeks' and 'submit', then build an idea the email never mentions.",
   },
   {
-    id: "mh03", tier: 1, ctx: "Announcement",
+    id: "mh03", tier: 1, ctx: "Announcement", spoken: true,
     src: "Due to low demand, the evening shuttle service to the airport has been discontinued.",
     q: "What is being announced?",
     opts: ["Demand for evening flights is low.", "The shuttle will leave the airport earlier.", "Parking fees have gone up.", "A transportation option is no longer offered."],
@@ -117,7 +122,7 @@ export var MIMIC_ITEMS = [
     trap: "'Hire six new sales representatives' copies 'six' and 'sales representatives', but hiring isn't managing. 'Manage the company's sales budget' keeps 'manage' and 'sales' and swaps people for money.",
   },
   {
-    id: "mh16", tier: 1, ctx: "Voicemail",
+    id: "mh16", tier: 1, ctx: "Voicemail", voice: "m", spoken: true,
     src: "Hi, this is Tom from Brightline Dental. I'm calling to let you know that your appointment has been moved to Thursday morning.",
     q: "Why is the speaker calling?",
     opts: ["To say that a visit has been rescheduled", "To say that the dental office has moved", "To ask the listener to call back on Thursday", "To request a payment"],
@@ -128,7 +133,7 @@ export var MIMIC_ITEMS = [
     trap: "'The dental office has moved' copies 'dental' and 'moved', but it's the appointment that moved, not the office. 'Call back on Thursday' reuses 'call' and 'Thursday' for a request Tom never makes.",
   },
   {
-    id: "mh17", tier: 1, ctx: "Advertisement",
+    id: "mh17", tier: 1, ctx: "Advertisement", spoken: true,
     src: "Sign up for our newsletter and receive a 10% discount on your first purchase.",
     q: "What is being offered?",
     opts: ["A free newsletter for first-time visitors", "Free delivery on large orders", "Money off an initial order", "10% of every purchase given to charity"],
@@ -196,7 +201,7 @@ export var MIMIC_ITEMS = [
     trap: "'Update their account details' keeps 'update' and 'account' but changes what must be updated. 'Wait three days before logging in' copies 'three days' and turns a deadline into a waiting time.",
   },
   {
-    id: "mh23", tier: 1, ctx: "Conversation", speaker: "Man",
+    id: "mh23", tier: 1, ctx: "Conversation", speaker: "Man", spoken: true,
     src: "I'm afraid we've run out of the blue folders, but we have plenty of green ones.",
     q: "What does the man say about the blue folders?",
     opts: ["There are plenty of them.", "They are sold out.", "They cost more than the green ones.", "They will arrive tomorrow."],
@@ -229,7 +234,7 @@ export var MIMIC_ITEMS = [
     trap: "'To ask everyone to work harder' recycles 'everyone', 'hard' and 'work' into a complaint. 'To assign more work on the Henderson project' keeps the project's name, but the manager is thanking, not assigning.",
   },
   {
-    id: "mh26", tier: 1, ctx: "Store announcement",
+    id: "mh26", tier: 1, ctx: "Store announcement", spoken: true,
     src: "Our store will stay open later than usual throughout the holiday season.",
     q: "What is being announced?",
     opts: ["The store will close for the holiday season", "Discounts on seasonal items", "Extended opening hours this festive period", "Employees must stay later than usual"],
@@ -251,7 +256,7 @@ export var MIMIC_ITEMS = [
     trap: "'The company's stock price has fallen' takes 'stock' in the wrong sense: here it means goods in the warehouse, not shares. 'The order was sent to the wrong address' reuses 'order' for a problem the email never mentions.",
   },
   {
-    id: "mh28", tier: 1, ctx: "Conversation", speaker: "Woman",
+    id: "mh28", tier: 1, ctx: "Conversation", speaker: "Woman", spoken: true,
     src: "Could you give me a hand moving these boxes to the storage room?",
     q: "What does the woman ask for?",
     opts: ["A larger storage room", "A list of office supplies", "Some help carrying items", "Permission to move to a different room"],
@@ -297,7 +302,7 @@ export var MIMIC_ITEMS = [
     trap: "The two traps reuse 'client', 'presentation', 'contract' and 'signed'. But the client didn't present anything, and the signing wasn't later.",
   },
   {
-    id: "mh08", tier: 2, ctx: "Conversation", speaker: "Woman",
+    id: "mh08", tier: 2, ctx: "Conversation", speaker: "Woman", spoken: true,
     src: "I'd be happy to cover your shift on Saturday if you can take mine next week.",
     q: "What does the woman offer to do?",
     opts: ["Take over a project next week", "Cover the cost of a Saturday event", "Fill in for her coworker on the weekend", "Train a new employee"],
@@ -363,7 +368,7 @@ export var MIMIC_ITEMS = [
     trap: "'It has been moved to a bigger venue' keeps 'has been moved' but invents a new place. 'Heavy traffic is expected at the conference' recycles 'heavy' and 'conference' into a problem the email never mentions.",
   },
   {
-    id: "mh34", tier: 2, ctx: "Conversation", speaker: "Woman",
+    id: "mh34", tier: 2, ctx: "Conversation", speaker: "Woman", spoken: true,
     src: "I don't think we'll finish the report unless someone helps us with the charts.",
     q: "What does the woman suggest?",
     opts: ["They need an extra person for the graphs.", "Someone has already finished the charts.", "They should leave early today.", "The report does not need any charts."],
@@ -397,7 +402,7 @@ export var MIMIC_ITEMS = [
     trap: "'The attachment could not be uploaded' mixes 'attachment' and 'uploaded', but the upload worked. 'The shared drive was too large' moves 'too large' from the file to the drive.",
   },
   {
-    id: "mh37", tier: 2, ctx: "Voicemail",
+    id: "mh37", tier: 2, ctx: "Voicemail", spoken: true,
     src: "Before you come to the office, please call me so I can meet you at the entrance.",
     q: "What is the listener asked to do?",
     opts: ["Come to the office before calling", "Phone ahead of arriving", "Bring a form of identification", "Wait at the office entrance"],
@@ -408,7 +413,7 @@ export var MIMIC_ITEMS = [
     trap: "'Come to the office before calling' copies 'come to the office', 'before' and 'call' but swaps the order: the call comes first. 'Wait at the office entrance' reuses 'office' and 'entrance', but the speaker is the one who will be waiting.",
   },
   {
-    id: "mh38", tier: 2, ctx: "Local news",
+    id: "mh38", tier: 2, ctx: "Local news", spoken: true,
     src: "The award was presented to Ms. Tanaka by the mayor.",
     q: "What happened at the ceremony?",
     opts: ["The mayor gave Ms. Tanaka a prize.", "Ms. Tanaka presented an award to the mayor.", "The ceremony was postponed.", "The mayor received an award."],
@@ -452,7 +457,7 @@ export var MIMIC_ITEMS = [
     trap: "'The company will pay for personal calls' reuses 'company' and 'personal calls' and reverses the rule. 'Employees may use their own phones at work' keeps 'employees' and 'use' but talks about personal phones, which the policy doesn't cover.",
   },
   {
-    id: "mh42", tier: 2, ctx: "Conversation", speaker: "Man",
+    id: "mh42", tier: 2, ctx: "Conversation", speaker: "Man", spoken: true,
     src: "If the client doesn't sign by Friday, we'll lose the deal.",
     q: "What does the man say?",
     opts: ["The client will sign on Friday.", "They have already lost the deal.", "The agreement depends on a signature before the weekend.", "The price will go up next month."],
@@ -487,7 +492,7 @@ export var MIMIC_ITEMS = [
 
   // ═══ TIER III · BIG PICTURE ═══
   {
-    id: "mh09", tier: 3, ctx: "Conversation", speaker: "Man",
+    id: "mh09", tier: 3, ctx: "Conversation", speaker: "Man", spoken: true,
     src: "Let me grab us a couple of lattes before the client gets here.",
     q: "What will the man most likely do next?",
     opts: ["Grab a couple of documents", "Wait for the client to get here", "Book a meeting room", "Buy some beverages"],
@@ -498,7 +503,7 @@ export var MIMIC_ITEMS = [
     trap: "'Grab a couple of documents' keeps 'grab a couple of' but changes the object. 'Wait for the client to get here' keeps 'client' and 'gets here': that happens later, it's not what he'll do next.",
   },
   {
-    id: "mh10", tier: 3, ctx: "Voicemail",
+    id: "mh10", tier: 3, ctx: "Voicemail", voice: "f", spoken: true,
     src: "Hi, it's Dana from Harlow Printing. The brochures you ordered are ready, but the color on the cover looks different from your sample, so please call me before we deliver them.",
     q: "Why is the speaker calling?",
     opts: ["To report a possible problem with an order", "To confirm that the brochures were delivered", "To request a new color sample", "To schedule a meeting"],
@@ -532,7 +537,7 @@ export var MIMIC_ITEMS = [
     trap: "A Mimic isn't just any repeated word. It's a repeated word that says something the text doesn't. The payment answer copies 'June 3', but that's when the wrong invoice was sent, not a payment deadline.",
   },
   {
-    id: "mh45", tier: 3, ctx: "Conversation", speaker: "Man",
+    id: "mh45", tier: 3, ctx: "Conversation", speaker: "Man", spoken: true,
     src: "Could you print twenty copies of the agenda and put them on the conference table before ten?",
     q: "What does the man ask the woman to do?",
     opts: ["Book the conference room for ten people", "Prepare materials for a meeting", "Put the agenda on the company website", "Order lunch for the team"],
@@ -543,7 +548,7 @@ export var MIMIC_ITEMS = [
     trap: "'Book the conference room for ten people' recycles 'conference' and 'ten' (the time becomes a headcount). 'Put the agenda on the company website' keeps 'put' and 'agenda' but moves it online.",
   },
   {
-    id: "mh46", tier: 3, ctx: "Announcement",
+    id: "mh46", tier: 3, ctx: "Announcement", spoken: true,
     src: "Passengers on Flight 208 to Oslo are invited to proceed to Gate 14, where boarding will begin shortly.",
     q: "Where is this announcement most likely being made?",
     opts: ["At a train station", "In the city of Oslo", "On board the plane", "In an airport terminal"],
@@ -565,7 +570,7 @@ export var MIMIC_ITEMS = [
     trap: "'To schedule a team-building day for Saturday' copies the event and the day, but it has already happened. 'To invite staff to a spring party' grabs 'spring' from a vague wish: no invitation is sent.",
   },
   {
-    id: "mh48", tier: 3, ctx: "Conversation", speaker: "Woman",
+    id: "mh48", tier: 3, ctx: "Conversation", speaker: "Woman", spoken: true,
     src: "The printer on the third floor is jammed again, and the copier downstairs is out of toner.",
     q: "What problem does the woman mention?",
     opts: ["The internet connection is slow.", "The third floor is closed.", "Office equipment is not working.", "They need a new printer downstairs."],
@@ -576,7 +581,7 @@ export var MIMIC_ITEMS = [
     trap: "'The third floor is closed' copies 'third floor', where the printer is. 'They need a new printer downstairs' mixes 'printer' and 'downstairs', but the printer is upstairs and nobody talks about buying one.",
   },
   {
-    id: "mh49", tier: 3, ctx: "Voicemail",
+    id: "mh49", tier: 3, ctx: "Voicemail", voice: "m", spoken: true,
     src: "Hi Ms. Park, this is Leo from Carter Realty. The owners accepted your offer on the house on Maple Street. Call me back so we can go over the next steps.",
     q: "Why is the speaker calling?",
     opts: ["To share good news about a purchase", "To make an offer on a house on Maple Street", "To ask for a rent payment", "To ask Ms. Park to call the owners"],
@@ -609,7 +614,7 @@ export var MIMIC_ITEMS = [
     trap: "'To order a jacket in a larger size' recycles 'order', 'jacket' and 'large' into a new purchase. 'To say that the black jacket fits well' keeps 'black' and 'jacket', but the customer got the wrong item and says nothing about the fit.",
   },
   {
-    id: "mh52", tier: 3, ctx: "Conversation", speaker: "Man",
+    id: "mh52", tier: 3, ctx: "Conversation", speaker: "Man", spoken: true,
     src: "I've booked a table for six at Luigi's, and the taxi will pick us up at seven.",
     q: "What are the speakers most likely doing tonight?",
     opts: ["Buying a table for six people", "Going out for dinner", "Watching a movie at home", "Driving a taxi at seven"],
@@ -653,7 +658,7 @@ export var MIMIC_ITEMS = [
     trap: "'A call center manager' borrows 'call' from 'answer calls', and 'A tour guide for visitors' takes 'visitors'. Each keeps one task and invents a different job.",
   },
   {
-    id: "mh56", tier: 3, ctx: "Radio announcement",
+    id: "mh56", tier: 3, ctx: "Radio announcement", spoken: true,
     src: "Due to an accident on Highway 9, drivers heading downtown should expect delays of up to an hour.",
     q: "What is the purpose of the announcement?",
     opts: ["To advertise a new bus service", "To warn commuters about a traffic problem", "To announce the opening of Highway 9", "To report an accident that lasted an hour downtown"],
@@ -664,7 +669,7 @@ export var MIMIC_ITEMS = [
     trap: "'To announce the opening of Highway 9' copies the road's name for news the announcement doesn't give. 'To report an accident that lasted an hour downtown' mixes 'accident', 'hour' and 'downtown': the hour is the delay, and the accident is on the highway.",
   },
   {
-    id: "mh57", tier: 3, ctx: "Conversation", speaker: "Woman",
+    id: "mh57", tier: 3, ctx: "Conversation", speaker: "Woman", spoken: true,
     src: "Could you check whether the hotel has a shuttle from the airport? My flight lands at midnight.",
     q: "What is the woman concerned about?",
     opts: ["The price of her hotel room", "Checking in to the hotel at midnight", "Getting transportation late at night", "Missing her flight to the airport"],
@@ -698,7 +703,7 @@ export var MIMIC_ITEMS = [
     trap: "A repeated word isn't always a trap: 'subscription' is in the right answer too. The Mimics are 'To announce a new magazine', which copies 'magazine' for news the email doesn't give, and 'To confirm a payment made on June 30', which turns the end date into a payment date.",
   },
   {
-    id: "mh60", tier: 3, ctx: "Conversation", speaker: "Man",
+    id: "mh60", tier: 3, ctx: "Conversation", speaker: "Man", spoken: true,
     src: "The projector keeps turning off, so I'll give my presentation from the handouts instead.",
     q: "What problem does the man mention?",
     opts: ["His handouts are missing.", "The meeting room is too small.", "He has to turn off the lights for his presentation.", "A piece of equipment is unreliable."],

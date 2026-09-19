@@ -12,7 +12,9 @@ export var MASTERY_ACC = 0.8;
 // "hunt" : la chasse repose des questions déjà vues, sa précision ne mesure rien de progressif.
 // Mimic Hunt y a été du 2026-09-18 au 2026-09-19, tant que sa banque (12 items) se rejouait en entière à
 // chaque partie : tests/check_mimic_items.cjs l'y remettrait si la banque repassait sous 45 items.
-export var MASTERY_BLACKLIST = { mock1: 1, mock2: 1, mock3: 1, boss: 1, daily: 1, csess: 1, hunt: 1 };
+// "mimic_listen" (2026-09-19) : 21 sources parlées seulement, rejouées presque entières à chaque partie ;
+// check_mimic_items exige l'exclusion sous 45 sources parlées et son retrait au-delà (lot 4 en projet).
+export var MASTERY_BLACKLIST = { mock1: 1, mock2: 1, mock3: 1, boss: 1, daily: 1, csess: 1, hunt: 1, mimic_listen: 1 };
 
 export function isMastered(ms) {
   return !!ms && ms.total >= MASTERY_Q && ms.correct / ms.total >= MASTERY_ACC;

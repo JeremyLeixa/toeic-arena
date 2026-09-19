@@ -43,3 +43,16 @@ export function letterVoiceKey(part,id){
 export function letterClipUrl(part,id,pos){
   return "/audio/letters/"+letterVoiceKey(part,id)+"_"+LETTERS[pos]+".mp3";
 }
+
+// Mimic Hunt, mode écoute (2026-09-19) : la source d'un item `spoken` lue par une seule voix, du genre du
+// locuteur — `voice` ("m"/"f", messagerie qui se présente), sinon `speaker` (Man / Woman), sinon l'une des
+// six. L'index vient du numéro de l'item : scripts/gen-mimic-audio.mjs régénère un clip à l'identique.
+var MIMIC_MALE=["adam","uk_m","voice_a"],MIMIC_FEMALE=["sarah","ca_f","voice_b"];
+export function mimicVoice(it){
+  var g=it.voice||(it.speaker==="Man"?"m":it.speaker==="Woman"?"f":null);
+  var pool=g==="m"?MIMIC_MALE:g==="f"?MIMIC_FEMALE:LISTENING_VOICES.map(function(v){return v.key;});
+  var key=pool[itemNumber(it.id)%pool.length];
+  for(var i=0;i<LISTENING_VOICES.length;i++)if(LISTENING_VOICES[i].key===key)return LISTENING_VOICES[i];
+  return LISTENING_VOICES[0];
+}
+export function mimicClipUrl(id){return "/audio/mimic/"+id+".mp3";}

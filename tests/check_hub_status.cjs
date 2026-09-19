@@ -52,7 +52,8 @@ eq('absent → non', H.isMastered(undefined), false);
 // progressif — un coffre de maîtrise y récompenserait d'avoir beaucoup raté ailleurs.
 // mimic y a été du 2026-09-18 au 2026-09-19, le temps que sa banque passe de 12 à 60 items
 // (tests/check_mimic_items.cjs lie sa présence à la taille de la banque).
-eq('liste noire = mocks, boss, daily, flashcards, chasse', Object.keys(H.MASTERY_BLACKLIST).sort(), ['boss', 'csess', 'daily', 'hunt', 'mock1', 'mock2', 'mock3']);
+// mimic_listen (2026-09-19) : le mode écoute n'a que 21 sources parlées ; même règle, même test (45).
+eq('liste noire = mocks, boss, daily, flashcards, chasse, Mimic à l\'oreille', Object.keys(H.MASTERY_BLACKLIST).sort(), ['boss', 'csess', 'daily', 'hunt', 'mimic_listen', 'mock1', 'mock2', 'mock3']);
 
 // 2. Module
 const wf = st({ id: 'wordfam' });

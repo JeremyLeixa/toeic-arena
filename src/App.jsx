@@ -76,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-19-mimic-bgm";
+var BUILD_ID="2026-09-19-mimic-listen";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1446,7 +1446,9 @@ function sv(d){
   // `mistakes` (facultatif, aussi dans drillDone et dailyDone) : la liste mistakesRef du module. Ses
   // entrées qui portent `ref` entrent au bestiaire (lib/review.js recordMisses), file bornée ICI, à
   // l'écriture, jamais dans supaToLocal (une troncature à la lecture ferait échouer le round-trip).
-  function miniSession(sc,tot,xp,mistakes,extra){var modId=sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot,null,extra&&extra.bites!=null?{bites:extra.bites}:null);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
+  // extra.modId : un module à deux volets sur une même route (Mimic Hunt : mimic / mimic_listen, 2026-09-19)
+  // dit sous quel module compter la partie ; sinon, la route.
+  function miniSession(sc,tot,xp,mistakes,extra){var modId=(extra&&extra.modId)||sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot,null,extra&&extra.bites!=null?{bites:extra.bites}:null);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
   // Chasse aux erreurs (2026-09-17, lot 3). La base d'XP vient du module (5 + 5 par créature vaincue,
   // lib/review.js huntReward) : on ne paie QUE les créatures vaincues, jamais une simple réussite —
   // rater exprès une question de Drill coûte 7 XP tout de suite contre 5 XP onze jours plus tard.

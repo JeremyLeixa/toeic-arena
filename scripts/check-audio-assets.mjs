@@ -28,7 +28,8 @@ import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "../src/data/listening.js";
 import { BOSS_P1, BOSS_P2, BOSS_P3, BOSS_P4 } from "../src/data/bossTestFull.js";
-import { LISTENING_VOICES, LETTERS } from "../src/lib/listeningVoices.js";
+import { LISTENING_VOICES, LETTERS, mimicClipUrl } from "../src/lib/listeningVoices.js";
+import { MIMIC_ITEMS } from "../src/data/mimicHunt.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -102,6 +103,11 @@ BOSS_P4.forEach((_, i) => check(`/audio/boss/p4_${pad2(i + 1)}.mp3`, "BossP4"));
 // Lettres « A. » … par voix — lib/audio.js playLetteredOption → /audio/letters/{voix}_{L}.mp3
 // (2026-09-16 : les clips d'options P1/P2 n'ont plus de lettre, elle est jouée à part).
 for (const v of LISTENING_VOICES) for (const L of LETTERS) check(`/audio/letters/${v.key}_${L}.mp3`, "letters");
+
+// Mimic Hunt, mode écoute (2026-09-19) — chaque source `spoken` → /audio/mimic/{id}.mp3 (lib/listeningVoices.js
+// mimicClipUrl). Un clip absent ne se voit pas : playAudioFile résout sur onerror, les réponses se déverrouillent
+// et l'élève répond à une source qu'il n'a jamais entendue.
+for (const it of MIMIC_ITEMS) if (it.spoken) check(mimicClipUrl(it.id), "MimicListen");
 
 // Musiques — toute chaîne "bgm_x" de src/ → /audio/bgm/bgm_x.mp3 : playBGM("bgm_x") comme bgm:"bgm_x" des hubs
 // qui passent le nom par une variable. Le vecteur exact de bgm_tavern.mp3 (présent en local, jamais `git add`-é),

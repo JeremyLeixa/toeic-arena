@@ -53,6 +53,8 @@ ITEMS.forEach(function (it) {
   ok(it.c >= 0 && it.c <= 3, L + ': index de bonne réponse dans 0-3');
   ok(!!it.q && !!it.src && !!it.ctx, L + ': source, question et étiquette présentes');
   ok(!!it.exp && !!it.trap, L + ': explication et analyse du piège présentes');
+  ok(it.voice == null || ((it.voice === 'm' || it.voice === 'f') && it.spoken), L + ': `voice` vaut "m" ou "f", sur une source parlée');
+  ok(it.spoken == null || it.spoken === true, L + ': `spoken` vaut true ou est absent');
   if (it.c >= 0 && it.c <= 3) pos[it.c]++;
 
   // Le pont : chaque moitié doit exister là où le module la cherchera.
@@ -138,7 +140,7 @@ if (!LOT) {
   // Câblage : sans lui, la base est réduite mais le parchemin ne dit pas pourquoi.
   const read = function (f) { return fs.readFileSync(path.join(ROOT, 'src', f), 'utf8'); };
   const MH = read('features/games/MimicHunt.jsx');
-  ok(/mimicXp\(sc,TOTAL,bites\)/.test(MH) && /p\.done\([^;]*\{bites:bites,bitePenalty:x\.bitePenalty\}\)/.test(MH),
+  ok(/mimicXp\(sc,TOTAL,bites\)/.test(MH) && /p\.done\([^;]*\{bites:bites,bitePenalty:x\.bitePenalty,modId:[^}]*\}\)/.test(MH),
     'câblage : MimicHunt calcule sa base par mimicXp et passe morsures et retenue à p.done');
   ok(/sp==="mimic"[^\n]*miniSession\(sc,tot,xp,mistakes,extra\)/.test(read('routes.jsx')), 'câblage : la route mimic relaie extra à miniSession');
   ok(/function miniSession\(sc,tot,xp,mistakes,extra\)[^\n]*extra:extra/.test(read('App.jsx')), 'câblage : miniSession passe extra à settleSession');
@@ -165,9 +167,44 @@ if (!LOT) {
   // central d'App() la coupait juste après que la route l'avait lancée : silence, puis retour au hasard.
   const selfManaged = (read('App.jsx').match(/var SELF_MANAGED=\[([^\]]*)\]/) || [])[1] || '';
   ok(/"mimic"/.test(selfManaged), 'musique : "mimic" dans SELF_MANAGED (App.jsx)');
+  ok(/if\(listenMode\)stopBGM\(\)/.test(MH), 'musique : coupée en mode écoute (une voix sous la musique ne s\'entend pas)');
   ok(/playBGM\("bgm_mimic"\)/.test(MH), 'musique : le module joue bgm_mimic');
   const mimicRoute = read('routes.jsx').split(/\r?\n/).find(function (l) { return l.indexOf('if(sp==="mimic")') >= 0; }) || '';
   ok(mimicRoute && mimicRoute.indexOf('playBGM') < 0, 'musique : la route mimic ne lance plus de piste (le module s\'en charge)');
+
+  // Mode écoute (variante A, 2026-09-19). Un clip absent ne se voit pas : playAudioFile résout sur onerror,
+  // les réponses se déverrouillent et l'élève répond à une source qu'il n'a jamais entendue.
+  const { mimicClipUrl, mimicVoice } = require(path.join(ROOT, 'src', 'lib', 'listeningVoices.js'));
+  const SPOKEN = ITEMS.filter(function (it) { return it.spoken; });
+  [1, 2, 3].forEach(function (t) {
+    const n = SPOKEN.filter(function (it) { return it.tier === t; }).length;
+    ok(n >= 5, 'écoute : palier ' + t + ' : au moins 5 sources parlées, une partie en tire 5 (' + n + ')');
+  });
+  SPOKEN.forEach(function (it) {
+    let size = 0;
+    try { size = fs.statSync(path.join(ROOT, 'public', mimicClipUrl(it.id))).size; } catch (e) { size = 0; }
+    ok(size > 1000, it.id + ' : clip ' + mimicClipUrl(it.id) + ' présent (node scripts/gen-mimic-audio.mjs --all)');
+    const g = it.voice || (it.speaker === 'Man' ? 'm' : it.speaker === 'Woman' ? 'f' : null);
+    const v = mimicVoice(it);
+    ok(!g || (g === 'm' ? /male/.test(v.label) && !/female/.test(v.label) : /female/.test(v.label)), it.id + ' : voix du genre du locuteur (' + v.label + ')');
+  });
+  // Coffre de maîtrise à l'oreille : même règle que la lecture, sur les sources parlées.
+  ok(SPOKEN.length < BANK_MIN ? !!MASTERY_BLACKLIST.mimic_listen : !MASTERY_BLACKLIST.mimic_listen,
+    SPOKEN.length < BANK_MIN
+      ? 'écoute : mimic_listen doit rester dans MASTERY_BLACKLIST sous ' + BANK_MIN + ' sources parlées (' + SPOKEN.length + ')'
+      : 'écoute : ' + SPOKEN.length + ' sources parlées, retirer mimic_listen de MASTERY_BLACKLIST (lib/hubStatus.js)');
+  // Au-delà, la tuile Games doit montrer les deux modes (sinon la progression à l'oreille reste invisible).
+  if (SPOKEN.length >= BANK_MIN) ok(/id:"mimic"[^}]*subs:\[[^\]]*"mimic_listen"/.test(read('features/games/GamesHub.jsx')),
+    'écoute : la tuile Games de Mimic Hunt passe en subs:["mimic","mimic_listen"]');
+  ok(/mimicClipUrl\(item\.id\)/.test(MH) && /resumeAudioSession\(\);return stopListenAudio;/.test(MH), 'écoute : clip par mimicClipUrl, drapeau audio au montage et au démontage');
+  ok(/function answer\(i\)\{\s*if\(listenMode&&!heard\)return;/.test(MH), 'écoute : pas de réponse avant la fin de l\'enregistrement (variante A)');
+  ok(/modId:listenMode\?"mimic_listen":"mimic"/.test(MH) && /var modId=\(extra&&extra\.modId\)\|\|sp/.test(read('App.jsx')), 'écoute : la partie compte sous mimic_listen (extra.modId lu par miniSession)');
+  const TOEIC = read('lib/toeic.js');
+  ok(/mimic_listen:\{part:null,section:"listening",score:true\}/.test(TOEIC) && /LIS_MODS=\[[^\]]*"mimic_listen"/.test(TOEIC) && /\{id:"mimic_listen",w:0\.04\}/.test(TOEIC),
+    'écoute : mimic_listen compte en Listening (MODULE_TOEIC_MAP, LIS_MODS, poids .04)');
+  const heardU = { moduleScores: {} };
+  recordModule(heardU, 'mimic_listen', 15, 15, null, { bites: 0 });
+  ok(ach('mimic_first').check(heardU) && ach('mimic_unbitten').check(heardU) && ach('mimic_perfect').check(heardU), 'trophées : une partie à l\'oreille compte');
 }
 
 console.log(fails === 0

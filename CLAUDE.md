@@ -183,7 +183,8 @@ src/
     miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps
     audioBlitz.js      — 60 Audio Blitz items
     clueHunter.js      — 80 Clue Hunter items
-    mimicHunt.js       — 60 items Mimic Hunt (reformulation, 20 par palier) + MIMIC_TIERS (3 paliers)
+    mimicHunt.js       — 60 items Mimic Hunt (reformulation, 20 par palier ; 21 `spoken` pour le mode écoute)
+                          + MIMIC_TIERS (3 paliers)
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
     placement.js       — 85 Battle Scan questions + tier levels + mission modules
@@ -355,7 +356,7 @@ Grammar & Vocab, Tips), Games, Listening et Reading rendent `HubTile` + `HubShel
   - **Sections normalisées proportionnellement** (`wSum/wTot`). ⚠️ NE PAS revenir au hack `wSum+=(1-wTot)*0.01` : il écrasait le Reading des profils à couverture partielle (défaut historique "Reading 8/495").
   - **Reading backbone** (A.2) : drill .22, p6 .15, p7 .18, wordfam .06, connsort .06, prepdrill .05, gerinf .05, falsefr .04, pvdojo .04, sbuild .04, gauntlet(moy 4) .11.
   - **Reading support (Chantier B, 2026-06-10)** — poids FAIBLE, garde-fou validité (backbone dominant) : tavern .05, clue .04, traps .04, modals(moy match+sort) .04, bforge .03, timesim .03, stratquiz .02, daily .03. Principe : tout module à précision réelle qui donne de l'XP bouge le score (exceptions : Flashcards 0 XP + jeux d'arcade sans précision).
-  - **Listening** (A.3) : lisP1 .18, lisP2 .27, lisP3 .25, lisP4 .22, ablitz .08.
+  - **Listening** (A.3) : lisP1 .18, lisP2 .27, lisP3 .25, lisP4 .22, ablitz .08 ; support **mimic_listen .04** (Mimic Hunt à l'oreille, 2026-09-19).
   - **Groupe mock** (débloque l'estimation + bonus asymétrique) : mock1, mock2, boss, **endless** (Endless = full TOEIC, ajouté Chantier B).
   - **`MODULE_TOEIC_MAP`** (juste avant `partOfModule`) = source unique module→{part,section,score}, consommée par partOfModule + partAccuracies (Mentor/Focus). Fix Chantier B des ids falsefr/pvdojo/ablitz qui étaient invisibles au Mentor.
   - **Export CSV** : itère `EXPORT_MODULES` (superset, PAS `MISSION_MODULES`) → toutes les colonnes modules présentes depuis le 2026-06-10.
@@ -554,8 +555,19 @@ Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alo
   d'avant ne comptent pas. Mimic compte aussi dans « Game Master ».
 - **BGM `bgm_mimic`** (piste Mureka du 2026-09-19, prompt archivé dans la mémoire des BGM). Module **SELF_MANAGED** :
   il joue la piste lui-même (effet sur la phase), la route n'y touche pas. Hors de la liste, l'effet central d'App()
-  coupait la musique juste après que la route l'avait lancée (silence, puis retour au rendu suivant). À faire : le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
-  direct vers les Parts 3 et 4, et un poids Listening).
+  coupait la musique juste après que la route l'avait lancée (silence, puis retour au rendu suivant). Coupée en mode écoute.
+- **Mode écoute** (variante A « aperçu », choix de Jérémy du 2026-09-19, proto `prototypes/mimic-hunt/listen.html`) : la
+  source d'un item `spoken` s'ENTEND (en Parts 3 et 4, le distracteur classique reprend un mot de l'enregistrement).
+  Deux portes sur l'intro (Read / Listen). Question et réponses lisibles avant l'écoute (consigne des Parts 3 et 4) mais
+  **verrouillées jusqu'à la fin de l'enregistrement** (répondre au premier mot reconnu, c'est mordre), une réécoute
+  (`REPLAYS`), puis la transcription et le retour habituel. **Module `mimic_listen`** (même route : `extra.modId`, lu par
+  `miniSession`) : Listening `.04`, ses propres stats et courbe anti-farming, coffre de maîtrise exclu sous 45 sources
+  parlées (`check_mimic_items`, qui exige alors aussi la tuile Games en `subs`). Trophées et « Game Master » comptent
+  les deux modes ; les erreurs gardent la `ref` `mimic:<id>` (la chasse les repose à l'écrit). « Play again » repart
+  dans le même mode (`replayMode`). Clips `public/audio/mimic/<id>.mp3` (`node scripts/gen-mimic-audio.mjs --all`,
+  voix `mimicVoice` de `lib/listeningVoices.js` : genre de `voice` / `speaker`) ; `check:assets` et `check_mimic_items`
+  exigent chaque clip — un clip absent ne se voit pas, les réponses se déverrouilleraient sans rien faire entendre.
+  21 sources parlées (6 / 5 / 10) ; le lot 4 « parlé » (`drafts/lot4.js`, 24 items) les porte à 45 après relecture.
 
 ### Mentor qui se souvient : bestiaire, chasse, plan du jour, narration, lettre, Chronique (2026-09-17/18, lots 1-6)
 Proto `prototypes/mentor-memory/` (storyboard des 8 moments, décisions de Jérémy dans son README) ; banc de
@@ -950,6 +962,7 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 - **P4 training:** `public/audio/p4/{id}.mp3`
 - **Boss test:** `public/audio/boss/p1_XX_Y.mp3`, etc.
 - **Audio Blitz:** `public/audio/blitz/{id}.mp3`
+- **Mimic Hunt (mode écoute):** `public/audio/mimic/{id}.mp3` — items `spoken`, une voix par item (`mimicVoice`)
 - **BGM:** `public/audio/bgm/bgm_{name}.mp3`
 
 ### ElevenLabs

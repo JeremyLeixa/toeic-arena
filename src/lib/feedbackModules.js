@@ -43,7 +43,8 @@ export var FEEDBACK_MODULES = [
   {group:"Games",items:[
     {id:"duel",label:"Vocabulary Arena (Duel)"},
     {id:"wfall",label:"Word Fall"},
-    {id:"matchE",label:"Speed Match"}
+    {id:"matchE",label:"Speed Match"},
+    {id:"mimic",label:"Mimic Hunt"}
   ]},
   {group:"Mocks",items:[
     {id:"mock1",label:"Mock Test 1"},

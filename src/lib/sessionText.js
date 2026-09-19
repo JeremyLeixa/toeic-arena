@@ -78,7 +78,7 @@ export function stepDetail(st, o) {
   // « 9 correct » à 45 XP passerait pour une erreur de calcul. La retenue n'est chiffrée que COMPLÈTE :
   // quand le plancher des 15 joue, « 11 bites −15 » se lirait comme une erreur (choix de Jérémy du
   // 2026-09-19), on ne dit que le nombre de morsures.
-  if (st.id === "base" && o.modId === "mimic" && o.bites > 0) {
+  if (st.id === "base" && (o.modId === "mimic" || o.modId === "mimic_listen") && o.bites > 0) {
     var full = o.bitePenalty === MIMIC_XP.perBite * o.bites;
     return o.sc + " correct · " + o.bites + (o.bites === 1 ? " bite" : " bites") + (full ? " −" + o.bitePenalty : "");
   }
