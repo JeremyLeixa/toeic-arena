@@ -880,6 +880,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .mm-strip-go{font-size:18px;color:var(--t3);line-height:1}
 /* Pastille de l'onglet Mentor : la mission du jour attend (l'onglet reste toujours ouvert). */
 .mm-tabdot{position:absolute;top:4px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+/* Onglets inactifs en clair (2026-09-19) : --t1 à 0,55 tombait à 3,7:1 sur --bg3 ; 0,70 = 5,9:1 au pire. Le sombre garde 0,55 (4,8:1). */
+.light .tab-bar{--tab-idle:.7}
 @media(min-width:768px){.app:not(.onboard-shell) .tab-bar .mm-tabdot{right:auto;left:36px;top:8px}}
 /* Today's Path : les quêtes du jour figé, cochées au lieu de disparaître. */
 .mm-intro{margin:0 2px 12px;font-size:12.5px;line-height:1.5;font-style:italic;color:var(--t2)}
