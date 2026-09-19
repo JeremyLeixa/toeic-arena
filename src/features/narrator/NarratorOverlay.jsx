@@ -202,7 +202,9 @@ export function NarratorOverlay(props) {
           letterSpacing: 3, margin: "6px 0 2px"
         }}>{moment.title.toUpperCase()}</h2>
         <div style={{
-          textAlign: "center", fontSize: 11, color: /*fond local*/"#8a6530",
+          // #5e3c1a (2026-09-19) : l'ancien #8a6530 tombait à 2,8:1 sur le parchemin (#d4bc85 à cette hauteur
+          // du dégradé), 5,3:1 désormais. L'ornement ❖ et les filets gardent #8a6530 : décoratifs.
+          textAlign: "center", fontSize: 11, color: /*fond local*/"#5e3c1a",
           fontStyle: "italic", letterSpacing: 1.5, marginBottom: 14
         }}>{"\u2014 " + moment.subtitle + " \u2014"}</div>
 
@@ -219,7 +221,7 @@ export function NarratorOverlay(props) {
           borderBottom: "1px solid rgba(90,58,20,0.25)"
         }}>
           <div className="out" style={{
-            fontSize: 8, letterSpacing: 2.5, color: /*fond local*/"#8a6530",
+            fontSize: 8, letterSpacing: 2.5, color: /*fond local*/"#5e3c1a",
             textTransform: "uppercase", marginBottom: 6, textAlign: "center", fontWeight: 700,
             flexShrink: 0
           }}>{"\u25c6 His words \u25c6"}</div>
