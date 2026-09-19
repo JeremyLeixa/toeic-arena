@@ -18,7 +18,7 @@ import { MIMIC_ITEMS, MIMIC_TIERS } from "../../data/mimicHunt.js";
 import { shuffle } from "../../lib/util.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
 import { mimicXp, MIMIC_XP } from "../../lib/mimicXp.js";
-import { playChestLand, playCorrect, playWrong } from "../../sounds.js";
+import { playBGM, playChestLand, playCorrect, playWrong } from "../../sounds.js";
 import { useEffect, useRef, useState } from "react";
 
 // Tout en jetons : suit le skin, la fête et le mode clair. Patron des CSS locaux
@@ -181,6 +181,9 @@ export function MimicHunt(p){
     var app=document.querySelector(".app");
     if(app)app.scrollTop=0;
   },[idx,phase]);
+  // Musique pilotée ici (module SELF_MANAGED dans App) : la route n'y touche plus. playBGM ne relance pas
+  // une piste déjà en cours ; à la fin, le done de la route l'arrête, et rien ne la relance sous le parchemin.
+  useEffect(function(){if(phase!=="done")playBGM("bgm_mimic");},[phase]);
 
   function openingOf(i){return i===0||items[i].tier!==items[i-1].tier?"tier":"q";}
 

@@ -76,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-19-mimic-bite";
+var BUILD_ID="2026-09-19-mimic-bgm";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -734,7 +734,9 @@ useEffect(function(){
   useEffect(function(){
     if(ld||!u||!bgmStarted.current)return;
     // Routes that manage their own BGM (do not interfere):
-    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet","modals","bforge","shop"];
+    // "mimic" : absent jusqu'au 2026-09-19, cet effet coupait la musique juste après que la route l'avait lancée
+    // (elle revenait au rendu suivant d'App(), jusqu'à 60 s plus tard). Le module la pilote lui-même.
+    var SELF_MANAGED=["boss","endless","matchE","wfall","duel","sbuild","clue","tavern","gauntlet","modals","bforge","shop","mimic"];
     if(sp&&SELF_MANAGED.indexOf(sp)!==-1)return;
     if(sp){stopBGM();return;}
     // No subpage active and on a home-BGM tab → ensure bgm_home is playing

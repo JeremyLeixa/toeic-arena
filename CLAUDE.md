@@ -480,7 +480,7 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 
 ### BGM Control (centralized)
 - Central useEffect in main App watches `sp` and `tab`. Stops BGM on entry to audio routes (lis, lisP1-P4, ablitz). Restores `bgm_home` on return to home/league/profile without subpage.
-- `SELF_MANAGED` routes that handle their own BGM: boss, endless, matchE, wfall, duel, sbuild, clue, tavern, **gauntlet**. These are excluded from centralized control.
+- `SELF_MANAGED` routes that handle their own BGM: boss, endless, matchE, wfall, duel, sbuild, clue, tavern, **gauntlet**, modals, bforge, shop, **mimic**. These are excluded from centralized control. `npm run check:assets` vérifie depuis le 2026-09-19 que chaque `"bgm_x"` nommé dans `src/` existe et est suivi par git.
 - Routes à écran de fin commun : `if(!lastSession)playBGM(…)`, sinon la musique repart sous le parchemin à chaque rendu.
 - Auto-start on first user interaction: only triggers `bgm_home` if `tab==="home" && !sp`.
 
@@ -552,7 +552,9 @@ Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alo
   permises), Paraphrase Master (15/15), Mimic Slayer (80 % sur 60 Q). Unbitten lit `bites` dans l'entrée
   d'history, posé par `recordModule` (6e argument `more`) depuis l'`extra` de `miniSession` : les parties
   d'avant ne comptent pas. Mimic compte aussi dans « Game Master ».
-- **BGM placeholder** `bgm_clue`. À faire : piste Mureka dédiée, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
+- **BGM `bgm_mimic`** (piste Mureka du 2026-09-19, prompt archivé dans la mémoire des BGM). Module **SELF_MANAGED** :
+  il joue la piste lui-même (effet sur la phase), la route n'y touche pas. Hors de la liste, l'effet central d'App()
+  coupait la musique juste après que la route l'avait lancée (silence, puis retour au rendu suivant). À faire : le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
   direct vers les Parts 3 et 4, et un poids Listening).
 
 ### Mentor qui se souvient : bestiaire, chasse, plan du jour, narration, lettre, Chronique (2026-09-17/18, lots 1-6)

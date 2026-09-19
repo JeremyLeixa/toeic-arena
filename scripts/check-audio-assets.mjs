@@ -103,10 +103,27 @@ BOSS_P4.forEach((_, i) => check(`/audio/boss/p4_${pad2(i + 1)}.mp3`, "BossP4"));
 // (2026-09-16 : les clips d'options P1/P2 n'ont plus de lettre, elle est jouée à part).
 for (const v of LISTENING_VOICES) for (const L of LETTERS) check(`/audio/letters/${v.key}_${L}.mp3`, "letters");
 
+// Musiques — toute chaîne "bgm_x" de src/ → /audio/bgm/bgm_x.mp3 : playBGM("bgm_x") comme bgm:"bgm_x" des hubs
+// qui passent le nom par une variable. Le vecteur exact de bgm_tavern.mp3 (présent en local, jamais `git add`-é),
+// que rien ne vérifiait avant le 2026-09-19.
+function walk(dir, out) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walk(p, out); else if (/\.(js|jsx)$/.test(e.name)) out.push(p);
+  }
+  return out;
+}
+const bgms = new Set();
+for (const f of walk(path.join(ROOT, "src"), [])) {
+  for (const m of fs.readFileSync(f, "utf8").matchAll(/["'](bgm_[a-z0-9_]+)["']/g)) bgms.add(m[1]);
+}
+for (const b of bgms) check(`/audio/bgm/${b}.mp3`, "playBGM");
+
 // ═══ Rapport ═══
 const counts = [LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4].map(a => a.length);
 console.log(`\nPools listening: P1=${counts[0]} P2=${counts[1]} P3=${counts[2]} P4=${counts[3]}`);
 console.log(`Boss: P1=${BOSS_P1.length} P2=${BOSS_P2.length} P3=${BOSS_P3.length} P4=${BOSS_P4.length}`);
+console.log(`Musiques nommées dans src/ : ${bgms.size} (${[...bgms].sort().join(", ")})`);
 
 if (missing.length) {
   console.error(`\n${missing.length} ASSET(S) MANQUANT(S) — 404 silencieux en prod :`);

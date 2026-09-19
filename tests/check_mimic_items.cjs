@@ -160,6 +160,14 @@ if (!LOT) {
   ok(ach('mimic_slayer').check(played([[12, 1], [12, 1], [12, 1], [12, 1]])) && !ach('mimic_slayer').check(played([[12, 1], [12, 1], [12, 1]])),
     'Mimic Slayer : 80 % sur 60 questions, pas avant');
   ok(/recordModule\(c,modId,sc,tot,null,extra&&extra\.bites!=null\?\{bites:extra\.bites\}:null\)/.test(read('App.jsx')), 'câblage : miniSession range les morsures dans l\'history');
+
+  // Musique (2026-09-19) : le module la pilote (il la coupera en mode écoute). Hors de SELF_MANAGED, l'effet
+  // central d'App() la coupait juste après que la route l'avait lancée : silence, puis retour au hasard.
+  const selfManaged = (read('App.jsx').match(/var SELF_MANAGED=\[([^\]]*)\]/) || [])[1] || '';
+  ok(/"mimic"/.test(selfManaged), 'musique : "mimic" dans SELF_MANAGED (App.jsx)');
+  ok(/playBGM\("bgm_mimic"\)/.test(MH), 'musique : le module joue bgm_mimic');
+  const mimicRoute = read('routes.jsx').split(/\r?\n/).find(function (l) { return l.indexOf('if(sp==="mimic")') >= 0; }) || '';
+  ok(mimicRoute && mimicRoute.indexOf('playBGM') < 0, 'musique : la route mimic ne lance plus de piste (le module s\'en charge)');
 }
 
 console.log(fails === 0
