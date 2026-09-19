@@ -112,11 +112,13 @@ export function dailyQs(date,u){
 export function srsUp(st,r){var e=st.ease||2.5,iv=st.interval||0;if(r===1){iv=1;e=Math.max(1.3,e-0.2);}else if(r===2){iv=Math.max(1,Math.ceil(iv*1.2));e=Math.max(1.3,e-0.15);}else if(r===3){iv=iv===0?1:Math.ceil(iv*e);}else{iv=iv===0?3:Math.ceil(iv*e*1.3);e+=0.15;}var nx=new Date();nx.setDate(nx.getDate()+iv);return{ease:e,interval:iv,nextReview:nx.toISOString().split("T")[0],correct:(st.correct||0)+(r>=3?1:0),total:(st.total||0)+1};}
 export function dueCards(states,cards){var t=today(),due=[],nw=[];for(var i=0;i<cards.length;i++){var s=states[cards[i].id];if(!s)nw.push(cards[i]);else if(s.nextReview<=t)due.push(cards[i]);}return due.concat(nw.slice(0,Math.max(0,10-due.length))).slice(0,15);}
 // ─── MODULE SCORE TRACKING ───
-export function recordModule(u,modId,sc,tot,catStats){
+// `more` : champs propres au module ajoutés à l'entrée d'history (Mimic Hunt : `bites`, lu par le
+// trophée « Unbitten » ; une partie sans morsure ne se déduit ni du score ni du cumul).
+export function recordModule(u,modId,sc,tot,catStats,more){
   if(!u.moduleScores)u.moduleScores={};
   var prev=u.moduleScores[modId]||{correct:0,total:0,sessions:0,lastDate:null,history:[],catStats:{}};
   var hist=prev.history||[];
-  var entry={date:today(),correct:sc,total:tot};
+  var entry=Object.assign({date:today(),correct:sc,total:tot},more||{});
   // Les catStats DE LA SESSION, en plus du cumul (2026-09-17, lib/learnerModel.js) : sans elles, on ne
   // peut dire « 6 sur tes 13 dernières » ni dater un retournement, seulement une moyenne à vie. Format
   // compact {cat:{c,t}} : l'history est déjà bornée à 100 entrées, donc le jsonb ne dérive pas.

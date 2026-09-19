@@ -143,6 +143,23 @@ if (!LOT) {
   ok(/sp==="mimic"[^\n]*miniSession\(sc,tot,xp,mistakes,extra\)/.test(read('routes.jsx')), 'câblage : la route mimic relaie extra à miniSession');
   ok(/function miniSession\(sc,tot,xp,mistakes,extra\)[^\n]*extra:extra/.test(read('App.jsx')), 'câblage : miniSession passe extra à settleSession');
   ok(/bites: s\.bites, bitePenalty: s\.bitePenalty/.test(read('components/SessionResult.jsx')), 'câblage : SessionResult passe morsures et retenue à stepDetail');
+
+  // Trophées (data/achievements.js). « Unbitten » lit `bites` dans l'entrée d'history : sans lui
+  // (recordModule qui l'oublie, miniSession qui ne le passe pas), le trophée ne tombe jamais, en silence.
+  const { ACHIEVEMENTS } = require(path.join(ROOT, 'src', 'data', 'achievements.js'));
+  const { recordModule } = require(path.join(ROOT, 'src', 'lib', 'progress.js'));
+  const ach = function (id) { return ACHIEVEMENTS.find(function (a) { return a.id === id; }); };
+  const played = function (runs) { const u = { moduleScores: {} }; runs.forEach(function (r) { recordModule(u, 'mimic', r[0], 15, null, r[1] == null ? null : { bites: r[1] }); }); return u; };
+  ['mimic_first', 'mimic_unbitten', 'mimic_perfect', 'mimic_slayer'].forEach(function (id) { ok(!!ach(id), 'trophée ' + id + ' déclaré'); });
+  ok(ACHIEVEMENTS.length === new Set(ACHIEVEMENTS.map(function (a) { return a.id; })).size, 'trophées : identifiants uniques');
+  ok(ach('mimic_first').check(played([[3, 11]])) && !ach('mimic_first').check({ moduleScores: {} }), 'trophée : première partie');
+  ok(ach('mimic_unbitten').check(played([[9, 0]])), 'Unbitten : 9 justes, 0 morsure (erreurs neutres permises)');
+  ok(!ach('mimic_unbitten').check(played([[14, 1]])), 'Unbitten : une morsure suffit à le refuser');
+  ok(!ach('mimic_unbitten').check(played([[9, null]])), 'Unbitten : une partie sans `bites` (d\'avant la règle) ne compte pas');
+  ok(ach('mimic_perfect').check(played([[15, 0]])) && !ach('mimic_perfect').check(played([[14, 0]])), 'Paraphrase Master : 15/15 seulement');
+  ok(ach('mimic_slayer').check(played([[12, 1], [12, 1], [12, 1], [12, 1]])) && !ach('mimic_slayer').check(played([[12, 1], [12, 1], [12, 1]])),
+    'Mimic Slayer : 80 % sur 60 questions, pas avant');
+  ok(/recordModule\(c,modId,sc,tot,null,extra&&extra\.bites!=null\?\{bites:extra\.bites\}:null\)/.test(read('App.jsx')), 'câblage : miniSession range les morsures dans l\'history');
 }
 
 console.log(fails === 0

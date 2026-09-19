@@ -187,7 +187,7 @@ src/
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
     placement.js       — 85 Battle Scan questions + tier levels + mission modules
-    achievements.js    — 58 achievements (incl. 16 Gauntlet, 4 Word Tavern, 4 Duel)
+    achievements.js    — 66 achievements (incl. 16 Gauntlet, 4 Word Tavern, 4 Duel, 4 Modal Council, 4 Mimic Hunt)
     leagues.js         — 7 league tiers + bot competitors
     avatarIcons.js     — Iconify SVG paths for game icons
     chests.js          — CHEST_TYPES, RARITIES, AVATARS, SKINS, trigger logic,
@@ -547,8 +547,12 @@ Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alo
   `prototypes/mimic-hunt/drafts/`, contrôlé par `node tests/check_mimic_items.cjs <lot.js>…` (mêmes
   contrôles par item, identifiants distincts de la banque), relu sur `prototypes/mimic-hunt/review.html`
   (tout visible : pont, recopies, mot gardé ; `?tier=2`), puis versé dans `src/data/mimicHunt.js`.
-- **BGM placeholder** `bgm_clue`. À faire : piste Mureka dédiée,
-  achievements, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
+- **Trophées** (2026-09-19, sans coffre, comme Word Tavern et Modal Council ; 30 Darics chacun) : Mimic
+  Spotter (1re partie), **Unbitten** (une partie de 15 sans morsure : la compétence du module, erreurs neutres
+  permises), Paraphrase Master (15/15), Mimic Slayer (80 % sur 60 Q). Unbitten lit `bites` dans l'entrée
+  d'history, posé par `recordModule` (6e argument `more`) depuis l'`extra` de `miniSession` : les parties
+  d'avant ne comptent pas. Mimic compte aussi dans « Game Master ».
+- **BGM placeholder** `bgm_clue`. À faire : piste Mureka dédiée, et le lot 2 « audio » (même source lue par les voix de `lib/listeningVoices.js` → transfert
   direct vers les Parts 3 et 4, et un poids Listening).
 
 ### Mentor qui se souvient : bestiaire, chasse, plan du jour, narration, lettre, Chronique (2026-09-17/18, lots 1-6)
