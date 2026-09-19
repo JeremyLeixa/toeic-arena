@@ -1,0 +1,41 @@
+/* Proto échelons de maîtrise — ajouts aux .hub-* réels de appCss.js, en jetons (skin, fête, clair). */
+.mt-gold{color:var(--gold);font-weight:700}
+
+/* Coffre suivant, chiffre romain hors du SVG (le filtre gris du coffre ne le touche pas) */
+.mt-cw{position:relative;display:inline-flex}
+.mt-num{position:absolute;right:-7px;top:-3px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:99px;
+  font:800 9.5px/15px 'Cinzel',serif;letter-spacing:.3px;text-align:center;color:var(--gold);background:var(--bg2);border:1px solid var(--gold)}
+.mt-num.sm{min-width:14px;height:14px;font-size:8px;line-height:12px;right:-5px;top:-4px;padding:0 3px}
+.hub-chest.legend svg{filter:grayscale(.25) brightness(.9);opacity:.9}
+.hub-chest.legend small{color:var(--gold)}
+.hub-chest.wait svg{filter:drop-shadow(0 0 6px rgba(230,180,70,.35));opacity:1}
+.hub-chest.wait small{color:var(--t2)}
+
+/* C · Échelle : segments proportionnels aux questions à jouer (50, 100, 150) */
+.mt-ladder{margin-top:6px;max-width:190px}
+.mt-segs{display:flex;gap:3px}
+.mt-seg{height:4px;border-radius:99px;background:var(--bg3);overflow:hidden;flex-basis:0}
+.mt-seg i{display:block;height:100%;border-radius:99px;background:var(--cyan);animation:hubGrow 1s cubic-bezier(.2,.8,.2,1) .15s both}
+.mt-seg.won{background:var(--gold)}
+.mt-seg.full i{background:var(--gold)}
+.mt-seg.low i{background:repeating-linear-gradient(90deg,var(--t3) 0 5px,transparent 5px 8px)}
+.mt-labs{margin-top:2px}
+.mt-labs span{flex-basis:0;font:700 8.5px/1 'Cinzel',serif;color:var(--t3);letter-spacing:.3px}
+.mt-labs span.won{color:var(--gold)}
+.mt-labs span.cur{color:var(--t1)}
+.mt-labs span.legend{color:var(--t2)}
+
+/* D · Médailles : un sceau par échelon gagné */
+.mt-dmeta{display:flex;align-items:center;gap:6px}
+.mt-dmeta>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.mt-medals{display:inline-flex;gap:3px;flex-shrink:0}
+.mt-medal{min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:99px;display:inline-flex;align-items:center;justify-content:center;
+  font:800 8.5px/1 'Cinzel',serif;letter-spacing:.2px;color:var(--gold);border:1px solid var(--gold);background:rgba(var(--bg3-rgb),.6)}
+.mt-medal.legend{background:var(--gold);color:var(--bg)}
+.mt-medal.renown{border-style:dashed}
+
+/* Étagère : coffre au palier du dernier échelon gagné + son chiffre */
+.mt-shelf-c{position:relative;display:inline-flex}
+.hub-shelf-row .mt-shelf-c{margin-right:5px}
+
+@media(prefers-reduced-motion:reduce){.mt-seg i{animation:none}}
