@@ -2,6 +2,8 @@
 import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
+import { SessionTop, ComboBanner, AnswerCard, NextBar } from "../../components/SessionHud.jsx";
+import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { STRATEGIES, STRAT_QUIZ } from "../../data/miniGames.js";
 import { shuffle, shuffleOpts } from "../../lib/util.js";
@@ -203,7 +205,8 @@ export function StratQuizPage(p){
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(i){sPk(i);if(i!==qs[ci].correct){var sq=qs[ci];mistakesRef.current.push({tag:"Strategy · "+sq.part,prompt:sq.scenario,noBlank:true,yours:sq.options[i],correct:sq.options[sq.correct],why:sq.explain,ref:moduleRef("stratquiz",sq.id)});}if(i===qs[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  var track=useSessionTrack(); // HUD de session (lot 2, 2026-09-19)
+  function doAns(i){sPk(i);track.record(i===qs[ci].correct);if(i!==qs[ci].correct){var sq=qs[ci];mistakesRef.current.push({tag:"Strategy · "+sq.part,prompt:sq.scenario,noBlank:true,yours:sq.options[i],correct:sq.options[sq.correct],why:sq.explain,ref:moduleRef("stratquiz",sq.id)});}if(i===qs[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<qs.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,qs.length,20+sc*5,mistakesRef.current);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -221,13 +224,11 @@ export function StratQuizPage(p){
   var partColors={"Part 1":"#22c55e","Part 2":"#f59e0b","Part 3":"#06b6d4","Part 4":"#8b5cf6","Part 5":"#ef4444","Part 6":"#ec4899","Part 7":"#3b82f6","General":"#64748b"};
   var pc=partColors[q.part]||"var(--cyan)";
 
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{qs.length}</span></div>
-    <Bar value={ci} max={qs.length} h={4} color="linear-gradient(90deg,#b07830,#8b5e83)"/>
-
-    <div style={{marginTop:16,marginBottom:20}}>
+  return(<>
+  <SessionTop n={qs.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
+  <ComboBanner combo={track.combo}/>
+  <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div style={{marginTop:8,marginBottom:20}}>
       <span className="out" style={{fontSize:10,fontWeight:700,color:pc,textTransform:"uppercase",letterSpacing:1,padding:"3px 8px",background:pc+"18",borderRadius:6}}>{q.part}</span></div>
 
     <div className="crd" style={{padding:16,marginBottom:20,background:"rgba(27,112,207,.05)",borderColor:"rgba(27,112,207,.12)"}}>
@@ -247,10 +248,8 @@ export function StratQuizPage(p){
           <span>{opt}</span></button>);})}
     </div>
 
-    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
-        <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",marginBottom:6}}>Why this works</p>
-        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{q.explain}</p></div>
-      <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<qs.length-1?"Next":"See Results"}</button></div>}
-  </div>);
+    {ph==="fb"&&<AnswerCard ok={pick===q.correct} answer={String.fromCharCode(65+q.correct)+". "+q.options[q.correct]} label="Why this works" why={q.explain}/>}
+  </div>
+  {ph==="fb"&&<NextBar onNext={nxt} last={ci===qs.length-1}/>}
+  </>);
 }

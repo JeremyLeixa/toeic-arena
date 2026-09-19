@@ -10,7 +10,9 @@ import { Tabs } from "../../src/components/Tabs.jsx";
 import { SessionTop, ComboBanner, AnswerCard, NextBar, ListenDisc } from "../../src/components/SessionHud.jsx";
 import { useSessionTrack } from "../../src/components/useSessionTrack.js";
 import { QUESTIONS } from "../../src/data/grammar.js";
-import { Drill as RealDrill } from "../../src/features/train/grammar.jsx";
+import { Drill as RealDrill, WordFam, ConnSort, LinkingBridge, PrepDrill, TrapsQuiz, FalseFriends } from "../../src/features/train/grammar.jsx";
+import { StratQuizPage } from "../../src/features/train/strategy.jsx";
+import { Daily } from "../../src/features/home/Daily.jsx";
 import { fresh } from "../../src/lib/profileSchema.js";
 import { playCorrect, playWrong } from "../../src/sounds.js";
 
@@ -97,9 +99,14 @@ function Intro() {
   </div>;
 }
 
+// Lot 2 (2026-09-19) : les vrais modules quiz, montés avec des props de banc (?sc=wordfam…).
+var LOT2 = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepdrill: PrepDrill, traps: TrapsQuiz, falsefr: FalseFriends, stratquiz: StratQuizPage, daily: Daily };
+
 function Frame() {
   var lc = "app" + (MODE === "light" ? " light" : "") + (FEST ? " fest-" + FEST : SKIN ? " skin-" + SKIN : "");
-  var body = SC === "intro" ? <Intro /> : SC === "listen" ? <Listen /> : SC === "drill" ? <RealDrill u={fresh("Camille", "visitor")} done={function () { return 1; }} back={function () { alert("Back → hub"); }} nav={noop} session={null} closeSession={noop} replaySession={noop} /> : <Drill />;
+  var common = { u: fresh("Camille", "visitor"), done: function () { return 1; }, back: function () { alert("Back → hub"); }, nav: noop, session: null, closeSession: noop, replaySession: noop };
+  var Mod = LOT2[SC];
+  var body = Mod ? <Mod {...common} /> : SC === "intro" ? <Intro /> : SC === "listen" ? <Listen /> : SC === "drill" ? <RealDrill {...common} /> : <Drill />;
   return <div className={lc}>
     <style>{CSS}</style>
     {RM && <style>{RM_CSS}</style>}

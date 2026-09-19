@@ -175,9 +175,11 @@ export function WordFam(p){
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");var[pick,sPk]=useState(null);var[sk,sSk]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 2, 2026-09-19)
   function doAns(cat){
     sPk(cat);
     var itW=items[ci];
+    track.record(itW.validAnswers.indexOf(cat)!==-1);
     if(itW.validAnswers.indexOf(cat)===-1){var fm=itW.family;mistakesRef.current.push({tag:"Word families",prompt:itW.word,noBlank:true,yours:cat,correct:itW.validAnswers.join(" / "),why:[fm.v&&"Verb: "+fm.v,fm.n&&"Noun: "+fm.n,fm.adj&&"Adjective: "+fm.adj,fm.adv&&"Adverb: "+fm.adv].filter(Boolean).join(" · "),ref:itW.validAnswers.length===1?moduleRef("wordfam",itW.word,itW.validAnswers[0]):null});}
     // Accept any valid POS for this word (handles homographs)
     if(items[ci].validAnswers.indexOf(cat)!==-1){sSc(sc+1);try{playCorrect();}catch(e){}}
@@ -190,12 +192,12 @@ export function WordFam(p){
     onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];var fam=it.family;var isMulti=it.validAnswers.length>1;
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
-    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
-    <div style={{textAlign:"center",marginTop:32,marginBottom:24}}>
+  // HUD de session (variante E) : barre et pied fixes rendus HORS du bloc .sk (le shake anime transform).
+  return(<>
+  <SessionTop n={items.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
+  <ComboBanner combo={track.combo}/>
+  <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div style={{textAlign:"center",marginTop:12,marginBottom:24}}>
       <div className="out" style={{fontSize:11,color:"var(--orange)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>CLASSIFY THIS WORD</div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:8}}>
         <div className="out" style={{fontWeight:800,fontSize:36}}>{it.word}</div>
@@ -212,20 +214,18 @@ export function WordFam(p){
           <div className="out" style={{fontWeight:700,fontSize:16,color:show&&isValid?"var(--green)":show&&isPick?"var(--red)":catColors[cat]}}>{cat}</div>
         </button>);})}
     </div>
-    {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
-      {isMulti&&<div style={{padding:"8px 14px",background:"rgba(255,215,0,.08)",border:"1px solid rgba(255,215,0,.2)",borderRadius:10,marginBottom:10}}>
-        <p style={{fontSize:12,color:"var(--gold)",fontWeight:600}}>This word can be both: {it.validAnswers.join(" & ")}</p>
-      </div>}
-      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
-        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.8}}>
-          <strong style={{color:"var(--t1)"}}>Word family:</strong><br/>
-          {fam.v&&<span>Verb: <strong style={{color:"var(--green)"}}>{fam.v}</strong> &nbsp;</span>}
-          {fam.n&&<span>Noun: <strong style={{color:"var(--cyan)"}}>{fam.n}</strong> &nbsp;</span>}
-          {fam.adj&&<span>Adj: <strong style={{color:"var(--orange)"}}>{fam.adj}</strong> &nbsp;</span>}
-          {fam.adv&&<span>Adv: <strong style={{color:"var(--purple)"}}>{fam.adv}</strong></span>}
-        </p></div>
-      <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button></div>}
-  </div>);
+    {ph==="fb"&&<AnswerCard ok={it.validAnswers.indexOf(pick)!==-1} answer={it.validAnswers.join(" / ")} label="Word family">
+      {isMulti&&<p className="ss-why" style={{color:"var(--gold)",fontWeight:600,marginBottom:6}}>This word can be both: {it.validAnswers.join(" & ")}</p>}
+      <p className="ss-why" style={{lineHeight:1.8}}>
+        {fam.v&&<span>Verb: <strong style={{color:"var(--green)"}}>{fam.v}</strong> &nbsp;</span>}
+        {fam.n&&<span>Noun: <strong style={{color:"var(--cyan)"}}>{fam.n}</strong> &nbsp;</span>}
+        {fam.adj&&<span>Adj: <strong style={{color:"var(--orange)"}}>{fam.adj}</strong> &nbsp;</span>}
+        {fam.adv&&<span>Adv: <strong style={{color:"var(--purple)"}}>{fam.adv}</strong></span>}
+      </p>
+    </AnswerCard>}
+  </div>
+  {ph==="fb"&&<NextBar onNext={nxt} last={ci===items.length-1}/>}
+  </>);
 }
 // ─── CONNECTORS SORTING ───
 export function ConnSort(p){
@@ -235,7 +235,8 @@ export function ConnSort(p){
   var[openGrim,setOpenGrim]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(rule){sPk(rule);if(rule!==items[ci].rule){var lab=function(id){var r=rules.find(function(x){return x.id===id;});return r?r.label:id;};mistakesRef.current.push({tag:"Connectors",prompt:items[ci].word,noBlank:true,yours:lab(rule),correct:lab(items[ci].rule),why:items[ci].tip+(items[ci].ex?" — “"+items[ci].ex+"”":""),ref:moduleRef("connsort",items[ci].word)});}if(rule===items[ci].rule){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  var track=useSessionTrack(); // HUD de session (lot 2, 2026-09-19)
+  function doAns(rule){sPk(rule);track.record(rule===items[ci].rule);if(rule!==items[ci].rule){var lab=function(id){var r=rules.find(function(x){return x.id===id;});return r?r.label:id;};mistakesRef.current.push({tag:"Connectors",prompt:items[ci].word,noBlank:true,yours:lab(rule),correct:lab(items[ci].rule),why:items[ci].tip+(items[ci].ex?" — “"+items[ci].ex+"”":""),ref:moduleRef("connsort",items[ci].word)});}if(rule===items[ci].rule){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5,mistakesRef.current);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
@@ -253,12 +254,12 @@ export function ConnSort(p){
     onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
-    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#8b5e83,#c4587a)"/>
-    <div style={{textAlign:"center",marginTop:32,marginBottom:28}}>
+  var ruleLab=function(id){var r=rules.find(function(x){return x.id===id;});return r?r.label:id;};
+  return(<>
+  <SessionTop n={items.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
+  <ComboBanner combo={track.combo}/>
+  <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div style={{textAlign:"center",marginTop:12,marginBottom:28}}>
       <div className="out" style={{fontSize:11,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>THIS CONNECTOR IS FOLLOWED BY...</div>
       <div className="out" style={{fontWeight:800,fontSize:30,marginBottom:4}}>{it.word}</div></div>
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -273,12 +274,13 @@ export function ConnSort(p){
           <div><div className="out" style={{fontWeight:700,fontSize:15,color:show&&isCor?"var(--green)":show&&isPick?"var(--red)":"var(--t1)"}}>{r.label}</div>
             <div style={{fontSize:11,color:"var(--t3)"}}>{r.desc}</div></div></button>);})}
     </div>
-    {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
-        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{it.tip}</p>
-        <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",marginTop:8}}>"{it.ex}"</p></div>
-      <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button></div>}
-  </div>);
+    {ph==="fb"&&<AnswerCard ok={pick===it.rule} answer={ruleLab(it.rule)}>
+      <p className="ss-why">{it.tip}</p>
+      {it.ex&&<p className="ss-why" style={{color:"var(--t2)",fontStyle:"italic",marginTop:8}}>{"“"+it.ex+"”"}</p>}
+    </AnswerCard>}
+  </div>
+  {ph==="fb"&&<NextBar onNext={nxt} last={ci===items.length-1}/>}
+  </>);
 }
 // ─── LINKING BRIDGE ───
 // Contextual connector picker: blank-fill sentence, 4 options with FR translation
@@ -297,10 +299,12 @@ export function LinkingBridge(p){
   var[openGrim,setOpenGrim]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 2, 2026-09-19)
   function doAns(idx){
     if(pickIdx!==-1)return;
     sPk(idx);
     var correctOpt=items[ci].opts[idx];
+    track.record(!!correctOpt.correct);
     if(!correctOpt.correct){var goodOpt=items[ci].opts.find(function(o){return o.correct;});mistakesRef.current.push({tag:"Linking words",prompt:items[ci].prompt,yours:correctOpt.w,correct:goodOpt?goodOpt.w:"",why:items[ci].exp,ref:moduleRef("bforge",items[ci].id)});}
     if(correctOpt.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
@@ -334,14 +338,11 @@ export function LinkingBridge(p){
   var showFb=ph==="fb";
   var correctIdx=it.opts.findIndex(function(o){return o.correct;});
   var picked=pickIdx!==-1?it.opts[pickIdx]:null;
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button className="back-btn" onClick={p.back}>{"←"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span>
-      <div style={{width:40}}/>
-    </div>
-    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#8b5e83,#06b6d4)"/>
-    <div style={{marginTop:32,marginBottom:24}}>
+  return(<>
+  <SessionTop n={items.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
+  <ComboBanner combo={track.combo}/>
+  <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div style={{marginTop:12,marginBottom:24}}>
       <div className="out" style={{fontSize:11,color:"var(--cx-hex)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12,textAlign:"center"}}>PICK THE CONNECTOR THAT FITS</div>
       <div className="crd" style={{padding:20,fontSize:16,lineHeight:1.6,textAlign:"center"}}>{it.prompt}</div>
     </div>
@@ -356,15 +357,14 @@ export function LinkingBridge(p){
           style={{padding:"14px 16px",background:bg,border:"1.5px solid "+bd,borderRadius:12,cursor:showFb?"default":"pointer",textAlign:"left",fontSize:14,color:col,lineHeight:1.4,fontFamily:"'DM Sans',sans-serif",fontWeight:600}}>{opt.w}</button>);
       })}
     </div>
-    {showFb&&<div style={{marginTop:18,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
-        {picked&&<p style={{fontSize:13,fontWeight:700,color:picked.correct?"var(--green)":"var(--red)",marginBottom:6}}>{picked.correct?"✓ ":"✗ "}<span style={{fontWeight:800}}>{picked.w}</span> {"— "}{picked.fr}</p>}
-        {picked&&!picked.correct&&correctIdx>=0&&<p style={{fontSize:12,color:"var(--green)",marginBottom:8}}>{"→ Correct: "}<strong>{it.opts[correctIdx].w}</strong> {"— "}{it.opts[correctIdx].fr}</p>}
-        <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,marginTop:4}}>{it.exp}</p>
-      </div>
-      <button className="btn1" onClick={nxt} style={{marginTop:14,width:"100%"}}>{ci<items.length-1?"Next →":"See Results"}</button>
-    </div>}
-  </div>);
+    {showFb&&picked&&<AnswerCard ok={!!picked.correct} answer={correctIdx>=0?it.opts[correctIdx].w:undefined}>
+      <p className="ss-why" style={{fontWeight:700,color:picked.correct?"var(--green)":"var(--red)",marginBottom:6}}>{picked.w}{" — "}{picked.fr}</p>
+      {!picked.correct&&correctIdx>=0&&<p className="ss-why" style={{color:"var(--green)",marginBottom:8}}><strong>{it.opts[correctIdx].w}</strong>{" — "}{it.opts[correctIdx].fr}</p>}
+      <p className="ss-why">{it.exp}</p>
+    </AnswerCard>}
+  </div>
+  {showFb&&<NextBar onNext={nxt} last={ci===items.length-1}/>}
+  </>);
 }
 // ─── PREPOSITION COLLOCATIONS ───
 export function PrepDrill(p){
@@ -380,7 +380,8 @@ export function PrepDrill(p){
   var prepLabels={for:"Responsibility, eligibility, purpose",in:"Involvement, interest, results",with:"Compliance, familiarity, association",on:"Dependence, reliance",of:"Composition, charge, capability",to:"Relation, addition, attribution"};
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(pr){sPk(pr);var it=items[ci];var ok=pr===it.prep||(it.alts&&it.alts.indexOf(pr)>=0);if(!ok)mistakesRef.current.push({tag:"Prepositions",prompt:it.base+" _____",yours:pr,correct:it.prep+(it.alts&&it.alts.length?" / "+it.alts.join(" / "):""),why:it.ex,ref:moduleRef("prepdrill",it.base)});if(ok){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  var track=useSessionTrack(); // HUD de session (lot 2, 2026-09-19)
+  function doAns(pr){sPk(pr);var it=items[ci];var ok=pr===it.prep||(it.alts&&it.alts.indexOf(pr)>=0);track.record(ok);if(!ok)mistakesRef.current.push({tag:"Prepositions",prompt:it.base+" _____",yours:pr,correct:it.prep+(it.alts&&it.alts.length?" / "+it.alts.join(" / "):""),why:it.ex,ref:moduleRef("prepdrill",it.base)});if(ok){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<items.length-1){sC(ci+1);sPk(null);sP("q");}else{sidRef.current=p.done(sc,items.length,15+sc*5,mistakesRef.current);sP("done");}}
 
   if(ph==="menu")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
@@ -408,12 +409,12 @@ export function PrepDrill(p){
     onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var it=items[ci];
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
-    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#06b6d4,#22c55e)"/>
-    <div style={{textAlign:"center",marginTop:32,marginBottom:28}}>
+  var prepOk=pick===it.prep||(it.alts&&it.alts.indexOf(pick)>=0);
+  return(<>
+  <SessionTop n={items.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
+  <ComboBanner combo={track.combo}/>
+  <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div style={{textAlign:"center",marginTop:12,marginBottom:28}}>
       <div className="out" style={{fontSize:11,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>COMPLETE THE COLLOCATION</div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
         <div className="out" style={{fontWeight:800,fontSize:30}}>{it.base} <span style={{color:"var(--cyan)"}}>_____</span></div>
@@ -429,16 +430,17 @@ export function PrepDrill(p){
           style={{padding:"14px 8px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",transition:"all .2s"}}>
           <div className="out" style={{fontWeight:700,fontSize:16,color:col,textTransform:"uppercase"}}>{pr}</div></button>);})}
     </div>
-    {ph==="fb"&&<div style={{marginTop:20,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-          <p style={{fontSize:14,color:"var(--t1)"}}><strong>{it.base} {it.prep}</strong>{it.alts&&it.alts.length?<span style={{color:"var(--t2)",fontWeight:500}}>{" / "}<strong style={{color:"var(--t1)"}}>{it.base} {it.alts.join(" / ")}</strong>{" (both accepted)"}</span>:null}</p>
-          <SpeakBtn text={it.base+" "+it.prep} size={26}/></div>
-        <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-          <p style={{fontSize:13,color:"var(--t2)",fontStyle:"italic",flex:1}}>"{it.ex}"</p>
-          <SpeakBtn text={it.ex} size={24} rate={0.85}/></div></div>
-      <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button></div>}
-  </div>);
+    {ph==="fb"&&<AnswerCard ok={prepOk} answer={it.base+" "+it.prep} label="Example">
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+        <p className="ss-why"><strong>{it.base} {it.prep}</strong>{it.alts&&it.alts.length?<span style={{color:"var(--t2)",fontWeight:500}}>{" / "}<strong style={{color:"var(--t1)"}}>{it.base} {it.alts.join(" / ")}</strong>{" (both accepted)"}</span>:null}</p>
+        <SpeakBtn text={it.base+" "+it.prep} size={26}/></div>
+      <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+        <p className="ss-why" style={{color:"var(--t2)",fontStyle:"italic",flex:1}}>{"“"+it.ex+"”"}</p>
+        <SpeakBtn text={it.ex} size={24} rate={0.85}/></div>
+    </AnswerCard>}
+  </div>
+  {ph==="fb"&&<NextBar onNext={nxt} last={ci===items.length-1}/>}
+  </>);
 }
 // Study Mode collapsible group sub-component
 export function StudyGroup(p){
@@ -572,7 +574,8 @@ export function TrapsQuiz(p){
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
-  function doAns(i){sPk(i);if(i!==traps[ci].correct){var tr=traps[ci];mistakesRef.current.push({tag:"Trap #"+tr.id+" · "+tr.part,prompt:tr.scenario,noBlank:true,yours:tr.options[i],correct:tr.options[tr.correct],why:tr.tip,ref:moduleRef("traps",tr.id)});}if(i===traps[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
+  var track=useSessionTrack(); // HUD de session (lot 2, 2026-09-19)
+  function doAns(i){sPk(i);track.record(i===traps[ci].correct);if(i!==traps[ci].correct){var tr=traps[ci];mistakesRef.current.push({tag:"Trap #"+tr.id+" · "+tr.part,prompt:tr.scenario,noBlank:true,yours:tr.options[i],correct:tr.options[tr.correct],why:tr.tip,ref:moduleRef("traps",tr.id)});}if(i===traps[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}sP("fb");}
   function nxt(){if(ci<traps.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,traps.length,25+sc*6,mistakesRef.current);sP("done");}}
 
   if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center"}}>
@@ -587,13 +590,11 @@ export function TrapsQuiz(p){
     onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
 
   var t=traps[ci];
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Trap {ci+1}/{traps.length}</span></div>
-    <Bar value={ci} max={traps.length} h={4} color="linear-gradient(90deg,#e11d48,#f59e0b)"/>
-
-    <div style={{marginTop:16,marginBottom:8}}>
+  return(<>
+  <SessionTop n={traps.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
+  <ComboBanner combo={track.combo}/>
+  <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div style={{marginTop:8,marginBottom:8}}>
       <span className="out" style={{fontSize:11,fontWeight:600,color:"var(--red)",textTransform:"uppercase",letterSpacing:1}}>Trap #{t.id} — {t.part}</span></div>
     <h2 className="out" style={{fontWeight:800,fontSize:20,marginBottom:12,color:"var(--orange)"}}>{t.name}</h2>
     <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:20}}>{t.trap}</p>
@@ -615,12 +616,10 @@ export function TrapsQuiz(p){
           <span>{opt}</span></button>);})}
     </div>
 
-    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
-        <p className="out" style={{fontSize:12,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",marginBottom:6}}>Pro Tip</p>
-        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{t.tip}</p></div>
-      <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<traps.length-1?"Next Trap":"See Results"}</button></div>}
-  </div>);
+    {ph==="fb"&&<AnswerCard ok={pick===t.correct} answer={String.fromCharCode(65+t.correct)+". "+t.options[t.correct]} label="Pro Tip" why={t.tip}/>}
+  </div>
+  {ph==="fb"&&<NextBar onNext={nxt} last={ci===traps.length-1} label={ci<traps.length-1?"Next Trap":undefined}/>}
+  </>);
 }
 // ─── GRAMMAR REFERENCE SHEETS ───
 // GrammarSheet (le corps d'une fiche) vit dans components/GrammarSheet.jsx depuis le 2026-09-18 :
@@ -864,8 +863,10 @@ export function FalseFriends(p){
   var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
 
   var mistakesRef=useRef([]);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 2, 2026-09-19)
   function doAns(i){
     sPk(i);
+    track.record(i===items[ci].correct);
     if(i!==items[ci].correct){var ff=items[ci];mistakesRef.current.push({tag:"False friend · "+ff.en,prompt:ff.ex,noBlank:true,yours:ff.opts[i],correct:ff.opts[ff.correct],why:ff.trap+(ff.realFr?" (FR: "+ff.realFr+")":""),ref:moduleRef("falsefr",ff.en)});}
     if(i===items[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
@@ -886,13 +887,11 @@ export function FalseFriends(p){
 
   var it=items[ci];
 
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{items.length}</span></div>
-    <Bar value={ci} max={items.length} h={4} color="linear-gradient(90deg,#ec4899,#f59e0b)"/>
-
-    <div style={{marginTop:20,marginBottom:20}}>
+  return(<>
+  <SessionTop n={items.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
+  <ComboBanner combo={track.combo}/>
+  <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div style={{marginTop:8,marginBottom:20}}>
       <div className="out" style={{fontSize:11,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>What does the underlined word mean here?</div>
       <div className="crd" style={{padding:16,background:"rgba(27,112,207,.05)",borderColor:"rgba(27,112,207,.12)"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
@@ -920,17 +919,13 @@ export function FalseFriends(p){
           <span>{opt}</span></button>);})}
     </div>
 
-    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-          <span style={{fontSize:14}}>🎭</span>
-          <span className="out" style={{fontWeight:700,fontSize:13,color:"var(--orange)"}}>False Friend Alert</span></div>
-        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:8}}>{it.trap}</p>
-        <div style={{borderTop:"1px solid var(--bdr)",paddingTop:8,marginTop:4}}>
-          <span style={{fontSize:12,color:"var(--t3)"}}>FR translation: </span>
-          <span className="out" style={{fontSize:12,fontWeight:600,color:"var(--cyan)"}}>{it.realFr}</span>
-        </div>
-      </div>
-      <button className="btn1" onClick={nxt} style={{marginTop:16}}>{ci<items.length-1?"Next":"See Results"}</button></div>}
-  </div>);
+    {ph==="fb"&&<AnswerCard ok={pick===it.correct} answer={String.fromCharCode(65+it.correct)+". "+it.opts[it.correct]} label="False Friend Alert">
+      <p className="ss-why" style={{marginBottom:8}}>{it.trap}</p>
+      <p className="ss-why" style={{borderTop:"1px solid var(--bdr)",paddingTop:8,fontSize:13}}>
+        <span style={{color:"var(--t2)"}}>FR translation: </span>
+        <span className="out" style={{fontWeight:600,color:"var(--cyan)"}}>{it.realFr}</span></p>
+    </AnswerCard>}
+  </div>
+  {ph==="fb"&&<NextBar onNext={nxt} last={ci===items.length-1}/>}
+  </>);
 }
