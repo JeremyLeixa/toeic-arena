@@ -816,6 +816,20 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .hub-shelf-txt em{font-style:normal;color:var(--t3);margin-left:auto;font-size:11px}
 .hub-hint{font-size:11px;color:var(--t3)}
 @media(prefers-reduced-motion:reduce){.hub-chest.won svg,.hub-bar i{animation:none}}
+/* Échelons de maîtrise, variante B « coffre suivant » (2026-09-19, proto prototypes/mastery-tiers/) : le coffre de
+   droite est le PROCHAIN, chiffre romain hors du SVG (le filtre gris du coffre ne le touche pas). En jetons. */
+.mt-gold{color:var(--gold);font-weight:700}
+.mt-cw{position:relative;display:inline-flex}
+.mt-num{position:absolute;right:-7px;top:-3px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:99px;font:800 9.5px/15px 'Cinzel',serif;letter-spacing:.3px;text-align:center;color:var(--gold);background:var(--bg2);border:1px solid var(--gold)}
+.mt-num.sm{min-width:14px;height:14px;font-size:8px;line-height:12px;right:-5px;top:-4px;padding:0 3px}
+.hub-chest.legend svg{filter:grayscale(.25) brightness(.9);opacity:.9}
+.hub-chest.legend small{color:var(--gold)}
+.hub-chest.wait svg{filter:drop-shadow(0 0 6px rgba(230,180,70,.35));opacity:1}
+.hub-chest.wait small{color:var(--t2)}
+/* La précision insuffisante sous le coffre : .hub-chest small (gris) l'emportait sur .hub-warn. */
+.hub-chest small.hub-warn{color:var(--red)}
+.mt-shelf-c{position:relative;display:inline-flex}
+.hub-shelf-row .mt-shelf-c{margin-right:5px}
 /* ═══ HUD DE SESSION (components/SessionHud.jsx, 2026-09-17) ═══ proto prototypes/sessions/, variante E
    (l'Arène avec le fil d'encre d'Aldric). En jetons : suit le skin, la fête et le mode clair.
    Tab bar masquée sur mobile tant que la barre de session est à l'écran (:has, aucun état) ; la barre

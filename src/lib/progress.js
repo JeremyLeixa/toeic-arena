@@ -140,6 +140,10 @@ export function recordModule(u,modId,sc,tot,catStats,more){
     });
   }
   u.moduleScores[modId]={correct:prev.correct+sc,total:prev.total+tot,sessions:prev.sessions+1,lastDate:today(),history:hist,catStats:mergedCats};
+  // Échelon de maîtrise atteint (lib/hubStatus.js tierStatus, posé par le watcher d'App.jsx) : l'objet est
+  // reconstruit ci-dessus avec des clés fixes, sans cette recopie chaque partie effacerait l'échelon et le
+  // watcher retenterait le coffre (le serveur refuse, mais le délai de 7 jours repartirait de zéro).
+  if(prev.mt)u.moduleScores[modId].mt=prev.mt;
   // V2 — Bypass Token consumed once a round of the armed module lands. Clearing here
   // (rather than in each Done handler) keeps the contract central and consistent.
   if(u.boosts&&u.boosts.bypassArmedModule===modId)u.boosts.bypassArmedModule=null;

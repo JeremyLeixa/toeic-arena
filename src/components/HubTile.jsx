@@ -4,10 +4,11 @@
 // une fois gagné) et une étiquette « ½ XP / Low XP / No XP » seulement quand la prochaine partie
 // rapporte moins. L'état vient de lib/hubStatus.js (pur, testé) ; les styles de .hub-* dans
 // styles/appCss.js, en jetons (suivent le skin, la fête et le mode clair).
+// Depuis le 2026-09-19, le coffre ne se gagne plus une seule fois : échelons de maîtrise (variante B).
 import { GIcon, ResultIcon } from "./icons.jsx";
 import { TreasureChestSvg } from "./avatar.jsx";
 import { GAME_ICON_PATHS } from "../data/avatarIcons.js";
-import { MASTERY_Q, agoLabel } from "../lib/hubStatus.js";
+import { agoLabel, roman, TIERS, RENOWN_STEP } from "../lib/hubStatus.js";
 
 var CHIP = { half: "½ XP", low: "Low XP", none: "No XP" };
 
@@ -19,13 +20,43 @@ function subLine(s, d) {
   if (s.last) return "Last " + s.last.correct + "/" + s.last.total + " · " + agoLabel(s.last.date);
   return d;
 }
+
+// ── Échelons de maîtrise, variante B « coffre suivant » (2026-09-19, proto prototypes/mastery-tiers/) ──
+// La tuile d'avant, mais le coffre de droite est toujours le PROCHAIN, avec son chiffre romain (III en
+// Légendaire, obsidienne et or) ; « Mastery I » en or devant la ligne de stats une fois un échelon gagné.
+// État : s.tier (lib/hubStatus.js tierStatus / hubTierStatus).
+function AccPart(p) {
+  var t = p.t;
+  if (t.accLow) return <><span className="hub-warn">{pct(t.acc)}</span>{" (" + pct(t.next.acc) + " needed)"}</>;
+  return <>{pct(t.acc)}</>;
+}
+// Volume vers l'échelon suivant : « 112/150 Q » ou, pour un hub, « 1/4 trials at II ».
+function volText(t, unit) {
+  if (t.hub) return t.at + "/" + t.n + " " + unit + (t.won ? " at " + roman(t.next.n) : " mastered");
+  return (t.volOk ? t.total : t.total + "/" + t.next.q) + " Q";
+}
+// Au-delà de I, la précision affichée est celle des ~50 dernières questions (« recent »).
+function statsLine(t, unit) {
+  if (t.state === "new") return "Not started";
+  if (t.state === "wait") return roman(t.next.n) + " opens in " + t.wait + " d";
+  if (t.hub) return volText(t, unit);
+  return <>{volText(t, unit) + " · "}<AccPart t={t} />{t.won && !t.accLow ? " recent" : ""}</>;
+}
 function Mastery(p) {
-  var s = p.s;
-  if (s.hub) return <div className={"hub-meta" + (s.allMastered ? " gold" : "")}>{s.allMastered ? "All " + p.unit + " mastered" : s.mastered + "/" + s.n + " " + p.unit + " mastered"}</div>;
-  if (s.mastered) return <div className="hub-meta gold">Mastered</div>;
-  if (!s.total) return <div className="hub-meta">Not started</div>;
-  // Au-delà de 50 questions, le volume est acquis : « 160 Q », pas « 160/50 Q ».
-  return <div className="hub-meta">{(s.total >= MASTERY_Q ? s.total : s.total + "/" + MASTERY_Q) + " Q · "}<span className={s.accLow ? "hub-warn" : ""}>{pct(s.acc)}</span>{s.accLow ? " (80% needed)" : ""}</div>;
+  var t = p.t;
+  return <div className="hub-meta">{t.won ? <><span className="mt-gold">{"Mastery " + roman(t.won)}</span>{" · "}</> : null}{statsLine(t, p.unit)}</div>;
+}
+function NextChest(p) {
+  var t = p.t, blocked = t.accLow && (t.volOk || t.hub);
+  var label = t.state === "wait" ? "in " + t.wait + " d" : blocked && !t.hub ? pct(t.acc) + " acc" : pct(t.vol);
+  var cls = "hub-chest" + (t.state === "new" ? " idle" : "") + (t.next.chest === 3 ? " legend" : "") + (t.state === "wait" ? " wait" : "");
+  return <div className={cls}>
+    <span className="mt-cw">
+      <TreasureChestSvg size={34} tier={t.next.chest} idSuffix={"hub" + p.id} />
+      <b className="mt-num">{roman(t.next.n)}</b>
+    </span>
+    <small className={blocked && !t.hub ? "hub-warn" : ""}>{label}</small>
+  </div>;
 }
 
 // p.item {id, n, d, i} · p.status (hubItemStatus) · p.size "md" (Train, Listening, Reading) | "lg" (Games)
@@ -34,8 +65,8 @@ function Mastery(p) {
 export function HubTile(p) {
   var it = p.item, s = p.status || { plain: true }, lg = p.size === "lg";
   var vl = !!p.locked, off = !!p.disabled;
-  var won = s.hub ? s.allMastered : s.mastered;
-  var showChest = !vl && !off && !s.plain && !s.game;
+  var t = s.tier;
+  var showChest = !vl && !off && !s.plain && !s.game && !!t;
   var chip = !vl && !off && !s.plain && CHIP[s.xp];
   var box = lg ? 48 : 42;
   var style = Object.assign({ display: "flex", alignItems: "center", gap: 14, padding: lg ? "16px" : "14px 16px",
@@ -52,32 +83,36 @@ export function HubTile(p) {
           {chip && <span className={"hub-chip " + s.xp}>{chip}</span>}
         </div>
         <div className="hub-sub" style={{ color: vl ? "var(--gold)" : undefined }}>{vl ? "Arena Premium" : off ? it.d : subLine(s, it.d)}</div>
-        {showChest && <div className={"hub-bar" + (won ? " won" : s.accLow ? " low" : "")}><i style={{ width: (s.vol * 100) + "%" }} /></div>}
-        {showChest && <Mastery s={s} unit={p.unit || "trials"} />}
+        {showChest && <div className={"hub-bar" + (t.accLow ? " low" : "") + (t.state === "wait" ? " won" : "")}><i style={{ width: (t.vol * 100) + "%" }} /></div>}
+        {showChest && <Mastery t={t} unit={p.unit || "trials"} />}
         {!vl && p.children}
       </div>
       {vl ? <ResultIcon e={"🔒"} size={14} color="var(--gold)" />
         : off ? <ResultIcon e={"🔒"} size={15} color="var(--t3)" />
-        : showChest ? <div className={"hub-chest" + (won ? " won" : s.total || s.started ? "" : " idle")}>
-            <TreasureChestSvg size={won ? 38 : 34} tier={2} idSuffix={"hub" + it.id} />
-            <small className={!won && s.accLow && s.vol >= 1 ? "hub-warn" : ""}>{won ? "Won" : s.accLow && s.vol >= 1 ? pct(s.acc) + " acc" : Math.round(s.vol * 100) + "%"}</small>
-          </div>
+        : showChest ? <NextChest t={t} id={it.id} />
         : <span style={{ fontSize: 16, color: "var(--cyan)" }}>{"→"}</span>}
     </div>
   );
 }
 
-// Étagère de coffres en tête de hub (hubSummary) : un coffre par tuile qui en a un.
+// Étagère en tête de hub (hubSummary) : un coffre par tuile, au palier de son dernier échelon gagné, avec
+// son chiffre ; le total des coffres gagnés (sans « of N » : la série ne finit pas) et le prochain coffre.
 export function HubShelf(p) {
   var sm = p.summary;
   if (!sm || sm.chests.length < 3) return null;
   return (
     <div className="crd hub-shelf">
       <div className="hub-shelf-row">{sm.chests.map(function (w, i) {
-        return <span key={i} className={w ? "won" : ""}><TreasureChestSvg size={26} tier={2} idSuffix={"shelf" + (p.id || "") + i} /></span>;
+        return <span key={i} className={"mt-shelf-c" + (w ? " won" : "")}>
+          <TreasureChestSvg size={26} tier={w >= 3 ? 3 : 2} idSuffix={"shelf" + (p.id || "") + i} />
+          {w > 0 && <b className="mt-num sm">{roman(w)}</b>}
+        </span>;
       })}</div>
-      <div className="hub-shelf-txt"><b className="out">{sm.won + " of " + sm.chests.length}</b>{" mastery chests won"}<em>{sm.fresh + " at full XP today"}</em></div>
-      {sm.won === 0 && <div className="hub-hint">{"50 questions at 80% or more win a module's Champion chest."}</div>}
+      <div className="hub-shelf-txt"><b className="out">{sm.won}</b>{sm.won === 1 ? " mastery chest won" : " mastery chests won"}<em>{sm.fresh + " at full XP today"}</em></div>
+      {sm.near ? <div className="hub-hint">{"Next: "}<span className="mt-gold">{sm.near.n + " " + roman(sm.near.tier)}</span>{" · " + sm.near.left + " Q to go"}</div>
+        : sm.wait ? <div className="hub-hint">{"Next: "}<span className="mt-gold">{sm.wait.n + " " + roman(sm.wait.tier)}</span>{" opens in " + sm.wait.wait + " d"}</div>
+        : null}
+      {sm.won === 0 && <div className="hub-hint">{"Mastery chests at " + TIERS.map(function (d) { return d.q; }).join(", ") + " questions, then one every " + RENOWN_STEP + "."}</div>}
     </div>
   );
 }

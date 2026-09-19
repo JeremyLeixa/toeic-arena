@@ -26,7 +26,7 @@ import { boundReview, recordMisses, recordHits } from "./lib/review.js";
 import { dayMission, stakePart, todayMission, celebrateTurn, recordChronicle, letterDue, letterWeek } from "./lib/planner.js";
 import { MondayLetter } from "./features/mentor/MondayLetter.jsx";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
-import { MASTERY_BLACKLIST, isMastered } from "./lib/hubStatus.js";
+import { MASTERY_BLACKLIST, tierStatus, tierTrigger, tierMarksKey, TIERS_EPOCH } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
@@ -76,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-19-armed-tokens";
+var BUILD_ID="2026-09-19-mastery-tiers";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -389,23 +389,44 @@ useEffect(function(){
   // Modules excluded from Mastery : mock1/2/3/boss already have dedicated Champion triggers
   // (mock_1, etc.), and "daily" / "csess" are not real practice modules.
   var masteryRef=useRef({});
-  // Seuils (50 Q, 80 %) et liste noire : lib/hubStatus.js, lus aussi par les tuiles des hubs.
+  // Échelons de maîtrise (2026-09-19, variante B) : seuils, liste noire et état dans lib/hubStatus.js
+  // (tierStatus), lus aussi par les tuiles des hubs. Un échelon « ready » part au serveur ; sa réponse pose
+  // moduleScores[mod].mt = {n, date} (markTier). Échelon I : déclencheur d'avant (mastery_<mod>) ; un
+  // « déjà servi » = coffre gagné AVANT les échelons, daté TIERS_EPOCH (rattrapage : 7 jours d'attente pour
+  // tous, pas une avalanche de coffres II). Garde par module ET par échelon (patron anti-boucle ci-dessus).
   useEffect(function(){
     if(!u||!u.moduleScores)return;
     if(u.classCode==="visitor")return;
+    var now=new Date();
     Object.keys(u.moduleScores).forEach(function(modId){
       if(MASTERY_BLACKLIST[modId])return;
-      if(masteryRef.current[modId])return; // session dedup — anti boucle
       var m=u.moduleScores[modId];
       if(!m||!m.total)return;
-      if(isMastered(m)){
-        masteryRef.current[modId]=true;
-        grantChestLocal("mastery_"+modId,"champion");
-        // Arena Shop P1 — 50 Darics, one-shot per module ever.
-        grantMarks(50,"mastery","mastery_marks_"+modId,true);
-      }
+      var t=tierStatus(m,now);
+      if(t.state!=="ready")return;
+      var n=t.next.n,key=modId+"_"+n;
+      if(masteryRef.current[key])return; // session dedup — anti boucle
+      masteryRef.current[key]=true;
+      grantChestLocal(tierTrigger(modId,n),t.next.chest===3?"legendaire":"champion",function(r){
+        if(r&&r.ok)markTier(modId,n,r.granted?today(now):(n===1?TIERS_EPOCH:today(now)));
+      });
+      // Arena Shop P1 — 50 Darics par échelon (unique par déclencheur, idempotent côté serveur).
+      grantMarks(50,"mastery",tierMarksKey(modId,n),true);
     });
   },[u&&u.moduleScores]);
+  // Pose l'échelon atteint sur le profil ET le sauvegarde : une réponse asynchrone modifie le profil, donc
+  // sU(prev => …) (recopier le u capturé écraserait les sv() intermédiaires) ; recordModule le recopie ensuite.
+  function markTier(modId,n,date){
+    sU(function(prev){
+      if(!prev||!prev.moduleScores||!prev.moduleScores[modId])return prev;
+      var cur=prev.moduleScores[modId].mt;
+      if(cur&&cur.n>=n)return prev;
+      var c=JSON.parse(JSON.stringify(prev));
+      c.moduleScores[modId].mt={n:n,date:date};
+      saveLocal(c);save(c);
+      return c;
+    });
+  }
 
   // V2 helper — Weekly TOEIC Progression (+25 pts vs last weekly_snapshot)
   async function checkWeeklyToeicChest(uu,wkId){
@@ -931,12 +952,15 @@ useEffect(function(){
   // check-puis-insert cote client etait un TOCTOU — c'est lui qui a produit les
   // pending_chests en double et les +37k XP fantomes du 2026-04-27. On ne montre
   // le toast que si le serveur dit avoir reellement cree le coffre.
-  function grantChestLocal(trigger,chestType){
+  // onResult (facultatif) : la réponse du serveur {ok, granted} — granted:false avec ok:true = déjà servi
+  // (déclencheur unique). Les échelons de maîtrise en ont besoin pour mémoriser l'échelon dans les deux cas.
+  function grantChestLocal(trigger,chestType,onResult){
     if(!u||!u.name)return;
     var un=u.name,cc=u.classCode||"visitor";
     var sid=openSessionRef.current;
     grantChest(un,cc,chestType,trigger,null).then(function(r){
       if(r&&r.granted){refreshPendingChests(un,cc);deliverChest(sid,trigger,chestType);}
+      if(onResult)onResult(r);
     }).catch(function(e){console.error("[CHEST] grant error:",e&&e.message);});
   }
   // Fire-and-forget: grant a weekly chest (7-day cooldown per trigger)

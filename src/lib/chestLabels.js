@@ -1,5 +1,17 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { ACHIEVEMENTS } from "../data/achievements.js";
+import { MISSION_MODULES } from "../data/placement.js";
+import { roman } from "./hubStatus.js";
+
+// Noms des modules absents de MISSION_MODULES (hubs à épreuves, jeux ajoutés après).
+var MODULE_NAMES = { tavern: "Word Tavern", bforge: "Linking Bridge", gauntlet_irregular: "Irregular Crypt",
+  gauntlet_tense: "Chronomancer", gauntlet_passive: "Passive Forge", gauntlet_relative: "Relative Weaver",
+  modals_match: "The Oracle", modals_sort: "The Verdict", mimic: "Mimic Hunt", mimic_listen: "Mimic Hunt · Listen" };
+function moduleName(id) {
+  if (MODULE_NAMES[id]) return MODULE_NAMES[id];
+  var m = MISSION_MODULES.find(function (x) { return x.id === id; });
+  return m ? m.name : id;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // TRIGGER LABEL — human-friendly description of why a chest was granted
@@ -50,9 +62,10 @@ export function getTriggerLabel(trigger){
     var ms=trigger.substring(15);
     return ms+"-day mission streak";
   }
+  // Échelons de maîtrise (2026-09-19) : mastery_<mod> = I, mastery_<mod>_<n> = échelon n.
   if(trigger.indexOf("mastery_")===0){
-    var modIdT=trigger.substring(8);
-    return"Module mastery: "+modIdT;
+    var mt=/^mastery_(.+?)(?:_(\d+))?$/.exec(trigger);
+    return"Mastery "+roman(mt[2]?parseInt(mt[2],10):1)+": "+moduleName(mt[1]);
   }
   if(trigger.indexOf("ach_legendary_")===0){
     var achId=trigger.substring(14);
