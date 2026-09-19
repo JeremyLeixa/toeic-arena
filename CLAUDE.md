@@ -53,7 +53,11 @@ Ce que la suite protège, et pourquoi :
   le client et le SQL vivent dans deux fichiers que rien ne relie. Une clé de paramètre
   invalide fait refuser l'appel **entier** par PostgREST.
 - **`check_profile_roundtrip`** — la règle « fresh() ET supaToLocal ET payload », plus la
-  liste blanche de `save_student`. Une colonne hors liste est ignorée **en silence**.
+  liste blanche de `save_student`. Une colonne hors liste est ignorée **en silence**. Et **aucun champ lu sur
+  le profil (`u.X`, `p.u.X` dans `src/`) hors de `fresh()`** : il vivrait en mémoire et en localStorage, jamais
+  dans Supabase, et disparaîtrait au premier rechargement (cas vécu jusqu'au 2026-09-19 : les jetons armés,
+  brûlés côté serveur puis perdus au retour sur l'onglet). Exceptions listées : propriétés de l'énoncé de
+  synthèse vocale (`u` dans `lib/audio.js`), drapeau passager `_shieldPending`.
 - **`check_chest_drops`** — `open_pending_chest` ignore silencieusement tout type de
   récompense hors liste blanche.
 - **`check_identity`** — `normNameForEmail` décide de l'adresse du compte Auth,
@@ -397,7 +401,7 @@ Grammar & Vocab, Tips), Games, Listening et Reading rendent `HubTile` + `HubShel
 - **Frames** : avatar borders/glow CSS (player_rewards `reward_type='frame'`, equipped via `students.frame_id` / `u.equippedFrame`). 8 entries in FRAMES.
 - **Titles** : text label under name (player_rewards `reward_type='title'`, equipped via `students.title_id` / `u.equippedTitle`). 12 entries in TITLES.
 - **Cheat Sheets** : codex pages rendered via GrimoireReader wrapping (player_rewards `reward_type='cheat_sheet'`). 3 stubs in CHEAT_SHEETS V1, more content authoring deferred.
-- **Tokens** (stackable consumables) : 7 types in TOKEN_TYPES, stored in dedicated `player_tokens` table (composite PK user×class×type, qty, cap-aware via `grant_token` / `consume_token` SQL helpers). `diminishing_bypass` (cap 5), `streak_shield` (cap 3, **passive auto-consume** at load if 1-day gap detected), `daily_reroll` (cap 1, clickable from Collection → moves the mission to the next quest of the frozen plan, see « Mentor qui se souvient »), `mock_reset` (cap 2 — semantic deferred), `boss_reset` (cap 1, in-context CTA on Train Mocks → arms `u.bossResetArmed` → bypasses canUnlockBoss 24h cooldown), `endless_resurrect` (cap 2, in-context CTA → arms `u.endlessResetArmed` → bypasses getEndlessState cooldown), `insight_token` (cap 3, drops 30% on Légendaire ; consumed from Collection → `insightText`, stored in `review.insights`, reread in the Mentor's Chronicle).
+- **Tokens** (stackable consumables) : 7 types in TOKEN_TYPES, stored in dedicated `player_tokens` table (composite PK user×class×type, qty, cap-aware via `grant_token` / `consume_token` SQL helpers). `diminishing_bypass` (cap 5), `streak_shield` (cap 3, **passive auto-consume** at load if 1-day gap detected), `daily_reroll` (cap 1, clickable from Collection → moves the mission to the next quest of the frozen plan, see « Mentor qui se souvient »), `mock_reset` (cap 2 — semantic deferred), `boss_reset` (cap 1, in-context CTA on Train Mocks → arms `u.boosts.bossResetArmed` → bypasses canUnlockBoss 24h cooldown), `endless_resurrect` (cap 2, in-context CTA → arms `u.boosts.endlessResetArmed` → bypasses getEndlessState cooldown). **Tout jeton armé vit dans `u.boosts`** (jsonb persisté, depuis le 2026-09-19 : `bypassArmedModule`, `bossResetArmed`, `endlessResetArmed`, `mockResetArmed`, comme les boosts Daric) : au haut du profil, le drapeau n'allait dans aucune colonne et le jeton, déjà consommé par `consume_token`, était perdu au rechargement, `insight_token` (cap 3, drops 30% on Légendaire ; consumed from Collection → `insightText`, stored in `review.insights`, reread in the Mentor's Chronicle).
 
 #### V2 segmented drop tables (DROP_TABLES in chests.js)
 - **Novice** : 50-150 XP + 1 token (Bypass/Shield/Reroll)

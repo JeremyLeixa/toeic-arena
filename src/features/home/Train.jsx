@@ -45,9 +45,10 @@ import { useState } from "react";
       // V2 — Mocks lock permanently after completion, UNLESS Mock Reset is armed.
       // The token bypasses the lock for any of the 3 mocks ; mockDone clears the flag
       // after the run so a single token = one replay.
-      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armed":"");if(!p.u.mockResetArmed){items[0].lock=true;items[0].bg="var(--bg3)";}}
-      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armed":"");if(!p.u.mockResetArmed){items[1].lock=true;items[1].bg="var(--bg3)";}}
-      if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495"+(p.u.mockResetArmed?" · 🎟️ Reset armed":"");if(!p.u.mockResetArmed){items[2].lock=true;items[2].bg="var(--bg3)";}}
+      var mockArmed=!!(p.u.boosts&&p.u.boosts.mockResetArmed); // jeton Mock Reset, dans boosts (persisté)
+      if(p.u.mockResults&&p.u.mockResults.mock1){items[0].d="Completed — TOEIC "+p.u.mockResults.mock1.toeicEstimate+"/495"+(mockArmed?" · 🎟️ Reset armed":"");if(!mockArmed){items[0].lock=true;items[0].bg="var(--bg3)";}}
+      if(p.u.mockResults&&p.u.mockResults.mock2){items[1].d="Completed — TOEIC "+p.u.mockResults.mock2.toeicEstimate+"/495"+(mockArmed?" · 🎟️ Reset armed":"");if(!mockArmed){items[1].lock=true;items[1].bg="var(--bg3)";}}
+      if(p.u.mockResults&&p.u.mockResults.mock3){items[2].d="Completed — TOEIC "+p.u.mockResults.mock3.toeicEstimate+"/495"+(mockArmed?" · 🎟️ Reset armed":"");if(!mockArmed){items[2].lock=true;items[2].bg="var(--bg3)";}}
       return items;
     })()},
     {key:"tips",title:"Tips & Strategy",sub:"Master the exam",icon:"treasure-map",count:"5 tools",items:[

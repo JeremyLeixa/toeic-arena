@@ -76,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-19-mimic-lot4";
+var BUILD_ID="2026-09-19-armed-tokens";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1336,7 +1336,7 @@ function sv(d){
 
   function goTeacher(){setTeacher(true);}
 
-  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp,{ceremony:true});c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.bossResetArmed)c.bossResetArmed=false;if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);
+  function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp,{ceremony:true});c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.boosts&&c.boosts.bossResetArmed)c.boosts.bossResetArmed=false;if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);
     // Pas de navigation ici : bossDone est appelé depuis doSubmit() pendant que
     // l'écran de résultats reste affiché (même GARDE que mockDone / bug Yannou).
   }
@@ -1355,7 +1355,7 @@ function sv(d){
       history:meta.history.slice(-50)
     };
     trackModSession(c,"endless");recordModule(c,"endless",result.score,result.total);
-    if(c.endlessResetArmed)c.endlessResetArmed=false; // V2 — consume after the run
+    if(c.boosts&&c.boosts.endlessResetArmed)c.boosts.endlessResetArmed=false; // V2 — consume after the run
     try{if(result.toeicEstimate>=800)playJingleMock();else playJingleMockOk();}catch(e){}haptic("complete");
     sv(c);
     // Pas de navigation ici : endlessDone est appelé depuis doSubmit() pendant
@@ -1371,7 +1371,7 @@ function sv(d){
     c.mockResults["mock"+result.mockId]=result;
     trackModSession(c,modId);
     recordModule(c,modId,result.score,result.total);
-    if(c.mockResetArmed)c.mockResetArmed=false; // V2 — consume Mock Reset flag after run
+    if(c.boosts&&c.boosts.mockResetArmed)c.boosts.mockResetArmed=false; // V2 — consume Mock Reset flag after run
     if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false; // P2.5 — consume Mock Multiplier
     try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}haptic("complete");
     // Coffres : Mock Tests + Boss Test

@@ -162,6 +162,57 @@ if (!MIG) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// 4. Aucun champ lu sur le profil hors de fresh()
+// ══════════════════════════════════════════════════════════════════════════
+// Les sections 1 à 3 ne voient que les champs de fresh(). Un champ posé sur le profil sans y figurer
+// passe entre les mailles : il vit en mémoire et en localStorage, jamais dans Supabase, et disparaît au
+// premier rechargement depuis la base (ouverture, ou retour sur l'onglet : synchro multi-appareils).
+// Cas vécu jusqu'au 2026-09-19 : les jetons armés (Bypass, Boss Reset, Endless Resurrect, Mock Reset),
+// brûlés côté serveur à l'armement puis perdus dès que l'élève changeait d'appli. Ils vivent dans `boosts`.
+// Ce test lit src/ : tout `u.X` / `p.u.X` doit être un champ de fresh(), ou vivre dans un champ persisté.
+const PROFILE_KEYS = new Set(Object.keys(base));
+// `u` désigne aussi l'énoncé de synthèse vocale (lib/audio.js, Onboard.jsx) : ses propriétés ne sont pas
+// des champs du profil.
+const NOT_PROFILE = new Set(['lang', 'onend', 'onerror', 'onstart', 'pitch', 'rate', 'voice', 'volume']);
+// Drapeaux passagers VOULUS : posés et consommés dans la même session, jamais attendus après rechargement.
+const TRANSIENT = {
+  _shieldPending: 'posé par le chargement sur un trou d\'un jour, consommé aussitôt par l\'effet du Streak Shield',
+};
+function walkSrc(dir, out) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walkSrc(p, out); else if (/\.(js|jsx)$/.test(e.name)) out.push(p);
+  }
+  return out;
+}
+const unsaved = {};
+for (const f of walkSrc(path.join(ROOT, 'src'), [])) {
+  // Commentaires retirés (ils citent d'anciens champs, « u.insights »…) ; pas les URL (« https:// »).
+  const src = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:"'\\])\/\/.*$/gm, '$1');
+  for (const mm of src.matchAll(/(?:^|[^\w.$])(?:p\.u|u)\.([A-Za-z_$][\w$]*)/g)) {
+    const k = mm[1];
+    if (PROFILE_KEYS.has(k) || NOT_PROFILE.has(k) || TRANSIENT[k]) continue;
+    (unsaved[k] = unsaved[k] || new Set()).add(path.relative(ROOT, f).split(path.sep).join('/'));
+  }
+}
+Object.keys(unsaved).forEach(function (k) {
+  fail('champ « ' + k + ' » lu sur le profil (' + [...unsaved[k]].join(', ') + ') mais absent de fresh() : '
+    + 'il ne passe ni par buildSavePayload ni par supaToLocal et disparaît au rechargement. '
+    + 'Le ranger dans un champ persisté (boosts, mission…) ou l\'ajouter aux trois endroits.');
+});
+// Les jetons armés s'écrivent dans boosts, y compris par la CTA générique (écriture dynamique, invisible
+// au balayage ci-dessus).
+const tokenCta = fs.readFileSync(path.join(ROOT, 'src', 'components', 'TokenCTAs.jsx'), 'utf8');
+if (!/c\.boosts\[p\.armField\]=true/.test(tokenCta)) {
+  fail('TokenCTAs.jsx : le jeton armé doit s\'écrire dans c.boosts[p.armField] (persisté), pas au haut du profil.');
+}
+const armedLocal = Object.assign({}, filled, { boosts: { bypassArmedModule: 'drill', bossResetArmed: true, endlessResetArmed: true, mockResetArmed: true, moduleBoostArmed: 'p6' } });
+const armedBack = app.supaToLocal(Object.assign({ name: filled.name, class_code: filled.classCode }, app.buildSavePayload(armedLocal)));
+if (JSON.stringify(armedBack.boosts) !== JSON.stringify(armedLocal.boosts)) {
+  fail('jetons armés perdus à l\'aller-retour : envoyé ' + JSON.stringify(armedLocal.boosts) + ', revenu ' + JSON.stringify(armedBack.boosts));
+}
+
 console.log(fails === 0
   ? '\nOK — aucun champ ne se perd entre le client, le payload et la base.'
   : '\n' + fails + ' problème(s).');

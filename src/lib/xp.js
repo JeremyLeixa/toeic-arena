@@ -98,8 +98,8 @@ export function gateSteps(baseXp,sc,tot,modId,ctx){
   }
   if(modId){
     // Bypass Token armé pour CE module : on saute la courbe ET tout ce qui suit (retour
-    // anticipé historique). Le flag est consommé par recordModule après la manche.
-    if(u&&u.bypassArmedModule===modId){
+    // anticipé historique). Le flag (dans boosts, persisté) est consommé par recordModule après la manche.
+    if(u&&u.boosts&&u.boosts.bypassArmedModule===modId){
       steps.push({id:"bypass",kind:"bonus",value:gatedXp});
       return out();
     }
@@ -136,7 +136,7 @@ export function gateSteps(baseXp,sc,tot,modId,ctx){
 // nombre de parties du jour. tests/check_xp_gates.cjs vérifie l'égalité avec l'étape « farm ».
 export function nextRunMult(u,modId,ctx){
   ctx=ctx||{};
-  if(u&&u.bypassArmedModule===modId)return 1;
+  if(u&&u.boosts&&u.boosts.bypassArmedModule===modId)return 1;
   if(isBoostedByEvents(modId,ctx.events))return 1;
   var dms=(u&&u.dailyModSessions)||{};
   return farmMult(modId,dms[modId+"_"+today(ctx.now||new Date())]||0);

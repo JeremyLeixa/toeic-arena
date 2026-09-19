@@ -25,7 +25,9 @@ export function TokenContextCTA(p){
     consumeToken(p.u.name,p.u.classCode||"visitor",p.tokenType,1).then(function(res){
       setBusy(false);setAsking(false);
       if(!res.ok){setToast({err:true,msg:"Failed: "+(res.error||"unknown")});setTimeout(function(){setToast(null);},2400);return;}
-      var c=JSON.parse(JSON.stringify(p.u));c[p.armField]=true;
+      // Dans boosts (jsonb persisté) : au haut du profil, le drapeau n'allait dans aucune colonne et le jeton,
+      // déjà brûlé côté serveur, était perdu au premier rechargement depuis Supabase (retour sur l'onglet).
+      var c=JSON.parse(JSON.stringify(p.u));if(!c.boosts)c.boosts={};c.boosts[p.armField]=true;
       p.setUser(c);
       setQty(qty-1);
       setToast({err:false,msg:icon+" "+(p.armedMsg||"Token armed")});

@@ -142,7 +142,7 @@ export function recordModule(u,modId,sc,tot,catStats,more){
   u.moduleScores[modId]={correct:prev.correct+sc,total:prev.total+tot,sessions:prev.sessions+1,lastDate:today(),history:hist,catStats:mergedCats};
   // V2 — Bypass Token consumed once a round of the armed module lands. Clearing here
   // (rather than in each Done handler) keeps the contract central and consistent.
-  if(u.bypassArmedModule===modId)u.bypassArmedModule=null;
+  if(u.boosts&&u.boosts.bypassArmedModule===modId)u.boosts.bypassArmedModule=null;
   if(u.boosts&&u.boosts.moduleBoostArmed===modId)u.boosts.moduleBoostArmed=null; // P2.5 — consume Module Booster
   return u;
 }
@@ -184,7 +184,7 @@ export function canUnlockBoss(u){
   if(!u.mockResults||!u.mockResults.mock2)reasons.push("Complete Mock Test 2 first");
   if(!u.mockResults||!u.mockResults.mock3)reasons.push("Complete Mock Test 3 first");
   // V2 — Boss Reset token bypasses the 24h cooldown when armed.
-  if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()&&!u.bossResetArmed){
+  if(reasons.length===0&&u.mockResults&&u.mockResults.boss&&u.mockResults.boss.date===today()&&!(u.boosts&&u.boosts.bossResetArmed)){
     reasons.push("24h cooldown — come back tomorrow");
   }
   return{ok:reasons.length===0,reasons:reasons};
@@ -205,6 +205,6 @@ export function getEndlessState(u){
   if((u.mockResults.boss.toeicEstimate||0)<650)return"locked";
   var last=u.mockResults.endless&&u.mockResults.endless.lastAttempt;
   // V2 — Endless Resurrect token bypasses the 24h cooldown when armed.
-  if(last&&(Date.now()-last)<24*60*60*1000&&!u.endlessResetArmed)return"cooldown";
+  if(last&&(Date.now()-last)<24*60*60*1000&&!(u.boosts&&u.boosts.endlessResetArmed))return"cooldown";
   return"ready";
 }

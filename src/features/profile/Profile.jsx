@@ -573,13 +573,14 @@ export function Profile(p){
             var clickable=owned&&COLLECTION_ACTIONABLE[tt];
             var hint=IN_CONTEXT_HINT[tt]||info.desc;
             // V2 — surface armed flags on each token's card so the user remembers what's queued
-            if(tt==="diminishing_bypass"&&u.bypassArmedModule){
-              var armedMod=MISSION_MODULES.find(function(m){return m.id===u.bypassArmedModule;});
-              hint="🔓 Armed on "+(armedMod?armedMod.name:u.bypassArmedModule)+" — burns next round";
+            var armed=u.boosts||{}; // jetons armés : dans boosts (persisté) depuis le 2026-09-19
+            if(tt==="diminishing_bypass"&&armed.bypassArmedModule){
+              var armedMod=MISSION_MODULES.find(function(m){return m.id===armed.bypassArmedModule;});
+              hint="🔓 Armed on "+(armedMod?armedMod.name:armed.bypassArmedModule)+" — burns next round";
             }
-            else if(tt==="mock_reset"&&u.mockResetArmed){hint="🎟️ Armed — bypass on next Mock played";}
-            else if(tt==="boss_reset"&&u.bossResetArmed){hint="🐲 Armed — enter the Boss arena";}
-            else if(tt==="endless_resurrect"&&u.endlessResetArmed){hint="💎 Armed — replay Endless";}
+            else if(tt==="mock_reset"&&armed.mockResetArmed){hint="🎟️ Armed — bypass on next Mock played";}
+            else if(tt==="boss_reset"&&armed.bossResetArmed){hint="🐲 Armed — enter the Boss arena";}
+            else if(tt==="endless_resurrect"&&armed.endlessResetArmed){hint="💎 Armed — replay Endless";}
             else if(tt==="module_booster"&&u.boosts&&u.boosts.moduleBoostArmed){var mbm=MISSION_MODULES.find(function(m){return m.id===u.boosts.moduleBoostArmed;});hint="🚀 Armed on "+(mbm?mbm.name:u.boosts.moduleBoostArmed)+" — +50% next session";}
             else if(tt==="mock_multiplier"&&u.boosts&&u.boosts.mockMultArmed){hint="📈 Armed — ×1.5 on next Mock or Boss";}
             else if(tt==="daily_doubler"&&u.boosts&&u.boosts.dailyDoublerUntil&&Date.now()<u.boosts.dailyDoublerUntil){var ddm=Math.max(0,Math.round((u.boosts.dailyDoublerUntil-Date.now())/60000));hint="⏫ Active — ×2 XP ("+(ddm>=60?Math.round(ddm/60)+"h":ddm+"m")+" left)";}
@@ -753,7 +754,7 @@ export function Profile(p){
         var pickedMod=MISSION_MODULES.find(function(m){return m.id===bypassPick;})||{name:bypassPick,icon:"🎯"};
         function doBypassArm(){
           applyConsume("diminishing_bypass",function(){
-            var c=JSON.parse(JSON.stringify(u));c.bypassArmedModule=bypassPick;
+            var c=JSON.parse(JSON.stringify(u));if(!c.boosts)c.boosts={};c.boosts.bypassArmedModule=bypassPick;
             p.setAvatar(c);
             setTokenToast({err:false,msg:"🔓 Bypass armed on "+pickedMod.name});setTimeout(function(){setTokenToast(null);},2800);
             closeAll();

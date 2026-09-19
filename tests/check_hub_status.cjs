@@ -69,7 +69,7 @@ eq('jamais joué', (({ total, vol, last, mastered }) => ({ total, vol, last, mas
 eq('paliers 0/1/2/3 parties', ['bforge', 'connsort', 'gerinf', 'pvdojo'].map((id) => st({ id }).xp), ['full', 'half', 'low', 'none']);
 eq('parties d\'hier ne comptent pas', st({ id: 'drill' }).xp, 'full');
 eq('événement global → plein tarif', st({ id: 'pvdojo' }, { now: NOW, events: [{ type: 'flash_hour' }] }).xp, 'full');
-eq('Bypass Token armé pour ce module → plein tarif', H.hubItemStatus(Object.assign({}, u, { bypassArmedModule: 'pvdojo' }), { id: 'pvdojo' }, ctx).xp, 'full');
+eq('Bypass Token armé pour ce module → plein tarif', H.hubItemStatus(Object.assign({}, u, { boosts: { bypassArmedModule: 'pvdojo' } }), { id: 'pvdojo' }, ctx).xp, 'full');
 eq('xpTier mock 0,4 et flashcards 0,6 → half', [H.xpTier(0.4), H.xpTier(0.6), H.xpTier(0.15), H.xpTier(0)], ['half', 'half', 'low', 'none']);
 
 // 4. Tuiles sans coffre

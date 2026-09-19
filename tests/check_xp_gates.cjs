@@ -84,9 +84,9 @@ eq('composition : base 33, acc 40 %, 2e session → round(round(16.5)×.5)=9', g
 eq('4e session → 0', g(100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } })), { xp: 0, focusHit: false });
 eq('compteur d\'un AUTRE jour ignoré', g(100, 10, 10, 'drill', base({ dailyModSessions: { 'drill_2026-09-14': 3 } })), { xp: 100, focusHit: false });
 eq('mock1 2e session → 40 %', g(100, 10, 10, 'mock1', base({ dailyModSessions: { ['mock1_' + TD]: 1 } })), { xp: 40, focusHit: false });
-eq('bypass armé : courbe sautée, accuracy toujours active', g(100, 2, 10, 'drill', base({ bypassArmedModule: 'drill', dailyModSessions: { ['drill_' + TD]: 3 } })), { xp: 10, focusHit: false });
-eq('bypass armé : retour anticipé, PAS de Module Booster ensuite', g(100, 10, 10, 'drill', base({ bypassArmedModule: 'drill', boosts: { moduleBoostArmed: 'drill' } })), { xp: 100, focusHit: false });
-eq('bypass armé sur un autre module : courbe appliquée', g(100, 10, 10, 'drill', base({ bypassArmedModule: 'p6', dailyModSessions: { ['drill_' + TD]: 3 } })), { xp: 0, focusHit: false });
+eq('bypass armé : courbe sautée, accuracy toujours active', g(100, 2, 10, 'drill', base({ boosts: { bypassArmedModule: 'drill' }, dailyModSessions: { ['drill_' + TD]: 3 } })), { xp: 10, focusHit: false });
+eq('bypass armé : retour anticipé, PAS de Module Booster ensuite', g(100, 10, 10, 'drill', base({ boosts: { bypassArmedModule: 'drill', moduleBoostArmed: 'drill' } })), { xp: 100, focusHit: false });
+eq('bypass armé sur un autre module : courbe appliquée', g(100, 10, 10, 'drill', base({ boosts: { bypassArmedModule: 'p6' }, dailyModSessions: { ['drill_' + TD]: 3 } })), { xp: 0, focusHit: false });
 eq('spotlight sur ce module : courbe sautée', g(100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [spotDrill]), { xp: 100, focusHit: false });
 eq('spotlight ailleurs : courbe appliquée', g(100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [spotP6]), { xp: 0, focusHit: false });
 eq('flash_hour : courbe sautée', g(100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [{ type: 'flash_hour' }]), { xp: 100, focusHit: false });
@@ -209,9 +209,9 @@ const GATE_CASES = [
   [100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } })],
   [100, 10, 10, 'drill', base({ dailyModSessions: { 'drill_2026-09-14': 3 } })],
   [100, 10, 10, 'mock1', base({ dailyModSessions: { ['mock1_' + TD]: 1 } })],
-  [100, 2, 10, 'drill', base({ bypassArmedModule: 'drill', dailyModSessions: { ['drill_' + TD]: 3 } })],
-  [100, 10, 10, 'drill', base({ bypassArmedModule: 'drill', boosts: { moduleBoostArmed: 'drill' } })],
-  [100, 10, 10, 'drill', base({ bypassArmedModule: 'p6', dailyModSessions: { ['drill_' + TD]: 3 } })],
+  [100, 2, 10, 'drill', base({ boosts: { bypassArmedModule: 'drill' }, dailyModSessions: { ['drill_' + TD]: 3 } })],
+  [100, 10, 10, 'drill', base({ boosts: { bypassArmedModule: 'drill', moduleBoostArmed: 'drill' } })],
+  [100, 10, 10, 'drill', base({ boosts: { bypassArmedModule: 'p6' }, dailyModSessions: { ['drill_' + TD]: 3 } })],
   [100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [spotDrill]],
   [100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [spotP6]],
   [100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [{ type: 'flash_hour' }]],
@@ -233,7 +233,7 @@ GATE_CASES.forEach((a, i) => {
 eq('étapes : 2e session, accuracy 40 %', gs(33, 4, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 1 } })).steps,
   [{ id: 'base', kind: 'base', value: 33 }, { id: 'accuracy', kind: 'malus', mult: 0.5, value: 17 }, { id: 'farm', kind: 'malus', mult: 0.5, run: 2, value: 9 }]);
 eq('étapes : accuracy < 30 % → mult 0.1', gs(100, 2, 10, 'drill', base()).steps[1], { id: 'accuracy', kind: 'malus', mult: 0.1, value: 10 });
-eq('étapes : bypass = retour anticipé, pas de courbe ni de booster', ids(gs(100, 10, 10, 'drill', base({ bypassArmedModule: 'drill', boosts: { moduleBoostArmed: 'drill' }, dailyModSessions: { ['drill_' + TD]: 3 } })).steps), ['base', 'bypass']);
+eq('étapes : bypass = retour anticipé, pas de courbe ni de booster', ids(gs(100, 10, 10, 'drill', base({ boosts: { bypassArmedModule: 'drill', moduleBoostArmed: 'drill' }, dailyModSessions: { ['drill_' + TD]: 3 } })).steps), ['base', 'bypass']);
 eq('étapes : spotlight sur le module = pas d\'étape de courbe', ids(gs(100, 10, 10, 'drill', base({ dailyModSessions: { ['drill_' + TD]: 3 } }), [spotDrill]).steps), ['base']);
 eq('étapes : 1re session du jour = pas d\'étape de courbe (×1)', ids(gs(100, 10, 10, 'drill', base()).steps), ['base']);
 eq('étapes : plancher 0', gs(-20, 10, 10, 'drill', base()).steps, [{ id: 'base', kind: 'base', value: -20 }, { id: 'floor', kind: 'malus', value: 0 }]);
@@ -243,7 +243,7 @@ eq('étapes : Module Booster puis Mock Multiplier', ids(gs(40, 10, 10, 'mock1', 
   const withSpot = gs(40, 10, 10, 'drill', base(), [spotDrill], { spotlight: true });
   eq('ctx.spotlight : ×3 appliqué en dernière étape', [withSpot.xp, withSpot.steps[withSpot.steps.length - 1]], [120, { id: 'spotlight', kind: 'bonus', mult: 3, value: 120 }]);
   eq('sans ctx.spotlight : gateXp inchangé (miniDone l\'appliquait à part)', g(40, 10, 10, 'drill', base(), [spotDrill]).xp, 40);
-  const bypassSpot = gs(40, 10, 10, 'drill', base({ bypassArmedModule: 'drill' }), [spotDrill], { spotlight: true });
+  const bypassSpot = gs(40, 10, 10, 'drill', base({ boosts: { bypassArmedModule: 'drill' } }), [spotDrill], { spotlight: true });
   eq('ctx.spotlight : appliqué aussi après un bypass (comme miniDone)', [bypassSpot.xp, ids(bypassSpot.steps)], [120, ['base', 'bypass', 'spotlight']]);
 })();
 
@@ -274,7 +274,7 @@ eq('settle : underdog et Daily Doubler', ids(s(base({ lastActive: TD, boosts: { 
     for (let run = 0; run <= 4; run++) {
       for (const events of evs) {
         for (const bypass of [null, modId, 'other']) {
-          const u = base({ dailyModSessions: { [modId + '_' + TD]: run }, bypassArmedModule: bypass });
+          const u = base({ dailyModSessions: { [modId + '_' + TD]: run }, boosts: { bypassArmedModule: bypass } });
           const st = XP.gateSteps(1000, 10, 10, modId, { u, now: NOW, events }).steps;
           const farm = st.find((x) => x.id === 'farm');
           eq('nextRunMult ' + modId + ' run ' + run + ' ev ' + JSON.stringify(events) + ' bypass ' + bypass,

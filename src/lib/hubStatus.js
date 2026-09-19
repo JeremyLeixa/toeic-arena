@@ -1,5 +1,5 @@
 // État des tuiles de hub (2026-09-17, proto prototypes/living-hubs/, variante C « Coffre »).
-// Pur : tout vient du profil (moduleScores, dailyModSessions, gameScores, bypassArmedModule) et
+// Pur : tout vient du profil (moduleScores, dailyModSessions, gameScores, boosts.bypassArmedModule) et
 // des événements injectés. Rendu par components/HubTile.jsx ; testé par tests/check_hub_status.cjs.
 import { nextRunMult } from "./xp.js";
 import { today } from "./util.js";
