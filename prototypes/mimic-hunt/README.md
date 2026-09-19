@@ -62,3 +62,29 @@ Choix de rédaction, vérifiés au chargement par `game.jsx` (console : « 12 it
 - Icône `mimic-chest` (game-icons, déjà dans `mimic-chest.svg`) à ajouter à `GAME_ICON_PATHS`.
 - Couleurs : tout est en jetons (`--green`, `--red`, `--cyan`, `color-mix`) ; aucun hex en dur hors `rgba(0,0,0,…)` des ombres, rien pour `check_tones`.
 - BGM : placeholder à choisir (`bgm_clue` ?), piste Mureka dédiée ensuite.
+
+## Lot audio « à l'oreille » (2026-09-19) — proto `listen.html`
+
+La source n'est plus lue, elle **s'entend** : en Parts 3 et 4, le distracteur classique reprend un mot de
+l'enregistrement, c'est le Mimic version écoute. Après la réponse, la transcription apparaît et le retour
+est celui du jeu (variante C, rien de souligné avant un tap). Six vrais clips dans `audio/`
+(`node scripts/gen-mimic-audio.mjs --sample`), quatre voix de `lib/listeningVoices.js` choisies par le
+genre du locuteur.
+
+- **A · Aperçu (recommandée)** : question et réponses lisibles avant l'écoute, verrouillées jusqu'à la fin
+  de l'enregistrement, une réécoute. C'est la consigne des Parts 3 et 4, et le verrou empêche de répondre
+  au premier mot reconnu, c'est-à-dire de mordre.
+- **B · À l'aveugle** : on écoute d'abord, la question arrive après (patron Audio Blitz). Plus dur.
+- **C · Libre** : réponses tapables pendant l'écoute, réécoutes illimitées. Récompense le réflexe visé.
+- **Entrée** : deux portes sur l'intro (Lire / Écouter), deux modules pour les stats (`mimic`,
+  `mimic_listen`) : la version écoute compte en Listening (poids faible, comme `.04` en Reading).
+
+**Contenu** : seules les sources qui se disent (conversation, messagerie, annonce, météo, flash éco,
+visite) passent à l'oreille : 21 dans la banque (6 / 5 / 10 par palier). Le **lot 4** (`drafts/lot4.js`,
+24 items, mh61-mh84, relecture `review.html?lot=4`) les porte à 45 (15 par palier), seuil du coffre de
+maîtrise ; il sert aussi en lecture (banque de 84). `voice: "m"|"f"` quand une messagerie se présente.
+
+**Au câblage (après choix de la variante et relecture du lot 4)** : champ `spoken` (ou liste) pour la
+banque écoute, clips `public/audio/mimic/<id>.mp3` pour les 45 sources (~4 500 crédits), `check:assets`,
+lecture par `lib/audio.js` (drapeau `_audioAborted`), module `mimic_listen` (hub, `MODULE_TOEIC_MAP`
+section Listening, poids, `EXPORT_MODULES`, `feedbackModules`, liste noire du coffre sous 45 items).
