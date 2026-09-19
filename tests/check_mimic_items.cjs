@@ -131,6 +131,10 @@ if (!LOT) {
   eq(stepDetail({ id: 'base' }, { modId: 'mimic', sc: 9, bites: 5, bitePenalty: 15 }), '9 correct · 5 bites −15', 'parchemin : morsures et retenue');
   eq(stepDetail({ id: 'base' }, { modId: 'mimic', sc: 13, bites: 1, bitePenalty: 3 }), '13 correct · 1 bite −3', 'parchemin : une morsure');
   eq(stepDetail({ id: 'base' }, { modId: 'mimic', sc: 15, bites: 0, bitePenalty: 0 }), '15 correct', 'parchemin : sans morsure');
+  // Plancher : la retenue réelle (20 pour 7 morsures) se lirait comme une erreur, on ne la chiffre pas.
+  const fl = mimicXp(4, 15, 7);
+  eq(stepDetail({ id: 'base' }, { modId: 'mimic', sc: 4, bites: 7, bitePenalty: fl.bitePenalty }), '4 correct · 7 bites', 'parchemin : plancher, retenue non chiffrée');
+  eq(stepDetail({ id: 'base' }, { modId: 'mimic', sc: 0, bites: 11, bitePenalty: mimicXp(0, 15, 11).bitePenalty }), '0 correct · 11 bites', 'parchemin : rien retenu, rien chiffré');
   // Câblage : sans lui, la base est réduite mais le parchemin ne dit pas pourquoi.
   const read = function (f) { return fs.readFileSync(path.join(ROOT, 'src', f), 'utf8'); };
   const MH = read('features/games/MimicHunt.jsx');

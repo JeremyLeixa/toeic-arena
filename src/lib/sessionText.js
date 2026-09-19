@@ -3,6 +3,7 @@
 // Les étapes viennent de lib/xp.js : gateSteps(...).steps puis settleXp(...).steps, plus l'étape
 // « mission » ajoutée par App.jsx quand checkMission crédite ses +15 XP.
 import { LEAGUES } from "../data/leagues.js";
+import { MIMIC_XP } from "./mimicXp.js";
 
 // Bande de résultat (score sur total). Sans total (jeux notés en points ou au temps) : "fair".
 export function resultBand(sc, tot) {
@@ -74,9 +75,13 @@ export function stepDetail(st, o) {
   // (5 + 5 par créature). Dire « 7 correct » ici mentirait sur ce qui a été payé.
   if (st.id === "base" && o.modId === "hunt") return o.slain != null ? o.slain + " slain" : "";
   // Mimic Hunt : la base arrive déjà réduite de 3 XP par morsure (lib/mimicXp.js). Sans la mention,
-  // « 9 correct » à 45 XP passerait pour une erreur de calcul. `bitePenalty` = retenue réelle (plancher).
-  if (st.id === "base" && o.modId === "mimic" && o.bites > 0)
-    return o.sc + " correct · " + o.bites + (o.bites === 1 ? " bite" : " bites") + (o.bitePenalty > 0 ? " −" + o.bitePenalty : "");
+  // « 9 correct » à 45 XP passerait pour une erreur de calcul. La retenue n'est chiffrée que COMPLÈTE :
+  // quand le plancher des 15 joue, « 11 bites −15 » se lirait comme une erreur (choix de Jérémy du
+  // 2026-09-19), on ne dit que le nombre de morsures.
+  if (st.id === "base" && o.modId === "mimic" && o.bites > 0) {
+    var full = o.bitePenalty === MIMIC_XP.perBite * o.bites;
+    return o.sc + " correct · " + o.bites + (o.bites === 1 ? " bite" : " bites") + (full ? " −" + o.bitePenalty : "");
+  }
   if (st.id === "base") return o.mode === "points" || o.mode === "time" ? "" : (o.sc != null ? o.sc + " correct" : "");
   if (st.id === "bypass") return "no daily limit";
   if (st.id === "floor") return "min 0";
