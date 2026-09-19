@@ -84,7 +84,8 @@ export function GamesHub(p){
     {id:"sbuild",n:"Sentence Builder",d:"Tap blocks in the right order!",i:"brick-pile",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)"},
     {id:"ablitz",n:"Audio Blitz",d:"Listen once, answer fast!",i:"lyre",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
     {id:"clue",n:"Clue Hunter",d:"Find the clue, fill the blank!",i:"spyglass",bg:"linear-gradient(135deg,var(--cx-hex),#4abe60)"},
-    {id:"mimic",n:"Mimic Hunt",d:"Same meaning — or just the same words?",i:"mimic-chest",bg:"linear-gradient(135deg,#8b5e83,#c84040)",tag:"NEW"},
+    // Deux modes (lecture, écoute) : maîtrise agrégée et meilleur tarif restant, comme un hub à épreuves.
+    {id:"mimic",n:"Mimic Hunt",d:"Same meaning — or just the same words?",i:"mimic-chest",bg:"linear-gradient(135deg,#8b5e83,#c84040)",tag:"NEW",subs:["mimic","mimic_listen"],unit:"modes"},
     {id:"duel",n:"Vocabulary Arena",d:"Real-time 1v1 — challenge a classmate!",i:"swords-emblem",bg:"linear-gradient(135deg,#c84040,#8b5e83)",tag:"NEW",game:"duel"},
   ];
   return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -93,7 +94,7 @@ export function GamesHub(p){
     <HubShelf id="games" summary={hubSummary(p.u,games.filter(function(m){return !isModuleLocked(m.id,p.u,p.groupType);}),{events:p.events})}/>
     <div className="rg-games" style={{display:"flex",flexDirection:"column",gap:12}}>
       {games.map(function(m){var vl=isModuleLocked(m.id,p.u,p.groupType);var lb=classBests[m.id];return(
-        <HubTile key={m.id} item={m} size="lg" locked={vl} status={vl?null:hubItemStatus(p.u,m,{events:p.events})}
+        <HubTile key={m.id} item={m} size="lg" unit={m.unit} locked={vl} status={vl?null:hubItemStatus(p.u,m,{events:p.events})}
           onClick={function(){if(vl){p.onPremium(m.n);return;}p.nav(m.id);}}>
           {lb&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{"🏆 "}{lb.name}{" · "}{lb.label}</div>}
           {m.tag&&<div style={{fontSize:10,color:"var(--gold)",marginTop:2}}>{m.tag}</div>}

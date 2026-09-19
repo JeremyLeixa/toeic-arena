@@ -80,11 +80,10 @@ genre du locuteur.
   `mimic_listen`) : la version écoute compte en Listening (poids faible, comme `.04` en Reading).
 
 **Contenu** : seules les sources qui se disent (conversation, messagerie, annonce, météo, flash éco,
-visite) passent à l'oreille : 21 dans la banque (6 / 5 / 10 par palier). Le **lot 4** (`drafts/lot4.js`,
-24 items, mh61-mh84, relecture `review.html?lot=4`) les porte à 45 (15 par palier), seuil du coffre de
-maîtrise ; il sert aussi en lecture (banque de 84). `voice: "m"|"f"` quand une messagerie se présente.
+visite) passent à l'oreille : 21 dans la banque (6 / 5 / 10 par palier). Le **lot 4** (24 items, mh61-mh84), relu par Jérémy, est versé le 2026-09-19 : 45 sources parlées
+(15 par palier), seuil du coffre de maîtrise ; il sert aussi en lecture (banque de 84). `voice: "m"|"f"`
+quand une messagerie se présente.
 
-**Au câblage (après choix de la variante et relecture du lot 4)** : champ `spoken` (ou liste) pour la
-banque écoute, clips `public/audio/mimic/<id>.mp3` pour les 45 sources (~4 500 crédits), `check:assets`,
-lecture par `lib/audio.js` (drapeau `_audioAborted`), module `mimic_listen` (hub, `MODULE_TOEIC_MAP`
-section Listening, poids, `EXPORT_MODULES`, `feedbackModules`, liste noire du coffre sous 45 items).
+**Câblé le 2026-09-19** (variante A, voir CLAUDE.md « Mimic Hunt ») : `spoken`, clips
+`public/audio/mimic/<id>.mp3` (`scripts/gen-mimic-audio.mjs --all`), module `mimic_listen` (Listening .04), tuile Games
+en `subs` (unit `modes`).

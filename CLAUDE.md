@@ -183,7 +183,7 @@ src/
     miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps
     audioBlitz.js      — 60 Audio Blitz items
     clueHunter.js      — 80 Clue Hunter items
-    mimicHunt.js       — 60 items Mimic Hunt (reformulation, 20 par palier ; 21 `spoken` pour le mode écoute)
+    mimicHunt.js       — 84 items Mimic Hunt (reformulation, 29 / 30 / 25 par palier ; 45 `spoken` pour le mode écoute)
                           + MIMIC_TIERS (3 paliers)
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
@@ -527,10 +527,10 @@ Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alo
   citent l'option (`check_option_shuffle` scanne `MIMIC_ITEMS` depuis que 11 pièges disaient « A recycles… »).
 - **Rédaction des items** (`src/data/mimicHunt.js`, gardée par `tests/check_mimic_items.cjs`) : tout tient
   sur des **fragments** retrouvés en mots entiers, sans casse (`bridge`, `echo`, `mimics`) — un mot réécrit
-  et le surlignage disparaît en silence. **60 items, 20 par palier** (12 pilotes + 48 relus par Jérémy le
-  2026-09-19), bonne réponse 15 fois en A, B, C et D. 2 Mimics par item sauf cinq (un seul), des
+  et le surlignage disparaît en silence. **84 items** (29 / 30 / 25 par palier : 12 pilotes + 48 relus par Jérémy
+  le 2026-09-19 + le lot 4 « parlé », 24 items relus le même jour), bonne réponse 21 fois en A, B, C et D. 2 Mimics par item sauf cinq (un seul), des
   distracteurs neutres qui ressemblent à des reformulations, et **cinq items gardent un mot de la source
-  dans la bonne réponse** (mh12, mh18, mh22, mh35, mh59) : la règle n'est pas « mot repris = faux » mais
+  dans la bonne réponse** (mh12, mh18, mh22, mh35, mh59, mh72) : la règle n'est pas « mot repris = faux » mais
   « mot repris qui dit autre chose ».
 - **XP** : `15 + 5×bonne réponse`, +25 sans faute (115 pour 15 items, palier des 15 Q ; le `+2×Mimic
   démasqué` de la variante 2 a disparu avec elle), **−3 par morsure** (choix de Jérémy du 2026-09-19,
@@ -562,12 +562,13 @@ Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alo
   **verrouillées jusqu'à la fin de l'enregistrement** (répondre au premier mot reconnu, c'est mordre), une réécoute
   (`REPLAYS`), puis la transcription et le retour habituel. **Module `mimic_listen`** (même route : `extra.modId`, lu par
   `miniSession`) : Listening `.04`, ses propres stats et courbe anti-farming, coffre de maîtrise exclu sous 45 sources
-  parlées (`check_mimic_items`, qui exige alors aussi la tuile Games en `subs`). Trophées et « Game Master » comptent
+  parlées (`check_mimic_items`) et rendu depuis le lot 4 ; au-delà, le test exige aussi la tuile Games en
+  `subs:["mimic","mimic_listen"]` (`unit:"modes"`, « 1/2 modes mastered »). Trophées et « Game Master » comptent
   les deux modes ; les erreurs gardent la `ref` `mimic:<id>` (la chasse les repose à l'écrit). « Play again » repart
   dans le même mode (`replayMode`). Clips `public/audio/mimic/<id>.mp3` (`node scripts/gen-mimic-audio.mjs --all`,
   voix `mimicVoice` de `lib/listeningVoices.js` : genre de `voice` / `speaker`) ; `check:assets` et `check_mimic_items`
   exigent chaque clip — un clip absent ne se voit pas, les réponses se déverrouilleraient sans rien faire entendre.
-  21 sources parlées (6 / 5 / 10) ; le lot 4 « parlé » (`drafts/lot4.js`, 24 items) les porte à 45 après relecture.
+  **45 sources parlées** (15 par palier) depuis le lot 4 « parlé » (mh61-mh84, relu et versé le 2026-09-19).
 
 ### Mentor qui se souvient : bestiaire, chasse, plan du jour, narration, lettre, Chronique (2026-09-17/18, lots 1-6)
 Proto `prototypes/mentor-memory/` (storyboard des 8 moments, décisions de Jérémy dans son README) ; banc de

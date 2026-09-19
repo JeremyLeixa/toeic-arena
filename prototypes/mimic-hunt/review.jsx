@@ -2,17 +2,16 @@
 // montre qu'après la réponse : le pont (vert), ce que chaque Mimic recopie (rouge ondulé), le mot
 // gardé (gris). Le critère de Jérémy pour un Mimic : faux à la lecture attentive, tentant à la
 // lecture rapide. Les options sont dans l'ordre de rédaction (le jeu les permute).
-//   ?mode=light   ?tier=1|2|3   ?lot=4 (le lot en projet seul)
+//   ?mode=light   ?tier=1|2|3
 // Lot en projet : le poser dans drafts/, l'importer ici dans une Section « en projet », et le contrôler
 // avec node tests/check_mimic_items.cjs prototypes/mimic-hunt/drafts/<lot>.js avant relecture.
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { CSS } from "../../src/styles/appCss.js";
 import { MIMIC_ITEMS, MIMIC_TIERS } from "../../src/data/mimicHunt.js";
-import { LOT as LOT4 } from "./drafts/lot4.js";
 
 var q = new URLSearchParams(location.search);
-var MODE = q.get("mode") || "dark", TIER = q.get("tier") || "", ONLY = q.get("lot") || "";
+var MODE = q.get("mode") || "dark", TIER = q.get("tier") || "";
 
 var RV_CSS = `
 .rv{max-width:760px;margin:0 auto;padding:24px 16px 80px}
@@ -119,10 +118,6 @@ function Review() {
           <span><mark className="mh-mk mh-mk-echo">gardé</mark> mot sans synonyme courant</span>
         </div>
         {[1, 2, 3].filter(function (t) { return !TIER || String(t) === TIER; }).map(function (t) {
-          var items = LOT4.filter(function (it) { return it.tier === t; }), T = MIMIC_TIERS[t];
-          return <Section key={"l4" + t} title={"Lot 4 « parlé », en projet · Palier " + T.roman + " · " + items.length + " items"} lead={"Sources qui se disent (conversation, messagerie, annonce) : elles serviront au mode écoute, et à la lecture. " + T.lead} items={items} />;
-        })}
-        {ONLY !== "4" && [1, 2, 3].filter(function (t) { return !TIER || String(t) === TIER; }).map(function (t) {
           var items = MIMIC_ITEMS.filter(function (it) { return it.tier === t; }), T = MIMIC_TIERS[t];
           return <Section key={t} title={"Palier " + T.roman + " · " + T.name + " · " + items.length + " items en jeu"} lead={T.lead} items={items} />;
         })}
