@@ -76,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-19-mimic-calm";
+var BUILD_ID="2026-09-19-mimic-bite";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1118,7 +1118,8 @@ function sv(d){
     if(g.focusHit)grantMarks(30,"focus","focus_"+today(),true);
     var r=settleXp(u,g.xp,{now:now,events:activeEvents,classMedianXp:classMedianXp,leagueOf:getLeague});
     // opts.extra : ce que le module ajoute à la session pour que l'écran de fin le dise juste
-    // (la chasse y met `slain` : sa base d'XP paie les créatures vaincues, pas les bonnes réponses).
+    // (la chasse y met `slain` : sa base d'XP paie les créatures vaincues, pas les bonnes réponses ;
+    // Mimic Hunt y met `bites` et `bitePenalty` : sa base est déjà réduite de 3 XP par morsure).
     setLastSession(Object.assign({id:sid,sp:sp,modId:modId,sc:sc,tot:tot,userName:u.name,steps:g.steps.concat(r.steps),total:r.amt,
       fromXp:u.xp,toXp:r.c.xp,levelUp:r.levelUp,leagueUp:r.leagueUp,weekly:{from:u.weeklyXp||0,to:r.c.weeklyXp},
       streak:r.c.streak,chests:[],achievements:[],marks:[]},opts.extra||{}));
@@ -1443,7 +1444,7 @@ function sv(d){
   // `mistakes` (facultatif, aussi dans drillDone et dailyDone) : la liste mistakesRef du module. Ses
   // entrées qui portent `ref` entrent au bestiaire (lib/review.js recordMisses), file bornée ICI, à
   // l'écriture, jamais dans supaToLocal (une troncature à la lecture ferait échouer le round-trip).
-  function miniSession(sc,tot,xp,mistakes){var modId=sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
+  function miniSession(sc,tot,xp,mistakes,extra){var modId=sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
   // Chasse aux erreurs (2026-09-17, lot 3). La base d'XP vient du module (5 + 5 par créature vaincue,
   // lib/review.js huntReward) : on ne paie QUE les créatures vaincues, jamais une simple réussite —
   // rater exprès une question de Drill coûte 7 XP tout de suite contre 5 XP onze jours plus tard.

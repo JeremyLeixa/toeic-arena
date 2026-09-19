@@ -73,6 +73,10 @@ export function stepDetail(st, o) {
   // Chasse aux erreurs : la base ne vient pas des bonnes réponses mais des créatures VAINCUES
   // (5 + 5 par créature). Dire « 7 correct » ici mentirait sur ce qui a été payé.
   if (st.id === "base" && o.modId === "hunt") return o.slain != null ? o.slain + " slain" : "";
+  // Mimic Hunt : la base arrive déjà réduite de 3 XP par morsure (lib/mimicXp.js). Sans la mention,
+  // « 9 correct » à 45 XP passerait pour une erreur de calcul. `bitePenalty` = retenue réelle (plancher).
+  if (st.id === "base" && o.modId === "mimic" && o.bites > 0)
+    return o.sc + " correct · " + o.bites + (o.bites === 1 ? " bite" : " bites") + (o.bitePenalty > 0 ? " −" + o.bitePenalty : "");
   if (st.id === "base") return o.mode === "points" || o.mode === "time" ? "" : (o.sc != null ? o.sc + " correct" : "");
   if (st.id === "bypass") return "no daily limit";
   if (st.id === "floor") return "min 0";

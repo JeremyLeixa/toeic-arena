@@ -17,6 +17,7 @@ import { SessionResult } from "../../components/SessionResult.jsx";
 import { MIMIC_ITEMS, MIMIC_TIERS } from "../../data/mimicHunt.js";
 import { shuffle } from "../../lib/util.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
+import { mimicXp, MIMIC_XP } from "../../lib/mimicXp.js";
 import { playChestLand, playCorrect, playWrong } from "../../sounds.js";
 import { useEffect, useRef, useState } from "react";
 
@@ -196,11 +197,13 @@ export function MimicHunt(p){
   }
 
   // Fin de partie : XP versée ici, jamais derrière un bouton (quitter l'écran de fin la perdait).
-  // 15 + 5 par bonne réponse, +25 sans faute : 115 pour 15 items, le palier des modules à 15 questions.
+  // 15 + 5 par bonne réponse, −3 par morsure, +25 sans faute (lib/mimicXp.js) : 115 pour 15 items.
+  // Morsures et retenue voyagent avec la session : le parchemin dit « 9 correct · 5 bites −15 ».
   function next(){
     if(idx+1<TOTAL){sPk(-1);sF(-1);sPO(false);sI(idx+1);sP(openingOf(idx+1));return;}
     var sc=results.filter(function(r){return r.ok;}).length;
-    sidRef.current=p.done(sc,TOTAL,15+5*sc+(sc===TOTAL?25:0),mistakesRef.current);
+    var bites=results.filter(function(r){return r.bitten;}).length,x=mimicXp(sc,TOTAL,bites);
+    sidRef.current=p.done(sc,TOTAL,x.xp,mistakesRef.current,{bites:bites,bitePenalty:x.bitePenalty});
     sP("done");
   }
 
@@ -234,7 +237,7 @@ export function MimicHunt(p){
       </div>
       <div className="crd mh-def">
         <div className="mh-def-t out"><MimicIcon size={22} color="var(--red)"/>{"What's a Mimic?"}</div>
-        <p>An answer that <b>copies words from the text</b> but says something the text doesn{"'"}t. It{"'"}s the TOEIC{"'"}s favourite trap.</p>
+        <p>An answer that <b>copies words from the text</b> but says something the text doesn{"'"}t. It{"'"}s the TOEIC{"'"}s favourite trap: each bite costs you {MIMIC_XP.perBite} XP.</p>
       </div>
       <div className="crd mh-steps">
         {[{t:"Read the text",d:"An email, a notice, a line from a conversation."},

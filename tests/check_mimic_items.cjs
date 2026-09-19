@@ -105,6 +105,42 @@ if (!LOT) ok(ITEMS.length < BANK_MIN ? !!MASTERY_BLACKLIST.mimic : !MASTERY_BLAC
     ? 'coffre de maîtrise : mimic doit rester dans MASTERY_BLACKLIST tant que la banque a moins de ' + BANK_MIN + ' items (' + ITEMS.length + ')'
     : 'coffre de maîtrise : la banque a ' + ITEMS.length + ' items, retirer mimic de MASTERY_BLACKLIST (lib/hubStatus.js)');
 
+// XP de base (lib/mimicXp.js, choix de Jérémy du 2026-09-19) : −3 par morsure, dans la partie seulement.
+// Une pénalité sans plancher mettrait la base sous la participation (voire en négatif, donc de l'XP
+// déjà acquise retirée) ; une pénalité que l'écran de fin ne dit pas passe pour un bug de calcul.
+if (!LOT) {
+  const { mimicXp } = require(path.join(ROOT, 'src', 'lib', 'mimicXp.js'));
+  const { stepDetail } = require(path.join(ROOT, 'src', 'lib', 'sessionText.js'));
+  const fs = require('fs');
+  function eq(got, want, label) { ok(got === want, label + ' (' + got + ', attendu ' + want + ')'); }
+  eq(mimicXp(15, 15, 0).xp, 115, 'XP : sans faute = 15 + 75 + 25');
+  eq(mimicXp(13, 15, 1).xp, 77, 'XP : 13 justes, 1 morsure');
+  eq(mimicXp(9, 15, 5).xp, 45, 'XP : 9 justes, 5 morsures');
+  eq(mimicXp(9, 15, 0).xp, 60, 'XP : 9 justes, 6 erreurs neutres (une erreur sans morsure ne coûte rien)');
+  eq(mimicXp(4, 15, 7).xp, 15, 'XP : plancher de participation');
+  eq(mimicXp(4, 15, 7).bitePenalty, 20, 'XP : la retenue affichée est celle vraiment appliquée (plancher)');
+  eq(mimicXp(9, 15, 5).bitePenalty, 15, 'XP : retenue de 5 morsures');
+  let mono = true, floor = true;
+  for (let sc = 0; sc <= 15; sc++) for (let b = 0; sc + b <= 15; b++) {
+    const a = mimicXp(sc, 15, b), n = mimicXp(sc, 15, b + 1);
+    if (a.xp < 15) floor = false;
+    if (sc + b < 15 && (n.xp > a.xp || a.xp - n.xp > 3)) mono = false;
+  }
+  ok(floor, 'XP : jamais sous les 15 de participation');
+  ok(mono, 'XP : une morsure de plus ne rapporte jamais et coûte au plus 3');
+  eq(stepDetail({ id: 'base' }, { modId: 'mimic', sc: 9, bites: 5, bitePenalty: 15 }), '9 correct · 5 bites −15', 'parchemin : morsures et retenue');
+  eq(stepDetail({ id: 'base' }, { modId: 'mimic', sc: 13, bites: 1, bitePenalty: 3 }), '13 correct · 1 bite −3', 'parchemin : une morsure');
+  eq(stepDetail({ id: 'base' }, { modId: 'mimic', sc: 15, bites: 0, bitePenalty: 0 }), '15 correct', 'parchemin : sans morsure');
+  // Câblage : sans lui, la base est réduite mais le parchemin ne dit pas pourquoi.
+  const read = function (f) { return fs.readFileSync(path.join(ROOT, 'src', f), 'utf8'); };
+  const MH = read('features/games/MimicHunt.jsx');
+  ok(/mimicXp\(sc,TOTAL,bites\)/.test(MH) && /p\.done\([^;]*\{bites:bites,bitePenalty:x\.bitePenalty\}\)/.test(MH),
+    'câblage : MimicHunt calcule sa base par mimicXp et passe morsures et retenue à p.done');
+  ok(/sp==="mimic"[^\n]*miniSession\(sc,tot,xp,mistakes,extra\)/.test(read('routes.jsx')), 'câblage : la route mimic relaie extra à miniSession');
+  ok(/function miniSession\(sc,tot,xp,mistakes,extra\)[^\n]*extra:extra/.test(read('App.jsx')), 'câblage : miniSession passe extra à settleSession');
+  ok(/bites: s\.bites, bitePenalty: s\.bitePenalty/.test(read('components/SessionResult.jsx')), 'câblage : SessionResult passe morsures et retenue à stepDetail');
+}
+
 console.log(fails === 0
   ? '\n✅ ' + checks + ' vérifications, aucun problème.\n'
   : '\n❌ ' + fails + ' problème(s) sur ' + checks + ' vérifications.\n');

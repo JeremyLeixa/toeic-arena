@@ -182,7 +182,8 @@ wiring.forEach(([p, mods, n]) => {
   const s = read(...p), f = p[p.length - 1];
   mods.forEach((m) => ok(s.indexOf('moduleRef("' + m + '"') >= 0, f + ' : les erreurs de ' + m + ' portent une ref'));
   const dones = (s.match(/p\.done\([^;]*\)/g) || []);
-  const passed = dones.filter((d) => /mistakesRef\.current\)$/.test(d)).length;
+  // Suivi au plus d'un objet posé sur la session (`extra` de miniSession : les morsures de Mimic Hunt).
+  const passed = dones.filter((d) => /mistakesRef\.current(,\{[^()]*\})?\)$/.test(d)).length;
   if (n) ok(passed >= n, f + ' : mistakesRef.current passé à p.done (' + passed + '/' + n + ')');
 });
 // grammar.jsx : chaque module câblé passe sa liste (le Drill en passe une aussi, avec catStats).
@@ -206,7 +207,7 @@ const routes = read('routes.jsx'), app = read('App.jsx');
 });
 ['bforge', 'tavern', 'mimic'].forEach((sp) => {
   const line = routes.split(/\r?\n/).find((l) => l.indexOf('if(sp==="' + sp + '")') >= 0) || '';
-  ok(/miniSession\(sc,tot,xp,mistakes\)/.test(line), 'routes.jsx ' + sp + ' : la route transmet la liste à miniSession');
+  ok(/miniSession\(sc,tot,xp,mistakes(,extra)?\)/.test(line), 'routes.jsx ' + sp + ' : la route transmet la liste à miniSession');
 });
 ok(/if\(sp==="wfall"\).*gameSession\(mk,res,xp,mistakes\)/.test(routes), 'routes.jsx wfall : la route transmet la liste à gameSession');
 ok(/function gameSession\(modeKey,result,xp,mistakes\)\{[\s\S]{0,700}?recordMisses\(c\.review,mistakes/.test(app), 'App.jsx gameSession : les erreurs entrent au bestiaire');

@@ -24,16 +24,17 @@ function player() {
   return u;
 }
 
-function buildSession(sc, tot, xp, id) {
+function buildSession(sc, tot, xp, id, extra) {
   var u = player();
   var g = gateSteps(xp, sc, tot, "mimic", { u: u, now: NOW, events: [], spotlight: true });
   var st = settleXp(u, g.xp, { now: NOW, events: [], classMedianXp: 0, leagueOf: getLeague });
-  return {
+  // `extra` (morsures, retenue) comme opts.extra de settleSession.
+  return Object.assign({
     id: id, sp: "mimic", modId: "mimic", sc: sc, tot: tot, userName: u.name,
     steps: g.steps.concat(st.steps), total: st.amt, fromXp: u.xp, toXp: st.c.xp,
     levelUp: st.levelUp, leagueUp: st.leagueUp, weekly: { from: u.weeklyXp, to: st.c.weeklyXp }, streak: st.c.streak,
     chests: [], achievements: [], marks: [],
-  };
+  }, extra || {});
 }
 
 function Bench() {
@@ -46,7 +47,7 @@ function Bench() {
       {RM && <style>{RM_CSS}</style>}
       <MimicHunt key={run} bank={BANK}
         session={session}
-        done={function (sc, tot, xp) { var s = buildSession(sc, tot, xp, run + 1); setSession(s); console.log("[bench] done", sc + "/" + tot, "base", xp, "→", s.total, "XP"); return s.id; }}
+        done={function (sc, tot, xp, mistakes, extra) { var s = buildSession(sc, tot, xp, run + 1, extra); setSession(s); console.log("[bench] done", sc + "/" + tot, "base", xp, extra, "→", s.total, "XP"); return s.id; }}
         closeSession={function () { setSession(null); }}
         replaySession={function () { setSession(null); setRun(function (n) { return n + 1; }); }}
         back={function () { setSession(null); setRun(function (n) { return n + 1; }); }} />

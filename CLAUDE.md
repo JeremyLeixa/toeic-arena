@@ -158,7 +158,8 @@ src/
                           points en jeu, retournements), review (bestiaire des erreurs :
                           boîtes 1-3-7, force, chasse), reviewRefs (clé et catégorie des
                           erreurs des jeux et mini-modules), optionShuffle (options permutées
-                          des questions de grammaire et d'examen), planner (plan du jour, composition
+                          des questions de grammaire et d'examen), mimicXp (base d'XP de Mimic Hunt,
+                          −3 par morsure), planner (plan du jour, composition
                           des sessions, semaine, allure, Chronique), mentorVoice (les
                           phrases d'Aldric, anglais, à côté de sessionText)
   components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
@@ -307,7 +308,8 @@ Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
   `_____` dans `prompt` pour le trou, « … » dans `correct` pour deux trous). **`ref:{k,cat,part}`** fait
   entrer l'erreur au bestiaire (voir « Mentor qui se souvient ») : le module passe alors `mistakesRef.current`
   en **dernier argument** de `p.done` (`drillDone` 5e, `dailyDone` 3e, `miniSession` 4e, `gameSession` 4e,
-  `onModuleDone` des hubs 5e). `sidRef.current=p.done(…)`
+  `onModuleDone` des hubs 5e), suivi au plus d'un `extra` posé sur la session (`miniSession` 5e : morsures de
+  Mimic Hunt). `sidRef.current=p.done(…)`
   **à la fin de la manche, jamais derrière un bouton** (« Collect XP » perdait l'XP si l'élève quittait),
   puis `<SessionResult session sid name mistakes onContinue onReplay>{extras}</SessionResult>` (`memory` :
   la carte « Aldric remembers », rendue AVANT les leçons ; `session.turn` : cérémonie, voir « Mentor qui se souvient »). Le
@@ -530,7 +532,13 @@ Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alo
   dans la bonne réponse** (mh12, mh18, mh22, mh35, mh59) : la règle n'est pas « mot repris = faux » mais
   « mot repris qui dit autre chose ».
 - **XP** : `15 + 5×bonne réponse`, +25 sans faute (115 pour 15 items, palier des 15 Q ; le `+2×Mimic
-  démasqué` de la variante 2 a disparu avec elle). **Estimateur** : Reading support `.04`, `part:null` dans `MODULE_TOEIC_MAP` (la reformulation sert
+  démasqué` de la variante 2 a disparu avec elle), **−3 par morsure** (choix de Jérémy du 2026-09-19,
+  `lib/mimicXp.js`) : la morsure coûte, pas l'erreur neutre (mordre = associer des mots sans lire le sens,
+  le réflexe visé). Le coût reste dans la partie : base jamais sous les 15 de participation, rien de repris
+  sur l'XP acquise (un compteur qui baisse fait lâcher le module). Morsures et retenue **réelle** (plancher
+  compris) voyagent par l'`extra` de `miniSession` (5e argument → `settleSession` → session) jusqu'au
+  parchemin : « 9 correct · 5 bites −15 » (`sessionText.stepDetail`) — une base réduite sans la mention
+  passe pour une erreur de calcul. Gardé par `check_mimic_items` (formule, plancher, libellé, câblage). **Estimateur** : Reading support `.04`, `part:null` dans `MODULE_TOEIC_MAP` (la reformulation sert
   P3/P4/P7 : la ranger dans p7 fausserait le diagnostic du Mentor).
 - **Coffre de maîtrise lié à la taille de la banque** : exclu (`MASTERY_BLACKLIST.mimic`) du 2026-09-18 au
   2026-09-19, quand chaque partie rejouait les 12 items (5 parties apprises par cœur donnaient le coffre
