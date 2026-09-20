@@ -56,4 +56,41 @@ seulement**, barre latérale gardée sur bureau. Câblage : `src/lib/sessionHud.
 à zéro (la barre disparaît avec le composant).
 
 Banc des vrais composants dans un faux `pg()` (avec la vraie tab bar) :
-`real.html?sc=live|intro|q|ok|ko|combo|timeout|exam|tight|p3|listen&mode=dark|light&skin=<id>&fest=<id>&rm=1`.
+`real.html?sc=<scénario>&mode=dark|light&skin=<id>&fest=<id>&rm=1`.
+
+## Câblage terminé (lots 0 à 8, 2026-09-17 → 2026-09-20)
+
+Les 30 écrans à manche sont passés au HUD. `real.jsx` monte **les vrais modules de `src/`** avec des
+props de banc : changer un module, c'est le revoir ici sans compte ni base.
+
+| Lot | `?sc=` |
+|---|---|
+| 0 · socle | `live`, `intro`, `q`, `ok`, `ko`, `combo`, `timeout`, `exam`, `tight`, `p3`, `listen` (états simulés) |
+| 1 · pilote | `drill` (le vrai Drill) |
+| 2 · quiz | `daily`, `stratquiz`, `traps`, `connsort`, `falsefr`, `wordfam`, `prepdrill`, `bforge` |
+| 3 · listening | `lisP1`, `lisP2`, `lisP3`, `lisP4` |
+| 4 · reading | `p6`, `p7`, `timesim` |
+| 5 · jeux | `tavern`, `ablitz`, `clue`, `sbuild` |
+| 6 · hubs | `crypt`, `chrono`, `forge`, `weaver`, `mmatch`, `msort`, `gerinf`, `pvdojo` |
+| 7 · examens | `mock1`, `boss`, `endless` |
+
+**Hors périmètre, volontairement** : Speed Match et Word Fall (HUD et boucle d'animation propres),
+Duel, Flashcards, Battle Scan.
+
+### Ce que le câblage a appris (et que le proto ne montrait pas)
+
+- Barre et pied en `fixed` : **jamais dans un `.enter` ni un `.sk`** — les deux animent `transform`,
+  et un `fixed` s'y accroche. Garde de dev en console.
+- Un minuteur doit se **figer** pendant la feuille « Leave this round? » (`onSheet`), sinon la question
+  expire sous une fenêtre modale. Par `useState` quand le minuteur est une chaîne de `setTimeout`,
+  par **ref** quand l'effet remet le minuteur à son maximum en se relançant.
+- Un compteur qui avance au clic (compteur de score) doit reculer d'un cran en phase de retour, sinon
+  il saute une question sous les yeux de l'élève.
+- Un pied fixe passe **derrière le clavier iOS** : Irregular Crypt garde son Submit dans le flux.
+- Un examen n'a **pas** de `useSessionTrack` : marques neutres, aucun combo sonore.
+
+Bugs trouvés en câblant, tous corrigés : `\u2014` littéral en texte JSX (Part 2), `ComboBanner` absent
+de la phase de retour de P1/P2 (le palier n'était jamais visible), compteur qui sautait en P3/P4/P6/P7,
+Exam Simulation qui effaçait la question après une réponse (`sel` écrit et jamais relu), Sentence Builder
+sans aucune marque au temps écoulé, en-tête du Mock Test en `sticky` donc inerte, Boss et Endless qui
+perdaient les dernières réponses en quittant par la tab bar.

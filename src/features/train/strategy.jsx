@@ -1,5 +1,4 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { SessionTop, ComboBanner, AnswerCard, NextBar } from "../../components/SessionHud.jsx";

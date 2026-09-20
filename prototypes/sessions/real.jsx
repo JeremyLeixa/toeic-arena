@@ -112,7 +112,7 @@ function Intro() {
 }
 
 // Lots 2 à 7 (2026-09-19/20) : les vrais modules, montés avec des props de banc (?sc=wordfam, ?sc=lisP3…).
-var LOT2 = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepdrill: PrepDrill, traps: TrapsQuiz, falsefr: FalseFriends, stratquiz: StratQuizPage, daily: Daily,
+var WIRED = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepdrill: PrepDrill, traps: TrapsQuiz, falsefr: FalseFriends, stratquiz: StratQuizPage, daily: Daily,
   lisP1: ListenP1, lisP2: ListenP2, lisP3: ListenP3, lisP4: ListenP4,
   p6: Part6Drill, p7: Part7Read, timesim: TimeSim,
   tavern: WordTavern, ablitz: AudioBlitz, clue: ClueHunter, sbuild: SentenceBuilder,
@@ -123,7 +123,7 @@ var LOT2 = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepdr
 function Frame() {
   var lc = "app" + (MODE === "light" ? " light" : "") + (FEST ? " fest-" + FEST : SKIN ? " skin-" + SKIN : "");
   var common = { u: fresh("Camille", "visitor"), done: function () { return 1; }, back: function () { alert("Back → hub"); }, nav: noop, session: null, closeSession: noop, replaySession: noop, resetCard: noop, onContinue: noop, onReplay: noop, mockId: 1 };
-  var Mod = LOT2[SC];
+  var Mod = WIRED[SC];
   var body = Mod ? <Mod {...common} /> : SC === "intro" ? <Intro /> : SC === "listen" ? <Listen /> : SC === "drill" ? <RealDrill {...common} /> : <Drill />;
   return <div className={lc}>
     <style>{CSS}</style>

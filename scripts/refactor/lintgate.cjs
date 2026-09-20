@@ -9,7 +9,10 @@
  *   1. `no-undef`  → un import MANQUANT (passe le build, ReferenceError au rendu) ;
  *   2. `no-unused-vars` sur une ligne `import` → un import INUTILE (bruit, ou symptôme
  *      d'un déplacement raté) ;
- *   3. le total des problèmes sur src/ ne doit pas dépasser la référence figée.
+ *   3. le total des problèmes sur src/ ne doit pas dépasser la référence figée ;
+ *   4. un import NOMMÉ jamais réutilisé dans son fichier (deadimports.cjs) : eslint ne le voit
+ *      pas dès que le nom commence par une majuscule, donc aucun import de COMPOSANT mort ne
+ *      faisait rougir quoi que ce soit (trois Bar morts laissés par le câblage du HUD, 2026-09-20).
  *
  * Usage :
  *   node scripts/refactor/lintgate.cjs            → vérifie 1, 2, 3 sur src/
@@ -18,6 +21,7 @@
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { deadNamedImports } = require('./deadimports.cjs');
 
 const ROOT = path.join(__dirname, '..', '..');
 const REF = path.join(__dirname, 'lint_baseline.json');
@@ -62,6 +66,7 @@ let fails = 0;
 const show = (title, arr) => { console.log(title + ' : ' + arr.length); for (const l of arr) console.log('   ' + l); if (arr.length) fails++; };
 show('no-undef (import manquant)', undef);
 show('imports inutilisés nouveaux (' + (unusedImports.length - newUnused.length) + ' préexistants ignorés)', newUnused);
+show('imports nommés morts (invisibles à eslint)', deadNamedImports());
 console.log('total src/ : ' + total + (ref ? ' (référence ' + ref.totalSrc + ', figée le ' + ref.frozenAt + ')' : ' (pas de référence : --freeze)') + (refresh ? ' ; ' + refresh + ' avertissement(s) react-refresh hors total' : ''));
 if (ref && total > ref.totalSrc) { fails++; console.log('   le total a AUGMENTÉ de ' + (total - ref.totalSrc)); }
 process.exit(fails ? 1 : 0);

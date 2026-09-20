@@ -1,12 +1,11 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { GIcon, ResultIcon } from "../../components/icons.jsx";
+import { GIcon } from "../../components/icons.jsx";
 import { ListeningGraphic } from "../../components/ListeningGraphic.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
 import { HubTile, HubShelf } from "../../components/HubTile.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
 import { SessionTop, ComboBanner, AnswerCard, NextBar, ListenDisc } from "../../components/SessionHud.jsx";
 import { useSessionTrack } from "../../components/useSessionTrack.js";
-import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "../../data/listening.js";
 import { isModuleLocked } from "../../lib/access.js";
 import { hubItemStatus, hubSummary } from "../../lib/hubStatus.js";

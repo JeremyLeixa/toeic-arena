@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, Suspense } from "react";
-import { playXP, playLevelUp, playCombo, playStreak, playTimer, playClick, playJingleEnter, playJingleAchieve, playJingleLeague, playJingleMock, playJingleMockOk, playJingleDaily, playBGM, stopBGM } from "./sounds.js";
+import { playXP, playLevelUp, playJingleAchieve, playJingleLeague, playJingleMock, playJingleMockOk, playJingleDaily, playBGM, stopBGM } from "./sounds.js";
 import { today, weekId, normalizeName } from "./lib/util.js";
 import { fresh, supaToLocal, buildSavePayload } from "./lib/profileSchema.js";
 import { haptic } from "./lib/device.js";
 import { supabase } from './supabase.js'
-import { getAuthUser, onAuthChange } from './auth.js';
 
 /* ═══════════════════════════════════════════
    VERSE ARENA — MVP v2.0
@@ -14,8 +13,7 @@ import { getAuthUser, onAuthChange } from './auth.js';
 
 // ─── DATA IMPORTS ───
 import { ACHIEVEMENTS } from "./data/achievements.js";
-import { UNIQUE_TRIGGERS, LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, rollRarity, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, consumeToken, spendMarks } from "./data/chests.js";
-import { GAME_ICON_VIEWBOX } from "./data/avatarIcons.js";
+import { LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, consumeToken, spendMarks } from "./data/chests.js";
 import { NARRATOR_MOMENTS, hasHeardMoment, markMomentHeard } from "./narrator.js";
 import { estimateTOEICScore } from "./lib/toeic.js";
 import { getLeague, applyWeekTransition } from "./lib/league.js";
@@ -76,7 +74,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-20-session-lot7";
+var BUILD_ID="2026-09-20-session-lot8";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 

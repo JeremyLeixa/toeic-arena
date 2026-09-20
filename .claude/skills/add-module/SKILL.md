@@ -46,6 +46,34 @@ Touchpoints to wire (in rough order):
 - [ ] Custom handler (own stats, chests…): same order — `var s=settleSession(modId,sc,tot,baseXp,{spotlight:true}); var c=s.c; …; sealSession(c,s.sid); sv(c); return s.sid;`. Never `applyXpGates`+`addXp` for a module that shows `SessionResult` (no step detail, toast over the screen).
 - [ ] `grantWeeklyChest(trigger, "novice"|"guerrier"|"champion")` if perfect / milestone — while the screen is open, the confirmed chest appears IN it (not as a toast).
 
+### Session HUD (CRITICAL — `components/SessionHud.jsx`, CLAUDE.md « HUD de session »)
+- [ ] `var track=useSessionTrack();` before any early `return` (rules-of-hooks). In the answer
+      handler: `track.record(ok)` — `true`/`false`, or `null` for an exam (neutral mark, no verdict).
+- [ ] Question render: `<SessionTop n cur results={track.results} streak={track.streak} onQuit={p.back}/>`
+      + `<ComboBanner combo={track.combo}/>` + content + on feedback `<AnswerCard ok answer why/>`
+      + `<NextBar onNext={nxt} last={…}/>`. No `.back-btn`, no counter, no `<Bar/>` of your own.
+- [ ] ⚠️ `SessionTop` and `NextBar` are `position:fixed`: render them OUTSIDE any `.enter` or `.sk`
+      wrapper (both animate `transform`, which re-anchors `fixed` children). Use a fragment. A dev
+      guard warns in the console. `sticky` does not work under `.app` either (`overflow-y:auto`).
+- [ ] Only during questions — never on an intro or an end screen: `.ss-top` hides the tab bar on
+      mobile (`.app:has(.ss-top)`, pure CSS).
+- [ ] Timer module: clock in `aside` (the counter then moves to `sub`), and FREEZE the countdown
+      while the « Leave this round? » sheet is open via `onSheet`. `useState` + `paused` in the
+      effect deps when the timer is a `setTimeout` chain; a **ref** read inside the tick when the
+      effect resets the timer as it re-runs — otherwise every sheet opening refills the clock.
+- [ ] Counter that advances on click (score counter): pass `cur={ph==="fb"?Math.max(0,n-1):n}`, or
+      it skips a question in front of the student during feedback.
+- [ ] Container module (conversation, text, passage, board): pass `groups` (sizes) so the ink thread
+      shows a break between them, and put the position in `sub` (« Passage 2/4 · Question 1/4 »).
+- [ ] Typed-input module: keep the submit button IN THE FLOW under the fields. A fixed footer ends up
+      behind the iOS keyboard, which does not move `position:fixed` elements.
+- [ ] Internal hub replaying without remounting (GerInf, Phrasal Dojo): `resetQuiz` calls `track.reset()`.
+- [ ] End reached from a timer: post the mark in a `useEffect([phase])` with a ref guard, never in the
+      tick (Sentence Builder recorded nothing on time-out until 2026-09-20).
+- [ ] Exam (no feedback before the end): no `useSessionTrack` at all — `results={new Array(answered)
+      .fill(null)}`, section in `sub`, clock in `aside`, and a `quitCopy` that tells the truth about
+      whether the round resumes.
+- [ ] Add the module to the bench: `prototypes/sessions/real.jsx` (`LOT2` map) → `real.html?sc=<id>`.
 ### End-of-session screen (CRITICAL — `components/SessionResult.jsx`, CLAUDE.md « écran de fin »)
 - [ ] Keep `var sidRef=useRef(0), mistakesRef=useRef([]);`. On a wrong answer: `mistakesRef.current.push({tag, prompt, yours, correct, why})` (`prompt` with `_____` for the blank; `noBlank:true` for a definition/transcript). If the Mistake Hunt can replay the item, add `ref:moduleRef("<mod>", item.id)` (`lib/reviewRefs.js` : declare the module's category there, a grammar-bank category when one fits; item reference, never an option index — see CLAUDE.md « Mentor qui se souvient »), pass `mistakesRef.current` as the last argument of `p.done` (and through the route wrapper to `miniSession`), teach `lib/reviewLookup.js` to resolve the new prefix as a shuffled MCQ, and add the bank to `tests/check_review_lookup.cjs`.
 - [ ] At the end of the round, in the same handler: `sidRef.current=p.done(sc,tot,baseXp); sP("done");` — persist at submit, never behind a button.
@@ -95,9 +123,13 @@ Touchpoints to wire (in rough order):
 ## After wiring
 
 1. `npm run build` — must pass clean, and `npm test` (symbol census, import graph, TOEIC estimator)
+1b. `node scripts/refactor/lintgate.cjs` — no missing import, no dead named import (eslint cannot see
+   a dead COMPONENT import: its `varsIgnorePattern` skips every capitalised name)
 2. Test locally on `npm run dev`
 3. Check console for `[BUILD] <BUILD_ID>` log on load
 4. Verify the end-of-session screen: XP shown = XP in the profile after reload, Continue returns to the right screen, Play again gives new questions
+4b. Play a round on `prototypes/sessions/real.html?sc=<id>`: tab bar gone during questions and back on
+   the intro, combo at 3 and 5, « Leave » sheet (and a frozen clock if the module has one)
 5. Verify BGM stops on back, restarts on home if SELF_MANAGED
 6. **Don't `git add public/`** files implicitly — explicitly add new MP3s, the `bgm_tavern.mp3` regression cost 30min
 

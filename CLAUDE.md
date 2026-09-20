@@ -292,6 +292,51 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 - **Accuracy gate:** <30% accuracy → 10% XP, 30-49% → 50%, ≥50% → 100%.
 - **TOEIC Progression ranking is the primary bonification metric.** XP Overall is secondary.
 
+### HUD de session (variante E, 2026-09-17/20)
+Proto `prototypes/sessions/`, choix de Jérémy **E** (environnement de C + fil d'encre de D).
+Pendant une manche : barre du haut (retour avec confirmation, fil d'encre, compteur ou minuteur),
+bannière de combo, carte de réponse, bouton Next fixé en bas. Banc des vrais écrans :
+`prototypes/sessions/real.html?sc=<module>` (voir son README pour la liste).
+- **Pur** : `lib/sessionHud.js` (`COMBO_AT` 3·5·7·10·15·20, `streakOf`, `comboAt`, `segMarks`,
+  `segDensity` : cases ≤ 15 Q, serrées ≤ 30, **barre continue au-delà** — les examens),
+  testé par `tests/check_session_hud.cjs`. Hook `components/useSessionTrack.js`
+  (`{results, record(ok|null), streak, combo, reset}`) : `record` s'appelle **depuis le
+  gestionnaire de réponse** (un événement, donc un seul son en StrictMode).
+- **Composants** (`components/SessionHud.jsx`) : `SessionTop {n, cur, results, groups?, aside?,
+  sub?, count?, streak, onQuit, quitCopy?, onSheet?}`, `ComboBanner`, `AnswerCard {ok, answer?,
+  timeout?, label?, why?, children}`, `NextBar {onNext, last?, label?, disabled?}`, `ListenDisc`.
+- ⚠️ **Barre et pied sont en `position:fixed`** : ne JAMAIS les rendre dans un `.enter` ou un `.sk`
+  (ils animent `transform`, et un `fixed` suit alors le bloc au lieu de l'écran). Les rendre à côté
+  du contenu animé, dans un fragment ; une garde de dev l'avertit en console. `sticky` ne marche pas
+  non plus sous `.app` (`overflow-y:auto`) — c'est ce qui rendait l'en-tête du Mock Test inerte.
+- La présence de `.ss-top` **masque la tab bar** sur mobile (`.app:has(.ss-top)`, CSS pur, aucun
+  état dans `App()`) : ne rendre `SessionTop` que pendant les questions, jamais sur une intro ni un
+  écran de fin. Sur bureau (≥ 768 px) la barre latérale reste, et le HUD est décalé de `left:200px`.
+- **Un module à minuteur** met le chrono dans `aside` (le compteur passe alors dans `sub`) et **fige**
+  le décompte pendant la feuille « Leave this round? » via `onSheet` — sinon la question expire sous
+  une fenêtre modale. Deux façons : `useState` + `paused` dans les deps de l'effet quand le minuteur
+  est une chaîne de `setTimeout` (Irregular Crypt, Passive Forge), ou une **ref** lue dans le tick
+  quand l'effet remet le minuteur à son maximum en se relançant (Audio Blitz, Sentence Builder,
+  Particle Picker). Se tromper de façon remet le minuteur à neuf à chaque ouverture de la feuille.
+- **Le compteur reste sur la question affichée.** Un module dont le compteur avance au clic (c'est le
+  compteur du score : P3/P4, Part 6, Part 7) passe `cur={ph==="fb"?Math.max(0,n-1):n}`, sinon il saute
+  une question sous les yeux de l'élève pendant le retour.
+- **Groupes** : un module à conteneurs passe `groups` (tailles) — conversation P3/P4, talk, texte
+  Part 6, passage Part 7, plateau de Modal Match — et le fil montre une coupure entre chacun.
+- **Examens** (Mock, Boss, Endless) : marques **neutres**, pas de `useSessionTrack` du tout
+  (`results={new Array(answered).fill(null)}`) — un examen ne dit rien avant la fin, et un combo
+  sonore en plein Boss n'a aucun sens. Section dans `sub`, chrono en `aside`, `quitCopy` qui dit la
+  vérité de l'épreuve (Boss et Endless reprennent dans la journée, un Mock non).
+- **Clavier iOS** : un pied fixe passe derrière le clavier, qu'iOS ne déplace pas. Un module à saisie
+  (Irregular Crypt) garde son bouton de validation **dans le flux**, sous les champs.
+- **Rejouer sans remonter** (GerInf, Phrasal Dojo) : le `resetQuiz` interne appelle `track.reset()`,
+  sinon le fil garde la manche précédente.
+- **Fin sur minuteur** (temps écoulé) : la marque se pose dans un `useEffect([phase])` avec une ref
+  garde, pas dans le tick (Sentence Builder ne marquait rien du tout avant le 2026-09-20).
+- **Couvert** : Drill, chasse, 8 quiz, Listening P1-P4, Part 6, Part 7, Exam Simulation, Word Tavern,
+  Audio Blitz, Clue Hunter, Sentence Builder, les 4 épreuves du Gauntlet, Modal Match et Sort, GerInf,
+  les 2 modes de Phrasal Dojo, Mock, Boss, Endless. **Hors périmètre** : Speed Match et Word Fall (HUD
+  et boucle d'animation propres), Duel, Flashcards, Battle Scan.
 ### Écran de fin de session commun (`SessionResult`, 2026-09-17)
 Proto `prototypes/victory/`, choix de Jérémy **V3 « Verdict d'Aldric »** (tient en mode clair), niveau
 dans le parchemin, promotion de ligue en cérémonie « Ascension », examens gardés + cérémonies.
