@@ -1,5 +1,4 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { Bar } from "../../components/Bar.jsx";
 import { GrimoireReader } from "../../components/GrimoireReader.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
@@ -478,7 +477,8 @@ export function GerInf(p){
   function buildQuiz(){return shuffle(GERUND_INF).map(function(it){var s=shuffleOpts(it.opts,it.c);return Object.assign({},it,{opts:s.opts,c:s.c});});}
   var[quizItems,setQuizItems]=useState(buildQuiz);
 
-  function resetQuiz(){setQuizItems(buildQuiz());sC(0);sSc(0);sPk(-1);sP("q");mistakesRef.current=[];}
+  var track=useSessionTrack(); // HUD de session (lot 6, 2026-09-20)
+  function resetQuiz(){setQuizItems(buildQuiz());sC(0);sSc(0);sPk(-1);sP("q");mistakesRef.current=[];track.reset();}
 
   // ═══ HUB ═══
   if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -515,13 +515,11 @@ export function GerInf(p){
       <button className="btn2" onClick={function(){p.closeSession();setMode("hub");setOpenGrim(true);}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="bookmarklet" size={18} color="currentColor"/>Open Grimoire</button>
     </SessionResult>);
 
-    return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <button className="back-btn" onClick={function(){setMode("hub");}}>{"\u2190"} Back</button>
-        <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{quizItems.length}</span></div>
-      <Bar value={ci} max={quizItems.length} h={4} color="linear-gradient(90deg,#e11d48,#f59e0b)"/>
-
-      <div style={{marginTop:20,marginBottom:24}}>
+    return(<>
+      <SessionTop n={quizItems.length} cur={ci} results={track.results} streak={track.streak} onQuit={function(){setMode("hub");}}/>
+      <ComboBanner combo={track.combo}/>
+      <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+      <div style={{marginBottom:24}}>
         <span className="out" style={{fontSize:11,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:12}}>Choose the correct form</span>
         <p className="out" style={{fontSize:17,fontWeight:700,lineHeight:1.6,color:"var(--t1)"}}>{q.ctx.split("_____")[0]}<span style={{color:"var(--cyan)",fontWeight:900}}>_____</span>{q.ctx.split("_____")[1]}</p>
       </div>
@@ -534,6 +532,7 @@ export function GerInf(p){
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
           return(<button key={i} onClick={function(){
             if(ph!=="q")return;sPk(i);
+            track.record(i===q.c);
             if(i!==q.c)mistakesRef.current.push({tag:"Gerund vs infinitive · "+q.verb,prompt:q.ctx,yours:opt,correct:q.opts[q.c],why:q.tip+(q.ex?" — “"+q.ex+"”":""),ref:moduleRef("gerinf",q.verb)});
             if(i===q.c){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
             sP("fb");
@@ -545,8 +544,7 @@ export function GerInf(p){
         })}
       </div>
 
-      {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{padding:14,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
+      {ph==="fb"&&<AnswerCard ok={pick===q.c} answer={q.opts[q.c]} label="Why">
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{q.verb}</span>
             <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:99,
@@ -555,14 +553,14 @@ export function GerInf(p){
           </div>
           <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,marginBottom:4}}>{q.tip}</p>
           <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic"}}>"{q.ex}"</p>
-        </div>
-        <button className="btn1" onClick={function(){
-          sPk(-1);
-          if(ci<quizItems.length-1){sC(ci+1);sP("q");}
-          else{sidRef.current=p.done(sc,quizItems.length,20+sc*4,mistakesRef.current);sP("done");}
-        }} style={{marginTop:12}}>{ci<quizItems.length-1?"Next":"See Results"}</button>
-      </div>}
-    </div>);
+      </AnswerCard>}
+      </div>
+      {ph==="fb"&&<NextBar last={ci===quizItems.length-1} onNext={function(){
+        sPk(-1);
+        if(ci<quizItems.length-1){sC(ci+1);sP("q");}
+        else{sidRef.current=p.done(sc,quizItems.length,20+sc*4,mistakesRef.current);sP("done");}
+      }}/>}
+    </>);
   }
 
   return null;
@@ -665,6 +663,8 @@ export function PhrasalDojo(p){
   var[openGrim,setOpenGrim]=useState(false);
   var timerRef=useRef(null);
   var mistakesRef=useRef([]);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 6, 2026-09-20) : le badge 🔥 devient « N in a row »
+  var pausedRef=useRef(false); // feuille « Leave this round? » : le compte à rebours du Picker s'arrête
 
   var matchQs=useMemo(function(){return shuffle(PHRASAL_VERBS.slice()).slice(0,15);},[]);
   var pickerQs=useMemo(function(){return shuffle(PHRASAL_VERBS.slice()).slice(0,15);},[]);
@@ -698,6 +698,7 @@ export function PhrasalDojo(p){
     setTimer(8);
     timerRef.current=setInterval(function(){
       setTimer(function(t){
+        if(pausedRef.current)return t;
         if(t<=1){
           clearInterval(timerRef.current);
           setStreak(0);sPk(-1);sP("fb");
@@ -709,7 +710,7 @@ export function PhrasalDojo(p){
     return function(){clearInterval(timerRef.current);};
   },[ci,mode,ph]);
 
-  function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");setTimer(0);setStreak(0);setBest(0);clearInterval(timerRef.current);mistakesRef.current=[];}
+  function resetQuiz(){sC(0);sSc(0);sPk(-1);sP("q");setTimer(0);setStreak(0);setBest(0);clearInterval(timerRef.current);mistakesRef.current=[];track.reset();}
 
   // ═══ HUB ═══
   if(mode==="hub")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
@@ -749,13 +750,11 @@ export function PhrasalDojo(p){
     if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="Phrasal Dojo · Meaning Match" mistakes={mistakesRef.current}
       onContinue={function(){p.closeSession();setMode("hub");}} onReplay={function(){p.closeSession();resetQuiz();}}/>);
 
-    return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <button className="back-btn" onClick={function(){setMode("hub");}}>{"\u2190"} Back</button>
-        {streak>=2&&<span className="out" style={{fontSize:12,fontWeight:700,color:"var(--gold)",animation:"pulse .6s infinite"}}>{"🔥"} x{streak}</span>}
-        <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{matchQs.length}</span></div>
-      <Bar value={ci} max={matchQs.length} h={4} color="linear-gradient(90deg,#22c55e,#06b6d4)"/>
-      <div style={{textAlign:"center",marginTop:24,marginBottom:24}}>
+    return(<>
+      <SessionTop n={matchQs.length} cur={ci} results={track.results} streak={track.streak} onQuit={function(){setMode("hub");}}/>
+      <ComboBanner combo={track.combo}/>
+      <div style={{padding:"4px 16px 0"}}>
+      <div style={{textAlign:"center",marginBottom:24}}>
         <span className="out" style={{fontSize:11,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>What does this mean?</span>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
           <span className="out" style={{fontSize:28,fontWeight:900,color:"var(--cyan)"}}>{mq.pv}</span>
@@ -768,14 +767,13 @@ export function PhrasalDojo(p){
           var bg="var(--bg2)";var bd="var(--bdr)";
           if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-          return(<button key={i} onClick={function(){if(ph!=="q")return;sPk(i);if(i!==mOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:mq.pv,noBlank:true,yours:opt,correct:mOpts.opts[mOpts.c],why:(mq.fr?mq.fr+" — ":"")+"“"+mq.ex+"”",ref:moduleRef("pvdojo",mq.pv,"match")});if(i===mOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;sPk(i);track.record(i===mOpts.c);if(i!==mOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:mq.pv,noBlank:true,yours:opt,correct:mOpts.opts[mOpts.c],why:(mq.fr?mq.fr+" — ":"")+"“"+mq.ex+"”",ref:moduleRef("pvdojo",mq.pv,"match")});if(i===mOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
             style={{padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",
               fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s",lineHeight:1.5}}>
             {opt}</button>);
         })}
       </div>
-      {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-        <div className="crd" style={{padding:14,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
+      {ph==="fb"&&<AnswerCard ok={pick===mOpts.c} answer={mOpts.opts[mOpts.c]} label="Why">
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:14,color:"var(--cyan)"}}>{mq.pv}</span>
             <SpeakBtn text={mq.pv} size={22} audio={"/audio/phrasal/"+mq.pv.replace(/\s+/g,"_")+".mp3"}/>
@@ -785,10 +783,10 @@ export function PhrasalDojo(p){
             <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",lineHeight:1.5,flex:1}}>"{mq.ex}"</p>
             <SpeakBtn text={mq.ex} size={20} rate={0.85} audio={"/audio/phrasal/"+mq.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
           </div>
-        </div>
-        <button className="btn1" onClick={function(){sPk(-1);if(ci<matchQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,matchQs.length,20+sc*4,mistakesRef.current);sP("done");}}} style={{marginTop:12}}>{ci<matchQs.length-1?"Next":"See Results"}</button>
-      </div>}
-    </div>);
+      </AnswerCard>}
+      </div>
+      {ph==="fb"&&<NextBar last={ci===matchQs.length-1} onNext={function(){sPk(-1);if(ci<matchQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,matchQs.length,20+sc*4,mistakesRef.current);sP("done");}}}/>}
+    </>);
   }
 
   // ═══ PARTICLE PICKER ═══
@@ -800,19 +798,17 @@ export function PhrasalDojo(p){
       {bestStreak>=3&&<div className="crd" style={{padding:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><GIcon name="flame" size={18} color="var(--orange)"/><span className="out" style={{fontWeight:700,color:"var(--gold)"}}>{"Best streak: "+bestStreak}</span></div>}
     </SessionResult>);
 
-    var timerPct=timer/8*100;
     var timerCol=timer<=2?"var(--red)":timer<=4?"var(--orange)":"var(--cyan)";
 
-    return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <button className="back-btn" onClick={function(){clearInterval(timerRef.current);setMode("hub");}}>{"\u2190"} Back</button>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          {streak>=2&&<span className="out" style={{fontSize:12,fontWeight:700,color:"var(--gold)",animation:"pulse .6s infinite"}}>{"🔥"} x{streak}</span>}
-          <span className="out" style={{fontSize:16,fontWeight:800,color:timerCol}}>{timer}s</span>
-        </div>
-        <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{pickerQs.length}</span></div>
-      <div style={{height:4,background:"var(--bg3)",borderRadius:2,marginBottom:20,overflow:"hidden"}}>
-        <div style={{height:"100%",width:timerPct+"%",background:timerCol,borderRadius:2,transition:"width 1s linear"}}/></div>
+    return(<>
+      <SessionTop n={pickerQs.length} cur={ci} results={track.results} streak={track.streak}
+        onQuit={function(){clearInterval(timerRef.current);setMode("hub");}}
+        onSheet={function(open){pausedRef.current=open;}}
+        aside={ph==="q"
+          ?<span className="out" style={{fontSize:18,fontWeight:800,color:timerCol}}>{timer}</span>
+          :<span className="out" style={{fontSize:13,color:"var(--t3)",fontWeight:600}}>{(ci+1)+"/"+pickerQs.length}</span>}/>
+      <ComboBanner combo={track.combo}/>
+      <div style={{padding:"4px 16px 0"}}>
       <div style={{textAlign:"center",marginBottom:8}}>
         <span className="out" style={{fontSize:11,color:"var(--red)",fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>Pick the particle!</span>
       </div>
@@ -829,16 +825,13 @@ export function PhrasalDojo(p){
           var bg="var(--bg2)";var bd="var(--bdr)";var col="var(--t1)";
           if(show&&isCor){bg="rgba(0,230,118,.15)";bd="var(--green)";col="var(--green)";}
           else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.15)";bd="var(--red)";col="var(--red)";}
-          return(<button key={i} onClick={function(){if(ph!=="q")return;clearInterval(timerRef.current);sPk(i);if(i!==pOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:opt,correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":""),ref:moduleRef("pvdojo",pq.pv,"picker")});if(i===pOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
+          return(<button key={i} onClick={function(){if(ph!=="q")return;clearInterval(timerRef.current);sPk(i);track.record(i===pOpts.c);if(i!==pOpts.c)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:opt,correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":""),ref:moduleRef("pvdojo",pq.pv,"picker")});if(i===pOpts.c){sSc(sc+1);setStreak(streak+1);if(streak+1>bestStreak)setBest(streak+1);try{playCorrect();}catch(e){}}else{setStreak(0);try{playWrong();}catch(e){}}sP("fb");}} disabled={show}
             style={{padding:"18px 12px",background:bg,border:"2px solid "+bd,borderRadius:14,cursor:ph==="q"?"pointer":"default",
               fontSize:20,fontWeight:800,color:col,fontFamily:"'DM Sans',sans-serif",transition:"all .15s",textAlign:"center"}}>
             {opt}</button>);
         })}
       </div>
-      {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .2s"}}>
-        {pick===-1&&<div style={{textAlign:"center",marginBottom:12}}>
-          <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
-        <div className="crd" style={{padding:14,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
+      {ph==="fb"&&<AnswerCard ok={pick===pOpts.c} timeout={pick===-1} answer={pOpts.opts[pOpts.c]} label="Why">
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
             <span className="out" style={{fontWeight:700,fontSize:15,color:"var(--cyan)"}}>{pq.pv}</span>
             <SpeakBtn text={pq.pv} size={22} audio={"/audio/phrasal/"+pq.pv.replace(/\s+/g,"_")+".mp3"}/>
@@ -848,10 +841,10 @@ export function PhrasalDojo(p){
             <p style={{fontSize:12,color:"var(--t3)",fontStyle:"italic",flex:1}}>"{pq.ex}"</p>
             <SpeakBtn text={pq.ex} size={20} rate={0.85} audio={"/audio/phrasal/"+pq.pv.replace(/\s+/g,"_")+"_ex.mp3"}/>
           </div>
-        </div>
-        <button className="btn1" onClick={function(){if(pick===-1)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:"(time's up)",correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":""),ref:moduleRef("pvdojo",pq.pv,"picker")});sPk(-1);if(ci<pickerQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,pickerQs.length,25+sc*5,mistakesRef.current);sP("done");}}} style={{marginTop:12}}>{ci<pickerQs.length-1?"Next":"See Results"}</button>
-      </div>}
-    </div>);
+      </AnswerCard>}
+      </div>
+      {ph==="fb"&&<NextBar last={ci===pickerQs.length-1} onNext={function(){if(pick===-1)mistakesRef.current.push({tag:"Phrasal verbs",prompt:pq.v+" _____ = "+pq.m,yours:"(time's up)",correct:pOpts.opts[pOpts.c],why:pq.pv+(pq.fr?" — "+pq.fr:"")+(pq.ex?" · “"+pq.ex+"”":""),ref:moduleRef("pvdojo",pq.pv,"picker")});sPk(-1);if(ci<pickerQs.length-1){sC(ci+1);sP("q");}else{sidRef.current=p.done(sc,pickerQs.length,25+sc*5,mistakesRef.current);sP("done");}}}/>}
+    </>);
   }
 
   return null;

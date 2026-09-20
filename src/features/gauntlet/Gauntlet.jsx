@@ -2,6 +2,8 @@
 import { GrimoireReader } from "../../components/GrimoireReader.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
+import { SessionTop, ComboBanner, AnswerCard, NextBar } from "../../components/SessionHud.jsx";
+import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } from "../../data/grammarGauntlet.js";
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "../../data/grammarGauntletGrimoire.js";
@@ -29,6 +31,8 @@ export function IrregularCrypt(p){
   var [timeLeft,setTimeLeft]=useState(TIME_PER_Q);
 
   var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 6, 2026-09-20)
+  var [paused,setPaused]=useState(false); // feuille « Leave this round? » : le minuteur s'arrête
   function startSession(){
     var shuffled=[].concat(IRREGULAR_VERBS).sort(function(){return Math.random()-0.5;});
     var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length));
@@ -41,6 +45,7 @@ export function IrregularCrypt(p){
     var verb=deck[idx];
     var v2Ok=normalize(v2In)===normalize(verb.past);
     var v3Ok=normalize(v3In)===normalize(verb.pp);
+    track.record(v2Ok&&v3Ok);
     if(!(v2Ok&&v3Ok))mistakesRef.current.push({tag:"Irregular verbs",prompt:verb.base,noBlank:true,yours:(v2In.trim()||"—")+" · "+(v3In.trim()||"—"),correct:verb.past+" · "+verb.pp,why:verb.fr+(verb.ex?" — "+verb.ex:""),ref:moduleRef("gauntlet",verb.id)});
     if(v2Ok&&v3Ok){try{playCorrect();}catch(e){console.warn("[icrypt] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[icrypt] sfx:",e&&e.message);}}
@@ -59,11 +64,11 @@ export function IrregularCrypt(p){
   // and on the next "play" commit Effect 1 fires before the reset effect → submit()
   // is called immediately on Q N+1 (timer "drops to 0 d'un coup" bug, 2026-04-30).
   useEffect(function(){
-    if(phase!=="play")return;
+    if(phase!=="play"||paused)return;
     if(timeLeft<=0){submit();return;}
     var t=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
     return function(){clearTimeout(t);};
-  },[timeLeft,phase]);
+  },[timeLeft,phase,paused]);
 
   function finishSession(){
     var totalFull=results.filter(function(r){return r.v2Ok&&r.v3Ok;}).length;
@@ -110,14 +115,14 @@ export function IrregularCrypt(p){
 
   // phase === "play" or "reveal"
   var verb=deck[idx];
-  var pct=timeLeft/TIME_PER_Q*100;
-  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:480,margin:"0 auto"}}>
-    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Verb {idx+1} / {deck.length}</div>
-    <div style={{width:"100%",height:6,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:20}}>
-      <div style={{width:pct+"%",height:"100%",background:phase==="play"?(timeLeft<5?"#ef4444":"linear-gradient(90deg,#7c3aed,#c026d3)"):"#6b7280",transition:"width 1s linear"}}/>
-    </div>
-    <div style={{textAlign:"center",padding:"14px 0 22px"}}>
+  return(<>
+    <SessionTop n={deck.length} cur={idx} results={track.results} streak={track.streak} onQuit={p.back} onSheet={setPaused}
+      aside={phase==="play"
+        ?<span className="out" style={{fontSize:18,fontWeight:800,color:timeLeft<5?"var(--red)":"var(--cyan)"}}>{timeLeft}</span>
+        :<span className="out" style={{fontSize:13,color:"var(--t3)",fontWeight:600}}>{(idx+1)+"/"+deck.length}</span>}/>
+    <ComboBanner combo={track.combo}/>
+    <div className="enter" style={{padding:"4px 16px 0",maxWidth:480,margin:"0 auto"}}>
+    <div style={{textAlign:"center",padding:"4px 0 22px"}}>
       <div style={{fontSize:11,color:"var(--t3)",marginBottom:6,letterSpacing:2,textTransform:"uppercase"}}>Base</div>
       <div style={{fontSize:38,fontWeight:800,color:"var(--t1)",letterSpacing:.5}}>{verb.base}</div>
     </div>
@@ -131,7 +136,7 @@ export function IrregularCrypt(p){
       </div>
     ):(
       <div style={{maxWidth:360,margin:"0 auto"}}>
-        <div className="crd" style={{padding:14,marginBottom:12}}>
+        <AnswerCard ok={revealData.v2Ok&&revealData.v3Ok} label="Meaning">
           <div style={{display:"flex",gap:12,marginBottom:12}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:10,color:"var(--t3)",marginBottom:3,letterSpacing:1,textTransform:"uppercase"}}>V2</div>
@@ -146,11 +151,12 @@ export function IrregularCrypt(p){
           </div>
           <div style={{fontSize:12.5,color:"var(--t2)",fontStyle:"italic",marginBottom:8}}>{revealData.verb.fr}</div>
           <div style={{fontSize:13,color:"var(--t2)",lineHeight:1.55,borderLeft:"2px solid var(--bg3)",paddingLeft:10}}>{revealData.verb.ex}</div>
-        </div>
-        <div style={{textAlign:"center",fontSize:11,color:"var(--t3)",opacity:.7}}>Next in a moment...</div>
+        </AnswerCard>
+        <div style={{textAlign:"center",fontSize:11,color:"var(--t3)",opacity:.7,marginTop:10}}>Next in a moment...</div>
       </div>
     )}
-  </div>);
+    </div>
+  </>);
 }
 // Chronomancer, Passive Forge, Relative Weaver : options permutées au montage du deck (la bonne
 // réponse était en B ou C pour 156 items sur 190). Tout se lit ensuite sur la copie : q.o, q.c.
@@ -169,6 +175,7 @@ export function Chronomancer(p){
   var [results,setResults]=useState([]);
 
   var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 6, 2026-09-20)
   function startSession(){
     var shuffled=[].concat(TENSE_CHRONOMANCER).sort(function(){return Math.random()-0.5;});
     var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length)).map(permuteQ);
@@ -178,6 +185,7 @@ export function Chronomancer(p){
     if(phase!=="play"||!deck)return;
     var q=deck[idx];
     var ok=optIdx===q.c;
+    track.record(ok);
     if(!ok)mistakesRef.current.push({tag:"Tenses · "+String(q.tense||"").replace(/_/g," "),prompt:q.s,yours:q.o[optIdx],correct:q.o[q.c],why:q.x,ref:moduleRef("gauntlet",q.id)});
     if(ok){try{playCorrect();}catch(e){console.warn("[chrono] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[chrono] sfx:",e&&e.message);}}
@@ -259,13 +267,10 @@ export function Chronomancer(p){
 
   // phase "play" or "reveal"
   var q=deck[idx];
-  var pct=(idx+1)/deck.length*100;
-  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Question {idx+1} / {deck.length}</div>
-    <div style={{width:"100%",height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:18}}>
-      <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,#7c3aed,#c026d3)",transition:"width .3s ease"}}/>
-    </div>
+  return(<>
+    <SessionTop n={deck.length} cur={idx} results={track.results} streak={track.streak} onQuit={p.back}/>
+    <ComboBanner combo={track.combo}/>
+    <div className="enter" style={{padding:"4px 16px 0",maxWidth:520,margin:"0 auto"}}>
     {/* Marker hint badge */}
     {q.marker&&<div style={{textAlign:"center",marginBottom:14}}>
       <span style={{display:"inline-block",padding:"4px 12px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(192,38,211,.4)",borderRadius:99,color:tone("#d8b4fe"),fontSize:12,fontWeight:700,letterSpacing:.3}}>{"\uD83D\uDD2E  Clue: "}<span style={{color:tone("#e9d5ff")}}>{q.marker}</span></span>
@@ -288,13 +293,11 @@ export function Chronomancer(p){
         </button>);
       })}
     </div>
-    {/* Reveal card */}
-    {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(results[results.length-1]&&results[results.length-1].ok?"#22c55e":"#f59e0b")}}>
-      <div style={{fontSize:11,color:"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{results[results.length-1]&&results[results.length-1].ok?"\u2713 Correct":"Explanation"}</div>
-      <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#7c3aed,#c026d3)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next question \u2192"}</button>
-    </div>}
-  </div>);
+    {phase==="reveal"&&<AnswerCard ok={!!(results[results.length-1]&&results[results.length-1].ok)}
+      answer={String.fromCharCode(65+q.c)+". "+q.o[q.c]} why={q.x}/>}
+    </div>
+    {phase==="reveal"&&<NextBar onNext={nextQ} last={idx>=deck.length-1} label={idx>=deck.length-1?"See result":"Next question"}/>}
+  </>);
 }
 // ─── PASSIVE FORGE — sub-module 3/4 of Grammar Gauntlet ───
 // QCM 2-modes (transform vs fill-in). 15 questions per session.
@@ -312,6 +315,8 @@ export function PassiveForge(p){
   var [timeLeft,setTimeLeft]=useState(TIME_PER_Q);
 
   var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 6, 2026-09-20)
+  var [paused,setPaused]=useState(false); // feuille « Leave this round? » : le minuteur s'arrête
   function startSession(){
     var shuffled=[].concat(PASSIVE_FORGE).sort(function(){return Math.random()-0.5;});
     var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length)).map(permuteQ);
@@ -322,6 +327,7 @@ export function PassiveForge(p){
     if(phase!=="play"||!deck)return;
     var q=deck[idx];
     var ok=optIdx===q.c;
+    track.record(ok);
     if(!ok)mistakesRef.current.push({tag:"Passive voice",prompt:q.prompt,yours:q.o[optIdx],correct:q.o[q.c],why:(q.active?"Active: “"+q.active+"” — ":"")+q.x,ref:moduleRef("gauntlet",q.id)});
     if(ok){try{playCorrect();}catch(e){console.warn("[forge] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[forge] sfx:",e&&e.message);}}
@@ -333,6 +339,7 @@ export function PassiveForge(p){
     if(phase!=="play"||!deck)return;
     try{playWrong();}catch(e){console.warn("[forge] sfx:",e&&e.message);}
     var q=deck[idx];
+    track.record(false);
     mistakesRef.current.push({tag:"Passive voice",prompt:q.prompt,yours:"(time's up)",correct:q.o[q.c],why:(q.active?"Active: “"+q.active+"” — ":"")+q.x,ref:moduleRef("gauntlet",q.id)});
     setPicked(-1);
     setResults(results.concat([{q:q,picked:-1,ok:false,timedOut:true}]));
@@ -358,11 +365,11 @@ export function PassiveForge(p){
   // and on the next "play" commit Effect 1 fires before the reset effect →
   // timeoutQ() called immediately on Q N+1 (timer "drops to 0" bug, 2026-04-30).
   useEffect(function(){
-    if(phase!=="play")return;
+    if(phase!=="play"||paused)return;
     if(timeLeft<=0){timeoutQ();return;}
     var t=setTimeout(function(){setTimeLeft(timeLeft-1);},1000);
     return function(){clearTimeout(t);};
-  },[timeLeft,phase]);
+  },[timeLeft,phase,paused]);
 
   function renderWithBlank(s){
     var segs=s.split(/_{3,}/);
@@ -402,25 +409,15 @@ export function PassiveForge(p){
 
   // phase "play" or "reveal"
   var q=deck[idx];
-  var progPct=(idx+1)/deck.length*100;
-  var timePct=timeLeft/TIME_PER_Q*100;
   var lastResult=results[results.length-1];
   var isTimedOut=phase==="reveal"&&picked===-1;
-  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,color:"var(--t3)",marginBottom:4}}>
-      <span>Question {idx+1} / {deck.length}</span>
-      {phase==="play"&&<span style={{fontWeight:700,color:timeLeft<10?tone("#ef4444"):tone("#f59e0b")}}>{"\u23F1\uFE0F "+timeLeft+"s"}</span>}
-    </div>
-    {/* progress bar */}
-    <div style={{width:"100%",height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:8}}>
-      <div style={{width:progPct+"%",height:"100%",background:"linear-gradient(90deg,#dc2626,#f59e0b)",transition:"width .3s ease"}}/>
-    </div>
-    {/* timer bar */}
-    {phase==="play"&&<div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:16}}>
-      <div style={{width:timePct+"%",height:"100%",background:timeLeft<10?"#ef4444":"#f59e0b",transition:"width 1s linear"}}/>
-    </div>}
-    {phase==="reveal"&&<div style={{marginBottom:16}}/>}
+  return(<>
+    <SessionTop n={deck.length} cur={idx} results={track.results} streak={track.streak} onQuit={p.back} onSheet={setPaused}
+      aside={phase==="play"
+        ?<span className="out" style={{fontSize:18,fontWeight:800,color:timeLeft<10?"var(--red)":"var(--orange)"}}>{timeLeft}</span>
+        :<span className="out" style={{fontSize:13,color:"var(--t3)",fontWeight:600}}>{(idx+1)+"/"+deck.length}</span>}/>
+    <ComboBanner combo={track.combo}/>
+    <div className="enter" style={{padding:"4px 16px 0",maxWidth:520,margin:"0 auto"}}>
     {/* Mode badge */}
     <div style={{textAlign:"center",marginBottom:12}}>
       <span style={{display:"inline-block",padding:"3px 11px",background:q.mode==="transform"?"rgba(220,38,38,.15)":"rgba(245,158,11,.15)",border:"1px solid "+(q.mode==="transform"?"rgba(220,38,38,.4)":"rgba(245,158,11,.4)"),borderRadius:99,color:q.mode==="transform"?tone("#fca5a5"):tone("#fcd34d"),fontSize:11,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>{q.mode==="transform"?"\uD83D\uDD04 Transform":"\u270D\uFE0F Fill in the blank"}</span>
@@ -450,13 +447,11 @@ export function PassiveForge(p){
         </button>);
       })}
     </div>
-    {/* Reveal card */}
-    {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(lastResult&&lastResult.ok?"#22c55e":isTimedOut?"#ef4444":"#f59e0b")}}>
-      <div style={{fontSize:11,color:isTimedOut?tone("#fca5a5"):"var(--t3)",marginBottom:6,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":isTimedOut?"\u23F1 Time's up":"Explanation"}</div>
-      <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#dc2626,#f59e0b)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next question \u2192"}</button>
-    </div>}
-  </div>);
+    {phase==="reveal"&&<AnswerCard ok={!!(lastResult&&lastResult.ok)} timeout={isTimedOut}
+      answer={String.fromCharCode(65+q.c)+". "+q.o[q.c]} why={q.x}/>}
+    </div>
+    {phase==="reveal"&&<NextBar onNext={nextQ} last={idx>=deck.length-1} label={idx>=deck.length-1?"See result":"Next question"}/>}
+  </>);
 }
 // ─── RELATIVE WEAVER — sub-module 4/4 of Grammar Gauntlet ───
 // QCM reflection: 15 questions per session, no timer. Mixes defining/
@@ -472,6 +467,7 @@ export function RelativeWeaver(p){
   var [results,setResults]=useState([]);
 
   var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 6, 2026-09-20)
   function startSession(){
     var shuffled=[].concat(RELATIVE_WEAVER).sort(function(){return Math.random()-0.5;});
     var d=shuffled.slice(0,Math.min(SESSION_SIZE,shuffled.length)).map(permuteQ);
@@ -481,6 +477,7 @@ export function RelativeWeaver(p){
     if(phase!=="play"||!deck)return;
     var q=deck[idx];
     var ok=optIdx===q.c;
+    track.record(ok);
     if(!ok)mistakesRef.current.push({tag:"Relative clauses · "+typeLabel(q.type),prompt:q.s,yours:q.o[optIdx],correct:q.o[q.c],why:q.x,ref:moduleRef("gauntlet",q.id)});
     if(ok){try{playCorrect();}catch(e){console.warn("[weaver] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[weaver] sfx:",e&&e.message);}}
@@ -553,14 +550,11 @@ export function RelativeWeaver(p){
 
   // play / reveal
   var q=deck[idx];
-  var progPct=(idx+1)/deck.length*100;
   var lastResult=results[results.length-1];
-  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-    <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:4}}>Question {idx+1} / {deck.length}</div>
-    <div style={{width:"100%",height:5,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:18}}>
-      <div style={{width:progPct+"%",height:"100%",background:"linear-gradient(90deg,#0891b2,#7c3aed)",transition:"width .3s ease"}}/>
-    </div>
+  return(<>
+    <SessionTop n={deck.length} cur={idx} results={track.results} streak={track.streak} onQuit={p.back}/>
+    <ComboBanner combo={track.combo}/>
+    <div className="enter" style={{padding:"4px 16px 0",maxWidth:520,margin:"0 auto"}}>
     {/* Sentence */}
     <div className="crd" style={{padding:"18px 16px",marginBottom:14,fontSize:16.5,lineHeight:1.7,color:"var(--t1)"}}>
       {renderWithBlank(q.s)}
@@ -579,16 +573,12 @@ export function RelativeWeaver(p){
         </button>);
       })}
     </div>
-    {/* Reveal card */}
-    {phase==="reveal"&&<div className="crd enter" style={{padding:14,marginTop:14,borderLeft:"3px solid "+(lastResult&&lastResult.ok?"#22c55e":"#f59e0b")}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-        <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{lastResult&&lastResult.ok?"\u2713 Correct":"Explanation"}</span>
-        <span style={{fontSize:10,color:tone("#d8b4fe"),padding:"2px 8px",background:"rgba(124,58,237,.15)",border:"1px solid rgba(124,58,237,.3)",borderRadius:99,fontWeight:700,letterSpacing:.3}}>{typeLabel(q.type)}</span>
-      </div>
-      <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{q.x}</div>
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:14,padding:"11px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next question \u2192"}</button>
-    </div>}
-  </div>);
+    {/* Le type de relative sert d'étiquette à l'explication (il n'est pas montré pendant la question). */}
+    {phase==="reveal"&&<AnswerCard ok={!!(lastResult&&lastResult.ok)}
+      answer={String.fromCharCode(65+q.c)+". "+q.o[q.c]} label={typeLabel(q.type)} why={q.x}/>}
+    </div>
+    {phase==="reveal"&&<NextBar onNext={nextQ} last={idx>=deck.length-1} label={idx>=deck.length-1?"See result":"Next question"}/>}
+  </>);
 }
 // ─── GAUNTLET HUB — entry point for the 4 sub-modules ───
 // Internal state `subMode` decides whether to render the hub or a sub-module.

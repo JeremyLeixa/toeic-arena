@@ -2,6 +2,8 @@
 import { GrimoireReader } from "../../components/GrimoireReader.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
+import { SessionTop, ComboBanner, AnswerCard, NextBar } from "../../components/SessionHud.jsx";
+import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { MODAL_MATCH_BOARDS, MODAL_SORT_ITEMS } from "../../data/modals.js";
 import { GRIMOIRE_MODALS } from "../../data/modalsGrimoire.js";
@@ -69,6 +71,7 @@ export function ModalMatch(p){
   var boardRef=useRef(null);
   var activeAnchorRef=useRef(null);
   var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 6, 2026-09-20)
 
   function startSession(){
     var picked=shuffle(MODAL_MATCH_BOARDS.slice()).slice(0,BOARDS_PER_SESSION);
@@ -95,6 +98,13 @@ export function ModalMatch(p){
   function commitLock(){
     if(pairs.length!==PAIRS_PER_BOARD)return;
     var board=boards[boardIdx];var correct=0;
+    // Le fil d'encre reçoit les 5 paires du plateau, dans l'ordre des situations : une case
+    // par paire, comme partout ailleurs (le plateau se verrouille d'un bloc).
+    var marks=[];
+    pairs.slice().sort(function(a,b){return a.sIdx-b.sIdx;}).forEach(function(pp){
+      marks.push(board.modals[pp.mIdx].originalIdx===pp.sIdx);
+    });
+    marks.forEach(function(m){track.record(m);});
     pairs.forEach(function(pp){
       if(board.modals[pp.mIdx].originalIdx===pp.sIdx){correct++;return;}
       var good=board.modals.find(function(m){return m.originalIdx===pp.sIdx;});
@@ -261,13 +271,14 @@ export function ModalMatch(p){
   function findPairForSit(i){return pairs.find(function(pp){return pp.sIdx===i;});}
   function findPairForModal(i){return pairs.find(function(pp){return pp.mIdx===i;});}
 
-  return(<div className="enter" style={{padding:"12px 12px 14px",maxWidth:720,margin:"0 auto",display:"flex",flexDirection:"column",minHeight:"calc(100dvh - 50px)"}}>
+  var TOTAL_PAIRS=BOARDS_PER_SESSION*PAIRS_PER_BOARD;
+  return(<>
     <style>{DTL_CSS}</style>
-    <button className="back-btn" onClick={p.back} style={{flexShrink:0}}>{"←"} Back</button>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"4px 0",flexShrink:0}}>
-      <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>Board {boardIdx+1} / {BOARDS_PER_SESSION}</span>
-      <span style={{fontSize:11,color:"var(--cyan)",fontWeight:700,letterSpacing:.8}}>{pairs.length} / {PAIRS_PER_BOARD} paired</span>
-    </div>
+    <SessionTop n={TOTAL_PAIRS} cur={boardIdx*PAIRS_PER_BOARD+Math.min(pairs.length,PAIRS_PER_BOARD-1)}
+      groups={[PAIRS_PER_BOARD,PAIRS_PER_BOARD,PAIRS_PER_BOARD]} results={track.results} streak={track.streak} onQuit={p.back}
+      sub={"Board "+(boardIdx+1)+"/"+BOARDS_PER_SESSION+(phase==="play"?" · "+pairs.length+"/"+PAIRS_PER_BOARD+" paired":"")}/>
+    <ComboBanner combo={track.combo}/>
+    <div className="enter" style={{padding:"4px 12px 0",maxWidth:720,margin:"0 auto",display:"flex",flexDirection:"column"}}>
     <div style={{textAlign:"center",fontSize:13,color:"var(--t2)",fontStyle:"italic",margin:"2px 0 8px",flexShrink:0}}>{board.theme}</div>
 
     <div style={{display:"grid",gridTemplateColumns:"1fr 80px 1fr",marginBottom:2,flexShrink:0}}>
@@ -342,17 +353,12 @@ export function ModalMatch(p){
       </svg>
     </div>
 
-    <div style={{marginTop:10,flexShrink:0}}>
-      {phase==="play"&&(
-        <button className="btn1" disabled={pairs.length<PAIRS_PER_BOARD} style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:15,padding:"13px",fontWeight:800,opacity:pairs.length===PAIRS_PER_BOARD?1:.5,cursor:pairs.length===PAIRS_PER_BOARD?"pointer":"not-allowed"}} onClick={commitLock}>
-          {pairs.length===PAIRS_PER_BOARD?"Lock answers":"Lock answers ("+pairs.length+"/"+PAIRS_PER_BOARD+")"}
-        </button>
-      )}
-      {phase==="reveal"&&(
-        <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#0891b2,#7c3aed)",fontSize:15,padding:"13px",fontWeight:800}} onClick={nextBoard}>{boardIdx>=BOARDS_PER_SESSION-1?"See result":"Next board →"}</button>
-      )}
     </div>
-  </div>);
+    {phase==="play"&&<NextBar onNext={commitLock} disabled={pairs.length<PAIRS_PER_BOARD}
+      label={pairs.length===PAIRS_PER_BOARD?"Lock answers":"Lock answers ("+pairs.length+"/"+PAIRS_PER_BOARD+")"}/>}
+    {phase==="reveal"&&<NextBar onNext={nextBoard} last={boardIdx>=BOARDS_PER_SESSION-1}
+      label={boardIdx>=BOARDS_PER_SESSION-1?"See result":"Next board"}/>}
+  </>);
 }
 // ─── MODAL SORT — sub-module 2/2 of Modal Council ───
 // 15 phrases drawn from MODAL_SORT_ITEMS. For each, the student taps one
@@ -372,6 +378,7 @@ export function ModalSort(p){
   var [picked,setPicked]=useState(null);
   var [results,setResults]=useState([]);
   var mistakesRef=useRef([]);var sentRef=useRef(false);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 6, 2026-09-20)
 
   function startSession(){
     var shuffled=shuffle(MODAL_SORT_ITEMS.slice()).slice(0,SESSION_SIZE);
@@ -381,6 +388,7 @@ export function ModalSort(p){
   function pickBucket(bid){
     if(phase!=="play"||!deck)return;
     var item=deck[idx];var ok=bid===item.bucket;
+    track.record(ok);
     if(!ok){var lab=function(id){var b=BUCKETS.find(function(x){return x.id===id;});return b?b.label:id;};mistakesRef.current.push({tag:"Modals · "+item.modal,prompt:item.s,noBlank:true,yours:lab(bid),correct:lab(item.bucket),why:item.x,ref:moduleRef("modals_sort",item.id)});}
     if(ok){try{playCorrect();}catch(e){console.warn("[msort] sfx:",e&&e.message);}}
     else{try{playWrong();}catch(e){console.warn("[msort] sfx:",e&&e.message);}}
@@ -437,13 +445,10 @@ export function ModalSort(p){
   // phase === "play" or "reveal"
   var item=deck[idx];
   var correctBucket=BUCKETS.find(function(b){return b.id===item.bucket;});
-  return(<div className="enter" style={{padding:"16px 16px 100px",maxWidth:520,margin:"0 auto"}}>
-    <button className="back-btn" onClick={p.back}>{"←"} Back</button>
-    <div style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:6}}>Sentence {idx+1} / {deck.length}</div>
-    <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:99,overflow:"hidden",marginBottom:18}}>
-      <div style={{width:((idx+(phase==="reveal"?1:0))/deck.length*100)+"%",height:"100%",background:"linear-gradient(90deg,#f59e0b,#dc2626)",transition:"width .4s ease"}}/>
-    </div>
-
+  return(<>
+    <SessionTop n={deck.length} cur={idx} results={track.results} streak={track.streak} onQuit={p.back}/>
+    <ComboBanner combo={track.combo}/>
+    <div className="enter" style={{padding:"4px 16px 0",maxWidth:520,margin:"0 auto"}}>
     <div className="crd" style={{padding:"22px 18px",marginBottom:18,fontSize:17,fontWeight:600,color:"var(--t1)",lineHeight:1.5,textAlign:"center"}}>
       "{item.s}"
     </div>
@@ -464,19 +469,17 @@ export function ModalSort(p){
       })}
     </div>
 
-    {phase==="reveal"&&(<div className="crd enter" style={{padding:14,marginBottom:12,borderLeft:"3px solid "+correctBucket.color}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8,flexWrap:"wrap"}}>
-        <span style={{fontSize:11,color:"var(--t3)",fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{results[results.length-1].ok?"✓ Correct verdict":"Explanation"}</span>
-        <span style={{fontSize:10,color:tone(correctBucket.color),padding:"2px 8px",background:"rgba(0,0,0,.18)",border:"1px solid "+correctBucket.color,borderRadius:99,fontWeight:700,letterSpacing:.3}}>{correctBucket.label}</span>
+    {phase==="reveal"&&<AnswerCard ok={results[results.length-1].ok} answer={correctBucket.label} label="Why">
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+        <span style={{fontSize:10,color:tone(correctBucket.color),padding:"2px 8px",background:"rgba(var(--bg3-rgb),.6)",border:"1px solid "+correctBucket.color,borderRadius:99,fontWeight:700,letterSpacing:.3}}>{correctBucket.label}</span>
+        <span style={{fontSize:12.5,color:"var(--t3)",fontStyle:"italic"}}>Modal: <strong style={{color:"var(--t1)",fontStyle:"normal"}}>{item.modal}</strong></span>
       </div>
-      <div style={{fontSize:12.5,color:"var(--t3)",fontStyle:"italic",marginBottom:6}}>Modal: <strong style={{color:"var(--t1)",fontStyle:"normal"}}>{item.modal}</strong></div>
-      <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6}}>{item.x}</div>
-    </div>)}
-
-    {phase==="reveal"&&(
-      <button className="btn1" style={{width:"100%",background:"linear-gradient(135deg,#f59e0b,#dc2626)",fontSize:14,padding:"12px",fontWeight:800}} onClick={nextQ}>{idx>=deck.length-1?"See result":"Next sentence →"}</button>
-    )}
-  </div>);
+      <p className="ss-why">{item.x}</p>
+    </AnswerCard>}
+    </div>
+    {phase==="reveal"&&<NextBar onNext={nextQ} last={idx>=deck.length-1}
+      label={idx>=deck.length-1?"See result":"Next sentence"}/>}
+  </>);
 }
 // ─── MODAL COUNCIL HUB — entry point for the 2 sub-modules ───
 // Mirror of GauntletHub. Internal state `subMode` switches between hub
