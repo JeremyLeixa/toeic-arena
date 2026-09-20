@@ -2,6 +2,7 @@
 import { Bar } from "../../components/Bar.jsx";
 import { ResultIcon } from "../../components/icons.jsx";
 import { ListeningGraphic } from "../../components/ListeningGraphic.jsx";
+import { SessionTop } from "../../components/SessionHud.jsx";
 import { BOSS_P1, BOSS_P3, BOSS_P4, BOSS_P5, BOSS_P6, BOSS_P7 } from "../../data/bossTestFull.js";
 import { resumeAudioSession, stopListenAudio, playAudioFile, playLetteredOption } from "../../lib/audio.js";
 import { BOSS_P2_SHUF, seedFromId } from "../../lib/listeningShuffle.js";
@@ -84,7 +85,10 @@ export function BossTest(p){
   useEffect(function(){
     function onUnload(){var s=bossStateRef.current;if(s.phase==="test")saveBossSession(s.ans,s.sec,s.qi,s.sqi,s.timeLeft);}
     window.addEventListener("beforeunload",onUnload);
-    return function(){window.removeEventListener("beforeunload",onUnload);};
+    // Sauvegarde AU DÉMONTAGE aussi : quitter par la barre (ou par la tab bar) coupait la
+    // sauvegarde périodique de 5 s, donc la dernière poignée de réponses était perdue. La feuille
+    // « Leave » promet une reprise : elle doit être vraie.
+    return function(){window.removeEventListener("beforeunload",onUnload);onUnload();};
   },[]);
 
   function fmtT(s){var m=Math.floor(s/60);var sc2=s%60;return m+":"+(sc2<10?"0":"")+sc2;}
@@ -220,18 +224,12 @@ export function BossTest(p){
   if(phase==="test"&&!result){
     var timerCol=timeLeft>600?"var(--cyan)":timeLeft>120?"var(--orange)":"var(--red)";
 
-    // Common header
-    var header=(<div style={{marginBottom:16}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <div style={{fontSize:11,color:isListening?"var(--orange)":"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>{isListening?"🔊 Listening":"📖 Reading"}</div>
-        <div className="out" style={{fontSize:14,fontWeight:800,color:timerCol}}>{fmtT(timeLeft)}</div>
-      </div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <span className="out" style={{fontSize:13,fontWeight:700}}>{secLabel}</span>
-        <span style={{fontSize:11,color:"var(--t3)"}}>{answered}/{totalQ} answered</span>
-      </div>
-      <Bar value={answered} max={totalQ} h={4} color={isListening?"linear-gradient(90deg,#f59e0b,#ef4444)":"linear-gradient(90deg,#22c55e,#06b6d4)"}/>
-    </div>);
+    // Barre de session : marques neutres (aucun verdict avant la fin), chrono en aside.
+    var NEUTRAL=new Array(answered).fill(null);
+    var header=(<SessionTop n={totalQ} cur={answered} results={NEUTRAL} onQuit={p.back}
+      sub={(isListening?"Listening":"Reading")+" \u00b7 "+secLabel+" \u00b7 "+answered+"/"+totalQ}
+      quitCopy={{title:"Leave the exam?",body:"Your progress is saved — you can resume today.",stay:"Keep going",leave:"Leave"}}
+      aside={<span className="out" style={{fontSize:16,fontWeight:800,color:timerCol}}>{fmtT(timeLeft)}</span>}/>);
 
     // ── P1: Photos (TOEIC: blind A/B/C/D, answer during audio) ──
     if(sec==="p1"){

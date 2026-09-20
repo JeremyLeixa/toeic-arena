@@ -1,5 +1,6 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { ResultIcon } from "../../components/icons.jsx";
+import { SessionTop } from "../../components/SessionHud.jsx";
 import { MOCK1_P5, MOCK1_P6, MOCK1_P7, MOCK2_P5, MOCK2_P6, MOCK2_P7, MOCK3_P5, MOCK3_P6, MOCK3_P7 } from "../../data/mockTests.js";
 import { estimateToeic } from "../../lib/toeic.js";
 import { today } from "../../lib/util.js";
@@ -111,7 +112,8 @@ export function MockTest(p){
   ans.p5.forEach(function(a){if(a>=0)answered++;});
   ans.p6.forEach(function(t){t.forEach(function(a){if(a>=0)answered++;});});
   ans.p7.forEach(function(ps){ps.forEach(function(a){if(a>=0)answered++;});});
-  var progressPct=Math.round(answered/totalQ*100);
+  // Le fil d'encre d'un examen ne porte que l'avancement : une entrée neutre par réponse donnée.
+  var NEUTRAL=new Array(answered).fill(null);
 
   // ════════════════ INTRO ════════════════
   if(phase==="intro"){
@@ -140,23 +142,19 @@ export function MockTest(p){
     var timerCol=timeLeft>300?"var(--cyan)":timeLeft>60?"var(--orange)":"var(--red)";
     var sectionLabel=section==="p5"?"Part 5":section==="p6"?"Part 6":"Part 7";
 
-    // Header bar (always visible)
-    var header=(<div style={{position:"sticky",top:0,background:"var(--bg)",zIndex:10,padding:"12px 0 8px",borderBottom:"1px solid var(--bdr)"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <span className="out" style={{fontSize:12,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{sectionLabel}</span>
-        <span className="out" style={{fontSize:18,fontWeight:800,color:timerCol,fontVariantNumeric:"tabular-nums"}}>{formatTime(timeLeft)}</span>
-      </div>
-      <div style={{width:"100%",height:4,background:"var(--bg3)",borderRadius:2,overflow:"hidden"}}>
-        <div style={{height:"100%",width:progressPct+"%",background:"linear-gradient(90deg,var(--cx-hex),#8b5e83)",borderRadius:2,transition:"width .3s"}}/>
-      </div>
-      <div style={{fontSize:10,color:"var(--t3)",marginTop:4,textAlign:"right"}}>{answered}/{totalQ}</div>
-    </div>);
+    // Barre de session : marques neutres (aucun verdict pendant l'épreuve), chrono en aside.
+    // Elle est en position:fixed — l'ancienne barre était en position:sticky, donc inerte sous
+    // .app (overflow-y:auto) : elle défilait avec la page au lieu de rester en haut.
+    var header=(<SessionTop n={totalQ} cur={answered} results={NEUTRAL} onQuit={p.back}
+      sub={sectionLabel+" \u00b7 "+answered+"/"+totalQ}
+      quitCopy={{title:"Leave the exam?",body:"Your answers won't be saved — this Mock Test has no resume.",stay:"Keep going",leave:"Leave"}}
+      aside={<span className="out" style={{fontSize:18,fontWeight:800,color:timerCol,fontVariantNumeric:"tabular-nums"}}>{formatTime(timeLeft)}</span>}/>);
 
     // ── PART 5 RENDER ──
     if(section==="p5"){
       var q=p5Qs[qi];var selected=ans.p5[qi];
       return(<div style={{padding:"0 16px 40px"}}>{header}
-        <div style={{marginTop:16}}>
+        <div>
           <span style={{fontSize:11,color:"var(--t3)"}}>{qi+1} / {p5Qs.length}</span>
           <h2 className="qstem" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginTop:8,marginBottom:24}}>{q.s}</h2>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -183,7 +181,7 @@ export function MockTest(p){
       var currentBlank=blanks[bi];var selected6=ans.p6[qi][bi];
 
       return(<div style={{padding:"0 16px 40px"}}>{header}
-        <div style={{marginTop:16}}>
+        <div>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
             <span style={{fontSize:11,color:"var(--t3)"}}>Text {qi+1}/{p6Texts.length}</span>
             <span style={{fontSize:11,color:"var(--cyan)"}}>Blank {bi+1}/{blanks.length}</span>
@@ -215,7 +213,7 @@ export function MockTest(p){
       var passage=p7Passages[qi];var pq=passage.questions[pqi];var selected7=ans.p7[qi][pqi];
 
       return(<div style={{padding:"0 16px 40px"}}>{header}
-        <div style={{marginTop:16}}>
+        <div>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
             <span style={{fontSize:11,color:"var(--t3)"}}>Passage {qi+1}/{p7Passages.length}</span>
             <span style={{fontSize:11,color:"var(--cyan)"}}>Q {pqi+1}/{passage.questions.length}</span>

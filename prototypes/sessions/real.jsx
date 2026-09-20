@@ -22,6 +22,9 @@ import { SentenceBuilder } from "../../src/features/games/SentenceBuilder.jsx";
 import { IrregularCrypt, Chronomancer, PassiveForge, RelativeWeaver } from "../../src/features/gauntlet/Gauntlet.jsx";
 import { ModalMatch, ModalSort } from "../../src/features/modals/ModalCouncil.jsx";
 import { GerInf, PhrasalDojo } from "../../src/features/train/grammar.jsx";
+import { MockTest } from "../../src/features/exams/MockTest.jsx";
+import { BossTest } from "../../src/features/exams/BossTest.jsx";
+import { EndlessArena } from "../../src/features/exams/EndlessArena.jsx";
 import { fresh } from "../../src/lib/profileSchema.js";
 import { playCorrect, playWrong } from "../../src/sounds.js";
 
@@ -108,17 +111,18 @@ function Intro() {
   </div>;
 }
 
-// Lots 2 à 6 (2026-09-19/20) : les vrais modules, montés avec des props de banc (?sc=wordfam, ?sc=lisP3…).
+// Lots 2 à 7 (2026-09-19/20) : les vrais modules, montés avec des props de banc (?sc=wordfam, ?sc=lisP3…).
 var LOT2 = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepdrill: PrepDrill, traps: TrapsQuiz, falsefr: FalseFriends, stratquiz: StratQuizPage, daily: Daily,
   lisP1: ListenP1, lisP2: ListenP2, lisP3: ListenP3, lisP4: ListenP4,
   p6: Part6Drill, p7: Part7Read, timesim: TimeSim,
   tavern: WordTavern, ablitz: AudioBlitz, clue: ClueHunter, sbuild: SentenceBuilder,
   crypt: IrregularCrypt, chrono: Chronomancer, forge: PassiveForge, weaver: RelativeWeaver,
-  mmatch: ModalMatch, msort: ModalSort, gerinf: GerInf, pvdojo: PhrasalDojo };
+  mmatch: ModalMatch, msort: ModalSort, gerinf: GerInf, pvdojo: PhrasalDojo,
+  mock1: MockTest, boss: BossTest, endless: EndlessArena };
 
 function Frame() {
   var lc = "app" + (MODE === "light" ? " light" : "") + (FEST ? " fest-" + FEST : SKIN ? " skin-" + SKIN : "");
-  var common = { u: fresh("Camille", "visitor"), done: function () { return 1; }, back: function () { alert("Back → hub"); }, nav: noop, session: null, closeSession: noop, replaySession: noop, resetCard: noop, onContinue: noop, onReplay: noop };
+  var common = { u: fresh("Camille", "visitor"), done: function () { return 1; }, back: function () { alert("Back → hub"); }, nav: noop, session: null, closeSession: noop, replaySession: noop, resetCard: noop, onContinue: noop, onReplay: noop, mockId: 1 };
   var Mod = LOT2[SC];
   var body = Mod ? <Mod {...common} /> : SC === "intro" ? <Intro /> : SC === "listen" ? <Listen /> : SC === "drill" ? <RealDrill {...common} /> : <Drill />;
   return <div className={lc}>

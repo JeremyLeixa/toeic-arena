@@ -2,6 +2,7 @@
 import { Bar } from "../../components/Bar.jsx";
 import { ResultIcon, GIcon } from "../../components/icons.jsx";
 import { ListeningGraphic } from "../../components/ListeningGraphic.jsx";
+import { SessionTop } from "../../components/SessionHud.jsx";
 import { resumeAudioSession, stopListenAudio, playAudioFile, playLetteredOption } from "../../lib/audio.js";
 import { haptic } from "../../lib/device.js";
 import { generateEndlessTest, endlessAnsFitsTest, freshAnsFor } from "../../lib/endless.js";
@@ -253,17 +254,12 @@ export function EndlessArena(p){
   // ═══ TEST PHASE ═══
   if(phase==="test"&&!result){
     var timerCol=timeLeft>600?"var(--endless)":timeLeft>120?"var(--orange)":"var(--red)";
-    var header=(<div style={{marginBottom:16}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <div style={{fontSize:11,color:isListening?"var(--orange)":"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>{isListening?"🔊 Listening":"📖 Reading"}</div>
-        <div className="out" style={{fontSize:14,fontWeight:800,color:timerCol}}>{fmtT(timeLeft)}</div>
-      </div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <span className="out" style={{fontSize:13,fontWeight:700}}>{secLabel}</span>
-        <span style={{fontSize:11,color:"var(--t3)"}}>{answered}/{totalQ} answered</span>
-      </div>
-      <Bar value={answered} max={totalQ} h={4} color={isListening?"linear-gradient(90deg,#f59e0b,#1B70CF)":"linear-gradient(90deg,#22c55e,#1B70CF)"}/>
-    </div>);
+    // Barre de session : marques neutres (aucun verdict avant la fin), chrono en aside.
+    var NEUTRAL=new Array(answered).fill(null);
+    var header=(<SessionTop n={totalQ} cur={answered} results={NEUTRAL} onQuit={p.back}
+      sub={(isListening?"Listening":"Reading")+" \u00b7 "+secLabel+" \u00b7 "+answered+"/"+totalQ}
+      quitCopy={{title:"Leave the arena?",body:"Your progress is saved — you can resume today.",stay:"Keep going",leave:"Leave"}}
+      aside={<span className="out" style={{fontSize:16,fontWeight:800,color:timerCol}}>{fmtT(timeLeft)}</span>}/>);
 
     // ── P1 ──
     if(sec==="p1"){
