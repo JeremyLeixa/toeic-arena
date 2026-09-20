@@ -1,7 +1,8 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
+import { SessionTop, ComboBanner, AnswerCard, NextBar } from "../../components/SessionHud.jsx";
+import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { SpeakBtn } from "../../components/SpeakBtn.jsx";
 import { SENTENCES } from "../../data/sentences.js";
 import { shuffle } from "../../lib/util.js";
@@ -43,6 +44,10 @@ export function SentenceBuilder(p){
   var answerRef=useRef(null);
   var bankRef=useRef(null);
   var mistakesRef=useRef([]);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 5, 2026-09-20)
+  // Le minuteur s'arrête pendant la feuille « Leave this round? » : sinon la manche expire
+  // sous une fenêtre modale. recordedRef : une seule marque par manche (StrictMode remonte).
+  var pausedRef=useRef(false);var recordedRef=useRef(-1);
 
   var items=useMemo(function(){return shuffle(SENTENCES.slice()).slice(0,TOTAL);},[]);
 
@@ -60,6 +65,7 @@ export function SentenceBuilder(p){
       setTimer(TIMER_SEC);
       timerRef.current=setInterval(function(){
         setTimer(function(t){
+          if(pausedRef.current)return t;
           if(t<=1){clearInterval(timerRef.current);sP("fb");return 0;}
           return t-1;
         });
@@ -82,6 +88,15 @@ export function SentenceBuilder(p){
       sP("fb");
     }
   },[placed.length]);
+
+  // Marque du fil d'encre : posée à l'entrée en retour, donc AUSSI au temps écoulé (l'autre
+  // chemin, la phrase complétée, n'est pas le seul — une manche expirée compte comme ratée).
+  useEffect(function(){
+    if(ph!=="fb"||recordedRef.current===ci)return;
+    recordedRef.current=ci;
+    var it2=items[ci];
+    track.record(placed.length===it2.chunks.length&&placed.every(function(c,i){return c.idx===i;}));
+  },[ph,ci]);
 
   // Cancel any in-flight drag on phase transition (timer expiry, auto-check, back).
   useEffect(function(){
@@ -232,7 +247,6 @@ export function SentenceBuilder(p){
   var it=items[ci];
   var isCorrect=ph==="fb"&&placed.length===it.chunks.length&&placed.every(function(c,i){return c.idx===i;});
   var timerCol=timer<=5?"var(--red)":timer<=10?"var(--orange)":"var(--cyan)";
-  var timerPct=timer/TIMER_SEC*100;
   var drag=dragRef.current;
   var dragOn=drag&&drag.started;
 
@@ -243,19 +257,17 @@ export function SentenceBuilder(p){
   var bankCls="sbd-bank";
   if(dragOn&&drag.zone==="bank")bankCls+=" sbd-active";
 
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
+  return(<>
     <style>{SBD_CSS}</style>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-      <button className="back-btn" onClick={function(){clearInterval(timerRef.current);p.back();}}>{"←"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{TOTAL}</span>
-    </div>
-    {ph==="q"&&<div style={{textAlign:"left",marginBottom:8}}><span className="out" style={{fontSize:20,fontWeight:800,color:timerCol}}>{timer}s</span></div>}
-    <Bar value={ci} max={TOTAL} h={4} color="linear-gradient(90deg,#3b82f6,#8b5cf6)"/>
-
-    {ph==="q"&&<div style={{height:4,background:"var(--bg3)",borderRadius:2,marginTop:8,marginBottom:20,overflow:"hidden"}}>
-      <div style={{height:"100%",width:timerPct+"%",background:timerCol,borderRadius:2,transition:"width 1s linear"}}/></div>}
-
-    <div style={{marginTop:ph==="fb"?16:0}}>
+    <SessionTop n={TOTAL} cur={ci} results={track.results} streak={track.streak}
+      onQuit={function(){clearInterval(timerRef.current);p.back();}}
+      onSheet={function(open){pausedRef.current=open;}}
+      aside={ph==="q"
+        ?<span className="out" style={{fontSize:18,fontWeight:800,color:timerCol}}>{timer}</span>
+        :<span className="out" style={{fontSize:13,color:"var(--t3)",fontWeight:600}}>{(ci+1)+"/"+TOTAL}</span>}/>
+    <ComboBanner combo={track.combo}/>
+    <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div>
       <span className="out" style={{fontSize:11,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:8}}>{"🔀"} Build the sentence</span>
       <span style={{fontSize:11,color:"var(--t3)",display:"block",marginBottom:12}}>{it.cat}</span>
     </div>
@@ -287,21 +299,13 @@ export function SentenceBuilder(p){
     {/* Ghost */}
     {dragOn&&<div className="sbd-ghost" style={{left:drag.x+"px",top:drag.y+"px",transform:"translate(-50%,-50%) scale(1.06)"}}>{drag.chunk.text}</div>}
 
-    {/* Feedback */}
-    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      {timer===0&&placed.length<it.chunks.length&&<div style={{textAlign:"center",marginBottom:12}}>
-        <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
-      <div className="crd" style={{padding:14,background:isCorrect?"rgba(0,230,118,.06)":"rgba(255,71,87,.06)",borderColor:isCorrect?"rgba(0,230,118,.15)":"rgba(255,71,87,.15)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-          <span style={{fontSize:16}}>{isCorrect?"✅":"❌"}</span>
-          <span className="out" style={{fontWeight:700,fontSize:14,color:isCorrect?"var(--green)":"var(--red)"}}>{isCorrect?"Perfect!":"Correct order:"}</span>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.6,fontWeight:500,flex:1}}>{it.s}</p>
-          <SpeakBtn text={it.s} size={26} rate={0.85} audio={"/audio/sentences/sb_"+String(SENTENCES.indexOf(it)+1).padStart(2,"0")+".mp3"}/>
-        </div>
+    {ph==="fb"&&<AnswerCard ok={isCorrect} timeout={timer===0&&placed.length<it.chunks.length} label="Correct order">
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <p style={{fontSize:14,color:"var(--t1)",lineHeight:1.6,fontWeight:500,flex:1}}>{it.s}</p>
+        <SpeakBtn text={it.s} size={26} rate={0.85} audio={"/audio/sentences/sb_"+String(SENTENCES.indexOf(it)+1).padStart(2,"0")+".mp3"}/>
       </div>
-      <button className="btn1" onClick={next} style={{marginTop:12}}>{ci<items.length-1?"Next":"See Results"}</button>
-    </div>}
-  </div>);
+    </AnswerCard>}
+    </div>
+    {ph==="fb"&&<NextBar onNext={next} last={ci===items.length-1}/>}
+  </>);
 }

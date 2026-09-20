@@ -1,8 +1,9 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
+import { SessionTop, ComboBanner, AnswerCard, NextBar } from "../../components/SessionHud.jsx";
+import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { VOCAB } from "../../data/vocab.js";
 import { shuffle, today } from "../../lib/util.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
@@ -58,11 +59,12 @@ export function WordTavern(p){
   var[sel,sSel]=useState(-1);
   var[missed,setMissed]=useState([]);
   var mistakesRef=useRef([]);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 5, 2026-09-20)
 
   function answer(idx){
     if(sel!==-1)return;
     sSel(idx);
-    var correct=qs[ci].opts[idx].correct;
+    var correct=qs[ci].opts[idx].correct;track.record(correct);
     if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{
       try{playWrong();}catch(e){}
@@ -112,14 +114,12 @@ export function WordTavern(p){
   // ── QUESTION ──
   var q=qs[ci];
   var qLabel=q.type==="defToWord"?"Which word matches this definition?":q.type==="wordToDef"?"What does this word mean?":"Fill in the blank:";
-  return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{TOTAL}</span>
-      <div style={{width:40}}/>
-    </div>
-    <Bar value={ci} max={TOTAL} h={4} color="linear-gradient(90deg,#c87a35,#8b5e83)"/>
-    <div style={{marginTop:32,marginBottom:24}}>
+  var rightOpt=q.opts.filter(function(o){return o.correct;})[0];
+  return(<>
+    <SessionTop n={TOTAL} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
+    <ComboBanner combo={track.combo}/>
+    <div style={{padding:"4px 16px 0"}}>
+    <div style={{marginBottom:24}}>
       <div className="out" style={{fontSize:11,color:"var(--cx-hex)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12}}>{qLabel}</div>
       <div className="crd" style={{padding:20,textAlign:"center",minHeight:80,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <div style={{fontSize:q.type==="fillBlank"?15:q.type==="wordToDef"?24:15,fontWeight:q.type==="wordToDef"?800:400,lineHeight:1.5}}>{q.prompt}</div>
@@ -136,9 +136,8 @@ export function WordTavern(p){
         return(<button key={oi} onClick={function(){answer(oi);}} disabled={sel!==-1} style={{padding:"14px 16px",background:bg,border:"1.5px solid "+bdr,borderRadius:12,cursor:sel===-1?"pointer":"default",textAlign:"left",fontSize:14,color:col,lineHeight:1.4,fontFamily:"'DM Sans',sans-serif"}}>{opt.text}</button>);
       })}
     </div>
-    {sel!==-1&&<div style={{marginTop:16,padding:"12px 16px",background:"var(--bg3)",borderRadius:10}}>
-      <div style={{fontSize:12,color:"var(--t2)",fontStyle:"italic",lineHeight:1.5}}>{"\u201C"}{q.example}{"\u201D"}</div>
-    </div>}
-    {sel!==-1&&<button className="btn1" onClick={nextQ} style={{marginTop:16,width:"100%"}}>{ci<qs.length-1?"Next \u2192":"Finish"}</button>}
-  </div>);
+    {sel!==-1&&<AnswerCard ok={q.opts[sel].correct} answer={rightOpt.text} label="Example" why={"\u201C"+q.example+"\u201D"}/>}
+    </div>
+    {sel!==-1&&<NextBar onNext={nextQ} last={ci===qs.length-1}/>}
+  </>);
 }

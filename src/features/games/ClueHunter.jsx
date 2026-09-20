@@ -1,7 +1,8 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
+import { SessionTop, ComboBanner, AnswerCard, NextBar } from "../../components/SessionHud.jsx";
+import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { CLUE_HUNTER } from "../../data/clueHunter.js";
 import { shuffle, shuffleOpts } from "../../lib/util.js";
 import { moduleRef } from "../../lib/reviewRefs.js";
@@ -20,6 +21,7 @@ export function ClueHunter(p){
   var[pick,sPk]=useState(-1);
   var[scores,setSc]=useState([]);
   var mistakesRef=useRef([]);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 5, 2026-09-20)
  
   function toggleChip(idx){
     if(phase!=="q")return;
@@ -38,6 +40,7 @@ export function ClueHunter(p){
     // Mauvaise réponse : la phrase à trou. Bonne réponse sur un mauvais indice : la phrase complète et les indices.
     if(!ansOK)mistakesRef.current.push({tag:"Clue Hunter · "+item.cat,prompt:item.sentence,yours:item.opts[i],correct:item.opts[item.ans],why:item.exp,ref:moduleRef("clue",item.id,null,item.cat)});
     else if(!clueOK)mistakesRef.current.push({tag:"Clue Hunter · "+item.cat+" · clue",prompt:item.sentence.replace("___",item.opts[item.ans]),noBlank:true,yours:selected.map(function(k){return item.chips[k].w;}).join(" + "),correct:item.chips.filter(function(ch){return ch.c;}).map(function(ch){return ch.w;}).join(" + "),why:item.clue});
+    track.record(ansOK);
     setSc(function(prev){return prev.concat([{clue:clueOK,ans:ansOK,pts:pts}]);});try{if(ansOK)playCorrect();else playWrong();}catch(e){}
     sPk(i);sP("ans_fb");
   }
@@ -70,16 +73,16 @@ export function ClueHunter(p){
   }
  
   function Header(){
-    return(<>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-        <div/>
-        <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1} / {TOTAL}</span>
-      </div>
-      <Bar value={phase==="ans_fb"?ci+1:ci} max={TOTAL} h={4} color="linear-gradient(90deg,var(--cx-hex),#8b5e83)"/>
-      <div style={{marginTop:20,marginBottom:12}}>
-        <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{"🧭"} {phase==="clue_fb"||phase==="ans_fb"?items[ci].cat:"Find the clue..."}</span>
-      </div>
-    </>);
+    return(<div style={{marginBottom:12}}>
+      <span className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1}}>{"🧭"} {phase==="clue_fb"||phase==="ans_fb"?items[ci].cat:"Find the clue..."}</span>
+    </div>);
+  }
+  // La barre de session, identique aux quatre étapes : deux étapes par question (l'indice, puis la
+  // réponse), d'où le sous-titre.
+  function Top(){
+    return(<><SessionTop n={TOTAL} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}
+      sub={phase==="q"||phase==="clue_fb"?"Step 1 · The clue":"Step 2 · The answer"}/>
+      <ComboBanner combo={track.combo}/></>);
   }
  
   // ── INTRO ──
@@ -139,8 +142,9 @@ export function ClueHunter(p){
   var lastScore=scores[scores.length-1];
  
   // ── Q : CLUE HUNT ──
-  if(phase==="q")return(
-    <div style={{padding:"20px 20px 100px",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+  if(phase==="q")return(<>
+    <Top/>
+    <div style={{padding:"4px 20px 0"}}>
       <Header/>
       <SentenceCard item={item}/>
       <p className="out" style={{fontSize:13,fontWeight:600,color:"var(--t2)",marginBottom:18,textAlign:"center"}}>
@@ -156,18 +160,14 @@ export function ClueHunter(p){
             </button>);
         })}
       </div>
-      <div style={{marginTop:"auto"}}>
-        <button className="btn1" onClick={confirmClues}
-          style={{opacity:selected.length>0?1:.3,pointerEvents:selected.length>0?"auto":"none",fontSize:16}}>
-          Confirm my clue{selected.length>1?"s":""} →
-        </button>
-        <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button>
-      </div>
-    </div>);
+    </div>
+    <NextBar onNext={confirmClues} disabled={selected.length===0} label={"Confirm my clue"+(selected.length>1?"s":"")}/>
+  </>);
  
   // ── CLUE FEEDBACK ──
-  if(phase==="clue_fb")return(
-    <div className="enter" style={{padding:"20px 20px 100px",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+  if(phase==="clue_fb")return(<>
+    <Top/>
+    <div className="enter" style={{padding:"4px 20px 0"}}>
       <Header/>
       <SentenceCard item={item}/>
       <p className="out" style={{fontSize:11,fontWeight:700,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:14,textAlign:"center"}}>Your clues</p>
@@ -188,15 +188,14 @@ export function ClueHunter(p){
         <p className="out" style={{fontSize:11,fontWeight:700,color:"var(--cyan)",textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>{"💡"} Clue analysis</p>
         <p style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{item.clue}</p>
       </div>
-      <div style={{marginTop:"auto"}}>
-        <button className="btn1" onClick={goAnswer} style={{fontSize:16}}>Now answer →</button>
-        <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button>
-      </div>
-    </div>);
+    </div>
+    <NextBar onNext={goAnswer} label="Now answer"/>
+  </>);
  
   // ── ANSWER ──
-  if(phase==="ans")return(
-    <div className="enter" style={{padding:"20px 20px 100px",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+  if(phase==="ans")return(<>
+    <Top/>
+    <div className="enter" style={{padding:"4px 20px 0"}}>
       <Header/>
       <SentenceCard item={item}/>
       <p className="out" style={{fontSize:13,fontWeight:600,color:"var(--t2)",marginBottom:18,textAlign:"center"}}>Choose the correct form:</p>
@@ -212,14 +211,16 @@ export function ClueHunter(p){
             </button>);
         })}
       </div>
-      <button className="btn2" onClick={p.back} style={{marginTop:16,width:"100%"}}>Back</button>
-    </div>);
+    </div>
+  </>);
  
   // ── ANSWER FEEDBACK ──
   if(phase==="ans_fb"){
     var isCorrect=pick===item.ans;
     return(
-      <div className={"enter"+(isCorrect?"":" sk")} style={{padding:"20px 20px 100px",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+      <>
+      <Top/>
+      <div className={"enter"+(isCorrect?"":" sk")} style={{padding:"4px 20px 0"}}>
         <Header/>
         <SentenceCard item={item} answerWord={item.opts[item.ans]} isCorrect={isCorrect}/>
         {lastScore&&<div style={{textAlign:"center",marginBottom:20}}>
@@ -244,16 +245,10 @@ export function ClueHunter(p){
               </div>);
           })}
         </div>
-        <div className="crd" style={{padding:18,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",marginBottom:24}}>
-          <p style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{item.exp}</p>
-        </div>
-        <div style={{marginTop:"auto"}}>
-          <button className="btn1" onClick={next} style={{fontSize:16}}>
-            {ci<items.length-1?"Next Question →":"See Results"}
-          </button>
-          <button className="btn2" onClick={p.back} style={{marginTop:12,width:"100%"}}>Back</button>
-        </div>
-      </div>);
+        <AnswerCard ok={isCorrect} answer={String.fromCharCode(65+item.ans)+". "+item.opts[item.ans]} why={item.exp}/>
+      </div>
+      <NextBar onNext={next} last={ci===items.length-1} label={ci<items.length-1?"Next question":null}/>
+      </>);
   }
  
   return null;

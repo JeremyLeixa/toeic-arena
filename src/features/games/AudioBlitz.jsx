@@ -1,7 +1,8 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
+import { SessionTop, ComboBanner, AnswerCard, NextBar, ListenDisc } from "../../components/SessionHud.jsx";
+import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { AUDIO_BLITZ } from "../../data/audioBlitz.js";
 import { stopCurrentListenAudio, setListenAudio, speak, stopListenAudio } from "../../lib/audio.js";
 import { shuffle, shuffleOpts } from "../../lib/util.js";
@@ -19,6 +20,10 @@ export function AudioBlitz(p){
   var[replays,setReplays]=useState(0);
   var timerRef=useRef(null);var answeredRef=useRef(false);var bufferRef=useRef(null);
   var mistakesRef=useRef([]);var sidRef=useRef(0);
+  var track=useSessionTrack(); // HUD de session (lot 5, 2026-09-20)
+  // Le compte à rebours s'arrête pendant la feuille « Leave this round? » : sinon la question
+  // expire sous une fenêtre modale, réponse perdue sans que l'élève ait rien pu faire.
+  var pausedRef=useRef(false);
 
   // Options permutées par item (bonne réponse en B ou C 80 fois sur 90). L'audio ne lit que la
   // phrase (`text`), jamais les options : rien à transporter jusqu'au lecteur.
@@ -51,9 +56,10 @@ export function AudioBlitz(p){
           clearInterval(timerRef.current);
           timerRef.current=setInterval(function(){
             setTimer(function(t){
+              if(pausedRef.current)return t;
               if(t<=1){
                 clearInterval(timerRef.current);
-                if(!answeredRef.current){answeredRef.current=true;sPk(-1);sP("fb");}
+                if(!answeredRef.current){answeredRef.current=true;track.record(false);sPk(-1);sP("fb");}
                 return 0;
               }
               return t-1;
@@ -91,7 +97,7 @@ export function AudioBlitz(p){
     if(answeredRef.current||played<2)return;
     answeredRef.current=true;
     clearInterval(timerRef.current);
-    sPk(i);
+    sPk(i);track.record(i===items[ci].c);
     if(i===items[ci].c){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
     sP("fb");
@@ -124,33 +130,24 @@ export function AudioBlitz(p){
 
   // ═══ PLAY ═══
   var it=items[ci];
-  var timerPct=played>=2?timer/TIMER_SEC*100:100;
   var timerCol=timer<=3?"var(--red)":timer<=6?"var(--orange)":"var(--cyan)";
 
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-      <div/>
-      {played>=2&&ph==="q"&&<span className="out" style={{fontSize:20,fontWeight:800,color:timerCol}}>{timer}s</span>}
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/{TOTAL}</span>
-    </div>
-    <Bar value={ci} max={TOTAL} h={4} color="linear-gradient(90deg,#f59e0b,#ef4444)"/>
+  return(<>
+    <SessionTop n={TOTAL} cur={ci} results={track.results} streak={track.streak}
+      onQuit={function(){clearInterval(timerRef.current);p.back();}}
+      onSheet={function(open){pausedRef.current=open;}}
+      aside={played>=2&&ph==="q"
+        ?<span className="out" style={{fontSize:18,fontWeight:800,color:timerCol}}>{timer}</span>
+        :<span className="out" style={{fontSize:13,color:"var(--t3)",fontWeight:600}}>{(ci+1)+"/"+TOTAL}</span>}/>
+    <ComboBanner combo={track.combo}/>
+    <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
 
-    {played>=2&&ph==="q"&&<div style={{height:4,background:"var(--bg3)",borderRadius:2,marginTop:8,marginBottom:16,overflow:"hidden"}}>
-      <div style={{height:"100%",width:timerPct+"%",background:timerCol,borderRadius:2,transition:"width 1s linear"}}/></div>}
-
-    {/* Audio status */}
-    <div style={{textAlign:"center",marginTop:16,marginBottom:20}}>
-      {played<=1&&<div style={{animation:"pulse 1.5s infinite"}}>
-        <div style={{fontSize:48,marginBottom:8}}>{"🔊"}</div>
-        <p className="out" style={{fontWeight:700,fontSize:16,color:"var(--cyan)"}}>Listening...</p>
-      </div>}
-      {played>=2&&ph==="q"&&<div>
-        <p className="qstem" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginBottom:12}}>{it.q}</p>
-        {replays===0&&<button onClick={replay} style={{background:"rgba(27,112,207,.1)",border:"1px solid rgba(27,112,207,.2)",
-          borderRadius:10,padding:"8px 20px",cursor:"pointer",fontSize:12,color:"var(--purple)",fontWeight:600,fontFamily:"'DM Sans',sans-serif"}}>
-          {"🔁"} Replay once</button>}
-        {replays>=1&&<span style={{fontSize:11,color:"var(--t3)"}}>No more replays</span>}
-      </div>}
+    {/* Écoute : même disque runique que le Listening (il porte aussi la réécoute unique). */}
+    <div style={{marginTop:8,marginBottom:20}}>
+      <ListenDisc playing={played<=1} onPlay={replay} disabled={played<2||replays>=1||ph!=="q"}
+        playingLabel="Listening…"
+        hint={replays>=1?"No more replays":"Tap to replay once"}/>
+      {played>=2&&<p className="qstem" style={{fontWeight:700,fontSize:14,color:"var(--t1)",marginTop:16,textAlign:"center"}}>{it.q}</p>}
     </div>
 
     {/* Options (only show after audio) */}
@@ -171,16 +168,9 @@ export function AudioBlitz(p){
       })}
     </div>}
 
-    {/* Feedback */}
-    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      {pick===-1&&<div style={{textAlign:"center",marginBottom:12}}>
-        <span className="out" style={{fontSize:16,fontWeight:700,color:"var(--red)"}}>{"⏰"} Time's up!</span></div>}
-      <div className="crd" style={{padding:14,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
-        <p className="out" style={{fontWeight:700,fontSize:13,color:"var(--cyan)",marginBottom:6}}>Transcript:</p>
-        <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,fontStyle:"italic"}}>"{it.text}"</p>
-      </div>
-      <button className="btn1" onClick={next} style={{marginTop:12}}>{ci<items.length-1?"Next":"See Results"}</button>
-    </div>}
-	<button className="btn2" onClick={function(){clearInterval(timerRef.current);p.back();}} style={{marginTop:12,width:"100%"}}>Back</button>
-  </div>);
+    {ph==="fb"&&<AnswerCard ok={pick===it.c} timeout={pick===-1} answer={String.fromCharCode(65+it.c)+". "+it.opts[it.c]}
+      label="Transcript" why={"“"+it.text+"”"}/>}
+    </div>
+    {ph==="fb"&&<NextBar onNext={next} last={ci===items.length-1}/>}
+  </>);
 }
