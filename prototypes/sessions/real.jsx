@@ -13,6 +13,7 @@ import { QUESTIONS } from "../../src/data/grammar.js";
 import { Drill as RealDrill, WordFam, ConnSort, LinkingBridge, PrepDrill, TrapsQuiz, FalseFriends } from "../../src/features/train/grammar.jsx";
 import { StratQuizPage } from "../../src/features/train/strategy.jsx";
 import { Daily } from "../../src/features/home/Daily.jsx";
+import { ListenP1, ListenP2, ListenP3, ListenP4 } from "../../src/features/listening/Listening.jsx";
 import { fresh } from "../../src/lib/profileSchema.js";
 import { playCorrect, playWrong } from "../../src/sounds.js";
 
@@ -99,8 +100,9 @@ function Intro() {
   </div>;
 }
 
-// Lot 2 (2026-09-19) : les vrais modules quiz, montés avec des props de banc (?sc=wordfam…).
-var LOT2 = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepdrill: PrepDrill, traps: TrapsQuiz, falsefr: FalseFriends, stratquiz: StratQuizPage, daily: Daily };
+// Lots 2 et 3 (2026-09-19/20) : les vrais modules, montés avec des props de banc (?sc=wordfam, ?sc=lisP3…).
+var LOT2 = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepdrill: PrepDrill, traps: TrapsQuiz, falsefr: FalseFriends, stratquiz: StratQuizPage, daily: Daily,
+  lisP1: ListenP1, lisP2: ListenP2, lisP3: ListenP3, lisP4: ListenP4 };
 
 function Frame() {
   var lc = "app" + (MODE === "light" ? " light" : "") + (FEST ? " fest-" + FEST : SKIN ? " skin-" + SKIN : "");
