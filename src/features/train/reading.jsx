@@ -3,6 +3,8 @@ import { Bar } from "../../components/Bar.jsx";
 import { GIcon } from "../../components/icons.jsx";
 import { NextStepReco } from "../../components/NextStepReco.jsx";
 import { SessionResult } from "../../components/SessionResult.jsx";
+import { SessionTop, ComboBanner, AnswerCard, NextBar } from "../../components/SessionHud.jsx";
+import { useSessionTrack } from "../../components/useSessionTrack.js";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
 import { QUESTIONS } from "../../data/grammar.js";
 import { PART6_TEXTS } from "../../data/part6.js";
@@ -26,6 +28,7 @@ export function TimeSim(p){
   // « Review » naviguait vers Grammar Reference, ce qui démontait cette revue, et « Back »
   // renvoyait au menu Train — impossible de revenir aux autres erreurs.
   var[sheetOpen,setSheetOpen]=useState(false);
+  var track=useSessionTrack(); // HUD de session (lot 4, 2026-09-20)
   var TARGET=600; // 10 minutes = 600 seconds
   var perQ=TARGET/30; // 20s per question target
 
@@ -33,7 +36,7 @@ export function TimeSim(p){
     if(ph==="q"){timerRef.current=setInterval(function(){sEl(function(e){return e+1;});},1000);return function(){clearInterval(timerRef.current);};}
   },[ph]);
 
-  function doAns(i){sS(i);var correct=i===qs[ci].c;if(!correct){var tq=qs[ci];mistakesRef.current.push({tag:tq.cat,prompt:tq.s,yours:tq.o[i],correct:tq.o[tq.c],why:tq.x,ref:{k:"drill:"+tq.id,cat:tq.cat,part:"p5"}});}if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sAn(answers.concat([{q:ci,pick:i,correct:correct,time:elapsed}]));sP("next");}
+  function doAns(i){sS(i);var correct=i===qs[ci].c;track.record(null);if(!correct){var tq=qs[ci];mistakesRef.current.push({tag:tq.cat,prompt:tq.s,yours:tq.o[i],correct:tq.o[tq.c],why:tq.x,ref:{k:"drill:"+tq.id,cat:tq.cat,part:"p5"}});}if(correct){sSc(sc+1);try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}sAn(answers.concat([{q:ci,pick:i,correct:correct,time:elapsed}]));sP("next");}
   function nxt(){if(ci<qs.length-1){sC(ci+1);sS(-1);sP("q");}else{clearInterval(timerRef.current);sidRef.current=p.done(sc,qs.length,30+sc*5,mistakesRef.current);sP("done");}}
 
   function fmtTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
@@ -169,37 +172,34 @@ export function TimeSim(p){
 
     </SessionResult>);}
 
-  // Active quiz (no feedback, exam mode)
+  // Active quiz (no feedback, exam mode) : marques NEUTRES dans le fil d'encre (track.record(null)),
+  // chrono en aside, ni bannière de combo ni carte de réponse — l'examen ne dit rien avant la fin.
   var q=qs[ci];var timeColor=elapsed>TARGET?"var(--red)":elapsed>TARGET*0.8?"var(--orange)":"var(--t2)";
-  return(<div style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-      <button className="back-btn" onClick={function(){clearInterval(timerRef.current);p.back();}}>{"\u2190"} Back</button>
-      <div className="out" style={{fontSize:18,fontWeight:800,color:timeColor}}>{fmtTime(elapsed)}</div>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>{ci+1}/30</span></div>
-    <Bar value={ci} max={30} h={4}/>
-
-    {/* Pace indicator */}
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:8,marginBottom:20}}>
-      <div style={{width:8,height:8,borderRadius:"50%",background:ahead?"var(--green)":"var(--red)"}}/>
-      <span style={{fontSize:11,color:ahead?"var(--green)":"var(--red)",fontWeight:600}} className="out">{ahead?"On pace":"Behind pace"} — {(elapsed/(ci+1)).toFixed(0)}s/q (target: {Math.round(perQ)}s)</span>
-    </div>
-
-    {ph==="next"?
-      <div style={{textAlign:"center",padding:"40px 0"}}>
-        <button className="btn1" onClick={nxt}>{ci<qs.length-1?"Next Question ("+(ci+2)+"/30)":"Finish Exam"}</button></div>
-    :<div>
+  var show=ph==="next";
+  return(<>
+    <SessionTop n={qs.length} cur={ci} results={track.results} onQuit={function(){clearInterval(timerRef.current);p.back();}}
+      aside={<span className="out" style={{fontSize:16,fontWeight:800,color:timeColor}}>{fmtTime(elapsed)}</span>}
+      sub={"Part 5 \u00b7 Question "+(ci+1)+"/"+qs.length}/>
+    <div style={{padding:"4px 16px 0"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:20}}>
+        <div style={{width:8,height:8,borderRadius:"50%",background:ahead?"var(--green)":"var(--red)"}}/>
+        <span style={{fontSize:11,color:ahead?"var(--green)":"var(--red)",fontWeight:600}} className="out">{ahead?"On pace":"Behind pace"} — {(elapsed/(ci+1)).toFixed(0)}s/q (target: {Math.round(perQ)}s)</span>
+      </div>
       <span className="out" style={{fontSize:11,fontWeight:600,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1}}>{q.cat}</span>
       <h2 className="qstem" style={{fontWeight:700,fontSize:19,lineHeight:1.5,marginBottom:24,marginTop:8}}>{q.s}</h2>
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {q.o.map(function(opt,i){
-          return(<button key={i} onClick={function(){doAns(i);}}
-            style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,cursor:"pointer",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
-            <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid var(--t3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,color:"var(--t3)"}}>
+          // Aucun verdict : seule la réponse choisie est rappelée, en accent neutre.
+          var isPick=show&&sel===i;
+          return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={show}
+            style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:isPick?"rgba(var(--cx),.12)":"var(--bg2)",border:"1px solid "+(isPick?"var(--cyan)":"var(--bdr)"),borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:15,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
+            <div style={{width:28,height:28,borderRadius:"50%",border:"2px solid "+(isPick?"var(--cyan)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0,color:isPick?"var(--cyan)":"var(--t3)"}}>
               {String.fromCharCode(65+i)}</div>
             <span>{opt}</span></button>);})}
       </div>
-    </div>}
-  </div>);
+    </div>
+    {show&&<NextBar onNext={nxt} last={ci===qs.length-1} label={ci<qs.length-1?"Next question":"Finish exam"}/>}
+  </>);
 }
 // ─── PART 6 TEXT COMPLETION ───
 export function Part6Drill(p){
@@ -210,6 +210,9 @@ export function Part6Drill(p){
 
   // Count total blanks
   var totalBlanks=useMemo(function(){var c=0;texts.forEach(function(t){t.parts.forEach(function(p){if(p.blank)c++;});});return c;},[]);
+  // Coupures du fil d'encre : un texte = un groupe de trous.
+  var groups=texts.map(function(t){var c=0;t.parts.forEach(function(x){if(x.blank)c++;});return c;});
+  var track=useSessionTrack(); // HUD de session (lot 4, 2026-09-20)
 
   // Get current text and its blanks
   var curText=texts[ti];
@@ -231,7 +234,7 @@ export function Part6Drill(p){
   var curBlank=shuffledBlanks[blankOffset+bi];
 
   function doAns(i){
-    sPk(i);
+    sPk(i);track.record(i===curBlank.correct);
     if(i!==curBlank.correct){var bIdx=curText.parts.map(function(pt,k){return pt.blank?k:-1;}).filter(function(k){return k>=0;})[bi];var bef=((curText.parts[bIdx-1]||{}).text||"").slice(-90);var aft=((curText.parts[bIdx+1]||{}).text||"").slice(0,70);mistakesRef.current.push({tag:"Part 6 — "+(curText.type||"Text"),prompt:"…"+bef+"_____"+aft+"…",yours:curBlank.options[i],correct:curBlank.options[curBlank.correct],why:curBlank.x,ref:{k:"p6:"+curText.id+":"+bi,part:"p6"}});}
     if(i===curBlank.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
     else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
@@ -275,10 +278,11 @@ export function Part6Drill(p){
     });
   }
 
-  if(ph==="text")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Text {ti+1}/{texts.length}</span></div>
+  // La barre reste posée sur la phase texte (elle fait partie de la manche), rendue hors du .enter.
+  if(ph==="text")return(<>
+    <SessionTop n={totalBlanks} cur={totalB} groups={groups} results={track.results} streak={track.streak} onQuit={p.back}
+      sub={"Text "+(ti+1)+"/"+texts.length}/>
+    <div className="enter" style={{padding:"4px 16px 0"}}>
     <div style={{display:"flex",gap:6,marginBottom:12}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(27,112,207,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}</span>
       <span style={{fontSize:10,padding:"3px 8px",background:"var(--bg3)",color:"var(--t3)",borderRadius:6}} className="out">From: {curText.from}</span></div>
@@ -286,15 +290,17 @@ export function Part6Drill(p){
     <div className="crd" style={{padding:16,marginBottom:20}}>
       <p className="read-text" style={{fontSize:13,color:"var(--t2)",lineHeight:2,whiteSpace:"pre-line"}}>{renderText()}</p></div>
     <p style={{fontSize:12,color:"var(--t3)",textAlign:"center",marginBottom:16}}>Read the full text, then tap below to fill in the blanks.</p>
-    <button className="btn1" onClick={function(){sP("q");}}>Fill in the blanks</button></div>);
+    </div>
+    <NextBar onNext={function(){sP("q");}} label="Fill in the blanks"/>
+  </>);
 
   // Question mode
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Blank {totalB+1}/{totalBlanks}</span></div>
-    <Bar value={totalB} max={totalBlanks} h={4} color="linear-gradient(90deg,#c4587a,#8b5e83)"/>
-    <div style={{marginTop:12,marginBottom:6}}>
+  return(<>
+    <SessionTop n={totalBlanks} cur={ph==="fb"?Math.max(0,totalB-1):totalB} groups={groups} results={track.results} streak={track.streak} onQuit={p.back}
+      sub={"Text "+(ti+1)+"/"+texts.length+" \u00b7 Blank "+(bi+1)+"/"+blanks.length}/>
+    <ComboBanner combo={track.combo}/>
+    <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div style={{marginBottom:6}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(27,112,207,.1)",color:"var(--purple)",borderRadius:6,fontWeight:600}} className="out">{curText.type}: {curText.subject}</span></div>
     <div className="crd" style={{padding:14,marginBottom:20,background:"var(--bg3)"}}>
       <p className="read-text" style={{fontSize:12,color:"var(--t2)",lineHeight:1.9,whiteSpace:"pre-line"}}>{renderText()}</p></div>
@@ -309,11 +315,11 @@ export function Part6Drill(p){
           style={{padding:"12px 14px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
           {opt}</button>);})}
     </div>
-    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
-        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{curBlank.x}</p></div>
-      <button className="btn1" onClick={nxt} style={{marginTop:14}}>{bi<blanks.length-1?"Next Blank":(ti<texts.length-1?"Next Text":"See Results")}</button></div>}
-  </div>);
+    {ph==="fb"&&<AnswerCard ok={pick===curBlank.correct} answer={curBlank.options[curBlank.correct]} why={curBlank.x}/>}
+    </div>
+    {ph==="fb"&&<NextBar onNext={nxt} last={bi===blanks.length-1&&ti===texts.length-1}
+      label={bi<blanks.length-1?"Next blank":(ti<texts.length-1?"Next text":null)}/>}
+  </>);
 }
 export function Part7Read(p){
   var passages=useMemo(function(){return shuffle(PART7_PASSAGES).filter(function(p){return p&&p.questions&&p.questions.length>0;}).slice(0,4);},[]);
@@ -323,12 +329,15 @@ export function Part7Read(p){
   var mistakesRef=useRef([]);var sidRef=useRef(0);
 
   var totalQs=useMemo(function(){var c=0;passages.forEach(function(p){if(p&&p.questions)c+=p.questions.length;});return c;},[]);
+  // Coupures du fil d'encre : un passage = un groupe de questions.
+  var groups=passages.map(function(ps){return ps.questions.length;});
+  var track=useSessionTrack(); // HUD de session (lot 4, 2026-09-20)
   var shuffledQMap=useMemo(function(){var m={};passages.forEach(function(ps){if(!ps||!ps.questions)return;m[ps.id]=ps.questions.map(function(q){var idx=[0,1,2,3];for(var i=idx.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=idx[i];idx[i]=idx[j];idx[j]=tmp;}return{options:idx.map(function(k){return q.options[k];}),correct:idx.indexOf(q.correct),x:q.x,q:q.q};});});return m;},[]);
   var curPass=passages[pi];
   var curQ=curPass&&shuffledQMap[curPass.id]?shuffledQMap[curPass.id][qi]:null;
 
   function doAns(i){
-    sPk(i);
+    sPk(i);track.record(i===curQ.correct);
     // ref : l'index de la question dans son passage (l'ordre n'est jamais permuté, seules les options le sont).
     if(i!==curQ.correct)mistakesRef.current.push({tag:"Part 7 — "+(curPass.type||"Passage"),prompt:curQ.q,yours:curQ.options[i],correct:curQ.options[curQ.correct],why:curQ.x,ref:{k:"p7:"+curPass.id+":"+qi,part:"p7"}});
     if(i===curQ.correct){sSc(sc+1);try{playCorrect();}catch(e){}}
@@ -356,34 +365,37 @@ export function Part7Read(p){
   </SessionResult>);
 
 // Reading view — show passage with question preview toggle
-  if(ph==="read")return(<div className="enter" style={{padding:"20px 16px 100px"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Passage {pi+1}/{passages.length}</span></div>
-    <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
-    <div style={{display:"flex",gap:6,marginTop:12,marginBottom:12}}>
+  // La barre de session reste posée sur la phase de lecture : le passage fait partie de la manche.
+  // SessionTop est rendu HORS du .enter (un fixed suit un parent qui anime transform).
+  if(ph==="read")return(<>
+    <SessionTop n={totalQs} cur={totalQ} groups={groups} results={track.results} streak={track.streak} onQuit={p.back}
+      sub={"Passage "+(pi+1)+"/"+passages.length}/>
+    <div className="enter" style={{padding:"4px 16px 0"}}>
+    <div style={{display:"flex",gap:6,marginBottom:12}}>
       <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:tone("#3b82f6"),borderRadius:6,fontWeight:600}} className="out">{curPass.type}</span>
-      <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(27,112,207,.15)":"var(--bg3)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions ▲":"Preview questions ▼"} ({curPass.questions.length})</button></div>
+      <button onClick={function(){setShowQPreview(!showQPreview);}} style={{fontSize:10,padding:"3px 8px",background:showQPreview?"rgba(27,112,207,.15)":"var(--bg3)",color:showQPreview?"var(--purple)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showQPreview?"Hide questions \u25b2":"Preview questions \u25bc"} ({curPass.questions.length})</button></div>
     {showQPreview&&<div className="crd" style={{padding:12,marginBottom:12,borderColor:"rgba(27,112,207,.2)",background:"rgba(27,112,207,.04)"}}>
       <div style={{fontSize:10,color:"var(--purple)",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Read these first!</div>
       {(shuffledQMap[curPass.id]||curPass.questions).map(function(q,i){return(<div key={i} style={{fontSize:12,color:"var(--t2)",lineHeight:1.6,padding:"4px 0",borderBottom:i<curPass.questions.length-1?"1px solid var(--bdr)":"none"}}><span style={{color:"var(--purple)",fontWeight:700}}>Q{i+1}.</span> {q.q}</div>);})}</div>}
     <div className="crd" style={{padding:16,marginBottom:16}}>
       <PassageDocs key={curPass.id} text={curPass.text} fontSize={13} lineHeight={1.8}/></div>
-    <button className="btn1" onClick={function(){sP("q");setShowQPreview(false);setShowText(false);}}>Answer Questions</button></div>);
+    </div>
+    <NextBar onNext={function(){sP("q");setShowQPreview(false);setShowText(false);}} label="Answer questions"/>
+  </>);
 
 // Question mode
-  return(<div className={sk?"sk":""} style={{padding:"20px 16px",minHeight:"100vh"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <button className="back-btn" onClick={p.back}>{"\u2190"} Back</button>
-      <span className="out" style={{fontSize:13,color:"var(--t2)",fontWeight:600}}>Q {totalQ+1}/{totalQs}</span></div>
-    <Bar value={totalQ} max={totalQs} h={4} color="linear-gradient(90deg,#3b82f6,#06b6d4)"/>
-    <div style={{display:"flex",gap:6,marginTop:12,marginBottom:6}}>
-      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:tone("#3b82f6"),borderRadius:6,fontWeight:600}} className="out">{curPass.type} — Passage {pi+1}</span>
-      <button onClick={function(){setShowText(!showText);}} style={{fontSize:10,padding:"3px 8px",background:showText?"rgba(6,182,212,.15)":"var(--bg3)",color:showText?"var(--cyan)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showText?"Hide text ▲":"Show text ▼"}</button></div>
+  return(<>
+    <SessionTop n={totalQs} cur={ph==="fb"?Math.max(0,totalQ-1):totalQ} groups={groups} results={track.results} streak={track.streak} onQuit={p.back}
+      sub={"Passage "+(pi+1)+"/"+passages.length+" \u00b7 Question "+(qi+1)+"/"+curPass.questions.length}/>
+    <ComboBanner combo={track.combo}/>
+    <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
+    <div style={{display:"flex",gap:6,marginBottom:6}}>
+      <span style={{fontSize:10,padding:"3px 8px",background:"rgba(59,130,246,.1)",color:tone("#3b82f6"),borderRadius:6,fontWeight:600}} className="out">{curPass.type}</span>
+      <button onClick={function(){setShowText(!showText);}} style={{fontSize:10,padding:"3px 8px",background:showText?"rgba(6,182,212,.15)":"var(--bg3)",color:showText?"var(--cyan)":"var(--t3)",borderRadius:6,border:"none",cursor:"pointer",fontWeight:600}} className="out">{showText?"Hide text \u25b2":"Show text \u25bc"}</button></div>
     {showText&&<div className="crd read-scroll" style={{padding:14,marginBottom:12,maxHeight:200,overflowY:"auto",borderColor:"rgba(6,182,212,.2)"}}>
       <PassageDocs key={curPass.id+"-q"} text={curPass.text} fontSize={12} lineHeight={1.7}/></div>}
 
-    <h2 className="out q-heading" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:12}}>{curQ.q}</h2>
+    <h2 className="out q-heading" style={{fontWeight:700,fontSize:17,lineHeight:1.5,marginBottom:20,marginTop:4}}>{curQ.q}</h2>
     <div className="read-opts" style={{display:"flex",flexDirection:"column",gap:8}}>
       {curQ.options.map(function(opt,i){
         var isCor=i===curQ.correct;var isPick=pick===i;var show=ph==="fb";
@@ -393,12 +405,12 @@ export function Part7Read(p){
         return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={show}
           style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
           <div style={{width:24,height:24,borderRadius:"50%",border:"2px solid "+(show&&isCor?"var(--green)":show&&isPick?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:show&&isCor?"var(--green)":show&&isPick&&!isCor?"var(--red)":"transparent",color:show&&(isCor||isPick)?"#fff":"var(--t3)"}}>
-            {show&&isCor?"✓":show&&isPick?"✗":String.fromCharCode(65+i)}</div>
+            {show&&isCor?"\u2713":show&&isPick?"\u2717":String.fromCharCode(65+i)}</div>
           <span>{opt}</span></button>);})}
     </div>
-    {ph==="fb"&&<div style={{marginTop:16,animation:"fadeIn .3s"}}>
-      <div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
-        <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6}}>{curQ.x}</p></div>
-      <button className="btn1" onClick={nxt} style={{marginTop:14}}>{qi<curPass.questions.length-1?"Next Question":(pi<passages.length-1?"Next Passage":"See Results")}</button></div>}
-  </div>);
+    {ph==="fb"&&<AnswerCard ok={pick===curQ.correct} answer={String.fromCharCode(65+curQ.correct)+". "+curQ.options[curQ.correct]} why={curQ.x}/>}
+    </div>
+    {ph==="fb"&&<NextBar onNext={nxt} last={qi===curPass.questions.length-1&&pi===passages.length-1}
+      label={qi<curPass.questions.length-1?"Next question":(pi<passages.length-1?"Next passage":null)}/>}
+  </>);
 }

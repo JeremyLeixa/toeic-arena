@@ -14,6 +14,7 @@ import { Drill as RealDrill, WordFam, ConnSort, LinkingBridge, PrepDrill, TrapsQ
 import { StratQuizPage } from "../../src/features/train/strategy.jsx";
 import { Daily } from "../../src/features/home/Daily.jsx";
 import { ListenP1, ListenP2, ListenP3, ListenP4 } from "../../src/features/listening/Listening.jsx";
+import { Part6Drill, Part7Read, TimeSim } from "../../src/features/train/reading.jsx";
 import { fresh } from "../../src/lib/profileSchema.js";
 import { playCorrect, playWrong } from "../../src/sounds.js";
 
@@ -100,9 +101,10 @@ function Intro() {
   </div>;
 }
 
-// Lots 2 et 3 (2026-09-19/20) : les vrais modules, montés avec des props de banc (?sc=wordfam, ?sc=lisP3…).
+// Lots 2 à 4 (2026-09-19/20) : les vrais modules, montés avec des props de banc (?sc=wordfam, ?sc=lisP3…).
 var LOT2 = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepdrill: PrepDrill, traps: TrapsQuiz, falsefr: FalseFriends, stratquiz: StratQuizPage, daily: Daily,
-  lisP1: ListenP1, lisP2: ListenP2, lisP3: ListenP3, lisP4: ListenP4 };
+  lisP1: ListenP1, lisP2: ListenP2, lisP3: ListenP3, lisP4: ListenP4,
+  p6: Part6Drill, p7: Part7Read, timesim: TimeSim };
 
 function Frame() {
   var lc = "app" + (MODE === "light" ? " light" : "") + (FEST ? " fest-" + FEST : SKIN ? " skin-" + SKIN : "");
