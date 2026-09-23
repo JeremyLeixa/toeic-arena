@@ -1,0 +1,42 @@
+# Intégration continue : rejoue à chaque push et chaque PR les gardes qu'on lançait à la main.
+#
+# Ce qui tourne ici, et pourquoi dans cet ordre :
+#   1. npm ci          — installe EXACTEMENT le lock. Échoue si package.json et le lock divergent
+#                        (stripe y manquait depuis la monétisation : Vercel, en `npm install`, ne le voyait pas).
+#   2. npm test        — les 25 gardes de tests/run.cjs (hors ligne, sans .env).
+#   3. lintgate        — PAS `npm run lint` : le lint du dépôt est rouge par héritage (voir
+#                        scripts/refactor/lintgate.cjs). La porte refuse un import manquant (no-undef,
+#                        ReferenceError au rendu), un import mort, et tout total au-dessus de la référence.
+#   4. check:assets    — un MP3 référencé mais non commité : muet en prod, sans erreur.
+#   5. build           — sans .env, comme tout build de CI : les VITE_* ne servent qu'à l'exécution.
+#
+# Hors CI, volontairement : `npm run check:security` (réseau + secrets Supabase).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22 : les tests requièrent les modules ESM de src/lib/ en natif (require(esm)).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: node scripts/refactor/lintgate.cjs
+      - run: npm run check:assets
+      - run: npm run build
