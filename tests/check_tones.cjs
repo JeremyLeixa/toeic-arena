@@ -92,7 +92,6 @@ const strict = new Set([...leagueColors, ...titleColors, ...rarityColors]);
 // Sources de données dont les couleurs sont affichées via tone(<var>) : le fichier, les lignes qui
 // portent les couleurs, la propriété, et le rendu qui DOIT rester passé par tone().
 const DATA_SOURCES = [
-  { file: 'src/features/home/Home.jsx', line: /pills\.push/, prop: 'col', render: /color:tone\(p\.col\)/, what: 'pastilles de bonus de Home' },
   { file: 'src/features/train/strategy.jsx', line: /cefr:"/, prop: 'col', render: /color:tone\(r\.col\)/, what: 'niveaux CECRL de What is the TOEIC?' },
   { file: 'src/data/grammarSheets.js', line: /title:"/, prop: 'color', render: null, what: 'en-têtes des fiches de grammaire' },
   { file: 'src/features/profile/Profile.jsx', line: /arena:"/, prop: 'color', render: /color:tone\(a\.color\)/, what: 'jauges des arènes du Profil' },

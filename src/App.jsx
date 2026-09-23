@@ -75,7 +75,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-23-usage-quits";
+var BUILD_ID="2026-09-23-home-one-door";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 

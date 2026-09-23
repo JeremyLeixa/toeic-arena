@@ -41,7 +41,7 @@ export var CSS=`
    ramenés vers 43° (un jaune assombri vire à l'olive). Hors clair la variable n'existe pas et le
    hex s'applique ; les cartes-nuit la remettent à initial. Une couleur de ligue, de titre ou de
    rareté ajoutée sans sa variante ici : tests/check_tones.cjs rougit. */
-.light{--tone-cd7f32:#8b5622;--tone-c0c0c0:#626262;--tone-ffd700:#7d5d0e;--tone-00d4ff:#0e6c7f;--tone-ff6bff:#ad13ad;--tone-ff4757:#c21625;--tone-ffae00:#815c0e;--tone-3a8ee0:#1b64ab;--tone-c060f0:#9818d8;--tone-ffc020:#7c5d0e;--tone-e8d4a8:#795d20;--tone-c9a23a:#785f21;--tone-e8c45a:#7b5d11;--tone-909090:#626262;--tone-3ecc78:#1e703f;--tone-00e676:#0d7140;--tone-059669:#0c7051;--tone-06b6d4:#0e6c7d;--tone-0891b2:#0e6b81;--tone-14b8a6:#0c6e63;--tone-22c55e:#147136;--tone-3b82f6:#175ccd;--tone-4a9fe0:#1b669f;--tone-4abe60:#287036;--tone-64748b:#556377;--tone-6a8a50:#516a3d;--tone-7c3aed:#7734e8;--tone-7fa4d4:#35639f;--tone-7fb8e8:#1d66a3;--tone-888888:#626262;--tone-8b5cf6:#6f3ae9;--tone-8b5e83:#7e5576;--tone-c87a35:#8c5625;--tone-d4943a:#855a1d;--tone-d8b4fe:#8528e7;--tone-dc2626:#c01f1f;--tone-e11d48:#c0193e;--tone-e8c88a:#7f5c19;--tone-e9d5ff:#8429e7;--tone-ec4899:#bd1568;--tone-ef4444:#c41616;--tone-f0c850:#7d5d0e;--tone-f59e0b:#85590f;--tone-f5dfaa:#7d5d0f;--tone-fca5a5:#c31616;--tone-fcd34d:#7d5e0e;--tone-ff6428:#ac3e13;--tone-ff8c42:#a04a12;--tone-8a7e6a:#5a5040;--tone-c026d3:#a421b5;--tone-c4587a:#a83b5e}
+.light{--tone-cd7f32:#8b5622;--tone-c0c0c0:#626262;--tone-ffd700:#7d5d0e;--tone-00d4ff:#0e6c7f;--tone-ff6bff:#ad13ad;--tone-ff4757:#c21625;--tone-ffae00:#815c0e;--tone-3a8ee0:#1b64ab;--tone-c060f0:#9818d8;--tone-ffc020:#7c5d0e;--tone-e8d4a8:#795d20;--tone-c9a23a:#785f21;--tone-e8c45a:#7b5d11;--tone-909090:#626262;--tone-3ecc78:#1e703f;--tone-059669:#0c7051;--tone-06b6d4:#0e6c7d;--tone-0891b2:#0e6b81;--tone-14b8a6:#0c6e63;--tone-22c55e:#147136;--tone-3b82f6:#175ccd;--tone-4a9fe0:#1b669f;--tone-4abe60:#287036;--tone-64748b:#556377;--tone-6a8a50:#516a3d;--tone-7c3aed:#7734e8;--tone-7fa4d4:#35639f;--tone-7fb8e8:#1d66a3;--tone-888888:#626262;--tone-8b5cf6:#6f3ae9;--tone-8b5e83:#7e5576;--tone-c87a35:#8c5625;--tone-d4943a:#855a1d;--tone-d8b4fe:#8528e7;--tone-dc2626:#c01f1f;--tone-e11d48:#c0193e;--tone-e8c88a:#7f5c19;--tone-e9d5ff:#8429e7;--tone-ec4899:#bd1568;--tone-ef4444:#c41616;--tone-f0c850:#7d5d0e;--tone-f59e0b:#85590f;--tone-f5dfaa:#7d5d0f;--tone-fca5a5:#c31616;--tone-fcd34d:#7d5e0e;--tone-ff6428:#ac3e13;--tone-8a7e6a:#5a5040;--tone-c026d3:#a421b5;--tone-c4587a:#a83b5e}
 .light.skin-argent{--cx:80,80,110;--cx-hex:#505070;--cx-dark:#383848;--cyan:#505070;--orange:#383848}
 .light.skin-emeraude{--cx:18,110,52;--cx-hex:#126e34;--cx-dark:#0c5228;--cyan:#126e34;--orange:#0c5228}
 .light.skin-saphir{--cx:20,80,150;--cx-hex:#145096;--cx-dark:#0e3a78;--cyan:#145096;--orange:#0e3a78}
@@ -180,7 +180,7 @@ export var CSS=`
    3. Fond de carte translucide sans couleur opaque (abyssal : shorthand ; molten_gold, heraldic :
       background-image seul, et 78 .crd ont un fond inline translucide) : en sombre la page sombre
       passe dessous, en clair la page crème délavait la carte. On remet ce qui est dessous en sombre. */
-.light:where(.skin-obsidienne,.skin-aurore,.skin-frostbite,.skin-emberheart,.skin-cosmic_void,.skin-abyssal,.skin-molten_gold,.skin-heraldic,.skin-aldric_chamber) .crd{--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--t3:#756b54;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--cx-hex:#d4943a;--cx-dark:#a06e20;--tone-cd7f32:initial;--tone-c0c0c0:initial;--tone-ffd700:initial;--tone-00d4ff:initial;--tone-ff6bff:initial;--tone-ff4757:initial;--tone-ffae00:initial;--tone-3a8ee0:initial;--tone-c060f0:initial;--tone-ffc020:initial;--tone-e8d4a8:initial;--tone-c9a23a:initial;--tone-e8c45a:initial;--tone-909090:initial;--tone-3ecc78:initial;--tone-00e676:initial;--tone-059669:initial;--tone-06b6d4:initial;--tone-0891b2:initial;--tone-14b8a6:initial;--tone-22c55e:initial;--tone-3b82f6:initial;--tone-4a9fe0:initial;--tone-4abe60:initial;--tone-64748b:initial;--tone-6a8a50:initial;--tone-7c3aed:initial;--tone-7fa4d4:initial;--tone-7fb8e8:initial;--tone-888888:initial;--tone-8b5cf6:initial;--tone-8b5e83:initial;--tone-c87a35:initial;--tone-d4943a:initial;--tone-d8b4fe:initial;--tone-dc2626:initial;--tone-e11d48:initial;--tone-e8c88a:initial;--tone-e9d5ff:initial;--tone-ec4899:initial;--tone-ef4444:initial;--tone-f0c850:initial;--tone-f59e0b:initial;--tone-f5dfaa:initial;--tone-fca5a5:initial;--tone-fcd34d:initial;--tone-ff6428:initial;--tone-ff8c42:initial;--tone-8a7e6a:initial;--tone-c026d3:initial;--tone-c4587a:initial;--on-cx:#0f0c08;color:var(--t1)}
+.light:where(.skin-obsidienne,.skin-aurore,.skin-frostbite,.skin-emberheart,.skin-cosmic_void,.skin-abyssal,.skin-molten_gold,.skin-heraldic,.skin-aldric_chamber) .crd{--bg-rgb:15,12,8;--bg2-rgb:26,22,16;--bg3-rgb:40,34,26;--t3:#756b54;--gold:#f0c850;--green:#4abe60;--red:#e05252;--purple:#8b5e83;--cx-hex:#d4943a;--cx-dark:#a06e20;--tone-cd7f32:initial;--tone-c0c0c0:initial;--tone-ffd700:initial;--tone-00d4ff:initial;--tone-ff6bff:initial;--tone-ff4757:initial;--tone-ffae00:initial;--tone-3a8ee0:initial;--tone-c060f0:initial;--tone-ffc020:initial;--tone-e8d4a8:initial;--tone-c9a23a:initial;--tone-e8c45a:initial;--tone-909090:initial;--tone-3ecc78:initial;--tone-059669:initial;--tone-06b6d4:initial;--tone-0891b2:initial;--tone-14b8a6:initial;--tone-22c55e:initial;--tone-3b82f6:initial;--tone-4a9fe0:initial;--tone-4abe60:initial;--tone-64748b:initial;--tone-6a8a50:initial;--tone-7c3aed:initial;--tone-7fa4d4:initial;--tone-7fb8e8:initial;--tone-888888:initial;--tone-8b5cf6:initial;--tone-8b5e83:initial;--tone-c87a35:initial;--tone-d4943a:initial;--tone-d8b4fe:initial;--tone-dc2626:initial;--tone-e11d48:initial;--tone-e8c88a:initial;--tone-e9d5ff:initial;--tone-ec4899:initial;--tone-ef4444:initial;--tone-f0c850:initial;--tone-f59e0b:initial;--tone-f5dfaa:initial;--tone-fca5a5:initial;--tone-fcd34d:initial;--tone-ff6428:initial;--tone-8a7e6a:initial;--tone-c026d3:initial;--tone-c4587a:initial;--on-cx:#0f0c08;color:var(--t1)}
 .light.skin-obsidienne .btn2,.light.skin-aurore .btn2,.light.skin-frostbite .btn2,.light.skin-emberheart .btn2,.light.skin-cosmic_void .btn2,.light.skin-abyssal .btn2,.light.skin-molten_gold .btn2,.light.skin-heraldic .btn2,.light.skin-aldric_chamber .btn2{color:var(--cyan)!important}
 .light.skin-abyssal .crd{background-color:var(--bg)!important}
 .light.skin-molten_gold .crd,.light.skin-heraldic .crd{background-color:var(--bg2)!important}
@@ -892,6 +892,57 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .mm-strip.due{background:linear-gradient(135deg,rgba(240,200,80,.12),rgba(var(--cx),.05));border-color:rgba(240,200,80,.3)}
 .mm-strip-t{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mm-strip-go{font-size:18px;color:var(--t3);line-height:1}
+/* Home « une porte » (2026-09-23, proto prototypes/home-focus/, variante B). */
+.hm-wrap{padding:20px 16px 110px}
+.hm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.hm-hello{color:var(--t2);font-size:13px;margin:0 0 2px}
+.hm-name{font-weight:800;font-size:23px;display:flex;align-items:center;gap:8px;margin:0}
+.hm-title{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.hm-streak{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px}
+.hm-lvl{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;background:linear-gradient(135deg,var(--cx-hex),var(--cx-dark));color:var(--on-cx)}
+.hm-level{display:flex;align-items:center;gap:10px;width:100%;padding:8px 2px;margin-bottom:16px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;color:var(--t1)}
+.hm-level-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.hm-level-row{display:flex;justify-content:space-between;font-size:12px;color:var(--t2)}
+.hm-level-row b{color:var(--t1);font-size:12.5px}
+.hm-league{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;background:var(--bg3);font-size:11.5px;font-weight:600;flex-shrink:0}
+.hm-hero{padding:18px 18px 16px;margin-bottom:16px;border:1.5px solid rgba(var(--cx),.35);background-image:linear-gradient(150deg,rgba(var(--cx),.16),rgba(var(--cx),.03) 70%);box-shadow:0 8px 30px rgba(var(--cx),.14)}
+.hm-hero.calm{border-color:var(--bdr);background-image:none;box-shadow:none;text-align:center}
+.hm-hero-top{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.hm-hero-icon{width:58px;height:58px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:16px;background:rgba(var(--cx),.12)}
+.hm-hero.chest .hm-hero-icon{background:none}
+.hm-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--cyan);margin-bottom:3px}
+.hm-hero.chest .hm-eyebrow{color:var(--gold)}
+.hm-hero-title{font-size:19px;font-weight:800;line-height:1.25;color:var(--t1)}
+.hm-hero-sub{font-size:12.5px;color:var(--t2);margin-top:3px;line-height:1.4}
+.hm-hero.calm .hm-hero-title{margin:4px 0}
+.hm-hero-btn{width:100%;padding:14px;font-size:15px}
+.hm-hero.calm .hm-hero-btn{margin-top:14px}
+.hm-bonus{font-size:11px;color:var(--t3);text-align:center;margin-top:9px}
+.hm-also{margin-bottom:14px}
+.hm-also-h{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin:0 2px 6px}
+.hm-row{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;margin-bottom:6px;border-radius:12px;background:var(--bg2);border:1px solid var(--bdr);cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;color:var(--t1)}
+.hm-row-t{flex:1;min-width:0;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm-row-s{font-size:11px;color:var(--t3);flex-shrink:0}
+.hm-go{color:var(--t3);font-size:16px}
+.hm-more{justify-content:center;color:var(--cyan);font-size:12px;font-weight:600;background:none;border-style:dashed}
+.hm-tick{display:flex;align-items:center;gap:7px;padding:7px 4px;font-size:12px;color:var(--t2);border-top:1px solid var(--bdr)}
+.hm-tick b{color:var(--t1);font-weight:700}
+.hm-tick span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm-tick em{font-style:normal;color:var(--t3);font-size:11px}
+.hm-tip{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;margin-top:12px;padding:11px 14px;border-radius:12px;background:none;border:1px solid var(--bdr);cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--t2);font-size:12px;text-align:left}
+.hm-tip .out{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.hm-tip-body{padding:10px 14px 0;font-size:12.5px;color:var(--t2);line-height:1.5}
+.hm-tip-body b{color:var(--t1)}
+.hm-tip-body p{margin:6px 0 0}
+.hm-daily{display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border:1.5px solid rgba(var(--cx),.3);background-image:linear-gradient(135deg,rgba(var(--cx),.13),rgba(var(--cx),.03));box-shadow:0 0 22px rgba(var(--cx),.16)}
+.hm-daily.done{cursor:default;border-color:var(--bdr);background-image:none;box-shadow:none}
+.hm-daily-btn{padding:9px 16px;font-size:13px;width:auto}
+.hm-hero.chest{border-color:rgba(240,200,80,.45);background-image:linear-gradient(150deg,rgba(240,200,80,.16),rgba(240,200,80,.03) 70%);box-shadow:0 8px 30px rgba(240,200,80,.14)}
+.hm-daily{margin-bottom:14px}
+.hm-daily.done{border-width:1px}
+.hm-tick.link{cursor:pointer}
+.hm-off{background:none;border:none;padding:6px 0 6px 10px;margin:-6px 0;cursor:pointer;font-size:10.5px;color:var(--t3);text-decoration:underline;font-family:inherit}
+.hm-tip-all{background:none;border:none;padding:10px 0 4px;cursor:pointer;color:var(--cyan);font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif}
 /* Pastille de l'onglet Mentor : la mission du jour attend (l'onglet reste toujours ouvert). */
 .mm-tabdot{position:absolute;top:4px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
 /* Onglets inactifs en clair (2026-09-19) : --t1 à 0,55 tombait à 3,7:1 sur --bg3 ; 0,70 = 5,9:1 au pire. Le sombre garde 0,55 (4,8:1). */
