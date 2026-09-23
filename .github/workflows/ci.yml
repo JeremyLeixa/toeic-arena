@@ -27,10 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      # Historique complet : validate_toeic_shrinkage relit l'estimateur d'une révision passée (git show).
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       # Node 22 : les tests requièrent les modules ESM de src/lib/ en natif (require(esm)).
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22.x
           cache: npm
