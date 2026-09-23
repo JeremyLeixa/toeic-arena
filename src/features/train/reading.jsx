@@ -332,7 +332,7 @@ export function Part7Read(p){
   // Coupures du fil d'encre : un passage = un groupe de questions.
   var groups=passages.map(function(ps){return ps.questions.length;});
   var track=useSessionTrack(); // HUD de session (lot 4, 2026-09-20)
-  var shuffledQMap=useMemo(function(){var m={};passages.forEach(function(ps){if(!ps||!ps.questions)return;m[ps.id]=ps.questions.map(function(q){var idx=[0,1,2,3];for(var i=idx.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=idx[i];idx[i]=idx[j];idx[j]=tmp;}return{options:idx.map(function(k){return q.options[k];}),correct:idx.indexOf(q.correct),x:q.x,q:q.q};});});return m;},[]);
+  var shuffledQMap=useMemo(function(){var m={};passages.forEach(function(ps){if(!ps||!ps.questions)return;m[ps.id]=ps.questions.map(function(q){var idx=[0,1,2,3];if(!q.keep)for(var i=idx.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=idx[i];idx[i]=idx[j];idx[j]=tmp;}return{options:idx.map(function(k){return q.options[k];}),correct:idx.indexOf(q.correct),x:q.x,q:q.q};});});return m;},[]);
   var curPass=passages[pi];
   var curQ=curPass&&shuffledQMap[curPass.id]?shuffledQMap[curPass.id][qi]:null;
 

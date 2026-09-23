@@ -29,6 +29,8 @@ export function shufP6(t, seed) {
 // Part 7 : chaque question {options, correct} du passage.
 export function shufP7(ps, seed) {
   return Object.assign({}, ps, { questions: ps.questions.map(function (q, i) {
+    // `keep` : options d'ordre fixe (insertion de phrase, [1] à [4] dans l'ordre du texte).
+    if (q.keep) return q;
     var s = pick(q.options, q.correct, seed, ps.id + ":" + i);
     return Object.assign({}, q, { options: s.opts, correct: s.c });
   }) });

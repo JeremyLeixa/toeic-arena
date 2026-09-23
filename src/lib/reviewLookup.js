@@ -91,7 +91,8 @@ export function lookupRef(k) {
   if (r.mod === "p7") {
     var ps = byId(PART7_PASSAGES, r.id), pq = ps && ps.questions[qi];
     if (!pq) return null;
-    var p7m = perm(pq.options, pq.correct);
+    // `keep` : options d'ordre fixe (insertion de phrase : [1] [2] [3] [4] dans l'ordre du texte).
+    var p7m = pq.keep ? { options: pq.options, c: pq.correct } : perm(pq.options, pq.correct);
     return { k: k, mod: r.mod, kind: "passage", part: "p7", label: "Part 7 — " + ps.type,
       prompt: pq.q, options: p7m.options, c: p7m.c, why: pq.x,
       passage: { id: ps.id, type: ps.type, text: ps.text } };

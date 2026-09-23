@@ -41,7 +41,7 @@ export function generateEndlessTest(){
   var p7Shuffled=fy(allP7);var ep7=[];var p7qCount=0;
   for(var i=0;i<p7Shuffled.length&&p7qCount<54;i++){
     var ps=p7Shuffled[i];if(!ps||!ps.questions||!ps.questions.length)continue;
-    ep7.push(Object.assign({},ps,{questions:ps.questions.map(function(q){var s=shufOpts4(q.options,q.correct);return Object.assign({},q,{options:s.options,correct:s.correct});})}));
+    ep7.push(Object.assign({},ps,{questions:ps.questions.map(function(q){var s=q.keep?{options:q.options,correct:q.correct}:shufOpts4(q.options,q.correct);return Object.assign({},q,{options:s.options,correct:s.correct});})}));
     p7qCount+=ps.questions.length;
   }
   return{p1:ep1,p2:ep2,p3:ep3,p4:ep4,p5:ep5,p6:ep6,p7:ep7};
