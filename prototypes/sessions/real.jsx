@@ -26,12 +26,15 @@ import { MockTest } from "../../src/features/exams/MockTest.jsx";
 import { BossTest } from "../../src/features/exams/BossTest.jsx";
 import { EndlessArena } from "../../src/features/exams/EndlessArena.jsx";
 import { PART7_PASSAGES } from "../../src/data/part7.js";
+import { LISTENING_P3, LISTENING_P4 } from "../../src/data/listening.js";
 import { fresh } from "../../src/lib/profileSchema.js";
 import { playCorrect, playWrong } from "../../src/sounds.js";
 
 var q = new URLSearchParams(location.search);
 var SC = q.get("sc") || "live";
 // Banc seulement : `p7only=p7p68,p7p71` restreint la banque Part 7 à ces passages (relire un lot neuf).
+// Banc seulement : `lisonly=p3_92,p4_95` restreint les banques P3/P4 à ces items.
+if (q.get("lisonly")) { var lisIds = q.get("lisonly").split(","); [LISTENING_P3, LISTENING_P4].forEach(function (bank) { var only = bank.filter(function (x) { return lisIds.indexOf(x.id) >= 0; }); if (only.length) bank.splice.apply(bank, [0, bank.length].concat(only)); }); }
 if (q.get("p7only")) { var keepIds = q.get("p7only").split(","); var only = PART7_PASSAGES.filter(function (x) { return keepIds.indexOf(x.id) >= 0; }); PART7_PASSAGES.splice.apply(PART7_PASSAGES, [0, PART7_PASSAGES.length].concat(only)); }
 var MODE = q.get("mode") || "dark";
 var SKIN = q.get("skin") || "";
