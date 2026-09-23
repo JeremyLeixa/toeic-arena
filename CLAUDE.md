@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (26 fichiers, ~12 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (27 fichiers, ~14 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -112,7 +112,7 @@ Ce que la suite protège, et pourquoi :
   `/*fond local*/` (fond sombre ou fixe en dur posé ailleurs : tuiles Boss/Endless, parchemin du
   narrateur). Plus : une variante `.light{--tone-<hex>}` (≥ 4,5:1) pour
   chaque couleur de ligue, titre, rareté et chaque couleur passée à `tone()` (littérale ou issue
-  d'une source déclarée dans `DATA_SOURCES` : pastilles de Home, CECRL, fiches de grammaire,
+  d'une source déclarée dans `DATA_SOURCES` : CECRL, fiches de grammaire,
   jauges du Profil, familles du Modal Council) sous 4,5:1 ; aucune variante orpheline ni hors
   clair ; `lg/ti/rarity….color` et `shopRarColor(…)` jamais bruts. Hors périmètre : Onboard,
   TeacherDash, Chests. Une couleur délavée ne casse pas le build, elle disparaît en clair.
@@ -397,6 +397,17 @@ Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
   `addXp(gxp,{ceremony:true})` pose une file `examCeremony` (niveau puis ligue, coffre de promotion)
   que `ExamCeremonies` (`components/Ceremonies.jsx`) affiche 1,4 s après, avec son propre jingle.
 - Banc sans base : `prototypes/victory/real.html` (vrai composant, scénarios, clair/sombre).
+
+### Home « une porte » (2026-09-23)
+Proto `prototypes/home-focus/`, choix de Jérémy **B** ; la décision du 17/09 (« le plan ne va pas sur Home »)
+est **assouplie** : le plan figé s'y affiche. Un seul grand bouton = la prochaine chose à faire, calculée par
+`lib/homeAgenda.js` (pur, `tests/check_home_agenda.cjs`) : **coffre > premier Mock > mission du jour (`pick`,
+re-tirage compris) > autres quêtes du plan**. Puis « Also today » (2 lignes), un lien « Today's path » (+N),
+le **Daily Challenge en bloc à part** (jamais dans l'agenda), évènements et fête en lignes de texte (« Turn off »
+reste là : surface d'opt-out), astuce repliée. Niveau/ligue en une ligne fine (garde « this week »). Bonus en
+une ligne `bonusLine` (les pastilles colorées ont disparu). **Quick Start supprimé** (doublon de Train). Seule
+animation : le pulse du coffre quand il est le bouton. Journée finie → « Today's path complete ». Mêmes props
+qu'avant, aucun état dans `App()`. Styles `.hm-*` dans `appCss.js`. Banc : `frame.html?v=A&sc=busy|typical|done|new`.
 
 ### Hubs vivants (tuiles « Coffre », 2026-09-17)
 Proto `prototypes/living-hubs/`, choix de Jérémy **C « Coffre »**. Les listes de Train (Exercises,
@@ -690,8 +701,8 @@ la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la pro
   formule d'accueil), sinon deux « Part 6 · Article » se confondaient ; pastilles de réussites espacées en
   anneau `--t3` (3,4:1 en sombre). Le Camp montre la maîtrise **récente** par partie, triée
   par points en jeu ; la liste de grammaire garde les `catStats` cumulées (la série `cs` n'existe que depuis le
-  2026-09-17). Home : un seul bandeau d'une ligne sous la carte Niveau/Ligue (créneau `path` de `pulseSlot`),
-  qui ouvre la feuille (`openPath` → `sSPA("path")` → `Mentor initialSheet`). `Tabs badge="mentor"` tant que la
+  2026-09-17). Home montre le plan depuis le 2026-09-23 (voir « Home une porte ») ; son lien « Today's path »
+  ouvre la feuille (`openPath` → `sSPA("path")` → `Mentor initialSheet`). `Tabs badge="mentor"` tant que la
   mission attend ; jamais un verrou.
 - **Jeton `daily_reroll`** : `rerollMission` déplace la mission sur la quête suivante (l'ordre ne bouge pas) ;
   mission faite ou quête unique → le jeton n'est pas consommé.

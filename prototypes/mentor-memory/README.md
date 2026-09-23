@@ -30,7 +30,7 @@ et la règle qui autorisent la phrase d'Aldric), mouvement réduit.
 
 Les 8 moments sont validés. Quatre décisions prises, une tranchée par le calcul :
 
-1. **Le plan ne va pas sur Home** (risque de surcharge) : il vit dans le Mentor, feuille « Today's Path ».
+1. ~~**Le plan ne va pas sur Home**~~ (assouplie le 2026-09-23 avec la Home « une porte », `prototypes/home-focus/`) (risque de surcharge) : il vit dans le Mentor, feuille « Today's Path ».
    Home ne gagne **aucune carte** — seul « Welcome back » devient une ligne qui se souvient. Ça tombe
    juste : la Daily Mission habitait déjà le Mentor depuis le 2026-05-05.
 2. **La Daily Mission devient la 1re quête du plan** : ses +15 XP, sa série et le coffre `mission_streak`
