@@ -123,7 +123,13 @@ Ce que la suite protège, et pourquoi :
 faire passer. Et tout nouveau test doit être **prouvé mordant** : introduire l'erreur
 qu'il doit attraper, vérifier qu'il rougit, annuler.
 
-Déclenchement manuel pour l'instant : ni hook pre-commit, ni CI.
+**CI GitHub Actions** (`.github/workflows/ci.yml`, 2026-09-23) à chaque push sur `main` et chaque PR :
+`npm ci` → `npm test` → `lintgate` (pas `npm run lint`, rouge par héritage) → `check:assets` → `build`
+sans `.env`. Pas de hook pre-commit. Pièges : `npm ci` refuse un lock désynchronisé de `package.json`
+(toujours commiter le lock avec une dépendance) ; le checkout est en `fetch-depth: 0` parce que
+`validate_toeic_shrinkage` relit une révision passée. Un test en échec sort en annotation `::error`
+(`tests/run.cjs`), lisible sur la page du run sans connexion. La CI ne bloque PAS Vercel, qui déploie
+chaque push indépendamment : un run rouge est un signal, pas une barrière.
 
 **À lancer après tout ajout de contenu listening.** Un MP3 manquant ne casse
 rien à l'exécution : `playAudioFile()` résout silencieusement sur `onerror`,
