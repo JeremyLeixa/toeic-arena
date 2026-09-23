@@ -37,6 +37,7 @@ const SUITE = [
   ['check_hub_status.cjs',         'les tuiles des hubs annoncent le vrai coffre de maîtrise et le vrai tarif de la prochaine partie'],
   ['check_mimic_items.cjs',        'les items de Mimic Hunt gardent leurs fragments surlignables, un Mimic par item et une bonne réponse répartie'],
   ['check_session_hud.cjs',        'le combo de session tombe sur ses paliers et le fil d\'encre colore la bonne case'],
+  ['check_usage_stats.cjs',        'l\'onglet Usage du formateur : fenêtres, abandons jamais comptés comme parties, hubs, capture neuve, câblage'],
   ['validate_endless_resume.cjs',  'la reprise d\'Endless rejoue le même test'],
   ['validate_listening_shuffle.cjs', 'la position des bonnes réponses est randomisée'],
   ['check_option_shuffle.cjs',     'les QCM des modules permutent leurs options sous les bonnes clés, et aucun texte ne désigne une option par sa lettre'],

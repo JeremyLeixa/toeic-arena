@@ -10,6 +10,7 @@ import { generateSeasons } from "../../lib/league.js";
 import { getDashTeacher, getBioCredId, biometricAvailable, isDashAdmin, teacherAuth, optIcon, bioRegister, BIOMETRIC_KEY, clearDashSession, setDashSession } from "../../lib/teacherSession.js";
 import { estimateTOEICScore } from "../../lib/toeic.js";
 import { tone } from "../../lib/tone.js";
+import { usageStats } from "../../lib/usageStats.js";
 import { today, weekId } from "../../lib/util.js";
 import { supabase } from "../../supabase.js";
 import { useState, useEffect } from "react";
@@ -629,6 +630,17 @@ export function TeacherDash(p){
   }
   useEffect(function(){if(dashPhase==="campus"&&isDashAdmin())loadCampusData();},[dashPhase]);
   useEffect(function(){if(dashTab==="feedback")loadFeedback();},[dashTab]);
+  // Onglet Usage (2026-09-23) : RPC anonyme teacher_usage, agrégée par lib/usageStats.js.
+  var[usage,setUsage]=useState(null); // null = chargement, {error} ou le résultat de usageStats
+  function loadUsage(){
+    setUsage(null);
+    supabase.rpc('teacher_usage',{p_code:getDashTeacher(),p_class_code:classCode}).then(function(res){
+      if(res.error){console.warn("[usage] teacher_usage failed:",res.error.message);setUsage({error:res.error.message});return;}
+      if(!res.data||!res.data.ok){console.warn("[usage] refused:",res.data&&res.data.error);setUsage({error:(res.data&&res.data.error)||"refused"});return;}
+      setUsage(usageStats(res.data.students||[],new Date()));
+    }).catch(function(e){console.warn("[usage] teacher_usage caught:",e&&e.message);setUsage({error:e&&e.message});});
+  }
+  useEffect(function(){if(dashTab==="usage")loadUsage();},[dashTab,classCode]);
 
   function loadStudents(){
     fetchRoster(classCode);
@@ -1300,7 +1312,7 @@ export function TeacherDash(p){
 
     {/* ── Tab switcher ── */}
     <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg2)",borderRadius:12,padding:3}}>
-      {[{id:"overview",label:"👥 Students"},{id:"analytics",label:"📊 Analytics"},{id:"events",label:"🎪 Events"},{id:"feedback",label:"📬 Feedback"}].map(function(t){
+      {[{id:"overview",label:"👥 Students"},{id:"analytics",label:"📊 Analytics"},{id:"events",label:"🎪 Events"},{id:"feedback",label:"📬 Feedback"},{id:"usage",label:"📈 Usage"}].map(function(t){
         var active=dashTab===t.id;
         return(<button key={t.id} onClick={function(){setDashTab(t.id);}} style={{
           flex:1,padding:"10px 8px",borderRadius:10,border:"none",cursor:"pointer",
@@ -1741,6 +1753,41 @@ export function TeacherDash(p){
         })}
       </div>
     </div>)}
+
+    {/* ═══ USAGE TAB (2026-09-23) : parties, portée, abandons, missions, bestiaire ═══ */}
+    {dashTab==="usage"&&(function(){
+      var pct=function(x){return x==null?"—":Math.round(x*100)+" %";};
+      var capDate=usage&&usage.captureStart?usage.captureStart.split("-").reverse().slice(0,2).join("/"):"";
+      if(!usage)return(<div className="out" style={{color:"var(--t3)",fontSize:13,padding:20,textAlign:"center"}}>{"Chargement…"}</div>);
+      if(usage.error)return(<div className="out" style={{color:"var(--t3)",fontSize:13,padding:20,textAlign:"center"}}>{"Usage indisponible ("+usage.error+")."}<br/><button onClick={loadUsage} className="btn2" style={{marginTop:10}}>{"Réessayer"}</button></div>);
+      var kpi=[
+        {v:usage.active7+" / "+usage.students,l:"actifs 7 j"},
+        {v:usage.active30+" / "+usage.students,l:"actifs 30 j"},
+        {v:pct(usage.mission.rate),l:"missions faites (jours actifs, depuis le "+capDate+")"},
+        {v:usage.bestiary.slain+" / "+usage.bestiary.caught,l:"créatures vaincues / créées (5 sem.)"},
+      ];
+      var th={textAlign:"right",padding:"6px 4px",fontWeight:600,color:"var(--t3)",fontSize:11};
+      var td={textAlign:"right",padding:"6px 4px",fontSize:12,color:"var(--t2)"};
+      return(<div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginBottom:14}}>
+          {kpi.map(function(k){return(<div key={k.l} className="crd" style={{padding:12}}><div className="out" style={{fontSize:20,fontWeight:700,color:"var(--t1)"}}>{k.v}</div><div style={{fontSize:11,color:"var(--t3)",marginTop:4}}>{k.l}</div></div>);})}
+        </div>
+        <div className="crd" style={{padding:12,overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"'DM Sans',sans-serif"}}>
+            <thead><tr><th style={Object.assign({},th,{textAlign:"left"})}>{"Module"}</th><th style={th}>{"Parties 7 j"}</th><th style={th}>{"Parties 30 j"}</th><th style={th}>{"Élèves 30 j"}</th><th style={th}>{"Abandons"}</th><th style={th}>{"Taux d'abandon"}</th></tr></thead>
+            <tbody>{usage.modules.map(function(m){return(<tr key={m.id} style={{borderTop:"1px solid var(--bdr)"}}>
+              <td style={Object.assign({},td,{textAlign:"left",color:"var(--t1)"})}>{m.label}</td>
+              <td style={td}>{m.plays7}</td><td style={td}>{m.plays30}</td>
+              <td style={td}>{m.reach30+" ("+Math.round(m.reach30/Math.max(1,usage.students)*100)+" %)"}</td>
+              <td style={td}>{m.quits30}</td>
+              <td style={td}>{m.attempts>=5?pct(m.quitRate):"—"}</td>
+            </tr>);})}</tbody>
+          </table>
+          {!usage.modules.length&&<div style={{fontSize:12,color:"var(--t3)",padding:12,textAlign:"center"}}>{"Aucune partie sur 30 jours."}</div>}
+          <div style={{fontSize:11,color:"var(--t3)",marginTop:10,lineHeight:1.5}}>{"Abandon = « Leave this round » confirmé après au moins une réponse (Boss et Endless exclus, ils reprennent). Compté depuis le "+capDate+" ; taux affiché à partir de 5 tentatives. Les épreuves du Gauntlet et du Modal Council comptent au hub."}</div>
+        </div>
+      </div>);
+    })()}
 
     {/* ═══ FEEDBACK TAB ═══ */}
     {dashTab==="feedback"&&(<div>
