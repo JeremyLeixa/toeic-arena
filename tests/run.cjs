@@ -66,6 +66,13 @@ for (const [file, what] of SUITE) {
   results.push({ file, what, ok, ms, output });
   console.log((ok ? '  ok   ' : '  FAIL ') + file.padEnd(34) + (ms + ' ms').padStart(8) + '   ' + what);
   if (!ok) console.log(output.split('\n').map(l => '         ' + l).join('\n'));
+  // En CI, l'échec devient une annotation : lisible sur la page du run sans se connecter
+  // (les logs, eux, l'exigent). Les 40 dernières lignes suffisent à dire ce qui casse.
+  if (!ok && process.env.GITHUB_ACTIONS) {
+    const tail = output.trim().split('\n').slice(-40).join('\n');
+    const esc = s => s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+    console.log('::error title=' + file + '::' + esc(tail));
+  }
 }
 
 const failed = results.filter(r => !r.ok);
