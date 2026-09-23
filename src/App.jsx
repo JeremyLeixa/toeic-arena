@@ -26,6 +26,7 @@ import { MondayLetter } from "./features/mentor/MondayLetter.jsx";
 import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { MASTERY_BLACKLIST, tierStatus, tierTrigger, tierMarksKey, TIERS_EPOCH } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
+import { setQuitSink, QUIT_EXEMPT, QUIT_PREFIX } from "./lib/sessionQuit.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
 import { appliedFestivalId, setFestivalsEnabled, applyThemeColor } from "./lib/festivals.js";
@@ -74,7 +75,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-20-session-lot8";
+var BUILD_ID="2026-09-23-usage-quits";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -192,6 +193,24 @@ export default function App(){
     if(openSessionRef.current&&openSessionSpRef.current!==sp){openSessionRef.current=0;openSessionSpRef.current=null;setLastSession(null);}
     setExamCeremony(null); // une cérémonie d'examen n'appartient qu'à l'écran de résultats qui l'a déclenchée
   },[sp]);
+  // Abandons de manche (onglet Usage du formateur) : SessionTop signale « Leave » confirmé après N réponses,
+  // rangé sous quit:<route>_<date> dans dailyModSessions. La route est lue dans une ref (le puits est posé
+  // une fois) ; sU(prev => …) + sauvegarde, jamais le u capturé (il écraserait les sv() intermédiaires).
+  var quitSpRef=useRef(null);quitSpRef.current=sp;
+  useEffect(function(){
+    setQuitSink(function(answered){
+      var route=quitSpRef.current;
+      if(answered<1||!route||QUIT_EXEMPT[route])return;
+      sU(function(prev){
+        if(!prev)return prev;
+        var c=JSON.parse(JSON.stringify(prev));if(!c.dailyModSessions)c.dailyModSessions={};
+        var key=QUIT_PREFIX+route+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;
+        saveLocal(c);save(c);
+        return c;
+      });
+    });
+    return function(){setQuitSink(null);};
+  },[]);
   // ── Chest toast dispatcher: show next queued toast when conditions allow ──
   useEffect(function(){
     if(activeChestToast)return; // one toast at a time
@@ -1449,6 +1468,8 @@ function sv(d){
     var c=s.c;if(!c.gameScores)c.gameScores={};
     recordGame(c,modeKey,result);
     c.stats.sessions+=1;trackModSession(c,"game_"+modeKey);c.review=recordMisses(c.review,mistakes,new Date());sealSession(c,s.sid);sv(c);return s.sid;}
+  // ⚠️ dailyModSessions porte aussi les abandons sous quit:<route>_<date> (effet setQuitSink) : tout lecteur
+  // lit une clé EXACTE <modId>_<date> (farmMult, questDone, bypass), ne jamais sommer toutes les clés d'un jour.
   function trackModSession(c,modId){if(!c.dailyModSessions)c.dailyModSessions={};var key=modId+"_"+today();c.dailyModSessions[key]=(c.dailyModSessions[key]||0)+1;}
   // Daily sur l'écran de fin commun : xpE garde désormais l'XP réellement versée (bonus du jour compris),
   // affichée ensuite par « Already completed » et sur Home. Pas de Spotlight (comme avant).

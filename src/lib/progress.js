@@ -163,6 +163,10 @@ export function checkMission(u,modId){
     if(prev===ysIso)u.mission.streak=(u.mission.streak||0)+1;
     else if(prev!==today())u.mission.streak=1; // gap or first time → restart at 1
     u.mission.lastDoneDate=today();
+    // Jours de mission faite (onglet Usage du formateur, taux sur les jours actifs). Borné : dayMission
+    // recopie la mission de la veille (Object.assign), le tableau traverse donc les jours tout seul.
+    var dd=(u.mission.doneDays||[]).filter(function(d){return d!==today();});dd.push(today());
+    u.mission.doneDays=dd.slice(-35);
   }
   return u;
 }

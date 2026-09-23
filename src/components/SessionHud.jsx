@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GIcon } from "./icons.jsx";
 import { segDensity, segMarks } from "../lib/sessionHud.js";
+import { reportQuit } from "../lib/sessionQuit.js";
 
 var QUIT_COPY = { title: "Leave this round?", body: "Your answers in this round won't be saved.", stay: "Keep going", leave: "Leave" };
 
@@ -32,7 +33,9 @@ export function SessionTop(p) {
     if (p.onSheet) p.onSheet(true);
   }
   function stay() { setSheet(false); if (p.onSheet) p.onSheet(false); }
-  function leave() { setSheet(false); if (p.onSheet) p.onSheet(false); p.onQuit(); }
+  // Abandon confirmé après au moins une réponse : compté pour l'onglet Usage du formateur (lib/sessionQuit.js).
+  // Le départ sans réponse (ask, plus haut) ne l'est pas : un aller-retour, pas une manche lâchée.
+  function leave() { setSheet(false); if (p.onSheet) p.onSheet(false); reportQuit(results.length); p.onQuit(); }
   var dens = segDensity(p.n);
   var streak = p.streak || 0;
   return (
