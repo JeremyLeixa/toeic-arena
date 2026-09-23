@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (25 fichiers, ~9 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (26 fichiers, ~12 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -118,6 +118,10 @@ Ce que la suite protège, et pourquoi :
   TeacherDash, Chests. Une couleur délavée ne casse pas le build, elle disparaît en clair.
 - **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
   et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
+- **`check_usage_stats`** — l'onglet Usage du formateur (`lib/usageStats.js`, `lib/sessionQuit.js`) : fenêtres
+  7/30 j bornes incluses, abandons jamais comptés comme parties, épreuves des hubs ramenées au hub (sinon
+  100 % d'abandon), rien d'avant `CAPTURE_START` dans les taux, `doneDays` borné, et le câblage : « Leave »
+  confirmé signale l'abandon, le départ sans réponse non. Faux, ces chiffres font retirer un module joué.
 
 ⚠️ **Un test qui échoue décrit un vrai problème.** Le corriger, ne pas l'ajuster pour le
 faire passer. Et tout nouveau test doit être **prouvé mordant** : introduire l'erreur
@@ -289,6 +293,12 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 - **Upsert on `{onConflict: 'name,class_code'}`** prevents multi-device duplicate profiles.
 - **`fresh()` function** initializes a new student profile. Any new field must be added here AND in `supaToLocal` AND `save()` payload. Column names must match Supabase exactly.
 - **`mockResults`** stores `mock1`, `mock2`, `mock3`, `boss`. Boss Test saves best score but updates `date` on every attempt.
+- **Onglet Usage du formateur** (2026-09-23) : RPC `teacher_usage` → `lib/usageStats.js`. Parties = clés `<modId>_<date>`
+  de `dailyModSessions` (rétroactif). **Abandons** = « Leave this round » confirmé après ≥ 1 réponse, rangés dans le MÊME
+  objet sous `quit:<route>_<date>` (puits `setQuitSink` posé par `App()`, `reportQuit` dans `SessionTop.leave()` ; Boss et
+  Endless exemptés). Tout lecteur de `dailyModSessions` lit une clé **exacte**, ne jamais sommer les clés d'un jour.
+  **Jours de mission** : `mission.doneDays` (35, posé par `checkMission`). Ces deux captures datent du 2026-09-23
+  (`CAPTURE_START`) : les taux ne comptent rien avant. Retour matériel et fermeture d'onglet ne sont pas des abandons.
 
 ### XP System
 - **Le calcul des portes vit dans `src/lib/xp.js`** (pur : `accuracyGate`, `farmMult`, `isBoostedByEvents`, `spotlightMult`, `gateSteps`, `gateXp`, `settleXp`), testé par `tests/check_xp_gates.cjs`. `settleSession`, `applyXpGates` / `addXp` dans `App.jsx` ne font qu'injecter l'état (`u`, événements, médiane, instant) et exécuter les effets rendus (Darics du Focus, jingles, haptique, toast, coffres). Toute règle ci-dessous se change **dans `xp.js` et dans le test**, jamais dans App.jsx. La table des ligues est injectée (`ctx.leagueOf`) : `lib/league.js` importe Supabase et n'est pas requérable en Node.
@@ -806,7 +816,7 @@ l'ajouter à `supabase/migrations/`.
 |---|---|---|
 | Données perso | `student_guard(p_name, p_class_code)` | `load_student`, `save_student`, `my_rewards`, `my_tokens`, `my_pending_chests`, `my_weekly_snapshots`, `upsert_push_subscription`, `open_pending_chest` |
 | Lecture publique (classement, fiche de promo) | aucune, mais **bornée** : colonnes figées, limite dure, `Teacher` exclu en SQL | `students_public`, `class_median_xp`, `class_weekly_progress`, `class_week_podium`, `group_public` |
-| Dashboard formateur | `teacher_role_of(p_code)` + propriété de cohorte | `teacher_students`, `teacher_weekly_snapshots`, `teacher_feedback`, `teacher_create_event` |
+| Dashboard formateur | `teacher_role_of(p_code)` + propriété de cohorte | `teacher_students`, `teacher_weekly_snapshots`, `teacher_feedback`, `teacher_create_event`, `teacher_usage` (anonyme : ni nom ni id) |
 
 `student_guard` a une **tolérance legacy** : une ligne sans `user_id` passe, faute de
 preuve à exiger. Chaque compte migré se protège tout seul. Le durcissement final de la
