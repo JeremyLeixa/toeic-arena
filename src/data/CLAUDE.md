@@ -61,8 +61,11 @@ All content is imported at build time. No dynamic fetching. Files use `export va
 { id: "p1_01", img: "/images/p1/p1_01.png", opts: [...4], c: 0, x: "..." }
 // P2: audio question + 3 blind options
 { id: "p2_01", audio: "/audio/p2/p2_01_q.mp3", opts: [...3], c: 0, x: "..." }
-// P3/P4: audio conversation + written questions
-{ id: "p3_01", audio: "/audio/p3/p3_01.mp3", questions: [{ s, opts, c, x }] }
+// P3: lines (speaker W/M/W2/M2, 1st char = gender) → /audio/p3/{id}_line{N}.mp3 + stitched {id}.mp3
+{ id: "p3_01", lines: [{ s: "W", t: "..." }], qs: [{ q, opts: [...4], c, x, graphic? }] }
+// P4: one talk, voice W/M (script rotation: odd id M, even id W) → /audio/p4/{id}.mp3
+{ id: "p4_01", type: "Voicemail", voice: "M", text: "...", qs: [{ q, opts, c, x }] }
+// P3 96, P4 102 (2026-09-23). Intent questions quote a line verbatim: tests/check_listening_items.cjs.
 ```
 
 ### part6.js — `PART6_TEXTS`
