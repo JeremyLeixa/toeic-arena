@@ -80,7 +80,7 @@ All content is imported at build time. No dynamic fetching. Files use `export va
 { id: "p7p1", type: "Email", text: "full passage...",
   questions: [{ q: "What is implied?", options: [...4], correct: 0, x: "..." }] }
 ```
-61 passages (single, double, text-message chain, meeting minutes, FAQ, itinerary, ~224 questions total). Double passages use `--- DOCUMENT 1/2 ---` separator.
+75 passages, 289 questions (single, double, triple, text-message chain, online chat, web page, job posting, invoice, meeting minutes, FAQ, itinerary). Question types include sentence insertion (`[1]`-`[4]` markers in the text, options `["[1]","[2]","[3]","[4]"]`, `keep:true` so no screen shuffles them), vocabulary in context ("the word 'X' ... is closest in meaning to" — no line numbers, lines wrap on mobile) and intent ("what does X mean when she writes, '...'"). Never cite an option by letter. Checked by `tests/check_part7_items.cjs`. Double passages use `--- DOCUMENT 1/2 ---` separator.
 
 ### audioBlitz.js — `AUDIO_BLITZ`
 ```js

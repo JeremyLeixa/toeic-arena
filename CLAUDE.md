@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (27 fichiers, ~14 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (28 fichiers, ~15 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -116,6 +116,11 @@ Ce que la suite protège, et pourquoi :
   jauges du Profil, familles du Modal Council) sous 4,5:1 ; aucune variante orpheline ni hors
   clair ; `lg/ti/rarity….color` et `shopRarColor(…)` jamais bruts. Hors périmètre : Onboard,
   TeacherDash, Chests. Une couleur délavée ne casse pas le build, elle disparaît en clair.
+- **`check_part7_items`** — la banque Part 7 : mot cité par une question de vocabulaire (« the word 'X' … closest
+  in meaning ») et réplique citée par une question d'intention présents dans le passage, insertions de phrase
+  (« positions marked [1]… ») avec leurs 4 marqueurs, options `[1]`-`[4]` et `keep:true`, et les **quatre**
+  permutations de Part 7 (`shufP7`, `reading.jsx`, `endless.js`, `reviewLookup.js`) qui respectent `keep`.
+  Relire un lot neuf : `prototypes/sessions/real.html?sc=p7&p7only=p7p68,p7p71`.
 - **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
   et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
 - **`check_usage_stats`** — l'onglet Usage du formateur (`lib/usageStats.js`, `lib/sessionQuit.js`) : fenêtres
@@ -191,7 +196,7 @@ src/
     grammar.js         — 456 Part 5 drill questions
     listening.js       — P1 (43), P2 (175), P3 (70 convos), P4 (60 talks)
     part6.js           — 40 texts, 160 blanks
-    part7.js           — 61 passages
+    part7.js           — 75 passages, 289 Q (insertion de phrase `keep:true`, voir check_part7_items)
     mockTests.js       — Mock Tests 1-3
     bossTestFull.js    — The Final Arena (full TOEIC, 202Q, 7 parts)
     miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps
