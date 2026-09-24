@@ -54,5 +54,28 @@ ok('le client ne tire plus le butin (pickRewards absent de chests.js hors ré-ex
 ok('les Darics des coffres ne sont plus crédités par le client', !/grantMarks\([^)]*"chest"/.test(app));
 ok('le solde renvoyé par le serveur est recopié', /if\(typeof result\.balance==="number"\)c\.arenaMarks=result\.balance;/.test(app));
 
+// ── lot 2b : tout déclencheur de coffre émis par le client est connu du serveur ──
+// Une source de coffre ajoutée côté client sans passer par scripts/gen-economy-sql.mjs serait refusée en silence
+// par grant_pending_chest ('invalid_trigger') : l'élève ne recevrait jamais le coffre.
+const routes = fs.readFileSync(path.join(ROOT, 'src', 'routes.jsx'), 'utf8');
+const xpSrc = fs.readFileSync(path.join(ROOT, 'src', 'lib', 'xp.js'), 'utf8');
+const known = new Set(G.chestTriggerRows().map((r) => r.trigger));
+const literal = [];
+for (const m of (app + routes).matchAll(/grant(?:ChestLocal|WeeklyChest)\("([a-z0-9_]+)",/g)) literal.push(m[1]);
+for (const m of xpSrc.matchAll(/trigger:"([a-z0-9_]+)"(?=[,}])/g)) literal.push(m[1]); // pas les préfixes "xp_"+…
+ok('au moins 15 déclencheurs littéraux relevés dans le client (' + literal.length + ')', literal.length >= 15);
+literal.forEach((t) => ok('déclencheur « ' + t + ' » connu du serveur', known.has(t)));
+// Déclencheurs construits : leurs préfixes doivent être ceux que le serveur sait vérifier.
+const DYNAMIC = ['"streak_login_"', '"mission_streak_"', '"weekly_toeic_"', '"podium_"', '"ach_legendary_"', '"ach_epic_"',
+  '"ach_novice_"', 'tierTrigger(', 'fullModId+"_perfect"', '"xp_"', '"league_up_"'];
+const dyn = (app + routes + xpSrc).match(/(?<!function )grant(?:ChestLocal|WeeklyChest)\((?!")[^,]+|(?<!function )grant(?:ChestLocal|WeeklyChest)\("[a-z_]+"\+/g) || [];
+// Les préfixes construits de lib/xp.js (xp_<n>k, league_up_<id>) : générés depuis XP_MILESTONES et LEAGUES.
+ok('préfixes de lib/xp.js couverts (xp_, league_up_)', /trigger:"xp_"\+/.test(xpSrc) && /trigger:"league_up_"\+/.test(xpSrc)
+  && known.has('xp_1k') && known.has('league_up_silver'));
+dyn.forEach((d) => ok('déclencheur construit reconnu : ' + d, DYNAMIC.some((p) => d.includes(p.replace(/"$/, '')) || d.includes(p))
+  || /ch\.trigger/.test(d)));
+ok('les 4 épreuves du Gauntlet et les 2 du Modal Council ont leur défi parfait', ['irregular', 'tense', 'passive', 'relative']
+  .every((s) => known.has('gauntlet_' + s + '_perfect')) && ['match', 'sort'].every((s) => known.has('modals_' + s + '_perfect')));
+
 console.log((checks - fails) + '/' + checks + ' vérifications de l\'économie au vert');
 process.exit(fails ? 1 : 0);

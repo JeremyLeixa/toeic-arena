@@ -7,7 +7,41 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SHOP_CATALOG, TOKEN_TYPES, AVATARS, SKINS, FRAMES, TITLES, CHEAT_SHEETS, DROP_TABLES, RARITIES } from "../src/data/chestCatalog.js";
+import { SHOP_CATALOG, TOKEN_TYPES, AVATARS, SKINS, FRAMES, TITLES, CHEAT_SHEETS, DROP_TABLES, RARITIES,
+  LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS } from "../src/data/chestCatalog.js";
+import { XP_MILESTONES } from "../src/lib/xp.js";
+import { MODULE_TOEIC_MAP } from "../src/lib/toeic.js";
+import { MISSION_MODULES } from "../src/data/placement.js";
+import { MASTERY_BLACKLIST, tierTrigger } from "../src/lib/hubStatus.js";
+import { LEAGUES } from "../src/data/leagues.js";
+
+// Lot 2b : déclencheurs de coffres LÉGITIMES à valeur fixe (le serveur impose type et délai ; les déclencheurs
+// datés — connexion du jour, TOEIC de la semaine, podium — et la série de missions sont vérifiés par motif
+// dans grant_pending_chest). Toute nouvelle source de coffre s'ajoute ICI, sinon le serveur la refuse.
+export const MASTERY_MAX_TIER = 30;
+export const WEEKLY_TRIGGERS = [["duel_win", "guerrier"], ["duel_win3", "champion"], ["wfall_combo30", "champion"],
+  ["wfall_combo20", "guerrier"], ["wfall_combo10", "novice"], ["smatch_easy_good", "novice"], ["sbuild_90", "novice"],
+  ["clue_perfect", "guerrier"], ["ablitz_90", "guerrier"], ["ablitz_70", "novice"],
+  ...["irregular", "tense", "passive", "relative"].map((s) => ["gauntlet_" + s + "_perfect", "guerrier"]),
+  ...["match", "sort"].map((s) => ["modals_" + s + "_perfect", "guerrier"])];
+export function masteryModules() {
+  const ids = new Set(Object.keys(MODULE_TOEIC_MAP).concat(MISSION_MODULES.map((m) => m.id), ["endless"]));
+  return [...ids].filter((id) => !MASTERY_BLACKLIST[id]).sort();
+}
+export function chestTriggerRows() {
+  const rows = [];
+  const add = (t, type, cd) => rows.push({ trigger: t, chest_type: type, cooldown_days: cd == null ? null : cd });
+  XP_MILESTONES.forEach(([n, type]) => add("xp_" + (n >= 1000 ? n / 1000 + "k" : n), type));
+  add("streak_7", "novice"); add("streak_30", "guerrier"); add("streak_100", "champion");
+  LEAGUES.forEach((l) => add("league_up_" + l.id, "guerrier"));
+  add("boss_test", "legendaire"); ["1", "2", "3"].forEach((n) => add("mock_" + n, "champion"));
+  LEGENDARY_ACHIEVEMENTS.forEach((id) => add("ach_legendary_" + id, "legendaire"));
+  EPIC_ACHIEVEMENTS.forEach((id) => add("ach_epic_" + id, "guerrier"));
+  NOVICE_ACHIEVEMENTS.forEach((id) => add("ach_novice_" + id, "novice"));
+  masteryModules().forEach((mod) => { for (let n = 1; n <= MASTERY_MAX_TIER; n++) add(tierTrigger(mod, n), n === 3 ? "legendaire" : "champion"); });
+  WEEKLY_TRIGGERS.forEach(([t, type]) => add(t, type, 7));
+  return rows;
+}
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "supabase", "migrations", "2026-09-24_economy_catalog_data.sql");
@@ -25,11 +59,12 @@ export function economyRows() {
   // Lot 2 (coffres) : tables de tirage telles quelles (jsonb), et l'ordre des raretés (seuil minRarity).
   const drops = Object.keys(DROP_TABLES).map((t) => ({ chest_type: t, slots: DROP_TABLES[t] }));
   const rarities = RARITIES.map((r, i) => ({ id: r.id, tier: i }));
-  return { shop, rewards, tokens, drops, rarities };
+  const triggers = chestTriggerRows();
+  return { shop, rewards, tokens, drops, rarities, triggers };
 }
 
 export const ECONOMY_SQL_FILE = OUT;
-export function render({ shop, rewards, tokens, drops, rarities }) {
+export function render({ shop, rewards, tokens, drops, rarities, triggers }) {
   const L = [];
   L.push("-- ════════════════════════════════════════════════════════════════════════");
   L.push("-- FICHIER GÉNÉRÉ par scripts/gen-economy-sql.mjs depuis src/data/chestCatalog.js — NE PAS ÉDITER.");
@@ -47,15 +82,19 @@ export function render({ shop, rewards, tokens, drops, rarities }) {
   L.push("  token_type text PRIMARY KEY, cap integer NOT NULL CHECK (cap > 0), premium boolean NOT NULL, boost boolean NOT NULL);");
   L.push("CREATE TABLE IF NOT EXISTS public.chest_drop_tables (chest_type text PRIMARY KEY, slots jsonb NOT NULL);");
   L.push("CREATE TABLE IF NOT EXISTS public.rarity_catalog (id text PRIMARY KEY, tier integer NOT NULL);");
+  L.push("CREATE TABLE IF NOT EXISTS public.chest_triggers (");
+  L.push("  trigger text PRIMARY KEY, chest_type text NOT NULL, cooldown_days integer);");
   L.push("");
-  ["shop_catalog", "reward_catalog", "token_catalog", "chest_drop_tables", "rarity_catalog"].forEach((t) => {
+  ["shop_catalog", "reward_catalog", "token_catalog", "chest_drop_tables", "rarity_catalog", "chest_triggers"].forEach((t) => {
     L.push("ALTER TABLE public." + t + " ENABLE ROW LEVEL SECURITY;");
     L.push("REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public." + t + " FROM anon, authenticated, public;");
   });
   L.push("");
   L.push("BEGIN;");
   L.push("DELETE FROM public.shop_catalog; DELETE FROM public.reward_catalog; DELETE FROM public.token_catalog;");
-  L.push("DELETE FROM public.chest_drop_tables; DELETE FROM public.rarity_catalog;");
+  L.push("DELETE FROM public.chest_drop_tables; DELETE FROM public.rarity_catalog; DELETE FROM public.chest_triggers;");
+  L.push("INSERT INTO public.chest_triggers (trigger, chest_type, cooldown_days) VALUES");
+  L.push(triggers.map((r) => "  (" + [q(r.trigger), q(r.chest_type), r.cooldown_days == null ? "NULL" : r.cooldown_days].join(", ") + ")").join(",\n") + ";");
   L.push("INSERT INTO public.chest_drop_tables (chest_type, slots) VALUES");
   L.push(drops.map((d) => "  (" + q(d.chest_type) + ", " + q(JSON.stringify(d.slots)) + "::jsonb)").join(",\n") + ";");
   L.push("INSERT INTO public.rarity_catalog (id, tier) VALUES");
