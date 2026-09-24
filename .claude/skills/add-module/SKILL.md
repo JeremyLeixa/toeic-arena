@@ -20,7 +20,7 @@ Wiring a new training module is mechanical but unforgiving: a single missing ite
 
 1. **Decide the module ID** — short kebab/camel string used as `sp` value, `recordModule` key, BGM filename suffix, achievement keys. Examples : `tavern`, `gauntlet`, `modals`, `wfall`. Stay consistent across all touchpoints.
 2. **Decide if module is SELF_MANAGED for BGM** — if it has its own BGM track and manages start/stop internally (sub-module hubs, multi-phase modules), add to the `SELF_MANAGED` array (in `App()`, central BGM `useEffect` — grep `SELF_MANAGED` in `src/App.jsx`). Otherwise the route line in `src/routes.jsx` controls BGM.
-3. **Decide the XP tier** — see CLAUDE.md "Gauntlet XP tier" section. Tier B (15Q modules) = `15 + 5×correct + 35 perfect`. Match peer modules (Tavern 110, SBuilder 95, Gauntlet 125 max).
+3. **Decide the XP tier** — see `src/features/gauntlet/CLAUDE.md`, section "Gauntlet XP tier". Tier B (15Q modules) = `15 + 5×correct + 35 perfect`. Match peer modules (Tavern 110, SBuilder 95, Gauntlet 125 max).
 4. **Decide TOEIC estimator weight** — does this contribute to Listening or Reading section? What weight (e.g. Gauntlet = 0.15 of reading)? Update `MODULE_TOEIC_MAP` and `estimateTOEICScore` in `src/lib/toeic.js` accordingly.
 
 ## Checklist — every module
@@ -46,7 +46,7 @@ Touchpoints to wire (in rough order):
 - [ ] Custom handler (own stats, chests…): same order — `var s=settleSession(modId,sc,tot,baseXp,{spotlight:true}); var c=s.c; …; sealSession(c,s.sid); sv(c); return s.sid;`. Never `applyXpGates`+`addXp` for a module that shows `SessionResult` (no step detail, toast over the screen).
 - [ ] `grantWeeklyChest(trigger, "novice"|"guerrier"|"champion")` if perfect / milestone — while the screen is open, the confirmed chest appears IN it (not as a toast).
 
-### Session HUD (CRITICAL — `components/SessionHud.jsx`, CLAUDE.md « HUD de session »)
+### Session HUD (CRITICAL — `components/SessionHud.jsx`, `src/components/CLAUDE.md` « HUD de session »)
 - [ ] `var track=useSessionTrack();` before any early `return` (rules-of-hooks). In the answer
       handler: `track.record(ok)` — `true`/`false`, or `null` for an exam (neutral mark, no verdict).
 - [ ] Question render: `<SessionTop n cur results={track.results} streak={track.streak} onQuit={p.back}/>`
@@ -74,7 +74,7 @@ Touchpoints to wire (in rough order):
       .fill(null)}`, section in `sub`, clock in `aside`, and a `quitCopy` that tells the truth about
       whether the round resumes.
 - [ ] Add the module to the bench: `prototypes/sessions/real.jsx` (`LOT2` map) → `real.html?sc=<id>`.
-### End-of-session screen (CRITICAL — `components/SessionResult.jsx`, CLAUDE.md « écran de fin »)
+### End-of-session screen (CRITICAL — `components/SessionResult.jsx`, `src/components/CLAUDE.md` « Écran de fin de session commun »)
 - [ ] Keep `var sidRef=useRef(0), mistakesRef=useRef([]);`. On a wrong answer: `mistakesRef.current.push({tag, prompt, yours, correct, why})` (`prompt` with `_____` for the blank; `noBlank:true` for a definition/transcript). If the Mistake Hunt can replay the item, add `ref:moduleRef("<mod>", item.id)` (`lib/reviewRefs.js` : declare the module's category there, a grammar-bank category when one fits; item reference, never an option index — see CLAUDE.md « Mentor qui se souvient »), pass `mistakesRef.current` as the last argument of `p.done` (and through the route wrapper to `miniSession`), teach `lib/reviewLookup.js` to resolve the new prefix as a shuffled MCQ, and add the bank to `tests/check_review_lookup.cjs`.
 - [ ] At the end of the round, in the same handler: `sidRef.current=p.done(sc,tot,baseXp); sP("done");` — persist at submit, never behind a button.
 - [ ] `if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="<Module name>" mistakes={mistakesRef.current} onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}>{extras}</SessionResult>);` — module-specific info (NextStepReco, records…) goes in `children`. Never wrap it in `.enter`. No `p.gate()` in render.

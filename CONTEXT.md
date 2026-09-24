@@ -8,8 +8,8 @@
 
 ## État au 2026-09-24 (à lire en premier)
 
-Entre le 15 et le 23 septembre, ~300 commits. Les conventions de chaque chantier vivent dans `CLAUDE.md`
-(sections nommées ci-dessous) ; ici, seulement ce qui est livré, ce qui reste à voir en prod, et ce qui attend
+Entre le 15 et le 23 septembre, ~300 commits. Les conventions de chaque chantier vivent dans `CLAUDE.md` et, depuis le 24/09, dans
+les `CLAUDE.md` de sous-dossier listés par son « Index des fonctionnalités » ; ici, seulement ce qui est livré, ce qui reste à voir en prod, et ce qui attend
 une décision.
 
 ### Livré en prod (15 → 23/09)

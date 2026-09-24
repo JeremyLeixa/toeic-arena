@@ -47,93 +47,8 @@ remettre le module pur plutôt que revenir au découpage. Deux gardes protègent
 structure elle-même : `check_symbol_census` (aucun symbole perdu ni dédoublé) et
 `check_import_graph` (aucun cycle, sens des couches respecté).
 
-Ce que la suite protège, et pourquoi :
-
-- **`check_rpc_contracts`** — depuis le verrou du 2026-09-15, tout passe par des RPC, et
-  le client et le SQL vivent dans deux fichiers que rien ne relie. Une clé de paramètre
-  invalide fait refuser l'appel **entier** par PostgREST.
-- **`check_profile_roundtrip`** — la règle « fresh() ET supaToLocal ET payload », plus la
-  liste blanche de `save_student`. Une colonne hors liste est ignorée **en silence**. Et **aucun champ lu sur
-  le profil (`u.X`, `p.u.X` dans `src/`) hors de `fresh()`** : il vivrait en mémoire et en localStorage, jamais
-  dans Supabase, et disparaîtrait au premier rechargement (cas vécu jusqu'au 2026-09-19 : les jetons armés,
-  brûlés côté serveur puis perdus au retour sur l'onglet). Exceptions listées : propriétés de l'énoncé de
-  synthèse vocale (`u` dans `lib/audio.js`), drapeau passager `_shieldPending`.
-- **`check_chest_drops`** — `open_pending_chest` ignore silencieusement tout type de
-  récompense hors liste blanche.
-- **`check_identity`** — `normNameForEmail` décide de l'adresse du compte Auth,
-  recalculée à chaque connexion. La changer enferme dehors les élèves déjà migrés.
-- **`check_fresher_local`** — la garde stale-remote (`lib/staleRemote.js`) : quand la copie
-  locale gagne sur Supabase (XP strictement supérieure et actif au moins aussi récemment), avec
-  les champs serveur (`class_code`, `access_level`, `access_expires_at`, `email`) toujours pris
-  au distant, et jamais pour un autre élève (`fresherLocalFor`). Trop stricte, une progression
-  jouée pendant une panne est écrasée ; trop large, un payant repasse free.
-- **`check_xp_gates`** — les portes XP (`lib/xp.js` : seuil d'accuracy, trois courbes
-  anti-farming, bypass, événements, Focus, boosts, streak, +10, planchers, ligue, coffres)
-  sont celles de « XP System » ci-dessous. Un `<` devenu `<=` ne casse pas le build.
-- **`check_learner_model`** — le modèle de l'apprenant (`lib/learnerModel.js`) : maîtrise **récente**
-  (demi-vie 14 j + prior 6 Q à 60 %), priorité aux **points en jeu** (6 questions de Part 1 contre 54 de
-  Part 7) et non à la précision la plus basse, retournement prouvé (deux fenêtres mesurables + 10 jours
-  d'écart), chasse exclue de la maîtrise, `cs` posées par `recordModule`. Revenir à `correct/total` à vie
-  remet Today's Focus sur une faiblesse déjà corrigée, sans rien casser au build.
-- **`check_review`** — le bestiaire (`lib/review.js`) : intervalles 1-3-7 et mort à la 3e réussite
-  espacée, force qui ne monte que sur une retombée (sinon l'assiduité est punie), repos des questions
-  ratées 3 fois, regroupement par support (un passage Part 7 lu une fois), XP de chasse toujours sous le
-  coût d'une erreur volontaire, et **le module `hunt` jamais dans l'estimation TOEIC**.
-- **`check_review_lookup`** — les références des 16 autres modules (`lib/reviewRefs.js`, `lib/reviewLookup.js`) :
-  chaque item de chaque banque se relit avec la réponse que le module compte juste, même catégorie à la
-  capture et à la résolution, options permutées, énoncé qui ne dit pas la réponse, et le câblage (`ref`,
-  `mistakesRef.current` jusqu'à `recordMisses`) lu dans le source. Une clé que la chasse ne sait pas relire
-  laisse une créature « due » pour toujours, sans erreur nulle part.
-- **`check_option_shuffle`** — les QCM des modules (3 épreuves du Gauntlet, Clue Hunter, Audio Blitz, False
-  Friends, Traps, Strategy, Gerund/Infinitive) permutent leurs options au montage du deck par
-  `lib/util.js shuffleOpts`, sous les clés que le module lit (`o/c`, `opts/ans`, `options/correct`…), et
-  GerInf retire son deck à chaque partie. Aucun texte de ces banques ne désigne une option par sa lettre
-  ou par « of the above » (exceptions listées avec les lettres permises). Les banques mettent la bonne
-  réponse en B ou C huit fois sur dix : un module qui ne permute pas s'apprend par la position. Nouveau
-  module QCM → l'ajouter à `MODULES` du test. Section 2b : la banque de grammaire (Drill, Daily, Exam
-  Simulation, Word Fall — bonne réponse en B 61 %, en D 4 %), les Mock Tests (Part 6 en A 7 fois sur 8) et
-  le Boss (Parts 3-4 jamais en A) passent par `lib/optionShuffle.js` (`shufP5/P6/P7/Qs`) ; leurs explications
-  ne citent aucune lettre (exceptions : noms comme « Lot C », « Vitamin D »).
-- **`check_planner`** — le plan du jour (`lib/planner.js`) : seuil de la chasse (4 échéances), démarrage
-  à froid (< 5 sessions → Battle Scan), quête d'enjeu réservée aux parties mesurées, composition du Drill
-  (catégorie visée, catégorie méritée allégée, erreurs dues glissées, **aucune créature tirée au hasard**),
-  tendances hebdomadaires seulement au-dessus de 10 questions par semaine, et la **journée figée** (`u.mission` : mission sur la quête 1, série gardée, +25 % sur l'enjeu figé, re-tirage).
-- **`check_festivals`** — fenêtres des thèmes saisonniers (`lib/festivals.js`) : bornes
-  incluses en heure locale, Pâques, déc → jan, disjonction jour par jour, opt-out > forçage ;
-  un paquet `.fest-<id>` + `.light.fest-<id>` par fête dans `appCss.js`, animations existantes,
-  `themeColor` = `--bg` du CSS. Une fenêtre fausse change le thème de tous les élèves.
-- **`check_skins_light`** — les 9 skins qui forcent un fond sombre sur `.crd` (règle de tokens
-  `.skin-X:not(.light),.light.skin-X .crd`, présence dans `.light:where(…) .crd`, tout token de
-  `.light` reposé dans la carte, `.btn2` et fonds translucides corrigés en clair). Un oubli ne
-  casse pas le build : les cartes deviennent illisibles pour les élèves en mode clair.
-- **`check_tones`** — **aucune couleur hex en dur sous 4,5:1 (AA) sur les fonds clairs** dans une
-  expression `color:` / `color=` du JSX, sauf passée par `tone()`, sur un fond posé sur la même
-  ligne qui la rend lisible à 4,5:1 (ternaires et jetons résolus en clair), ou précédée de
-  `/*fond local*/` (fond sombre ou fixe en dur posé ailleurs : tuiles Boss/Endless, parchemin du
-  narrateur). Plus : une variante `.light{--tone-<hex>}` (≥ 4,5:1) pour
-  chaque couleur de ligue, titre, rareté et chaque couleur passée à `tone()` (littérale ou issue
-  d'une source déclarée dans `DATA_SOURCES` : CECRL, fiches de grammaire,
-  jauges du Profil, familles du Modal Council) sous 4,5:1 ; aucune variante orpheline ni hors
-  clair ; `lg/ti/rarity….color` et `shopRarColor(…)` jamais bruts. Hors périmètre : Onboard,
-  TeacherDash, Chests. Une couleur délavée ne casse pas le build, elle disparaît en clair.
-- **`check_interruptions`** — le budget d'interruptions (`lib/interruptions.js`) : priorité retournement > promotion
-  > Aldric (paliers) > lettre, moments contextuels jamais reportés, et le câblage de `SessionResult` et d'`App()`
-  (moment verrouillé une fois affiché, rediffusion hors budget, lettre derrière le budget).
-- **`check_listening_items`** — P3/P4 : réplique citée par une question d'intention (« What does the woman mean
-  when she says, '…' », « Why does the speaker say, '…' ») présente dans la conversation ou le monologue, locuteurs
-  W/M/W2/M2, `voice` P4, graphiques. Réécrire une réplique = **regénérer son MP3** (les scripts sautent un fichier
-  existant : le supprimer d'abord). Lot 6 : `generate-audio-p{3,4}-batch6.mjs` (`ONLY=<id>` pour l'échantillon).
-- **`check_part7_items`** — la banque Part 7 : mot cité par une question de vocabulaire (« the word 'X' … closest
-  in meaning ») et réplique citée par une question d'intention présents dans le passage, insertions de phrase
-  (« positions marked [1]… ») avec leurs 4 marqueurs, options `[1]`-`[4]` et `keep:true`, et les **quatre**
-  permutations de Part 7 (`shufP7`, `reading.jsx`, `endless.js`, `reviewLookup.js`) qui respectent `keep`.
-  Relire un lot neuf : `prototypes/sessions/real.html?sc=p7&p7only=p7p68,p7p71`.
-- **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
-  et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
-- **`check_usage_stats`** — l'onglet Usage du formateur (`lib/usageStats.js`, `lib/sessionQuit.js`) : fenêtres
-  7/30 j bornes incluses, abandons jamais comptés comme parties, épreuves des hubs ramenées au hub (sinon
-  100 % d'abandon), rien d'avant `CAPTURE_START` dans les taux, `doneDays` borné, et le câblage : « Leave »
-  confirmé signale l'abandon, le départ sans réponse non. Faux, ces chiffres font retirer un module joué.
+La liste exécutée, avec une phrase par test : `tests/run.cjs`. **Le pourquoi détaillé de chaque garde**
+(ce qu'elle protège, ce qui casserait en silence) : `tests/CLAUDE.md`, chargé quand on travaille dans `tests/`.
 
 ⚠️ **Un test qui échoue décrit un vrai problème.** Le corriger, ne pas l'ajuster pour le
 faire passer. Et tout nouveau test doit être **prouvé mordant** : introduire l'erreur
@@ -284,6 +199,30 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 
 ---
 
+## Index des fonctionnalités (détail dans des `CLAUDE.md` de sous-dossier)
+
+Depuis le 2026-09-24, le détail de chaque fonctionnalité vit à côté de son code : Claude Code charge un
+`CLAUDE.md` de sous-dossier **quand on lit un fichier de ce dossier**. Avant de modifier une fonctionnalité dont
+le code vit ailleurs (un `lib/` utilisé par un écran, par exemple), **lire son fichier de détail**. Ici, seulement
+l'invariant qui casse sans bruit.
+
+| Fonctionnalité | Détail | À ne jamais oublier |
+|---|---|---|
+| Tests (le pourquoi de chaque garde) | `tests/CLAUDE.md` | Tout nouveau test est prouvé mordant. |
+| HUD de session, écran de fin commun, budget d'interruptions, icônes, grimoires | `src/components/CLAUDE.md` | Barre et pied du HUD en `position:fixed`, jamais dans un `.enter` ; `p.done(…)` à la fin de la manche, jamais derrière un bouton ; un seul plein écran par entrée sur Home (`lib/interruptions.js`). |
+| Home « une porte », hubs vivants | `src/features/home/CLAUDE.md` | Ordre du bouton dans `lib/homeAgenda.js` ; le Daily reste un bloc à part. |
+| Estimateur TOEIC, thèmes saisonniers | `src/lib/CLAUDE.md` | Ne jamais revenir à `wSum/wTot` (retenue bayésienne) ; `total` peut être `null` ; fenêtres de fête en heure locale. |
+| Mentor qui se souvient (bestiaire, chasse, plan figé, lettre, Chronique) | `src/features/mentor/CLAUDE.md` | Une `ref` que `lib/reviewLookup.js` ne sait pas relire laisse une créature due pour toujours ; `reviewLookup.js` jamais importé hors d'un écran lazy. |
+| Mimic Hunt, Word Tavern | `src/features/games/CLAUDE.md` | Nouveaux items Mimic toujours relus par Jérémy avant d'entrer au jeu ; aucun texte ne cite une lettre d'option. |
+| Coffres, jetons, échelons de maîtrise | `src/features/chests/CLAUDE.md` | Watchers sur objet JSON cloné = garde `useRef` (boucle de +37 k XP vécue) ; **un nouveau jeton se déclare dans `TOKEN_TYPES` ET `token_cap()`** (SQL), sinon le serveur refuse de l'accorder. |
+| Boss, Endless, écoute fidèle au TOEIC | `src/features/exams/CLAUDE.md` | Toute nouvelle disposition du Boss → bumper `BOSS_LAYOUT_V`. |
+| Grammar Gauntlet, Modal Council | `src/features/gauntlet/CLAUDE.md`, `src/features/modals/CLAUDE.md` | Palier XP B des modules à 15 questions. |
+| Audio (nommage, ElevenLabs, génération) | `scripts/CLAUDE.md` | Clips d'options P1/P2 sans lettre ; `npm run check:assets` après tout ajout ; réécrire une réplique = supprimer son MP3 avant de regénérer. |
+| Edge Functions, push | `supabase/CLAUDE.md` | Les textes de push sont en anglais ; la lettre du lundi n'est jamais recalculée en Deno. |
+| Contenu (formats, identifiants) | `src/data/CLAUDE.md` | Chaque question porte une explication ; identifiants continus. |
+
+---
+
 ## Critical Development Rules
 
 ### Architecture (découpage du 2026-09-15)
@@ -320,218 +259,10 @@ scripts/refactor/      — outillage du découpage : extract.cjs (déplace des d
 - **Accuracy gate:** <30% accuracy → 10% XP, 30-49% → 50%, ≥50% → 100%.
 - **TOEIC Progression ranking is the primary bonification metric.** XP Overall is secondary.
 
-### HUD de session (variante E, 2026-09-17/20)
-Proto `prototypes/sessions/`, choix de Jérémy **E** (environnement de C + fil d'encre de D).
-Pendant une manche : barre du haut (retour avec confirmation, fil d'encre, compteur ou minuteur),
-bannière de combo, carte de réponse, bouton Next fixé en bas. Banc des vrais écrans :
-`prototypes/sessions/real.html?sc=<module>` (voir son README pour la liste).
-- **Pur** : `lib/sessionHud.js` (`COMBO_AT` 3·5·7·10·15·20, `streakOf`, `comboAt`, `segMarks`,
-  `segDensity` : cases ≤ 15 Q, serrées ≤ 30, **barre continue au-delà** — les examens),
-  testé par `tests/check_session_hud.cjs`. Hook `components/useSessionTrack.js`
-  (`{results, record(ok|null), streak, combo, reset}`) : `record` s'appelle **depuis le
-  gestionnaire de réponse** (un événement, donc un seul son en StrictMode).
-- **Composants** (`components/SessionHud.jsx`) : `SessionTop {n, cur, results, groups?, aside?,
-  sub?, count?, streak, onQuit, quitCopy?, onSheet?}`, `ComboBanner`, `AnswerCard {ok, answer?,
-  timeout?, label?, why?, children}`, `NextBar {onNext, last?, label?, disabled?}`, `ListenDisc`.
-- ⚠️ **Barre et pied sont en `position:fixed`** : ne JAMAIS les rendre dans un `.enter` ou un `.sk`
-  (ils animent `transform`, et un `fixed` suit alors le bloc au lieu de l'écran). Les rendre à côté
-  du contenu animé, dans un fragment ; une garde de dev l'avertit en console. `sticky` ne marche pas
-  non plus sous `.app` (`overflow-y:auto`) — c'est ce qui rendait l'en-tête du Mock Test inerte.
-- La présence de `.ss-top` **masque la tab bar** sur mobile (`.app:has(.ss-top)`, CSS pur, aucun
-  état dans `App()`) : ne rendre `SessionTop` que pendant les questions, jamais sur une intro ni un
-  écran de fin. Sur bureau (≥ 768 px) la barre latérale reste, et le HUD est décalé de `left:200px`.
-- **Un module à minuteur** met le chrono dans `aside` (le compteur passe alors dans `sub`) et **fige**
-  le décompte pendant la feuille « Leave this round? » via `onSheet` — sinon la question expire sous
-  une fenêtre modale. Deux façons : `useState` + `paused` dans les deps de l'effet quand le minuteur
-  est une chaîne de `setTimeout` (Irregular Crypt, Passive Forge), ou une **ref** lue dans le tick
-  quand l'effet remet le minuteur à son maximum en se relançant (Audio Blitz, Sentence Builder,
-  Particle Picker). Se tromper de façon remet le minuteur à neuf à chaque ouverture de la feuille.
-- **Le compteur reste sur la question affichée.** Un module dont le compteur avance au clic (c'est le
-  compteur du score : P3/P4, Part 6, Part 7) passe `cur={ph==="fb"?Math.max(0,n-1):n}`, sinon il saute
-  une question sous les yeux de l'élève pendant le retour.
-- **Groupes** : un module à conteneurs passe `groups` (tailles) — conversation P3/P4, talk, texte
-  Part 6, passage Part 7, plateau de Modal Match — et le fil montre une coupure entre chacun.
-- **Examens** (Mock, Boss, Endless) : marques **neutres**, pas de `useSessionTrack` du tout
-  (`results={new Array(answered).fill(null)}`) — un examen ne dit rien avant la fin, et un combo
-  sonore en plein Boss n'a aucun sens. Section dans `sub`, chrono en `aside`, `quitCopy` qui dit la
-  vérité de l'épreuve (Boss et Endless reprennent dans la journée, un Mock non).
-- **Clavier iOS** : un pied fixe passe derrière le clavier, qu'iOS ne déplace pas. Un module à saisie
-  (Irregular Crypt) garde son bouton de validation **dans le flux**, sous les champs.
-- **Rejouer sans remonter** (GerInf, Phrasal Dojo) : le `resetQuiz` interne appelle `track.reset()`,
-  sinon le fil garde la manche précédente.
-- **Fin sur minuteur** (temps écoulé) : la marque se pose dans un `useEffect([phase])` avec une ref
-  garde, pas dans le tick (Sentence Builder ne marquait rien du tout avant le 2026-09-20).
-- **Couvert** : Drill, chasse, 8 quiz, Listening P1-P4, Part 6, Part 7, Exam Simulation, Word Tavern,
-  Audio Blitz, Clue Hunter, Sentence Builder, les 4 épreuves du Gauntlet, Modal Match et Sort, GerInf,
-  les 2 modes de Phrasal Dojo, Mock, Boss, Endless. **Hors périmètre** : Speed Match et Word Fall (HUD
-  et boucle d'animation propres), Duel, Flashcards, Battle Scan.
-### Écran de fin de session commun (`SessionResult`, 2026-09-17)
-Proto `prototypes/victory/`, choix de Jérémy **V3 « Verdict d'Aldric »** (tient en mode clair), niveau
-dans le parchemin, promotion de ligue en cérémonie « Ascension », examens gardés + cérémonies.
-Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
-`components/SessionResult.jsx` ; le skill `add-module` en tient la liste de contrôle.
-- **Chiffres réellement versés, étape par étape.** `lib/xp.js` : `gateSteps(base,sc,tot,modId,ctx)` rend
-  `{xp, focusHit, steps}` et `gateXp` lui délègue (même calcul, testé : dernière étape = XP versée) ;
-  `settleXp` rend aussi ses `steps` (weekend, streak, flash hour, underdog, daily doubler, +10). Libellés,
-  verdict et épilogue d'Aldric dans `lib/sessionText.js` (pur). Avant, les écrans rappelaient
-  `p.gate()` au rendu, après l'incrément des compteurs du jour : XP affichée ≠ versée.
-- **Chaîne dans `App()`** : `settleSession(modId,sc,tot,baseXp,{spotlight})` (portes + settleXp + coffres,
-  sans toast ni son, pose `lastSession` et ouvre la session) → stats, `recordModule`, `checkMission`… →
-  `sealSession(c,sid)` (ajoute la mission du jour, recalcule niveau et ligue) → `sv(c)` → rend le `sid`.
-  Handlers : `miniSession` (mini-modules, Spotlight compris), `drillDone`, `dailyDone`, `gameSession`
-  (Speed Match, Word Fall : record et coffres dans `recordGame`, partagé avec `gameDone` du Duel), et
-  les handlers en ligne de `routes.jsx` (sbuild, ablitz, clue, hubs Gauntlet/Modal). **Base XP** en
-  entrée : les portes ne s'appliquent qu'une fois (bforge, tavern et clue les appliquaient deux fois).
-- **Le module** : `mistakesRef` (erreurs à la réponse : `{tag, prompt, yours, correct, why, noBlank?, ref?}`,
-  `_____` dans `prompt` pour le trou, « … » dans `correct` pour deux trous). **`ref:{k,cat,part}`** fait
-  entrer l'erreur au bestiaire (voir « Mentor qui se souvient ») : le module passe alors `mistakesRef.current`
-  en **dernier argument** de `p.done` (`drillDone` 5e, `dailyDone` 3e, `miniSession` 4e, `gameSession` 4e,
-  `onModuleDone` des hubs 5e), suivi au plus d'un `extra` posé sur la session (`miniSession` 5e : morsures de
-  Mimic Hunt). `sidRef.current=p.done(…)`
-  **à la fin de la manche, jamais derrière un bouton** (« Collect XP » perdait l'XP si l'élève quittait),
-  puis `<SessionResult session sid name mistakes onContinue onReplay>{extras}</SessionResult>` (`memory` :
-  la carte « Aldric remembers », rendue AVANT les leçons ; `session.turn` : cérémonie, voir « Mentor qui se souvient »). Le
-  composant n'affiche QUE `session.id===sid` (sinon parchemin « sealing », Continue au bout de 2 s).
-  Fin sur minuteur (dernière vie, auto-submit) : envoi dans `useEffect([phase])` + `sentRef`, **placé
-  avant tout `return`** (`lintgate` ne fait pas échouer un rules-of-hooks : `npx eslint <fichier>`).
-  Record lu dans `p.u` AVANT `p.done` (`sv()` l'écrit tout de suite). Jeux au score : `mode="points"`
-  ou `"time"` + `points`/`pointsLabel` ; sans liste d'erreurs (Speed Match), ne pas passer `mistakes`.
-- **Hubs internes** (Gauntlet, Modal Council) : `subDone` RENVOIE `onModuleDone(...)` et ne ferme plus
-  l'épreuve ; Continue = `closeSession` + retour au hub, Play again = `closeSession` + `playBGM` + `subRun++`
-  (clé de l'épreuve). GerInf / PhrasalDojo : Continue → mode hub, Play again → reset (erreurs comprises).
-  Ailleurs, Play again = `replaySession` (`runKey` dans la clé du `LoadBoundary` de `pg()`).
-- **Tant qu'une session est ouverte** (`openSessionRef`, capturé à l'octroi) : coffres confirmés
-  (`deliverChest`), Darics (`grantMarks`) et trophées (`sv`) vont **dans le parchemin**, pas en toast
-  (le toast n'est rendu que sur les onglets) ; Aldric attend (`pg()`) ; la route ne relance pas sa
-  musique (`if(!lastSession)playBGM(…)`). Quitter la route autrement que par Continue ferme la session
-  (effet sur `[sp]`). Plein écran fixe z 150, **jamais dans un `.enter`** (translateY).
-- **Examens** (Mock, Boss, Endless) : gardent leur écran de résultats et le toast d'XP ;
-  `addXp(gxp,{ceremony:true})` pose une file `examCeremony` (niveau puis ligue, coffre de promotion)
-  que `ExamCeremonies` (`components/Ceremonies.jsx`) affiche 1,4 s après, avec son propre jingle.
-- Banc sans base : `prototypes/victory/real.html` (vrai composant, scénarios, clair/sombre).
-
-### Budget d'interruptions (2026-09-24)
-Proto `prototypes/ceremony-budget/`, choix de Jérémy **B « une par retour »** (avant : jusqu'à 6 plein écran et
-7 taps après une manche). `lib/interruptions.js` (pur, `tests/check_interruptions.cjs`) :
-- **Écran de fin** : un seul plein écran, `sessionFullscreen(s)` = retournement > promotion. Avec les deux, la
-  promotion devient une ligne du parchemin (`inlineLeague`), son coffre reste dans la liste. Le retournement
-  n'attend l'Ascension que si elle a lieu (sinon il ne s'afficherait jamais). Jingle des trophées tu quand le
-  retournement joue le sien.
-- **`App()`** : une *entrée* = chaque arrivée sur Home racine (`homeEntry`). Au plus un plein écran non demandé par
-  entrée : moment d'Aldric **de palier** (`MILESTONE_MOMENTS` : ligue, série, niveau, examens), puis la lettre du
-  lundi. Une session à cérémonie (ou un examen à cérémonies) consomme l'entrée suivante (`spentNextRef`). Moments
-  **contextuels** (Shop, Mentor, verdict, premier coffre) et **rediffusions** (`replayNarratorMoment`) hors budget.
-  Le moment affiché est verrouillé (`narratorActive`) et la lettre aussi (`letterEntry`) : sans verrou, le budget
-  qu'ils consomment les retirerait aussitôt. Compteurs doublés en refs (effets du même commit).
-- Banc : `prototypes/victory/real.html?sc=promotion&turn=1`.
-
-### Home « une porte » (2026-09-23)
-Proto `prototypes/home-focus/`, choix de Jérémy **B** ; la décision du 17/09 (« le plan ne va pas sur Home »)
-est **assouplie** : le plan figé s'y affiche. Un seul grand bouton = la prochaine chose à faire, calculée par
-`lib/homeAgenda.js` (pur, `tests/check_home_agenda.cjs`) : **coffre > premier Mock > mission du jour (`pick`,
-re-tirage compris) > autres quêtes du plan**. Puis « Also today » (2 lignes), un lien « Today's path » (+N),
-le **Daily Challenge en bloc à part** (jamais dans l'agenda), évènements et fête en lignes de texte (« Turn off »
-reste là : surface d'opt-out), astuce repliée. Niveau/ligue en une ligne fine (garde « this week »). Bonus en
-une ligne `bonusLine` (les pastilles colorées ont disparu). **Quick Start supprimé** (doublon de Train). Seule
-animation : le pulse du coffre quand il est le bouton. Journée finie → « Today's path complete ». Mêmes props
-qu'avant, aucun état dans `App()`. Styles `.hm-*` dans `appCss.js`. Banc : `frame.html?v=A&sc=busy|typical|done|new`.
-
-### Hubs vivants (tuiles « Coffre », 2026-09-17)
-Proto `prototypes/living-hubs/`, choix de Jérémy **C « Coffre »**. Les listes de Train (Exercises,
-Grammar & Vocab, Tips), Games, Listening et Reading rendent `HubTile` + `HubShelf` (`components/HubTile.jsx`).
-- **État pur** `lib/hubStatus.js` (`hubItemStatus`, `hubSummary`, `tests/check_hub_status.cjs`) : dernier score
-  (`moduleScores[id].history`), progression vers le **prochain échelon** de maîtrise (`s.tier`, voir « Chest System » :
-  la tuile montre le coffre suivant avec son chiffre romain, « Mastery I » en or une fois un échelon gagné, et
-  l'étagère le total des coffres gagnés puis le prochain, sans « of N »), tarif de la prochaine
-  partie par `nextRunMult` (`lib/xp.js` : Bypass Token, événements, `farmMult`, testé égal à l'étape « farm »
-  de `gateSteps`). Étiquette « ½ XP / Low XP / No XP » seulement quand le tarif baisse.
-- **Déclarer l'item** dans la liste du hub : module simple = son `id` suffit ; hub à épreuves = `subs:[…]` +
-  `unit:"trials"|"parts"` (Gauntlet, Modal, Listening et Reading dans Exercises : maîtrise agrégée, meilleur
-  tarif encore disponible) ; jeu sans précision = `game:"matchEasy"|"wordFall"|"duel"` (record, pas de coffre) ;
-  outil sans score = `plain:true`. Liste noire (mocks, boss, daily, csess) → tuile simple.
-- Les hubs reçoivent `events` (`activeEvents` d'`App()`, via le contexte des routes pour Listening/Reading) :
-  sans, un Flash Hour afficherait « ½ XP » à tort. Étagère à partir de 3 coffres. Précision sous 80 % en gris
-  pointillé (l'orange se confond avec l'accent du skin Doré). Banc des vrais écrans : `prototypes/living-hubs/real.html`.
-
-### TOEIC Score Estimator (Chantier A — refonte V2, 2026-06-09)
-- `estimateToeic(raw, total)` — piecewise curve, harder to gain at the top. Échelle **section** (5-495), pas un total.
-- `estimateTOEICScore(ms, opts)` — **retour structuré** `{total, listening, reading, estimable, evidence, reason?}`.
-  - **`estimable`** : `true` (chiffre complet), `"partial"` (une seule section calculable → `total:null`), ou `false` (`total/listening/reading:null` + `reason:"insufficient_data"`). **`total` peut être `null`** : tout call site doit le gérer (un cold-start à 200 trompeur n'existe plus).
-  - **Gating A.1** (seuils = décision produit, ne pas toucher sans validation) : Reading exige ≥80 Q cumulées sur les modules contribuant au Reading, Listening ≥40 Q, **OU** ≥1 Mock complété (débloque + sert d'ancrage).
-  - **Sections normalisées proportionnellement** (`wSum/wTot`). ⚠️ NE PAS revenir au hack `wSum+=(1-wTot)*0.01` : il écrasait le Reading des profils à couverture partielle (défaut historique "Reading 8/495").
-  - **Reading backbone** (A.2) : drill .22, p6 .15, p7 .18, wordfam .06, connsort .06, prepdrill .05, gerinf .05, falsefr .04, pvdojo .04, sbuild .04, gauntlet(moy 4) .11.
-  - **Reading support (Chantier B, 2026-06-10)** — poids FAIBLE, garde-fou validité (backbone dominant) : tavern .05, clue .04, traps .04, modals(moy match+sort) .04, bforge .03, timesim .03, stratquiz .02, daily .03. Principe : tout module à précision réelle qui donne de l'XP bouge le score (exceptions : Flashcards 0 XP + jeux d'arcade sans précision).
-  - **Listening** (A.3) : lisP1 .18, lisP2 .27, lisP3 .25, lisP4 .22, ablitz .08 ; support **mimic_listen .04** (Mimic Hunt à l'oreille, 2026-09-19).
-  - **Groupe mock** (débloque l'estimation + bonus asymétrique) : mock1, mock2, boss, **endless** (Endless = full TOEIC, ajouté Chantier B).
-  - **`MODULE_TOEIC_MAP`** (juste avant `partOfModule`) = source unique module→{part,section,score}, consommée par partOfModule + partAccuracies (Mentor/Focus). Fix Chantier B des ids falsefr/pvdojo/ablitz qui étaient invisibles au Mentor.
-  - **Export CSV** : itère `EXPORT_MODULES` (superset, PAS `MISSION_MODULES`) → toutes les colonnes modules présentes depuis le 2026-06-10.
-  - **A.5 v2 — retenue bayésienne** (2026-09-15, remplace `confW`) : `section = (wSum + PRIOR_K×PRIOR_ACC) / (wTot + PRIOR_K)` avec `ew = w × q/(q+EVID_HALF)`, `EVID_HALF=30`, `PRIOR_K=0.12`, `PRIOR_ACC=0.60`. ⚠️ **NE PAS revenir à `wSum/wTot`** : l'ancien `confW` apparaissait au numérateur ET au dénominateur, donc il se **simplifiait** — 4 questions justes sur 4 valaient 300 questions à 100%, et 1 module sur 23 suffisait à afficher Reading 495/495. C'est le `+PRIOR_K` qui fait que couverture et volume comptent. Effet : au-dessus du prior un profil mince descend, en dessous il monte.
-  - **Bonus mock asymétrique (Kamel-safe)** : `+(acc−0.60)×100` **points** par mock >60%, cap **+40 pts** (`MOCK_BONUS_MAX`). ⚠️ Il était **multiplicatif** (`×(1+bonus)`, cap +20%) : +18% sur un total de 843 donnait 995 → plafonné à 990, donc **82,5% de précision suffisaient à afficher 990** (signalé par un étudiant iabd2627 le 2026-09-15). Additif, la sur-perf mock reste récompensée sans saturer l'échelle. Ne pénalise toujours jamais une mauvaise perf mock.
-  - **Validation vivante** : `tests/validate_toeic_shrinkage.cjs` compare l'estimateur de `HEAD` à celui du working tree (aucune copie de l'algo maintenue dans le test) sur les pathologies + la cohorte réelle. ⚠️ `validate_toeic_estimation.cjs`, lui, embarque **sa propre copie** de l'algo Chantier A : c'est un artefact de calibration historique, il ne teste PAS le code de prod.
-  - **A.4 ancrage Boss** : **RETIRÉ le 2026-09-24** (décision de Jérémy). Dormant depuis juin, jamais validé sur des Boss réels ; le Boss compte déjà dans le groupe mock (déblocage + bonus additif plafonné). `estimateTOEICScore(ms)` ne prend plus d'`opts`. Les copies de l'algo dans `validate_toeic_estimation.cjs` / `phase2_widen_experiment.cjs` (artefacts de calibration) le gardent : ne pas s'y fier.
-  - **Validation** : `tests/validate_toeic_estimation.cjs` (corrélation + cas-test sur CSV cohorte). (`verify_patched_estimation.cjs` supprimé 2026-06-10 — il lisait `src/App_patched.jsx` qui n'existe plus.) Patch de prod : `scripts/patch_chantier_A_toeic_estimation.cjs` (idempotent, écrit `App_patched.jsx`).
-  - **Critère d'évidence** : porte sur les **questions alimentant une section TOEIC**, PAS sur toutes les questions hors-flashcards (le Clue Hunter, par ex., ne donne aucun signal de section → ne débloque pas l'estimation).
-
 ### Flashcards
 - **Flashcard accuracy is NOT a performance metric.** SRS self-evaluation, not right/wrong.
 - **Flashcards give 0 XP.** Reward for vocabulary knowledge happens in Word Tavern.
 - **Battle Scan does NOT populate moduleScores.** Only `u.battleScan` holds placement results. The old code that wrote scan answers to moduleScores triggered false "Explorer" achievement — removed 2026-04-17.
-
-### Word Tavern 🍺
-- Route `sp==="tavern"`. 15 questions per session, 3 types (def→word, word→def, fill-in-blank).
-- Distractors picked from SAME vocabulary domain as the correct card.
-- **Failed words auto-reset in SRS** (`cardStates[id] = {ease:2.5, interval:0, nextReview:today()}`) → they come back in next flashcard review.
-- BGM: `bgm_tavern.mp3`.
-
-### Chest System
-- **`ChestEarnedToast`** at grant moment (bottom-center, above tab bar). Queue (FIFO) + anti-interruption during tests (boss/endless/mock) + queue dispatcher useEffect. **Exception** : un coffre gagné pendant qu'un écran de fin est ouvert s'affiche dans le parchemin (`deliverChest`, voir « Écran de fin de session commun »).
-- **`ChestOpenModal` v3 « Crack & Cards »** (2026-09-16, proto `prototypes/chest-animations-v3/`) — chute du coffre, **3 taps** (appui long = ouverture directe) dont la lumière annonce la **meilleure rareté du butin** (peut sauter d'un palier), couvercle qui bascule, puis récompenses en **cartes face cachée** à retourner (inspection + flip 3D, reflet holo Epic/Legendary), « Reveal all », **récap** (meilleur objet en vedette) → Collect all. Skip à tout moment.
-  - **Découpage** : `Chests.jsx` rend le squelette et relaie les événements ; `chestSequence.js` = moteur impératif (Web Animations API sur refs, garde `gen` contre les séquences périmées) ; `ChestCards.jsx` (cartes, tuiles) ; `components/particles.js` (particules canvas `createChestFx`, une instance par modal ; partagé avec l'écran de fin de session) ; `chestTheme.js` (couleurs, fond sombre fixe : hex bruts + marqueurs `/*fond local*/`, jamais `tone()`) ; sons `playChest*/playCard*/playLoot*` + `duckBGM` dans `sounds.js`.
-  - **Ordre et regroupement** dans `lib/chestReveal.js` (pur, `tests/check_chest_reveal.cjs`) : monnaies sur une carte, tokens sur une carte, puis chaque objet à rareté seul, du moins au plus rare. Badge = rareté de l'**objet** (les cheat sheets en ont une), jamais celle du coffre.
-  - ⚠️ **`onOpen` part au montage** (la V2 attendait 2 s), **une seule fois** (`openedRef` : StrictMode remonte le modal en dev, un second `doOpenChest` retaperait la RPC). Si les 3 taps précèdent le résultat, le coffre « résiste ». `result.ok!==true` → message d'erreur, aucune carte (rien n'a été crédité, voir `doOpenChest`) ; 15 s sans réponse → message provisoire.
-  - ⚠️ `.chx-stage` en **`overflow:clip`** : les rayons (1000 px) débordent et un conteneur `hidden` reste défilable par programme (la scène glissait de ~190 px). `linear()` passé à `animate()` lève une TypeError sur Safari < 17.2 : détection + repli `cubic-bezier` dans `chestSequence.js`.
-  - Banc de test sans base ni compte : `prototypes/chest-animations-v3/app-harness.html` (serveur Vite `festival-proto`, port 5606), vrais composants en StrictMode, réseau normal/lent/muet/échec, mouvement réduit, mode clair.
-- **`TreasureChestSvg tier`** (0 Novice bois et corde · 1 Warrior acier bleui · 2 Champion bronze runique · 3 Legendary obsidienne et or) : même SVG pour le toast, le modal et le bouton de Home, calques `chx-lid/chx-lid-int/chx-mouth/chx-seam/chx-lock` animés par le modal.
-- **Bouton « Treasure Chest Available » de Home** (2026-09-17) : montre le coffre du palier le **plus élevé** de la file (`pendingChestTier`, calculé dans `App()` sur `chestPending` via `CHEST_TIER` : Home ne peut pas importer `features/chests/`), teinte du palier dans `.home-chest.tN` (`appCss.js`, triplets rgb = `CHEST_TOAST_COLOR`), pastille ×N. L'ouverture reste FIFO (`chestPending[0]`).
-- **`getTriggerLabel(trigger)`** converts trigger IDs to human FR/EN labels (e.g. `mock_1` → "Mock Test 1 completed", `daily_login_2026-04-27` → "Daily login reward", `mastery_drill` → "Module mastery: drill").
-- **Legendary differentiation**: 400ms gold radial flash before toast + shimmer sweep on toast + 12s display.
-- **Teacher account CAN receive chests** (GHOST_NAME filter is only for TeacherDash student list — NOT for chest grants, despite older CLAUDE.md wording).
-
-#### V2 reward types (since 2026-04-27)
-- **Avatars / Skins** : V1 cosmetics (player_rewards table, equipped via `students.skin_id` / `u.avatar`)
-- **Frames** : avatar borders/glow CSS (player_rewards `reward_type='frame'`, equipped via `students.frame_id` / `u.equippedFrame`). 8 entries in FRAMES.
-- **Titles** : text label under name (player_rewards `reward_type='title'`, equipped via `students.title_id` / `u.equippedTitle`). 12 entries in TITLES.
-- **Cheat Sheets** : codex pages rendered via GrimoireReader wrapping (player_rewards `reward_type='cheat_sheet'`). 3 stubs in CHEAT_SHEETS V1, more content authoring deferred.
-- **Tokens** (stackable consumables) : 7 types in TOKEN_TYPES, stored in dedicated `player_tokens` table (composite PK user×class×type, qty, cap-aware via `grant_token` / `consume_token` SQL helpers). `diminishing_bypass` (cap 5), `streak_shield` (cap 3, **passive auto-consume** at load if 1-day gap detected), `daily_reroll` (cap 1, clickable from Collection → moves the mission to the next quest of the frozen plan, see « Mentor qui se souvient »), `mock_reset` (cap 2 — semantic deferred), `boss_reset` (cap 1, in-context CTA on Train Mocks → arms `u.boosts.bossResetArmed` → bypasses canUnlockBoss 24h cooldown), `endless_resurrect` (cap 2, in-context CTA → arms `u.boosts.endlessResetArmed` → bypasses getEndlessState cooldown). **Tout jeton armé vit dans `u.boosts`** (jsonb persisté, depuis le 2026-09-19 : `bypassArmedModule`, `bossResetArmed`, `endlessResetArmed`, `mockResetArmed`, comme les boosts Daric) : au haut du profil, le drapeau n'allait dans aucune colonne et le jeton, déjà consommé par `consume_token`, était perdu au rechargement, `insight_token` (cap 3, drops 30% on Légendaire ; consumed from Collection → `insightText`, stored in `review.insights`, reread in the Mentor's Chronicle).
-
-#### V2 segmented drop tables (DROP_TABLES in chests.js)
-- **Novice** : 50-150 XP + 1 token (Bypass/Shield/Reroll)
-- **Guerrier** : 200-400 XP + 1 cosmetic (frame OR title) + 2 tokens (non-premium)
-- **Champion** : 500-800 XP + 1 cosmetic (avatar/skin/frame/title min rare) + 3 tokens (Bypass/Reroll/Mock/Endless)
-- **Légendaire** : 1000-1500 XP + 1 cosmetic legend (avatar OR skin) + 1 cosmetic epic+ (frame OR title) + 3 tokens (Bypass/Reroll/Mock/Boss/Endless) + Cheat Sheet guaranteed + 30% Insight Token
-
-#### V2 anti-frustration system (Conversions)
-- When the user owns the full pool of a cosmetic type, `pickRewards` drops a **duplicate** instead of the XP fallback (`{type, id, rarity, duplicate:true}`).
-- Profile → **Conversions** sub-view exposes : "3 doublons → 1 token" (requires count ≥ 4 and only deletes 3 rows so the original is **always preserved** — see `feedback_destructive_action_safety.md`) and "5 tokens non-premium → 1 token premium". Helpers : `convertCosmeticDups`, `convertTokensToPremium`.
-
-#### V2 recurring chest sources (5 triggers added 2026-04-27 step 2)
-- `daily_login_<today>` (Novice) — streak ≥ 1, anti-spam via unique trigger (date in id)
-- `weekly_toeic_<wkId>` (Guerrier) — +25 pts TOEIC vs last weekly_snapshot (recomputed via `estimateTOEICScore`)
-- `podium_<prevWk>` (Guerrier) — top 3 of class_code on the just-finished week (from `weekly_snapshots.xp_this_week`)
-- `mission_streak_<n>` (Guerrier) — when `u.mission.streak` (in jsonb) crosses a multiple of 7. Reset on missed day at load.
-- `mastery_<modId>` (Champion) — **échelons de maîtrise depuis le 2026-09-19** (proto `prototypes/mastery-tiers/`, variante B « coffre suivant ») : I = 50 Q à 80 % sur le cumul (`mastery_<mod>`, inchangé), II = 150 Q, III = 300 Q (**Légendaire**), puis un échelon tous les +150 Q (`mastery_<mod>_<n>`, Champion) ; au-delà de I, 85 % sur les ~50 dernières questions (`recentAcc`), et **7 jours au moins entre deux échelons** d'un module. 50 Darics par échelon (`mastery_marks_<mod>[_<n>]`). Échelon atteint = `moduleScores[mod].mt = {n, date}`, posé par le watcher d'`App.jsx` (`markTier`, `sU(prev => …)` + save) sur **toute** réponse du serveur : accordé → daté du jour ; déjà servi à l'échelon I = coffre d'avant les échelons → daté `TIERS_EPOCH` (2026-09-19 : rattrapage choisi par Jérémy, tout le monde attend 7 jours au lieu d'une avalanche de coffres II). **Sans `mt`, rien n'est acquis** (supposer l'échelon I gagné priverait de coffre tout module maîtrisé après la mise en ligne). `recordModule` recopie `mt` (il reconstruit l'objet). Garde anti-boucle par module ET par échelon. **Blacklist** : `mock1/2/3, boss, daily, csess, hunt`. Règle, seuils et liste noire dans `lib/hubStatus.js` (`TIERS`, `tierStatus`, `hubTierStatus`, `tierTrigger`, `MASTERY_BLACKLIST`), lus par le watcher ET par les tuiles : ne jamais les recopier ailleurs. Libellé : « Mastery II: Word Tavern » (`chestLabels`). Tests : `check_hub_status` (section 8).
-
-#### V2 useEffect anti-loop pattern (CRITICAL — see `feedback_useeffect_dep_by_ref.md`)
-The Module Mastery watcher used `[u && u.moduleScores]` as deps, which changes reference on every `sv()` (because `u` is JSON-cloned each save). Each chest opening triggered `sv` → re-fire → 10+ parallel `grantChestLocal` calls → race against `hasUniqueTrigger` before `chest_log` writes were visible → duplicate `pending_chests` rows, runaway loop, +37k phantom XP. **Fix** : per-modId `useRef` guard so each module is attempted at most once per mount. Apply this pattern to any V2 watcher that depends on a JSON-cloned object.
-
-#### V2 schema migrations
-SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.sql` :
-- New table `player_tokens` (composite UNIQUE on user×class×type, RLS off in line with siblings)
-- `grant_token(user, class, type, amount, cap)` SQL function : cap-aware UPSERT
-- `consume_token(user, class, type, amount)` SQL function : decrement with sufficiency check
-- `students.frame_id`, `students.title_id` columns (mirror skin_id pattern)
-- `chest_log.reward_type CHECK` relaxed to allow `multi/frame/title/cheat_sheet/token`
-- `player_rewards.reward_type CHECK` relaxed to allow `frame/title/cheat_sheet`
 
 ### Teacher Account
 - The `Teacher` account syncs to Supabase but is **hidden from all leaderboards** (League, TeacherDash student list).
@@ -539,45 +270,10 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - **Teacher student row lives on `class_code='teacher-internal'`** (permanent group, `end_date=NULL`) — decoupled from any student cohort since 2026-04-17. This insulates Jérémy's account from cohort cutoffs (e.g. `idrac2026` ending 2026-06-28).
 - Teacher dashboard login still uses `groups.teacher_code` (code formateur géré en env, voir Vercel). This is independent of the Teacher student row's class_code.
 
-### Listening (Boss Test — TOEIC Faithful)
-- **P1:** Photo + blind A/B/C/D. Student can answer DURING audio.
-- **P2:** Blind A/B/C. Student can answer DURING audio.
-- **P3/P4:** Preview questions BEFORE audio. Answer after.
-- **P5-P7:** Text + options, no audio.
-
-### Boss Test — The Final Arena
-- **Options permutées de façon FIGÉE par item** (Part 2 : `BOSS_P2_SHUF` ; Parts 3 à 7 depuis le 2026-09-18 :
-  `lib/optionShuffle.js` avec `seedFromId`, `seededShuffleOpts` au pas 0.67) : la reprise de session relit des
-  réponses rangées par index, un tirage par ouverture les désalignerait. Toute nouvelle disposition → bumper
-  `BOSS_LAYOUT_V` (3 depuis le 2026-09-18), sinon une session reprise lit ses réponses de travers. Mock Tests :
-  tirage neuf à chaque passage (pas de reprise). Part 1 laissée dans l'ordre de ses clips (déjà répartie).
-- Unlocked after completing Mock Tests 1, 2, and 3.
-- 202 questions, 120 min timer, Listening first then Reading.
-- 24h cooldown. Best score preserved.
-- XP: 100 base + 3 per correct + bonus at 600+ and 800+.
-- Achievements: "Arena Conqueror" 🐉 (complete) + "Dragon Slayer" 🔥 (800+).
-- BGM: `bgm_final.mp3`.
-
-### Endless Arena ⏳
-- Unlocked after Boss Test with ≥650 TOEIC. 24h cooldown.
-- Random full TOEIC test generated from all content pools.
-- Results screen shows weakness reco + suggested next module.
-- BGM: `bgm_endless.mp3`.
-
 ### League System
 - 7 tiers: Bronze (0) → Silver (200) → Gold (600) → Platinum (1500) → Diamond (5000) → Champion (10000) → Légende (30000).
 - `getEffectiveLeague()` requires TOEIC estimated score ≥ 400 to display Légende.
 - Season structure S1-S4, weekly snapshots, 3 tabs: Semaine, Général, Progrès.
-
-### Festival themes 🎃 (2026-09-16)
-- **Mécanisme** : pendant une fenêtre, `App.jsx` pose `fest-<id>` **à la place** de `skin-<id>` sur `.app` (ligne `lc`). `u.equippedSkin` / `skin_id` jamais touchés, le skin revient seul. Jamais de superposition : 13 skins sur 16 tiennent `.crd::before/::after` en `!important`. Gardé par `u` comme le skin → l'onboarding reste canonique. Avatar, frame, titre intacts.
-- **Nom `festival`, jamais `season`** (la Ligue S1-S4 et `seasons` jsonb l'ont déjà).
-- **4 fêtes** (`FESTIVALS`, `src/lib/festivals.js`) : `halloween` 24/10→2/11 · `yule` 14/12→4/1 · `spring` Pâques −5→+1 (Meeus) · `solstice` 19→28/6. Dates **locales**, bornes incluses (pas `today()`, qui est UTC). `festId` (état primitif d'`App()`) relu par un tick horaire : la bascule arrive sans rechargement.
-- **CSS** : paquets `.fest-<id>` / `.light.fest-<id>` après les `.skin-*` dans `appCss.js`, collés tels quels depuis `prototypes/festival-themes/festivals.css` (palettes validées par Jérémy, ne pas les retoucher sans son feu vert). Aucun keyframe propre. En clair, fond pâle propre à la fête (contrairement aux skins).
-- **Opt-out** localStorage `toeic-festivals` = `off` (patron `toeic-sound`), pas de colonne Supabase. **L'opt-out gagne toujours**, forçage compris. Surfaces : lien « Turn off » du bandeau Home, toggle « Seasonal themes » dans Profil → Style (visible pendant la fenêtre même désactivé). `setFestivals(on)` dans `App()` relit tout de suite.
-- **Forçage de test** : `?fest=<id>` (ou localStorage `toeic-fest-force`) lève la fenêtre de dates ; `?fest=none` retire la fête pendant une vraie fenêtre. Hors fenêtre, dates et jours restants sont ceux de la prochaine occurrence.
-- **Surfaces** (anglais) : message d'accueil `greeting` au lieu de « Welcome back », bandeau Home sous les pastilles (fin, jours restants, Turn off), bandeau Profil → Style. `meta[name=theme-color]` (les 3 d'index.html) suit la fête et le mode, hors fête `#0f0c08` / `#f5f0e8` : `themeColor` recopie le `--bg` du CSS, le test vérifie l'égalité.
-- **Ajouter une fête** = une entrée `FESTIVALS` (icône dans `GAME_ICON_PATHS`, `themeColor`) + ses deux paquets CSS ; `check_festivals` refuse tout oubli et tout chevauchement. Lot 4 non décidé : BGM `bgm_home_<fest>`, coffre `fest_<id>_<année>`, cosmétique exclusif, mention Shop (un skin acheté pendant une fenêtre ne se voit qu'après).
 
 ### Haptic Feedback
 - `haptic(key)` dispatches to `navigator.vibrate()`. Silent on iOS.
@@ -589,201 +285,6 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - `SELF_MANAGED` routes that handle their own BGM: boss, endless, matchE, wfall, duel, sbuild, clue, tavern, **gauntlet**, modals, bforge, shop, **mimic**. These are excluded from centralized control. `npm run check:assets` vérifie depuis le 2026-09-19 que chaque `"bgm_x"` nommé dans `src/` existe et est suivi par git.
 - Routes à écran de fin commun : `if(!lastSession)playBGM(…)`, sinon la musique repart sous le parchemin à chaque rendu.
 - Auto-start on first user interaction: only triggers `bgm_home` if `tab==="home" && !sp`.
-
-### Grammar Gauntlet 🛡️ (S2 major feature, delivered 2026-04-22)
-- Route `sp==="gauntlet"` → `GauntletHub` component.
-- 4 sub-modules rendered via internal `subMode` state: `"irregular"` (IrregularCrypt), `"tense"` (Chronomancer), `"passive"` (PassiveForge), `"relative"` (RelativeWeaver).
-- `onModuleDone(subId, sc, tot, xp)` prop bubbles completion to App, which runs `settleSession("gauntlet_"+subId, …, {spotlight:true})` → stats → `recordModule` → `checkMission` → `grantWeeklyChest` if perfect → `sealSession` → `sv`, and **returns the session id**. The sub-module shows `SessionResult` itself (Continue → hub, Play again → `subRun` key).
-- Each sub-module has its own BGM: `bgm_crypt` / `bgm_chrono` / `bgm_forge` / `bgm_weaver`.
-- Content pool: 270 items total (80/70/60/60). Session size 15 everywhere.
-- TOEIC estimator: reading backbone `gauntlet` weight **0.11** (avg accuracy across the 4 sub-modules, `lib/toeic.js` `rdParts` ; the 0.15 of the first delivery was rebalanced in Chantier A.2).
-
-### Modal Council ⚖️ (S2 module, delivered 2026-04-30)
-- Route `sp==="modals"` → `ModalCouncilHub` component.
-- 2 sub-modules : `"match"` (ModalMatch — tap-to-pair, 3 boards × 5 pairs = 15 items) + `"sort"` (ModalSort — tap-to-bucket among 4 functions: Obligation / Advice / Possibility / Deduction).
-- Same `onModuleDone(subId, sc, tot, xp)` pipeline as Gauntlet (session id returned, `SessionResult` in the sub-module) → `recordModule("modals_"+subId)`.
-- **First app-wide use of the tap-to-pair UX pattern** (precedent for future drag/drop-style activities without HTML5 DnD lib — mobile-first, zero dependency).
-- BGM **placeholder**: both sub-modules currently wired to `bgm_chrono`. Generate 2 dedicated Mureka tracks and replace in `ModalCouncilHub` `cards` config.
-- Content pool: 15 boards × 5 pairs (75 Match items) + 50 Sort items in `src/data/modals.js`. Session: 15 items everywhere (Tier B XP).
-- Single grimoire (`GRIMOIRE_MODALS`, 7 chapters FR) accessed from the hub.
-- 4 achievements added (council_initiate / oracle_voice / verdict_sworn / council_crowned).
-- TOEIC estimator: Reading support **0.04** (average of match + sort, wired in Chantier B, 2026-06-10 ; `lib/toeic.js` `rdParts`).
-
-### Mimic Hunt 🪤 (2026-09-17)
-Route `sp==="mimic"` (Games). Entraîne **la reformulation** : la bonne réponse dit la même chose avec
-d'autres mots, le **Mimic** recopie des mots de la source pour dire autre chose. Le Traps Quiz et une
-Strategy Card énonçaient déjà la règle ; aucun module ne l'entraînait, alors qu'elle porte les Parts 3,
-4 et 7 (123 questions sur 200) — et la Part 7 n'avait aucun jeu. Proto et comparateur des mécaniques :
-`prototypes/mimic-hunt/` ; banc du vrai module sans compte : `prototypes/mimic-hunt/real.html`.
-- **Une manche = un tap** (variante 3 « révélation », choix de Jérémy le 2026-09-18 ; la variante 2
-  « double marque », réponse ET Mimic puis Check, livrée le 2026-09-17, était trop lente) : la réponse
-  part au tap, les Mimics se démasquent d'office au retour.
-- **Au retour, sobre** (variante C « au tap », choix de Jérémy le 2026-09-19, proto
-  `prototypes/mimic-hunt/calm.html` ; l'écran d'avant disait tout trois fois, avec fonds, ondulations,
-  bordures pointillées et une icône par Mimic) : **rien n'est souligné** — juste, faux, un mot « Mimic »,
-  l'icône seulement sur celui qui a mordu. Un tap sur une option souligne ses liens dans la source ET
-  dans cette option seulement (vert plein = même sens, pointillé rouge = mots recopiés, tirets gris = mot
-  gardé), un second tap efface. « The paraphrase » garde l'explication et le piège ; les reformulations
-  sont repliées (« Show the rewordings »). Soulignés seulement, jamais de fond coloré.
-- **Paliers** annoncés avant leurs items (I Synonyms → II Reshaped → III Big picture) : la progression
-  est la pédagogie, elle ne se mélange pas. Les items sont mélangés **dans** leur palier (5 tirés par
-  palier au plus, `PER_TIER` : 15 par partie quand la banque le permet) et les 4 options permutées à
-  chaque partie (sinon on rejoue « la réponse C ») — donc **aucun texte ne cite une lettre** : les pièges
-  citent l'option (`check_option_shuffle` scanne `MIMIC_ITEMS` depuis que 11 pièges disaient « A recycles… »).
-- **Rédaction des items** (`src/data/mimicHunt.js`, gardée par `tests/check_mimic_items.cjs`) : tout tient
-  sur des **fragments** retrouvés en mots entiers, sans casse (`bridge`, `echo`, `mimics`) — un mot réécrit
-  et le surlignage disparaît en silence. **84 items** (29 / 30 / 25 par palier : 12 pilotes + 48 relus par Jérémy
-  le 2026-09-19 + le lot 4 « parlé », 24 items relus le même jour), bonne réponse 21 fois en A, B, C et D. 2 Mimics par item sauf cinq (un seul), des
-  distracteurs neutres qui ressemblent à des reformulations, et **cinq items gardent un mot de la source
-  dans la bonne réponse** (mh12, mh18, mh22, mh35, mh59, mh72) : la règle n'est pas « mot repris = faux » mais
-  « mot repris qui dit autre chose ».
-- **XP** : `15 + 5×bonne réponse`, +25 sans faute (115 pour 15 items, palier des 15 Q ; le `+2×Mimic
-  démasqué` de la variante 2 a disparu avec elle), **−3 par morsure** (choix de Jérémy du 2026-09-19,
-  `lib/mimicXp.js`) : la morsure coûte, pas l'erreur neutre (mordre = associer des mots sans lire le sens,
-  le réflexe visé). Le coût reste dans la partie : base jamais sous les 15 de participation, rien de repris
-  sur l'XP acquise (un compteur qui baisse fait lâcher le module). Morsures et retenue **réelle** (plancher
-  compris) voyagent par l'`extra` de `miniSession` (5e argument → `settleSession` → session) jusqu'au
-  parchemin : « 9 correct · 5 bites −15 » (`sessionText.stepDetail`) — une base réduite sans la mention
-  passe pour une erreur de calcul. Gardé par `check_mimic_items` (formule, plancher, libellé, câblage). **Estimateur** : Reading support `.04`, `part:null` dans `MODULE_TOEIC_MAP` (la reformulation sert
-  P3/P4/P7 : la ranger dans p7 fausserait le diagnostic du Mentor).
-- **Coffre de maîtrise lié à la taille de la banque** : exclu (`MASTERY_BLACKLIST.mimic`) du 2026-09-18 au
-  2026-09-19, quand chaque partie rejouait les 12 items (5 parties apprises par cœur donnaient le coffre
-  Champion), rendu à 60 items. `check_mimic_items` exige l'exclusion sous 45 items et son absence au-delà.
-- **Nouveaux items : toujours relus par Jérémy avant d'entrer au jeu.** Lot en projet dans
-  `prototypes/mimic-hunt/drafts/`, contrôlé par `node tests/check_mimic_items.cjs <lot.js>…` (mêmes
-  contrôles par item, identifiants distincts de la banque), relu sur `prototypes/mimic-hunt/review.html`
-  (tout visible : pont, recopies, mot gardé ; `?tier=2`), puis versé dans `src/data/mimicHunt.js`.
-- **Trophées** (2026-09-19, sans coffre, comme Word Tavern et Modal Council ; 30 Darics chacun) : Mimic
-  Spotter (1re partie), **Unbitten** (une partie de 15 sans morsure : la compétence du module, erreurs neutres
-  permises), Paraphrase Master (15/15), Mimic Slayer (80 % sur 60 Q). Unbitten lit `bites` dans l'entrée
-  d'history, posé par `recordModule` (6e argument `more`) depuis l'`extra` de `miniSession` : les parties
-  d'avant ne comptent pas. Mimic compte aussi dans « Game Master ».
-- **BGM `bgm_mimic`** (piste Mureka du 2026-09-19, prompt archivé dans la mémoire des BGM). Module **SELF_MANAGED** :
-  il joue la piste lui-même (effet sur la phase), la route n'y touche pas. Hors de la liste, l'effet central d'App()
-  coupait la musique juste après que la route l'avait lancée (silence, puis retour au rendu suivant). Coupée en mode écoute.
-- **Mode écoute** (variante A « aperçu », choix de Jérémy du 2026-09-19, proto `prototypes/mimic-hunt/listen.html`) : la
-  source d'un item `spoken` s'ENTEND (en Parts 3 et 4, le distracteur classique reprend un mot de l'enregistrement).
-  Deux portes sur l'intro (Read / Listen). Question et réponses lisibles avant l'écoute (consigne des Parts 3 et 4) mais
-  **verrouillées jusqu'à la fin de l'enregistrement** (répondre au premier mot reconnu, c'est mordre), une réécoute
-  (`REPLAYS`), puis la transcription et le retour habituel. **Module `mimic_listen`** (même route : `extra.modId`, lu par
-  `miniSession`) : Listening `.04`, ses propres stats et courbe anti-farming, coffre de maîtrise exclu sous 45 sources
-  parlées (`check_mimic_items`) et rendu depuis le lot 4 ; au-delà, le test exige aussi la tuile Games en
-  `subs:["mimic","mimic_listen"]` (`unit:"modes"`, « 1/2 modes mastered »). Trophées et « Game Master » comptent
-  les deux modes ; les erreurs gardent la `ref` `mimic:<id>` (la chasse les repose à l'écrit). « Play again » repart
-  dans le même mode (`replayMode`). Clips `public/audio/mimic/<id>.mp3` (`node scripts/gen-mimic-audio.mjs --all`,
-  voix `mimicVoice` de `lib/listeningVoices.js` : genre de `voice` / `speaker`) ; `check:assets` et `check_mimic_items`
-  exigent chaque clip — un clip absent ne se voit pas, les réponses se déverrouilleraient sans rien faire entendre.
-  **45 sources parlées** (15 par palier) depuis le lot 4 « parlé » (mh61-mh84, relu et versé le 2026-09-19).
-
-### Mentor qui se souvient : bestiaire, chasse, plan du jour, narration, lettre, Chronique (2026-09-17/18, lots 1-6)
-Proto `prototypes/mentor-memory/` (storyboard des 8 moments, décisions de Jérémy dans son README) ; banc de
-la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la prochaine réussite tue, `empty=1`).
-- **Colonne `students.review` jsonb** (`2026-09-17_mentor_memory.sql`, avec `letter_seen`) :
-  `{items:[{k,cat,part,first,last,miss,fails,box,due}], slain, log}`. Des **références**, jamais le texte des
-  questions. Bornée à l'écriture (`boundReview` : 120 créatures, 60 lignes), jamais dans `supaToLocal`.
-- **Références** : `drill:<id>` pour toute la banque de grammaire (Drill, Daily, Exam Simulation : ratée ici
-  ou là, même créature), `lisP1:<id>`, `lisP2:<id>`, `lisP3:<id>:<qi>`, `lisP4:<id>:<qi>`, `p6:<texte>:<trou>`,
-  `p7:<passage>:<qi>`. **Jamais un indice d'option** (toutes les options sont permutées), jamais l'index d'un
-  tableau. Une référence que `lib/reviewLookup.js` ne sait pas résoudre est sautée par la chasse : un module qui
-  se met à poser des `ref` y ajoute sa résolution. Couverts : Drill, Daily, Exam Simulation, Word Fall (mauvaise
-  réponse seulement, pas une phrase tombée), Part 6, Part 7, Listening P1-P4.
-- **Les 16 autres modules** (2026-09-18) : la `ref` vient de `lib/reviewRefs.js moduleRef(mod, id, sub, label)`,
-  **une table** lue à la capture ET par `reviewLookup` (même catégorie dans le Lair et dans la chasse). Clés :
-  `gauntlet:<id>` (irr/td/pf/rw), `clue:<id>`, `ablitz:<id>`, `mimic:<id>`, `bforge:<id>`, `traps:<id>`,
-  `stratquiz:<id>`, `modals_sort:<id>`, `modals_match:<plateau>:<paire>`, `tavern:<carte>:<type>`,
-  `connsort:<mot>`, `prepdrill:<base>`, `gerinf:<verbe>`, `falsefr:<mot>`, `pvdojo:<verbe>:match|picker`,
-  `wordfam:<mot>:<nature>`. Catégories = celles de la banque de grammaire quand elles existent (Gauntlet
-  Chronomancer → Tenses, Clue ramené par `clueCat`, Linking Bridge → Connectors…) : la fiche de grammaire
-  s'ouvre au 3e échec. **Toute `ref` à sous-partie porte une catégorie**, sinon `groupKey` la range comme un
-  passage (« Part 4 » dans le Lair). Tout revient en **QCM permuté** (ces banques mettent la bonne réponse en
-  B ou C huit fois sur dix ; seules les grilles natures / règles / fonctions gardent l'ordre du module) ;
-  Irregular Crypt (tapé) revient en QCM « prétérit · participe » avec les confusions classiques. Hors
-  bestiaire : Sentence Builder, l'indice du Clue Hunter, le Mimic manqué, les mots à deux natures, Speed Match.
-  Transport : `miniSession` 4e argument, `onModuleDone` 5e (hubs Gauntlet / Modal Council, `subDone` le relaie),
-  `gameSession` 4e, handlers en ligne de `routes.jsx` (clue, ablitz). Test : `check_review_lookup` (chaque item
-  de chaque banque se relit avec la bonne réponse, catégories, permutation, câblage lu dans le source).
-  Banc : `hunt.html?mods=1`.
-- **Chasse** `sp==="hunt"` (`features/hunt/MistakeHunt.jsx`, lazy, gratuite, sans coffre de maîtrise, hors
-  estimateur) : file figée au montage (`huntQueue`, 10 au plus, un passage Part 7 d'un seul tenant), vrai HUD.
-  Écoute : P1/P2 se répondent pendant l'audio (la réponse coupe la chaîne : génération `genRef`), P3/P4
-  montrent question et options avant l'audio mais ne se répondent qu'après. XP `5 + 5 × vaincues` **sans
-  porte de précision** (courbe anti-farming gardée), 1 Daric par vaincue (`grantMarks`, unique par jour).
-  `huntDone` reçoit le bestiaire mis à jour : le module travaille sur une copie.
-- `lib/reviewLookup.js` importe listening, part6, part7 et les banques des jeux : **jamais d'import statique hors d'un écran lazy**
-  (le bundle principal les tirerait) ; `lib/review.js`, lui, reste sans données.
-- **Plan du jour FIGÉ dans `u.mission`** (lot 4, 2026-09-18 ; jsonb existant, aucune migration) : `App()` le
-  pose une fois par jour dans un effet (`lib/planner.js dayMission`, deps primitives, jamais pendant le
-  chargement), avec `quests` (primitives, `thawQuest` réhydrate catégorie et macro), `pick` (la quête qui
-  porte la mission, 0 sauf re-tirage), `actId = quests[pick].mod`, et garde `streak`/`lastDoneDate` (coffre
-  `mission_streak`). Recalculé à chaque ouverture, le plan bougeait sous les yeux de l'élève. **Tout le lit** :
-  feuille « Today's Path » (quêtes cochées par `questDone` : la quête-mission quand `mission.done`, les autres
-  quand leur module a été joué aujourd'hui), bandeau de Home (`homeStrip`), pastille de l'onglet Mentor,
-  `NextStepReco` (prochaine quête non faite), et le **+25 % du Focus** : `stakePart` → `ctx.focusPart` de
-  `gateSteps` (`computeTodayFocus`, précision la plus basse, est supprimé). `checkMission` inchangé.
-- **Mentor** : cinq repères (Peak, Path, Lair, Camp, Aldric). « The Crossroads » disparaît (le Focus est la quête
-  « enjeu »). Le **Lair** est une vue pleine page du Mentor (pas de route) qui charge `reviewLookup.js` par
-  `import()` ; `lookupRef(k).title` = la ligne du bestiaire (question entendue en P2, extrait autour du trou en
-  P6 coupé aux mots entiers par `aroundBlank`, numéro de photo en P1 — jamais la bonne réponse) ; un groupe de
-  document porte son nom (`docName` : sujet en P6, objet ou titre en P7, première réplique en P3/P4 sans la
-  formule d'accueil), sinon deux « Part 6 · Article » se confondaient ; pastilles de réussites espacées en
-  anneau `--t3` (3,4:1 en sombre). Le Camp montre la maîtrise **récente** par partie, triée
-  par points en jeu ; la liste de grammaire garde les `catStats` cumulées (la série `cs` n'existe que depuis le
-  2026-09-17). Home montre le plan depuis le 2026-09-23 (voir « Home une porte ») ; son lien « Today's path »
-  ouvre la feuille (`openPath` → `sSPA("path")` → `Mentor initialSheet`). `Tabs badge="mentor"` tant que la
-  mission attend ; jamais un verrou.
-- **Jeton `daily_reroll`** : `rerollMission` déplace la mission sur la quête suivante (l'ordre ne bouge pas) ;
-  mission faite ou quête unique → le jeton n'est pas consommé.
-- Banc des vrais écrans : `prototypes/mentor-memory/app.html` (Home, Mentor, onglets ; `p=lea|karim|ines`,
-  `v=home|mentor|path|camp`, `done=1`, `reroll=1`, `mode=light`), horloge figée au 21/09/2026 (`clock.js`).
-- **Drill composé par le plan** (lot 5, 2026-09-18 ; `lib/planner.js drillComposition`, `pickAdaptive`
-  supprimé) : 4 questions sur la catégorie visée (quête Part 5 du plan figé, sinon `weakestCat` récente, sinon
-  **`weakestLifetimeCat`** sur les `catStats` cumulées ≥ 5 Q — sans ce repli le Drill serait aléatoire pour
-  presque tous, la série `cs` datant du 2026-09-17), 2 sur une catégorie « méritée », jusqu'à 2 échéances
-  glissées (quand il y en a moins de 4, sinon la chasse les prend), le reste mêlé, **jamais une créature tirée
-  au hasard**. Les échéances ne comptent pas dans les `catStats` de la manche ; battues, elles remontent en
-  6e argument de `p.done` → `drillDone` → `recordHits`.
-- **Narration de session** (Drill et chasse) : briefing en parchemin (`components/MentorMemory.jsx AldricBrief`,
-  `mentorVoice.briefing` — sur le cumul il dit « so far », jamais « your last N »), mémoire de la question due
-  dans `SessionTop sub`, conséquence d'Aldric dans les `children` d'`AnswerCard` (pas de slot à ajouter au
-  HUD), et au **3e échec** la fiche de grammaire en place (`data/grammarSheets.js CAT_SHEET`,
-  `components/GrammarSheet.jsx`, déplacé de `features/train/` pour la chasse) — seulement si la fiche existe
-  (`hasSheet`). Fin : `SessionResult memory={<AldricRemembers/>}`, rendu **avant** « Lessons to keep ».
-- **Cérémonie « faiblesse devenue force »** (`Ceremonies.jsx TurnCeremony`) : `sealSession` appelle
-  `celebrateTurn` (retournement `eligible` de `learnerModel.turnaround`, jamais célébré) → marque
-  `review.celebrated` (une fois par catégorie) et pose `session.turn`. L'écran de fin l'ouvre après une
-  éventuelle promotion de ligue, **même si l'élève a passé l'animation** (moment unique). Symbolique.
-  Impossible avant ~le 27/09 : la règle exige 10 jours entre deux fenêtres de la série `cs`.
-- Bancs : `prototypes/mentor-memory/drill.html` (vrai Drill ; `p=lea|karim|ines`, `fold=1` deux échéances
-  glissées dont un 3e échec, `turn=1` cérémonie de démonstration).
-- **Lettre du lundi** (lot 6, 2026-09-18 ; `features/mentor/MondayLetter.jsx`, `mentorVoice.mondayLetter`) :
-  calculée **côté client**, rendue par `App()` au premier passage sur Home de la semaine (`planner.letterDue` :
-  `letterSeen` ≠ le lundi courant, et inscrit avant ce lundi ; jamais par-dessus une session, un coffre, Aldric,
-  une session perdue). Datée du lundi même lue un mercredi, elle raconte la semaine lundi → dimanche d'avant
-  (`weekFacts`, compteurs `review.weeks` : le journal borné à 60 lignes ne tient pas une semaine active),
-  l'allure vers l'objectif depuis les instantanés (`useWeeklySnaps` → RPC `my_weekly_snapshots` →
-  `snapshotSeries` ; échec loggé, la lettre part sans au bout de 2,5 s) et les buts du plan figé. « Later » ou
-  « See today's plan » → `letterSeen` = le lundi (colonne `letter_seen`). Le push `weekly-results` n'en est
-  que l'**accroche** (titre « Aldric's Monday letter ») : ne jamais recalculer la lettre en Deno.
-- **Chronique** (repère Aldric ; la rediffusion de son chapitre passe au pied de la feuille, avec « This
-  week's letter ») : jalons datés **rangés par `sealSession`** (`recordChronicle` → `review.chronicle`, 60)
-  avant que `history`, bornée à 100 sessions, ne les efface ; la vue (`planner.chronicle`) fusionne rangés et
-  recalculés (la date rangée gagne), les insights, puis « The next page ». Créatures vaincues par le compteur
-  total (`review.slain`), pas par le journal.
-- **Jeton Insight** : `mentorVoice.insightText` (points en jeu, catégorie la plus faible, bestiaire) rangé par
-  `addInsight` dans `review.insights` (10), relu dans la Chronique. `generateInsight` (précision cumulée) et
-  `u.insights` (mappé dans aucune colonne, perdu au rechargement) sont supprimés.
-- Bancs : `prototypes/mentor-memory/app.html?v=letter` et `?v=chronicle`.
-- `weekly-results` déployée le 2026-09-18 (version 19, JWT vérifié) : elle portait encore les textes français
-  d'avant la passe anglaise du 2026-04-17, jamais déployée.
-
-### Grimoire pattern (applies to Gauntlet + G&V grimoires)
-- **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.
-- **Block types** consumed by `<GrimoireReader/>`: `paragraph`, `heading`, `rule` (formula/label), `example` (en/fr/note), `trap` (red warning), `table` (headers+rows), `list`.
-- **One idea per chapter** — mobile-readability rule. Repaginate dense chapters into short ones.
-- **Grimoires stay in FR** (language policy: theory = FR for francophone learners, chrome = EN).
-- **Replacing Study Mode**: when a G&V module has a Study Mode and theoretical content, replace the Study Mode entirely with a grimoire (GerInf + PhrasalDojo pattern). Don't keep both.
-- **Reader component**: shared `<GrimoireReader grimoire={...} back={...}/>` + `renderGrimoireBlock` helpers. Parchment styling, CSS 3D flip animation, TOC drawer, roman numeral page numbers.
-- **Page number placement**: the `.grim-page-num` must live INSIDE `.grim-page-content` with `margin-top:auto` (flex column with `min-height:100%`). Avoid `position:absolute;bottom:X` — it sticks to viewport, not content.
 
 ### UX harmonization (back buttons)
 - **Single back button convention**: `.back-btn` CSS class + `← Back` label. Top-left, 40px min-height for mobile tap.
@@ -799,32 +300,11 @@ la VRAIE chasse `prototypes/mentor-memory/hunt.html` (port 5608 : `box=2` la pro
 - Without this pattern, the async sequence keeps creating new Audio objects after the user navigates away (bug fixed 2026-04-22, regression risk).
 - **User-initiated speak() must call resumeAudioSession() first**: `speak()` bails out early if `_audioAborted` is true. Components that play audio on click WITHOUT mounting a `resumeAudioSession` useEffect (SpeakBtn, Flashcards, Word Tavern) need to reset the flag themselves at click time — otherwise any prior Listen unmount leaves the flag set and they stay silent. `SpeakBtn.go()` handles this centrally.
 
-### Icon system (2026-04-22)
-- **`<GIcon name size color block style/>`** — inline SVG helper in `src/components/icons.jsx` (with LeagueIcon, SeasonIcon, ResultIcon, BrandMark). Renders an Iconify `game-icons:` path from `GAME_ICON_PATHS`. `color` defaults to `currentColor`. Use skin-aware `var(--cyan)` for module content; specific hex for signaling (e.g. gold for achievements).
-- **`GAME_ICON_PATHS`** in `src/data/avatarIcons.js` — 60+ entries, format `"name":"<path fill=\"currentColor\" d=\"...\"/>"`. ViewBox is always `0 0 512 512` (game-icons standard). Add new paths via the Iconify API: `https://api.iconify.design/game-icons/NAME.svg`.
-- **Fallback-friendly render pattern**: `{GAME_ICON_PATHS[m.i]?<GIcon name={m.i} ...\/>:m.i}`. This lets modules migrate incrementally — any item still on emoji renders as emoji. Used everywhere data arrays use `i:` for an icon key.
-- **Unified tile design** (Games 48×48, Train sub-view 42×42, Listen/Reading Hub 42×42, Mock sub-view, Mock Exams hero):
-  - `background: linear-gradient(135deg, rgba(var(--cx),.22), transparent)` (V10 tint — picked in `prototypes/tile-bg-nuances/`)
-  - `border: 1.5px solid var(--cyan)`
-  - Icon `color="var(--cyan)"` (skin-aware)
-  - Visitor-locked: transparent bg + `var(--bdr)` border + `var(--t3)` icon
-  - Featured tiles kept colored for signal: Boss red / Endless blue / Home stats pills.
-- **Mode-aware bg gradients**: `rgba(var(--bg3-rgb), alpha)` works in both dark and light. `--bg-rgb`, `--bg2-rgb`, `--bg3-rgb` are defined in both `:root` and `.light`. Prefer these over hardcoded `rgba(15,12,8,...)`.
-- **Bulk emoji→SVG migration rule** — never use Python string literals with `\uXXXX` escapes to match emojis across the codebase. The source encodes emojis inconsistently (literal codepoint vs surrogate-pair escape `\\uD83D\\uDC09` vs with/without `\uFE0F`). Use regex keyed on **structural anchors** (`{id:"X"}`, `{key:"X"}`, distinctive surrounding text) that are independent of the emoji bytes. And verify via grep AFTER the script reports success — "Applied: 36/42" can be technically true while most of the 36 were trivial and the critical patterns silently missed.
-
 ### XP toast rendering in sub-pages
 - `<XpToast>` and `<AchToast>` MUST be rendered inside `pg()` (the wrapper for `sp===X` sub-page routes), not only in the main return.
 - Rationale: if a module earns XP without navigating back to the main return (e.g. Gauntlet sub-module → GauntletHub stays on `sp==="gauntlet"`), the toast is set by `addXp()` but never reaches the DOM until the user manually navigates home, by which time the 4s timer has expired.
 - The fix landed 2026-04-22 alongside the icon refactor.
 - Since 2026-09-17 only exams, Duel and Flashcards still raise `XpToast` (via `addXp`) : modules on `SessionResult` show their XP in the parchment, never as a toast.
-
-### Gauntlet XP tier (2026-04-22 rebalance)
-- 15 Q per sub-module, base 15 + 5 × correct + 35 perfect bonus → max 125 XP per run.
-- Irregular Crypt keeps partial-credit granularity: `15 + 5×full + 2×partial` + 35 perfect.
-- The other 3 (Chronomancer / Passive Forge / Relative Weaver): `15 + 5×correct` + 35 perfect.
-- Rationale: old formulas (Irregular 60 max, others 80) under-paid the Gauntlet vs peer 15 Q modules (Word Tavern 110, Phrasal Picker 100, SentenceBuilder 95) despite being harder (typed answers, 30s timer, complex transforms). New tier B puts Gauntlet at the top of the 15 Q bracket.
-
----
 
 ## Modèle d'accès Supabase — verrou complet du 2026-09-15
 
@@ -1066,25 +546,7 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 
 ## Audio Conventions
 
-### File naming
-- **P1 training:** `public/audio/p1/{id}_{0-3}.mp3`
-- **P2 training:** `public/audio/p2/{id}_q.mp3` + `{id}_{0-2}.mp3`
-- **Lettres (depuis le 2026-09-16) :** `public/audio/letters/{voix}_{A|B|C|D}.mp3`, 6 voix × 4 lettres. **Les clips d'options P1/P2 ne contiennent plus la lettre** : `playLetteredOption(part,id,pos,url)` (`lib/audio.js`) joue « B. » dans la voix de l'item puis l'option **affichée** en position `pos`. C'est ce qui rend la permutation des options (`aud`, `lib/listeningShuffle.js`) libre : l'élève entend toujours A, B, C(, D) dans l'ordre. La voix d'un item se déduit de son numéro (`lib/listeningVoices.js`, règle partagée avec le script) ; **ne jamais regénérer un clip d'option avec sa lettre dedans**, et ne pas changer la règle de voix sans regénérer les clips concernés.
-- **Explications P1/P2 et leurs lettres** : l'exercice affiche `x` remappé aux lettres affichées (`remapOptLetters`) ; les leçons de l'écran de fin, qui ne montrent pas les lettres, affichent `xq` (`quoteOptLetters` : chaque lettre devient le texte de l'option cité), calculé sur l'item **d'origine** au moment de la permutation. Un `x` déjà remappé ne se relit pas (« and A trap » passe pour un article). Test `validate_listening_shuffle` (I2, I3).
-- **P3 training:** `public/audio/p3/{id}_line{0-3}.mp3` + `{id}.mp3` (stitched)
-- **P4 training:** `public/audio/p4/{id}.mp3`
-- **Boss test:** `public/audio/boss/p1_XX_Y.mp3`, etc.
-- **Audio Blitz:** `public/audio/blitz/{id}.mp3`
-- **Mimic Hunt (mode écoute):** `public/audio/mimic/{id}.mp3` — items `spoken`, une voix par item (`mimicVoice`)
-- **BGM:** `public/audio/bgm/bgm_{name}.mp3`
-
-### ElevenLabs
-- Voices: Sarah (W) = `EXAVITQu4vr4xnSDxMaL`, Adam (M) = `pNInz6obpgDQGcFmaJgB`
-- Model: `eleven_multilingual_v2` pour les phrases. **Pour un clip d'une syllabe (les lettres), `eleven_turbo_v2` (anglais seul, `stability: 0.75`)** : le multilingue devine la langue sur un caractère isolé et lit « A » à la française (/a/), constaté le 2026-09-16.
-- Settings: `stability: 0.5, similarity_boost: 0.75, speed: 0.92` (lots P1/P2 2026-09-16 et précédents ; `0.55 / 0.85` sur les tout premiers lots).
-- 6 voix en rotation pour P1/P2 (`lib/listeningVoices.js`) : Sarah US-F, Adam US-M, Canadienne F, Britannique M, Voice A (non-US, M), Voice B (non-US, F). P2 : question et réponses par **deux locuteurs différents** (TOEIC), à trois pas d'écart dans le cycle.
-- Script de (re)génération P1/P2 : `scripts/regen-listening-letterless.mjs` (`--letters | --p1 | --p2 | --sample | --all`, reprenable : saute les fichiers existants ; **déplacer les anciens clips hors de `public/` avant un lot complet**, sinon tout est sauté).
-- Audio files are pre-generated. ElevenLabs credits for generating new content only, never runtime.
+Nommage des fichiers, voix ElevenLabs et scripts de génération : `scripts/CLAUDE.md`.
 
 ### BGM Wiring Pattern
 ```javascript
@@ -1141,15 +603,3 @@ FREE_FLASHCARD_DOMAINS = ["finance","travel","office"]
 Visitor mode (no class code) locks premium modules. All content unlocks with a valid class code.
 
 ---
-
-## Push Notification Infrastructure
-
-3 Edge Functions deployed, all in English:
-
-| Function | Schedule | Target |
-|----------|----------|--------|
-| `streak-reminder` | Daily 20h CET | Streak ≥ 2, inactive today |
-| `weekly-results` | Monday 08h CET | Personalized weekly ranking + teaser of Aldric's Monday letter (computed client-side) |
-| `inactive-reminder` | Every 3d 17h CET | Inactive 7-30d, active classes only |
-
-Anti-spam on `inactive-reminder` via `students.inactivity_push_sent` (max 1 per 14d).
