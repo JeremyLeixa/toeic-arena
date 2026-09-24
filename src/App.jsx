@@ -76,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-24-interruption-budget";
+var BUILD_ID="2026-09-24-rgpd-mock3";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1588,8 +1588,13 @@ function sv(d){
       // sécuriser le compte (mot de passe) avant de pouvoir l'effacer. Dégrade proprement
       // si la RPC n'est pas encore déployée (function not found → warn, pas de crash).
       var r=await supabase.rpc('delete_my_account',{p_name:name,p_class_code:cc});
-      if(r.error)console.warn("[purge] rpc error:",r.error.message);
-      else if(r.data&&r.data.ok===false)console.warn("[purge] rpc refused:",r.data.error);
+      if(r.error){console.warn("[purge] rpc error:",r.error.message);return{ok:false,error:"network"};}
+      if(r.data&&r.data.ok===false){
+        console.warn("[purge] rpc refused:",r.data.error);
+        // Ligne déjà absente : rien à effacer côté serveur, l'effacement local peut suivre.
+        if(r.data.error==="no_student")return{ok:true};
+        return{ok:false,error:r.data.error};
+      }
       // Best-effort satellites côté client (couvre les legacy que la RPC n'a pas touchés ;
       // no-op idempotent sinon). Ces tables SONT supprimables par authenticated.
       // weekly_snapshots : plus d'acces direct (lot 3). delete_my_account purge
@@ -1600,12 +1605,22 @@ function sv(d){
       // — c'est assume, voir le message affiche a l'utilisateur.
       // Les 4 tables de coffres non plus (lot 4). delete_my_account les purge
       // toutes cote serveur, dans la meme transaction que la ligne students.
-    }catch(e){console.warn("[purge] caught:",e&&e.message);}
+      return{ok:true};
+    }catch(e){console.warn("[purge] caught:",e&&e.message);return{ok:false,error:"network"};}
+  }
+  // Refus du serveur (2026-09-24) : AVANT, deleteAccount/reset déconnectaient et effaçaient le local quand
+  // même — l'élève croyait son compte effacé alors qu'il restait entier sur le serveur (échec RGPD muet).
+  // Désormais on s'arrête, on explique, et rien n'est effacé nulle part.
+  function purgeRefusedMessage(err){
+    if(err==="not_secured")return"Ton compte n'est pas encore protégé par un mot de passe : le serveur ne peut pas vérifier que c'est bien toi, il refuse donc de l'effacer.\n\nDemande à ton formateur de le supprimer depuis son tableau de bord. Rien n'a été effacé.";
+    if(err==="not_owner")return"Cette session ne correspond pas à ce compte. Reconnecte-toi avec ton mot de passe, puis recommence. Rien n'a été effacé.";
+    return"Le serveur n'a pas pu confirmer l'effacement (connexion ?). Rien n'a été effacé : réessaie dans un instant.";
   }
   async function deleteAccount(){
     var sess=await supabase.auth.getSession();
     var uid=sess.data.session?sess.data.session.user.id:null;
-    await purgeUserRows(uid,u.name,u.classCode);
+    var pr=await purgeUserRows(uid,u.name,u.classCode);
+    if(!pr.ok){alert(purgeRefusedMessage(pr.error));return;}
     // signOut GLOBAL voulu ici (F4) : le compte est supprimé, aucun appareil ne doit garder de session.
     // La « Déconnexion complète » du Profil, elle, est en portée locale (auth.js signOutCompletely).
     try{await supabase.auth.signOut();}catch(e){console.warn("[deleteAccount] signOut caught:",e&&e.message);}
@@ -1617,7 +1632,8 @@ function sv(d){
   async function reset(){
     var sess=await supabase.auth.getSession();
     var uid=sess.data.session?sess.data.session.user.id:null;
-    await purgeUserRows(uid,u.name,u.classCode);
+    var pr=await purgeUserRows(uid,u.name,u.classCode);
+    if(!pr.ok){alert(purgeRefusedMessage(pr.error));return;}
     // signOut GLOBAL voulu ici (F4) : les lignes du compte viennent d'être purgées, aucune session
     // ne doit survivre ailleurs sur un compte vidé.
     try{await supabase.auth.signOut();}catch(e){console.warn("[reset] signOut caught:",e&&e.message);}
