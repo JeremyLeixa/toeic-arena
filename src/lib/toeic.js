@@ -177,8 +177,10 @@ export function estimateTOEICScore(ms){
   var READING_MODS=["drill","p6","p7","wordfam","connsort","prepdrill","gerinf","falsefr","pvdojo","sbuild","gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","tavern","clue","traps","modals_match","modals_sort","bforge","timesim","stratquiz","daily","mimic"];
   var LIS_MODS=["lisP1","lisP2","lisP3","lisP4","ablitz","mimic_listen"];
   var readingQ=sumQ(READING_MODS),listeningQ=sumQ(LIS_MODS);
-  var m1=rec("mock1"),m2=rec("mock2"),mbR=rec("boss"),meR=rec("endless");
-  var mocksList=[m1,m2,mbR,meR].filter(Boolean); // CHANTIER-B : Endless = full TOEIC, compte comme un mock
+  var m1=rec("mock1"),m2=rec("mock2"),m3=rec("mock3"),mbR=rec("boss"),meR=rec("endless");
+  // Mock 3 (même format que 1 et 2, demi-test Reading) était oublié jusqu'au 2026-09-24 : il ne débloquait
+  // pas l'estimation et ne donnait pas de bonus.
+  var mocksList=[m1,m2,m3,mbR,meR].filter(Boolean); // CHANTIER-B : Endless = full TOEIC, compte comme un mock
   var hasMock=mocksList.length>0;
   var mocksDone=mocksList.length;
   var evidence={listeningQ:listeningQ,readingQ:readingQ,mocksDone:mocksDone};
