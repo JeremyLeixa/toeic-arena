@@ -104,5 +104,20 @@ marksClient.forEach((s) => ok('source de Darics « ' + s + ' » acceptée par gr
 ['chest', 'shop', 'admin', 'admin_bonus'].forEach((s) => ok('grant_marks refuse la source « ' + s + ' »', marksSql.length > 0 && !marksSql.includes(s)));
 ok('grantMarks n\'est appelé qu\'avec une source littérale', !/grantMarks\([^,)]+,(?!")[^,)]+,/.test(app.replace(/function grantMarks\(/, '')));
 
+// ── lot 3 : garde-fou XP dans save_student ──
+// La dernière migration qui définit save_student doit toujours passer par _xp_guard, et les colonnes de base du
+// jour ne doivent JAMAIS entrer dans la liste blanche : le client pourrait remettre sa base à zéro.
+const MIGS = path.join(ROOT, 'supabase', 'migrations');
+const lastSave = fs.readdirSync(MIGS).filter((f) => f.endsWith('.sql')).sort()
+  .filter((f) => /CREATE\s+OR\s+REPLACE\s+FUNCTION\s+public\.save_student/i.test(fs.readFileSync(path.join(MIGS, f), 'utf8'))).pop();
+const saveSql = lastSave ? fs.readFileSync(path.join(MIGS, lastSave), 'utf8') : '';
+const vcols = (saveSql.match(/v_cols\s+text\[\]\s*:=\s*ARRAY\[([\s\S]*?)\]/) || [, ''])[1];
+ok('save_student (' + lastSave + ') plafonne l\'XP par _xp_guard', /FROM _xp_guard\(v_row,/.test(saveSql) && /v_new\.xp := v_g\.o_xp/.test(saveSql));
+ok('save_student plafonne aussi un profil neuf', /v_new\.xp := LEAST\(COALESCE\(v_new\.xp, 0\), 20000\)/.test(saveSql));
+ok('colonnes xp_day_* hors de la liste blanche du client', vcols.length > 0 && !/xp_day/.test(vcols));
+ok('borne quotidienne de 20 000 XP', /c_max CONSTANT integer := 20000/.test(fs.readFileSync(path.join(MIGS, '2026-09-24_economy_lot3_xp_guard.sql'), 'utf8')));
+const dash = fs.readFileSync(path.join(ROOT, 'src', 'features', 'teacher', 'TeacherDash.jsx'), 'utf8');
+ok('plafonnements affichés dans l\'onglet Usage (teacher_xp_clamps)', /rpc\('teacher_xp_clamps'/.test(dash));
+
 console.log((checks - fails) + '/' + checks + ' vérifications de l\'économie au vert');
 process.exit(fails ? 1 : 0);

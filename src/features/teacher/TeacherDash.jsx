@@ -632,6 +632,7 @@ export function TeacherDash(p){
   useEffect(function(){if(dashTab==="feedback")loadFeedback();},[dashTab]);
   // Onglet Usage (2026-09-23) : RPC anonyme teacher_usage, agrégée par lib/usageStats.js.
   var[usage,setUsage]=useState(null); // null = chargement, {error} ou le résultat de usageStats
+  var[xpClamps,setXpClamps]=useState(null); // plafonnements XP nommés (teacher_xp_clamps)
   function loadUsage(){
     setUsage(null);
     supabase.rpc('teacher_usage',{p_code:getDashTeacher(),p_class_code:classCode}).then(function(res){
@@ -639,6 +640,13 @@ export function TeacherDash(p){
       if(!res.data||!res.data.ok){console.warn("[usage] refused:",res.data&&res.data.error);setUsage({error:(res.data&&res.data.error)||"refused"});return;}
       setUsage(usageStats(res.data.students||[],new Date()));
     }).catch(function(e){console.warn("[usage] teacher_usage caught:",e&&e.message);setUsage({error:e&&e.message});});
+    // Garde-fou XP (2026-09-24) : sauvegardes plafonnées à +20 000 XP/jour par save_student, NOMMÉES (RPC à part,
+    // teacher_usage reste anonyme). Échec → section absente, l'onglet reste utilisable.
+    setXpClamps(null);
+    supabase.rpc('teacher_xp_clamps',{p_code:getDashTeacher(),p_class_code:classCode}).then(function(res){
+      if(res.error||!res.data||!res.data.ok){console.warn("[usage] teacher_xp_clamps failed:",(res.error&&res.error.message)||(res.data&&res.data.error));setXpClamps([]);return;}
+      setXpClamps(res.data.clamps||[]);
+    }).catch(function(e){console.warn("[usage] teacher_xp_clamps caught:",e&&e.message);setXpClamps([]);});
   }
   useEffect(function(){if(dashTab==="usage")loadUsage();},[dashTab,classCode]);
 
@@ -1788,6 +1796,20 @@ export function TeacherDash(p){
           {!usage.modules.length&&<div style={{fontSize:12,color:"var(--t3)",padding:12,textAlign:"center"}}>{"Aucune partie sur 30 jours."}</div>}
           <div style={{fontSize:11,color:"var(--t3)",marginTop:10,lineHeight:1.5}}>{"Abandon = « Leave this round » confirmé après au moins une réponse (Boss et Endless exclus, ils reprennent). Compté depuis le "+capDate+" ; taux affiché à partir de 5 tentatives. Les épreuves du Gauntlet et du Modal Council comptent au hub."}</div>
         </div>
+        {xpClamps&&xpClamps.length>0&&<div className="crd" style={{padding:12,marginTop:14,overflowX:"auto"}}>
+          <div className="out" style={{fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:8}}>{"⚠️ Activité anormale (30 j)"}</div>
+          <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"'DM Sans',sans-serif"}}>
+            <thead><tr><th style={Object.assign({},th,{textAlign:"left"})}>{"Élève"}</th><th style={th}>{"Jour"}</th><th style={th}>{"XP demandée"}</th><th style={th}>{"XP gardée"}</th><th style={th}>{"Tentatives"}</th></tr></thead>
+            <tbody>{xpClamps.map(function(c){return(<tr key={c.name+c.day} style={{borderTop:"1px solid var(--bdr)"}}>
+              <td style={Object.assign({},td,{textAlign:"left",color:"var(--t1)"})}>{c.name}</td>
+              <td style={td}>{String(c.day).split("-").reverse().slice(0,2).join("/")}</td>
+              <td style={td}>{"+"+(c.claimed_xp-c.base_xp).toLocaleString("fr-FR")}</td>
+              <td style={td}>{"+"+(c.accepted_xp-c.base_xp).toLocaleString("fr-FR")}</td>
+              <td style={td}>{c.hits}</td>
+            </tr>);})}</tbody>
+          </table>
+          <div style={{fontSize:11,color:"var(--t3)",marginTop:10,lineHeight:1.5}}>{"Une sauvegarde ne peut pas ajouter plus de 20 000 XP par jour (la plus grosse semaine réelle en fait 29 000). Au-delà, l'XP est plafonnée et la tentative notée ici : XP écrite à la main depuis la console, ou très longue partie hors ligne. Le reste du profil est sauvegardé normalement."}</div>
+        </div>}
       </div>);
     })()}
 
