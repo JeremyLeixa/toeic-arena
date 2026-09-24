@@ -49,6 +49,7 @@ const SUITE = [
   ['check_festivals.cjs',          'les fenêtres des thèmes saisonniers (bornes, Pâques, déc → jan, opt-out > forçage) n\'ont pas bougé'],
   ['check_skins_light.cjs',        'les skins à cartes sombres restent lisibles en mode clair (cartes-nuit)'],
   ['check_tones.cjs',              'titres et pastilles de ligue gardent une variante lisible en mode clair (tone)'],
+  ['check_rgpd_erasure.cjs',        'l\'effacement RGPD purge toutes les tables de l\'élève (élève et formateur) et un refus ne se fait pas passer pour un succes'],
   ['check_mock_coverage.cjs',       'le Mock 3 et le Boss comptent partout où les Mocks 1 et 2 comptent (estimateur, trophée, coffre)'],
   ['validate_toeic_shrinkage.cjs','l\'estimateur TOEIC ne réintroduit pas les 3 pathologies'],
   ['check_symbol_census.cjs',      'aucun symbole d\'App.jsx perdu ni dédoublé par le découpage'],
