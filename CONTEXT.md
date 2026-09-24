@@ -29,7 +29,10 @@ une décision.
   conversions serveur, `grant_marks` limité aux sources du jeu, garde-fou XP +20 000/jour dans `save_student`
   (journal nommé dans l'onglet Usage). Anciennes RPC supprimées, `check:security` vert.
 - **24/09 : instantanés hebdomadaires** (`a35de59`) : `xp_this_week` partait à 0 sous l'étiquette de la semaine
-  suivante depuis toujours (398 lignes) ; podium à 0 XP exclu. Premier lundi juste : **28/09**.
+  suivante depuis toujours ; podium à 0 XP exclu. Premier lundi juste : **28/09**. Anciens instantanés réétiquetés le 24/09
+  depuis `weekly_history` (366 semaines retrouvent leur XP, 17 doublons supprimés, 33 laissés à 0 faute de preuve ;
+  `daily_completions` perdu), `week_start` = lundi local partout (c'était le dimanche 8 jours avant). Sauvegarde :
+  `weekly_snapshots_backup_2026_09_24` (verrouillée), à supprimer quand le rapport formateur aura été relu.
 
 ### À voir en prod (pas encore observé sur de vrais élèves)
 - Vague de coffres **Mastery II** à partir du **26/09** (échelons I datés du 19/09 + 7 jours) : garde anti-boucle.
@@ -42,8 +45,7 @@ une décision.
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).
 - **Cérémonies qui s'enchaînent** en fin de session (parchemin, ligue, retournement, coffre) : règle « une seule plein
   écran par fin de session » à prototyper.
-- ~~Économie côté serveur~~ : **faite le 24/09** (voir « Livré »). Restent : les instantanés faux d'avant le 24/09
-  (réétiquetables depuis `weekly_history` si le rapport formateur en a besoin) ; comptes anormaux vus en calibrant
+- ~~Économie côté serveur~~ : **faite le 24/09** (voir « Livré »). Restent : comptes anormaux vus en calibrant
   (cyril iabd2627 102 900 XP pour 55 Q, DanielC idrac2026 103 485 XP) à regarder par Jérémy ; cron
   `weekly-teacher-report` planifié avec une clé `<TA_CLE_ANON>` factice (fonction jamais déployée).
 - ~~Rotation de `PUSH_SECRET`~~ : faite le 24/09 (Vercel + secrets Supabase, `VITE_PUSH_SECRET` retiré des `.env`) ;
