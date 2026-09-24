@@ -761,6 +761,8 @@ export function TeacherDash(p){
       "TOEIC estime total","TOEIC Listening","TOEIC Reading",
       "Mock1 TOEIC estime /495","Mock1 Score %","Mock1 Questions","Mock1 Date","Mock1 Temps (min)",
       "Mock2 TOEIC estime /495","Mock2 Score %","Mock2 Questions","Mock2 Date","Mock2 Temps (min)",
+      "Mock3 TOEIC estime /495","Mock3 Score %","Mock3 Questions","Mock3 Date","Mock3 Temps (min)",
+      "Boss TOEIC estime /990","Boss Score %","Boss Questions","Boss Date","Boss Temps (min)",
       "SpeedEasy score","SpeedEasy temps (s)","SpeedHard score","SpeedHard temps (s)",
       "WordFall score","WordFall combo max",
       "Duel parties","Duel victoires","Duel XP vole",
@@ -795,7 +797,7 @@ export function TeacherDash(p){
         na(stats.cardsRev||0),na(stats.drills||0),na(stats.perfects||0),
         na(s.weekly_daily_count||s.weeklyDailyCount||0),
         toeic.total===null?"non estim\u00e9":na(toeic.total),toeic.listening===null?"non estim\u00e9":na(toeic.listening),toeic.reading===null?"non estim\u00e9":na(toeic.reading),
-      ].concat(mockC("mock1")).concat(mockC("mock2")).concat([
+      ].concat(mockC("mock1")).concat(mockC("mock2")).concat(mockC("mock3")).concat(mockC("boss")).concat([
         na(gs.matchEasy?gs.matchEasy.score:""),na(gs.matchEasy?gs.matchEasy.time:""),
         na(gs.matchHard?gs.matchHard.score:""),na(gs.matchHard?gs.matchHard.time:""),
         na(gs.wordFall?gs.wordFall.score:""),na(gs.wordFall?(gs.wordFall.maxCombo||0):""),
