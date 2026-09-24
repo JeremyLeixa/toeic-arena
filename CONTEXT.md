@@ -33,7 +33,7 @@ une décision.
   **début octobre** avant de ranger ou retirer un module (premier aperçu iabd2627 : 45 créatures créées, 0 vaincue).
 
 ### En attente d'une décision de Jérémy
-- **A.4 ancrage Boss** de l'estimateur : dormant depuis juin (aucun appelant ne passe `bossToeic`). Câbler ou retirer.
+- ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).
 - **Cérémonies qui s'enchaînent** en fin de session (parchemin, ligue, retournement, coffre) : règle « une seule plein
   écran par fin de session » à prototyper.
 - **Phase C sécurité** : 158 lignes legacy sans mot de passe tolérées par `student_guard` → campagne « sécurise ton
