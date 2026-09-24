@@ -27,6 +27,8 @@ import { BossTest } from "../../src/features/exams/BossTest.jsx";
 import { EndlessArena } from "../../src/features/exams/EndlessArena.jsx";
 import { PART7_PASSAGES } from "../../src/data/part7.js";
 import { LISTENING_P3, LISTENING_P4 } from "../../src/data/listening.js";
+import { NineToFive } from "../../src/features/waygates/NineToFive.jsx";
+import { Waygates } from "../../src/features/waygates/Waygates.jsx";
 import { fresh } from "../../src/lib/profileSchema.js";
 import { playCorrect, playWrong } from "../../src/sounds.js";
 
@@ -124,11 +126,14 @@ var WIRED = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepd
   tavern: WordTavern, ablitz: AudioBlitz, clue: ClueHunter, sbuild: SentenceBuilder,
   crypt: IrregularCrypt, chrono: Chronomancer, forge: PassiveForge, weaver: RelativeWeaver,
   mmatch: ModalMatch, msort: ModalSort, gerinf: GerInf, pvdojo: PhrasalDojo,
-  mock1: MockTest, boss: BossTest, endless: EndlessArena };
+  mock1: MockTest, boss: BossTest, endless: EndlessArena, office: NineToFive, waygates: Waygates };
 
 function Frame() {
   var lc = "app" + (MODE === "light" ? " light" : "") + (FEST ? " fest-" + FEST : SKIN ? " skin-" + SKIN : "");
-  var common = { u: fresh("Camille", "visitor"), done: function () { return 1; }, back: function () { alert("Back → hub"); }, nav: noop, session: null, closeSession: noop, replaySession: noop, resetCard: noop, onContinue: noop, onReplay: noop, mockId: 1 };
+  var u = fresh("Camille", "visitor");
+  // Banc seulement : `rep=300` pose la réputation de Nine to Five (grade, clémence, formats débloqués).
+  if (q.get("rep")) u.gameScores = Object.assign({}, u.gameScores, { officeDay: { rep: +q.get("rep"), days: 3 } });
+  var common = { u: u, done: function () { console.log("[bench] done", JSON.stringify([].slice.call(arguments))); return 1; }, back: function () { alert("Back → hub"); }, nav: noop, session: null, closeSession: noop, replaySession: noop, resetCard: noop, onContinue: noop, onReplay: noop, mockId: 1 };
   var Mod = WIRED[SC];
   var body = Mod ? <Mod {...common} /> : SC === "intro" ? <Intro /> : SC === "listen" ? <Listen /> : SC === "drill" ? <RealDrill {...common} /> : <Drill />;
   return <div className={lc}>

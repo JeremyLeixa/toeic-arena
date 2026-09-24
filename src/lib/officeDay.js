@@ -10,9 +10,11 @@
 import { LISTENING_P3, LISTENING_P4 } from "../data/listening.js";
 import { PART7_PASSAGES } from "../data/part7.js";
 
+import { GRADES, REP_MAX_GAIN, REP_PER_CORRECT, REP_PER_TASK, gradeOf, nextGrade, officeRep } from "./officeGrades.js";
+export { GRADES, REP_MAX_GAIN, REP_PER_CORRECT, REP_PER_TASK, gradeOf, nextGrade, officeRep };
+
 export var DAY_START = 9 * 60, DAY_LEN = 8 * 60;
 export var REPLAY_COST = 15;         // « Sorry, could you repeat that? » : 15 min de jeu
-export var REP_PER_CORRECT = 4, REP_PER_TASK = 6, REP_MAX_GAIN = 200;
 
 export var COMPANY = "Meridian Harbor Group";
 export var PEOPLE = {
@@ -20,26 +22,7 @@ export var PEOPLE = {
   marcus: { name: "Marcus Bell", role: "Support desk", initials: "MB", hue: 28 },
 };
 
-// Grades : la réputation ne baisse JAMAIS (leçon de Mimic Hunt : un compteur qui recule fait lâcher le
-// module) ; une tâche manquée ne rapporte simplement rien. Horloge clémente en bas (choix de Jérémy) :
-// à 0,6 min de jeu par seconde, la journée d'un Intern dure 13 min réelles au plus.
-//   speed   minutes de jeu par seconde réelle      ringFor  minutes avant qu'un direct soit manqué
-//   tasks   tâches dans la journée                  multi    0 simples, 2 + doubles, 3 + triples
-export var GRADES = [
-  { id: "intern", name: "Intern", rep: 0, speed: 0.6, ringFor: 45, tasks: 4, multi: 0 },
-  { id: "junior", name: "Junior Associate", rep: 100, speed: 0.7, ringFor: 40, tasks: 4, multi: 0 },
-  { id: "associate", name: "Associate", rep: 250, speed: 0.8, ringFor: 30, tasks: 5, multi: 2, unlock: "Double-document files" },
-  { id: "senior", name: "Senior Associate", rep: 500, speed: 0.9, ringFor: 25, tasks: 5, multi: 2, unlock: "A faster clock" },
-  { id: "lead", name: "Team Lead", rep: 900, speed: 1, ringFor: 20, tasks: 5, multi: 3, unlock: "Triple-document files" },
-  { id: "manager", name: "Manager", rep: 1400, speed: 1, ringFor: 20, tasks: 6, multi: 3, unlock: "A sixth task every day" },
-  { id: "director", name: "Director", rep: 2200, speed: 1, ringFor: 20, tasks: 6, multi: 3, unlock: "The corner office" },
-];
-export function gradeOf(rep) {
-  var g = GRADES[0];
-  GRADES.forEach(function (x) { if ((rep || 0) >= x.rep) g = x; });
-  return g;
-}
-export function nextGrade(rep) { return GRADES.find(function (x) { return x.rep > (rep || 0); }) || null; }
+// Grades, réputation du profil et bornes : lib/officeGrades.js (sans données, lu aussi par App.jsx).
 
 export function fmtClock(min) {
   var t = DAY_START + Math.max(0, Math.floor(min));

@@ -39,6 +39,8 @@ var TimeSim=lazyNamed(function(){return import("./features/train/reading.jsx");}
 var AudioBlitz=lazyNamed(function(){return import("./features/games/AudioBlitz.jsx");},"AudioBlitz");
 var ClueHunter=lazyNamed(function(){return import("./features/games/ClueHunter.jsx");},"ClueHunter");
 var MimicHunt=lazyNamed(function(){return import("./features/games/MimicHunt.jsx");},"MimicHunt");
+var Waygates=lazyNamed(function(){return import("./features/waygates/Waygates.jsx");},"Waygates");
+var NineToFive=lazyNamed(function(){return import("./features/waygates/NineToFive.jsx");},"NineToFive");
 var DuelArena=lazyNamed(function(){return import("./features/games/DuelArena.jsx");},"DuelArena");
 var SentenceBuilder=lazyNamed(function(){return import("./features/games/SentenceBuilder.jsx");},"SentenceBuilder");
 var GauntletHub=lazyNamed(function(){return import("./features/gauntlet/Gauntlet.jsx");},"GauntletHub");
@@ -52,7 +54,7 @@ var ModalCouncilHub=lazyNamed(function(){return import("./features/modals/ModalC
  * manque, ici comme dans le littéral d'appel côté App(). Retourne l'écran rendu, ou
  * undefined si `sp` n'est pas une sous-page (App() enchaîne alors sur les onglets). */
 export function renderRoute(c){
-  var {activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, huntDone, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u}=c;
+  var {activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, huntDone, lastSession, miniSession, mockDone, nav, officeDone, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u}=c;
   if(sp==="daily")return pg(<Daily u={u} done={dailyDone} session={lastSession} closeSession={closeSession} back={function(){sSP(null);}}/>);
   if(sp==="csess")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
@@ -83,6 +85,10 @@ export function renderRoute(c){
   if(sp==="clue"){if(!lastSession)playBGM("bgm_clue");return pg(<ClueHunter u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp,mistakes){stopBGM();var s=settleSession("clue",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"clue");recordModule(c,"clue",sc,tot);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,"clue");if(sc===tot&&tot>0)grantWeeklyChest("clue_perfect","guerrier");sealSession(c,s.sid);sv(c);return s.sid;}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
   // Mimic Hunt : SELF_MANAGED, le module joue bgm_mimic lui-même (et la coupera en mode écoute).
   if(sp==="mimic"){return pg(<MimicHunt session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp,mistakes,extra){stopBGM();return miniSession(sc,tot,xp,mistakes,extra);}} back={function(){stopBGM();sSP(null);sT("games");}}/>);}
+  // The Waygates (2026-09-24) : hub des modules thématiques, puis ses mondes. Pas de BGM (l'effet central
+  // la coupe hors SELF_MANAGED : l'écoute des Parts 3 et 4 ne passe pas sous la musique).
+  if(sp==="waygates")return pg(<Waygates u={u} nav={nav} back={function(){sSP(null);sT("games");}}/>);
+  if(sp==="office")return pg(<NineToFive u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp,mistakes,extra){return officeDone(sc,tot,xp,mistakes,extra);}} back={function(){sSP("waygates");}}/>);
   if(sp==="ablitz")return pg(<AudioBlitz u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp,mistakes){var s=settleSession("ablitz",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);c.review=recordMisses(c.review,mistakes,new Date());if(tot>0){var abPct=sc/tot;if(abPct>=0.9)grantWeeklyChest("ablitz_90","guerrier");else if(abPct>=0.7)grantWeeklyChest("ablitz_70","novice");}sealSession(c,s.sid);sv(c);return s.sid;}} back={function(){sSP(null);sT("games");}}/>);
   if(sp==="upgrade")return pg(<UpgradeScreen u={u} back={function(){sSP(null);sT("profile");}}/>);
   if(sp==="shop"){playBGM("bgm_shop");return pg(<Shop u={u} buy={shopBuy} setAvatar={function(c){sv(c);}} back={function(){stopBGM();sSP(null);sT("profile");}}/>);}
