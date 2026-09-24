@@ -37,8 +37,8 @@ export var ACHIEVEMENTS = [
     {id:"weekly_500",name:"Weekly Warrior",desc:"Earn 500 XP in one week",icon:"⚡",check:function(s){return(s.weeklyXp||0)>=500;}},
   {id:"legend_league",name:"Légende",desc:"Reach the Légende league (30,000 XP)",icon:"⚡",check:function(s){return(s.xp||0)>=30000;}},
   // ─── MOCK TEST ───
-  {id:"mock_complete",name:"Trial by Fire",desc:"Complete a Mock Test",icon:"📝",check:function(s){return s.mockResults&&(s.mockResults.mock1||s.mockResults.mock2);}},
-  {id:"toeic_master",name:"TOEIC Master",desc:"Score 400+ on a Mock Test",icon:"🏆",check:function(s){if(!s.mockResults)return false;var m1=s.mockResults.mock1;var m2=s.mockResults.mock2;return(m1&&m1.toeicEstimate>=400)||(m2&&m2.toeicEstimate>=400);}},
+  {id:"mock_complete",name:"Trial by Fire",desc:"Complete a Mock Test",icon:"📝",check:function(s){return s.mockResults&&(s.mockResults.mock1||s.mockResults.mock2||s.mockResults.mock3);}},
+  {id:"toeic_master",name:"TOEIC Master",desc:"Score 400+ on a Mock Test",icon:"🏆",check:function(s){if(!s.mockResults)return false;return["mock1","mock2","mock3"].some(function(k){var m=s.mockResults[k];return m&&m.toeicEstimate>=400;});}},
   // ─── WORD TAVERN ───
   {id:"tavern_first",name:"Tavern Visitor",desc:"Complete your first Word Tavern",icon:"🍺",check:function(s){return s.moduleScores&&s.moduleScores.tavern&&s.moduleScores.tavern.sessions>=1;}},
   {id:"tavern_silver",name:"Silver Tongue",desc:"Score 13+/15 in one Word Tavern",icon:"🗣️",check:function(s){if(!s.moduleScores||!s.moduleScores.tavern||!s.moduleScores.tavern.history)return false;for(var i=0;i<s.moduleScores.tavern.history.length;i++){if(s.moduleScores.tavern.history[i].correct>=13)return true;}return false;}},

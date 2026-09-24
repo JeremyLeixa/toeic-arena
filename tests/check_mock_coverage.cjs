@@ -32,5 +32,18 @@ eq('sans examen : pas d\'estimation complète', T.estimateTOEICScore(thin).estim
   eq(id + ' compte comme examen fait', r.evidence.mocksDone, 1);
 });
 
+// ── coffre du Boss : accordé par bossDone (le circuit du Boss), une seule fois (déclencheur sans date) ──
+const app = fs.readFileSync(path.join(ROOT, 'src', 'App.jsx'), 'utf8');
+const bossDone = (app.match(/function bossDone\([\s\S]*?\n  \}/) || [''])[0];
+eq('bossDone accorde le coffre Légendaire boss_test', /grantChestLocal\("boss_test","legendaire"\)/.test(bossDone), true);
+eq('plus de branche morte « boss » dans mockDone', /mockId==="boss"/.test(app), false);
+
+// ── trophées des Mocks : les trois Mocks comptent ──
+const { ACHIEVEMENTS } = require(path.join(ROOT, 'src', 'data', 'achievements.js'));
+const ach = (id) => ACHIEVEMENTS.find((a) => a.id === id);
+eq('Trial by Fire : Mock 3 seul suffit', !!ach('mock_complete').check({ mockResults: { mock3: { toeicEstimate: 300 } } }), true);
+eq('TOEIC Master : 400+ au Mock 3', !!ach('toeic_master').check({ mockResults: { mock3: { toeicEstimate: 420 } } }), true);
+eq('TOEIC Master : 390 partout → non', !!ach('toeic_master').check({ mockResults: { mock1: { toeicEstimate: 390 }, mock3: { toeicEstimate: 390 } } }), false);
+
 console.log((checks - fails) + '/' + checks + ' vérifications Mock 3 / Boss au vert');
 process.exit(fails ? 1 : 0);
