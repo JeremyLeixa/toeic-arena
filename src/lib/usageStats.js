@@ -4,6 +4,7 @@
 //   dms       {"<modId>_<YYYY-MM-DD>": n, "quit:<route>_<YYYY-MM-DD>": n}  (35 derniers jours)
 //   done_days ["YYYY-MM-DD", …]  jours de mission du jour accomplie
 //   weeks     {"<lundi>": {caught, slain}}  bestiaire, 5 semaines
+//   secured   true si le compte a un mot de passe (user_id posé) — suivi de la Phase C (2026-09-24)
 // Les dates sont celles de today() (UTC), comme à l'écriture.
 //
 // Deux captures sont neuves au 2026-09-23 (abandons, jours de mission) : leurs taux ne comptent que
@@ -52,7 +53,7 @@ export function usageStats(rows, now) {
   now = now || new Date();
   var from7 = dayMinus(now, 6), from30 = dayMinus(now, 29);
   var capFrom = from30 > CAPTURE_START ? from30 : CAPTURE_START;
-  var mods = {}, active7 = 0, active30 = 0, mDone = 0, mActive = 0, caught = 0, slain = 0;
+  var mods = {}, active7 = 0, active30 = 0, mDone = 0, mActive = 0, caught = 0, slain = 0, secured = 0, activeUnsecured = 0;
   function mod(id) {
     return mods[id] || (mods[id] = { id: id, label: moduleLabel(id), plays7: 0, plays30: 0, playsCap: 0, quits30: 0, reach: {} });
   }
@@ -69,6 +70,8 @@ export function usageStats(rows, now) {
     });
     var active = Object.keys(days30);
     if (active.length) active30++;
+    // Phase C : un compte actif sans mot de passe est celui qui verra l'écran de sécurisation à la bascule.
+    if (r && r.secured) secured++; else if (active.length) activeUnsecured++;
     if (in7) active7++;
     var done = {};
     ((r && r.done_days) || []).forEach(function (d) { done[d] = true; });
@@ -87,6 +90,7 @@ export function usageStats(rows, now) {
     students: (rows || []).length, active7: active7, active30: active30,
     mission: { done: mDone, active: mActive, rate: mActive ? mDone / mActive : null },
     bestiary: { caught: caught, slain: slain },
+    security: { secured: secured, total: (rows || []).length, activeUnsecured30: activeUnsecured },
     modules: modules, captureStart: CAPTURE_START,
   };
 }

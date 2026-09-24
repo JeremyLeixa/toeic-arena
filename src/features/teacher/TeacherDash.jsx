@@ -639,7 +639,7 @@ export function TeacherDash(p){
     supabase.rpc('teacher_usage',{p_code:getDashTeacher(),p_class_code:classCode}).then(function(res){
       if(res.error){console.warn("[usage] teacher_usage failed:",res.error.message);setUsage({error:res.error.message});return;}
       if(!res.data||!res.data.ok){console.warn("[usage] refused:",res.data&&res.data.error);setUsage({error:(res.data&&res.data.error)||"refused"});return;}
-      setUsage(usageStats(res.data.students||[],new Date()));
+      setUsage(Object.assign(usageStats(res.data.students||[],new Date()),{strictSince:res.data.strict_since||null}));
     }).catch(function(e){console.warn("[usage] teacher_usage caught:",e&&e.message);setUsage({error:e&&e.message});});
     // Garde-fou XP (2026-09-24) : journées notées au-delà de +20 000 XP, plafonnées au-delà de +40 000 par save_student, NOMMÉES (RPC à part,
     // teacher_usage reste anonyme). Échec → section absente, l'onglet reste utilisable.
@@ -1783,6 +1783,19 @@ export function TeacherDash(p){
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginBottom:14}}>
           {kpi.map(function(k){return(<div key={k.l} className="crd" style={{padding:12}}><div className="out" style={{fontSize:20,fontWeight:700,color:"var(--t1)"}}>{k.v}</div><div style={{fontSize:11,color:"var(--t3)",marginTop:4}}>{k.l}</div></div>);})}
         </div>
+        {/* Phase C (2026-09-24) : avancement de la sécurisation des comptes de la promo (visiteurs exclus : toujours tolérés). */}
+        {classCode!=="visitor"&&usage.security&&(function(){
+          var sec=usage.security,n=sec.activeUnsecured30,pl=n>1;
+          var line=usage.strictSince
+            ?"Mode strict depuis le "+String(usage.strictSince).slice(0,10).split("-").reverse().join("/")+" : un élève sans mot de passe passe par l'écran « Sécurise ton compte » à sa prochaine ouverture (progression conservée)."
+            :(n>0
+              ?n+" élève"+(pl?"s":"")+" actif"+(pl?"s":"")+" sur 30 j sans mot de passe : "+(pl?"ils verront":"il verra")+" l'écran de sécurisation quand la promo passera en mode strict."
+              :"Aucun élève actif sur 30 j sans mot de passe : la promo peut passer en mode strict sans gêner personne.");
+          return(<div className="crd" style={{padding:12,marginBottom:14}}>
+            <div className="out" style={{fontSize:13,fontWeight:700,color:"var(--t1)"}}>{"🔒 Comptes sécurisés : "+sec.secured+" / "+sec.total}</div>
+            <div style={{fontSize:12,color:"var(--t2)",marginTop:6,lineHeight:1.5}}>{line}</div>
+          </div>);
+        })()}
         <div className="crd" style={{padding:12,overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"'DM Sans',sans-serif"}}>
             <thead><tr><th style={Object.assign({},th,{textAlign:"left"})}>{"Module"}</th><th style={th}>{"Parties 7 j"}</th><th style={th}>{"Parties 30 j"}</th><th style={th}>{"Élèves 30 j"}</th><th style={th}>{"Abandons"}</th><th style={th}>{"Taux d'abandon"}</th></tr></thead>

@@ -98,6 +98,21 @@ eq('préfixe d\'abandon aligné sur sessionQuit', Q.QUIT_PREFIX, 'quit:');
   eq('entrée nulle', U.usageStats(null, NOW).modules, []);
 }
 
+// ── Phase C : comptes sécurisés, actifs pas encore sécurisés ──
+// « Actif sans mot de passe » = celui qui verra l'écran de sécurisation à la bascule : le chiffre qui dit si la
+// promo est prête. Un sécurisé inactif ne compte pas dedans, un non sécurisé dormant non plus.
+{
+  const r = U.usageStats([
+    { secured: true, dms: { 'drill_2026-10-05': 1 } },
+    { secured: true },
+    { dms: { 'drill_2026-10-01': 2 } },
+    { dms: { 'drill_2026-08-01': 2 } },
+    {},
+  ], NOW);
+  eq('sécurisés / total', [r.security.secured, r.security.total], [2, 5]);
+  eq('actifs 30 j sans mot de passe', r.security.activeUnsecured30, 1);
+}
+
 // ── tri et libellés ──
 {
   const r = U.usageStats([{ dms: { 'tavern_2026-10-05': 1, 'drill_2026-10-05': 5, 'game_wordFall_2026-10-05': 2 } }], NOW);

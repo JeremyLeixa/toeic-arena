@@ -336,9 +336,16 @@ l'ajouter à `supabase/migrations/`.
 | Lecture publique (classement, fiche de promo) | aucune, mais **bornée** : colonnes figées, limite dure, `Teacher` exclu en SQL | `students_public`, `class_median_xp`, `class_weekly_progress`, `class_week_podium`, `group_public` |
 | Dashboard formateur | `teacher_role_of(p_code)` + propriété de cohorte | `teacher_students`, `teacher_weekly_snapshots`, `teacher_feedback`, `teacher_create_event`, `teacher_usage` (anonyme : ni nom ni id) |
 
-`student_guard` a une **tolérance legacy** : une ligne sans `user_id` passe, faute de
-preuve à exiger. Chaque compte migré se protège tout seul. Le durcissement final de la
-Phase C = retirer cette branche, une ligne.
+**Règle de propriété unique : `_owner_ok(owner, promo)`** (Phase C, 2026-09-24). Les 7 portes (`student_guard`,
+`save_student`, `grant_marks`, `consume_token`, `buy_item`, `claim_bourse_title`, `grant_token`) l'appellent ; elles
+avaient chacune leur copie de la tolérance legacy. Ligne liée → seul son propriétaire ; ligne sans `user_id` →
+tolérée **sauf si sa promo est en mode strict** (`identity_strict_classes`, `'*'` = toutes), visiteurs toujours
+tolérés. Refus = `not_owner` → session perdue côté client → écran « Sécurise ton compte » (bandeau « Nouveau… »),
+copie locale gardée. **Basculer une promo** : `INSERT INTO identity_strict_classes VALUES ('<code>')` ; revenir :
+`DELETE`. Suivi dans l'onglet Usage (« Comptes sécurisés », actifs sans mot de passe). ⚠️ Toujours `IS NOT DISTINCT
+FROM auth.uid()`, jamais `=` : sans session, `auth.uid()` est NULL et `IF NOT NULL` ne refuse rien (écrit ainsi, le
+lot 1 ouvrait les comptes sécurisés aux appels anonymes ; attrapé par l'essai en transaction). `check_owner_rule`
+refuse ce retour et toute nouvelle copie de la tolérance.
 
 **Deux marqueurs d'identité sur `students`, deux lecteurs différents** (piège vécu le
 2026-09-15, P2-D4) : le **routage du login** (`find_students_by_name` → Onboard) lit

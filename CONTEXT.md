@@ -54,8 +54,11 @@ une décision.
 - ~~Rotation de `PUSH_SECRET`~~ : faite le 24/09 (Vercel + secrets Supabase, `VITE_PUSH_SECRET` retiré des `.env`) ;
   l'ancienne valeur (encore dans l'historique git) est refusée par `/api/push-send` (401 vérifié), envoi réel testé
   via `streak-reminder`.
-- **Phase C sécurité** : 158 lignes legacy sans mot de passe tolérées par `student_guard` → campagne « sécurise ton
-  compte », puis retrait de la branche (une ligne SQL).
+- **Phase C sécurité** (lot 1 LIVRÉ le 24/09, `e88c26e`) : règle unique `_owner_ok`, mode strict par promo
+  (`identity_strict_classes`, vide), essai de bout en bout validé sur une promo de test (sécurisation depuis l'appli,
+  copie locale gardée), suivi « Comptes sécurisés » dans l'onglet Usage. 5 comptes sécurisés sur 163. **Reste** : date
+  de bascule d'iabd2627 (12 actifs) et mpqse2527 (13 actifs sur 60 j), annoncée en cours par Jérémy, puis les
+  promos dormantes ; visiteurs toujours tolérés (choix de Jérémy).
 - ~~`CLAUDE.md` à alléger~~ : découpé le 24/09 (racine + 13 `CLAUDE.md` de sous-dossier).
 - ~~Restes d'audit~~ traités le 24/09 : Mock 3 dans l'estimateur, coffre du Boss, trophées Mock 3, RGPD (feedback
   purgé, refus plus jamais silencieux), CSV Mock 3 + Boss, flags de `MODULE_TOEIC_MAP`, bornes de la monnaie ; alerte
