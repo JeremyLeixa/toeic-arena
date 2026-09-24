@@ -56,9 +56,10 @@ une décision.
   via `streak-reminder`.
 - **Phase C sécurité** (lot 1 LIVRÉ le 24/09, `e88c26e`) : règle unique `_owner_ok`, mode strict par promo
   (`identity_strict_classes`, vide), essai de bout en bout validé sur une promo de test (sécurisation depuis l'appli,
-  copie locale gardée), suivi « Comptes sécurisés » dans l'onglet Usage. 5 comptes sécurisés sur 163. **Reste** : date
-  de bascule d'iabd2627 (12 actifs) et mpqse2527 (13 actifs sur 60 j), annoncée en cours par Jérémy, puis les
-  promos dormantes ; visiteurs toujours tolérés (choix de Jérémy).
+  copie locale gardée), suivi « Comptes sécurisés » dans l'onglet Usage. 5 comptes sécurisés sur 163. **Bascule programmée le 15/10 à 4 h** (tâche pg_cron
+  `phase-c-bascule-2026-10-15`, qui se retire seule) pour iabd2627 et mpqse2527, annoncée en cours par Jérémy ;
+  promos dormantes ensuite, à décider ; visiteurs toujours tolérés (choix de Jérémy). Annuler avant :
+  `SELECT cron.unschedule('phase-c-bascule-2026-10-15')`.
 - ~~`CLAUDE.md` à alléger~~ : découpé le 24/09 (racine + 13 `CLAUDE.md` de sous-dossier).
 - ~~Restes d'audit~~ traités le 24/09 : Mock 3 dans l'estimateur, coffre du Boss, trophées Mock 3, RGPD (feedback
   purgé, refus plus jamais silencieux), CSV Mock 3 + Boss, flags de `MODULE_TOEIC_MAP`, bornes de la monnaie ; alerte
