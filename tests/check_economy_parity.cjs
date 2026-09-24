@@ -77,5 +77,22 @@ dyn.forEach((d) => ok('déclencheur construit reconnu : ' + d, DYNAMIC.some((p) 
 ok('les 4 épreuves du Gauntlet et les 2 du Modal Council ont leur défi parfait', ['irregular', 'tense', 'passive', 'relative']
   .every((s) => known.has('gauntlet_' + s + '_perfect')) && ['match', 'sort'].every((s) => known.has('modals_' + s + '_perfect')));
 
+// ── lot 2c : conversions décidées par le serveur ──
+// Le SQL écrit ses listes de jetons en dur : un jeton ajouté à TOKEN_TYPES sans passer par ici serait
+// inaccessible par conversion (ou, pire, un jeton de boost deviendrait convertible).
+const conv = fs.readFileSync(path.join(ROOT, 'supabase', 'migrations', '2026-09-24_economy_lot2c_conversions.sql'), 'utf8');
+const sqlArrays = [...conv.matchAll(/unnest\(ARRAY\[([^\]]+)\]\)/g)].map((m) => m[1].match(/'([a-z_]+)'/g).map((s) => s.slice(1, -1)).sort());
+const nonPrem = rows.tokens.filter((t) => !t.premium && !t.boost).map((t) => t.type).sort();
+const prem = rows.tokens.filter((t) => t.premium && t.type !== 'insight_token').map((t) => t.type).sort();
+ok('convert_dups_to_token rend un jeton non premium (liste = TOKEN_TYPES)', JSON.stringify(sqlArrays[0]) === JSON.stringify(nonPrem));
+ok('convert_tokens_premium rend un jeton premium hors insight (liste = TOKEN_TYPES)', JSON.stringify(sqlArrays[1]) === JSON.stringify(prem));
+const srcCheck = (conv.match(/p_source NOT IN \(([^)]+)\)/) || [, ''])[1].match(/'([a-z_]+)'/g) || [];
+ok('source d\'une conversion premium = jetons non premium', JSON.stringify(srcCheck.map((s) => s.slice(1, -1)).sort()) === JSON.stringify(nonPrem));
+ok('doublons convertis par convert_dups_to_token', /rpc\("convert_dups_to_token"/.test(chests));
+ok('jetons convertis par convert_tokens_premium', /rpc\("convert_tokens_premium"/.test(chests));
+const clientSrc = chests + app + fs.readFileSync(path.join(ROOT, 'src', 'features', 'shop', 'Shop.jsx'), 'utf8');
+ok('plus aucun appel client à grant_token', !/rpc\(["']grant_token["']/.test(clientSrc));
+ok('plus aucun appel client à convert_cosmetic_dups', !/rpc\(["']convert_cosmetic_dups["']/.test(clientSrc));
+
 console.log((checks - fails) + '/' + checks + ' vérifications de l\'économie au vert');
 process.exit(fails ? 1 : 0);

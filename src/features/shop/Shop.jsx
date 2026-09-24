@@ -205,7 +205,7 @@ export function ConversionsView(p){
   async function doConvertCosmetic(group){
     if(busy)return;
     setBusy(true);
-    var res=await convertCosmeticDups(u.name,u.classCode||"visitor",group.type,group.id,tokens||{});
+    var res=await convertCosmeticDups(u.name,u.classCode||"visitor",group.type,group.id);
     setBusy(false);
     if(!res.ok){showToast({err:true,msg:"Failed: "+(res.error||"unknown")});return;}
     if(res.xpFallback){
@@ -221,7 +221,7 @@ export function ConversionsView(p){
   async function doConvertTokens(item){
     if(busy)return;
     setBusy(true);
-    var res=await convertTokensToPremium(u.name,u.classCode||"visitor",item.type,tokens||{});
+    var res=await convertTokensToPremium(u.name,u.classCode||"visitor",item.type);
     setBusy(false);
     if(!res.ok){
       var msgMap={all_premium_capped:"All premium tokens maxed",not_enough_tokens:"Not enough tokens"};

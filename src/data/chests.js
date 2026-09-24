@@ -2,7 +2,7 @@
 import { supabase } from "../supabase.js";
 // Données pures (catalogues, tables de tirage) : src/data/chestCatalog.js, ré-exportées ici.
 export { RARITIES, CHEST_TYPES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, SHOP_CATALOG, DROP_TABLES, pickRewards, UNIQUE_TRIGGERS, NOVICE_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, LEGENDARY_ACHIEVEMENTS, rollRarity, pickReward } from "./chestCatalog.js";
-import { RARITIES, TOKEN_TYPES } from "./chestCatalog.js";
+import { RARITIES } from "./chestCatalog.js";
 
 // ═══ SUPABASE HELPERS ═══
 // Lot 4 du verrou des tables satellites (2026-09-15) : plus aucun accès direct
@@ -96,95 +96,35 @@ export async function spendMarks(userName, classCode, item){
   }catch(e){console.warn("[SHOP] spendMarks exception:",e&&e.message);return{ok:false,error:e&&e.message};}
 }
 
-// V2 — grant a token via the SQL helper (cap-aware UPSERT)
-async function grantTokenRPC(userName, classCode, tokenType, amount, cap){
+// Économie côté serveur, lot 2c (2026-09-24) : les conversions sont décidées par le SERVEUR, en une
+// transaction (convert_dups_to_token, convert_tokens_premium). Le client ne choisit plus le jeton rendu et ne
+// s'accorde plus rien lui-même. Jetons rendus : non premium = ni premium ni boost dans TOKEN_TYPES ; premium = premium
+// sauf insight_token (réservé au Légendaire). tests/check_economy_parity.cjs compare avec le SQL.
+
+// 3 doublons d'un cosmétique (4 exemplaires au moins, le plus ancien gardé) → 1 jeton non premium, ou 100 XP
+// si tous sont au plafond. Returns {ok, token?, xpFallback?, error?}.
+export async function convertCosmeticDups(userName, classCode, rewardType, rewardId){
   try{
-    var res=await supabase.rpc("grant_token",{
-      p_user_name:userName, p_class_code:classCode,
-      p_token_type:tokenType, p_amount:amount, p_cap:cap,
+    var res=await supabase.rpc("convert_dups_to_token",{
+      p_name:userName,p_class_code:classCode,p_reward_type:rewardType,p_reward_id:rewardId,
     });
-    if(res.error)console.warn("[CHEST] grant_token RPC error:",res.error.message);
-    return res.data;
-  }catch(e){console.warn("[CHEST] grant_token exception:",e&&e.message);return null;}
-}
-
-// V2 step 5 — pool of token types eligible as conversion outputs
-var NON_PREMIUM_TOKENS=["diminishing_bypass","streak_shield","daily_reroll"];
-var PREMIUM_TOKENS=["mock_reset","boss_reset","endless_resurrect"];
-
-// Convert 3 duplicate cosmetics → 1 random non-premium token.
-// Returns {ok, token?, error?}. Atomic enough for V1 : DELETE 3 rows then grant 1 token.
-// Failure modes : <3 dups (ok:false), all token types capped (returns XP gem instead).
-export async function convertCosmeticDups(userName, classCode, rewardType, rewardId, ownedTokens){
-  try{
-    // Pick a non-capped non-premium token to grant, AVANT de supprimer quoi que
-    // ce soit — on veut savoir ce qu'on rend avant de retirer.
-    var owned=ownedTokens||{};
-    var candidates=NON_PREMIUM_TOKENS.filter(function(tt){
-      var qty=owned[tt]||0;
-      var cap=(TOKEN_TYPES[tt]&&TOKEN_TYPES[tt].cap)||1;
-      return qty<cap;
-    });
-
-    // Le plancher "≥ 4 exemplaires, on n'en supprime que 3" est désormais tenu
-    // EN SQL (convert_cosmetic_dups) et plus seulement par ce fichier : la base
-    // ne peut plus être amenée à effacer le dernier exemplaire d'un cosmétique,
-    // quoi qu'envoie le client. La RPC supprime les 3 plus récents et garde le
-    // plus ancien — choix déterministe, là où ce code prenait 3 lignes dans un
-    // ordre non spécifié.
-    var conv=await supabase.rpc("convert_cosmetic_dups",{
-      p_name:userName,p_class_code:classCode,
-      p_reward_type:rewardType,p_reward_id:rewardId,
-    });
-    if(conv.error)return{ok:false,error:conv.error.message};
-    if(!conv.data||conv.data.ok===false)return{ok:false,error:(conv.data&&conv.data.error)||"convert_failed"};
-
-    // All non-premium tokens capped → the 3 dups are gone, caller grants 100 XP instead.
-    if(candidates.length===0)return{ok:true,xpFallback:100};
-
-    var pick=candidates[Math.floor(Math.random()*candidates.length)];
-    var cap=TOKEN_TYPES[pick].cap||1;
-
-    // Grant the token (cap-aware via SQL helper)
-    await grantTokenRPC(userName,classCode,pick,1,cap);
-    return{ok:true,token:pick};
+    if(res.error)return{ok:false,error:res.error.message};
+    if(!res.data||res.data.ok===false)return{ok:false,error:(res.data&&res.data.error)||"convert_failed"};
+    if(res.data.xp_fallback)return{ok:true,xpFallback:res.data.xp_fallback};
+    return{ok:true,token:res.data.token};
   }catch(e){return{ok:false,error:e&&e.message};}
 }
 
-// Convert 5 of a non-premium token → 1 random premium token.
-// Returns {ok, token?, error?}. Uses consume_token RPC × 5 (atomic per call).
-export async function convertTokensToPremium(userName, classCode, sourceType, ownedTokens){
+// 5 jetons non premium d'un même type → 1 jeton premium. Returns {ok, token?, error?}.
+export async function convertTokensToPremium(userName, classCode, sourceType){
   try{
-    if(NON_PREMIUM_TOKENS.indexOf(sourceType)===-1)return{ok:false,error:"source_not_non_premium"};
-    var owned=ownedTokens||{};
-    if((owned[sourceType]||0)<5)return{ok:false,error:"not_enough_tokens"};
-
-    // Pick a non-capped premium token target
-    var candidates=PREMIUM_TOKENS.filter(function(tt){
-      var qty=owned[tt]||0;
-      var cap=(TOKEN_TYPES[tt]&&TOKEN_TYPES[tt].cap)||1;
-      return qty<cap;
-    });
-    if(candidates.length===0)return{ok:false,error:"all_premium_capped"};
-    var pick=candidates[Math.floor(Math.random()*candidates.length)];
-    var cap=TOKEN_TYPES[pick].cap||1;
-
-    // Consume 5 source tokens via the SQL helper
-    var consumeRes=await supabase.rpc("consume_token",{
-      p_user_name:userName, p_class_code:classCode,
-      p_token_type:sourceType, p_amount:5,
-    });
-    if(consumeRes.error)return{ok:false,error:consumeRes.error.message};
-    if(consumeRes.data===false)return{ok:false,error:"consume_returned_false"};
-
-    // Grant the premium token
-    await grantTokenRPC(userName,classCode,pick,1,cap);
-    return{ok:true,token:pick};
+    var res=await supabase.rpc("convert_tokens_premium",{p_name:userName,p_class_code:classCode,p_source:sourceType});
+    if(res.error)return{ok:false,error:res.error.message};
+    if(!res.data||res.data.ok===false)return{ok:false,error:(res.data&&res.data.error)||"convert_failed"};
+    return{ok:true,token:res.data.token};
   }catch(e){return{ok:false,error:e&&e.message};}
 }
 
-// V2 — Open a chest: roll multi-rewards, persist them, log, delete pending, return aggregate.
-// `owned` = {avatars, skins, frames, titles, cheatSheets, tokens:{type:qty}}
 // Returns {ok:true, rewards, totalXp, totalDarics, balance, newPityCount, …} once the server has consumed the
 // pending row, or {ok:false, error, chestType, triggerSource} otherwise.
 // Économie côté serveur, lot 2a (2026-09-24) : le SERVEUR tire le butin (open_chest → _roll_chest, port de
