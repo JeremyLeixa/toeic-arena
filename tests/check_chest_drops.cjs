@@ -35,21 +35,11 @@ function fail(key, msg) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// Le module pur de chests.js
+// Le module pur des coffres
 // ══════════════════════════════════════════════════════════════════════════
-// chests.js importe supabase en ligne 2 : non requérable tel quel. On garde la
-// tranche entre l'import et la section « SUPABASE HELPERS », qui ne contient que
-// des données et des fonctions pures, et on retire les `export`.
-const raw = fs.readFileSync(path.join(ROOT, 'src', 'data', 'chests.js'), 'utf8')
-  .replace(/\r\n/g, '\n').split('\n');
-const cut = raw.findIndex(l => l.includes('SUPABASE HELPERS'));
-if (cut < 0) throw new Error('marqueur « SUPABASE HELPERS » introuvable dans chests.js — '
-  + 'le découpage doit être revu.');
-const pure = raw.slice(2, cut).join('\n').replace(/^export /gm, '');
-
-const NAMES = ['RARITIES', 'CHEST_TYPES', 'AVATARS', 'SKINS', 'FRAMES', 'TITLES',
-  'TOKEN_TYPES', 'CHEAT_SHEETS', 'DROP_TABLES', 'pickRewards'];
-const M = new Function(pure + '\nreturn {' + NAMES.join(',') + '};')();
+// Depuis le 2026-09-24, catalogues et tables de tirage vivent dans src/data/chestCatalog.js (sans Supabase) :
+// plus de découpage de texte de chests.js, le module se charge tel quel.
+const M = require(path.join(ROOT, 'src', 'data', 'chestCatalog.js'));
 
 // ══════════════════════════════════════════════════════════════════════════
 // Les types persistés, lus dans la migration

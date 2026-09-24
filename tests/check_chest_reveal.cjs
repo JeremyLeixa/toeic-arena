@@ -38,7 +38,7 @@ const eq = (label, got, want) => {
 const ok = (label, cond) => { checks++; if (!cond) fail(label); };
 
 // 1. Ordre des raretés = RARITIES de data/chests.js
-const chestsSrc = fs.readFileSync(path.join(ROOT, 'src', 'data', 'chests.js'), 'utf8');
+const chestsSrc = fs.readFileSync(path.join(ROOT, 'src', 'data', 'chestCatalog.js'), 'utf8'); // sorti de chests.js le 2026-09-24
 const block = (chestsSrc.match(/export var RARITIES\s*=\s*\[([\s\S]*?)\];/) || [])[1] || '';
 eq('RARITY_ORDER = RARITIES', R.RARITY_ORDER, [...block.matchAll(/id:"(\w+)"/g)].map((m) => m[1]));
 eq('rarityTier', ['common', 'rare', 'legend', 'nope', undefined].map(R.rarityTier), [0, 2, 4, -1, -1]);

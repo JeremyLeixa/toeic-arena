@@ -78,7 +78,7 @@ const worstLight = (h) => Math.min(...lightBgs.filter(([, v]) => v).map(([, v]) 
 
 // ── Les couleurs à couvrir ──
 // data/chests.js importe Supabase et n'est pas requérable : on lit les blocs en texte.
-const chests = read('src/data/chests.js');
+const chests = read('src/data/chestCatalog.js'); // blocs sortis de chests.js le 2026-09-24
 const titlesBlock = (/export var TITLES\s*=\s*\{([\s\S]*?)\n\};/.exec(chests) || [])[1] || '';
 const titleColors = [...titlesBlock.matchAll(/color:\s*"(#[0-9a-fA-F]{6})"/g)].map((m) => m[1].toLowerCase());
 check(titleColors.length >= 10, 'bloc TITLES de data/chests.js introuvable ou vide (' + titleColors.length + ' couleurs lues)');
