@@ -39,8 +39,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  var ip = req.headers["x-forwarded-for"] || "unknown";
+  var ip = String(req.headers["x-forwarded-for"] || "unknown").split(",")[0].trim();
   if (!rateLimit(ip, 5, 5 * 60 * 1000)) {
+    return res.status(429).json({ error: "Too many requests" });
+  }
+
+  // Session exigée (2026-09-24) : avant, n'importe qui pouvait écrire au nom de n'importe quel élève dans
+  // la boîte de feedback du formateur et déclencher des e-mails. Même patron que stripe-checkout-create.js.
+  var authHeader = req.headers.authorization || "";
+  var token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (!token) return res.status(401).json({ error: "session_required" });
+  var userRes = await supaAdmin.auth.getUser(token);
+  var uid = userRes && userRes.data && userRes.data.user ? userRes.data.user.id : null;
+  if (userRes.error || !uid) return res.status(401).json({ error: "session_required" });
+  if (!rateLimit("u:" + uid, 5, 5 * 60 * 1000)) {
     return res.status(429).json({ error: "Too many requests" });
   }
 
@@ -59,6 +71,27 @@ export default async function handler(req, res) {
   }
   if (!module_id || !module_label) return res.status(400).json({ error: "module required" });
   if (message.length < 10) return res.status(400).json({ error: "message too short (min 10 chars)" });
+
+  // Qui signe : le compte sécurisé de cette session, quel que soit le pseudo tapé. Sans compte sécurisé
+  // (legacy, visiteur), le pseudo tapé passe, sauf s'il désigne un compte sécurisé d'un autre élève.
+  var own = await supaAdmin.from("students").select("name,class_code").eq("user_id", uid).limit(1);
+  if (own.error) {
+    console.error("[feedback-send] owner lookup error:", own.error.message);
+    return res.status(500).json({ error: "Failed to verify sender" });
+  }
+  if (own.data && own.data.length) {
+    user_name = own.data[0].name;
+    class_code = own.data[0].class_code || class_code;
+  } else {
+    var claimed = await supaAdmin.from("students").select("user_id").eq("name", user_name).eq("class_code", class_code).limit(1);
+    if (claimed.error) {
+      console.error("[feedback-send] claim lookup error:", claimed.error.message);
+      return res.status(500).json({ error: "Failed to verify sender" });
+    }
+    if (claimed.data && claimed.data.length && claimed.data[0].user_id && claimed.data[0].user_id !== uid) {
+      return res.status(403).json({ error: "not_owner" });
+    }
+  }
 
   // ── Insert in Supabase ──
   var insertRes = await supaAdmin

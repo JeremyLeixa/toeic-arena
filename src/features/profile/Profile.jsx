@@ -13,6 +13,7 @@ import { MISSION_MODULES } from "../../data/placement.js";
 import { PREMIUM_UPGRADE_ENABLED } from "../../lib/access.js";
 import { haptic } from "../../lib/device.js";
 import { findModuleLabel, FEEDBACK_MODULES } from "../../lib/feedbackModules.js";
+import { getAccessTokenSync } from "../../lib/persistence.js";
 import { festivalById, festivalOccurrence, formatFestivalDate, windowFestivalId } from "../../lib/festivals.js";
 import { getEffectiveLeague } from "../../lib/league.js";
 import { isPushSubscribed, unsubscribePush, subscribePush } from "../../lib/push.js";
@@ -1335,9 +1336,13 @@ export function FeedbackForm(p){
     if(message.trim().length<10){setErr("Message trop court (10 caractères minimum).");return;}
     setBusy(true);
     var label=findModuleLabel(moduleId);
+    // Session exigée par /api/feedback-send depuis le 2026-09-24 : le compte sécurisé de la session signe le
+    // message (le pseudo tapé ne peut plus usurper un autre élève).
+    var tok=getAccessTokenSync();
+    if(!tok){setErr("Ta session a expiré : reconnecte-toi, puis renvoie ton message.");setBusy(false);return;}
     fetch("/api/feedback-send",{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok},
       body:JSON.stringify({
         user_name:name.trim(),
         class_code:u.classCode||"visitor",
@@ -1348,7 +1353,13 @@ export function FeedbackForm(p){
       })
     }).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
       .then(function(res){
-        if(!res.ok){setErr((res.j&&res.j.error)||"Erreur inconnue.");setBusy(false);return;}
+        if(!res.ok){
+          var code=res.j&&res.j.error;
+          setErr(code==="session_required"?"Ta session a expiré : reconnecte-toi, puis renvoie ton message."
+            :code==="not_owner"?"Ce pseudo appartient au compte d'un autre élève : garde le tien."
+            :code||"Erreur inconnue.");
+          setBusy(false);return;
+        }
         setDone(true);setBusy(false);
         try{haptic("complete");}catch(e){console.warn("[feedback] haptic:",e&&e.message);}
       })
