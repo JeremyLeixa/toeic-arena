@@ -205,7 +205,12 @@ if (!guard || guard.ok !== false) {
 // verrait. Arguments factices : une fonction revenue répondrait 200 sans rien écrire.
 //   recover_student_row — ligne students COMPLÈTE sur prénom + code promo (finding C4 en
 //   lecture), retirée par 2026-09-16_f3_drop_recover_student_row.sql.
-const RETIRED = [['recover_student_row', { p_name: 'ZZPersonne', p_class_code: 'zz-inexistant' }]];
+const RETIRED = [['recover_student_row', { p_name: 'ZZPersonne', p_class_code: 'zz-inexistant' }],
+  // Économie côté serveur, lot 1 (2026-09-24) : prix et récompenses fournis par le client.
+  ['spend_marks', { p_user_name: 'ZZPersonne', p_class_code: 'zz-inexistant', p_item_id: 'x', p_category: 'x',
+    p_ref_id: 'x', p_price: 1, p_rarity: 'rare', p_cap: 0, p_one_shot: true }],
+  ['grant_reward_once', { p_name: 'ZZPersonne', p_class_code: 'zz-inexistant', p_reward_type: 'title',
+    p_reward_id: 'x', p_rarity: 'rare' }]];
 for (const [name, args] of RETIRED) {
   const r = await rpc(name, args);
   if (r.status !== 404) {
