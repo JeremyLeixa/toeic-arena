@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waygate · passage du portail</title>
+<!-- Proto du 2026-09-24 : l'effet de passage entre le hub The Waygates et l'accueil d'un monde (Nine to Five).
+     Trois variantes côte à côte, jouées dans des maquettes de téléphone. Couleurs : jetons seulement (--cx, --bg…),
+     comme dans l'appli, donc le rendu suit le mode et l'accent choisis en haut. Hors build. -->
+<style>
+  :root{--pg:#0b0906;--line:#2c2418;--ui:#ede4d4;--ui2:#a89a80}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--pg);color:var(--ui);font:13px/1.45 system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#120e09f2;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  header h1{font-size:14px;margin:0 8px 0 0;color:#d4943a}
+  header label{display:flex;gap:5px;align-items:center;color:var(--ui2)}
+  header select,header button{font:inherit;background:#1f1810;color:var(--ui);border:1px solid #3a2e20;border-radius:6px;padding:4px 8px;cursor:pointer}
+  header button.go{background:#d4943a;color:#140e06;border-color:#d4943a;font-weight:700}
+  main{display:flex;flex-wrap:wrap;gap:22px;justify-content:center;padding:20px 12px 30px}
+  .cell{display:flex;flex-direction:column;gap:8px;width:300px}
+  .cap b{color:#d4943a;font-size:14px}
+  .desc{color:var(--ui2);font-size:11.5px}
+  footer{color:var(--ui2);font-size:12px;max-width:980px;margin:0 auto;padding:0 16px 34px;line-height:1.55}
+  footer b{color:var(--ui)}
+
+  /* ── Le téléphone : jetons du thème de l'appli ── */
+  .phone{--bg:#0f0c08;--bg2:#1a1610;--bdr:rgba(180,140,80,.14);--t1:#ede4d4;--t2:#8a7e6a;--t3:#756b54;--cx:212,148,58;--cyan:#d4943a;--on-cx:#0f0c08;
+    position:relative;width:300px;height:620px;border-radius:26px;overflow:hidden;border:1px solid var(--line);box-shadow:0 12px 40px #000a;background:var(--bg);color:var(--t1);
+    font-family:"DM Sans",system-ui,sans-serif;isolation:isolate}
+  .light .phone{--bg:#f5f0e8;--bg2:#fffaf2;--bdr:rgba(120,90,40,.16);--t1:#2a2116;--t2:#6b5d48;--t3:#7a6c55;--cx:160,105,30;--cyan:#8a5a14;--on-cx:#fffcf5}
+  .acc-saphir .phone{--cx:74,144,226;--cyan:#4a90e2}
+  .light.acc-saphir .phone{--cx:30,90,170;--cyan:#1e5aaa}
+  .acc-rubis .phone{--cx:224,82,96;--cyan:#e05260}
+  .light.acc-rubis .phone{--cx:170,40,55;--cyan:#aa2837}
+  .scr{position:absolute;inset:0;padding:40px 18px 20px;display:flex;flex-direction:column}
+  .hub h2{margin:10px 0 4px;text-align:center;font-size:22px;letter-spacing:.5px}
+  .hub p{margin:0 0 16px;text-align:center;color:var(--t2);font-size:12px}
+  .hub .ico{align-self:center;width:62px;height:62px;color:var(--cyan)}
+  .gate{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;border:1.5px solid var(--cyan);background:linear-gradient(135deg,rgba(var(--cx),.18),transparent),var(--bg2);cursor:pointer;text-align:left;color:var(--t1);font:inherit;width:100%}
+  .gate b{font-size:15px}
+  .gate span{display:block;font-size:11.5px;color:var(--t2)}
+  .gate .m{color:var(--cyan);font-weight:700;margin-top:4px}
+  .sealed{margin-top:10px;padding:14px;border-radius:14px;border:1px solid var(--bdr);color:var(--t3);font-size:12px;background:var(--bg2);opacity:.7}
+  .intro{justify-content:center;gap:12px}
+  .intro .time{font-size:46px;font-weight:300;text-align:center;line-height:1}
+  .intro .co{text-align:center;font-size:12px;color:var(--t2)}
+  .intro .notif{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:10px 12px;font-size:12.5px;line-height:1.5}
+  .intro .notif b{display:block;font-size:11.5px;margin-bottom:2px}
+  .intro .btn{margin-top:6px;padding:12px;border-radius:12px;background:var(--cyan);color:var(--on-cx);text-align:center;font-weight:800;letter-spacing:.5px}
+  .intro .back{position:absolute;top:12px;left:16px;color:var(--t2);font-size:12px}
+  .replay{align-self:flex-start;font:inherit;background:#1f1810;color:var(--ui);border:1px solid #3a2e20;border-radius:6px;padding:4px 10px;cursor:pointer}
+
+  /* L'accueil du monde arrive toujours de la même façon : il se pose (léger dézoom) quand le voile s'en va. */
+  .intro{opacity:0}
+  .phone.arrived .intro{opacity:1;animation:land .6s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes land{from{transform:scale(1.06);filter:blur(4px)}to{transform:none;filter:none}}
+  .phone.arrived .hub{visibility:hidden}
+
+  /* ── V1 · Vortex : le portail s'ouvre depuis la carte touchée, tourne et avale l'écran ── */
+  .fx{position:absolute;inset:0;pointer-events:none;z-index:3}
+  /* Le tourbillon : une couche conique floutée qui TOURNE (::before), un voile radial qui creuse un cœur sombre
+     au centre et assombrit les bords (::after). L'ouverture part du point touché (clip-path). */
+  .v1 .fx{--x:50%;--y:40%;overflow:hidden;background:var(--bg);clip-path:circle(0 at var(--x) var(--y));opacity:0}
+  .v1 .fx::before{content:"";position:absolute;left:-60%;top:-40%;width:220%;height:180%;
+    background:conic-gradient(from 0deg,rgba(var(--cx),.95),rgba(var(--cx),.12) 25%,rgba(var(--cx),.85) 50%,rgba(var(--cx),.12) 75%,rgba(var(--cx),.95));
+    filter:blur(14px)}
+  .v1 .fx::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 50%,var(--bg) 0 7%,rgba(var(--cx),.35) 16%,transparent 34%,rgba(0,0,0,.25) 70%,var(--bg) 100%)}
+  .v1.go .fx{animation:v1open .75s cubic-bezier(.6,0,.4,1) forwards}
+  .v1.go .fx::before{animation:v1spin .75s cubic-bezier(.5,0,.2,1) forwards}
+  .v1.go .fx::after{animation:v1core .75s cubic-bezier(.6,0,.3,1) forwards}
+  .v1.go .hub{animation:v1pull .75s cubic-bezier(.6,0,.4,1) forwards}
+  .v1.leave .fx{animation:v1fade .45s ease-out forwards}
+  @keyframes v1open{0%{clip-path:circle(0 at var(--x) var(--y));opacity:1}100%{clip-path:circle(150% at var(--x) var(--y));opacity:1}}
+  @keyframes v1spin{from{transform:rotate(0)}to{transform:rotate(540deg)}}
+  @keyframes v1core{0%{transform:scale(.6)}100%{transform:scale(2.6)}}
+  @keyframes v1pull{to{transform:scale(1.35) rotate(-6deg);filter:blur(3px);opacity:.4}}
+  @keyframes v1fade{from{opacity:1;clip-path:circle(150% at var(--x) var(--y))}to{opacity:0;clip-path:circle(150% at var(--x) var(--y))}}
+
+  /* ── V2 · Seuil : une fente de lumière s'ouvre comme une porte, éblouit, puis on est de l'autre côté ── */
+  .v2 .fx{background:linear-gradient(90deg,transparent,rgba(var(--cx),.35) 30%,#fff9ec 50%,rgba(var(--cx),.35) 70%,transparent);
+    clip-path:inset(0 50% 0 50%);opacity:0}
+  .v2 .fx::after{content:"";position:absolute;inset:0;background:#fff9ec;opacity:0}
+  .v2.go .fx{animation:v2slit .7s cubic-bezier(.7,0,.3,1) forwards}
+  .v2.go .fx::after{animation:v2flash .7s ease-in forwards}
+  .v2.go .hub{animation:v2dim .7s ease-in forwards}
+  .v2.leave .fx{animation:v2out .5s ease-out forwards}
+  @keyframes v2slit{0%{opacity:1;clip-path:inset(0 50% 0 50%)}35%{clip-path:inset(0 48.5% 0 48.5%)}100%{opacity:1;clip-path:inset(0 0 0 0)}}
+  @keyframes v2flash{0%,55%{opacity:0}100%{opacity:1}}
+  @keyframes v2dim{to{filter:brightness(.5) blur(1px);transform:scale(.97)}}
+  @keyframes v2out{from{opacity:1;clip-path:inset(0)}to{opacity:0;clip-path:inset(0)}}
+
+  /* ── V3 · Plongée : on entre DANS le portail (l'icône grossit jusqu'à remplir l'écran), anneaux de runes ── */
+  .v3 .fx{display:flex;align-items:center;justify-content:center;opacity:0}
+  .v3 .fx .ring{position:absolute;width:40px;height:40px;border-radius:50%;border:2px solid rgba(var(--cx),.9);box-shadow:0 0 18px rgba(var(--cx),.8),inset 0 0 18px rgba(var(--cx),.6)}
+  .v3 .fx .core{position:absolute;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,#fff9ec 0,rgba(var(--cx),.95) 40%,var(--bg) 72%)}
+  .v3.go .fx{opacity:1}
+  .v3.go .fx .core{animation:v3core .8s cubic-bezier(.7,0,.25,1) forwards}
+  .v3.go .fx .ring{animation:v3ring .8s cubic-bezier(.3,0,.2,1) forwards}
+  .v3.go .fx .ring:nth-child(2){animation-delay:.1s}
+  .v3.go .fx .ring:nth-child(3){animation-delay:.2s}
+  .v3.go .hub{animation:v3dive .8s cubic-bezier(.7,0,.25,1) forwards;transform-origin:50% 22%}
+  .v3.leave .fx{animation:v3out .45s ease-out forwards}
+  @keyframes v3core{0%{transform:scale(1)}100%{transform:scale(34)}}
+  @keyframes v3ring{0%{transform:scale(1);opacity:1}100%{transform:scale(14);opacity:0}}
+  @keyframes v3dive{to{transform:scale(2.6);filter:blur(5px);opacity:0}}
+  @keyframes v3out{to{opacity:0}}
+
+  /* Mouvement réduit : un simple fondu, quelle que soit la variante. */
+  .rm .phone *{animation-duration:.001ms!important}
+  .rm .phone.go .fx{opacity:0!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>Waygate · passage du portail</h1>
+  <label>Mode <select id="mode"><option value="dark">Sombre</option><option value="light">Clair</option></select></label>
+  <label>Accent (skin) <select id="acc"><option value="">Doré</option><option value="saphir">Saphir</option><option value="rubis">Rubis</option></select></label>
+  <label><input type="checkbox" id="rm"> Mouvement réduit</label>
+  <button class="go" id="all">▶ Jouer les trois</button>
+</header>
+<main id="grid"></main>
+<footer>
+  <b>Touche la carte « Nine to Five »</b> dans un téléphone (ou « Jouer les trois »). Même arrivée partout : l'accueil du monde se pose avec un léger dézoom.
+  Seul le passage change. Durées : V1 0,75 s, V2 0,7 s, V3 0,8 s, puis 0,5 s de sortie. <b>Au câblage</b> : l'effet couvre aussi le chargement
+  de l'écran (chargé à la demande) ; en mouvement réduit, un fondu seul ; option d'un souffle sonore court (Web Audio, comme le coffre).
+</footer>
+<script>
+var V = [
+  { id: "v1", name: "V1 · Vortex", desc: "Le portail s'ouvre depuis la carte touchée : spirale aux couleurs du skin qui tourne et avale l'écran, le hub est aspiré (zoom, rotation, flou)." },
+  { id: "v2", name: "V2 · Seuil de lumière", desc: "Une fente de lumière s'ouvre au centre comme deux battants, éblouit (flash blanc chaud), et on est de l'autre côté. Le plus sobre, le plus « porte »." },
+  { id: "v3", name: "V3 · Plongée", desc: "On entre DANS le portail : un cœur lumineux grossit jusqu'à remplir l'écran, trois anneaux de runes s'échappent, le hub plonge en avant." },
+];
+function phone(v) {
+  return '<div class="phone ' + v.id + '">' +
+    '<div class="scr hub">' +
+      '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="12" rx="6" ry="9"/><ellipse cx="12" cy="12" rx="3" ry="6"/><path d="M4 21h16"/></svg>' +
+      '<h2>THE WAYGATES</h2><p>Step through, and put your English to work.</p>' +
+      '<button class="gate"><div><b>NINE TO FIVE</b><span>A working day at Meridian Harbor Group.</span><span class="m">Intern · first day</span></div></button>' +
+      '<div class="sealed">A sealed gate · More worlds are being forged.</div>' +
+    '</div>' +
+    '<div class="scr intro"><span class="back">← Back</span><div class="time">8:58</div><div class="co">Meridian Harbor Group</div>' +
+      '<div class="notif"><b>Dana Whitfield</b>Morning! There\'s an email on your desk: I need it before 12:00.</div><div class="btn">START THE DAY</div></div>' +
+    '<div class="fx"><span class="ring"></span><span class="ring"></span><span class="ring"></span><span class="core"></span></div>' +
+  '</div>';
+}
+var DUR = { v1: 750, v2: 700, v3: 800 };
+// Arrêt sur image (banc) : `?freeze=0.5` fige chaque passage à 50 % de sa durée, sans arriver.
+var FREEZE = parseFloat(new URLSearchParams(location.search).get("freeze"));
+function play(ph, ev) {
+  if (FREEZE >= 0) {
+    ph.classList.remove("go", "leave", "arrived"); void ph.offsetWidth; ph.classList.add("go");
+    var at = FREEZE * DUR[ph.classList[1]];
+    ph.getAnimations({ subtree: true }).forEach(function (a) { a.pause(); a.currentTime = at; });
+    return;
+  }
+  ph.classList.remove("go", "leave", "arrived");
+  void ph.offsetWidth;
+  if (ev && ph.classList.contains("v1")) {
+    var r = ph.getBoundingClientRect();
+    ph.querySelector(".fx").style.setProperty("--x", ((ev.clientX - r.left) / r.width * 100) + "%");
+    ph.querySelector(".fx").style.setProperty("--y", ((ev.clientY - r.top) / r.height * 100) + "%");
+  }
+  var rm = document.getElementById("rm").checked;
+  ph.classList.add("go");
+  setTimeout(function () { ph.classList.add("arrived", "leave"); }, rm ? 150 : DUR[ph.classList[1]]);
+}
+function render() {
+  var b = document.body;
+  b.className = (document.getElementById("mode").value === "light" ? "light " : "") + (document.getElementById("acc").value ? "acc-" + document.getElementById("acc").value : "") + (document.getElementById("rm").checked ? " rm" : "");
+  var g = document.getElementById("grid");
+  g.innerHTML = V.map(function (v) {
+    return '<div class="cell"><div class="cap"><b>' + v.name + '</b></div>' + phone(v) + '<button class="replay">↺ Revenir au hub</button><div class="desc">' + v.desc + '</div></div>';
+  }).join("");
+  g.querySelectorAll(".cell").forEach(function (c) {
+    var ph = c.querySelector(".phone");
+    ph.querySelector(".gate").addEventListener("click", function (e) { play(ph, e); });
+    c.querySelector(".replay").addEventListener("click", function () { ph.classList.remove("go", "leave", "arrived"); });
+  });
+}
+["mode", "acc", "rm"].forEach(function (k) { document.getElementById(k).addEventListener("change", render); });
+document.getElementById("all").addEventListener("click", function () { document.querySelectorAll(".phone").forEach(function (ph) { play(ph); }); });
+render();
+</script>
+</body>
+</html>
