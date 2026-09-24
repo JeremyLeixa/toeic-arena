@@ -63,7 +63,7 @@ const LOCKED = [
   'teacher_audit_log', 'passes', 'subscriptions', 'stripe_events',
   'password_reset_tokens', 'students_xp_backup_2026_04_27', 'player_equipped',
   // Économie côté serveur (2026-09-24) : catalogues lus seulement par les RPC.
-  'shop_catalog', 'reward_catalog', 'token_catalog',
+  'shop_catalog', 'reward_catalog', 'token_catalog', 'chest_drop_tables', 'rarity_catalog', 'chest_triggers',
 ];
 // Volontairement lisibles : le classement et les événements en cours.
 const READABLE = ['students_public', 'events'];
@@ -210,7 +210,12 @@ const RETIRED = [['recover_student_row', { p_name: 'ZZPersonne', p_class_code: '
   ['spend_marks', { p_user_name: 'ZZPersonne', p_class_code: 'zz-inexistant', p_item_id: 'x', p_category: 'x',
     p_ref_id: 'x', p_price: 1, p_rarity: 'rare', p_cap: 0, p_one_shot: true }],
   ['grant_reward_once', { p_name: 'ZZPersonne', p_class_code: 'zz-inexistant', p_reward_type: 'title',
-    p_reward_id: 'x', p_rarity: 'rare' }]];
+    p_reward_id: 'x', p_rarity: 'rare' }],
+  // Lot 2 (2026-09-24) : butin fourni par le client, jeton choisi par le client.
+  ['open_pending_chest', { p_pending_id: '00000000-0000-0000-0000-000000000000', p_name: 'ZZPersonne',
+    p_class_code: 'zz-inexistant', p_rewards: [], p_total_xp: 0, p_rarity: 'common' }],
+  ['convert_cosmetic_dups', { p_name: 'ZZPersonne', p_class_code: 'zz-inexistant', p_reward_type: 'frame',
+    p_reward_id: 'x' }]];
 for (const [name, args] of RETIRED) {
   const r = await rpc(name, args);
   if (r.status !== 404) {

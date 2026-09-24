@@ -1,7 +1,8 @@
 /* Invariants du butin : ce que le client tire doit être persistable et connu.
  *
  * POURQUOI CE TEST EXISTE. Depuis le 2026-09-15, l'ouverture d'un coffre passe par
- * `open_pending_chest`, qui persiste les récompenses avec une liste blanche de types :
+ * `open_pending_chest` (depuis le 2026-09-24 `open_chest`, qui tire lui-même le butin par `_roll_chest`, port
+ * SQL de `pickRewards`), qui persiste les récompenses avec une liste blanche de types :
  *
  *     IF v_type IN ('avatar','skin','frame','title','cheat_sheet') ... INSERT
  *
@@ -10,8 +11,7 @@
  * à l'ouverture : l'élève voit l'animation, la carte, le nom du lot… et ne possède rien
  * après rechargement. Exactement le genre de bug qu'on ne découvre que par une plainte.
  *
- * Même logique pour les identifiants : `openChestFromPending` fait `TOKEN_TYPES[r.id]` et
- * saute silencieusement si la clé est absente. Un jeton mal orthographié ne tombe jamais.
+ * Même logique pour les identifiants : un jeton absent de token_catalog (token_cap NULL) ne tombe jamais.
  *
  * Le test lit la liste blanche DANS le fichier de migration plutôt que de la recopier :
  * si la RPC gagne un type, le test suit tout seul.
@@ -44,7 +44,7 @@ const M = require(path.join(ROOT, 'src', 'data', 'chestCatalog.js'));
 // ══════════════════════════════════════════════════════════════════════════
 // Les types persistés, lus dans la migration
 // ══════════════════════════════════════════════════════════════════════════
-const MIG = path.join(ROOT, 'supabase', 'migrations', '2026-09-15_p2d3_chest_rpc.sql');
+const MIG = path.join(ROOT, 'supabase', 'migrations', '2026-09-24_economy_lot2a_open.sql');
 const sql = fs.readFileSync(MIG, 'utf8').replace(/\r\n/g, '\n');
 const mWhite = sql.match(/v_type\s+IN\s*\(([^)]*)\)/i);
 if (!mWhite) throw new Error('liste blanche des types introuvable dans '
@@ -79,7 +79,7 @@ const nothing = { avatars: [], skins: [], frames: [], titles: [], cheatSheets: [
 const chestTypes = Object.keys(M.DROP_TABLES);
 console.log('Invariants du butin — ' + chestTypes.length + ' types de coffre × '
   + RUNS + ' tirages × 2 profils');
-console.log('  types persistés par open_pending_chest : ' + PERSISTED.join(', ') + '\n');
+console.log('  types persistés par open_chest : ' + PERSISTED.join(', ') + '\n');
 
 // Garanties de palier documentées dans CLAUDE.md (« V2 segmented drop tables »).
 const GUARANTEES = {
@@ -110,7 +110,7 @@ for (const ct of chestTypes) {
         // 1. Le type est-il traitable par le serveur ?
         if (ALLOWED.indexOf(r.type) < 0) {
           fail('type:' + r.type, ct + ' (' + label + ') : type de récompense « ' + r.type
-            + ' » inconnu. open_pending_chest ne persiste que [' + PERSISTED.join(', ')
+            + ' » inconnu. open_chest ne persiste que [' + PERSISTED.join(', ')
             + '] et IGNORE le reste EN SILENCE — l\'élève ne posséderait rien après ouverture.');
           continue;
         }
@@ -118,8 +118,8 @@ for (const ct of chestTypes) {
         if (KNOWN[r.type] && !KNOWN[r.type].has(r.id)) {
           fail('id:' + r.type + ':' + r.id, ct + ' (' + label + ') : ' + r.type
             + ' « ' + r.id + ' » absent du pool correspondant.'
-            + (r.type === 'token' ? ' openChestFromPending fait TOKEN_TYPES[id] et saute'
-              + ' silencieusement : ce jeton ne serait jamais accordé.' : ''));
+            + (r.type === 'token' ? ' open_chest passe par grant_token et token_cap'
+              + ' (token_catalog) : ce jeton ne serait jamais accordé.' : ''));
         }
         if (r.type === 'token') n.token++;
         else if (COSMETIC.indexOf(r.type) >= 0) n.cosmetic++;

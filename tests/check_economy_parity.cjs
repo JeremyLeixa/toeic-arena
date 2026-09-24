@@ -94,5 +94,15 @@ const clientSrc = chests + app + fs.readFileSync(path.join(ROOT, 'src', 'feature
 ok('plus aucun appel client à grant_token', !/rpc\(["']grant_token["']/.test(clientSrc));
 ok('plus aucun appel client à convert_cosmetic_dups', !/rpc\(["']convert_cosmetic_dups["']/.test(clientSrc));
 
+// ── fermeture du lot 2 : grant_marks n'accepte que les sources du jeu ──
+// Une source ajoutée côté client sans l'ajouter au SQL serait refusée ('invalid_source') : Darics jamais versés.
+const close2 = fs.readFileSync(path.join(ROOT, 'supabase', 'migrations', '2026-09-24_economy_lot2_close.sql'), 'utf8');
+const marksSql = ((close2.match(/p_source NOT IN \(([^)]+)\)/) || [, ''])[1].match(/'([a-z_]+)'/g) || []).map((s) => s.slice(1, -1));
+const marksClient = [...new Set([...app.matchAll(/grantMarks\([^,]+,"([a-z_]+)"/g)].map((m) => m[1]))];
+ok('au moins 6 sources de Darics relevées dans App.jsx (' + marksClient.length + ')', marksClient.length >= 6);
+marksClient.forEach((s) => ok('source de Darics « ' + s + ' » acceptée par grant_marks', marksSql.includes(s)));
+['chest', 'shop', 'admin', 'admin_bonus'].forEach((s) => ok('grant_marks refuse la source « ' + s + ' »', marksSql.length > 0 && !marksSql.includes(s)));
+ok('grantMarks n\'est appelé qu\'avec une source littérale', !/grantMarks\([^,)]+,(?!")[^,)]+,/.test(app.replace(/function grantMarks\(/, '')));
+
 console.log((checks - fails) + '/' + checks + ' vérifications de l\'économie au vert');
 process.exit(fails ? 1 : 0);

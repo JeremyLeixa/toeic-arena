@@ -462,8 +462,8 @@ export function pickRewards(chestType, owned){
 
   table.forEach(function(slot){
     if(slot.kind==="daric"){
-      // Arena Shop P1 — flat amount per slot, no RNG. The grant itself happens
-      // in doOpenChest via grantMarks() after openChestFromPending sums totalDarics.
+      // Arena Shop P1 — flat amount per slot, no RNG. Credited by the server (open_chest, marks_log source
+      // « chest ») since 2026-09-24 ; this JS table only feeds the SQL generator and the tests.
       rewards.push({type:"daric",amount:slot.amount||0});
       return;
     }
