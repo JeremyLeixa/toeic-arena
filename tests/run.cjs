@@ -38,6 +38,7 @@ const SUITE = [
   ['check_mimic_items.cjs',        'les items de Mimic Hunt gardent leurs fragments surlignables, un Mimic par item et une bonne réponse répartie'],
   ['check_session_hud.cjs',        'le combo de session tombe sur ses paliers et le fil d\'encre colore la bonne case'],
   ['check_usage_stats.cjs',        'l\'onglet Usage du formateur : fenêtres, abandons jamais comptés comme parties, hubs, capture neuve, câblage'],
+  ['check_interruptions.cjs',      'au plus un plein écran par entrée sur Home : retournement > promotion > Aldric (paliers) > lettre, contextuels jamais reportés'],
   ['check_home_agenda.cjs',        'le bouton unique de Home : coffre > Mock > mission (même re-tirée) > chemin, Daily à part, journée finie dite'],
   ['check_part7_items.cjs',        'la banque Part 7 : mots et répliques cités présents, insertions [1]-[4] jamais permutées (keep)'],
   ['check_listening_items.cjs',    'Listening P3/P4 : répliques citées par les questions d\'intention bien dites, locuteurs et voix connus, graphiques'],
