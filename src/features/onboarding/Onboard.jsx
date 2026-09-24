@@ -472,6 +472,9 @@ var[step,sSt]=useState("name");
           <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><GIcon name="castle" size={48} color="var(--cyan)"/></div>
           <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{spClaim?("Sécurise ton compte, "+name.trim()):"Choisis ton mot de passe"}</h1>
           <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{spClaim?"Choisis un mot de passe pour protéger ta progression et te reconnecter partout.":("Ce mot de passe protège ton compte"+(classGroupName?" ("+classGroupName+")":"")+" et te reconnecte sur tous tes appareils.")}</p>
+          {/* Phase C (2026-09-24) : un compte sans mot de passe d'une promo passée en mode strict arrive ici
+              depuis l'appli (load refusé → reauth → lookup → claim). Sans ce mot, il croirait à une panne. */}
+          {spClaim&&p.reauth&&<div style={{marginTop:14,padding:"10px 12px",borderRadius:10,background:"rgba(var(--cx),.08)",border:"1px solid rgba(var(--cx),.25)",color:"var(--t1)",fontSize:12,lineHeight:1.5,textAlign:"left"}}>{"Nouveau : ton compte doit maintenant être protégé par un mot de passe. Ta progression est conservée, y compris ce que tu as joué sur cet appareil."}</div>}
         </div>
         <PasswordInput value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}}
           placeholder="Mot de passe (8 caractères min.)" autoComplete="new-password"

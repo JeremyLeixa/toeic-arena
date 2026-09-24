@@ -64,7 +64,7 @@ const LOCKED = [
   'password_reset_tokens', 'students_xp_backup_2026_04_27', 'player_equipped',
   // Économie côté serveur (2026-09-24) : catalogues lus seulement par les RPC.
   'shop_catalog', 'reward_catalog', 'token_catalog', 'chest_drop_tables', 'rarity_catalog', 'chest_triggers',
-  'xp_clamp_log', 'weekly_snapshots_backup_2026_09_24',
+  'xp_clamp_log', 'weekly_snapshots_backup_2026_09_24', 'identity_strict_classes',
 ];
 // Volontairement lisibles : le classement et les événements en cours.
 const READABLE = ['students_public', 'events'];
@@ -169,7 +169,8 @@ const rpc = async (name, body) => fetch(URL_ + '/rest/v1/rpc/' + name, {
 });
 const rpcNames = collectRpcNames(SRC, ROOT);
 const defs = collectDefs(path.join(ROOT, 'supabase', 'migrations'));
-const isGuarded = (d) => /\bstudent_guard\s*\(|\bteacher_role_of\s*\(|\bauth\.(uid|jwt)\s*\(\)/.test(d.body);
+// _owner_ok : la règle de propriété unique de la Phase C (2026-09-24).
+const isGuarded = (d) => /\bstudent_guard\s*\(|\b_owner_ok\s*\(|\bteacher_role_of\s*\(|\bauth\.(uid|jwt)\s*\(\)/.test(d.body);
 // Lectures sans garde (patron « classement », plus le lookup de l'onboarding, pur SELECT) :
 // rien n'écrit, on peut les sonder. Vérifié corps par corps le 2026-09-15 ; group_public (fiche
 // publique d'une promo, P2-D5) ajoutée le 2026-09-16 ; recover_student_row retirée (F3).
