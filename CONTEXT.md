@@ -24,6 +24,12 @@ une décision.
 - **23/09** : CI GitHub Actions (`8f38a21`) ; onglet **Usage** du TeacherDash + RPC `teacher_usage` en prod (`8d1fac0`) ;
   **Home « une porte »** (`64aa490`) ; contenu **Part 7** +8 passages (`4c7c1a5`) et **P3/P4** +16 items audio (`b6cb5fa`),
   types de questions TOEIC comblés (insertion, vocabulaire en contexte, intention).
+- **24/09 : économie côté serveur** (lots 1-3, `5c842e7` → `98c9a60`) : catalogues générés depuis `chestCatalog.js`,
+  achat `buy_item`, coffres tirés et crédités par `open_chest`, types et délais imposés par `grant_pending_chest`,
+  conversions serveur, `grant_marks` limité aux sources du jeu, garde-fou XP +20 000/jour dans `save_student`
+  (journal nommé dans l'onglet Usage). Anciennes RPC supprimées, `check:security` vert.
+- **24/09 : instantanés hebdomadaires** (`a35de59`) : `xp_this_week` partait à 0 sous l'étiquette de la semaine
+  suivante depuis toujours (398 lignes) ; podium à 0 XP exclu. Premier lundi juste : **28/09**.
 
 ### À voir en prod (pas encore observé sur de vrais élèves)
 - Vague de coffres **Mastery II** à partir du **26/09** (échelons I datés du 19/09 + 7 jours) : garde anti-boucle.
@@ -36,8 +42,10 @@ une décision.
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).
 - **Cérémonies qui s'enchaînent** en fin de session (parchemin, ligue, retournement, coffre) : règle « une seule plein
   écran par fin de session » à prototyper.
-- **Économie côté serveur** : mitigation des bornes appliquée le 24/09 (`2026-09-24_currency_bounds.sql`) ; reste à
-  calculer montants, prix et récompenses côté serveur (catalogue boutique, contenu des coffres) — Plan Mode.
+- ~~Économie côté serveur~~ : **faite le 24/09** (voir « Livré »). Restent : les instantanés faux d'avant le 24/09
+  (réétiquetables depuis `weekly_history` si le rapport formateur en a besoin) ; comptes anormaux vus en calibrant
+  (cyril iabd2627 102 900 XP pour 55 Q, DanielC idrac2026 103 485 XP) à regarder par Jérémy ; cron
+  `weekly-teacher-report` planifié avec une clé `<TA_CLE_ANON>` factice (fonction jamais déployée).
 - ~~Rotation de `PUSH_SECRET`~~ : faite le 24/09 (Vercel + secrets Supabase, `VITE_PUSH_SECRET` retiré des `.env`) ;
   l'ancienne valeur (encore dans l'historique git) est refusée par `/api/push-send` (401 vérifié), envoi réel testé
   via `streak-reminder`.

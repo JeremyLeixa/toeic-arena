@@ -23,20 +23,25 @@
 - **Cheat Sheets** : codex pages rendered via GrimoireReader wrapping (player_rewards `reward_type='cheat_sheet'`). 3 stubs in CHEAT_SHEETS V1, more content authoring deferred.
 - **Tokens** (stackable consumables) : 7 types in TOKEN_TYPES, stored in dedicated `player_tokens` table (composite PK user×class×type, qty, cap-aware via `grant_token` / `consume_token` SQL helpers). `diminishing_bypass` (cap 5), `streak_shield` (cap 3, **passive auto-consume** at load if 1-day gap detected), `daily_reroll` (cap 1, clickable from Collection → moves the mission to the next quest of the frozen plan, see « Mentor qui se souvient »), `mock_reset` (cap 2 — semantic deferred), `boss_reset` (cap 1, in-context CTA on Train Mocks → arms `u.boosts.bossResetArmed` → bypasses canUnlockBoss 24h cooldown), `endless_resurrect` (cap 2, in-context CTA → arms `u.boosts.endlessResetArmed` → bypasses getEndlessState cooldown). **Tout jeton armé vit dans `u.boosts`** (jsonb persisté, depuis le 2026-09-19 : `bypassArmedModule`, `bossResetArmed`, `endlessResetArmed`, `mockResetArmed`, comme les boosts Daric) : au haut du profil, le drapeau n'allait dans aucune colonne et le jeton, déjà consommé par `consume_token`, était perdu au rechargement, `insight_token` (cap 3, drops 30% on Légendaire ; consumed from Collection → `insightText`, stored in `review.insights`, reread in the Mentor's Chronicle).
 
-#### V2 segmented drop tables (DROP_TABLES in chests.js)
+#### Économie côté serveur (2026-09-24) : le serveur tire et crédite
+- **Les données restent dans `src/data/chestCatalog.js`** (pur, sans Supabase ; `chests.js` les ré-exporte et ne garde que les appels RPC). Le serveur en tient une copie GÉNÉRÉE (`node scripts/gen-economy-sql.mjs`, voir le CLAUDE.md racine, « Économie côté serveur ») : un changement de `DROP_TABLES`, d'un cosmétique, d'un jeton ou d'une source de coffre sans régénérer + passer le SQL = le jeu affiche une chose, le serveur en fait une autre (`check_economy_parity` rougit).
+- **Ouverture** : `openChestFromPending` → `open_chest(p_pending_id)` ; le serveur tire (`_roll_chest`, port SQL de `pickRewards`), crédite cosmétiques, jetons (`grant_token`) et Darics (`marks_log` source `chest`), et rend le butin au format de `pickRewards` + le solde (`result.balance`, recopié dans `arenaMarks`). Le client ne crédite que l'XP. `pickRewards` ne sert plus qu'au générateur et aux tests.
+- **Octroi** : `grant_pending_chest` ignore le type et le délai du client ; il les lit dans `chest_triggers` (généré : paliers d'XP, séries, ligues, mocks, Boss, trophées, maîtrise jusqu'à l'échelon 30, défis hebdo) ou vérifie les motifs datés (`streak_login_`, `weekly_toeic_<semaine>`, `podium_<semaine>`, `mission_streak_`). **Une nouvelle source de coffre s'ajoute à `chestTriggerRows()`**, sinon refusée (`invalid_trigger`) en silence pour l'élève.
+
+#### V2 segmented drop tables (DROP_TABLES in chestCatalog.js)
 - **Novice** : 50-150 XP + 1 token (Bypass/Shield/Reroll)
 - **Guerrier** : 200-400 XP + 1 cosmetic (frame OR title) + 2 tokens (non-premium)
 - **Champion** : 500-800 XP + 1 cosmetic (avatar/skin/frame/title min rare) + 3 tokens (Bypass/Reroll/Mock/Endless)
 - **Légendaire** : 1000-1500 XP + 1 cosmetic legend (avatar OR skin) + 1 cosmetic epic+ (frame OR title) + 3 tokens (Bypass/Reroll/Mock/Boss/Endless) + Cheat Sheet guaranteed + 30% Insight Token
 
 #### V2 anti-frustration system (Conversions)
-- When the user owns the full pool of a cosmetic type, `pickRewards` drops a **duplicate** instead of the XP fallback (`{type, id, rarity, duplicate:true}`).
-- Profile → **Conversions** sub-view exposes : "3 doublons → 1 token" (requires count ≥ 4 and only deletes 3 rows so the original is **always preserved** — see `feedback_destructive_action_safety.md`) and "5 tokens non-premium → 1 token premium". Helpers : `convertCosmeticDups`, `convertTokensToPremium`.
+- When the user owns the full pool of a cosmetic type, the roll (`_roll_chest`, from `pickRewards`) drops a **duplicate** instead of the XP fallback (`{type, id, rarity, duplicate:true}`).
+- Profile → **Conversions** sub-view exposes : "3 doublons → 1 token" (requires count ≥ 4 and only deletes 3 rows so the original is **always preserved** — see `feedback_destructive_action_safety.md`) and "5 tokens non-premium → 1 token premium". Helpers : `convertCosmeticDups` → `convert_dups_to_token`, `convertTokensToPremium` → `convert_tokens_premium` (2026-09-24 : jeton tiré par le serveur dans la même transaction ; non premium = ni premium ni boost, premium = premium sauf `insight_token` ; rien n'est consommé si tout est au plafond).
 
 #### V2 recurring chest sources (5 triggers added 2026-04-27 step 2)
 - `daily_login_<today>` (Novice) — streak ≥ 1, anti-spam via unique trigger (date in id)
 - `weekly_toeic_<wkId>` (Guerrier) — +25 pts TOEIC vs last weekly_snapshot (recomputed via `estimateTOEICScore`)
-- `podium_<prevWk>` (Guerrier) — top 3 of class_code on the just-finished week (from `weekly_snapshots.xp_this_week`)
+- `podium_<prevWk>` (Guerrier) — top 3 of class_code on the just-finished week (from `weekly_snapshots.xp_this_week > 0` ; les instantanés valaient tous 0 et portaient l'étiquette de la semaine suivante jusqu'au 2026-09-24, voir `check_weekly_snapshot`)
 - `mission_streak_<n>` (Guerrier) — when `u.mission.streak` (in jsonb) crosses a multiple of 7. Reset on missed day at load.
 - `mastery_<modId>` (Champion) — **échelons de maîtrise depuis le 2026-09-19** (proto `prototypes/mastery-tiers/`, variante B « coffre suivant ») : I = 50 Q à 80 % sur le cumul (`mastery_<mod>`, inchangé), II = 150 Q, III = 300 Q (**Légendaire**), puis un échelon tous les +150 Q (`mastery_<mod>_<n>`, Champion) ; au-delà de I, 85 % sur les ~50 dernières questions (`recentAcc`), et **7 jours au moins entre deux échelons** d'un module. 50 Darics par échelon (`mastery_marks_<mod>[_<n>]`). Échelon atteint = `moduleScores[mod].mt = {n, date}`, posé par le watcher d'`App.jsx` (`markTier`, `sU(prev => …)` + save) sur **toute** réponse du serveur : accordé → daté du jour ; déjà servi à l'échelon I = coffre d'avant les échelons → daté `TIERS_EPOCH` (2026-09-19 : rattrapage choisi par Jérémy, tout le monde attend 7 jours au lieu d'une avalanche de coffres II). **Sans `mt`, rien n'est acquis** (supposer l'échelon I gagné priverait de coffre tout module maîtrisé après la mise en ligne). `recordModule` recopie `mt` (il reconstruit l'objet). Garde anti-boucle par module ET par échelon. **Blacklist** : `mock1/2/3, boss, daily, csess, hunt`. Règle, seuils et liste noire dans `lib/hubStatus.js` (`TIERS`, `tierStatus`, `hubTierStatus`, `tierTrigger`, `MASTERY_BLACKLIST`), lus par le watcher ET par les tuiles : ne jamais les recopier ailleurs. Libellé : « Mastery II: Word Tavern » (`chestLabels`). Tests : `check_hub_status` (section 8).
 
@@ -46,7 +51,7 @@ The Module Mastery watcher used `[u && u.moduleScores]` as deps, which changes r
 #### V2 schema migrations
 SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.sql` :
 - New table `player_tokens` (composite UNIQUE on user×class×type, RLS off in line with siblings)
-- `grant_token(user, class, type, amount, cap)` SQL function : cap-aware UPSERT
+- `grant_token(user, class, type, amount, cap)` SQL function : cap-aware UPSERT (**plus appelable par le client** depuis le 2026-09-24 : seules les RPC serveur l'utilisent)
 - `consume_token(user, class, type, amount)` SQL function : decrement with sufficiency check
 - `students.frame_id`, `students.title_id` columns (mirror skin_id pattern)
 - `chest_log.reward_type CHECK` relaxed to allow `multi/frame/title/cheat_sheet/token`

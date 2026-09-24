@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (30 fichiers, ~15 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (34 fichiers, ~15 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -214,7 +214,7 @@ l'invariant qui casse sans bruit.
 | Estimateur TOEIC, thèmes saisonniers | `src/lib/CLAUDE.md` | Ne jamais revenir à `wSum/wTot` (retenue bayésienne) ; `total` peut être `null` ; fenêtres de fête en heure locale. |
 | Mentor qui se souvient (bestiaire, chasse, plan figé, lettre, Chronique) | `src/features/mentor/CLAUDE.md` | Une `ref` que `lib/reviewLookup.js` ne sait pas relire laisse une créature due pour toujours ; `reviewLookup.js` jamais importé hors d'un écran lazy. |
 | Mimic Hunt, Word Tavern | `src/features/games/CLAUDE.md` | Nouveaux items Mimic toujours relus par Jérémy avant d'entrer au jeu ; aucun texte ne cite une lettre d'option. |
-| Coffres, jetons, échelons de maîtrise | `src/features/chests/CLAUDE.md` | Watchers sur objet JSON cloné = garde `useRef` (boucle de +37 k XP vécue) ; **un nouveau jeton se déclare dans `TOKEN_TYPES` ET `token_cap()`** (SQL), sinon le serveur refuse de l'accorder. |
+| Coffres, jetons, échelons de maîtrise | `src/features/chests/CLAUDE.md` | Watchers sur objet JSON cloné = garde `useRef` (boucle de +37 k XP vécue) ; **prix, cosmétiques, jetons, tables de tirage et sources de coffre vivent dans `chestCatalog.js` : les changer = `node scripts/gen-economy-sql.mjs` + passer le SQL généré en prod** (le serveur décide sur ses copies). |
 | Boss, Endless, écoute fidèle au TOEIC | `src/features/exams/CLAUDE.md` | Toute nouvelle disposition du Boss → bumper `BOSS_LAYOUT_V`. |
 | Grammar Gauntlet, Modal Council | `src/features/gauntlet/CLAUDE.md`, `src/features/modals/CLAUDE.md` | Palier XP B des modules à 15 questions. |
 | Audio (nommage, ElevenLabs, génération) | `scripts/CLAUDE.md` | Clips d'options P1/P2 sans lettre ; `npm run check:assets` après tout ajout ; réécrire une réplique = supprimer son MP3 avant de regénérer. |
@@ -435,10 +435,27 @@ prod (`2026-09-16_f3_drop_recover_student_row.sql`) ; `check:security` exige un 
 - **Monnaie et jetons : bornes serveur** (`2026-09-24_currency_bounds.sql`, mitigation). Ces RPC vérifiaient QUI,
   jamais COMBIEN (un prix négatif créditait, une consommation négative ajoutait des jetons). Désormais : gain de
   Darics 1 à 1000 par appel et 3000 sur 24 h glissantes (hors boutique et dons du formateur, record réel 1795),
-  prix ≥ 1, jetons de types connus au plafond serveur `token_cap()` (**miroir de `TOKEN_TYPES`** : un nouveau
-  jeton s'ajoute AUX DEUX, sinon son octroi est refusé), 1 à 3 par octroi, 1 à 5 par consommation. Un don de
-  formateur au-delà passe par le SQL Editor. **Reste ouvert** : montants et récompenses fournis par le client
-  (prix sous-évalué d'un article, `grant_reward_once`, `open_pending_chest`) → économie côté serveur, Plan Mode.
+  prix ≥ 1, jetons de types connus au plafond serveur `token_cap()`, 1 à 3 par octroi, 1 à 5 par consommation. Un
+  don de formateur au-delà passe par le SQL Editor.
+- **Économie côté serveur** (2026-09-24, lots 1-3) : le serveur **possède les catalogues et décide**, le client
+  demande et affiche. Catalogues **générés** depuis `src/data/chestCatalog.js` par `node scripts/gen-economy-sql.mjs`
+  → `2026-09-24_economy_catalog_data.sql` (`shop_catalog`, `reward_catalog`, `token_catalog` que lit `token_cap()`,
+  `chest_drop_tables`, `rarity_catalog`, `chest_triggers`) ; **jamais édité à la main**, et tout changement de
+  prix, cosmétique, jeton, table de tirage ou source de coffre = relancer le script ET passer le fichier en prod
+  (`check_economy_parity` rougit sinon). Achat `buy_item(item_id)` ; titre Bottomless Purse `claim_bourse_title` ;
+  coffre : `grant_pending_chest` impose type et délai (`chest_triggers` ou motifs datés : un déclencheur inconnu est
+  refusé, **toute nouvelle source de coffre s'ajoute au générateur**), `open_chest` tire (`_roll_chest`, port de
+  `pickRewards`) et crédite cosmétiques, jetons et Darics ; le client ne crédite que l'XP. Conversions
+  `convert_dups_to_token` / `convert_tokens_premium`. `grant_token` n'est plus appelable par le client ;
+  `grant_marks` n'accepte que les sources du jeu (`achievement, daily, focus, hunt, login, mastery, podium,
+  toeic_weekly` : une nouvelle source de Darics s'ajoute à `2026-09-24_economy_lot2_close.sql`, le test la réclame).
+  Retirées (404 exigé par `check:security`) : `spend_marks`, `grant_reward_once`, `open_pending_chest`,
+  `convert_cosmetic_dups`.
+- **Garde-fou XP dans `save_student`** (lot 3) : `xp` et `weekly_xp` ne montent pas de plus de **20 000 par jour**
+  (heure de Paris) au-dessus de leurs valeurs du premier enregistrement du jour (colonnes serveur `xp_day_*`, **hors
+  liste blanche** : le client ne doit jamais pouvoir remettre sa base). Au-delà : plafonné (jamais refusé) et noté
+  dans `xp_clamp_log`, affiché nommé dans l'onglet Usage (`teacher_xp_clamps`). L'XP d'une manche reste calculée
+  par le client.
 
 ---
 

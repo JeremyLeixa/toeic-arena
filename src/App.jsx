@@ -76,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-24-rgpd-mock3";
+var BUILD_ID="2026-09-24-economy-server";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 

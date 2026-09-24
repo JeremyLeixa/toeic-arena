@@ -13,8 +13,16 @@ Ce que la suite protège, et pourquoi :
   dans Supabase, et disparaîtrait au premier rechargement (cas vécu jusqu'au 2026-09-19 : les jetons armés,
   brûlés côté serveur puis perdus au retour sur l'onglet). Exceptions listées : propriétés de l'énoncé de
   synthèse vocale (`u` dans `lib/audio.js`), drapeau passager `_shieldPending`.
-- **`check_chest_drops`** — `open_pending_chest` ignore silencieusement tout type de
+- **`check_chest_drops`** — `open_chest` ignore silencieusement tout type de
   récompense hors liste blanche.
+- **`check_economy_parity`** — le SQL généré (`scripts/gen-economy-sql.mjs`) = les données de `chestCatalog.js`,
+  octet pour octet ; le client n'envoie que des identifiants (`buy_item`, `open_chest`), toute source de coffre et de
+  Darics émise par le client est connue du serveur, listes de jetons des conversions, et `save_student` toujours
+  plafonnée (`_xp_guard`, colonnes `xp_day_*` hors liste blanche). Un prix changé sans régénérer ne casse rien au
+  build : la boutique affiche un prix, le serveur en débite un autre.
+- **`check_weekly_snapshot`** — l'instantané de fin de semaine part avec la semaine FINIE et son XP. Lues dans un
+  `.then()` après la remise à zéro, les valeurs partaient à 0 sous l'étiquette suivante (398 instantanés à 0,
+  podium et rapport formateur faussés, jusqu'au 2026-09-24).
 - **`check_identity`** — `normNameForEmail` décide de l'adresse du compte Auth,
   recalculée à chaque connexion. La changer enferme dehors les élèves déjà migrés.
 - **`check_fresher_local`** — la garde stale-remote (`lib/staleRemote.js`) : quand la copie
