@@ -45,15 +45,18 @@ une décision.
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).
 - **Cérémonies qui s'enchaînent** en fin de session (parchemin, ligue, retournement, coffre) : règle « une seule plein
   écran par fin de session » à prototyper.
-- ~~Économie côté serveur~~ : **faite le 24/09** (voir « Livré »). Restent : comptes anormaux vus en calibrant
-  (cyril iabd2627 102 900 XP pour 55 Q, DanielC idrac2026 103 485 XP) à regarder par Jérémy ; cron
-  `weekly-teacher-report` planifié avec une clé `<TA_CLE_ANON>` factice (fonction jamais déployée).
+- ~~Économie côté serveur~~ : **faite le 24/09** (voir « Livré »). Garde-fou XP en deux seuils (`eb2e181`) : journée
+  notée à +20 000, plafonnée à +40 000 (des semaines réelles montent à 44 365). **cyril** (iabd2627) ramené de 102 900 à
+  2 901 XP le 24/09 (XP écrite à la main le 11/09 ; last_active posé au 24/09 pour que sa copie locale perde au
+  prochain chargement ; ancien last_active 14/09, streak 3). Ses coffres et Darics gagnés sur cette XP restent.
+  DanielC, Noé, Kamel : XP par question 8 à 60 fois la médiane, mais sur des mois d'activité réelle et la semaine de
+  lancement W12 : pas de preuve de triche, rien touché. Cron `weekly-teacher-report` (clé factice) retiré le 24/09.
 - ~~Rotation de `PUSH_SECRET`~~ : faite le 24/09 (Vercel + secrets Supabase, `VITE_PUSH_SECRET` retiré des `.env`) ;
   l'ancienne valeur (encore dans l'historique git) est refusée par `/api/push-send` (401 vérifié), envoi réel testé
   via `streak-reminder`.
 - **Phase C sécurité** : 158 lignes legacy sans mot de passe tolérées par `student_guard` → campagne « sécurise ton
   compte », puis retrait de la branche (une ligne SQL).
-- **`CLAUDE.md` à alléger** (~112 Ko chargés à chaque session) : y garder les règles, déplacer ici l'historique.
+- ~~`CLAUDE.md` à alléger~~ : découpé le 24/09 (racine + 13 `CLAUDE.md` de sous-dossier).
 - ~~Restes d'audit~~ traités le 24/09 : Mock 3 dans l'estimateur, coffre du Boss, trophées Mock 3, RGPD (feedback
   purgé, refus plus jamais silencieux), CSV Mock 3 + Boss, flags de `MODULE_TOEIC_MAP`, bornes de la monnaie ; alerte
   Disk IO close (compteur figé à 231 Go depuis le 16/09). `/api/feedback-send` exige une session depuis le 24/09
