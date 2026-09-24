@@ -578,7 +578,7 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - `onModuleDone(subId, sc, tot, xp)` prop bubbles completion to App, which runs `settleSession("gauntlet_"+subId, …, {spotlight:true})` → stats → `recordModule` → `checkMission` → `grantWeeklyChest` if perfect → `sealSession` → `sv`, and **returns the session id**. The sub-module shows `SessionResult` itself (Continue → hub, Play again → `subRun` key).
 - Each sub-module has its own BGM: `bgm_crypt` / `bgm_chrono` / `bgm_forge` / `bgm_weaver`.
 - Content pool: 270 items total (80/70/60/60). Session size 15 everywhere.
-- TOEIC estimator: reading section has a new `gauntlet` weight of 0.15 (avg accuracy across the 4 sub-modules).
+- TOEIC estimator: reading backbone `gauntlet` weight **0.11** (avg accuracy across the 4 sub-modules, `lib/toeic.js` `rdParts` ; the 0.15 of the first delivery was rebalanced in Chantier A.2).
 
 ### Modal Council ⚖️ (S2 module, delivered 2026-04-30)
 - Route `sp==="modals"` → `ModalCouncilHub` component.
@@ -589,7 +589,7 @@ SQL applied in production via `supabase/migrations/2026-04-27_chest_redesign_v2.
 - Content pool: 15 boards × 5 pairs (75 Match items) + 50 Sort items in `src/data/modals.js`. Session: 15 items everywhere (Tier B XP).
 - Single grimoire (`GRIMOIRE_MODALS`, 7 chapters FR) accessed from the hub.
 - 4 achievements added (council_initiate / oracle_voice / verdict_sworn / council_crowned).
-- TOEIC estimator: NOT wired in yet (deliberate — no rebalance until next pass).
+- TOEIC estimator: Reading support **0.04** (average of match + sort, wired in Chantier B, 2026-06-10 ; `lib/toeic.js` `rdParts`).
 
 ### Mimic Hunt 🪤 (2026-09-17)
 Route `sp==="mimic"` (Games). Entraîne **la reformulation** : la bonne réponse dit la même chose avec

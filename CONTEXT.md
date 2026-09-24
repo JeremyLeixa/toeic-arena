@@ -6,7 +6,44 @@
 
 ---
 
-## Last session: 2026-07-07 (MULTI-CAMPUS — teacher scoping + cross-campus admin view)
+## État au 2026-09-24 (à lire en premier)
+
+Entre le 15 et le 23 septembre, ~300 commits. Les conventions de chaque chantier vivent dans `CLAUDE.md`
+(sections nommées ci-dessous) ; ici, seulement ce qui est livré, ce qui reste à voir en prod, et ce qui attend
+une décision.
+
+### Livré en prod (15 → 23/09)
+- **Découpage d'App.jsx** (15-16/09) : 18 589 → ~1 500 lignes, `lib/` pur testé, écrans lazy (−65 % de bundle).
+- **Verrou Supabase** (15-16/09) : plus aucun privilège de table côté client, tout en RPC ; audit identité F1-F6.
+- **Mode clair** (16/09) et **thèmes saisonniers** (16/09) ; **coffre v3 « Crack & Cards »** (16/09).
+- **Écran de fin commun « Verdict d'Aldric »** (17/09) sur tous les modules à score ; **hubs vivants** (17/09).
+- **Mentor qui se souvient** (17-18/09) : bestiaire, chasse aux erreurs, plan du jour figé, lettre du lundi, Chronique.
+- **Options permutées partout** (18/09) : grammaire, Mock, Boss figé (`BOSS_LAYOUT_V` 3), 9 modules.
+- **Mimic Hunt** (17-19/09) : 84 items dont 45 parlés, mode écoute, morsures, trophées.
+- **Échelons de maîtrise** (19/09, `9c28837`) ; **HUD de session** sur ~25 modules (17-20/09, clos `32688e8`).
+- **23/09** : CI GitHub Actions (`8f38a21`) ; onglet **Usage** du TeacherDash + RPC `teacher_usage` en prod (`8d1fac0`) ;
+  **Home « une porte »** (`64aa490`) ; contenu **Part 7** +8 passages (`4c7c1a5`) et **P3/P4** +16 items audio (`b6cb5fa`),
+  types de questions TOEIC comblés (insertion, vocabulaire en contexte, intention).
+
+### À voir en prod (pas encore observé sur de vrais élèves)
+- Vague de coffres **Mastery II** à partir du **26/09** (échelons I datés du 19/09 + 7 jours) : garde anti-boucle.
+- Première cérémonie **« faiblesse devenue force »** possible vers le **27/09**.
+- Home « une porte », Part 7 et P3/P4 neufs, mode écoute de Mimic Hunt, sessions en mode clair.
+- **Onglet Usage** : abandons et taux de mission n'ont de sens qu'une à deux semaines après le 23/09 → relire
+  **début octobre** avant de ranger ou retirer un module (premier aperçu iabd2627 : 45 créatures créées, 0 vaincue).
+
+### En attente d'une décision de Jérémy
+- **A.4 ancrage Boss** de l'estimateur : dormant depuis juin (aucun appelant ne passe `bossToeic`). Câbler ou retirer.
+- **Cérémonies qui s'enchaînent** en fin de session (parchemin, ligue, retournement, coffre) : règle « une seule plein
+  écran par fin de session » à prototyper.
+- **Phase C sécurité** : 158 lignes legacy sans mot de passe tolérées par `student_guard` → campagne « sécurise ton
+  compte », puis retrait de la branche (une ligne SQL).
+- **`CLAUDE.md` à alléger** (~112 Ko chargés à chaque session) : y garder les règles, déplacer ici l'historique.
+- Restes d'audit : export CSV et `deleteAccount` RGPD à revérifier, rotation `PUSH_SECRET`, alerte Disk IO Supabase.
+
+---
+
+## Earlier session: 2026-07-07 (MULTI-CAMPUS — teacher scoping + cross-campus admin view)
 
 **Mise en place de la stratégie multi-campus** (argument de déploiement en école). Avant, un seul `teacher_code` (`arena-teacher-2026`) donnait accès à TOUS les groupes : `loadGroups()` chargeait tout sans filtre. Objectif : 1 campus = 1 formateur voyant SES cohortes.
 
