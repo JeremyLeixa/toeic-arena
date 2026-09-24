@@ -39,7 +39,7 @@ une décision.
 - Première cérémonie **« faiblesse devenue force »** possible vers le **27/09**.
 - Home « une porte », Part 7 et P3/P4 neufs, mode écoute de Mimic Hunt, sessions en mode clair.
 - **Onglet Usage** : abandons et taux de mission n'ont de sens qu'une à deux semaines après le 23/09 → relire
-  **début octobre** avant de ranger ou retirer un module (premier aperçu iabd2627 : 45 créatures créées, 0 vaincue).
+  **début octobre** avant de ranger ou retirer un module (premier aperçu iabd2627 : 45 créatures créées, 0 vaincue — **normal** : une créature meurt à sa 3e réussite espacée, 1-3-7 j, premières captures le 21/09 → premières morts vers le 2/10 ; au 24/09, 34 créatures sur 104 déjà touchées, 6 chasses jouées, 0 abandon).
 
 ### En attente d'une décision de Jérémy
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).

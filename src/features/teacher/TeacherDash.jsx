@@ -1775,7 +1775,9 @@ export function TeacherDash(p){
         {v:usage.active7+" / "+usage.students,l:"actifs 7 j"},
         {v:usage.active30+" / "+usage.students,l:"actifs 30 j"},
         {v:pct(usage.mission.rate),l:"missions faites (jours actifs, depuis le "+capDate+")"},
-        {v:usage.bestiary.slain+" / "+usage.bestiary.caught,l:"créatures vaincues / créées (5 sem.)"},
+        // Une créature meurt à sa 3e réussite ESPACÉE (1, 3 puis 7 jours) : 0 vaincue pendant les ~11 premiers jours
+        // d'une promo est mécanique, pas un désintérêt (lu à tort ainsi le 24/09, premières captures le 21/09).
+        {v:usage.bestiary.slain+" / "+usage.bestiary.caught,l:"créatures vaincues / créées (5 sem.) · une créature meurt à sa 3e réussite espacée, 11 j au plus tôt"},
       ];
       var th={textAlign:"right",padding:"6px 4px",fontWeight:600,color:"var(--t3)",fontSize:11};
       var td={textAlign:"right",padding:"6px 4px",fontSize:12,color:"var(--t2)"};
