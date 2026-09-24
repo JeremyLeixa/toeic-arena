@@ -43,8 +43,8 @@ une décision.
 
 ### En attente d'une décision de Jérémy
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).
-- **Cérémonies qui s'enchaînent** en fin de session (parchemin, ligue, retournement, coffre) : règle « une seule plein
-  écran par fin de session » à prototyper.
+- ~~Cérémonies qui s'enchaînent~~ : **faites le 24/09** (variante B, `lib/interruptions.js`, `check_interruptions`) : une
+  seule cérémonie par écran de fin (retournement > promotion), au plus un plein écran non demandé par entrée sur Home.
 - ~~Économie côté serveur~~ : **faite le 24/09** (voir « Livré »). Garde-fou XP en deux seuils (`eb2e181`) : journée
   notée à +20 000, plafonnée à +40 000 (des semaines réelles montent à 44 365). **cyril** (iabd2627) ramené de 102 900 à
   2 901 XP le 24/09 (XP écrite à la main le 11/09 ; last_active posé au 24/09 pour que sa copie locale perde au
