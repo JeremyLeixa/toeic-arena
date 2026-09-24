@@ -88,13 +88,10 @@ export async function consumeToken(userName, classCode, tokenType, amount){
 // one transaction. Error codes: no_student / already_owned / at_cap / insufficient_marks.
 export async function spendMarks(userName, classCode, item){
   try{
-    var cap=item.cat==="token"?((TOKEN_TYPES[item.ref]&&TOKEN_TYPES[item.ref].cap)||1):0;
-    var res=await supabase.rpc("spend_marks",{
-      p_user_name:userName, p_class_code:classCode, p_item_id:item.item_id,
-      p_category:item.cat, p_ref_id:item.ref, p_price:item.price,
-      p_rarity:item.rarity||"rare", p_cap:cap, p_one_shot:!!item.one_shot,
-    });
-    if(res.error){console.warn("[SHOP] spend_marks RPC error:",res.error.message);return{ok:false,error:res.error.message};}
+    // Économie côté serveur, lot 1 (2026-09-24) : seul l'identifiant part. Prix, catégorie, rareté, plafond et
+    // « déjà possédé » sont lus par le serveur dans shop_catalog (buy_item) — le client ne peut plus les choisir.
+    var res=await supabase.rpc("buy_item",{p_name:userName, p_class_code:classCode, p_item_id:item.item_id});
+    if(res.error){console.warn("[SHOP] buy_item RPC error:",res.error.message);return{ok:false,error:res.error.message};}
     return res.data||{ok:false,error:"empty_response"}; // {ok, balance?, error?}
   }catch(e){console.warn("[SHOP] spendMarks exception:",e&&e.message);return{ok:false,error:e&&e.message};}
 }

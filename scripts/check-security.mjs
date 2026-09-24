@@ -62,6 +62,8 @@ const LOCKED = [
   'marks_log', 'shop_purchases', 'feedback_reports', 'teacher_codes',
   'teacher_audit_log', 'passes', 'subscriptions', 'stripe_events',
   'password_reset_tokens', 'students_xp_backup_2026_04_27', 'player_equipped',
+  // Économie côté serveur (2026-09-24) : catalogues lus seulement par les RPC.
+  'shop_catalog', 'reward_catalog', 'token_catalog',
 ];
 // Volontairement lisibles : le classement et les événements en cours.
 const READABLE = ['students_public', 'events'];

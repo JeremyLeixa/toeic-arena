@@ -955,13 +955,10 @@ useEffect(function(){
   function maybeGrantBourse(c){
     if(!c||(c.boosts&&c.boosts.spent<10000))return;
     var un=c.name,cc=c.classCode||"visitor";
-    // Lot 4 : le couple SELECT-puis-INSERT etait le meme TOCTOU que les coffres
-    // (deux appels rapproches pouvaient inserer le titre deux fois). grant_reward_once
-    // fait les deux en une transaction et dit s'il a reellement accorde.
-    supabase.rpc("grant_reward_once",{
-      p_name:un,p_class_code:cc,
-      p_reward_type:"title",p_reward_id:"bourse_inepuisable",p_rarity:"legend"
-    }).then(function(r){
+    // Économie côté serveur, lot 1 (2026-09-24) : claim_bourse_title vérifie la dépense RÉELLE en base
+    // (shop_purchases) et accorde le titre une seule fois. Le compteur boosts.spent du client ne sert plus
+    // qu'à éviter un appel inutile à chaque achat.
+    supabase.rpc("claim_bourse_title",{p_name:un,p_class_code:cc}).then(function(r){
       if(r.error){console.warn("[BOURSE] grant error:",r.error.message);return;}
       if(r.data&&r.data.ok===false){console.warn("[BOURSE] grant refused:",r.data.error);return;}
       if(!(r.data&&r.data.granted))return; // already owned

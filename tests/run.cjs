@@ -26,6 +26,7 @@ const SUITE = [
   ['check_profile_roundtrip.cjs',  'aucun champ du profil ne se perd entre client, payload et base'],
   ['check_chest_drops.cjs',        'tout butin tiré est persistable et connu'],
   ['check_chest_reveal.cjs',       'la révélation des coffres montre tout le butin, du moins rare au plus rare, et le tell ne ment pas'],
+  ['check_economy_parity.cjs',      'les catalogues du serveur (prix, raretes, jetons) = ceux du jeu, et le client n envoie que l identifiant'],
   ['check_fresher_local.cjs',      'la copie locale plus fraîche gagne sur Supabase, avec les champs serveur, et jamais pour un autre élève'],
   ['check_identity.cjs',          'le normaliseur de noms et l\'adresse synthétique n\'ont pas bougé'],
   ['check_xp_gates.cjs',           'les portes XP (accuracy, anti-farming, Focus, boosts, bonus) sont celles du produit'],
