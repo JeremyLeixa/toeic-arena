@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Push opt-in · comparateur</title>
+<style>
+  :root{--bg:#0b0906;--panel:#15110b;--line:#2c2418;--t1:#ede4d4;--t2:#a89a80;--acc:#d4943a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--t1);font:13px/1.4 system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#120e09f2;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  header h1{font-size:14px;margin:0 8px 0 0;color:var(--acc);letter-spacing:.5px}
+  label{display:flex;gap:5px;align-items:center;color:var(--t2)}
+  select,button{font:inherit;background:#1f1810;color:var(--t1);border:1px solid #3a2e20;border-radius:6px;padding:4px 8px;cursor:pointer}
+  .vs{display:flex;gap:4px}
+  .vs label{background:#1f1810;border:1px solid #3a2e20;border-radius:6px;padding:3px 7px;color:var(--t1)}
+  main{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:18px 12px 40px}
+  .cell{display:flex;flex-direction:column;gap:6px}
+  .cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .cap b{color:var(--acc);font-size:14px}
+  .cap a{color:var(--t2);font-size:11px}
+  .desc{color:var(--t2);font-size:11.5px;max-width:var(--w)}
+  .phone{width:var(--w);height:var(--h);border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 40px #000a;background:#000}
+  .phone iframe{width:375px;height:812px;border:0;transform:scale(var(--s));transform-origin:0 0;display:block}
+  footer{color:var(--t2);font-size:12px;max-width:900px;margin:0 auto;padding:0 16px 30px}
+  footer b{color:var(--t1)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Demande de notifications</h1>
+  <label>Situation <select id="sc"><option value="ask">Demande possible (Android, ou iPhone avec l'appli installée)</option><option value="ios">iPhone, appli pas installée</option><option value="granted">Déjà accepté</option><option value="denied">Refusé dans le navigateur</option></select></label>
+  <label>Élève <select id="p"><option value="lea">Léa</option><option value="karim">Karim</option><option value="ines">Inès</option></select></label>
+  <label>Mode <select id="mode"><option value="dark">Sombre</option><option value="light">Clair</option></select></label>
+  <label>Skin <select id="skin">
+    <option value="">Doré (défaut)</option><option>argent</option><option>emeraude</option><option>saphir</option><option>rubis</option><option>amethyste</option><option>corail</option><option>jade</option><option>obsidienne</option><option>aurore</option><option>frostbite</option><option>abyssal</option><option>emberheart</option><option>cosmic_void</option><option>molten_gold</option><option>heraldic</option><option>aldric_chamber</option>
+  </select></label>
+  <label><input type="checkbox" id="rm"> Mouvement réduit</label>
+  <label>Taille <select id="size"><option value="fit">Ajustée</option><option value="1">100 %</option></select></label>
+  <span class="vs" id="vs"></span>
+</header>
+<main id="grid"></main>
+<footer>
+  Vraie Home (A, B) et vrai écran de fin (C), élèves simulés. <b>Tap « Turn on »</b> : la boîte du navigateur (simulée) s'ouvre, « Allow » ou « Block » montre la suite ; « Not now » dit ce qui se passerait. Les textes ne promettent que les trois notifications qui existent : série à 20 h, lettre du lundi, retour après une semaine. Rien dans <code>src/</code>.
+</footer>
+<script>
+var VARIANTS = [
+  { id: "A", name: "Ligne sous la porte", desc: "Une carte fine sous le grand bouton de Home, après la première session. Ne coûte pas le budget d'interruptions (pas de plein écran) ; reste jusqu'à réponse, × = « plus tard ». Discrète : facile à ignorer, donc taux d'acceptation plus bas." },
+  { id: "B", name: "Feuille d'Aldric", desc: "Une demi-feuille à l'entrée sur Home, voix d'Aldric, les trois notifications listées. Prend l'emplacement du budget (au plus un plein écran non demandé par entrée). La plus explicite : l'élève sait exactement à quoi il dit oui." },
+  { id: "C", name: "Dans le parchemin", desc: "Une ligne dans l'écran de fin, au moment où l'élève vient de gagner (« Remind me »). Hors budget, contextuelle. Vue par tout élève qui finit une manche, mais noyée parmi les autres lignes du parchemin." },
+];
+var ids = ["sc", "p", "mode", "skin", "rm", "size"];
+var shown = { A: true, B: true, C: true };
+try {
+  var saved = JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}");
+  ids.forEach(function (k) { if (saved[k] != null) { var el = document.getElementById(k); if (el.type === "checkbox") el.checked = saved[k]; else el.value = saved[k]; } });
+  if (saved.shown) shown = saved.shown;
+} catch (e) { console.warn("[push-optin] hash illisible:", e && e.message); }
+var vs = document.getElementById("vs");
+VARIANTS.forEach(function (v) {
+  var l = document.createElement("label");
+  l.innerHTML = '<input type="checkbox" ' + (shown[v.id] ? "checked" : "") + "> " + v.id;
+  l.firstChild.addEventListener("change", function (e) { shown[v.id] = e.target.checked; render(); });
+  vs.appendChild(l);
+});
+function state() { var s = {}; ids.forEach(function (k) { var el = document.getElementById(k); s[k] = el.type === "checkbox" ? el.checked : el.value; }); return s; }
+function frameUrl(v, s) { return "frame.html?" + new URLSearchParams({ v: v, st: s.sc, p: s.p, mode: s.mode, skin: s.skin, rm: s.rm ? "1" : "0" }).toString(); }
+function render() {
+  var s = state();
+  location.replace("#" + encodeURIComponent(JSON.stringify(Object.assign({ shown: shown }, s))));
+  var list = VARIANTS.filter(function (v) { return shown[v.id]; });
+  var avail = Math.min(window.innerWidth - 24, 2400);
+  var sc = s.size === "1" ? 1 : Math.min(1, Math.max(0.34, (avail - 18 * (list.length - 1)) / (list.length * 375)));
+  var grid = document.getElementById("grid");
+  grid.style.setProperty("--s", sc); grid.style.setProperty("--w", Math.round(375 * sc) + "px"); grid.style.setProperty("--h", Math.round(812 * sc) + "px");
+  grid.innerHTML = "";
+  list.forEach(function (v) {
+    var url = frameUrl(v.id, s), cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerHTML = '<div class="cap"><b>' + v.id + " · " + v.name + '</b><a href="' + url + '" target="_blank">Ouvrir seul ↗</a></div>' +
+      '<div class="phone"><iframe loading="eager" src="' + url + '"></iframe></div><div class="desc">' + v.desc + "</div>";
+    grid.appendChild(cell);
+  });
+}
+ids.forEach(function (k) { document.getElementById(k).addEventListener("change", render); });
+var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(render, 200); });
+render();
+</script>
+</body>
+</html>

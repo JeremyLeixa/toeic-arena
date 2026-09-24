@@ -1,0 +1,51 @@
+/* Proto « Demande de notifications » : uniquement des jetons de thème (skins, fêtes, clair/sombre suivent). */
+
+/* A — ligne sous la porte */
+.po-line{display:flex;gap:12px;align-items:center;margin:12px 0;padding:12px 12px 12px 14px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(var(--cx),.12),rgba(var(--bg3-rgb),.4));border:1px solid rgba(var(--cx),.28)}
+.po-line-ic{width:36px;height:36px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:rgba(var(--cx),.14);border:1px solid rgba(var(--cx),.35)}
+.po-line-txt{flex:1;min-width:0}
+.po-line-t{font-weight:700;font-size:13.5px;color:var(--t1)}
+.po-line-s{font-size:12px;color:var(--t2);line-height:1.4;margin-top:2px}
+.po-line-btns{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.po-go{font:inherit;font-size:12.5px;font-weight:700;padding:8px 12px;border-radius:10px;border:none;cursor:pointer;
+  background:var(--cx-hex);color:var(--on-cx)}
+.po-x{font:inherit;font-size:18px;line-height:1;width:30px;height:30px;border:none;background:none;color:var(--t3);cursor:pointer}
+
+/* B — feuille d'Aldric */
+.po-sheet-back{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;
+  animation:fadeIn .25s}
+.po-sheet{width:100%;max-width:480px;padding:10px 20px calc(22px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;
+  background:var(--bg2);border-top:1px solid rgba(var(--cx),.35);box-shadow:0 -12px 40px rgba(0,0,0,.45);animation:po-up .32s ease-out}
+@keyframes po-up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.po-sheet-grip{width:40px;height:4px;border-radius:2px;background:var(--bdr);margin:0 auto 14px}
+.po-sheet-eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);font-weight:700}
+.po-sheet-t{font-family:'Cinzel',serif;font-weight:800;font-size:19px;color:var(--t1);margin:6px 0 8px}
+.po-sheet-s{font-size:13.5px;color:var(--t2);line-height:1.5}
+.po-what{display:flex;flex-direction:column;gap:8px;margin:14px 0 4px}
+.po-what-row{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--t1);padding:9px 12px;border-radius:10px;
+  background:rgba(var(--cx),.07);border:1px solid rgba(var(--cx),.16)}
+.po-sheet-go{width:100%;margin-top:16px;font-size:14px;padding:13px 20px}
+.po-sheet-later{display:block;width:100%;margin-top:6px;padding:11px;font:inherit;font-size:13px;background:none;border:none;color:var(--t2);cursor:pointer}
+.po-sheet-foot{text-align:center;font-size:11px;color:var(--t3);margin-top:2px}
+
+/* C — ligne du parchemin */
+.po-res{display:flex;gap:10px;align-items:center;margin:12px 0;padding:11px 12px;border-radius:12px;
+  background:rgba(var(--cx),.08);border:1px solid rgba(var(--cx),.25);text-align:left}
+.po-res-t{flex:1;font-size:12.5px;color:var(--t1);line-height:1.4}
+.po-res-done{background:transparent;border-style:dashed}
+.po-res-done span{font-size:12.5px;color:var(--t2)}
+
+/* Boîte du navigateur simulée (volontairement « système », hors thème) */
+.po-os-back{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.35);display:flex;align-items:flex-start;justify-content:center;padding-top:70px}
+.po-os{width:300px;background:#fff;color:#202124;border-radius:12px;padding:16px 18px 12px;font:14px/1.4 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.po-os-h{font-size:13px;color:#5f6368;margin-bottom:10px}
+.po-os-row{display:flex;gap:10px;align-items:center;font-size:14px}
+.po-os-bell{font-size:16px}
+.po-os-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.po-os-btns button{font:inherit;font-size:13px;padding:7px 14px;border-radius:18px;border:1px solid #dadce0;background:#fff;color:#1a73e8;cursor:pointer}
+.po-os-btns .po-os-ok{background:#1a73e8;color:#fff;border-color:#1a73e8}
+.po-os-note{margin-top:10px;font-size:10.5px;color:#80868b}
+
+.po-toast{position:fixed;top:8px;left:8px;right:8px;z-index:99999;padding:8px 12px;border-radius:10px;background:#111;color:#fff;font-size:12px}
