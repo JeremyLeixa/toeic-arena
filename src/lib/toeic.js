@@ -54,24 +54,25 @@ export var MODULE_TOEIC_MAP={
   gauntlet_tense:{part:"p5",section:"reading",score:true},
   gauntlet_passive:{part:"p5",section:"reading",score:true},
   gauntlet_relative:{part:"p5",section:"reading",score:true},
-  // Donnent de l'XP + vus par le Mentor, PAS encore dans le score (Phase 2) :
-  bforge:{part:"p5",section:"reading",score:false},
-  modals_match:{part:"p5",section:"reading",score:false},
-  modals_sort:{part:"p5",section:"reading",score:false},
-  tavern:{part:"vocab",section:"reading",score:false},
+  // Modules « support » : pesés dans le Reading depuis le Chantier B (2026-06-10, rdParts plus bas) ; les
+  // flags score:false d'avant étaient périmés (corrigés le 2026-09-24 ; rien ne lit .score, c'est de la doc).
+  bforge:{part:"p5",section:"reading",score:true},
+  modals_match:{part:"p5",section:"reading",score:true},
+  modals_sort:{part:"p5",section:"reading",score:true},
+  tavern:{part:"vocab",section:"reading",score:true},
   csess:{part:"vocab",section:null,score:false},        // flashcards : 0 XP, jamais dans le score
   cdom:{part:"vocab",section:null,score:false},
   phrasalpicker:{part:"vocab",section:null,score:false},
-  clue:{part:null,section:null,score:false},
+  clue:{part:null,section:null,score:true},
   // Mimic Hunt : compte dans le Reading (poids support .04) mais part:null — la reformulation
   // sert P3/P4/P7 à la fois, la ranger dans p7 fausserait le diagnostic du Mentor sur la Part 7.
   mimic:{part:null,section:"reading",score:true},
   // Mimic Hunt à l'oreille (2026-09-19) : la source s'entend, le piège est celui des Parts 3 et 4. Listening,
   // poids support .04 (comme la lecture en Reading), part:null pour la même raison.
   mimic_listen:{part:null,section:"listening",score:true},
-  traps:{part:null,section:null,score:false},
-  stratquiz:{part:null,section:null,score:false},
-  timesim:{part:null,section:null,score:false}
+  traps:{part:null,section:null,score:true},
+  stratquiz:{part:null,section:null,score:true},
+  timesim:{part:null,section:null,score:true}
 };
 export function partOfModule(modId){
   if(!modId)return null;
