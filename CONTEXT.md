@@ -43,7 +43,11 @@ une décision.
 - **Phase C sécurité** : 158 lignes legacy sans mot de passe tolérées par `student_guard` → campagne « sécurise ton
   compte », puis retrait de la branche (une ligne SQL).
 - **`CLAUDE.md` à alléger** (~112 Ko chargés à chaque session) : y garder les règles, déplacer ici l'historique.
-- Restes d'audit : export CSV et `deleteAccount` RGPD à revérifier, rotation `PUSH_SECRET`, alerte Disk IO Supabase.
+- ~~Restes d'audit~~ traités le 24/09 : Mock 3 dans l'estimateur, coffre du Boss, trophées Mock 3, RGPD (feedback
+  purgé, refus plus jamais silencieux), CSV Mock 3 + Boss, flags de `MODULE_TOEIC_MAP`, bornes de la monnaie ; alerte
+  Disk IO close (compteur figé à 231 Go depuis le 16/09). Restent : `/api/feedback-send` sans authentification,
+  classement de la Ligue rechargé à chaque gain d'XP, `daily` absent de `MODULE_TOEIC_MAP` (décision : l'ajouter
+  ferait entrer le Daily dans la maîtrise Part 5 du Mentor).
 
 ---
 
