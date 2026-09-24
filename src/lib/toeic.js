@@ -133,7 +133,7 @@ export function battleScanToToeic(bs){
   return Math.round(200+(t/20)*400);
 }
 // ── TOEIC Score Estimator (global — used by Profile + TeacherDash) ──
-export function estimateTOEICScore(ms,opts){
+export function estimateTOEICScore(ms){
   // CHANTIER-A v2 (2026-06-09) — refonte calibree sur la cohorte IDRAC T2.
   // Changements clefs vs V1 :
   //  - Normalisation PROPORTIONNELLE des sections (wSum/wTot) au lieu du hack
@@ -147,14 +147,15 @@ export function estimateTOEICScore(ms,opts){
   //    wSum/wTot. Remplacee le 2026-09-15 par une retenue bayesienne (voir plus bas).
   //  - Bonus mock ASYMETRIQUE (Kamel-safe) : recompense la sur-perf mock,
   //    ne penalise jamais une mauvaise perf mock.
-  //  - A.4 ancrage Boss 60% via opts.bossToeic (echelle 990, optionnel).
+  //  - A.4 ancrage Boss (60% du score Boss) RETIRE le 2026-09-24 : jamais appele depuis juin, jamais
+  //    valide sur des Boss reels. Le Boss compte deja dans le groupe mock (deblocage + bonus additif).
   // CHANTIER-B (2026-06-10) — principe "tout ce qui fait de l'XP bouge le score" :
   //  - Modules-support versés dans le Reading en POIDS FAIBLE (garde-fou validité :
   //    le backbone Part5/6/7+Gauntlet reste dominant) : tavern, clue, traps,
   //    modals (moy 2), bforge, timesim, stratquiz, daily.
   //  - Endless Arena rejoint le groupe mock (full TOEIC : débloque + bonus).
   //  - Exceptions assumées hors-score : Flashcards (0 XP) + jeux d'arcade (pas de précision).
-  ms=ms||{};opts=opts||{};
+  ms=ms||{};
   function rec(id){var d=ms[id];if(!d||!d.total)return null;return{acc:d.correct/d.total,q:d.total};}
   // A.5 v2 (2026-09-15) — RETENUE BAYESIENNE, en remplacement de confW().
   // confW ponderait les poids par le volume : ew = w*confW(q), puis la section
@@ -177,10 +178,9 @@ export function estimateTOEICScore(ms,opts){
   var LIS_MODS=["lisP1","lisP2","lisP3","lisP4","ablitz","mimic_listen"];
   var readingQ=sumQ(READING_MODS),listeningQ=sumQ(LIS_MODS);
   var m1=rec("mock1"),m2=rec("mock2"),mbR=rec("boss"),meR=rec("endless");
-  var bossToeic=(opts.bossToeic!=null&&isFinite(opts.bossToeic))?opts.bossToeic:null;
   var mocksList=[m1,m2,mbR,meR].filter(Boolean); // CHANTIER-B : Endless = full TOEIC, compte comme un mock
-  var hasMock=mocksList.length>0||bossToeic!==null;
-  var mocksDone=mocksList.length+((bossToeic!==null&&!mbR)?1:0);
+  var hasMock=mocksList.length>0;
+  var mocksDone=mocksList.length;
   var evidence={listeningQ:listeningQ,readingQ:readingQ,mocksDone:mocksDone};
   // A.1 seuils (decision produit — ne pas modifier sans validation) : 80 Reading, 40 Listening, ou >=1 mock.
   var readingOK=readingQ>=80||hasMock;
@@ -223,7 +223,6 @@ export function estimateTOEICScore(ms,opts){
     var bonusPts=0;mocksList.forEach(function(m){if(m.acc>0.60)bonusPts+=(m.acc-0.60)*100;});
     bonusPts=Math.min(MOCK_BONUS_MAX,bonusPts);
     if(bonusPts>0)total=total+bonusPts;
-    if(bossToeic!==null)total=0.60*bossToeic+0.40*total; // A.4
     total=Math.max(200,Math.min(990,total));
     return{total:Math.round(total/5)*5,listening:lisScore,reading:rdScore,estimable:true,evidence:evidence};
   }
