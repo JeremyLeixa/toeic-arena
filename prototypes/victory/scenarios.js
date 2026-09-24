@@ -6,7 +6,6 @@
 // affichable, puis vérifie qu'il retombe exactement sur gateXp/settleXp (console.warn sinon).
 // Au câblage, ce détail deviendra le retour de gateXp/settleXp (+ test), pas une copie.
 import { gateXp, settleXp, accuracyGate, farmMult, isBoostedByEvents } from "../../src/lib/xp.js";
-import { computeTodayFocus, partOfModule } from "../../src/lib/toeic.js";
 import { getLeague } from "../../src/lib/league.js";
 import { getLevel } from "../../src/data/helpers.js";
 import { fresh } from "../../src/lib/profileSchema.js";
@@ -92,10 +91,8 @@ export function explainXp(s) {
         hint: "Full XP again tomorrow, or on another module today" });
     }
   }
-  try {
-    var f = computeTodayFocus(u);
-    if (f && partOfModule(modId) === f.partId) { x = Math.round(x * 1.25); lines.push({ kind: "bonus", label: "Today's Focus", detail: "+25%", value: x }); }
-  } catch (e) { console.warn("[victory] focus:", e && e.message); }
+  // Focus : computeTodayFocus a disparu avec le plan du jour figé (2026-09-18, ctx.focusPart de gateXp) ; le
+  // banc n'injecte pas de plan, donc pas de +25 % ici (gateXp non plus : pas de divergence).
 
   var g = gateXp(base, sc, tot, modId, { u: u, now: NOW, events: events });
   if (g.xp !== x) console.warn("[victory] gateXp diverge :", g.xp, "≠", x);

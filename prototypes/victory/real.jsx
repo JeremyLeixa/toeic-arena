@@ -15,6 +15,10 @@ import { SCENARIOS, NOW } from "./scenarios.js";
 var q = new URLSearchParams(location.search);
 var SC = q.get("sc") || "promotion", MODE = q.get("mode") || "dark", SKIN = q.get("skin") || "";
 var RM = q.get("rm") === "1", SEAL = q.get("seal") === "1", HONORS = q.get("honors") === "1", POINTS = q.get("points") === "1";
+// turn=1 : cérémonie « faiblesse devenue force » de démonstration (forme de celebrateTurn), pour voir le budget
+// d'interruptions (2026-09-24) : avec sc=promotion, la promotion passe en ligne du parchemin.
+var TURN = q.get("turn") === "1" ? { cat: "Conditionals", then: { c: 3, t: 11 }, now: { c: 11, t: 13 },
+  spark: [0.2, 0.3, 0.25, 0.4, 0.5, 0.8, 0.9, 0.85].map(function (a, i) { return { acc: a, up: i >= 5 }; }) } : null;
 var RM_CSS = "*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}";
 var TIER = { novice: 0, guerrier: 1, champion: 2, legendaire: 3 };
 var noop = function () {};
@@ -30,6 +34,7 @@ function buildSession(sc) {
     chests: st.chests.map(function (ch) { return { trigger: ch.trigger, type: ch.type, tier: TIER[ch.type] || 0, label: getTriggerLabel(ch.trigger) }; }),
     achievements: HONORS ? [{ name: "Word Collector", desc: "Review 50 flashcards" }] : [],
     marks: HONORS || g.focusHit ? [{ amount: 30, label: g.focusHit ? "Today's Focus" : "Achievement" }] : [],
+    turn: TURN,
   };
 }
 
