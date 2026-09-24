@@ -70,6 +70,10 @@ export var MODULE_TOEIC_MAP={
   // Mimic Hunt à l'oreille (2026-09-19) : la source s'entend, le piège est celui des Parts 3 et 4. Listening,
   // poids support .04 (comme la lecture en Reading), part:null pour la même raison.
   mimic_listen:{part:null,section:"listening",score:true},
+  // Nine to Five (The Waygates, 2026-09-24) : ni part ni section, hors des tables de poids. Ses réponses sont de
+  // vrais items P3/P4/P7 et comptent DANS lisP3, lisP4 et p7 (officeDone, App.jsx) : les compter aussi ici les
+  // pèserait deux fois, et une part unique fausserait le Mentor (une journée mêle trois Parts).
+  office:{part:null,section:null,score:true},
   traps:{part:null,section:null,score:true},
   stratquiz:{part:null,section:null,score:true},
   timesim:{part:null,section:null,score:true}

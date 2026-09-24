@@ -3,6 +3,9 @@ import { getLevel } from "./helpers.js";
 // Mimic Hunt se joue en lecture (mimic) ou à l'oreille (mimic_listen, 2026-09-19) : ses trophées comptent les deux.
 function mimicModes(s){var ms=s.moduleScores||{};return [ms.mimic,ms.mimic_listen].filter(Boolean);}
 function mimicRuns(s){return mimicModes(s).reduce(function(a,m){return a.concat(m.history||[]);},[]);}
+// Nine to Five (The Waygates, 2026-09-24) : réputation et journées dans gameScores.officeDay (officeDone, App.jsx),
+// tâches rendues à l'heure dans l'entrée d'history du module "office" (onTime / tasks, posés par recordModule).
+function officeDay(s){return (s.gameScores&&s.gameScores.officeDay)||{};}
 
 export var ACHIEVEMENTS = [
   {id:"first_blood",name:"First Blood",desc:"Complete your first exercise",icon:"⚔️",check:function(s){return s.stats.sessions>=1;}},
@@ -91,4 +94,8 @@ export var ACHIEVEMENTS = [
   {id:"mimic_unbitten",name:"Unbitten",desc:"Finish a Mimic Hunt without a single bite",icon:"🛡️",check:function(s){return mimicRuns(s).some(function(h){return h.bites===0&&h.total>=15;});}},
   {id:"mimic_perfect",name:"Paraphrase Master",desc:"Perfect 15/15 in one Mimic Hunt",icon:"🎭",check:function(s){return mimicRuns(s).some(function(h){return h.correct===h.total&&h.total>=15;});}},
   {id:"mimic_slayer",name:"Mimic Slayer",desc:"Mimic Hunt: 80%+ accuracy (min 60 Q)",icon:"🗡️",check:function(s){var t=0,c=0;mimicModes(s).forEach(function(m){t+=m.total||0;c+=m.correct||0;});return t>=60&&c/t>=0.8;}},
+  {id:"office_first",name:"First Day",desc:"Work your first day in Nine to Five",icon:"💼",check:function(s){var m=(s.moduleScores||{}).office;return !!m&&m.sessions>=1;}},
+  {id:"office_clean",name:"Clean Desk",desc:"Nine to Five: 5+ tasks in a day, all on time",icon:"🗂️",check:function(s){var m=(s.moduleScores||{}).office;return !!m&&(m.history||[]).some(function(h){return h.tasks>=5&&h.onTime===h.tasks;});}},
+  {id:"office_promoted",name:"Promoted",desc:"Reach Associate in Nine to Five",icon:"📈",check:function(s){return (+officeDay(s).rep||0)>=250;}},
+  {id:"office_veteran",name:"Ten Days on the Job",desc:"Work 10 days in Nine to Five",icon:"📅",check:function(s){return (+officeDay(s).days||0)>=10;}},
 ];

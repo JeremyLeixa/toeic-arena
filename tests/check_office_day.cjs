@@ -98,5 +98,64 @@ ok(L.dayXp(13, 13, true) === 15 + 65 + 25, 'dayXp : +25 pour une journée sans f
 ok(L.dayXp(13, 13, false) === 15 + 65, 'dayXp : pas de bonus si une tâche a filé');
 ok(L.dayStars(13, 15) === 3 && L.dayStars(11, 15) === 2 && L.dayStars(8, 15) === 1 && L.dayStars(3, 15) === 0, 'dayStars : paliers 85 / 70 / 50 %');
 
+// ── 4. Câblage (lu dans le source) ──────────────────────────────────────────────────────────────
+const fs = require('fs');
+const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
+const APP = read('src/App.jsx'), ROUTES = read('src/routes.jsx'), SCREEN = read('src/features/waygates/NineToFive.jsx');
+const HUB = read('src/features/waygates/Waygates.jsx'), GAMES = read('src/features/games/GamesHub.jsx');
+
+// officeDone : XP et anti-farming sous "office", réponses versées dans les Parts SANS trackModSession sur elles
+// (sinon une journée taxe les tuiles Listening/Reading et coche les quêtes du plan), réputation dans gameScores.
+const od = (APP.match(/function officeDone\([\s\S]*?sv\(c\);return s\.sid;\}/) || [''])[0];
+ok(!!od, 'App.jsx : officeDone existe (settle → … → sv → return s.sid)');
+ok(/settleSession\("office",sc,tot,xp,\{spotlight:true,extra:extra\}\)/.test(od), 'officeDone : XP réglée sous "office", Spotlight compris');
+ok((od.match(/trackModSession\(/g) || []).length === 1 && /trackModSession\(c,"office"\)/.test(od), 'officeDone : trackModSession UNIQUEMENT sur "office", jamais sur lisP3/lisP4/p7');
+ok(/\["lisP3","lisP4","p7"\]\.forEach[\s\S]*recordModule\(c,m,pr\.c,pr\.t,null,\{via:"office"\}\)/.test(od), 'officeDone : les réponses entrent dans lisP3, lisP4 et p7 (estimateur, Mentor)');
+ok(/Math\.min\(REP_MAX_GAIN/.test(od) && /gameScores\.officeDay=/.test(od), 'officeDone : réputation bornée, rangée dans gameScores.officeDay');
+ok(/recordMisses\(c\.review,mistakes/.test(od), 'officeDone : les erreurs entrent au bestiaire');
+ok(/officeDone, pg/.test(APP) && /officeDone, pg/.test(ROUTES), 'officeDone passé au contexte de renderRoute (appel ET déstructuration)');
+ok(/if\(sp==="office"\)return pg\(<NineToFive [^\n]*done=\{function\(sc,tot,xp,mistakes,extra\)\{return officeDone\(sc,tot,xp,mistakes,extra\);\}\}/.test(ROUTES), 'route office → officeDone, sid rendu');
+ok(/if\(sp==="waygates"\)return pg\(<Waygates /.test(ROUTES), 'route waygates');
+ok(/lazyNamed\(function\(\)\{return import\("\.\/features\/waygates\/NineToFive\.jsx"\);\},"NineToFive"\)/.test(ROUTES), 'Nine to Five chargé à la demande (les banques restent hors du bundle principal)');
+ok(!/from "[./]*\/lib\/officeDay\.js"/.test(APP) && !/from "[./]*\/lib\/officeDay\.js"/.test(GAMES), 'App.jsx et GamesHub lisent officeGrades.js, jamais officeDay.js (qui importe les banques)');
+ok(!/^import /m.test(read('src/lib/officeGrades.js')), 'lib/officeGrades.js sans import (pur, sans données)');
+const selfManaged = (APP.match(/var SELF_MANAGED=\[([^\]]*)\]/) || ['', ''])[1];
+ok(selfManaged.indexOf('"office"') < 0, 'office hors SELF_MANAGED : l\'effet central coupe la musique (écoute des Parts 3 et 4)');
+
+// L'écran : options permutées, refs relisibles par la chasse, audio interruptible, envoi à la fin, jetons de thème.
+ok(/shufP7\(/.test(SCREEN) && /shufListeningItem\)/.test(SCREEN), 'écran : options permutées (shufP7, shufListeningItem)');
+ok(/ref: \{ k: t\.mod \+ ":" \+ t\.itemId \+ ":" \+ q\.qi, part: PART\[t\.mod\] \}/.test(SCREEN), 'écran : refs lisP3:/lisP4:/p7: <id>:<question d\'origine>');
+ok(/resumeAudioSession\(\); return stopListenAudio;/.test(SCREEN), 'écran : drapeau d\'abandon audio (resumeAudioSession / stopListenAudio)');
+ok(/sidRef\.current = p\.done\(sc, answered, dayXp\(/.test(SCREEN) && /modId: "office", parts: parts/.test(SCREEN), 'écran : p.done à la fin de journée, modId office et parts');
+ok(/onSheet=\{function \(on\) \{ pausedRef\.current = on; \}\}/.test(SCREEN) && /if \(pausedRef\.current\) return;/.test(SCREEN), 'écran : la feuille « Leave » gèle l\'horloge');
+[['NineToFive', SCREEN, 'NF_CSS'], ['Waygates', HUB, 'WG_CSS']].forEach(function (x) {
+  const css = (x[1].match(new RegExp('var ' + x[2] + ' = `([\\s\\S]*?)`;')) || ['', ''])[1];
+  ok(css.length > 100, x[0] + ' : CSS privé trouvé');
+  ok(!/#[0-9a-fA-F]{3,8}\b/.test(css), x[0] + ' : aucune couleur en dur dans le CSS (skins, fêtes, mode clair : jetons du thème seulement)');
+});
+const lookup = require(path.join(ROOT, 'src', 'lib', 'reviewLookup.js'));
+[['p7', PART7_PASSAGES[0]], ['lisP3', LISTENING_P3[0]], ['lisP4', LISTENING_P4[0]]].forEach(function (x) {
+  const q = lookup.lookupRef(x[0] + ':' + x[1].id + ':0');
+  ok(!!(q && q.prompt && q.options && q.options.length === 4), 'la chasse relit une erreur de Nine to Five (' + x[0] + ')');
+});
+
+// Tuile, liste noire, estimateur, trophées.
+ok(/\{id:"waygates",n:"The Waygates",[^\n]*plain:true\}/.test(GAMES) && GAMES.indexOf('{id:"waygates"') < GAMES.indexOf('{id:"tavern"'), 'hub Games : tuile The Waygates en tête, sans coffre propre (plain)');
+ok(require(path.join(ROOT, 'src', 'lib', 'hubStatus.js')).MASTERY_BLACKLIST.office === 1, 'office en liste noire de maîtrise (ses réponses font avancer lisP3/lisP4/p7 : pas de double coffre)');
+const TOEIC = read('src/lib/toeic.js');
+ok(/office:\{part:null,section:null,score:true\}/.test(TOEIC), 'MODULE_TOEIC_MAP.office : ni part ni section');
+ok(!/"office"|id:"office"/.test((TOEIC.match(/var READING_MODS[\s\S]*?var lisParts=[^\n]*/) || [''])[0]), 'office hors des tables de poids (compté via les Parts, jamais deux fois)');
+const ACH = require(path.join(ROOT, 'src', 'data', 'achievements.js')).ACHIEVEMENTS;
+const ach = (id) => ACH.find(function (a) { return a.id === id; });
+const u0 = { stats: {}, moduleScores: {}, gameScores: {} };
+const u1 = { stats: {}, moduleScores: { office: { sessions: 1, history: [{ tasks: 5, onTime: 5, correct: 10, total: 15 }] } }, gameScores: { officeDay: { rep: 250, days: 10 } } };
+const u2 = { stats: {}, moduleScores: { office: { sessions: 9, history: [{ tasks: 5, onTime: 4 }, { tasks: 4, onTime: 4 }] } }, gameScores: { officeDay: { rep: 249, days: 9 } } };
+['office_first', 'office_clean', 'office_promoted', 'office_veteran'].forEach(function (id) {
+  ok(!!ach(id), 'trophée ' + id + ' déclaré');
+  if (ach(id)) { ok(ach(id).check(u1), 'trophée ' + id + ' obtenu quand il le faut'); ok(!ach(id).check(u0), 'trophée ' + id + ' refusé à un profil neuf'); }
+});
+ok(!ach('office_clean').check(u2), 'Clean Desk : il faut 5 tâches ou plus, TOUTES à l\'heure');
+ok(!ach('office_promoted').check(u2) && !ach('office_veteran').check(u2), 'Promoted à 250 rep, Ten Days à 10 journées');
+
 console.log((fails ? 'ÉCHEC' : 'OK') + ' — Nine to Five : ' + checks + ' contrôles' + (fails ? ', ' + fails + ' en échec' : ''));
 process.exit(fails ? 1 : 0);

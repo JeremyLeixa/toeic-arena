@@ -6,7 +6,7 @@ import { roman } from "./hubStatus.js";
 // Noms des modules absents de MISSION_MODULES (hubs à épreuves, jeux ajoutés après).
 var MODULE_NAMES = { tavern: "Word Tavern", bforge: "Linking Bridge", gauntlet_irregular: "Irregular Crypt",
   gauntlet_tense: "Chronomancer", gauntlet_passive: "Passive Forge", gauntlet_relative: "Relative Weaver",
-  modals_match: "The Oracle", modals_sort: "The Verdict", mimic: "Mimic Hunt", mimic_listen: "Mimic Hunt · Listen" };
+  modals_match: "The Oracle", modals_sort: "The Verdict", mimic: "Mimic Hunt", mimic_listen: "Mimic Hunt · Listen", office: "Nine to Five" };
 function moduleName(id) {
   if (MODULE_NAMES[id]) return MODULE_NAMES[id];
   var m = MISSION_MODULES.find(function (x) { return x.id === id; });

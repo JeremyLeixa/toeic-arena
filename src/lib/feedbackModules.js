@@ -44,7 +44,8 @@ export var FEEDBACK_MODULES = [
     {id:"duel",label:"Vocabulary Arena (Duel)"},
     {id:"wfall",label:"Word Fall"},
     {id:"matchE",label:"Speed Match"},
-    {id:"mimic",label:"Mimic Hunt"}
+    {id:"mimic",label:"Mimic Hunt"},
+    {id:"office",label:"The Waygates · Nine to Five"}
   ]},
   {group:"Mocks",items:[
     {id:"mock1",label:"Mock Test 1"},
