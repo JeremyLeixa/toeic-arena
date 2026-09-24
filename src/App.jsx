@@ -27,6 +27,7 @@ import { gateXp, gateSteps, settleXp } from "./lib/xp.js";
 import { MASTERY_BLACKLIST, tierStatus, tierTrigger, tierMarksKey, TIERS_EPOCH } from "./lib/hubStatus.js";
 import { marksLabel } from "./lib/sessionText.js";
 import { setQuitSink, QUIT_EXEMPT, QUIT_PREFIX } from "./lib/sessionQuit.js";
+import { isMilestone, pickNarrator, spendsNextEntry } from "./lib/interruptions.js";
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
 import { appliedFestivalId, setFestivalsEnabled, applyThemeColor } from "./lib/festivals.js";
@@ -75,7 +76,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-23-home-one-door";
+var BUILD_ID="2026-09-24-interruption-budget";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -117,26 +118,59 @@ export default function App(){
   var[authLost,setAuthLost]=useState(null);
   // ─── Narrator queue (Aldric narrative moments) ───
   var[narratorQueue,setNarratorQueue]=useState([]);
-  var currentNarratorMoment=narratorQueue.length>0?NARRATOR_MOMENTS[narratorQueue[0]]:null;
+  // ─── Budget d'interruptions (lib/interruptions.js, 2026-09-24, variante B du proto ceremony-budget) ───
+  // Une « entrée » = chaque arrivée sur Home (onglet home, aucune sous-page). Au plus UN plein écran non
+  // demandé par entrée : un moment d'Aldric de PALIER (ligue, série, niveau, examens) ou la lettre du lundi,
+  // le palier d'abord ; une session à cérémonie (retournement, promotion, cérémonies d'examen) consomme
+  // l'entrée qui la suit. Les moments CONTEXTUELS (Shop, Mentor, verdict, premier coffre) et les
+  // rediffusions demandées passent toujours. Avant : jusqu'à 6 plein écran d'affilée après une manche.
+  // Les compteurs vivent aussi dans des refs : l'effet d'entrée et celui du narrateur tournent dans le même
+  // commit, et l'état seul donnerait au second une entrée périmée (un palier passerait après une cérémonie).
+  var[homeEntry,setHomeEntry]=useState(0);var[usedEntry,setUsedEntry]=useState(-1);var[letterEntry,setLetterEntry]=useState(-1);
+  var entryRef=useRef(0),usedRef=useRef(-1),atHomeRef=useRef(false),spentNextRef=useRef(false);
+  var atHome=!!u&&!ld&&tab==="home"&&!sp;
+  function markEntryUsed(n){usedRef.current=n;setUsedEntry(n);}
+  function budgetFreeNow(){return atHomeRef.current&&entryRef.current>0&&usedRef.current!==entryRef.current;}
+  useEffect(function(){
+    if(atHome&&!atHomeRef.current){
+      entryRef.current+=1;setHomeEntry(entryRef.current);
+      if(spentNextRef.current){spentNextRef.current=false;markEntryUsed(entryRef.current);}
+    }
+    atHomeRef.current=atHome;
+  },[atHome]);
+  // Une session à cérémonie (retournement, promotion) ou un examen à cérémonies consomme l'entrée suivante.
+  useEffect(function(){
+    if(spendsNextEntry(lastSession))spentNextRef.current=true;
+  },[lastSession&&lastSession.id,lastSession&&!!lastSession.turn,lastSession&&!!lastSession.leagueUp]);
+  useEffect(function(){if(examCeremony)spentNextRef.current=true;},[!!examCeremony]);
+  // Moment affiché : verrouillé jusqu'à sa fermeture (sinon le budget qu'il consomme le retirerait aussitôt).
+  var[narratorActive,setNarratorActive]=useState(null);
+  useEffect(function(){
+    if(narratorActive&&narratorQueue.indexOf(narratorActive)!==-1)return;
+    var id=pickNarrator(narratorQueue,budgetFreeNow());
+    if(id!==narratorActive)setNarratorActive(id);
+    if(id&&isMilestone(id))markEntryUsed(entryRef.current);
+  },[narratorQueue,narratorActive,homeEntry,usedEntry,atHome]);
+  var currentNarratorMoment=narratorActive?NARRATOR_MOMENTS[narratorActive]:null;
   // Idempotent push: no-op if unknown id, already-heard, or already queued
   function pushNarratorMoment(uu,momentId){
     if(!NARRATOR_MOMENTS[momentId])return;
     if(hasHeardMoment(uu,momentId))return;
     setNarratorQueue(function(q){if(q.indexOf(momentId)!==-1)return q;return q.concat([momentId]);});
   }
+  // Rediffusion demandée (Profil, Mentor) : jamais soumise au budget.
+  function replayNarratorMoment(id){setNarratorQueue([id]);setNarratorActive(id);}
   function dismissNarratorMoment(){
-    setNarratorQueue(function(q){
-      if(q.length===0)return q;
-      var momentId=q[0];
-      // Mutate+save the user profile so Supabase persists the "heard" record.
-      // Use functional setter on u via sU to stay consistent with other mutations.
-      if(u){
-        var u2=JSON.parse(JSON.stringify(u));
-        markMomentHeard(u2,momentId);
-        sU(u2);save(u2);
-      }
-      return q.slice(1);
-    });
+    var momentId=narratorActive;
+    if(!momentId)return;
+    // Mutate+save the user profile so Supabase persists the "heard" record.
+    if(u){
+      var u2=JSON.parse(JSON.stringify(u));
+      markMomentHeard(u2,momentId);
+      sU(u2);save(u2);
+    }
+    setNarratorQueue(function(q){return q.filter(function(x){return x!==momentId;});});
+    setNarratorActive(null);
   }
   // Arena Shop P4 — Aldric's chronicle plays once on the first Shop visit.
   // pushNarratorMoment is idempotent (hasHeardMoment guard) → fires only the first time.
@@ -1610,7 +1644,13 @@ function sv(d){
   // Lettre du lundi (lot 6) : au premier passage sur Home de la semaine, jamais par-dessus une session, un
   // coffre, Aldric ou un bandeau de session perdue. Lue (ou remise à plus tard), elle ne revient pas
   // avant lundi prochain ; elle reste relisible dans la Chronique du Mentor.
-  var showLetter=!!u&&!ld&&!lastSession&&tab==="home"&&!sp&&!chestModal&&!currentNarratorMoment&&!authLost&&!teacherMode&&!isExpiredGroup&&letterDue(u,new Date());
+  // Lettre du lundi : dernière du budget d'interruptions (lib/interruptions.js). Une fois ouverte dans une
+  // entrée (letterEntry), elle y reste jusqu'à « Later » / « See today's plan », même si le budget est pris.
+  var letterBase=!!u&&!ld&&!lastSession&&tab==="home"&&!sp&&!chestModal&&!currentNarratorMoment&&!authLost&&!teacherMode&&!isExpiredGroup&&letterDue(u,new Date());
+  var showLetter=letterBase&&homeEntry>0&&(letterEntry===homeEntry||usedEntry!==homeEntry);
+  useEffect(function(){
+    if(showLetter&&letterEntry!==homeEntry){setLetterEntry(homeEntry);markEntryUsed(homeEntry);}
+  },[showLetter,letterEntry,homeEntry]);
   function closeLetter(action){
     var c=JSON.parse(JSON.stringify(u));c.letterSeen=letterWeek(new Date());sv(c);
     if(action==="plan"){tabGo("mentor");sSPA("path");}
@@ -1705,7 +1745,7 @@ function sv(d){
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0 Acc\u00e8s expir\u00e9 le "}{groupAccess.endDate}{" — consultation uniquement"}</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} festId={festId} onFestivalsOff={function(){setFestivals(false);}} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} pendingChestTier={pendingChestTier} openPath={function(){tabGo("mentor");sSPA("path");}} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} initialSheet={spA} setUser={function(c){sv(c);}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} festId={festId} setFestivals={setFestivals} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} goShop={function(){sSP("shop");}} replayNarrator={function(id){setNarratorQueue([id]);}}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} festId={festId} onFestivalsOff={function(){setFestivals(false);}} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} pendingChestTier={pendingChestTier} openPath={function(){tabGo("mentor");sSPA("path");}} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} initialSheet={spA} setUser={function(c){sv(c);}} replayNarrator={replayNarratorMoment}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} festId={festId} setFestivals={setFestivals} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} goShop={function(){sSP("shop");}} replayNarrator={replayNarratorMoment}/>}
     {/* TutorialTour supprimé 2026-05-03 — absorbé dans le Verdict d'Aldric (cf. narrator.js). */}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
