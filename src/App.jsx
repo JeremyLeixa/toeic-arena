@@ -1412,6 +1412,9 @@ function sv(d){
   function goTeacher(){setTeacher(true);}
 
   function bossDone(result,xp){var gxp=applyXpGates(xp,result.score,result.total,"boss");var c=addXp(gxp,{ceremony:true});c.stats.totalQ+=result.total;c.stats.correct+=result.score;c.stats.sessions+=1;if(!c.mockResults)c.mockResults={};var prev=c.mockResults.boss;if(!prev||result.toeicEstimate>=prev.toeicEstimate){c.mockResults.boss=result;}else{c.mockResults.boss=Object.assign({},prev,{date:result.date});}trackModSession(c,"boss");recordModule(c,"boss",result.score,result.total);if(c.boosts&&c.boosts.bossResetArmed)c.boosts.bossResetArmed=false;if(c.boosts&&c.boosts.mockMultArmed)c.boosts.mockMultArmed=false;try{if(result.total>0&&result.score/result.total>=0.7)playJingleMock();else playJingleMockOk();}catch(e){}sv(c);
+    // Coffre Légendaire « The Final Arena conquered » : une fois par élève (déclencheur sans date). Il n'était
+    // accordé que dans mockDone, que le Boss n'emprunte pas : injoignable jusqu'au 2026-09-24.
+    grantChestLocal("boss_test","legendaire");
     // Pas de navigation ici : bossDone est appelé depuis doSubmit() pendant que
     // l'écran de résultats reste affiché (même GARDE que mockDone / bug Yannou).
   }
@@ -1453,7 +1456,6 @@ function sv(d){
     if(result.mockId==="1"||result.mockId===1)grantChestLocal("mock_1","champion");
     if(result.mockId==="2"||result.mockId===2)grantChestLocal("mock_2","champion");
     if(result.mockId==="3"||result.mockId===3)grantChestLocal("mock_3","champion");
-    if(result.mockId==="boss")grantChestLocal("boss_test","legendaire");
     // Pas de navigation ici : mockDone est appelé depuis submitTest() pendant
     // que l'écran de résultats reste affiché. La navigation se fait via le
     // bouton "Exit" / la révision (voir GARDE dans MockTest.submitTest).
