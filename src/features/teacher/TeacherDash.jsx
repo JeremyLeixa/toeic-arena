@@ -641,7 +641,7 @@ export function TeacherDash(p){
       if(!res.data||!res.data.ok){console.warn("[usage] refused:",res.data&&res.data.error);setUsage({error:(res.data&&res.data.error)||"refused"});return;}
       setUsage(usageStats(res.data.students||[],new Date()));
     }).catch(function(e){console.warn("[usage] teacher_usage caught:",e&&e.message);setUsage({error:e&&e.message});});
-    // Garde-fou XP (2026-09-24) : sauvegardes plafonnées à +20 000 XP/jour par save_student, NOMMÉES (RPC à part,
+    // Garde-fou XP (2026-09-24) : journées notées au-delà de +20 000 XP, plafonnées au-delà de +40 000 par save_student, NOMMÉES (RPC à part,
     // teacher_usage reste anonyme). Échec → section absente, l'onglet reste utilisable.
     setXpClamps(null);
     supabase.rpc('teacher_xp_clamps',{p_code:getDashTeacher(),p_class_code:classCode}).then(function(res){
@@ -1805,11 +1805,11 @@ export function TeacherDash(p){
               <td style={Object.assign({},td,{textAlign:"left",color:"var(--t1)"})}>{c.name}</td>
               <td style={td}>{String(c.day).split("-").reverse().slice(0,2).join("/")}</td>
               <td style={td}>{"+"+(c.claimed_xp-c.base_xp).toLocaleString("fr-FR")}</td>
-              <td style={td}>{"+"+(c.accepted_xp-c.base_xp).toLocaleString("fr-FR")}</td>
+              <td style={td}>{c.clamped?"+"+(c.accepted_xp-c.base_xp).toLocaleString("fr-FR"):"tout"}</td>
               <td style={td}>{c.hits}</td>
             </tr>);})}</tbody>
           </table>
-          <div style={{fontSize:11,color:"var(--t3)",marginTop:10,lineHeight:1.5}}>{"Une sauvegarde ne peut pas ajouter plus de 20 000 XP par jour (la plus grosse semaine réelle en fait 29 000). Au-delà, l'XP est plafonnée et la tentative notée ici : XP écrite à la main depuis la console, ou très longue partie hors ligne. Le reste du profil est sauvegardé normalement."}</div>
+          <div style={{fontSize:11,color:"var(--t3)",marginTop:10,lineHeight:1.5}}>{"Journée notée ici dès que l'XP d'un élève monte de plus de 20 000 (les plus grosses semaines réelles en font 30 000 à 44 000) : très gros joueur, longue partie hors ligne, ou XP écrite à la main. Au-delà de 40 000 dans la journée, l'XP est plafonnée (« XP gardée ») ; en dessous, rien n'est retiré (« tout »). Le reste du profil est toujours sauvegardé."}</div>
         </div>}
       </div>);
     })()}

@@ -451,10 +451,11 @@ prod (`2026-09-16_f3_drop_recover_student_row.sql`) ; `check:security` exige un 
   toeic_weekly` : une nouvelle source de Darics s'ajoute à `2026-09-24_economy_lot2_close.sql`, le test la réclame).
   Retirées (404 exigé par `check:security`) : `spend_marks`, `grant_reward_once`, `open_pending_chest`,
   `convert_cosmetic_dups`.
-- **Garde-fou XP dans `save_student`** (lot 3) : `xp` et `weekly_xp` ne montent pas de plus de **20 000 par jour**
-  (heure de Paris) au-dessus de leurs valeurs du premier enregistrement du jour (colonnes serveur `xp_day_*`, **hors
-  liste blanche** : le client ne doit jamais pouvoir remettre sa base). Au-delà : plafonné (jamais refusé) et noté
-  dans `xp_clamp_log`, affiché nommé dans l'onglet Usage (`teacher_xp_clamps`). L'XP d'une manche reste calculée
+- **Garde-fou XP dans `save_student`** (lots 3 et 3b) : au-dessus des valeurs de `xp` et `weekly_xp` du premier
+  enregistrement du jour (heure de Paris ; colonnes serveur `xp_day_*`, **hors liste blanche** : le client ne doit
+  jamais pouvoir remettre sa base), **+20 000 = journée notée** dans `xp_clamp_log` sans rien retirer, **+40 000 =
+  plafond** (jamais un refus). Des semaines réelles montent à 44 365 : ne pas redescendre le plafond sans relire
+  `weekly_history`. Affiché nommé dans l'onglet Usage (`teacher_xp_clamps`). L'XP d'une manche reste calculée
   par le client.
 
 ---

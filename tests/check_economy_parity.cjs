@@ -113,9 +113,16 @@ const lastSave = fs.readdirSync(MIGS).filter((f) => f.endsWith('.sql')).sort()
 const saveSql = lastSave ? fs.readFileSync(path.join(MIGS, lastSave), 'utf8') : '';
 const vcols = (saveSql.match(/v_cols\s+text\[\]\s*:=\s*ARRAY\[([\s\S]*?)\]/) || [, ''])[1];
 ok('save_student (' + lastSave + ') plafonne l\'XP par _xp_guard', /FROM _xp_guard\(v_row,/.test(saveSql) && /v_new\.xp := v_g\.o_xp/.test(saveSql));
-ok('save_student plafonne aussi un profil neuf', /v_new\.xp := LEAST\(COALESCE\(v_new\.xp, 0\), 20000\)/.test(saveSql));
+ok('save_student plafonne aussi un profil neuf (40 000)', /v_new\.xp := LEAST\(COALESCE\(v_new\.xp, 0\), 40000\)/.test(saveSql));
+ok('save_student note toute journée au-dessus du seuil d\'alerte, plafonnée ou non', /IF v_g\.o_alert THEN/.test(saveSql));
 ok('colonnes xp_day_* hors de la liste blanche du client', vcols.length > 0 && !/xp_day/.test(vcols));
-ok('borne quotidienne de 20 000 XP', /c_max CONSTANT integer := 20000/.test(fs.readFileSync(path.join(MIGS, '2026-09-24_economy_lot3_xp_guard.sql'), 'utf8')));
+// Lot 3b (choix de Jérémy) : alerte à +20 000, plafond à +40 000. Des semaines réelles montent à 44 365 : un
+// plafond plus bas retirerait de l'XP aux gros joueurs honnêtes.
+const lastGuard = fs.readdirSync(MIGS).filter((f) => f.endsWith('.sql')).sort()
+  .filter((f) => /FUNCTION public\._xp_guard\(/.test(fs.readFileSync(path.join(MIGS, f), 'utf8'))).pop();
+const guardSql = lastGuard ? fs.readFileSync(path.join(MIGS, lastGuard), 'utf8') : '';
+ok('seuil d\'alerte 20 000 et plafond 40 000 (' + lastGuard + ')', /c_alert CONSTANT integer := 20000/.test(guardSql)
+  && /c_max CONSTANT integer := 40000/.test(guardSql));
 const dash = fs.readFileSync(path.join(ROOT, 'src', 'features', 'teacher', 'TeacherDash.jsx'), 'utf8');
 ok('plafonnements affichés dans l\'onglet Usage (teacher_xp_clamps)', /rpc\('teacher_xp_clamps'/.test(dash));
 
