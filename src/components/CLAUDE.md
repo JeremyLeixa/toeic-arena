@@ -107,6 +107,14 @@ Proto `prototypes/ceremony-budget/`, choix de Jérémy **B « une par retour »*
   Le moment affiché est verrouillé (`narratorActive`) et la lettre aussi (`letterEntry`) : sans verrou, le budget
   qu'ils consomment les retirerait aussitôt. Compteurs doublés en refs (effets du même commit).
 - Banc : `prototypes/victory/real.html?sc=promotion&turn=1`.
+- **Demande de notifications** (`PushOfferSheet`, 2026-09-24, proto `prototypes/push-optin/`, variante B « feuille
+  d'Aldric ») : **dernière** du budget, après la lettre du lundi (`pushBase` exige `!letterBase`), même verrou
+  (`pushEntry`). Qui et quand : `lib/pushOffer.js` (`tests/check_push_offer.cjs`) — après la 1re session, jamais
+  un visiteur, jamais après un refus du navigateur ni si l'autorisation est déjà donnée, « Not now » = 5 jours,
+  3 fois au plus ; iPhone hors appli installée = mode `ios` (étapes d'installation, compteur à part pour ne pas
+  épuiser la vraie demande). Reports en localStorage (`toeic-push-offer`) : l'autorisation est celle de l'appareil.
+  Les textes ne promettent que les 3 notifications qui existent (série 20 h, lettre du lundi, retour après 7 j) :
+  une nouvelle Edge Function = mettre à jour `WHAT`. Banc du vrai composant : `frame.html?v=R&st=ask|ios`.
 
 ### Grimoire pattern (applies to Gauntlet + G&V grimoires)
 - **Data format** per grimoire: `{id, title, subtitle, readingTime, icon, chapters: [{id, title, intro, blocks: [...]}]}`.

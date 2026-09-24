@@ -34,6 +34,11 @@ une décision.
   `daily_completions` perdu), `week_start` = lundi local partout (c'était le dimanche 8 jours avant). Sauvegarde :
   `weekly_snapshots_backup_2026_09_24` (verrouillée), à supprimer quand le rapport formateur aura été relu.
 
+- **24/09 : demande de notifications dans l'appli** (proto `push-optin`, variante B « feuille d'Aldric ») : 39 abonnés
+  depuis toujours, 3 depuis septembre (l'onboarding ne demande plus depuis le 30/06). Feuille sur Home après la 1re
+  session, dernière du budget d'interruptions ; iPhone hors appli → étapes d'installation. À relire mi-octobre :
+  abonnés par promo (requête de `prototypes/push-optin/README.md`).
+
 ### À voir en prod (pas encore observé sur de vrais élèves)
 - Vague de coffres **Mastery II** à partir du **26/09** (échelons I datés du 19/09 + 7 jours) : garde anti-boucle.
 - Première cérémonie **« faiblesse devenue force »** possible vers le **27/09**.

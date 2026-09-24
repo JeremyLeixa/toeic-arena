@@ -934,6 +934,22 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .hm-tip-body{padding:10px 14px 0;font-size:12.5px;color:var(--t2);line-height:1.5}
 .hm-tip-body b{color:var(--t1)}
 .hm-tip-body p{margin:6px 0 0}
+/* Feuille d'Aldric « notifications » (components/PushOfferSheet.jsx, 2026-09-24, proto push-optin B). z 300 : au-dessus
+   de la barre d'onglets (100), sous le narrateur. Tout en jetons (skins, fêtes, clair/sombre). */
+.pof-back{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .25s}
+.pof-sheet{width:100%;max-width:480px;padding:10px 20px calc(22px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;background:var(--bg2);border-top:1px solid rgba(var(--cx),.35);box-shadow:0 -12px 40px rgba(0,0,0,.45);animation:pof-up .32s ease-out}
+@keyframes pof-up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.pof-grip{width:40px;height:4px;border-radius:2px;background:var(--bdr);margin:0 auto 14px}
+.pof-eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);font-weight:700}
+.pof-t{font-family:'Cinzel',serif;font-weight:800;font-size:19px;color:var(--t1);margin:6px 0 8px}
+.pof-s{font-size:13.5px;color:var(--t2);line-height:1.5}
+.pof-what{display:flex;flex-direction:column;gap:8px;margin:14px 0 4px}
+.pof-row{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--t1);padding:9px 12px;border-radius:10px;background:rgba(var(--cx),.07);border:1px solid rgba(var(--cx),.16)}
+.pof-go{width:100%;margin-top:16px;font-size:14px;padding:13px 20px}
+.pof-later{display:block;width:100%;margin-top:6px;padding:11px;font:inherit;font-size:13px;background:none;border:none;color:var(--t2);cursor:pointer}
+.pof-foot{text-align:center;font-size:11px;color:var(--t3);margin-top:2px}
+.pof-done{display:flex;gap:10px;align-items:center;margin:14px 0 10px;font-size:14px;color:var(--t1);line-height:1.45}
+@media(prefers-reduced-motion:reduce){.pof-back,.pof-sheet{animation:none!important}}
 .hm-daily{display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border:1.5px solid rgba(var(--cx),.3);background-image:linear-gradient(135deg,rgba(var(--cx),.13),rgba(var(--cx),.03));box-shadow:0 0 22px rgba(var(--cx),.16)}
 .hm-daily.done{cursor:default;border-color:var(--bdr);background-image:none;box-shadow:none}
 .hm-daily-btn{padding:9px 16px;font-size:13px;width:auto}

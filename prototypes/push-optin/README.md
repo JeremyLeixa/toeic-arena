@@ -38,4 +38,17 @@ définitif, ne jamais redemander).
 
 ## Décision
 
-À prendre par Jérémy.
+**B « feuille d'Aldric »**, choisie par Jérémy le 2026-09-24.
+
+## Câblé (2026-09-24)
+
+Variante **B** choisie par Jérémy : `src/components/PushOfferSheet.jsx`, règle `src/lib/pushOffer.js`
+(`tests/check_push_offer.cjs`), dernière du budget d'interruptions dans `App.jsx`. Banc du vrai composant :
+`frame.html?v=R&st=ask` ou `st=ios`.
+
+Suivi (SQL Editor, lecture seule) — abonnés par promo depuis la mise en ligne :
+
+```sql
+select class_code, count(distinct lower(student_name)) abonnes, count(*) filter (where created_at >= '2026-09-24') depuis_la_feuille
+from push_subscriptions group by 1 order by 2 desc;
+```

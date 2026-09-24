@@ -41,6 +41,7 @@ const SUITE = [
   ['check_session_hud.cjs',       'le combo de session tombe sur ses paliers et le fil d\'encre colore la bonne case'],
   ['check_usage_stats.cjs',        'l\'onglet Usage du formateur : fenêtres, abandons jamais comptés comme parties, hubs, capture neuve, câblage'],
   ['check_owner_rule.cjs',         'Phase C : une seule règle de propriété (_owner_ok), aucune copie de la tolérance legacy, jamais « = auth.uid() »'],
+  ['check_push_offer.cjs',         'la demande de notifications : après la 1re session, jamais après un refus, iPhone hors appli à part, dernière du budget'],
   ['check_weekly_snapshot.cjs',   'l\'instantané hebdomadaire part avec la semaine finie et son XP, pas la suivante à 0 (podium, rapport formateur)'],
   ['check_interruptions.cjs',     'au plus un plein écran par entrée sur Home : retournement > promotion > Aldric (paliers) > lettre, contextuels jamais reportés'],
   ['check_home_agenda.cjs',        'le bouton unique de Home : coffre > Mock > mission (même re-tirée) > chemin, Daily à part, journée finie dite'],

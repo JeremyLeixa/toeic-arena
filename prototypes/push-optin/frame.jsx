@@ -1,6 +1,6 @@
 // Un téléphone du comparateur « Demande de notifications » (2026-09-24). Hors build, rien dans src/.
 // Vraie Home (élèves simulés et horloge figée du proto mentor-memory) et vrai écran de fin (banc victory).
-//   v=A|B|C  st=ask|ios|granted|denied  p=lea|karim|ines  mode=dark|light  skin=<id>  rm=1
+//   v=A|B|C|R (R = le VRAI composant PushOfferSheet câblé le 2026-09-24)  st=ask|ios|granted|denied  p=lea|karim|ines  mode=dark|light  skin=<id>  rm=1
 import "../mentor-memory/clock.js";
 import { StrictMode, useLayoutEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -10,6 +10,7 @@ import { Tabs } from "../../src/components/Tabs.jsx";
 import { Home } from "../../src/features/home/Home.jsx";
 import { SessionResult } from "../../src/components/SessionResult.jsx";
 import { GIcon } from "../../src/components/icons.jsx";
+import { PushOfferSheet } from "../../src/components/PushOfferSheet.jsx";
 import { dayMission, todayMission } from "../../src/lib/planner.js";
 import { gateSteps, settleXp } from "../../src/lib/xp.js";
 import { getLeague } from "../../src/lib/league.js";
@@ -174,6 +175,9 @@ function Frame() {
             {V === "A" && tab === "home" && <AfterDoor><OfferLine o={o} /></AfterDoor>}
           </div>}
       {V === "B" && tab === "home" && <OfferSheet o={o} name={u.name} />}
+      {V === "R" && tab === "home" && (o.st === "ask" || o.st === "ios") && <PushOfferSheet mode={o.st} name={u.name}
+        onTurnOn={function () { return new Promise(function (res) { setTimeout(function () { res(true); }, 400); }); }}
+        onLater={o.later} onClose={function () { o.allow(); }} />}
       {o.st === "asking" && <BrowserAsk onAllow={o.allow} onBlock={o.block} />}
       {msg && <div className="po-toast" onClick={function () { setWent(null); o.clearToast(); }}>{"→ " + msg + " — tap"}</div>}
       {V !== "C" && <Tabs cur={tab} go={setTab} badge={m && m.quests.length && !m.done ? "mentor" : null} />}

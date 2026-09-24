@@ -23,6 +23,9 @@ Ce que la suite protège, et pourquoi :
 - **`check_weekly_snapshot`** — l'instantané de fin de semaine part avec la semaine FINIE et son XP. Lues dans un
   `.then()` après la remise à zéro, les valeurs partaient à 0 sous l'étiquette suivante (398 instantanés à 0,
   podium et rapport formateur faussés, jusqu'au 2026-09-24).
+- **`check_push_offer`** — la demande de notifications (`lib/pushOffer.js`) : jamais avant la 1re session ni pour un
+  visiteur, jamais après un refus du navigateur (définitif : insister épuise), iPhone hors appli à part (sinon trois
+  « Got it » privent de la vraie demande), reports 5 j × 3, et le câblage : dernière du budget, après la lettre.
 - **`check_identity`** — `normNameForEmail` décide de l'adresse du compte Auth,
   recalculée à chaque connexion. La changer enferme dehors les élèves déjà migrés.
 - **`check_fresher_local`** — la garde stale-remote (`lib/staleRemote.js`) : quand la copie

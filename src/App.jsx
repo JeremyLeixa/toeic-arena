@@ -2,7 +2,10 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { playXP, playLevelUp, playJingleAchieve, playJingleLeague, playJingleMock, playJingleMockOk, playJingleDaily, playBGM, stopBGM } from "./sounds.js";
 import { today, weekId, normalizeName } from "./lib/util.js";
 import { fresh, supaToLocal, buildSavePayload } from "./lib/profileSchema.js";
-import { haptic } from "./lib/device.js";
+import { haptic, isIOSDevice, isStandalonePWA } from "./lib/device.js";
+import { subscribePush } from "./lib/push.js";
+import { pushOfferMode, laterRecord, readOfferRecord, writeOfferRecord } from "./lib/pushOffer.js";
+import { PushOfferSheet } from "./components/PushOfferSheet.jsx";
 import { supabase } from './supabase.js'
 
 /* ═══════════════════════════════════════════
@@ -1672,6 +1675,36 @@ function sv(d){
     var c=JSON.parse(JSON.stringify(u));c.letterSeen=letterWeek(new Date());sv(c);
     if(action==="plan"){tabGo("mentor");sSPA("path");}
   }
+  // Demande de notifications (2026-09-24, proto push-optin B, lib/pushOffer.js) : DERNIÈRE du budget
+  // d'interruptions, après la lettre du lundi, jamais par-dessus une session, un coffre, Aldric ou une session
+  // perdue. L'autorisation et les reports vivent sur l'appareil (localStorage), pas dans le profil.
+  function pushStore(){try{return window.localStorage;}catch(e){console.warn("[pushOffer] storage caught:",e&&e.message);return null;}}
+  function pushEnvNow(){
+    var hasN=typeof window!=="undefined"&&"Notification" in window;
+    return{supported:hasN&&"serviceWorker" in navigator&&"PushManager" in window,permission:hasN?Notification.permission:null,
+      ios:isIOSDevice(),standalone:isStandalonePWA()};
+  }
+  var[pushEnv,setPushEnv]=useState(null);var[pushRec,setPushRec]=useState(function(){return readOfferRecord(pushStore());});
+  var[pushEntry,setPushEntry]=useState(-1);
+  var pushName=u&&u.name; // dep primitive : u est recloné à chaque sv()
+  useEffect(function(){setPushEnv(pushEnvNow());},[pushName]);
+  var pushMode=pushEnv?pushOfferMode(u,pushEnv,pushRec,Date.now()):null;
+  var pushBase=!!u&&!ld&&!lastSession&&tab==="home"&&!sp&&!chestModal&&!currentNarratorMoment&&!authLost&&!teacherMode&&!isExpiredGroup&&!letterBase&&!!pushMode;
+  var showPush=pushBase&&homeEntry>0&&(pushEntry===homeEntry||usedEntry!==homeEntry);
+  useEffect(function(){
+    if(showPush&&pushEntry!==homeEntry){setPushEntry(homeEntry);markEntryUsed(homeEntry);}
+  },[showPush,pushEntry,homeEntry]);
+  function pushLater(){var r=laterRecord(pushRec,Date.now(),pushMode);writeOfferRecord(pushStore(),r);setPushRec(r);}
+  // subscribePush ouvre la vraie boîte du navigateur. Fermée sans réponse (permission restée "default") ou
+  // échec technique → compté comme « Not now » ; refus → la permission "denied" coupe toute nouvelle demande.
+  // Succès : l'état n'est relu qu'à la fermeture (pushClose), sinon la feuille se démonte avant sa confirmation.
+  function pushTurnOn(){
+    return subscribePush(u.name,u.classCode||"visitor").then(function(sub){
+      if(!sub){var env=pushEnvNow();setPushEnv(env);if(env.permission==="default")pushLater();}
+      return!!sub;
+    });
+  }
+  function pushClose(){setPushEnv(pushEnvNow());setPushEntry(-2);}
   var tabGo=function(t){if(expBlocked.indexOf(t)!==-1)return;if(teacherMode)setTeacher(false);
     // Mentor shares bgm_home with Home/League/Profile. The narrator-watcher
     // useEffect below will fade it out automatically when Aldric speaks
@@ -1777,5 +1810,6 @@ function sv(d){
 
     {premiumOverlay}
     {showLetter&&<MondayLetter u={u} onClose={closeLetter}/>}
+    {showPush&&<PushOfferSheet mode={pushMode} name={u.name} onTurnOn={pushTurnOn} onLater={pushLater} onClose={pushClose}/>}
     <Tabs cur={tab} go={tabGo} blocked={expBlocked} badge={mentorBadge}/></div>);
 }
