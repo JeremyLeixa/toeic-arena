@@ -13,7 +13,7 @@ import { supabase } from './supabase.js'
 
 // ─── DATA IMPORTS ───
 import { ACHIEVEMENTS } from "./data/achievements.js";
-import { LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, grantChest, getPendingChests, getOwnedRewards, getOwnedTokens, openChestFromPending, consumeToken, spendMarks } from "./data/chests.js";
+import { LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, grantChest, getPendingChests, openChestFromPending, consumeToken, spendMarks } from "./data/chests.js";
 import { NARRATOR_MOMENTS, hasHeardMoment, markMomentHeard } from "./narrator.js";
 import { estimateTOEICScore } from "./lib/toeic.js";
 import { getLeague, applyWeekTransition } from "./lib/league.js";
@@ -1037,20 +1037,11 @@ useEffect(function(){
   async function doOpenChest(){
     if(chestPending.length===0)return;
     var chest=chestPending[0];
-    // V2 — fetch all owned reward types + tokens in parallel
-    var rewardsRows=await getOwnedRewards(chest.user_name,chest.class_code);
-    var tokensMap=await getOwnedTokens(chest.user_name,chest.class_code);
-    var owned={
-      avatars:rewardsRows.filter(function(r){return r.reward_type==="avatar";}).map(function(r){return r.reward_id;}),
-      skins:rewardsRows.filter(function(r){return r.reward_type==="skin";}).map(function(r){return r.reward_id;}),
-      frames:rewardsRows.filter(function(r){return r.reward_type==="frame";}).map(function(r){return r.reward_id;}),
-      titles:rewardsRows.filter(function(r){return r.reward_type==="title";}).map(function(r){return r.reward_id;}),
-      cheatSheets:rewardsRows.filter(function(r){return r.reward_type==="cheat_sheet";}).map(function(r){return r.reward_id;}),
-      tokens:tokensMap,
-    };
+    // Économie côté serveur, lot 2a (2026-09-24) : le serveur lit lui-même l'inventaire, tire le butin et crédite
+    // cosmétiques, jetons et Darics (open_chest). Plus de lecture de l'inventaire ici.
     var pity=(u&&u.gameScores?u.gameScores.pityCount:0)||0;
     var result;
-    try{result=await openChestFromPending(chest,pity,owned);}
+    try{result=await openChestFromPending(chest,pity);}
     catch(e){console.warn("[CHEST] doOpenChest exception (nothing credited):",e&&e.message);result={ok:false,error:(e&&e.message)||"exception"};}
     // Garde anti-farm (2026-09-16) : tant que le serveur n'a pas consommé le pending
     // (ok:true), on ne crédite RIEN — ni XP, ni Darics, ni pity, ni narrateur. Avant,
@@ -1076,15 +1067,10 @@ useEffect(function(){
     if(!c.gameScores)c.gameScores={};
     c.gameScores.pityCount=result.newPityCount;
     if(result.totalXp>0){c.xp+=result.totalXp;c.weeklyXp+=result.totalXp;}
+    // Darics : crédités par le serveur dans la transaction d'ouverture (lot 2a) ; on recopie le solde qu'il
+    // renvoie dans le miroir local (arena_marks reste hors de save()). Plus d'appel à grantMarks ici.
+    if(typeof result.balance==="number")c.arenaMarks=result.balance;
     sv(c);
-    // Arena Shop P1 — grant Darics via RPC after sv(). silent=true because the
-    // reveal modal already shows the Daric card ; no double-feedback toast.
-    // unique=false because each chest opening is a distinct grant event (the
-    // chest_log + pending_chests delete pair already guarantees no double-open —
-    // which only holds because we returned above when open_pending_chest failed).
-    if(result.totalDarics>0){
-      grantMarks(result.totalDarics,"chest",chest.trigger_source,false,true);
-    }
     // Pas de haptic ici : le résultat arrive pendant la chute du coffre (onOpen part au
     // montage du modal v3), c'est chestSequence.js qui vibre au moment de l'ouverture.
     setChestResult(result);

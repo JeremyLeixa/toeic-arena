@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS public.reward_catalog (
   PRIMARY KEY (reward_type, reward_id));
 CREATE TABLE IF NOT EXISTS public.token_catalog (
   token_type text PRIMARY KEY, cap integer NOT NULL CHECK (cap > 0), premium boolean NOT NULL, boost boolean NOT NULL);
+CREATE TABLE IF NOT EXISTS public.chest_drop_tables (chest_type text PRIMARY KEY, slots jsonb NOT NULL);
+CREATE TABLE IF NOT EXISTS public.rarity_catalog (id text PRIMARY KEY, tier integer NOT NULL);
 
 ALTER TABLE public.shop_catalog ENABLE ROW LEVEL SECURITY;
 REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.shop_catalog FROM anon, authenticated, public;
@@ -19,9 +21,25 @@ ALTER TABLE public.reward_catalog ENABLE ROW LEVEL SECURITY;
 REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.reward_catalog FROM anon, authenticated, public;
 ALTER TABLE public.token_catalog ENABLE ROW LEVEL SECURITY;
 REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.token_catalog FROM anon, authenticated, public;
+ALTER TABLE public.chest_drop_tables ENABLE ROW LEVEL SECURITY;
+REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.chest_drop_tables FROM anon, authenticated, public;
+ALTER TABLE public.rarity_catalog ENABLE ROW LEVEL SECURITY;
+REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.rarity_catalog FROM anon, authenticated, public;
 
 BEGIN;
 DELETE FROM public.shop_catalog; DELETE FROM public.reward_catalog; DELETE FROM public.token_catalog;
+DELETE FROM public.chest_drop_tables; DELETE FROM public.rarity_catalog;
+INSERT INTO public.chest_drop_tables (chest_type, slots) VALUES
+  ('novice', '[{"kind":"daric","amount":30},{"kind":"xp","min":50,"max":150},{"kind":"token","pool":["diminishing_bypass","streak_shield","daily_reroll"],"count":1}]'::jsonb),
+  ('guerrier', '[{"kind":"daric","amount":90},{"kind":"xp","min":200,"max":400},{"kind":"cosmetic","oneOf":["frame","title"]},{"kind":"token","pool":["diminishing_bypass","streak_shield","daily_reroll"],"count":2}]'::jsonb),
+  ('champion', '[{"kind":"daric","amount":250},{"kind":"xp","min":500,"max":800},{"kind":"cosmetic","oneOf":["avatar","skin","frame","title"],"minRarity":"rare"},{"kind":"token","pool":["diminishing_bypass","daily_reroll","mock_reset","endless_resurrect"],"count":3}]'::jsonb),
+  ('legendaire', '[{"kind":"daric","amount":700},{"kind":"xp","min":1000,"max":1500},{"kind":"cosmetic","oneOf":["avatar","skin"],"minRarity":"legend"},{"kind":"cosmetic","oneOf":["frame","title"],"minRarity":"epic"},{"kind":"token","pool":["diminishing_bypass","daily_reroll","mock_reset","boss_reset","endless_resurrect"],"count":3},{"kind":"cheat_sheet","chance":1},{"kind":"token","pool":["insight_token"],"count":1,"chance":0.3}]'::jsonb);
+INSERT INTO public.rarity_catalog (id, tier) VALUES
+  ('common', 0),
+  ('uncommon', 1),
+  ('rare', 2),
+  ('epic', 3),
+  ('legend', 4);
 INSERT INTO public.shop_catalog (item_id, category, ref_id, price, rarity, one_shot) VALUES
   ('sk_frostbite', 'skin', 'frostbite', 1400, 'rare', true),
   ('sk_abyssal', 'skin', 'abyssal', 1400, 'rare', true),

@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SHOP_CATALOG, TOKEN_TYPES, AVATARS, SKINS, FRAMES, TITLES, CHEAT_SHEETS } from "../src/data/chestCatalog.js";
+import { SHOP_CATALOG, TOKEN_TYPES, AVATARS, SKINS, FRAMES, TITLES, CHEAT_SHEETS, DROP_TABLES, RARITIES } from "../src/data/chestCatalog.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "supabase", "migrations", "2026-09-24_economy_catalog_data.sql");
@@ -22,11 +22,14 @@ export function economyRows() {
       rarity: table[id].rarity, exclusive: !!table[id].exclusive })));
   const tokens = Object.keys(TOKEN_TYPES).map((t) => ({ type: t, cap: TOKEN_TYPES[t].cap, premium: !!TOKEN_TYPES[t].premium,
     boost: !!TOKEN_TYPES[t].boost }));
-  return { shop, rewards, tokens };
+  // Lot 2 (coffres) : tables de tirage telles quelles (jsonb), et l'ordre des raretés (seuil minRarity).
+  const drops = Object.keys(DROP_TABLES).map((t) => ({ chest_type: t, slots: DROP_TABLES[t] }));
+  const rarities = RARITIES.map((r, i) => ({ id: r.id, tier: i }));
+  return { shop, rewards, tokens, drops, rarities };
 }
 
 export const ECONOMY_SQL_FILE = OUT;
-export function render({ shop, rewards, tokens }) {
+export function render({ shop, rewards, tokens, drops, rarities }) {
   const L = [];
   L.push("-- ════════════════════════════════════════════════════════════════════════");
   L.push("-- FICHIER GÉNÉRÉ par scripts/gen-economy-sql.mjs depuis src/data/chestCatalog.js — NE PAS ÉDITER.");
@@ -42,14 +45,21 @@ export function render({ shop, rewards, tokens }) {
   L.push("  PRIMARY KEY (reward_type, reward_id));");
   L.push("CREATE TABLE IF NOT EXISTS public.token_catalog (");
   L.push("  token_type text PRIMARY KEY, cap integer NOT NULL CHECK (cap > 0), premium boolean NOT NULL, boost boolean NOT NULL);");
+  L.push("CREATE TABLE IF NOT EXISTS public.chest_drop_tables (chest_type text PRIMARY KEY, slots jsonb NOT NULL);");
+  L.push("CREATE TABLE IF NOT EXISTS public.rarity_catalog (id text PRIMARY KEY, tier integer NOT NULL);");
   L.push("");
-  ["shop_catalog", "reward_catalog", "token_catalog"].forEach((t) => {
+  ["shop_catalog", "reward_catalog", "token_catalog", "chest_drop_tables", "rarity_catalog"].forEach((t) => {
     L.push("ALTER TABLE public." + t + " ENABLE ROW LEVEL SECURITY;");
     L.push("REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public." + t + " FROM anon, authenticated, public;");
   });
   L.push("");
   L.push("BEGIN;");
   L.push("DELETE FROM public.shop_catalog; DELETE FROM public.reward_catalog; DELETE FROM public.token_catalog;");
+  L.push("DELETE FROM public.chest_drop_tables; DELETE FROM public.rarity_catalog;");
+  L.push("INSERT INTO public.chest_drop_tables (chest_type, slots) VALUES");
+  L.push(drops.map((d) => "  (" + q(d.chest_type) + ", " + q(JSON.stringify(d.slots)) + "::jsonb)").join(",\n") + ";");
+  L.push("INSERT INTO public.rarity_catalog (id, tier) VALUES");
+  L.push(rarities.map((r) => "  (" + q(r.id) + ", " + r.tier + ")").join(",\n") + ";");
   L.push("INSERT INTO public.shop_catalog (item_id, category, ref_id, price, rarity, one_shot) VALUES");
   L.push(shop.map((r) => "  (" + [q(r.item_id), q(r.category), q(r.ref_id), r.price, q(r.rarity), r.one_shot].join(", ") + ")").join(",\n") + ";");
   L.push("INSERT INTO public.reward_catalog (reward_type, reward_id, rarity, exclusive) VALUES");

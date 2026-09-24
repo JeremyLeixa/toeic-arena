@@ -47,5 +47,12 @@ ok('plus aucun appel client à spend_marks', !/rpc\(["']spend_marks["']/.test(ch
 ok('titre Bottomless Purse par claim_bourse_title', /rpc\("claim_bourse_title"/.test(app));
 ok('plus aucun appel client à grant_reward_once', !/rpc\(["']grant_reward_once["']/.test(chests + app));
 
+// ── lot 2a : le serveur tire et crédite le contenu des coffres ──
+ok('ouverture par open_chest (identifiant du coffre seulement)', /rpc\("open_chest",\{p_pending_id:pendingChest\.id, p_name:un, p_class_code:cc\}\)/.test(chests));
+ok('plus aucun appel client à open_pending_chest (butin fourni par le client)', !/rpc\(["']open_pending_chest["']/.test(chests + app));
+ok('le client ne tire plus le butin (pickRewards absent de chests.js hors ré-export)', !/pickRewards\(/.test(chests));
+ok('les Darics des coffres ne sont plus crédités par le client', !/grantMarks\([^)]*"chest"/.test(app));
+ok('le solde renvoyé par le serveur est recopié', /if\(typeof result\.balance==="number"\)c\.arenaMarks=result\.balance;/.test(app));
+
 console.log((checks - fails) + '/' + checks + ' vérifications de l\'économie au vert');
 process.exit(fails ? 1 : 0);

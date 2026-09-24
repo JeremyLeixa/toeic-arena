@@ -2,7 +2,7 @@
 import { supabase } from "../supabase.js";
 // Données pures (catalogues, tables de tirage) : src/data/chestCatalog.js, ré-exportées ici.
 export { RARITIES, CHEST_TYPES, AVATARS, SKINS, FRAMES, TITLES, TOKEN_TYPES, CHEAT_SHEETS, SHOP_CATALOG, DROP_TABLES, pickRewards, UNIQUE_TRIGGERS, NOVICE_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, LEGENDARY_ACHIEVEMENTS, rollRarity, pickReward } from "./chestCatalog.js";
-import { RARITIES, TOKEN_TYPES, SHOP_CATALOG, pickRewards } from "./chestCatalog.js";
+import { RARITIES, TOKEN_TYPES } from "./chestCatalog.js";
 
 // ═══ SUPABASE HELPERS ═══
 // Lot 4 du verrou des tables satellites (2026-09-15) : plus aucun accès direct
@@ -185,96 +185,41 @@ export async function convertTokensToPremium(userName, classCode, sourceType, ow
 
 // V2 — Open a chest: roll multi-rewards, persist them, log, delete pending, return aggregate.
 // `owned` = {avatars, skins, frames, titles, cheatSheets, tokens:{type:qty}}
-// Returns {ok:true, rewards, totalXp, totalDarics, newPityCount, …} once the server has
-// consumed the pending row, or {ok:false, error, chestType, triggerSource} otherwise.
-// ⚠️ On ok:false the caller must credit NOTHING (XP, Darics, pity): the pending row still
-// exists, so crediting would let the same chest be opened — and paid — again.
-export async function openChestFromPending(pendingChest, pityCount, owned){
-  // Rarity is now derived from chest_type itself (drop tables segmented per chest tier).
-  // pityCount kept for backward signature compat — no longer used to roll rarity, but
-  // forwarded back to the caller to preserve the reset-on-rare invariant.
-  var rewards=pickRewards(pendingChest.chest_type, owned||{});
+// Returns {ok:true, rewards, totalXp, totalDarics, balance, newPityCount, …} once the server has consumed the
+// pending row, or {ok:false, error, chestType, triggerSource} otherwise.
+// Économie côté serveur, lot 2a (2026-09-24) : le SERVEUR tire le butin (open_chest → _roll_chest, port de
+// pickRewards sur les tables générées depuis chestCatalog.js) et crédite lui-même cosmétiques, jetons et Darics
+// dans la même transaction que la consommation du coffre. Le client ne choisit plus rien : il affiche le butin
+// renvoyé (même forme que pickRewards, l'écran d'ouverture ne change pas) et crédite seulement l'XP.
+// ⚠️ On ok:false the caller must credit NOTHING : the pending row still exists (the whole transaction rolled back).
+export async function openChestFromPending(pendingChest, pityCount){
   var ct=pendingChest.chest_type;
-  // Map chest type to a representative rarity tier for UI color/label fallback
+  // Couleur et libellé du coffre (affichage), même correspondance que le serveur pour chest_log.
   var tierByChest={novice:0,guerrier:2,champion:3,legendaire:4};
   var tier=tierByChest[ct]!==undefined?tierByChest[ct]:0;
-  var rarityId=RARITIES[tier].id;
-  // Pity reset on Champion/Légendaire chests (any non-novice/guerrier roll)
-  var newPity=(ct==="novice"||ct==="guerrier")?(pityCount+1):0;
-  var totalXp=0;
-  var totalDarics=0; // Arena Shop P1 — aggregated from {type:"daric"} reward slots
+  // Pitié : compteur inerte depuis la V2 (aucun tirage ne le lit), gardé pour la forme du profil.
+  var newPity=(ct==="novice"||ct==="guerrier")?((pityCount||0)+1):0;
   var un=pendingChest.user_name, cc=pendingChest.class_code;
-  var opened=false, openError=null;
-
-  // Aggregate XP / Darics (pure). Both are credited by doOpenChest, and only if the
-  // RPC below consumed the pending row.
-  for(var i=0;i<rewards.length;i++){
-    var r=rewards[i];
-    if(r.type==="xp")totalXp+=r.xp||0;
-    // Granted server-side by doOpenChest via grantMarks RPC (atomic increment +
-    // marks_log entry). Source is "chest" + trigger_source.
-    else if(r.type==="daric")totalDarics+=r.amount||0;
-    // token → grant_token, APRÈS l'ouverture (voir plus bas)
-    // avatar / skin / frame / title / cheat_sheet → persistés par la RPC ci-dessous
-  }
-
+  var data=null, openError=null;
   try{
-    // Les TROIS écritures (player_rewards, chest_log, suppression du pending)
-    // tiennent maintenant dans UNE transaction SQL.
-    //
-    // Avant, ce code les enchaînait à la main et devait se garder de supprimer
-    // le pending si l'INSERT de chest_log échouait : chest_log sert à dédupliquer
-    // les attributions futures, perdre la ligne de log tout en consommant le
-    // pending rendait le trigger ré-attribuable sans trace. Cette précaution
-    // devient inutile — soit tout passe, soit rien ne passe et le coffre reste
-    // en attente.
-    //
-    // La RPC est idempotente : elle exige que la ligne pending existe encore et
-    // appartienne à l'appelant, donc un rejeu réseau ne double pas les récompenses.
-    var op=await supabase.rpc("open_pending_chest",{
-      p_pending_id:pendingChest.id,
-      p_name:un, p_class_code:cc,
-      p_rewards:rewards,
-      p_total_xp:totalXp||0,
-      p_rarity:rarityId,
-    });
-    // Succès = ok:true explicite, rien d'autre. Avant le 2026-09-16, une erreur ou un
-    // refus ne faisait qu'un console.warn et la fonction rendait le butin complet :
-    // doOpenChest créditait XP, Darics et pity alors que le pending existait encore,
-    // donc le même coffre se rouvrait et se re-créditait (vecteur de farm).
-    if(op.error){openError=op.error.message||"rpc_error";console.warn("[CHEST] open_pending_chest error (nothing credited):",openError);}
-    else if(!(op.data&&op.data.ok===true)){openError=(op.data&&op.data.error)||"empty_response";console.warn("[CHEST] open_pending_chest refused (nothing credited):",openError);}
-    else opened=true;
+    var op=await supabase.rpc("open_chest",{p_pending_id:pendingChest.id, p_name:un, p_class_code:cc});
+    if(op.error){openError=op.error.message||"rpc_error";console.warn("[CHEST] open_chest error (nothing credited):",openError);}
+    else if(!(op.data&&op.data.ok===true)){openError=(op.data&&op.data.error)||"empty_response";console.warn("[CHEST] open_chest refused (nothing credited):",openError);}
+    else data=op.data;
   }catch(e){openError=(e&&e.message)||"exception";console.warn("[CHEST] openChest exception (nothing credited):",openError);}
-
-  if(!opened){
-    return{ok:false,error:openError,chestType:ct,triggerSource:pendingChest.trigger_source};
-  }
-
-  // Jetons APRÈS l'ouverture, pas avant : accordés avant la RPC, ils restaient acquis
-  // quand elle échouait, et chaque nouvelle tentative sur le même coffre en redonnait.
-  // Le prix de cet ordre : si grant_token échoue alors que le coffre est consommé, le
-  // jeton est perdu (sous-crédit, loggé par grantTokenRPC) — jamais un double crédit.
-  // Les faire entrer dans la transaction d'open_pending_chest demanderait de changer le
-  // contrat SQL (et HANDLED_ELSEWHERE dans tests/check_chest_drops.cjs).
-  for(var k=0;k<rewards.length;k++){
-    var rt=rewards[k];
-    if(rt.type!=="token")continue;
-    var tt=TOKEN_TYPES[rt.id];
-    if(tt)await grantTokenRPC(un,cc,rt.id,1,tt.cap||1);
-  }
-
+  if(!data)return{ok:false,error:openError,chestType:ct,triggerSource:pendingChest.trigger_source};
   return{
     ok:true,
     chestType:ct,
     triggerSource:pendingChest.trigger_source,
     rarityTier:tier,
-    rarityId:rarityId,
+    rarityId:RARITIES[tier].id,
     rarityColor:RARITIES[tier].color,
     rarityLabel:RARITIES[tier].label,
-    rewards:rewards,
-    totalXp:totalXp,
-    totalDarics:totalDarics,
+    rewards:Array.isArray(data.rewards)?data.rewards:[],
+    totalXp:data.total_xp||0,
+    totalDarics:data.total_darics||0,
+    balance:typeof data.balance==="number"?data.balance:null,
     newPityCount:newPity,
   };
 }
