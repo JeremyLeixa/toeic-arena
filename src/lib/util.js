@@ -3,7 +3,15 @@
 // today(d) : date ISO (UTC) du jour, ou de `d` si fourni — l'argument sert aux fonctions
 // pures (lib/xp.js) et aux tests, qui injectent l'instant plutôt que lire l'horloge.
 export function today(d){return (d||new Date()).toISOString().split("T")[0];}
-export function weekId(){var d=new Date();var day=d.getDay();var diff=d.getDate()-day+(day===0?-6:1);var mon=new Date(d);mon.setDate(diff);mon.setHours(0,0,0,0);var jan1=new Date(mon.getFullYear(),0,1);var wk=Math.floor((mon-jan1)/(7*864e5))+1;return mon.getFullYear()+"-W"+wk;}
+export function weekId(at){var d=at?new Date(at):new Date();var day=d.getDay();var diff=d.getDate()-day+(day===0?-6:1);var mon=new Date(d);mon.setDate(diff);mon.setHours(0,0,0,0);var jan1=new Date(mon.getFullYear(),0,1);var wk=Math.floor(Math.round((mon-jan1)/864e5)/7)+1;/* jours entiers : l'heure d'été ôtait 1 h aux années qui commencent un lundi (2029 : deux semaines « W12 ») */return mon.getFullYear()+"-W"+wk;}
+// Lundi LOCAL ("YYYY-MM-DD") de la semaine weekId w, par recherche : l'inverse exact de weekId, heure d'été comprise.
+// Avant le 2026-09-24, pushWeeklySnapshot reculait au lundi PRÉCÉDENT puis passait par toISOString (lundi local
+// minuit = dimanche en UTC) : week_start valait le dimanche 8 jours avant. tests/check_weekly_snapshot.cjs.
+export function localYmd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+export function weekStartOf(w){var p=String(w||"").split("-W");if(p.length!==2)return null;var yr=parseInt(p[0],10),wk=parseInt(p[1],10);if(!yr||!wk)return null;
+  var d=new Date(yr,0,1,12);d.setDate(d.getDate()+(wk-1)*7-7);
+  for(var i=0;i<21;i++){if(d.getDay()===1&&weekId(d)===w)return localYmd(d);d.setDate(d.getDate()+1);}
+  return null;}
 export function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
 // shuffleOpts(opts, c) : les options d'un QCM dans un ordre neuf, et la nouvelle position de la bonne
 // réponse. Les banques écrites à la main la mettent en B ou C huit fois sur dix (mesuré le 2026-09-18) :

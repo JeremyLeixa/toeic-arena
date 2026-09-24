@@ -2,7 +2,7 @@
 import { LEAGUES } from "../data/leagues.js";
 import { supabase } from "../supabase.js";
 import { estimateTOEICScore } from "./toeic.js";
-import { weekId } from "./util.js";
+import { weekId, weekStartOf } from "./util.js";
 
 // Push a weekly_snapshots row for the week that just ended. Fire-and-forget.
 // Called from both load-time and mid-session week transitions so that snapshots
@@ -18,12 +18,9 @@ export function pushWeeklySnapshot(d){
       unlockedAch:(d.unlockedAch||[]).slice()};
     supabase.auth.getUser().then(function(r){
       if(!r.data||!r.data.user)return;
-      var parts=(snap.weekId||"").split('-W');
-      if(parts.length!==2)return;
-      var yr=parseInt(parts[0]),wk=parseInt(parts[1]);
-      var jan1=new Date(yr,0,1);
-      var ws=new Date(jan1.getTime()+(wk-1)*7*86400000);
-      var dy=ws.getDay();ws.setDate(ws.getDate()+(dy===0?-6:1-dy));
+      // Lundi LOCAL de la semaine finie (weekStartOf, inverse exact de weekId ; voir util.js).
+      var ws=weekStartOf(snap.weekId);
+      if(!ws)return;
       // Securite (lot 3 du verrou satellites) : plus d'ecriture directe.
       // user_id n'est plus envoye — la RPC le prend dans le JWT. Sinon
       // n'importe qui pouvait s'attribuer les snapshots d'un autre, et donc
@@ -33,7 +30,7 @@ export function pushWeeklySnapshot(d){
         p_class_code:snap.classCode||'visitor',
         p_payload:{
           week_id:snap.weekId,
-          week_start:ws.toISOString().split('T')[0],
+          week_start:ws,
           xp_this_week:snap.weeklyXp,
           xp_cumulative:snap.xp,
           daily_completions:snap.weeklyDailyCount||0,

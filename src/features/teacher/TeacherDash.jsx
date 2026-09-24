@@ -11,7 +11,7 @@ import { getDashTeacher, getBioCredId, biometricAvailable, isDashAdmin, teacherA
 import { estimateTOEICScore } from "../../lib/toeic.js";
 import { tone } from "../../lib/tone.js";
 import { usageStats } from "../../lib/usageStats.js";
-import { today, weekId } from "../../lib/util.js";
+import { today, weekId, localYmd } from "../../lib/util.js";
 import { supabase } from "../../supabase.js";
 import { useState, useEffect } from "react";
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar as RBar, Cell, LineChart, Line } from "recharts";
@@ -35,8 +35,9 @@ export function WeeklyReport(p){
   var lastMonday=new Date(now);lastMonday.setDate(now.getDate()-dow+1-7);lastMonday.setHours(0,0,0,0);
   var lastSunday=new Date(lastMonday);lastSunday.setDate(lastMonday.getDate()+6);
   var prevMonday=new Date(lastMonday);prevMonday.setDate(lastMonday.getDate()-7);
-  var lastMondayStr=lastMonday.toISOString().split("T")[0];
-  var prevMondayStr=prevMonday.toISOString().split("T")[0];
+  // Lundis LOCAUX (localYmd), comme week_start depuis le 2026-09-24 : toISOString donnait le dimanche en France.
+  var lastMondayStr=localYmd(lastMonday);
+  var prevMondayStr=localYmd(prevMonday);
 
   useEffect(function(){
     // Securite (lot 3) : ce select('*') tirait toute la cohorte sur deux semaines.
