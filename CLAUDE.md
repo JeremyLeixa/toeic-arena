@@ -35,7 +35,7 @@ The app is a React application **split into modules since the 2026-09-15 refacto
 | `npm run lint` | ESLint (flat config) |
 | `npm run preview` | Preview du build production en local |
 | `npm run check:assets` | Vérifie que tout MP3/image référencé par le contenu existe **et** est tracké par git (exit 1 sinon) |
-| `npm test` | Suite de tests (29 fichiers, ~15 s, hors ligne). Liste explicite dans `tests/run.cjs` |
+| `npm test` | Suite de tests (30 fichiers, ~15 s, hors ligne). Liste explicite dans `tests/run.cjs` |
 | `npm run check:security` | Rejoue le balayage du chantier pentest : tables verrouillées, vecteurs destructeurs, RPC vivantes. **Réseau + `.env` requis**, d'où sa séparation de `npm test` |
 
 **Pas de framework de test** — tout est en Node natif, zéro dépendance. Depuis le
@@ -116,6 +116,9 @@ Ce que la suite protège, et pourquoi :
   jauges du Profil, familles du Modal Council) sous 4,5:1 ; aucune variante orpheline ni hors
   clair ; `lg/ti/rarity….color` et `shopRarColor(…)` jamais bruts. Hors périmètre : Onboard,
   TeacherDash, Chests. Une couleur délavée ne casse pas le build, elle disparaît en clair.
+- **`check_interruptions`** — le budget d'interruptions (`lib/interruptions.js`) : priorité retournement > promotion
+  > Aldric (paliers) > lettre, moments contextuels jamais reportés, et le câblage de `SessionResult` et d'`App()`
+  (moment verrouillé une fois affiché, rediffusion hors budget, lettre derrière le budget).
 - **`check_listening_items`** — P3/P4 : réplique citée par une question d'intention (« What does the woman mean
   when she says, '…' », « Why does the speaker say, '…' ») présente dans la conversation ou le monologue, locuteurs
   W/M/W2/M2, `voice` P4, graphiques. Réécrire une réplique = **regénérer son MP3** (les scripts sautent un fichier
@@ -406,6 +409,21 @@ Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
   `addXp(gxp,{ceremony:true})` pose une file `examCeremony` (niveau puis ligue, coffre de promotion)
   que `ExamCeremonies` (`components/Ceremonies.jsx`) affiche 1,4 s après, avec son propre jingle.
 - Banc sans base : `prototypes/victory/real.html` (vrai composant, scénarios, clair/sombre).
+
+### Budget d'interruptions (2026-09-24)
+Proto `prototypes/ceremony-budget/`, choix de Jérémy **B « une par retour »** (avant : jusqu'à 6 plein écran et
+7 taps après une manche). `lib/interruptions.js` (pur, `tests/check_interruptions.cjs`) :
+- **Écran de fin** : un seul plein écran, `sessionFullscreen(s)` = retournement > promotion. Avec les deux, la
+  promotion devient une ligne du parchemin (`inlineLeague`), son coffre reste dans la liste. Le retournement
+  n'attend l'Ascension que si elle a lieu (sinon il ne s'afficherait jamais). Jingle des trophées tu quand le
+  retournement joue le sien.
+- **`App()`** : une *entrée* = chaque arrivée sur Home racine (`homeEntry`). Au plus un plein écran non demandé par
+  entrée : moment d'Aldric **de palier** (`MILESTONE_MOMENTS` : ligue, série, niveau, examens), puis la lettre du
+  lundi. Une session à cérémonie (ou un examen à cérémonies) consomme l'entrée suivante (`spentNextRef`). Moments
+  **contextuels** (Shop, Mentor, verdict, premier coffre) et **rediffusions** (`replayNarratorMoment`) hors budget.
+  Le moment affiché est verrouillé (`narratorActive`) et la lettre aussi (`letterEntry`) : sans verrou, le budget
+  qu'ils consomment les retirerait aussitôt. Compteurs doublés en refs (effets du même commit).
+- Banc : `prototypes/victory/real.html?sc=promotion&turn=1`.
 
 ### Home « une porte » (2026-09-23)
 Proto `prototypes/home-focus/`, choix de Jérémy **B** ; la décision du 17/09 (« le plan ne va pas sur Home »)
