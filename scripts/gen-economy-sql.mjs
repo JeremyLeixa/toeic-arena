@@ -23,6 +23,8 @@ export const WEEKLY_TRIGGERS = [["duel_win", "guerrier"], ["duel_win3", "champio
   ["wfall_combo20", "guerrier"], ["wfall_combo10", "novice"], ["smatch_easy_good", "novice"], ["sbuild_90", "novice"],
   ["clue_perfect", "guerrier"], ["ablitz_90", "guerrier"], ["ablitz_70", "novice"],
   ...["irregular", "tense", "passive", "relative"].map((s) => ["gauntlet_" + s + "_perfect", "guerrier"]),
+  // Épreuves entrées au Gauntlet le 2026-09-25 sous leurs ids d'origine (Knotbinder, Anchor Hall, Twin Paths).
+  ...["connsort", "prepdrill", "gerinf"].map((s) => [s + "_perfect", "guerrier"]),
   ...["match", "sort"].map((s) => ["modals_" + s + "_perfect", "guerrier"])];
 export function masteryModules() {
   const ids = new Set(Object.keys(MODULE_TOEIC_MAP).concat(MISSION_MODULES.map((m) => m.id), ["endless"]));
