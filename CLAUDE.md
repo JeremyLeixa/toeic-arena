@@ -952,6 +952,13 @@ prod (`2026-09-16_f3_drop_recover_student_row.sql`) ; `check:security` exige un 
   un login + un « Join a Group » sur la prod. La migration d'hygiène du 2026-09-15 est
   passée sans ni l'un ni l'autre : aucune inscription par code de promo pendant des heures.
 - `api/*.js` et les Edge Functions tournent en `service_role` → insensibles à tout ceci.
+- **Monnaie et jetons : bornes serveur** (`2026-09-24_currency_bounds.sql`, mitigation). Ces RPC vérifiaient QUI,
+  jamais COMBIEN (un prix négatif créditait, une consommation négative ajoutait des jetons). Désormais : gain de
+  Darics 1 à 1000 par appel et 3000 sur 24 h glissantes (hors boutique et dons du formateur, record réel 1795),
+  prix ≥ 1, jetons de types connus au plafond serveur `token_cap()` (**miroir de `TOKEN_TYPES`** : un nouveau
+  jeton s'ajoute AUX DEUX, sinon son octroi est refusé), 1 à 3 par octroi, 1 à 5 par consommation. Un don de
+  formateur au-delà passe par le SQL Editor. **Reste ouvert** : montants et récompenses fournis par le client
+  (prix sous-évalué d'un article, `grant_reward_once`, `open_pending_chest`) → économie côté serveur, Plan Mode.
 
 ---
 

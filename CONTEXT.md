@@ -36,6 +36,10 @@ une décision.
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).
 - **Cérémonies qui s'enchaînent** en fin de session (parchemin, ligue, retournement, coffre) : règle « une seule plein
   écran par fin de session » à prototyper.
+- **Économie côté serveur** : mitigation des bornes appliquée le 24/09 (`2026-09-24_currency_bounds.sql`) ; reste à
+  calculer montants, prix et récompenses côté serveur (catalogue boutique, contenu des coffres) — Plan Mode.
+- **À faire par Jérémy : rotation de `PUSH_SECRET`** (ancienne valeur dans l'historique git ; Vercel + secrets
+  Supabase + redéploiement ; le client ne s'en sert plus).
 - **Phase C sécurité** : 158 lignes legacy sans mot de passe tolérées par `student_guard` → campagne « sécurise ton
   compte », puis retrait de la branche (une ligne SQL).
 - **`CLAUDE.md` à alléger** (~112 Ko chargés à chaque session) : y garder les règles, déplacer ici l'historique.
