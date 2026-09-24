@@ -24,6 +24,8 @@ import { TreasureChestSvg } from "./avatar.jsx";
 import { LeaguePromotion, TurnCeremony } from "./Ceremonies.jsx";
 import { createChestFx, burstAt } from "./particles.js";
 import { getLevel } from "../data/helpers.js";
+import { LEAGUES } from "../data/leagues.js";
+import { sessionFullscreen } from "../lib/interruptions.js";
 import { verdictText, epilogueText, stepLabel, stepDetail, stepHint, CHEST_TIER_NAMES } from "../lib/sessionText.js";
 import { playLootTick, playXP, playLevelUp, playChestLand, playJingleAchieve } from "../sounds.js";
 import { haptic } from "../lib/device.js";
@@ -213,6 +215,10 @@ function Verdict(p) {
   var [skip, setSkip] = useState(prefersReducedMotion);
   var [ceremony, setCeremony] = useState(null); // null | "league" | "turn"
   var hasLeague = !!s.leagueUp, hasTurn = !!s.turn;
+  // Budget d'interruptions (lib/interruptions.js, 2026-09-24) : UN plein écran par fin de session. Avec un
+  // retournement, la promotion de ligue devient une ligne du parchemin (inlineLeague) au lieu de l'Ascension.
+  var full = sessionFullscreen(s), inlineLeague = hasLeague && full !== "league";
+  var inlineLeagueName = inlineLeague ? (LEAGUES.find(function (l) { return l.id === s.leagueUp.to; }) || {}).name : null;
   var durs = useMemo(function () {
     var d = [300, 1300, 700];
     for (var i = 1; i < n; i++) d.push(380);
@@ -247,20 +253,20 @@ function Verdict(p) {
   }, [stage, skip]);
   var ceremonyFired = useRef(false);
   useEffect(function () {
-    if (skip || !hasLeague || stage < ST_LEAGUE || ceremonyFired.current) return;
+    if (skip || full !== "league" || stage < ST_LEAGUE || ceremonyFired.current) return;
     ceremonyFired.current = true;
     setCeremony("league");
-  }, [stage, skip, hasLeague, ST_LEAGUE]);
+  }, [stage, skip, full, ST_LEAGUE]);
   // « Faiblesse devenue force » (lot 5 du Mentor) : après la promotion de ligue s'il y en a une, à la fin
   // du parchemin. Contrairement à la ligue, elle s'affiche MÊME si l'élève a passé l'animation (ou en
   // mouvement réduit) : c'est un moment unique par catégorie, il ne doit pas se perdre.
   var turnFired = useRef(false);
   useEffect(function () {
     if (!hasTurn || turnFired.current || ceremony || !done) return;
-    if (hasLeague && !skip && !ceremonyFired.current) return;
+    if (full === "league" && !skip && !ceremonyFired.current) return;
     turnFired.current = true;
     setCeremony("turn");
-  }, [done, skip, ceremony, hasTurn, hasLeague]);
+  }, [done, skip, ceremony, hasTurn, full]);
   var totalDone = useRef(false);
   useEffect(function () {
     if (totalDone.current || stage < ST_TOTAL || total !== s.total || s.total <= 0) return;
@@ -274,9 +280,11 @@ function Verdict(p) {
   useEffect(function () {
     if (!done || honorCount === 0 || honorsPlayed.current) return;
     honorsPlayed.current = true;
+    // Avec un retournement, TurnCeremony joue déjà ce jingle au même instant : une seule fois.
+    if (hasTurn) return;
     sound(playJingleAchieve);
     haptic("achieve");
-  }, [done, honorCount]);
+  }, [done, honorCount, hasTurn]);
 
   function skipAll() { if (!skip) { setSkip(true); setCeremony(false); } }
 
@@ -285,7 +293,7 @@ function Verdict(p) {
   var date = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   var sealMain = mode === "score" ? s.sc : p.points, sealSub = mode === "score" ? "of " + s.tot : (p.pointsLabel || "points");
   var leagueChest = s.chests.find(function (c) { return /^league_up_/.test(c.trigger || ""); });
-  var honors = (s.achievements || []).length + (s.marks || []).length;
+  var honors = (s.achievements || []).length + (s.marks || []).length + (inlineLeague ? 1 : 0);
   return (
     <div className={"sr-root" + (skip ? " sr-skip" : "")} onClick={skipAll}>
       {!done && <div className="sr-skiphint">Tap to skip</div>}
@@ -315,6 +323,7 @@ function Verdict(p) {
             </div>
             {epilogue && <p className={"sr-ink sr-epi" + (stage >= ST_LEAGUE ? " on" : "")}>{epilogue}</p>}
             {honors > 0 && <div className={"sr-honors" + (done ? " on" : "")}>
+              {inlineLeague && <div className="sr-honor"><GIcon name="laurel-crown" size={16} color={/*fond local*/"#8b5a28"} /><span><b>{"Promoted · " + (inlineLeagueName || "new") + " League"}</b>{s.weekly && s.weekly.to ? " · " + s.weekly.to + " XP this week" : ""}</span></div>}
               {(s.achievements || []).map(function (a, i) {
                 return <div key={"a" + i} className="sr-honor"><GIcon name="laurel-crown" size={16} color={/*fond local*/"#8b5a28"} /><span><b>{a.name}</b>{a.desc ? " · " + a.desc : ""}</span></div>;
               })}
