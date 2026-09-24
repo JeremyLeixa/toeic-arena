@@ -7,8 +7,15 @@ import { weekId } from "./util.js";
 // Push a weekly_snapshots row for the week that just ended. Fire-and-forget.
 // Called from both load-time and mid-session week transitions so that snapshots
 // are never missed regardless of when the transition is detected.
-export function pushWeeklySnapshot(snap){
+export function pushWeeklySnapshot(d){
   try{
+    // Valeurs FIGÉES à l'appel (2026-09-24). applyWeekTransition remet weeklyXp à 0 et passe weekId à la
+    // nouvelle semaine juste après nous, de façon synchrone : lues dans le .then(), elles partaient à 0 et sous
+    // l'étiquette de la semaine suivante (xp_this_week = 0 dans tous les instantanés jusqu'au 24/09, podium compris).
+    var snap={name:d.name,classCode:d.classCode,weekId:d.weekId,weeklyXp:d.weeklyXp,xp:d.xp,
+      weeklyDailyCount:d.weeklyDailyCount,streak:d.streak,stats:JSON.parse(JSON.stringify(d.stats||{})),
+      moduleScores:JSON.parse(JSON.stringify(d.moduleScores||{})),mockResults:JSON.parse(JSON.stringify(d.mockResults||{})),
+      unlockedAch:(d.unlockedAch||[]).slice()};
     supabase.auth.getUser().then(function(r){
       if(!r.data||!r.data.user)return;
       var parts=(snap.weekId||"").split('-W');

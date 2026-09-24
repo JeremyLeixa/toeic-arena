@@ -501,7 +501,9 @@ useEffect(function(){
     }catch(e){console.warn("[CHEST V2] weekly TOEIC check error:",e&&e.message);}
   }
 
-  // V2 helper — League Podium (top 3 of class_code on the just-finished week)
+  // V2 helper — League Podium (top 3 of class_code on the just-finished week, xp_this_week > 0 : les instantanés
+  // valaient tous 0 jusqu'au 24/09, cf. pushWeeklySnapshot). Classe sur les instantanés DÉJÀ poussés : le premier
+  // élève de la promo à ouvrir l'appli la semaine suivante voit un podium partiel (limite connue).
   async function checkLeaguePodiumChest(uu){
     try{
       // Use the most recent entry in weeklyHistory as the "last finished week".
