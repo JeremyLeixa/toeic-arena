@@ -24,10 +24,16 @@ import { SessionResult } from "../../components/SessionResult.jsx";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
 import { ListeningGraphic } from "../../components/ListeningGraphic.jsx";
 import { GIcon } from "../../components/icons.jsx";
+import { arrivedByPortal } from "./portal.js";
 
 var NF_CSS = `
 .nf{padding:4px 16px 120px}
 .nf-intro{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:56px 20px 40px}
+.nf-intro.landed{animation:nf-land .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes nf-land{from{transform:scale(1.06);filter:blur(4px);opacity:0}to{transform:none;filter:none;opacity:1}}
+.nf-arrive{position:fixed;inset:0;z-index:300;pointer-events:none;background:radial-gradient(circle,rgba(var(--cx),.9),var(--bg) 72%);animation:nf-veil .55s ease-out forwards}
+@keyframes nf-veil{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){.nf-intro.landed{animation:none}.nf-arrive{animation-duration:.25s}}
 .nf-intro-back{position:absolute;top:10px;left:16px;margin-bottom:0}
 .nf-time{font-size:54px;font-weight:300;text-align:center;line-height:1;color:var(--t1);font-variant-numeric:tabular-nums}
 .nf-day{text-align:center;font-size:13px;color:var(--t2);margin-top:-4px}
@@ -164,6 +170,7 @@ export function NineToFive(p) {
   var totalQs = tasks.reduce(function (a, t) { return a + t.qs.length; }, 0);
 
   var [phase, setPhase] = useState("intro");          // intro | day | end
+  var landed = useState(arrivedByPortal)[0];          // arrivé par le portail du hub : voile qui se dissipe, accueil qui se pose
   var [min, setMin] = useState(0);
   var [st, setSt] = useState(function () { return initState(tasks); });
   var [view, setView] = useState(null);               // null = le bureau ; sinon l'id de la tâche ouverte
@@ -301,7 +308,8 @@ export function NineToFive(p) {
   if (phase === "intro") {
     var nx0 = nextGrade(rep0);
     return (<><style>{NF_CSS}</style>
-      <div className="enter nf-intro">
+      {landed && <div className="nf-arrive" />}
+      <div className={landed ? "nf-intro landed" : "enter nf-intro"}>
         <button className="back-btn nf-intro-back" onClick={p.back}>{"← Back"}</button>
         <div className="nf-time out">8:58</div>
         <div className="nf-day">{COMPANY}</div>

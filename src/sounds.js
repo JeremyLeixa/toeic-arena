@@ -824,6 +824,20 @@ export function playChestOpen(r) {
     if (r >= 4) { chxBoom(x, t + 0.45, 0.6); chxBell(x, N.D7, t + 0.5, 0.05); chxArp(x, [N.D6, N.E6, N.Fs6, N.A6, N.D7], t + 0.6, 0.05, 0.07, 0.6); }
   });
 }
+// Passage d'un Waygate (2026-09-24, variante V3 « Plongée », prototypes/waygate-portal/) : on tombe DANS le
+// portail en 0,8 s. Souffle qui monte (bruit filtré 180 → 3 200 Hz), houle grave qui s'élève, trois runes qui
+// scintillent dans la réverbération, puis une cloche douce à l'arrivée, de l'autre côté. Même bus que le coffre.
+export function playPortal() {
+  chxPlay(function (x, t) {
+    var N = CHX_N;
+    chxNoise(x, { t: t, a: 0.6, d: 0.3, v: 0.26, f: 180, f2: 3200, q: 1.3, wet: 0.45 });
+    chxTone(x, { type: "sine", f: 70, f2: 150, glide: 0.75, t: t, a: 0.5, d: 0.35, v: 0.22, wet: 0.2 });
+    chxTone(x, { type: "sawtooth", f: 110, f2: 330, glide: 0.75, t: t, a: 0.55, d: 0.3, v: 0.035, lp: 1200 });
+    chxArp(x, [N.A5, N.D6, N.Fs6], t + 0.1, 0.1, 0.05, 0.75);
+    chxBell(x, N.D5, t + 0.8, 0.06);
+    chxTone(x, { type: "sine", f: N.A4, t: t + 0.8, a: 0.02, d: 0.9, v: 0.05, wet: 0.7 });
+  });
+}
 export function playCardFly(i) {
   chxPlay(function (x, t) { chxNoise(x, { t: t, a: 0.02, d: 0.2, v: 0.12, f: 1200 + i * 120, f2: 2800, q: 1.2, wet: 0.2 }); });
 }

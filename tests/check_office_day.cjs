@@ -139,6 +139,15 @@ const lookup = require(path.join(ROOT, 'src', 'lib', 'reviewLookup.js'));
   ok(!!(q && q.prompt && q.options && q.options.length === 4), 'la chasse relit une erreur de Nine to Five (' + x[0] + ')');
 });
 
+// Passage du portail (V3 « Plongée ») : le hub marque le passage AVANT de naviguer (sinon le monde arrive sans
+// voile), et le monde lit le drapeau sans le consommer, dans un initialiseur de useState (StrictMode l'appelle deux
+// fois : une lecture qui consomme rendrait false et l'accueil apparaîtrait sec après la plongée).
+const PORTAL = read('src/features/waygates/portal.js');
+ok(/markPortal\(\);[\s\S]*?p\.nav\(w\.id\)/.test(HUB) && /playPortal\(\)/.test(HUB), 'hub : markPortal et le son avant la navigation');
+ok(/reducedMotion\(\)\) \{ p\.nav\(w\.id\); return; \}/.test(HUB), 'hub : mouvement réduit = navigation directe, sans plongée');
+ok(/useState\(arrivedByPortal\)/.test(SCREEN) && !/_arrivingAt\s*=\s*0/.test((PORTAL.match(/function arrivedByPortal[\s\S]*?\n/) || [''])[0]), 'monde : drapeau lu sans effet de bord (StrictMode)');
+ok(/export function playPortal\(\)/.test(read('src/sounds.js')), 'son du portail (sounds.js playPortal)');
+
 // Tuile, liste noire, estimateur, trophées.
 ok(/\{id:"waygates",n:"The Waygates",[^\n]*plain:true\}/.test(GAMES) && GAMES.indexOf('{id:"waygates"') < GAMES.indexOf('{id:"tavern"'), 'hub Games : tuile The Waygates en tête, sans coffre propre (plain)');
 ok(require(path.join(ROOT, 'src', 'lib', 'hubStatus.js')).MASTERY_BLACKLIST.office === 1, 'office en liste noire de maîtrise (ses réponses font avancer lisP3/lisP4/p7 : pas de double coffre)');
