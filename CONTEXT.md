@@ -39,7 +39,17 @@ une décision.
   session, dernière du budget d'interruptions ; iPhone hors appli → étapes d'installation. À relire mi-octobre :
   abonnés par promo (requête de `prototypes/push-optin/README.md`).
 
+- **24/09 : The Waygates + Nine to Five** (`5a201d1` proto → `69ce5b3`, `e611ebd`, `d545198`) : premier **module
+  thématique**. Constat des exports CSV : formats longs fuis (IDRAC, campagne entière : P3 14 sessions, P4 14, P7 38,
+  contre 1 491 de flashcards) ; petits QCM (Connectors, Prepositions, Gerund/Inf…) essayés par ~60 élèves et gardés par
+  ≤ 11. Nine to Five = une journée de bureau (P3/P4/P7 tels quels, habillés), V3 horloge + réputation, horloge clémente
+  aux grades bas, 7 grades (Intern → Director), réponses comptées dans lisP3/lisP4/p7. Tuile en tête du hub Games.
+  Détail : `src/features/waygates/CLAUDE.md`.
+
 ### À voir en prod (pas encore observé sur de vrais élèves)
+- **Nine to Five** (à jouer par Jérémy sur son compte) : l'XP affichée = l'XP du profil après rechargement ;
+  `moduleScores.lisP3/lisP4/p7` avancent ; une erreur de la journée revient dans la chasse ; la tuile Games dit le grade.
+  Puis, dans 2-3 semaines : parties par élève dans l'onglet Usage (« Nine to Five ») contre Listening P3/P4 et Part 7.
 - Vague de coffres **Mastery II** à partir du **26/09** (échelons I datés du 19/09 + 7 jours) : garde anti-boucle.
 - Première cérémonie **« faiblesse devenue force »** possible vers le **27/09**.
 - Home « une porte », Part 7 et P3/P4 neufs, mode écoute de Mimic Hunt, sessions en mode clair.
@@ -47,6 +57,9 @@ une décision.
   **début octobre** avant de ranger ou retirer un module (premier aperçu iabd2627 : 45 créatures créées, 0 vaincue — **normal** : une créature meurt à sa 3e réussite espacée, 1-3-7 j, premières captures le 21/09 → premières morts vers le 2/10 ; au 24/09, 34 créatures sur 104 déjà touchées, 6 chasses jouées, 0 abandon).
 
 ### En attente d'une décision de Jérémy
+- **The Waygates, suite** : prochain monde (aéroport, hôtel, salon professionnel…) ? « L'affaire du jour » (mécanique
+  C du proto : indices répartis sur plusieurs documents, contenu neuf à écrire) comme journée spéciale ? Et les petits
+  QCM abandonnés (Connectors, Prepositions, Gerund/Inf, False Friends) versés en épreuves du **Grammar Gauntlet** ?
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).
 - ~~Cérémonies qui s'enchaînent~~ : **faites le 24/09** (variante B, `lib/interruptions.js`, `check_interruptions`) : une
   seule cérémonie par écran de fin (retournement > promotion), au plus un plein écran non demandé par entrée sur Home.

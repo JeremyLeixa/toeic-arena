@@ -102,7 +102,9 @@ src/
                           des questions de grammaire et d'examen), mimicXp (base d'XP de Mimic Hunt,
                           −3 par morsure), planner (plan du jour, composition
                           des sessions, semaine, allure, Chronique), mentorVoice (les
-                          phrases d'Aldric, anglais, à côté de sessionText)
+                          phrases d'Aldric, anglais, à côté de sessionText), officeDay (journées
+                          de Nine to Five composées depuis P3/P4/P7) + officeGrades (grades,
+                          réputation, SANS données : lu par App.jsx et la tuile Games)
   components/          — shared widgets: icons (GIcon…), Bar, SpeakBtn, ListeningGraphic,
                           PassageDocs, avatar (renderAv, AvatarMedal), toasts, Tabs,
                           GrimoireReader, NextStepReco, TokenCTAs, legal, PasswordInput (œil),
@@ -111,7 +113,8 @@ src/
   features/            — one folder per screen: train/ (grammar, reading, strategy),
                           home/ (Home, Train, Cards, Daily, DailyTip), gauntlet/, modals/,
                           games/, listening/, exams/ (Mock, Boss, Endless), mentor/,
-                          league/, chests/, shop/, profile/, narrator/, onboarding/, teacher/
+                          league/, chests/, shop/, profile/, narrator/, onboarding/, teacher/,
+                          waygates/ (hub des modules thématiques The Waygates + Nine to Five)
   styles/appCss.js     — the CSS template literal, injected by App.jsx via <style>{CSS}</style>
   data/
     vocab.js           — 920 flashcards, 18 domains
@@ -213,6 +216,7 @@ l'invariant qui casse sans bruit.
 | Home « une porte », hubs vivants | `src/features/home/CLAUDE.md` | Ordre du bouton dans `lib/homeAgenda.js` ; le Daily reste un bloc à part. |
 | Estimateur TOEIC, thèmes saisonniers | `src/lib/CLAUDE.md` | Ne jamais revenir à `wSum/wTot` (retenue bayésienne) ; `total` peut être `null` ; fenêtres de fête en heure locale. |
 | Mentor qui se souvient (bestiaire, chasse, plan figé, lettre, Chronique) | `src/features/mentor/CLAUDE.md` | Une `ref` que `lib/reviewLookup.js` ne sait pas relire laisse une créature due pour toujours ; `reviewLookup.js` jamais importé hors d'un écran lazy. |
+| The Waygates, Nine to Five (modules thématiques) | `src/features/waygates/CLAUDE.md` | Réponses versées dans lisP3/lisP4/p7 **sans** `trackModSession` sur ces clés ; `office` hors tables de poids et en liste noire de maîtrise ; jetons du thème seulement. |
 | Mimic Hunt, Word Tavern | `src/features/games/CLAUDE.md` | Nouveaux items Mimic toujours relus par Jérémy avant d'entrer au jeu ; aucun texte ne cite une lettre d'option. |
 | Coffres, jetons, échelons de maîtrise | `src/features/chests/CLAUDE.md` | Watchers sur objet JSON cloné = garde `useRef` (boucle de +37 k XP vécue) ; **prix, cosmétiques, jetons, tables de tirage et sources de coffre vivent dans `chestCatalog.js` : les changer = `node scripts/gen-economy-sql.mjs` + passer le SQL généré en prod** (le serveur décide sur ses copies). |
 | Boss, Endless, écoute fidèle au TOEIC | `src/features/exams/CLAUDE.md` | Toute nouvelle disposition du Boss → bumper `BOSS_LAYOUT_V`. |

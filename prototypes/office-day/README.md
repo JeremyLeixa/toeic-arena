@@ -1,5 +1,11 @@
 # Office Day — la journée au bureau (proto)
 
+> **Tranché et câblé le 2026-09-24** : variante **V3** (horloge + réputation) avec une horloge **clémente aux grades
+> bas**, sous les noms **The Waygates** (hub des modules thématiques) et **Nine to Five** (ce monde). Code :
+> `src/features/waygates/`, `src/lib/officeDay.js`, `src/lib/officeGrades.js` ; conventions :
+> `src/features/waygates/CLAUDE.md`. Ce dossier reste le banc de comparaison des variantes (palette ardoise du proto
+> abandonnée : le module câblé suit les skins).
+
 Proto du 2026-09-24. Hors build Vercel, rien dans `src/`. Premier des **modules thématiques**.
 
 **Le constat** (exports CSV `tests/data/`, campagne IDRAC entière, 66 élèves) : les formats longs du TOEIC

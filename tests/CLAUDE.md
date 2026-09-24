@@ -96,6 +96,14 @@ Ce que la suite protège, et pourquoi :
   Relire un lot neuf : `prototypes/sessions/real.html?sc=p7&p7only=p7p68,p7p71`.
 - **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
   et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
+- **`check_office_day`** — Nine to Five (`lib/officeDay.js`, `lib/officeGrades.js`) : des centaines de journées tirées
+  par grade, chacune dans 9:00-17:00 (un direct finit de sonner avant 17:00, une échéance tombe après l'arrivée), sans
+  item en double, au format P7 du grade (double à Associate, triple à Team Lead, et garanti le jour du déblocage),
+  sujet de P3 générique (un sujet tiré du contenu trahit la Q1) ; horloge jamais plus clémente en montant ; réputation
+  jamais négative et bornée ; XP au palier des 15 Q. Câblage : réponses versées dans lisP3/lisP4/p7 **sans**
+  `trackModSession` sur ces clés (sinon une journée taxe les tuiles et coche les quêtes), refs relues par la chasse,
+  `office` en liste noire de maîtrise et hors tables de poids, CSS sans couleur en dur (skins), horloge gelée par
+  « Leave », App.jsx et la tuile Games jamais sur `officeDay.js` (il importe les banques du chunk lazy).
 - **`check_usage_stats`** — l'onglet Usage du formateur (`lib/usageStats.js`, `lib/sessionQuit.js`) : fenêtres
   7/30 j bornes incluses, abandons jamais comptés comme parties, épreuves des hubs ramenées au hub (sinon
   100 % d'abandon), rien d'avant `CAPTURE_START` dans les taux, `doneDays` borné, et le câblage : « Leave »
