@@ -9,6 +9,7 @@ import { IRREGULAR_VERBS, TENSE_CHRONOMANCER, PASSIVE_FORGE, RELATIVE_WEAVER } f
 import { GRIMOIRE_CHRONOMANCER, GRIMOIRE_PASSIVE_FORGE, GRIMOIRE_RELATIVE_WEAVER } from "../../data/grammarGauntletGrimoire.js";
 import { GRIMOIRE_CONNECTORS } from "../../data/connectorsGrimoire.js";
 import { GRIMOIRE_GERUND } from "../../data/gerundGrimoire.js";
+import { GRIMOIRE_PREPOSITIONS } from "../../data/prepositionsGrimoire.js";
 import { CONNECTORS, CONNECTOR_RULES, PREP_COLLOCATIONS, GERUND_INF } from "../../data/miniGames.js";
 import { SpeakBtn } from "../../components/SpeakBtn.jsx";
 import { haptic } from "../../lib/device.js";
@@ -820,7 +821,7 @@ export function GauntletHub(p){
     {id:"relative",name:"Relative Weaver",icon:"spider-web",desc:"Weave relative clauses. Defining, non-defining, reduced relatives.",accent:"linear-gradient(90deg,#0891b2,#7c3aed)",bgm:"bgm_weaver",grimoire:GRIMOIRE_RELATIVE_WEAVER,stats:scores["gauntlet_relative"],ready:true},
     // 2026-09-25 : musiques réutilisées (choix de Jérémy), bgm_bridge est aussi celle de Linking Bridge.
     {id:"connectors",name:"Knotbinder",icon:"knot",desc:"Tie every idea with the right knot. Clause, noun, or a brand-new sentence?",accent:"linear-gradient(90deg,#8b5e83,#c4587a)",bgm:"bgm_bridge",grimoire:GRIMOIRE_CONNECTORS,stats:scores[gauntletModId("connectors")],ready:true},
-    {id:"prepositions",name:"Anchor Hall",icon:"anchor",desc:"Every word drops its own anchor. Interested in, depend on, responsible for: find it.",accent:"linear-gradient(90deg,#1d4ed8,#06b6d4)",bgm:"bgm_clue",grimoire:null,stats:scores[gauntletModId("prepositions")],ready:true},
+    {id:"prepositions",name:"Anchor Hall",icon:"anchor",desc:"Every word drops its own anchor. Interested in, depend on, responsible for: find it.",accent:"linear-gradient(90deg,#1d4ed8,#06b6d4)",bgm:"bgm_clue",grimoire:GRIMOIRE_PREPOSITIONS,stats:scores[gauntletModId("prepositions")],ready:true},
     {id:"gerund",name:"Twin Paths",icon:"split-arrows",desc:"Two roads after every verb: -ing or to. Only one leads on.",accent:"linear-gradient(90deg,#e11d48,#f59e0b)",bgm:"bgm_verdict",grimoire:GRIMOIRE_GERUND,stats:scores[gauntletModId("gerund")],ready:true}
   ];
   function fmtAcc(s){if(!s||!s.total)return"\u2014";return Math.round((s.correct/s.total)*100)+"%";}

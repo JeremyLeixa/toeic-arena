@@ -22,9 +22,9 @@ Connectors Sorting, Preposition Collocations et Gerund vs Infinitive, entrés au
   barème B, `sentRef` + `useEffect([phase])`, écran d'entrée commun `TrialIntro` (privé au fichier). Options de Twin
   Paths permutées (`permuteGI`) ; Knotbinder et Anchor Hall ont une grille fixe (3 règles, 8 prépositions en ordre alpha).
 - Musiques réutilisées : `bgm_bridge` (partagée avec Linking Bridge), `bgm_clue`, `bgm_verdict` (Modal Council).
-- Grimoires : `GRIMOIRE_CONNECTORS` (aussi celui de Linking Bridge), `GRIMOIRE_GERUND`. Celui des prépositions
-  (`data/prepositionsGrimoire.js`) attend la relecture de Jérémy (`prototypes/gauntlet-seven/grimoire.html`) avant d'être
-  accroché à la carte Anchor Hall (`grimoire:null` pour l'instant).
+- Grimoires : `GRIMOIRE_CONNECTORS` (aussi celui de Linking Bridge), `GRIMOIRE_GERUND`, `GRIMOIRE_PREPOSITIONS`
+  (`data/prepositionsGrimoire.js`, 10 chapitres, relu par Jérémy et accroché le 2026-09-25 ; il remplace le Study Mode
+  de l'ancien PrepDrill). Relecture d'un grimoire dans le vrai lecteur : `prototypes/gauntlet-seven/grimoire.html`.
 - Coffre sans faute : `<modId>_perfect` (`connsort_perfect`…), déclenchés dans `scripts/gen-economy-sql.mjs`.
 - Trophées de tout le hub (Champion, Explorer, Grinder, Scholar) : `GAUNTLET_KEYS` dans `data/achievements.js`, 7 clés.
 - Pas d'alias pour les anciennes routes `connsort` / `prepdrill` / `gerinf` : rien n'y naviguait hors des tuiles retirées

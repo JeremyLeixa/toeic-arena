@@ -147,7 +147,7 @@ src/
     gerundGrimoire.js      — GRIMOIRE_GERUND (replaces GerInf Study Mode)
     phrasalGrimoire.js     — GRIMOIRE_PHRASAL (replaces PhrasalDojo Study Mode)
     connectorsGrimoire.js  — GRIMOIRE_CONNECTORS (Knotbinder + Linking Bridge)
-    prepositionsGrimoire.js — GRIMOIRE_PREPOSITIONS (Anchor Hall, 10 chapitres ; brouillon en relecture)
+    prepositionsGrimoire.js — GRIMOIRE_PREPOSITIONS (Anchor Hall, 10 chapitres)
     modals.js              — MODAL_MATCH_BOARDS (15 boards × 5 pairs) +
                           MODAL_SORT_ITEMS (50 sentences, 4 buckets)
     modalsGrimoire.js      — GRIMOIRE_MODALS (7 chapters FR)

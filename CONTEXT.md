@@ -54,7 +54,7 @@ une décision.
 - **Gauntlet à 7** : passer d'abord `supabase/migrations/2026-09-24_economy_catalog_data.sql` (coffres `connsort_perfect`…
   et rangs des 9 nouveaux trophées) ; **les 9 trophées (`achievements.js`) ne partent qu'après**, sinon leurs coffres
   seraient refusés et perdus. Puis : une épreuve sans faute donne le coffre guerrier, `moduleScores.connsort` avance,
-  une erreur revient dans la chasse. Grimoire d'Anchor Hall à relire (`prototypes/gauntlet-seven/grimoire.html`).
+  une erreur revient dans la chasse.
 - **Nine to Five** (à jouer par Jérémy sur son compte) : l'XP affichée = l'XP du profil après rechargement ;
   `moduleScores.lisP3/lisP4/p7` avancent ; une erreur de la journée revient dans la chasse ; la tuile Games dit le grade.
   Puis, dans 2-3 semaines : parties par élève dans l'onglet Usage (« Nine to Five ») contre Listening P3/P4 et Part 7.
