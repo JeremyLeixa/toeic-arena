@@ -1,7 +1,8 @@
-# The Waygates : les modules thématiques (Nine to Five, Jet Lag)
+# The Waygates : les modules thématiques (Nine to Five, Jet Lag, Front Desk)
 
 > Chargé quand on travaille dans `src/features/waygates/`. Protos : `prototypes/office-day/` (README : le constat
-> chiffré et les variantes comparées), `prototypes/travel-day/` (monde voyage, météo W1/W2, relecture du vivier).
+> chiffré et les variantes comparées), `prototypes/travel-day/` (monde voyage, météo W1/W2, relecture du vivier),
+> `prototypes/service-day/` (monde service client, variantes S1 note client / S2 briefé = calme, relecture du vivier).
 > Test : `tests/check_office_day.cjs`.
 
 **Pourquoi** (2026-09-24, exports CSV `tests/data/`) : les formats longs du TOEIC étaient fuis. Sur toute la campagne
@@ -20,16 +21,22 @@ Listening et la P7 la plus grosse part du Reading. Un module thématique **habil
 réponses versées dans les Parts), un autre décor et un autre vivier. Jamais un écran copié.
 - **`lib/worlds.js`** (pur, SANS données, lu par `App.jsx`, le hub et la tuile Games) : `WORLD_META[id]` déclare
   `modId` (clé XP / historique), `repKey` (`gameScores.<repKey>`), `name`, `company`, `person` (clé de `PEOPLE`),
-  `desk` / `wait` (libellés du bureau et de l'attente), `weather` (règle W2 active). `worldRep(u, id)`.
+  `desk` / `wait` (libellés du bureau et de l'attente), `announce`, `rules` (les 3 règles de l'accueil), `quit`, `empty`,
+  et `prep` : `null`, ou la règle « prévu = paré » avec TOUS ses textes. `worldRep(u, id)`, `PREP_BONUS`, `PREP_DELAY`.
+- **Règle « prévu = paré », générique depuis Front Desk** : une tâche `prep` (bulletin, point du matin) comprise en
+  entier → +`PREP_BONUS` (15) rep quand la tâche `prepHit` arrive ; sinon l'horloge saute de `PREP_DELAY` (45) min. Une
+  fois par journée, ligne dans le bilan, `prepared` rangé dans l'historique (trophées Weather-wise, Keep Calm).
+  **L'écran n'a plus aucun cas particulier par monde** (le test le vérifie) : un nouveau texte va dans `worlds.js`.
 - **`lib/officeDay.js composeDay(rep, rnd, world)`** : `office` = composition d'origine, **inchangée** ; `travel` =
-  `composeTravel` depuis `TRAVEL_POOL`.
+  `composeTravel` depuis `TRAVEL_POOL` ; `service` = `composeService` depuis `SERVICE_POOL`.
 - **`WorldDay.jsx`** (ex-`NineToFive.jsx`) : prop `world`, tout ce qui dépend du monde vient de `worldMeta`.
 - **`App.jsx worldDone(world, …)`** (ex-`officeDone`) et une route par monde dans `routes.jsx`
   (`<WorldDay key=… world=…>`, `done=worldDone("<id>",…)`).
 - **Ajouter un monde** = une entrée dans `WORLD_META`, sa composition dans `officeDay.js`, sa carte dans `WORLDS`
-  (`Waygates.jsx`), sa route, puis les listes du lot 3 : `MASTERY_BLACKLIST`, `MODULE_TOEIC_MAP` (ni part ni
-  section), libellés (`usageStats`, `chestLabels`, `feedbackModules`, `TeacherDash`), trophées. Le test réclame
-  chacune pour `office` et `travel` ; l'étendre au monde suivant.
+  (`Waygates.jsx`, icône game-icons dans `data/avatarIcons.js`), sa route, puis les listes : `MASTERY_BLACKLIST`,
+  `MODULE_TOEIC_MAP` (ni part ni section), libellés (`usageStats`, `chestLabels`, `feedbackModules`, `TeacherDash`
+  liste ET export), trophées, tuile Games (« N worlds »), banc (`WIRED` et `rep=` de `prototypes/sessions/real.jsx`).
+  Le test réclame chacune pour les trois mondes ; l'étendre au suivant.
 
 ## Nine to Five (module `office`)
 Une journée chez Meridian Harbor Group (entreprise fictive), de 9:00 à 17:00. Variante **V3** du proto (horloge +
@@ -50,13 +57,27 @@ Déplacement professionnel, coordonné par Maya Ortiz. Vivier **validé par Jér
 audio, 6 à 8 P7) est prévu, rédigé par Claude et relu par Jérémy avant d'entrer au vivier.
 - **Journée** : bulletin en direct à 9:00, puis P3/P7 selon le grade (4 tâches → 1 P3 + 1 P7, 5 → 1 + 2, 6 → 2 + 2),
   et **une seule** perturbation en direct, toujours après au moins une P3.
-- **Météo W2 « prévu = paré »** : bulletin compris en entier → +`WEATHER_BONUS` (15) de réputation à l'arrivée de la
-  perturbation ; sinon l'horloge saute de `WEATHER_DELAY` (45) min. Une seule fois par journée, ligne dans le bilan,
+- **Météo W2 « prévu = paré »** : bulletin compris en entier → +`PREP_BONUS` (15) de réputation à l'arrivée de la
+  perturbation ; sinon l'horloge saute de `PREP_DELAY` (45) min. Une seule fois par journée, ligne dans le bilan,
   `prepared` rangé dans l'historique du module (trophée Weather-wise).
 - **Les messages parlent d'anticipation, jamais d'orage** : seule p4_02 est causée par la météo (p4_47 et p4_32 =
   panne de signalisation, p4_97 = nettoyage).
 - **Habillage des P3 et annonces générique** (« Two travellers », « On speaker ») : des questions demandent
   « Where are the speakers? », un décor « At the airport » donnerait la réponse.
+
+## Front Desk (module `service`, 2026-09-25)
+Un samedi au service client de Halden & Co. (grand magasin fictif), avec Priya Shah (« Customer care manager »).
+Variante **S2** du proto (« briefé = calme »), nom et vivier **validés par Jérémy tels quels** (`SERVICE_POOL`, rangé par
+rôle : 2 points du matin, 2 clients mécontents, 3 P3 face au client, 6 P3 entre collègues, 5 annonces aux clients, 5
+autres P4, 11 P7).
+- **Journée** : point du matin en direct à 9:00 (p4_94 ou p4_35, clients difficiles), puis P3/P4/P7 selon le grade
+  (4 tâches → 1 P3 + 1 P7, 5 → + 1 P4, 6 → + 1 P7), et **un seul** client mécontent (P3, `prepHit`), jamais le premier.
+- **p3_04 n'est PAS un client mécontent** : sa Q1 (« Why is the man calling? » → « To complain… ») serait soufflée par le
+  toast. Le test refuse tout client mécontent dont une bonne réponse dit « complain / upset / angry / unhappy ».
+- **Habillage générique** : P3 client → « At the counter » / « Support line » ; P3 collègues → « Two colleagues » /
+  « Team meeting » ; annonces → « Store PA · An announcement to shoppers ». Jamais le motif de la visite.
+- Les items traiteur et salons (p3_90, p3_45, p3_26, p3_64, p3_69, p3_84, p3_39, p7p44, p7p69) sont gardés pour le
+  monde « événements ».
 
 ## Les invariants qui cassent sans bruit (tous les mondes)
 - **Les réponses comptent dans lisP3 / lisP4 / p7** (`worldDone`, `App.jsx`, choix de Jérémy : poids plein dans
@@ -73,11 +94,11 @@ audio, 6 à 8 P7) est prévu, rédigé par Claude et relu par Jérémy avant d'e
   importe les banques P3/P4/P7, qui doivent rester dans le chunk chargé à la demande.
 - **Refs d'erreurs = celles des modules d'origine** (`lisP3:<id>:<qi>`, `lisP4:…`, `p7:…`) : la chasse les rejoue
   sans code neuf. `qi` = l'index d'origine de la question (seules les options sont permutées).
-- **Pas de BGM** : `office`, `travel` et `waygates` hors `SELF_MANAGED`, l'effet central coupe la musique (écoute).
+- **Pas de BGM** : `office`, `travel`, `service` et `waygates` hors `SELF_MANAGED`, l'effet central coupe la musique (écoute).
 - **Trophées sans coffre** (Darics seuls) : pas de SQL. Un trophée qui recevrait un coffre passerait par
   `chestCatalog.js` + `gen-economy-sql.mjs` + SQL en prod AVANT le code.
 
 ## Banc sans compte
-`prototypes/sessions/real.html?sc=office` (`sc=travel`, `sc=waygates`) ; `rep=300` pose la réputation des deux mondes
+`prototypes/sessions/real.html?sc=office` (`sc=travel`, `sc=service`, `sc=waygates`) ; `rep=300` pose la réputation des mondes
 (grade, formats) ; `mode=light`, `skin=<id>`. Le banc journalise ce que la fin de journée envoie à `p.done`
 (`[bench] done`).

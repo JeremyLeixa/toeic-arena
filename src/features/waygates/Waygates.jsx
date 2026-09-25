@@ -1,6 +1,6 @@
 // The Waygates (2026-09-24) — le hub des modules thématiques : les portails d'Aldric vers le monde réel.
 // Chaque monde habille les vraies Parts du TOEIC dans une situation (choix de Jérémy : « faire bosser sans
-// en donner l'air »). Mondes : Nine to Five (`office`), Jet Lag (`travel`), un seul écran WorldDay.jsx. Un monde de plus =
+// en donner l'air »). Mondes : Nine to Five (`office`), Jet Lag (`travel`), Front Desk (`service`), un seul écran WorldDay.jsx. Un monde de plus =
 // une entrée dans WORLDS, sa route, son écran ; les portails scellés annoncent la suite.
 //
 // Passage du portail (variante V3 « Plongée », prototypes/waygate-portal/) : au tap, le hub plonge vers le point
@@ -43,6 +43,7 @@ var WG_CSS = `
 var WORLDS = [
   { id: "office", icon: "briefcase", desc: "A working day at Meridian Harbor Group. Emails, calls, meetings: the clock is running.", days: "on the job" },
   { id: "travel", icon: "commercial-airplane", desc: "A business trip. Check the forecast, catch the announcements, make it on time.", days: "on the road" },
+  { id: "service", icon: "shopping-bag", desc: "Saturday at the customer care counter. Serve, listen, keep your cool.", days: "at the counter" },
 ];
 function worldLine(u, w) {
   var o = (u && u.gameScores && u.gameScores[worldMeta(w.id).repKey]) || {};

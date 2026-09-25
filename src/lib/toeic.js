@@ -75,6 +75,7 @@ export var MODULE_TOEIC_MAP={
   // pèserait deux fois, et une part unique fausserait le Mentor (une journée mêle trois Parts).
   office:{part:null,section:null,score:true},
   travel:{part:null,section:null,score:true}, // Jet Lag (2026-09-25) : même règle qu'office, ses réponses comptent dans les Parts
+  service:{part:null,section:null,score:true}, // Front Desk (2026-09-25) : idem
   traps:{part:null,section:null,score:true},
   stratquiz:{part:null,section:null,score:true},
   timesim:{part:null,section:null,score:true}

@@ -116,7 +116,7 @@ src/
                           games/, listening/, exams/ (Mock, Boss, Endless), mentor/,
                           league/, chests/, shop/, profile/, narrator/, onboarding/, teacher/,
                           waygates/ (hub The Waygates + WorldDay, écran commun des mondes
-                          Nine to Five et Jet Lag)
+                          Nine to Five, Jet Lag et Front Desk)
   styles/appCss.js     — the CSS template literal, injected by App.jsx via <style>{CSS}</style>
   data/
     vocab.js           — 920 flashcards, 18 domains
@@ -135,7 +135,7 @@ src/
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
     placement.js       — 85 Battle Scan questions + tier levels + mission modules
-    achievements.js    — 83 achievements (incl. 25 Gauntlet, 4 Word Tavern, 4 Duel, 4 Modal Council, 4 Mimic Hunt, 4 Nine to Five, 4 Jet Lag)
+    achievements.js    — 87 achievements (incl. 25 Gauntlet, 4 Word Tavern, 4 Duel, 4 Modal Council, 4 Mimic Hunt, 4 Nine to Five, 4 Jet Lag, 4 Front Desk)
     leagues.js         — 7 league tiers + bot competitors
     avatarIcons.js     — Iconify SVG paths for game icons
     chests.js          — CHEST_TYPES, RARITIES, AVATARS, SKINS, trigger logic,
@@ -220,7 +220,7 @@ l'invariant qui casse sans bruit.
 | Home « une porte », hubs vivants | `src/features/home/CLAUDE.md` | Ordre du bouton dans `lib/homeAgenda.js` ; le Daily reste un bloc à part. |
 | Estimateur TOEIC, thèmes saisonniers | `src/lib/CLAUDE.md` | Ne jamais revenir à `wSum/wTot` (retenue bayésienne) ; `total` peut être `null` ; fenêtres de fête en heure locale. |
 | Mentor qui se souvient (bestiaire, chasse, plan figé, lettre, Chronique) | `src/features/mentor/CLAUDE.md` | Une `ref` que `lib/reviewLookup.js` ne sait pas relire laisse une créature due pour toujours ; `reviewLookup.js` jamais importé hors d'un écran lazy. |
-| The Waygates, Nine to Five, Jet Lag (modules thématiques) | `src/features/waygates/CLAUDE.md` | Un monde = même moteur (`lib/worlds.js`, `WorldDay`, `worldDone`), jamais un écran copié ; réponses versées dans lisP3/lisP4/p7 **sans** `trackModSession` sur ces clés ; `office`/`travel` hors tables de poids et en liste noire de maîtrise ; jetons du thème seulement. |
+| The Waygates, Nine to Five, Jet Lag, Front Desk (modules thématiques) | `src/features/waygates/CLAUDE.md` | Un monde = même moteur (`lib/worlds.js`, `WorldDay`, `worldDone`), jamais un écran copié, aucun texte de monde dans l'écran ; réponses versées dans lisP3/lisP4/p7 **sans** `trackModSession` sur ces clés ; `office`/`travel`/`service` hors tables de poids et en liste noire de maîtrise ; jetons du thème seulement. |
 | Mimic Hunt, Word Tavern | `src/features/games/CLAUDE.md` | Nouveaux items Mimic toujours relus par Jérémy avant d'entrer au jeu ; aucun texte ne cite une lettre d'option. |
 | Coffres, jetons, échelons de maîtrise | `src/features/chests/CLAUDE.md` | Watchers sur objet JSON cloné = garde `useRef` (boucle de +37 k XP vécue) ; **prix, cosmétiques, jetons, tables de tirage et sources de coffre vivent dans `chestCatalog.js` : les changer = `node scripts/gen-economy-sql.mjs` + passer le SQL généré en prod** (le serveur décide sur ses copies). |
 | Boss, Endless, écoute fidèle au TOEIC | `src/features/exams/CLAUDE.md` | Toute nouvelle disposition du Boss → bumper `BOSS_LAYOUT_V`. |

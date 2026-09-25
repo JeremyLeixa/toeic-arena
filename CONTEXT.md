@@ -53,6 +53,10 @@ une décision.
   devient multi-mondes (`lib/worlds.js`, écran `WorldDay`, `worldDone`) ; déplacement pro coordonné par Maya Ortiz,
   vivier validé par Jérémy (6 P3, 8 P4 météo/perturbations, 6 P7), météo W2 « prévu = paré » (bulletin compris →
   +15 rep, sinon +45 min). 4 trophées sans coffre (pas de SQL). Détail : `src/features/waygates/CLAUDE.md`.
+- **25/09 : Front Desk, 3e monde des Waygates** (`e651f97` proto → commit de câblage) : un samedi au service client de
+  Halden & Co., variante S2 « briefé = calme » (point du matin compris → le client mécontent repart calmé, +15 rep ;
+  sinon +45 min), vivier validé tel quel (11 P3, 12 P4, 11 P7). La règle « prévu = paré » devient générique
+  (`WORLD_META.prep`, flags `prep` / `prepHit`) : l'écran ne connaît plus aucun monde. 4 trophées sans coffre.
 
 ### À voir en prod (pas encore observé sur de vrais élèves)
 - **Gauntlet à 7** : passer d'abord `supabase/migrations/2026-09-24_economy_catalog_data.sql` (coffres `connsort_perfect`…
@@ -65,6 +69,8 @@ une décision.
 - **Jet Lag** : traversée du portail, une journée paré et une coincé (ligne du bilan, horloge +45), `gameScores.travelDay`
   distinct d'`officeDay`, trophée First Flight à la 1re journée. Vivier mince : contenu voyage neuf à écrire (~10 P3
   avec audio, 6 à 8 P7) si les élèves y reviennent.
+- **Front Desk** : une journée « briefé » (toast +15 rep à l'appel du client) et une « coincé » (+45 min), trophée Open
+  for Business, `gameScores.serviceDay` distinct. Vérifié au banc le 25/09 (chemin briefé, hub, Jet Lag intact).
 - Vague de coffres **Mastery II** à partir du **26/09** (échelons I datés du 19/09 + 7 jours) : garde anti-boucle.
 - Première cérémonie **« faiblesse devenue force »** possible vers le **27/09**.
 - Home « une porte », Part 7 et P3/P4 neufs, mode écoute de Mimic Hunt, sessions en mode clair.
@@ -72,7 +78,8 @@ une décision.
   **début octobre** avant de ranger ou retirer un module (premier aperçu iabd2627 : 45 créatures créées, 0 vaincue — **normal** : une créature meurt à sa 3e réussite espacée, 1-3-7 j, premières captures le 21/09 → premières morts vers le 2/10 ; au 24/09, 34 créatures sur 104 déjà touchées, 6 chasses jouées, 0 abandon).
 
 ### En attente d'une décision de Jérémy
-- **The Waygates, suite** : mondes validés à faire, même moteur : service client / boutique, organisation d'événements. « L'affaire du jour » (mécanique
+- **The Waygates, suite** : monde validé à faire, même moteur : organisation d'événements (items traiteur et salons
+  déjà mis de côté dans `prototypes/service-day/review.jsx`, liste EVENTS). « L'affaire du jour » (mécanique
   C du proto : indices répartis sur plusieurs documents, contenu neuf à écrire) comme journée spéciale ? (Les petits QCM
   abandonnés : faits le 25/09, voir « Livré ».)
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).

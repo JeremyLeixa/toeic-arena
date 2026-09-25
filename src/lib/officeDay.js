@@ -21,6 +21,7 @@ export var PEOPLE = {
   dana: { name: "Dana Whitfield", role: "Your manager", initials: "DW", hue: 214 },
   marcus: { name: "Marcus Bell", role: "Support desk", initials: "MB", hue: 28 },
   maya: { name: "Maya Ortiz", role: "Travel coordinator", initials: "MO", hue: 170 },
+  priya: { name: "Priya Shah", role: "Customer care manager", initials: "PS", hue: 330 },
 };
 
 // Grades, réputation du profil et bornes : lib/officeGrades.js (sans données, lu aussi par App.jsx).
@@ -99,7 +100,10 @@ function dressP7(ps, rnd) {
       ask: { who: "dana", text: pick(ASK_FILE, rnd) } };
   }
   if (kind === "phone") return { kind: kind, from: "Group chat", subject: ps.type === "Online Chat" ? "Online chat" : "Text messages", ask: { who: "dana", text: pick(ASK_PHONE, rnd) } };
-  return { kind: kind, from: from ? clip(from, 48) : ps.type, subject: clip(subject || firstLine(ps.text), 60), ask: { who: "dana", text: pick(ASK_DOC, rnd) } };
+  // Une lettre sans objet commence par « Dear … » : pas un sujet de boîte de réception.
+  var subj = subject || firstLine(ps.text);
+  if (/^Dear\b/i.test(subj)) subj = "A letter";
+  return { kind: kind, from: from ? clip(from, 48) : ps.type, subject: clip(subj, 60), ask: { who: "dana", text: pick(ASK_DOC, rnd) } };
 }
 function dressP4(it, rnd) {
   var label = P4_LABEL[it.type] || it.type;
@@ -112,13 +116,15 @@ function dressP4(it, rnd) {
 // la Part 7 le plus au Reading (54 Q). 4 → 2 P7 + 1 P3 + 1 P4 ; 5 → 2 + 2 + 1 ; 6 → 3 + 2 + 1.
 var MIX = { 4: [2, 1, 1], 5: [2, 2, 1], 6: [3, 2, 1] };
 
-// rep : réputation actuelle. rnd : générateur [0,1) (injecté par les tests). world : "office" (défaut) | "travel".
+// rep : réputation actuelle. rnd : générateur [0,1) (injecté par les tests). world : "office" (défaut) | "travel" | "service".
 // Rend {grade, brief, tasks:[{id, mod, itemId, kind, from, subject, ask, at, due, ringFor, live}]}
 //   mod    "p7" | "lisP3" | "lisP4" (le module où la réponse compte : refs et moduleScores)
 //   live   true : direct à heure fixe (sonne `ringFor` minutes puis est manqué) ; false : boîte, `due`
+//   prep / prepHit : la règle « prévu = paré » des mondes qui en ont une (lib/worlds.js, WORLD_META[world].prep)
 export function composeDay(rep, rnd, world) {
   rnd = rnd || Math.random;
   if (world === "travel") return composeTravel(rep, rnd);
+  if (world === "service") return composeService(rep, rnd);
   var g = gradeOf(rep), mix = MIX[g.tasks] || MIX[4];
   var p7pool = PART7_PASSAGES.filter(function (x) { return x.questions && x.questions.length && p7Level(x.type) <= Math.max(1, g.multi); });
   // Au grade qui débloque un format, en garantir un par journée : le déblocage doit se voir.
@@ -204,7 +210,7 @@ function composeTravel(rep, rnd) {
 
   var tasks = [];
   // Le bulletin, à 9:00 : la première chose de la journée (la règle « prévu = paré » en dépend).
-  tasks.push({ mod: "lisP4", itemId: fc.id, live: true, kind: "forecast", forecast: true, forecastLabel: TRAVEL_POOL.forecast[fc.id],
+  tasks.push({ mod: "lisP4", itemId: fc.id, live: true, kind: "forecast", prep: true, prepLabel: TRAVEL_POOL.forecast[fc.id],
     from: "Radio · Weather forecast", subject: "Today's weather", ask: { who: "maya", text: "Catch the forecast before you leave." }, at: 0 });
   p7s.forEach(function (ps, i) {
     var d = dressP7(ps, rnd);
@@ -213,7 +219,7 @@ function composeTravel(rep, rnd) {
   });
   var scenes = shuffled(TRAVEL_P3_SCENES, rnd);
   var rest = p3s.map(function (it, i) { return Object.assign({ mod: "lisP3", itemId: it.id, live: true }, scenes[i % scenes.length]); });
-  var disTask = { mod: "lisP4", itemId: dis.id, live: true, kind: "announce", weatherHit: true, from: "Public announcement",
+  var disTask = { mod: "lisP4", itemId: dis.id, live: true, kind: "announce", prepHit: true, from: "Public announcement",
     subject: "An announcement for passengers", ask: { who: "maya", text: "An announcement for passengers. Listen!" } };
   // La perturbation n'arrive jamais la première : l'élève doit avoir eu le temps d'écouter le bulletin.
   rest.splice(Math.min(1, rest.length), 0, disTask);
@@ -230,6 +236,95 @@ function briefTravel(tasks) {
   var first = tasks.find(function (t) { return t.mod === "p7" && t.due != null; });
   if (first) parts.push("There's a document about your trip in your inbox: check it before " + fmtClock(first.due) + ".");
   parts.push("Listen to the weather on the radio before you leave. And keep your ears open: announcements won't wait.");
+  return parts.join(" ");
+}
+
+// ── Front Desk : le monde service client (2026-09-25) ───────────────────────────────────────
+// Vivier relu et validé par Jérémy (prototypes/service-day/review.html), rangé par rôle. SEULS ces items entrent.
+export var SERVICE_POOL = {
+  // Le point du matin sur les clients difficiles : compris en entier → le client mécontent repart calmé (variante S2).
+  huddle: ["p4_94", "p4_35"],
+  // Le client mécontent de la journée. PAS p3_04 : sa Q1 (« Why is the man calling? » → « To complain… ») serait
+  // soufflée par le toast qui annonce un client mécontent. Il reste au vivier, comme client ordinaire.
+  angry: ["p3_57", "p3_14"],
+  // Parts 3 : face au client (comptoir, téléphone) ou entre collègues (réclamations, livraisons, satisfaction).
+  p3customer: ["p3_04", "p3_35", "p3_63"],
+  p3team: ["p3_96", "p3_22", "p3_83", "p3_86", "p3_13", "p3_78"],
+  // Parts 4 : annonces aux clients du magasin (en direct), le reste habillé comme au bureau (vocal, réunion, formation).
+  p4store: ["p4_56", "p4_62", "p4_88", "p4_41", "p4_09"],
+  p4other: ["p4_72", "p4_23", "p4_54", "p4_77", "p4_98"],
+  p7: ["p7p53", "p7p48", "p7p73", "p7p64", "p7p67", "p7p15", "p7p57", "p7p22", "p7p51", "p7p7", "p7p41"],
+};
+// Habillage GÉNÉRIQUE : jamais le motif de la visite ou de l'appel (« Why is the woman returning the jacket? »).
+var SERVICE_SCENES = {
+  customer: [
+    { kind: "counter", from: "At the counter", subject: "A customer at the counter", ask: { who: "priya", text: "A customer is waiting at the counter." } },
+    { kind: "call", from: "Support line", subject: "A customer on the line", ask: { who: "priya", text: "The support line is ringing. Pick up." } },
+  ],
+  team: [
+    { kind: "chat", from: "Two colleagues", subject: "A conversation in the back office", ask: { who: "priya", text: "The team is talking about a customer issue. Listen in." } },
+    { kind: "meeting", from: "Team meeting", subject: "A quick team meeting", ask: { who: "priya", text: "Sit in on this one and tell me what was decided." } },
+  ],
+};
+var ASK_SERVICE_DOC = ["Read this before the customer calls back.", "Check the details, we'll need them at the counter.", "Have a look and tell me what we owe them."];
+// 4 tâches : point du matin + client mécontent + 1 P3 + 1 P7 ; 5 : + 1 P4 ; 6 : + 1 P7. [P3, P4, P7] hors point et client.
+var SERVICE_MIX = { 4: [1, 0, 1], 5: [1, 1, 1], 6: [1, 1, 2] };
+
+function composeService(rep, rnd) {
+  var g = gradeOf(rep), mix = SERVICE_MIX[g.tasks] || SERVICE_MIX[4];
+  var p7pool = byIds(PART7_PASSAGES, SERVICE_POOL.p7).filter(function (x) { return p7Level(x.type) <= Math.max(1, g.multi); });
+  // Au grade qui débloque un format, en garantir un par journée (le vivier a des doubles et des triples).
+  var multi = g.multi >= 2 ? shuffled(p7pool.filter(function (x) { return p7Level(x.type) === g.multi; }), rnd).slice(0, 1) : [];
+  var p7s = multi.concat(shuffled(p7pool.filter(function (x) { return multi.indexOf(x) < 0; }), rnd)).slice(0, mix[2]);
+  var p3s = shuffled(SERVICE_POOL.p3customer.concat(SERVICE_POOL.p3team), rnd).slice(0, mix[0]);
+  var p4s = shuffled(SERVICE_POOL.p4store.concat(SERVICE_POOL.p4other), rnd).slice(0, mix[1]);
+  var hud = pick(SERVICE_POOL.huddle, rnd), angry = pick(SERVICE_POOL.angry, rnd);
+
+  var tasks = [];
+  // Le point du matin, à 9:00 : la première chose de la journée (la règle « prévu = paré » en dépend).
+  tasks.push({ mod: "lisP4", itemId: hud, live: true, kind: "huddle", prep: true, from: "Morning huddle · Priya",
+    subject: "The morning huddle", ask: { who: "priya", text: "The huddle is starting. Come and listen." }, at: 0 });
+  p7s.forEach(function (ps, i) {
+    var d = dressP7(ps, rnd);
+    d.ask = { who: "priya", text: pick(ASK_SERVICE_DOC, rnd) };
+    tasks.push(Object.assign({ mod: "p7", itemId: ps.id, live: false, at: 0, due: i === 0 ? 180 : null }, d));
+  });
+  var sc = { customer: shuffled(SERVICE_SCENES.customer, rnd), team: shuffled(SERVICE_SCENES.team, rnd) }, n = { customer: 0, team: 0 };
+  var rest = p3s.map(function (id) {
+    var grp = SERVICE_POOL.p3customer.indexOf(id) >= 0 ? "customer" : "team";
+    return Object.assign({ mod: "lisP3", itemId: id, live: true }, sc[grp][n[grp]++ % sc[grp].length]);
+  });
+  p4s.forEach(function (id) {
+    var it = LISTENING_P4.find(function (x) { return x.id === id; });
+    if (SERVICE_POOL.p4store.indexOf(id) >= 0) {
+      rest.push({ mod: "lisP4", itemId: id, live: true, kind: "announce", from: "Store PA", subject: "An announcement to shoppers",
+        ask: { who: "priya", text: "Listen: customers will ask you about this." } });
+      return;
+    }
+    var d = dressP4(it, rnd); d.ask = Object.assign({}, d.ask, { who: "priya" });
+    rest.push(Object.assign({ mod: "lisP4", itemId: id, live: d.kind === "live" }, d));
+  });
+  rest = shuffled(rest, rnd);
+  var angryTask = { mod: "lisP3", itemId: angry, live: true, kind: "call", prepHit: true, from: "Support line",
+    subject: "A customer on the line", ask: { who: "priya", text: "The support line is ringing. Pick up." } };
+  // Le client mécontent n'arrive jamais le premier : l'élève doit avoir eu le temps d'écouter le point du matin.
+  rest.splice(Math.min(1, rest.length), 0, angryTask);
+  var from = 60, to = DAY_LEN - (g.ringFor + 15), step = (to - from) / rest.length;
+  rest.forEach(function (t, i) {
+    t.at = Math.floor(from + i * step + rnd() * step * 0.5);
+    if (!t.live) { var due = t.at + 150; t.due = due <= DAY_LEN - 30 ? due : null; }
+  });
+  tasks = tasks.concat(rest);
+  tasks.forEach(function (t) { if (t.live) { t.ringFor = g.ringFor; t.due = null; } else { t.ringFor = null; if (t.due === undefined) t.due = null; } });
+  tasks.sort(function (a, b) { return a.at - b.at; });
+  tasks.forEach(function (t, i) { t.id = "t" + (i + 1); });
+  return { grade: g, brief: briefService(tasks), tasks: tasks };
+}
+function briefService(tasks) {
+  var parts = ["Morning! Busy day at the store."];
+  parts.push("Join the huddle at 9:00: I'm going over difficult customers, and believe me, we'll get one today.");
+  var first = tasks.find(function (t) { return t.mod === "p7" && t.due != null; });
+  if (first) parts.push("There's something on your counter too: I need it before " + fmtClock(first.due) + ".");
   return parts.join(" ");
 }
 

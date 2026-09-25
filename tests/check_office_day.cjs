@@ -105,8 +105,8 @@ G.forEach(function (g, gi) {
     const tag = 'travel ' + g.id + '#' + s;
     ok(d.tasks.length === g.tasks, tag + ' : ' + g.tasks + ' tâches (' + d.tasks.length + ')');
     ok(typeof d.brief === 'string' && d.brief.indexOf('undefined') < 0 && /weather/.test(d.brief), tag + ' : brief qui annonce le bulletin');
-    const fc = d.tasks.filter(function (t) { return t.forecast; }), hit = d.tasks.filter(function (t) { return t.weatherHit; });
-    ok(fc.length === 1 && fc[0].at === 0 && fc[0].live && fc[0].forecastLabel, tag + ' : un bulletin, en direct à 9:00, avec son étiquette');
+    const fc = d.tasks.filter(function (t) { return t.prep; }), hit = d.tasks.filter(function (t) { return t.prepHit; });
+    ok(fc.length === 1 && fc[0].at === 0 && fc[0].live && fc[0].prepLabel && fc[0].kind === 'forecast', tag + ' : un bulletin, en direct à 9:00, avec son étiquette');
     ok(hit.length === 1 && hit[0].live && hit[0].at >= 60, tag + ' : une seule perturbation, jamais avant 10:00');
     ok(hit.length === 1 && d.tasks.some(function (t) { return t.mod === 'lisP3' && t.at < hit[0].at; }), tag + ' : au moins une conversation avant la perturbation (le temps d\'écouter le bulletin)');
     const ids = new Set();
@@ -123,11 +123,66 @@ G.forEach(function (g, gi) {
     });
   }
 });
+// ── 2c. Front Desk (monde service client, 2026-09-25) : 400 journées par grade ─────────────────────
+// Vivier relu par Jérémy, rangé par rôle. Point du matin à 9:00 (règle « prévu = paré », variante S2), un seul client
+// mécontent, jamais le premier. Habillage générique : ni le motif de l'appel, ni le lieu.
+const SP = L.SERVICE_POOL;
+ok(SP && SP.huddle && SP.angry && SP.p3customer && SP.p3team && SP.p4store && SP.p4other && SP.p7, 'Front Desk : vivier déclaré par rôle (SERVICE_POOL)');
+const SERVICE_ALL = [].concat(SP.huddle, SP.angry, SP.p3customer, SP.p3team, SP.p4store, SP.p4other, SP.p7);
+ok(new Set(SERVICE_ALL).size === SERVICE_ALL.length, 'Front Desk : aucun item dans deux rôles');
+ok(SERVICE_ALL.length === 11 + 12 + 11, 'Front Desk : le vivier validé tel quel (11 P3, 12 P4, 11 P7)');
+[['huddle', SP.huddle, LISTENING_P4], ['angry', SP.angry, LISTENING_P3], ['p3customer', SP.p3customer, LISTENING_P3], ['p3team', SP.p3team, LISTENING_P3],
+  ['p4store', SP.p4store, LISTENING_P4], ['p4other', SP.p4other, LISTENING_P4], ['p7', SP.p7, PART7_PASSAGES]].forEach(function (x) {
+  x[1].forEach(function (id) { ok(x[2].some(function (it) { return it.id === id; }), 'Front Desk : ' + x[0] + ' ' + id + ' existe dans la banque'); });
+});
+SP.huddle.forEach(function (id) { ok(/difficult/i.test(LISTENING_P4.find(function (it) { return it.id === id; }).text), 'Front Desk : le point du matin ' + id + ' porte sur les clients difficiles'); });
+// Le toast annonce un client mécontent : sa Q1 ne doit pas en dépendre (p3_04 : « Why is the man calling? » → « To complain… »).
+SP.angry.forEach(function (id) {
+  const it = LISTENING_P3.find(function (x) { return x.id === id; });
+  ok(!it.qs.some(function (q) { return /complain|upset|angry|unhappy/i.test(q.opts[q.c]); }), 'Front Desk : ' + id + ' ne se répond pas par « client mécontent »');
+});
+const SERVICE_SUBJECTS = new Set(['The morning huddle', 'A customer at the counter', 'A customer on the line', 'A conversation in the back office', 'A quick team meeting', 'An announcement to shoppers']);
+G.forEach(function (g, gi) {
+  for (let s = 0; s < 400; s++) {
+    const d = L.composeDay(g.rep, rng(70000 + 1000 * gi + s), 'service');
+    const tag = 'service ' + g.id + '#' + s;
+    ok(d.tasks.length === g.tasks, tag + ' : ' + g.tasks + ' tâches (' + d.tasks.length + ')');
+    ok(typeof d.brief === 'string' && d.brief.indexOf('undefined') < 0 && /huddle/.test(d.brief), tag + ' : brief qui annonce le point du matin');
+    const pr = d.tasks.filter(function (t) { return t.prep; }), hit = d.tasks.filter(function (t) { return t.prepHit; });
+    ok(pr.length === 1 && pr[0].at === 0 && pr[0].live && pr[0].kind === 'huddle' && SP.huddle.indexOf(pr[0].itemId) >= 0, tag + ' : un point du matin, en direct à 9:00');
+    ok(hit.length === 1 && hit[0].live && hit[0].mod === 'lisP3' && SP.angry.indexOf(hit[0].itemId) >= 0 && hit[0].at >= 60, tag + ' : un seul client mécontent, jamais avant 10:00');
+    ok(hit.length === 1 && d.tasks.some(function (t) { return !t.prep && t.at < hit[0].at && t.at > 0; }), tag + ' : une autre tâche arrive avant le client mécontent');
+    const ids = new Set();
+    d.tasks.forEach(function (t, i) {
+      ok(t.id === 't' + (i + 1), tag + ' : ids t1..tn dans l\'ordre');
+      ok(SERVICE_ALL.indexOf(t.itemId) >= 0, tag + ' : ' + t.itemId + ' hors du vivier validé');
+      ok(!ids.has(t.itemId), tag + ' : item en double ' + t.itemId); ids.add(t.itemId);
+      if (i > 0) ok(t.at >= d.tasks[i - 1].at, tag + ' : tâches triées par arrivée');
+      if (t.live) ok(t.at + t.ringFor <= L.DAY_LEN && t.ringFor === g.ringFor, tag + ' : direct à la sonnerie du grade, fini avant 17:00');
+      else ok(t.due == null || (t.due > t.at + 60 && t.due <= L.DAY_LEN), tag + ' : échéance après l\'arrivée et avant 17:00');
+      if (t.mod === 'p7') { const it = PART7_PASSAGES.find(function (x) { return x.id === t.itemId; }); ok(L.p7Level(it.type) <= Math.max(1, g.multi), tag + ' : format P7 débloqué au grade'); ok(!/^Dear\b/.test(t.subject), tag + ' : pas de « Dear … » en objet'); }
+      else if (t.mod === 'lisP3' || SP.p4store.indexOf(t.itemId) >= 0 || t.prep) ok(SERVICE_SUBJECTS.has(t.subject), tag + ' : sujet générique : ' + t.subject);
+      if (SP.p3customer.indexOf(t.itemId) >= 0) ok(t.kind === 'counter' || t.kind === 'call', tag + ' : client au comptoir ou au téléphone');
+      if (SP.p3team.indexOf(t.itemId) >= 0) ok(t.kind === 'chat' || t.kind === 'meeting', tag + ' : collègues entre eux');
+      ok([t.from, t.subject, t.ask && t.ask.text].join(' ').indexOf('undefined') < 0 && t.ask.who === 'priya', tag + ' : habillage complet, interlocutrice Priya');
+    });
+  }
+});
+ok(L.PEOPLE.priya && L.PEOPLE.priya.name === 'Priya Shah', 'Front Desk : Priya Shah déclarée (PEOPLE)');
+
 const W = require(path.join(ROOT, 'src', 'lib', 'worlds.js'));
-ok(W.WORLD_META.travel.modId === 'travel' && W.WORLD_META.travel.repKey === 'travelDay' && W.WORLD_META.travel.weather === true, 'worlds.js : Jet Lag = module travel, réputation gameScores.travelDay, météo');
-ok(W.WORLD_META.office.modId === 'office' && W.WORLD_META.office.repKey === 'officeDay', 'worlds.js : Nine to Five inchangé (office, officeDay)');
+ok(W.WORLD_META.travel.modId === 'travel' && W.WORLD_META.travel.repKey === 'travelDay' && !!W.WORLD_META.travel.prep, 'worlds.js : Jet Lag = module travel, réputation gameScores.travelDay, règle « prévu = paré »');
+ok(W.WORLD_META.service.modId === 'service' && W.WORLD_META.service.repKey === 'serviceDay' && W.WORLD_META.service.person === 'priya' && !!W.WORLD_META.service.prep, 'worlds.js : Front Desk = module service, réputation gameScores.serviceDay, Priya, règle « prévu = paré »');
+ok(W.WORLD_META.office.modId === 'office' && W.WORLD_META.office.repKey === 'officeDay' && W.WORLD_META.office.prep === null, 'worlds.js : Nine to Five inchangé (office, officeDay, sans règle)');
+Object.keys(W.WORLD_META).forEach(function (id) {
+  const m = W.WORLD_META[id];
+  ok(m.id === id && m.name && m.company && m.desk && m.wait && m.announce && m.empty && m.quit && m.quit.title && m.rules && m.rules.length === 3 && L.PEOPLE[m.person], 'worlds.js : ' + id + ' déclare tout ce que lit l\'écran');
+  if (m.prep) ['hud', 'arrive', 'doneOk', 'doneKo', 'ready', 'caught', 'reviewReady', 'reviewCaught', 'reviewCaughtTail'].forEach(function (k) { ok(typeof m.prep[k] === 'string' && m.prep[k].length > 0, 'worlds.js : ' + id + '.prep.' + k); });
+});
+ok(!/storm|rain/i.test(JSON.stringify(W.WORLD_META.travel.prep)), 'Jet Lag : la règle parle d\'anticipation, jamais d\'orage');
 ok(W.worldRep({ gameScores: { travelDay: { rep: 42 } } }, 'travel') === 42 && W.worldRep({}, 'travel') === 0, 'worldRep : lit la réputation du monde, 0 sans profil');
-ok(W.WEATHER_BONUS === 15 && W.WEATHER_DELAY === 45, 'règle « prévu = paré » : +15 rep ou +45 min (choix de Jérémy, W2)');
+ok(W.worldRep({ gameScores: { travelDay: { rep: 42 } } }, 'service') === 0, 'worldRep : chaque monde a sa réputation');
+ok(W.PREP_BONUS === 15 && W.PREP_DELAY === 45, 'règle « prévu = paré » : +15 rep ou +45 min (choix de Jérémy, W2 / S2)');
 ok(!/^import /m.test(fs0.readFileSync(path.join(ROOT, 'src', 'lib', 'worlds.js'), 'utf8')), 'lib/worlds.js sans import (pur, sans données)');
 
 // ── 3. Réputation, XP, étoiles ────────────────────────────────────────────────────────────────
@@ -159,7 +214,7 @@ ok(/Math\.min\(REP_MAX_GAIN/.test(od) && /c\.gameScores\[W\.repKey\]=/.test(od),
 ok(/prepared:extra&&extra\.prepared/.test(od), 'worldDone : « paré » rangé dans l\'historique (trophée Weather-wise)');
 ok(/recordMisses\(c\.review,mistakes/.test(od), 'worldDone : les erreurs entrent au bestiaire');
 ok(/trackModSession, u, worldDone\}\)/.test(APP) && /trackModSession, u, worldDone\}=c;/.test(ROUTES), 'worldDone passé au contexte de renderRoute (appel ET déstructuration)');
-['office', 'travel'].forEach(function (w) {
+['office', 'travel', 'service'].forEach(function (w) {
   ok(new RegExp('if\\(sp==="' + w + '"\\)return pg\\(<WorldDay key="' + w + '" world="' + w + '" [^\\n]*done=\\{function\\(sc,tot,xp,mistakes,extra\\)\\{return worldDone\\("' + w + '",sc,tot,xp,mistakes,extra\\);\\}\\}').test(ROUTES), 'route ' + w + ' → WorldDay monde ' + w + ', worldDone, sid rendu');
 });
 ok(/if\(sp==="waygates"\)return pg\(<Waygates /.test(ROUTES), 'route waygates');
@@ -167,12 +222,16 @@ ok(/lazyNamed\(function\(\)\{return import\("\.\/features\/waygates\/WorldDay\.j
 ok(!/from "[./]*\/lib\/officeDay\.js"/.test(APP) && !/from "[./]*\/lib\/officeDay\.js"/.test(GAMES) && !/from "[./]*\/lib\/officeDay\.js"/.test(HUB), 'App.jsx, GamesHub et le hub lisent officeGrades.js / worlds.js, jamais officeDay.js (qui importe les banques)');
 ok(!/^import /m.test(read('src/lib/officeGrades.js')), 'lib/officeGrades.js sans import (pur, sans données)');
 const selfManaged = (APP.match(/var SELF_MANAGED=\[([^\]]*)\]/) || ['', ''])[1];
-ok(selfManaged.indexOf('"office"') < 0 && selfManaged.indexOf('"travel"') < 0, 'office et travel hors SELF_MANAGED : l\'effet central coupe la musique (écoute des Parts 3 et 4)');
-// La règle « prévu = paré » (W2) : le bulletin compris en entier décide ; la perturbation déclenche UNE fois.
-ok(/var hit = W\.weather \? arrivals\.find\(function \(t\) \{ return t\.weatherHit; \}\) : null;/.test(SCREEN) && /if \(hit && !wxRef\.current\.hit\)/.test(SCREEN), 'écran : la perturbation déclenche la règle une seule fois, dans les mondes à météo');
-ok(/bonus: WEATHER_BONUS/.test(SCREEN) && /m \+ WEATHER_DELAY/.test(SCREEN), 'écran : paré = +WEATHER_BONUS rep, sinon +WEATHER_DELAY min');
-ok(/var prepared = ok === t\.qs\.length;/.test(SCREEN), 'écran : paré = bulletin compris EN ENTIER');
-ok(/\{ id: "travel", icon: "commercial-airplane"/.test(HUB), 'hub : carte Jet Lag');
+ok(selfManaged.indexOf('"office"') < 0 && selfManaged.indexOf('"travel"') < 0 && selfManaged.indexOf('"service"') < 0, 'office, travel et service hors SELF_MANAGED : l\'effet central coupe la musique (écoute des Parts 3 et 4)');
+// La règle « prévu = paré » (Jet Lag W2, Front Desk S2) : la préparation comprise en entier décide ; la tâche qui en
+// dépend déclenche UNE fois, et seulement dans les mondes qui déclarent la règle.
+ok(/var hit = W\.prep \? arrivals\.find\(function \(t\) \{ return t\.prepHit; \}\) : null;/.test(SCREEN) && /if \(hit && !wxRef\.current\.hit\)/.test(SCREEN), 'écran : la tâche prepHit déclenche la règle une seule fois, dans les mondes à W.prep');
+ok(/bonus: PREP_BONUS/.test(SCREEN) && /m \+ PREP_DELAY/.test(SCREEN), 'écran : paré = +PREP_BONUS rep, sinon +PREP_DELAY min');
+ok(/if \(t\.prep && W\.prep\) \{[\s\S]{0,200}var prepared = ok === t\.qs\.length;/.test(SCREEN), 'écran : paré = préparation comprise EN ENTIER');
+ok(/prepared: W\.prep \? wx\.hit === "ready" : undefined/.test(SCREEN), 'écran : « paré » envoyé à worldDone (trophées Weather-wise, Keep Calm)');
+ok(!/weather|forecastLabel/i.test(SCREEN.replace(/forecast: "(raining|Weather forecast)"/g, '').replace(/t\.kind === "forecast"/g, '')), 'écran : plus aucun cas particulier météo (tout vient de lib/worlds.js)');
+ok(/\{ id: "travel", icon: "commercial-airplane"/.test(HUB) && /\{ id: "service", icon: "shopping-bag"/.test(HUB), 'hub : cartes Jet Lag et Front Desk');
+ok(/"shopping-bag":/.test(read('src/data/avatarIcons.js')) && /"conversation":/.test(read('src/data/avatarIcons.js')) && /"ringing-bell":/.test(read('src/data/avatarIcons.js')), 'icônes de Front Desk présentes (sac, point du matin, comptoir)');
 
 // L'écran : options permutées, refs relisibles par la chasse, audio interruptible, envoi à la fin, jetons de thème.
 ok(/shufP7\(/.test(SCREEN) && /shufListeningItem\)/.test(SCREEN), 'écran : options permutées (shufP7, shufListeningItem)');
@@ -232,6 +291,22 @@ const t2 = { stats: {}, moduleScores: { travel: { sessions: 9, history: [{ prepa
 ok(!ach('travel_weatherwise').check(t2), 'Weather-wise : 3 journées « paré », pas 2');
 ok(!ach('travel_promoted').check(t2) && !ach('travel_veteran').check(t2), 'Upgraded à 250 rep, Frequent Flyer à 10 journées');
 ok(!ach('office_first').check(t1) && !ach('travel_first').check(u1), 'les trophées d\'un monde ne se gagnent pas dans l\'autre');
+
+// Front Desk : mêmes règles, ses 4 trophées. Keep Calm lit `prepared` dans l'historique du module service.
+ok(require(path.join(ROOT, 'src', 'lib', 'hubStatus.js')).MASTERY_BLACKLIST.service === 1, 'service en liste noire de maîtrise (pas de double coffre)');
+ok(/service:\{part:null,section:null,score:true\}/.test(TOEIC), 'MODULE_TOEIC_MAP.service : ni part ni section');
+ok(!/"service"|id:"service"/.test((TOEIC.match(/var READING_MODS[\s\S]*?var lisParts=[^\n]*/) || [''])[0]), 'service hors des tables de poids');
+const s1 = { stats: {}, moduleScores: { service: { sessions: 10, history: [{ prepared: true }, { prepared: true }, { prepared: false }, { prepared: true }] } }, gameScores: { serviceDay: { rep: 250, days: 10 } } };
+const s2 = { stats: {}, moduleScores: { service: { sessions: 9, history: [{ prepared: true }, { prepared: true }, { prepared: false }, {}] } }, gameScores: { serviceDay: { rep: 249, days: 9 } } };
+['service_first', 'service_veteran', 'service_promoted', 'service_calm'].forEach(function (id) {
+  ok(!!ach(id), 'trophée ' + id + ' déclaré');
+  if (ach(id)) { ok(ach(id).check(s1), 'trophée ' + id + ' obtenu quand il le faut'); ok(!ach(id).check(u0), 'trophée ' + id + ' refusé à un profil neuf'); }
+});
+ok(!ach('service_calm').check(s2), 'Keep Calm : 3 journées « paré », pas 2');
+ok(!ach('service_promoted').check(s2) && !ach('service_veteran').check(s2), 'Employee of the Month à 250 rep, Regular Staff à 10 journées');
+ok(!ach('service_calm').check(t1) && !ach('travel_weatherwise').check(s1) && !ach('service_first').check(u1), 'Front Desk et les autres mondes ne se prêtent pas leurs trophées');
+ok(['usageStats.js', 'chestLabels.js'].every(function (f) { return /service: "Front Desk"/.test(read('src/lib/' + f)); }) && /id:"service",label:"The Waygates · Front Desk"/.test(read('src/lib/feedbackModules.js'))
+  && /service:"Front Desk"/.test(read('src/features/teacher/TeacherDash.jsx')) && /\{id:"service",name:"Front Desk"\}/.test(read('src/features/teacher/TeacherDash.jsx')), 'libellé « Front Desk » : Usage, coffres, feedback, formateur (liste et export)');
 
 console.log((fails ? 'ÉCHEC' : 'OK') + ' — Nine to Five : ' + checks + ' contrôles' + (fails ? ', ' + fails + ' en échec' : ''));
 process.exit(fails ? 1 : 0);

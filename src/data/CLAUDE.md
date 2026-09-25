@@ -115,7 +115,7 @@ All content is imported at build time. No dynamic fetching. Files use `export va
 ```js
 { id: "first_blood", name: "First Blood", desc: "...", icon: "⚔️", check: (s) => s.xp > 0 }
 ```
-83 achievements (incl. 25 Gauntlet, 4 Word Tavern, 4 Duel, 4 Modal Council, 4 Mimic Hunt, 4 Nine to Five, 4 Jet Lag). `check` is a predicate function on student profile.
+87 achievements (incl. 25 Gauntlet, 4 Word Tavern, 4 Duel, 4 Modal Council, 4 Mimic Hunt, 4 Nine to Five, 4 Jet Lag, 4 Front Desk). `check` is a predicate function on student profile.
 
 ### leagues.js — `LEAGUES`
 ```js

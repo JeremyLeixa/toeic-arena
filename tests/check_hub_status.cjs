@@ -53,7 +53,7 @@ eq('absent → non', H.isMastered(undefined), false);
 // mimic y a été du 2026-09-18 au 2026-09-19, le temps que sa banque passe de 12 à 60 items
 // (tests/check_mimic_items.cjs lie sa présence à la taille de la banque).
 // mimic_listen y a été le 2026-09-19, le temps que le mode écoute passe de 21 à 45 sources parlées (même règle).
-eq('liste noire = mocks, boss, daily, flashcards, chasse, Nine to Five (ses réponses font déjà avancer lisP3/lisP4/p7)', Object.keys(H.MASTERY_BLACKLIST).sort(), ['boss', 'csess', 'daily', 'hunt', 'mock1', 'mock2', 'mock3', 'office', 'travel']);
+eq('liste noire = mocks, boss, daily, flashcards, chasse, Nine to Five (ses réponses font déjà avancer lisP3/lisP4/p7)', Object.keys(H.MASTERY_BLACKLIST).sort(), ['boss', 'csess', 'daily', 'hunt', 'mock1', 'mock2', 'mock3', 'office', 'service', 'travel']);
 
 // 2. Module
 const wf = st({ id: 'wordfam' });

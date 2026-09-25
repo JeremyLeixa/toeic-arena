@@ -97,8 +97,11 @@ Ce que la suite protège, et pourquoi :
 - **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
   et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
 - **`check_office_day`** — The Waygates (`lib/officeDay.js`, `lib/officeGrades.js`, `lib/worlds.js`). Jet Lag : bulletin
-  à 9:00, une seule perturbation après au moins une P3, vivier validé seul, sujets génériques, règle W2 câblée, `travel`
-  dans les mêmes listes qu'`office` et trophées qui ne croisent pas les mondes. Nine to Five : des centaines de journées tirées
+  à 9:00, une seule perturbation après au moins une P3, vivier validé seul, sujets génériques, `travel` dans les mêmes
+  listes qu'`office` et trophées qui ne croisent pas les mondes. Front Desk : point du matin à 9:00, un seul client
+  mécontent jamais le premier et dont aucune bonne réponse ne dit « complain » (le toast la soufflerait), P3 client /
+  collègues habillés selon leur groupe, pas de « Dear … » en objet, libellés et trophées. Règle « prévu = paré »
+  générique : écran sans aucun cas particulier par monde, chaque monde déclare tous les textes que l'écran lit. Nine to Five : des centaines de journées tirées
   par grade, chacune dans 9:00-17:00 (un direct finit de sonner avant 17:00, une échéance tombe après l'arrivée), sans
   item en double, au format P7 du grade (double à Associate, triple à Team Lead, et garanti le jour du déblocage),
   sujet de P3 générique (un sujet tiré du contenu trahit la Q1) ; horloge jamais plus clémente en montant ; réputation

@@ -2,7 +2,9 @@
 //   world="office" : Nine to Five, une journée chez Meridian Harbor Group (proto prototypes/office-day/, V3)
 //   world="travel" : Jet Lag, un déplacement d'affaires, avec bulletin météo et règle « prévu = paré »
 //                    (proto prototypes/travel-day/, variante W2 choisie par Jérémy)
-// Ce que chaque monde déclare : lib/worlds.js (décor, libellés, réputation). Composition des journées, grades,
+//   world="service": Front Desk, un samedi au service client d'un grand magasin ; même règle, point du matin →
+//                    client mécontent (proto prototypes/service-day/, variante S2)
+// Ce que chaque monde déclare : lib/worlds.js (décor, libellés, textes, règle « prévu = paré », réputation). Composition des journées, grades,
 // réputation et XP : lib/officeDay.js (pur, testé). Ajouter un monde = une entrée dans WORLD_META, son vivier et son
 // habillage dans officeDay.js, sa carte dans Waygates.jsx, sa route : jamais une copie de cet écran.
 //
@@ -18,7 +20,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { LISTENING_P3, LISTENING_P4 } from "../../data/listening.js";
 import { PART7_PASSAGES } from "../../data/part7.js";
 import { DAY_LEN, PEOPLE, REPLAY_COST, composeDay, dayStars, dayXp, fmtClock, gradeOf, nextGrade, repGain } from "../../lib/officeDay.js";
-import { WEATHER_BONUS, WEATHER_DELAY, worldMeta, worldRep } from "../../lib/worlds.js";
+import { PREP_BONUS, PREP_DELAY, worldMeta, worldRep } from "../../lib/worlds.js";
 import { shufListeningItem } from "../../lib/listeningShuffle.js";
 import { shufP7 } from "../../lib/optionShuffle.js";
 import { playAudioFile, resumeAudioSession, stopCurrentListenAudio, stopListenAudio } from "../../lib/audio.js";
@@ -145,12 +147,14 @@ function buildTask(t) {
   return Object.assign({}, t, { text: tk.text, qs: flat(tk.qs.map(shufListeningItem), { opts: "opts", c: "c" }), audio: ["/audio/p4/" + tk.id + ".mp3"] });
 }
 var ICON = { mail: "envelope", doc: "scroll-unfurled", phone: "smartphone", file: "files", chat: "coffee-cup", call: "rotary-phone", meeting: "round-table", live: "megaphone", voicemail: "microphone",
-  forecast: "raining", announce: "megaphone" };
+  forecast: "raining", announce: "megaphone", huddle: "conversation", counter: "ringing-bell" };
 var LABEL = { mail: "Email", doc: "Document", phone: "Messages", file: "Case file", chat: "Conversation", call: "Call", meeting: "Meeting", voicemail: "Voicemail",
-  forecast: "Weather forecast", announce: "Announcement" };
+  forecast: "Weather forecast", announce: "Announcement", huddle: "Morning huddle", counter: "Counter" };
 function labelOf(t) { return t.kind === "live" ? t.from : t.kind === "mail" || t.kind === "doc" ? (t.docType || LABEL[t.kind]) : LABEL[t.kind] || "Task"; }
-// Bouton d'un direct : on décroche un appel, on écoute une annonce ou un bulletin, on rejoint le reste.
-function pickLabel(t) { return t.kind === "call" ? "Pick up" : t.kind === "forecast" || t.kind === "announce" ? "Listen" : "Join"; }
+// Bouton d'un direct : on décroche un appel, on sert un client, on écoute une annonce ou un bulletin, on rejoint le reste.
+function pickLabel(t) { return t.kind === "call" ? "Pick up" : t.kind === "counter" ? "Serve" : t.kind === "forecast" || t.kind === "announce" ? "Listen" : "Join"; }
+// Les règles de l'accueil (lib/worlds.js) : [texte, gras, texte].
+function Rule(p) { return <li>{p.r[0]}{p.r[1] && <b>{p.r[1]}</b>}{p.r[2]}</li>; }
 function isAudio(t) { return t.mod !== "p7"; }
 function initState(tasks) {
   var s = {};
@@ -187,8 +191,8 @@ export function WorldDay(p) {
   var [playing, setPlaying] = useState(false);
   var [showScript, setShowScript] = useState(false);
   var [toast, setToast] = useState(null);
-  // Météo (mondes W.weather) : connue une fois le bulletin traité ; `prepared` = bulletin compris en entier ; `hit` posé
-  // quand la perturbation arrive (« ready » : bonus, « caught » : retard). Une seule fois par journée.
+  // « Prévu = paré » (mondes à W.prep) : connue une fois la tâche `prep` traitée (bulletin, point du matin) ; `prepared` =
+  // comprise en entier ; `hit` posé quand la tâche `prepHit` arrive (« ready » : bonus, « caught » : retard). Une fois par journée.
   var [wx, setWx] = useState({ known: false, label: null, prepared: false, bonus: 0, hit: null });
   var wxRef = useRef(wx); wxRef.current = wx;
   var track = useSessionTrack();
@@ -230,24 +234,24 @@ export function WorldDay(p) {
       Object.keys(changes).forEach(function (id) { n[id] = Object.assign({}, prev[id], changes[id]); });
       return n;
     });
-    // « Prévu = paré » (Jet Lag) : la perturbation tombe. Bulletin compris en entier → l'élève avait prévu de la marge
-    // (bonus) ; sinon → coincé, l'horloge saute. Le message parle d'anticipation, jamais d'orage : une seule des
-    // perturbations du vivier est due à la météo (p4_02).
-    var hit = W.weather ? arrivals.find(function (t) { return t.weatherHit; }) : null;
+    // « Prévu = paré » : la tâche qui en dépend arrive (perturbation, client mécontent). Préparation comprise en entier
+    // → bonus ; sinon l'horloge saute. Les textes sont ceux du monde (lib/worlds.js) : Jet Lag parle d'anticipation,
+    // jamais d'orage (une seule perturbation du vivier est due à la météo).
+    var hit = W.prep ? arrivals.find(function (t) { return t.prepHit; }) : null;
     if (hit && !wxRef.current.hit) {
       if (wxRef.current.prepared) {
-        setWx(function (w) { return Object.assign({}, w, { hit: "ready", bonus: WEATHER_BONUS }); });
-        say("You planned ahead: the delay doesn't catch you out · +" + WEATHER_BONUS + " rep");
+        setWx(function (w) { return Object.assign({}, w, { hit: "ready", bonus: PREP_BONUS }); });
+        say(W.prep.ready + " · +" + PREP_BONUS + " rep");
       } else {
         setWx(function (w) { return Object.assign({}, w, { hit: "caught" }); });
-        setMin(function (m) { return Math.min(DAY_LEN, m + WEATHER_DELAY); });
-        say("Caught out at the gate · +" + WEATHER_DELAY + " min");
+        setMin(function (m) { return Math.min(DAY_LEN, m + PREP_DELAY); });
+        say(W.prep.caught + " · +" + PREP_DELAY + " min");
       }
       return;
     }
     var a = arrivals.filter(function (t) { return t.at > 0; }).pop();
     if (a) say(a.live ? (a.kind === "chat" ? (W.id === "office" ? "Colleagues at the coffee machine" : "People talking nearby")
-      : a.kind === "call" ? "Incoming call" : a.kind === "forecast" ? "Weather forecast on the radio" : a.kind === "announce" ? "Announcement for passengers" : a.from + " starting now")
+      : a.kind === "call" ? "Incoming call" : a.kind === "counter" ? "A customer at the counter" : a.prep ? W.prep.arrive : a.kind === "announce" ? W.announce : a.from + " starting now")
       : a.kind === "voicemail" ? "New voicemail" : "New " + labelOf(a).toLowerCase() + (W.id === "office" ? " on your desk" : ""));
     else if (lost.length) say("Missed · " + labelOf(lost[0]));
   }, [minute, phase]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -277,7 +281,7 @@ export function WorldDay(p) {
     var clean = rows.every(function (r) { return r.done && r.onTime; });
     sidRef.current = p.done(sc, answered, dayXp(sc, answered, clean), mistakesRef.current,
       { modId: W.modId, world: W.id, parts: parts, repGain: gain, onTime: rows.filter(function (r) { return r.onTime; }).length, tasks: rows.length, stars: dayStars(sc, totalQs),
-        prepared: W.weather ? wx.hit === "ready" : undefined });
+        prepared: W.prep ? wx.hit === "ready" : undefined });
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Audio ──
@@ -329,11 +333,11 @@ export function WorldDay(p) {
     var late = t.due != null && minRef.current > t.due;
     patch(view, { status: "done", doneAt: minRef.current });
     hush(); setView(null);
-    if (t.forecast) {
-      // Le bulletin : la météo s'affiche en haut ; compris en entier = paré pour la perturbation du jour.
+    if (t.prep && W.prep) {
+      // La préparation (bulletin, point du matin) : son état s'affiche en haut ; comprise en entier = paré.
       var prepared = ok === t.qs.length;
-      setWx(function (w) { return Object.assign({}, w, { known: true, label: t.forecastLabel, prepared: prepared }); });
-      say(t.forecastLabel + " today · " + (prepared ? "you're ready for it" : "some details slipped past you"));
+      setWx(function (w) { return Object.assign({}, w, { known: true, label: t.prepLabel || null, prepared: prepared }); });
+      say((t.prepLabel ? t.prepLabel + " today" : W.prep.doneLead) + " · " + (prepared ? W.prep.doneOk : W.prep.doneKo));
       return;
     }
     say((W.id === "office" ? "Filed · " : "Done · ") + ok + "/" + t.qs.length + (late ? " · late" : "") + " · +" + (ok * 4 + (late ? 0 : 6)) + " rep");
@@ -362,19 +366,7 @@ export function WorldDay(p) {
           {nx0 && <><span className="nf-bar"><i style={{ width: (100 * (rep0 - grade.rep) / (nx0.rep - grade.rep)) + "%" }} /></span>
             <div className="nf-small">{rep0 + " / " + nx0.rep + " rep · next: "}<b>{nx0.name}</b></div></>}
         </div>
-        {W.weather ? (
-          <ul className="nf-rules">
-            <li>Your day runs from <b>9:00 to 17:00</b>. Your trip can change at any time.</li>
-            <li><b>Announcements don{"'"}t wait.</b> Read the questions while you listen.</li>
-            <li>Listen to the forecast carefully: <b>travellers who plan ahead don{"'"}t get stuck.</b></li>
-          </ul>
-        ) : (
-          <ul className="nf-rules">
-            <li>Your day runs from <b>9:00 to 17:00</b>. Work comes in all day.</li>
-            <li><b>Calls and meetings don{"'"}t wait.</b> Read the questions while you listen.</li>
-            <li>Whatever is still on your desk at 17:00 stays undone.</li>
-          </ul>
-        )}
+        <ul className="nf-rules">{W.rules.map(function (r, i) { return <Rule key={i} r={r} />; })}</ul>
         <button className="btn1" onClick={function () { setPhase("day"); }}>Start the day</button>
       </div></>);
   }
@@ -384,15 +376,13 @@ export function WorldDay(p) {
     if (!answered) return (<><style>{NF_CSS}</style>
       <div className="enter nf-intro">
         <div className="nf-time out">17:00</div>
-        <div className="crd nf-review"><Avatar who={W.person} /><p>{W.weather
-          ? "Nothing got handled today. Tomorrow, start with the forecast at 9:00: the rest of the trip follows."
-          : "Nothing got filed today. Tomorrow, start with the desk: the first email is right there at 9:00."}</p></div>
+        <div className="crd nf-review"><Avatar who={W.person} /><p>{W.empty}</p></div>
         <button className="btn1" onClick={p.back}>Back to the Waygates</button>
       </div></>);
     return (<><style>{NF_CSS}</style>
       <SessionResult session={p.session} sid={sidRef.current} name={W.name} mistakes={mistakesRef.current}
         onContinue={function () { p.closeSession(); p.back(); }} onReplay={p.replaySession}>
-        <DayReview rows={rows} sc={sc} totalQs={totalQs} rep0={rep0} gain={gain} person={W.person} hit={W.weather ? wx.hit : null} />
+        <DayReview rows={rows} sc={sc} totalQs={totalQs} rep0={rep0} gain={gain} person={W.person} hit={W.prep ? wx.hit : null} prep={W.prep} />
       </SessionResult></>);
   }
 
@@ -406,10 +396,8 @@ export function WorldDay(p) {
     <SessionTop n={totalQs} cur={fb ? Math.max(0, answeredNow - 1) : answeredNow} results={track.results} streak={track.streak} onQuit={p.back}
       onSheet={function (on) { pausedRef.current = on; }}
       aside={<span className={"nf-clock" + (min >= DAY_LEN - 60 ? " late" : "")}>{fmtClock(min)}</span>}
-      sub={(W.weather ? "Weather: " + (wx.known ? wx.label : "?") + " · " : "") + grade.name + (nx ? " · " + (rep0 + gain) + " / " + nx.rep + " rep" : "")}
-      quitCopy={W.weather
-        ? { title: "Cancel the trip?", body: "Today's answers won't be saved.", stay: "Keep travelling", leave: "Leave" }
-        : { title: "Leave the office?", body: "Today's answers won't be saved.", stay: "Back to work", leave: "Leave" }} />
+      sub={(W.prep ? W.prep.hud + ": " + (wx.known ? wx.label || (wx.prepared ? W.prep.okWord : W.prep.koWord) : "?") + " · " : "") + grade.name + (nx ? " · " + (rep0 + gain) + " / " + nx.rep + " rep" : "")}
+      quitCopy={W.quit} />
     <ComboBanner combo={track.combo} />
     {!cur && <Desk tasks={tasks} st={st} min={min} onOpen={open} onSkip={skipAhead} deskTitle={W.desk} waitLabel={W.wait} />}
     {cur && <Task t={cur} s={cs} fb={fb} playing={playing} showScript={showScript} min={min}
@@ -595,7 +583,7 @@ function DayReview(p) {
     <div className="crd" style={{ padding: 14 }}>
       <div className="nf-stars">{[0, 1, 2].map(function (i) { return <span key={i} className={i < stars ? "on" : ""}>★</span>; })}</div>
       <div className="nf-review"><Avatar who={p.person} /><p>{review}</p></div>
-      {p.hit && <div className="nf-review"><Avatar who={p.person} /><p>{p.hit === "ready" ? "You planned ahead: the delay didn't catch you out (+" + WEATHER_BONUS + " rep)." : "The delay caught you out at the gate: " + WEATHER_DELAY + " minutes lost. Travellers who check the forecast leave themselves a margin."}</p></div>}
+      {p.hit && <div className="nf-review"><Avatar who={p.person} /><p>{p.hit === "ready" ? p.prep.reviewReady + " (+" + PREP_BONUS + " rep)." : p.prep.reviewCaught + ": " + PREP_DELAY + " minutes lost. " + p.prep.reviewCaughtTail}</p></div>}
       {rows.map(function (r) {
         return (
           <div key={r.t.id} className="nf-end-row">
