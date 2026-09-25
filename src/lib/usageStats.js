@@ -12,6 +12,7 @@
 // missions faites et 0 abandon.
 import { MISSION_MODULES } from "../data/placement.js";
 import { QUIT_PREFIX } from "./sessionQuit.js";
+import { GAUNTLET_MODS } from "./gauntletTrials.js";
 
 export var CAPTURE_START = "2026-09-23";
 
@@ -31,8 +32,9 @@ export function moduleLabel(id) {
 
 // Id de module (clé de partie) → famille = la route qui la joue, pour que parties et abandons
 // (rangés par route : SessionTop ne connaît que sp) se comparent. Les épreuves des hubs comptent au hub.
+// connsort / prepdrill / gerinf : épreuves du Gauntlet depuis le 2026-09-25, sous leurs ids d'origine (sans préfixe).
 export function familyOf(modId) {
-  if (modId.indexOf("gauntlet_") === 0) return "gauntlet";
+  if (modId.indexOf("gauntlet_") === 0 || GAUNTLET_MODS.indexOf(modId) >= 0) return "gauntlet";
   if (modId.indexOf("modals_") === 0) return "modals";
   if (modId === "mimic_listen") return "mimic";
   return modId;

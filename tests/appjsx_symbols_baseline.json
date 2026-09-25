@@ -240,6 +240,10 @@
     "MentorDailyMission": "carte de mission du Mentor, qui écrivait u.mission PENDANT le rendu ; remplacé par le plan du jour figé (lib/planner.js dayMission/stakePart, lot 4 du Mentor) — supprimé 2026-09-18 (feuille Today's Path)",
     "TodayFocusBanner": "bannière du Focus, remplacé par le plan du jour figé (lib/planner.js dayMission/stakePart, lot 4 du Mentor) — supprimé 2026-09-18 (la quête « enjeu » porte son +25 %)",
     "pickAdaptive": "tirage pondéré 60/40 du Drill, remplacé par la manche composée par le plan (lib/planner.js drillComposition, lot 5 du Mentor) — supprimé 2026-09-18",
-    "generateInsight": "jeton Insight sur la précision cumulée par module, remplacé par lib/mentorVoice.js insightText (points en jeu, catégorie, bestiaire) rangé dans review.insights (lot 6 du Mentor) — supprimé 2026-09-18"
+    "generateInsight": "jeton Insight sur la précision cumulée par module, remplacé par lib/mentorVoice.js insightText (points en jeu, catégorie, bestiaire) rangé dans review.insights (lot 6 du Mentor) — supprimé 2026-09-18",
+    "ConnSort": "Connectors Sorting, remplacé par l'épreuve Knotbinder du Grammar Gauntlet (features/gauntlet/Gauntlet.jsx), même module connsort — supprimé 2026-09-25",
+    "PrepDrill": "Preposition Collocations, remplacé par l'épreuve Anchor Hall du Grammar Gauntlet (features/gauntlet/Gauntlet.jsx), même module prepdrill — supprimé 2026-09-25",
+    "StudyGroup": "Study Mode de PrepDrill, qu'Anchor Hall ne reprend pas (un grimoire des prépositions le remplace) — supprimé 2026-09-25",
+    "GerInf": "Gerund vs Infinitive, remplacé par l'épreuve Twin Paths du Grammar Gauntlet (features/gauntlet/Gauntlet.jsx), même module gerinf — supprimé 2026-09-25"
   }
 }

@@ -6,7 +6,8 @@ import { CardSess } from "./features/home/Cards.jsx";
 import { Daily } from "./features/home/Daily.jsx";
 import { Shop } from "./features/shop/Shop.jsx";
 import { UpgradeScreen } from "./features/shop/UpgradeScreen.jsx";
-import { ConnSort, Drill, FalseFriends, GerInf, GrammarRef, LinkingBridge, PhrasalDojo, PrepDrill, TrapsQuiz, WordFam } from "./features/train/grammar.jsx";
+import { Drill, FalseFriends, GrammarRef, LinkingBridge, PhrasalDojo, TrapsQuiz, WordFam } from "./features/train/grammar.jsx";
+import { gauntletModId } from "./lib/gauntletTrials.js";
 import { AboutToeic, StratCards, StratQuizPage } from "./features/train/strategy.jsx";
 import { checkMission, recordModule } from "./lib/progress.js";
 import { recordMisses } from "./lib/review.js";
@@ -62,14 +63,11 @@ export function renderRoute(c){
   // Chasse aux erreurs : pas de Play again (la file du jour est vidée), retour au Mentor où vit le bestiaire.
   if(sp==="hunt")return pg(<MistakeHunt u={u} nav={nav} done={huntDone} session={lastSession} closeSession={closeSession} back={function(){sSP(null);sT("mentor");}}/>);
   if(sp==="wordfam")return pg(<WordFam u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
-  if(sp==="connsort")return pg(<ConnSort u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="bforge"){if(!lastSession)playBGM("bgm_bridge");return pg(<LinkingBridge u={u} done={function(sc,tot,xp,mistakes){stopBGM();return miniSession(sc,tot,xp,mistakes);}} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);}
-  if(sp==="prepdrill")return pg(<PrepDrill u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
-  if(sp==="gerinf")return pg(<GerInf u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="traps")return pg(<TrapsQuiz u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(3);sT("train");}}/>);
   if(sp==="falsefr")return pg(<FalseFriends u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="pvdojo")return pg(<PhrasalDojo u={u} done={miniSession} session={lastSession} closeSession={closeSession} replaySession={replaySession} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
-  if(sp==="gauntlet")return pg(<GauntletHub u={u} nav={nav} session={lastSession} closeSession={closeSession} onModuleDone={function(subId,sc,tot,xp,mistakes){var fullModId="gauntlet_"+subId;var s=settleSession(fullModId,sc,tot,xp,{spotlight:true});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,fullModId);recordModule(c,fullModId,sc,tot);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,fullModId);if(sc===tot&&tot>0)grantWeeklyChest(fullModId+"_perfect","guerrier");sealSession(c,s.sid);sv(c);return s.sid;}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);
+  if(sp==="gauntlet")return pg(<GauntletHub u={u} nav={nav} session={lastSession} closeSession={closeSession} onModuleDone={function(subId,sc,tot,xp,mistakes){var fullModId=gauntletModId(subId);var s=settleSession(fullModId,sc,tot,xp,{spotlight:true});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,fullModId);recordModule(c,fullModId,sc,tot);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,fullModId);if(sc===tot&&tot>0)grantWeeklyChest(fullModId+"_perfect","guerrier");sealSession(c,s.sid);sv(c);return s.sid;}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="modals")return pg(<ModalCouncilHub u={u} nav={nav} session={lastSession} closeSession={closeSession} onModuleDone={function(subId,sc,tot,xp,mistakes){var fullModId="modals_"+subId;var s=settleSession(fullModId,sc,tot,xp,{spotlight:true});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,fullModId);recordModule(c,fullModId,sc,tot);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,fullModId);if(sc===tot&&tot>0)grantWeeklyChest(fullModId+"_perfect","guerrier");sealSession(c,s.sid);sv(c);return s.sid;}} back={function(){stopBGM();sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="mock1")return pg(<MockTest mockId={1} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);
   if(sp==="mock2")return pg(<MockTest mockId={2} u={u} done={mockDone} back={function(){sSP(null);sSPA("mocks");sT("train");}}/>);

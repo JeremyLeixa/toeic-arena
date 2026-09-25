@@ -36,6 +36,8 @@ const byId = (r, id) => r.modules.find(m => m.id === id);
 eq('clé de partie', U.parseKey('drill_2026-10-01'), { id: 'drill', date: '2026-10-01', quit: false });
 eq('clé d\'abandon', U.parseKey('quit:drill_2026-10-01'), { id: 'drill', date: '2026-10-01', quit: true });
 eq('épreuve de hub → famille', U.parseKey('gauntlet_irregular_2026-10-01').id, 'gauntlet');
+// Knotbinder, Anchor Hall, Twin Paths : épreuves du Gauntlet (2026-09-25) sous leurs ids d'origine, sans préfixe.
+['connsort', 'prepdrill', 'gerinf'].forEach(function (m) { eq(m + ' → famille gauntlet', U.parseKey(m + '_2026-10-01').id, 'gauntlet'); });
 eq('mimic_listen → mimic', U.parseKey('mimic_listen_2026-10-01').id, 'mimic');
 eq('clé sans date → ignorée', U.parseKey('drill'), null);
 eq('clé sans séparateur → ignorée', U.parseKey('x2026-10-01'), null);

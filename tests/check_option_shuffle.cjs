@@ -65,7 +65,7 @@ const MODULES = [
   { file: 'features/games/AudioBlitz.jsx', fn: 'AudioBlitz', bank: 'AUDIO_BLITZ', ok: 'opts', ck: 'c' },
   { file: 'features/train/grammar.jsx', fn: 'FalseFriends', bank: 'FALSE_FRIENDS', ok: 'opts', ck: 'correct' },
   { file: 'features/train/grammar.jsx', fn: 'TrapsQuiz', bank: 'TOEIC_TRAPS', ok: 'options', ck: 'correct' },
-  { file: 'features/train/grammar.jsx', fn: 'GerInf', bank: 'GERUND_INF', ok: 'opts', ck: 'c' },
+  { file: 'features/gauntlet/Gauntlet.jsx', fn: 'TwinPaths', bank: 'GERUND_INF', ok: 'opts', ck: 'c' },
   { file: 'features/train/strategy.jsx', fn: 'StratQuizPage', bank: 'STRAT_QUIZ', ok: 'options', ck: 'correct' },
 ];
 const itemKey = (it) => String(it.id != null ? it.id : (it.en || it.verb));
@@ -164,10 +164,11 @@ MODULES.forEach(function (m) {
   ok(new RegExp('\\.' + m.ok + '\\.map\\(function').test(body), L + ' : les options sont rendues depuis .' + m.ok);
   ok(new RegExp('===\\s*[\\w.\\[\\]]*\\.' + m.ck + '\\b').test(body), L + ' : la bonne réponse est lue dans .' + m.ck);
 });
-// GerInf garde le composant monté entre deux parties : « Play again » passe par resetQuiz, qui
-// doit retirer le deck (sinon même ordre et mêmes positions à chaque partie).
-const gerinf = bodyOf(sources['features/train/grammar.jsx'], 'GerInf') || '';
-ok(/function resetQuiz\(\)\{[^\n]*setQuizItems\(buildQuiz\(\)\)/.test(gerinf), 'GerInf : resetQuiz retire un deck neuf (Play again)');
+// Twin Paths (ex-GerInf, 2026-09-25) : le deck est tiré dans l'initialiseur de useState, et « Play again » remonte
+// l'épreuve par sa clé (subRun du hub) : un deck neuf à chaque partie, jamais le même ordre ni les mêmes positions.
+const twin = bodyOf(sources['features/gauntlet/Gauntlet.jsx'], 'TwinPaths') || '';
+ok(/useState\(function\(\)\{return shuffle\(GERUND_INF\)\.slice\(0,SESSION_SIZE\)\.map\(permuteGI\);\}\)/.test(twin), 'TwinPaths : deck tiré au montage (15 parmi 45, permutés)');
+ok(/<TwinPaths key=\{subKey\}/.test(sources['features/gauntlet/Gauntlet.jsx']), 'TwinPaths : remonté par sa clé au Play again (subRun)');
 
 // ── 2b. Banque de grammaire et examens (lib/optionShuffle.js, 2026-09-18) ────────────────────────
 // Grammaire en B 61 % (D 4 %), Part 6 des Mock Tests en A 7 fois sur 8, Parts 3-4 du Boss jamais en A.

@@ -10,7 +10,7 @@ import { Tabs } from "../../src/components/Tabs.jsx";
 import { SessionTop, ComboBanner, AnswerCard, NextBar, ListenDisc } from "../../src/components/SessionHud.jsx";
 import { useSessionTrack } from "../../src/components/useSessionTrack.js";
 import { QUESTIONS } from "../../src/data/grammar.js";
-import { Drill as RealDrill, WordFam, ConnSort, LinkingBridge, PrepDrill, TrapsQuiz, FalseFriends } from "../../src/features/train/grammar.jsx";
+import { Drill as RealDrill, WordFam, LinkingBridge, TrapsQuiz, FalseFriends } from "../../src/features/train/grammar.jsx";
 import { StratQuizPage } from "../../src/features/train/strategy.jsx";
 import { Daily } from "../../src/features/home/Daily.jsx";
 import { ListenP1, ListenP2, ListenP3, ListenP4 } from "../../src/features/listening/Listening.jsx";
@@ -19,9 +19,9 @@ import { WordTavern } from "../../src/features/games/WordTavern.jsx";
 import { AudioBlitz } from "../../src/features/games/AudioBlitz.jsx";
 import { ClueHunter } from "../../src/features/games/ClueHunter.jsx";
 import { SentenceBuilder } from "../../src/features/games/SentenceBuilder.jsx";
-import { IrregularCrypt, Chronomancer, PassiveForge, RelativeWeaver } from "../../src/features/gauntlet/Gauntlet.jsx";
+import { IrregularCrypt, Chronomancer, PassiveForge, RelativeWeaver, Knotbinder, AnchorHall, TwinPaths } from "../../src/features/gauntlet/Gauntlet.jsx";
 import { ModalMatch, ModalSort } from "../../src/features/modals/ModalCouncil.jsx";
-import { GerInf, PhrasalDojo } from "../../src/features/train/grammar.jsx";
+import { PhrasalDojo } from "../../src/features/train/grammar.jsx";
 import { MockTest } from "../../src/features/exams/MockTest.jsx";
 import { BossTest } from "../../src/features/exams/BossTest.jsx";
 import { EndlessArena } from "../../src/features/exams/EndlessArena.jsx";
@@ -120,12 +120,13 @@ function Intro() {
 }
 
 // Lots 2 à 7 (2026-09-19/20) : les vrais modules, montés avec des props de banc (?sc=wordfam, ?sc=lisP3…).
-var WIRED = { wordfam: WordFam, connsort: ConnSort, bforge: LinkingBridge, prepdrill: PrepDrill, traps: TrapsQuiz, falsefr: FalseFriends, stratquiz: StratQuizPage, daily: Daily,
+var WIRED = { wordfam: WordFam, bforge: LinkingBridge, traps: TrapsQuiz, falsefr: FalseFriends, stratquiz: StratQuizPage, daily: Daily,
   lisP1: ListenP1, lisP2: ListenP2, lisP3: ListenP3, lisP4: ListenP4,
   p6: Part6Drill, p7: Part7Read, timesim: TimeSim,
   tavern: WordTavern, ablitz: AudioBlitz, clue: ClueHunter, sbuild: SentenceBuilder,
   crypt: IrregularCrypt, chrono: Chronomancer, forge: PassiveForge, weaver: RelativeWeaver,
-  mmatch: ModalMatch, msort: ModalSort, gerinf: GerInf, pvdojo: PhrasalDojo,
+  knot: Knotbinder, anchor: AnchorHall, twin: TwinPaths,
+  mmatch: ModalMatch, msort: ModalSort, pvdojo: PhrasalDojo,
   mock1: MockTest, boss: BossTest, endless: EndlessArena, office: NineToFive, waygates: Waygates };
 
 function Frame() {

@@ -169,9 +169,11 @@ eq('recordMisses : ref absente ou null ignorée', recordMisses(newReview(), [{ t
 // ── 5. Câblage dans les modules (lecture du source : rien ne le relie à un test sinon) ───────────
 const read = (...p) => fs.readFileSync(src(...p), 'utf8');
 const wiring = [
-  [['features', 'gauntlet', 'Gauntlet.jsx'], ['gauntlet'], 4],
+  // Le Gauntlet compte 7 épreuves depuis le 2026-09-25 : Knotbinder, Anchor Hall, Twin Paths gardent les refs de
+  // leurs modules d'origine (connsort, prepdrill, gerinf), que la chasse sait déjà relire.
+  [['features', 'gauntlet', 'Gauntlet.jsx'], ['gauntlet', 'connsort', 'prepdrill', 'gerinf'], 7],
   [['features', 'modals', 'ModalCouncil.jsx'], ['modals_match', 'modals_sort'], 2],
-  [['features', 'train', 'grammar.jsx'], ['wordfam', 'connsort', 'bforge', 'prepdrill', 'gerinf', 'traps', 'pvdojo', 'falsefr'], 0],
+  [['features', 'train', 'grammar.jsx'], ['wordfam', 'bforge', 'traps', 'pvdojo', 'falsefr'], 0],
   [['features', 'train', 'strategy.jsx'], ['stratquiz'], 1],
   [['features', 'games', 'ClueHunter.jsx'], ['clue'], 1],
   [['features', 'games', 'AudioBlitz.jsx'], ['ablitz'], 1],
@@ -188,7 +190,7 @@ wiring.forEach(([p, mods, n]) => {
 });
 // grammar.jsx : chaque module câblé passe sa liste (le Drill en passe une aussi, avec catStats).
 const gram = read('features', 'train', 'grammar.jsx');
-['WordFam', 'ConnSort', 'LinkingBridge', 'PrepDrill', 'GerInf', 'TrapsQuiz', 'PhrasalDojo', 'FalseFriends'].forEach((fn) => {
+['WordFam', 'LinkingBridge', 'TrapsQuiz', 'PhrasalDojo', 'FalseFriends'].forEach((fn) => {
   const at = gram.indexOf('export function ' + fn + '(');
   const end = gram.indexOf('\nexport function ', at + 10);
   const body = gram.slice(at, end < 0 ? gram.length : end);
@@ -201,6 +203,12 @@ ok(/mistakesRef\.current\);/.test(read('features', 'games', 'WordFall.jsx')), 'W
   ok(/function subDone\(sc,tot,xp,mistakes\)/.test(s) && /onModuleDone\(subMode,sc,tot,xp,mistakes\)/.test(s), f + ' : le hub transmet la liste de l\'épreuve');
 });
 const routes = read('routes.jsx'), app = read('App.jsx');
+// Les 3 épreuves du 2026-09-25 comptent sous leurs ids d'origine : les renommer en gauntlet_… remettrait à zéro
+// historique, estimateur, échelons et refs (la chasse ne retrouverait plus les créatures déjà capturées).
+const GT = require(src('lib', 'gauntletTrials.js'));
+eq('Gauntlet : épreuves → modules (ids d\'origine gardés)', GT.GAUNTLET_MODS, ['gauntlet_irregular', 'gauntlet_tense', 'gauntlet_passive', 'gauntlet_relative', 'connsort', 'prepdrill', 'gerinf']);
+ok(/if\(sp==="gauntlet"\)[^\n]*var fullModId=gauntletModId\(subId\);/.test(routes), 'routes.jsx gauntlet : le module vient de la table (gauntletModId), jamais du préfixe en dur');
+ok(/id:"gauntlet"[^\n]*subs:GAUNTLET_MODS/.test(read('features', 'home', 'Train.jsx')), 'Train.jsx : la tuile Gauntlet agrège ses 7 épreuves');
 ['gauntlet', 'modals', 'clue', 'ablitz'].forEach((sp) => {
   const line = routes.split(/\r?\n/).find((l) => l.indexOf('if(sp==="' + sp + '")') >= 0) || '';
   ok(/recordMisses\(c\.review,mistakes,new Date\(\)\)/.test(line), 'routes.jsx ' + sp + ' : le handler envoie les erreurs au bestiaire');
