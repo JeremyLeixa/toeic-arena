@@ -81,7 +81,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-25-waygates-front-desk";
+var BUILD_ID="2026-09-25-waygates-opening-night";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1523,16 +1523,17 @@ function sv(d){
   function miniSession(sc,tot,xp,mistakes,extra){var modId=(extra&&extra.modId)||sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot,null,extra&&extra.bites!=null?{bites:extra.bites}:null);
     var parts=(extra&&extra.parts)||{};Object.keys(parts).forEach(function(m){var pr=parts[m];if(m!==modId&&pr&&pr.t>0)recordModule(c,m,pr.c,pr.t,null,{via:modId});});
     c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
-  // Les mondes des Waygates (Nine to Five 2026-09-24, Jet Lag et Front Desk 2026-09-25 : lib/worlds.js). Une journée = une partie
-  // du module du monde (office, travel, service : XP, anti-farming, historique, écran de fin). Ses réponses sont de vrais items
+  // Les mondes des Waygates (Nine to Five 2026-09-24, Jet Lag, Front Desk et Opening Night 2026-09-25 : lib/worlds.js). Une journée = une partie
+  // du module du monde (office, travel, service, opening : XP, anti-farming, historique, écran de fin). Ses réponses sont de vrais items
   // P3/P4/P7 : elles comptent AUSSI dans lisP3, lisP4 et p7 (extra.parts), à plein poids pour l'estimateur et le Mentor
   // (choix de Jérémy). JAMAIS de trackModSession sur ces clés : une journée taxerait les tuiles Listening/Reading
   // (farmMult) et cocherait les quêtes du plan (questDone lit dailyModSessions). Réputation dans gameScores[repKey]
   // (jsonb déjà synchronisé, pas de colonne) : bornée par REP_MAX_GAIN, ne baisse jamais. `prepared` (Jet Lag, Front Desk) :
   // la journée où la préparation (bulletin, point du matin) avait été comprise, lue par Weather-wise et Keep Calm.
+  // `ready` / `lines` (Opening Night) : lignes de checklist cochées à l'ouverture des portes, lues par Full House.
   function worldDone(world,sc,tot,xp,mistakes,extra){var W=worldMeta(world),modId=W.modId;var s=settleSession(modId,sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);
     var gain=Math.max(0,Math.min(REP_MAX_GAIN,+(extra&&extra.repGain)||0));
-    recordModule(c,modId,sc,tot,null,{rep:gain,onTime:extra&&extra.onTime,tasks:extra&&extra.tasks,prepared:extra&&extra.prepared});
+    recordModule(c,modId,sc,tot,null,{rep:gain,onTime:extra&&extra.onTime,tasks:extra&&extra.tasks,prepared:extra&&extra.prepared,ready:extra&&extra.ready,lines:extra&&extra.lines});
     var parts=(extra&&extra.parts)||{};["lisP3","lisP4","p7"].forEach(function(m){var pr=parts[m];if(pr&&pr.t>0)recordModule(c,m,pr.c,pr.t,null,{via:modId});});
     if(!c.gameScores)c.gameScores={};var od=c.gameScores[W.repKey]||{};
     c.gameScores[W.repKey]={rep:(+od.rep||0)+gain,days:(+od.days||0)+1,bestStars:Math.max(+od.bestStars||0,+(extra&&extra.stars)||0)};

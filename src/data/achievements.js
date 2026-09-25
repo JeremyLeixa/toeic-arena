@@ -13,6 +13,9 @@ function travelRuns(s){var m=(s.moduleScores||{}).travel;return (m&&m.history)||
 // Front Desk (2026-09-25) : même patron, gameScores.serviceDay ; `prepared` = point du matin compris, client calmé.
 function serviceDay(s){return (s.gameScores&&s.gameScores.serviceDay)||{};}
 function serviceRuns(s){var m=(s.moduleScores||{}).service;return (m&&m.history)||[];}
+// Opening Night (2026-09-25) : gameScores.openingDay ; `ready` / `lines` = lignes cochées à l'ouverture des portes.
+function openingDay(s){return (s.gameScores&&s.gameScores.openingDay)||{};}
+function openingRuns(s){var m=(s.moduleScores||{}).opening;return (m&&m.history)||[];}
 // Grammar Gauntlet : ses 7 épreuves (2026-09-25 : Knotbinder, Anchor Hall et Twin Paths y entrent SOUS LEURS IDS
 // D'ORIGINE, connsort / prepdrill / gerinf, pour garder l'historique, l'estimateur et les échelons). Les trophées de
 // tout le hub (Champion, Explorer, Grinder, Scholar) les comptent toutes ; ceux déjà obtenus restent acquis.
@@ -132,4 +135,8 @@ export var ACHIEVEMENTS = [
   {id:"service_veteran",name:"Regular Staff",desc:"Work 10 days in Front Desk",icon:"🧾",check:function(s){return (+serviceDay(s).days||0)>=10;}},
   {id:"service_promoted",name:"Employee of the Month",desc:"Reach Associate in Front Desk",icon:"🏅",check:function(s){return (+serviceDay(s).rep||0)>=250;}},
   {id:"service_calm",name:"Keep Calm",desc:"Front Desk: calm an upset customer on 3 different days",icon:"🧘",check:function(s){return serviceRuns(s).filter(function(h){return h.prepared===true;}).length>=3;}},
+  {id:"opening_first",name:"Curtain Up",desc:"Work your first day in Opening Night",icon:"🎭",check:function(s){var m=(s.moduleScores||{}).opening;return !!m&&m.sessions>=1;}},
+  {id:"opening_veteran",name:"Seasoned Planner",desc:"Work 10 days in Opening Night",icon:"📋",check:function(s){return (+openingDay(s).days||0)>=10;}},
+  {id:"opening_promoted",name:"Rising Star",desc:"Reach Associate in Opening Night",icon:"🌟",check:function(s){return (+openingDay(s).rep||0)>=250;}},
+  {id:"opening_fullhouse",name:"Full House",desc:"Opening Night: open the doors with everything ready on 3 different days",icon:"🎉",check:function(s){return openingRuns(s).filter(function(h){return h.lines>0&&h.ready===h.lines;}).length>=3;}},
 ];

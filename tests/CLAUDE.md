@@ -101,7 +101,10 @@ Ce que la suite protège, et pourquoi :
   listes qu'`office` et trophées qui ne croisent pas les mondes. Front Desk : point du matin à 9:00, un seul client
   mécontent jamais le premier et dont aucune bonne réponse ne dit « complain » (le toast la soufflerait), P3 client /
   collègues habillés selon leur groupe, pas de « Dear … » en objet, libellés et trophées. Règle « prévu = paré »
-  générique : écran sans aucun cas particulier par monde, chaque monde déclare tous les textes que l'écran lit. Nine to Five : des centaines de journées tirées
+  générique : écran sans aucun cas particulier par monde, chaque monde déclare tous les textes que l'écran lit.
+  Opening Night : une tâche par ligne de checklist, ouverture des portes à 16:00 en dernier, tout le reste rendable
+  avant, aucune ligne ni nature d'événement dans l'habillage ou le brief (elles souffleraient des réponses), ligne
+  cochée = tâche sans faute, portes comptées une fois, aucun item partagé entre deux viviers. Nine to Five : des centaines de journées tirées
   par grade, chacune dans 9:00-17:00 (un direct finit de sonner avant 17:00, une échéance tombe après l'arrivée), sans
   item en double, au format P7 du grade (double à Associate, triple à Team Lead, et garanti le jour du déblocage),
   sujet de P3 générique (un sujet tiré du contenu trahit la Q1) ; horloge jamais plus clémente en montant ; réputation

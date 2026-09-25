@@ -4,6 +4,8 @@
 //                    (proto prototypes/travel-day/, variante W2 choisie par Jérémy)
 //   world="service": Front Desk, un samedi au service client d'un grand magasin ; même règle, point du matin →
 //                    client mécontent (proto prototypes/service-day/, variante S2)
+//   world="opening": Opening Night, une journée d'agence d'événements ; checklist cochée tâche par tâche, les portes
+//                    s'ouvrent à 16:00 (proto prototypes/event-day/, variante E1)
 // Ce que chaque monde déclare : lib/worlds.js (décor, libellés, textes, règle « prévu = paré », réputation). Composition des journées, grades,
 // réputation et XP : lib/officeDay.js (pur, testé). Ajouter un monde = une entrée dans WORLD_META, son vivier et son
 // habillage dans officeDay.js, sa carte dans Waygates.jsx, sa route : jamais une copie de cet écran.
@@ -20,7 +22,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { LISTENING_P3, LISTENING_P4 } from "../../data/listening.js";
 import { PART7_PASSAGES } from "../../data/part7.js";
 import { DAY_LEN, PEOPLE, REPLAY_COST, composeDay, dayStars, dayXp, fmtClock, gradeOf, nextGrade, repGain } from "../../lib/officeDay.js";
-import { PREP_BONUS, PREP_DELAY, worldMeta, worldRep } from "../../lib/worlds.js";
+import { CHECK_BONUS, PREP_BONUS, PREP_DELAY, worldMeta, worldRep } from "../../lib/worlds.js";
 import { shufListeningItem } from "../../lib/listeningShuffle.js";
 import { shufP7 } from "../../lib/optionShuffle.js";
 import { playAudioFile, resumeAudioSession, stopCurrentListenAudio, stopListenAudio } from "../../lib/audio.js";
@@ -147,12 +149,12 @@ function buildTask(t) {
   return Object.assign({}, t, { text: tk.text, qs: flat(tk.qs.map(shufListeningItem), { opts: "opts", c: "c" }), audio: ["/audio/p4/" + tk.id + ".mp3"] });
 }
 var ICON = { mail: "envelope", doc: "scroll-unfurled", phone: "smartphone", file: "files", chat: "coffee-cup", call: "rotary-phone", meeting: "round-table", live: "megaphone", voicemail: "microphone",
-  forecast: "raining", announce: "megaphone", huddle: "conversation", counter: "ringing-bell" };
+  forecast: "raining", announce: "megaphone", huddle: "conversation", counter: "ringing-bell", finale: "party-popper" };
 var LABEL = { mail: "Email", doc: "Document", phone: "Messages", file: "Case file", chat: "Conversation", call: "Call", meeting: "Meeting", voicemail: "Voicemail",
-  forecast: "Weather forecast", announce: "Announcement", huddle: "Morning huddle", counter: "Counter" };
+  forecast: "Weather forecast", announce: "Announcement", huddle: "Morning huddle", counter: "Counter", finale: "The event" };
 function labelOf(t) { return t.kind === "live" ? t.from : t.kind === "mail" || t.kind === "doc" ? (t.docType || LABEL[t.kind]) : LABEL[t.kind] || "Task"; }
 // Bouton d'un direct : on décroche un appel, on sert un client, on écoute une annonce ou un bulletin, on rejoint le reste.
-function pickLabel(t) { return t.kind === "call" ? "Pick up" : t.kind === "counter" ? "Serve" : t.kind === "forecast" || t.kind === "announce" ? "Listen" : "Join"; }
+function pickLabel(t) { return t.kind === "call" ? "Pick up" : t.kind === "counter" ? "Serve" : t.kind === "finale" ? "Go in" : t.kind === "forecast" || t.kind === "announce" ? "Listen" : "Join"; }
 // Les règles de l'accueil (lib/worlds.js) : [texte, gras, texte].
 function Rule(p) { return <li>{p.r[0]}{p.r[1] && <b>{p.r[1]}</b>}{p.r[2]}</li>; }
 function isAudio(t) { return t.mod !== "p7"; }
@@ -172,6 +174,10 @@ function summarize(tasks, st) {
     return { t: t, correct: correct, answered: s.answers.length, done: done, onTime: onTime, status: status };
   });
 }
+
+// Checklist (Opening Night) : une ligne est COCHÉE quand sa tâche est rendue sans faute.
+function isReady(t, s) { return s.status === "done" && t.qs.every(function (q, k) { return s.answers[k] === q.c; }); }
+function readyCount(tasks, st) { return tasks.filter(function (t) { return t.check && isReady(t, st[t.id]); }).length; }
 
 function Avatar(p) { var who = PEOPLE[p.who] || PEOPLE.dana; return <span className={"nf-av" + (p.sm ? " sm" : "")}>{who.initials}</span>; }
 
@@ -193,7 +199,9 @@ export function WorldDay(p) {
   var [toast, setToast] = useState(null);
   // « Prévu = paré » (mondes à W.prep) : connue une fois la tâche `prep` traitée (bulletin, point du matin) ; `prepared` =
   // comprise en entier ; `hit` posé quand la tâche `prepHit` arrive (« ready » : bonus, « caught » : retard). Une fois par journée.
-  var [wx, setWx] = useState({ known: false, label: null, prepared: false, bonus: 0, hit: null });
+  // Checklist (mondes à W.checklist) : `finale` = lignes cochées à l'ouverture des portes (posé une fois, à l'arrivée de
+  // la tâche `finale`), et `bonus` la réputation qu'elles rapportent.
+  var [wx, setWx] = useState({ known: false, label: null, prepared: false, bonus: 0, hit: null, finale: null });
   var wxRef = useRef(wx); wxRef.current = wx;
   var track = useSessionTrack();
   var mistakesRef = useRef([]), sidRef = useRef(0), sentRef = useRef(false), genRef = useRef(0);
@@ -249,6 +257,14 @@ export function WorldDay(p) {
       }
       return;
     }
+    // Checklist : les portes s'ouvrent. Chaque ligne cochée à ce moment-là rapporte CHECK_BONUS ; une seule fois.
+    var fin = W.checklist ? arrivals.find(function (t) { return t.finale; }) : null;
+    if (fin && wxRef.current.finale == null) {
+      var n = readyCount(tasks, stRef.current), lines = tasks.filter(function (t) { return t.check; }).length;
+      setWx(function (w) { return Object.assign({}, w, { finale: n, bonus: w.bonus + n * CHECK_BONUS }); });
+      say(W.checklist.arrive + " · " + n + "/" + lines + " " + W.checklist.ok + (n ? " · +" + n * CHECK_BONUS + " rep" : ""));
+      return;
+    }
     var a = arrivals.filter(function (t) { return t.at > 0; }).pop();
     if (a) say(a.live ? (a.kind === "chat" ? (W.id === "office" ? "Colleagues at the coffee machine" : "People talking nearby")
       : a.kind === "call" ? "Incoming call" : a.kind === "counter" ? "A customer at the counter" : a.prep ? W.prep.arrive : a.kind === "announce" ? W.announce : a.from + " starting now")
@@ -281,7 +297,8 @@ export function WorldDay(p) {
     var clean = rows.every(function (r) { return r.done && r.onTime; });
     sidRef.current = p.done(sc, answered, dayXp(sc, answered, clean), mistakesRef.current,
       { modId: W.modId, world: W.id, parts: parts, repGain: gain, onTime: rows.filter(function (r) { return r.onTime; }).length, tasks: rows.length, stars: dayStars(sc, totalQs),
-        prepared: W.prep ? wx.hit === "ready" : undefined });
+        prepared: W.prep ? wx.hit === "ready" : undefined,
+        ready: W.checklist ? wx.finale : undefined, lines: W.checklist ? tasks.filter(function (t) { return t.check; }).length : undefined });
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Audio ──
@@ -340,6 +357,11 @@ export function WorldDay(p) {
       say((t.prepLabel ? t.prepLabel + " today" : W.prep.doneLead) + " · " + (prepared ? W.prep.doneOk : W.prep.doneKo));
       return;
     }
+    if (t.check && W.checklist) {
+      // La ligne n'est nommée qu'ICI, une fois la tâche rendue : avant, elle soufflerait des réponses.
+      say((ok === t.qs.length ? "✓ " : "~ ") + W.checklist.labels[t.check] + " · " + (ok === t.qs.length ? W.checklist.ok : W.checklist.ko + " (" + ok + "/" + t.qs.length + ")") + " · +" + (ok * 4 + (late ? 0 : 6)) + " rep");
+      return;
+    }
     say((W.id === "office" ? "Filed · " : "Done · ") + ok + "/" + t.qs.length + (late ? " · late" : "") + " · +" + (ok * 4 + (late ? 0 : 6)) + " rep");
   }
   function skipAhead() {
@@ -382,7 +404,7 @@ export function WorldDay(p) {
     return (<><style>{NF_CSS}</style>
       <SessionResult session={p.session} sid={sidRef.current} name={W.name} mistakes={mistakesRef.current}
         onContinue={function () { p.closeSession(); p.back(); }} onReplay={p.replaySession}>
-        <DayReview rows={rows} sc={sc} totalQs={totalQs} rep0={rep0} gain={gain} person={W.person} hit={W.prep ? wx.hit : null} prep={W.prep} />
+        <DayReview rows={rows} sc={sc} totalQs={totalQs} rep0={rep0} gain={gain} person={W.person} hit={W.prep ? wx.hit : null} prep={W.prep} checklist={W.checklist} finale={wx.finale} />
       </SessionResult></>);
   }
 
@@ -396,7 +418,7 @@ export function WorldDay(p) {
     <SessionTop n={totalQs} cur={fb ? Math.max(0, answeredNow - 1) : answeredNow} results={track.results} streak={track.streak} onQuit={p.back}
       onSheet={function (on) { pausedRef.current = on; }}
       aside={<span className={"nf-clock" + (min >= DAY_LEN - 60 ? " late" : "")}>{fmtClock(min)}</span>}
-      sub={(W.prep ? W.prep.hud + ": " + (wx.known ? wx.label || (wx.prepared ? W.prep.okWord : W.prep.koWord) : "?") + " · " : "") + grade.name + (nx ? " · " + (rep0 + gain) + " / " + nx.rep + " rep" : "")}
+      sub={(W.checklist ? W.checklist.hud + ": " + readyCount(tasks, st) + "/" + tasks.filter(function (t) { return t.check; }).length + " · " : "") + (W.prep ? W.prep.hud + ": " + (wx.known ? wx.label || (wx.prepared ? W.prep.okWord : W.prep.koWord) : "?") + " · " : "") + grade.name + (nx ? " · " + (rep0 + gain) + " / " + nx.rep + " rep" : "")}
       quitCopy={W.quit} />
     <ComboBanner combo={track.combo} />
     {!cur && <Desk tasks={tasks} st={st} min={min} onOpen={open} onSkip={skipAhead} deskTitle={W.desk} waitLabel={W.wait} />}
@@ -584,6 +606,11 @@ function DayReview(p) {
       <div className="nf-stars">{[0, 1, 2].map(function (i) { return <span key={i} className={i < stars ? "on" : ""}>★</span>; })}</div>
       <div className="nf-review"><Avatar who={p.person} /><p>{review}</p></div>
       {p.hit && <div className="nf-review"><Avatar who={p.person} /><p>{p.hit === "ready" ? p.prep.reviewReady + " (+" + PREP_BONUS + " rep)." : p.prep.reviewCaught + ": " + PREP_DELAY + " minutes lost. " + p.prep.reviewCaughtTail}</p></div>}
+      {p.checklist && <div className="nf-review"><Avatar who={p.person} /><p>{(p.finale != null
+        ? p.checklist.opened + " " + p.finale + "/" + rows.filter(function (r) { return r.t.check; }).length + " " + p.checklist.ok + (p.finale ? " (+" + p.finale * CHECK_BONUS + " rep)." : ".")
+        : p.checklist.none) + " " + rows.filter(function (r) { return r.t.check; }).map(function (r) {
+          return (r.done && r.correct === r.t.qs.length ? "✓ " : r.done ? "~ " : "✗ ") + p.checklist.labels[r.t.check];
+        }).join(" · ")}</p></div>}
       {rows.map(function (r) {
         return (
           <div key={r.t.id} className="nf-end-row">

@@ -170,12 +170,65 @@ G.forEach(function (g, gi) {
 });
 ok(L.PEOPLE.priya && L.PEOPLE.priya.name === 'Priya Shah', 'Front Desk : Priya Shah déclarée (PEOPLE)');
 
+// ── 2d. Opening Night (monde événements, 2026-09-25) : 400 journées par grade ─────────────────────
+// Vivier relu par Jérémy, rangé par ligne de checklist. Une tâche cochable par ligne (3 lignes aux grades à 4 tâches,
+// 4 au-delà), l'ouverture des portes à 16:00 en DERNIER, tout le reste rendable avant. Habillage générique : ni la ligne
+// (« Venue » soufflerait p3_75), ni la nature de l'événement (p3_58, p4_20, p4_71).
+const OP = L.OPENING_POOL;
+ok(OP && L.OPENING_LINES && L.OPENING_LINES.join() === 'venue,catering,setup,program' && L.FINALE_AT === 420, 'Opening Night : vivier par ligne, 4 lignes, portes à 16:00');
+const OPENING_ALL = [].concat.apply([], Object.keys(OP).map(function (k) { return OP[k]; }));
+ok(new Set(OPENING_ALL).size === OPENING_ALL.length, 'Opening Night : aucun item dans deux rôles');
+ok(OPENING_ALL.filter(function (id) { return /^p3_/.test(id); }).length === 15 && OPENING_ALL.filter(function (id) { return /^p4_/.test(id); }).length === 11 && OPENING_ALL.filter(function (id) { return /^p7p/.test(id); }).length === 9, 'Opening Night : le vivier validé tel quel (15 P3, 11 P4, 9 P7)');
+OPENING_ALL.forEach(function (id) {
+  const bank = /^p3_/.test(id) ? LISTENING_P3 : /^p4_/.test(id) ? LISTENING_P4 : PART7_PASSAGES;
+  ok(bank.some(function (it) { return it.id === id; }), 'Opening Night : ' + id + ' existe dans la banque');
+});
+ok(OP.finale.concat(OP.extra).every(function (id) { return /^p4_/.test(id); }), 'Opening Night : ouverture et atelier sont des Parts 4 (en direct)');
+// Aucun vivier d'un autre monde ne prête ses items : un item joué dans deux mondes compterait double à l'usage.
+[].concat(L.TRAVEL_POOL.p3, L.TRAVEL_POOL.p7, L.TRAVEL_POOL.disruption, Object.keys(L.TRAVEL_POOL.forecast), SERVICE_ALL).forEach(function (id) {
+  ok(OPENING_ALL.indexOf(id) < 0, 'Opening Night : ' + id + ' appartient déjà à un autre monde');
+});
+const OPENING_SUBJECTS = new Set(['A call about an event', 'A chat about an event', 'A quick planning meeting', 'A workshop starting', 'The event is starting']);
+const LINE_WORDS = /venue|cater|setup|set-up|program|gala|award|festival|picnic|retirement|summit|trade show|expo/i;
+G.forEach(function (g, gi) {
+  for (let s = 0; s < 400; s++) {
+    const d = L.composeDay(g.rep, rng(50000 + 1000 * gi + s), 'opening');
+    const tag = 'opening ' + g.id + '#' + s;
+    ok(d.tasks.length === g.tasks, tag + ' : ' + g.tasks + ' tâches (' + d.tasks.length + ')');
+    const checks = d.tasks.filter(function (t) { return t.check; }), fin = d.tasks.filter(function (t) { return t.finale; });
+    ok(checks.length === (g.tasks >= 5 ? 4 : 3) && new Set(checks.map(function (t) { return t.check; })).size === checks.length, tag + ' : une tâche par ligne, 3 ou 4 lignes selon le grade');
+    checks.forEach(function (t) { ok(OP[t.check].indexOf(t.itemId) >= 0, tag + ' : ' + t.itemId + ' tiré de la ligne ' + t.check); });
+    ok(fin.length === 1 && fin[0] === d.tasks[d.tasks.length - 1] && fin[0].at === L.FINALE_AT && fin[0].live && OP.finale.indexOf(fin[0].itemId) >= 0, tag + ' : l\'ouverture des portes, en direct à 16:00, en dernier');
+    ok(typeof d.brief === 'string' && d.brief.indexOf('undefined') < 0 && /16:00/.test(d.brief) && !LINE_WORDS.test(d.brief), tag + ' : brief qui annonce 16:00 sans nommer de ligne');
+    const ids = new Set();
+    d.tasks.forEach(function (t, i) {
+      ok(t.id === 't' + (i + 1), tag + ' : ids t1..tn dans l\'ordre');
+      ok(OPENING_ALL.indexOf(t.itemId) >= 0, tag + ' : ' + t.itemId + ' hors du vivier validé');
+      ok(!ids.has(t.itemId), tag + ' : item en double ' + t.itemId); ids.add(t.itemId);
+      if (i > 0) ok(t.at >= d.tasks[i - 1].at, tag + ' : tâches triées par arrivée');
+      if (t.live) ok(t.at + t.ringFor <= L.DAY_LEN && t.ringFor === g.ringFor, tag + ' : direct à la sonnerie du grade, fini avant 17:00');
+      if (!t.finale) {
+        ok(t.live ? t.at + t.ringFor <= L.FINALE_AT : t.due != null && t.due <= L.FINALE_AT && t.due > t.at + 60, tag + ' : ' + t.itemId + ' rendable avant l\'ouverture des portes');
+      }
+      if (t.mod === 'p7') { const it = PART7_PASSAGES.find(function (x) { return x.id === t.itemId; }); ok(L.p7Level(it.type) <= Math.max(1, g.multi), tag + ' : format P7 débloqué au grade'); }
+      else ok(OPENING_SUBJECTS.has(t.subject) && !LINE_WORDS.test([t.from, t.subject, t.ask.text].join(' ')), tag + ' : habillage générique (ni la ligne, ni l\'événement) : ' + t.subject);
+      ok([t.from, t.subject, t.ask && t.ask.text].join(' ').indexOf('undefined') < 0 && t.ask.who === 'theo', tag + ' : habillage complet, interlocuteur Theo');
+    });
+  }
+});
+ok(L.PEOPLE.theo && L.PEOPLE.theo.name === 'Theo Marchetti', 'Opening Night : Theo Marchetti déclaré (PEOPLE)');
+
 const W = require(path.join(ROOT, 'src', 'lib', 'worlds.js'));
 ok(W.WORLD_META.travel.modId === 'travel' && W.WORLD_META.travel.repKey === 'travelDay' && !!W.WORLD_META.travel.prep, 'worlds.js : Jet Lag = module travel, réputation gameScores.travelDay, règle « prévu = paré »');
 ok(W.WORLD_META.service.modId === 'service' && W.WORLD_META.service.repKey === 'serviceDay' && W.WORLD_META.service.person === 'priya' && !!W.WORLD_META.service.prep, 'worlds.js : Front Desk = module service, réputation gameScores.serviceDay, Priya, règle « prévu = paré »');
-ok(W.WORLD_META.office.modId === 'office' && W.WORLD_META.office.repKey === 'officeDay' && W.WORLD_META.office.prep === null, 'worlds.js : Nine to Five inchangé (office, officeDay, sans règle)');
+ok(W.WORLD_META.office.modId === 'office' && W.WORLD_META.office.repKey === 'officeDay' && W.WORLD_META.office.prep === null && W.WORLD_META.office.checklist === null, 'worlds.js : Nine to Five inchangé (office, officeDay, sans règle)');
+const OW = W.WORLD_META.opening;
+ok(OW.modId === 'opening' && OW.repKey === 'openingDay' && OW.person === 'theo' && OW.prep === null && OW.checklist, 'worlds.js : Opening Night = module opening, réputation gameScores.openingDay, Theo, checklist sans « prévu = paré »');
+ok(L.OPENING_LINES.every(function (k) { return typeof OW.checklist.labels[k] === 'string'; }) && ['hud', 'arrive', 'ok', 'ko', 'opened', 'none'].every(function (k) { return typeof OW.checklist[k] === 'string' && OW.checklist[k]; }), 'worlds.js : la checklist déclare un libellé par ligne et tous ses textes');
+ok(W.CHECK_BONUS === 5, 'checklist : +5 rep par ligne cochée à l\'ouverture des portes (choix de Jérémy, E1)');
 Object.keys(W.WORLD_META).forEach(function (id) {
   const m = W.WORLD_META[id];
+  ok(m.prep !== undefined && m.checklist !== undefined, 'worlds.js : ' + id + ' déclare prep et checklist (null si le monde n\'en a pas)');
   ok(m.id === id && m.name && m.company && m.desk && m.wait && m.announce && m.empty && m.quit && m.quit.title && m.rules && m.rules.length === 3 && L.PEOPLE[m.person], 'worlds.js : ' + id + ' déclare tout ce que lit l\'écran');
   if (m.prep) ['hud', 'arrive', 'doneOk', 'doneKo', 'ready', 'caught', 'reviewReady', 'reviewCaught', 'reviewCaughtTail'].forEach(function (k) { ok(typeof m.prep[k] === 'string' && m.prep[k].length > 0, 'worlds.js : ' + id + '.prep.' + k); });
 });
@@ -211,10 +264,11 @@ ok(/var W=worldMeta\(world\),modId=W\.modId;/.test(od) && /settleSession\(modId,
 ok((od.match(/trackModSession\(/g) || []).length === 1 && /trackModSession\(c,modId\)/.test(od), 'worldDone : trackModSession UNIQUEMENT sur le module du monde, jamais sur lisP3/lisP4/p7');
 ok(/\["lisP3","lisP4","p7"\]\.forEach[\s\S]*recordModule\(c,m,pr\.c,pr\.t,null,\{via:modId\}\)/.test(od), 'worldDone : les réponses entrent dans lisP3, lisP4 et p7 (estimateur, Mentor)');
 ok(/Math\.min\(REP_MAX_GAIN/.test(od) && /c\.gameScores\[W\.repKey\]=/.test(od), 'worldDone : réputation bornée, rangée dans gameScores[repKey]');
+ok(/ready:extra&&extra\.ready,lines:extra&&extra\.lines/.test(od), 'worldDone : lignes cochées rangées dans l\'historique (trophée Full House)');
 ok(/prepared:extra&&extra\.prepared/.test(od), 'worldDone : « paré » rangé dans l\'historique (trophée Weather-wise)');
 ok(/recordMisses\(c\.review,mistakes/.test(od), 'worldDone : les erreurs entrent au bestiaire');
 ok(/trackModSession, u, worldDone\}\)/.test(APP) && /trackModSession, u, worldDone\}=c;/.test(ROUTES), 'worldDone passé au contexte de renderRoute (appel ET déstructuration)');
-['office', 'travel', 'service'].forEach(function (w) {
+['office', 'travel', 'service', 'opening'].forEach(function (w) {
   ok(new RegExp('if\\(sp==="' + w + '"\\)return pg\\(<WorldDay key="' + w + '" world="' + w + '" [^\\n]*done=\\{function\\(sc,tot,xp,mistakes,extra\\)\\{return worldDone\\("' + w + '",sc,tot,xp,mistakes,extra\\);\\}\\}').test(ROUTES), 'route ' + w + ' → WorldDay monde ' + w + ', worldDone, sid rendu');
 });
 ok(/if\(sp==="waygates"\)return pg\(<Waygates /.test(ROUTES), 'route waygates');
@@ -222,7 +276,7 @@ ok(/lazyNamed\(function\(\)\{return import\("\.\/features\/waygates\/WorldDay\.j
 ok(!/from "[./]*\/lib\/officeDay\.js"/.test(APP) && !/from "[./]*\/lib\/officeDay\.js"/.test(GAMES) && !/from "[./]*\/lib\/officeDay\.js"/.test(HUB), 'App.jsx, GamesHub et le hub lisent officeGrades.js / worlds.js, jamais officeDay.js (qui importe les banques)');
 ok(!/^import /m.test(read('src/lib/officeGrades.js')), 'lib/officeGrades.js sans import (pur, sans données)');
 const selfManaged = (APP.match(/var SELF_MANAGED=\[([^\]]*)\]/) || ['', ''])[1];
-ok(selfManaged.indexOf('"office"') < 0 && selfManaged.indexOf('"travel"') < 0 && selfManaged.indexOf('"service"') < 0, 'office, travel et service hors SELF_MANAGED : l\'effet central coupe la musique (écoute des Parts 3 et 4)');
+ok(selfManaged.indexOf('"office"') < 0 && selfManaged.indexOf('"travel"') < 0 && selfManaged.indexOf('"service"') < 0 && selfManaged.indexOf('"opening"') < 0, 'mondes hors SELF_MANAGED : l\'effet central coupe la musique (écoute des Parts 3 et 4)');
 // La règle « prévu = paré » (Jet Lag W2, Front Desk S2) : la préparation comprise en entier décide ; la tâche qui en
 // dépend déclenche UNE fois, et seulement dans les mondes qui déclarent la règle.
 ok(/var hit = W\.prep \? arrivals\.find\(function \(t\) \{ return t\.prepHit; \}\) : null;/.test(SCREEN) && /if \(hit && !wxRef\.current\.hit\)/.test(SCREEN), 'écran : la tâche prepHit déclenche la règle une seule fois, dans les mondes à W.prep');
@@ -230,7 +284,14 @@ ok(/bonus: PREP_BONUS/.test(SCREEN) && /m \+ PREP_DELAY/.test(SCREEN), 'écran :
 ok(/if \(t\.prep && W\.prep\) \{[\s\S]{0,200}var prepared = ok === t\.qs\.length;/.test(SCREEN), 'écran : paré = préparation comprise EN ENTIER');
 ok(/prepared: W\.prep \? wx\.hit === "ready" : undefined/.test(SCREEN), 'écran : « paré » envoyé à worldDone (trophées Weather-wise, Keep Calm)');
 ok(!/weather|forecastLabel/i.test(SCREEN.replace(/forecast: "(raining|Weather forecast)"/g, '').replace(/t\.kind === "forecast"/g, '')), 'écran : plus aucun cas particulier météo (tout vient de lib/worlds.js)');
-ok(/\{ id: "travel", icon: "commercial-airplane"/.test(HUB) && /\{ id: "service", icon: "shopping-bag"/.test(HUB), 'hub : cartes Jet Lag et Front Desk');
+ok(/\{ id: "travel", icon: "commercial-airplane"/.test(HUB) && /\{ id: "service", icon: "shopping-bag"/.test(HUB) && /\{ id: "opening", icon: "theater-curtains"/.test(HUB), 'hub : cartes Jet Lag, Front Desk, Opening Night');
+// Checklist (Opening Night) : ligne cochée = tâche SANS faute ; les portes comptent une fois, à l'arrivée de la finale ;
+// la ligne n'est nommée qu'après sa tâche.
+ok(/function isReady\(t, s\) \{ return s\.status === "done" && t\.qs\.every\(function \(q, k\) \{ return s\.answers\[k\] === q\.c; \}\); \}/.test(SCREEN), 'écran : ligne cochée = tâche rendue sans faute');
+ok(/var fin = W\.checklist \? arrivals\.find\(function \(t\) \{ return t\.finale; \}\) : null;\s*if \(fin && wxRef\.current\.finale == null\)/.test(SCREEN) && /bonus: w\.bonus \+ n \* CHECK_BONUS/.test(SCREEN), 'écran : l\'ouverture des portes compte les lignes UNE fois, +CHECK_BONUS par ligne');
+ok(/ready: W\.checklist \? wx\.finale : undefined/.test(SCREEN), 'écran : lignes cochées envoyées à worldDone');
+ok((SCREEN.match(/checklist\.labels\[/g) || []).length === 2 && /if \(t\.check && W\.checklist\) \{/.test(SCREEN), 'écran : une ligne n\'est nommée qu\'après sa tâche (toast de fin de tâche, bilan)');
+ok(/"theater-curtains":/.test(read('src/data/avatarIcons.js')) && /"party-popper":/.test(read('src/data/avatarIcons.js')), 'icônes d\'Opening Night présentes (rideau, cotillon)');
 ok(/"shopping-bag":/.test(read('src/data/avatarIcons.js')) && /"conversation":/.test(read('src/data/avatarIcons.js')) && /"ringing-bell":/.test(read('src/data/avatarIcons.js')), 'icônes de Front Desk présentes (sac, point du matin, comptoir)');
 
 // L'écran : options permutées, refs relisibles par la chasse, audio interruptible, envoi à la fin, jetons de thème.
@@ -307,6 +368,22 @@ ok(!ach('service_promoted').check(s2) && !ach('service_veteran').check(s2), 'Emp
 ok(!ach('service_calm').check(t1) && !ach('travel_weatherwise').check(s1) && !ach('service_first').check(u1), 'Front Desk et les autres mondes ne se prêtent pas leurs trophées');
 ok(['usageStats.js', 'chestLabels.js'].every(function (f) { return /service: "Front Desk"/.test(read('src/lib/' + f)); }) && /id:"service",label:"The Waygates · Front Desk"/.test(read('src/lib/feedbackModules.js'))
   && /service:"Front Desk"/.test(read('src/features/teacher/TeacherDash.jsx')) && /\{id:"service",name:"Front Desk"\}/.test(read('src/features/teacher/TeacherDash.jsx')), 'libellé « Front Desk » : Usage, coffres, feedback, formateur (liste et export)');
+
+// Opening Night : mêmes règles, ses 4 trophées. Full House lit `ready` / `lines` dans l'historique du module opening.
+ok(require(path.join(ROOT, 'src', 'lib', 'hubStatus.js')).MASTERY_BLACKLIST.opening === 1, 'opening en liste noire de maîtrise (pas de double coffre)');
+ok(/opening:\{part:null,section:null,score:true\}/.test(TOEIC), 'MODULE_TOEIC_MAP.opening : ni part ni section');
+ok(!/"opening"|id:"opening"/.test((TOEIC.match(/var READING_MODS[\s\S]*?var lisParts=[^\n]*/) || [''])[0]), 'opening hors des tables de poids');
+const o1 = { stats: {}, moduleScores: { opening: { sessions: 10, history: [{ ready: 4, lines: 4 }, { ready: 3, lines: 3 }, { ready: 2, lines: 4 }, { ready: 4, lines: 4 }] } }, gameScores: { openingDay: { rep: 250, days: 10 } } };
+const o2 = { stats: {}, moduleScores: { opening: { sessions: 9, history: [{ ready: 4, lines: 4 }, { ready: 3, lines: 4 }, { ready: 0, lines: 0 }, { ready: null, lines: 4 }, { ready: 3, lines: 3 }] } }, gameScores: { openingDay: { rep: 249, days: 9 } } };
+['opening_first', 'opening_veteran', 'opening_promoted', 'opening_fullhouse'].forEach(function (id) {
+  ok(!!ach(id), 'trophée ' + id + ' déclaré');
+  if (ach(id)) { ok(ach(id).check(o1), 'trophée ' + id + ' obtenu quand il le faut'); ok(!ach(id).check(u0), 'trophée ' + id + ' refusé à un profil neuf'); }
+});
+ok(!ach('opening_fullhouse').check(o2), 'Full House : 3 journées tout prêt, pas 2 (et 0/0 ne compte pas)');
+ok(!ach('opening_promoted').check(o2) && !ach('opening_veteran').check(o2), 'Rising Star à 250 rep, Seasoned Planner à 10 journées');
+ok(!ach('opening_first').check(s1) && !ach('service_first').check(o1) && !ach('opening_fullhouse').check(t1), 'Opening Night et les autres mondes ne se prêtent pas leurs trophées');
+ok(['usageStats.js', 'chestLabels.js'].every(function (f) { return /opening: "Opening Night"/.test(read('src/lib/' + f)); }) && /id:"opening",label:"The Waygates · Opening Night"/.test(read('src/lib/feedbackModules.js'))
+  && /opening:"Opening Night"/.test(read('src/features/teacher/TeacherDash.jsx')) && /\{id:"opening",name:"Opening Night"\}/.test(read('src/features/teacher/TeacherDash.jsx')), 'libellé « Opening Night » : Usage, coffres, feedback, formateur (liste et export)');
 
 console.log((fails ? 'ÉCHEC' : 'OK') + ' — Nine to Five : ' + checks + ' contrôles' + (fails ? ', ' + fails + ' en échec' : ''));
 process.exit(fails ? 1 : 0);

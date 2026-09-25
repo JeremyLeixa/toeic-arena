@@ -22,6 +22,7 @@ export var PEOPLE = {
   marcus: { name: "Marcus Bell", role: "Support desk", initials: "MB", hue: 28 },
   maya: { name: "Maya Ortiz", role: "Travel coordinator", initials: "MO", hue: 170 },
   priya: { name: "Priya Shah", role: "Customer care manager", initials: "PS", hue: 330 },
+  theo: { name: "Theo Marchetti", role: "Senior event planner", initials: "TM", hue: 40 },
 };
 
 // Grades, réputation du profil et bornes : lib/officeGrades.js (sans données, lu aussi par App.jsx).
@@ -116,15 +117,17 @@ function dressP4(it, rnd) {
 // la Part 7 le plus au Reading (54 Q). 4 → 2 P7 + 1 P3 + 1 P4 ; 5 → 2 + 2 + 1 ; 6 → 3 + 2 + 1.
 var MIX = { 4: [2, 1, 1], 5: [2, 2, 1], 6: [3, 2, 1] };
 
-// rep : réputation actuelle. rnd : générateur [0,1) (injecté par les tests). world : "office" (défaut) | "travel" | "service".
+// rep : réputation actuelle. rnd : générateur [0,1) (injecté par les tests). world : "office" (défaut) | "travel" | "service" | "opening".
 // Rend {grade, brief, tasks:[{id, mod, itemId, kind, from, subject, ask, at, due, ringFor, live}]}
 //   mod    "p7" | "lisP3" | "lisP4" (le module où la réponse compte : refs et moduleScores)
 //   live   true : direct à heure fixe (sonne `ringFor` minutes puis est manqué) ; false : boîte, `due`
 //   prep / prepHit : la règle « prévu = paré » des mondes qui en ont une (lib/worlds.js, WORLD_META[world].prep)
+//   check / finale : la checklist d'Opening Night (une ligne par tâche cochable, l'ouverture des portes en fin de journée)
 export function composeDay(rep, rnd, world) {
   rnd = rnd || Math.random;
   if (world === "travel") return composeTravel(rep, rnd);
   if (world === "service") return composeService(rep, rnd);
+  if (world === "opening") return composeOpening(rep, rnd);
   var g = gradeOf(rep), mix = MIX[g.tasks] || MIX[4];
   var p7pool = PART7_PASSAGES.filter(function (x) { return x.questions && x.questions.length && p7Level(x.type) <= Math.max(1, g.multi); });
   // Au grade qui débloque un format, en garantir un par journée : le déblocage doit se voir.
@@ -326,6 +329,89 @@ function briefService(tasks) {
   var first = tasks.find(function (t) { return t.mod === "p7" && t.due != null; });
   if (first) parts.push("There's something on your counter too: I need it before " + fmtClock(first.due) + ".");
   return parts.join(" ");
+}
+
+// ── Opening Night : le monde événements (2026-09-25) ──────────────────────────────────────────
+// Vivier relu et validé par Jérémy (prototypes/event-day/review.html), rangé par ligne de checklist. L'agence mène
+// plusieurs clients à la fois : le vivier mêle un gala, un départ à la retraite, un sommet, un salon… et rien ne
+// prétend que c'est le même événement. SEULS ces items entrent.
+export var OPENING_POOL = {
+  venue: ["p3_75", "p3_69", "p3_01", "p3_58", "p3_84", "p7p34", "p7p69"],
+  catering: ["p3_77", "p3_26", "p3_90", "p3_45", "p7p44"],
+  setup: ["p3_64", "p3_94", "p3_39", "p3_47", "p3_60"],
+  program: ["p3_88", "p7p24", "p7p62", "p7p8", "p7p38", "p7p4", "p7p49"],
+  // L'ouverture de la soirée, en direct à 16:00 (discours d'accueil, remise de prix, présentation d'un invité).
+  finale: ["p4_78", "p4_20", "p4_30", "p4_61", "p4_71", "p4_82", "p4_68", "p4_75", "p4_90"],
+  // La sixième tâche des grades hauts : les consignes d'un atelier, hors checklist.
+  extra: ["p4_14", "p4_58"],
+};
+export var OPENING_LINES = ["venue", "catering", "setup", "program"];
+// Habillage GÉNÉRIQUE : ni la ligne de checklist (elle soufflerait « A conference venue »), ni la nature de l'événement
+// (p3_58, p4_20, p4_71 : « What kind of event…? »). On dit « the event », « tonight ».
+// Les P3 au téléphone (un client ou un fournisseur appelle) ; les autres se passent entre collègues.
+var OPENING_CALLS = { p3_58: 1, p3_69: 1, p3_90: 1, p3_45: 1, p3_60: 1, p3_64: 1, p3_47: 1 };
+var OPENING_CALL_SCENE = { kind: "call", from: "On the phone", subject: "A call about an event", ask: { who: "theo", text: "Someone's on the line about an event. Catch the details." } };
+var OPENING_TEAM_SCENES = [
+  { kind: "chat", from: "Two colleagues", subject: "A chat about an event", ask: { who: "theo", text: "The team is sorting something out. Listen in." } },
+  { kind: "meeting", from: "Planning meeting", subject: "A quick planning meeting", ask: { who: "theo", text: "Sit in on this one and tell me what was decided." } },
+];
+var ASK_EVENT_DOC = ["This one's on your list. Read it carefully.", "Check the details before the doors open.", "I need the key points from this."];
+
+function composeOpening(rep, rnd) {
+  var g = gradeOf(rep);
+  // 4 tâches : 3 lignes + la soirée ; 5 : les 4 lignes + la soirée ; 6 : + les consignes d'un atelier.
+  var lines = shuffled(OPENING_LINES, rnd).slice(0, g.tasks >= 5 ? 4 : 3);
+  var lvl = Math.max(1, g.multi);
+  var used = {};
+  var tasks = [];
+  lines.forEach(function (line) {
+    var ids = OPENING_POOL[line].filter(function (id) {
+      var ps = id.indexOf("p7") === 0 ? PART7_PASSAGES.find(function (x) { return x.id === id; }) : null;
+      return !ps || p7Level(ps.type) <= lvl;
+    });
+    // Au grade qui débloque un format, la ligne « program » en sert un quand le vivier en a (doubles, triple).
+    if (line === "program" && g.multi >= 2) {
+      var top = ids.filter(function (id) { var ps = PART7_PASSAGES.find(function (x) { return x.id === id; }); return ps && p7Level(ps.type) === g.multi; });
+      if (top.length) ids = top;
+    }
+    var id = pick(ids, rnd); used[id] = 1;
+    if (id.indexOf("p7") === 0) {
+      var d = dressP7(PART7_PASSAGES.find(function (x) { return x.id === id; }), rnd);
+      d.ask = { who: "theo", text: pick(ASK_EVENT_DOC, rnd) };
+      tasks.push(Object.assign({ mod: "p7", itemId: id, live: false, check: line }, d));
+    } else {
+      tasks.push(Object.assign({ mod: "lisP3", itemId: id, live: true, check: line }, OPENING_CALLS[id] ? OPENING_CALL_SCENE : pick(OPENING_TEAM_SCENES, rnd)));
+    }
+  });
+  if (g.tasks >= 6) {
+    var ex = pick(OPENING_POOL.extra, rnd);
+    tasks.push({ mod: "lisP4", itemId: ex, live: true, kind: "live", from: "Workshop room", subject: "A workshop starting",
+      ask: { who: "theo", text: "A client's workshop is starting. Be there for the first minutes." } });
+  }
+  // Horaires : un document sur la liste à 9:00 (s'il y en a), le reste réparti de 10:00 à 15:00 ; tout doit pouvoir être
+  // rendu AVANT 16:00, l'heure où les portes s'ouvrent (échéance des documents à 16:00 au plus tard).
+  var docs = tasks.filter(function (t) { return !t.live; });
+  var rest = shuffled(tasks.filter(function (t) { return t.live; }).concat(docs.slice(1)), rnd);
+  if (docs.length) docs[0].at = 0;
+  var from = 60, to = FINALE_AT - 60, step = rest.length ? (to - from) / rest.length : 0;
+  rest.forEach(function (t, i) { t.at = Math.floor(from + i * step + rnd() * step * 0.5); });
+  tasks.forEach(function (t) {
+    if (t.live) { t.ringFor = g.ringFor; t.due = null; }
+    else { t.ringFor = null; t.due = Math.min(FINALE_AT, t.at + 180); }
+  });
+  var fin = pick(OPENING_POOL.finale, rnd);
+  tasks.push({ mod: "lisP4", itemId: fin, live: true, kind: "finale", finale: true, from: "Main hall · Tonight", subject: "The event is starting",
+    ask: { who: "theo", text: "Doors are open. Go and listen to the opening." }, at: FINALE_AT, ringFor: g.ringFor, due: null });
+  tasks.sort(function (a, b) { return a.at - b.at; });
+  tasks.forEach(function (t, i) { t.id = "t" + (i + 1); });
+  return { grade: g, brief: briefOpening(tasks), tasks: tasks };
+}
+// 16:00 : les portes s'ouvrent. Le plus lent des directs (45 min de sonnerie) finit à 16:45, avant 17:00.
+export var FINALE_AT = 7 * 60;
+function briefOpening(tasks) {
+  var n = tasks.filter(function (t) { return t.check; }).length;
+  return "Morning! Three clients on the go, and tonight's event opens its doors at 16:00. " +
+    "You've got " + n + " things to sort out before then: get each one right and it's ready. I'll be at the door at four.";
 }
 
 // ── Bilan ───────────────────────────────────────────────────────────────────────────────────

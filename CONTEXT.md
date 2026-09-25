@@ -57,6 +57,10 @@ une décision.
   Halden & Co., variante S2 « briefé = calme » (point du matin compris → le client mécontent repart calmé, +15 rep ;
   sinon +45 min), vivier validé tel quel (11 P3, 12 P4, 11 P7). La règle « prévu = paré » devient générique
   (`WORLD_META.prep`, flags `prep` / `prepHit`) : l'écran ne connaît plus aucun monde. 4 trophées sans coffre.
+- **25/09 : Opening Night, 4e monde des Waygates** (`60cb541` proto → commit de câblage) : une journée à l'agence Lumen
+  Events, variante E1 « checklist + soirée » (une ligne cochée par tâche sans faute, portes à 16:00 : +5 rep par ligne),
+  vivier validé tel quel (15 P3, 11 P4, 9 P7). Lignes nommées seulement après leur tâche (sinon réponses soufflées).
+  4 trophées sans coffre (Curtain Up, Seasoned Planner, Rising Star, Full House).
 
 ### À voir en prod (pas encore observé sur de vrais élèves)
 - **Gauntlet à 7** : passer d'abord `supabase/migrations/2026-09-24_economy_catalog_data.sql` (coffres `connsort_perfect`…
@@ -71,6 +75,8 @@ une décision.
   avec audio, 6 à 8 P7) si les élèves y reviennent.
 - **Front Desk** : une journée « briefé » (toast +15 rep à l'appel du client) et une « coincé » (+45 min), trophée Open
   for Business, `gameScores.serviceDay` distinct. Vérifié au banc le 25/09 (chemin briefé, hub, Jet Lag intact).
+- **Opening Night** : une journée avec une ou deux lignes cochées (toast « ✓ Venue · ready »), les portes à 16:00 (toast
+  « Doors are open · n/4 ready »), le bilan avec la liste. Vérifié au banc le 25/09 (ligne cochée, portes, `ready/lines`).
 - Vague de coffres **Mastery II** à partir du **26/09** (échelons I datés du 19/09 + 7 jours) : garde anti-boucle.
 - Première cérémonie **« faiblesse devenue force »** possible vers le **27/09**.
 - Home « une porte », Part 7 et P3/P4 neufs, mode écoute de Mimic Hunt, sessions en mode clair.
@@ -78,8 +84,8 @@ une décision.
   **début octobre** avant de ranger ou retirer un module (premier aperçu iabd2627 : 45 créatures créées, 0 vaincue — **normal** : une créature meurt à sa 3e réussite espacée, 1-3-7 j, premières captures le 21/09 → premières morts vers le 2/10 ; au 24/09, 34 créatures sur 104 déjà touchées, 6 chasses jouées, 0 abandon).
 
 ### En attente d'une décision de Jérémy
-- **The Waygates, suite** : monde validé à faire, même moteur : organisation d'événements (items traiteur et salons
-  déjà mis de côté dans `prototypes/service-day/review.jsx`, liste EVENTS). « L'affaire du jour » (mécanique
+- **The Waygates, suite** : les 4 mondes validés sont en ligne. Viviers minces à étoffer si les élèves y reviennent
+  (Jet Lag surtout) ; « L'affaire du jour » (indices sur plusieurs documents, contenu neuf) toujours en réserve. « L'affaire du jour » (mécanique
   C du proto : indices répartis sur plusieurs documents, contenu neuf à écrire) comme journée spéciale ? (Les petits QCM
   abandonnés : faits le 25/09, voir « Livré ».)
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).

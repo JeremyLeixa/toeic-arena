@@ -19,7 +19,7 @@ export var CAPTURE_START = "2026-09-23";
 // Libellés des modules hors MISSION_MODULES. Un id inconnu s'affiche tel quel.
 var EXTRA_LABELS = {
   daily: "Daily Challenge", tavern: "Word Tavern", bforge: "Bridge Forge", gauntlet: "Grammar Gauntlet",
-  modals: "Modal Council", mimic: "Mimic Hunt", hunt: "Mistake Hunt", wfall: "Word Fall", office: "Nine to Five", travel: "Jet Lag", service: "Front Desk",
+  modals: "Modal Council", mimic: "Mimic Hunt", hunt: "Mistake Hunt", wfall: "Word Fall", office: "Nine to Five", travel: "Jet Lag", service: "Front Desk", opening: "Opening Night",
   mock1: "Mock Test 1", mock2: "Mock Test 2", mock3: "Mock Test 3", boss: "The Final Arena", endless: "Endless Arena",
 };
 export function moduleLabel(id) {

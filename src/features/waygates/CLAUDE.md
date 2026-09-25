@@ -1,8 +1,9 @@
-# The Waygates : les modules thématiques (Nine to Five, Jet Lag, Front Desk)
+# The Waygates : les modules thématiques (Nine to Five, Jet Lag, Front Desk, Opening Night)
 
 > Chargé quand on travaille dans `src/features/waygates/`. Protos : `prototypes/office-day/` (README : le constat
 > chiffré et les variantes comparées), `prototypes/travel-day/` (monde voyage, météo W1/W2, relecture du vivier),
-> `prototypes/service-day/` (monde service client, variantes S1 note client / S2 briefé = calme, relecture du vivier).
+> `prototypes/service-day/` (monde service client, variantes S1 note client / S2 briefé = calme, relecture du vivier),
+> `prototypes/event-day/` (monde événements, variantes E1 checklist + soirée / E2 prévu = paré, relecture du vivier).
 > Test : `tests/check_office_day.cjs`.
 
 **Pourquoi** (2026-09-24, exports CSV `tests/data/`) : les formats longs du TOEIC étaient fuis. Sur toute la campagne
@@ -22,13 +23,18 @@ réponses versées dans les Parts), un autre décor et un autre vivier. Jamais u
 - **`lib/worlds.js`** (pur, SANS données, lu par `App.jsx`, le hub et la tuile Games) : `WORLD_META[id]` déclare
   `modId` (clé XP / historique), `repKey` (`gameScores.<repKey>`), `name`, `company`, `person` (clé de `PEOPLE`),
   `desk` / `wait` (libellés du bureau et de l'attente), `announce`, `rules` (les 3 règles de l'accueil), `quit`, `empty`,
-  et `prep` : `null`, ou la règle « prévu = paré » avec TOUS ses textes. `worldRep(u, id)`, `PREP_BONUS`, `PREP_DELAY`.
+  `prep` : `null`, ou la règle « prévu = paré » avec TOUS ses textes ; `checklist` : `null`, ou la checklist d'Opening
+  Night (libellés des lignes, textes). `worldRep(u, id)`, `PREP_BONUS`, `PREP_DELAY`, `CHECK_BONUS`.
 - **Règle « prévu = paré », générique depuis Front Desk** : une tâche `prep` (bulletin, point du matin) comprise en
   entier → +`PREP_BONUS` (15) rep quand la tâche `prepHit` arrive ; sinon l'horloge saute de `PREP_DELAY` (45) min. Une
   fois par journée, ligne dans le bilan, `prepared` rangé dans l'historique (trophées Weather-wise, Keep Calm).
   **L'écran n'a plus aucun cas particulier par monde** (le test le vérifie) : un nouveau texte va dans `worlds.js`.
+- **Checklist (Opening Night)** : chaque tâche `check: <ligne>` est cochée si elle est rendue SANS faute ; à l'arrivée de
+  la tâche `finale` (16:00, `FINALE_AT`), +`CHECK_BONUS` (5) rep par ligne cochée, une seule fois. `ready` / `lines`
+  rangés dans l'historique (trophée Full House).
 - **`lib/officeDay.js composeDay(rep, rnd, world)`** : `office` = composition d'origine, **inchangée** ; `travel` =
-  `composeTravel` depuis `TRAVEL_POOL` ; `service` = `composeService` depuis `SERVICE_POOL`.
+  `composeTravel` depuis `TRAVEL_POOL` ; `service` = `composeService` depuis `SERVICE_POOL` ; `opening` = `composeOpening`
+  depuis `OPENING_POOL`. **Aucun item dans deux viviers** (le test le refuse : il compterait double à l'usage).
 - **`WorldDay.jsx`** (ex-`NineToFive.jsx`) : prop `world`, tout ce qui dépend du monde vient de `worldMeta`.
 - **`App.jsx worldDone(world, …)`** (ex-`officeDone`) et une route par monde dans `routes.jsx`
   (`<WorldDay key=… world=…>`, `done=worldDone("<id>",…)`).
@@ -79,6 +85,19 @@ autres P4, 11 P7).
 - Les items traiteur et salons (p3_90, p3_45, p3_26, p3_64, p3_69, p3_84, p3_39, p7p44, p7p69) sont gardés pour le
   monde « événements ».
 
+## Opening Night (module `opening`, 2026-09-25)
+Une journée à l'agence Lumen Events, avec Theo Marchetti (« Senior event planner »). Variante **E1** du proto
+(« checklist + soirée »), nom et vivier **validés par Jérémy tels quels** (`OPENING_POOL`, rangé par ligne : venue 7,
+catering 5, setup 5, program 7, ouverture 9, atelier 2 ; 15 P3, 11 P4, 9 P7).
+- **Journée** : une tâche par ligne (3 lignes aux grades à 4 tâches, 4 au-delà, + les consignes d'un atelier aux
+  grades à 6), tout rendable avant 16:00, puis l'ouverture des portes (P4 en direct) à 16:00, en dernier.
+- **L'agence mène plusieurs clients** : le vivier mêle gala, départ à la retraite, sommet, salon. Rien ne prétend que
+  c'est le même événement (« Three clients, and one event tonight »).
+- **Une ligne n'est nommée qu'APRÈS sa tâche** (toast, bilan). Bureau, brief, demandes et barre (« Ready: 1/4 ») restent
+  génériques : « Venue » soufflerait p3_75 (« What are the speakers trying to decide? » → « A conference venue »),
+  « Catering » p3_90 et p7p44. Jamais non plus la nature de l'événement (p3_58, p4_20, p4_71 : « What kind of event…? »).
+  Le test refuse ces mots dans l'habillage des P3/P4 et dans le brief.
+
 ## Les invariants qui cassent sans bruit (tous les mondes)
 - **Les réponses comptent dans lisP3 / lisP4 / p7** (`worldDone`, `App.jsx`, choix de Jérémy : poids plein dans
   l'estimateur et le Mentor), **mais JAMAIS de `trackModSession` sur ces clés**. Sinon une journée taxe les tuiles
@@ -94,11 +113,11 @@ autres P4, 11 P7).
   importe les banques P3/P4/P7, qui doivent rester dans le chunk chargé à la demande.
 - **Refs d'erreurs = celles des modules d'origine** (`lisP3:<id>:<qi>`, `lisP4:…`, `p7:…`) : la chasse les rejoue
   sans code neuf. `qi` = l'index d'origine de la question (seules les options sont permutées).
-- **Pas de BGM** : `office`, `travel`, `service` et `waygates` hors `SELF_MANAGED`, l'effet central coupe la musique (écoute).
+- **Pas de BGM** : `office`, `travel`, `service`, `opening` et `waygates` hors `SELF_MANAGED`, l'effet central coupe la musique (écoute).
 - **Trophées sans coffre** (Darics seuls) : pas de SQL. Un trophée qui recevrait un coffre passerait par
   `chestCatalog.js` + `gen-economy-sql.mjs` + SQL en prod AVANT le code.
 
 ## Banc sans compte
-`prototypes/sessions/real.html?sc=office` (`sc=travel`, `sc=service`, `sc=waygates`) ; `rep=300` pose la réputation des mondes
+`prototypes/sessions/real.html?sc=office` (`sc=travel`, `sc=service`, `sc=opening`, `sc=waygates`) ; `rep=300` pose la réputation des mondes
 (grade, formats) ; `mode=light`, `skin=<id>`. Le banc journalise ce que la fin de journée envoie à `p.done`
 (`[bench] done`).

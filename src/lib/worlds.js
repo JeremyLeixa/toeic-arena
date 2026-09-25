@@ -13,6 +13,10 @@
 //   prep       null, ou la règle « prévu = paré » du monde (Jet Lag : bulletin → perturbation ; Front Desk : point du
 //              matin → client mécontent). Tâche `prep` comprise en entier → +PREP_BONUS rep quand la tâche `prepHit`
 //              arrive ; sinon l'horloge saute de PREP_DELAY min. Les textes vivent ici, le moteur est le même.
+//   checklist  null, ou la checklist du monde (Opening Night) : chaque tâche `check: <ligne>` est COCHÉE si elle est rendue
+//              sans faute ; à l'arrivée de la tâche `finale` (les portes s'ouvrent), +CHECK_BONUS rep par ligne cochée.
+//              Une ligne n'est NOMMÉE qu'après sa tâche (toast, bilan) : « Venue » ou « Catering » souffleraient des
+//              réponses (p3_75 : « What are the speakers trying to decide? » → « A conference venue »).
 export var WORLD_META = {
   office: { id: "office", modId: "office", repKey: "officeDay", name: "Nine to Five", company: "Meridian Harbor Group", person: "dana",
     desk: "On your desk", wait: "Grab a coffee · wait for the next task", announce: "Announcement",
@@ -21,7 +25,7 @@ export var WORLD_META = {
       ["Whatever is still on your desk at 17:00 stays undone.", "", ""]],
     quit: { title: "Leave the office?", body: "Today's answers won't be saved.", stay: "Back to work", leave: "Leave" },
     empty: "Nothing got filed today. Tomorrow, start with the desk: the first email is right there at 9:00.",
-    prep: null },
+    prep: null, checklist: null },
   travel: { id: "travel", modId: "travel", repKey: "travelDay", name: "Jet Lag", company: "Business trip", person: "maya",
     desk: "Your trip", wait: "Wait in the lounge · skip to the next event", announce: "Announcement for passengers",
     rules: [["Your day runs from ", "9:00 to 17:00", ". Your trip can change at any time."],
@@ -34,7 +38,7 @@ export var WORLD_META = {
       okWord: "", koWord: "",
       ready: "You planned ahead: the delay doesn't catch you out", caught: "Caught out at the gate",
       reviewReady: "You planned ahead: the delay didn't catch you out", reviewCaught: "The delay caught you out at the gate",
-      reviewCaughtTail: "Travellers who check the forecast leave themselves a margin." } },
+      reviewCaughtTail: "Travellers who check the forecast leave themselves a margin." }, checklist: null },
   service: { id: "service", modId: "service", repKey: "serviceDay", name: "Front Desk", company: "Halden & Co. · Customer care", person: "priya",
     desk: "Your counter", wait: "Tidy the shelves · skip to the next customer", announce: "Announcement to shoppers",
     rules: [["Your day runs from ", "9:00 to 17:00", ". Customers come in all day."],
@@ -46,7 +50,17 @@ export var WORLD_META = {
       okWord: "briefed", koWord: "half-briefed",
       ready: "An upset customer. You know what to do", caught: "An upset customer asks for the manager",
       reviewReady: "The upset customer left calm: you did what the huddle said", reviewCaught: "The upset customer asked for the manager",
-      reviewCaughtTail: "The huddle had the answer." } },
+      reviewCaughtTail: "The huddle had the answer." }, checklist: null },
+  opening: { id: "opening", modId: "opening", repKey: "openingDay", name: "Opening Night", company: "Lumen Events · Event agency", person: "theo",
+    desk: "Your list", wait: "Double-check the seating plan · skip ahead", announce: "Announcement",
+    rules: [["Your day runs from ", "9:00 to 17:00", ". Three clients, and one event tonight."],
+      ["", "Suppliers don't wait.", " Read the questions while you listen."],
+      ["Clear your list ", "before the doors open at 16:00.", " Every task done right is one thing ready."]],
+    quit: { title: "Leave the agency?", body: "Today's answers won't be saved.", stay: "Back to the list", leave: "Leave" },
+    empty: "Nothing got done today. Tomorrow, start with your list: the doors open at 16:00 whatever happens.",
+    prep: null,
+    checklist: { hud: "Ready", arrive: "Doors are open", ok: "ready", ko: "not quite", opened: "Doors opened with", none: "The day ended before the doors opened.",
+      labels: { venue: "Venue", catering: "Catering", setup: "Setup", program: "Program" } } },
 };
 export function worldMeta(id) { return WORLD_META[id] || WORLD_META.office; }
 // Réputation du profil dans un monde.
@@ -57,3 +71,5 @@ export function worldRep(u, id) {
 // Règle « prévu = paré » (Jet Lag W2, Front Desk S2) : tâche de préparation comprise en entier → bonus à l'arrivée de la
 // tâche qui en dépend ; sinon, retard.
 export var PREP_BONUS = 15, PREP_DELAY = 45;
+// Checklist (Opening Night, variante E1) : réputation par ligne cochée quand les portes s'ouvrent.
+export var CHECK_BONUS = 5;

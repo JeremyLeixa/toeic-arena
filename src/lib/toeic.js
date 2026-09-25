@@ -76,6 +76,7 @@ export var MODULE_TOEIC_MAP={
   office:{part:null,section:null,score:true},
   travel:{part:null,section:null,score:true}, // Jet Lag (2026-09-25) : même règle qu'office, ses réponses comptent dans les Parts
   service:{part:null,section:null,score:true}, // Front Desk (2026-09-25) : idem
+  opening:{part:null,section:null,score:true}, // Opening Night (2026-09-25) : idem
   traps:{part:null,section:null,score:true},
   stratquiz:{part:null,section:null,score:true},
   timesim:{part:null,section:null,score:true}

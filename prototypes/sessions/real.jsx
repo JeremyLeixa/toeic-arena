@@ -127,13 +127,13 @@ var WIRED = { wordfam: WordFam, bforge: LinkingBridge, traps: TrapsQuiz, stratqu
   crypt: IrregularCrypt, chrono: Chronomancer, forge: PassiveForge, weaver: RelativeWeaver,
   knot: Knotbinder, anchor: AnchorHall, twin: TwinPaths,
   mmatch: ModalMatch, msort: ModalSort, pvdojo: PhrasalDojo,
-  mock1: MockTest, boss: BossTest, endless: EndlessArena, office: WorldDay, travel: WorldDay, service: WorldDay, waygates: Waygates };
+  mock1: MockTest, boss: BossTest, endless: EndlessArena, office: WorldDay, travel: WorldDay, service: WorldDay, opening: WorldDay, waygates: Waygates };
 
 function Frame() {
   var lc = "app" + (MODE === "light" ? " light" : "") + (FEST ? " fest-" + FEST : SKIN ? " skin-" + SKIN : "");
   var u = fresh("Camille", "visitor");
   // Banc seulement : `rep=300` pose la réputation de Nine to Five (grade, clémence, formats débloqués).
-  if (q.get("rep")) u.gameScores = Object.assign({}, u.gameScores, { officeDay: { rep: +q.get("rep"), days: 3 }, travelDay: { rep: +q.get("rep"), days: 3 }, serviceDay: { rep: +q.get("rep"), days: 3 } });
+  if (q.get("rep")) u.gameScores = Object.assign({}, u.gameScores, { officeDay: { rep: +q.get("rep"), days: 3 }, travelDay: { rep: +q.get("rep"), days: 3 }, serviceDay: { rep: +q.get("rep"), days: 3 }, openingDay: { rep: +q.get("rep"), days: 3 } });
   var common = { u: u, world: SC, done: function () { console.log("[bench] done", JSON.stringify([].slice.call(arguments))); return 1; }, back: function () { alert("Back → hub"); }, nav: noop, session: null, closeSession: noop, replaySession: noop, resetCard: noop, onContinue: noop, onReplay: noop, mockId: 1 };
   var Mod = WIRED[SC];
   var body = Mod ? <Mod {...common} /> : SC === "intro" ? <Intro /> : SC === "listen" ? <Listen /> : SC === "drill" ? <RealDrill {...common} /> : <Drill />;

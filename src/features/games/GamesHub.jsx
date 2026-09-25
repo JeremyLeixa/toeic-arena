@@ -80,7 +80,7 @@ export function GamesHub(p){
   var games=[
     // The Waygates (2026-09-24) : hub des modules thématiques, en tête. `plain` : pas de coffre ni de tarif propre
     // (Nine to Five compte dans lisP3/lisP4/p7) ; la ligne dit le grade du joueur dans le premier monde.
-    {id:"waygates",n:"The Waygates",d:"3 worlds · Nine to Five, Jet Lag, Front Desk",i:"magic-portal",bg:"linear-gradient(135deg,var(--cx-hex),#1B70CF)",tag:"NEW",plain:true},
+    {id:"waygates",n:"The Waygates",d:"4 worlds · Nine to Five, Jet Lag, Front Desk, Opening Night",i:"magic-portal",bg:"linear-gradient(135deg,var(--cx-hex),#1B70CF)",tag:"NEW",plain:true},
     {id:"tavern",n:"Word Tavern",d:"Prove your vocabulary — and dodge the false friends!",i:"beer-stein",bg:"linear-gradient(135deg,#c87a35,#8b5e83)",tag:"NEW"},
     {id:"matchE",n:"Speed Match",d:"Match words with definitions!",i:"chained-arrow-heads",bg:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",game:"matchEasy"},
     {id:"wfall",n:"Word Fall",d:"Catch the falling sentences!",i:"meteor-impact",bg:"linear-gradient(135deg,#ef4444,#f59e0b)",game:"wordFall"},
