@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monde service client · comparateur</title>
+<style>
+  :root{--bg:#0a0e13;--line:#243040;--t1:#e8edf3;--t2:#9fadbe;--acc:#4c8dff}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--t1);font:13px/1.4 system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#0e1319f2;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  header h1{font-size:14px;margin:0 8px 0 0;color:var(--acc);letter-spacing:.5px}
+  header a{color:var(--acc)}
+  label{display:flex;gap:5px;align-items:center;color:var(--t2)}
+  select,button{font:inherit;background:#161d26;color:var(--t1);border:1px solid #2a3544;border-radius:6px;padding:4px 8px;cursor:pointer}
+  button.go{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+  main{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:18px 12px 30px}
+  .cell{display:flex;flex-direction:column;gap:6px}
+  .cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .cap b{color:var(--acc);font-size:14px}
+  .cap a{color:var(--t2);font-size:11px}
+  .desc{color:var(--t2);font-size:11.5px;max-width:var(--w)}
+  .phone{width:var(--w);height:var(--h);border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 40px #000a;background:#000}
+  .phone iframe{width:375px;height:812px;border:0;transform:scale(var(--s));transform-origin:0 0;display:block}
+  footer{color:var(--t2);font-size:12px;max-width:980px;margin:0 auto;padding:0 16px 34px;line-height:1.55}
+  footer b{color:var(--t1)}
+  .names{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .names span{border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--t1)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Monde service client</h1>
+  <label>Départ <select id="start">
+    <option value="intro">Brief du matin</option>
+    <option value="desk">Journée (9:00)</option>
+    <option value="end">Bilan (journée simulée)</option>
+  </select></label>
+  <label>Vitesse <select id="speed">
+    <option value="1">Réelle (8 min)</option>
+    <option value="3">×3 (pour tester)</option>
+    <option value="8">×8 (défilement)</option>
+  </select></label>
+  <label>Taille <select id="size"><option value="fit">Ajustée</option><option value="1">100 %</option></select></label>
+  <button class="go" id="replay">↻ Recommencer</button>
+  <a href="review.html">Relire le vivier « service client » →</a>
+</header>
+<main id="grid"></main>
+<footer>
+  <b>Même journée dans les deux écrans</b> : un samedi au service client de Halden &amp; Co. (grand magasin fictif), 6 tâches
+  tirées du contenu existant (point du matin p4_94, lettre de réclamation p7p53, échange au comptoir p3_35, client mécontent
+  au téléphone p3_57, annonce aux clients p4_56, réponse d'un fabricant sur une garantie p7p15). Moteur de Nine to Five
+  (horloge + réputation) ; seul l'élément propre au monde change entre les deux écrans.
+  <b>Pour voir l'effet de S2</b> : réponds juste (ou faux) au point du matin, puis attends l'appel de 11:30 (vitesse ×3).
+  <b>Pour S1</b> : chaque client servi laisse ses étoiles, la moyenne s'affiche en haut.
+  <div class="names"><b>Nom du monde, à choisir :</b><span>Front Desk</span><span>Rush Hour</span><span>Checkout</span></div>
+</footer>
+<script>
+var VARIANTS = [
+  { id: "1", name: "Note client", desc: "Chaque client servi (comptoir, téléphone, lettre) laisse une note : 5 étoiles si tout est juste, une de moins par erreur, 1 s\'il repart sans réponse. La moyenne du jour s\'affiche en haut et dans le bilan. De l\'affichage : rien ne change dans la journée." },
+  { id: "2", name: "Briefé = calme", desc: "Le point du matin porte sur les clients difficiles. Compris en entier, le client mécontent de 11:30 repart calmé (+15 rep). Mal compris ou manqué : il demande la responsable, +45 min sur l'horloge. C'est la règle météo de Jet Lag, sans code moteur neuf au câblage." },
+];
+var ids = ["start", "speed", "size"];
+try {
+  var saved = JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}");
+  ids.forEach(function (k) { if (saved[k] != null) document.getElementById(k).value = saved[k]; });
+} catch (e) { console.warn("[service] hash illisible:", e && e.message); }
+
+function state() { var s = {}; ids.forEach(function (k) { s[k] = document.getElementById(k).value; }); return s; }
+function url(v, s) { return "frame.html?" + new URLSearchParams({ s: v, start: s.start, speed: s.speed }).toString(); }
+function render() {
+  var s = state();
+  location.replace("#" + encodeURIComponent(JSON.stringify(s)));
+  var avail = Math.min(window.innerWidth - 24, 2400);
+  var sc = s.size === "1" ? 1 : Math.min(1, Math.max(0.4, (avail - 18 - 40) / (2 * 375)));
+  var grid = document.getElementById("grid");
+  grid.style.setProperty("--s", sc);
+  grid.style.setProperty("--w", Math.round(375 * sc) + "px");
+  grid.style.setProperty("--h", Math.round(812 * sc) + "px");
+  grid.innerHTML = "";
+  VARIANTS.forEach(function (v) {
+    var cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerHTML = '<div class="cap"><b>S' + v.id + " · " + v.name + '</b><a href="' + url(v.id, s) + '" target="_blank">Ouvrir seul ↗</a></div>' +
+      '<div class="phone"><iframe src="' + url(v.id, s) + '"></iframe></div>' +
+      '<div class="desc">' + v.desc + "</div>";
+    grid.appendChild(cell);
+  });
+}
+ids.forEach(function (k) { document.getElementById(k).addEventListener("change", render); });
+document.getElementById("replay").addEventListener("click", render);
+var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(render, 200); });
+render();
+</script>
+</body>
+</html>

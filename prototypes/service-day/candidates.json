@@ -1,0 +1,902 @@
+[
+ {
+  "part": "P3",
+  "id": "p3_96",
+  "type": "",
+  "service": 16,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: Rachel, the Tokyo client just emailed. Their order still hasn't arrived, and they need it for a launch on Monday. W: The tracking shows it's stuck in customs. Kenji, y"
+ },
+ {
+  "part": "P3",
+  "id": "p3_04",
+  "type": "",
+  "service": 15,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: I'm calling about the laptop I ordered two weeks ago. It still hasn't arrived. W: I'm sorry to hear that. Can I have your order number, please? M: It's TK-4578. I was "
+ },
+ {
+  "part": "P3",
+  "id": "p3_57",
+  "type": "",
+  "service": 14,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: Customer service, this is Aisha. How can I help you today? M: Hi, I received my office chair order this morning, but two of the boxes were crushed and the chairs insid"
+ },
+ {
+  "part": "P3",
+  "id": "p3_28",
+  "type": "",
+  "service": 11,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: I've just finished the inventory count, and we're short two hundred units of the XT-500 model. M: Two hundred? That doesn't match the delivery records. The supplier co"
+ },
+ {
+  "part": "P3",
+  "id": "p3_14",
+  "type": "",
+  "service": 10,
+  "policy": 1,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: Excuse me, I'd like to return this printer. It stopped working after two days. W: I'm sorry about that. Do you have your receipt? M: Yes, here it is. I bought it last "
+ },
+ {
+  "part": "P3",
+  "id": "p3_35",
+  "type": "",
+  "service": 10,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: Hi, I bought this jacket online last week, but the size doesn't fit. I'd like to exchange it for a medium. M: Of course. Do you have the original packaging and the rec"
+ },
+ {
+  "part": "P3",
+  "id": "p3_90",
+  "type": "",
+  "service": 10,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: Hi, this is Daniel from Brookside Consulting. I'd like to order lunch for twelve people for a meeting tomorrow at noon. W: Certainly. Our catering orders usually need "
+ },
+ {
+  "part": "P3",
+  "id": "p3_78",
+  "type": "",
+  "service": 9,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: The shipment to the Chicago branch is going to be two days late. W: That's a problem. They need those parts for Monday's production run. M2: Could we send a partial or"
+ },
+ {
+  "part": "P3",
+  "id": "p3_95",
+  "type": "",
+  "service": 8,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: Hi, I'm calling about the lease for our shop on Elm Street. It ends next month, and we'd like to renew it. M: Of course. The new rate would be two thousand four hundre"
+ },
+ {
+  "part": "P3",
+  "id": "p3_22",
+  "type": "",
+  "service": 7,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: I've received a complaint from a client about the quality of the latest shipment. M: What exactly was the issue? W: Several items arrived damaged. The packaging didn't"
+ },
+ {
+  "part": "P3",
+  "id": "p3_10",
+  "type": "",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: I noticed the supply room is almost empty. We're low on paper, toner, and pens. W: I placed an order last Tuesday, but the supplier said there's a two-week backlog. M:"
+ },
+ {
+  "part": "P3",
+  "id": "p3_54",
+  "type": "",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: I'd like to check out, please. The name is Carter, room 412. W: Of course, Mr. Carter. I have your final bill here. The total comes to four hundred and twenty pounds. "
+ },
+ {
+  "part": "P3",
+  "id": "p3_74",
+  "type": "",
+  "service": 5,
+  "policy": 0,
+  "travel": 1,
+  "qn": 3,
+  "excerpt": "W: Everyone, the clients from Meridian are visiting on Thursday, so we need to finalize the agenda today. M: I can prepare the product demo. How long should it run? W: Le"
+ },
+ {
+  "part": "P3",
+  "id": "p3_83",
+  "type": "",
+  "service": 5,
+  "policy": 0,
+  "travel": 1,
+  "qn": 3,
+  "excerpt": "W: We've received several complaints about slow delivery times this month. M: Is it a problem with the warehouse or the courier? W2: I checked. The warehouse is fine; the"
+ },
+ {
+  "part": "P3",
+  "id": "p3_13",
+  "type": "",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: Our customer satisfaction scores dropped five percent this quarter. M: That's concerning. Do we know which area was affected the most? W: Response time. Customers are "
+ },
+ {
+  "part": "P3",
+  "id": "p3_20",
+  "type": "",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: I'd like to open a business checking account, please. W: Of course. Do you have your company registration documents with you? M: Yes, I have everything here. I also ne"
+ },
+ {
+  "part": "P3",
+  "id": "p3_39",
+  "type": "",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: The booth setup is almost done, but we have a problem. The banners we ordered arrived with the wrong logo. M: You're kidding. The conference opens in less than eightee"
+ },
+ {
+  "part": "P3",
+  "id": "p3_51",
+  "type": "",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: Hi, I'm calling from Bridgewater Solutions. I understand you're interested in seeing a demo of our project management platform. M: That's right. We're evaluating three"
+ },
+ {
+  "part": "P3",
+  "id": "p3_64",
+  "type": "",
+  "service": 4,
+  "policy": 1,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: I'd like to place an order for branded notebooks and pens for our trade show booth. We're thinking five hundred of each. W: Brilliant. Our most popular notebook is the"
+ },
+ {
+  "part": "P3",
+  "id": "p3_67",
+  "type": "",
+  "service": 4,
+  "policy": 1,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: I wanted to talk about our payment terms. Currently we're at net thirty, but our cash flow has improved and we'd be open to discussing changes. M: Interesting. If you "
+ },
+ {
+  "part": "P3",
+  "id": "p3_86",
+  "type": "",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: We've had a few reports of the new blender overheating. W: How many units are affected? Is it a safety issue? M2: So far it's a small batch, but we should investigate "
+ },
+ {
+  "part": "P3",
+  "id": "p3_26",
+  "type": "",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: We need to finalize the catering for the annual company picnic next Saturday. M: How many people have confirmed so far? W: About a hundred and forty, including employe"
+ },
+ {
+  "part": "P3",
+  "id": "p3_45",
+  "type": "",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: Hi, I'd like to place a catering order for a corporate meeting next Wednesday. We'll need coffee and pastries for about twenty people. M: No problem. Our corporate pac"
+ },
+ {
+  "part": "P3",
+  "id": "p3_52",
+  "type": "",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: I'd like to discuss the repayment schedule on my small business loan. I've come into some additional funds and want to pay it down faster. W: That's wonderful news. Le"
+ },
+ {
+  "part": "P3",
+  "id": "p3_63",
+  "type": "",
+  "service": 3,
+  "policy": 1,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: I registered for the marketing summit next week, but I have to cancel due to a family emergency. Is a refund possible? M: I'm sorry to hear that. Our standard policy a"
+ },
+ {
+  "part": "P3",
+  "id": "p3_69",
+  "type": "",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: Hi, I'm enquiring about exhibit floor space for the technology expo in March. We had a corner booth last year and would like the same again. M: Let me check the floor "
+ },
+ {
+  "part": "P3",
+  "id": "p3_71",
+  "type": "",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: Hi, I'd like to book a meeting room for our client presentation this Thursday at two o'clock. What's available? M: Let me see. At two o'clock, both the Oak Room and th"
+ },
+ {
+  "part": "P3",
+  "id": "p3_84",
+  "type": "",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "M: Our booth at the tech expo is confirmed for Hall C, space twelve. W: How big is the space? We had trouble fitting everything in last year. M2: It's about thirty percen"
+ },
+ {
+  "part": "P3",
+  "id": "p3_91",
+  "type": "",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "W: Has everyone seen the floor plan for the new office? We move in on the fifteenth. M: I have. I noticed the sales team is on the third floor, but the meeting rooms are "
+ },
+ {
+  "part": "P4",
+  "id": "p4_23",
+  "type": "Training session",
+  "service": 8,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Now that everyone has logged in to the new customer management system, let me walk you through the main features. On the left side of your screen, you'll see the client d"
+ },
+ {
+  "part": "P4",
+  "id": "p4_56",
+  "type": "Announcement",
+  "service": 8,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Attention shoppers. Westwood Department Store will be closing two hours earlier than usual tonight, at six PM, for our annual inventory count. We apologize for any inconv"
+ },
+ {
+  "part": "P4",
+  "id": "p4_99",
+  "type": "Advertisement",
+  "service": 7,
+  "policy": 2,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Is your office chair giving you a sore back by lunchtime? At Ergoline, we design seating for people who work long hours. Our chairs adjust in five different ways, and eve"
+ },
+ {
+  "part": "P4",
+  "id": "p4_08",
+  "type": "Advertisement",
+  "service": 6,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Are you looking for a reliable delivery service for your business? FastTrack Logistics offers same-day delivery in the metropolitan area and next-day delivery nationwide."
+ },
+ {
+  "part": "P4",
+  "id": "p4_28",
+  "type": "Company update",
+  "service": 6,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "I'm pleased to report that our customer retention rate has risen to 92 percent this year, up from 87 percent last year. This is largely thanks to the new loyalty program "
+ },
+ {
+  "part": "P4",
+  "id": "p4_55",
+  "type": "Meeting introduction",
+  "service": 6,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Good morning everyone, and thank you for joining today's quarterly review. Before we start, I want to acknowledge two things. First, congratulations to the customer succe"
+ },
+ {
+  "part": "P4",
+  "id": "p4_62",
+  "type": "Announcement",
+  "service": 6,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Attention shoppers, and thank you for visiting Brightway Department Store. We're holding our biggest seasonal sale of the year, this weekend only. Discounts vary by depar"
+ },
+ {
+  "part": "P4",
+  "id": "p4_88",
+  "type": "Event introduction",
+  "service": 6,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Welcome to the grand opening of our newest branch here in the Westfield shopping center. To celebrate, we're offering twenty percent off all purchases this weekend only. "
+ },
+ {
+  "part": "P4",
+  "id": "p4_35",
+  "type": "Training session",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Alright team, let's get started with today's customer service refresher. The main topic is handling difficult conversations, specifically complaint calls. Research shows "
+ },
+ {
+  "part": "P4",
+  "id": "p4_41",
+  "type": "Announcement",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Good afternoon shoppers, and welcome to Greenwood Market. As a friendly reminder, our store will be closing thirty minutes earlier than usual this evening, at eight o'clo"
+ },
+ {
+  "part": "P4",
+  "id": "p4_46",
+  "type": "Voicemail",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Hello, this is Greenfield Pharmacy calling for Mr. Lecomte. I wanted to let you know that your prescription refill is ready for pickup. Our hours today are nine to seven."
+ },
+ {
+  "part": "P4",
+  "id": "p4_72",
+  "type": "Automated menu",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "You've reached the customer support line for Nova Electronics. To check the status of an existing order, press one. For technical support with a product, press two. To re"
+ },
+ {
+  "part": "P4",
+  "id": "p4_77",
+  "type": "Meeting excerpt",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Moving on, I want to address the results of last month's customer survey. Overall satisfaction is up by eight percent, which is excellent news. However, one area still ne"
+ },
+ {
+  "part": "P4",
+  "id": "p4_94",
+  "type": "Workshop excerpt",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Alright, let's start our session on customer service. Today's focus is handling difficult conversations. When a customer is upset, the most important first step is to lis"
+ },
+ {
+  "part": "P4",
+  "id": "p4_95",
+  "type": "Voicemail",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Hi, this is Marco Ricci from Ricci Home Renovations, returning your call about the kitchen project. I've looked at the photos you sent, and I can give you an estimate onc"
+ },
+ {
+  "part": "P4",
+  "id": "p4_18",
+  "type": "Recorded message",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Welcome to the Springfield Public Library automated system. The library is currently open. Today's hours are 9 AM to 8 PM. The book return drop box is available 24 hours "
+ },
+ {
+  "part": "P4",
+  "id": "p4_21",
+  "type": "Voicemail",
+  "service": 4,
+  "policy": 1,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Hi, this is Angela from Westfield Insurance. I'm calling regarding your claim for the water damage in your office. I've reviewed the assessment report, and we can cover t"
+ },
+ {
+  "part": "P4",
+  "id": "p4_54",
+  "type": "Voicemail",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Hi, this is Daniel from QuickShip Couriers. I have a package addressed to your office, but the building is locked and there's no answer at the main entrance. I'll wait fo"
+ },
+ {
+  "part": "P4",
+  "id": "p4_65",
+  "type": "Automated menu",
+  "service": 4,
+  "policy": 2,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Thank you for calling Brightline Insurance. Your call is important to us. For new policy inquiries, press one. To report a claim, press two. For billing and payment quest"
+ },
+ {
+  "part": "P4",
+  "id": "p4_93",
+  "type": "Automated menu",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Thank you for calling City Central Library. The library is currently closed. Our opening hours are Monday to Friday, nine to eight, and Saturday, ten to five. To renew a "
+ },
+ {
+  "part": "P4",
+  "id": "p4_96",
+  "type": "Tour",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Welcome to the Harlow Textile Mill. Before we begin, a quick note: the machines on the ground floor are still in use, so please stay behind the yellow lines. This mill op"
+ },
+ {
+  "part": "P4",
+  "id": "p4_98",
+  "type": "Meeting excerpt",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Before we finish, I want to share the results of last month's customer survey. Overall satisfaction went up to eighty-six percent, which is our best result in three years"
+ },
+ {
+  "part": "P4",
+  "id": "p4_01",
+  "type": "Voicemail",
+  "service": 3,
+  "policy": 0,
+  "travel": 1,
+  "qn": 3,
+  "excerpt": "Hi, this is Karen from Summit Consulting. I'm calling to confirm our meeting on Wednesday at 10 AM. I've reserved conference room B at your office. Could you let me know "
+ },
+ {
+  "part": "P4",
+  "id": "p4_09",
+  "type": "Announcement",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Attention shoppers. Riverside Mall will be closing in 30 minutes, at 9 PM. Please make your final purchases and proceed to the exits. The parking garage will remain acces"
+ },
+ {
+  "part": "P4",
+  "id": "p4_20",
+  "type": "Event introduction",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Ladies and gentlemen, thank you for joining us for the tenth annual Innovation Awards ceremony. Tonight we celebrate the most creative ideas and solutions from teams acro"
+ },
+ {
+  "part": "P4",
+  "id": "p4_32",
+  "type": "Announcement",
+  "service": 3,
+  "policy": 0,
+  "travel": 2,
+  "qn": 3,
+  "excerpt": "Attention all passengers on platform four. The eight forty-seven express service to Manchester Piccadilly has been delayed by approximately twenty minutes due to a signal"
+ },
+ {
+  "part": "P4",
+  "id": "p4_33",
+  "type": "Meeting introduction",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Good morning everyone, and thank you for joining today's quarterly review. Before we dive into the financial results, I want to acknowledge the marketing team for their o"
+ },
+ {
+  "part": "P4",
+  "id": "p4_37",
+  "type": "Advertisement",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Tired of losing track of your business expenses? Say hello to Ledgerly, the expense management app designed for freelancers and small business owners. With Ledgerly, you "
+ },
+ {
+  "part": "P4",
+  "id": "p4_45",
+  "type": "Advertisement",
+  "service": 3,
+  "policy": 1,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Looking to transform your backyard into the entertaining space of your dreams? GreenScape Landscaping has been designing and building custom outdoor environments for over"
+ },
+ {
+  "part": "P4",
+  "id": "p4_47",
+  "type": "Announcement",
+  "service": 3,
+  "policy": 0,
+  "travel": 2,
+  "qn": 3,
+  "excerpt": "Attention passengers on platform seven. The 4:25 express service to Brussels has been canceled this evening due to a signaling issue on the line. Passengers holding ticke"
+ },
+ {
+  "part": "P4",
+  "id": "p4_49",
+  "type": "Advertisement",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "Are you tired of crowded gyms with broken equipment? At Pulse Cycling Studio, we offer indoor cycling classes designed for every fitness level. Our brand-new facility on "
+ },
+ {
+  "part": "P7",
+  "id": "p7p48",
+  "type": "Double Passage",
+  "service": 32,
+  "policy": 1,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "--- DOCUMENT 1: Invoice --- BRIGHTLINE OFFICE SUPPLIES Invoice #BL-77324 Bill To: Marlowe & Finch Law Office Date: May 2 Due: May 31 | Item | Qty | Unit Price | Total | |"
+ },
+ {
+  "part": "P7",
+  "id": "p7p64",
+  "type": "Triple Passage",
+  "service": 32,
+  "policy": 0,
+  "travel": 0,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Price List --- PRINTWELL SUPPLIES — Bulk Price List Item / Unit price / Bulk price (50+ units of that item) A4 Paper (ream): $4.50 / $3.80 Toner Cartridge"
+ },
+ {
+  "part": "P7",
+  "id": "p7p67",
+  "type": "Triple Passage",
+  "service": 32,
+  "policy": 0,
+  "travel": 0,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Advertisement --- GREENLEAF GARDEN CENTER — Spring Sale! This week only: - 15% off all plants - 25% off orders over $100 - Free local delivery on orders o"
+ },
+ {
+  "part": "P7",
+  "id": "p7p53",
+  "type": "Letter",
+  "service": 29,
+  "policy": 0,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "Dear Customer Service Manager, I am writing to express my dissatisfaction with order #DR-5521, which I placed on March 2. First, the delivery arrived eight days later tha"
+ },
+ {
+  "part": "P7",
+  "id": "p7p73",
+  "type": "Invoice",
+  "service": 24,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "BRIGHTLINE OFFICE SUPPLY — INVOICE Invoice No.: 58213 Date: 3 April Customer: Moreau & Park Architects, 22 Canal Street, Bristol Account No.: MPA-0417 Item | Qty | Unit p"
+ },
+ {
+  "part": "P7",
+  "id": "p7p12",
+  "type": "Double Passage",
+  "service": 21,
+  "policy": 0,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "--- DOCUMENT 1: Email --- From: Robert Kline, Purchasing Manager To: All Department Heads Date: May 5 Subject: New Office Supply Vendor Dear colleagues, After a thorough "
+ },
+ {
+  "part": "P7",
+  "id": "p7p15",
+  "type": "Letter",
+  "service": 21,
+  "policy": 5,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "Dear Ms. Fontaine, Thank you for contacting Apex Home Electronics regarding your ProChef 9000 Oven (Serial No. PC9-88412). We are sorry to hear that the temperature displ"
+ },
+ {
+  "part": "P7",
+  "id": "p7p44",
+  "type": "Advertisement",
+  "service": 16,
+  "policy": 0,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "SAVORY OCCASIONS — CORPORATE CATERING MADE SIMPLE Planning a meeting, training day, or office celebration? Let Savory Occasions handle the food so you can focus on your e"
+ },
+ {
+  "part": "P7",
+  "id": "p7p66",
+  "type": "Triple Passage",
+  "service": 13,
+  "policy": 0,
+  "travel": 21,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Travel Itinerary --- BUSINESS TRIP — Daniel Cho Prepared by Horizon Travel Outbound: May 5 — Flight NX-210, departs 8:00 AM (Seattle to Chicago), arrives "
+ },
+ {
+  "part": "P7",
+  "id": "p7p57",
+  "type": "Double Passage",
+  "service": 12,
+  "policy": 3,
+  "travel": 0,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Product Catalog --- APEX LAPTOPS — BUSINESS SERIES | Model | RAM | Storage | Battery | Price | | Apex Lite | 8 GB | 256 GB | 8 hours | $699 | | Apex Pro |"
+ },
+ {
+  "part": "P7",
+  "id": "p7p22",
+  "type": "Notice",
+  "service": 8,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "BAYSIDE SUPERMARKET — LOYALTY PROGRAM UPDATE Dear valued customers, We are excited to announce a major upgrade to the Bayside Rewards program, effective March 1. What's c"
+ },
+ {
+  "part": "P7",
+  "id": "p7p40",
+  "type": "Text Message Chain",
+  "service": 7,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "--- ONLINE CHAT --- Diana Foster (9:14 AM): Hi Raj, quick question. The client just asked if we can move the product demo from Thursday to Tuesday. Is the prototype going"
+ },
+ {
+  "part": "P7",
+  "id": "p7p51",
+  "type": "Email",
+  "service": 7,
+  "policy": 0,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "From: Customer Experience Team, StreamWell To: Subscribers Date: August 4 Subject: Important Changes to Your StreamWell Subscription Dear Subscriber, We're writing to let"
+ },
+ {
+  "part": "P7",
+  "id": "p7p52",
+  "type": "Meeting Minutes",
+  "service": 7,
+  "policy": 0,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "MINUTES — Quarterly Operations Meeting Date: July 9 | Chair: Laura Bishop | Attendees: 8 1. Review of Q2 KPIs: On-time delivery rose to 94%, up from 89% in Q1. Customer c"
+ },
+ {
+  "part": "P7",
+  "id": "p7p69",
+  "type": "Online Chat",
+  "service": 7,
+  "policy": 1,
+  "travel": 0,
+  "qn": 5,
+  "excerpt": "--- ONLINE CHAT --- Lena Ortiz (10:02 A.M.): The Walsh Foundation dinner has grown again. They now expect 140 guests instead of 110. Priya Nair (10:04 A.M.): The Garden R"
+ },
+ {
+  "part": "P7",
+  "id": "p7p74",
+  "type": "Double Passage",
+  "service": 7,
+  "policy": 0,
+  "travel": 0,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Email --- From: Hannah Weber <h.weber@alderinsurance.com> To: Training Team Date: 2 October Subject: Autumn workshop schedule Hi all, Below is the draft s"
+ },
+ {
+  "part": "P7",
+  "id": "p7p14",
+  "type": "Instructions",
+  "service": 6,
+  "policy": 0,
+  "travel": 4,
+  "qn": 3,
+  "excerpt": "GLOBETROTTER REWARDS — MEMBERSHIP GUIDE Thank you for joining the GlobeTrotter Rewards program! Here is everything you need to know: EARNING POINTS - Flights: 1 point per"
+ },
+ {
+  "part": "P7",
+  "id": "p7p19",
+  "type": "Email",
+  "service": 6,
+  "policy": 0,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "From: Monica Reyes, Head of Procurement To: Operations Team; Warehouse Managers Subject: Supplier Delay — Component XR-200 Date: August 19 Team, I want to flag a supply c"
+ },
+ {
+  "part": "P7",
+  "id": "p7p7",
+  "type": "Instructions",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "SETTING UP YOUR NEW VOICEPRINT SECURITY SYSTEM Thank you for purchasing the VoiceLock Pro security system. Please follow these steps to complete the setup: Step 1: Downlo"
+ },
+ {
+  "part": "P7",
+  "id": "p7p39",
+  "type": "Advertisement",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "CROSSBRIDGE ACCOUNTING — YOUR SMALL BUSINESS TAX PARTNER Tax season is stressful enough without worrying whether you're missing deductions or filing correctly. At Crossbr"
+ },
+ {
+  "part": "P7",
+  "id": "p7p71",
+  "type": "Article",
+  "service": 5,
+  "policy": 0,
+  "travel": 0,
+  "qn": 5,
+  "excerpt": "LOCAL BAKERY CHAIN BETS ON SMALLER STORES GRANTHAM (12 June) — Crumb & Co., the bakery chain known for its sourdough loaves, will open six small-format shops over the nex"
+ },
+ {
+  "part": "P7",
+  "id": "p7p20",
+  "type": "Article",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "RETAIL TECHNOLOGY REPORT Artificial intelligence is rapidly transforming the retail industry, according to a comprehensive study released Monday by the Global Retail Rese"
+ },
+ {
+  "part": "P7",
+  "id": "p7p34",
+  "type": "Email",
+  "service": 4,
+  "policy": 0,
+  "travel": 2,
+  "qn": 4,
+  "excerpt": "From: Anna Kowalski, Event Coordinator To: Registered Attendees Date: September 5 Subject: IMPORTANT — Venue Change for Innovation Summit 2024 Dear Attendees, We are writ"
+ },
+ {
+  "part": "P7",
+  "id": "p7p41",
+  "type": "Email",
+  "service": 4,
+  "policy": 1,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "From: Priya Anand, Professional Development To: All Staff Date: October 6 Subject: Free Webinar — Mastering Difficult Conversations Dear colleagues, We are pleased to off"
+ },
+ {
+  "part": "P7",
+  "id": "p7p72",
+  "type": "Text Message Chain",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "--- TEXT MESSAGE CHAIN --- Grace Kim (7:48 A.M.): The 8:05 train to Leeds is canceled. The next one is at 8:40. Daniel Price (7:50 A.M.): That gets you in after the clien"
+ },
+ {
+  "part": "P7",
+  "id": "p7p75",
+  "type": "Triple Passage",
+  "service": 4,
+  "policy": 0,
+  "travel": 0,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Web Page --- www.lakesidelodge.com/groups LAKESIDE LODGE — GROUP AND CORPORATE STAYS Planning a team retreat? Book 10 rooms or more and enjoy: - 15% off o"
+ },
+ {
+  "part": "P7",
+  "id": "p7p36",
+  "type": "Notice",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 3,
+  "excerpt": "PUBLIC LIBRARY — TEMPORARY HOURS CHANGE Dear library patrons, Please be advised that the Central Public Library will operate on reduced hours from June 10 through June 24"
+ },
+ {
+  "part": "P7",
+  "id": "p7p46",
+  "type": "Review",
+  "service": 3,
+  "policy": 0,
+  "travel": 2,
+  "qn": 3,
+  "excerpt": "HOTEL REVIEW — THE CEDARWOOD INN, ASHEVILLE Posted by: TravelWithLena | Rating: 4 / 5 | Stayed: March I booked two nights at The Cedarwood Inn for a weekend getaway, and "
+ },
+ {
+  "part": "P7",
+  "id": "p7p58",
+  "type": "Memo",
+  "service": 3,
+  "policy": 2,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "To: All Staff From: Human Resources Date: May 18 Re: Updated Dress Code — Effective June 1 Following feedback gathered during our spring staff survey, we are updating the"
+ },
+ {
+  "part": "P7",
+  "id": "p7p68",
+  "type": "Web Page",
+  "service": 3,
+  "policy": 0,
+  "travel": 0,
+  "qn": 4,
+  "excerpt": "www.harborpointwork.com/membership HARBOR POINT COWORKING — MEMBERSHIP OPTIONS Harbor Point opened its doors in 2019 with a single floor of shared desks. [1] Today, the s"
+ }
+]

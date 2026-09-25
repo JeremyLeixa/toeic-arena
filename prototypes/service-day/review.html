@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monde service client · vivier à relire</title>
+<style>
+  :root{--bg:#0a0e13;--s1:#131a23;--line:#243040;--t1:#e8edf3;--t2:#9fadbe;--t3:#6d7c8f;--acc:#4c8dff;--ok:#35c07a;--wx:#7aaaff}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--t1);font:14px/1.5 system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:#0e1319f2;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+  header h1{font-size:15px;margin:0;color:var(--acc)}
+  header .n{color:var(--t2)}
+  button{font:inherit;background:var(--acc);color:#fff;border:0;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:700}
+  main{max-width:900px;margin:0 auto;padding:16px}
+  h2{font-size:14px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin:24px 0 10px}
+  .it{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+  .it.on{border-color:var(--ok)}
+  .hd{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .hd input{width:18px;height:18px}
+  .id{font-weight:800}
+  .tg{font-size:11px;padding:2px 8px;border-radius:999px;background:#1d2632;color:var(--t2)}
+  .tg.wx{color:var(--wx)}
+  details{margin-top:8px}
+  summary{color:var(--t3);cursor:pointer;font-size:12.5px}
+  .tx{white-space:pre-line;color:var(--t2);font-size:13px;margin:8px 0}
+  .q{font-size:12.5px;color:var(--t1);margin:4px 0}
+  .q b{color:var(--ok)}
+  textarea{width:100%;height:80px;background:var(--s1);color:var(--t1);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px monospace}
+  p.lead{color:var(--t2)}
+</style>
+</head>
+<body>
+<!-- Relecture du vivier « service client » : candidats trouvés par mots-clés (candidates.json), présélection de Claude cochée.
+     Jérémy coche / décoche, puis copie la liste finale. Hors build. -->
+<header>
+  <h1>Monde service client · vivier à relire</h1>
+  <span class="n" id="count"></span>
+  <button id="copy">Copier ma sélection</button>
+</header>
+<main>
+  <p class="lead">Candidats trouvés par mots-clés dans les banques P3, P4 et P7. <b>Cochés : ceux que je garderais</b> (un client, le magasin, ou le service client lui-même).
+    Les autres sont des faux positifs probables (« account » au sens bancaire, « order » de fournitures en interne…) ou des items que je garde pour le monde « événements » (traiteur, salons). Déplie un item pour lire le texte et les questions.
+    Coche ou décoche, puis « Copier ma sélection » et colle-moi la liste.</p>
+  <div id="list"></div>
+  <h2>Ta sélection</h2>
+  <textarea id="out" readonly></textarea>
+</main>
+<script type="module" src="./review.jsx"></script>
+</body>
+</html>
