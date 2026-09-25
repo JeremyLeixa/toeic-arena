@@ -1,13 +1,14 @@
 // The Waygates (2026-09-24) — le hub des modules thématiques : les portails d'Aldric vers le monde réel.
 // Chaque monde habille les vraies Parts du TOEIC dans une situation (choix de Jérémy : « faire bosser sans
-// en donner l'air »). Premier monde : Nine to Five (route `office`, NineToFive.jsx). Un monde de plus =
+// en donner l'air »). Mondes : Nine to Five (`office`), Jet Lag (`travel`), un seul écran WorldDay.jsx. Un monde de plus =
 // une entrée dans WORLDS, sa route, son écran ; les portails scellés annoncent la suite.
 //
 // Passage du portail (variante V3 « Plongée », prototypes/waygate-portal/) : au tap, le hub plonge vers le point
 // touché pendant qu'un cœur de lumière grossit jusqu'à remplir l'écran (0,8 s, son playPortal), puis on navigue ;
 // l'écran du monde joue l'arrivée (portal.js relie les deux). Mouvement réduit : navigation directe, fondu seul.
 import { useEffect, useRef, useState } from "react";
-import { gradeOf, officeRep } from "../../lib/officeGrades.js";
+import { gradeOf } from "../../lib/officeGrades.js";
+import { worldMeta, worldRep } from "../../lib/worlds.js";
 import { GIcon } from "../../components/icons.jsx";
 import { playPortal } from "../../sounds.js";
 import { PORTAL_DIVE_MS, markPortal, reducedMotion } from "./portal.js";
@@ -38,11 +39,15 @@ var WG_CSS = `
 @media (prefers-reduced-motion:reduce){.wg.dive,.wg-fx{animation:none!important;display:none}}
 `;
 
-// Les mondes. `id` = la route ; `meta(u)` = la ligne d'état (grade, journées).
+// Les mondes. `id` = la route ET l'id de lib/worlds.js ; la ligne d'état (grade, journées) vient de gameScores[repKey].
 var WORLDS = [
-  { id: "office", name: "Nine to Five", icon: "briefcase", desc: "A working day at Meridian Harbor Group. Emails, calls, meetings: the clock is running.",
-    meta: function (u) { var o = (u && u.gameScores && u.gameScores.officeDay) || {}; var g = gradeOf(officeRep(u)); return g.name + (o.days ? " · " + o.days + (o.days > 1 ? " days" : " day") + " on the job" : " · first day"); } },
+  { id: "office", icon: "briefcase", desc: "A working day at Meridian Harbor Group. Emails, calls, meetings: the clock is running.", days: "on the job" },
+  { id: "travel", icon: "commercial-airplane", desc: "A business trip. Check the forecast, catch the announcements, make it on time.", days: "on the road" },
 ];
+function worldLine(u, w) {
+  var o = (u && u.gameScores && u.gameScores[worldMeta(w.id).repKey]) || {};
+  return gradeOf(worldRep(u, w.id)).name + (o.days ? " · " + o.days + (o.days > 1 ? " days " : " day ") + w.days : " · first day");
+}
 
 export function Waygates(p) {
   var [dive, setDive] = useState(null);               // {x, y, k} pendant la plongée
@@ -75,9 +80,9 @@ export function Waygates(p) {
           <button key={w.id} className="crd wg-gate" onClick={function (e) { enter(w, e); }}>
             <GIcon name={w.icon} size={44} color="var(--cyan)" />
             <div className="wg-gate-b">
-              <div className="wg-gate-n out">{w.name}</div>
+              <div className="wg-gate-n out">{worldMeta(w.id).name}</div>
               <div className="wg-gate-d">{w.desc}</div>
-              <div className="wg-gate-m">{w.meta(p.u)}</div>
+              <div className="wg-gate-m">{worldLine(p.u, w)}</div>
             </div>
           </button>);
       })}

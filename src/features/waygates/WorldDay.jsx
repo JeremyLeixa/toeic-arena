@@ -1,10 +1,14 @@
-// Nine to Five (hub The Waygates, 2026-09-24) — une journée de travail chez Meridian Harbor Group.
-// Proto : prototypes/office-day/ (variante V3 choisie par Jérémy : horloge + réputation, horloge clémente
-// aux grades bas). Composition de la journée, grades, réputation et XP : lib/officeDay.js (pur, testé).
+// Les mondes des Waygates (2026-09-24, multi-mondes le 2026-09-25) : UN écran, UN moteur, un décor par monde.
+//   world="office" : Nine to Five, une journée chez Meridian Harbor Group (proto prototypes/office-day/, V3)
+//   world="travel" : Jet Lag, un déplacement d'affaires, avec bulletin météo et règle « prévu = paré »
+//                    (proto prototypes/travel-day/, variante W2 choisie par Jérémy)
+// Ce que chaque monde déclare : lib/worlds.js (décor, libellés, réputation). Composition des journées, grades,
+// réputation et XP : lib/officeDay.js (pur, testé). Ajouter un monde = une entrée dans WORLD_META, son vivier et son
+// habillage dans officeDay.js, sa carte dans Waygates.jsx, sa route : jamais une copie de cet écran.
 //
 // Les questions sont celles du TOEIC, TELLES QUELLES (Parts 3, 4 et 7) : tout le jeu est autour, jamais
 // à leur place. Chaque réponse compte dans le module de sa Part (lisP3, lisP4, p7 : estimateur et Mentor
-// à plein poids, voir officeDone dans App.jsx) et ses erreurs gardent les refs de ces modules : la
+// à plein poids, voir worldDone dans App.jsx) et ses erreurs gardent les refs de ces modules : la
 // chasse les rejoue sans code neuf.
 //
 // Couleurs : UNIQUEMENT les jetons du thème (skins, fêtes et mode clair s'appliquent, question de
@@ -13,7 +17,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LISTENING_P3, LISTENING_P4 } from "../../data/listening.js";
 import { PART7_PASSAGES } from "../../data/part7.js";
-import { COMPANY, DAY_LEN, PEOPLE, REPLAY_COST, composeDay, dayStars, dayXp, fmtClock, gradeOf, nextGrade, officeRep, repGain } from "../../lib/officeDay.js";
+import { DAY_LEN, PEOPLE, REPLAY_COST, composeDay, dayStars, dayXp, fmtClock, gradeOf, nextGrade, repGain } from "../../lib/officeDay.js";
+import { WEATHER_BONUS, WEATHER_DELAY, worldMeta, worldRep } from "../../lib/worlds.js";
 import { shufListeningItem } from "../../lib/listeningShuffle.js";
 import { shufP7 } from "../../lib/optionShuffle.js";
 import { playAudioFile, resumeAudioSession, stopCurrentListenAudio, stopListenAudio } from "../../lib/audio.js";
@@ -139,9 +144,13 @@ function buildTask(t) {
   var tk = LISTENING_P4.find(function (x) { return x.id === t.itemId; });
   return Object.assign({}, t, { text: tk.text, qs: flat(tk.qs.map(shufListeningItem), { opts: "opts", c: "c" }), audio: ["/audio/p4/" + tk.id + ".mp3"] });
 }
-var ICON = { mail: "envelope", doc: "scroll-unfurled", phone: "smartphone", file: "files", chat: "coffee-cup", call: "rotary-phone", meeting: "round-table", live: "megaphone", voicemail: "microphone" };
-var LABEL = { mail: "Email", doc: "Document", phone: "Messages", file: "Case file", chat: "Conversation", call: "Call", meeting: "Meeting", voicemail: "Voicemail" };
+var ICON = { mail: "envelope", doc: "scroll-unfurled", phone: "smartphone", file: "files", chat: "coffee-cup", call: "rotary-phone", meeting: "round-table", live: "megaphone", voicemail: "microphone",
+  forecast: "raining", announce: "megaphone" };
+var LABEL = { mail: "Email", doc: "Document", phone: "Messages", file: "Case file", chat: "Conversation", call: "Call", meeting: "Meeting", voicemail: "Voicemail",
+  forecast: "Weather forecast", announce: "Announcement" };
 function labelOf(t) { return t.kind === "live" ? t.from : t.kind === "mail" || t.kind === "doc" ? (t.docType || LABEL[t.kind]) : LABEL[t.kind] || "Task"; }
+// Bouton d'un direct : on décroche un appel, on écoute une annonce ou un bulletin, on rejoint le reste.
+function pickLabel(t) { return t.kind === "call" ? "Pick up" : t.kind === "forecast" || t.kind === "announce" ? "Listen" : "Join"; }
 function isAudio(t) { return t.mod !== "p7"; }
 function initState(tasks) {
   var s = {};
@@ -162,9 +171,10 @@ function summarize(tasks, st) {
 
 function Avatar(p) { var who = PEOPLE[p.who] || PEOPLE.dana; return <span className={"nf-av" + (p.sm ? " sm" : "")}>{who.initials}</span>; }
 
-export function NineToFive(p) {
-  var rep0 = useRef(officeRep(p.u)).current;              // lu AVANT p.done : sv() écrit tout de suite
-  var day = useMemo(function () { return composeDay(rep0); }, [rep0]);
+export function WorldDay(p) {
+  var W = worldMeta(p.world);
+  var rep0 = useRef(worldRep(p.u, W.id)).current;         // lu AVANT p.done : sv() écrit tout de suite
+  var day = useMemo(function () { return composeDay(rep0, null, W.id); }, [rep0, W.id]);
   var tasks = useMemo(function () { return day.tasks.map(buildTask); }, [day]);
   var grade = day.grade;
   var totalQs = tasks.reduce(function (a, t) { return a + t.qs.length; }, 0);
@@ -177,6 +187,10 @@ export function NineToFive(p) {
   var [playing, setPlaying] = useState(false);
   var [showScript, setShowScript] = useState(false);
   var [toast, setToast] = useState(null);
+  // Météo (mondes W.weather) : connue une fois le bulletin traité ; `prepared` = bulletin compris en entier ; `hit` posé
+  // quand la perturbation arrive (« ready » : bonus, « caught » : retard). Une seule fois par journée.
+  var [wx, setWx] = useState({ known: false, label: null, prepared: false, bonus: 0, hit: null });
+  var wxRef = useRef(wx); wxRef.current = wx;
   var track = useSessionTrack();
   var mistakesRef = useRef([]), sidRef = useRef(0), sentRef = useRef(false), genRef = useRef(0);
   var pausedRef = useRef(false);                      // feuille « Leave this round? » ouverte : l'horloge s'arrête
@@ -216,8 +230,25 @@ export function NineToFive(p) {
       Object.keys(changes).forEach(function (id) { n[id] = Object.assign({}, prev[id], changes[id]); });
       return n;
     });
+    // « Prévu = paré » (Jet Lag) : la perturbation tombe. Bulletin compris en entier → l'élève avait prévu de la marge
+    // (bonus) ; sinon → coincé, l'horloge saute. Le message parle d'anticipation, jamais d'orage : une seule des
+    // perturbations du vivier est due à la météo (p4_02).
+    var hit = W.weather ? arrivals.find(function (t) { return t.weatherHit; }) : null;
+    if (hit && !wxRef.current.hit) {
+      if (wxRef.current.prepared) {
+        setWx(function (w) { return Object.assign({}, w, { hit: "ready", bonus: WEATHER_BONUS }); });
+        say("You planned ahead: the delay doesn't catch you out · +" + WEATHER_BONUS + " rep");
+      } else {
+        setWx(function (w) { return Object.assign({}, w, { hit: "caught" }); });
+        setMin(function (m) { return Math.min(DAY_LEN, m + WEATHER_DELAY); });
+        say("Caught out at the gate · +" + WEATHER_DELAY + " min");
+      }
+      return;
+    }
     var a = arrivals.filter(function (t) { return t.at > 0; }).pop();
-    if (a) say(a.live ? (a.kind === "chat" ? "Colleagues at the coffee machine" : a.kind === "call" ? "Incoming call" : a.from + " starting now") : a.kind === "voicemail" ? "New voicemail" : "New " + labelOf(a).toLowerCase() + " on your desk");
+    if (a) say(a.live ? (a.kind === "chat" ? (W.id === "office" ? "Colleagues at the coffee machine" : "People talking nearby")
+      : a.kind === "call" ? "Incoming call" : a.kind === "forecast" ? "Weather forecast on the radio" : a.kind === "announce" ? "Announcement for passengers" : a.from + " starting now")
+      : a.kind === "voicemail" ? "New voicemail" : "New " + labelOf(a).toLowerCase() + (W.id === "office" ? " on your desk" : ""));
     else if (lost.length) say("Missed · " + labelOf(lost[0]));
   }, [minute, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -232,7 +263,7 @@ export function NineToFive(p) {
   var rows = summarize(tasks, st);
   var answered = rows.reduce(function (a, r) { return a + r.answered; }, 0);
   var sc = rows.reduce(function (a, r) { return a + r.correct; }, 0);
-  var gain = repGain(rows);
+  var gain = repGain(rows) + wx.bonus;
   useEffect(function () {
     if (phase !== "end" || sentRef.current) return;
     sentRef.current = true;
@@ -245,7 +276,8 @@ export function NineToFive(p) {
     });
     var clean = rows.every(function (r) { return r.done && r.onTime; });
     sidRef.current = p.done(sc, answered, dayXp(sc, answered, clean), mistakesRef.current,
-      { modId: "office", parts: parts, repGain: gain, onTime: rows.filter(function (r) { return r.onTime; }).length, tasks: rows.length, stars: dayStars(sc, totalQs) });
+      { modId: W.modId, world: W.id, parts: parts, repGain: gain, onTime: rows.filter(function (r) { return r.onTime; }).length, tasks: rows.length, stars: dayStars(sc, totalQs),
+        prepared: W.weather ? wx.hit === "ready" : undefined });
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Audio ──
@@ -286,7 +318,7 @@ export function NineToFive(p) {
     var t = taskOf(view), s = st[view], q = t.qs[s.qi], ok = i === q.c;
     track.record(ok);
     try { if (ok) playCorrect(); else playWrong(); } catch (e) { console.warn("[office] sfx:", e && e.message); }
-    if (!ok) mistakesRef.current.push({ tag: "Nine to Five · " + labelOf(t), prompt: q.q, yours: q.opts[i], correct: q.opts[q.c], why: q.x,
+    if (!ok) mistakesRef.current.push({ tag: W.name + " · " + labelOf(t), prompt: q.q, yours: q.opts[i], correct: q.opts[q.c], why: q.x,
       ref: { k: t.mod + ":" + t.itemId + ":" + q.qi, part: PART[t.mod] } });
     patch(view, { answers: s.answers.concat([i]) });
   }
@@ -297,7 +329,14 @@ export function NineToFive(p) {
     var late = t.due != null && minRef.current > t.due;
     patch(view, { status: "done", doneAt: minRef.current });
     hush(); setView(null);
-    say("Filed · " + ok + "/" + t.qs.length + (late ? " · late" : "") + " · +" + (ok * 4 + (late ? 0 : 6)) + " rep");
+    if (t.forecast) {
+      // Le bulletin : la météo s'affiche en haut ; compris en entier = paré pour la perturbation du jour.
+      var prepared = ok === t.qs.length;
+      setWx(function (w) { return Object.assign({}, w, { known: true, label: t.forecastLabel, prepared: prepared }); });
+      say(t.forecastLabel + " today · " + (prepared ? "you're ready for it" : "some details slipped past you"));
+      return;
+    }
+    say((W.id === "office" ? "Filed · " : "Done · ") + ok + "/" + t.qs.length + (late ? " · late" : "") + " · +" + (ok * 4 + (late ? 0 : 6)) + " rep");
   }
   function skipAhead() {
     var up = tasks.filter(function (t) { return st[t.id].status === "hidden"; }).map(function (t) { return t.at; });
@@ -312,10 +351,10 @@ export function NineToFive(p) {
       <div className={landed ? "nf-intro landed" : "enter nf-intro"}>
         <button className="back-btn nf-intro-back" onClick={p.back}>{"← Back"}</button>
         <div className="nf-time out">8:58</div>
-        <div className="nf-day">{COMPANY}</div>
+        <div className="nf-day">{W.company}</div>
         <div className="crd nf-notif">
-          <Avatar who="dana" />
-          <div><div className="nf-notif-h"><b>{PEOPLE.dana.name}</b><span>now</span></div><p>{day.brief}</p></div>
+          <Avatar who={W.person} />
+          <div><div className="nf-notif-h"><b>{PEOPLE[W.person].name}</b><span>now</span></div><p>{day.brief}</p></div>
         </div>
         <div className="crd nf-badge">
           <div className="nf-lbl out">Your badge</div>
@@ -323,11 +362,19 @@ export function NineToFive(p) {
           {nx0 && <><span className="nf-bar"><i style={{ width: (100 * (rep0 - grade.rep) / (nx0.rep - grade.rep)) + "%" }} /></span>
             <div className="nf-small">{rep0 + " / " + nx0.rep + " rep · next: "}<b>{nx0.name}</b></div></>}
         </div>
-        <ul className="nf-rules">
-          <li>Your day runs from <b>9:00 to 17:00</b>. Work comes in all day.</li>
-          <li><b>Calls and meetings don{"'"}t wait.</b> Read the questions while you listen.</li>
-          <li>Whatever is still on your desk at 17:00 stays undone.</li>
-        </ul>
+        {W.weather ? (
+          <ul className="nf-rules">
+            <li>Your day runs from <b>9:00 to 17:00</b>. Your trip can change at any time.</li>
+            <li><b>Announcements don{"'"}t wait.</b> Read the questions while you listen.</li>
+            <li>Listen to the forecast carefully: <b>travellers who plan ahead don{"'"}t get stuck.</b></li>
+          </ul>
+        ) : (
+          <ul className="nf-rules">
+            <li>Your day runs from <b>9:00 to 17:00</b>. Work comes in all day.</li>
+            <li><b>Calls and meetings don{"'"}t wait.</b> Read the questions while you listen.</li>
+            <li>Whatever is still on your desk at 17:00 stays undone.</li>
+          </ul>
+        )}
         <button className="btn1" onClick={function () { setPhase("day"); }}>Start the day</button>
       </div></>);
   }
@@ -337,13 +384,15 @@ export function NineToFive(p) {
     if (!answered) return (<><style>{NF_CSS}</style>
       <div className="enter nf-intro">
         <div className="nf-time out">17:00</div>
-        <div className="crd nf-review"><Avatar who="dana" /><p>Nothing got filed today. Tomorrow, start with the desk: the first email is right there at 9:00.</p></div>
+        <div className="crd nf-review"><Avatar who={W.person} /><p>{W.weather
+          ? "Nothing got handled today. Tomorrow, start with the forecast at 9:00: the rest of the trip follows."
+          : "Nothing got filed today. Tomorrow, start with the desk: the first email is right there at 9:00."}</p></div>
         <button className="btn1" onClick={p.back}>Back to the Waygates</button>
       </div></>);
     return (<><style>{NF_CSS}</style>
-      <SessionResult session={p.session} sid={sidRef.current} name="Nine to Five" mistakes={mistakesRef.current}
+      <SessionResult session={p.session} sid={sidRef.current} name={W.name} mistakes={mistakesRef.current}
         onContinue={function () { p.closeSession(); p.back(); }} onReplay={p.replaySession}>
-        <DayReview rows={rows} sc={sc} totalQs={totalQs} rep0={rep0} gain={gain} />
+        <DayReview rows={rows} sc={sc} totalQs={totalQs} rep0={rep0} gain={gain} person={W.person} hit={W.weather ? wx.hit : null} />
       </SessionResult></>);
   }
 
@@ -357,10 +406,12 @@ export function NineToFive(p) {
     <SessionTop n={totalQs} cur={fb ? Math.max(0, answeredNow - 1) : answeredNow} results={track.results} streak={track.streak} onQuit={p.back}
       onSheet={function (on) { pausedRef.current = on; }}
       aside={<span className={"nf-clock" + (min >= DAY_LEN - 60 ? " late" : "")}>{fmtClock(min)}</span>}
-      sub={grade.name + (nx ? " · " + (rep0 + gain) + " / " + nx.rep + " rep" : "")}
-      quitCopy={{ title: "Leave the office?", body: "Today's answers won't be saved.", stay: "Back to work", leave: "Leave" }} />
+      sub={(W.weather ? "Weather: " + (wx.known ? wx.label : "?") + " · " : "") + grade.name + (nx ? " · " + (rep0 + gain) + " / " + nx.rep + " rep" : "")}
+      quitCopy={W.weather
+        ? { title: "Cancel the trip?", body: "Today's answers won't be saved.", stay: "Keep travelling", leave: "Leave" }
+        : { title: "Leave the office?", body: "Today's answers won't be saved.", stay: "Back to work", leave: "Leave" }} />
     <ComboBanner combo={track.combo} />
-    {!cur && <Desk tasks={tasks} st={st} min={min} onOpen={open} onSkip={skipAhead} />}
+    {!cur && <Desk tasks={tasks} st={st} min={min} onOpen={open} onSkip={skipAhead} deskTitle={W.desk} waitLabel={W.wait} />}
     {cur && <Task t={cur} s={cs} fb={fb} playing={playing} showScript={showScript} min={min}
       onBack={toDesk} onAnswer={answer} onNext={next} onPlay={function () { listen(cur); }}
       onReplay={function () { patch(cur.id, { replays: cs.replays + 1 }); setMin(function (m) { return Math.min(DAY_LEN, m + REPLAY_COST); }); listen(cur); }}
@@ -372,7 +423,7 @@ export function NineToFive(p) {
         <div key={t.id} className="nf-ringbar">
           <span className="nf-ico"><GIcon name={ICON[t.kind]} size={18} color="var(--green)" /></span>
           <div className="nf-ringbar-b"><b>{t.kind === "live" ? t.from : t.subject}</b><span>{"Starts now · " + left + " min to join"}</span></div>
-          <button className="btn1" disabled={busy} onClick={function () { pickUp(t.id); }}>{busy ? "Busy" : t.kind === "call" ? "Pick up" : "Join"}</button>
+          <button className="btn1" disabled={busy} onClick={function () { pickUp(t.id); }}>{busy ? "Busy" : pickLabel(t)}</button>
         </div>);
     })}
     {toast && <div className="nf-toast" key={toast.k}>{toast.msg}</div>}
@@ -390,11 +441,11 @@ function Desk(p) {
   var pending = p.tasks.some(function (t) { return p.st[t.id].status === "hidden"; });
   return (
     <div className="nf">
-      <div className="nf-sec out">On your desk</div>
+      <div className="nf-sec out">{p.deskTitle}</div>
       {!visible.length && (
         <div className="crd nf-empty">
           <p>{pending ? "Nothing on your desk right now." : "All clear."}</p>
-          {pending && <button className="btn2" onClick={p.onSkip}>Grab a coffee · wait for the next task</button>}
+          {pending && <button className="btn2" onClick={p.onSkip}>{p.waitLabel}</button>}
         </div>
       )}
       {visible.map(function (t) {
@@ -410,7 +461,7 @@ function Desk(p) {
               <div className="nf-row-ask"><Avatar who={t.ask.who} sm />{t.ask.text}</div>
             </div>
             <div className="nf-row-r">
-              {ring && <span className="nf-chip go">{(t.kind === "call" ? "Pick up" : "Join") + " · " + left + " min"}</span>}
+              {ring && <span className="nf-chip go">{pickLabel(t) + " · " + left + " min"}</span>}
               {!ring && t.due != null && <span className={"nf-chip" + (overdue ? " late" : soon ? " soon" : "")}>{overdue ? "overdue" : "due " + fmtClock(t.due)}</span>}
               {s.answers.length > 0 && <span className="nf-chip">{s.answers.length + "/" + t.qs.length}</span>}
             </div>
@@ -543,7 +594,8 @@ function DayReview(p) {
   return (
     <div className="crd" style={{ padding: 14 }}>
       <div className="nf-stars">{[0, 1, 2].map(function (i) { return <span key={i} className={i < stars ? "on" : ""}>★</span>; })}</div>
-      <div className="nf-review"><Avatar who="dana" /><p>{review}</p></div>
+      <div className="nf-review"><Avatar who={p.person} /><p>{review}</p></div>
+      {p.hit && <div className="nf-review"><Avatar who={p.person} /><p>{p.hit === "ready" ? "You planned ahead: the delay didn't catch you out (+" + WEATHER_BONUS + " rep)." : "The delay caught you out at the gate: " + WEATHER_DELAY + " minutes lost. Travellers who check the forecast leave themselves a margin."}</p></div>}
       {rows.map(function (r) {
         return (
           <div key={r.t.id} className="nf-end-row">
