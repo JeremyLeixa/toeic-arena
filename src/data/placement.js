@@ -5,10 +5,12 @@
 export var MISSION_MODULES=[
   {id:"drill",name:"Part 5 Drill",icon:"📝",reason:"Grammar practice"},
   {id:"wordfam",name:"Word Families",icon:"🧩",reason:"Word form mastery"},
-  {id:"connsort",name:"Connectors",icon:"🔀",reason:"Connector rules"},
-  {id:"prepdrill",name:"Prepositions",icon:"🎯",reason:"Collocation practice"},
-  {id:"gerinf",name:"Gerund/Infinitive",icon:"⏱️",reason:"Verb patterns"},
-  {id:"falsefr",name:"False Friends",icon:"🎭",reason:"FR/EN traps"},
+  {id:"connsort",name:"Knotbinder (Connectors)",icon:"🔀",reason:"Connector rules"},
+  {id:"prepdrill",name:"Anchor Hall (Prepositions)",icon:"🎯",reason:"Collocation practice"},
+  {id:"gerinf",name:"Twin Paths (Gerund/Infinitive)",icon:"⏱️",reason:"Verb patterns"},
+  // retired : plus joué seul depuis le 2026-09-25 (faux amis dans Word Tavern, réponses versées dans falsefr). Gardé
+  // pour l'historique et le dashboard formateur ; exclu des sélecteurs de jetons du Profil (un jeton y serait perdu).
+  {id:"falsefr",name:"False Friends",icon:"🎭",reason:"FR/EN traps",retired:true},
   {id:"csess",name:"Flashcard Review",icon:"🃏",reason:"Vocabulary SRS"},
   {id:"p6",name:"Part 6",icon:"📄",reason:"Text completion"},
   {id:"p7",name:"Part 7 Reading",icon:"📖",reason:"Reading comprehension"},

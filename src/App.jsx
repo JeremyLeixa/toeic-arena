@@ -1516,7 +1516,12 @@ function sv(d){
   // l'écriture, jamais dans supaToLocal (une troncature à la lecture ferait échouer le round-trip).
   // extra.modId : un module à deux volets sur une même route (Mimic Hunt : mimic / mimic_listen, 2026-09-19)
   // dit sous quel module compter la partie ; sinon, la route.
-  function miniSession(sc,tot,xp,mistakes,extra){var modId=(extra&&extra.modId)||sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot,null,extra&&extra.bites!=null?{bites:extra.bites}:null);c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
+  // extra.parts {<modId>:{c,t}} : une partie qui contient des questions d'un AUTRE module (les faux amis de Word
+  // Tavern, 2026-09-25) les y verse aussi, pour l'estimateur et le Mentor. JAMAIS de trackModSession sur ces clés :
+  // l'anti-farming et les quêtes du plan restent ceux du module joué (même règle qu'officeDone).
+  function miniSession(sc,tot,xp,mistakes,extra){var modId=(extra&&extra.modId)||sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot,null,extra&&extra.bites!=null?{bites:extra.bites}:null);
+    var parts=(extra&&extra.parts)||{};Object.keys(parts).forEach(function(m){var pr=parts[m];if(m!==modId&&pr&&pr.t>0)recordModule(c,m,pr.c,pr.t,null,{via:modId});});
+    c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
   // Nine to Five (The Waygates, 2026-09-24). Une journée = une partie du module "office" (XP, anti-farming,
   // historique, écran de fin). Ses réponses sont de vrais items P3/P4/P7 : elles comptent AUSSI dans lisP3,
   // lisP4 et p7 (extra.parts), à plein poids pour l'estimateur et le Mentor (choix de Jérémy). JAMAIS de

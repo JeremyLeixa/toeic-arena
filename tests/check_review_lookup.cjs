@@ -173,11 +173,11 @@ const wiring = [
   // leurs modules d'origine (connsort, prepdrill, gerinf), que la chasse sait déjà relire.
   [['features', 'gauntlet', 'Gauntlet.jsx'], ['gauntlet', 'connsort', 'prepdrill', 'gerinf'], 7],
   [['features', 'modals', 'ModalCouncil.jsx'], ['modals_match', 'modals_sort'], 2],
-  [['features', 'train', 'grammar.jsx'], ['wordfam', 'bforge', 'traps', 'pvdojo', 'falsefr'], 0],
+  [['features', 'train', 'grammar.jsx'], ['wordfam', 'bforge', 'traps', 'pvdojo'], 0],
   [['features', 'train', 'strategy.jsx'], ['stratquiz'], 1],
   [['features', 'games', 'ClueHunter.jsx'], ['clue'], 1],
   [['features', 'games', 'AudioBlitz.jsx'], ['ablitz'], 1],
-  [['features', 'games', 'WordTavern.jsx'], ['tavern'], 1],
+  [['features', 'games', 'WordTavern.jsx'], ['tavern', 'falsefr'], 1],
   [['features', 'games', 'MimicHunt.jsx'], ['mimic'], 1],
 ];
 wiring.forEach(([p, mods, n]) => {
@@ -190,7 +190,7 @@ wiring.forEach(([p, mods, n]) => {
 });
 // grammar.jsx : chaque module câblé passe sa liste (le Drill en passe une aussi, avec catStats).
 const gram = read('features', 'train', 'grammar.jsx');
-['WordFam', 'LinkingBridge', 'TrapsQuiz', 'PhrasalDojo', 'FalseFriends'].forEach((fn) => {
+['WordFam', 'LinkingBridge', 'TrapsQuiz', 'PhrasalDojo'].forEach((fn) => {
   const at = gram.indexOf('export function ' + fn + '(');
   const end = gram.indexOf('\nexport function ', at + 10);
   const body = gram.slice(at, end < 0 ? gram.length : end);
@@ -209,6 +209,12 @@ const GT = require(src('lib', 'gauntletTrials.js'));
 eq('Gauntlet : épreuves → modules (ids d\'origine gardés)', GT.GAUNTLET_MODS, ['gauntlet_irregular', 'gauntlet_tense', 'gauntlet_passive', 'gauntlet_relative', 'connsort', 'prepdrill', 'gerinf']);
 ok(/if\(sp==="gauntlet"\)[^\n]*var fullModId=gauntletModId\(subId\);/.test(routes), 'routes.jsx gauntlet : le module vient de la table (gauntletModId), jamais du préfixe en dur');
 ok(/id:"gauntlet"[^\n]*subs:GAUNTLET_MODS/.test(read('features', 'home', 'Train.jsx')), 'Train.jsx : la tuile Gauntlet agrège ses 7 épreuves');
+// Faux amis dans Word Tavern (2026-09-25) : leurs réponses nourrissent aussi falsefr (poids .04 de l'estimateur),
+// par extra.parts, et miniSession ne consomme JAMAIS l'anti-farming ni les quêtes d'un module versé ainsi.
+ok(/p\.done\(finalSc,TOTAL,baseXp,mistakesRef\.current,\{parts:\{falsefr:\{c:ffc,t:ffq\.length\}\}\}\)/.test(read('features', 'games', 'WordTavern.jsx')), 'WordTavern.jsx : les faux amis sont versés dans falsefr (extra.parts)');
+const ms = (app.match(/function miniSession\([\s\S]*?return s\.sid;\}/) || [''])[0];
+ok(/Object\.keys\(parts\)\.forEach\(function\(m\)\{var pr=parts\[m\];if\(m!==modId&&pr&&pr\.t>0\)recordModule\(c,m,pr\.c,pr\.t,null,\{via:modId\}\);\}\)/.test(ms), 'App.jsx miniSession : extra.parts versé dans les modules concernés');
+ok((ms.match(/trackModSession\(/g) || []).length === 1, 'App.jsx miniSession : trackModSession sur le seul module joué, jamais sur les parts');
 ['gauntlet', 'modals', 'clue', 'ablitz'].forEach((sp) => {
   const line = routes.split(/\r?\n/).find((l) => l.indexOf('if(sp==="' + sp + '")') >= 0) || '';
   ok(/recordMisses\(c\.review,mistakes,new Date\(\)\)/.test(line), 'routes.jsx ' + sp + ' : le handler envoie les erreurs au bestiaire');

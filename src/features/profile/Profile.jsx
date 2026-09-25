@@ -721,7 +721,7 @@ export function Profile(p){
       if(useTokenAsk==="diminishing_bypass"){
         var dms=u.dailyModSessions||{};var td=today();
         // Step 1 : module selector. List MISSION_MODULES, sorted by today's session count (most farmed first).
-        var modList=MISSION_MODULES.slice().map(function(m){
+        var modList=MISSION_MODULES.filter(function(m){return !m.retired;}).map(function(m){
           var key=m.id+"_"+td;var cnt=dms[key]||0;
           var nextMult=cnt===0?1:cnt===1?0.5:cnt===2?0.15:0;
           return{m:m,cnt:cnt,nextMult:nextMult};
@@ -815,7 +815,7 @@ export function Profile(p){
       }
       // ── XP Boost flow A : Module Booster (pick a module, +50% next session) ──
       if(useTokenAsk==="module_booster"){
-        var bModList=MISSION_MODULES.slice();
+        var bModList=MISSION_MODULES.filter(function(m){return !m.retired;});
         if(!bypassPick){
           return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={function(e){if(e.target===e.currentTarget)closeAll();}}>
             <div className="crd" style={{maxWidth:380,maxHeight:"80vh",overflowY:"auto",padding:20,border:"1px solid var(--bdr)"}}>

@@ -63,7 +63,8 @@ const MODULES = [
   { file: 'features/gauntlet/Gauntlet.jsx', fn: 'RelativeWeaver', bank: 'RELATIVE_WEAVER', ok: 'o', ck: 'c' },
   { file: 'features/games/ClueHunter.jsx', fn: 'ClueHunter', bank: 'CLUE_HUNTER', ok: 'opts', ck: 'ans' },
   { file: 'features/games/AudioBlitz.jsx', fn: 'AudioBlitz', bank: 'AUDIO_BLITZ', ok: 'opts', ck: 'c' },
-  { file: 'features/train/grammar.jsx', fn: 'FalseFriends', bank: 'FALSE_FRIENDS', ok: 'opts', ck: 'correct' },
+  // Les faux amis vivent dans Word Tavern depuis le 2026-09-25 (3 questions sur 15).
+  { file: 'features/games/WordTavern.jsx', fn: 'WordTavern', bank: 'FALSE_FRIENDS', ok: 'opts', ck: 'correct' },
   { file: 'features/train/grammar.jsx', fn: 'TrapsQuiz', bank: 'TOEIC_TRAPS', ok: 'options', ck: 'correct' },
   { file: 'features/gauntlet/Gauntlet.jsx', fn: 'TwinPaths', bank: 'GERUND_INF', ok: 'opts', ck: 'c' },
   { file: 'features/train/strategy.jsx', fn: 'StratQuizPage', bank: 'STRAT_QUIZ', ok: 'options', ck: 'correct' },

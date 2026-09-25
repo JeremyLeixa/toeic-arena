@@ -9,7 +9,7 @@ import { SpeakBtn } from "../../components/SpeakBtn.jsx";
 import { GRIMOIRE_CONNECTORS } from "../../data/connectorsGrimoire.js";
 import { WORD_FAMILIES } from "../../data/grammar.js";
 import { LINKING_BRIDGE } from "../../data/linkingBridge.js";
-import { TOEIC_TRAPS, FALSE_FRIENDS } from "../../data/miniGames.js";
+import { TOEIC_TRAPS } from "../../data/miniGames.js";
 import { GRIMOIRE_PHRASAL } from "../../data/phrasalGrimoire.js";
 import { PHRASAL_VERBS } from "../../data/phrasalVerbs.js";
 import { drillComposition } from "../../lib/planner.js";
@@ -592,77 +592,4 @@ export function PhrasalDojo(p){
   }
 
   return null;
-}
-// ─── FALSE FRIENDS ───
-export function FalseFriends(p){
-  // Options permutées par item (bonne réponse en B ou C 47 fois sur 51).
-  var items=useMemo(function(){return shuffle(FALSE_FRIENDS).slice(0,12).map(function(it){var s=shuffleOpts(it.opts,it.correct);return Object.assign({},it,{opts:s.opts,correct:s.c});});},[]);
-  var[ci,sC]=useState(0);var[sc,sSc]=useState(0);var[ph,sP]=useState("intro");var[pick,sPk]=useState(-1);var[sk,sSk]=useState(false);
-
-  var mistakesRef=useRef([]);var sidRef=useRef(0);
-  var track=useSessionTrack(); // HUD de session (lot 2, 2026-09-19)
-  function doAns(i){
-    sPk(i);
-    track.record(i===items[ci].correct);
-    if(i!==items[ci].correct){var ff=items[ci];mistakesRef.current.push({tag:"False friend · "+ff.en,prompt:ff.ex,noBlank:true,yours:ff.opts[i],correct:ff.opts[ff.correct],why:ff.trap+(ff.realFr?" (FR: "+ff.realFr+")":""),ref:moduleRef("falsefr",ff.en)});}
-    if(i===items[ci].correct){sSc(sc+1);try{playCorrect();}catch(e){}}
-    else{try{playWrong();}catch(e){}sSk(true);setTimeout(function(){sSk(false);},400);}
-    sP("fb");
-  }
-  function nxt(){if(ci<items.length-1){sC(ci+1);sPk(-1);sP("q");}else{sidRef.current=p.done(sc,items.length,20+sc*5,mistakesRef.current);sP("done");}}
-
-  if(ph==="intro")return(<div className="enter" style={{padding:"20px 16px",minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",textAlign:"center",position:"relative"}}>
-    <button className="back-btn" onClick={p.back} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"\u2190"} Back</button>
-    <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="duality-mask" size={60} color="var(--cyan)"/></div>
-    <h1 className="out" style={{fontWeight:900,fontSize:26,marginBottom:8}}>False Friends</h1>
-    <p style={{color:"var(--t2)",fontSize:13,marginBottom:8,lineHeight:1.6}}>These English words LOOK like French words but mean something completely different!</p>
-    <p style={{color:"var(--gold)",fontWeight:600,fontSize:14,marginBottom:32}}>Can you avoid the francophone traps?</p>
-    <button className="btn1" onClick={function(){sP("q");}}>Start</button></div>);
-
-  if(ph==="done")return(<SessionResult session={p.session} sid={sidRef.current} name="False Friends" mistakes={mistakesRef.current}
-    onContinue={function(){p.closeSession();p.back();}} onReplay={p.replaySession}/>);
-
-  var it=items[ci];
-
-  return(<>
-  <SessionTop n={items.length} cur={ci} results={track.results} streak={track.streak} onQuit={p.back}/>
-  <ComboBanner combo={track.combo}/>
-  <div className={sk?"sk":""} style={{padding:"4px 16px 0"}}>
-    <div style={{marginTop:8,marginBottom:20}}>
-      <div className="out" style={{fontSize:11,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:16}}>What does the underlined word mean here?</div>
-      <div className="crd" style={{padding:16,background:"rgba(27,112,207,.05)",borderColor:"rgba(27,112,207,.12)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-          <SpeakBtn text={it.ex} size={28} rate={0.85}/>
-          <p style={{fontSize:15,color:"var(--t1)",lineHeight:1.6}}>
-            {it.ex.split(new RegExp("("+it.en+")","i")).map(function(part,i){
-              if(part.toLowerCase()===it.en.toLowerCase()) return (<span key={i} style={{color:"var(--gold)",fontWeight:800,textDecoration:"underline",textDecorationColor:"var(--gold)",textUnderlineOffset:3}}>{part}</span>);
-              return (<span key={i}>{part}</span>);
-            })}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div style={{display:"flex",flexDirection:"column",gap:8}}>
-      {it.opts.map(function(opt,i){
-        var isCor=i===it.correct;var isPick=pick===i;var show=ph==="fb";
-        var bg="var(--bg2)";var bd="var(--bdr)";
-        if(show&&isCor){bg="rgba(0,230,118,.12)";bd="var(--green)";}
-        else if(show&&isPick&&!isCor){bg="rgba(255,71,87,.12)";bd="var(--red)";}
-        return(<button key={i} onClick={function(){if(ph==="q")doAns(i);}} disabled={show}
-          style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:bg,border:"1px solid "+bd,borderRadius:12,cursor:ph==="q"?"pointer":"default",fontSize:14,color:"var(--t1)",textAlign:"left",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
-          <div style={{width:26,height:26,borderRadius:"50%",border:"2px solid "+(show&&isCor?"var(--green)":show&&isPick?"var(--red)":"var(--t3)"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,background:show&&isCor?"var(--green)":show&&isPick&&!isCor?"var(--red)":"transparent",color:show&&(isCor||isPick)?"#fff":"var(--t3)"}}>
-            {show&&isCor?"✓":show&&isPick?"✗":String.fromCharCode(65+i)}</div>
-          <span>{opt}</span></button>);})}
-    </div>
-
-    {ph==="fb"&&<AnswerCard ok={pick===it.correct} answer={String.fromCharCode(65+it.correct)+". "+it.opts[it.correct]} label="False Friend Alert">
-      <p className="ss-why" style={{marginBottom:8}}>{it.trap}</p>
-      <p className="ss-why" style={{borderTop:"1px solid var(--bdr)",paddingTop:8,fontSize:13}}>
-        <span style={{color:"var(--t2)"}}>FR translation: </span>
-        <span className="out" style={{fontWeight:600,color:"var(--cyan)"}}>{it.realFr}</span></p>
-    </AnswerCard>}
-  </div>
-  {ph==="fb"&&<NextBar onNext={nxt} last={ci===items.length-1}/>}
-  </>);
 }

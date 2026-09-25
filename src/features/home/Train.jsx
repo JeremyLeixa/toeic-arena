@@ -23,12 +23,11 @@ import { useState } from "react";
       {id:"lis",n:"Listening Practice",d:"Parts 1-4 with audio",i:"ringing-bell",bg:"linear-gradient(135deg,#22c55e,#f59e0b)",subs:["lisP1","lisP2","lisP3","lisP4"],unit:"parts"},
       {id:"read",n:"Reading Practice",d:"Parts 5-7",i:"bookmarklet",bg:"linear-gradient(135deg,#5a7a9a,#7a5a80)",subs:["drill","timesim","p6","p7"],unit:"parts"},
     ]},
-    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"bookshelf",count:"7 modules",items:[
+    {key:"grammar",title:"Grammar & Vocab",sub:"Build your foundations",icon:"bookshelf",count:"6 modules",items:[
       {id:"csess",n:"Flashcard Review",d:"SRS spaced repetition",i:"card-joker",bg:"linear-gradient(135deg,#ff8c42,#ff6b35)"},
       {id:"gauntlet",n:"Grammar Gauntlet",d:"7 trials · Tenses, Passive, Relatives, Connectors, Prepositions…",i:"gauntlet",bg:"linear-gradient(135deg,#7c3aed,#c026d3)",subs:GAUNTLET_MODS,unit:"trials"},
       {id:"modals",n:"Modal Council",d:"2 trials · Pair situations, classify verdicts",i:"throne-king",bg:"linear-gradient(135deg,#0891b2,#7c3aed)",subs:["modals_match","modals_sort"],unit:"trials"},
       {id:"wordfam",n:"Word Families",d:"Classify: Noun, Verb, Adj, Adv",i:"family-tree",bg:"linear-gradient(135deg,#f59e0b,#ef4444)"},
-      {id:"falsefr",n:"False Friends",d:"FR/EN traps: actually ≠ actuellement",i:"duality-mask",bg:"linear-gradient(135deg,#ec4899,#f59e0b)"},
       {id:"bforge",n:"Linking Bridge",d:"Pick the connector that fits the logic & grammar",i:"stone-bridge",bg:"linear-gradient(135deg,#8b5e83,#06b6d4)",tag:"NEW"},
       {id:"pvdojo",n:"Phrasal Verb Dojo",d:"55 verbs · Study, Match & Speed",i:"shuriken",bg:"linear-gradient(135deg,#f97316,#dc2626)"},
     ]},

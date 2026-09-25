@@ -244,6 +244,7 @@
     "ConnSort": "Connectors Sorting, remplacé par l'épreuve Knotbinder du Grammar Gauntlet (features/gauntlet/Gauntlet.jsx), même module connsort — supprimé 2026-09-25",
     "PrepDrill": "Preposition Collocations, remplacé par l'épreuve Anchor Hall du Grammar Gauntlet (features/gauntlet/Gauntlet.jsx), même module prepdrill — supprimé 2026-09-25",
     "StudyGroup": "Study Mode de PrepDrill, qu'Anchor Hall ne reprend pas (un grimoire des prépositions le remplace) — supprimé 2026-09-25",
-    "GerInf": "Gerund vs Infinitive, remplacé par l'épreuve Twin Paths du Grammar Gauntlet (features/gauntlet/Gauntlet.jsx), même module gerinf — supprimé 2026-09-25"
+    "GerInf": "Gerund vs Infinitive, remplacé par l'épreuve Twin Paths du Grammar Gauntlet (features/gauntlet/Gauntlet.jsx), même module gerinf — supprimé 2026-09-25",
+    "FalseFriends": "False Friends, devenu un type de question de Word Tavern (features/games/WordTavern.jsx, 3 sur 15), réponses versées dans falsefr — supprimé 2026-09-25"
   }
 }
