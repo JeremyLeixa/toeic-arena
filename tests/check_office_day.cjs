@@ -228,6 +228,9 @@ ok(L.OPENING_LINES.every(function (k) { return typeof OW.checklist.labels[k] ===
 ok(W.CHECK_BONUS === 5, 'checklist : +5 rep par ligne cochée à l\'ouverture des portes (choix de Jérémy, E1)');
 Object.keys(W.WORLD_META).forEach(function (id) {
   const m = W.WORLD_META[id];
+  // « Rester » ferme la feuille et garde l'élève dans la tâche en cours (un direct ne se quitte pas) : le libellé ne
+  // promet jamais d'aller ailleurs. « Back to the list » l'a fait dans Opening Night (retour de Jérémy, 2026-09-25).
+  ok(m.quit && m.quit.stay && !/\b(list|counter|desk|lobby|hub)\b/i.test(m.quit.stay), 'worlds.js : ' + id + ' : « ' + (m.quit && m.quit.stay) + ' » ne promet pas une navigation');
   ok(m.prep !== undefined && m.checklist !== undefined, 'worlds.js : ' + id + ' déclare prep et checklist (null si le monde n\'en a pas)');
   ok(m.id === id && m.name && m.company && m.desk && m.wait && m.announce && m.empty && m.quit && m.quit.title && m.rules && m.rules.length === 3 && L.PEOPLE[m.person], 'worlds.js : ' + id + ' déclare tout ce que lit l\'écran');
   if (m.prep) ['hud', 'arrive', 'doneOk', 'doneKo', 'ready', 'caught', 'reviewReady', 'reviewCaught', 'reviewCaughtTail'].forEach(function (k) { ok(typeof m.prep[k] === 'string' && m.prep[k].length > 0, 'worlds.js : ' + id + '.prep.' + k); });
