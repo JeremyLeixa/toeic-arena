@@ -124,7 +124,8 @@ src/
     part7.js           — 75 passages, 289 Q (insertion de phrase `keep:true`, voir check_part7_items)
     mockTests.js       — Mock Tests 1-3
     bossTestFull.js    — The Final Arena (full TOEIC, 202Q, 7 parts)
-    miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps
+    miniGames.js       — Word Families, Connectors, Preps, Ger/Inf, False Friends, Traps (Connectors, Preps, Ger/Inf
+                          = épreuves Knotbinder, Anchor Hall, Twin Paths du Gauntlet ; False Friends = type de Word Tavern)
     audioBlitz.js      — 60 Audio Blitz items
     clueHunter.js      — 80 Clue Hunter items
     mimicHunt.js       — 84 items Mimic Hunt (reformulation, 29 / 30 / 25 par palier ; 45 `spoken` pour le mode écoute)
@@ -145,7 +146,8 @@ src/
                           Passive Forge, Relative Weaver)
     gerundGrimoire.js      — GRIMOIRE_GERUND (replaces GerInf Study Mode)
     phrasalGrimoire.js     — GRIMOIRE_PHRASAL (replaces PhrasalDojo Study Mode)
-    connectorsGrimoire.js  — GRIMOIRE_CONNECTORS (new, ConnSort intro)
+    connectorsGrimoire.js  — GRIMOIRE_CONNECTORS (Knotbinder + Linking Bridge)
+    prepositionsGrimoire.js — GRIMOIRE_PREPOSITIONS (Anchor Hall, 10 chapitres ; brouillon en relecture)
     modals.js              — MODAL_MATCH_BOARDS (15 boards × 5 pairs) +
                           MODAL_SORT_ITEMS (50 sentences, 4 buckets)
     modalsGrimoire.js      — GRIMOIRE_MODALS (7 chapters FR)
@@ -220,7 +222,7 @@ l'invariant qui casse sans bruit.
 | Mimic Hunt, Word Tavern | `src/features/games/CLAUDE.md` | Nouveaux items Mimic toujours relus par Jérémy avant d'entrer au jeu ; aucun texte ne cite une lettre d'option. |
 | Coffres, jetons, échelons de maîtrise | `src/features/chests/CLAUDE.md` | Watchers sur objet JSON cloné = garde `useRef` (boucle de +37 k XP vécue) ; **prix, cosmétiques, jetons, tables de tirage et sources de coffre vivent dans `chestCatalog.js` : les changer = `node scripts/gen-economy-sql.mjs` + passer le SQL généré en prod** (le serveur décide sur ses copies). |
 | Boss, Endless, écoute fidèle au TOEIC | `src/features/exams/CLAUDE.md` | Toute nouvelle disposition du Boss → bumper `BOSS_LAYOUT_V`. |
-| Grammar Gauntlet, Modal Council | `src/features/gauntlet/CLAUDE.md`, `src/features/modals/CLAUDE.md` | Palier XP B des modules à 15 questions. |
+| Grammar Gauntlet, Modal Council | `src/features/gauntlet/CLAUDE.md`, `src/features/modals/CLAUDE.md` | Palier XP B des modules à 15 questions ; Knotbinder / Anchor Hall / Twin Paths comptent sous `connsort` / `prepdrill` / `gerinf` (`lib/gauntletTrials.js`), jamais renommés. |
 | Audio (nommage, ElevenLabs, génération) | `scripts/CLAUDE.md` | Clips d'options P1/P2 sans lettre ; `npm run check:assets` après tout ajout ; réécrire une réplique = supprimer son MP3 avant de regénérer. |
 | Edge Functions, push | `supabase/CLAUDE.md` | Les textes de push sont en anglais ; la lettre du lundi n'est jamais recalculée en Deno. |
 | Contenu (formats, identifiants) | `src/data/CLAUDE.md` | Chaque question porte une explication ; identifiants continus. |

@@ -44,9 +44,17 @@ une décision.
   contre 1 491 de flashcards) ; petits QCM (Connectors, Prepositions, Gerund/Inf…) essayés par ~60 élèves et gardés par
   ≤ 11. Nine to Five = une journée de bureau (P3/P4/P7 tels quels, habillés), V3 horloge + réputation, horloge clémente
   aux grades bas, 7 grades (Intern → Director), réponses comptées dans lisP3/lisP4/p7. Tuile en tête du hub Games.
-  Détail : `src/features/waygates/CLAUDE.md`.
+  Détail : `src/features/waygates/CLAUDE.md`. Passage du portail V3 « Plongée » + son `playPortal` (`86fa4f0`).
+- **25/09 : Gauntlet à 7 épreuves + faux amis dans la Taverne** (`1cf19a5` proto → `505d7ca` SQL, `e6d3292`, `2af3754`) :
+  Connectors, Prepositions, Gerund/Inf deviennent **Knotbinder, Anchor Hall, Twin Paths** (15 Q, barème B) sous leurs
+  ids d'origine ; False Friends devient 3 questions sur 15 de Word Tavern (réponses versées dans `falsefr`). Grammar &
+  Vocab : 10 → 6 tuiles. Détail : `src/features/gauntlet/CLAUDE.md`, `src/features/games/CLAUDE.md`.
 
 ### À voir en prod (pas encore observé sur de vrais élèves)
+- **Gauntlet à 7** : passer d'abord `supabase/migrations/2026-09-24_economy_catalog_data.sql` (coffres `connsort_perfect`…
+  et rangs des 9 nouveaux trophées) ; **les 9 trophées (`achievements.js`) ne partent qu'après**, sinon leurs coffres
+  seraient refusés et perdus. Puis : une épreuve sans faute donne le coffre guerrier, `moduleScores.connsort` avance,
+  une erreur revient dans la chasse. Grimoire d'Anchor Hall à relire (`prototypes/gauntlet-seven/grimoire.html`).
 - **Nine to Five** (à jouer par Jérémy sur son compte) : l'XP affichée = l'XP du profil après rechargement ;
   `moduleScores.lisP3/lisP4/p7` avancent ; une erreur de la journée revient dans la chasse ; la tuile Games dit le grade.
   Puis, dans 2-3 semaines : parties par élève dans l'onglet Usage (« Nine to Five ») contre Listening P3/P4 et Part 7.
@@ -58,8 +66,8 @@ une décision.
 
 ### En attente d'une décision de Jérémy
 - **The Waygates, suite** : prochain monde (aéroport, hôtel, salon professionnel…) ? « L'affaire du jour » (mécanique
-  C du proto : indices répartis sur plusieurs documents, contenu neuf à écrire) comme journée spéciale ? Et les petits
-  QCM abandonnés (Connectors, Prepositions, Gerund/Inf, False Friends) versés en épreuves du **Grammar Gauntlet** ?
+  C du proto : indices répartis sur plusieurs documents, contenu neuf à écrire) comme journée spéciale ? (Les petits QCM
+  abandonnés : faits le 25/09, voir « Livré ».)
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).
 - ~~Cérémonies qui s'enchaînent~~ : **faites le 24/09** (variante B, `lib/interruptions.js`, `check_interruptions`) : une
   seule cérémonie par écran de fin (retournement > promotion), au plus un plein écran non demandé par entrée sur Home.

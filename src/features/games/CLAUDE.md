@@ -3,7 +3,13 @@
 > Chargé quand on travaille dans `src/features/games/`.
 
 ### Word Tavern 🍺
-- Route `sp==="tavern"`. 15 questions per session, 3 types (def→word, word→def, fill-in-blank).
+- Route `sp==="tavern"`. 15 questions per session : 12 vocab (4 def→word, 4 word→def, 4 fill-in-blank) + **3 faux amis**.
+- **Faux amis** (2026-09-25, l'ancien module False Friends retiré) : type `falseFriend`, phrase `ff.ex` avec le mot
+  souligné, options permutées (`permuteFF`, `check_option_shuffle`), carte « The trap » (`trap` + `realFr`). Pas de retour
+  en répétition espacée (aucune carte). Erreurs sous la ref `falsefr:<en>`. Les réponses comptent AUSSI dans le module
+  `falsefr` (poids .04 de l'estimateur) : `p.done(…, {parts:{falsefr:{c,t}}})` → `miniSession` verse `extra.parts`
+  **sans `trackModSession`** sur ces clés (anti-farming et quêtes restent ceux de `tavern`). `falsefr` est `retired` dans
+  `MISSION_MODULES` : gardé pour l'historique et le dashboard, exclu des sélecteurs de jetons du Profil.
 - Distractors picked from SAME vocabulary domain as the correct card.
 - **Failed words auto-reset in SRS** (`cardStates[id] = {ease:2.5, interval:0, nextReview:today()}`) → they come back in next flashcard review.
 - BGM: `bgm_tavern.mp3`.
