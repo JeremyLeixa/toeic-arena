@@ -6,6 +6,15 @@ function mimicRuns(s){return mimicModes(s).reduce(function(a,m){return a.concat(
 // Nine to Five (The Waygates, 2026-09-24) : réputation et journées dans gameScores.officeDay (officeDone, App.jsx),
 // tâches rendues à l'heure dans l'entrée d'history du module "office" (onTime / tasks, posés par recordModule).
 function officeDay(s){return (s.gameScores&&s.gameScores.officeDay)||{};}
+// Grammar Gauntlet : ses 7 épreuves (2026-09-25 : Knotbinder, Anchor Hall et Twin Paths y entrent SOUS LEURS IDS
+// D'ORIGINE, connsort / prepdrill / gerinf, pour garder l'historique, l'estimateur et les échelons). Les trophées de
+// tout le hub (Champion, Explorer, Grinder, Scholar) les comptent toutes ; ceux déjà obtenus restent acquis.
+var GAUNTLET_KEYS=["gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative","connsort","prepdrill","gerinf"];
+// Trophées des 3 nouvelles épreuves, sur le patron des 4 premières : découverte, sans faute 15/15, maîtrise 30 Q à 80 %.
+function gMod(s,id){return (s.moduleScores||{})[id];}
+function gFirst(id){return function(s){var m=gMod(s,id);return !!m&&m.sessions>=1;};}
+function gPerfect(id){return function(s){var m=gMod(s,id);return !!m&&(m.history||[]).some(function(h){return h.correct===h.total&&h.total>=15;});};}
+function gMaster(id){return function(s){var m=gMod(s,id);return !!m&&m.total>=30&&m.correct/m.total>=0.8;};}
 
 export var ACHIEVEMENTS = [
   {id:"first_blood",name:"First Blood",desc:"Complete your first exercise",icon:"⚔️",check:function(s){return s.stats.sessions>=1;}},
@@ -67,21 +76,31 @@ export var ACHIEVEMENTS = [
   {id:"tense_sage",name:"Tense Sage",desc:"Chronomancer: 80%+ accuracy (min 30 Q)",icon:"🔮",check:function(s){if(!s.moduleScores||!s.moduleScores["gauntlet_tense"])return false;var m=s.moduleScores["gauntlet_tense"];return m.total>=30&&m.correct/m.total>=0.8;}},
   {id:"passive_alchemist",name:"Passive Alchemist",desc:"30 correct answers in Passive Forge",icon:"⚗️",check:function(s){return s.moduleScores&&s.moduleScores["gauntlet_passive"]&&s.moduleScores["gauntlet_passive"].correct>=30;}},
   {id:"relative_weaver",name:"Relative Weaver",desc:"Relative Weaver: 80%+ accuracy (min 30 Q)",icon:"🕸️",check:function(s){if(!s.moduleScores||!s.moduleScores["gauntlet_relative"])return false;var m=s.moduleScores["gauntlet_relative"];return m.total>=30&&m.correct/m.total>=0.8;}},
-  {id:"gauntlet_champion",name:"Gauntlet Champion",desc:"75%+ in all 4 Gauntlet trials (min 15 Q each)",icon:"🛡️",check:function(s){if(!s.moduleScores)return false;var keys=["gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative"];for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(!m||m.total<15||m.correct/m.total<0.75)return false;}return true;}},
+  {id:"gauntlet_champion",name:"Gauntlet Champion",desc:"75%+ in all 7 Gauntlet trials (min 15 Q each)",icon:"🛡️",check:function(s){if(!s.moduleScores)return false;var keys=GAUNTLET_KEYS;for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(!m||m.total<15||m.correct/m.total<0.75)return false;}return true;}},
   // ─── GAUNTLET — Tier 1 Discovery (badges only) ───
   {id:"crypt_first",name:"Crypt Entered",desc:"Complete your first Irregular Crypt session",icon:"🪦",check:function(s){return s.moduleScores&&s.moduleScores["gauntlet_irregular"]&&s.moduleScores["gauntlet_irregular"].sessions>=1;}},
   {id:"chrono_first",name:"Time Bender",desc:"Complete your first Chronomancer session",icon:"⏳",check:function(s){return s.moduleScores&&s.moduleScores["gauntlet_tense"]&&s.moduleScores["gauntlet_tense"].sessions>=1;}},
   {id:"forge_first",name:"Apprentice Smith",desc:"Complete your first Passive Forge session",icon:"⚒️",check:function(s){return s.moduleScores&&s.moduleScores["gauntlet_passive"]&&s.moduleScores["gauntlet_passive"].sessions>=1;}},
   {id:"weaver_first",name:"First Thread",desc:"Complete your first Relative Weaver session",icon:"🕸️",check:function(s){return s.moduleScores&&s.moduleScores["gauntlet_relative"]&&s.moduleScores["gauntlet_relative"].sessions>=1;}},
-  {id:"gauntlet_explorer",name:"Gauntlet Explorer",desc:"Try all 4 Gauntlet sub-modules",icon:"🗝️",check:function(s){if(!s.moduleScores)return false;var keys=["gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative"];for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(!m||m.sessions<1)return false;}return true;}},
+  {id:"gauntlet_explorer",name:"Gauntlet Explorer",desc:"Try all 7 Gauntlet trials",icon:"🗝️",check:function(s){if(!s.moduleScores)return false;var keys=GAUNTLET_KEYS;for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(!m||m.sessions<1)return false;}return true;}},
   // ─── GAUNTLET — Tier 2 Perfect Runs (EPIC — grants Guerrier chest) ───
   {id:"crypt_perfect",name:"Flawless Raid",desc:"Perfect 15/15 in Irregular Crypt",icon:"👑",check:function(s){if(!s.moduleScores||!s.moduleScores["gauntlet_irregular"]||!s.moduleScores["gauntlet_irregular"].history)return false;var h=s.moduleScores["gauntlet_irregular"].history;for(var i=0;i<h.length;i++){if(h[i].correct===h[i].total&&h[i].total>=15)return true;}return false;}},
   {id:"chrono_perfect",name:"Time Master",desc:"Perfect 15/15 in Chronomancer",icon:"👑",check:function(s){if(!s.moduleScores||!s.moduleScores["gauntlet_tense"]||!s.moduleScores["gauntlet_tense"].history)return false;var h=s.moduleScores["gauntlet_tense"].history;for(var i=0;i<h.length;i++){if(h[i].correct===h[i].total&&h[i].total>=15)return true;}return false;}},
   {id:"forge_perfect",name:"Forge Master",desc:"Perfect 15/15 in Passive Forge",icon:"👑",check:function(s){if(!s.moduleScores||!s.moduleScores["gauntlet_passive"]||!s.moduleScores["gauntlet_passive"].history)return false;var h=s.moduleScores["gauntlet_passive"].history;for(var i=0;i<h.length;i++){if(h[i].correct===h[i].total&&h[i].total>=15)return true;}return false;}},
   {id:"weaver_perfect",name:"Perfect Weave",desc:"Perfect 15/15 in Relative Weaver",icon:"👑",check:function(s){if(!s.moduleScores||!s.moduleScores["gauntlet_relative"]||!s.moduleScores["gauntlet_relative"].history)return false;var h=s.moduleScores["gauntlet_relative"].history;for(var i=0;i<h.length;i++){if(h[i].correct===h[i].total&&h[i].total>=15)return true;}return false;}},
   // ─── GAUNTLET — Tier 3 Consistency (LEGENDARY — grants Légendaire chest) ───
-  {id:"gauntlet_grinder",name:"Gauntlet Grinder",desc:"50 Gauntlet sessions (all sub-modules combined)",icon:"⚙️",check:function(s){if(!s.moduleScores)return false;var keys=["gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative"];var total=0;for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(m)total+=m.sessions||0;}return total>=50;}},
-  {id:"gauntlet_scholar",name:"Gauntlet Scholar",desc:"500 correct answers across all Gauntlet trials",icon:"📚",check:function(s){if(!s.moduleScores)return false;var keys=["gauntlet_irregular","gauntlet_tense","gauntlet_passive","gauntlet_relative"];var total=0;for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(m)total+=m.correct||0;}return total>=500;}},
+  {id:"gauntlet_grinder",name:"Gauntlet Grinder",desc:"50 Gauntlet sessions (all sub-modules combined)",icon:"⚙️",check:function(s){if(!s.moduleScores)return false;var keys=GAUNTLET_KEYS;var total=0;for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(m)total+=m.sessions||0;}return total>=50;}},
+  {id:"gauntlet_scholar",name:"Gauntlet Scholar",desc:"500 correct answers across all Gauntlet trials",icon:"📚",check:function(s){if(!s.moduleScores)return false;var keys=GAUNTLET_KEYS;var total=0;for(var i=0;i<keys.length;i++){var m=s.moduleScores[keys[i]];if(m)total+=m.correct||0;}return total>=500;}},
+  // ─── GAUNTLET — les 3 épreuves du 2026-09-25 (rangs de coffre : chestCatalog.js, NOVICE / EPIC) ───
+  {id:"knot_first",name:"First Knot",desc:"Complete your first Knotbinder trial",icon:"🪢",check:gFirst("connsort")},
+  {id:"anchor_first",name:"Anchor Dropped",desc:"Complete your first Anchor Hall trial",icon:"⚓",check:gFirst("prepdrill")},
+  {id:"twin_first",name:"Fork in the Road",desc:"Complete your first Twin Paths trial",icon:"🔀",check:gFirst("gerinf")},
+  {id:"knot_perfect",name:"Unbreakable Knot",desc:"Perfect 15/15 in Knotbinder",icon:"👑",check:gPerfect("connsort")},
+  {id:"anchor_perfect",name:"Steady Anchor",desc:"Perfect 15/15 in Anchor Hall",icon:"👑",check:gPerfect("prepdrill")},
+  {id:"twin_perfect",name:"Pathfinder",desc:"Perfect 15/15 in Twin Paths",icon:"👑",check:gPerfect("gerinf")},
+  {id:"knot_master",name:"Knot Master",desc:"Knotbinder: 80%+ accuracy (min 30 Q)",icon:"🪢",check:gMaster("connsort")},
+  {id:"anchor_master",name:"Harbour Master",desc:"Anchor Hall: 80%+ accuracy (min 30 Q)",icon:"⚓",check:gMaster("prepdrill")},
+  {id:"twin_master",name:"Path Master",desc:"Twin Paths: 80%+ accuracy (min 30 Q)",icon:"🧭",check:gMaster("gerinf")},
   // ─── MODAL COUNCIL ───
   {id:"council_initiate",name:"Council Initiate",desc:"Complete your first Modal Council session",icon:"⚖️",check:function(s){if(!s.moduleScores)return false;var m=s.moduleScores["modals_match"]||s.moduleScores["modals_sort"];return!!(m&&m.sessions>=1);}},
   {id:"oracle_voice",name:"Oracle's Voice",desc:"Perfect 15/15 in Modal Match",icon:"🔮",check:function(s){if(!s.moduleScores||!s.moduleScores["modals_match"]||!s.moduleScores["modals_match"].history)return false;var h=s.moduleScores["modals_match"].history;for(var i=0;i<h.length;i++){if(h[i].correct===h[i].total&&h[i].total>=15)return true;}return false;}},

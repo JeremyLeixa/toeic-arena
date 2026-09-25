@@ -133,7 +133,7 @@ src/
     sentences.js       — 50 Sentence Builder items
     phrasalVerbs.js    — 56 phrasal verbs
     placement.js       — 85 Battle Scan questions + tier levels + mission modules
-    achievements.js    — 66 achievements (incl. 16 Gauntlet, 4 Word Tavern, 4 Duel, 4 Modal Council, 4 Mimic Hunt)
+    achievements.js    — 79 achievements (incl. 25 Gauntlet, 4 Word Tavern, 4 Duel, 4 Modal Council, 4 Mimic Hunt, 4 Nine to Five)
     leagues.js         — 7 league tiers + bot competitors
     avatarIcons.js     — Iconify SVG paths for game icons
     chests.js          — CHEST_TYPES, RARITIES, AVATARS, SKINS, trigger logic,
