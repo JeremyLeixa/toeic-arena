@@ -144,34 +144,43 @@ ok(L.dayStars(13, 15) === 3 && L.dayStars(11, 15) === 2 && L.dayStars(8, 15) ===
 // ── 4. Câblage (lu dans le source) ──────────────────────────────────────────────────────────────
 const fs = require('fs');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
-const APP = read('src/App.jsx'), ROUTES = read('src/routes.jsx'), SCREEN = read('src/features/waygates/NineToFive.jsx');
+const APP = read('src/App.jsx'), ROUTES = read('src/routes.jsx'), SCREEN = read('src/features/waygates/WorldDay.jsx');
 const HUB = read('src/features/waygates/Waygates.jsx'), GAMES = read('src/features/games/GamesHub.jsx');
 
-// officeDone : XP et anti-farming sous "office", réponses versées dans les Parts SANS trackModSession sur elles
-// (sinon une journée taxe les tuiles Listening/Reading et coche les quêtes du plan), réputation dans gameScores.
-const od = (APP.match(/function officeDone\([\s\S]*?sv\(c\);return s\.sid;\}/) || [''])[0];
-ok(!!od, 'App.jsx : officeDone existe (settle → … → sv → return s.sid)');
-ok(/settleSession\("office",sc,tot,xp,\{spotlight:true,extra:extra\}\)/.test(od), 'officeDone : XP réglée sous "office", Spotlight compris');
-ok((od.match(/trackModSession\(/g) || []).length === 1 && /trackModSession\(c,"office"\)/.test(od), 'officeDone : trackModSession UNIQUEMENT sur "office", jamais sur lisP3/lisP4/p7');
-ok(/\["lisP3","lisP4","p7"\]\.forEach[\s\S]*recordModule\(c,m,pr\.c,pr\.t,null,\{via:"office"\}\)/.test(od), 'officeDone : les réponses entrent dans lisP3, lisP4 et p7 (estimateur, Mentor)');
-ok(/Math\.min\(REP_MAX_GAIN/.test(od) && /gameScores\.officeDay=/.test(od), 'officeDone : réputation bornée, rangée dans gameScores.officeDay');
-ok(/recordMisses\(c\.review,mistakes/.test(od), 'officeDone : les erreurs entrent au bestiaire');
-ok(/officeDone, pg/.test(APP) && /officeDone, pg/.test(ROUTES), 'officeDone passé au contexte de renderRoute (appel ET déstructuration)');
-ok(/if\(sp==="office"\)return pg\(<NineToFive [^\n]*done=\{function\(sc,tot,xp,mistakes,extra\)\{return officeDone\(sc,tot,xp,mistakes,extra\);\}\}/.test(ROUTES), 'route office → officeDone, sid rendu');
+// worldDone (tous les mondes) : XP et anti-farming sous le module du monde, réponses versées dans les Parts SANS
+// trackModSession sur elles (sinon une journée taxe les tuiles Listening/Reading et coche les quêtes du plan),
+// réputation dans gameScores[repKey] (lib/worlds.js).
+const od = (APP.match(/function worldDone\([\s\S]*?sv\(c\);return s\.sid;\}/) || [''])[0];
+ok(!!od, 'App.jsx : worldDone existe (settle → … → sv → return s.sid)');
+ok(/var W=worldMeta\(world\),modId=W\.modId;/.test(od) && /settleSession\(modId,sc,tot,xp,\{spotlight:true,extra:extra\}\)/.test(od), 'worldDone : XP réglée sous le module du monde, Spotlight compris');
+ok((od.match(/trackModSession\(/g) || []).length === 1 && /trackModSession\(c,modId\)/.test(od), 'worldDone : trackModSession UNIQUEMENT sur le module du monde, jamais sur lisP3/lisP4/p7');
+ok(/\["lisP3","lisP4","p7"\]\.forEach[\s\S]*recordModule\(c,m,pr\.c,pr\.t,null,\{via:modId\}\)/.test(od), 'worldDone : les réponses entrent dans lisP3, lisP4 et p7 (estimateur, Mentor)');
+ok(/Math\.min\(REP_MAX_GAIN/.test(od) && /c\.gameScores\[W\.repKey\]=/.test(od), 'worldDone : réputation bornée, rangée dans gameScores[repKey]');
+ok(/prepared:extra&&extra\.prepared/.test(od), 'worldDone : « paré » rangé dans l\'historique (trophée Weather-wise)');
+ok(/recordMisses\(c\.review,mistakes/.test(od), 'worldDone : les erreurs entrent au bestiaire');
+ok(/trackModSession, u, worldDone\}\)/.test(APP) && /trackModSession, u, worldDone\}=c;/.test(ROUTES), 'worldDone passé au contexte de renderRoute (appel ET déstructuration)');
+['office', 'travel'].forEach(function (w) {
+  ok(new RegExp('if\\(sp==="' + w + '"\\)return pg\\(<WorldDay key="' + w + '" world="' + w + '" [^\\n]*done=\\{function\\(sc,tot,xp,mistakes,extra\\)\\{return worldDone\\("' + w + '",sc,tot,xp,mistakes,extra\\);\\}\\}').test(ROUTES), 'route ' + w + ' → WorldDay monde ' + w + ', worldDone, sid rendu');
+});
 ok(/if\(sp==="waygates"\)return pg\(<Waygates /.test(ROUTES), 'route waygates');
-ok(/lazyNamed\(function\(\)\{return import\("\.\/features\/waygates\/NineToFive\.jsx"\);\},"NineToFive"\)/.test(ROUTES), 'Nine to Five chargé à la demande (les banques restent hors du bundle principal)');
-ok(!/from "[./]*\/lib\/officeDay\.js"/.test(APP) && !/from "[./]*\/lib\/officeDay\.js"/.test(GAMES), 'App.jsx et GamesHub lisent officeGrades.js, jamais officeDay.js (qui importe les banques)');
+ok(/lazyNamed\(function\(\)\{return import\("\.\/features\/waygates\/WorldDay\.jsx"\);\},"WorldDay"\)/.test(ROUTES), 'WorldDay chargé à la demande (les banques restent hors du bundle principal)');
+ok(!/from "[./]*\/lib\/officeDay\.js"/.test(APP) && !/from "[./]*\/lib\/officeDay\.js"/.test(GAMES) && !/from "[./]*\/lib\/officeDay\.js"/.test(HUB), 'App.jsx, GamesHub et le hub lisent officeGrades.js / worlds.js, jamais officeDay.js (qui importe les banques)');
 ok(!/^import /m.test(read('src/lib/officeGrades.js')), 'lib/officeGrades.js sans import (pur, sans données)');
 const selfManaged = (APP.match(/var SELF_MANAGED=\[([^\]]*)\]/) || ['', ''])[1];
-ok(selfManaged.indexOf('"office"') < 0, 'office hors SELF_MANAGED : l\'effet central coupe la musique (écoute des Parts 3 et 4)');
+ok(selfManaged.indexOf('"office"') < 0 && selfManaged.indexOf('"travel"') < 0, 'office et travel hors SELF_MANAGED : l\'effet central coupe la musique (écoute des Parts 3 et 4)');
+// La règle « prévu = paré » (W2) : le bulletin compris en entier décide ; la perturbation déclenche UNE fois.
+ok(/var hit = W\.weather \? arrivals\.find\(function \(t\) \{ return t\.weatherHit; \}\) : null;/.test(SCREEN) && /if \(hit && !wxRef\.current\.hit\)/.test(SCREEN), 'écran : la perturbation déclenche la règle une seule fois, dans les mondes à météo');
+ok(/bonus: WEATHER_BONUS/.test(SCREEN) && /m \+ WEATHER_DELAY/.test(SCREEN), 'écran : paré = +WEATHER_BONUS rep, sinon +WEATHER_DELAY min');
+ok(/var prepared = ok === t\.qs\.length;/.test(SCREEN), 'écran : paré = bulletin compris EN ENTIER');
+ok(/\{ id: "travel", icon: "commercial-airplane"/.test(HUB), 'hub : carte Jet Lag');
 
 // L'écran : options permutées, refs relisibles par la chasse, audio interruptible, envoi à la fin, jetons de thème.
 ok(/shufP7\(/.test(SCREEN) && /shufListeningItem\)/.test(SCREEN), 'écran : options permutées (shufP7, shufListeningItem)');
 ok(/ref: \{ k: t\.mod \+ ":" \+ t\.itemId \+ ":" \+ q\.qi, part: PART\[t\.mod\] \}/.test(SCREEN), 'écran : refs lisP3:/lisP4:/p7: <id>:<question d\'origine>');
 ok(/resumeAudioSession\(\); return stopListenAudio;/.test(SCREEN), 'écran : drapeau d\'abandon audio (resumeAudioSession / stopListenAudio)');
-ok(/sidRef\.current = p\.done\(sc, answered, dayXp\(/.test(SCREEN) && /modId: "office", parts: parts/.test(SCREEN), 'écran : p.done à la fin de journée, modId office et parts');
+ok(/sidRef\.current = p\.done\(sc, answered, dayXp\(/.test(SCREEN) && /modId: W\.modId, world: W\.id, parts: parts/.test(SCREEN), 'écran : p.done à la fin de journée, module du monde et parts');
 ok(/onSheet=\{function \(on\) \{ pausedRef\.current = on; \}\}/.test(SCREEN) && /if \(pausedRef\.current\) return;/.test(SCREEN), 'écran : la feuille « Leave » gèle l\'horloge');
-[['NineToFive', SCREEN, 'NF_CSS'], ['Waygates', HUB, 'WG_CSS']].forEach(function (x) {
+[['WorldDay', SCREEN, 'NF_CSS'], ['Waygates', HUB, 'WG_CSS']].forEach(function (x) {
   const css = (x[1].match(new RegExp('var ' + x[2] + ' = `([\\s\\S]*?)`;')) || ['', ''])[1];
   ok(css.length > 100, x[0] + ' : CSS privé trouvé');
   ok(!/#[0-9a-fA-F]{3,8}\b/.test(css), x[0] + ' : aucune couleur en dur dans le CSS (skins, fêtes, mode clair : jetons du thème seulement)');

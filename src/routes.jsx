@@ -41,7 +41,7 @@ var AudioBlitz=lazyNamed(function(){return import("./features/games/AudioBlitz.j
 var ClueHunter=lazyNamed(function(){return import("./features/games/ClueHunter.jsx");},"ClueHunter");
 var MimicHunt=lazyNamed(function(){return import("./features/games/MimicHunt.jsx");},"MimicHunt");
 var Waygates=lazyNamed(function(){return import("./features/waygates/Waygates.jsx");},"Waygates");
-var NineToFive=lazyNamed(function(){return import("./features/waygates/NineToFive.jsx");},"NineToFive");
+var WorldDay=lazyNamed(function(){return import("./features/waygates/WorldDay.jsx");},"WorldDay");
 var DuelArena=lazyNamed(function(){return import("./features/games/DuelArena.jsx");},"DuelArena");
 var SentenceBuilder=lazyNamed(function(){return import("./features/games/SentenceBuilder.jsx");},"SentenceBuilder");
 var GauntletHub=lazyNamed(function(){return import("./features/gauntlet/Gauntlet.jsx");},"GauntletHub");
@@ -55,7 +55,7 @@ var ModalCouncilHub=lazyNamed(function(){return import("./features/modals/ModalC
  * manque, ici comme dans le littéral d'appel côté App(). Retourne l'écran rendu, ou
  * undefined si `sp` n'est pas une sous-page (App() enchaîne alors sur les onglets). */
 export function renderRoute(c){
-  var {activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, huntDone, lastSession, miniSession, mockDone, nav, officeDone, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u}=c;
+  var {activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, huntDone, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u, worldDone}=c;
   if(sp==="daily")return pg(<Daily u={u} done={dailyDone} session={lastSession} closeSession={closeSession} back={function(){sSP(null);}}/>);
   if(sp==="csess")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);sSPA(1);sT("train");}}/>);
   if(sp==="cdom")return pg(<CardSess u={u} domId={spA} rate={rateCard} done={cardsDone} back={function(){sSP(null);}}/>);
@@ -85,7 +85,9 @@ export function renderRoute(c){
   // The Waygates (2026-09-24) : hub des modules thématiques, puis ses mondes. Pas de BGM (l'effet central
   // la coupe hors SELF_MANAGED : l'écoute des Parts 3 et 4 ne passe pas sous la musique).
   if(sp==="waygates")return pg(<Waygates u={u} nav={nav} back={function(){sSP(null);sT("games");}}/>);
-  if(sp==="office")return pg(<NineToFive u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp,mistakes,extra){return officeDone(sc,tot,xp,mistakes,extra);}} back={function(){sSP("waygates");}}/>);
+  if(sp==="office")return pg(<WorldDay key="office" world="office" u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp,mistakes,extra){return worldDone("office",sc,tot,xp,mistakes,extra);}} back={function(){sSP("waygates");}}/>);
+  // Jet Lag (2026-09-25) : même écran, autre monde (lib/worlds.js). `key` : changer de monde remonte l'écran.
+  if(sp==="travel")return pg(<WorldDay key="travel" world="travel" u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp,mistakes,extra){return worldDone("travel",sc,tot,xp,mistakes,extra);}} back={function(){sSP("waygates");}}/>);
   if(sp==="ablitz")return pg(<AudioBlitz u={u} session={lastSession} closeSession={closeSession} replaySession={replaySession} done={function(sc,tot,xp,mistakes){var s=settleSession("ablitz",sc,tot,xp);var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"ablitz");recordModule(c,"ablitz",sc,tot);c.review=recordMisses(c.review,mistakes,new Date());if(tot>0){var abPct=sc/tot;if(abPct>=0.9)grantWeeklyChest("ablitz_90","guerrier");else if(abPct>=0.7)grantWeeklyChest("ablitz_70","novice");}sealSession(c,s.sid);sv(c);return s.sid;}} back={function(){sSP(null);sT("games");}}/>);
   if(sp==="upgrade")return pg(<UpgradeScreen u={u} back={function(){sSP(null);sT("profile");}}/>);
   if(sp==="shop"){playBGM("bgm_shop");return pg(<Shop u={u} buy={shopBuy} setAvatar={function(c){sv(c);}} back={function(){stopBGM();sSP(null);sT("profile");}}/>);}

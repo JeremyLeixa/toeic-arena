@@ -24,6 +24,7 @@ import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, lo
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { REP_MAX_GAIN } from "./lib/officeGrades.js";
+import { worldMeta } from "./lib/worlds.js";
 import { boundReview, recordMisses, recordHits } from "./lib/review.js";
 import { dayMission, stakePart, todayMission, celebrateTurn, recordChronicle, letterDue, letterWeek } from "./lib/planner.js";
 import { MondayLetter } from "./features/mentor/MondayLetter.jsx";
@@ -80,7 +81,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-25-gauntlet-seven-tavern-ff";
+var BUILD_ID="2026-09-25-waygates-jet-lag";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1518,23 +1519,24 @@ function sv(d){
   // dit sous quel module compter la partie ; sinon, la route.
   // extra.parts {<modId>:{c,t}} : une partie qui contient des questions d'un AUTRE module (les faux amis de Word
   // Tavern, 2026-09-25) les y verse aussi, pour l'estimateur et le Mentor. JAMAIS de trackModSession sur ces clés :
-  // l'anti-farming et les quêtes du plan restent ceux du module joué (même règle qu'officeDone).
+  // l'anti-farming et les quêtes du plan restent ceux du module joué (même règle que worldDone).
   function miniSession(sc,tot,xp,mistakes,extra){var modId=(extra&&extra.modId)||sp||"unknown";var s=settleSession(modId,sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);recordModule(c,modId,sc,tot,null,extra&&extra.bites!=null?{bites:extra.bites}:null);
     var parts=(extra&&extra.parts)||{};Object.keys(parts).forEach(function(m){var pr=parts[m];if(m!==modId&&pr&&pr.t>0)recordModule(c,m,pr.c,pr.t,null,{via:modId});});
     c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
-  // Nine to Five (The Waygates, 2026-09-24). Une journée = une partie du module "office" (XP, anti-farming,
-  // historique, écran de fin). Ses réponses sont de vrais items P3/P4/P7 : elles comptent AUSSI dans lisP3,
-  // lisP4 et p7 (extra.parts), à plein poids pour l'estimateur et le Mentor (choix de Jérémy). JAMAIS de
-  // trackModSession sur ces clés : une journée taxerait les tuiles Listening/Reading (farmMult) et cocherait
-  // les quêtes du plan (questDone lit dailyModSessions). Réputation dans gameScores.officeDay (jsonb déjà
-  // synchronisé, pas de colonne) : bornée par lib/officeDay.js repGain, ne baisse jamais.
-  function officeDone(sc,tot,xp,mistakes,extra){var s=settleSession("office",sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,"office");
+  // Les mondes des Waygates (Nine to Five 2026-09-24, Jet Lag 2026-09-25 : lib/worlds.js). Une journée = une partie
+  // du module du monde (office, travel : XP, anti-farming, historique, écran de fin). Ses réponses sont de vrais items
+  // P3/P4/P7 : elles comptent AUSSI dans lisP3, lisP4 et p7 (extra.parts), à plein poids pour l'estimateur et le Mentor
+  // (choix de Jérémy). JAMAIS de trackModSession sur ces clés : une journée taxerait les tuiles Listening/Reading
+  // (farmMult) et cocherait les quêtes du plan (questDone lit dailyModSessions). Réputation dans gameScores[repKey]
+  // (jsonb déjà synchronisé, pas de colonne) : bornée par REP_MAX_GAIN, ne baisse jamais. `prepared` (Jet Lag) : la
+  // journée où l'élève avait compris le bulletin, lu par le trophée Weather-wise.
+  function worldDone(world,sc,tot,xp,mistakes,extra){var W=worldMeta(world),modId=W.modId;var s=settleSession(modId,sc,tot,xp,{spotlight:true,extra:extra});var c=s.c;c.stats.totalQ+=tot;c.stats.correct+=sc;c.stats.sessions+=1;trackModSession(c,modId);
     var gain=Math.max(0,Math.min(REP_MAX_GAIN,+(extra&&extra.repGain)||0));
-    recordModule(c,"office",sc,tot,null,{rep:gain,onTime:extra&&extra.onTime,tasks:extra&&extra.tasks});
-    var parts=(extra&&extra.parts)||{};["lisP3","lisP4","p7"].forEach(function(m){var pr=parts[m];if(pr&&pr.t>0)recordModule(c,m,pr.c,pr.t,null,{via:"office"});});
-    if(!c.gameScores)c.gameScores={};var od=c.gameScores.officeDay||{};
-    c.gameScores.officeDay={rep:(+od.rep||0)+gain,days:(+od.days||0)+1,bestStars:Math.max(+od.bestStars||0,+(extra&&extra.stars)||0)};
-    c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,"office");sealSession(c,s.sid);sv(c);return s.sid;}
+    recordModule(c,modId,sc,tot,null,{rep:gain,onTime:extra&&extra.onTime,tasks:extra&&extra.tasks,prepared:extra&&extra.prepared});
+    var parts=(extra&&extra.parts)||{};["lisP3","lisP4","p7"].forEach(function(m){var pr=parts[m];if(pr&&pr.t>0)recordModule(c,m,pr.c,pr.t,null,{via:modId});});
+    if(!c.gameScores)c.gameScores={};var od=c.gameScores[W.repKey]||{};
+    c.gameScores[W.repKey]={rep:(+od.rep||0)+gain,days:(+od.days||0)+1,bestStars:Math.max(+od.bestStars||0,+(extra&&extra.stars)||0)};
+    c.review=recordMisses(c.review,mistakes,new Date());checkMission(c,modId);sealSession(c,s.sid);sv(c);return s.sid;}
   // Chasse aux erreurs (2026-09-17, lot 3). La base d'XP vient du module (5 + 5 par créature vaincue,
   // lib/review.js huntReward) : on ne paie QUE les créatures vaincues, jamais une simple réussite —
   // rater exprès une question de Drill coûte 7 XP tout de suite contre 5 XP onze jours plus tard.
@@ -1791,7 +1793,7 @@ function sv(d){
     </div>
   </div>);
 
-  var routed=renderRoute({activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, huntDone, lastSession, miniSession, mockDone, nav, officeDone, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u});
+  var routed=renderRoute({activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, huntDone, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u, worldDone});
   if(routed)return routed;
 
   return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}
