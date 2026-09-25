@@ -6,6 +6,10 @@ function mimicRuns(s){return mimicModes(s).reduce(function(a,m){return a.concat(
 // Nine to Five (The Waygates, 2026-09-24) : réputation et journées dans gameScores.officeDay (officeDone, App.jsx),
 // tâches rendues à l'heure dans l'entrée d'history du module "office" (onTime / tasks, posés par recordModule).
 function officeDay(s){return (s.gameScores&&s.gameScores.officeDay)||{};}
+// Jet Lag (2026-09-25) : réputation et journées dans gameScores.travelDay ; `prepared` (bulletin compris, perturbation
+// absorbée) dans l'entrée d'history du module "travel", posé par worldDone (App.jsx).
+function travelDay(s){return (s.gameScores&&s.gameScores.travelDay)||{};}
+function travelRuns(s){var m=(s.moduleScores||{}).travel;return (m&&m.history)||[];}
 // Grammar Gauntlet : ses 7 épreuves (2026-09-25 : Knotbinder, Anchor Hall et Twin Paths y entrent SOUS LEURS IDS
 // D'ORIGINE, connsort / prepdrill / gerinf, pour garder l'historique, l'estimateur et les échelons). Les trophées de
 // tout le hub (Champion, Explorer, Grinder, Scholar) les comptent toutes ; ceux déjà obtenus restent acquis.
@@ -117,4 +121,8 @@ export var ACHIEVEMENTS = [
   {id:"office_clean",name:"Clean Desk",desc:"Nine to Five: 5+ tasks in a day, all on time",icon:"🗂️",check:function(s){var m=(s.moduleScores||{}).office;return !!m&&(m.history||[]).some(function(h){return h.tasks>=5&&h.onTime===h.tasks;});}},
   {id:"office_promoted",name:"Promoted",desc:"Reach Associate in Nine to Five",icon:"📈",check:function(s){return (+officeDay(s).rep||0)>=250;}},
   {id:"office_veteran",name:"Ten Days on the Job",desc:"Work 10 days in Nine to Five",icon:"📅",check:function(s){return (+officeDay(s).days||0)>=10;}},
+  {id:"travel_first",name:"First Flight",desc:"Complete your first day in Jet Lag",icon:"✈️",check:function(s){var m=(s.moduleScores||{}).travel;return !!m&&m.sessions>=1;}},
+  {id:"travel_veteran",name:"Frequent Flyer",desc:"Travel 10 days in Jet Lag",icon:"🧳",check:function(s){return (+travelDay(s).days||0)>=10;}},
+  {id:"travel_promoted",name:"Upgraded",desc:"Reach Associate in Jet Lag",icon:"🎫",check:function(s){return (+travelDay(s).rep||0)>=250;}},
+  {id:"travel_weatherwise",name:"Weather-wise",desc:"Jet Lag: plan ahead with the forecast on 3 different days",icon:"☂️",check:function(s){return travelRuns(s).filter(function(h){return h.prepared===true;}).length>=3;}},
 ];

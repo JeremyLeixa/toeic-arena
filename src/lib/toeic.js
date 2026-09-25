@@ -74,6 +74,7 @@ export var MODULE_TOEIC_MAP={
   // vrais items P3/P4/P7 et comptent DANS lisP3, lisP4 et p7 (officeDone, App.jsx) : les compter aussi ici les
   // pèserait deux fois, et une part unique fausserait le Mentor (une journée mêle trois Parts).
   office:{part:null,section:null,score:true},
+  travel:{part:null,section:null,score:true}, // Jet Lag (2026-09-25) : même règle qu'office, ses réponses comptent dans les Parts
   traps:{part:null,section:null,score:true},
   stratquiz:{part:null,section:null,score:true},
   timesim:{part:null,section:null,score:true}

@@ -111,7 +111,7 @@ export function WeeklyReport(p){
   var ghosts=(p.students||[]).filter(isGhost);
 
   // Module engagement this week (based on module_scores delta)
-  var MODULE_LABELS={drill:"Part 5 Drill",csess:"Flashcards",tavern:"Word Tavern",lisP1:"Listening P1",lisP2:"Listening P2",lisP3:"Listening P3",lisP4:"Listening P4",p6:"Part 6",p7:"Part 7",ablitz:"Audio Blitz",clue:"Clue Hunter",sbuild:"Sentence Builder",wfall:"Word Fall",matchEasy:"Speed Match",pvdojo:"Phrasal Verbs",stratquiz:"Strategy Quiz",timesim:"Time Sim",mock1:"Mock Test 1",mock2:"Mock Test 2",mock3:"Mock Test 3",bforge:"Linking Bridge",mimic:"Mimic Hunt",mimic_listen:"Mimic Hunt (écoute)",office:"Nine to Five"};
+  var MODULE_LABELS={drill:"Part 5 Drill",csess:"Flashcards",tavern:"Word Tavern",lisP1:"Listening P1",lisP2:"Listening P2",lisP3:"Listening P3",lisP4:"Listening P4",p6:"Part 6",p7:"Part 7",ablitz:"Audio Blitz",clue:"Clue Hunter",sbuild:"Sentence Builder",wfall:"Word Fall",matchEasy:"Speed Match",pvdojo:"Phrasal Verbs",stratquiz:"Strategy Quiz",timesim:"Time Sim",mock1:"Mock Test 1",mock2:"Mock Test 2",mock3:"Mock Test 3",bforge:"Linking Bridge",mimic:"Mimic Hunt",mimic_listen:"Mimic Hunt (écoute)",office:"Nine to Five",travel:"Jet Lag"};
   var modEngagement={}; // modId → count of students who practiced
   thisWeek.forEach(function(s){
     var p=prevByName[s.student_name];
@@ -761,7 +761,8 @@ export function TeacherDash(p){
       {id:"hunt",name:"Mistake Hunt"},
       {id:"mimic",name:"Mimic Hunt"},
       {id:"mimic_listen",name:"Mimic Hunt Ecoute"},
-      {id:"office",name:"Nine to Five"}
+      {id:"office",name:"Nine to Five"},
+      {id:"travel",name:"Jet Lag"}
     ]);
     var headers=[
       "Nom","Classe","XP Total","XP Semaine","Niveau","Ligue","Streak","Derniere activite",

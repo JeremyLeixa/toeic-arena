@@ -49,6 +49,10 @@ une décision.
   Connectors, Prepositions, Gerund/Inf deviennent **Knotbinder, Anchor Hall, Twin Paths** (15 Q, barème B) sous leurs
   ids d'origine ; False Friends devient 3 questions sur 15 de Word Tavern (réponses versées dans `falsefr`). Grammar &
   Vocab : 10 → 6 tuiles. Détail : `src/features/gauntlet/CLAUDE.md`, `src/features/games/CLAUDE.md`.
+- **25/09 : Jet Lag, 2e monde des Waygates** (`98ae472` proto → `494625a`, `c35e268`, `db116c9`, lot 3) : le moteur
+  devient multi-mondes (`lib/worlds.js`, écran `WorldDay`, `worldDone`) ; déplacement pro coordonné par Maya Ortiz,
+  vivier validé par Jérémy (6 P3, 8 P4 météo/perturbations, 6 P7), météo W2 « prévu = paré » (bulletin compris →
+  +15 rep, sinon +45 min). 4 trophées sans coffre (pas de SQL). Détail : `src/features/waygates/CLAUDE.md`.
 
 ### À voir en prod (pas encore observé sur de vrais élèves)
 - **Gauntlet à 7** : passer d'abord `supabase/migrations/2026-09-24_economy_catalog_data.sql` (coffres `connsort_perfect`…
@@ -58,6 +62,9 @@ une décision.
 - **Nine to Five** (à jouer par Jérémy sur son compte) : l'XP affichée = l'XP du profil après rechargement ;
   `moduleScores.lisP3/lisP4/p7` avancent ; une erreur de la journée revient dans la chasse ; la tuile Games dit le grade.
   Puis, dans 2-3 semaines : parties par élève dans l'onglet Usage (« Nine to Five ») contre Listening P3/P4 et Part 7.
+- **Jet Lag** : traversée du portail, une journée paré et une coincé (ligne du bilan, horloge +45), `gameScores.travelDay`
+  distinct d'`officeDay`, trophée First Flight à la 1re journée. Vivier mince : contenu voyage neuf à écrire (~10 P3
+  avec audio, 6 à 8 P7) si les élèves y reviennent.
 - Vague de coffres **Mastery II** à partir du **26/09** (échelons I datés du 19/09 + 7 jours) : garde anti-boucle.
 - Première cérémonie **« faiblesse devenue force »** possible vers le **27/09**.
 - Home « une porte », Part 7 et P3/P4 neufs, mode écoute de Mimic Hunt, sessions en mode clair.
@@ -65,7 +72,7 @@ une décision.
   **début octobre** avant de ranger ou retirer un module (premier aperçu iabd2627 : 45 créatures créées, 0 vaincue — **normal** : une créature meurt à sa 3e réussite espacée, 1-3-7 j, premières captures le 21/09 → premières morts vers le 2/10 ; au 24/09, 34 créatures sur 104 déjà touchées, 6 chasses jouées, 0 abandon).
 
 ### En attente d'une décision de Jérémy
-- **The Waygates, suite** : prochain monde (aéroport, hôtel, salon professionnel…) ? « L'affaire du jour » (mécanique
+- **The Waygates, suite** : mondes validés à faire, même moteur : service client / boutique, organisation d'événements. « L'affaire du jour » (mécanique
   C du proto : indices répartis sur plusieurs documents, contenu neuf à écrire) comme journée spéciale ? (Les petits QCM
   abandonnés : faits le 25/09, voir « Livré ».)
 - ~~A.4 ancrage Boss~~ : **retiré le 24/09** (décision de Jérémy).

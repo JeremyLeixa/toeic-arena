@@ -45,7 +45,8 @@ export var FEEDBACK_MODULES = [
     {id:"wfall",label:"Word Fall"},
     {id:"matchE",label:"Speed Match"},
     {id:"mimic",label:"Mimic Hunt"},
-    {id:"office",label:"The Waygates · Nine to Five"}
+    {id:"office",label:"The Waygates · Nine to Five"},
+    {id:"travel",label:"The Waygates · Jet Lag"}
   ]},
   {group:"Mocks",items:[
     {id:"mock1",label:"Mock Test 1"},

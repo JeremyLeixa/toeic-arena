@@ -96,7 +96,9 @@ Ce que la suite protège, et pourquoi :
   Relire un lot neuf : `prototypes/sessions/real.html?sc=p7&p7only=p7p68,p7p71`.
 - **`check_import_graph`** voit aussi les `import()` des écrans lazy : chemin, nom exporté,
   et absence d'import statique résiduel (sinon le chunk ne sort pas, en silence).
-- **`check_office_day`** — Nine to Five (`lib/officeDay.js`, `lib/officeGrades.js`) : des centaines de journées tirées
+- **`check_office_day`** — The Waygates (`lib/officeDay.js`, `lib/officeGrades.js`, `lib/worlds.js`). Jet Lag : bulletin
+  à 9:00, une seule perturbation après au moins une P3, vivier validé seul, sujets génériques, règle W2 câblée, `travel`
+  dans les mêmes listes qu'`office` et trophées qui ne croisent pas les mondes. Nine to Five : des centaines de journées tirées
   par grade, chacune dans 9:00-17:00 (un direct finit de sonner avant 17:00, une échéance tombe après l'arrivée), sans
   item en double, au format P7 du grade (double à Associate, triple à Team Lead, et garanti le jour du déblocage),
   sujet de P3 générique (un sujet tiré du contenu trahit la Q1) ; horloge jamais plus clémente en montant ; réputation

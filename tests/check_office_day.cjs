@@ -218,5 +218,20 @@ const u2 = { stats: {}, moduleScores: { office: { sessions: 9, history: [{ tasks
 ok(!ach('office_clean').check(u2), 'Clean Desk : il faut 5 tâches ou plus, TOUTES à l\'heure');
 ok(!ach('office_promoted').check(u2) && !ach('office_veteran').check(u2), 'Promoted à 250 rep, Ten Days à 10 journées');
 
+// Jet Lag : mêmes règles qu'office (liste noire, estimateur), et ses 4 trophées. Weather-wise lit `prepared` dans
+// l'historique du module travel (posé par worldDone) : 3 journées où le bulletin compris a absorbé la perturbation.
+ok(require(path.join(ROOT, 'src', 'lib', 'hubStatus.js')).MASTERY_BLACKLIST.travel === 1, 'travel en liste noire de maîtrise (pas de double coffre)');
+ok(/travel:\{part:null,section:null,score:true\}/.test(TOEIC), 'MODULE_TOEIC_MAP.travel : ni part ni section');
+ok(!/"travel"|id:"travel"/.test((TOEIC.match(/var READING_MODS[\s\S]*?var lisParts=[^\n]*/) || [''])[0]), 'travel hors des tables de poids');
+const t1 = { stats: {}, moduleScores: { travel: { sessions: 10, history: [{ prepared: true }, { prepared: true }, { prepared: false }, { prepared: true }] } }, gameScores: { travelDay: { rep: 250, days: 10 } } };
+const t2 = { stats: {}, moduleScores: { travel: { sessions: 9, history: [{ prepared: true }, { prepared: true }, { prepared: false }, {}] } }, gameScores: { travelDay: { rep: 249, days: 9 } } };
+['travel_first', 'travel_veteran', 'travel_promoted', 'travel_weatherwise'].forEach(function (id) {
+  ok(!!ach(id), 'trophée ' + id + ' déclaré');
+  if (ach(id)) { ok(ach(id).check(t1), 'trophée ' + id + ' obtenu quand il le faut'); ok(!ach(id).check(u0), 'trophée ' + id + ' refusé à un profil neuf'); }
+});
+ok(!ach('travel_weatherwise').check(t2), 'Weather-wise : 3 journées « paré », pas 2');
+ok(!ach('travel_promoted').check(t2) && !ach('travel_veteran').check(t2), 'Upgraded à 250 rep, Frequent Flyer à 10 journées');
+ok(!ach('office_first').check(t1) && !ach('travel_first').check(u1), 'les trophées d\'un monde ne se gagnent pas dans l\'autre');
+
 console.log((fails ? 'ÉCHEC' : 'OK') + ' — Nine to Five : ' + checks + ' contrôles' + (fails ? ', ' + fails + ' en échec' : ''));
 process.exit(fails ? 1 : 0);

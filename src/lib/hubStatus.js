@@ -16,7 +16,7 @@ export var MASTERY_ACC = 0.8;
 // check_mimic_items l'y remettrait sous 45.
 // "office" (Nine to Five, 2026-09-24) : ses réponses comptent déjà dans lisP3 / lisP4 / p7 (officeDone), dont
 // les coffres de maîtrise avancent. Un coffre "office" en plus paierait deux fois les mêmes réponses.
-export var MASTERY_BLACKLIST = { mock1: 1, mock2: 1, mock3: 1, boss: 1, daily: 1, csess: 1, hunt: 1, office: 1 };
+export var MASTERY_BLACKLIST = { mock1: 1, mock2: 1, mock3: 1, boss: 1, daily: 1, csess: 1, hunt: 1, office: 1, travel: 1 };
 
 export function isMastered(ms) {
   return !!ms && ms.total >= MASTERY_Q && ms.correct / ms.total >= MASTERY_ACC;
