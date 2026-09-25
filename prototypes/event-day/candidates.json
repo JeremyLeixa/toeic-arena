@@ -1,0 +1,425 @@
+[
+ {
+  "part": "P3",
+  "id": "p3_75",
+  "type": "",
+  "event": 13,
+  "off": 2,
+  "qn": 3,
+  "excerpt": "W: We still haven't chosen a venue for the annual conference. Any thoughts? W2: The Grand Hotel has a large hall, but it's quite expensive. M: What about the convention c"
+ },
+ {
+  "part": "P3",
+  "id": "p3_69",
+  "type": "",
+  "event": 10,
+  "off": 1,
+  "qn": 3,
+  "excerpt": "W: Hi, I'm enquiring about exhibit floor space for the technology expo in March. We had a corner booth last year and would like the same again. M: Let me check the floor "
+ },
+ {
+  "part": "P3",
+  "id": "p3_01",
+  "type": "",
+  "event": 8,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "W: Have you seen the updated schedule for the trade show next month? M: Yes, our booth has been moved to Hall B. It's actually a better location than last year. W: That's"
+ },
+ {
+  "part": "P3",
+  "id": "p3_17",
+  "type": "",
+  "event": 8,
+  "off": 4,
+  "qn": 3,
+  "excerpt": "W: Our flight has been delayed by two hours. We won't land until 9 PM. M: That means we'll miss the welcome reception at the conference. W: I know. But at least we'll mak"
+ },
+ {
+  "part": "P3",
+  "id": "p3_58",
+  "type": "",
+  "event": 8,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "M: Riverside Hall, this is Oliver speaking. W: Hi, I'm planning a charity gala for about two hundred guests in October. Do you still have any Saturday evenings available?"
+ },
+ {
+  "part": "P3",
+  "id": "p3_84",
+  "type": "",
+  "event": 7,
+  "off": 1,
+  "qn": 3,
+  "excerpt": "M: Our booth at the tech expo is confirmed for Hall C, space twelve. W: How big is the space? We had trouble fitting everything in last year. M2: It's about thirty percen"
+ },
+ {
+  "part": "P3",
+  "id": "p3_77",
+  "type": "",
+  "event": 6,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "W: We need to arrange catering for the retirement party. About forty people are coming. M: Should we go with the caterer we used last time? W2: Their food was good, but t"
+ },
+ {
+  "part": "P3",
+  "id": "p3_60",
+  "type": "",
+  "event": 5,
+  "off": 1,
+  "qn": 3,
+  "excerpt": "M: I need to rent equipment for a three-day conference next month. We'll need projectors, microphones, and a sound system for the main hall. W: Excellent. The main hall —"
+ },
+ {
+  "part": "P3",
+  "id": "p3_26",
+  "type": "",
+  "event": 4,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "W: We need to finalize the catering for the annual company picnic next Saturday. M: How many people have confirmed so far? W: About a hundred and forty, including employe"
+ },
+ {
+  "part": "P3",
+  "id": "p3_63",
+  "type": "",
+  "event": 4,
+  "off": 3,
+  "qn": 3,
+  "excerpt": "W: I registered for the marketing summit next week, but I have to cancel due to a family emergency. Is a refund possible? M: I'm sorry to hear that. Our standard policy a"
+ },
+ {
+  "part": "P3",
+  "id": "p3_64",
+  "type": "",
+  "event": 4,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "M: I'd like to place an order for branded notebooks and pens for our trade show booth. We're thinking five hundred of each. W: Brilliant. Our most popular notebook is the"
+ },
+ {
+  "part": "P3",
+  "id": "p3_88",
+  "type": "",
+  "event": 4,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "W: The board wants to move the product launch up by two weeks. M: That's tight. Marketing needs at least a month to prepare the campaign. M2: Engineering can be ready, bu"
+ },
+ {
+  "part": "P3",
+  "id": "p3_94",
+  "type": "",
+  "event": 4,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "W: The trade fair starts in two weeks. Where are we with the booth? W2: The display panels arrived yesterday, but the banner still has last year's logo on it. M: I can ha"
+ },
+ {
+  "part": "P3",
+  "id": "p3_39",
+  "type": "",
+  "event": 3,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "W: The booth setup is almost done, but we have a problem. The banners we ordered arrived with the wrong logo. M: You're kidding. The conference opens in less than eightee"
+ },
+ {
+  "part": "P3",
+  "id": "p3_47",
+  "type": "",
+  "event": 3,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "W: I need five hundred tri-fold brochures printed for a trade show next Friday. What are my options? M: For that quantity, we can do either standard matte paper or a glos"
+ },
+ {
+  "part": "P3",
+  "id": "p3_85",
+  "type": "",
+  "event": 3,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "W: Management wants us to launch a mentorship program for new hires. W2: That's a great idea. Who would act as the mentors? M: We could ask experienced staff to volunteer"
+ },
+ {
+  "part": "P4",
+  "id": "p4_78",
+  "type": "Event introduction",
+  "event": 8,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Welcome, everyone, to this year's Career Development Conference. Over the course of today, you'll have the chance to attend workshops on leadership, networking, and digit"
+ },
+ {
+  "part": "P4",
+  "id": "p4_20",
+  "type": "Event introduction",
+  "event": 7,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Ladies and gentlemen, thank you for joining us for the tenth annual Innovation Awards ceremony. Tonight we celebrate the most creative ideas and solutions from teams acro"
+ },
+ {
+  "part": "P4",
+  "id": "p4_30",
+  "type": "Event introduction",
+  "event": 6,
+  "off": 1,
+  "qn": 3,
+  "excerpt": "Good evening, and welcome to the twenty-third annual Hospitality Excellence Awards. We have over 400 guests here tonight, representing the finest hotels, restaurants, and"
+ },
+ {
+  "part": "P4",
+  "id": "p4_61",
+  "type": "Announcement",
+  "event": 6,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Good morning, everyone, and welcome to the annual Marketing Innovation Summit. Before we begin, a few quick notes. The full session schedule is displayed on the screens a"
+ },
+ {
+  "part": "P4",
+  "id": "p4_71",
+  "type": "Event introduction",
+  "event": 6,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Good evening, and welcome to the fifteenth annual Riverside Food Festival. Over the next three days, more than forty local vendors will be serving dishes from around the "
+ },
+ {
+  "part": "P4",
+  "id": "p4_82",
+  "type": "Award ceremony",
+  "event": 5,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "It's now my honor to introduce the recipient of this year's Community Leadership Award. For over a decade, Ms. Grace Okafor has volunteered with local youth programs, hel"
+ },
+ {
+  "part": "P4",
+  "id": "p4_101",
+  "type": "Orientation",
+  "event": 5,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Good morning, and welcome to your first day at Bexley Pharmaceuticals. I'll walk you through our security procedures. Your badge opens the main doors and the floors your "
+ },
+ {
+  "part": "P4",
+  "id": "p4_01",
+  "type": "Voicemail",
+  "event": 4,
+  "off": 1,
+  "qn": 3,
+  "excerpt": "Hi, this is Karen from Summit Consulting. I'm calling to confirm our meeting on Wednesday at 10 AM. I've reserved conference room B at your office. Could you let me know "
+ },
+ {
+  "part": "P4",
+  "id": "p4_14",
+  "type": "Instructions",
+  "event": 4,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Before we begin today's workshop, let me go over a few logistics. Restrooms are down the hall to the left. We'll take a 15-minute break at 10:30 and a one-hour lunch brea"
+ },
+ {
+  "part": "P4",
+  "id": "p4_55",
+  "type": "Meeting introduction",
+  "event": 4,
+  "off": 4,
+  "qn": 3,
+  "excerpt": "Good morning everyone, and thank you for joining today's quarterly review. Before we start, I want to acknowledge two things. First, congratulations to the customer succe"
+ },
+ {
+  "part": "P4",
+  "id": "p4_58",
+  "type": "Instructions",
+  "event": 4,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Welcome to today's professional development workshop. Please make sure you've signed in at the front desk and collected your name badge before we begin. The workbook mate"
+ },
+ {
+  "part": "P4",
+  "id": "p4_68",
+  "type": "Award ceremony",
+  "event": 4,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Ladies and gentlemen, it's my great pleasure to introduce tonight's keynote speaker. Dr. Elena Ross has spent over twenty years researching renewable energy and has publi"
+ },
+ {
+  "part": "P4",
+  "id": "p4_33",
+  "type": "Meeting introduction",
+  "event": 3,
+  "off": 1,
+  "qn": 3,
+  "excerpt": "Good morning everyone, and thank you for joining today's quarterly review. Before we dive into the financial results, I want to acknowledge the marketing team for their o"
+ },
+ {
+  "part": "P4",
+  "id": "p4_64",
+  "type": "Meeting excerpt",
+  "event": 3,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Good afternoon, everyone. Let's take a look at this year's regional sales performance, shown in the chart on the screen. As you can see, the North region was our stronges"
+ },
+ {
+  "part": "P4",
+  "id": "p4_75",
+  "type": "Award ceremony",
+  "event": 3,
+  "off": 1,
+  "qn": 3,
+  "excerpt": "Before we present tonight's top honor, I'd like to say a few words about our Employee of the Year. Marcus Bell joined the sales team just three years ago and has since be"
+ },
+ {
+  "part": "P4",
+  "id": "p4_90",
+  "type": "Award ceremony",
+  "event": 3,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "Good afternoon. It gives me great pleasure to introduce our guest lecturer for today's seminar. Professor James Ndiaye is an economist whose work on small-business growth"
+ },
+ {
+  "part": "P4",
+  "id": "p4_95",
+  "type": "Voicemail",
+  "event": 3,
+  "off": 1,
+  "qn": 3,
+  "excerpt": "Hi, this is Marco Ricci from Ricci Home Renovations, returning your call about the kitchen project. I've looked at the photos you sent, and I can give you an estimate onc"
+ },
+ {
+  "part": "P7",
+  "id": "p7p24",
+  "type": "Double Passage",
+  "event": 20,
+  "off": 0,
+  "qn": 5,
+  "excerpt": "--- PASSAGE 1: Conference Program Excerpt --- INNOVATE 2026 — ANNUAL MARKETING TECHNOLOGY CONFERENCE March 15-16, Vancouver Convention Center DAY 1 — MARCH 15 9:00 AM — O"
+ },
+ {
+  "part": "P7",
+  "id": "p7p34",
+  "type": "Email",
+  "event": 20,
+  "off": 5,
+  "qn": 4,
+  "excerpt": "From: Anna Kowalski, Event Coordinator To: Registered Attendees Date: September 5 Subject: IMPORTANT — Venue Change for Innovation Summit 2024 Dear Attendees, We are writ"
+ },
+ {
+  "part": "P7",
+  "id": "p7p62",
+  "type": "Triple Passage",
+  "event": 16,
+  "off": 1,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Conference Program --- NORTHERN TECH SUMMIT — October 14 Riverside Convention Center Morning Sessions 9:00 AM — Keynote: The Future of AI in Business (Mai"
+ },
+ {
+  "part": "P7",
+  "id": "p7p8",
+  "type": "Email",
+  "event": 12,
+  "off": 3,
+  "qn": 4,
+  "excerpt": "From: Lisa Chang, Conference Coordinator To: All Speakers Subject: Global Innovation Summit — Final Details Date: April 2 Dear speakers, Thank you for agreeing to present"
+ },
+ {
+  "part": "P7",
+  "id": "p7p38",
+  "type": "Double Passage",
+  "event": 7,
+  "off": 0,
+  "qn": 4,
+  "excerpt": "--- DOCUMENT 1: Memo --- To: All Department Managers From: Helena Bruno, COO Date: April 15 Re: Annual Company Retreat — Save the Date Dear Managers, I am excited to anno"
+ },
+ {
+  "part": "P7",
+  "id": "p7p4",
+  "type": "Notice",
+  "event": 6,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "NOTICE TO ALL EMPLOYEES — PARKVIEW INDUSTRIES Annual Company Picnic The annual company picnic will be held on Saturday, June 14, from 11:00 AM to 4:00 PM at Greenfield Pa"
+ },
+ {
+  "part": "P7",
+  "id": "p7p2",
+  "type": "Advertisement",
+  "event": 4,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "GRAND OPENING — RIVERSIDE BUSINESS CENTER Riverside Business Center is proud to announce the opening of its newest location at 450 Harbor Drive. Our state-of-the-art faci"
+ },
+ {
+  "part": "P7",
+  "id": "p7p69",
+  "type": "Online Chat",
+  "event": 4,
+  "off": 0,
+  "qn": 5,
+  "excerpt": "--- ONLINE CHAT --- Lena Ortiz (10:02 A.M.): The Walsh Foundation dinner has grown again. They now expect 140 guests instead of 110. Priya Nair (10:04 A.M.): The Garden R"
+ },
+ {
+  "part": "P7",
+  "id": "p7p33",
+  "type": "Report",
+  "event": 3,
+  "off": 0,
+  "qn": 4,
+  "excerpt": "Q3 Sales Performance Summary — Retail Division Overview: The retail division posted total sales of $14.2 million in Q3, representing a 7% increase over Q2 and a 12% incre"
+ },
+ {
+  "part": "P7",
+  "id": "p7p44",
+  "type": "Advertisement",
+  "event": 3,
+  "off": 0,
+  "qn": 4,
+  "excerpt": "SAVORY OCCASIONS — CORPORATE CATERING MADE SIMPLE Planning a meeting, training day, or office celebration? Let Savory Occasions handle the food so you can focus on your e"
+ },
+ {
+  "part": "P7",
+  "id": "p7p49",
+  "type": "Double Passage",
+  "event": 3,
+  "off": 0,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Workshop Schedule --- SPRING SKILLS SERIES — PROFESSIONAL WORKSHOPS All sessions held in the Innovation Hub, Room 4B | Date | Workshop | Time | Facilitato"
+ },
+ {
+  "part": "P7",
+  "id": "p7p75",
+  "type": "Triple Passage",
+  "event": 3,
+  "off": 1,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Web Page --- www.lakesidelodge.com/groups LAKESIDE LODGE — GROUP AND CORPORATE STAYS Planning a team retreat? Book 10 rooms or more and enjoy: - 15% off o"
+ },
+ {
+  "part": "P3",
+  "id": "p3_90",
+  "type": "",
+  "event": 2,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "M: Hi, this is Daniel from Brookside Consulting. I'd like to order lunch for twelve people for a meeting tomorrow at noon. W: Certainly. Our catering orders usually need "
+ },
+ {
+  "part": "P3",
+  "id": "p3_45",
+  "type": "",
+  "event": 2,
+  "off": 0,
+  "qn": 3,
+  "excerpt": "W: Hi, I'd like to place a catering order for a corporate meeting next Wednesday. We'll need coffee and pastries for about twenty people. M: No problem. Our corporate pac"
+ }
+]
