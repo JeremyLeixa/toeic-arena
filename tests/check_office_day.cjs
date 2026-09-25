@@ -10,6 +10,7 @@
  */
 'use strict';
 const path = require('path');
+const fs0 = require('fs');
 const ROOT = path.join(__dirname, '..');
 const L = require(path.join(ROOT, 'src', 'lib', 'officeDay.js'));
 const { LISTENING_P3, LISTENING_P4 } = require(path.join(ROOT, 'src', 'data', 'listening.js'));
@@ -86,6 +87,48 @@ G.forEach(function (g, gi) {
 });
 ok(multiSeen[2] && multiSeen[3], 'doubles et triples servis aux grades qui les débloquent');
 ok(liveP4 > 0 && recP4 > 0, 'Part 4 : des directs ET des messages (' + liveP4 + ' / ' + recP4 + ')');
+
+// ── 2b. Jet Lag (monde voyage, 2026-09-25) : 400 journées par grade ─────────────────────────────
+// Le vivier est celui qu'a relu Jérémy : rien d'autre n'y entre. Bulletin à 9:00 (la règle « prévu = paré » en dépend),
+// une seule perturbation, jamais avant 10:00, habillage générique (« Where does the conversation take place? »).
+const TP = L.TRAVEL_POOL;
+ok(TP && TP.p3 && TP.p7 && TP.forecast && TP.disruption, 'Jet Lag : vivier déclaré (TRAVEL_POOL)');
+[['p3', TP.p3, LISTENING_P3], ['p7', TP.p7, PART7_PASSAGES], ['disruption', TP.disruption, LISTENING_P4], ['forecast', Object.keys(TP.forecast), LISTENING_P4]].forEach(function (x) {
+  x[1].forEach(function (id) { ok(x[2].some(function (it) { return it.id === id; }), 'Jet Lag : ' + x[0] + ' ' + id + ' existe dans la banque'); });
+});
+Object.keys(TP.forecast).forEach(function (id) { ok(LISTENING_P4.find(function (it) { return it.id === id; }).type === 'Weather report', 'Jet Lag : ' + id + ' est bien un bulletin météo'); });
+const TRAVEL_IDS = new Set([].concat(TP.p3, TP.p7, TP.disruption, Object.keys(TP.forecast)));
+const TRAVEL_SUBJECTS = new Set(['A conversation nearby', 'A phone call', "Today's weather", 'An announcement for passengers']);
+G.forEach(function (g, gi) {
+  for (let s = 0; s < 400; s++) {
+    const d = L.composeDay(g.rep, rng(90000 + 1000 * gi + s), 'travel');
+    const tag = 'travel ' + g.id + '#' + s;
+    ok(d.tasks.length === g.tasks, tag + ' : ' + g.tasks + ' tâches (' + d.tasks.length + ')');
+    ok(typeof d.brief === 'string' && d.brief.indexOf('undefined') < 0 && /weather/.test(d.brief), tag + ' : brief qui annonce le bulletin');
+    const fc = d.tasks.filter(function (t) { return t.forecast; }), hit = d.tasks.filter(function (t) { return t.weatherHit; });
+    ok(fc.length === 1 && fc[0].at === 0 && fc[0].live && fc[0].forecastLabel, tag + ' : un bulletin, en direct à 9:00, avec son étiquette');
+    ok(hit.length === 1 && hit[0].live && hit[0].at >= 60, tag + ' : une seule perturbation, jamais avant 10:00');
+    ok(hit.length === 1 && d.tasks.some(function (t) { return t.mod === 'lisP3' && t.at < hit[0].at; }), tag + ' : au moins une conversation avant la perturbation (le temps d\'écouter le bulletin)');
+    const ids = new Set();
+    d.tasks.forEach(function (t, i) {
+      ok(t.id === 't' + (i + 1), tag + ' : ids t1..tn dans l\'ordre');
+      ok(TRAVEL_IDS.has(t.itemId), tag + ' : ' + t.itemId + ' hors du vivier validé');
+      ok(!ids.has(t.itemId), tag + ' : item en double ' + t.itemId); ids.add(t.itemId);
+      if (i > 0) ok(t.at >= d.tasks[i - 1].at, tag + ' : tâches triées par arrivée');
+      if (t.live) ok(t.at + t.ringFor <= L.DAY_LEN && t.ringFor === g.ringFor, tag + ' : direct à la sonnerie du grade, fini avant 17:00');
+      else ok(t.due == null || (t.due > t.at + 60 && t.due <= L.DAY_LEN), tag + ' : échéance après l\'arrivée et avant 17:00');
+      if (t.mod === 'p7') { const it = PART7_PASSAGES.find(function (x) { return x.id === t.itemId; }); ok(L.p7Level(it.type) <= Math.max(1, g.multi), tag + ' : format P7 débloqué au grade'); }
+      else ok(TRAVEL_SUBJECTS.has(t.subject), tag + ' : sujet générique (ne trahit pas le lieu) : ' + t.subject);
+      ok([t.from, t.subject, t.ask && t.ask.text].join(' ').indexOf('undefined') < 0 && t.ask.who === 'maya', tag + ' : habillage complet, interlocutrice Maya');
+    });
+  }
+});
+const W = require(path.join(ROOT, 'src', 'lib', 'worlds.js'));
+ok(W.WORLD_META.travel.modId === 'travel' && W.WORLD_META.travel.repKey === 'travelDay' && W.WORLD_META.travel.weather === true, 'worlds.js : Jet Lag = module travel, réputation gameScores.travelDay, météo');
+ok(W.WORLD_META.office.modId === 'office' && W.WORLD_META.office.repKey === 'officeDay', 'worlds.js : Nine to Five inchangé (office, officeDay)');
+ok(W.worldRep({ gameScores: { travelDay: { rep: 42 } } }, 'travel') === 42 && W.worldRep({}, 'travel') === 0, 'worldRep : lit la réputation du monde, 0 sans profil');
+ok(W.WEATHER_BONUS === 15 && W.WEATHER_DELAY === 45, 'règle « prévu = paré » : +15 rep ou +45 min (choix de Jérémy, W2)');
+ok(!/^import /m.test(fs0.readFileSync(path.join(ROOT, 'src', 'lib', 'worlds.js'), 'utf8')), 'lib/worlds.js sans import (pur, sans données)');
 
 // ── 3. Réputation, XP, étoiles ────────────────────────────────────────────────────────────────
 ok(L.repGain([{ correct: 3, done: true, onTime: true }, { correct: 2, done: true, onTime: false }]) === 3 * 4 + 6 + 2 * 4, 'repGain : 4 par bonne réponse, 6 par tâche à l\'heure seulement');
