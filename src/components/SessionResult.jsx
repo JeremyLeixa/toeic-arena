@@ -26,6 +26,7 @@ import { createChestFx, burstAt } from "./particles.js";
 import { getLevel } from "../data/helpers.js";
 import { LEAGUES } from "../data/leagues.js";
 import { sessionFullscreen } from "../lib/interruptions.js";
+import { foldTrophies, groupMarks } from "../lib/honors.js";
 import { verdictText, epilogueText, stepLabel, stepDetail, stepHint, CHEST_TIER_NAMES } from "../lib/sessionText.js";
 import { playLootTick, playXP, playLevelUp, playChestLand, playJingleAchieve } from "../sounds.js";
 import { haptic } from "../lib/device.js";
@@ -285,6 +286,8 @@ function Verdict(p) {
     sound(playJingleAchieve);
     haptic("achieve");
   }, [done, honorCount, hasTurn]);
+  // Honneurs compactés (lib/honors.js, 2026-09-25) : Darics regroupés par source, trophées repliés au-delà de 4.
+  var [honorsOpen, setHonorsOpen] = useState(false);
 
   function skipAll() { if (!skip) { setSkip(true); setCeremony(false); } }
 
@@ -294,6 +297,7 @@ function Verdict(p) {
   var sealMain = mode === "score" ? s.sc : p.points, sealSub = mode === "score" ? "of " + s.tot : (p.pointsLabel || "points");
   var leagueChest = s.chests.find(function (c) { return /^league_up_/.test(c.trigger || ""); });
   var honors = (s.achievements || []).length + (s.marks || []).length + (inlineLeague ? 1 : 0);
+  var trophies = foldTrophies(s.achievements, honorsOpen), markRows = groupMarks(s.marks);
   return (
     <div className={"sr-root" + (skip ? " sr-skip" : "")} onClick={skipAll}>
       {!done && <div className="sr-skiphint">Tap to skip</div>}
@@ -324,10 +328,12 @@ function Verdict(p) {
             {epilogue && <p className={"sr-ink sr-epi" + (stage >= ST_LEAGUE ? " on" : "")}>{epilogue}</p>}
             {honors > 0 && <div className={"sr-honors" + (done ? " on" : "")}>
               {inlineLeague && <div className="sr-honor"><GIcon name="laurel-crown" size={16} color={/*fond local*/"#8b5a28"} /><span><b>{"Promoted · " + (inlineLeagueName || "new") + " League"}</b>{s.weekly && s.weekly.to ? " · " + s.weekly.to + " XP this week" : ""}</span></div>}
-              {(s.achievements || []).map(function (a, i) {
+              {trophies.shown.map(function (a, i) {
                 return <div key={"a" + i} className="sr-honor"><GIcon name="laurel-crown" size={16} color={/*fond local*/"#8b5a28"} /><span><b>{a.name}</b>{a.desc ? " · " + a.desc : ""}</span></div>;
               })}
-              {(s.marks || []).map(function (m, i) {
+              {trophies.hidden > 0 && <button className="sr-honor sr-honor-more" onClick={function (e) { stop(e); setHonorsOpen(true); }}>
+                <GIcon name="laurel-crown" size={16} color={/*fond local*/"#8b5a28"} /><span><b>{"+" + trophies.hidden + " more trophies"}</b>{" · tap to see them"}</span></button>}
+              {markRows.map(function (m, i) {
                 return <div key={"m" + i} className="sr-honor"><GIcon name="daric" size={16} color={/*fond local*/"#8b5a28"} /><span><b>{"+" + m.amount + " Darics"}</b>{m.label ? " · " + m.label : ""}</span></div>;
               })}
             </div>}

@@ -1,7 +1,7 @@
 // Banc du VRAI écran de fin (src/components/SessionResult.jsx), sans base ni compte (2026-09-17).
 // La session est construite comme settleSession dans App() : gateSteps puis settleXp de lib/xp.js.
 //   sc=<scénario de scenarios.js>  mode=dark|light  skin=<id>  rm=1  seal=1 (sid ≠ id : parchemin d'attente)
-//   honors=1 (trophée + Darics simulés)  points=1 (jeu noté en points)
+//   honors=<n> (n trophées + n octrois de Darics simulés ; 7 = la vague du Gauntlet, honneurs repliés)  points=1 (jeu noté en points)
 import { StrictMode, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { CSS } from "../../src/styles/appCss.js";
@@ -14,7 +14,7 @@ import { SCENARIOS, NOW } from "./scenarios.js";
 
 var q = new URLSearchParams(location.search);
 var SC = q.get("sc") || "promotion", MODE = q.get("mode") || "dark", SKIN = q.get("skin") || "";
-var RM = q.get("rm") === "1", SEAL = q.get("seal") === "1", HONORS = q.get("honors") === "1", POINTS = q.get("points") === "1";
+var RM = q.get("rm") === "1", SEAL = q.get("seal") === "1", HONORS = parseInt(q.get("honors"), 10) || 0, POINTS = q.get("points") === "1";
 // turn=1 : cérémonie « faiblesse devenue force » de démonstration (forme de celebrateTurn), pour voir le budget
 // d'interruptions (2026-09-24) : avec sc=promotion, la promotion passe en ligne du parchemin.
 var TURN = q.get("turn") === "1" ? { cat: "Conditionals", then: { c: 3, t: 11 }, now: { c: 11, t: 13 },
@@ -32,8 +32,8 @@ function buildSession(sc) {
     steps: g.steps.concat(st.steps), total: st.amt, fromXp: u.xp, toXp: st.c.xp,
     levelUp: st.levelUp, leagueUp: st.leagueUp, weekly: { from: u.weeklyXp, to: st.c.weeklyXp }, streak: st.c.streak,
     chests: st.chests.map(function (ch) { return { trigger: ch.trigger, type: ch.type, tier: TIER[ch.type] || 0, label: getTriggerLabel(ch.trigger) }; }),
-    achievements: HONORS ? [{ name: "Word Collector", desc: "Review 50 flashcards" }] : [],
-    marks: HONORS || g.focusHit ? [{ amount: 30, label: g.focusHit ? "Today's Focus" : "Achievement" }] : [],
+    achievements: Array.from({ length: HONORS }, function (_, i) { return { name: i ? "Trophy " + (i + 1) : "Word Collector", desc: i ? "Simulated achievement" : "Review 50 flashcards" }; }),
+    marks: (g.focusHit ? [{ amount: 30, label: "Today's Focus" }] : []).concat(Array.from({ length: HONORS }, function () { return { amount: 30, label: "Achievement" }; })),
     turn: TURN,
   };
 }

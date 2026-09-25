@@ -88,6 +88,9 @@ Tous les modules à score (hors Duel, Flashcards, Battle Scan) finissent sur
   (le toast n'est rendu que sur les onglets) ; Aldric attend (`pg()`) ; la route ne relance pas sa
   musique (`if(!lastSession)playBGM(…)`). Quitter la route autrement que par Continue ferme la session
   (effet sur `[sp]`). Plein écran fixe z 150, **jamais dans un `.enter`** (translateY).
+- **Honneurs compactés** (2026-09-25, proto `prototypes/honors-compact/`) : les Darics du parchemin sont regroupés par
+  source (« +210 Darics · 7 achievements »), les trophées repliés au-delà de 4 (`lib/honors.js`, `check_honors`). Le
+  bouton « +N more » arrête la propagation : le parchemin entier est un « tap to skip ». Banc : `real.html?honors=7`.
 - **Examens** (Mock, Boss, Endless) : gardent leur écran de résultats et le toast d'XP ;
   `addXp(gxp,{ceremony:true})` pose une file `examCeremony` (niveau puis ligue, coffre de promotion)
   que `ExamCeremonies` (`components/Ceremonies.jsx`) affiche 1,4 s après, avec son propre jingle.

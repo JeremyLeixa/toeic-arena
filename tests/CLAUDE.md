@@ -112,6 +112,9 @@ Ce que la suite protège, et pourquoi :
   `trackModSession` sur ces clés (sinon une journée taxe les tuiles et coche les quêtes), refs relues par la chasse,
   `office` en liste noire de maîtrise et hors tables de poids, CSS sans couleur en dur (skins), horloge gelée par
   « Leave », App.jsx et la tuile Games jamais sur `officeDay.js` (il importe les banques du chunk lazy).
+- **`check_honors`** — le parchemin de fin (`lib/honors.js`, 2026-09-25) : Darics regroupés par source sans en perdre
+  un, trophées repliés au-delà de 4 (3 montrés + « +N more ») sans en perdre un, cas courant inchangé, et
+  `SessionResult` qui passe par ces fonctions. Né de la vague rétroactive du Gauntlet (7 trophées + 7 lignes de Darics).
 - **`check_usage_stats`** — l'onglet Usage du formateur (`lib/usageStats.js`, `lib/sessionQuit.js`) : fenêtres
   7/30 j bornes incluses, abandons jamais comptés comme parties, épreuves des hubs ramenées au hub (sinon
   100 % d'abandon), rien d'avant `CAPTURE_START` dans les taux, `doneDays` borné, et le câblage : « Leave »

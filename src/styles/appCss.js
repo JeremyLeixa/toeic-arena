@@ -705,6 +705,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .sr-honors.on{opacity:1}
 .sr-honor{display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;color:#4a2e14;line-height:1.4}
 .sr-honor b{color:#6b3410}
+.sr-honor-more{width:100%;background:none;border:0;font:inherit;font-size:13px;text-align:left;cursor:pointer;color:#4a2e14}
 .sr-chests{display:flex;flex-direction:column;gap:10px;max-width:400px;margin:0 auto 12px}
 .sr-chest{margin-bottom:0!important;cursor:default!important;animation:srRise .5s cubic-bezier(.2,.8,.2,1) both}
 @keyframes srRise{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
