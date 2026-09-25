@@ -1,0 +1,416 @@
+[
+ {
+  "part": "P3",
+  "id": "p3_29",
+  "type": "",
+  "travel": 5,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "M: I submitted my travel expenses for the Tokyo trip two weeks ago, but I haven't been reimbursed yet. W: Let me check the system. It looks like your receipts for the hot"
+ },
+ {
+  "part": "P3",
+  "id": "p3_92",
+  "type": "",
+  "travel": 5,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "W: Excuse me, I'm checking out this morning. Does the hotel have a shuttle to the airport? M: Yes, it leaves from the main entrance. What time is your flight? W: Twelve f"
+ },
+ {
+  "part": "P3",
+  "id": "p3_32",
+  "type": "",
+  "travel": 3,
+  "weather": 1,
+  "qn": 3,
+  "excerpt": "M: Good evening, I have a reservation for Petersen, party of four at seven thirty. W: Let me check... I'm sorry sir, I see your reservation but unfortunately we're runnin"
+ },
+ {
+  "part": "P3",
+  "id": "p3_37",
+  "type": "",
+  "travel": 4,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "W: Good morning. I'm interested in learning more about your small business loan options. I'm opening a bakery. M: Congratulations. We have several products designed for n"
+ },
+ {
+  "part": "P3",
+  "id": "p3_72",
+  "type": "",
+  "travel": 4,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "M: Our flight to Chicago was supposed to leave at three fifteen. Have you looked at the departures board? W: I just did. It's been delayed, and the new time and gate are "
+ },
+ {
+  "part": "P3",
+  "id": "p3_75",
+  "type": "",
+  "travel": 3,
+  "weather": 1,
+  "qn": 3,
+  "excerpt": "W: We still haven't chosen a venue for the annual conference. Any thoughts? W2: The Grand Hotel has a large hall, but it's quite expensive. M: What about the convention c"
+ },
+ {
+  "part": "P3",
+  "id": "p3_76",
+  "type": "",
+  "travel": 2,
+  "weather": 2,
+  "qn": 3,
+  "excerpt": "M: The new scheduling software goes live next Monday. Are both teams ready? W: Sales has been trained, but support still needs a session. M2: I can run a training session"
+ },
+ {
+  "part": "P3",
+  "id": "p3_02",
+  "type": "",
+  "travel": 1,
+  "weather": 2,
+  "qn": 3,
+  "excerpt": "M: Excuse me, I have a reservation for two under the name Patterson. W: Yes, Mr. Patterson. Your table is ready. Would you prefer the terrace or inside? M: The terrace so"
+ },
+ {
+  "part": "P3",
+  "id": "p3_08",
+  "type": "",
+  "travel": 3,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "M: I'm heading to the airport now. My flight to Chicago leaves at 3:30. W: Don't forget you have a dinner with the client at seven. The restaurant is near your hotel. M: "
+ },
+ {
+  "part": "P3",
+  "id": "p3_34",
+  "type": "",
+  "travel": 3,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "M: Excuse me, I'm trying to find out what's happening with flight 447 to Frankfurt. The board still shows 'delayed' but no new time. W: I apologize for the confusion. We "
+ },
+ {
+  "part": "P3",
+  "id": "p3_40",
+  "type": "",
+  "travel": 3,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "M: Central Cab, how can I help you? W: Hi, I need to book a pickup from 442 Oak Street to the airport for tomorrow morning. My flight is at nine fifteen. M: For a nine fi"
+ },
+ {
+  "part": "P3",
+  "id": "p3_93",
+  "type": "",
+  "travel": 3,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "M: Have you tried the new expense software yet? I submitted my travel receipts yesterday. W: I did. It's much faster than filling in the old spreadsheet. You just take a "
+ },
+ {
+  "part": "P3",
+  "id": "p3_63",
+  "type": "",
+  "travel": 0,
+  "weather": 2,
+  "qn": 3,
+  "excerpt": "W: I registered for the marketing summit next week, but I have to cancel due to a family emergency. Is a refund possible? M: I'm sorry to hear that. Our standard policy a"
+ },
+ {
+  "part": "P4",
+  "id": "p4_02",
+  "type": "Announcement",
+  "travel": 6,
+  "weather": 2,
+  "qn": 3,
+  "excerpt": "Attention all passengers. Flight BA-247 to London Heathrow, originally scheduled for departure at 3:15 PM, has been delayed due to severe weather conditions. The new esti"
+ },
+ {
+  "part": "P4",
+  "id": "p4_17",
+  "type": "Weather report",
+  "travel": 0,
+  "weather": 7,
+  "qn": 3,
+  "excerpt": "Good morning. Here's your Tuesday weather forecast. We're looking at cloudy skies this morning with temperatures around 12 degrees Celsius. Rain is expected to move in by"
+ },
+ {
+  "part": "P4",
+  "id": "p4_47",
+  "type": "Announcement",
+  "travel": 5,
+  "weather": 1,
+  "qn": 3,
+  "excerpt": "Attention passengers on platform seven. The 4:25 express service to Brussels has been canceled this evening due to a signaling issue on the line. Passengers holding ticke"
+ },
+ {
+  "part": "P4",
+  "id": "p4_67",
+  "type": "Weather report",
+  "travel": 0,
+  "weather": 6,
+  "qn": 3,
+  "excerpt": "Here's your weekend weather forecast. Saturday will start out cloudy, with a chance of light rain in the morning, clearing up by early afternoon. Temperatures will reach "
+ },
+ {
+  "part": "P4",
+  "id": "p4_85",
+  "type": "Automated menu",
+  "travel": 6,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "You have reached the reservations line for the Lakeside Hotel and Spa. To make a new booking, press one. To modify or cancel an existing reservation, press two. For infor"
+ },
+ {
+  "part": "P4",
+  "id": "p4_97",
+  "type": "Announcement",
+  "travel": 6,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "Attention, passengers on Northline flight 318 to Lisbon. The aircraft has arrived, but the cleaning crew needs a little more time than usual, so boarding will begin about"
+ },
+ {
+  "part": "P4",
+  "id": "p4_63",
+  "type": "Voicemail",
+  "travel": 3,
+  "weather": 2,
+  "qn": 3,
+  "excerpt": "Hi, it's Marcus. I'm calling about our trip to the regional office tomorrow. I've looked at the train timetable, and I think we should take an express service so we arriv"
+ },
+ {
+  "part": "P4",
+  "id": "p4_30",
+  "type": "Event introduction",
+  "travel": 4,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "Good evening, and welcome to the twenty-third annual Hospitality Excellence Awards. We have over 400 guests here tonight, representing the finest hotels, restaurants, and"
+ },
+ {
+  "part": "P4",
+  "id": "p4_32",
+  "type": "Announcement",
+  "travel": 4,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "Attention all passengers on platform four. The eight forty-seven express service to Manchester Piccadilly has been delayed by approximately twenty minutes due to a signal"
+ },
+ {
+  "part": "P4",
+  "id": "p4_84",
+  "type": "Weather report",
+  "travel": 0,
+  "weather": 4,
+  "qn": 3,
+  "excerpt": "And here's a look at today's conditions for the coast. Expect bright sunshine throughout the morning, with temperatures climbing to a warm twenty-six degrees by midday. I"
+ },
+ {
+  "part": "P4",
+  "id": "p4_74",
+  "type": "Weather report",
+  "travel": 0,
+  "weather": 3,
+  "qn": 3,
+  "excerpt": "Good morning. Commuters should prepare for a wet start to the week. A band of heavy rain is moving across the region and will continue through the morning rush hour, so a"
+ },
+ {
+  "part": "P7",
+  "id": "p7p35",
+  "type": "Double Passage",
+  "travel": 10,
+  "weather": 10,
+  "qn": 4,
+  "excerpt": "--- DOCUMENT 1: Email --- From: Kenji Watanabe, IT Manager To: All Staff Date: October 2 Subject: Mandatory Cybersecurity Training Dear team, As part of our ongoing commi"
+ },
+ {
+  "part": "P7",
+  "id": "p7p66",
+  "type": "Triple Passage",
+  "travel": 20,
+  "weather": 0,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Travel Itinerary --- BUSINESS TRIP — Daniel Cho Prepared by Horizon Travel Outbound: May 5 — Flight NX-210, departs 8:00 AM (Seattle to Chicago), arrives "
+ },
+ {
+  "part": "P7",
+  "id": "p7p63",
+  "type": "Triple Passage",
+  "travel": 15,
+  "weather": 1,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Hotel Information --- LAKESIDE GRAND HOTEL — Room Rates (per night) Standard Room: $120 Deluxe Room (lake view): $180 Executive Suite: $260 All rates incl"
+ },
+ {
+  "part": "P7",
+  "id": "p7p14",
+  "type": "Instructions",
+  "travel": 11,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "GLOBETROTTER REWARDS — MEMBERSHIP GUIDE Thank you for joining the GlobeTrotter Rewards program! Here is everything you need to know: EARNING POINTS - Flights: 1 point per"
+ },
+ {
+  "part": "P7",
+  "id": "p7p75",
+  "type": "Triple Passage",
+  "travel": 9,
+  "weather": 2,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Web Page --- www.lakesidelodge.com/groups LAKESIDE LODGE — GROUP AND CORPORATE STAYS Planning a team retreat? Book 10 rooms or more and enjoy: - 15% off o"
+ },
+ {
+  "part": "P7",
+  "id": "p7p59",
+  "type": "Itinerary",
+  "travel": 10,
+  "weather": 0,
+  "qn": 4,
+  "excerpt": "BUSINESS TRIP ITINERARY Prepared for: Mr. Daniel Cho OUTBOUND FLIGHT Tuesday, May 6 — Alaska Air AS221 Depart San Francisco (SFO) 08:15 → Arrive Seattle (SEA) 10:30 ACCOM"
+ },
+ {
+  "part": "P7",
+  "id": "p7p60",
+  "type": "Double Passage",
+  "travel": 3,
+  "weather": 5,
+  "qn": 4,
+  "excerpt": "--- DOCUMENT 1: Training Request --- Employee: Rosa Lim | Department: Finance Course: Advanced Financial Modeling Provider: FinSkills Academy Format: Online, 3 days Cost:"
+ },
+ {
+  "part": "P7",
+  "id": "p7p74",
+  "type": "Double Passage",
+  "travel": 4,
+  "weather": 4,
+  "qn": 5,
+  "excerpt": "--- DOCUMENT 1: Email --- From: Hannah Weber <h.weber@alderinsurance.com> To: Training Team Date: 2 October Subject: Autumn workshop schedule Hi all, Below is the draft s"
+ },
+ {
+  "part": "P7",
+  "id": "p7p16",
+  "type": "Memo",
+  "travel": 3,
+  "weather": 3,
+  "qn": 3,
+  "excerpt": "To: All Employees From: Karen Liu, Chief Information Security Officer Date: November 3 Re: Mandatory Cybersecurity Updates Due to an increase in phishing attacks targetin"
+ },
+ {
+  "part": "P7",
+  "id": "p7p39",
+  "type": "Advertisement",
+  "travel": 6,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "CROSSBRIDGE ACCOUNTING — YOUR SMALL BUSINESS TAX PARTNER Tax season is stressful enough without worrying whether you're missing deductions or filing correctly. At Crossbr"
+ },
+ {
+  "part": "P7",
+  "id": "p7p71",
+  "type": "Article",
+  "travel": 5,
+  "weather": 1,
+  "qn": 5,
+  "excerpt": "LOCAL BAKERY CHAIN BETS ON SMALLER STORES GRANTHAM (12 June) — Crumb & Co., the bakery chain known for its sourdough loaves, will open six small-format shops over the nex"
+ },
+ {
+  "part": "P7",
+  "id": "p7p2",
+  "type": "Advertisement",
+  "travel": 5,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "GRAND OPENING — RIVERSIDE BUSINESS CENTER Riverside Business Center is proud to announce the opening of its newest location at 450 Harbor Drive. Our state-of-the-art faci"
+ },
+ {
+  "part": "P7",
+  "id": "p7p70",
+  "type": "Job Posting",
+  "travel": 3,
+  "weather": 2,
+  "qn": 5,
+  "excerpt": "CAREERS AT NORVELL LOGISTICS Position: Warehouse Operations Supervisor (Rotterdam site) Norvell Logistics is seeking an experienced supervisor to oversee the evening shif"
+ },
+ {
+  "part": "P7",
+  "id": "p7p1",
+  "type": "Email",
+  "travel": 3,
+  "weather": 1,
+  "qn": 4,
+  "excerpt": "From: Sarah Chen, HR Director To: All Department Heads Subject: New Hiring Procedures Date: March 3 As part of our ongoing effort to streamline operations, the Human Reso"
+ },
+ {
+  "part": "P7",
+  "id": "p7p42",
+  "type": "Notice",
+  "travel": 3,
+  "weather": 1,
+  "qn": 3,
+  "excerpt": "GREENWOOD OFFICE PARK — NEW RECYCLING PROGRAM Starting Monday, July 7, Greenwood Office Park will introduce a comprehensive recycling program for all tenant businesses. O"
+ },
+ {
+  "part": "P7",
+  "id": "p7p44",
+  "type": "Advertisement",
+  "travel": 3,
+  "weather": 1,
+  "qn": 4,
+  "excerpt": "SAVORY OCCASIONS — CORPORATE CATERING MADE SIMPLE Planning a meeting, training day, or office celebration? Let Savory Occasions handle the food so you can focus on your e"
+ },
+ {
+  "part": "P7",
+  "id": "p7p4",
+  "type": "Notice",
+  "travel": 3,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "NOTICE TO ALL EMPLOYEES — PARKVIEW INDUSTRIES Annual Company Picnic The annual company picnic will be held on Saturday, June 14, from 11:00 AM to 4:00 PM at Greenfield Pa"
+ },
+ {
+  "part": "P7",
+  "id": "p7p5",
+  "type": "Letter",
+  "travel": 3,
+  "weather": 0,
+  "qn": 4,
+  "excerpt": "Anderson & Blake Consulting 15 Queen Street, London EC4R 1BE March 8, 2025 Mr. James Ward Director of Operations Northgate Manufacturing Ltd. 42 Industrial Avenue Manches"
+ },
+ {
+  "part": "P7",
+  "id": "p7p13",
+  "type": "Double Passage",
+  "travel": 3,
+  "weather": 0,
+  "qn": 4,
+  "excerpt": "--- DOCUMENT 1: Job Posting --- POSITION: Regional Sales Manager — Northeast Company: Atlas Medical Supplies Location: Boston, MA Salary: $85,000 - $105,000 + performance"
+ },
+ {
+  "part": "P7",
+  "id": "p7p25",
+  "type": "Email",
+  "travel": 0,
+  "weather": 3,
+  "qn": 3,
+  "excerpt": "From: Linda Takahashi, HR Director To: All Employees Date: March 12 Subject: Updated Remote Work Policy — Effective April 1 Dear colleagues, Following extensive consultat"
+ },
+ {
+  "part": "P7",
+  "id": "p7p34",
+  "type": "Email",
+  "travel": 3,
+  "weather": 0,
+  "qn": 4,
+  "excerpt": "From: Anna Kowalski, Event Coordinator To: Registered Attendees Date: September 5 Subject: IMPORTANT — Venue Change for Innovation Summit 2024 Dear Attendees, We are writ"
+ },
+ {
+  "part": "P7",
+  "id": "p7p46",
+  "type": "Review",
+  "travel": 3,
+  "weather": 0,
+  "qn": 3,
+  "excerpt": "HOTEL REVIEW — THE CEDARWOOD INN, ASHEVILLE Posted by: TravelWithLena | Rating: 4 / 5 | Stayed: March I booked two nights at The Cedarwood Inn for a weekend getaway, and "
+ }
+]

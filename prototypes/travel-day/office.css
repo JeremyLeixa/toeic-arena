@@ -1,0 +1,178 @@
+/* Proto « journée au bureau » — un univers visuel à part : bureau moderne assumé (choix de Jérémy,
+   2026-09-24). Ardoise froide + bleu d'entreprise, typo système, zéro parchemin. Sombre seulement
+   dans le proto ; le mode clair est à faire au câblage (jetons ci-dessous, rien en dur ailleurs). */
+.od{
+  --bg:#0e1319; --s1:#161d26; --s2:#1d2632; --s3:#263241; --line:#2a3544;
+  --t1:#e8edf3; --t2:#9fadbe; --t3:#6d7c8f;
+  --acc:#4c8dff; --acc2:#7aaaff; --on-acc:#fff;
+  --ok:#35c07a; --ko:#f0616d; --warn:#f2a93b; --ring:#35c07a;
+  min-height:100vh; background:var(--bg); color:var(--t1);
+  font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  position:relative; overflow-x:hidden; padding-bottom:40px;
+}
+.od *{box-sizing:border-box}
+.od button{font:inherit;color:inherit;cursor:pointer}
+.od button:disabled{cursor:default}
+
+/* Barre du haut */
+.od-top{position:sticky;top:0;z-index:4;display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:rgba(14,19,25,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.od-co{display:flex;align-items:center;gap:7px;font-weight:600;font-size:12.5px;color:var(--t2);flex:1;min-width:0;white-space:nowrap;overflow:hidden}
+.od-logo{width:22px;height:22px;border-radius:6px;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
+.od-clock{font-variant-numeric:tabular-nums;font-weight:700;font-size:17px;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.od-clock-late{color:var(--warn)}
+.od-clock-bar{width:64px;height:3px;border-radius:2px;background:var(--s3);overflow:hidden}
+.od-clock-bar i{display:block;height:100%;background:currentColor}
+.od-rep{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:11px}
+.od-rep b{color:var(--acc2);font-weight:600}
+.od-rep-bar{width:74px;height:4px;border-radius:2px;background:var(--s3);overflow:hidden;display:block}
+.od-rep-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .4s}
+.od-rep-bar-lg{width:100%;height:7px;border-radius:4px;margin:8px 0 6px}
+
+/* Boutons */
+.od-btn{border:1px solid var(--line);background:var(--s2);border-radius:10px;padding:11px 16px;font-weight:600;min-height:44px}
+.od-btn-main{background:var(--acc);border-color:var(--acc);color:var(--on-acc);width:100%}
+.od-btn-ring{background:var(--ring);border-color:var(--ring);color:#06210f;padding:8px 14px;min-height:38px}
+.od-btn-ring:disabled{background:var(--s3);border-color:var(--s3);color:var(--t3)}
+.od-link{background:none;border:0;color:var(--acc2);padding:6px 0;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.od-back{background:none;border:0;color:var(--t2);font-weight:600;padding:8px 0;min-height:40px}
+
+/* Intro */
+.od-intro{padding:44px 18px 24px;display:flex;flex-direction:column;gap:16px;
+  background:radial-gradient(120% 60% at 50% 0%,#1b2a40 0%,var(--bg) 70%);min-height:100vh}
+.od-lock-time{font-size:56px;font-weight:300;text-align:center;letter-spacing:-1px;line-height:1}
+.od-lock-day{text-align:center;color:var(--t2);font-size:13px;margin-top:-6px}
+.od-notif{display:flex;gap:10px;background:rgba(29,38,50,.9);border:1px solid var(--line);border-radius:16px;padding:12px}
+.od-notif p{margin:4px 0 0;font-size:13.5px;color:var(--t1)}
+.od-notif-h{display:flex;justify-content:space-between;font-size:12.5px}
+.od-notif-h span{color:var(--t3)}
+.od-av{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex:none}
+.od-badge{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.od-badge-l{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--t3)}
+.od-badge-n{font-size:18px;font-weight:700;margin-top:2px}
+.od-badge-s{font-size:12px;color:var(--t2)}
+.od-rules{margin:0;padding:0 0 0 18px;color:var(--t2);font-size:13px;display:flex;flex-direction:column;gap:4px}
+.od-rules b{color:var(--t1)}
+
+/* Bureau */
+.od-desk{padding:6px 12px}
+.od-sec{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin:14px 4px 8px}
+.od-empty{background:var(--s1);border:1px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--t2);display:flex;flex-direction:column;gap:10px}
+.od-empty p{margin:0}
+.od-row{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:var(--s1);border:1px solid var(--line);
+  border-radius:14px;padding:12px;margin-bottom:8px}
+button.od-row:active{background:var(--s2)}
+.od-row-ring{border-color:var(--ring);box-shadow:0 0 0 0 rgba(53,192,122,.5);animation:od-ring 1.4s infinite}
+@keyframes od-ring{0%{box-shadow:0 0 0 0 rgba(53,192,122,.45)}70%{box-shadow:0 0 0 9px rgba(53,192,122,0)}100%{box-shadow:0 0 0 0 rgba(53,192,122,0)}}
+.od-ico{width:32px;height:32px;border-radius:9px;background:var(--s3);display:grid;place-items:center;font-size:15px;flex:none;color:var(--acc2)}
+.od-row-b{flex:1;min-width:0}
+.od-row-f{font-size:12px;color:var(--t2)}
+.od-row-s{font-weight:600}
+.od-row-ask{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);margin-top:6px}
+.od-row-ask .od-av{width:18px;height:18px;font-size:8px}
+.od-row-r{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.od-row-done{opacity:.75;padding:9px 12px;align-items:center}
+.od-row-done .od-ico{width:26px;height:26px;font-size:12px}
+.od-row-missed .od-row-s{text-decoration:line-through;color:var(--t3)}
+.od-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--s3);color:var(--t2);white-space:nowrap}
+.od-chip-ring{background:var(--ring);color:#06210f}
+.od-chip-soon{background:rgba(242,169,59,.16);color:var(--warn)}
+.od-chip-late{background:rgba(240,97,109,.16);color:var(--ko)}
+
+/* Bandeau d'appel */
+.od-ring{position:fixed;left:10px;right:10px;top:58px;z-index:6;display:flex;align-items:center;gap:10px;background:#12301f;
+  border:1px solid var(--ring);border-radius:14px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:od-drop .3s ease-out}
+@keyframes od-drop{from{transform:translateY(-16px);opacity:0}}
+.od-ring-ico{font-size:18px;animation:od-shake 1s infinite}
+@keyframes od-shake{0%,50%,100%{transform:rotate(0)}10%,30%{transform:rotate(-14deg)}20%,40%{transform:rotate(14deg)}}
+.od-ring-b{flex:1;min-width:0;display:flex;flex-direction:column;font-size:12.5px}
+.od-ring-b span{color:#a7d8bb}
+
+/* Tâche */
+.od-task{padding:4px 12px}
+.od-task-h{display:flex;align-items:center;gap:10px;min-height:44px}
+.od-task-k{flex:1;text-align:center;font-size:12px;color:var(--t2)}
+.od-task-n{font-size:12px;color:var(--t3);font-variant-numeric:tabular-nums}
+.od-live{color:var(--ko);font-size:12px;font-weight:700}
+.od-doc{background:#f4f1ea;color:#1d232b;border-radius:10px;padding:14px;font-size:13px;line-height:1.5;max-height:42vh;overflow:auto;
+  box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.od-doc-head{border-bottom:1px solid #d9d3c6;padding-bottom:8px;margin-bottom:10px;font-size:12px}
+.od-doc-head span{display:inline-block;width:58px;color:#6b6456}
+.od-doc-body{white-space:pre-wrap}
+.od-doc-notice .od-doc-body::first-line{font-weight:800;letter-spacing:.3px}
+.od-call{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:6px}
+.od-call-who{font-weight:700;font-size:16px}
+.od-call-sub{color:var(--t2);font-size:12.5px}
+.od-call-state{font-size:13px;color:var(--ok)}
+.od-call-state span{display:block;color:var(--t3);font-size:11.5px}
+.od-wave{display:flex;gap:4px;align-items:center;height:34px;margin:6px 0}
+.od-wave i{width:5px;height:6px;border-radius:3px;background:var(--t3)}
+.od-wave-on i{background:var(--ok);animation:od-wave .9s ease-in-out infinite}
+@keyframes od-wave{0%,100%{height:6px}50%{height:30px}}
+.od-script{text-align:left;font-size:12.5px;color:var(--t2);background:var(--bg);border-radius:10px;padding:8px 12px;align-self:stretch}
+.od-script p{margin:4px 0}
+.od-script b{color:var(--t1)}
+.od-note{font-size:11.5px;color:var(--t3);text-align:center}
+
+/* Question */
+.od-q{margin-top:12px;position:relative}
+.od-q-lock{font-size:11.5px;color:var(--warn);margin-bottom:6px}
+.od-q-t{font-weight:600;font-size:15px;margin-bottom:10px}
+.od-q-k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-bottom:4px}
+.od-pre{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.od-pre .od-q-t{font-size:13.5px;margin-bottom:6px}
+.od-pre-o{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;font-size:12px;color:var(--t2)}
+.od-pre-o b{color:var(--t3);margin-right:3px}
+.od-opts{display:flex;flex-direction:column;gap:7px}
+.od-opt{display:flex;gap:10px;align-items:center;text-align:left;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:11px 12px;min-height:46px}
+.od-opt:disabled{opacity:1}
+.od-q-lock~.od-opts .od-opt{opacity:.55}
+.od-opt-l{width:24px;height:24px;border-radius:7px;background:var(--s3);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--t2);flex:none}
+.od-opt-ok{border-color:var(--ok);background:rgba(53,192,122,.12)}
+.od-opt-ok .od-opt-l{background:var(--ok);color:#06210f}
+.od-opt-ko{border-color:var(--ko);background:rgba(240,97,109,.12)}
+.od-opt-ko .od-opt-l{background:var(--ko);color:#2a0609}
+.od-opt-dim{opacity:.5!important}
+.od-fb{margin-top:10px;border-radius:12px;padding:12px;font-size:13px;display:flex;flex-direction:column;gap:10px;color:var(--t2)}
+.od-fb b{color:var(--t1)}
+.od-fb-ok{background:rgba(53,192,122,.1);border:1px solid rgba(53,192,122,.35)}
+.od-fb-ko{background:rgba(240,97,109,.08);border:1px solid rgba(240,97,109,.3)}
+
+/* Fin de journée */
+.od-end{padding:34px 16px 20px;display:flex;flex-direction:column;gap:14px;text-align:center;
+  background:radial-gradient(120% 50% at 50% 0%,#241f33 0%,var(--bg) 70%);min-height:100vh}
+.od-end-time{font-size:13px;color:var(--t3);font-variant-numeric:tabular-nums}
+.od-end h2{margin:-8px 0 0;font-size:24px}
+.od-stars{font-size:34px;letter-spacing:6px;color:var(--s3)}
+.od-stars .on{color:var(--warn);text-shadow:0 0 14px rgba(242,169,59,.5)}
+.od-review{display:flex;gap:10px;text-align:left;background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:12px}
+.od-review p{margin:0;font-size:13.5px}
+.od-end-nums{display:flex;gap:8px}
+.od-end-nums div{flex:1;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column}
+.od-end-nums b{font-size:20px}
+.od-end-nums span{font-size:11.5px;color:var(--t2)}
+.od-end-rows{display:flex;flex-direction:column;gap:6px;text-align:left}
+.od-end-row{display:flex;align-items:center;gap:10px;font-size:13px}
+.od-end-row .od-ico{width:26px;height:26px;font-size:12px}
+.od-end-s{flex:1;min-width:0}
+.od-st-missed .od-chip,.od-st-left-on-desk .od-chip,.od-st-never-came .od-chip{background:rgba(240,97,109,.14);color:var(--ko)}
+.od-st-late .od-chip{background:rgba(242,169,59,.14);color:var(--warn)}
+.od-badge-end{text-align:left;transition:border-color .4s,box-shadow .4s}
+.od-promoted{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 0 30px rgba(76,141,255,.3)}
+.od-promo{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;animation:od-drop .5s ease-out}
+.od-promo-t{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--acc2);font-weight:700}
+.od-promo-u{color:var(--t2);font-size:12px;margin-top:4px}
+
+/* Toast */
+.od-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:8;background:var(--s3);border:1px solid var(--line);
+  border-radius:999px;padding:9px 16px;font-size:12.5px;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:0 8px 24px rgba(0,0,0,.45);animation:od-up .25s ease-out}
+@keyframes od-up{from{transform:translate(-50%,12px);opacity:0}}
+
+@media (prefers-reduced-motion:reduce){.od *{animation:none!important;transition:none!important}}
+
+/* Monde voyage : la météo dans la barre du haut (inconnue tant que le bulletin n'est pas traité). */
+.od-wx{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:rgba(76,141,255,.14);color:var(--acc2);white-space:nowrap}
+.od-wx-unk{background:var(--s3);color:var(--t3)}
+.od-wx-line{border-color:rgba(76,141,255,.35)}
