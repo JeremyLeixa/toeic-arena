@@ -72,6 +72,11 @@ function walk(dir, out) {
 }
 for (const file of walk(path.join(root, 'src'), [])) {
   const src = fs.readFileSync(file, 'utf8');
+  // 4. Aucun gestionnaire on* dans du HTML écrit en chaîne (export du grimoire : sa fenêtre
+  //    about:blank hérite de la CSP, un onclick="…" y est bloqué en silence). Le JSX écrit
+  //    onClick={…}, jamais on<minuscules>= suivi d'un guillemet.
+  const handler = src.match(/\son[a-z]+=(\\"|\\'|')/);
+  if (handler) fail.push(path.relative(root, file).replace(/\\/g, '/') + ' : gestionnaire inline dans une chaîne HTML (' + handler[0].trim() + '…), à câbler par addEventListener');
   const re = /dangerouslySetInnerHTML=\{\{__html:\s*([^}]+?)\s*\}\}/g;
   let m;
   while ((m = re.exec(src))) {
