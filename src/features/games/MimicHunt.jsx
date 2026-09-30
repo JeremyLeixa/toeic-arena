@@ -30,95 +30,7 @@ import { mimicClipUrl } from "../../lib/listeningVoices.js";
 import { playAudioFile, resumeAudioSession, stopCurrentListenAudio, stopListenAudio } from "../../lib/audio.js";
 import { playBGM, stopBGM, playChestLand, playCorrect, playWrong } from "../../sounds.js";
 import { useEffect, useRef, useState } from "react";
-
-// Tout en jetons : suit le skin, la fête et le mode clair. Patron des CSS locaux
-// (DTL_CSS de ModalCouncil, SBD_CSS de SentenceBuilder) : le global vit dans styles/appCss.js.
-var MH_CSS=`
-.mh-intro{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:56px 22px 110px}
-.mh-intro-back{position:absolute;top:10px;left:16px;margin-bottom:0}
-.mh-hero{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:22px;color:var(--cyan)}
-.mh-hero h1{font-size:32px;font-weight:900;margin:12px 0 6px;color:var(--t1)}
-.mh-hero p{margin:0;font-size:15px;color:var(--t2)}
-.mh-def{padding:16px 18px!important;margin-bottom:12px}
-.mh-def-t{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--t1);margin-bottom:6px}
-.mh-def p{margin:0;font-size:14px;line-height:1.6;color:var(--t2)}
-.mh-def b{color:var(--t1)}
-.mh-tier{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 24px 110px;text-align:center}
-.mh-roman{font-size:68px;font-weight:900;line-height:1;color:var(--cyan)}
-.mh-tier-name{font-size:26px;font-weight:900;color:var(--t1);margin:8px 0 4px}
-.mh-tier-lead{font-size:16px;color:var(--t2);margin:0 0 22px}
-.mh-ex{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px!important;margin-bottom:18px;font-size:17px;color:var(--t1)}
-.mh-tip{font-size:14px;line-height:1.6;color:var(--t2);margin:0 0 26px}
-.mh{padding:8px 16px 110px;min-height:100vh;display:flex;flex-direction:column}
-.mh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
-.mh-tally{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;color:var(--t2)}
-.mh-tally>span{display:inline-flex;align-items:center;gap:4px}
-.mh-ok{color:var(--green)}
-.mh-chip{margin:12px 0 8px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cyan)}
-.mh-src{padding:16px 16px 14px!important;margin-bottom:12px}
-.mh-src-ctx{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);margin-bottom:6px}
-.mh-src-text{margin:0;font-size:17px;line-height:1.7;color:var(--t1)}
-.mh-spk{font-weight:700;color:var(--cyan);margin-right:6px}
-.mh-key{margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);font-size:12px;line-height:1.5;color:var(--t2)}
-.mh-key .g{color:var(--green);font-weight:700}
-.mh-key .r{color:var(--red);font-weight:700}
-.mh-q{font-size:15px;font-weight:700;color:var(--t1);margin:2px 2px 10px}
-.mh-q-small{font-size:13px;font-weight:600;color:var(--t2);margin-top:-4px}
-.mh-verdict{font-size:18px;font-weight:900;margin:2px 2px 6px}
-.mh-verdict.ok{color:var(--green)}
-.mh-verdict.bit{color:var(--red)}
-.mh-verdict.no{color:var(--orange)}
-.mh-mk{color:inherit;background-color:transparent;text-decoration-line:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-skip-ink:none}
-.mh-mk-bridge{text-decoration-style:solid;text-decoration-color:var(--green)}
-.mh-mk-copy{text-decoration-style:dotted;text-decoration-color:var(--red)}
-.mh-mk-echo{text-decoration-style:dashed;text-decoration-color:var(--t3)}
-.mh-opts{display:flex;flex-direction:column;gap:9px}
-.mh-opt{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:56px;text-align:left;padding:11px 12px;border-radius:14px;border:1.5px solid var(--bdr);background-color:var(--bg2);color:var(--t1);font:500 15px/1.4 'DM Sans',sans-serif;cursor:pointer;transition:border-color .15s,background-color .15s,opacity .2s,transform .12s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.mh-opt:active{transform:scale(.985)}
-.mh-let{width:28px;height:28px;border-radius:50%;border:2px solid var(--t3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--t2)}
-.mh-opt-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
-.mh-tags{display:flex;flex-wrap:wrap;gap:6px}
-.mh-tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
-.mh-tag.bad{color:var(--red)}
-.mh-opt.is-correct{border-color:var(--green);background-color:color-mix(in srgb,var(--green) 10%,var(--bg2))}
-.mh-opt.is-correct .mh-let{background:var(--green);border-color:var(--green);color:var(--bg2)}
-.mh-opt.is-wrong{border-color:var(--red);background-color:color-mix(in srgb,var(--red) 9%,var(--bg2))}
-.mh-opt.is-wrong .mh-let{background:var(--red);border-color:var(--red);color:var(--bg2)}
-.mh-opt.is-focus{box-shadow:0 0 0 1.5px var(--cyan)}
-.mh-face{display:flex;flex-shrink:0;color:var(--red);animation:mhPop .5s cubic-bezier(.3,1.7,.5,1) both}
-.mh-face.chomp{animation:mhPop .45s cubic-bezier(.3,1.7,.5,1) both,mhChomp .42s .45s ease-in-out 2}
-.mh-hint{margin:10px 2px 0;font-size:12px;color:var(--t2);text-align:center}
-.mh-why{margin-top:14px;padding:16px!important}
-.mh-why h4{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cyan)}
-.mh-pairs{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
-.mh-pair{font-size:14px;color:var(--t1)}
-.mh-pair .was{color:var(--t2)}
-.mh-arrow{color:var(--green);font-weight:800;margin:0 6px}
-.mh-toggle{display:block;background:none;border:none;padding:0;margin:0 0 10px;color:var(--cyan);font:700 13px 'DM Sans',sans-serif;cursor:pointer;min-height:32px}
-.mh-note{font-size:12px;color:var(--t2)}
-.mh-exp{margin:0;font-size:14px;line-height:1.6;color:var(--t2)}
-.mh-trap{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);font-size:13.5px;line-height:1.55;color:var(--t2)}
-.mh-doors{display:flex;flex-direction:column;gap:10px}
-.mh-door{display:flex;gap:12px;align-items:center;width:100%;padding:14px!important;margin:0;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--t1);border:1px solid var(--bdr)}
-.mh-door-i{width:44px;height:44px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--cyan);background:linear-gradient(135deg,rgba(var(--cx),.22),transparent);color:var(--cyan)}
-.mh-door-t{display:block;font-size:16px;font-weight:800;color:var(--t1)}
-.mh-door-d{display:block;font-size:13px;line-height:1.45;color:var(--t2);margin-top:2px}
-.mh-door-s{display:inline-block;margin-top:5px;font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--cyan)}
-.mh-src-ls{padding:14px 16px 16px!important}
-.mh-src-ls .ss-play{width:104px;height:104px}
-.mh-src-ls .ss-playlbl{font-size:13px}
-.mh-opt.is-locked{opacity:.5;cursor:default}
-.mh-opt.is-locked:active{transform:none}
-.mh-again{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 12px;min-height:32px;border-radius:999px;border:1px solid var(--bdr);background:none;color:var(--cyan);font:700 12px 'DM Sans',sans-serif;cursor:pointer}
-.mh-again[disabled]{opacity:.6;cursor:default}
-.mh-cta{margin-top:18px}
-.mh-cta .btn1{width:100%}
-.mh-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:16px!important;text-align:center}
-.mh-stat{font-size:26px;font-weight:900}
-.mh-stat-l{font-size:11px;color:var(--t2);margin-top:2px}
-@keyframes mhPop{0%{transform:scale(.2) rotate(-25deg);opacity:0}100%{transform:none;opacity:1}}
-@keyframes mhChomp{0%,100%{transform:scale(1)}45%{transform:scale(1.3) rotate(-10deg)}}
-`;
+import "./MimicHunt.css";
 
 function sound(fn){try{fn();}catch(e){console.warn("[mimic] sound:",e&&e.message);}}
 function isMimic(item,i){return !!(item.mimics&&item.mimics[i]);}
@@ -271,7 +183,7 @@ export function MimicHunt(p){
   if(phase==="done"){
     var nOk=results.filter(function(r){return r.ok;}).length;
     var nBit=results.filter(function(r){return r.bitten;}).length;
-    return(<><style>{MH_CSS}</style>
+    return(<>
       <SessionResult session={p.session} sid={sidRef.current} name={listenMode?"Mimic Hunt · Listen":"Mimic Hunt"} mistakes={mistakesRef.current}
         onContinue={function(){p.closeSession();p.back();}} onReplay={function(){replayMode=mode;p.replaySession();}}>
         <div className="crd mh-stats">
@@ -282,7 +194,7 @@ export function MimicHunt(p){
   }
 
   // ── INTRO ──
-  if(phase==="intro")return(<><style>{MH_CSS}</style>
+  if(phase==="intro")return(<>
     <div className="enter mh-intro">
       <button className="back-btn mh-intro-back" onClick={p.back}>{"← Back"}</button>
       <div className="mh-hero">
@@ -313,7 +225,7 @@ export function MimicHunt(p){
     </div></>);
 
   // ── PALIER ──
-  if(phase==="tier")return(<><style>{MH_CSS}</style>
+  if(phase==="tier")return(<>
     <div className="enter mh-tier">
       <div className="mh-roman out">{tier.roman}</div>
       <div className="mh-tier-name out">{tier.name}</div>
@@ -342,7 +254,6 @@ export function MimicHunt(p){
   var discHint=!heard?"Tap to listen":left<=0?"No more replays":"Tap to hear it once more";
 
   return(<>
-    <style>{MH_CSS}</style>
     <div className="mh">
       <div className="mh-top">
         <button className="back-btn" onClick={p.back}>{"← Back"}</button>

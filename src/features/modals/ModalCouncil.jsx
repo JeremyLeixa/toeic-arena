@@ -13,6 +13,7 @@ import { shuffle } from "../../lib/util.js";
 import { tone } from "../../lib/tone.js";
 import { playCorrect, playWrong, playBGM, stopBGM } from "../../sounds.js";
 import { useState, useRef, useEffect } from "react";
+import "./ModalCouncil.css";
 
 // ═══════════════════════════════════════════════════════════
 // MODAL COUNCIL — global module mirroring Grammar Gauntlet
@@ -28,35 +29,7 @@ import { useState, useRef, useEffect } from "react";
 // Tap a situation (left), then tap a modal (right) → pairs them with a
 // numbered badge. Auto-checks when 5 pairs are placed; reveals correct
 // mapping; manual "Next board" cycles to the next of 3.
-// ─── DRAW-THE-LINE styles (injected once for ModalMatch) ───
-// Anchors, SVG paths, gutter decor, animations. Class prefix .dtl- (draw-the-line)
-// to avoid collisions with the rest of App.jsx.
-var DTL_CSS = `
-@keyframes dtl-drawon { from{stroke-dashoffset:var(--len)} to{stroke-dashoffset:0} }
-@keyframes dtl-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 75%{transform:translateX(3px)} }
-.dtl-board{position:relative}
-.dtl-board::before{content:"";position:absolute;top:8px;bottom:8px;left:50%;width:0;border-left:1.5px dashed var(--bdr);transform:translateX(-1px);z-index:1;opacity:.7;pointer-events:none}
-.dtl-board::after{content:"";position:absolute;top:0;bottom:0;left:calc(50% - 40px);width:80px;background:linear-gradient(90deg,transparent,rgba(var(--cx),.025) 20%,rgba(var(--cx),.04) 50%,rgba(var(--cx),.025) 80%,transparent);z-index:0;pointer-events:none;border-radius:4px}
-@media (max-width:480px){.dtl-board::after{left:calc(50% - 32px);width:64px}}
-.dtl-anchor{position:absolute;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--bg3);border:2px solid var(--bdr);cursor:grab;touch-action:none;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s,transform .15s,box-shadow .15s;z-index:3}
-.dtl-anchor::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--t3);transition:background .15s,transform .15s}
-.dtl-card-s .dtl-anchor{right:-11px}
-.dtl-card-m .dtl-anchor{left:-11px}
-.dtl-anchor.busy{border-color:var(--cyan);background:rgba(var(--cx),.18)}
-.dtl-anchor.busy::after{background:var(--cyan);transform:scale(1.4)}
-.dtl-anchor.dragging{cursor:grabbing;transform:translateY(-50%) scale(1.25);box-shadow:0 0 0 4px rgba(var(--cx),.20);border-color:var(--cyan)}
-.dtl-anchor.snap{transform:translateY(-50%) scale(1.35);box-shadow:0 0 0 6px rgba(var(--cx),.28);border-color:var(--cyan)}
-.dtl-anchor.ok{border-color:#22c55e;background:rgba(34,197,94,.18)}
-.dtl-anchor.ok::after{background:#22c55e}
-.dtl-anchor.bad{border-color:#ef4444;background:rgba(239,68,68,.18)}
-.dtl-anchor.bad::after{background:#ef4444}
-.dtl-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;overflow:visible}
-.dtl-lines path.dtl-stroke{fill:none;stroke-width:3;stroke-linecap:round;pointer-events:none;transition:opacity .2s}
-.dtl-lines path.dtl-hit{fill:none;stroke-width:16;stroke:transparent;cursor:pointer;pointer-events:stroke}
-.dtl-lines path.dtl-draft{stroke-dasharray:6 5;opacity:.7}
-.dtl-lines path.dtl-justlocked{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:dtl-drawon .28s ease-out forwards}
-.dtl-lines path.dtl-bad{animation:dtl-shake .25s ease-in-out 2}
-`;
+// Draw-the-line styles (anchors, SVG paths, gutter decor): ModalCouncil.css, prefix .dtl-.
 export function ModalMatch(p){
   var BOARDS_PER_SESSION=3;
   var PAIRS_PER_BOARD=5;
@@ -273,7 +246,6 @@ export function ModalMatch(p){
 
   var TOTAL_PAIRS=BOARDS_PER_SESSION*PAIRS_PER_BOARD;
   return(<>
-    <style>{DTL_CSS}</style>
     <SessionTop n={TOTAL_PAIRS} cur={boardIdx*PAIRS_PER_BOARD+Math.min(pairs.length,PAIRS_PER_BOARD-1)}
       groups={[PAIRS_PER_BOARD,PAIRS_PER_BOARD,PAIRS_PER_BOARD]} results={track.results} streak={track.streak} onQuit={p.back}
       sub={"Board "+(boardIdx+1)+"/"+BOARDS_PER_SESSION+(phase==="play"?" · "+pairs.length+"/"+PAIRS_PER_BOARD+" paired":"")}/>

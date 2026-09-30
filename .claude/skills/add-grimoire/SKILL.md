@@ -110,7 +110,7 @@ Vite/Rolldown will throw a parse error.
 
 The `.grim-page-num` element MUST live INSIDE `.grim-page-content` with `margin-top:auto` (flex column with `min-height:100%`). Do NOT use `position:absolute; bottom:X` — it sticks to viewport, not to content, and breaks on shorter chapters.
 
-This is in `src/styles/appCss.js` (the `.grim-*` rules) — only relevant if extending the GrimoireReader styling (`src/components/GrimoireReader.jsx`). Stay away unless you have a specific reason.
+This is in `src/styles/app.css` (the `.grim-*` rules) — only relevant if extending the GrimoireReader styling (`src/components/GrimoireReader.jsx`). Stay away unless you have a specific reason.
 
 ## Wiring into the module
 

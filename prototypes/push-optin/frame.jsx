@@ -5,7 +5,7 @@ import "../mentor-memory/clock.js";
 import { StrictMode, useLayoutEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { Tabs } from "../../src/components/Tabs.jsx";
 import { Home } from "../../src/features/home/Home.jsx";
 import { SessionResult } from "../../src/components/SessionResult.jsx";

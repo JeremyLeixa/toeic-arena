@@ -303,8 +303,9 @@ ok(/ref: \{ k: t\.mod \+ ":" \+ t\.itemId \+ ":" \+ q\.qi, part: PART\[t\.mod\] 
 ok(/resumeAudioSession\(\); return stopListenAudio;/.test(SCREEN), 'écran : drapeau d\'abandon audio (resumeAudioSession / stopListenAudio)');
 ok(/sidRef\.current = p\.done\(sc, answered, dayXp\(/.test(SCREEN) && /modId: W\.modId, world: W\.id, parts: parts/.test(SCREEN), 'écran : p.done à la fin de journée, module du monde et parts');
 ok(/onSheet=\{function \(on\) \{ pausedRef\.current = on; \}\}/.test(SCREEN) && /if \(pausedRef\.current\) return;/.test(SCREEN), 'écran : la feuille « Leave » gèle l\'horloge');
-[['WorldDay', SCREEN, 'NF_CSS'], ['Waygates', HUB, 'WG_CSS']].forEach(function (x) {
-  const css = (x[1].match(new RegExp('var ' + x[2] + ' = `([\\s\\S]*?)`;')) || ['', ''])[1];
+// Leur CSS vit en fichier depuis le 2026-09-30 (CSP style-src 'self'), commentaires ôtés avant de chercher.
+[['WorldDay', 'src/features/waygates/WorldDay.css'], ['Waygates', 'src/features/waygates/Waygates.css']].forEach(function (x) {
+  const css = read(x[1]).replace(/\/\*[\s\S]*?\*\//g, '');
   ok(css.length > 100, x[0] + ' : CSS privé trouvé');
   ok(!/#[0-9a-fA-F]{3,8}\b/.test(css), x[0] + ' : aucune couleur en dur dans le CSS (skins, fêtes, mode clair : jetons du thème seulement)');
 });

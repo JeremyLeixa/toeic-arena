@@ -71,7 +71,7 @@ Ce que la suite protège, et pourquoi :
   tendances hebdomadaires seulement au-dessus de 10 questions par semaine, et la **journée figée** (`u.mission` : mission sur la quête 1, série gardée, +25 % sur l'enjeu figé, re-tirage).
 - **`check_festivals`** — fenêtres des thèmes saisonniers (`lib/festivals.js`) : bornes
   incluses en heure locale, Pâques, déc → jan, disjonction jour par jour, opt-out > forçage ;
-  un paquet `.fest-<id>` + `.light.fest-<id>` par fête dans `appCss.js`, animations existantes,
+  un paquet `.fest-<id>` + `.light.fest-<id>` par fête dans `app.css`, animations existantes,
   `themeColor` = `--bg` du CSS. Une fenêtre fausse change le thème de tous les élèves.
 - **`check_skins_light`** — les 9 skins qui forcent un fond sombre sur `.crd` (règle de tokens
   `.skin-X:not(.light),.light.skin-X .crd`, présence dans `.light:where(…) .crd`, tout token de

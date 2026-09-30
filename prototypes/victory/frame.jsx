@@ -3,7 +3,7 @@
 //   rm=1 (mouvement réduit)  sound=1 (bouton de départ : Web Audio exige un geste)  solo=1 (bouton Replay)
 import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { createChestFx } from "../../src/components/particles.js";
 import { setSoundEnabled, playLootTick, playXP, playLevelUp, playJingleLeague, playChestLand, playChestKnock, playLootCollect } from "../../src/sounds.js";
 import VX from "./victory.css?raw";

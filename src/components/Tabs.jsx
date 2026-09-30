@@ -7,7 +7,7 @@ import { GAME_ICON_PATHS } from "../data/avatarIcons.js";
 export function Tabs(p){var tabs=[{id:"home",l:"Home",i:"castle"},{id:"mentor",l:"Mentor",i:"wizard-staff"},{id:"train",l:"Train",i:"bullseye"},{id:"games",l:"Games",i:"coliseum"},{id:"league",l:"League",i:"laurel-crown"},{id:"profile",l:"Profile",i:"visored-helm"}];
 var blocked=p.blocked||[];
 // Onglet inactif : --t1 à l'opacité --tab-idle (0,55 en sombre = 4,8:1 ; 0,70 en clair, où 0,55 tombait à
-// 3,7:1 sur --bg3 : réglé par `.light .tab-bar` dans appCss.js, 5,9:1 au pire).
+// 3,7:1 sur --bg3 : réglé par `.light .tab-bar` dans app.css, 5,9:1 au pire).
 // 6 tabs : tighter container padding + per-button padding so "Profile" doesn't truncate
 // on narrow screens (≤375px). Icon stays 24px, label drops 11→10px.
 return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(var(--bg3-rgb),0) 0%,rgba(var(--bg3-rgb),.8) 15%,var(--bg3) 100%)",borderTop:"1px solid rgba(var(--cx),.15)",padding:"8px 4px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-between"}}>

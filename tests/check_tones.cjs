@@ -1,4 +1,4 @@
-/* Couleurs en dur en mode clair : lib/tone.js + règle .light{--tone-…} d'appCss.js.
+/* Couleurs en dur en mode clair : lib/tone.js + règle .light{--tone-…} d'app.css.
  *
  * POURQUOI CE TEST EXISTE. Beaucoup de couleurs du JSX et des données sont des hex clairs pensés
  * pour le fond sombre : ligues (data/leagues.js), titres et raretés (data/chests.js), mais aussi
@@ -48,7 +48,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const { tone } = require(path.join(ROOT, 'src', 'lib', 'tone.js'));
 const { LEAGUES } = require(path.join(ROOT, 'src', 'data', 'leagues.js'));
-const { CSS } = require(path.join(ROOT, 'src', 'styles', 'appCss.js'));
+const CSS = fs.readFileSync(path.join(ROOT, 'src', 'styles', 'app.css'), 'utf8').replace(/\r\n/g, '\n');
 
 let fails = 0, checks = 0;
 const fail = (m) => { fails++; console.log('  FAIL ' + m); };

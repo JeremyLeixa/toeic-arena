@@ -1,7 +1,7 @@
 // HUD de session (2026-09-17, proto prototypes/sessions/, variante E choisie par Jérémy) : barre du
 // haut (retour avec confirmation, fil d'encre, compteur ou minuteur, « N in a row »), bannière de combo,
 // carte de réponse (bandeau verdict + « Why ») et bouton Next fixé en bas ; disque d'écoute pour le
-// Listening. Styles .ss-* dans styles/appCss.js.
+// Listening. Styles .ss-* dans styles/app.css.
 //
 // ⚠️ La barre et le pied sont en position:fixed : ne JAMAIS les rendre dans un .enter ou un .sk (ils
 // animent transform, et un fixed suit alors le bloc au lieu de l'écran). Rendre le HUD à côté du

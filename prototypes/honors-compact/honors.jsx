@@ -6,7 +6,7 @@
 //             | one (un trophée, le cas courant : doit rester identique dans les deux variantes).
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { GIcon } from "../../src/components/icons.jsx";
 
 var SC = {

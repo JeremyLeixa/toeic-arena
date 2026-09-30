@@ -5,7 +5,7 @@
 // comme settleSession dans App() : gateSteps puis settleXp de lib/xp.js.
 import { StrictMode, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { gateSteps, settleXp } from "../../src/lib/xp.js";
 import { getLeague } from "../../src/lib/league.js";
 import { fresh } from "../../src/lib/profileSchema.js";

@@ -5,7 +5,7 @@
 //   mode=dark|light  skin=<id>  rm=1
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { Tabs } from "../../src/components/Tabs.jsx";
 import { Bar } from "../../src/components/Bar.jsx";
 import { GIcon } from "../../src/components/icons.jsx";

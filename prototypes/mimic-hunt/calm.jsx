@@ -8,7 +8,7 @@
 //   ?id=mh18  ?case=bit|ok|miss  ?mode=light
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { MIMIC_ITEMS, MIMIC_TIERS } from "../../src/data/mimicHunt.js";
 import { GIcon } from "../../src/components/icons.jsx";
 import MOD from "../../src/features/games/MimicHunt.jsx?raw";

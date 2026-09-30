@@ -1,4 +1,4 @@
-/* Skins à cartes sombres en mode clair : le mécanisme « cartes-nuit » de styles/appCss.js.
+/* Skins à cartes sombres en mode clair : le mécanisme « cartes-nuit » de styles/app.css.
  *
  * POURQUOI CE TEST EXISTE. 9 skins forcent un fond sombre sur .crd (!important). En clair, la
  * page suit .light et la palette sombre du skin ne doit vivre QUE dans ses cartes. Rien ne casse
@@ -22,10 +22,11 @@
  * Usage : node tests/check_skins_light.cjs
  */
 'use strict';
+const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const { CSS } = require(path.join(ROOT, 'src', 'styles', 'appCss.js'));
+const CSS = fs.readFileSync(path.join(ROOT, 'src', 'styles', 'app.css'), 'utf8').replace(/\r\n/g, '\n');
 
 let fails = 0, checks = 0;
 const fail = (m) => { fails++; console.log('  FAIL ' + m); };
@@ -54,7 +55,7 @@ const tokenRuleLegacy = (id) => lines.find((l) => l.startsWith('.skin-' + id + '
 const tokenRuleNight = (id) => lines.find((l) => l.startsWith('.skin-' + id + ':not(.light),.light.skin-' + id + ' .crd{'));
 const setsBg2 = (id) => { const l = tokenRuleLegacy(id) || tokenRuleNight(id); return !!l && tokensOf(bodyOf(l)).has('--bg2'); };
 const night = skinIds.filter((id) => forcesCardBg(id) || setsBg2(id));
-check(night.length > 0, 'aucun skin à cartes sombres trouvé : le test ne lit plus appCss.js correctement');
+check(night.length > 0, 'aucun skin à cartes sombres trouvé : le test ne lit plus app.css correctement');
 
 // ── Les règles partagées du bloc « cartes-nuit » ──
 // Toutes les règles « .light{…} », pas seulement la première : les variantes claires des couleurs

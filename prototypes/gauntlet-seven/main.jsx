@@ -3,7 +3,7 @@
 // une question « False friend » dans la Taverne, avant et après la réponse. Rien ici n'est câblé.
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { GAME_ICON_PATHS, GAME_ICON_VIEWBOX } from "../../src/data/avatarIcons.js";
 import { AnswerCard } from "../../src/components/SessionHud.jsx";
 import { FALSE_FRIENDS } from "../../src/data/miniGames.js";

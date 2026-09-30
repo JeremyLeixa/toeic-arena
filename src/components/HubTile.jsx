@@ -3,7 +3,7 @@
 // une barre vers le coffre de maîtrise, le coffre Champion à droite (terne avec son %, qui brille
 // une fois gagné) et une étiquette « ½ XP / Low XP / No XP » seulement quand la prochaine partie
 // rapporte moins. L'état vient de lib/hubStatus.js (pur, testé) ; les styles de .hub-* dans
-// styles/appCss.js, en jetons (suivent le skin, la fête et le mode clair).
+// styles/app.css, en jetons (suivent le skin, la fête et le mode clair).
 // Depuis le 2026-09-19, le coffre ne se gagne plus une seule fois : échelons de maîtrise (variante B).
 import { GIcon, ResultIcon } from "./icons.jsx";
 import { TreasureChestSvg } from "./avatar.jsx";

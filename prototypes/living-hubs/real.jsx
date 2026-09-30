@@ -5,7 +5,7 @@
 //   ev=flash (Flash Hour actif : tout à plein tarif)  rm=1
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { fresh } from "../../src/lib/profileSchema.js";
 import { Tabs } from "../../src/components/Tabs.jsx";
 import { Train } from "../../src/features/home/Train.jsx";

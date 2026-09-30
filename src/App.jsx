@@ -36,7 +36,7 @@ import { isMilestone, pickNarrator, spendsNextEntry } from "./lib/interruptions.
 import { clearDashSession } from "./lib/teacherSession.js";
 import { getTriggerLabel } from "./lib/chestLabels.js";
 import { appliedFestivalId, setFestivalsEnabled, applyThemeColor } from "./lib/festivals.js";
-import { CSS } from "./styles/appCss.js";
+import "./styles/app.css";
 import { LoadingMark, LoadBoundary } from "./components/LoadingMark.jsx";
 
 
@@ -1754,7 +1754,7 @@ function sv(d){
     <span style={{fontSize:13,fontWeight:600,color:"var(--red)"}}>{"Session expired — your progress isn't being saved."}</span>
     <button onClick={function(){sSP(null);sT("home");sU(null);}} style={{background:"transparent",border:"1px solid rgba(255,71,87,.45)",borderRadius:10,padding:"7px 14px",color:"var(--red)",fontFamily:"'Cinzel','Outfit',serif",fontWeight:600,fontSize:12,cursor:"pointer"}}>{"Log in again"}</button>
   </div>;
-  function pg(content){return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&!lastSession&&!examCeremony&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={(sp||"root")+":"+runKey}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked} badge={mentorBadge}/>{premiumOverlay}{examCeremony&&<ExamCeremonies key={examCeremony.id} items={examCeremony.items} onDone={function(){setExamCeremony(null);}}/>}</div>);}
+  function pg(content){return(<div className={lc}>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}{!chestModal&&!lastSession&&!examCeremony&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}<div className="pg-wrap"><LoadBoundary key={(sp||"root")+":"+runKey}><Suspense fallback={<LoadingMark inline/>}>{content}</Suspense></LoadBoundary></div><Tabs cur={tab} go={tabGo} blocked={expBlocked} badge={mentorBadge}/>{premiumOverlay}{examCeremony&&<ExamCeremonies key={examCeremony.id} items={examCeremony.items} onDone={function(){setExamCeremony(null);}}/>}</div>);}
   // ↑ Frontière des écrans chargés à la demande (Phase 5) : le fallback et le filet d'erreur
   // n'enveloppent QUE le contenu de la sous-page — toasts, Narrator, Tabs et overlay premium
   // sont frères, jamais cachés ni remontés. La key sur la route remet le filet à zéro quand
@@ -1765,17 +1765,17 @@ function sv(d){
   // Reset password : bypass complet du flow normal si l'URL a ?reset=<token>.
   // Doit être AVANT loading/teacher/onboard parce que le user peut être complètement
   // déconnecté quand il clique le lien depuis son mail.
-  if(resetToken)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><ResetPasswordView token={resetToken}/></div>);
+  if(resetToken)return(<div className={lc+" onboard-shell"}><ResetPasswordView token={resetToken}/></div>);
   // Écran de chargement : le bloc vit dans components/LoadingMark.jsx, qui sert aussi de
   // fallback aux écrans chargés à la demande (même rendu, plein écran ou sous-page).
-  if(ld)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadingMark/></div>);
+  if(ld)return(<div className={lc+" onboard-shell"}><LoadingMark/></div>);
   if(teacherMode)return pg(<TeacherDashLazy back={function(){setTeacher(false);}}/>);
   // Le fallback plein écran est pixel-identique à l'écran `ld` : pour un nouvel élève, le
   // chargement dure simplement un peu plus (le temps du chunk Onboard, une fois par build).
-  if(!u)return(<div className={lc+" onboard-shell"}><style>{CSS}</style><LoadBoundary><Suspense fallback={<LoadingMark/>}><OnboardLazy go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail} reauth={authLost}/></Suspense></LoadBoundary></div>);
+  if(!u)return(<div className={lc+" onboard-shell"}><LoadBoundary><Suspense fallback={<LoadingMark/>}><OnboardLazy go={onboard} goTeacher={goTeacher} recover={recover} recoverByEmail={recoverByEmail} reauth={authLost}/></Suspense></LoadBoundary></div>);
 
   // ── Group access control ──
-  if(groupAccess&&groupAccess.status==="not_started")return(<div className={lc}><style>{CSS}</style>
+  if(groupAccess&&groupAccess.status==="not_started")return(<div className={lc}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",maxWidth:360}}>
         <div style={{fontSize:56,marginBottom:16}}>{"\uD83D\uDD12"}</div>
@@ -1788,7 +1788,7 @@ function sv(d){
   // If expired and on a blocked tab, force to league or profile
   if(isExpiredGroup&&(tab==="home"||tab==="train"||tab==="cards"||tab==="games")){sT("league");}
   // If expired, block module navigation
-  if(isExpiredGroup&&sp)return(<div className={lc}><style>{CSS}</style>
+  if(isExpiredGroup&&sp)return(<div className={lc}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",maxWidth:360}}>
         <div style={{fontSize:56,marginBottom:16}}>{"\u23F0"}</div>
@@ -1802,7 +1802,7 @@ function sv(d){
   var routed=renderRoute({activeEvents, bossDone, cardsDone, closeSession, dailyDone, drillDone, endlessDone, gameDone, gameSession, grantWeeklyChest, groupType, huntDone, lastSession, miniSession, mockDone, nav, pg, rateCard, replaySession, sSP, sSPA, sT, sealSession, setPremiumPrompt, settleSession, shopBuy, sp, spA, sv, trackModSession, u, worldDone});
   if(routed)return routed;
 
-  return(<div className={lc}><style>{CSS}</style>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}
+  return(<div className={lc}>{authBanner}{xpt&&<XpToast v={xpt}/>}{achToast&&<AchToast v={achToast}/>}{marksToast&&<MarksToast v={marksToast}/>}
     {!chestModal&&<NarratorOverlay moment={currentNarratorMoment} muted={u&&u.narrator&&u.narrator.muted} onClose={dismissNarratorMoment}/>}
     {showTip&&u&&<DailyTip u={u} close={function(){setShowTip(false);}}/>}
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>

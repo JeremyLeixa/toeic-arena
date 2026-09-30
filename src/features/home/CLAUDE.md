@@ -11,7 +11,7 @@ le **Daily Challenge en bloc à part** (jamais dans l'agenda), évènements et f
 reste là : surface d'opt-out), astuce repliée. Niveau/ligue en une ligne fine (garde « this week »). Bonus en
 une ligne `bonusLine` (les pastilles colorées ont disparu). **Quick Start supprimé** (doublon de Train). Seule
 animation : le pulse du coffre quand il est le bouton. Journée finie → « Today's path complete ». Mêmes props
-qu'avant, aucun état dans `App()`. Styles `.hm-*` dans `appCss.js`. Banc : `frame.html?v=A&sc=busy|typical|done|new`.
+qu'avant, aucun état dans `App()`. Styles `.hm-*` dans `app.css`. Banc : `frame.html?v=A&sc=busy|typical|done|new`.
 
 ### Hubs vivants (tuiles « Coffre », 2026-09-17)
 Proto `prototypes/living-hubs/`, choix de Jérémy **C « Coffre »**. Les listes de Train (Exercises,

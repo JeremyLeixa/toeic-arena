@@ -7,7 +7,7 @@
 // avec node tests/check_mimic_items.cjs prototypes/mimic-hunt/drafts/<lot>.js avant relecture.
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { MIMIC_ITEMS, MIMIC_TIERS } from "../../src/data/mimicHunt.js";
 
 var q = new URLSearchParams(location.search);

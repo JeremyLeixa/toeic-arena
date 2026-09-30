@@ -6,7 +6,7 @@
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createPortal } from "react-dom";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { fresh } from "../../src/lib/profileSchema.js";
 import { Home } from "../../src/features/home/Home.jsx";
 import { Train } from "../../src/features/home/Train.jsx";

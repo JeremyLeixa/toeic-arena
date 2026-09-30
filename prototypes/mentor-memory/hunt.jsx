@@ -7,7 +7,7 @@
 //   mods=1 (créatures des autres modules : Gauntlet, Clue, Audio Blitz, Mimic, Modal Council, Tavern, Traps, Phrasal Dojo)
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { gateSteps, settleXp } from "../../src/lib/xp.js";
 import { getLeague } from "../../src/lib/league.js";
 import { fresh } from "../../src/lib/profileSchema.js";

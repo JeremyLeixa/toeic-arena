@@ -4,7 +4,7 @@
 // Envoie ses preuves (français) au comparateur par postMessage.
 import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { Tabs } from "../../src/components/Tabs.jsx";
 import { TabsBadge } from "./mentorHub.jsx";
 import { buildPersona } from "./personas.js";

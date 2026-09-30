@@ -1,0 +1,10 @@
+/* Ex-<style> inline du TeacherDash, servi en fichier depuis le 2026-09-30 (CSP style-src 'self').
+   Chargé toute la session (chunk préchargé) : le fond blanc d'impression ne vise que la page du rapport. */
+@media print{
+.no-print{display:none!important}
+.weekly-report{padding:0!important}
+body:has(.weekly-report){background:#fff!important}
+.wr-card{page-break-inside:avoid}
+.wr-section{page-break-inside:avoid}}
+.weekly-report h1,.weekly-report h2,.weekly-report h3{font-family:'Cinzel','Outfit',serif;color:#1a1a1a}
+.weekly-report p,.weekly-report div,.weekly-report span{font-family:'DM Sans',Arial,sans-serif}

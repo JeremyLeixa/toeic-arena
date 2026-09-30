@@ -1,0 +1,26 @@
+/* Ex-WG_CSS de Waygates.jsx, servi en fichier depuis le 2026-09-30 : la CSP
+   (style-src 'self') bloque tout <style> inline. Importé par l'écran, donc chargé avec son chunk lazy
+   et gardé toute la session (preloadLazyScreens) : tout sélecteur reste préfixé. */
+.wg{position:relative;padding:56px 18px 40px;min-height:100vh}
+.wg-back{position:absolute;top:10px;left:16px;margin-bottom:0}
+.wg-hero{display:flex;flex-direction:column;align-items:center;text-align:center;margin:6px 0 20px;color:var(--cyan)}
+.wg-hero h1{font-size:30px;font-weight:900;margin:10px 0 6px;color:var(--t1)}
+.wg-hero p{margin:0;font-size:14px;line-height:1.55;color:var(--t2);max-width:320px}
+.wg-gate{display:flex;gap:14px;align-items:center;width:100%;text-align:left;padding:16px!important;margin-bottom:10px;cursor:pointer;font-family:inherit;color:var(--t1);border:1.5px solid var(--cyan)!important;background-image:linear-gradient(135deg,rgba(var(--cx),.18),transparent)}
+.wg-gate-b{flex:1;min-width:0}
+.wg-gate-n{font-size:17px;font-weight:800;color:var(--t1)}
+.wg-gate-d{font-size:13px;color:var(--t2);margin-top:2px;line-height:1.45}
+.wg-gate-m{font-size:12px;font-weight:700;color:var(--cyan);margin-top:6px}
+.wg-gate.sealed{cursor:default;border-color:var(--bdr)!important;background-image:none;opacity:.7}
+.wg-gate.sealed .wg-gate-n{color:var(--t2)}
+.wg.dive{animation:wg-dive .8s cubic-bezier(.7,0,.25,1) forwards;transform-origin:var(--wx) var(--wy);pointer-events:none}
+@keyframes wg-dive{to{transform:scale(2.6);filter:blur(5px);opacity:0}}
+.wg-fx{position:fixed;inset:0;z-index:300;pointer-events:none}
+.wg-fx i{position:absolute;left:var(--wx);top:var(--wy);width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%}
+.wg-fx .core{background:radial-gradient(circle,rgba(255,250,240,.98) 0,rgba(var(--cx),.95) 40%,var(--bg) 72%);animation:wg-core .8s cubic-bezier(.7,0,.25,1) forwards}
+.wg-fx .ring{border:2px solid rgba(var(--cx),.9);box-shadow:0 0 18px rgba(var(--cx),.8),inset 0 0 18px rgba(var(--cx),.6);animation:wg-ring .8s cubic-bezier(.3,0,.2,1) forwards}
+.wg-fx .ring:nth-child(2){animation-delay:.1s}
+.wg-fx .ring:nth-child(3){animation-delay:.2s}
+@keyframes wg-core{from{transform:scale(1)}to{transform:scale(var(--wk))}}
+@keyframes wg-ring{from{transform:scale(1);opacity:1}to{transform:scale(14);opacity:0}}
+@media (prefers-reduced-motion:reduce){.wg.dive,.wg-fx{animation:none!important;display:none}}

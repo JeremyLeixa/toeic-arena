@@ -5,7 +5,7 @@
 //              mode=dark|light  skin=<id>  fest=<id>  rm=1
 import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { Tabs } from "../../src/components/Tabs.jsx";
 import { SessionTop, ComboBanner, AnswerCard, NextBar, ListenDisc } from "../../src/components/SessionHud.jsx";
 import { useSessionTrack } from "../../src/components/useSessionTrack.js";

@@ -12,7 +12,7 @@
 // L'opt-out gagne TOUJOURS, forçage compris : `?fest=<id>` ne fait que lever la fenêtre de
 // dates. Sinon un « Turn off » cliqué pendant un test forcé ne ferait rien de visible.
 
-// themeColor = `--bg` des paquets `.fest-<id>` / `.light.fest-<id>` d'appCss.js (barre d'état du
+// themeColor = `--bg` des paquets `.fest-<id>` / `.light.fest-<id>` d'app.css (barre d'état du
 // navigateur, meta theme-color). Recopié ici faute de lire le CSS calculé ; le test vérifie l'égalité.
 export var FESTIVALS=[
   {id:"halloween",name:"Hallow's Eve",greeting:"Happy Halloween,",icon:"spider-web",from:"10-24",to:"11-02",themeColor:{dark:"#0a0612",light:"#f4eefa"}},

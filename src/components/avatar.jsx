@@ -109,7 +109,7 @@ export function AvatarMedal(p){
 // TREASURE CHEST SVG — un coffre par niveau (ouverture v3, 2026-09-16)
 // tier 0 Novice (bois clair, cordage) · 1 Warrior (acier bleui) · 2 Champion (bronze,
 // runes gravées) · 3 Legendary (obsidienne, or, gemme, runes vivantes).
-// Calques pilotés par l'animation de Chests.jsx (classes chx-* d'appCss.js) :
+// Calques pilotés par l'animation de Chests.jsx (classes chx-* d'app.css) :
 // chx-lid (couvercle), chx-lid-int (intérieur du couvercle ouvert), chx-mouth (lumière du
 // coffre ouvert), chx-seam (fuites de lumière, couleur --chx-tell), chx-lock (serrure).
 // Au repos, seuls corps et couvercle sont visibles : le même SVG sert au toast.

@@ -3,7 +3,7 @@
 //   v=A|B|C|D  screen=gv|games|reading  mode=dark|light  skin=<id>  profile=mix|new  rm=1
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { fresh } from "../../src/lib/profileSchema.js";
 import { Tabs } from "../../src/components/Tabs.jsx";
 import { GIcon } from "../../src/components/icons.jsx";

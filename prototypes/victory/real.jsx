@@ -4,7 +4,7 @@
 //   honors=<n> (n trophées + n octrois de Darics simulés ; 7 = la vague du Gauntlet, honneurs repliés)  points=1 (jeu noté en points)
 import { StrictMode, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CSS } from "../../src/styles/appCss.js";
+import CSS from "../../src/styles/app.css?raw";
 import { gateSteps, settleXp } from "../../src/lib/xp.js";
 import { getLeague } from "../../src/lib/league.js";
 import { getTriggerLabel } from "../../src/lib/chestLabels.js";

@@ -26,12 +26,13 @@
  * Usage : node tests/check_festivals.cjs
  */
 'use strict';
+const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const F = require(path.join(ROOT, 'src', 'lib', 'festivals.js'));
 const { GAME_ICON_PATHS } = require(path.join(ROOT, 'src', 'data', 'avatarIcons.js'));
-const { CSS } = require(path.join(ROOT, 'src', 'styles', 'appCss.js'));
+const CSS = fs.readFileSync(path.join(ROOT, 'src', 'styles', 'app.css'), 'utf8').replace(/\r\n/g, '\n');
 
 let fails = 0, checks = 0;
 const fail = (m) => { fails++; console.log('  FAIL ' + m); };
@@ -62,11 +63,11 @@ for (const f of F.FESTIVALS) {
 const cssLines = CSS.split(/\r?\n/);
 const ids = new Set(F.FESTIVALS.map((f) => f.id));
 for (const f of F.FESTIVALS) {
-  check(cssLines.some((l) => l.startsWith('.fest-' + f.id + '{')), f.id + ' : paquet .fest-' + f.id + '{…} absent de styles/appCss.js');
-  check(cssLines.some((l) => l.startsWith('.light.fest-' + f.id + '{')), f.id + ' : retint .light.fest-' + f.id + '{…} absent de styles/appCss.js');
+  check(cssLines.some((l) => l.startsWith('.fest-' + f.id + '{')), f.id + ' : paquet .fest-' + f.id + '{…} absent de styles/app.css');
+  check(cssLines.some((l) => l.startsWith('.light.fest-' + f.id + '{')), f.id + ' : retint .light.fest-' + f.id + '{…} absent de styles/app.css');
 }
 for (const m of new Set(CSS.match(/\.fest-[a-z_]+/g) || [])) {
-  check(ids.has(m.slice(6)), 'classe ' + m + ' dans appCss.js sans fête correspondante dans FESTIVALS (jamais posée)');
+  check(ids.has(m.slice(6)), 'classe ' + m + ' dans app.css sans fête correspondante dans FESTIVALS (jamais posée)');
 }
 // Un nom d'animation fautif ne casse rien : l'animation est juste morte.
 const keyframes = new Set((CSS.match(/@keyframes\s+[\w-]+/g) || []).map((k) => k.split(/\s+/)[1]));

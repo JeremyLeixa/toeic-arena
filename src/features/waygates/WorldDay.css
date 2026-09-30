@@ -1,0 +1,95 @@
+/* Ex-NF_CSS de WorldDay.jsx, servi en fichier depuis le 2026-09-30 : la CSP
+   (style-src 'self') bloque tout <style> inline. Importé par l'écran, donc chargé avec son chunk lazy
+   et gardé toute la session (preloadLazyScreens) : tout sélecteur reste préfixé. */
+.nf{padding:4px 16px 120px}
+.nf-intro{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:56px 20px 40px}
+.nf-intro.landed{animation:nf-land .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes nf-land{from{transform:scale(1.06);filter:blur(4px);opacity:0}to{transform:none;filter:none;opacity:1}}
+.nf-arrive{position:fixed;inset:0;z-index:300;pointer-events:none;background:radial-gradient(circle,rgba(var(--cx),.9),var(--bg) 72%);animation:nf-veil .55s ease-out forwards}
+@keyframes nf-veil{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){.nf-intro.landed{animation:none}.nf-arrive{animation-duration:.25s}}
+.nf-intro-back{position:absolute;top:10px;left:16px;margin-bottom:0}
+.nf-time{font-size:54px;font-weight:300;text-align:center;line-height:1;color:var(--t1);font-variant-numeric:tabular-nums}
+.nf-day{text-align:center;font-size:13px;color:var(--t2);margin-top:-4px}
+.nf-notif{display:flex;gap:10px;padding:12px 14px!important;border-radius:16px!important}
+.nf-notif p{margin:4px 0 0;font-size:14px;line-height:1.55;color:var(--t1)}
+.nf-notif-h{display:flex;justify-content:space-between;font-size:12.5px;color:var(--t1)}
+.nf-notif-h span{color:var(--t3)}
+.nf-av{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:none;background:rgba(var(--cx),.18);color:var(--cyan);border:1px solid rgba(var(--cx),.35)}
+.nf-av.sm{width:18px;height:18px;font-size:8px}
+.nf-badge{padding:12px 14px!important}
+.nf-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3)}
+.nf-grade{font-size:18px;font-weight:800;color:var(--t1);margin-top:2px}
+.nf-bar{display:block;height:7px;border-radius:4px;background:rgba(var(--cx),.12);overflow:hidden;margin:8px 0 6px}
+.nf-bar i{display:block;height:100%;background:var(--cyan);border-radius:4px;transition:width .5s}
+.nf-small{font-size:12px;color:var(--t2)}
+.nf-rules{margin:0;padding:0 0 0 18px;font-size:13px;line-height:1.6;color:var(--t2)}
+.nf-rules b{color:var(--t1)}
+.nf-sec{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin:14px 2px 8px}
+.nf-row{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;padding:12px!important;margin-bottom:8px;cursor:pointer;font-family:inherit;color:var(--t1)}
+.nf-row.ring{border-color:var(--green)!important;animation:nf-ring 1.4s infinite}
+@keyframes nf-ring{0%{box-shadow:0 0 0 0 rgba(var(--cx),.35)}70%{box-shadow:0 0 0 9px rgba(var(--cx),0)}100%{box-shadow:0 0 0 0 rgba(var(--cx),0)}}
+.nf-ico{width:34px;height:34px;border-radius:10px;background:rgba(var(--cx),.12);color:var(--cyan);display:flex;align-items:center;justify-content:center;flex:none}
+.nf-row-b{flex:1;min-width:0}
+.nf-row-f{font-size:12px;color:var(--t2)}
+.nf-row-s{font-size:14px;font-weight:700;color:var(--t1);line-height:1.35}
+.nf-row-ask{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);margin-top:6px}
+.nf-row-r{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.nf-row.done{opacity:.72;padding:9px 12px!important;align-items:center;cursor:default}
+.nf-row.done .nf-ico{width:26px;height:26px}
+.nf-row.missed .nf-row-s{text-decoration:line-through;color:var(--t3)}
+.nf-chip{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:rgba(var(--cx),.1);color:var(--t2);white-space:nowrap}
+.nf-chip.go{background:var(--green);color:var(--bg)}
+.nf-chip.soon{color:var(--orange);background:rgba(var(--cx),.08);border:1px solid var(--orange)}
+.nf-chip.late,.nf-chip.miss{color:var(--red);background:transparent;border:1px solid var(--red)}
+.nf-empty{padding:18px!important;text-align:center;display:flex;flex-direction:column;gap:10px;color:var(--t2);font-size:14px}
+.nf-empty p{margin:0}
+.nf-clock{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;color:var(--t1)}
+.nf-clock.late{color:var(--orange)}
+.nf-head{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
+.nf-head .back-btn{margin-bottom:0}
+.nf-head-k{flex:1;text-align:right;font-size:12px;color:var(--t2)}
+.nf-live{font-size:12px;font-weight:800;color:var(--red)}
+.nf-doc{padding:14px!important;margin-bottom:12px;max-height:46vh;overflow:auto}
+.nf-doc-h{border-bottom:1px solid var(--bdr);padding-bottom:8px;margin-bottom:10px;font-size:12px;color:var(--t2);line-height:1.6}
+.nf-doc-h span{display:inline-block;width:58px;color:var(--t3)}
+.nf-doc-b{font-size:13.5px;line-height:1.7;color:var(--t2);white-space:pre-line;margin:0}
+.nf-call{padding:14px!important;margin-bottom:12px;text-align:center}
+.nf-call-who{font-size:16px;font-weight:800;color:var(--t1)}
+.nf-call-sub{font-size:12.5px;color:var(--t2);margin-bottom:4px}
+.nf-link{background:none;border:0;color:var(--cyan);font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 0;font-family:inherit}
+.nf-script{text-align:left;font-size:12.5px;line-height:1.6;color:var(--t2);margin-top:8px}
+.nf-script p{margin:4px 0}
+.nf-script b{color:var(--t1)}
+.nf-lock{font-size:12px;font-weight:700;color:var(--orange);margin:2px 0 8px}
+.nf-pre{padding:10px 12px!important;margin-bottom:8px}
+.nf-pre-q{font-size:13.5px;font-weight:700;color:var(--t1);margin-bottom:6px}
+.nf-pre-o{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;font-size:12px;color:var(--t2)}
+.nf-pre-o b{color:var(--t3);margin-right:3px}
+.nf-q{font-size:16px;font-weight:700;line-height:1.5;color:var(--t1);margin:4px 0 12px}
+.nf-opts{display:flex;flex-direction:column;gap:8px}
+.nf-opt{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;font-size:14px;color:var(--t1);text-align:left;cursor:pointer;font-family:inherit}
+.nf-opt:disabled{cursor:default}
+.nf-opt.ok{border-color:var(--green)}
+.nf-opt.ko{border-color:var(--red)}
+.nf-opt.dim{opacity:.5}
+.nf-opt-l{width:26px;height:26px;border-radius:50%;border:2px solid var(--t3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:none;color:var(--t3)}
+.nf-opt.ok .nf-opt-l{background:var(--green);border-color:var(--green);color:var(--bg)}
+.nf-opt.ko .nf-opt-l{background:var(--red);border-color:var(--red);color:var(--bg)}
+.nf-ringbar{position:fixed;left:50%;transform:translateX(-50%);top:calc(92px + env(safe-area-inset-top,0px));width:calc(100% - 24px);max-width:406px;z-index:91;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--bg2);border:1.5px solid var(--green);box-shadow:0 10px 28px rgba(0,0,0,.35);animation:nf-drop .3s ease-out}
+.app:not(.onboard-shell) .nf-ringbar{left:calc(200px + 32px);right:32px;width:auto;max-width:none;transform:none}
+@keyframes nf-drop{from{opacity:0;margin-top:-14px}}
+.nf-ringbar-b{flex:1;min-width:0;display:flex;flex-direction:column;font-size:12.5px;color:var(--t2)}
+.nf-ringbar-b b{color:var(--t1)}
+.nf-ringbar .btn1{width:auto;padding:8px 14px;min-height:38px;font-size:13px}
+.nf-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:92;padding:9px 16px;border-radius:999px;background:var(--bg3);border:1px solid var(--bdr);color:var(--t1);font-size:12.5px;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.app:not(.onboard-shell) .nf-toast{left:calc(50% + 100px)}
+.nf-review{display:flex;gap:10px;padding:12px 14px!important;margin-bottom:10px}
+.nf-review p{margin:0;font-size:14px;line-height:1.55;color:var(--t1)}
+.nf-stars{font-size:30px;letter-spacing:6px;text-align:center;color:var(--t3);margin-bottom:6px}
+.nf-stars .on{color:var(--gold)}
+.nf-end-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--t1);margin-bottom:6px}
+.nf-end-row .nf-ico{width:26px;height:26px}
+.nf-end-s{flex:1;min-width:0}
+.nf-promo{margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);font-size:13.5px;color:var(--t1)}
+.nf-promo .nf-lbl{color:var(--cyan)}

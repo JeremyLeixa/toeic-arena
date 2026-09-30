@@ -15,6 +15,7 @@ import { today, weekId, localYmd } from "../../lib/util.js";
 import { supabase } from "../../supabase.js";
 import { useState, useEffect } from "react";
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar as RBar, Cell, LineChart, Line } from "recharts";
+import "./TeacherDash.css";
 
 // ─── TEACHER DASHBOARD CONFIG ───
 // H1 (2026-09-14) : VITE_PUSH_SECRET a disparu d'ici. C'etait un "secret" partage inline
@@ -212,7 +213,6 @@ export function WeeklyReport(p){
   var leagueName=p.classCode||"visitor";
   return(
   <div style={{minHeight:"100vh",background:"#fff",color:"#222",padding:"24px 20px"}} className="weekly-report">
-    <style>{"@media print{.no-print{display:none!important}.weekly-report{padding:0!important}body{background:#fff!important}.wr-card{page-break-inside:avoid}.wr-section{page-break-inside:avoid}}.weekly-report h1,.weekly-report h2,.weekly-report h3{font-family:'Cinzel','Outfit',serif;color:#1a1a1a}.weekly-report p,.weekly-report div,.weekly-report span{font-family:'DM Sans',Arial,sans-serif}"}</style>
 
     {/* Top nav (hidden on print) */}
     <div className="no-print" style={{display:"flex",gap:10,marginBottom:24,justifyContent:"space-between",maxWidth:820,margin:"0 auto 24px"}}>

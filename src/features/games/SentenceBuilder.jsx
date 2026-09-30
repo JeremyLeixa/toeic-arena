@@ -8,30 +8,13 @@ import { SENTENCES } from "../../data/sentences.js";
 import { shuffle } from "../../lib/util.js";
 import { playCorrect, playWrong } from "../../sounds.js";
 import { useState, useRef, useMemo, useEffect } from "react";
+import "./SentenceBuilder.css";
 
 // ─── SENTENCE BUILDER — Drag & snap ───
 // Drag a chunk from the bank or from the answer zone, drop in the answer
 // zone at the computed insertion index (flex-wrap aware), or drop in the
 // bank to remove. Tap-to-place still works (5px drag threshold).
-// Class prefix .sbd- (sentence-builder-drag) to avoid global collisions.
-var SBD_CSS = `
-@keyframes sbd-pulse { 0%,100%{opacity:.7} 50%{opacity:1} }
-.sbd-answer{min-height:84px;padding:12px;background:var(--bg2);border:2px dashed var(--bdr);border-radius:14px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;align-items:center;transition:border-color .18s,background .18s;position:relative}
-.sbd-answer.sbd-active{border-color:var(--cyan);background:rgba(var(--cx),.04)}
-.sbd-answer.sbd-ok{border-color:var(--green);background:rgba(0,230,118,.06);border-style:solid}
-.sbd-answer.sbd-bad{border-color:var(--red);background:rgba(255,71,87,.06);border-style:solid}
-.sbd-empty{color:var(--t3);font-size:13px;font-style:italic;width:100%;text-align:center}
-.sbd-bank{min-height:48px;padding:10px;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:14px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;justify-content:center;transition:border-color .18s,background .18s}
-.sbd-bank.sbd-active{border-color:var(--cyan);background:rgba(var(--cx),.04)}
-.sbd-chunk{display:inline-flex;align-items:center;padding:9px 14px;border-radius:10px;font-size:14px;font-weight:600;line-height:1.2;cursor:grab;touch-action:none;user-select:none;transition:transform .12s,opacity .15s,background .18s,border-color .18s;font-family:inherit}
-.sbd-chunk.sbd-b{background:var(--bg3);border:1px solid var(--bdr);color:var(--t1)}
-.sbd-chunk.sbd-p{background:rgba(var(--cx),.1);border:1px solid rgba(var(--cx),.35);color:var(--cyan)}
-.sbd-chunk.sbd-p.sbd-correct{background:rgba(0,230,118,.15);border-color:var(--green);color:var(--green)}
-.sbd-chunk.sbd-p.sbd-wrong{background:rgba(255,71,87,.15);border-color:var(--red);color:var(--red)}
-.sbd-chunk:active{cursor:grabbing}
-.sbd-indicator{display:inline-block;width:3px;align-self:stretch;min-height:30px;background:var(--cyan);border-radius:2px;box-shadow:0 0 0 3px rgba(var(--cx),.20);animation:sbd-pulse 1s ease-in-out infinite}
-.sbd-ghost{position:fixed;top:0;left:0;z-index:1000;pointer-events:none;padding:9px 14px;border-radius:10px;font-size:14px;font-weight:600;line-height:1.2;background:rgba(var(--cx),.18);border:1px solid var(--cyan);color:var(--cyan);box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 0 4px rgba(var(--cx),.15);white-space:nowrap}
-`;
+// Styles in SentenceBuilder.css, class prefix .sbd- (sentence-builder-drag).
 export function SentenceBuilder(p){
   var TOTAL=15;var TIMER_SEC=20;
 
@@ -258,7 +241,6 @@ export function SentenceBuilder(p){
   if(dragOn&&drag.zone==="bank")bankCls+=" sbd-active";
 
   return(<>
-    <style>{SBD_CSS}</style>
     <SessionTop n={TOTAL} cur={ci} results={track.results} streak={track.streak}
       onQuit={function(){clearInterval(timerRef.current);p.back();}}
       onSheet={function(open){pausedRef.current=open;}}
