@@ -26,6 +26,11 @@ Ce que la suite protège, et pourquoi :
 - **`check_push_offer`** — la demande de notifications (`lib/pushOffer.js`) : jamais avant la 1re session ni pour un
   visiteur, jamais après un refus du navigateur (définitif : insister épuise), iPhone hors appli à part (sinon trois
   « Got it » privent de la vraie demande), reports 5 j × 3, et le câblage : dernière du budget, après la lettre.
+- **`check_csp`** — la CSP de `vercel.json` n'exécute que les scripts du site (`script-src 'self'`, hashes admis,
+  jamais `'unsafe-inline'` / `'unsafe-eval'` / hôte tiers), `index.html` sans script inline (l'enregistrement du
+  SW vit dans `public/sw-register.js`), et `dangerouslySetInnerHTML` nourri seulement de `GAME_ICON_PATHS`. Le
+  jeton Supabase est en localStorage : c'est la CSP qui empêche une XSS de le lire (2026-09-30, remarque d'un
+  élève). Piège : le dev Vite n'envoie pas les en-têtes de `vercel.json`, un script bloqué ne se voit qu'en prod.
 - **`check_identity`** — `normNameForEmail` décide de l'adresse du compte Auth,
   recalculée à chaque connexion. La changer enferme dehors les élèves déjà migrés.
 - **`check_fresher_local`** — la garde stale-remote (`lib/staleRemote.js`) : quand la copie
