@@ -1,4 +1,4 @@
-/* La CSP garde script-src sans 'unsafe-inline' (2026-09-30).
+/* La CSP garde script-src et style-src sans 'unsafe-inline' (2026-09-30).
  *
  * Pourquoi : supabase-js range la session (access + refresh token) dans le localStorage.
  * Une XSS qui s'exécute dans la page la lit et repart avec le compte. La défense retenue
@@ -35,12 +35,13 @@ else {
     const toks = part.trim().split(/\s+/).filter(Boolean);
     if (toks.length) dirs[toks[0]] = toks.slice(1);
   }
-  const script = dirs['script-src'] || dirs['default-src'];
-  if (!script) fail.push('CSP : ni script-src ni default-src');
-  else {
-    for (const t of script) {
+  // style-src au même régime depuis le 2026-09-30 : tout le CSS est en fichiers .css.
+  for (const d of ['script-src', 'style-src']) {
+    const list = dirs[d] || dirs['default-src'];
+    if (!list) { fail.push('CSP : ni ' + d + ' ni default-src'); continue; }
+    for (const t of list) {
       if (t !== "'self'" && !/^'(sha256|sha384|sha512)-[A-Za-z0-9+/=]+'$/.test(t))
-        fail.push("CSP script-src : source refusée " + t + " (seuls 'self' et des hashes sont admis)");
+        fail.push('CSP ' + d + ' : source refusée ' + t + " (seuls 'self' et des hashes sont admis)");
     }
   }
   for (const [d, want] of [['object-src', "'none'"], ['base-uri', "'self'"], ['frame-ancestors', "'none'"]]) {
@@ -56,10 +57,13 @@ for (const tag of scriptTags) {
   const body = tag.slice(open.length, -'</script>'.length);
   if (!/\bsrc\s*=/.test(open) || body.trim()) fail.push('index.html : script inline ' + open);
 }
+if (/<style\b/i.test(html)) fail.push('index.html : <style> inline (bloqué par style-src, le mettre dans src/styles/app.css)');
+if (/\sstyle\s*=/i.test(html)) fail.push('index.html : attribut style="…" (bloqué par style-src)');
 const onAttr = html.match(/<[^>]+\son[a-z]+\s*=/gi);
 if (onAttr) fail.push('index.html : gestionnaire inline ' + onAttr[0]);
 if (html.indexOf('/sw-register.js') === -1) fail.push('index.html : /sw-register.js n\'est plus chargé (service worker jamais enregistré)');
 if (!fs.existsSync(path.join(root, 'public', 'sw-register.js'))) fail.push('public/sw-register.js manquant');
+if (!fs.existsSync(path.join(root, 'public', 'grimoire-export.css'))) fail.push('public/grimoire-export.css manquant (export des grimoires sans styles)');
 
 // 3. dangerouslySetInnerHTML : seulement les chemins SVG statiques
 function walk(dir, out) {
@@ -77,6 +81,12 @@ for (const file of walk(path.join(root, 'src'), [])) {
   //    onClick={…}, jamais on<minuscules>= suivi d'un guillemet.
   const handler = src.match(/\son[a-z]+=(\\"|\\'|')/);
   if (handler) fail.push(path.relative(root, file).replace(/\\/g, '/') + ' : gestionnaire inline dans une chaîne HTML (' + handler[0].trim() + '…), à câbler par addEventListener');
+  // 5. Aucun <style> (JSX ou chaîne HTML) ni style="…" dans une chaîne HTML : bloqués par
+  //    style-src 'self', en prod seulement. Les style={{…}} de React passent par le CSSOM : permis.
+  const relf = path.relative(root, file).replace(/\\/g, '/');
+  if (/<style\b/.test(src)) fail.push(relf + ' : <style> (bloqué par la CSP style-src) : vrai fichier .css importé, ou public/ pour une page écrite en chaîne');
+  const sattr = src.match(/\sstyle=(\\"|\\'|')/);
+  if (sattr) fail.push(relf + ' : attribut style="…" dans une chaîne HTML (bloqué par la CSP style-src) : classe + feuille .css');
   const re = /dangerouslySetInnerHTML=\{\{__html:\s*([^}]+?)\s*\}\}/g;
   let m;
   while ((m = re.exec(src))) {
@@ -94,4 +104,4 @@ if (fail.length) {
   for (const f of fail) console.error('  · ' + f);
   process.exit(1);
 }
-console.log('check_csp : script-src sans inline, index.html sans script inline, innerHTML limité aux icônes');
+console.log('check_csp : script-src et style-src sans inline, ni <style> ni script inline, innerHTML limité aux icônes');
