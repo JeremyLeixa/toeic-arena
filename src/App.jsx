@@ -764,7 +764,7 @@ useEffect(function(){
     document.addEventListener("click",startBGM,{once:true});
     document.addEventListener("touchstart",startBGM,{once:true});
     return function(){document.removeEventListener("click",startBGM);document.removeEventListener("touchstart",startBGM);};
-  },[ld]);
+  },[ld,!!u]); // !!u : après « Changer de profil », l'autostart se réarme pour le compte suivant
 
   // ── Préchauffage des écrans chargés à la demande (Phase 5, C10) ── une fois le profil
   // chargé, recharger à l'idle, l'un après l'autre, tous les chunks déclarés via lazyNamed :
@@ -1575,6 +1575,11 @@ function sv(d){
     try{localStorage.removeItem("toeic-arena-profile");localStorage.removeItem("toeic-arena-name");localStorage.removeItem("toeic-arena-class");}catch(e){console.warn("[logout] storage caught:",e&&e.message);}
     clearDashSession(); // B4 : ne pas laisser une session formateur derrière soi
     setCachedUserId(null);setSyncDirty(false);
+    // BGM : sans ça, bgm_home continuait sous l'onboarding et le Battle Scan (App() reste monté,
+    // seul u passe à null). bgmStarted remis à faux = le prochain compte rearme l'autostart au
+    // premier clic, comme une première arrivée sur Home.
+    try{stopBGM();}catch(e){console.warn("[logout] stopBGM caught:",e&&e.message);}
+    bgmStarted.current=false;
     sU(null);sSP(null);sT("home");
     // Après le changement d'écran : l'attente réseau (et le verrou d'auth) ne fige pas l'interface.
     try{await supabase.auth.signOut({scope:'local'});}catch(e){console.warn("[logout] signOut caught:",e&&e.message);}
