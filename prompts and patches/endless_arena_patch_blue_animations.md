@@ -237,4 +237,4 @@ Jérémy valide ou invalide cette règle. Si invalidé, garder les animations Fi
 
 ---
 
-**Fin du patch.** Ce document se lit en complément du spec initial `endless_arena_spec.md`. Si contradiction entre les deux, ce patch est prioritaire pour les couleurs et les animations ; le spec initial reste autoritaire pour tout le reste (architecture, data, logique métier).
+**Fin du patch.** Ce document se lit en complément du spec initial `docs/archive/endless_arena_spec.md`. Si contradiction entre les deux, ce patch est prioritaire pour les couleurs et les animations ; le spec initial reste autoritaire pour tout le reste (architecture, data, logique métier).

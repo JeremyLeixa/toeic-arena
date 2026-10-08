@@ -765,8 +765,8 @@ Session démarrée le 17 avril (kickoff monétisation, CGV draft, migration Teac
 ### Artefacts produits
 
 - [`CGV_draft.md`](CGV_draft.md) — 20 articles, pricing 9,99 + 22,99, franchise TVA, CNPM en attente
-- [`MONETIZATION_CHECKLIST.md`](MONETIZATION_CHECKLIST.md) — checklist exhaustive 13 sections
-- [`BUSINESS_SETUP_GUIDE.md`](BUSINESS_SETUP_GUIDE.md) — guide step-by-step Stripe/SIRET/médiateur (8 étapes)
+- [`docs/archive/MONETIZATION_CHECKLIST.md`](docs/archive/MONETIZATION_CHECKLIST.md) — checklist exhaustive 13 sections
+- [`docs/archive/BUSINESS_SETUP_GUIDE.md`](docs/archive/BUSINESS_SETUP_GUIDE.md) — guide step-by-step Stripe/SIRET/médiateur (8 étapes)
 - `public/cgv.md` — copie statique accessible à `/cgv.md` pour le lien UI
 - `src/auth.js` — helpers magic link + Stripe checkout/portal (createCheckout, openCustomerPortal, requestMagicLink, linkEmailToAnonymous, getSession, signOutCompletely, onAuthChange)
 - 3 endpoints Vercel : `api/stripe-checkout-create.js`, `api/stripe-webhook.js` (avec id→email fallback), `api/stripe-portal-create.js`
@@ -877,7 +877,7 @@ Si le problème est l'email non confirmé : affiner le flow visitor pour forcer 
   - Welcome back push campaign
 
 ### 🟠 Monetization (chantier actif — cf. section dédiée ci-dessus)
-- Plan détaillé dans [`MONETIZATION_CHECKLIST.md`](MONETIZATION_CHECKLIST.md)
+- Plan détaillé dans [`docs/archive/MONETIZATION_CHECKLIST.md`](docs/archive/MONETIZATION_CHECKLIST.md)
 - Draft CGV dans [`CGV_draft.md`](CGV_draft.md)
 - Phase 1 (magic link) prête à démarrer au prochain go
 
