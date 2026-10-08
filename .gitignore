@@ -38,3 +38,6 @@ stripe_backup_code.txt
 # Outillage local
 .claude/worktrees/
 supabase/.temp/
+
+# Secrets et documents administratifs (jamais dans le depot)
+KEYS & ENV/
