@@ -480,7 +480,12 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 @keyframes chestWiggle{0%,100%{transform:rotate(0deg)}15%{transform:rotate(-6deg)}30%{transform:rotate(6deg)}45%{transform:rotate(-4deg)}60%{transform:rotate(4deg)}75%{transform:rotate(-2deg)}90%{transform:rotate(2deg)}}
 @keyframes legendGoldFlash{0%,100%{opacity:0}35%{opacity:.6}}
 @keyframes legendShimmer{0%{background-position:-150% 50%}50%{background-position:250% 50%}100%{background-position:-150% 50%}}
-.app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden}
+/* padding-top = encoche / barre d'état iOS (PWA en plein écran, status-bar-style black-translucent +
+   viewport-fit=cover : sans lui, « Welcome back », les ← Back et le streak passent SOUS l'heure et
+   la batterie). Posé ici, une fois, pour toutes les routes et l'onboarding. Les barres fixes
+   (.ss-top, .chx-skip, bandeau auth…) ajoutent déjà leur propre inset : ne pas le recompter dans
+   un spacer en flux (.ss-top-space). Le @media desktop remet padding à 0 32px : pas d'encoche là. */
+.app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);color:var(--t1);position:relative;overflow-x:hidden;padding-top:env(safe-area-inset-top,0px)}
 @supports(height:100dvh){.app{min-height:100dvh}}
 /* Ambiance de fond « Parchemin » (2026-09-17, proto prototypes/ambiance/, variante C choisie par
    Jérémy). Deux calques fixes derrière le contenu : ::before = halo de la couleur du skin en haut
@@ -853,8 +858,8 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 .ss-seg.bar i{display:block;height:100%;border-radius:2px;background:var(--cyan);transition:width .4s}
 .ss-sub{font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--t3);text-align:center;height:16px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ss-flame{height:18px;display:flex;justify-content:center;align-items:center;gap:5px;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--orange)}
-.ss-top-space{height:calc(66px + env(safe-area-inset-top,0px))}
-.ss-top-space.has-sub{height:calc(82px + env(safe-area-inset-top,0px))}
+.ss-top-space{height:66px}
+.ss-top-space.has-sub{height:82px}
 .ss-burst{position:fixed;left:50%;top:40%;z-index:95;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;color:var(--orange);font-size:26px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;text-shadow:0 2px 14px rgba(0,0,0,.45);padding:18px 34px;border-radius:50%;background:radial-gradient(closest-side,rgba(var(--bg-rgb),.92),rgba(var(--bg-rgb),.6) 60%,rgba(var(--bg-rgb),0));animation:ssBurst 1.4s cubic-bezier(.2,.8,.2,1) both}
 @keyframes ssBurst{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}18%{transform:translate(-50%,-50%) scale(1.15);opacity:1}30%{transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{transform:translate(-50%,-80%) scale(.95);opacity:0}}
 .ss-card{margin-top:18px;padding:0!important;overflow:hidden;border-left:4px solid var(--green)!important;scroll-margin-bottom:110px;animation:fadeIn .3s}
