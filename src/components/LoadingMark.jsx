@@ -30,10 +30,17 @@ export class LoadBoundary extends Component{
   componentDidCatch(err){console.warn("[CHUNK] LoadBoundary:",err&&err.message);}
   render(){
     if(!this.state.err)return this.props.children;
+    // Ce filet attrape AUSSI les exceptions de rendu, pas seulement un chunk manquant (2026-10-09,
+    // mpii2627 : « Check your connection » pour une élève dont le réseau allait bien). On ne dit
+    // « connection » que pour une vraie erreur de chargement de module, et on affiche le message
+    // brut pour qu'une capture d'écran d'élève suffise à diagnostiquer.
+    var msg=String((this.state.err&&this.state.err.message)||this.state.err||"");
+    var net=/dynamically imported module|importing a module script|failed to fetch|load failed|networkerror/i.test(msg);
     return(<div style={{textAlign:"center",padding:"18vh 16px"}}>
       <p className="out" style={{color:"var(--t1)",fontSize:15,marginBottom:8}}>This screen could not be loaded.</p>
-      <p style={{color:"var(--t3)",fontSize:12,marginBottom:18}}>Check your connection, then reload.</p>
+      <p style={{color:"var(--t3)",fontSize:12,marginBottom:18}}>{net?"Check your connection, then reload.":"Something went wrong. Reload; if it happens again, send a screenshot of this screen to your teacher."}</p>
       <button className="btn1" onClick={function(){window.location.reload();}} style={{fontSize:14,padding:"12px 24px"}}>Reload</button>
+      <p style={{color:"var(--t3)",fontSize:10,marginTop:18,wordBreak:"break-word",opacity:.8}}>{msg.slice(0,200)}</p>
     </div>);
   }
 }
