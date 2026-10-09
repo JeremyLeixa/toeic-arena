@@ -388,7 +388,23 @@ var[step,sSt]=useState("name");
         // entrer : student_guard refuserait ensuite chaque sauvegarde en silence.
         var bound=false;
         try{bound=await bindStudentUserId(epName,epCc,true);}catch(e){console.warn("[pwd] bind caught:",e&&e.message);}
-        if(!bound){setPwdErr("Ce compte est lié à une autre identité. Préviens ton formateur (liaison refusée).");return;}
+        if(!bound){
+          // Compte Auth sans ligne students (2026-10-09, mpii2627) : l'élève a posé son mot de
+          // passe puis quitté (bouton retour) avant la fin de l'onboarding, là où la ligne naît.
+          // « Liaison refusée » serait faux et sans issue : la connexion vient de réussir, on
+          // reprend l'onboarding avec la session password, comme après un setPassword « new ».
+          // Seulement si la promo ne connaît vraiment aucune ligne à ce nom (erreur RPC = on
+          // garde le refus, jamais de reprise sur une lecture qui a échoué).
+          var chk=await supabase.rpc('find_students_by_name',{p_name:epName,p_class_code:epCc});
+          var noRow=!chk.error&&!(chk.data||[]).some(function(s){return normalizeName(s.name)===normalizeName(epName);});
+          console.warn("[pwd] bind refused, orphan auth account:",noRow);
+          if(noRow){
+            sN(epName);setDetectMode(false);setStudentPwdSet(true);setPwd1("");
+            sSt(epCc?"consent":"classcode");
+            return;
+          }
+          setPwdErr("Ce compte est lié à une autre identité. Préviens ton formateur (liaison refusée).");return;
+        }
         var ok=await p.recover(epName,epCc);
         if(!ok)setPwdErr("Compte introuvable. Réessaie.");
       }catch(err){
