@@ -52,17 +52,23 @@ export function MockTest(p){
   function formatTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
 
   // ── Submit & Scoring ──
-  function submitTest(){
+  // GARDE : `finalAns` = les réponses À JOUR quand la soumission vient du clic sur la dernière question.
+  // pickAnswer fait setAns(a) puis setTimeout(nextItem) : ce nextItem a capturé le rendu d'AVANT le clic,
+  // son `ans` ne contient pas la dernière réponse. Sans cet argument, la dernière question de la Part 7
+  // était notée fausse au score alors que la revue (qui relit le state à jour) l'affichait juste
+  // (retour d'élève, 2026-10-15). Le chrono, lui, rappelle submitTest() sans argument : son rendu est frais.
+  function submitTest(finalAns){
     clearTimeout(timerRef.current);
-    var p5Score=0;p5Qs.forEach(function(q,i){if(ans.p5[i]===q.c)p5Score++;});
-    var p6Score=0;var bIdx=0;
+    var A=finalAns||ans;
+    var p5Score=0;p5Qs.forEach(function(q,i){if(A.p5[i]===q.c)p5Score++;});
+    var p6Score=0;
     p6Texts.forEach(function(t,ti){
       var localB=0;
       t.parts.forEach(function(pt){
-        if(pt.blank){if(ans.p6[ti][localB]===pt.correct)p6Score++;localB++;}
+        if(pt.blank){if(A.p6[ti][localB]===pt.correct)p6Score++;localB++;}
       });
     });
-    var p7Score=0;p7Passages.forEach(function(ps,pi){ps.questions.forEach(function(q,qii){if(ans.p7[pi][qii]===q.correct)p7Score++;});});
+    var p7Score=0;p7Passages.forEach(function(ps,pi){ps.questions.forEach(function(q,qii){if(A.p7[pi][qii]===q.correct)p7Score++;});});
     var totalScore=p5Score+p6Score+p7Score;
     var toeic=estimateToeic(totalScore,totalQ);
     var timeUsed=TOTAL_TIME-timeLeft;
@@ -87,11 +93,13 @@ export function MockTest(p){
   // ── Navigation ──
   function pickAnswer(val){
     var a=JSON.parse(JSON.stringify(ans));
-    if(section==="p5"){a.p5[qi]=val;setAns(a);setTimeout(nextItem,300);}
-    else if(section==="p6"){a.p6[qi][bi]=val;setAns(a);setTimeout(nextItem,300);}
-    else if(section==="p7"){a.p7[qi][pqi]=val;setAns(a);setTimeout(nextItem,300);}
+    if(section==="p5")a.p5[qi]=val;
+    else if(section==="p6")a.p6[qi][bi]=val;
+    else if(section==="p7")a.p7[qi][pqi]=val;
+    else return;
+    setAns(a);setTimeout(function(){nextItem(a);},300);
   }
-  function nextItem(){
+  function nextItem(latest){
     if(section==="p5"){
       if(qi<p5Qs.length-1){setQi(qi+1);}
       else{setSection("p6");setQi(0);setBi(0);}
@@ -103,7 +111,7 @@ export function MockTest(p){
     }else if(section==="p7"){
       if(pqi<p7Passages[qi].questions.length-1){setPqi(pqi+1);}
       else if(qi<p7Passages.length-1){setQi(qi+1);setPqi(0);}
-      else{submitTest();}
+      else{submitTest(latest);}
     }
   }
 
@@ -327,6 +335,19 @@ export function MockTest(p){
       rLabel="Part 6 — Text "+(tIdx+1)+", Blank "+(bIdx2+1);rAnswer=ans.p6[tIdx][bIdx2];rCorrect=bl.correct;rExpl=bl.x;
       rItem=(<div>
         <div style={{fontSize:12,color:"var(--t2)",marginBottom:12}}>{t.type}: {t.subject}</div>
+        <div className="crd read-scroll" style={{padding:14,marginBottom:16,maxHeight:240,overflowY:"auto",lineHeight:1.7,fontSize:13}}>
+          {(function(){
+            var bn=-1;
+            return t.parts.map(function(pt,i){
+              if(pt.text!==undefined)return(<span key={i}>{pt.text}</span>);
+              if(!pt.blank)return null;
+              bn++;
+              var isCur=bn===bIdx2;
+              // Trou en cours : surligné, vide. Les autres : leur bonne réponse, pour que le texte se lise entier.
+              return(<span key={i} className="out" style={{display:"inline",padding:"2px 8px",borderRadius:6,fontWeight:700,fontSize:12,background:isCur?"rgba(var(--cx),.2)":"var(--bg3)",color:isCur?"var(--cyan)":"var(--t2)",border:"1px solid "+(isCur?"var(--cyan)":"var(--bdr)")}}>{isCur?"["+String.fromCharCode(65+bn)+"]":pt.options[pt.correct]}</span>);
+            });
+          })()}
+        </div>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {bl.options.map(function(opt,i){
             var isCorrect=i===bl.correct;var isPicked=i===rAnswer;
@@ -350,6 +371,7 @@ export function MockTest(p){
       rLabel="Part 7 — Passage "+(pi+1)+", Q"+(pqIdx+1);rAnswer=ans.p7[pi][pqIdx];rCorrect=pqr.correct;rExpl=pqr.x;
       rItem=(<div>
         <div style={{fontSize:11,color:"var(--t2)",marginBottom:8}}>{ps.type}</div>
+        <div className="crd read-scroll" style={{padding:14,marginBottom:16,maxHeight:260,overflowY:"auto",lineHeight:1.7,fontSize:12,whiteSpace:"pre-wrap"}}>{ps.text}</div>
         <h3 className="qstem" style={{fontWeight:700,fontSize:15,lineHeight:1.5,marginBottom:16}}>{pqr.q}</h3>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {pqr.options.map(function(opt,i){
