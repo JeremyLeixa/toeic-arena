@@ -127,3 +127,7 @@ Ce que la suite protège, et pourquoi :
   7/30 j bornes incluses, abandons jamais comptés comme parties, épreuves des hubs ramenées au hub (sinon
   100 % d'abandon), rien d'avant `CAPTURE_START` dans les taux, `doneDays` borné, et le câblage : « Leave »
   confirmé signale l'abandon, le départ sans réponse non. Faux, ces chiffres font retirer un module joué.
+- **`check_scan_replay`** — la reprise du Battle Scan (`scanEngine.js`, 2026-10-22) : chaque section se rejoue à
+  l'identique depuis sa graine et la liste des réponses (`replayCatController`), à chaque point d'interruption, avec
+  le même score. Un tirage qui repasse par `Math.random` sans la graine ne casse rien au build : la reprise sert une
+  autre question que celle qui était à l'écran et le niveau adaptatif déraille.

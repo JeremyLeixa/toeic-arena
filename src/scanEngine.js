@@ -16,11 +16,15 @@ import { BATTLE_SCAN_V2, SCAN_GRAMMAR_MACROS, SCAN_DIFFICULTY_WEIGHTS, SCAN_TOEI
 import { LISTENING_P1, LISTENING_P2, LISTENING_P3, LISTENING_P4 } from "./data/listening.js";
 
 // ─── helpers ───
-function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function shuffle(arr){
+// Tirages par un générateur injectable (2026-10-22) : avec une graine, une section se rejoue à l'identique
+// (mêmes questions dans le même ordre pour les mêmes réponses). C'est ce qui permet à l'onboarding de
+// reprendre le scan après une interruption sans sérialiser les contrôleurs : il garde la graine et les
+// réponses, et rejoue. Sans graine, Math.random comme avant.
+function pickRandom(arr, R){ return arr[Math.floor((R||Math.random)()*arr.length)]; }
+function shuffle(arr, R){
   var a = arr.slice();
   for(var i=a.length-1; i>0; i--){
-    var j = Math.floor(Math.random()*(i+1));
+    var j = Math.floor((R||Math.random)()*(i+1));
     var t = a[i]; a[i] = a[j]; a[j] = t;
   }
   return a;
@@ -29,26 +33,46 @@ function shuffle(arr){
 // ═══════════════════════════════════════════════════════════════════════
 // Public factory — returns a controller for the given section.
 // ═══════════════════════════════════════════════════════════════════════
-export function createCatController(sectionId){
+// seed (entier, optionnel) : tirages reproductibles, voir seededRng.
+export function createCatController(sectionId, seed){
   var section = BATTLE_SCAN_V2[sectionId];
   if(!section){ console.warn("[scanEngine] unknown section:", sectionId); return null; }
-  if(sectionId === "grammar")   return _grammarCat(section);
-  if(sectionId === "vocab")     return _simpleCat(section, "vocab");
+  var R = seed == null ? null : seededRng(seed);
+  if(sectionId === "grammar")   return _grammarCat(section, R);
+  if(sectionId === "vocab")     return _simpleCat(section, "vocab", R);
   if(sectionId === "reading")   return _readingCat(section);
-  if(sectionId === "listening") return _listeningCat(section);
+  if(sectionId === "listening") return _listeningCat(section, R);
   return null;
+}
+// mulberry32 : petit générateur à graine, uniforme sur [0,1).
+export function seededRng(seed){
+  var s = seed >>> 0;
+  return function(){
+    s = (s + 0x6D2B79F5) >>> 0;
+    var x = Math.imul(s ^ (s >>> 15), 1 | s);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// Rejoue une section : contrôleur à la même graine, puis next()/record() pour chaque réponse donnée.
+// Rend le contrôleur prêt à servir la question suivante (celle qui était à l'écran à l'interruption).
+export function replayCatController(sectionId, seed, answers){
+  var c = createCatController(sectionId, seed);
+  if(!c) return null;
+  (answers || []).forEach(function(ok){ if(c.next()) c.record(!!ok); });
+  return c;
 }
 
 // ─── Grammar — 4 macros × 2 Q each, branched on first answer ───
 // Q1 of each macro = medium. Correct → Q2 hard. Wrong → Q2 easy.
-function _grammarCat(section){
+function _grammarCat(section, R){
   var queue = [];
   var current = null;
   var answered = [];
 
   // Seed: 1 medium per macro, in shuffled order so the user doesn't always
   // see verbs first.
-  shuffle(SCAN_GRAMMAR_MACROS.slice()).forEach(function(m){
+  shuffle(SCAN_GRAMMAR_MACROS.slice(), R).forEach(function(m){
     queue.push({macroId:m.id, lvl:"medium", phase:1});
   });
 
@@ -56,7 +80,7 @@ function _grammarCat(section){
     var pool = section.pool[macroId][lvl];
     var seenIds = answered.filter(function(a){return a.macroId===macroId;}).map(function(a){return a.itemId;});
     var avail = pool.filter(function(i){return seenIds.indexOf(i.id) < 0;});
-    return pickRandom(avail.length ? avail : pool);
+    return pickRandom(avail.length ? avail : pool, R);
   }
 
   return {
@@ -111,7 +135,7 @@ function _grammarCat(section){
 
 // ─── Vocab — 6 Q simple CAT: 2 medium primer → branch 4 ───
 // 2/2 → 4 hard. 1/2 → 2 medium + 2 hard. 0/2 → 3 easy + 1 medium.
-function _simpleCat(section, sectionId){
+function _simpleCat(section, sectionId, R){
   var pool = section.pool;
   var queue = [{lvl:"medium"}, {lvl:"medium"}];
   var current = null;
@@ -121,7 +145,7 @@ function _simpleCat(section, sectionId){
   function pickItem(lvl){
     var seenIds = answered.map(function(a){return a.itemId;});
     var avail = pool[lvl].filter(function(i){return seenIds.indexOf(i.id) < 0;});
-    return pickRandom(avail.length ? avail : pool[lvl]);
+    return pickRandom(avail.length ? avail : pool[lvl], R);
   }
 
   function maybeBranch(){
@@ -265,7 +289,7 @@ function _readingCat(section){
 
 // ─── Listening — 6 Q sampled from real listening.js pools ───
 // 2 medium primer → 4 branched. References resolve via refId + qIdx for P3/P4.
-function _listeningCat(section){
+function _listeningCat(section, R){
   var queue = [];
   var current = null;
   var answered = [];
@@ -284,7 +308,7 @@ function _listeningCat(section){
 
   function fresh(lvl, n){
     var avail = section.pool[lvl].filter(function(e){return !usedIds[e.id];});
-    var picked = shuffle(avail).slice(0, n);
+    var picked = shuffle(avail, R).slice(0, n);
     picked.forEach(function(e){ usedIds[e.id] = true; });
     return picked.map(function(e){return {lvl:lvl, entry:e};});
   }
