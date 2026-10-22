@@ -8,7 +8,7 @@ import { resumeAudioSession, stopListenAudio, getEnVoice, playAudioFile, playLet
 import { isModuleLocked } from "../../lib/access.js";
 import { getBioCredId, biometricAvailable, bioAuthenticate, teacherAuth, setDashSession, hasDashSession } from "../../lib/teacherSession.js";
 import { normalizeName } from "../../lib/util.js";
-import { createCatController, computeScanResult } from "../../scanEngine.js";
+import { createCatController, replayCatController, computeScanResult } from "../../scanEngine.js";
 import { playCorrect, playWrong, playArenaCall } from "../../sounds.js";
 import { supabase } from "../../supabase.js";
 import { useState, useRef, useEffect } from "react";
@@ -16,6 +16,22 @@ import { PasswordInput } from "../../components/PasswordInput.jsx";
 
 // ─── ONBOARDING ───
 var AUTO_ADVANCE_MS=1000; // Battle Scan : délai avant la question suivante après une bonne réponse
+// Reprise du Battle Scan après une interruption (2026-10-22). Un appel, un changement d'appli sur iPhone (qui
+// recharge souvent la PWA) ou un rechargement renvoyait à l'écran du prénom, 20 questions perdues. On garde dans
+// sessionStorage (l'onglet seulement : rien ne reste après sa fermeture, appareil partagé compris) l'identité
+// saisie, la graine de chaque section et les réponses ; au retour, scanEngine rejoue les sections à
+// l'identique (tests/check_scan_replay.cjs) et l'élève retrouve la question qui était à l'écran.
+var SCAN_SAVE_KEY="toeic-onb-scan";
+var SCAN_SAVE_TTL=6*36e5;
+function readScanSave(){
+  try{
+    var d=JSON.parse(sessionStorage.getItem(SCAN_SAVE_KEY)||"null");
+    if(!d||d.v!==1||!d.name||!d.seeds||Date.now()-(d.at||0)>SCAN_SAVE_TTL)return null;
+    return d;
+  }catch(e){console.warn("[scan-save] read caught:",e&&e.message);return null;}
+}
+function clearScanSave(){try{sessionStorage.removeItem(SCAN_SAVE_KEY);}catch(e){console.warn("[scan-save] clear caught:",e&&e.message);}}
+function newSeed(){return Math.floor(Math.random()*2147483647);}
 export function Onboard(p){
 var[step,sSt]=useState("name");
   var[name,sN]=useState("");
@@ -27,6 +43,7 @@ var[step,sSt]=useState("name");
   var[audioBusy,setAudioBusy]=useState(false);        // listening play button enable/disable
   var[audioStep,setAudioStep]=useState(-1);            // P1 statement index currently playing (0-3) or -1
   var ctrlRef=useRef(null);                            // active section controller (mutable, no rerenders)
+  var seedsRef=useRef(null);var answersRef=useRef(null);  // reprise : graine par section, réponses (justes/fausses)
   var autoRef=useRef(null);var advanceRef=useRef(null); // passage automatique après une bonne réponse
   useEffect(function(){return function(){if(autoRef.current)clearTimeout(autoRef.current);};},[]);
   // Mount listening audio session lifecycle
@@ -52,6 +69,23 @@ var[step,sSt]=useState("name");
     lookupName(p.reauth.name,p.reauth.classCode);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[reauthKey]);
+  // Reprise du scan (voir SCAN_SAVE_KEY). Jamais pendant une reconnexion (p.reauth : pas de scan en jeu).
+  // Un nouvel élève qui avait posé son mot de passe (studentPwdSet) ne reprend que si la session est bien
+  // celle de son compte : sans elle, onboard() lierait la ligne à une session anonyme et le mot de passe ne
+  // rouvrirait plus le compte. Il repart alors du prénom, et « entre ton mot de passe » le remet sur ses rails
+  // (reprise du compte Auth sans ligne, 0cd3a9c).
+  useEffect(function(){
+    if(p.reauth)return;
+    var d=readScanSave();if(!d)return;
+    var alive=true;
+    (d.studentPwdSet?supabase.auth.getSession().then(function(r){var s=r&&r.data&&r.data.session;return !!(s&&!s.user.is_anonymous);}):Promise.resolve(true)).then(function(ok){
+      if(!alive)return;
+      if(!ok){console.warn("[scan-save] password session gone, restart from name");clearScanSave();return;}
+      restoreScan(d);
+    }).catch(function(e){console.warn("[scan-save] restore caught:",e&&e.message);clearScanSave();});
+    return function(){alive=false;};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
   var[lookingUp,setLookingUp]=useState(false);var[returnHint,setReturnHint]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
   // SECURITY (2026-09-11) — confinement cross-promo : detectMode=true quand on arrive
   // sur l'écran classcode depuis l'écran name (détection "welcome back"). Il déclenche
@@ -84,7 +118,7 @@ var[step,sSt]=useState("name");
   // première manche (lib/device.js, iPhone : feuille de notifications), et le passage à l'anglais est annoncé
   // à l'accueil du Battle Scan, là où l'anglais commence vraiment. firstNav = module de la First Quest, ou null.
   // Ne pas remettre ici une demande automatique de notifications (refus définitif difficile à rattraper).
-  function enterArena(firstNav){stopTts();stopListenAudio();try{playArenaCall();}catch(e){console.warn("[onboard] arena call:",e&&e.message);}p.go(name.trim(),classCode||"visitor",scanScores,firstNav||undefined,sectionResults,studentPwdSet);}
+  function enterArena(firstNav){clearScanSave();stopTts();stopListenAudio();try{playArenaCall();}catch(e){console.warn("[onboard] arena call:",e&&e.message);}p.go(name.trim(),classCode||"visitor",scanScores,firstNav||undefined,sectionResults,studentPwdSet);}
 
   async function lookupName(n,cc){
     setLookingUp(true);
@@ -193,7 +227,41 @@ var[step,sSt]=useState("name");
     setScanPhase("welcome");
     setCurrentQ(null);
     sS(-1);
-    ctrlRef.current=createCatController(SCAN_SECTION_ORDER[0]);
+    seedsRef.current=SCAN_SECTION_ORDER.map(newSeed);
+    answersRef.current={grammar:[],vocab:[],reading:[],listening:[]};
+    ctrlRef.current=createCatController(SCAN_SECTION_ORDER[0],seedsRef.current[0]);
+    saveScan(0);
+  }
+  function saveScan(sec){
+    try{sessionStorage.setItem(SCAN_SAVE_KEY,JSON.stringify({v:1,at:Date.now(),name:name.trim(),classCode:classCode,
+      classGroupName:classGroupName,classGroupType:classGroupType,studentPwdSet:studentPwdSet,
+      seeds:seedsRef.current,answers:answersRef.current,scanSec:sec}));}
+    catch(e){console.warn("[scan-save] write caught:",e&&e.message);}
+  }
+  // Rejoue chaque section depuis sa graine. Une section dont toutes les réponses sont données (interruption
+  // sur l'écran de correction de sa dernière question) est close et la suivante démarre.
+  function restoreScan(d){
+    sN(d.name);setClassCode(d.classCode||"visitor");setClassGroupName(d.classGroupName||"");setClassGroupType(d.classGroupType||null);
+    setStudentPwdSet(!!d.studentPwdSet);
+    seedsRef.current=d.seeds;
+    answersRef.current=Object.assign({grammar:[],vocab:[],reading:[],listening:[]},d.answers||{});
+    var res={},scores={grammar:0,vocab:0,reading:0,listening:0},idx=d.scanSec||0,c=null,q=null,given=0;
+    SCAN_SECTION_ORDER.forEach(function(sid){given+=answersRef.current[sid].length;});
+    for(var i=0;i<idx;i++){var sid0=SCAN_SECTION_ORDER[i];var r0=replayCatController(sid0,d.seeds[i],answersRef.current[sid0]).score();res[sid0]=r0;scores[sid0]=Math.round(r0.acc*5);}
+    while(idx<SCAN_SECTION_ORDER.length){
+      var sid=SCAN_SECTION_ORDER[idx];
+      c=replayCatController(sid,d.seeds[idx],answersRef.current[sid]);
+      // Avant toute réponse, on rend l'accueil du scan (contrôleur prêt, rien de tiré).
+      if(given===0)break;
+      q=c.next();
+      if(q)break;
+      var r=c.score();res[sid]=r;scores[sid]=Math.round(r.acc*5);idx++;
+    }
+    setSectionResults(res);setScanScores(scores);
+    if(idx>=SCAN_SECTION_ORDER.length){sSt("results");return;}
+    ctrlRef.current=c;setScanSec(idx);sSt("scan");
+    if(given===0){setScanPhase("welcome");setCurrentQ(null);return;}
+    serveQ(q);
   }
   // Listening audio dispatcher — called from "Listen" button or auto on phase enter.
   // P1: plays 4 statements sequentially. P2: plays only the question audio.
@@ -250,6 +318,7 @@ var[step,sSt]=useState("name");
     var correct=isCorrectFor(curQ,pickIdx);
     if(correct){try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}
     var ctrl=ctrlRef.current;if(ctrl)ctrl.record(correct);
+    if(answersRef.current){answersRef.current[SCAN_SECTION_ORDER[scanSec]].push(!!correct);saveScan(scanSec);}
     setScanPhase("fb");
     // Passage automatique après une bonne réponse (2026-10-22) : le vert suffit, inutile de taper Next 26 fois.
     // Une erreur garde Next, pour laisser lire l'explication. advanceRef : la version de advanceScanV2 du
@@ -271,7 +340,7 @@ var[step,sSt]=useState("name");
     var nextIdx=scanSec+1;
     if(nextIdx>=SCAN_SECTION_ORDER.length){sSt("results");return;}
     setScanSec(nextIdx);
-    ctrlRef.current=createCatController(SCAN_SECTION_ORDER[nextIdx]);
+    ctrlRef.current=createCatController(SCAN_SECTION_ORDER[nextIdx],seedsRef.current&&seedsRef.current[nextIdx]);
     serveQ(ctrlRef.current.next());
   }
   advanceRef.current=advanceScanV2;

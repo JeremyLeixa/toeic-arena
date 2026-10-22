@@ -596,7 +596,7 @@ if(sp==="moduleName"){if(!lastSession)playBGM("bgm_name");return pg(<Component u
 - **Clue Hunter:** Clue identification phase distinct from answer. Category label hidden until post-answer.
 - **Weekly snapshots are necessary** — Supabase data is cumulative.
 - **Flashcards = learn, Word Tavern = prove (and earn XP).** Feedback loop: failed words in tavern → reset SRS → come back in next review.
-- **Onboarding enforces the right habits:** First Quest launched from the Battle Report, English-only from the scan on, Mock Test nudge from the day after a first session (`needsMockNudge`).
+- **Onboarding enforces the right habits:** First Quest launched from the Battle Report, English-only from the scan on, Mock Test nudge from the day after a first session (`needsMockNudge`). Battle Scan in one pass (no intro/done screens, auto-advance on a correct answer) and resumable after an interruption: seeds + answers in sessionStorage `toeic-onb-scan`, replayed by `replayCatController` (`tests/check_scan_replay.cjs`).
 
 ---
 
