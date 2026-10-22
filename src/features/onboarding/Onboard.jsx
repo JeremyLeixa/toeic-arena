@@ -951,15 +951,15 @@ var[step,sSt]=useState("name");
 
         {/* First Quest = l'action principale (2026-10-22). Avant, la carte n'était pas cliquable et la Home
             proposait ensuite un Mock : le rapport recommandait un module que rien ne permettait d'ouvrir. */}
-        <button className="btn1" onClick={function(){stopTts();stopListenAudio();setPendingNav(quest.mod);sSt("account");}}
-          style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
-          {"Start my First Quest →"}
-        </button>
-        <button className="btn2" onClick={function(){stopTts();stopListenAudio();setPendingNav(null);sSt("account");}}
-          style={{fontSize:13,padding:"11px 28px",width:"100%"}}>
-          {"Go to the Arena"}
-        </button>
         <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your radar refines as you train. Aldric will greet you inside, and your Mentor is one tap away whenever you want a personalized path.</p>
+        <div style={{height:"calc(96px + env(safe-area-inset-bottom,0px))"}}/>
+      </div>
+      {/* Boutons en pied fixe (2026-10-22) : le rapport dépasse l'écran d'un laptop, il fallait défiler
+          jusqu'en bas pour trouver la suite. Même pied que l'écran de fin des modules (.sr-cta), hors du
+          bloc animé. */}
+      <div className="sr-cta">
+        <button className="btn2" onClick={function(){stopTts();stopListenAudio();setPendingNav(null);sSt("account");}}>{"Go to the Arena"}</button>
+        <button className="btn1" onClick={function(){stopTts();stopListenAudio();setPendingNav(quest.mod);sSt("account");}}>{"Start my First Quest →"}</button>
       </div>
     </div>);}
 
@@ -1159,8 +1159,11 @@ var[step,sSt]=useState("name");
         {getExplain(currentQ)&&<div className="crd" style={{background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",padding:14}}>
           <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,margin:0}}>{getExplain(currentQ)}</p>
         </div>}
-        <button className="btn1" onClick={advanceScanV2} style={{marginTop:14}}>Next</button>
       </div>}
+      {/* Next en pied fixe (2026-10-22) : sur laptop, image P1 + options + explication poussaient le bouton
+          sous la ligne de flottaison. Même pied que les modules (.ss-foot), hors du bloc animé (fadeIn porte
+          un transform : il deviendrait le repère du position:fixed). */}
+      {scanPhase==="fb"&&<><div className="ss-foot-space"/><div className="ss-foot"><div className="ss-foot-in"><button className="btn1" onClick={advanceScanV2}>{"Next"}</button></div></div></>}
     </div>);
 
 }
