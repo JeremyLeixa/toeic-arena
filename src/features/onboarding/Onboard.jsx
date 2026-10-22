@@ -40,7 +40,7 @@ var[step,sSt]=useState("name");
   var[classGroupType,setClassGroupType]=useState(null);var lastCodeRef=useRef("");
   // Session perdue (F1, 2026-09-16) : App passe p.reauth={name,classCode} quand Supabase refuse la
   // ligne locale à la session courante. On rejoue le routage normal du lookup (compte sécurisé →
-  // « entre ton mot de passe », legacy → claim) au lieu de l'écran « Your arena name », qui
+  // « entre ton mot de passe », legacy → claim) au lieu de l'écran « Ton prénom », qui
   // laissait l'élève se croire déconnecté sans raison. Clé primitive : l'effet ne rejoue que si la
   // cible change (pas au retour « ← Back »).
   var reauthKey=p.reauth?(p.reauth.name+"|"+p.reauth.classCode):"";
@@ -50,7 +50,7 @@ var[step,sSt]=useState("name");
     lookupName(p.reauth.name,p.reauth.classCode);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[reauthKey]);
-  var[lookingUp,setLookingUp]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
+  var[lookingUp,setLookingUp]=useState(false);var[returnHint,setReturnHint]=useState(false);var[visitorConfirm,setVisitorConfirm]=useState(false);
   // SECURITY (2026-09-11) — confinement cross-promo : detectMode=true quand on arrive
   // sur l'écran classcode depuis l'écran name (détection "welcome back"). Il déclenche
   // la recherche de compte SCOPÉE au class_code saisi (lookupName(name,cc)). false =
@@ -296,17 +296,22 @@ var[step,sSt]=useState("name");
       <div style={{animation:"fadeIn .8s ease-out"}}>
         <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><BrandMark size={72}/></div>
         <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>VERSE ARENA</h1>
-        <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>Train smarter. Climb the ranks.<br/>Conquer the TOEIC.</p>
+        <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>{"Entraîne-toi. Grimpe au classement."}<br/>{"Décroche ton TOEIC."}</p>
         <div style={{marginBottom:20,textAlign:"left"}}>
-          <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Your arena name</label>
-          <input type="text" value={name} onChange={function(e){sN(e.target.value);}} onKeyDown={function(e){if(e.key==="Enter"&&name.trim()&&!lookingUp){setDetectMode(true);sSt("classcode");}}} autoFocus autoComplete="given-name" autoCapitalize="words" placeholder="Enter your name..."
+          <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>{"Ton prénom"}</label>
+          <input type="text" value={name} onChange={function(e){sN(e.target.value);}} onKeyDown={function(e){if(e.key==="Enter"&&name.trim()&&!lookingUp){setDetectMode(true);sSt("classcode");}}} autoFocus autoComplete="given-name" autoCapitalize="words" placeholder={"Ex. : Camille"}
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
         <button className="btn1" onClick={function(){if(name.trim()&&!lookingUp){setDetectMode(true);sSt("classcode");}}} disabled={lookingUp}
-          style={{opacity:name.trim()&&!lookingUp?1:.4,pointerEvents:name.trim()&&!lookingUp?"auto":"none",fontSize:18,padding:"16px 32px"}}>{lookingUp?"Checking...":"Next"}</button>
-        <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:20}}>
-          <button onClick={function(){sSt("emailLogin");setEmailInput("");setEmailErr("");setEmailSent(false);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"D\u00e9j\u00e0 un compte ? Me connecter"}</button>
-          <button onClick={function(){sSt("teacher");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Teacher access</button>
+          style={{opacity:name.trim()&&!lookingUp?1:.4,pointerEvents:name.trim()&&!lookingUp?"auto":"none",fontSize:18,padding:"16px 32px"}}>{lookingUp?"Vérification…":"Suivant"}</button>
+        {/* « Déjà inscrit » (2026-10-22) : le lien menait à la connexion par e-mail, alors que les élèves ont un
+            compte prénom + code classe + mot de passe (e-mail synthétique qu'ils ne connaissent pas). Le retour
+            passe par le même chemin que l'inscription : lookupName reconnaît le compte et demande le mot de passe. */}
+        {returnHint&&<p style={{fontSize:13,color:"var(--t2)",lineHeight:1.5,marginTop:18,maxWidth:300,marginLeft:"auto",marginRight:"auto"}}>{"Même chemin : ton prénom, puis ton code classe. On te reconnaît et on te demande ton mot de passe."}</p>}
+        <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:20,flexWrap:"wrap"}}>
+          {!returnHint&&<button onClick={function(){setReturnHint(true);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"Déjà inscrit ?"}</button>}
+          {returnHint&&<button onClick={function(){sSt("emailLogin");setEmailInput("");setEmailErr("");setEmailSent(false);}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"Connexion par e-mail"}</button>}
+          <button onClick={function(){sSt("teacher");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{"Accès formateur"}</button>
         </div>
       </div>
     </div>);
@@ -545,34 +550,34 @@ var[step,sSt]=useState("name");
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s"}}>
         <div style={{fontSize:48,marginBottom:16}}>🏫</div>
-        <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>Join a Group</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>Enter the class code given by your teacher to unlock all modules, or discover Verse Arena for free.</p>
+        <h2 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8}}>{"Rejoins ta classe"}</h2>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>{"Entre le code classe donné par ton formateur pour débloquer tous les modules, ou découvre Verse Arena gratuitement."}</p>
         <div style={{marginBottom:16,textAlign:"left"}}>
-          <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Class code</label>
-          <input type="text" value={classCode} onChange={function(e){var v=e.target.value.toLowerCase().replace(/\s/g,'');setClassCode(v);setClassValid(null);setClassGroupName("");}} onKeyDown={function(e){if(e.key==="Enter")submitClassCode();}} autoFocus autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="Code from your teacher"
+          <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>{"Code classe"}</label>
+          <input type="text" value={classCode} onChange={function(e){var v=e.target.value.toLowerCase().replace(/\s/g,'');setClassCode(v);setClassValid(null);setClassGroupName("");}} onKeyDown={function(e){if(e.key==="Enter")submitClassCode();}} autoFocus autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder={"Code de ton formateur"}
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid "+(classValid===true?"var(--green)":classValid===false?"var(--red)":"var(--bdr)"),borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none",transition:"border .2s"}}/>
-          {classChecking&&<p style={{fontSize:11,color:"var(--t3)",marginTop:6}}>Checking...</p>}
+          {classChecking&&<p style={{fontSize:11,color:"var(--t3)",marginTop:6}}>{"Vérification…"}</p>}
           {classValid===true&&<p style={{fontSize:12,color:"var(--green)",marginTop:6,fontWeight:600}}>✓ {classGroupName}</p>}
-          {classValid===false&&<p style={{fontSize:12,color:"var(--red)",marginTop:6}}>Code not found. Check with your teacher.</p>}
+          {classValid===false&&<p style={{fontSize:12,color:"var(--red)",marginTop:6}}>{"Code introuvable. Vérifie-le avec ton formateur."}</p>}
         </div>
         <button className="btn1" onClick={submitClassCode}
-          style={{opacity:classCode.trim()&&classValid!==false&&!lookingUp?1:.4,pointerEvents:classCode.trim()&&!lookingUp?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>{lookingUp?"Checking...":"Next"}</button>
+          style={{opacity:classCode.trim()&&classValid!==false&&!lookingUp?1:.4,pointerEvents:classCode.trim()&&!lookingUp?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>{lookingUp?"Vérification…":"Suivant"}</button>
         <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
-          <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">or</span>
+          <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">{"ou"}</span>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
         </div>
         {!visitorConfirm?<button className="btn2" onClick={function(){setVisitorConfirm(true);}}
-          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>{"🌍 Discover for Free"}</button>
+          style={{width:"100%",fontSize:14,padding:"12px 24px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>{"🌍 Découvrir gratuitement"}</button>
         :<div style={{animation:"fadeIn .3s",padding:16,background:"rgba(27,112,207,.08)",border:"1px solid rgba(27,112,207,.2)",borderRadius:14}}>
-          <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>{"\u26A0\uFE0F Free access includes 9 training modules. Unlock everything with a class code from your teacher, or with Arena Premium (9,99\u20AC/mo or 22,99\u20AC Pass 3m)."}</p>
+          <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>{"⚠️ L'accès gratuit ouvre une sélection de modules. Tout se débloque avec un code classe de ton formateur, ou avec Arena Premium (9,99 €/mois ou Pass 3 mois à 22,99 €)."}</p>
           <div style={{display:"flex",gap:8}}>
-            <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>Cancel</button>
+            <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>{"Annuler"}</button>
             <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);sSt("consent");}}
-              style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>Start Free Discovery</button>
+              style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>{"C'est parti"}</button>
           </div>
         </div>}
-        <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>← Back</button>
+        <button onClick={function(){sSt("name");}} style={{marginTop:16,background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"← Retour"}</button>
       </div>
     </div>);
 
@@ -582,8 +587,8 @@ var[step,sSt]=useState("name");
       {showPrivacy?<PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>:
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:420}}>
         <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="templar-shield" size={48} color="var(--cyan)"/></div>
-        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{"Protection de vos donn\u00e9es"}</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.6}}>{"Avant de commencer, voici comment Verse Arena utilise vos donn\u00e9es :"}</p>
+        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{"Protection de tes données"}</h2>
+        <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.6}}>{"Avant de commencer, voici comment Verse Arena utilise tes données :"}</p>
         <div style={{textAlign:"left",padding:"16px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:14,marginBottom:20}}>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
@@ -594,17 +599,17 @@ var[step,sSt]=useState("name");
                   l'\u00e9cran QUI SUIT la saisie du mot de passe. Cet \u00e9cran est un consentement
                   RGPD : toute \u00e9volution du mod\u00e8le d'identit\u00e9 doit \u00eatre r\u00e9percut\u00e9e ICI,
                   sinon on collecte une donn\u00e9e en affirmant le contraire. */}
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Votre pr\u00e9nom, code classe, scores, progression, temps d\u2019entra\u00eenement, et le mot de passe que vous choisissez \u2014 stock\u00e9 chiffr\u00e9, jamais lisible, ni par nous ni par votre formateur. Aucune adresse e-mail n\u2019est requise."}</p></div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Ton prénom, ton code classe, tes scores, ta progression, ton temps d’entraînement, et le mot de passe que tu choisis — stocké chiffré, jamais lisible, ni par nous ni par ton formateur. Aucune adresse e-mail n\u2019est requise."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
               <span style={{flexShrink:0,marginTop:1}}><GIcon name="bullseye" size={20} color="var(--cyan)"/></span>
               <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Finalit\u00e9"}</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Suivi p\u00e9dagogique, classements, et personnalisation de l\u2019entra\u00eenement. Donn\u00e9es accessibles \u00e0 votre formateur."}</p></div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Suivi p\u00e9dagogique, classements, et personnalisation de l\u2019entra\u00eenement. Données accessibles à ton formateur."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
               <span style={{flexShrink:0,marginTop:1}}><GIcon name="scales" size={20} color="var(--cyan)"/></span>
               <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Vos droits"}</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Vous pouvez \u00e0 tout moment exporter, modifier ou supprimer vos donn\u00e9es depuis votre profil."}</p></div>
+              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Tu peux à tout moment exporter, modifier ou supprimer tes données depuis ton profil."}</p></div>
             </div>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
               <span style={{flexShrink:0,marginTop:1}}><GIcon name="world" size={20} color="var(--cyan)"/></span>

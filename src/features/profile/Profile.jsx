@@ -1233,7 +1233,7 @@ export function Profile(p){
       {/* Teacher dashboard — only shown for users in a teacher-dedicated class.
           When the app is deployed on multiple campuses, each teacher gets their own
           synthetic class (like 'teacher-internal') so the button stays out of view
-          for students/visitors. Access via the onboarding "Teacher access" link is
+          for students/visitors. Access via the onboarding "Accès formateur" link is
           still possible with a valid teacher_code. */}
       {u.classCode==="teacher-internal"&&<button className="btn2" onClick={async function(){
         // Biométrie d'abord, mais seulement si un code formateur est mémorisé (hasDashSession) :
