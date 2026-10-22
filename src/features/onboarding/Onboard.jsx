@@ -1,5 +1,5 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { signInStudent, bindStudentUserId, signUpStudent, signInWithPassword, requestPasswordReset } from "../../auth.js";
+import { normNameForEmail, signInStudent, bindStudentUserId, signUpStudent, signInWithPassword, requestPasswordReset } from "../../auth.js";
 import { BrandMark, GIcon } from "../../components/icons.jsx";
 import { PrivacyPolicy } from "../../components/legal.jsx";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
@@ -345,6 +345,11 @@ var[step,sSt]=useState("name");
   }
   advanceRef.current=advanceScanV2;
 
+  // Un prénom qui se normalise à vide (caractères non latins) ne donne pas d'e-mail synthétique : synthEmail
+  // lèverait une erreur à la création du compte, qui vient après le scan (lot 3, 2026-10-22). Refusé ici.
+  var nameUnusable=!!name.trim()&&!normNameForEmail(name);
+  var nameReady=!!name.trim()&&!nameUnusable&&!lookingUp;
+  function submitName(){if(nameReady){setDetectMode(true);sSt("classcode");}}
   // ─ Name entry ─
   if(step==="name")return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
@@ -354,11 +359,12 @@ var[step,sSt]=useState("name");
         <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>{"Entraîne-toi. Grimpe au classement."}<br/>{"Décroche ton TOEIC."}</p>
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>{"Ton prénom"}</label>
-          <input type="text" value={name} onChange={function(e){sN(e.target.value);}} onKeyDown={function(e){if(e.key==="Enter"&&name.trim()&&!lookingUp){setDetectMode(true);sSt("classcode");}}} autoFocus autoComplete="given-name" autoCapitalize="words" placeholder={"Ex. : Camille"}
+          <input type="text" value={name} onChange={function(e){sN(e.target.value);}} onKeyDown={function(e){if(e.key==="Enter")submitName();}} autoFocus autoComplete="given-name" autoCapitalize="words" placeholder={"Ex. : Camille"}
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+          {nameUnusable&&<p style={{fontSize:12,color:"var(--red)",marginTop:6}}>{"Écris ton prénom en lettres latines (a-z), accents permis."}</p>}
         </div>
-        <button className="btn1" onClick={function(){if(name.trim()&&!lookingUp){setDetectMode(true);sSt("classcode");}}} disabled={lookingUp}
-          style={{opacity:name.trim()&&!lookingUp?1:.4,pointerEvents:name.trim()&&!lookingUp?"auto":"none",fontSize:18,padding:"16px 32px"}}>{lookingUp?"Vérification…":"Suivant"}</button>
+        <button className="btn1" onClick={submitName} disabled={!nameReady}
+          style={{opacity:nameReady?1:.4,pointerEvents:nameReady?"auto":"none",fontSize:18,padding:"16px 32px"}}>{lookingUp?"Vérification…":"Suivant"}</button>
         {/* « Déjà inscrit » (2026-10-22) : le lien menait à la connexion par e-mail, alors que les élèves ont un
             compte prénom + code classe + mot de passe (e-mail synthétique qu'ils ne connaissent pas). Le retour
             passe par le même chemin que l'inscription : lookupName reconnaît le compte et demande le mot de passe. */}
