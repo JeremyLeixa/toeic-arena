@@ -1,5 +1,5 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { signUpWithPassword, signInStudent, bindStudentUserId, signUpStudent, signInWithPassword, requestPasswordReset } from "../../auth.js";
+import { signInStudent, bindStudentUserId, signUpStudent, signInWithPassword, requestPasswordReset } from "../../auth.js";
 import { Bar } from "../../components/Bar.jsx";
 import { BrandMark, GIcon } from "../../components/icons.jsx";
 import { PrivacyPolicy } from "../../components/legal.jsx";
@@ -71,13 +71,10 @@ var[step,sSt]=useState("name");
   // PIN state removed 2026-04-20 — auth is now handled via Supabase magic link
   var[pendingNav,setPendingNav]=useState(null);
   var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
-  // ── Phase 2 — email+password signup state (cohabite avec emailLogin/emailPrompt magic link) ──
-  // pwd1/pwd2 : nouveau mot de passe + confirmation
-  // pwdBusy/pwdErr : état appel signUpWithPassword
-  // pwdSetupDone : true après signup OK → finishOnb() skip l'écran emailPrompt magic link
-  // pwdEmailDup : true si Supabase refuse l'email (déjà pris) → affiche bouton "Me connecter"
+  // pwd1/pwd2 : mot de passe + confirmation (setPassword, enterPassword, emailLogin) ; pwdBusy/pwdErr : appel en cours, erreur.
+  // L'étape emailPassword (inscription email + mot de passe, 2026-04-27) a été supprimée le 2026-10-22 :
+  // plus aucun chemin n'y menait depuis l'identité par prénom + code + mot de passe (P2 Phase A).
   var[pwd1,setPwd1]=useState("");var[pwd2,setPwd2]=useState("");var[pwdBusy,setPwdBusy]=useState(false);var[pwdErr,setPwdErr]=useState("");
-  var[pwdSetupDone,setPwdSetupDone]=useState(false);var[pwdEmailDup,setPwdEmailDup]=useState(false);
   // Phase 2 commit 3 (2026-04-27) : useEffect pollEmailConfirmation supprimé avec
   // le step emailPrompt. Plus de magic link post-onboarding → plus de poll nécessaire.
   function goToInstallStep(firstNav){
@@ -292,81 +289,6 @@ var[step,sSt]=useState("name");
         </div>
       </div>
     </div>);
-
-  // ─ Email + Password signup (Phase 2 — refonte 2026-04-27) ─
-  // Vient APRÈS l'écran name pour les users non reconnus (lookupName → 0 match).
-  // Propose 2 chemins : signup avec email+password, ou "Continuer sans compte" (visitor).
-  // Cohabite avec emailLogin/emailPrompt pendant la transition (Phase 4 cleanup).
-  if(step==="emailPassword"){
-    async function doSignUp(){
-      if(pwdBusy)return;
-      var e=(emailInput||"").trim().toLowerCase();
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){setPwdErr("Adresse email invalide");return;}
-      if((pwd1||"").length<8){setPwdErr("Mot de passe trop court (8 caractères minimum)");return;}
-      if(pwd1!==pwd2){setPwdErr("Les deux mots de passe ne correspondent pas");return;}
-      setPwdErr("");setPwdEmailDup(false);setPwdBusy(true);
-      try{
-        await signUpWithPassword(e,pwd1,{name:name.trim()});
-        setPwdSetupDone(true);
-        // Email saisi reste dans emailInput au cas où d'autres branches le lisent.
-        // Le class_code a déjà été saisi et validé AVANT la détection (écran classcode
-        // en amont) → on va direct à consent, on ne le redemande pas. Fallback classcode
-        // si jamais il est vide (chemin inattendu).
-        sSt(classCode?"consent":"classcode");
-      }catch(err){
-        var msg=((err&&err.message)||"").toLowerCase();
-        if(msg.includes("already")||msg.includes("registered")||msg.includes("exists")||msg.includes("duplicate")){
-          setPwdErr("Cet email est déjà utilisé.");
-          setPwdEmailDup(true);
-        }else{
-          setPwdErr((err&&err.message)||"Erreur");
-        }
-      }finally{setPwdBusy(false);}
-    }
-    function continueAsVisitor(){
-      // Skip email+password : mode visitor pur, pas de compte cross-device.
-      // Va direct à consent (pas classcode) puisque le choix est déjà fait.
-      setClassCode("visitor");
-      setPwdErr("");setPwdEmailDup(false);
-      sSt("consent");
-    }
-    return(
-    <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
-      <button className="back-btn" onClick={function(){sSt("name");setPwdErr("");setPwdEmailDup(false);}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"←"} Back</button>
-      <div style={{maxWidth:420,margin:"60px auto 0"}}>
-        <div style={{textAlign:"center",marginBottom:24}}>
-          <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><GIcon name="castle" size={48} color="var(--cyan)"/></div>
-          <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{"Crée ton compte"}</h1>
-          <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Email et mot de passe pour sauvegarder ton avancée et te reconnecter sur tous tes appareils."}</p>
-        </div>
-        <input type="email" value={emailInput} onChange={function(e){setEmailInput(e.target.value);setPwdEmailDup(false);setPwdErr("");}}
-          placeholder="ton@email.com" autoComplete="email" autoCapitalize="off" autoCorrect="off"
-          style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:10,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
-        <PasswordInput value={pwd1} onChange={function(e){setPwd1(e.target.value);}}
-          placeholder="Mot de passe (8 caractères min.)" autoComplete="new-password"
-          style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:10,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
-        <PasswordInput value={pwd2} onChange={function(e){setPwd2(e.target.value);}}
-          placeholder="Confirme le mot de passe" autoComplete="new-password"
-          style={{width:"100%",padding:"14px 16px",fontSize:14,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"}}/>
-        {pwdErr&&<div style={{color:"var(--red)",fontSize:13,marginBottom:12,textAlign:"center"}}>{pwdErr}</div>}
-        {pwdEmailDup&&<button className="btn2" onClick={function(){sSt("emailLogin");setEmailErr("");setEmailSent(false);setPwdErr("");setPwdEmailDup(false);}}
-          style={{width:"100%",fontSize:13,padding:"11px 16px",marginBottom:10,borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>
-          {"Me connecter avec cet email"}
-        </button>}
-        <button className="btn1" onClick={doSignUp} disabled={pwdBusy}
-          style={{width:"100%",fontSize:14,padding:"13px 20px",background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700,opacity:pwdBusy?.6:1}}>
-          {pwdBusy?"Création...":"Continuer"}
-        </button>
-        <div style={{marginTop:24,paddingTop:16,borderTop:"1px solid var(--bdr)",textAlign:"center"}}>
-          <p style={{color:"var(--t3)",fontSize:11,marginBottom:10,lineHeight:1.4}}>{"Tu veux juste essayer ? Tes stats resteront sur cet appareil."}</p>
-          <button className="btn2" onClick={continueAsVisitor}
-            style={{width:"100%",fontSize:13,padding:"11px 16px",borderColor:"var(--bdr)",color:"var(--t3)"}}>
-            {"Continuer sans compte"}
-          </button>
-        </div>
-      </div>
-    </div>);
-  }
 
   // ─ P2 Phase A (2026-09-11) : entre ton mot de passe (retour, compte sécurisé) ─
   // Atteint depuis lookupName quand la ligne a password_set_at. Login via compte synthétique
