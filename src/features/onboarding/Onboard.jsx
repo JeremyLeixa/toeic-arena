@@ -104,6 +104,7 @@ var[step,sSt]=useState("name");
   // même clic (sauvegarde du scan, puis entrée dans l'arène au lot 3). L'état React n'y est pas encore à jour :
   // lu tel quel, onboard() recevrait authBind=false et la ligne naîtrait sans user_id ni password_set_at.
   var pwdSetRef=useRef(false);
+  var[pendingNav,setPendingNav]=useState(null); // choix du rapport (module de la First Quest ou null), exécuté après account
   function markPwdSet(v){pwdSetRef.current=!!v;setStudentPwdSet(!!v);}
   // Filet auto-réparateur : si signUpStudent échoue "compte déjà existant" (ex. binding
   // password_set_at raté à la création, ou pré-claim par un tiers), on propose "me connecter"
@@ -161,9 +162,9 @@ var[step,sSt]=useState("name");
       // L'ancien sélecteur ouvrait le profil choisi SANS mot de passe (recover legacy).
       setPwd1("");setPwd2("");setPwdErr("");setPwdExistsDup(false);
       if(matches.length===0){
-        console.warn("[LOOKUP] no match in cohort → account (new)");
+        console.warn("[LOOKUP] no match in cohort → scan (new)");
         setDetectMode(false); // nouvel inscrit : quitte le mode détection
-        sSt("account");
+        startTestV2();
       } else {
         if(matches.length>1)console.warn("[LOOKUP] "+matches.length+" rows share this normalized name in",cc,"→ highest XP (same rule as the server)");
         // Casing DB nécessaire pour synthEmail + recover.
@@ -179,9 +180,9 @@ var[step,sSt]=useState("name");
         }
       }
     }catch(e){
-      console.warn("[LOOKUP] outer catch → account (new), err:",e&&e.message);
+      console.warn("[LOOKUP] outer catch → scan (new), err:",e&&e.message);
       setDetectMode(false);
-      sSt("account");
+      startTestV2();
     }
     setLookingUp(false);
   }
@@ -215,7 +216,7 @@ var[step,sSt]=useState("name");
     var ok=classValid;
     if(ok!==true){lastCodeRef.current=classCode.trim().toLowerCase();ok=await checkGroupCode(classCode);}
     if(!ok)return;
-    if(detectMode){lookupName(name.trim(),classCode);}else{sSt("account");}
+    if(detectMode){lookupName(name.trim(),classCode);}else{startTestV2();}
   }
 
   // ─── Battle Scan V2 helpers (CAT-light) ───
@@ -231,7 +232,8 @@ var[step,sSt]=useState("name");
     seedsRef.current=SCAN_SECTION_ORDER.map(newSeed);
     answersRef.current={grammar:[],vocab:[],reading:[],listening:[]};
     ctrlRef.current=createCatController(SCAN_SECTION_ORDER[0],seedsRef.current[0]);
-    saveScan(0);
+    // Pas de saveScan ici : appelé dans le même clic qu'un setClassCode (visiteur), il sauverait l'ancien code.
+    // La première réponse sauvegarde tout, graines comprises.
   }
   function saveScan(sec){
     try{sessionStorage.setItem(SCAN_SAVE_KEY,JSON.stringify({v:1,at:Date.now(),name:name.trim(),classCode:classCode,
@@ -410,7 +412,7 @@ var[step,sSt]=useState("name");
           console.warn("[pwd] bind refused, orphan auth account:",noRow);
           if(noRow){
             sN(epName);setDetectMode(false);markPwdSet(true);setPwd1("");
-            sSt(epCc?"account":"classcode");
+            if(epCc)startTestV2();else sSt("classcode");
             return;
           }
           setPwdErr("Ce compte est lié à une autre identité. Préviens ton formateur (liaison refusée).");return;
@@ -627,7 +629,7 @@ var[step,sSt]=useState("name");
           <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>{"⚠️ L'accès gratuit ouvre une sélection de modules. Tout se débloque avec un code classe de ton formateur, ou avec Arena Premium (9,99 €/mois ou Pass 3 mois à 22,99 €)."}</p>
           <div style={{display:"flex",gap:8}}>
             <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>{"Annuler"}</button>
-            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);sSt("account");}}
+            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);startTestV2();}}
               style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>{"C'est parti"}</button>
           </div>
         </div>}
@@ -635,14 +637,17 @@ var[step,sSt]=useState("name");
       </div>
     </div>);
 
-  // ─ Compte + consentement (2026-10-22) ─
+  // ─ Compte + consentement (2026-10-22), APRÈS le Battle Report ─
   // Une seule étape pour le mot de passe d'un nouvel élève ET le consentement RGPD (ex-étapes setPassword "new"
-  // et consent). Champs mot de passe seulement pour un nouvel élève d'une promo : le visiteur n'a pas de compte,
+  // et consent). Placée après le rapport (choix de Jérémy, lot 3) : la valeur d'abord, l'engagement ensuite.
+  // RGPD : rien n'est enregistré côté serveur avant ce clic (le scan vit dans l'état React et le sessionStorage
+  // de l'onglet ; seule la recherche prénom + code part avant, comme avant le lot 3). Ne JAMAIS appeler save,
+  // syncToCloud ou une RPC d'écriture avant account : on traiterait des données sans consentement. Champs mot de passe seulement pour un nouvel élève d'une promo : le visiteur n'a pas de compte,
   // l'orphelin (compte Auth sans ligne, reprise 0cd3a9c) a déjà le sien (studentPwdSet). Cet écran est un
   // consentement RGPD : toute évolution du modèle d'identité doit être répercutée dans « Données collectées ».
   if(step==="account"){
     var needPwd=classCode!=="visitor"&&!studentPwdSet;
-    var accountDone=function(){startTestV2();};
+    var accountDone=function(){enterArena(pendingNav);};
     async function doAccount(){
       if(pwdBusy)return;
       if(!needPwd){accountDone();return;}
@@ -675,12 +680,12 @@ var[step,sSt]=useState("name");
     return(
     <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
       {showPrivacy?<PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>:<>
-      <button className="back-btn" onClick={function(){setPwdErr("");setPwdExistsDup(false);sSt("classcode");}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"← Retour"}</button>
+      <button className="back-btn" onClick={function(){setPwdErr("");setPwdExistsDup(false);sSt("results");}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"← Retour"}</button>
       <div style={{maxWidth:420,margin:"56px auto 0",animation:"fadeIn .5s"}}>
         <div style={{textAlign:"center",marginBottom:18}}>
           <div style={{marginBottom:10,display:"flex",justifyContent:"center"}}><GIcon name="castle" size={44} color="var(--cyan)"/></div>
-          <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6,color:"var(--gold)"}}>{needPwd?"Crée ton compte":"Avant d’entrer"}</h1>
-          {needPwd&&<p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Un mot de passe pour retrouver ta progression"+(classGroupName?" ("+classGroupName+")":"")+" sur tous tes appareils."}</p>}
+          <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6,color:"var(--gold)"}}>{needPwd?"Garde ton résultat":"Avant d’entrer"}</h1>
+          {needPwd&&<p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Choisis un mot de passe : ton résultat et ta progression"+(classGroupName?" ("+classGroupName+")":"")+" te suivent sur tous tes appareils."}</p>}
         </div>
         {needPwd&&<>
           <PasswordInput value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}} placeholder="Mot de passe (8 caractères min.)" autoComplete="new-password" style={inputSt}/>
@@ -946,11 +951,11 @@ var[step,sSt]=useState("name");
 
         {/* First Quest = l'action principale (2026-10-22). Avant, la carte n'était pas cliquable et la Home
             proposait ensuite un Mock : le rapport recommandait un module que rien ne permettait d'ouvrir. */}
-        <button className="btn1" onClick={function(){enterArena(quest.mod);}}
+        <button className="btn1" onClick={function(){stopTts();stopListenAudio();setPendingNav(quest.mod);sSt("account");}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
           {"Start my First Quest →"}
         </button>
-        <button className="btn2" onClick={function(){enterArena(null);}}
+        <button className="btn2" onClick={function(){stopTts();stopListenAudio();setPendingNav(null);sSt("account");}}
           style={{fontSize:13,padding:"11px 28px",width:"100%"}}>
           {"Go to the Arena"}
         </button>
@@ -1013,6 +1018,7 @@ var[step,sSt]=useState("name");
         {/* Annonce du passage à l'anglais (ex-écran langBridge, fusionné ici le 2026-10-22) : c'est à la
             section suivante que l'anglais commence, pas après le Battle Report. */}
         <p style={{color:"var(--t1)",fontSize:13,fontWeight:600,lineHeight:1.55,margin:"0 auto 22px",maxWidth:330}}>{"À partir d’ici, tout se passe en anglais : questions, consignes, explications. C’est l’immersion qui fait progresser."}</p>
+        <p style={{color:"var(--t3)",fontSize:11,lineHeight:1.5,margin:"-10px auto 18px",maxWidth:330}}>{"Rien n’est enregistré avant la fin : tes réponses restent sur cet appareil jusqu’à ce que tu valides ton entrée."}</p>
         <button className="btn1" onClick={beginSectionV2} style={{fontSize:16,padding:"14px 32px",width:"100%"}}>{"Commencer l’épreuve"}</button>
       </div>
     </div>);
