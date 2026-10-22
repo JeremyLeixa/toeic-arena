@@ -204,6 +204,11 @@ export function needsMockNudge(u){
   if(u.mockResults&&(u.mockResults.mock1||u.mockResults.mock2||u.mockResults.mock3))return false;
   var joined=u.joinedAt?new Date(u.joinedAt):null;
   if(joined&&(Date.now()-joined.getTime())>=3*24*60*60*1000)return true;
+  // Pas de Mock le jour de l'arrivée ni avant une première manche (2026-10-22). L'élève sort du Battle
+  // Scan (26 questions) avec une First Quest : lui proposer aussitôt un Mock de 100 questions contredisait
+  // le rapport et tombait au pire moment. Au-delà de 3 jours (ci-dessus), le rappel revient quoi qu'il arrive.
+  if(u.joinedAt&&String(u.joinedAt).slice(0,10)===today())return false;
+  if(!(u.stats&&u.stats.sessions>0))return false;
   if(today()>=SEASON_START)return true;
   return false;
 }

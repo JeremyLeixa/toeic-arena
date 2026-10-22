@@ -46,6 +46,13 @@ const rookie = student({ mockResults: {}, joinedAt: new Date(NOW - 5 * 864e5).to
 eq('Mock avant la mission, après le coffre', ids(A.homeAgenda(rookie, NOW, 1)), ['chest', 'mock', 'mission', 'q1', 'q2']);
 eq('le Mock mène au Mock 1', A.homeAgenda(rookie, NOW, 0)[0].mod, 'mock1');
 
+// ── nouvel élève (2026-10-22) : il sort du Battle Scan, sa First Quest d'abord, pas un Mock de 100 questions ──
+const dayAgo = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+const newcomer = (joinedAt, sessions) => student({ mockResults: {}, joinedAt, stats: { sessions } });
+eq('pas de Mock le jour de l\'arrivée, même après une manche', ids(A.homeAgenda(newcomer(new Date().toISOString().slice(0, 10), 2), NOW, 0)), ['mission', 'q1', 'q2']);
+eq('pas de Mock avant une première manche', ids(A.homeAgenda(newcomer(dayAgo, 0), NOW, 0)), ['mission', 'q1', 'q2']);
+eq('le Mock revient le lendemain d\'une première manche', ids(A.homeAgenda(newcomer(dayAgo, 1), NOW, 0))[0], 'mock');
+
 // ── mission re-tirée : c'est `pick` qui la désigne, et elle passe devant ──
 const rr = student(); rr.mission.pick = 2;
 const it = A.homeAgenda(rr, NOW, 0);
