@@ -6,7 +6,6 @@ import { PrivacyPolicy } from "../../components/legal.jsx";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
 import { SCAN_SECTION_ORDER, BATTLE_SCAN_V2 } from "../../data/placement.js";
 import { resumeAudioSession, stopListenAudio, getEnVoice, playAudioFile, playLetteredOption, isAudioAborted } from "../../lib/audio.js";
-import { isStandalonePWA, isIOSDevice } from "../../lib/device.js";
 import { isModuleLocked } from "../../lib/access.js";
 import { getBioCredId, biometricAvailable, bioAuthenticate, teacherAuth, setDashSession, hasDashSession } from "../../lib/teacherSession.js";
 import { normalizeName } from "../../lib/util.js";
@@ -71,7 +70,6 @@ var[step,sSt]=useState("name");
   // → enterPassword, au lieu de laisser l'user coincé sur l'écran claim.
   var[pwdExistsDup,setPwdExistsDup]=useState(false);
   // PIN state removed 2026-04-20 — auth is now handled via Supabase magic link
-  var[pendingNav,setPendingNav]=useState(null);
   var[emailInput,setEmailInput]=useState("");var[emailBusy,setEmailBusy]=useState(false);var[emailErr,setEmailErr]=useState("");var[emailSent,setEmailSent]=useState(false);
   // pwd1/pwd2 : mot de passe + confirmation (setPassword, enterPassword, emailLogin) ; pwdBusy/pwdErr : appel en cours, erreur.
   // L'étape emailPassword (inscription email + mot de passe, 2026-04-27) a été supprimée le 2026-10-22 :
@@ -79,18 +77,12 @@ var[step,sSt]=useState("name");
   var[pwd1,setPwd1]=useState("");var[pwd2,setPwd2]=useState("");var[pwdBusy,setPwdBusy]=useState(false);var[pwdErr,setPwdErr]=useState("");
   // Phase 2 commit 3 (2026-04-27) : useEffect pollEmailConfirmation supprimé avec
   // le step emailPrompt. Plus de magic link post-onboarding → plus de poll nécessaire.
-  function goToInstallStep(firstNav){
-    // 2026-06-30: the former push opt-in screen is now a home-screen INSTALL prompt.
-    // Push opt-in moved out of onboarding (better triggered live at launch, or from
-    // Profile). No longer gated on the Push API — installing matters for fullscreen
-    // too, and on iOS it's the prerequisite for push. Skip only when already running
-    // as an installed PWA (nothing to install), going straight to the langBridge.
-    // Reverting this to an auto Notification.requestPermission() risks a premature
-    // hard-deny that's hard to recover from on iOS/Android.
-    setPendingNav(firstNav||null);
-    if(isStandalonePWA()){sSt("langBridge");return;}
-    sSt("install");
-  }
+  // Entrée dans l'arène, directement depuis le Battle Report (2026-10-22). L'écran d'installation et le
+  // langBridge (« From here, English ») sont sortis du flow : l'installation est proposée sur la Home après la
+  // première manche (lib/device.js, iPhone : feuille de notifications), et le passage à l'anglais est annoncé
+  // à l'accueil du Battle Scan, là où l'anglais commence vraiment. firstNav = module de la First Quest, ou null.
+  // Ne pas remettre ici une demande automatique de notifications (refus définitif difficile à rattraper).
+  function enterArena(firstNav){stopTts();stopListenAudio();try{playArenaCall();}catch(e){console.warn("[onboard] arena call:",e&&e.message);}p.go(name.trim(),classCode||"visitor",scanScores,firstNav||undefined,sectionResults,studentPwdSet);}
 
   async function lookupName(n,cc){
     setLookingUp(true);
@@ -862,90 +854,15 @@ var[step,sSt]=useState("name");
 
         {/* First Quest = l'action principale (2026-10-22). Avant, la carte n'était pas cliquable et la Home
             proposait ensuite un Mock : le rapport recommandait un module que rien ne permettait d'ouvrir. */}
-        <button className="btn1" onClick={function(){stopTts();stopListenAudio();goToInstallStep(quest.mod);}}
+        <button className="btn1" onClick={function(){enterArena(quest.mod);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
           {"Start my First Quest →"}
         </button>
-        <button className="btn2" onClick={function(){stopTts();stopListenAudio();goToInstallStep(null);}}
+        <button className="btn2" onClick={function(){enterArena(null);}}
           style={{fontSize:13,padding:"11px 28px",width:"100%"}}>
           {"Go to the Arena"}
         </button>
         <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your radar refines as you train. Aldric will greet you inside, and your Mentor is one tap away whenever you want a personalized path.</p>
-      </div>
-    </div>);}
-
-  // ─ Install on home screen (replaces the former push opt-in — 2026-06-30) ─
-  // Why install-first: on iOS, push & fullscreen only work once the PWA is on the
-  // home screen, and a teacher-led launch walks students through it live. The push
-  // opt-in itself now lives in Profile (toggle), not here. The browser-control glyph
-  // in the mock is kept REALISTIC on purpose (it's the button students must find);
-  // only the decorative icons are med-fan game-icons.
-  if(step==="install"){
-    function finishOnb(){sSt("langBridge");}
-    var ios=isIOSDevice();
-    var ctrl=ios
-      ?(<svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{display:"block"}}><path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>)
-      :(<svg viewBox="0 0 24 24" width={17} height={17} fill="currentColor" style={{display:"block"}}><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>);
-    var steps=ios?[
-      {n:1,ic:"compass",tx:(<span>{"Ouvre cette page dans "}<b style={{color:"var(--cx-hex)"}}>Safari</b></span>)},
-      {n:2,ic:"pointing",tx:(<span>{"Touche le bouton "}<b style={{color:"var(--cx-hex)"}}>Partager</b>{" en bas de l'écran"}</span>)},
-      {n:3,ic:"tower-flag",tx:(<span>{"Choisis "}<b style={{color:"var(--cx-hex)"}}>{"« Sur l'écran d'accueil »"}</b></span>)}
-    ]:[
-      {n:1,ic:"pointing",tx:(<span>{"Touche le menu "}<b style={{color:"var(--cx-hex)"}}>{"⋮"}</b>{" de ton navigateur"}</span>)},
-      {n:2,ic:"tower-flag",tx:(<span>{"Choisis "}<b style={{color:"var(--cx-hex)"}}>{"« Installer l'application »"}</b></span>)},
-      {n:3,ic:"castle",tx:(<span>{"L'icône apparaît avec tes autres apps"}</span>)}
-    ];
-    return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
-      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:360}}>
-        <div style={{marginBottom:14,display:"flex",justifyContent:"center",filter:"drop-shadow(0 4px 10px rgba(var(--cx),.35))"}}><GIcon name="castle" size={56} color="var(--cx-hex)"/></div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:22,color:"var(--t1)",lineHeight:1.25,marginBottom:18}}>{"Installe Verse Arena sur ton écran d'accueil"}</h2>
-
-        {/* Browser mock: highlights the real control to look for (kept realistic). */}
-        <div style={{padding:14,marginBottom:18,background:"rgba(var(--bg3-rgb),.5)",border:"1px solid var(--bdr)",borderRadius:16}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(var(--bg-rgb),.6)",borderRadius:10,padding:"8px 10px"}}>
-            <span style={{flex:1,textAlign:"left",fontSize:12,color:"var(--t2)",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>app.verse-arena.fr</span>
-            <span style={{width:30,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--cx-hex)",background:"rgba(var(--cx),.16)",border:"2px solid var(--cx-hex)",animation:"pulse 1.6s ease-in-out infinite"}}>{ctrl}</span>
-          </div>
-          <div style={{marginTop:10,fontSize:11,fontWeight:700,color:"var(--cx-hex)",display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}><GIcon name="pointing" size={13} color="var(--cx-hex)"/>{ios?"Touche ce bouton dans Safari":"Touche le menu de ton navigateur"}</div>
-        </div>
-
-        {/* Steps */}
-        <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:18,textAlign:"left"}}>
-          {steps.map(function(s){return(
-            <div key={s.n} style={{display:"flex",gap:11,alignItems:"center",background:"rgba(var(--cx),.06)",border:"1px solid rgba(var(--cx),.15)",borderRadius:12,padding:"11px 13px"}}>
-              <span style={{width:24,height:24,flexShrink:0,borderRadius:"50%",background:"var(--cx-hex)",color:"#0f0c08",fontWeight:800,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{s.n}</span>
-              <span style={{flex:1,fontSize:13,color:"var(--t1)",lineHeight:1.45}}>{s.tx}</span>
-              <GIcon name={s.ic} size={17} color="var(--cx-hex)"/>
-            </div>);})}
-        </div>
-
-        <p style={{fontSize:11,color:"var(--t3)",marginBottom:18}}>{"Plein écran · rappels de série · tes acquis te suivent"}</p>
-
-        <button className="btn1" onClick={finishOnb}
-          style={{fontSize:15,padding:"14px 28px",width:"100%",marginBottom:9,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>{"C'est fait, continuer →"}</button>
-        <button className="btn2" onClick={finishOnb}
-          style={{fontSize:13,padding:"11px 28px",width:"100%"}}>Plus tard</button>
-        <p style={{color:"var(--t3)",fontSize:10,marginTop:11,lineHeight:1.5}}>{"Tu pourras activer les rappels à tout moment depuis ton Profil."}</p>
-      </div>
-    </div>);}
-
-  // ─ Language bridge: transition to English ─
-  if(step==="langBridge"){
-    function enterArena(){p.go(name.trim(),classCode||"visitor",scanScores,pendingNav||undefined,sectionResults,studentPwdSet);}
-    return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"24px 16px",textAlign:"center"}}>
-      <div style={{animation:"fadeIn .6s",width:"100%",maxWidth:380}}>
-        <div style={{fontSize:64,marginBottom:18}}>{"\u2694\uFE0F"}</div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:12}}>Welcome, Warrior</h2>
-        <p style={{color:"var(--t1)",fontSize:15,lineHeight:1.6,marginBottom:16,fontWeight:600}}>From here, your adventure continues in English.</p>
-        <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.6,marginBottom:28}}>Every screen, every question, every feedback — English only. This is immersion. Trust the process.</p>
-        <div className="crd" style={{padding:"12px 16px",marginBottom:24,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)"}}>
-          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.5,margin:0,fontStyle:"italic"}}>{"\u201C"}The best way to learn a language is to live in it.{"\u201D"}</p>
-        </div>
-        <button className="btn1" onClick={function(){playArenaCall();enterArena();}}
-          style={{fontSize:16,padding:"14px 32px",width:"100%",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
-          Enter the Arena {"\u2192"}</button>
       </div>
     </div>);}
 
@@ -996,11 +913,14 @@ var[step,sSt]=useState("name");
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
         <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:2,marginBottom:14}}>Battle Scan</div>
         <div style={{marginBottom:18,animation:"countUp .6s"}}><GIcon name="coliseum" size={64} color="var(--cyan)"/></div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,color:"var(--cyan)",marginBottom:12}}>{"Votre première épreuve"}</h2>
-        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.65,marginBottom:16,maxWidth:330,margin:"0 auto 16px"}}>{"Avant de bâtir votre légende, l’arène doit jauger votre niveau. Cette épreuve adaptative déterminera le point de départ de votre quête."}</p>
+        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:26,color:"var(--cyan)",marginBottom:12}}>{"Ta première épreuve"}</h2>
+        <p style={{color:"var(--t2)",fontSize:14,lineHeight:1.65,marginBottom:16,maxWidth:330,margin:"0 auto 16px"}}>{"Avant de bâtir ta légende, l’arène doit jauger ton niveau. Cette épreuve adaptative fixera le point de départ de ta quête."}</p>
         <div className="crd" style={{padding:"12px 16px",marginBottom:22,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",fontSize:12,color:"var(--t2)",lineHeight:1.55,textAlign:"left"}}>
-          {"Quatre sections — grammaire, vocabulaire, lecture et écoute. Les questions s’ajustent à vos réponses. Pas de chrono, aucun piège : répondez du mieux que vous pouvez."}
+          {"Quatre sections — grammaire, vocabulaire, lecture et écoute. Les questions s’ajustent à tes réponses. Pas de chrono, aucun piège : réponds du mieux que tu peux."}
         </div>
+        {/* Annonce du passage à l'anglais (ex-écran langBridge, fusionné ici le 2026-10-22) : c'est à la
+            section suivante que l'anglais commence, pas après le Battle Report. */}
+        <p style={{color:"var(--t1)",fontSize:13,fontWeight:600,lineHeight:1.55,margin:"0 auto 22px",maxWidth:330}}>{"À partir d’ici, tout se passe en anglais : questions, consignes, explications. C’est l’immersion qui fait progresser."}</p>
         <button className="btn1" onClick={function(){setScanPhase("intro");}} style={{fontSize:16,padding:"14px 32px",width:"100%"}}>{"Commencer l’épreuve"}</button>
       </div>
     </div>);

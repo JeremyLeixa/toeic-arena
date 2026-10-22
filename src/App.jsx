@@ -81,7 +81,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-09-25-waygates-opening-night";
+var BUILD_ID="2026-10-22-onboarding-lot1";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1294,7 +1294,7 @@ function sv(d){
     // password_set_at (via save/bindAuth). Absent pour visitor/legacy (session anonyme).
     syncToCloud(u,{allowInsert:true,bindAuth:!!authBind});
     // Narrator: "The Verdict" fires once, right after the student clicks
-    // "Enter the Arena" (langBridge). Depuis 2026-05-03, ce moment intègre
+    // "Enter the Arena" (Battle Report depuis le 2026-10-22). Depuis 2026-05-03, ce moment intègre
     // aussi la présentation des 3 piliers de l'app (Daily Quest, Salle
     // d'Entraînement, Ligue) — le TutorialTour séparé a été supprimé.
     // Do NOT move this push earlier in the onboarding (e.g. to Battle Report)

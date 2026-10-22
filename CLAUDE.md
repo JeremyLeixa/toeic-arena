@@ -515,9 +515,9 @@ Quand un fix corrige un bug subtil d'interaction (ex : Teacher stuck en visitor,
 
 ## Language Policy
 
-- **Onboarding** (name, classcode, GDPR, Battle Scan, push opt-in): **French** — trust/consent flow, students need native language
+- **Onboarding** (prénom, code classe, mot de passe, RGPD, accueil du Battle Scan): **French**, tutoiement partout — trust/consent flow, students need native language
 - **Battle Report**: **English** (except explicit French labels like "Notification push" in privacy section)
-- **langBridge transition screen**: **English** — signals language shift to students
+- **Passage à l’anglais** : annoncé en français à l’accueil du Battle Scan (l’écran langBridge a été fusionné là le 2026-10-22, avec la sortie de l’écran d’installation : carte « Install » sur Home après la 1re manche, `lib/device.js`). Le Battle Report finit sur la First Quest, qui ouvre son module (`firstNav`), et le Verdict d’Aldric joue au premier retour sur Home
 - **Main app** (Home, Train, Games, Profile, modules): **English**
 - **League** : **French** where it already is (tabs Semaine / Général / Progrès, labels) — **voulu**, confirmé par Jérémy le 2026-09-17 ; ne pas « corriger » en anglais
 - **Push notifications** (all 3 Edge Functions): **English**
@@ -596,7 +596,7 @@ if(sp==="moduleName"){if(!lastSession)playBGM("bgm_name");return pg(<Component u
 - **Clue Hunter:** Clue identification phase distinct from answer. Category label hidden until post-answer.
 - **Weekly snapshots are necessary** — Supabase data is cumulative.
 - **Flashcards = learn, Word Tavern = prove (and earn XP).** Feedback loop: failed words in tavern → reset SRS → come back in next review.
-- **Onboarding enforces the right habits:** push opt-in prompt, English-only transition, 3-step Home tutorial, persistent Mock Test nudge.
+- **Onboarding enforces the right habits:** First Quest launched from the Battle Report, English-only from the scan on, Mock Test nudge from the day after a first session (`needsMockNudge`).
 
 ---
 

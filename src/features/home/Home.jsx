@@ -4,7 +4,7 @@
 // Niveau et ligue en une ligne fine ; bonus, évènements et fête en lignes de texte ; astuce repliée.
 // Décision du 17/09 (« le plan ne va pas sur Home ») assouplie par Jérémy le 23/09. Quick Start supprimé
 // (doublon de l'onglet Train). Mêmes props qu'avant : aucun état ajouté dans App().
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { renderAv, TreasureChestSvg } from "../../components/avatar.jsx";
 import { Bar } from "../../components/Bar.jsx";
 import { GIcon, LeagueIcon } from "../../components/icons.jsx";
@@ -12,6 +12,7 @@ import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { TITLES } from "../../data/chests.js";
 import { getLevel } from "../../data/helpers.js";
 import { STRATEGIES } from "../../data/miniGames.js";
+import { getInstallPrompt, onInstallPrompt, runInstallPrompt } from "../../lib/device.js";
 import { festivalById, festivalDaysLeft } from "../../lib/festivals.js";
 import { homeFocus, bonusLine } from "../../lib/homeAgenda.js";
 import { getEffectiveLeague } from "../../lib/league.js";
@@ -25,6 +26,35 @@ function tipOfDay() {
   return { tip: all[n % all.length], count: all.length };
 }
 function iconOf(name) { return GAME_ICON_PATHS[name] ? name : "lightning-bow"; }
+
+// Installer l'appli (2026-10-22) : sorti de l'onboarding, proposé ici après la première manche, seulement
+// quand le navigateur offre l'installation en un tap (beforeinstallprompt, capté par lib/device.js). L'iPhone
+// passe par la feuille de notifications (mode "ios"), pas par cette carte. « Not now » = 7 jours, sur l'appareil.
+var INSTALL_SNOOZE = "toeic-install-snooze";
+function installSnoozed() {
+  try { return Number(localStorage.getItem(INSTALL_SNOOZE) || 0) > Date.now(); }
+  catch (e) { console.warn("[install] snooze read caught:", e && e.message); return false; }
+}
+function InstallCard(p) {
+  var [prompt, setPrompt] = useState(getInstallPrompt());
+  var [hidden, setHidden] = useState(installSnoozed());
+  useEffect(function () { return onInstallPrompt(setPrompt); }, []);
+  if (!prompt || hidden || !(p.u.stats && p.u.stats.sessions > 0)) return null;
+  function later() {
+    try { localStorage.setItem(INSTALL_SNOOZE, String(Date.now() + 7 * 864e5)); }
+    catch (e) { console.warn("[install] snooze write caught:", e && e.message); }
+    setHidden(true);
+  }
+  return (<div className="crd hm-install">
+    <GIcon name="castle" size={22} color="var(--cyan)" />
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="out hm-install-t">{"Install Verse Arena"}</div>
+      <div className="hm-install-s">{"Full screen, one tap from your home screen."}</div>
+    </div>
+    <button className="hm-off" onClick={later}>{"Not now"}</button>
+    <button className="btn1 hm-install-btn" onClick={function () { runInstallPrompt(); }}>{"Install"}</button>
+  </div>);
+}
 
 export function Home(p) {
   var [tipOpen, setTipOpen] = useState(false);
@@ -108,6 +138,8 @@ export function Home(p) {
     </div>
     {!dd && <span className="hm-go" style={{ color: "var(--cyan)" }}>{"›"}</span>}
   </div>
+
+  <InstallCard u={u} />
 
   {/* Évènements : une ligne chacun. Spotlight cliquable (module cible), Flash Hour et Underdog non. */}
   {(p.events || []).map(function (ev, ei) {

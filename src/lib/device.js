@@ -11,6 +11,26 @@ export function isStandalonePWA(){
   }catch(e){}
   return false;
 }
+// ─── INSTALLATION EN UN TAP (Android/desktop Chromium) ───
+// 2026-10-22 : l'écran « Installe Verse Arena » est sorti de l'onboarding (il passait avant toute valeur).
+// Chrome n'émet beforeinstallprompt qu'une fois, au chargement : on le capte ici, au premier import (device.js
+// est chargé par la Home, donc tôt), et la Home propose « Install » après la première manche. L'iPhone n'a pas
+// cet événement : son installation passe par la feuille de notifications (lib/pushOffer.js, mode "ios").
+var installPrompt=null,installSubs=[];
+function emitInstall(){installSubs.forEach(function(f){try{f(installPrompt);}catch(e){console.warn("[install] sub caught:",e&&e.message);}});}
+if(typeof window!=="undefined"&&window.addEventListener){
+  window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();installPrompt=e;emitInstall();});
+  window.addEventListener("appinstalled",function(){installPrompt=null;emitInstall();});
+}
+export function getInstallPrompt(){return installPrompt;}
+export function onInstallPrompt(f){installSubs.push(f);return function(){installSubs=installSubs.filter(function(g){return g!==f;});};}
+// Ouvre la boîte native ; rend true si l'élève accepte. L'événement ne sert qu'une fois.
+export async function runInstallPrompt(){
+  var ev=installPrompt;if(!ev)return false;
+  installPrompt=null;emitInstall();
+  try{await ev.prompt();var ch=await ev.userChoice;return !!ch&&ch.outcome==="accepted";}
+  catch(e){console.warn("[install] prompt caught:",e&&e.message);return false;}
+}
 export function isIOSDevice(){
   try{
     var ua=navigator.userAgent||"";
