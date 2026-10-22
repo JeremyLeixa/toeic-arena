@@ -1,6 +1,5 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { signInStudent, bindStudentUserId, signUpStudent, signInWithPassword, requestPasswordReset } from "../../auth.js";
-import { Bar } from "../../components/Bar.jsx";
 import { BrandMark, GIcon } from "../../components/icons.jsx";
 import { PrivacyPolicy } from "../../components/legal.jsx";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
@@ -20,7 +19,7 @@ export function Onboard(p){
 var[step,sSt]=useState("name");
   var[name,sN]=useState("");
   var[ci,sC]=useState(0);var[sel,sS]=useState(-1);var[sc,sSc]=useState(0);var[ph,sP]=useState("q");
-  var[scanSec,setScanSec]=useState(0);var[scanScores,setScanScores]=useState({grammar:0,vocab:0,reading:0,listening:0});var[scanPhase,setScanPhase]=useState("intro");
+  var[scanSec,setScanSec]=useState(0);var[scanScores,setScanScores]=useState({grammar:0,vocab:0,reading:0,listening:0});var[scanPhase,setScanPhase]=useState("welcome");
   // ─── Battle Scan V2 — CAT-light state ───
   var[currentQ,setCurrentQ]=useState(null);            // {item, lvl, sectionId, ...sectionMeta} from controller.next()
   var[sectionResults,setSectionResults]=useState({}); // {grammar:{acc, byMacro,...}, vocab:{...}, ...} from .score()
@@ -187,8 +186,7 @@ var[step,sSt]=useState("name");
     setScanSec(0);
     setScanScores({grammar:0,vocab:0,reading:0,listening:0});
     setSectionResults({});
-    // One-time narrative gate before the per-section intros. Sections 2-4 still
-    // land on "intro" (see nextSectionV2), so this welcome screen never repeats.
+    // One-time narrative gate, then straight into the questions (no per-section intro since 2026-10-22).
     setScanPhase("welcome");
     setCurrentQ(null);
     sS(-1);
@@ -221,13 +219,16 @@ var[step,sSt]=useState("name");
     }catch(e){console.warn("[scan-v2] audio:",e&&e.message);}
     setAudioBusy(false);
   }
+  // Une seule traversée (2026-10-22) : plus d'écran d'intro ni de « section terminée » entre les sections (8
+  // écrans et autant de taps). La section suivante démarre sur sa première question, annoncée par un bandeau ;
+  // les scores par section sont dans le Battle Report.
+  function serveQ(q){
+    setCurrentQ(q);sS(-1);setScanPhase("q");
+    if(q&&q.sectionId==="listening"){setTimeout(function(){resumeAudioSession();playListeningClip(q);},400);}
+  }
   function beginSectionV2(){
     var ctrl=ctrlRef.current;if(!ctrl)return;
-    var q=ctrl.next();
-    setCurrentQ(q);
-    setScanPhase("q");
-    sS(-1);
-    if(q&&q.sectionId==="listening"){setTimeout(function(){playListeningClip(q);},400);}
+    serveQ(ctrl.next());
   }
   // Resolve: did the user pick the correct answer for the current Q?
   function isCorrectFor(curQ,pickIdx){
@@ -252,35 +253,18 @@ var[step,sSt]=useState("name");
     stopListenAudio();stopTts();
     var ctrl=ctrlRef.current;if(!ctrl)return;
     var nq=ctrl.next();
-    if(nq){
-      setCurrentQ(nq);
-      sS(-1);
-      setScanPhase("q");
-      if(nq.sectionId==="listening"){setTimeout(function(){resumeAudioSession();playListeningClip(nq);},400);}
-      return;
-    }
-    // Section finished — collect score, fold into legacy scanScores, advance.
+    if(nq){serveQ(nq);return;}
+    // Section finished — collect score, fold into legacy scanScores, chain the next section.
     var secId=SCAN_SECTION_ORDER[scanSec];
     var res=ctrl.score();
     var nextResults=Object.assign({},sectionResults);nextResults[secId]=res;
     setSectionResults(nextResults);
     var nextScores=Object.assign({},scanScores);nextScores[secId]=Math.round(res.acc*5);setScanScores(nextScores);
-    setScanPhase("done");
-  }
-  function nextSectionV2(){
-    stopListenAudio();stopTts();
     var nextIdx=scanSec+1;
-    if(nextIdx>=SCAN_SECTION_ORDER.length){
-      // All sections done — switch to results.
-      sSt("results");
-      return;
-    }
+    if(nextIdx>=SCAN_SECTION_ORDER.length){sSt("results");return;}
     setScanSec(nextIdx);
     ctrlRef.current=createCatController(SCAN_SECTION_ORDER[nextIdx]);
-    setCurrentQ(null);
-    sS(-1);
-    setScanPhase("intro");
-    resumeAudioSession();
+    serveQ(ctrlRef.current.next());
   }
 
   // ─ Name entry ─
@@ -907,7 +891,7 @@ var[step,sSt]=useState("name");
   function partLabelV2(p){return{p1:"Part 1 — Photo",p2:"Part 2 — Q&R",p3:"Part 3 — Conversation",p4:"Part 4 — Talk"}[p]||p;}
 
   // Battle Scan Welcome (V2) — one-time narrative gate after consent, before section 1.
-  // Set only by startTestV2(); nextSectionV2() uses "intro", so this never repeats.
+  // Set only by startTestV2(); the sections then chain with no intermediate screen (2026-10-22).
   if(scanPhase==="welcome")return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
@@ -921,55 +905,9 @@ var[step,sSt]=useState("name");
         {/* Annonce du passage à l'anglais (ex-écran langBridge, fusionné ici le 2026-10-22) : c'est à la
             section suivante que l'anglais commence, pas après le Battle Report. */}
         <p style={{color:"var(--t1)",fontSize:13,fontWeight:600,lineHeight:1.55,margin:"0 auto 22px",maxWidth:330}}>{"À partir d’ici, tout se passe en anglais : questions, consignes, explications. C’est l’immersion qui fait progresser."}</p>
-        <button className="btn1" onClick={function(){setScanPhase("intro");}} style={{fontSize:16,padding:"14px 32px",width:"100%"}}>{"Commencer l’épreuve"}</button>
+        <button className="btn1" onClick={beginSectionV2} style={{fontSize:16,padding:"14px 32px",width:"100%"}}>{"Commencer l’épreuve"}</button>
       </div>
     </div>);
-
-  // Section Intro (V2)
-  if(scanPhase==="intro")return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
-        <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:24}}>
-          {SCAN_SECTION_ORDER.map(function(sid,i){var sm=BATTLE_SCAN_V2[sid];return(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:4}}>
-              <div style={{width:i===scanSec?32:10,height:10,borderRadius:5,background:i<=scanSec?sm.color:"var(--bg3)",opacity:i<=scanSec?1:.4,transition:"all .4s"}}/>
-            </div>);})}
-        </div>
-        <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:2,marginBottom:16}}>Section {scanSec+1} of {SCAN_SECTION_ORDER.length}</div>
-        <div style={{marginBottom:16,animation:"countUp .6s"}}><GIcon name={secMeta.icon} size={64} color={secMeta.color}/></div>
-        <h2 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:900,fontSize:28,color:secMeta.color,marginBottom:4}}>{secMeta.name}</h2>
-        <p className="out" style={{color:"var(--t2)",fontSize:14,fontWeight:500,marginBottom:8}}>{secMeta.subtitle}</p>
-        <p style={{color:"var(--t3)",fontSize:13,lineHeight:1.6,marginBottom:8,maxWidth:320,margin:"0 auto 16px"}}>{secMeta.desc}</p>
-        <div className="crd" style={{padding:"10px 14px",marginBottom:20,background:"rgba(var(--cx),.06)",borderColor:"rgba(var(--cx),.15)",fontSize:11,color:"var(--t2)",lineHeight:1.5}}>
-          {"Adaptive — questions get harder if you nail them, easier if you struggle. No timer, no pressure."}
-        </div>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:24}}>
-          <span style={{fontSize:13,color:"var(--t2)"}}>{secMeta.targetCount} questions</span>
-        </div>
-        <button className="btn1" onClick={beginSectionV2} style={{fontSize:16,padding:"14px 32px"}}>Begin</button>
-      </div>
-    </div>);
-
-  // Section Done (V2)
-  if(scanPhase==="done"){
-    var doneRes=sectionResults[secId];
-    var donePct=doneRes?Math.round(doneRes.acc*100):0;
-    return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:360}}>
-        <div style={{marginBottom:12,animation:"countUp .5s"}}><GIcon name={secMeta.icon} size={56} color={secMeta.color}/></div>
-        <h3 className="out" style={{fontFamily:"'Cinzel',serif",fontWeight:800,fontSize:22,color:secMeta.color,marginBottom:4}}>{secMeta.name}</h3>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:16}}>{secMeta.subtitle+" — Complete"}</p>
-        <div style={{display:"inline-block",padding:"12px 28px",borderRadius:16,background:"rgba(var(--cx),.08)",border:"1px solid rgba(var(--cx),.15)",marginBottom:24}}>
-          <div className="out" style={{fontSize:42,fontWeight:900,color:secMeta.color,animation:"countUp .6s"}}>{donePct}<span style={{fontSize:20,color:"var(--t3)"}}>%</span></div>
-        </div>
-        {doneRes&&<div style={{fontSize:11,color:"var(--t3)",marginBottom:24}}>{doneRes.raw+" / "+doneRes.total+" correct (weighted by difficulty)"}</div>}
-        {scanSec<SCAN_SECTION_ORDER.length-1?
-          <button className="btn1" onClick={nextSectionV2} style={{fontSize:16,padding:"14px 32px"}}>Next Section</button>
-          :<button className="btn1" onClick={function(){stopListenAudio();stopTts();sSt("results");}} style={{fontSize:16,padding:"14px 32px",background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>See Your Battle Report</button>}
-      </div>
-    </div>);
-  }
 
   // Question phase (V2)
   if(!currentQ){
@@ -980,7 +918,10 @@ var[step,sSt]=useState("name");
 
   var ctrl=ctrlRef.current;
   var qNum=ctrl?(ctrl.score().total+(scanPhase==="q"?1:0)):1;
-  var qTotal=secMeta.targetCount;
+  // Numérotation sur tout le scan : sections finies (leur vrai total) + section en cours.
+  var doneBefore=SCAN_SECTION_ORDER.slice(0,scanSec).reduce(function(a,sid){var r=sectionResults[sid];return a+(r?r.total:BATTLE_SCAN_V2[sid].targetCount);},0);
+  var scanTotal=doneBefore+SCAN_SECTION_ORDER.slice(scanSec).reduce(function(a,sid){return a+BATTLE_SCAN_V2[sid].targetCount;},0);
+  var gNum=doneBefore+qNum;
   var lvlCols=lvlBadgeColors(currentQ.lvl);
   var opts=getOpts(currentQ);
   var corrIdx=getCorrect(currentQ);
@@ -997,10 +938,25 @@ var[step,sSt]=useState("name");
             {currentQ.sectionId==="grammar"&&currentQ.macroId&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(212,148,58,.12)",color:secMeta.color,fontWeight:700,letterSpacing:0.5,textTransform:"capitalize"}}>{currentQ.macroId}</span>}
             {currentQ.sectionId==="reading"&&<span className="out" style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:"rgba(34,197,94,.12)",color:"#22c55e",fontWeight:700,letterSpacing:0.5}}>{currentQ.format==="p6"?"Part 6 — Cloze":"Part 7 — Reading"}</span>}
           </div>
-          <p style={{fontSize:11,color:"var(--t3)",marginTop:2}}>Question {qNum} of {qTotal}</p>
+          <p style={{fontSize:11,color:"var(--t3)",marginTop:2}}>{"Question "+gNum+" of "+scanTotal}</p>
         </div>
       </div>
-      <Bar value={qNum} max={qTotal} h={4} color={secMeta.color}/>
+      {/* Une barre pour tout le scan, un segment par section (largeur = nombre de questions). */}
+      <div style={{display:"flex",gap:4}}>
+        {SCAN_SECTION_ORDER.map(function(sid,i){var sm=BATTLE_SCAN_V2[sid];var fill=i<scanSec?1:i>scanSec?0:Math.min(1,qNum/sm.targetCount);return(
+          <div key={sid} style={{flex:sm.targetCount,height:5,borderRadius:99,background:"var(--bg3)",overflow:"hidden"}}>
+            <div style={{width:(fill*100)+"%",height:"100%",background:sm.color,transition:"width .4s"}}/>
+          </div>);})}
+      </div>
+      {/* Bandeau de section sur sa première question : remplace l'ancien écran d'intro. */}
+      {qNum===1&&<div key={secId} className="crd" style={{marginTop:12,padding:"10px 14px",display:"flex",gap:12,alignItems:"center",animation:"fadeIn .5s"}}>
+        <GIcon name={secMeta.icon} size={30} color={secMeta.color}/>
+        <div style={{minWidth:0}}>
+          <div className="out" style={{fontSize:10,fontWeight:700,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1.5}}>{"Section "+(scanSec+1)+" of "+SCAN_SECTION_ORDER.length}</div>
+          <div className="out" style={{fontWeight:800,fontSize:15,color:secMeta.color}}>{secMeta.name}</div>
+          <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.4}}>{secMeta.subtitle+(secId==="listening"?" · Turn your sound on":"")}</div>
+        </div>
+      </div>}
 
       {(currentQ.sectionId==="grammar"||currentQ.sectionId==="vocab")&&(
         <h2 className="out" style={{fontWeight:700,fontSize:18,lineHeight:1.5,marginBottom:20,marginTop:18}}>{currentQ.item.s}</h2>
