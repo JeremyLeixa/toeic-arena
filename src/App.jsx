@@ -1306,16 +1306,20 @@ function sv(d){
     // arrivée Home (post-paiement, ou si l'user navigue manuellement).
     var pendingUpgrade=null;
     try{pendingUpgrade=sessionStorage.getItem("toeic-arena-pending-upgrade");}catch(e){}
-    if(!pendingUpgrade){
+    // firstNav may be a tab id ("home"|"games"|"train"|"league"|"profile"|"mentor")
+    // or a sub-page id ("drill"|"tavern"|"lisP1"...).
+    var KNOWN_TABS=["home","games","train","league","profile","mentor"];
+    var firstSub=firstNav&&KNOWN_TABS.indexOf(firstNav)<0;
+    // First Quest du Battle Report (2026-10-22) : l'élève part DIRECTEMENT dans le module. Le Verdict
+    // (qui présente la Home) n'est pas poussé ici : l'effet « verdict-defer » le joue à sa première
+    // arrivée sur Home, à la fin de la manche. Navigation synchrone, dans le même rendu que sU(u) : avec
+    // l'ancien setTimeout(300), l'effet voyait d'abord Home sans sous-page et jouait le Verdict par-dessus
+    // le module.
+    if(!pendingUpgrade&&!firstSub){
       pushNarratorMoment(u,"verdict");
     }
-    if(firstNav){setTimeout(function(){
-      // firstNav may be a tab id ("home"|"games"|"train"|"league"|"profile"|"mentor")
-      // or a sub-page id ("drill"|"tavern"|"lisP1"...). Phase E (scan-v2) added tab routing
-      // so the Battle Report can hand off to the Mentor tab directly.
-      var KNOWN_TABS=["home","games","train","league","profile","mentor"];
-      if(KNOWN_TABS.indexOf(firstNav)>=0){sT(firstNav);}else{sSP(firstNav);}
-    },300);}
+    if(firstSub)nav(firstNav);
+    else if(firstNav)sT(firstNav);
   }
   async function recover(name,classCode){
     // Find the best row (highest XP) for this student

@@ -7,6 +7,7 @@ import { PassageDocs } from "../../components/PassageDocs.jsx";
 import { SCAN_SECTION_ORDER, BATTLE_SCAN_V2 } from "../../data/placement.js";
 import { resumeAudioSession, stopListenAudio, getEnVoice, playAudioFile, playLetteredOption, isAudioAborted } from "../../lib/audio.js";
 import { isStandalonePWA, isIOSDevice } from "../../lib/device.js";
+import { isModuleLocked } from "../../lib/access.js";
 import { getBioCredId, biometricAvailable, bioAuthenticate, teacherAuth, setDashSession, hasDashSession } from "../../lib/teacherSession.js";
 import { normalizeName } from "../../lib/util.js";
 import { createCatController, computeScanResult } from "../../scanEngine.js";
@@ -717,6 +718,15 @@ var[step,sSt]=useState("name");
       return{mod:modMap[weakPart],icon:icoMap[weakPart],label:labelMap[weakPart],msg:"Your ear needs training. "+labelMap[weakPart]+" exercises real TOEIC audio."};
     }
     var quest=pickFirstQuest();
+    // La First Quest ouvre le module (2026-10-22) : un visiteur (ou une promo hors école/pro) n'a pas accès
+    // aux modules premium, on l'envoie sur le module gratuit de la même compétence plutôt que sur un verrou.
+    // `{}` et non null : hasFullAccess(null) répond false avant de lire le type de promo.
+    if(isModuleLocked(quest.mod,{},classGroupType)){
+      var FREE_QUEST={grammar:"drill",vocab:"tavern",reading:"drill",listening:"lisP2"};
+      var LABEL={drill:"Part 5 Drill",tavern:"Word Tavern",lisP2:"Listening Part 2 — Q&R"};
+      var fm=FREE_QUEST[weakestSec];
+      quest=Object.assign({},quest,{mod:fm,label:LABEL[fm],icon:fm==="lisP2"?"public-speaker":fm==="tavern"?"spell-book":"crossed-swords"});
+    }
 
     // Main radar geometry (4-axis diamond, % values)
     var cx=150,cy=150,rad=110;
@@ -850,12 +860,15 @@ var[step,sSt]=useState("name");
           </div>
         </div>
 
-        {/* Forward action only. "Enter the Arena" (+ its arena-call jingle) is
-            reserved for the real threshold (langBridge), so here the label is
-            "Continue" — avoids a duplicate "Enter the Arena" two screens apart. */}
-        <button className="btn1" onClick={function(){stopTts();stopListenAudio();goToInstallStep(null);}}
+        {/* First Quest = l'action principale (2026-10-22). Avant, la carte n'était pas cliquable et la Home
+            proposait ensuite un Mock : le rapport recommandait un module que rien ne permettait d'ouvrir. */}
+        <button className="btn1" onClick={function(){stopTts();stopListenAudio();goToInstallStep(quest.mod);}}
           style={{fontSize:16,padding:"14px 32px",width:"100%",marginBottom:10,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)"}}>
-          Continue {"→"}
+          {"Start my First Quest →"}
+        </button>
+        <button className="btn2" onClick={function(){stopTts();stopListenAudio();goToInstallStep(null);}}
+          style={{fontSize:13,padding:"11px 28px",width:"100%"}}>
+          {"Go to the Arena"}
         </button>
         <p style={{color:"var(--t3)",fontSize:11,marginTop:12,lineHeight:1.5}}>Your radar refines as you train. Aldric will greet you inside, and your Mentor is one tap away whenever you want a personalized path.</p>
       </div>
