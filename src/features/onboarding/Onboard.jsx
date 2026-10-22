@@ -95,12 +95,16 @@ var[step,sSt]=useState("name");
   // affichait même leur class_code (incident Hugo : accès à une promo CESI non sienne).
   var[detectMode,setDetectMode]=useState(false);
   // P2 Phase A (2026-09-11) — flux mot de passe (email synthétique).
-  // pwdMode : "new" (nouvel élève) | "claim" (compte legacy à sécuriser). pwdTarget : la
+  // setPassword ne sert plus qu’au claim d’un compte legacy (le nouvel élève passe par account). pwdTarget : la
   // ligne visée au retour {name, class_code, password_set_at}. studentPwdSet : vrai quand le
   // nouvel élève a posé son mot de passe → enterArena passe authBind à onboard().
-  var[pwdMode,setPwdMode]=useState("new");
   var[pwdTarget,setPwdTarget]=useState(null);
   var[studentPwdSet,setStudentPwdSet]=useState(false);
+  // Miroir synchrone de studentPwdSet (2026-10-22) : l'étape account pose le mot de passe et enchaîne dans le
+  // même clic (sauvegarde du scan, puis entrée dans l'arène au lot 3). L'état React n'y est pas encore à jour :
+  // lu tel quel, onboard() recevrait authBind=false et la ligne naîtrait sans user_id ni password_set_at.
+  var pwdSetRef=useRef(false);
+  function markPwdSet(v){pwdSetRef.current=!!v;setStudentPwdSet(!!v);}
   // Filet auto-réparateur : si signUpStudent échoue "compte déjà existant" (ex. binding
   // password_set_at raté à la création, ou pré-claim par un tiers), on propose "me connecter"
   // → enterPassword, au lieu de laisser l'user coincé sur l'écran claim.
@@ -118,7 +122,7 @@ var[step,sSt]=useState("name");
   // première manche (lib/device.js, iPhone : feuille de notifications), et le passage à l'anglais est annoncé
   // à l'accueil du Battle Scan, là où l'anglais commence vraiment. firstNav = module de la First Quest, ou null.
   // Ne pas remettre ici une demande automatique de notifications (refus définitif difficile à rattraper).
-  function enterArena(firstNav){clearScanSave();stopTts();stopListenAudio();try{playArenaCall();}catch(e){console.warn("[onboard] arena call:",e&&e.message);}p.go(name.trim(),classCode||"visitor",scanScores,firstNav||undefined,sectionResults,studentPwdSet);}
+  function enterArena(firstNav){clearScanSave();stopTts();stopListenAudio();try{playArenaCall();}catch(e){console.warn("[onboard] arena call:",e&&e.message);}p.go(name.trim(),classCode||"visitor",scanScores,firstNav||undefined,sectionResults,pwdSetRef.current);}
 
   async function lookupName(n,cc){
     setLookingUp(true);
@@ -157,10 +161,9 @@ var[step,sSt]=useState("name");
       // L'ancien sélecteur ouvrait le profil choisi SANS mot de passe (recover legacy).
       setPwd1("");setPwd2("");setPwdErr("");setPwdExistsDup(false);
       if(matches.length===0){
-        console.warn("[LOOKUP] no match in cohort → setPassword (new)");
+        console.warn("[LOOKUP] no match in cohort → account (new)");
         setDetectMode(false); // nouvel inscrit : quitte le mode détection
-        setPwdMode("new");
-        sSt("setPassword");
+        sSt("account");
       } else {
         if(matches.length>1)console.warn("[LOOKUP] "+matches.length+" rows share this normalized name in",cc,"→ highest XP (same rule as the server)");
         // Casing DB nécessaire pour synthEmail + recover.
@@ -172,15 +175,13 @@ var[step,sSt]=useState("name");
           sSt("enterPassword");
         }else{
           console.warn("[LOOKUP] match, legacy (no pwd) → claim");
-          setPwdMode("claim");
           sSt("setPassword");
         }
       }
     }catch(e){
-      console.warn("[LOOKUP] outer catch → setPassword (new), err:",e&&e.message);
+      console.warn("[LOOKUP] outer catch → account (new), err:",e&&e.message);
       setDetectMode(false);
-      setPwdMode("new");
-      sSt("setPassword");
+      sSt("account");
     }
     setLookingUp(false);
   }
@@ -214,7 +215,7 @@ var[step,sSt]=useState("name");
     var ok=classValid;
     if(ok!==true){lastCodeRef.current=classCode.trim().toLowerCase();ok=await checkGroupCode(classCode);}
     if(!ok)return;
-    if(detectMode){lookupName(name.trim(),classCode);}else{sSt("consent");}
+    if(detectMode){lookupName(name.trim(),classCode);}else{sSt("account");}
   }
 
   // ─── Battle Scan V2 helpers (CAT-light) ───
@@ -234,7 +235,7 @@ var[step,sSt]=useState("name");
   }
   function saveScan(sec){
     try{sessionStorage.setItem(SCAN_SAVE_KEY,JSON.stringify({v:1,at:Date.now(),name:name.trim(),classCode:classCode,
-      classGroupName:classGroupName,classGroupType:classGroupType,studentPwdSet:studentPwdSet,
+      classGroupName:classGroupName,classGroupType:classGroupType,studentPwdSet:pwdSetRef.current,
       seeds:seedsRef.current,answers:answersRef.current,scanSec:sec}));}
     catch(e){console.warn("[scan-save] write caught:",e&&e.message);}
   }
@@ -242,7 +243,7 @@ var[step,sSt]=useState("name");
   // sur l'écran de correction de sa dernière question) est close et la suivante démarre.
   function restoreScan(d){
     sN(d.name);setClassCode(d.classCode||"visitor");setClassGroupName(d.classGroupName||"");setClassGroupType(d.classGroupType||null);
-    setStudentPwdSet(!!d.studentPwdSet);
+    markPwdSet(!!d.studentPwdSet);
     seedsRef.current=d.seeds;
     answersRef.current=Object.assign({grammar:[],vocab:[],reading:[],listening:[]},d.answers||{});
     var res={},scores={grammar:0,vocab:0,reading:0,listening:0},idx=d.scanSec||0,c=null,q=null,given=0;
@@ -408,8 +409,8 @@ var[step,sSt]=useState("name");
           var noRow=!chk.error&&!(chk.data||[]).some(function(s){return normalizeName(s.name)===normalizeName(epName);});
           console.warn("[pwd] bind refused, orphan auth account:",noRow);
           if(noRow){
-            sN(epName);setDetectMode(false);setStudentPwdSet(true);setPwd1("");
-            sSt(epCc?"consent":"classcode");
+            sN(epName);setDetectMode(false);markPwdSet(true);setPwd1("");
+            sSt(epCc?"account":"classcode");
             return;
           }
           setPwdErr("Ce compte est lié à une autre identité. Préviens ton formateur (liaison refusée).");return;
@@ -450,12 +451,11 @@ var[step,sSt]=useState("name");
     </div>);
   }
 
-  // ─ P2 Phase A (2026-09-11) : pose un mot de passe (nouvel élève OU claim d'un compte legacy) ─
-  // pwdMode="new" → signUpStudent puis onboarding normal (ligne créée avec authBind).
-  // pwdMode="claim" → signUpStudent puis bind user_id + password_set_at + recover(). Pas de
+  // ─ P2 Phase A (2026-09-11) : sécurise un compte legacy (claim) ─
+  // Le nouvel élève passe par l'étape account depuis le 2026-10-22 ; il ne reste ici que le claim :
+  // signUpStudent puis bind user_id + password_set_at + recover(). Pas de
   // « plus tard » (retiré le 2026-09-14, voir DATE BUTOIR plus bas).
   if(step==="setPassword"){
-    var spClaim=(pwdMode==="claim");
     async function doStudentSignUp(){
       if(pwdBusy)return;
       if((pwd1||"").length<8){setPwdErr("Mot de passe trop court (8 caractères minimum)");return;}
@@ -464,7 +464,7 @@ var[step,sSt]=useState("name");
       var tName=name.trim(),tCc=classCode;
       try{
         await signUpStudent(tName,tCc,pwd1);
-        if(spClaim){
+        {
           var bound=false;
           try{bound=await bindStudentUserId(tName,tCc,true);}catch(e){console.warn("[pwd] claim bind caught:",e&&e.message);}
           // P2-D4 : un refus ici = ligne déjà sécurisée par quelqu'un d'autre (le routage
@@ -474,10 +474,6 @@ var[step,sSt]=useState("name");
           if(!bound){setPwdErr("Impossible de lier ce compte. Préviens ton formateur (liaison refusée).");return;}
           var ok=await p.recover(tName,tCc);
           if(!ok)setPwdErr("Compte introuvable.");
-        }else{
-          // Nouvel élève : la ligne naîtra en fin d'onboarding avec user_id + password_set_at.
-          setStudentPwdSet(true);
-          sSt(classCode?"consent":"classcode");
         }
       }catch(err){
         var msg=((err&&err.message)||"").toLowerCase();
@@ -495,11 +491,11 @@ var[step,sSt]=useState("name");
       <div style={{maxWidth:420,margin:"60px auto 0"}}>
         <div style={{textAlign:"center",marginBottom:24}}>
           <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><GIcon name="castle" size={48} color="var(--cyan)"/></div>
-          <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{spClaim?("Sécurise ton compte, "+name.trim()):"Choisis ton mot de passe"}</h1>
-          <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{spClaim?"Choisis un mot de passe pour protéger ta progression et te reconnecter partout.":("Ce mot de passe protège ton compte"+(classGroupName?" ("+classGroupName+")":"")+" et te reconnecte sur tous tes appareils.")}</p>
+          <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:8,color:"var(--gold)"}}>{"Sécurise ton compte, "+name.trim()}</h1>
+          <p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Choisis un mot de passe pour protéger ta progression et te reconnecter partout."}</p>
           {/* Phase C (2026-09-24) : un compte sans mot de passe d'une promo passée en mode strict arrive ici
               depuis l'appli (load refusé → reauth → lookup → claim). Sans ce mot, il croirait à une panne. */}
-          {spClaim&&p.reauth&&<div style={{marginTop:14,padding:"10px 12px",borderRadius:10,background:"rgba(var(--cx),.08)",border:"1px solid rgba(var(--cx),.25)",color:"var(--t1)",fontSize:12,lineHeight:1.5,textAlign:"left"}}>{"Nouveau : ton compte doit maintenant être protégé par un mot de passe. Ta progression est conservée, y compris ce que tu as joué sur cet appareil."}</div>}
+          {p.reauth&&<div style={{marginTop:14,padding:"10px 12px",borderRadius:10,background:"rgba(var(--cx),.08)",border:"1px solid rgba(var(--cx),.25)",color:"var(--t1)",fontSize:12,lineHeight:1.5,textAlign:"left"}}>{"Nouveau : ton compte doit maintenant être protégé par un mot de passe. Ta progression est conservée, y compris ce que tu as joué sur cet appareil."}</div>}
         </div>
         <PasswordInput value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}}
           placeholder="Mot de passe (8 caractères min.)" autoComplete="new-password"
@@ -515,7 +511,7 @@ var[step,sSt]=useState("name");
         </button>}
         <button className="btn1" onClick={doStudentSignUp} disabled={pwdBusy}
           style={{width:"100%",fontSize:14,padding:"13px 20px",background:"linear-gradient(135deg,#f0c850,#d4943a)",color:"#1a1610",fontWeight:700,opacity:pwdBusy?.6:1}}>
-          {pwdBusy?"...":(spClaim?"Sécuriser mon compte":"Créer mon compte")}
+          {pwdBusy?"...":"Sécuriser mon compte"}
         </button>
         <div style={{marginTop:20,textAlign:"center"}}>
           {/* DATE BUTOIR (2026-09-14) — le lien "Plus tard - continuer sans mot de passe"
@@ -528,9 +524,6 @@ var[step,sSt]=useState("name");
               « Continuer sans » de l'ecran mot de passe et le selecteur d'homonymes sont
               retires ; recover() ne lit plus que par load_student (gardee), et
               recover_student_row est supprimee cote SQL. */}
-          {spClaim
-            ?null
-            :<button onClick={function(){setPwdErr("");setPwdTarget({name:name.trim(),class_code:classCode,password_set_at:true});sSt("enterPassword");}} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"J'ai déjà un mot de passe — me connecter"}</button>}
         </div>
       </div>
     </div>);
@@ -634,7 +627,7 @@ var[step,sSt]=useState("name");
           <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>{"⚠️ L'accès gratuit ouvre une sélection de modules. Tout se débloque avec un code classe de ton formateur, ou avec Arena Premium (9,99 €/mois ou Pass 3 mois à 22,99 €)."}</p>
           <div style={{display:"flex",gap:8}}>
             <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>{"Annuler"}</button>
-            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);sSt("consent");}}
+            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);sSt("account");}}
               style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>{"C'est parti"}</button>
           </div>
         </div>}
@@ -642,51 +635,82 @@ var[step,sSt]=useState("name");
       </div>
     </div>);
 
-  // ─ GDPR Consent ─
-  if(step==="consent")return(
-    <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
-      {showPrivacy?<PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>:
-      <div style={{animation:"fadeIn .5s",width:"100%",maxWidth:420}}>
-        <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><GIcon name="templar-shield" size={48} color="var(--cyan)"/></div>
-        <h2 className="out" style={{fontWeight:800,fontSize:22,marginBottom:8}}>{"Protection de tes données"}</h2>
-        <p style={{color:"var(--t2)",fontSize:13,marginBottom:20,lineHeight:1.6}}>{"Avant de commencer, voici comment Verse Arena utilise tes données :"}</p>
-        <div style={{textAlign:"left",padding:"16px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:14,marginBottom:20}}>
-          <div style={{display:"flex",flexDirection:"column",gap:12}}>
-            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{flexShrink:0,marginTop:1}}><GIcon name="stone-tablet" size={20} color="var(--cyan)"/></span>
-              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Donn\u00e9es collect\u00e9es"}</div>
-              {/* La mention "Aucun e-mail, aucun mot de passe" datait d'avant la Phase A
-                  (identit\u00e9 par mot de passe, 2026-09-11). Elle est rest\u00e9e affich\u00e9e sur
-                  l'\u00e9cran QUI SUIT la saisie du mot de passe. Cet \u00e9cran est un consentement
-                  RGPD : toute \u00e9volution du mod\u00e8le d'identit\u00e9 doit \u00eatre r\u00e9percut\u00e9e ICI,
-                  sinon on collecte une donn\u00e9e en affirmant le contraire. */}
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Ton prénom, ton code classe, tes scores, ta progression, ton temps d’entraînement, et le mot de passe que tu choisis — stocké chiffré, jamais lisible, ni par nous ni par ton formateur. Aucune adresse e-mail n\u2019est requise."}</p></div>
-            </div>
-            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{flexShrink:0,marginTop:1}}><GIcon name="bullseye" size={20} color="var(--cyan)"/></span>
-              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Finalit\u00e9"}</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Suivi p\u00e9dagogique, classements, et personnalisation de l\u2019entra\u00eenement. Données accessibles à ton formateur."}</p></div>
-            </div>
-            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{flexShrink:0,marginTop:1}}><GIcon name="scales" size={20} color="var(--cyan)"/></span>
-              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"Vos droits"}</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Tu peux à tout moment exporter, modifier ou supprimer tes données depuis ton profil."}</p></div>
-            </div>
-            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{flexShrink:0,marginTop:1}}><GIcon name="world" size={20} color="var(--cyan)"/></span>
-              <div><div className="out" style={{fontWeight:700,fontSize:13,color:"var(--t1)",marginBottom:2}}>{"H\u00e9bergement"}</div>
-              <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.5}}>{"Donn\u00e9es stock\u00e9es chez Supabase (UE/US) et Vercel. Aucune revente \u00e0 des tiers."}</p></div>
-            </div>
-          </div>
+  // ─ Compte + consentement (2026-10-22) ─
+  // Une seule étape pour le mot de passe d'un nouvel élève ET le consentement RGPD (ex-étapes setPassword "new"
+  // et consent). Champs mot de passe seulement pour un nouvel élève d'une promo : le visiteur n'a pas de compte,
+  // l'orphelin (compte Auth sans ligne, reprise 0cd3a9c) a déjà le sien (studentPwdSet). Cet écran est un
+  // consentement RGPD : toute évolution du modèle d'identité doit être répercutée dans « Données collectées ».
+  if(step==="account"){
+    var needPwd=classCode!=="visitor"&&!studentPwdSet;
+    var accountDone=function(){startTestV2();};
+    async function doAccount(){
+      if(pwdBusy)return;
+      if(!needPwd){accountDone();return;}
+      if((pwd1||"").length<8){setPwdErr("Mot de passe trop court (8 caractères minimum)");return;}
+      if(pwd1!==pwd2){setPwdErr("Les deux mots de passe ne correspondent pas");return;}
+      setPwdErr("");setPwdBusy(true);
+      try{
+        await signUpStudent(name.trim(),classCode,pwd1);
+        // La ligne naîtra dans onboard() avec user_id + password_set_at (authBind = pwdSetRef).
+        markPwdSet(true);
+        accountDone();
+      }catch(err){
+        var msg=((err&&err.message)||"").toLowerCase();
+        if(msg.includes("already")||msg.includes("registered")||msg.includes("exists")||msg.includes("duplicate")){
+          setPwdErr("Un compte existe déjà pour ce nom dans cette promo — connecte-toi avec ton mot de passe.");
+          setPwdExistsDup(true);
+        }else{
+          setPwdErr((err&&err.message)||"Erreur");
+        }
+      }finally{setPwdBusy(false);}
+    }
+    function goSignIn(){setPwdErr("");setPwdExistsDup(false);setPwd1("");setPwdTarget({name:name.trim(),class_code:classCode,password_set_at:true});sSt("enterPassword");}
+    var inputSt={width:"100%",padding:"14px 16px",fontSize:14,marginBottom:10,background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:10,color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",boxSizing:"border-box",outline:"none"};
+    var gdprRows=[
+      {ic:"stone-tablet",h:"Données collectées",tx:"Ton prénom, ton code classe, tes scores, ta progression, ton temps d’entraînement"+(classCode==="visitor"?".":", et le mot de passe que tu choisis — stocké chiffré, jamais lisible, ni par nous ni par ton formateur.")+" Aucune adresse e-mail n’est requise."},
+      {ic:"bullseye",h:"Finalité",tx:"Suivi pédagogique, classements, et personnalisation de l’entraînement. Données accessibles à ton formateur."},
+      {ic:"scales",h:"Tes droits",tx:"Tu peux à tout moment exporter, modifier ou supprimer tes données depuis ton profil."},
+      {ic:"world",h:"Hébergement",tx:"Données stockées chez Supabase (UE/US) et Vercel. Aucune revente à des tiers."}
+    ];
+    return(
+    <div className="app onboard-shell" style={{minHeight:"100vh",padding:"24px 16px",position:"relative"}}>
+      {showPrivacy?<PrivacyPolicy onClose={function(){setShowPrivacy(false);}}/>:<>
+      <button className="back-btn" onClick={function(){setPwdErr("");setPwdExistsDup(false);sSt("classcode");}} style={{position:"absolute",top:16,left:16,marginBottom:0}}>{"← Retour"}</button>
+      <div style={{maxWidth:420,margin:"56px auto 0",animation:"fadeIn .5s"}}>
+        <div style={{textAlign:"center",marginBottom:18}}>
+          <div style={{marginBottom:10,display:"flex",justifyContent:"center"}}><GIcon name="castle" size={44} color="var(--cyan)"/></div>
+          <h1 className="out" style={{fontWeight:800,fontSize:24,marginBottom:6,color:"var(--gold)"}}>{needPwd?"Crée ton compte":"Avant d’entrer"}</h1>
+          {needPwd&&<p style={{color:"var(--t2)",fontSize:13,lineHeight:1.5}}>{"Un mot de passe pour retrouver ta progression"+(classGroupName?" ("+classGroupName+")":"")+" sur tous tes appareils."}</p>}
         </div>
-        <button className="btn1" onClick={function(){startTestV2();}}
-          style={{fontSize:16,padding:"14px 28px",width:"100%",marginBottom:10}}>{"J\u2019accepte \u2014 Continuer"}</button>
-        <button onClick={function(){setShowPrivacy(true);}}
-          style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",marginBottom:10}}>{"Lire la politique de confidentialit\u00e9 compl\u00e8te"}</button>
-        <br/>
-        <button onClick={function(){sSt("classcode");}} style={{background:"none",border:"none",color:"var(--t3)",fontSize:13,cursor:"pointer"}}>{"\u2190 Retour"}</button>
-      </div>}
+        {needPwd&&<>
+          <PasswordInput value={pwd1} onChange={function(e){setPwd1(e.target.value);setPwdErr("");}} placeholder="Mot de passe (8 caractères min.)" autoComplete="new-password" style={inputSt}/>
+          <PasswordInput value={pwd2} onChange={function(e){setPwd2(e.target.value);setPwdErr("");}} placeholder="Confirme le mot de passe" autoComplete="new-password"
+            onKeyDown={function(e){if(e.key==="Enter")doAccount();}} style={Object.assign({},inputSt,{marginBottom:14})}/>
+        </>}
+        <div style={{textAlign:"left",padding:"12px 14px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,marginBottom:14}}>
+          <div className="out" style={{fontSize:11,fontWeight:700,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>{"Protection de tes données"}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {gdprRows.map(function(r){return(
+              <div key={r.h} style={{display:"flex",gap:9,alignItems:"flex-start"}}>
+                <span style={{flexShrink:0,marginTop:1}}><GIcon name={r.ic} size={16} color="var(--cyan)"/></span>
+                <p style={{fontSize:12,color:"var(--t2)",margin:0,lineHeight:1.45}}><b style={{color:"var(--t1)"}}>{r.h+" · "}</b>{r.tx}</p>
+              </div>);})}
+          </div>
+          <button onClick={function(){setShowPrivacy(true);}} style={{background:"none",border:"none",padding:"8px 0 0",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"Lire la politique de confidentialité complète"}</button>
+        </div>
+        {pwdErr&&<div style={{color:"var(--red)",fontSize:13,marginBottom:12,textAlign:"center"}}>{pwdErr}</div>}
+        {pwdExistsDup&&<button className="btn2" onClick={goSignIn}
+          style={{width:"100%",fontSize:13,padding:"11px 16px",marginBottom:10,borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>{"Me connecter avec mon mot de passe"}</button>}
+        <button className="btn1" onClick={doAccount} disabled={pwdBusy}
+          style={{width:"100%",fontSize:15,padding:"14px 20px",opacity:pwdBusy?.6:1}}>
+          {pwdBusy?"Création…":(needPwd?"J’accepte et je crée mon compte":"J’accepte — continuer")}
+        </button>
+        {needPwd&&<div style={{marginTop:16,textAlign:"center"}}>
+          <button onClick={goSignIn} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"J'ai déjà un mot de passe — me connecter"}</button>
+        </div>}
+      </div></>}
     </div>);
+  }
 
   // ─ Teacher login ─
   if(step==="teacher")return(
