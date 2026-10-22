@@ -15,6 +15,7 @@ import { useState, useRef, useEffect } from "react";
 import { PasswordInput } from "../../components/PasswordInput.jsx";
 
 // ─── ONBOARDING ───
+var AUTO_ADVANCE_MS=1000; // Battle Scan : délai avant la question suivante après une bonne réponse
 export function Onboard(p){
 var[step,sSt]=useState("name");
   var[name,sN]=useState("");
@@ -26,6 +27,8 @@ var[step,sSt]=useState("name");
   var[audioBusy,setAudioBusy]=useState(false);        // listening play button enable/disable
   var[audioStep,setAudioStep]=useState(-1);            // P1 statement index currently playing (0-3) or -1
   var ctrlRef=useRef(null);                            // active section controller (mutable, no rerenders)
+  var autoRef=useRef(null);var advanceRef=useRef(null); // passage automatique après une bonne réponse
+  useEffect(function(){return function(){if(autoRef.current)clearTimeout(autoRef.current);};},[]);
   // Mount listening audio session lifecycle
   useEffect(function(){resumeAudioSession();return function(){stopListenAudio();};},[]);
   var[ttsPlaying,setTtsPlaying]=useState(false);var ttsUtter=useRef(null);
@@ -248,8 +251,13 @@ var[step,sSt]=useState("name");
     if(correct){try{playCorrect();}catch(e){}}else{try{playWrong();}catch(e){}}
     var ctrl=ctrlRef.current;if(ctrl)ctrl.record(correct);
     setScanPhase("fb");
+    // Passage automatique après une bonne réponse (2026-10-22) : le vert suffit, inutile de taper Next 26 fois.
+    // Une erreur garde Next, pour laisser lire l'explication. advanceRef : la version de advanceScanV2 du
+    // dernier rendu (celle de ce rendu-ci verrait un état périmé si un rendu passe entre-temps).
+    if(correct)autoRef.current=setTimeout(function(){autoRef.current=null;advanceRef.current();},AUTO_ADVANCE_MS);
   }
   function advanceScanV2(){
+    if(autoRef.current){clearTimeout(autoRef.current);autoRef.current=null;}
     stopListenAudio();stopTts();
     var ctrl=ctrlRef.current;if(!ctrl)return;
     var nq=ctrl.next();
@@ -266,6 +274,7 @@ var[step,sSt]=useState("name");
     ctrlRef.current=createCatController(SCAN_SECTION_ORDER[nextIdx]);
     serveQ(ctrlRef.current.next());
   }
+  advanceRef.current=advanceScanV2;
 
   // ─ Name entry ─
   if(step==="name")return(
