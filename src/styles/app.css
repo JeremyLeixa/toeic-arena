@@ -498,6 +498,12 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
    donc rien à couper en mouvement réduit. */
 .app{isolation:isolate}
 .app::before,.app::after{content:"";position:fixed;inset:0;pointer-events:none}
+/* Onboarding : un seul fond, plein écran (2026-10-22). App enveloppe Onboard dans un .app.onboard-shell et chaque
+   écran d'Onboard est lui-même un .app : deux halos plein écran s'additionnaient HORS de la colonne, tandis que le
+   fond opaque du .app intérieur masquait le premier DANS la colonne. Sur laptop : colonne sombre de 480 px entre
+   deux bandes dégradées. Colonne transparente (le fond est celui du body) et halo du seul .app extérieur. */
+.app.onboard-shell{background:transparent}
+.app .app::before,.app .app::after{content:none}
 .app::before{z-index:-2;background:radial-gradient(ellipse 95% 40% at 50% -6%,rgba(var(--cx),.18),rgba(var(--cx),.05) 55%,transparent 78%),radial-gradient(ellipse 135% 100% at 50% 40%,transparent 56%,rgba(0,0,0,.55) 100%)}
 .app.light::before{background:radial-gradient(ellipse 95% 40% at 50% -6%,rgba(var(--cx),.13),transparent 74%),radial-gradient(ellipse 135% 100% at 50% 40%,transparent 60%,rgba(110,78,36,.16) 100%)}
 .app::after{z-index:-1;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:220px 220px}
