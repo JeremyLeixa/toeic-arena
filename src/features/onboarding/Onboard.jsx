@@ -37,6 +37,7 @@ var[step,sSt]=useState("name");
   var[bioAvail,setBioAvail]=useState(false);var[bioRegistered,setBioRegistered]=useState(!!getBioCredId());
   useEffect(function(){biometricAvailable().then(function(v){setBioAvail(v);});},[]);
   var[classCode,setClassCode]=useState("");var[classValid,setClassValid]=useState(null);var[classChecking,setClassChecking]=useState(false);var[classGroupName,setClassGroupName]=useState("");
+  var[classGroupType,setClassGroupType]=useState(null);var lastCodeRef=useRef("");
   // Session perdue (F1, 2026-09-16) : App passe p.reauth={name,classCode} quand Supabase refuse la
   // ligne locale à la session courante. On rejoue le routage normal du lookup (compte sécurisé →
   // « entre ton mot de passe », legacy → claim) au lieu de l'écran « Your arena name », qui
@@ -155,16 +156,36 @@ var[step,sSt]=useState("name");
     setLookingUp(false);
   }
 
+  // Rend true/false (code connu ou non), null si le code a changé pendant l'appel : seule la réponse au
+  // DERNIER code tapé s'affiche (la validation part pendant la frappe, deux réponses peuvent se croiser).
   async function checkGroupCode(code){
-    if(!code.trim()){setClassValid(null);setClassGroupName("");return;}
+    var c=code.trim().toLowerCase();
+    if(!c){setClassValid(null);setClassGroupName("");setClassGroupType(null);return false;}
     setClassChecking(true);
     // Fiche publique par RPC (`groups` n'est plus lisible en direct, verrou P2-D5 du
     // 2026-09-16). null = code inconnu → « Code not found », comme avant.
-    var res=await supabase.rpc('group_public',{p_code:code.trim().toLowerCase()});
+    var res=await supabase.rpc('group_public',{p_code:c});
     if(res.error)console.warn("[onboard] group_public failed:",res.error.message);
-    if(res.data){setClassValid(true);setClassGroupName(res.data.name);}
-    else{setClassValid(false);setClassGroupName("");}
+    if(lastCodeRef.current!==c)return null;
     setClassChecking(false);
+    if(res.data){setClassValid(true);setClassGroupName(res.data.name);setClassGroupType(res.data.type||null);return true;}
+    setClassValid(false);setClassGroupName("");setClassGroupType(null);return false;
+  }
+  // Validation pendant la frappe (2026-10-22). Avant : au onBlur seulement, et Next restait inerte tant que
+  // le code n'était pas validé. Sur mobile, le premier tap sur Next ne faisait que fermer le clavier.
+  useEffect(function(){
+    if(step!=="classcode")return;
+    lastCodeRef.current=classCode.trim().toLowerCase();
+    if(!classCode.trim()){setClassChecking(false);return;}
+    var t=setTimeout(function(){checkGroupCode(classCode);},350);
+    return function(){clearTimeout(t);};
+  },[classCode,step]);
+  async function submitClassCode(){
+    if(lookingUp||!classCode.trim())return;
+    var ok=classValid;
+    if(ok!==true){lastCodeRef.current=classCode.trim().toLowerCase();ok=await checkGroupCode(classCode);}
+    if(!ok)return;
+    if(detectMode){lookupName(name.trim(),classCode);}else{sSt("consent");}
   }
 
   // ─── Battle Scan V2 helpers (CAT-light) ───
@@ -278,7 +299,7 @@ var[step,sSt]=useState("name");
         <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>Train smarter. Climb the ranks.<br/>Conquer the TOEIC.</p>
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Your arena name</label>
-          <input type="text" value={name} onChange={function(e){sN(e.target.value);}} placeholder="Enter your name..."
+          <input type="text" value={name} onChange={function(e){sN(e.target.value);}} onKeyDown={function(e){if(e.key==="Enter"&&name.trim()&&!lookingUp){setDetectMode(true);sSt("classcode");}}} autoFocus autoComplete="given-name" autoCapitalize="words" placeholder="Enter your name..."
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid var(--bdr)",borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
         </div>
         <button className="btn1" onClick={function(){if(name.trim()&&!lookingUp){setDetectMode(true);sSt("classcode");}}} disabled={lookingUp}
@@ -528,14 +549,14 @@ var[step,sSt]=useState("name");
         <p style={{color:"var(--t2)",fontSize:13,marginBottom:24,lineHeight:1.5}}>Enter the class code given by your teacher to unlock all modules, or discover Verse Arena for free.</p>
         <div style={{marginBottom:16,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>Class code</label>
-          <input type="text" value={classCode} onChange={function(e){var v=e.target.value.toLowerCase().replace(/\s/g,'');setClassCode(v);setClassValid(null);setClassGroupName("");}} onBlur={function(){checkGroupCode(classCode);}} placeholder="Code from your teacher"
+          <input type="text" value={classCode} onChange={function(e){var v=e.target.value.toLowerCase().replace(/\s/g,'');setClassCode(v);setClassValid(null);setClassGroupName("");}} onKeyDown={function(e){if(e.key==="Enter")submitClassCode();}} autoFocus autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="Code from your teacher"
             style={{width:"100%",padding:"14px 18px",background:"var(--bg2)",border:"1px solid "+(classValid===true?"var(--green)":classValid===false?"var(--red)":"var(--bdr)"),borderRadius:12,color:"var(--t1)",fontSize:16,fontFamily:"'DM Sans',sans-serif",outline:"none",transition:"border .2s"}}/>
           {classChecking&&<p style={{fontSize:11,color:"var(--t3)",marginTop:6}}>Checking...</p>}
           {classValid===true&&<p style={{fontSize:12,color:"var(--green)",marginTop:6,fontWeight:600}}>✓ {classGroupName}</p>}
           {classValid===false&&<p style={{fontSize:12,color:"var(--red)",marginTop:6}}>Code not found. Check with your teacher.</p>}
         </div>
-        <button className="btn1" onClick={function(){if(!classValid)return;if(detectMode){lookupName(name.trim(),classCode);}else{sSt("consent");}}}
-          style={{opacity:classValid?1:.4,pointerEvents:classValid?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>{lookingUp?"Checking...":"Next"}</button>
+        <button className="btn1" onClick={submitClassCode}
+          style={{opacity:classCode.trim()&&classValid!==false&&!lookingUp?1:.4,pointerEvents:classCode.trim()&&!lookingUp?"auto":"none",fontSize:16,padding:"14px 28px",marginBottom:12}}>{lookingUp?"Checking...":"Next"}</button>
         <div style={{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:12}}>
           <div style={{flex:1,height:1,background:"var(--bdr)"}}/>
           <span style={{fontSize:11,color:"var(--t3)",textTransform:"uppercase",letterSpacing:1}} className="out">or</span>
