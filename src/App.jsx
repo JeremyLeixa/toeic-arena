@@ -81,7 +81,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-10-23-onboarding-funnel";
+var BUILD_ID="2026-10-23-onboard-instant-entry";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1235,15 +1235,19 @@ function sv(d){
     // saisit un class code, pour répondre à « ce nom existe-t-il déjà ? ». La RPC fait la
     // comparaison normalisée côté serveur et ne renvoie que les correspondances, en
     // colonnes minimales. On n'a besoin que du nom canonique (casing DB) pour recover().
-    var lookup=await supabase.rpc('find_students_by_name',{p_name:name,p_class_code:classCode});
-    if(lookup.error)console.warn("[onboard] find_students_by_name failed:",lookup.error.message);
-    var existingMatch=(lookup.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
-    existingMatch.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
-    var existing={data:existingMatch.length>0?existingMatch:null};
-    if(existing.data&&existing.data.length>0){
-      // Student exists — recover using the DB-stored name (preserves original casing)
-      var recovered=await recover(existing.data[0].name,classCode);
-      if(recovered)return;
+    // authBind (compte Auth à mot de passe tout juste créé, ou repris sans ligne) : recherche sautée
+    // (2026-10-23, ~0,7 s de moins avant l'entrée). Onboard a déjà fait cette recherche à l'écran du code et
+    // n'a trouvé personne, et signUpStudent aurait échoué en « already exists » si le compte existait.
+    if(!authBind){
+      var lookup=await supabase.rpc('find_students_by_name',{p_name:name,p_class_code:classCode});
+      if(lookup.error)console.warn("[onboard] find_students_by_name failed:",lookup.error.message);
+      var existingMatch=(lookup.data||[]).filter(function(s){return normalizeName(s.name)===norm;});
+      existingMatch.sort(function(a,b){return(b.xp||0)-(a.xp||0);});
+      if(existingMatch.length>0){
+        // Student exists — recover using the DB-stored name (preserves original casing)
+        var recovered=await recover(existingMatch[0].name,classCode);
+        if(recovered)return;
+      }
     }
 
     // Get or create auth session
@@ -1294,13 +1298,15 @@ function sv(d){
     setSyncDirty(true);
     // authBind (P2 Phase A) : signup PASSWORD → la ligne créée ici reçoit user_id +
     // password_set_at (via save/bindAuth). Absent pour visitor/legacy (session anonyme).
-    // ⚠️ AWAIT AVANT sU(u) (2026-10-23, compte « Artest » de test2627) : sU déclenche les effets
-    // d'App, qui lancent leur propre save() SANS bindAuth. Les deux appels partaient ensemble ;
-    // quand le save ordinaire arrivait le premier, il CRÉAIT la ligne non liée, puis celui-ci
-    // tombait sur une ligne existante non liée et le mode strict (toutes les promos depuis le
-    // 15/10) le refusait en not_owner : bandeau « Session expired » dès l'entrée, aucune
-    // sauvegarde. Ne pas repasser sU(u) avant cette ligne.
-    await syncToCloud(u,{allowInsert:true,bindAuth:!!authBind});
+    // ⚠️ APPELÉ AVANT sU(u), SANS await (2026-10-23, compte « Artest » de test2627). sU déclenche les
+    // effets d'App, qui lancent leur propre save() SANS bindAuth. Quand ce save ordinaire arrivait le
+    // premier, il CRÉAIT la ligne non liée, puis celui-ci tombait sur une ligne existante non liée et le
+    // mode strict (toutes les promos depuis le 15/10) le refusait en not_owner : « Session expired » dès
+    // l'entrée. Ordre garanti par le verrou de save() (lib/persistence.js, _creating) : cet appel le pose
+    // de façon synchrone (syncToCloud → save sans await intermédiaire), et tout autre save attend la fin de
+    // la création. Plus d'await ici : la création prenait jusqu'à 3,3 s sur l'instance Free, l'élève attendait.
+    // Ne pas repasser sU(u) avant cette ligne, ni insérer d'await entre syncToCloud et save.
+    syncToCloud(u,{allowInsert:true,bindAuth:!!authBind});
     sU(u);
     // Narrator: "The Verdict" fires once, right after the student clicks
     // "Enter the Arena" (Battle Report depuis le 2026-10-22). Depuis 2026-05-03, ce moment intègre
