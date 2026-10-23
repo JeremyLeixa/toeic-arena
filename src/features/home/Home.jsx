@@ -11,7 +11,7 @@ import { GIcon, LeagueIcon } from "../../components/icons.jsx";
 import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { TITLES } from "../../data/chests.js";
 import { getLevel } from "../../data/helpers.js";
-import { STRATEGIES } from "../../data/miniGames.js";
+import { STRATEGIES } from "../../data/strategies.js";
 import { getInstallPrompt, onInstallPrompt, runInstallPrompt } from "../../lib/device.js";
 import { festivalById, festivalDaysLeft } from "../../lib/festivals.js";
 import { homeFocus, bonusLine } from "../../lib/homeAgenda.js";

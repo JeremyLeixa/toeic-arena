@@ -1,5 +1,5 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
-import { STRATEGIES } from "../../data/miniGames.js";
+import { STRATEGIES } from "../../data/strategies.js";
 import { today } from "../../lib/util.js";
 import { useState, useMemo } from "react";
 
