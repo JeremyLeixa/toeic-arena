@@ -15,7 +15,6 @@ import { useState, useRef, useEffect } from "react";
 import { PasswordInput } from "../../components/PasswordInput.jsx";
 
 // ─── ONBOARDING ───
-var AUTO_ADVANCE_MS=1000; // Battle Scan : délai avant la question suivante après une bonne réponse
 // Reprise du Battle Scan après une interruption (2026-10-22). Un appel, un changement d'appli sur iPhone (qui
 // recharge souvent la PWA) ou un rechargement renvoyait à l'écran du prénom, 20 questions perdues. On garde dans
 // sessionStorage (l'onglet seulement : rien ne reste après sa fermeture, appareil partagé compris) l'identité
@@ -44,8 +43,6 @@ var[step,sSt]=useState("name");
   var[audioStep,setAudioStep]=useState(-1);            // P1 statement index currently playing (0-3) or -1
   var ctrlRef=useRef(null);                            // active section controller (mutable, no rerenders)
   var seedsRef=useRef(null);var answersRef=useRef(null);  // reprise : graine par section, réponses (justes/fausses)
-  var autoRef=useRef(null);var advanceRef=useRef(null); // passage automatique après une bonne réponse
-  useEffect(function(){return function(){if(autoRef.current)clearTimeout(autoRef.current);};},[]);
   // Mount listening audio session lifecycle
   // Pas de resumeAudioSession() au montage (2026-10-23) : Onboard remplace l'appli dans le MÊME rendu
   // quand on tape « Log in again » sur le bandeau de session expirée. Le module d'écoute quitté venait
@@ -334,13 +331,8 @@ var[step,sSt]=useState("name");
     var ctrl=ctrlRef.current;if(ctrl)ctrl.record(correct);
     if(answersRef.current){answersRef.current[SCAN_SECTION_ORDER[scanSec]].push(!!correct);saveScan(scanSec);}
     setScanPhase("fb");
-    // Passage automatique après une bonne réponse (2026-10-22) : le vert suffit, inutile de taper Next 26 fois.
-    // Une erreur garde Next, pour laisser lire l'explication. advanceRef : la version de advanceScanV2 du
-    // dernier rendu (celle de ce rendu-ci verrait un état périmé si un rendu passe entre-temps).
-    if(correct)autoRef.current=setTimeout(function(){autoRef.current=null;advanceRef.current();},AUTO_ADVANCE_MS);
   }
   function advanceScanV2(){
-    if(autoRef.current){clearTimeout(autoRef.current);autoRef.current=null;}
     stopListenAudio();stopTts();
     var ctrl=ctrlRef.current;if(!ctrl)return;
     var nq=ctrl.next();
@@ -357,7 +349,6 @@ var[step,sSt]=useState("name");
     ctrlRef.current=createCatController(SCAN_SECTION_ORDER[nextIdx],seedsRef.current&&seedsRef.current[nextIdx]);
     serveQ(ctrlRef.current.next());
   }
-  advanceRef.current=advanceScanV2;
 
   // Un prénom qui se normalise à vide (caractères non latins) ne donne pas d'e-mail synthétique : synthEmail
   // lèverait une erreur à la création du compte, qui vient après le scan (lot 3, 2026-10-22). Refusé ici.
