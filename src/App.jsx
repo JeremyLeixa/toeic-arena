@@ -54,7 +54,6 @@ import { getLevel } from "./data/helpers.js";
 import { AchToast, MarksToast, XpToast } from "./components/toasts.jsx";
 import { ExamCeremonies } from "./components/Ceremonies.jsx";
 import { Tabs } from "./components/Tabs.jsx";
-import { Cards } from "./features/home/Cards.jsx";
 import { DailyTip } from "./features/home/DailyTip.jsx";
 import { GamesHub } from "./features/games/GamesHub.jsx";
 import { Mentor } from "./features/mentor/Mentor.jsx";
@@ -76,6 +75,9 @@ import { lazyNamed, preloadLazyScreens } from "./components/lazyNamed.js";
 // tests/check_import_graph.cjs. Fallbacks : LoadingMark via pg() et le shell Onboard.
 var TeacherDashLazy=lazyNamed(function(){return import("./features/teacher/TeacherDash.jsx");},"TeacherDash");
 var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboard.jsx");},"Onboard");
+// Onglet Cards (lot A, 2026-10-23) : il tirait vocab.js (186 Ko) dans le bundle de démarrage. Seul onglet
+// différé : il a sa propre frontière (LoadBoundary + Suspense + LoadingMark inline, le patron de pg()).
+var CardsLazy=lazyNamed(function(){return import("./features/home/Cards.jsx");},"Cards");
 
 
 
@@ -1827,7 +1829,7 @@ function sv(d){
     {isExpiredGroup&&<div style={{padding:"10px 16px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:12,margin:"12px 16px 0",textAlign:"center"}}>
       <p style={{fontSize:12,color:"var(--red)",margin:0,fontWeight:600}}>{"\u23F0 Acc\u00e8s expir\u00e9 le "}{groupAccess.endDate}{" — consultation uniquement"}</p>
     </div>}
-    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} festId={festId} onFestivalsOff={function(){setFestivals(false);}} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} pendingChestTier={pendingChestTier} openPath={function(){tabGo("mentor");sSPA("path");}} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<Cards u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} initialSheet={spA} setUser={function(c){sv(c);}} replayNarrator={replayNarratorMoment}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} festId={festId} setFestivals={setFestivals} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} goShop={function(){sSP("shop");}} replayNarrator={replayNarratorMoment}/>}
+    {tab==="home"&&!isExpiredGroup&&<Home u={u} nav={nav} tabGo={tabGo} festId={festId} onFestivalsOff={function(){setFestivals(false);}} events={activeEvents} medianXp={classMedianXp} pendingChests={pendingChestCount} pendingChestTier={pendingChestTier} openPath={function(){tabGo("mentor");sSPA("path");}} onOpenChest={function(){if(chestPending.length>0)setChestModal(chestPending[0]);}} onMount={function(){playBGM("bgm_home");}} onLeave={function(){stopBGM();}}/>}{tab==="train"&&!isExpiredGroup&&<Train u={u} nav={nav} tabGo={tabGo} initialView={spA} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}} setUser={function(c){sv(c);}}/>}{tab==="cards"&&!isExpiredGroup&&<LoadBoundary key="tab-cards"><Suspense fallback={<LoadingMark inline/>}><CardsLazy u={u} nav={nav} groupType={groupType} onPremium={function(n){setPremiumPrompt(n);}}/></Suspense></LoadBoundary>}{tab==="games"&&!isExpiredGroup&&<GamesHub u={u} nav={nav} groupType={groupType} events={activeEvents} onPremium={function(n){setPremiumPrompt(n);}}/>}{tab==="mentor"&&!isExpiredGroup&&<Mentor u={u} nav={nav} tabGo={tabGo} initialSheet={spA} setUser={function(c){sv(c);}} replayNarrator={replayNarratorMoment}/>}{tab==="league"&&<League u={u}/>}{tab==="profile"&&<Profile u={u} festId={festId} setFestivals={setFestivals} reset={reset} logout={logout} deleteAccount={deleteAccount} setAvatar={function(c){sv(c);}} goTeacher={function(){setTeacher(true);}} goUpgrade={function(){sSP("upgrade");}} goShop={function(){sSP("shop");}} replayNarrator={replayNarratorMoment}/>}
     {/* TutorialTour supprimé 2026-05-03 — absorbé dans le Verdict d'Aldric (cf. narrator.js). */}
     {/* ═══ CHEST OPEN MODAL ═══ */}
     {chestModal&&<ChestOpenModal chest={chestModal} result={chestResult} onOpen={doOpenChest} onClose={function(){setChestModal(null);setChestResult(null);}}/>}
