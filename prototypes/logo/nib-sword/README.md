@@ -36,5 +36,5 @@ contraste or/nuit 7,5:1, or profond/parchemin 6,3:1.
 ## Ouvert
 - Recherche d'antériorité INPI / EUIPO avant tout dépôt (non faite).
 - Pantone et CMJN approchés : à valider sur nuancier.
-- Intégration dans l'app (favicon, icônes PWA, manifest, wordmark de l'en-tête et de la sidebar) et sur la landing : pas faite.
+- Intégré dans l'app le 2026-10-23 (e981c4a) et sur la landing verse-arena.fr (86fd601, uploadée sur Hostinger le même jour).
 - `final/` contient encore le kit Tiered V : le dossier était verrouillé (synchro), à supprimer ou renommer à la main si on n'en veut plus.
