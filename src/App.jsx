@@ -20,7 +20,7 @@ import { LEGENDARY_ACHIEVEMENTS, EPIC_ACHIEVEMENTS, NOVICE_ACHIEVEMENTS, grantCh
 import { NARRATOR_MOMENTS, hasHeardMoment, markMomentHeard } from "./narrator.js";
 import { estimateTOEICScore } from "./lib/toeic.js";
 import { getLeague, applyWeekTransition } from "./lib/league.js";
-import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost, notifyAuthLost } from "./lib/persistence.js";
+import { _cachedUserId, _syncDirty, saveLocal, loadLocal, getAccessTokenSync, load, save, syncToCloud, setCachedUserId, setSyncDirty, onAuthLost, notifyAuthLost, isCreatingRow } from "./lib/persistence.js";
 import { fresherLocalFor } from "./lib/staleRemote.js";
 import { recordModule, checkMission, dailyQs, srsUp } from "./lib/progress.js";
 import { REP_MAX_GAIN } from "./lib/officeGrades.js";
@@ -887,7 +887,10 @@ useEffect(function(){
           // la RPC a besoin pour la garde de propriete.
           // NB : beforeunload ne se declenche pas de facon fiable sur iOS Safari — ce
           // chemin est un best-effort, la sauvegarde reelle vient de sv() et du sync 60s.
-          try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;var _bearer=getAccessTokenSync()||_anonKey;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/rpc/save_student",{
+          // Ligne en cours de création (onboard, 2026-10-23) : pas de keepalive, il pourrait la créer NON liée
+          // avant la création liée (même course que celle qu'évite le verrou de save()). La copie locale reste.
+          if(isCreatingRow()){console.warn("[UNLOAD] keepalive skipped: row creation in flight");}
+          else try{var _anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY;var _bearer=getAccessTokenSync()||_anonKey;fetch(import.meta.env.VITE_SUPABASE_URL+"/rest/v1/rpc/save_student",{
             method:"POST",keepalive:true,
             headers:{
               "Content-Type":"application/json",

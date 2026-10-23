@@ -185,7 +185,25 @@ export async function ensureAuthSession(){
 // opts.allowInsert — autorise la création d'une ligne pour un prénom déjà présent
 // dans une AUTRE promo (homonyme légitime). Seul onboard() le passe. Voir le garde
 // anti-phantom plus bas.
+// Création de ligne en cours (2026-10-23). onboard() n'attend plus la sauvegarde qui CRÉE et LIE la ligne
+// (allowInsert + bindAuth) avant d'ouvrir l'appli : toute autre sauvegarde attend ici qu'elle soit finie.
+// Sans ça, une sauvegarde ordinaire arrivée la première crée la ligne SANS la lier, et la création liée est
+// ensuite refusée en not_owner par le mode strict (compte « Artest », 2026-10-23, voir onboard()).
+var _creating=null;
+export function isCreatingRow(){return !!_creating;}
 export async function save(d,opts){
+  if(opts&&opts.allowInsert){
+    var p=_save(d,opts);
+    _creating=p;
+    try{return await p;}finally{if(_creating===p)_creating=null;}
+  }
+  if(_creating){
+    saveLocal(d); // la copie locale n'attend pas : seul l'envoi au serveur est retenu
+    try{await _creating;}catch(e){console.warn("[SAVE] wait for row creation caught:",e&&e.message);}
+  }
+  return _save(d,opts);
+}
+async function _save(d,opts){
   saveLocal(d);
   if(!d||!d.name){console.warn("[SAVE] skip: no data or name");return;}
   // Safety rail: never let a missing classCode fall through to the "visitor" fallback
