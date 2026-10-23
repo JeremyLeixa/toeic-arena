@@ -65,6 +65,8 @@ const LOCKED = [
   // Économie côté serveur (2026-09-24) : catalogues lus seulement par les RPC.
   'shop_catalog', 'reward_catalog', 'token_catalog', 'chest_drop_tables', 'rarity_catalog', 'chest_triggers',
   'xp_clamp_log', 'weekly_snapshots_backup_2026_09_24', 'identity_strict_classes',
+  // Entonnoir de l'onboarding (2026-10-23) : compteurs anonymes, écrits par onb_step, lus par teacher_usage.
+  'onboarding_steps',
 ];
 // Volontairement lisibles : le classement et les événements en cours.
 const READABLE = ['students_public', 'events'];
