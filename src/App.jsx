@@ -81,7 +81,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-10-22-onboarding-lot3";
+var BUILD_ID="2026-10-23-onboard-bind-race";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 
@@ -1283,7 +1283,6 @@ function sv(d){
         };
       }
     }
-    sU(u);
     saveLocal(u);
     // Initial sync to create the row in Supabase.
     // allowInsert: onboard() est le SEUL appelant autorisé à créer une ligne pour un
@@ -1292,7 +1291,14 @@ function sv(d){
     setSyncDirty(true);
     // authBind (P2 Phase A) : signup PASSWORD → la ligne créée ici reçoit user_id +
     // password_set_at (via save/bindAuth). Absent pour visitor/legacy (session anonyme).
-    syncToCloud(u,{allowInsert:true,bindAuth:!!authBind});
+    // ⚠️ AWAIT AVANT sU(u) (2026-10-23, compte « Artest » de test2627) : sU déclenche les effets
+    // d'App, qui lancent leur propre save() SANS bindAuth. Les deux appels partaient ensemble ;
+    // quand le save ordinaire arrivait le premier, il CRÉAIT la ligne non liée, puis celui-ci
+    // tombait sur une ligne existante non liée et le mode strict (toutes les promos depuis le
+    // 15/10) le refusait en not_owner : bandeau « Session expired » dès l'entrée, aucune
+    // sauvegarde. Ne pas repasser sU(u) avant cette ligne.
+    await syncToCloud(u,{allowInsert:true,bindAuth:!!authBind});
+    sU(u);
     // Narrator: "The Verdict" fires once, right after the student clicks
     // "Enter the Arena" (Battle Report depuis le 2026-10-22). Depuis 2026-05-03, ce moment intègre
     // aussi la présentation des 3 piliers de l'app (Daily Quest, Salle
