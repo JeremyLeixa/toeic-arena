@@ -47,7 +47,11 @@ var[step,sSt]=useState("name");
   var autoRef=useRef(null);var advanceRef=useRef(null); // passage automatique après une bonne réponse
   useEffect(function(){return function(){if(autoRef.current)clearTimeout(autoRef.current);};},[]);
   // Mount listening audio session lifecycle
-  useEffect(function(){resumeAudioSession();return function(){stopListenAudio();};},[]);
+  // Pas de resumeAudioSession() au montage (2026-10-23) : Onboard remplace l'appli dans le MÊME rendu
+  // quand on tape « Log in again » sur le bandeau de session expirée. Le module d'écoute quitté venait
+  // de couper l'audio (stopListenAudio) ; réarmer ici relançait sa chaîne d'énoncés en cours, qui se
+  // réveille après sa pause de 150-400 ms. Onboard réarme juste avant de jouer (serveQ, bouton Listen).
+  useEffect(function(){return function(){stopListenAudio();};},[]);
   var[ttsPlaying,setTtsPlaying]=useState(false);var ttsUtter=useRef(null);
   function speakQ(text){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=0.9;var v=getEnVoice();if(v)u.voice=v;u.onstart=function(){setTtsPlaying(true);};u.onend=function(){setTtsPlaying(false);};u.onerror=function(){setTtsPlaying(false);};ttsUtter.current=u;window.speechSynthesis.speak(u);}
   function stopTts(){if(window.speechSynthesis)window.speechSynthesis.cancel();setTtsPlaying(false);}
