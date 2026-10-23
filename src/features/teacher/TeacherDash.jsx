@@ -5,7 +5,7 @@ import { GAME_ICON_PATHS } from "../../data/avatarIcons.js";
 import { getLevel } from "../../data/helpers.js";
 import { LEAGUES } from "../../data/leagues.js";
 import { MISSION_MODULES } from "../../data/placement.js";
-import { isGhost } from "../../lib/access.js";
+import { isGhost, neverPlayed } from "../../lib/access.js";
 import { generateSeasons } from "../../lib/league.js";
 import { getDashTeacher, getBioCredId, biometricAvailable, isDashAdmin, teacherAuth, optIcon, bioRegister, BIOMETRIC_KEY, clearDashSession, setDashSession } from "../../lib/teacherSession.js";
 import { estimateTOEICScore } from "../../lib/toeic.js";
@@ -400,6 +400,8 @@ export function TeacherDash(p){
   var[campusSort,setCampusSort]=useState("toeic"); // "toeic"|"active"|"students"
   var[sortBy,setSortBy]=useState("toeic"); // "toeic"|"xp"|"accuracy"|"time"|"last_active"
   var[showGhostsOnly,setShowGhostsOnly]=useState(false);
+  // Filtre « Jamais joué » (2026-10-23) : inscrits sans première manche, exclusif avec Ghosts. copiedNames : retour du bouton « Copier ».
+  var[showNeverOnly,setShowNeverOnly]=useState(false);var[copiedNames,setCopiedNames]=useState(false);
   var[showReport,setShowReport]=useState(false);
   var[showReportCfg,setShowReportCfg]=useState(false);
   var[rcEmail,setRcEmail]=useState("");var[rcOptin,setRcOptin]=useState(true);
@@ -1360,7 +1362,7 @@ export function TeacherDash(p){
       <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:classAcc>=60?"var(--green)":"var(--orange)"}}>{classAcc}%</div><div style={{fontSize:10,color:"var(--t3)"}}>Accuracy</div></div>
       <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--purple)"}}>{totalSess}</div><div style={{fontSize:10,color:"var(--t3)"}}>Sessions</div></div>
       <div className="crd" style={{padding:10,textAlign:"center"}}><div className="out" style={{fontSize:18,fontWeight:800,color:"var(--orange)"}}>{fmtTime(totalClassTime)}</div><div style={{fontSize:10,color:"var(--t3)"}}>Time</div></div>
-      <div className="crd" onClick={function(){if(ghostCount>0){setShowGhostsOnly(!showGhostsOnly);setDashTab("overview");}}} style={{padding:10,textAlign:"center",cursor:ghostCount>0?"pointer":"default",background:showGhostsOnly?"rgba(224,82,82,.12)":"var(--bg2)",borderColor:showGhostsOnly?"rgba(224,82,82,.4)":"var(--bdr)"}}><div className="out" style={{fontSize:18,fontWeight:800,color:ghostCount>0?"var(--red)":"var(--t3)"}}>{ghostCount}</div><div style={{fontSize:10,color:"var(--t3)"}}>{"\uD83D\uDC7B"} Ghosts</div></div>
+      <div className="crd" onClick={function(){if(ghostCount>0){setShowGhostsOnly(!showGhostsOnly);setShowNeverOnly(false);setDashTab("overview");}}} style={{padding:10,textAlign:"center",cursor:ghostCount>0?"pointer":"default",background:showGhostsOnly?"rgba(224,82,82,.12)":"var(--bg2)",borderColor:showGhostsOnly?"rgba(224,82,82,.4)":"var(--bdr)"}}><div className="out" style={{fontSize:18,fontWeight:800,color:ghostCount>0?"var(--red)":"var(--t3)"}}>{ghostCount}</div><div style={{fontSize:10,color:"var(--t3)"}}>{"\uD83D\uDC7B"} Ghosts</div></div>
     </div>);})()}
 
     {/* ═══ OVERVIEW TAB ═══ */}
@@ -1404,7 +1406,7 @@ export function TeacherDash(p){
       </div>)}
 
       {/* Student list */}
-      <h3 className="out" style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--t2)"}}>{showGhostsOnly?"\uD83D\uDC7B Ghost students":"Students"} ({showGhostsOnly?students.filter(isGhost).length:students.length})</h3>
+      <h3 className="out" style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--t2)"}}>{showNeverOnly?"🌱 Jamais joué":showGhostsOnly?"\uD83D\uDC7B Ghost students":"Students"} ({showNeverOnly?students.filter(neverPlayed).length:showGhostsOnly?students.filter(isGhost).length:students.length})</h3>
       {students.length===0&&<div className="crd" style={{padding:20,textAlign:"center"}}>
         <p style={{color:"var(--t3)",fontSize:13}}>No students yet. Students appear automatically after onboarding.</p>
       </div>}
@@ -1418,7 +1420,8 @@ export function TeacherDash(p){
             {id:"time",label:"Time"},
             {id:"last_active",label:"Last Active"},
           ];
-          var pool=showGhostsOnly?students.filter(isGhost):students;
+          var pool=showNeverOnly?students.filter(neverPlayed):showGhostsOnly?students.filter(isGhost):students;
+          var neverCount=students.filter(neverPlayed).length;
           var sorted=pool.slice().sort(function(a,b){
             if(sortBy==="toeic"){return (estimateTOEIC(b).total||-1)-(estimateTOEIC(a).total||-1);}
             if(sortBy==="xp"){return(b.xp||0)-(a.xp||0);}
@@ -1444,11 +1447,27 @@ export function TeacherDash(p){
                     background:active?"rgba(0,212,255,.1)":"transparent",color:active?"var(--cyan)":"var(--t3)",
                     fontSize:11,fontWeight:active?700:400,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}} className="out">{o.label}</button>);
               })}
-              <button onClick={function(){setShowGhostsOnly(!showGhostsOnly);}}
+              <button onClick={function(){setShowNeverOnly(!showNeverOnly);setShowGhostsOnly(false);setCopiedNames(false);}}
+                style={{padding:"5px 10px",borderRadius:99,border:"1px solid "+(showNeverOnly?"var(--gold)":"var(--bdr)"),
+                  background:showNeverOnly?"rgba(240,200,80,.15)":"transparent",color:showNeverOnly?"var(--gold)":"var(--t3)",
+                  fontSize:11,fontWeight:showNeverOnly?700:400,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginLeft:"auto"}} className="out">{"🌱 Jamais joué ("+neverCount+")"}</button>
+              <button onClick={function(){setShowGhostsOnly(!showGhostsOnly);setShowNeverOnly(false);}}
                 style={{padding:"5px 10px",borderRadius:99,border:"1px solid "+(showGhostsOnly?"rgba(224,82,82,.6)":"var(--bdr)"),
                   background:showGhostsOnly?"rgba(224,82,82,.15)":"transparent",color:showGhostsOnly?"var(--red)":"var(--t3)",
-                  fontSize:11,fontWeight:showGhostsOnly?700:400,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginLeft:"auto"}} className="out">{"\uD83D\uDC7B"} Ghosts only</button>
+                  fontSize:11,fontWeight:showGhostsOnly?700:400,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}} className="out">{"\uD83D\uDC7B"} Ghosts only</button>
             </div>
+            {/* Jamais joué : à relancer en cours, le seul canal (aucune notification avant la 1re manche). */}
+            {showNeverOnly&&pool.length>0&&<div className="crd" style={{padding:"10px 12px",marginBottom:10,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+              <span style={{flex:1,minWidth:200,fontSize:12,color:"var(--t2)",lineHeight:1.5}}>{"Inscrits (Battle Scan fait) mais aucune manche terminée. Ils n'ont pas encore de notifications : une relance en cours est le meilleur moyen de les faire revenir."}</span>
+              <button className="btn2" onClick={function(){
+                var txt=pool.map(function(s){return s.name;}).join(", ");
+                // Presse-papiers refusé (navigateur, iframe) : les prénoms s'affichent à sélectionner à la main.
+                try{navigator.clipboard.writeText(txt).then(function(){setCopiedNames(true);},function(e){console.warn("[dash] copy names failed:",e&&e.message);setCopiedNames("fail");});}
+                catch(e){console.warn("[dash] copy names caught:",e&&e.message);setCopiedNames("fail");}
+              }} style={{fontSize:12,padding:"8px 12px",width:"auto"}}>{copiedNames===true?"Copié ✓":"Copier les prénoms"}</button>
+              {copiedNames==="fail"&&<textarea readOnly value={pool.map(function(s){return s.name;}).join(", ")} onFocus={function(e){e.target.select();}} rows={2}
+                style={{width:"100%",fontSize:12,padding:8,borderRadius:8,border:"1px solid var(--bdr)",background:"var(--bg)",color:"var(--t1)",fontFamily:"'DM Sans',sans-serif",resize:"vertical"}}/>}
+            </div>}
             {/* Student rows */}
             {sorted.map(function(s,i){
               var origIdx=students.indexOf(s);

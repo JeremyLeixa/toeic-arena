@@ -38,3 +38,6 @@ export var GHOST_NAME="Teacher"; // Teacher is hidden from leaderboards but DOES
 // var DASH_STUDENT_COLS="id,name,class_code,xp,weekly_xp,week_id,streak,last_active,stats,total_time,module_scores,mock_results,game_scores,unlocked_ach,weekly_daily_count,weekly_history";
 // A "ghost student" is a registered student (non-visitor) who barely engaged with the app
 export function isGhost(s){if(!s)return false;if(s.class_code==="visitor")return false;var tq=(s.stats&&s.stats.totalQ)||0;var cr=(s.stats&&s.stats.cardsRev)||0;return tq<=15&&cr<=10;}
+// Inscrit sans première manche (2026-10-23) : Battle Scan fait, aucune manche terminée. La moitié de 4ESGI en était
+// là, et aucun n'avait de notification (la demande vient après la 1re manche) : le formateur est le seul canal.
+export function neverPlayed(s){if(!s)return false;if(s.class_code==="visitor")return false;return !((s.stats&&s.stats.sessions)>0);}
