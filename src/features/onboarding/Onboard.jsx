@@ -108,6 +108,10 @@ var[step,sSt]=useState("name");
   // même clic (sauvegarde du scan, puis entrée dans l'arène au lot 3). L'état React n'y est pas encore à jour :
   // lu tel quel, onboard() recevrait authBind=false et la ligne naîtrait sans user_id ni password_set_at.
   var pwdSetRef=useRef(false);
+  // Étape account figée au tap (2026-10-23) : {needPwd, entering}. Sans ça, l'inscription réussie passait
+  // studentPwdSet à vrai, l'écran se recalculait en « Avant d'entrer » (sans champs) et restait ~6 s pendant que
+  // onboard() créait la ligne, puis partait seul : un second écran de consentement qui « passe sans tap ».
+  var[accountLock,setAccountLock]=useState(null);
   var[pendingNav,setPendingNav]=useState(null); // choix du rapport (module de la First Quest ou null), exécuté après account
   function markPwdSet(v){pwdSetRef.current=!!v;setStudentPwdSet(!!v);}
   // Filet auto-réparateur : si signUpStudent échoue "compte déjà existant" (ex. binding
@@ -653,10 +657,11 @@ var[step,sSt]=useState("name");
   // l'orphelin (compte Auth sans ligne, reprise 0cd3a9c) a déjà le sien (studentPwdSet). Cet écran est un
   // consentement RGPD : toute évolution du modèle d'identité doit être répercutée dans « Données collectées ».
   if(step==="account"){
-    var needPwd=classCode!=="visitor"&&!studentPwdSet;
-    var accountDone=function(){enterArena(pendingNav);};
+    var needPwd=accountLock?accountLock.needPwd:(classCode!=="visitor"&&!studentPwdSet);
+    var entering=!!(accountLock&&accountLock.entering);
+    var accountDone=function(){setAccountLock({needPwd:needPwd,entering:true});enterArena(pendingNav);};
     async function doAccount(){
-      if(pwdBusy)return;
+      if(pwdBusy||entering)return;
       if(!needPwd){accountDone();return;}
       if((pwd1||"").length<8){setPwdErr("Mot de passe trop court (8 caractères minimum)");return;}
       if(pwd1!==pwd2){setPwdErr("Les deux mots de passe ne correspondent pas");return;}
@@ -713,9 +718,9 @@ var[step,sSt]=useState("name");
         {pwdErr&&<div style={{color:"var(--red)",fontSize:13,marginBottom:12,textAlign:"center"}}>{pwdErr}</div>}
         {pwdExistsDup&&<button className="btn2" onClick={goSignIn}
           style={{width:"100%",fontSize:13,padding:"11px 16px",marginBottom:10,borderColor:"rgba(var(--cx),.25)",color:"var(--cyan)"}}>{"Me connecter avec mon mot de passe"}</button>}
-        <button className="btn1" onClick={doAccount} disabled={pwdBusy}
+        <button className="btn1" onClick={doAccount} disabled={pwdBusy||entering}
           style={{width:"100%",fontSize:15,padding:"14px 20px",opacity:pwdBusy?.6:1}}>
-          {pwdBusy?"Création…":(needPwd?"J’accepte et je crée mon compte":"J’accepte — continuer")}
+          {entering?(needPwd?"Compte créé ✓ — ouverture de l’arène…":"Ouverture de l’arène…"):pwdBusy?"Création…":(needPwd?"J’accepte et je crée mon compte":"J’accepte — continuer")}
         </button>
         {needPwd&&<div style={{marginTop:16,textAlign:"center"}}>
           <button onClick={goSignIn} style={{background:"none",border:"none",color:"var(--cyan)",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}}>{"J'ai déjà un mot de passe — me connecter"}</button>
