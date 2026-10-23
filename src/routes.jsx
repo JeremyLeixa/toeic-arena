@@ -1,14 +1,5 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, Phase 4a). Les 41 routes `sp` déplacées telles quelles.
-import { SpeedMatch } from "./features/games/SpeedMatch.jsx";
-import { WordFall } from "./features/games/WordFall.jsx";
-import { WordTavern } from "./features/games/WordTavern.jsx";
-import { CardSess } from "./features/home/Cards.jsx";
-import { Daily } from "./features/home/Daily.jsx";
-import { Shop } from "./features/shop/Shop.jsx";
-import { UpgradeScreen } from "./features/shop/UpgradeScreen.jsx";
-import { Drill, GrammarRef, LinkingBridge, PhrasalDojo, TrapsQuiz, WordFam } from "./features/train/grammar.jsx";
 import { gauntletModId } from "./lib/gauntletTrials.js";
-import { AboutToeic, StratCards, StratQuizPage } from "./features/train/strategy.jsx";
 import { checkMission, recordModule } from "./lib/progress.js";
 import { recordMisses } from "./lib/review.js";
 import { playBGM, stopBGM } from "./sounds.js";
@@ -34,9 +25,28 @@ var Part6Drill=lazyNamed(function(){return import("./features/train/reading.jsx"
 var Part7Read=lazyNamed(function(){return import("./features/train/reading.jsx");},"Part7Read");
 var TimeSim=lazyNamed(function(){return import("./features/train/reading.jsx");},"TimeSim");
 // Jeux et hubs lourds, chacun seul importateur de son fichier de données (audioBlitz,
-// clueHunter, sentences, grammarGauntlet + grimoires, modals + grimoire). SpeedMatch,
-// WordFall et WordTavern restent statiques : leurs données (vocab, grammar) sont de toute
-// façon dans le principal via Cards et lib/progress.
+// clueHunter, sentences, grammarGauntlet + grimoires, modals + grimoire).
+// Lot A du 2026-10-23 (bundle de démarrage) : aussi les écrans qui tiraient vocab.js (186 Ko : Cards,
+// CardSess, Word Tavern, Speed Match), miniGames.js (106 Ko) et les grimoires (grammar.jsx, stratégies),
+// plus Daily, Word Fall, la boutique et l'écran Premium. Aucun ne sert à l'ouverture ; preloadLazyScreens
+// les recharge à l'idle (3 s après le premier affichage), comme les autres.
+var SpeedMatch=lazyNamed(function(){return import("./features/games/SpeedMatch.jsx");},"SpeedMatch");
+var WordFall=lazyNamed(function(){return import("./features/games/WordFall.jsx");},"WordFall");
+var WordTavern=lazyNamed(function(){return import("./features/games/WordTavern.jsx");},"WordTavern");
+var CardSess=lazyNamed(function(){return import("./features/home/Cards.jsx");},"CardSess");
+var Daily=lazyNamed(function(){return import("./features/home/Daily.jsx");},"Daily");
+var Shop=lazyNamed(function(){return import("./features/shop/Shop.jsx");},"Shop");
+var UpgradeScreen=lazyNamed(function(){return import("./features/shop/UpgradeScreen.jsx");},"UpgradeScreen");
+// grammar.jsx : six écrans, un seul chunk (même module).
+var Drill=lazyNamed(function(){return import("./features/train/grammar.jsx");},"Drill");
+var GrammarRef=lazyNamed(function(){return import("./features/train/grammar.jsx");},"GrammarRef");
+var LinkingBridge=lazyNamed(function(){return import("./features/train/grammar.jsx");},"LinkingBridge");
+var PhrasalDojo=lazyNamed(function(){return import("./features/train/grammar.jsx");},"PhrasalDojo");
+var TrapsQuiz=lazyNamed(function(){return import("./features/train/grammar.jsx");},"TrapsQuiz");
+var WordFam=lazyNamed(function(){return import("./features/train/grammar.jsx");},"WordFam");
+var AboutToeic=lazyNamed(function(){return import("./features/train/strategy.jsx");},"AboutToeic");
+var StratCards=lazyNamed(function(){return import("./features/train/strategy.jsx");},"StratCards");
+var StratQuizPage=lazyNamed(function(){return import("./features/train/strategy.jsx");},"StratQuizPage");
 var AudioBlitz=lazyNamed(function(){return import("./features/games/AudioBlitz.jsx");},"AudioBlitz");
 var ClueHunter=lazyNamed(function(){return import("./features/games/ClueHunter.jsx");},"ClueHunter");
 var MimicHunt=lazyNamed(function(){return import("./features/games/MimicHunt.jsx");},"MimicHunt");
