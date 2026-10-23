@@ -6,6 +6,7 @@ import { PassageDocs } from "../../components/PassageDocs.jsx";
 import { SCAN_SECTION_ORDER, BATTLE_SCAN_V2 } from "../../data/placement.js";
 import { resumeAudioSession, stopListenAudio, getEnVoice, playAudioFile, playLetteredOption, isAudioAborted } from "../../lib/audio.js";
 import { isModuleLocked } from "../../lib/access.js";
+import { ONB_GLOBAL } from "../../lib/onbFunnel.js";
 import { getBioCredId, biometricAvailable, bioAuthenticate, teacherAuth, setDashSession, hasDashSession } from "../../lib/teacherSession.js";
 import { normalizeName } from "../../lib/util.js";
 import { createCatController, replayCatController, computeScanResult } from "../../scanEngine.js";
@@ -31,6 +32,21 @@ function readScanSave(){
 }
 function clearScanSave(){try{sessionStorage.removeItem(SCAN_SAVE_KEY);}catch(e){console.warn("[scan-save] clear caught:",e&&e.message);}}
 function newSeed(){return Math.floor(Math.random()*2147483647);}
+// Entonnoir anonyme (2026-10-23, lib/onbFunnel.js) : une étape atteinte = +1 sur un compteur (jour, promo,
+// étape) côté serveur. Aucun identifiant ; chaque étape n'est envoyée qu'une fois par onglet (drapeau local,
+// remis à zéro à l'entrée dans l'arène pour l'élève suivant d'un appareil partagé). Sans attendre : un échec
+// (hors ligne, RPC absente) ne bloque ni ne retarde rien. Promo '_' : étapes d'avant le code de classe.
+var ONB_SENT_KEY="toeic-onb-sent";
+function onbStep(step,cc){
+  try{
+    var sent=JSON.parse(sessionStorage.getItem(ONB_SENT_KEY)||"{}");
+    if(sent[step])return;
+    sent[step]=1;sessionStorage.setItem(ONB_SENT_KEY,JSON.stringify(sent));
+  }catch(e){console.warn("[onb-step] storage caught:",e&&e.message);}
+  supabase.rpc("onb_step",{p_class_code:cc||ONB_GLOBAL,p_step:step}).then(function(r){
+    if(r.error)console.warn("[onb-step]",step,"failed:",r.error.message);
+  },function(e){console.warn("[onb-step]",step,"caught:",e&&e.message);});
+}
 export function Onboard(p){
 var[step,sSt]=useState("name");
   var[name,sN]=useState("");
@@ -70,6 +86,9 @@ var[step,sSt]=useState("name");
     lookupName(p.reauth.name,p.reauth.classCode);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[reauthKey]);
+  useEffect(function(){if(step==="name"&&!p.reauth)onbStep("land");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[step]);
   // Reprise du scan (voir SCAN_SAVE_KEY). Jamais pendant une reconnexion (p.reauth : pas de scan en jeu).
   // Un nouvel élève qui avait posé son mot de passe (studentPwdSet) ne reprend que si la session est bien
   // celle de son compte : sans elle, onboard() lierait la ligne à une session anonyme et le mot de passe ne
@@ -131,7 +150,7 @@ var[step,sSt]=useState("name");
   // Une seule entrée : onboard() attend maintenant la création de la ligne avant d'ouvrir l'appli
   // (2026-10-23), l'écran account reste donc affiché un instant et un second tap relancerait tout.
   var enteringRef=useRef(false);
-  function enterArena(firstNav){if(enteringRef.current)return;enteringRef.current=true;clearScanSave();stopTts();stopListenAudio();try{playArenaCall();}catch(e){console.warn("[onboard] arena call:",e&&e.message);}p.go(name.trim(),classCode||"visitor",scanScores,firstNav||undefined,sectionResults,pwdSetRef.current);}
+  function enterArena(firstNav){if(enteringRef.current)return;enteringRef.current=true;clearScanSave();try{sessionStorage.removeItem(ONB_SENT_KEY);}catch(e){console.warn("[onb-step] clear caught:",e&&e.message);}stopTts();stopListenAudio();try{playArenaCall();}catch(e){console.warn("[onboard] arena call:",e&&e.message);}p.go(name.trim(),classCode||"visitor",scanScores,firstNav||undefined,sectionResults,pwdSetRef.current);}
 
   async function lookupName(n,cc){
     setLookingUp(true);
@@ -172,6 +191,7 @@ var[step,sSt]=useState("name");
       if(matches.length===0){
         console.warn("[LOOKUP] no match in cohort → scan (new)");
         setDetectMode(false); // nouvel inscrit : quitte le mode détection
+        onbStep("scan_open",cc);
         startTestV2();
       } else {
         if(matches.length>1)console.warn("[LOOKUP] "+matches.length+" rows share this normalized name in",cc,"→ highest XP (same rule as the server)");
@@ -179,6 +199,7 @@ var[step,sSt]=useState("name");
         var m=matches[0];
         sN(m.name);
         setPwdTarget({name:m.name,class_code:m.class_code,password_set_at:m.password_set_at||null});
+        if(!p.reauth)onbStep("returning",cc);
         if(m.password_set_at){
           console.warn("[LOOKUP] match, secured → enterPassword");
           sSt("enterPassword");
@@ -190,6 +211,7 @@ var[step,sSt]=useState("name");
     }catch(e){
       console.warn("[LOOKUP] outer catch → scan (new), err:",e&&e.message);
       setDetectMode(false);
+      onbStep("scan_open",cc);
       startTestV2();
     }
     setLookingUp(false);
@@ -224,7 +246,7 @@ var[step,sSt]=useState("name");
     var ok=classValid;
     if(ok!==true){lastCodeRef.current=classCode.trim().toLowerCase();ok=await checkGroupCode(classCode);}
     if(!ok)return;
-    if(detectMode){lookupName(name.trim(),classCode);}else{startTestV2();}
+    if(detectMode){lookupName(name.trim(),classCode);}else{onbStep("scan_open",classCode);startTestV2();}
   }
 
   // ─── Battle Scan V2 helpers (CAT-light) ───
@@ -310,6 +332,7 @@ var[step,sSt]=useState("name");
   }
   function beginSectionV2(){
     var ctrl=ctrlRef.current;if(!ctrl)return;
+    if(scanSec===0)onbStep("scan_start",classCode||"visitor");
     serveQ(ctrl.next());
   }
   // Resolve: did the user pick the correct answer for the current Q?
@@ -344,7 +367,9 @@ var[step,sSt]=useState("name");
     setSectionResults(nextResults);
     var nextScores=Object.assign({},scanScores);nextScores[secId]=Math.round(res.acc*5);setScanScores(nextScores);
     var nextIdx=scanSec+1;
-    if(nextIdx>=SCAN_SECTION_ORDER.length){sSt("results");return;}
+    // Fins de section : sec1..sec3, puis scan_done (ordre de SCAN_SECTION_ORDER, libellés dans lib/onbFunnel.js).
+    if(nextIdx>=SCAN_SECTION_ORDER.length){onbStep("scan_done",classCode||"visitor");sSt("results");return;}
+    onbStep("sec"+nextIdx,classCode||"visitor");
     setScanSec(nextIdx);
     ctrlRef.current=createCatController(SCAN_SECTION_ORDER[nextIdx],seedsRef.current&&seedsRef.current[nextIdx]);
     serveQ(ctrlRef.current.next());
@@ -354,7 +379,7 @@ var[step,sSt]=useState("name");
   // lèverait une erreur à la création du compte, qui vient après le scan (lot 3, 2026-10-22). Refusé ici.
   var nameUnusable=!!name.trim()&&!normNameForEmail(name);
   var nameReady=!!name.trim()&&!nameUnusable&&!lookingUp;
-  function submitName(){if(nameReady){setDetectMode(true);sSt("classcode");}}
+  function submitName(){if(nameReady){onbStep("name");setDetectMode(true);sSt("classcode");}}
   // ─ Name entry ─
   if(step==="name")return(
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
@@ -631,7 +656,7 @@ var[step,sSt]=useState("name");
           <p style={{fontSize:13,color:"var(--t1)",lineHeight:1.6,marginBottom:12}}>{"⚠️ L'accès gratuit ouvre une sélection de modules. Tout se débloque avec un code classe de ton formateur, ou avec Arena Premium (9,99 €/mois ou Pass 3 mois à 22,99 €)."}</p>
           <div style={{display:"flex",gap:8}}>
             <button className="btn2" onClick={function(){setVisitorConfirm(false);}} style={{flex:1,fontSize:12,padding:"10px 8px"}}>{"Annuler"}</button>
-            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);startTestV2();}}
+            <button className="btn2" onClick={function(){setClassCode("visitor");setClassValid(true);setClassGroupName("Visitor / Free Access");setVisitorConfirm(false);onbStep("scan_open","visitor");startTestV2();}}
               style={{flex:1,fontSize:12,padding:"10px 8px",borderColor:"rgba(27,112,207,.3)",color:"var(--purple)"}}>{"C'est parti"}</button>
           </div>
         </div>}
@@ -650,7 +675,7 @@ var[step,sSt]=useState("name");
   if(step==="account"){
     var needPwd=accountLock?accountLock.needPwd:(classCode!=="visitor"&&!studentPwdSet);
     var entering=!!(accountLock&&accountLock.entering);
-    var accountDone=function(){setAccountLock({needPwd:needPwd,entering:true});enterArena(pendingNav);};
+    var accountDone=function(){setAccountLock({needPwd:needPwd,entering:true});onbStep("account",classCode||"visitor");enterArena(pendingNav);};
     async function doAccount(){
       if(pwdBusy||entering)return;
       if(!needPwd){accountDone();return;}
@@ -961,8 +986,8 @@ var[step,sSt]=useState("name");
           jusqu'en bas pour trouver la suite. Même pied que l'écran de fin des modules (.sr-cta), hors du
           bloc animé. */}
       <div className="sr-cta">
-        <button className="btn2" onClick={function(){stopTts();stopListenAudio();setPendingNav(null);sSt("account");}}>{"Go to the Arena"}</button>
-        <button className="btn1" onClick={function(){stopTts();stopListenAudio();setPendingNav(quest.mod);sSt("account");}}>{"Start my First Quest →"}</button>
+        <button className="btn2" onClick={function(){stopTts();stopListenAudio();onbStep("report_cta",classCode||"visitor");setPendingNav(null);sSt("account");}}>{"Go to the Arena"}</button>
+        <button className="btn1" onClick={function(){stopTts();stopListenAudio();onbStep("report_cta",classCode||"visitor");setPendingNav(quest.mod);sSt("account");}}>{"Start my First Quest →"}</button>
       </div>
     </div>);}
 
@@ -1021,7 +1046,7 @@ var[step,sSt]=useState("name");
         {/* Annonce du passage à l'anglais (ex-écran langBridge, fusionné ici le 2026-10-22) : c'est à la
             section suivante que l'anglais commence, pas après le Battle Report. */}
         <p style={{color:"var(--t1)",fontSize:13,fontWeight:600,lineHeight:1.55,margin:"0 auto 22px",maxWidth:330}}>{"À partir d’ici, tout se passe en anglais : questions, consignes, explications. C’est l’immersion qui fait progresser."}</p>
-        <p style={{color:"var(--t3)",fontSize:11,lineHeight:1.5,margin:"-10px auto 18px",maxWidth:330}}>{"Rien n’est enregistré avant la fin : tes réponses restent sur cet appareil jusqu’à ce que tu valides ton entrée."}</p>
+        <p style={{color:"var(--t3)",fontSize:11,lineHeight:1.5,margin:"-10px auto 18px",maxWidth:330}}>{"Tes réponses restent sur cet appareil jusqu’à ce que tu valides ton entrée. On compte seulement, sans ton nom, combien de personnes passent chaque étape."}</p>
         <button className="btn1" onClick={beginSectionV2} style={{fontSize:16,padding:"14px 32px",width:"100%"}}>{"Commencer l’épreuve"}</button>
       </div>
     </div>);

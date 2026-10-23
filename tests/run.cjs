@@ -45,6 +45,7 @@ const SUITE = [
   ['check_weekly_snapshot.cjs',  'l\'instantané hebdomadaire part avec la semaine finie et son XP, pas la suivante à 0 (podium, rapport formateur)'],
   ['check_honors.cjs',            'le parchemin de fin : Darics regroupés par source, trophées repliés au-delà de 4, sans rien perdre'],
   ['check_interruptions.cjs',     'au plus un plein écran par entrée sur Home : retournement > promotion > Aldric (paliers) > lettre, contextuels jamais reportés'],
+  ['check_onb_funnel.cjs',         'l\'entonnoir anonyme de l\'onboarding : fenêtre et mise en service, vue promo/globale, plus forte perte, après le compte, liste blanche SQL = étapes du client, câblage'],
   ['check_scan_replay.cjs',        'le Battle Scan se rejoue à l\'identique depuis sa graine et ses réponses : la reprise après interruption sert la bonne question'],
   ['check_home_agenda.cjs',        'le bouton unique de Home : coffre > Mock > mission (même re-tirée) > chemin, Daily à part, journée finie dite'],
   ['check_part7_items.cjs',        'la banque Part 7 : mots et répliques cités présents, insertions [1]-[4] jamais permutées (keep)'],

@@ -131,3 +131,8 @@ Ce que la suite protège, et pourquoi :
   l'identique depuis sa graine et la liste des réponses (`replayCatController`), à chaque point d'interruption, avec
   le même score. Un tirage qui repasse par `Math.random` sans la graine ne casse rien au build : la reprise sert une
   autre question que celle qui était à l'écran et le niveau adaptatif déraille.
+- **`check_onb_funnel`** — l'entonnoir de l'onboarding (`lib/onbFunnel.js`, 2026-10-23) : compteurs anonymes
+  (jour, promo, étape) sommés sur 30 j sans rien d'avant `ONB_CAPTURE_START`, vue promo qui part de `scan_open`
+  (les étapes `land`/`name` sont comptées sous la promo `_`, vue globale admin seulement), plus forte perte,
+  « après le compte » lu dans `joined_at` + `dms` (abandons exclus), **liste blanche SQL de `onb_step` = `ONB_STEP_IDS`**
+  (une étape oubliée côté SQL est ignorée en silence) et chaque étape envoyée par `Onboard.jsx`.
