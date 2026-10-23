@@ -11,6 +11,7 @@ import { getDashTeacher, getBioCredId, biometricAvailable, isDashAdmin, teacherA
 import { estimateTOEICScore } from "../../lib/toeic.js";
 import { tone } from "../../lib/tone.js";
 import { usageStats } from "../../lib/usageStats.js";
+import { onbFunnel } from "../../lib/onbFunnel.js";
 import { today, weekId, localYmd } from "../../lib/util.js";
 import { supabase } from "../../supabase.js";
 import { useState, useEffect } from "react";
@@ -634,12 +635,16 @@ export function TeacherDash(p){
   // Onglet Usage (2026-09-23) : RPC anonyme teacher_usage, agrégée par lib/usageStats.js.
   var[usage,setUsage]=useState(null); // null = chargement, {error} ou le résultat de usageStats
   var[xpClamps,setXpClamps]=useState(null); // plafonnements XP nommés (teacher_xp_clamps)
+  var[funnelAll,setFunnelAll]=useState(false); // entonnoir de l'onboarding : vue toutes promos (admin seulement)
   function loadUsage(){
     setUsage(null);
     supabase.rpc('teacher_usage',{p_code:getDashTeacher(),p_class_code:classCode}).then(function(res){
       if(res.error){console.warn("[usage] teacher_usage failed:",res.error.message);setUsage({error:res.error.message});return;}
       if(!res.data||!res.data.ok){console.warn("[usage] refused:",res.data&&res.data.error);setUsage({error:(res.data&&res.data.error)||"refused"});return;}
-      setUsage(Object.assign(usageStats(res.data.students||[],new Date()),{strictSince:res.data.strict_since||null}));
+      // funnel / funnel_all : compteurs anonymes de l'onboarding (2026-10-23). Absents tant que la migration
+      // 2026-10-23_onboarding_funnel.sql n'est pas passée : le bloc ne s'affiche pas. funnel_all : admin seulement.
+      setUsage(Object.assign(usageStats(res.data.students||[],new Date()),{strictSince:res.data.strict_since||null,
+        funnelRows:res.data.funnel||null,funnelAllRows:res.data.funnel_all||null,rawStudents:res.data.students||[]}));
     }).catch(function(e){console.warn("[usage] teacher_usage caught:",e&&e.message);setUsage({error:e&&e.message});});
     // Garde-fou XP (2026-09-24) : journées notées au-delà de +20 000 XP, plafonnées au-delà de +40 000 par save_student, NOMMÉES (RPC à part,
     // teacher_usage reste anonyme). Échec → section absente, l'onglet reste utilisable.
@@ -1800,6 +1805,38 @@ export function TeacherDash(p){
           return(<div className="crd" style={{padding:12,marginBottom:14}}>
             <div className="out" style={{fontSize:13,fontWeight:700,color:"var(--t1)"}}>{"🔒 Comptes sécurisés : "+sec.secured+" / "+sec.total}</div>
             <div style={{fontSize:12,color:"var(--t2)",marginTop:6,lineHeight:1.5}}>{line}</div>
+          </div>);
+        })()}
+        {/* Entonnoir de l'onboarding (2026-10-23, lib/onbFunnel.js) : compteurs anonymes avant le compte, activité
+            des inscrits après. Vue globale (admin) : toutes promos, depuis l'écran prénom ; « après le compte » n'y
+            est pas montré (il ne porte que sur la promo affichée). */}
+        {usage.funnelRows&&(function(){
+          var glob=funnelAll&&!!usage.funnelAllRows;
+          var fn=onbFunnel(glob?usage.funnelAllRows:usage.funnelRows,usage.rawStudents,new Date(),{global:glob});
+          var max=Math.max(1,fn.steps.reduce(function(a,s){return Math.max(a,s.n);},0));
+          var since=fn.from.split("-").reverse().slice(0,2).join("/");
+          return(<div className="crd" style={{padding:12,marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:10,flexWrap:"wrap"}}>
+              <div className="out" style={{fontSize:13,fontWeight:700,color:"var(--t1)"}}>{"🚪 Arrivée des nouveaux (30 j)"}</div>
+              {usage.funnelAllRows&&<div style={{display:"flex",gap:4}}>
+                {[{v:false,l:"Cette promo"},{v:true,l:"Toutes promos"}].map(function(o){return(<button key={o.l} onClick={function(){setFunnelAll(o.v);}}
+                  style={{padding:"4px 10px",borderRadius:99,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",border:"1px solid "+(funnelAll===o.v?"var(--cyan)":"var(--bdr)"),background:funnelAll===o.v?"rgba(var(--cx),.12)":"transparent",color:funnelAll===o.v?"var(--cyan)":"var(--t3)"}}>{o.l}</button>);})}
+              </div>}
+            </div>
+            {fn.empty&&<div style={{fontSize:12,color:"var(--t3)",padding:"6px 0"}}>{"Aucune arrivée comptée depuis le "+since+"."}</div>}
+            {!fn.empty&&fn.steps.map(function(s){return(<div key={s.id} style={{display:"grid",gridTemplateColumns:"minmax(120px,1.4fr) 3fr 44px 52px",alignItems:"center",gap:8,padding:"4px 0"}}>
+              <span style={{fontSize:12,color:s.worst?"var(--orange)":"var(--t2)",fontWeight:s.worst?700:400}}>{s.label}</span>
+              <span style={{height:8,borderRadius:99,background:"var(--bg3)",overflow:"hidden"}}><span style={{display:"block",height:"100%",width:(s.n/max*100)+"%",background:s.worst?"var(--orange)":"var(--cyan)"}}/></span>
+              <span className="out" style={{fontSize:12,color:"var(--t1)",textAlign:"right"}}>{s.n}</span>
+              <span style={{fontSize:11,color:s.worst?"var(--orange)":"var(--t3)",textAlign:"right"}}>{s.ofPrev==null?"":pct(s.ofPrev)}</span>
+            </div>);})}
+            {!glob&&<div style={{display:"flex",gap:14,flexWrap:"wrap",fontSize:12,color:"var(--t2)",marginTop:10,paddingTop:10,borderTop:"1px solid var(--bdr)"}}>
+              <span>{"Inscrits : "}<b style={{color:"var(--t1)"}}>{fn.after.joined}</b></span>
+              <span>{"1re manche : "}<b style={{color:"var(--t1)"}}>{fn.after.firstSession}</b></span>
+              <span>{"Revenus un autre jour : "}<b style={{color:"var(--t1)"}}>{fn.after.cameBack}</b></span>
+              {fn.returning>0&&<span>{"Déjà inscrits reconnus : "}<b style={{color:"var(--t1)"}}>{fn.returning}</b></span>}
+            </div>}
+            <div style={{fontSize:11,color:"var(--t3)",marginTop:10,lineHeight:1.5}}>{"Compteurs anonymes (ni nom ni identifiant), depuis le "+since+". Une même personne sur deux onglets compte deux fois. % = part de l'étape précédente ; en orange, la plus forte perte."+(glob?" Vue toutes promos : à partir de l'écran prénom, visiteurs compris.":"")}</div>
           </div>);
         })()}
         <div className="crd" style={{padding:12,overflowX:"auto"}}>
