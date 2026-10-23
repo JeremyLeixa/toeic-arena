@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════
 // supabase/functions/streak-reminder/index.ts
 // Runs daily at 20:00 CET via pg_cron
-// Sends push to students who have a streak ≥ 2 and haven't
-// been active today — "Your streak is in danger!"
+// Sends push to students who have a streak ≥ 2, were active
+// yesterday and not yet today — "Your streak is in danger!"
 // ═══════════════════════════════════════════════════════════
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -15,15 +15,22 @@ serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Today's date in YYYY-MM-DD
-    const today = new Date().toISOString().split("T")[0];
+    // Yesterday's date in YYYY-MM-DD (UTC, same convention as the client's lastActive)
+    const yd = new Date();
+    yd.setUTCDate(yd.getUTCDate() - 1);
+    const yesterday = yd.toISOString().split("T")[0];
 
-    // Get all students with a streak ≥ 2 who haven't been active today (all groups)
+    // Only streaks still alive: last active YESTERDAY. The `streak` column is
+    // only reset to 0 when the student next opens the app (App.jsx load), so a
+    // student gone for weeks keeps a stale streak ≥ 2 in the DB. Filtering on
+    // `last_active <> today` pinged those students every evening about a streak
+    // that had already ended (feedback Martin, mpqse2527, 2026-10-23: 17 stale
+    // targets for 2 real ones that day).
     const { data: students, error: sErr } = await supabase
       .from("students")
       .select("name, class_code, streak, last_active")
       .gte("streak", 2)
-      .neq("last_active", today);
+      .eq("last_active", yesterday);
 
     if (sErr) throw sErr;
     if (!students || students.length === 0) {
