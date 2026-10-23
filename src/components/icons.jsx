@@ -4,34 +4,25 @@ import { SEASON_GI, RESULT_GI } from "../lib/iconMaps.js";
 import { tone } from "../lib/tone.js";
 
 // ─── BRAND MARK ───
-// Verse Arena logo ("plume & épée"): steel sword crossed with a gold quill.
-// Single source of truth for the launch identity — loading screen + onboarding hero,
-// and matches the app icon / favicon (public/icon-*.png, favicon.svg) exactly.
-// Colors are brand-FIXED (gold/steel), deliberately NOT skin-tinted, so the mark
-// stays constant across skins and never desyncs from the installed app icon.
+// Verse Arena logo « Nib Sword » (2026-10-23, kit prototypes/logo/nib-sword) : une plume métallique dont
+// la fente et le trou d'aération dessinent une épée en réserve. Même tracé que les icônes d'app et le
+// favicon (public/icon-*.png, favicon.svg) : le changer = régénérer le kit (tools/wordmark.py) et public/.
+// Couleur FIXE de marque (or #D4943A, or profond #6F5410 en mode clair), posée par `.brand-mark` dans
+// app.css : jamais teintée par un skin, pour ne pas se désynchroniser de l'icône installée.
+// Un seul contour qui entre par la fente du bec : aucun fill-rule, aucune pièce fragile.
+var NIB_SWORD="M88 20 L168 20 L168 40 C186 52 196 76 196 110 C196 158 164 196 130 236 L130 210 L134 198 L138 105.74 L158.97 111.36 L162 100.04 L132 92 L132 74.25 A11 11 0 1 0 124 74.25 L124 92 L94 100.04 L97.03 111.36 L118 105.74 L122 198 L126 210 L126 236 C92 196 60 158 60 110 C60 76 70 52 88 40 Z";
 export function BrandMark(p){
   var s=p.size||94;
-  return(<svg width={s} height={s} viewBox="0 0 100 100" style={Object.assign({display:"block"},p.style||{})} aria-hidden="true">
-    <defs>
-      <linearGradient id="bmGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f9dd84"/><stop offset="1" stopColor="#dca02e"/></linearGradient>
-      <linearGradient id="bmSteel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#efe3c6"/><stop offset="1" stopColor="#a89878"/></linearGradient>
-    </defs>
-    <g transform="rotate(-45 50 50)">
-      <path d="M50 8 L53 15 L53 57 L47 57 L47 15 Z" fill="url(#bmSteel)"/>
-      <path d="M50 13 L50 55" fill="none" stroke="#c9bfa6" strokeWidth="1" opacity="0.55"/>
-      <path d="M36 57 L64 57 L61 63 L39 63 Z" fill="url(#bmGold)"/>
-      <rect x="47.5" y="63" width="5" height="13" rx="1.5" fill="#6e4a24"/>
-      <path d="M48 66.5 L52 66.5 M48 69.5 L52 69.5 M48 72.5 L52 72.5" fill="none" stroke="#3f2a14" strokeWidth="1"/>
-      <circle cx="50" cy="79" r="3.6" fill="url(#bmGold)"/>
-    </g>
-    <g transform="rotate(45 50 50)">
-      <path d="M50 9 C43 19 41 33 43 44 C44 51 46 57 48 61 L50 63 L52 61 C54 57 56 51 57 44 C59 33 57 19 50 9 Z" fill="url(#bmGold)"/>
-      <path d="M50 20 L44.5 17 M50 28 L43.5 26 M50 37 L44 36 M50 46 L45 46" fill="none" stroke="#b9791a" strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M50 20 L55.5 17 M50 28 L56.5 26 M50 37 L56 36 M50 46 L55 46" fill="none" stroke="#b9791a" strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M50 13 L50 78" fill="none" stroke="#8f5f16" strokeWidth="1.7" strokeLinecap="round"/>
-      <path d="M50 72 L47.4 78 L50 76 L52.6 78 Z" fill="url(#bmGold)"/>
-    </g>
-  </svg>);
+  return(<svg className="brand-mark" width={s} height={s} viewBox="0 0 256 256" style={Object.assign({display:"block"},p.style||{})} aria-hidden="true"><path d={NIB_SWORD}/></svg>);
+}
+// Le nom de marque, sur deux lignes : VERSE, puis ARENA justifié sur la même largeur (comme le logo
+// horizontal du kit). Texte en Cinzel 700 (police des titres, déjà chargée) plutôt que des tracés : même
+// dessin que le logo vectorisé, sans 15 Ko de chemins. `size` = corps de VERSE en px.
+export function BrandName(p){
+  return(<span className="brand-name" role="img" aria-label="Verse Arena" style={Object.assign({fontSize:p.size||32},p.style||{})}>
+    <span className="brand-name-1" aria-hidden="true">VERSE</span>
+    <span className="brand-name-2" aria-hidden="true"><span>A</span><span>R</span><span>E</span><span>N</span><span>A</span></span>
+  </span>);
 }
 // ─── GAME-ICON SVG HELPER ───
 // Renders an Iconify game-icons SVG by name. Use: <GIcon name="castle" size={26} color="var(--cyan)"/>

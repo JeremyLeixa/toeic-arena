@@ -81,7 +81,7 @@ var OnboardLazy=lazyNamed(function(){return import("./features/onboarding/Onboar
 
 
 
-var BUILD_ID="2026-10-23-onboard-bind-race";
+var BUILD_ID="2026-10-23-logo-nib-sword";
 
 console.warn("[VERSE ARENA] Build:",BUILD_ID);
 

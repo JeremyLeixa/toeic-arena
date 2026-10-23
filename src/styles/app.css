@@ -534,6 +534,15 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
 /* Question stems read in sans-serif (not Cinzel) — comprehension > flourish on the
    core learning task, and mirrors the real TOEIC's clean typography. (audit 2026-06-25) */
 .qstem{font-family:'Outfit','DM Sans',sans-serif;letter-spacing:0}
+/* Marque Verse Arena « Nib Sword » (2026-10-23, components/icons.jsx BrandMark + BrandName). Or FIXE de marque, jamais
+   un jeton de thème ou de skin (--cx suit le skin) : le logo doit rester celui de l'icône installée. Or profond en clair :
+   l'or #D4943A tombe à 2,3:1 sur parchemin, #6F5410 y tient 6,3:1. */
+.brand-mark path{fill:#d4943a}
+.light .brand-mark path{fill:#6f5410}
+.brand-name{display:inline-flex;flex-direction:column;align-items:stretch;font-family:'Cinzel',serif;font-weight:700;line-height:1;color:#d4943a}
+.light .brand-name{color:#6f5410}
+.brand-name-1{letter-spacing:.04em;margin-right:-.04em}
+.brand-name-2{display:flex;justify-content:space-between;font-size:.41em;margin-top:.3em}
 @media(min-width:768px){
 .app:not(.onboard-shell){max-width:none;margin:0 0 0 200px;padding:0 32px}
 .app.onboard-shell{max-width:480px;margin:0 auto;padding:0 16px}

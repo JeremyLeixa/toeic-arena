@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════
-// sw.js — Verse Arena Service Worker v4
+// sw.js — Verse Arena Service Worker v5
 // Cache static assets + handle push notifications
 // ═══════════════════════════════════════════════════════════
 
-var CACHE_NAME = "toeic-arena-v4";
+var CACHE_NAME = "toeic-arena-v5"; // v5 (2026-10-23) : logo Nib Sword, purge des anciennes icônes précachées
 
 // ─── INSTALL: cache app shell + force activate ───
 self.addEventListener("install", function (e) {

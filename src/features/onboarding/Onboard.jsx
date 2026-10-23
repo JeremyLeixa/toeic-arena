@@ -1,6 +1,6 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { normNameForEmail, signInStudent, bindStudentUserId, signUpStudent, signInWithPassword, requestPasswordReset } from "../../auth.js";
-import { BrandMark, GIcon } from "../../components/icons.jsx";
+import { BrandMark, BrandName, GIcon } from "../../components/icons.jsx";
 import { PrivacyPolicy } from "../../components/legal.jsx";
 import { PassageDocs } from "../../components/PassageDocs.jsx";
 import { SCAN_SECTION_ORDER, BATTLE_SCAN_V2 } from "../../data/placement.js";
@@ -360,7 +360,7 @@ var[step,sSt]=useState("name");
     <div className="app onboard-shell" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:32,textAlign:"center"}}>
       <div style={{animation:"fadeIn .8s ease-out"}}>
         <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><BrandMark size={72}/></div>
-        <h1 className="out" style={{fontWeight:900,fontSize:36,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>VERSE ARENA</h1>
+        <h1 style={{margin:"0 0 14px",display:"flex",justifyContent:"center"}}><BrandName size={40}/></h1>
         <p style={{color:"var(--t2)",fontSize:15,marginBottom:40,lineHeight:1.5}}>{"Entraîne-toi. Grimpe au classement."}<br/>{"Décroche ton TOEIC."}</p>
         <div style={{marginBottom:20,textAlign:"left"}}>
           <label className="out" style={{fontSize:12,fontWeight:600,color:"var(--t2)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"block"}}>{"Ton prénom"}</label>

@@ -1,8 +1,8 @@
 // Chargement et filet des écrans chargés à la demande (Phase 5, code-splitting, 2026-09-16).
 import { Component } from "react";
-import { BrandMark } from "./icons.jsx";
+import { BrandMark, BrandName } from "./icons.jsx";
 
-// Le bloc de chargement de l'app — blason qui pulse, « Verse Arena », « loading… » — déplacé
+// Le bloc de chargement de l'app — logo Nib Sword qui pulse, nom de marque, « loading… » — déplacé
 // tel quel depuis l'écran `ld` d'App.jsx. Il sert aussi de fallback aux <Suspense> des écrans
 // lazy : `inline` en donne la version sous-page (padding au lieu du plein écran, les Tabs
 // restent visibles, aucun saut de layout).
@@ -14,7 +14,7 @@ export function LoadingMark(p){
     <div style={{animation:"pulse 1.6s ease-in-out infinite"}}>
       <BrandMark size={94} style={{margin:"0 auto"}}/>
     </div>
-    <p className="out" style={{color:"var(--t1)",marginTop:16,letterSpacing:"0.24em",textTransform:"uppercase",fontSize:15}}>Verse Arena</p>
+    <div style={{marginTop:16,display:"flex",justifyContent:"center"}}><BrandName size={22}/></div>
     <p style={{color:"var(--t3)",marginTop:5,letterSpacing:"0.3em",textTransform:"uppercase",fontSize:9}}>loading…</p>
   </div></div>);
 }

@@ -1,5 +1,6 @@
 // Extrait de src/App.jsx le 2026-09-15 (refactor split-app, REFACTOR_PLAN.md). Code déplacé tel quel.
 import { GAME_ICON_PATHS } from "../data/avatarIcons.js";
+import { BrandMark, BrandName } from "./icons.jsx";
 
 // `badge` (id d'onglet) : une pastille dorée tant que la mission du jour attend (lot 4 du Mentor,
 // 2026-09-18) — l'appel vers le Mentor depuis que le plan y vit. Jamais un verrou : l'onglet reste
@@ -11,6 +12,6 @@ var blocked=p.blocked||[];
 // 6 tabs : tighter container padding + per-button padding so "Profile" doesn't truncate
 // on narrow screens (≤375px). Icon stays 24px, label drops 11→10px.
 return(<div className="tab-bar" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"linear-gradient(180deg,rgba(var(--bg3-rgb),0) 0%,rgba(var(--bg3-rgb),.8) 15%,var(--bg3) 100%)",borderTop:"1px solid rgba(var(--cx),.15)",padding:"8px 4px calc(12px + env(safe-area-inset-bottom, 0px))",zIndex:100,display:"flex",justifyContent:"space-between"}}>
-<div className="sidebar-brand" style={{display:"none"}}><span style={{fontSize:20}}>{"⚔️"}</span><span className="out" style={{fontWeight:800,fontSize:14,background:"linear-gradient(135deg,var(--cx-hex),#8b5e83)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>VERSE ARENA</span></div>
+<div className="sidebar-brand" style={{display:"none"}}><BrandMark size={34}/><BrandName size={19}/></div>
 {tabs.map(function(t){var a=p.cur===t.id;var dis=blocked.indexOf(t.id)!==-1;var dot=p.badge===t.id&&!a&&!dis;return(<button key={t.id} onClick={function(){if(!dis)p.go(t.id);}} aria-label={dot?t.l+" (today's mission is waiting)":undefined} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:dis?"not-allowed":"pointer",padding:"6px 4px",borderRadius:12,color:dis?"var(--bg3)":a?"var(--cyan)":"var(--t1)",transform:a&&!dis?"scale(1.06)":"scale(1)",opacity:dis?.35:a?1:"var(--tab-idle,.55)",transition:"all .2s",flex:1,minWidth:0}}>
 <svg viewBox="0 0 512 512" width="24" height="24" style={{display:"block",filter:a&&!dis?"drop-shadow(0 0 6px rgba(var(--cx),.55))":"none",transition:"filter .2s",flexShrink:0}}><g fill="currentColor" dangerouslySetInnerHTML={{__html:GAME_ICON_PATHS[t.i]||""}}/></svg><span style={{fontSize:10,fontWeight:a?700:500,letterSpacing:.3,whiteSpace:"nowrap"}} className="out">{t.l}</span>{a&&!dis&&<div style={{width:4,height:4,borderRadius:"50%",background:"var(--cyan)",marginTop:2}}/>}{dot&&<span className="mm-tabdot"/>}</button>);})}</div>);}
