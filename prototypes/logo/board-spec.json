@@ -1,0 +1,40 @@
+{
+  "brand": "Verse Arena",
+  "tagline": "Train for the TOEIC like a champion",
+  "brief": "Une prépa TOEIC gamifiée (ligues, duels, coffres, grimoires, mentor Aldric) pour des étudiants de 19 à 23 ans sur mobile, vendue aux écoles et aux pros. Refonte : on garde l'esprit fantasy parchemin et or, on remplace l'illustration épée + plume par une marque simple, en une couleur, lisible à 16 px.",
+  "adjectives": ["épique", "ludique", "lettré"],
+  "criteria": "Réussite : icône d'app nette à 16 px, en une couleur et en inversé ; distincte des apps de langue (chouettes, bulles, bleu) et des jeux (épées, boucliers) ; crédible sur un document B2B.",
+  "mockups": ["app-icon", "favicon-tab", "website", "social", "badge", "tshirt"],
+  "nav": ["Modules", "Écoles", "Tarifs"],
+  "brand_color": "#D4943A",
+  "tile_color": "#0F0C08",
+  "greyscale": false,
+  "final": true,
+  "designer": "Jérémy Leixa × Claude",
+  "concepts": [
+    {
+      "name": "Tiered V",
+      "symbol": "final/verse-arena-symbol-night.svg",
+      "lockup": "final/verse-arena-horizontal-night.svg",
+      "stacked": "final/verse-arena-stacked-night.svg",
+      "symbol_on_tile": "final/verse-arena-symbol-gold.svg",
+      "stacked_on_tile": "final/verse-arena-stacked-gold.svg",
+      "lockup_on_tile": "final/verse-arena-horizontal-gold.svg",
+      "symbol_on_dark": "final/verse-arena-symbol-gold.svg",
+      "lockup_on_dark": "final/verse-arena-horizontal-gold.svg",
+      "stacked_on_dark": "final/verse-arena-stacked-gold.svg",
+      "idea": "Le V de Verse est une arène vue en coupe : ses gradins montent comme des niveaux.",
+      "rationale": [
+        "Un seul aplat de 16 points : intact à 16 px, en une couleur, en broderie",
+        "Flancs à 60° exacts, gradins réguliers (contremarche 28, giron 18) : la même règle donnera motifs, barres de progression et animations",
+        "Or arène #D4943A sur nuit #0F0C08 (contraste 7,5:1), l'or de l'app ; encre nuit ou or profond sur fond clair"
+      ]
+    }
+  ],
+  "recommendation": "Tiered V en or sur nuit pour l'app, en encre nuit sur les documents clairs. Le wordmark Cinzel 700 vectorisé reprend la typo des titres de l'app.",
+  "next_steps": [
+    "Remplacer favicon, icônes PWA et wordmark de l'app",
+    "Mettre à jour la landing verse-arena.fr et les docs B2B",
+    "Recherche d'antériorité de marque (INPI / EUIPO) avant dépôt"
+  ]
+}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- A — Sword & Quill V : épée et plume, verticales puis tournées de ±20° autour de la pointe commune -->
+  <g transform="rotate(-20 128 232)">
+    <path d="M128 232 L113 204 L113 86 L143 86 L143 204 Z"/>
+    <rect x="94" y="70" width="68" height="14" rx="3"/>
+    <rect x="120" y="40" width="16" height="30"/>
+    <circle cx="128" cy="30" r="12"/>
+  </g>
+  <g transform="rotate(20 128 232)">
+    <path d="M128 232 L119 208 C98 172 92 98 122 18 C150 64 162 112 156 146 L138 138 L152 168 C148 188 142 200 137 208 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Verse Arena — C Nib Tower</title>
+  <!-- C — Nib Tower : plume métallique = tour crénelée ; le trou d'aération est une porte d'arène en arc, la fente descend jusqu'à la pointe -->
+  <path d="M52 30 L84 30 L84 56 L112 56 L112 30 L144 30 L144 56 L172 56 L172 30 L204 30 L204 120 C204 162 170 196 132 226 L132 156 L144 156 L144 116 A16 16 0 0 0 112 116 L112 156 L124 156 L124 226 C86 196 52 162 52 120 Z"/>
+</svg>

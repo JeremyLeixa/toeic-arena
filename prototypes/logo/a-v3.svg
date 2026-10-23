@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Verse Arena — A Sword &amp; Quill</title>
+  <!-- A — Sword & Quill V : épée et plume, dessinées verticales puis tournées de ±20° autour de la pointe commune (128,236).
+       v3 : épée épaissie (lame 32, garde 16, poignée 16) pour tenir à 32 px -->
+  <g transform="rotate(-20 128 236)">
+    <path d="M128 236 L112 206 L112 90 L144 90 L144 206 Z"/>
+    <rect x="94" y="72" width="68" height="16" rx="3"/>
+    <rect x="120" y="44" width="16" height="28"/>
+    <circle cx="128" cy="32" r="14"/>
+  </g>
+  <g transform="rotate(20 128 236)">
+    <path fill-rule="evenodd" d="M128 236 L117 208 C102 176 96 104 128 12 C152 58 162 96 160 126 L143 122 L159 146 C157 170 150 192 139 208 Z M125 196 L131 196 L131 66 L125 94 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Verse Arena — E Quill Blade</title>
+  <!-- E — Quill Blade : une seule arme. La garde et la lame sont d'une épée, la poignée est une plume, la pointe est un bec fendu.
+       Dessinée verticale puis tournée de 45° (pointe en bas à gauche, geste d'écriture). -->
+  <g transform="rotate(45 128 128)">
+    <path d="M128 10 C150 34 154 70 140 102 L116 102 C102 70 106 34 128 10 Z"/>
+    <rect x="84" y="102" width="88" height="16" rx="4"/>
+    <path fill-rule="evenodd" d="M113 118 L143 118 L143 214 L128 246 L113 214 Z M126.5 246 L129.5 246 L129.5 222 L126.5 222 Z"/>
+  </g>
+</svg>

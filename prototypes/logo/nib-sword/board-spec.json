@@ -1,0 +1,55 @@
+{
+  "brand": "Verse Arena",
+  "tagline": "Train for the TOEIC like a champion",
+  "brief": "Une prépa TOEIC gamifiée (ligues, duels, coffres, grimoires, mentor Aldric) pour des étudiants de 19 à 23 ans sur mobile, vendue aux écoles et aux pros. Refonte : on garde l'esprit fantasy parchemin et or, on remplace l'illustration épée + plume par une marque simple, en une couleur, lisible à 16 px.",
+  "adjectives": [
+    "épique",
+    "ludique",
+    "lettré"
+  ],
+  "criteria": "Réussite : icône d'app nette à 16 px, en une couleur et en inversé ; distincte des apps de langue (chouettes, bulles, bleu) et des jeux (épées, boucliers) ; crédible sur un document B2B.",
+  "mockups": [
+    "app-icon",
+    "favicon-tab",
+    "website",
+    "social",
+    "badge",
+    "tshirt"
+  ],
+  "nav": [
+    "Modules",
+    "Écoles",
+    "Tarifs"
+  ],
+  "brand_color": "#D4943A",
+  "tile_color": "#0F0C08",
+  "greyscale": false,
+  "final": true,
+  "designer": "Jérémy Leixa × Claude",
+  "concepts": [
+    {
+      "name": "Nib Sword",
+      "symbol": "verse-arena-symbol-night.svg",
+      "lockup": "verse-arena-horizontal-night.svg",
+      "stacked": "verse-arena-stacked-night.svg",
+      "symbol_on_tile": "verse-arena-symbol-gold.svg",
+      "stacked_on_tile": "verse-arena-stacked-gold.svg",
+      "lockup_on_tile": "verse-arena-horizontal-gold.svg",
+      "symbol_on_dark": "verse-arena-symbol-gold.svg",
+      "lockup_on_dark": "verse-arena-horizontal-gold.svg",
+      "stacked_on_dark": "verse-arena-stacked-gold.svg",
+      "idea": "Une plume métallique dont la fente et le trou d'aération dessinent une épée : la plume est plus forte que l'épée.",
+      "rationale": [
+        "Épique et lettré dans une seule silhouette : le bec pour la langue, l'épée en réserve pour l'arène",
+        "Un seul contour qui entre par la fente : aucune pièce fragile, intact en une couleur ; sous 24 px, coupe à épée épaissie",
+        "Or arène #D4943A sur nuit #0F0C08 (7,5:1), l'or de l'app ; encre nuit ou or profond sur fond clair"
+      ]
+    }
+  ],
+  "recommendation": "Nib Sword en or sur nuit pour l'app, en encre nuit sur les documents clairs. Nom en Cinzel 700 vectorisé, la typo des titres de l'app.",
+  "next_steps": [
+    "Remplacer favicon, icônes PWA et wordmark de l'app",
+    "Mettre à jour la landing verse-arena.fr et les docs B2B",
+    "Recherche d'antériorité de marque (INPI / EUIPO) avant dépôt"
+  ]
+}

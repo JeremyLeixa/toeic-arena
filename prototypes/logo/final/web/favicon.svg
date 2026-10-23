@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><title>Verse Arena</title>
+<!-- Coupe petite taille (2 gradins). Encre nuit sur onglet clair, or sur onglet sombre. -->
+<style>path{fill:#0F0C08}@media (prefers-color-scheme:dark){path{fill:#D4943A}}</style>
+<g transform="translate(-16.9 -9.22) scale(1.132)"><path d="M19.46 34 L80 34 L80 76 L100 76 L100 118 L156 118 L156 76 L176 76 L176 34 L236.54 34 L128 222 Z"/></g></svg>

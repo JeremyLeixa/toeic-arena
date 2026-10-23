@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Verse Arena — F Nib Sword</title>
+  <!-- F — Nib Sword : une plume métallique dont la fente et le trou d'aération dessinent une épée en réserve.
+       Un seul contour : on entre par la fente à la pointe, on fait le tour de l'épée, on ressort. -->
+  <path d="M64 22 L192 22 L192 110 C192 158 162 196 130 234 L130 210 L138 198 L138 106 L158 106 L158 92 L132 92 L132 74.25 A11 11 0 1 0 124 74.25 L124 92 L98 92 L98 106 L118 106 L118 198 L126 210 L126 234 C94 196 64 158 64 110 Z"/>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Verse Arena — D Duel V</title>
+  <!-- D — Duel V (A redessiné) : épée et plume verticales, tournées de ±20° autour de la pointe commune (128,232).
+       v2 : plume asymétrique, pointe qui s'incurve vers l'extérieur, deux encoches profondes (18) ; tige en réserve. -->
+  <g transform="rotate(-20 128 232)">
+    <path d="M128 232 L113 204 L113 92 L143 92 L143 204 Z"/>
+    <rect x="96" y="76" width="64" height="16" rx="4"/>
+    <rect x="121" y="48" width="14" height="28"/>
+    <circle cx="128" cy="36" r="13"/>
+  </g>
+  <g transform="rotate(20 128 232)">
+    <path fill-rule="evenodd" d="M128 232 L121 202 C106 180 104 104 140 22 C150 50 156 72 158 92 L138 106 L158 118 C158 134 156 146 153 158 L136 168 L149 180 C145 191 140 198 135 202 Z M126 196 L130 196 L133 60 L130 60 Z"/>
+  </g>
+</svg>

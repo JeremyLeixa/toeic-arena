@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Verse Arena — Nib Sword, coupe petite taille</title>
+  <!-- Coupe ≤ 24 px : épée épaissie (lame 32 -> 24, garde aux quillons tombants, poignée 16, pommeau r16), fente 8. -->
+  <path d="M88 20 L168 20 L168 40 C186 52 196 76 196 110 C196 158 164 196 132 236 L132 206 L140 190 L144 110 L170 118 L174 96 L136 88 L136 71.86 A16 16 0 1 0 120 71.86 L120 88 L82 96 L86 118 L112 110 L116 190 L124 206 L124 236 C92 196 60 158 60 110 C60 76 70 52 88 40 Z"/>
+</svg>
