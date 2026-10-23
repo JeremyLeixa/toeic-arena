@@ -123,7 +123,10 @@ var[step,sSt]=useState("name");
   // première manche (lib/device.js, iPhone : feuille de notifications), et le passage à l'anglais est annoncé
   // à l'accueil du Battle Scan, là où l'anglais commence vraiment. firstNav = module de la First Quest, ou null.
   // Ne pas remettre ici une demande automatique de notifications (refus définitif difficile à rattraper).
-  function enterArena(firstNav){clearScanSave();stopTts();stopListenAudio();try{playArenaCall();}catch(e){console.warn("[onboard] arena call:",e&&e.message);}p.go(name.trim(),classCode||"visitor",scanScores,firstNav||undefined,sectionResults,pwdSetRef.current);}
+  // Une seule entrée : onboard() attend maintenant la création de la ligne avant d'ouvrir l'appli
+  // (2026-10-23), l'écran account reste donc affiché un instant et un second tap relancerait tout.
+  var enteringRef=useRef(false);
+  function enterArena(firstNav){if(enteringRef.current)return;enteringRef.current=true;clearScanSave();stopTts();stopListenAudio();try{playArenaCall();}catch(e){console.warn("[onboard] arena call:",e&&e.message);}p.go(name.trim(),classCode||"visitor",scanScores,firstNav||undefined,sectionResults,pwdSetRef.current);}
 
   async function lookupName(n,cc){
     setLookingUp(true);
