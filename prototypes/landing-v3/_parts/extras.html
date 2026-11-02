@@ -1,0 +1,65 @@
+<!-- Écrans de l'appli (maquettes HTML, clonées par JS) -->
+<template id="v3-tpl-home">
+  <div class="v3-phone"><div class="v3-screen"><div class="v3-notch"></div><div class="v3-glare"></div>
+    <div class="v3-scr">
+      <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+        <div class="v3-lvl">12</div>
+        <div style="flex:1"><div style="font-size:14px;color:#8a7e6a">Welcome back</div><h2 style="font-size:26px">Maya</h2></div>
+        <div class="v3-pill">14-day streak</div>
+      </div>
+      <div style="margin:16px 0 6px;display:flex;justify-content:space-between;font-size:13px;color:#8a7e6a"><span>Level 12 · Squire</span><span>6,840 XP</span></div>
+      <div class="v3-xpbar"><div class="v3-xpfill"></div></div>
+      <div class="v3-card" style="margin:18px 0 14px;padding:16px;display:flex;align-items:center;gap:14px">
+        <div style="flex:1"><div style="font-size:12px;letter-spacing:.14em;color:#d4943a;font-weight:700">TOEIC ESTIMATE</div>
+        <div style="font-family:Cinzel,serif;font-weight:900;font-size:44px;color:#f0c850;line-height:1.1">745</div></div>
+        <div class="v3-pill">+55 this month</div>
+      </div>
+      <div class="v3-tile v3-card"><div class="v3-ic"><svg viewBox="0 0 24 24"><path d="M5 19L19 5M14 5h5v5M5 5l4 4"/></svg></div><div><b>Daily Challenge</b><small>10 questions · +120 XP</small></div></div>
+      <div class="v3-tile v3-card"><div class="v3-ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"/></svg></div><div><b>Part 5 Drill</b><small>Grammar &amp; vocabulary</small></div></div>
+      <div class="v3-tile v3-card"><div class="v3-ic"><svg viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></div><div><b>Speed Match</b><small>Beat the clock</small></div></div>
+      <div class="v3-tabbar"><div class="on"><i></i>Home</div><div><i></i>Train</div><div><i></i>Cards</div><div><i></i>Games</div><div><i></i>League</div></div>
+    </div></div></div>
+</template>
+
+<template id="v3-tpl-duel">
+  <div class="v3-phone"><div class="v3-screen"><div class="v3-notch"></div><div class="v3-glare"></div>
+    <div class="v3-scr">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px"><div class="v3-pill">Part 5 · Duel</div><div class="v3-pill">Combo x4</div></div>
+      <div class="v3-qtimer" style="margin:18px 0 22px"><i></i></div>
+      <div class="v3-card" style="padding:22px 20px;margin-bottom:18px">
+        <div style="font-size:12px;letter-spacing:.14em;color:#d4943a;font-weight:700;margin-bottom:10px">QUESTION 7 / 10</div>
+        <div style="font-size:22px;line-height:1.4;font-weight:500">The board has decided to <span style="display:inline-block;min-width:120px;border-bottom:2px solid #f0c850;text-align:center;color:#f0c850;font-weight:700">postpone</span> the merger until next quarter.</div>
+      </div>
+      <div class="v3-opt v3-card ok"><span>A</span>postpone</div>
+      <div class="v3-opt v3-card"><span>B</span>postponing</div>
+      <div class="v3-opt v3-card"><span>C</span>to postponed</div>
+      <div class="v3-opt v3-card"><span>D</span>postponement</div>
+      <div class="v3-tabbar"><div><i></i>Home</div><div class="on"><i></i>Train</div><div><i></i>Cards</div><div><i></i>Games</div><div><i></i>League</div></div>
+    </div></div></div>
+</template>
+
+<template id="v3-tpl-chest">
+  <div class="v3-phone"><div class="v3-screen"><div class="v3-notch"></div><div class="v3-glare"></div>
+    <div class="v3-scr" style="padding:0;background:#050302">
+      <img src="assets/chest.jpg" alt="" class="v3-chest-img">
+      <div class="v3-chest-glow"></div>
+      <div class="v3-rar">LEGENDARY CHEST</div>
+      <div class="v3-loot">
+        <div class="v3-card"><b>+250</b><small>XP</small></div><div class="v3-card"><b>Gold</b><small>Skin</small></div><div class="v3-card"><b>x3</b><small>Tokens</small></div>
+      </div>
+    </div></div></div>
+</template>
+
+<!-- Intro vidéo (modale) -->
+<dialog id="v3-video" class="v3-dialog" aria-label="Intro Verse Arena">
+  <button type="button" class="v3-close" id="v3-close" aria-label="Fermer">✕</button>
+  <video id="v3-video-el" controls playsinline preload="none" poster="assets/intro-poster.jpg" style="width:100%;display:block;border-radius:14px;background:#000">
+    <source src="assets/intro.mp4" type="video/mp4">
+  </video>
+</dialog>
+
+<!-- Barre CTA collante (mobile) -->
+<div class="v3-sticky" id="v3-sticky" aria-hidden="true">
+  <a href="https://app.verse-arena.fr" target="_blank" class="cta-main" tabindex="-1">⚔️ Entrer dans l'arène</a>
+</div>
+
