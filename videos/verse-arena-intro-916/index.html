@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Verse Arena Intro 9x16</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Cinzel"; src: url("fonts/cinzel-latin.woff2") format("woff2"); font-weight: 600 900; }
+      @font-face { font-family: "DM Sans"; src: url("fonts/dmsans-latin.woff2") format("woff2"); font-weight: 400 700; }
+      :root {
+        --bg: #0f0c08; --bg2: #1a1610; --bg3: #28221a;
+        --amber: #d4943a; --amber-d: #a06e20; --gold: #f0c850;
+        --t1: #ede4d4; --t2: #8a7e6a; --green: #4abe60; --red: #e05252; --purple: #8b5e83;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); font-family: "DM Sans", sans-serif; color: var(--t1); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #070503; }
+      #root::after { content: ""; position: absolute; inset: 0; z-index: 50; pointer-events: none;
+        background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.78) 100%); }
+      .clip { position: absolute; inset: 0; }
+      #title, #end, #stage3d, #scr-home, #scr-duel, #scr-chest, .call, #t-sub, #logo, #ring svg { opacity: 0; }
+      .abs { position: absolute; }
+
+      /* ── background art ── */
+      #art { overflow: hidden; }
+      #art img { position: absolute; left: -5%; top: -5%; width: 110%; height: 110%; object-fit: cover;
+        filter: sepia(1) saturate(2.2) hue-rotate(-12deg) contrast(1.15) brightness(0.62); }
+      #art-tint { background: radial-gradient(ellipse at 50% 60%, rgba(212, 148, 58, 0.35), rgba(15, 12, 8, 0.85) 70%); mix-blend-mode: multiply; }
+      #rays { overflow: hidden; mix-blend-mode: screen; opacity: 0; }
+      #rays div { position: absolute; left: 50%; top: 50%; width: 3400px; height: 3400px; margin: -1700px 0 0 -1700px;
+        background: repeating-conic-gradient(from 0deg, rgba(240, 200, 80, 0.16) 0deg 4deg, transparent 4deg 18deg);
+        -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 55%); mask-image: radial-gradient(circle, #000 0%, transparent 55%); }
+      #embers span { position: absolute; border-radius: 50%; background: var(--gold);
+        box-shadow: 0 0 10px 3px rgba(240, 160, 50, 0.9); }
+      #grain { position: absolute; inset: -200px; opacity: 0.1; mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.4 -0.2'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>"); }
+
+      /* ── rune ring + logo ── */
+      #ring { display: grid; place-items: center; }
+      #ring svg { width: 760px; height: 760px; overflow: visible; }
+      #logo { position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; margin: -150px 0 0 -150px; border-radius: 50%;
+        object-fit: cover; box-shadow: 0 0 80px 10px rgba(240, 160, 50, 0.45); }
+      .shock { position: absolute; left: 50%; top: 50%; width: 500px; height: 500px; margin: -250px 0 0 -250px; border-radius: 50%;
+        border: 4px solid var(--gold); box-shadow: 0 0 40px 6px rgba(240, 160, 50, 0.7), inset 0 0 40px 6px rgba(240, 160, 50, 0.5); opacity: 0; }
+      #flash { background: radial-gradient(circle at 50% 50%, #fff6d8, rgba(240, 200, 80, 0.6) 40%, transparent 70%); opacity: 0; mix-blend-mode: screen; }
+
+      /* ── title ── */
+      #title { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+      #t-word { display: flex; flex-direction: column; align-items: center; font-family: "Cinzel", serif; font-weight: 900; font-size: 205px; line-height: 1.02; letter-spacing: 0.04em; white-space: nowrap; }
+      .row { display: flex; }
+      #t-word .ch { display: inline-block; background: linear-gradient(180deg, #fff6cf 0%, #f0c850 38%, #d4943a 62%, #8a5a16 100%);
+        -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 6px 24px rgba(212, 148, 58, 0.55)); }
+      #t-word .sp { width: 70px; display: inline-block; }
+      #t-sub { margin-top: 34px; max-width: 860px; text-align: center; line-height: 1.5; font-family: "Cinzel", serif; font-weight: 600; font-size: 34px; letter-spacing: 0.2em; color: var(--t1); text-transform: uppercase; text-shadow: 0 0 24px rgba(212, 148, 58, 0.6); }
+      #t-sub b { color: var(--gold); font-weight: 700; }
+      #shine { position: absolute; top: 0; bottom: 0; width: 220px; left: 0; opacity: 0; mix-blend-mode: screen;
+        background: linear-gradient(100deg, transparent 0%, rgba(255, 240, 190, 0.9) 50%, transparent 100%); transform: skewX(-18deg); }
+      #t-clipbox { position: relative; overflow: hidden; padding: 10px 40px; }
+
+      /* ── phone ── */
+      #stage3d { perspective: 2200px; display: flex; align-items: center; justify-content: center; }
+      #phone { position: relative; width: 418px; height: 872px; border-radius: 68px; padding: 14px;
+        background: linear-gradient(145deg, #4a3a22, #1a1308 45%, #3a2c16); box-shadow: 0 0 0 2px #6a4f22, 0 50px 120px rgba(0, 0, 0, 0.85), 0 0 140px 20px rgba(212, 148, 58, 0.28);
+        transform-style: preserve-3d; }
+      #screen { position: relative; width: 390px; height: 844px; border-radius: 54px; overflow: hidden; background: var(--bg); }
+      #notch { position: absolute; top: 12px; left: 50%; width: 118px; height: 32px; margin-left: -59px; border-radius: 20px; background: #000; z-index: 20; }
+      #glare { position: absolute; inset: 0; z-index: 30; pointer-events: none; border-radius: 54px;
+        background: linear-gradient(115deg, transparent 30%, rgba(255, 235, 180, 0.16) 45%, transparent 60%); }
+      .scr { position: absolute; inset: 0; padding: 62px 18px 0; background: radial-gradient(ellipse at 50% 0%, #2a2010 0%, var(--bg) 60%); }
+      .scr h2 { font-family: "Cinzel", serif; font-weight: 800; letter-spacing: 0.04em; }
+      .card { background: linear-gradient(180deg, var(--bg2), #15110b); border: 1px solid rgba(180, 140, 80, 0.22); border-radius: 18px; }
+      .tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; background: rgba(15, 12, 8, 0.96); border-top: 1px solid rgba(180, 140, 80, 0.18);
+        display: flex; justify-content: space-around; padding-top: 12px; font-size: 12px; color: var(--t2); letter-spacing: 0.04em; }
+      .tabbar div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .tabbar i { width: 24px; height: 24px; border-radius: 8px; border: 2px solid var(--t2); }
+      .tabbar .on { color: var(--gold); } .tabbar .on i { border-color: var(--gold); background: rgba(240, 200, 80, 0.2); }
+
+      /* home */
+      .lvl { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-family: "Cinzel", serif; font-weight: 900; font-size: 26px; color: #0f0c08;
+        background: radial-gradient(circle at 35% 30%, #fff0b0, var(--gold) 45%, var(--amber-d)); box-shadow: 0 0 22px rgba(240, 200, 80, 0.55); }
+      .xpbar { height: 10px; border-radius: 6px; background: var(--bg3); overflow: hidden; }
+      .xpfill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--amber-d), var(--gold)); box-shadow: 0 0 12px var(--gold); }
+      .tile { display: flex; align-items: center; gap: 14px; padding: 15px 16px; margin-bottom: 11px; }
+      .tile .ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: rgba(212, 148, 58, 0.16); border: 1px solid rgba(212, 148, 58, 0.4); }
+      .tile .ic svg { width: 26px; height: 26px; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .tile b { display: block; font-size: 17px; font-weight: 700; } .tile small { color: var(--t2); font-size: 13px; }
+      .pill { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; background: rgba(212, 148, 58, 0.16); border: 1px solid rgba(212, 148, 58, 0.45); color: var(--gold); }
+
+      /* duel */
+      .opt { position: relative; display: flex; align-items: center; gap: 12px; padding: 15px 16px; margin-bottom: 11px; font-size: 17px; font-weight: 500; }
+      .opt span { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; background: var(--bg3); color: #c9bc9f; }
+      .opt.ok { border-color: var(--green); background: linear-gradient(180deg, rgba(74, 190, 96, 0.28), rgba(74, 190, 96, 0.08)); box-shadow: 0 0 24px rgba(74, 190, 96, 0.35); }
+      .opt.ok span { background: var(--green); color: #07140a; }
+      .qtimer { height: 8px; border-radius: 5px; background: var(--bg3); overflow: hidden; } .qtimer i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--red), var(--amber)); transform-origin: 0 50%; }
+      .xpup { position: absolute; left: 50%; top: 330px; margin-left: -80px; width: 160px; text-align: center; font-family: "Cinzel", serif; font-weight: 900; font-size: 44px; color: var(--gold); text-shadow: 0 0 26px rgba(240, 200, 80, 0.9); opacity: 0; }
+
+      /* chest */
+      #scr-chest { padding: 0; background: #050302; }
+      #scr-chest img { position: absolute; left: -40%; top: 90px; width: 190%; filter: sepia(1) saturate(2.6) hue-rotate(-14deg) contrast(1.1) brightness(0.85); }
+      #chest-glow { position: absolute; left: 50%; top: 360px; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%; opacity: 0;
+        background: radial-gradient(circle, rgba(255, 240, 180, 0.95), rgba(240, 160, 50, 0.55) 35%, transparent 68%); mix-blend-mode: screen; }
+      .rar { position: absolute; left: 0; right: 0; top: 70px; text-align: center; font-family: "Cinzel", serif; font-weight: 800; letter-spacing: 0.3em; font-size: 20px; color: var(--gold); text-shadow: 0 0 20px var(--amber); opacity: 0; }
+      .loot { position: absolute; left: 18px; right: 18px; bottom: 36px; display: flex; gap: 10px; }
+      .loot .card { flex: 1; padding: 14px 6px; text-align: center; opacity: 0; }
+      .loot b { display: block; font-family: "Cinzel", serif; font-weight: 800; font-size: 22px; color: var(--gold); }
+      .loot small { color: var(--t2); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+      /* callouts */
+      .call { position: absolute; left: 0; right: 0; text-align: center; }
+      .call .bar { margin-left: auto; margin-right: auto; }
+      .call h3 { font-family: "Cinzel", serif; font-weight: 900; font-size: 100px; line-height: 1; letter-spacing: 0.04em; color: var(--t1); text-shadow: 0 0 40px rgba(212, 148, 58, 0.55); }
+      .call p { margin-top: 14px; font-size: 34px; color: #cdbf9f; line-height: 1.35; }
+      .call .bar { width: 110px; height: 4px; margin-bottom: 22px; background: linear-gradient(90deg, var(--gold), transparent); box-shadow: 0 0 16px var(--amber); }
+      #call-conq { padding: 0 40px; top: 760px; }
+      #call-conq h3 { font-size: 136px; background: linear-gradient(180deg, #fff6cf, #f0c850 45%, #a8701c); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 8px 30px rgba(212, 148, 58, 0.6)); }
+
+      /* end lockup */
+      #end { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+      #end img { width: 210px; height: 210px; border-radius: 50%; box-shadow: 0 0 90px 16px rgba(240, 160, 50, 0.5); }
+      #end h1 { font-family: "Cinzel", serif; font-weight: 900; font-size: 84px; letter-spacing: 0.1em; color: var(--gold); text-shadow: 0 0 40px rgba(212, 148, 58, 0.7); }
+      #end p { font-size: 40px; letter-spacing: 0.1em; color: var(--t1); }
+      #end p b { color: var(--gold); text-shadow: 0 0 14px rgba(0,0,0,.9); }
+      #fadeblack { background: #000; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1080" data-height="1920">
+
+      <audio id="bgm" src="audio/bgm.mp3" data-start="0" data-duration="15" data-track-index="10" data-volume="0.9"></audio>
+      <audio id="sfx" src="audio/sfx.mp3" data-start="0" data-duration="15" data-track-index="11" data-volume="1"></audio>
+
+      <div id="cam" class="clip" data-start="0" data-duration="15" data-track-index="0">
+        <div id="art" class="clip"><img id="art-img" src="img/08_dragon.jpg" alt="" /><div id="art-tint" class="clip"></div></div>
+        <div id="rays" class="clip"><div id="rays-in"></div></div>
+        <div id="embers" class="clip"></div>
+
+        <div id="ring" class="clip">
+          <svg viewBox="-380 -380 760 760">
+            <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b0" /><stop offset="1" stop-color="#d4943a" /></linearGradient></defs>
+            <g fill="none" stroke="url(#gg)" stroke-linecap="round">
+              <circle id="r1" r="360" stroke-width="3" />
+              <circle id="r2" r="330" stroke-width="1.5" stroke-dasharray="4 14" />
+              <circle id="r3" r="285" stroke-width="2" />
+              <g id="runes" stroke-width="3"></g>
+            </g>
+          </svg>
+          <img id="logo" src="img/logo.png" alt="" />
+          <div class="shock" id="sh1"></div><div class="shock" id="sh2"></div>
+        </div>
+
+        <div id="title" class="clip">
+          <div id="t-clipbox"><div id="t-word"></div><div id="shine"></div></div>
+          <div id="t-sub">Forge your English.<br /><b>Conquer</b> the TOEIC.</div>
+        </div>
+
+        <div id="stage3d" class="clip">
+          <div id="phone">
+            <div id="screen">
+              <div id="notch"></div><div id="glare"></div>
+
+              <!-- HOME -->
+              <div id="scr-home" class="scr">
+                <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+                  <div class="lvl">12</div>
+                  <div style="flex:1">
+                    <div style="font-size:14px;color:var(--t2)">Welcome back</div>
+                    <h2 style="font-size:26px;color:var(--t1)">Maya</h2>
+                  </div>
+                  <div class="pill">14-day streak</div>
+                </div>
+                <div style="margin:16px 0 6px;display:flex;justify-content:space-between;font-size:13px;color:var(--t2)"><span>Level 12 · Squire</span><span id="xpnum">6,840 XP</span></div>
+                <div class="xpbar"><div class="xpfill" id="xpfill"></div></div>
+                <div class="card" style="margin:18px 0 14px;padding:16px;display:flex;align-items:center;gap:14px">
+                  <div style="flex:1"><div style="font-size:12px;letter-spacing:.14em;color:var(--amber);font-weight:700">TOEIC ESTIMATE</div>
+                    <div style="font-family:Cinzel,serif;font-weight:900;font-size:44px;color:var(--gold);line-height:1.1">745</div></div>
+                  <div class="pill">+55 this month</div>
+                </div>
+                <div class="tile card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M5 19L19 5M14 5h5v5M5 5l4 4"/></svg></div><div><b>Daily Challenge</b><small>10 questions · +120 XP</small></div></div>
+                <div class="tile card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"/></svg></div><div><b>Part 5 Drill</b><small>Grammar &amp; vocabulary</small></div></div>
+                <div class="tile card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></div><div><b>Speed Match</b><small>Beat the clock</small></div></div>
+                <div class="tabbar"><div class="on"><i></i>Home</div><div><i></i>Train</div><div><i></i>Cards</div><div><i></i>Games</div><div><i></i>League</div></div>
+              </div>
+
+              <!-- DUEL -->
+              <div id="scr-duel" class="scr">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+                  <div class="pill">Part 5 · Duel</div><div class="pill" id="combo">Combo x4</div>
+                </div>
+                <div class="qtimer" style="margin:18px 0 22px"><i id="qt"></i></div>
+                <div class="card" style="padding:22px 20px;margin-bottom:18px">
+                  <div style="font-size:12px;letter-spacing:.14em;color:var(--amber);font-weight:700;margin-bottom:10px">QUESTION 7 / 10</div>
+                  <div style="font-size:22px;line-height:1.4;font-weight:500">The board has decided to <span id="blank" style="position:relative;display:inline-block;min-width:120px;height:26px;vertical-align:bottom;border-bottom:2px solid var(--gold)"><span id="blankword" style="position:absolute;left:0;right:0;text-align:center;color:var(--gold);font-weight:700;opacity:0">postpone</span></span> the merger until next quarter.</div>
+                </div>
+                <div class="opt card" id="optA"><i id="okglow" style="position:absolute;inset:-1px;border-radius:18px;border:1px solid var(--green);background:linear-gradient(180deg,rgba(74,190,96,.3),rgba(74,190,96,.08));box-shadow:0 0 26px rgba(74,190,96,.45);opacity:0"></i><span>A</span>postpone</div>
+                <div class="opt card"><span>B</span>postponing</div>
+                <div class="opt card"><span>C</span>to postponed</div>
+                <div class="opt card"><span>D</span>postponement</div>
+                <div class="xpup" id="xpup">+25 XP</div>
+                <div class="tabbar"><div><i></i>Home</div><div class="on"><i></i>Train</div><div><i></i>Cards</div><div><i></i>Games</div><div><i></i>League</div></div>
+              </div>
+
+              <!-- CHEST -->
+              <div id="scr-chest" class="scr">
+                <img src="img/02_first_chest.jpg" alt="" />
+                <div id="chest-glow"></div>
+                <div class="rar" id="rar">LEGENDARY CHEST</div>
+                <div class="loot">
+                  <div class="card" id="l1"><b>+250</b><small>XP</small></div>
+                  <div class="card" id="l2"><b>Gold</b><small>Skin</small></div>
+                  <div class="card" id="l3"><b>x3</b><small>Tokens</small></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="calls" class="clip">
+          <div id="call-train" class="call" style="top:250px"><div class="bar"></div><h3>TRAIN</h3><p>Part 5, listening, reading.<br />Every question explained.</p></div>
+          <div id="call-duel" class="call" style="top:250px"><div class="bar"></div><h3>DUEL</h3><p>Race the clock. Chain combos.<br />Climb the league.</p></div>
+          <div id="call-lvl" class="call" style="top:250px"><div class="bar"></div><h3>LEVEL UP</h3><p>Open chests. Win skins.<br />Forge your legend.</p></div>
+          <div id="call-conq" class="call"><h3>CONQUER<br />THE TOEIC</h3></div>
+        </div>
+
+        <div id="end" class="clip"><img src="img/logo-end.png" alt="" /><h1>VERSE ARENA</h1><p>Train <b>/</b> Duel <b>/</b> Level up</p></div>
+      </div>
+
+      <div id="flash" class="clip" data-start="0" data-duration="15" data-track-index="2"></div>
+      <div id="grainwrap" class="clip" data-start="0" data-duration="15" data-track-index="3" style="overflow:hidden"><div id="grain"></div></div>
+      <div id="fadeblack" class="clip" data-start="0" data-duration="15" data-track-index="4"></div>
+    </div>
+
+    <script>
+      /* deterministic PRNG */
+      function rng(a) { return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+      const R = rng(1618);
+      const TITLE = "VERSE ARENA";
+
+      /* build title letters */
+      const tw = document.getElementById("t-word");
+      TITLE.split(" ").forEach((w) => { const row = document.createElement("div"); row.className = "row"; w.split("").forEach((c) => { const s = document.createElement("span"); s.className = "ch"; s.textContent = c; row.appendChild(s); }); tw.appendChild(row); });
+      const letters = tw.querySelectorAll(".ch");
+
+      /* rune ticks around ring */
+      const runes = document.getElementById("runes"); const NS = "http://www.w3.org/2000/svg";
+      for (let i = 0; i < 48; i++) {
+        const a = (i / 48) * Math.PI * 2, long = i % 4 === 0, r1 = 300, r2 = long ? 322 : 312;
+        const l = document.createElementNS(NS, "line");
+        l.setAttribute("x1", Math.cos(a) * r1); l.setAttribute("y1", Math.sin(a) * r1); l.setAttribute("x2", Math.cos(a) * r2); l.setAttribute("y2", Math.sin(a) * r2);
+        runes.appendChild(l);
+      }
+
+      /* embers */
+      const emb = document.getElementById("embers"); const embEls = [];
+      for (let i = 0; i < 70; i++) {
+        const s = document.createElement("span"), sz = 3 + R() * 7;
+        s.style.cssText = `left:${R() * 1080}px;top:${1830 + R() * 120}px;width:${sz}px;height:${sz}px;opacity:0`;
+        emb.appendChild(s); embEls.push({ s, dur: 5 + R() * 6, delay: R() * 5, drift: (R() - 0.5) * 240, peak: 0.35 + R() * 0.65 });
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      /* ---------- initial states (set at t=0, via first tweens) ---------- */
+
+      /* ---------- 0 – 2.4  ignition ---------- */
+      tl.fromTo("#art", { opacity: 0 }, { opacity: 1, duration: 2.4, ease: "power2.out" }, 0);
+      tl.fromTo("#art-img", { scale: 1.0 }, { scale: 1.16, duration: 6, ease: "none" }, 0);
+      tl.fromTo("#rays", { opacity: 0 }, { opacity: 1, duration: 2, ease: "power2.out" }, 0.4);
+      tl.fromTo("#rays-in", { rotation: 0 }, { rotation: 50, duration: 15, ease: "none" }, 0);
+      embEls.forEach((e, i) => {
+        const reps = Math.ceil(15 / e.dur);
+        tl.fromTo(e.s, { y: 0, x: 0, opacity: 0 }, { y: -2150, x: e.drift, opacity: e.peak, duration: e.dur, ease: "none", repeat: reps, immediateRender: false }, e.delay * 0.3);
+      });
+      tl.set("#ring svg", { opacity: 1 }, 0.5);
+      tl.fromTo("#r1", { strokeDasharray: 2262, strokeDashoffset: 2262 }, { strokeDashoffset: 0, duration: 1.6, ease: "power2.inOut", immediateRender: false }, 0.5);
+      tl.fromTo("#r3", { strokeDasharray: 1800, strokeDashoffset: 1800 }, { strokeDashoffset: 0, duration: 1.5, ease: "power2.inOut", immediateRender: false }, 0.7);
+      tl.fromTo("#r2", { opacity: 0 }, { opacity: 1, duration: 1.2, immediateRender: false }, 0.9);
+      tl.fromTo("#runes", { opacity: 0 }, { opacity: 1, duration: 1.2, immediateRender: false }, 1.0);
+      tl.to("#r2", { rotation: 40, transformOrigin: "50% 50%", duration: 15, ease: "none" }, 0);
+      tl.to("#runes", { rotation: -35, transformOrigin: "50% 50%", duration: 15, ease: "none" }, 0);
+      tl.fromTo("#logo", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 1.3, ease: "back.out(1.6)", immediateRender: false }, 1.1);
+
+      /* ---------- 2.4  slam: title ---------- */
+      tl.to("#flash", { opacity: 0.9, duration: 0.07, ease: "power1.out" }, 2.42);
+      tl.to("#flash", { opacity: 0, duration: 0.7, ease: "power2.out" }, 2.49);
+      tl.fromTo("#sh1", { scale: 0.5, opacity: 0.95 }, { scale: 5.2, opacity: 0, duration: 1.1, ease: "power2.out", immediateRender: false }, 2.45);
+      tl.fromTo("#sh2", { scale: 0.5, opacity: 0.7 }, { scale: 4.2, opacity: 0, duration: 1.3, ease: "power2.out", immediateRender: false }, 2.65);
+      tl.to("#ring", { scale: 1.9, opacity: 0, duration: 0.6, ease: "power2.in" }, 2.42);
+      tl.to("#art-img", { filter: "sepia(1) saturate(2.2) hue-rotate(-12deg) contrast(1.15) brightness(0.32) blur(5px)", duration: 1.2, ease: "power2.out" }, 2.5);
+      tl.set("#title", { opacity: 1 }, 2.44);
+      tl.fromTo(letters, { opacity: 0, y: -260, scale: 2.2, rotationX: 70 }, { opacity: 1, y: 0, scale: 1, rotationX: 0, duration: 0.7, ease: "expo.out", stagger: 0.07, immediateRender: false }, 2.44);
+      tl.to("#cam", { x: 14, y: -9, duration: 0.05, yoyo: true, repeat: 7, ease: "none" }, 2.46);
+      tl.set("#cam", { x: 0, y: 0 }, 2.9);
+      tl.fromTo("#shine", { x: -300, opacity: 1 }, { x: 1100, opacity: 1, duration: 1.1, ease: "power2.inOut", immediateRender: false }, 3.25);
+      tl.to("#shine", { opacity: 0, duration: 0.01 }, 4.4);
+      tl.fromTo("#t-sub", { opacity: 0, y: 36, scale: 1.08 }, { opacity: 1, y: 0, scale: 1, duration: 1.0, ease: "power3.out", immediateRender: false }, 3.4);
+
+      /* ---------- 4.5 – 5.6  title leaves, phone rises ---------- */
+      tl.to("#title", { opacity: 0, y: -90, scale: 0.9, duration: 0.8, ease: "power2.in" }, 4.4);
+      tl.set("#stage3d", { opacity: 1 }, 4.5);
+      tl.set("#scr-home", { opacity: 1 }, 4.5);
+      tl.fromTo("#phone", { y: 1100, rotationY: -38, rotationX: 18, rotationZ: 5, scale: 0.9, x: 0 },
+        { y: 0, rotationY: -14, rotationX: 5, rotationZ: 0, scale: 1.12, x: 0, duration: 1.3, ease: "expo.out", immediateRender: false }, 4.55);
+      tl.to("#art-img", { filter: "sepia(1) saturate(2) hue-rotate(-12deg) contrast(1.1) brightness(0.28) blur(9px)", duration: 1, ease: "none" }, 4.6);
+      tl.to("#phone", { rotationY: -7, rotationX: 3, duration: 5.2, ease: "sine.inOut" }, 5.85);
+
+      /* callout 1 : TRAIN (home) 5.4 – 7.0 */
+      tl.fromTo("#call-train", { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 0.7, ease: "power3.out", immediateRender: false }, 5.5);
+      tl.to("#xpfill", { width: "68%", duration: 1.4, ease: "power2.out" }, 5.8);
+      tl.to("#call-train", { opacity: 0, x: 40, duration: 0.4, ease: "power2.in" }, 7.0);
+
+      /* swap home -> duel @7.0 */
+      tl.fromTo("#glare", { x: -500 }, { x: 500, duration: 0.9, ease: "power2.inOut", immediateRender: false }, 6.9);
+      tl.to("#scr-home", { opacity: 0, x: -60, duration: 0.35, ease: "power2.in" }, 7.0);
+      tl.fromTo("#scr-duel", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out", immediateRender: false }, 7.05);
+      tl.fromTo("#call-duel", { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 0.7, ease: "power3.out", immediateRender: false }, 7.15);
+      tl.fromTo("#qt", { scaleX: 1 }, { scaleX: 0.42, duration: 1.7, ease: "none", immediateRender: false }, 7.2);
+      /* answer B chosen at 8.7 */
+      tl.to("#optA", { y: -4, duration: 0.12, yoyo: true, repeat: 1 }, 8.65);
+      tl.fromTo("#okglow", { opacity: 0 }, { opacity: 1, duration: 0.2, immediateRender: false }, 8.9);
+      tl.fromTo("#blankword", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.25, immediateRender: false }, 8.92);
+      tl.fromTo("#xpup", { opacity: 0, y: 40, scale: 0.6 }, { opacity: 1, y: -40, scale: 1, duration: 0.5, ease: "back.out(2)", immediateRender: false }, 8.95);
+      tl.to("#xpup", { opacity: 0, y: -90, duration: 0.4 }, 9.5);
+      tl.to("#combo", { scale: 1.2, duration: 0.15, yoyo: true, repeat: 1 }, 8.95);
+      tl.to("#call-duel", { opacity: 0, x: 40, duration: 0.4, ease: "power2.in" }, 9.55);
+
+      /* swap duel -> chest @9.6 */
+      tl.fromTo("#glare", { x: -500 }, { x: 500, duration: 0.9, ease: "power2.inOut", immediateRender: false }, 9.55);
+      tl.to("#scr-duel", { opacity: 0, x: -60, duration: 0.35, ease: "power2.in" }, 9.6);
+      tl.fromTo("#scr-chest", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out", immediateRender: false }, 9.65);
+      tl.fromTo("#call-lvl", { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 0.7, ease: "power3.out", immediateRender: false }, 9.75);
+      tl.to("#phone", { x: 0, rotationZ: 1.2, duration: 0.07, yoyo: true, repeat: 9, ease: "none" }, 10.2);
+      /* chest opens @10.95 */
+      tl.to("#flash", { opacity: 0.85, duration: 0.08 }, 10.93);
+      tl.to("#flash", { opacity: 0, duration: 0.8, ease: "power2.out" }, 11.01);
+      tl.fromTo("#chest-glow", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1.5, duration: 0.8, ease: "power3.out", immediateRender: false }, 10.95);
+      tl.to("#chest-glow", { opacity: 0.55, scale: 1.2, duration: 1.4, ease: "sine.inOut" }, 11.8);
+      tl.fromTo("#rar", { opacity: 0, y: -20, scale: 1.3 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out", immediateRender: false }, 11.1);
+      ["#l1", "#l2", "#l3"].forEach((id, i) => tl.fromTo(id, { opacity: 0, y: 50, scale: 0.8 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(2)", immediateRender: false }, 11.3 + i * 0.16));
+
+      /* ---------- 12.2 – 13.4 conquer ---------- */
+      tl.to("#call-lvl", { opacity: 0, x: 40, duration: 0.35, ease: "power2.in" }, 12.0);
+      tl.to("#phone", { x: 0, y: 120, scale: 0.8, rotationY: -26, opacity: 0.0, duration: 0.5, ease: "power3.in" }, 12.15);
+      tl.fromTo("#call-conq", { opacity: 0, scale: 1.5, y: 20 }, { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: "expo.out", immediateRender: false }, 12.45);
+      tl.to("#art-img", { filter: "sepia(1) saturate(2.4) hue-rotate(-12deg) contrast(1.2) brightness(0.55)", duration: 0.8, ease: "power2.out" }, 12.4);
+      tl.to("#rays", { opacity: 1.0, duration: 0.5 }, 12.4);
+      tl.to("#flash", { opacity: 0.5, duration: 0.07 }, 12.45);
+      tl.to("#flash", { opacity: 0, duration: 0.6 }, 12.52);
+      tl.to("#call-conq", { opacity: 0, scale: 0.92, duration: 0.35, ease: "power2.in" }, 13.3);
+
+      /* ---------- 13.7 – 15 end lockup ---------- */
+      tl.fromTo("#end", { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power3.out", immediateRender: false }, 13.65);
+      tl.to("#fadeblack", { opacity: 1, duration: 0.7, ease: "power2.in" }, 14.3);
+
+      /* film grain jitter, stepped (deterministic) */
+      for (let t = 0; t < 15; t += 0.08) tl.set("#grain", { x: Math.floor(R() * 200) - 100, y: Math.floor(R() * 200) - 100 }, t);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
