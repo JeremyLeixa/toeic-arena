@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verse Arena — Prépare ton TOEIC comme un jeu</title>
+<meta name="description" content="Verse Arena : la plateforme gamifiée de préparation au TOEIC. 2 500+ questions, 25+ modules, classements, achievements, Boss Test. Gratuit pour commencer.">
+<meta name="keywords" content="TOEIC, préparation TOEIC, entraînement TOEIC, TOEIC gratuit, gamification, score TOEIC, test anglais">
+<meta property="og:title" content="Verse Arena — Prépare ton TOEIC comme un jeu">
+<meta property="og:description" content="25+ modules, classements entre étudiants, achievements, Boss Test final. La seule plateforme TOEIC où tu as envie de t'entraîner.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://verse-arena.fr">
+<link rel="canonical" href="https://verse-arena.fr">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:#0f0c08;color:#ede4d4;font-family:'DM Sans',sans-serif;overflow-x:hidden}
+::selection{background:#d4943a;color:#0f0c08}
+img{max-width:100%;display:block}
+a{text-decoration:none}
+
+/* ── Vars ── */
+:root{
+  --bg:#0f0c08;--bg2:#1a1610;--bg3:#28221a;
+  --gold:#d4943a;--gold2:#f0c850;--orange:#c87a35;--purple:#8b5e83;--green:#4abe60;
+  --t1:#ede4d4;--t2:#8a7e6a;--t3:#5a5040;
+  --bdr:rgba(180,140,80,0.08);
+}
+
+/* ── Animations ── */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes flicker{0%,100%{opacity:.7}50%{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+@keyframes fadeLeft{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes grain{0%,100%{transform:translate(0)}10%{transform:translate(-1%,-1%)}30%{transform:translate(1%,1%)}50%{transform:translate(-1%,0)}70%{transform:translate(0,-1%)}90%{transform:translate(1%,0)}}
+
+.fade-up{opacity:0;animation:fadeUp .7s cubic-bezier(.23,1,.32,1) forwards}
+.fade-left{opacity:0;animation:fadeLeft .7s cubic-bezier(.23,1,.32,1) forwards}
+.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.4s}
+.d5{animation-delay:.5s}.d6{animation-delay:.6s}.d7{animation-delay:.7s}.d8{animation-delay:.8s}
+
+/* ── Grain overlay ── */
+.grain{
+  position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat:repeat;background-size:180px;
+  animation:grain 8s steps(10) infinite;
+}
+
+/* ── Nav ── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:0 28px;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:all .35s;
+}
+.nav.solid{background:rgba(15,12,8,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr)}
+.nav-logo{display:flex;align-items:center;gap:8px}
+.nav-logo span:last-child{
+  font-family:'Cinzel',serif;font-weight:800;font-size:14px;
+  background:linear-gradient(135deg,var(--gold),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.nav-links{display:flex;align-items:center;gap:20px}
+.nav-links a{color:var(--t2);font-size:12px;font-weight:600;font-family:'Cinzel',serif;transition:color .2s}
+.nav-links a:hover{color:var(--gold)}
+.nav-links a.cta-main{color:#000}
+.nav-links a.cta-main:hover{color:#000}
+
+/* ── Buttons ── */
+.cta-main{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 34px;border-radius:12px;border:none;cursor:pointer;
+  font-family:'Cinzel',serif;font-weight:700;font-size:14px;
+  background:linear-gradient(135deg,var(--gold),#a06e20);
+  color:#000;position:relative;overflow:hidden;
+  box-shadow:0 4px 24px rgba(212,148,58,.25),inset 0 1px 0 rgba(255,255,255,.15);
+  text-shadow:0 1px 0 rgba(255,255,255,.15);
+  transition:transform .2s,box-shadow .3s;letter-spacing:.5px;
+}
+.cta-main:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(212,148,58,.4),inset 0 1px 0 rgba(255,255,255,.15)}
+.cta-main::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  background-size:200% 100%;animation:shimmer 4s infinite;
+}
+.cta-sm{padding:9px 20px;font-size:11px}
+.cta-ghost{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 28px;border-radius:12px;
+  border:1px solid rgba(180,140,80,.15);cursor:pointer;
+  font-family:'Cinzel',serif;font-weight:600;font-size:13px;
+  background:rgba(180,140,80,.04);color:var(--t2);
+  transition:all .2s;letter-spacing:.5px;
+}
+.cta-ghost:hover{background:rgba(180,140,80,.08);border-color:rgba(180,140,80,.3);color:var(--gold)}
+
+/* ── Cards ── */
+.card{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;
+  padding:28px 24px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04);
+  transition:transform .3s,border-color .3s;
+}
+.card:hover{transform:translateY(-4px);border-color:rgba(180,140,80,.15)}
+.stat-card{
+  text-align:center;padding:24px 16px;
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;
+  box-shadow:inset 0 1px 0 rgba(180,140,80,.04);transition:transform .3s;
+}
+.stat-card:hover{transform:translateY(-3px)}
+
+/* ── Ornament ── */
+.ornament{display:flex;align-items:center;gap:12px;justify-content:center;margin:8px 0}
+.ornament::before,.ornament::after{content:'';width:40px;height:1px}
+.ornament::before{background:linear-gradient(90deg,transparent,rgba(212,148,58,.3))}
+.ornament::after{background:linear-gradient(90deg,rgba(212,148,58,.3),transparent)}
+.ornament span{color:var(--gold2);font-size:10px;opacity:.6}
+
+/* ── Phone mockup ── */
+.phone{
+  width:272px;min-height:500px;background:var(--bg2);border-radius:34px;
+  border:2px solid rgba(180,140,80,.2);padding:10px 7px;
+  box-shadow:0 40px 80px rgba(0,0,0,.7),0 0 80px rgba(212,148,58,.06),inset 0 1px 0 rgba(180,140,80,.08);
+  position:relative;overflow:hidden;animation:float 6s ease-in-out infinite;
+}
+.phone-notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:76px;height:22px;background:var(--bg);border-radius:18px;z-index:2}
+.phone-screen{border-radius:26px;overflow:hidden;height:100%;background:var(--bg)}
+.mock-card{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;
+  background:var(--bg2);border-radius:12px;border:1px solid var(--bdr);
+  box-shadow:inset 0 1px 0 rgba(180,140,80,.04);
+}
+.mock-card.locked{opacity:.45}
+.mock-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.mock-card h4{font-weight:700;font-size:10.5px;color:var(--t1);font-family:'DM Sans',sans-serif;margin:0}
+.mock-card p{font-size:8.5px;color:var(--t3);margin:0}
+.mock-card.locked p{color:var(--gold)}
+
+/* ── Comparison table ── */
+.comp{border-radius:16px;overflow:hidden;border:1px solid var(--bdr);background:var(--bg2)}
+.comp-head{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;background:linear-gradient(135deg,var(--bg3),var(--bg2));border-bottom:1px solid var(--bdr)}
+.comp-head>div{padding:14px 12px;font-size:11px;font-weight:600;color:var(--t3);text-align:center}
+.comp-head>div:first-child{text-align:left}
+.comp-head>div:last-child{font-weight:800;color:var(--gold);font-family:'Cinzel',serif;border-left:2px solid rgba(212,148,58,.18);background:rgba(212,148,58,.04)}
+.comp-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;border-bottom:1px solid var(--bdr);transition:background .2s}
+.comp-row:last-child{border-bottom:none}
+.comp-row:hover{background:rgba(180,140,80,.03)}
+.comp-row>div{padding:12px 12px;font-size:11.5px;color:var(--t2);text-align:center;display:flex;align-items:center;justify-content:center}
+.comp-row>div:first-child{font-weight:700;color:var(--t1);text-align:left;justify-content:flex-start}
+.comp-row>div:last-child{font-weight:700;color:var(--gold);border-left:2px solid rgba(212,148,58,.18);background:rgba(212,148,58,.02)}
+
+/* ── Sections ── */
+.section{padding:90px 40px}
+.section-title{font-family:'Cinzel',serif;font-weight:800;font-size:clamp(26px,3.8vw,40px);margin-bottom:12px}
+.boss-section{overflow:hidden} /* le halo de 500px debordait de 63px sur mobile : la page devenait plus large que l'ecran et le nav fixe (bouton Commencer) sortait a droite */
+.section-label{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:3px;margin-bottom:10px;font-family:'Cinzel',serif}
+
+/* ── Grids ── */
+.stats-grid{max-width:860px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  /* Nav — compact */
+  .nav{padding:0 12px!important;height:50px;gap:8px}
+  .nav-logo span:first-child{font-size:16px!important}
+  .nav-logo span:last-child{font-size:11px!important}
+  .nav-links{gap:8px}
+  .nav-links a.nav-link-text{display:none}
+  .cta-sm{padding:7px 14px!important;font-size:10px!important;letter-spacing:0!important;gap:4px!important;white-space:nowrap;flex-shrink:0}
+
+  /* Hero */
+  .hero{padding:70px 16px 24px!important;min-height:auto!important}
+  .hero-flex{flex-direction:column!important;text-align:center!important;gap:24px!important}
+  .hero-flex>div:first-child{align-items:center!important}
+  .hero-ctas{justify-content:center!important;flex-direction:column!important;align-items:stretch!important;width:100%}
+  .hero-ctas .cta-main,.hero-ctas .cta-ghost{width:100%;justify-content:center;text-align:center;box-sizing:border-box}
+  .phone-wrap{transform:scale(.75)!important;margin:0 auto!important}
+
+  /* Stats */
+  .stats-section{padding:32px 16px!important}
+  .stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px}
+  .stat-card{padding:16px 10px}
+  .stat-card div[data-count]{font-size:24px!important}
+
+  /* Pricing — stack en mobile pour éviter l'écrasement des 3 colonnes */
+  .pricing-grid{grid-template-columns:1fr!important;gap:14px!important}
+  .pricing-card{padding:24px 20px!important}
+  .pricing-featured{order:-1} /* Le Pass remonte en 1er sur mobile = le plus visible */
+
+  /* Footer — stack en mobile */
+  .footer-grid{grid-template-columns:1fr!important;gap:32px!important;text-align:center}
+  .footer-grid>div:first-child p{max-width:100%!important;margin-left:auto;margin-right:auto}
+
+  /* Sections — tighter */
+  .section{padding:40px 16px!important}
+  .section-title{font-size:clamp(22px,6vw,32px)!important}
+
+  /* Features */
+  .feat-grid{grid-template-columns:1fr!important;gap:12px}
+  .card{padding:22px 18px!important}
+
+  /* Comparison — mobile card layout */
+  .comp-wrap{overflow:visible!important;margin:0!important;padding:0!important}
+  .comp{display:none!important}
+  .comp-mobile{display:flex!important}
+
+  /* Boss Test */
+  .boss-section{padding:40px 16px!important}
+  .boss-section div[style*="font-size:64px"]{font-size:48px!important}
+
+  /* Final CTA */
+  .final-cta{padding:40px 16px 40px!important}
+  .final-cta .cta-main{width:100%;justify-content:center;text-align:center;box-sizing:border-box;padding:16px 24px!important;font-size:14px!important}
+
+  /* Footer */
+  footer{padding:28px 16px!important}
+
+  /* General overrides for inline paddings */
+  section[style*="padding:50px 40px"]{padding:32px 16px!important}
+  section[style*="padding:90px 40px"]{padding:40px 16px!important}
+  section[style*="padding:100px 40px"]{padding:40px 16px!important}
+}
+
+@media(max-width:480px){
+  .nav{padding:0 10px!important}
+  .nav-logo span:last-child{font-size:10px!important}
+  .cta-sm{padding:6px 12px!important;font-size:9px!important}
+  .phone-wrap{transform:scale(.65)!important}
+  h1{font-size:clamp(26px,7vw,36px)!important}
+  .hero-ctas .cta-main{padding:14px 20px!important;font-size:13px!important}
+}
+
+/* ── Mobile comparison cards (hidden on desktop) ── */
+.comp-mobile{
+  display:none;
+  flex-direction:column;gap:12px;
+}
+.comp-mobile-card{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;
+  padding:18px;box-shadow:inset 0 1px 0 rgba(180,140,80,.04);
+}
+.comp-mobile-card h4{
+  font-family:'Cinzel',serif;font-weight:800;font-size:14px;
+  margin-bottom:12px;padding-bottom:10px;
+  border-bottom:1px solid var(--bdr);
+}
+.comp-mobile-card .cm-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid rgba(180,140,80,.04);
+  font-size:12px;
+}
+.comp-mobile-card .cm-row:last-child{border-bottom:none}
+.comp-mobile-card .cm-label{color:var(--t3);font-weight:600}
+.comp-mobile-card .cm-val{color:var(--t2);text-align:right;max-width:55%}
+.comp-mobile-card.arena{border-color:rgba(212,148,58,.2)}
+.comp-mobile-card.arena h4{color:var(--gold);border-bottom-color:rgba(212,148,58,.15)}
+.comp-mobile-card.arena .cm-val{color:var(--gold);font-weight:700}
+
+/* ════════════ v3 : hero cinématique, téléphones, how, vidéo, CTA collant ════════════ */
+.v3-gold{background:linear-gradient(180deg,#fff0b8 0%,#f0c850 38%,#d4943a 68%,#a06e20 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 22px rgba(212,148,58,.45))}
+.v3-live{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(74,190,96,.6);animation:v3pulse 2.4s infinite}
+@keyframes v3pulse{70%{box-shadow:0 0 0 9px rgba(74,190,96,0)}100%{box-shadow:0 0 0 0 rgba(74,190,96,0)}}
+.v3-cta-big{padding:18px 36px;font-size:15px}
+.v3-play{cursor:pointer;color:#d9ccb0;border-color:rgba(240,200,80,.3);background:rgba(15,12,8,.5);backdrop-filter:blur(6px)}
+.v3-play:hover{color:var(--gold2);border-color:rgba(240,200,80,.6)}
+.v3-trust{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:16px;font-size:12px;color:var(--t2)}
+.v3-trust li::before{content:"✓";color:var(--gold2);margin-right:6px;font-weight:700}
+.v3-scroll{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:3;color:var(--gold);font-size:20px;opacity:.7;animation:float 3s ease-in-out infinite}
+
+/* fond du hero */
+.v3-art{position:absolute;inset:0;overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 100%);mask-image:linear-gradient(to bottom,#000 55%,transparent 100%)}
+.v3-art img{position:absolute;left:50%;top:auto;bottom:-6%;width:max(100%,1100px);height:auto;transform:translateX(-50%);filter:sepia(1) saturate(2.2) hue-rotate(-12deg) contrast(1.15) brightness(.5);animation:v3kb 40s ease-in-out infinite alternate}
+@keyframes v3kb{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.1)}}
+.v3-art-tint{position:absolute;inset:0;background:radial-gradient(ellipse at 72% 45%,rgba(212,148,58,.30),transparent 60%),linear-gradient(to right,rgba(15,12,8,.92) 0%,rgba(15,12,8,.55) 55%,rgba(15,12,8,.2) 100%),linear-gradient(to bottom,transparent 70%,var(--bg) 100%)}
+.v3-rays{position:absolute;inset:0;overflow:hidden;mix-blend-mode:screen;pointer-events:none;opacity:.8}
+.v3-rays i{position:absolute;left:72%;top:46%;width:2200px;height:2200px;margin:-1100px 0 0 -1100px;
+  background:repeating-conic-gradient(from 0deg,rgba(240,200,80,.14) 0deg 3deg,transparent 3deg 15deg);
+  -webkit-mask-image:radial-gradient(circle,#000 0%,transparent 50%);mask-image:radial-gradient(circle,#000 0%,transparent 50%);animation:v3spin 120s linear infinite}
+@keyframes v3spin{to{transform:rotate(360deg)}}
+.v3-embers{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.v3-embers span{position:absolute;bottom:-12px;width:var(--s);height:var(--s);border-radius:50%;background:var(--gold2);box-shadow:0 0 10px 3px rgba(240,160,50,.85);opacity:0;animation:v3rise var(--d) linear infinite}
+@keyframes v3rise{0%{transform:translate(0,0);opacity:0}10%{opacity:.9}85%{opacity:.7}100%{transform:translate(var(--x),-110vh);opacity:0}}
+
+/* scène téléphones */
+.v3-stage{position:relative;width:480px;height:620px}
+.v3-ph-wrap{width:calc(418px*var(--s));height:calc(872px*var(--s));position:absolute}
+.v3-ph{width:418px;height:872px;transform:scale(var(--s));transform-origin:0 0}
+.v3-ph-back{left:10px;top:70px;transform:rotate(-8deg);z-index:1;filter:brightness(.82)}
+.v3-ph-front{left:196px;top:34px;transform:rotate(6deg);z-index:2}
+.v3-chip{position:absolute;z-index:4;white-space:nowrap;padding:9px 16px;border-radius:30px;font-family:'Cinzel',serif;font-weight:800;letter-spacing:.08em;font-size:13px;color:var(--gold2);
+  background:linear-gradient(180deg,rgba(40,34,26,.95),rgba(15,12,8,.95));border:1px solid rgba(240,200,80,.55);box-shadow:0 0 24px rgba(212,148,58,.45),0 8px 24px rgba(0,0,0,.6);animation:float 6s ease-in-out infinite}
+.v3-chip em{font-style:normal;color:var(--t1);font-family:'DM Sans',sans-serif;font-weight:600;letter-spacing:.02em}
+.v3-chip:nth-of-type(4){animation-delay:-2s}.v3-chip:nth-of-type(5){animation-delay:-4s}
+
+/* téléphone (écrans recréés) */
+.v3-phone{position:relative;width:418px;height:872px;border-radius:68px;padding:14px;background:linear-gradient(145deg,#4a3a22,#1a1308 45%,#3a2c16);
+  box-shadow:0 0 0 2px #6a4f22,0 40px 90px rgba(0,0,0,.8),0 0 120px 16px rgba(212,148,58,.28)}
+.v3-screen{position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:#0f0c08;color:#ede4d4;font-family:'DM Sans',sans-serif}
+.v3-notch{position:absolute;top:12px;left:50%;width:118px;height:32px;margin-left:-59px;border-radius:20px;background:#000;z-index:20}
+.v3-glare{position:absolute;inset:0;z-index:30;pointer-events:none;border-radius:54px;background:linear-gradient(115deg,transparent 30%,rgba(255,235,180,.15) 45%,transparent 60%)}
+.v3-scr{position:absolute;inset:0;padding:62px 18px 0;background:radial-gradient(ellipse at 50% 0%,#2a2010 0%,#0f0c08 60%)}
+.v3-scr h2{font-family:'Cinzel',serif;font-weight:800;letter-spacing:.04em}
+.v3-card{background:linear-gradient(180deg,#1a1610,#15110b);border:1px solid rgba(180,140,80,.22);border-radius:18px}
+.v3-tabbar{position:absolute;left:0;right:0;bottom:0;height:84px;background:rgba(15,12,8,.96);border-top:1px solid rgba(180,140,80,.18);display:flex;justify-content:space-around;padding-top:12px;font-size:12px;color:#8a7e6a;letter-spacing:.04em}
+.v3-tabbar div{display:flex;flex-direction:column;align-items:center;gap:6px}
+.v3-tabbar i{width:24px;height:24px;border-radius:8px;border:2px solid #8a7e6a}
+.v3-tabbar .on{color:#f0c850}.v3-tabbar .on i{border-color:#f0c850;background:rgba(240,200,80,.2)}
+.v3-lvl{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-family:'Cinzel',serif;font-weight:900;font-size:26px;color:#0f0c08;background:radial-gradient(circle at 35% 30%,#fff0b0,#f0c850 45%,#a06e20);box-shadow:0 0 22px rgba(240,200,80,.55)}
+.v3-xpbar{height:10px;border-radius:6px;background:#28221a;overflow:hidden}.v3-xpfill{height:100%;width:68%;border-radius:6px;background:linear-gradient(90deg,#a06e20,#f0c850)}
+.v3-tile{display:flex;align-items:center;gap:14px;padding:15px 16px;margin-bottom:11px}
+.v3-tile b{display:block;font-size:17px;font-weight:700}.v3-tile small{color:#8a7e6a;font-size:13px}
+.v3-ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:rgba(212,148,58,.16);border:1px solid rgba(212,148,58,.4)}
+.v3-ic svg{width:26px;height:26px;fill:none;stroke:#f0c850;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.v3-pill{padding:6px 12px;border-radius:20px;font-size:13px;font-weight:700;background:rgba(212,148,58,.16);border:1px solid rgba(212,148,58,.45);color:#f0c850;white-space:nowrap}
+.v3-qtimer{height:8px;border-radius:5px;background:#28221a;overflow:hidden}.v3-qtimer i{display:block;height:100%;width:42%;background:linear-gradient(90deg,#e05252,#d4943a)}
+.v3-opt{position:relative;display:flex;align-items:center;gap:12px;padding:15px 16px;margin-bottom:11px;font-size:17px;font-weight:500}
+.v3-opt span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:#28221a;color:#c9bc9f}
+.v3-opt.ok{border-color:#4abe60;background:linear-gradient(180deg,rgba(74,190,96,.3),rgba(74,190,96,.08));box-shadow:0 0 24px rgba(74,190,96,.4)}
+.v3-opt.ok span{background:#4abe60;color:#07140a}
+.v3-chest-img{position:absolute;left:-40%;top:90px;width:190%;max-width:none;filter:sepia(1) saturate(2.6) hue-rotate(-14deg) contrast(1.1) brightness(.85)}
+.v3-chest-glow{position:absolute;left:50%;top:420px;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;background:radial-gradient(circle,rgba(255,240,180,.8),rgba(240,160,50,.45) 35%,transparent 68%);mix-blend-mode:screen}
+.v3-rar{position:absolute;left:0;right:0;top:70px;text-align:center;font-family:'Cinzel',serif;font-weight:800;letter-spacing:.3em;font-size:20px;color:#f0c850;text-shadow:0 0 20px #d4943a}
+.v3-loot{position:absolute;left:18px;right:18px;bottom:36px;display:flex;gap:10px}
+.v3-loot .v3-card{flex:1;padding:14px 6px;text-align:center}
+.v3-loot b{display:block;font-family:'Cinzel',serif;font-weight:800;font-size:22px;color:#f0c850}
+.v3-loot small{color:#8a7e6a;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+
+/* how */
+.v3-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.v3-step{position:relative;text-align:center;padding:30px 22px 28px;border-radius:20px;background:linear-gradient(180deg,rgba(40,34,26,.7),rgba(15,12,8,.9));border:1px solid rgba(212,148,58,.25);box-shadow:inset 0 0 40px rgba(212,148,58,.06);transition:transform .35s,border-color .35s,box-shadow .35s}
+.v3-step:hover{transform:translateY(-6px);border-color:rgba(240,200,80,.5);box-shadow:0 18px 60px rgba(212,148,58,.18),inset 0 0 40px rgba(212,148,58,.08)}
+.v3-step-num{position:absolute;top:14px;left:18px;font-family:'Cinzel',serif;font-weight:900;font-size:13px;letter-spacing:.2em;color:var(--gold);opacity:.7}
+.v3-step .v3-ph-wrap{position:relative;margin:0 auto 22px}
+.v3-step h3{font-family:'Cinzel',serif;font-weight:900;font-size:26px;letter-spacing:.08em;color:var(--gold2);text-shadow:0 0 18px rgba(212,148,58,.5);margin-bottom:8px}
+.v3-step p{font-size:13.5px;line-height:1.65;color:var(--t2);max-width:290px;margin:0 auto}
+
+/* reveal au scroll */
+.v3-reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.23,1,.32,1),transform .8s cubic-bezier(.23,1,.32,1)}
+.v3-reveal.in{opacity:1;transform:none}
+
+/* vidéo */
+.v3-dialog{border:1px solid rgba(240,200,80,.4);border-radius:18px;background:#0f0c08;padding:10px;width:min(960px,92vw);margin:auto;box-shadow:0 0 120px rgba(212,148,58,.35)}
+.v3-dialog::backdrop{background:rgba(5,3,2,.88);backdrop-filter:blur(4px)}
+.v3-close{position:absolute;right:-6px;top:-44px;background:none;border:none;color:var(--t1);font-size:22px;cursor:pointer;padding:8px 12px}
+
+/* final */
+.v3-final-glow{position:absolute;left:50%;top:50%;width:min(900px,100%);height:520px;transform:translate(-50%,-50%);background:radial-gradient(ellipse,rgba(212,148,58,.14),transparent 65%);pointer-events:none}
+.v3-final-row{display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap}
+.v3-qr{display:flex;align-items:center;gap:16px;text-align:left}
+.v3-qr-frame{padding:8px;border-radius:14px;background:#ede4d4;box-shadow:0 0 0 3px var(--gold),0 0 34px rgba(240,200,80,.4)}
+.v3-qr-frame img{width:104px;height:104px}
+.v3-qr-txt{display:flex;flex-direction:column;gap:4px;max-width:170px;font-size:12.5px;color:var(--t2);line-height:1.5}
+.v3-qr-txt strong{font-family:'Cinzel',serif;color:var(--gold2);font-size:14px;letter-spacing:.04em}
+
+/* CTA collant mobile */
+.v3-sticky{display:none}
+
+@media(max-width:900px){
+  .v3-steps{grid-template-columns:1fr;max-width:420px;margin:0 auto}
+  .v3-stage{width:100%;max-width:380px;height:470px;margin:0 auto;transform:none!important}
+  .v3-ph-back{--s:.4!important;left:4px;top:50px}
+  .v3-ph-front{--s:.46!important;left:calc(50% - 8px);top:20px}
+  .v3-chip{font-size:10px;padding:7px 12px}
+}
+@media(max-width:768px){
+  .v3-art-tint{background:radial-gradient(ellipse at 50% 70%,rgba(212,148,58,.25),transparent 60%),linear-gradient(to bottom,rgba(15,12,8,.88) 0%,rgba(15,12,8,.6) 50%,rgba(15,12,8,.85) 100%)}
+  .v3-rays i{left:50%;top:70%}
+  .v3-hero{padding:84px 16px 56px!important}
+  .v3-hero .hero-flex{gap:8px!important}
+  .v3-trust{justify-content:center}
+  .v3-hero .hero-flex>div:first-child{align-items:center!important}
+  .v3-scroll{display:none}
+  .v3-final-row{flex-direction:column;gap:24px}
+  .v3-qr{display:none}
+  .v3-sticky{display:block;position:fixed;left:0;right:0;bottom:0;z-index:90;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(15,12,8,.97) 60%,rgba(15,12,8,0));transform:translateY(120%);transition:transform .4s cubic-bezier(.23,1,.32,1)}
+  .v3-sticky.show{transform:none}
+  .v3-sticky .cta-main{width:100%;justify-content:center;box-sizing:border-box;padding:15px 20px;font-size:14px}
+  footer{padding-bottom:84px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .v3-art img,.v3-rays i,.v3-embers span,.v3-chip,.v3-scroll,.v3-live{animation:none!important}
+  .v3-reveal{opacity:1;transform:none;transition:none}
+}
+
+/* ════════════ v3b : icônes, stats, fonctionnalités, comparatif, boss, tarifs, FAQ ════════════ */
+.ico{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ico-btn{width:18px;height:18px;margin-right:2px}
+.v3-ico-tile{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;color:var(--gold2);
+  background:linear-gradient(145deg,rgba(212,148,58,.24),rgba(212,148,58,.06));border:1px solid rgba(240,200,80,.4);
+  box-shadow:0 0 24px rgba(212,148,58,.22),inset 0 1px 0 rgba(255,255,255,.08)}
+.v3-ico-tile .ico{width:26px;height:26px}
+.v3-ico-xl{width:88px;height:88px;border-radius:24px;margin:0 auto 20px;box-shadow:0 0 50px rgba(212,148,58,.35),inset 0 1px 0 rgba(255,255,255,.1)}
+.v3-ico-xl .ico{width:44px;height:44px;stroke-width:1.5}
+
+/* stats */
+.stat-card{background:linear-gradient(180deg,rgba(40,34,26,.7),rgba(15,12,8,.9))!important;border:1px solid rgba(212,148,58,.25)!important;border-radius:18px!important;padding:26px 16px!important;box-shadow:inset 0 0 36px rgba(212,148,58,.06)!important;transition:transform .35s,border-color .35s,box-shadow .35s,opacity .8s!important}
+.stat-card:hover{transform:translateY(-4px)!important;border-color:rgba(240,200,80,.5)!important;box-shadow:0 14px 50px rgba(212,148,58,.16),inset 0 0 36px rgba(212,148,58,.08)!important}
+.stat-card .v3-ico-tile{margin:0 auto 14px}
+.v3-stat-n{font-family:'Cinzel',serif;font-weight:900;font-size:34px;line-height:1.1;margin-bottom:4px;background:linear-gradient(180deg,#fff0b8,#f0c850 45%,#d4943a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.v3-stat-l{font-size:10.5px;color:var(--t2);font-weight:700;text-transform:uppercase;letter-spacing:2px}
+
+/* sections : halo doré discret */
+.v3-features,.v3-pricing,.v3-how{background:radial-gradient(ellipse at 50% 0%,rgba(212,148,58,.07),transparent 62%)}
+
+/* fonctionnalités */
+.feat-grid{gap:20px!important}
+.v3-feat{position:relative;overflow:hidden;padding:28px 24px 26px;border-radius:20px;background:linear-gradient(180deg,rgba(40,34,26,.7),rgba(15,12,8,.9));border:1px solid rgba(212,148,58,.22);box-shadow:inset 0 0 40px rgba(212,148,58,.05);transition:transform .35s,border-color .35s,box-shadow .35s,opacity .8s}
+.v3-feat::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 0%,rgba(240,200,80,.16),transparent 55%);opacity:0;transition:opacity .35s;pointer-events:none}
+.v3-feat:hover{transform:translateY(-6px);border-color:rgba(240,200,80,.5);box-shadow:0 18px 60px rgba(212,148,58,.18),inset 0 0 40px rgba(212,148,58,.08)}
+.v3-feat:hover::before{opacity:1}
+.v3-feat .v3-ico-tile{margin-bottom:18px}
+.v3-feat h3{font-family:'Cinzel',serif;font-weight:800;font-size:17px;letter-spacing:.03em;color:var(--t1);margin-bottom:9px}
+.v3-feat p{font-size:13px;line-height:1.7;color:var(--t2)}
+
+/* comparatif */
+.comp{border:1px solid rgba(212,148,58,.3)!important;border-radius:20px!important;background:linear-gradient(180deg,rgba(40,34,26,.55),rgba(15,12,8,.85))!important;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.comp-head{background:linear-gradient(180deg,rgba(40,34,26,.9),rgba(26,22,16,.9))!important;border-bottom:1px solid rgba(212,148,58,.25)!important}
+.comp-head>div{padding:16px 12px!important;font-size:11px!important;text-transform:uppercase;letter-spacing:.14em;color:var(--t2)!important}
+.comp-head>div:last-child,.comp-row>div:last-child{position:relative;background:linear-gradient(180deg,rgba(212,148,58,.16),rgba(212,148,58,.06))!important;border-left:1px solid rgba(240,200,80,.5)!important;box-shadow:inset 0 0 30px rgba(212,148,58,.1)}
+.comp-head>div:last-child{color:var(--gold2)!important;display:flex;align-items:center;justify-content:center;gap:8px}
+.comp-head>div:last-child img{width:18px;height:18px}
+.comp-row{border-bottom:1px solid rgba(180,140,80,.1)!important}
+.comp-row:nth-child(even){background:rgba(180,140,80,.025)}
+.comp-row>div{font-size:12.5px!important;padding:14px 12px!important}
+.comp-row>div:last-child{color:var(--gold2)!important;font-weight:700}
+.comp-mobile-card{border-radius:16px!important;background:linear-gradient(180deg,rgba(40,34,26,.6),rgba(15,12,8,.85))!important;border-color:rgba(180,140,80,.18)!important}
+.comp-mobile-card.arena{border-color:rgba(240,200,80,.5)!important;box-shadow:0 0 40px rgba(212,148,58,.18),inset 0 0 30px rgba(212,148,58,.08)}
+.comp-mobile-card h4{display:flex;align-items:center;gap:8px}
+.comp-mobile-card h4 img{width:20px;height:20px}
+
+/* boss */
+.v3-boss{padding:110px 40px!important;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr)}
+.v3-boss-art{position:absolute;inset:0;overflow:hidden;opacity:.5;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at 50% 50%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 50%,#000 20%,transparent 75%)}
+.v3-boss-art img{position:absolute;left:50%;top:50%;width:max(100%,1000px);transform:translate(-50%,-45%);filter:sepia(1) saturate(2.2) hue-rotate(-12deg) contrast(1.15) brightness(.55)}
+.v3-boss-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin:22px 0 22px}
+.v3-boss-stats div{min-width:112px;padding:14px 16px;border-radius:16px;background:linear-gradient(180deg,rgba(40,34,26,.8),rgba(15,12,8,.9));border:1px solid rgba(212,148,58,.3);backdrop-filter:blur(6px)}
+.v3-boss-stats b{display:block;font-family:'Cinzel',serif;font-weight:900;font-size:32px;line-height:1.1;background:linear-gradient(180deg,#fff0b8,#f0c850 45%,#d4943a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.v3-boss-stats span{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--t2);font-weight:700}
+
+/* tarifs */
+.v3-price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:stretch}
+.v3-price{position:relative;display:flex;flex-direction:column;padding:36px 28px 30px;border-radius:22px;background:linear-gradient(180deg,rgba(40,34,26,.6),rgba(15,12,8,.9));border:1px solid rgba(212,148,58,.22);box-shadow:inset 0 0 40px rgba(212,148,58,.04);transition:transform .35s,border-color .35s,box-shadow .35s,opacity .8s}
+.v3-price:hover{transform:translateY(-6px);border-color:rgba(240,200,80,.45)}
+.v3-price-feat{border:1.5px solid rgba(240,200,80,.6);background:linear-gradient(180deg,rgba(212,148,58,.16),rgba(40,34,26,.7) 40%,rgba(15,12,8,.92));box-shadow:0 20px 80px rgba(212,148,58,.22),inset 0 0 50px rgba(212,148,58,.1)}
+.v3-price-feat.v3-reveal.in{transform:scale(1.04)}
+.v3-price-feat.v3-reveal.in:hover{transform:scale(1.04) translateY(-6px)}
+.v3-ribbon{position:absolute;top:-15px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;white-space:nowrap;padding:6px 16px;border-radius:99px;background:linear-gradient(135deg,var(--gold2),#a06e20);color:#0f0c08;font-family:'Cinzel',serif;font-weight:800;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;box-shadow:0 6px 24px rgba(212,148,58,.5)}
+.v3-ribbon .ico{width:13px;height:13px;fill:currentColor;stroke-width:1}
+.v3-price-name{font-family:'Cinzel',serif;font-weight:800;font-size:13px;color:var(--t2);letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px}
+.v3-price-name.gold{color:var(--gold2)}
+.v3-price-amt{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.v3-price-amt .n{font-family:'Cinzel',serif;font-weight:900;font-size:46px;line-height:1.1;color:var(--t1)}
+.v3-price-amt .n.v3-gold{filter:none}
+.v3-price-amt .u{font-size:13px;color:var(--t3)}
+.v3-price-sub{font-size:12px;color:var(--t3);margin-bottom:24px}.v3-price-sub.it{font-style:italic}
+.v3-price-list{list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:11px;flex:1}
+.v3-price-list li{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;color:var(--t2)}
+.v3-price-list li.strong{color:var(--t1)}
+.v3-price-list li.off{color:var(--t3)}.v3-price-list li.off .v3-ck{color:var(--t3)}
+.v3-ck{width:18px;height:18px;color:var(--gold2);stroke-width:2.4;margin-top:1px}
+.v3-price-cta{display:flex!important;justify-content:center;width:100%}
+
+/* FAQ */
+#faq details{background:linear-gradient(180deg,rgba(40,34,26,.6),rgba(15,12,8,.85))!important;border:1px solid rgba(212,148,58,.22)!important;border-radius:16px!important;transition:border-color .25s,box-shadow .25s}
+#faq details:hover{border-color:rgba(240,200,80,.4)!important}
+#faq details[open]{border-color:rgba(240,200,80,.55)!important;box-shadow:0 0 36px rgba(212,148,58,.14)}
+#faq summary::-webkit-details-marker{display:none}
+#faq summary span{transition:transform .25s;color:var(--gold2)!important}
+#faq details[open] summary span{transform:rotate(45deg)}
+
+@media(max-width:900px){.v3-price-grid{grid-template-columns:1fr!important;max-width:460px;margin:0 auto}.v3-price-feat.v3-reveal.in,.v3-price-feat.v3-reveal.in:hover{transform:none}}
+@media(max-width:768px){.v3-boss{padding:64px 16px!important}.v3-stat-n{font-size:26px}.v3-boss-stats div{min-width:0;flex:1 1 40%}}
+
+.v3-boss p{color:#d9ccb0!important;text-shadow:0 1px 14px rgba(0,0,0,.95)}
+</style>
+</head>
+<body>
+<!-- Icônes (sprite SVG, trait or) : remplacent tous les emojis -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-swords" viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></symbol>
+    <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" x2="2" y1="8" y2="22"/><line x1="17.5" x2="9" y1="15" y2="15"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-1.02 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98 1.02 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="m2 4 3 12h14l3-12-6 7-4-9-4 9-6-7z"/><path d="M5 20h14"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.5" y="2" width="11" height="20" rx="3"/><line x1="12" x2="12" y1="18.5" y2="18.5"/></symbol>
+    <symbol id="i-podium" viewBox="0 0 24 24"><path d="M8 21V12H3v9"/><path d="M14 21V5h-4v16"/><path d="M21 21v-7h-5v7"/><path d="M2 21h20"/></symbol>
+    <symbol id="i-castle" viewBox="0 0 24 24"><path d="M3 21V8l3 2V5l3 2V3h6v4l3-2v5l3-2v13z"/><path d="M10 21v-5a2 2 0 0 1 4 0v5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3 7 7 .6-5.3 4.7 1.6 7.2L12 17.8 5.7 21.5l1.6-7.2L2 9.6 9 9z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  </defs>
+</svg>
+
+
+<!-- Grain -->
+<div class="grain"></div>
+
+<!-- Nav -->
+<nav class="nav" id="nav">
+  <div class="nav-logo">
+    <img src="/logo-mark.svg" alt="" width="32" height="32" style="display:block;filter:drop-shadow(0 0 10px rgba(212,148,58,.5))">
+    <span>VERSE ARENA</span>
+  </div>
+  <div class="nav-links">
+    <a href="#features" class="nav-link-text">Fonctionnalités</a>
+    <a href="#compare" class="nav-link-text">Comparatif</a>
+    <a href="#pricing" class="nav-link-text">Tarifs</a>
+    <a href="/blog/" class="nav-link-text">Blog</a>
+    <a href="https://app.verse-arena.fr" target="_blank" class="cta-main cta-sm">Commencer</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero v3-hero" style="min-height:100vh;display:flex;align-items:center;padding:110px 40px 70px;position:relative;overflow:hidden">
+  <!-- Fond : dragon encre, teinte ambre, rayons, braises -->
+  <div class="v3-art" aria-hidden="true"><img src="assets/dragon.jpg" alt="" width="1600" height="1600" fetchpriority="high"></div>
+  <div class="v3-art-tint" aria-hidden="true"></div>
+  <div class="v3-rays" aria-hidden="true"><i></i></div>
+  <div class="v3-embers" aria-hidden="true">
+    <span style="left:6%;--d:11s;--s:5px;--x:30px;animation-delay:-2s"></span><span style="left:14%;--d:14s;--s:3px;--x:-24px;animation-delay:-8s"></span>
+    <span style="left:23%;--d:10s;--s:6px;--x:40px;animation-delay:-5s"></span><span style="left:31%;--d:15s;--s:4px;--x:-30px;animation-delay:-11s"></span>
+    <span style="left:42%;--d:12s;--s:3px;--x:22px;animation-delay:-1s"></span><span style="left:51%;--d:13s;--s:5px;--x:-36px;animation-delay:-7s"></span>
+    <span style="left:60%;--d:9s;--s:4px;--x:28px;animation-delay:-4s"></span><span style="left:68%;--d:16s;--s:6px;--x:-20px;animation-delay:-12s"></span>
+    <span style="left:76%;--d:11s;--s:3px;--x:34px;animation-delay:-6s"></span><span style="left:84%;--d:14s;--s:5px;--x:-28px;animation-delay:-9s"></span>
+    <span style="left:91%;--d:10s;--s:4px;--x:24px;animation-delay:-3s"></span><span style="left:97%;--d:13s;--s:3px;--x:-18px;animation-delay:-10s"></span>
+  </div>
+
+  <div class="hero-flex" style="max-width:1140px;margin:0 auto;width:100%;display:flex;align-items:center;gap:40px;position:relative;z-index:2">
+    <!-- Left -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;min-width:0">
+      <div class="fade-up" style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:rgba(15,12,8,.55);border:1px solid rgba(240,200,80,.25);margin-bottom:22px;backdrop-filter:blur(6px)">
+        <span class="v3-live"></span>
+        <span style="font-size:11px;font-weight:600;color:#d9ccb0;letter-spacing:.3px">Testé par 120+ étudiants dans plusieurs écoles de commerce</span>
+      </div>
+
+      <h1 class="fade-up d1" style="font-family:'Cinzel',serif;font-weight:900;font-size:clamp(38px,5.6vw,68px);line-height:1.05;margin-bottom:18px;letter-spacing:-0.3px;text-shadow:0 4px 30px rgba(0,0,0,.6)">
+        <span style="display:block;color:var(--t1)">Prépare ton</span>
+        <span class="v3-gold" style="display:block">TOEIC</span>
+        <span style="display:block;color:var(--t1)">comme un jeu.</span>
+      </h1>
+
+      <p class="fade-up d2" style="font-size:17px;line-height:1.7;color:#cdbf9f;max-width:480px;margin-bottom:30px;margin-top:4px">
+        25+ modules d'entraînement, des duels et des classements entre étudiants, des coffres à ouvrir, un Boss Test final.
+        La seule plateforme TOEIC où tu as <em style="color:var(--gold2);font-style:normal;font-weight:700">envie</em> de t'entraîner.
+      </p>
+
+      <div class="fade-up d3 hero-ctas" style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="https://app.verse-arena.fr" target="_blank" class="cta-main v3-cta-big"><svg class="ico ico-btn" aria-hidden="true"><use href="#i-swords"/></svg>Entrer dans l'arène</a>
+        <button type="button" class="cta-ghost v3-play" id="v3-play-btn" aria-haspopup="dialog">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>
+          Voir l'intro · 15 s
+        </button>
+      </div>
+      <ul class="fade-up d4 v3-trust">
+        <li>Gratuit</li><li>Aucune carte bancaire</li><li>8 modules accessibles immédiatement</li>
+      </ul>
+    </div>
+
+    <!-- Right : deux vrais écrans en téléphones -->
+    <div class="fade-left d3 phone-wrap v3-stage" style="flex:0 0 auto" aria-hidden="true">
+      <div class="v3-ph-wrap v3-ph-back" style="--s:.5"><div class="v3-ph" data-screen="home"></div></div>
+      <div class="v3-ph-wrap v3-ph-front" style="--s:.56"><div class="v3-ph" data-screen="duel"></div></div>
+      <div class="v3-chip" style="left:-6px;top:300px;transform:rotate(-6deg)">+25 XP <em>bonne réponse</em></div>
+      <div class="v3-chip" style="right:-14px;top:60px;transform:rotate(5deg)">COMBO x4</div>
+      <div class="v3-chip" style="right:-10px;bottom:30px;transform:rotate(-4deg)">COFFRE LÉGENDAIRE</div>
+    </div>
+  </div>
+  <a href="#how" class="v3-scroll" aria-label="Descendre">↓</a>
+</section>
+
+<!-- Stats -->
+<section class="stats-section v3-stats" style="padding:56px 40px;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);position:relative">
+  <div class="stats-grid">
+    <div class="stat-card v3-reveal">
+      <div class="v3-ico-tile"><svg class="ico"><use href="#i-feather"/></svg></div>
+      <div class="v3-stat-n" data-count="2500">0+</div>
+      <div class="v3-stat-l">Questions</div>
+    </div>
+    <div class="stat-card v3-reveal" style="transition-delay:.08s">
+      <div class="v3-ico-tile"><svg class="ico"><use href="#i-grid"/></svg></div>
+      <div class="v3-stat-n" data-count="25">0+</div>
+      <div class="v3-stat-l">Modules</div>
+    </div>
+    <div class="stat-card v3-reveal" style="transition-delay:.16s">
+      <div class="v3-ico-tile"><svg class="ico"><use href="#i-trophy"/></svg></div>
+      <div class="v3-stat-n" data-count="58">0</div>
+      <div class="v3-stat-l">Achievements</div>
+    </div>
+    <div class="stat-card v3-reveal" style="transition-delay:.24s">
+      <div class="v3-ico-tile"><svg class="ico"><use href="#i-crown"/></svg></div>
+      <div class="v3-stat-n" data-count="7">0</div>
+      <div class="v3-stat-l">Leagues</div>
+    </div>
+  </div>
+</section>
+
+<!-- Comment ça marche -->
+<section id="how" class="section v3-how" style="position:relative;overflow:hidden">
+  <div style="max-width:1060px;margin:0 auto;position:relative">
+    <div style="text-align:center;margin-bottom:48px" class="v3-reveal">
+      <div class="section-label">Comment ça marche</div>
+      <h2 class="section-title">Trois gestes. <span style="color:var(--gold)">Une habitude.</span></h2>
+      <div class="ornament"><span>◆</span></div>
+      <p style="font-size:14px;color:var(--t2);max-width:520px;margin:10px auto 0;line-height:1.7">
+        Tu t'entraînes, tu te mesures, tu progresses. Chaque session te donne de l'XP, et ton score TOEIC estimé monte avec.
+      </p>
+    </div>
+
+    <div class="v3-steps">
+      <article class="v3-step v3-reveal">
+        <div class="v3-step-num">01</div>
+        <div class="v3-ph-wrap" style="--s:.6"><div class="v3-ph" data-screen="home"></div></div>
+        <h3>TRAIN</h3>
+        <p>Part 5, listening, reading : plus de 2&nbsp;500 questions, chaque réponse expliquée. Ta Daily Quest te dit par où commencer.</p>
+      </article>
+      <article class="v3-step v3-reveal" style="transition-delay:.12s">
+        <div class="v3-step-num">02</div>
+        <div class="v3-ph-wrap" style="--s:.6"><div class="v3-ph" data-screen="duel"></div></div>
+        <h3>DUEL</h3>
+        <p>Course contre la montre, combos, classements hebdomadaires. Vois qui progresse le plus dans ta promo.</p>
+      </article>
+      <article class="v3-step v3-reveal" style="transition-delay:.24s">
+        <div class="v3-step-num">03</div>
+        <div class="v3-ph-wrap" style="--s:.6"><div class="v3-ph" data-screen="chest"></div></div>
+        <h3>LEVEL UP</h3>
+        <p>XP, coffres, skins, 7 ligues de Bronze à Légende. Et un score TOEIC estimé qui suit ta vraie progression.</p>
+      </article>
+    </div>
+
+    <div style="text-align:center;margin-top:44px" class="v3-reveal">
+      <a href="https://app.verse-arena.fr" target="_blank" class="cta-main"><svg class="ico ico-btn" aria-hidden="true"><use href="#i-swords"/></svg>Lancer ma première quête</a>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="section v3-features">
+  <div style="max-width:1060px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:50px" class="v3-reveal">
+      <div class="section-label">Fonctionnalités</div>
+      <h2 class="section-title">Pas un cours. Une <span style="color:var(--gold)">arène</span>.</h2>
+      <div class="ornament"><span>◆</span></div>
+      <p style="font-size:14px;color:var(--t2);max-width:500px;margin:10px auto 0;line-height:1.7">
+        Chaque session te rapproche de ton objectif de score. Et tu ne t'en rends même pas compte.
+      </p>
+    </div>
+
+    <div class="feat-grid">
+      <div class="v3-feat v3-reveal">
+        <div class="v3-ico-tile"><svg class="ico"><use href="#i-trophy"/></svg></div>
+        <h3>Gamification profonde</h3>
+        <p>XP, niveaux, 7 ligues de Bronze à Légende, 58 achievements, streaks quotidiens. Ton cerveau ne fait pas la différence avec un vrai jeu.</p>
+      </div>
+      <div class="v3-feat v3-reveal" style="transition-delay:.08s">
+        <div class="v3-ico-tile"><svg class="ico"><use href="#i-book"/></svg></div>
+        <h3>Contenu TOEIC complet</h3>
+        <p>Les 7 parties couvertes : Listening avec audio multi-accents IA, Reading, Grammar, Vocabulary. 4 Mock Tests + Boss Test final /990.</p>
+      </div>
+      <div class="v3-feat v3-reveal" style="transition-delay:.16s">
+        <div class="v3-ico-tile"><svg class="ico"><use href="#i-layers"/></svg></div>
+        <h3>Mémorisation intelligente</h3>
+        <p>390+ flashcards en répétition espacée, 18 domaines de vocabulaire professionnel. Le système s'adapte à ce que tu oublies.</p>
+      </div>
+      <div class="v3-feat v3-reveal">
+        <div class="v3-ico-tile"><svg class="ico"><use href="#i-bolt"/></svg></div>
+        <h3>Mini-jeux addictifs</h3>
+        <p>Sentence Builder, Audio Blitz, Clue Hunter, Word Fall, Vocabulary Duel... L'entraînement TOEIC qui ne ressemble pas à de l'entraînement.</p>
+      </div>
+      <div class="v3-feat v3-reveal" style="transition-delay:.08s">
+        <div class="v3-ico-tile"><svg class="ico"><use href="#i-phone"/></svg></div>
+        <h3>Dans ta poche</h3>
+        <p>Installable sur ton téléphone. Notifications de rappel. Entraîne-toi dans le bus, entre deux cours, avant de dormir.</p>
+      </div>
+      <div class="v3-feat v3-reveal" style="transition-delay:.16s">
+        <div class="v3-ico-tile"><svg class="ico"><use href="#i-podium"/></svg></div>
+        <h3>Classements entre étudiants</h3>
+        <p>Classements hebdomadaires et saisonniers. Vois qui progresse le plus dans ta promo. La compétition saine booste tout le monde.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Comparatif -->
+<section id="compare" class="section" style="background:linear-gradient(180deg,transparent,rgba(180,140,80,.012),transparent)">
+  <div style="max-width:880px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:44px">
+      <div class="section-label">Comparatif</div>
+      <h2 class="section-title">Face à la <span style="color:var(--gold)">concurrence</span></h2>
+      <div class="ornament"><span>◆</span></div>
+    </div>
+
+    <div class="comp-wrap">
+    <div class="comp">
+      <div class="comp-head">
+        <div></div><div>GlobalExam</div><div>PrepMyFuture</div><div>7Speaking</div><div><img src="/logo-mark.svg" alt="" width="18" height="18">Verse Arena</div>
+      </div>
+      <div class="comp-row"><div>Gamification</div><div>Faible</div><div>Non</div><div>Faible</div><div>XP, Leagues, 58 Achievements</div></div>
+      <div class="comp-row"><div>Contenu TOEIC</div><div>~6 000 Q</div><div>~3 000 Q</div><div>Module</div><div>2 500+ items, 25+ modules</div></div>
+      <div class="comp-row"><div>Simulations</div><div>Oui</div><div>7 blancs</div><div>Non</div><div>4 Mocks + Boss Test /990</div></div>
+      <div class="comp-row"><div>App mobile installable</div><div>Non</div><div>Non</div><div>Non</div><div>Oui (PWA + notifications)</div></div>
+      <div class="comp-row"><div>Engagement</div><div>Moyen</div><div>Faible</div><div>Moyen</div><div>Streaks, Push, Saisons</div></div>
+      <div class="comp-row"><div>Dashboard prof</div><div>Oui</div><div>Oui</div><div>Oui</div><div>Oui + Events + CSV</div></div>
+      <div class="comp-row"><div>Prix estimé</div><div>10–25€/an</div><div>10–20€/an</div><div>20–40€/an</div><div>Gratuit*</div></div>
+    </div>
+    </div>
+
+    <!-- Mobile comparison cards -->
+    <div class="comp-mobile">
+      <div class="comp-mobile-card arena">
+        <h4><img src="/logo-mark.svg" alt="" width="20" height="20">Verse Arena</h4>
+        <div class="cm-row"><span class="cm-label">Gamification</span><span class="cm-val">XP, Leagues, 58 Achievements</span></div>
+        <div class="cm-row"><span class="cm-label">Contenu</span><span class="cm-val">2 500+ items, 25+ modules</span></div>
+        <div class="cm-row"><span class="cm-label">Simulations</span><span class="cm-val">4 Mocks + Boss Test /990</span></div>
+        <div class="cm-row"><span class="cm-label">App mobile</span><span class="cm-val">Oui (PWA + notifications)</span></div>
+        <div class="cm-row"><span class="cm-label">Engagement</span><span class="cm-val">Streaks, Push, Saisons</span></div>
+        <div class="cm-row"><span class="cm-label">Dashboard prof</span><span class="cm-val">Oui + Events + CSV</span></div>
+        <div class="cm-row"><span class="cm-label">Prix</span><span class="cm-val">Gratuit*</span></div>
+      </div>
+      <div class="comp-mobile-card">
+        <h4 style="color:var(--t2)">GlobalExam</h4>
+        <div class="cm-row"><span class="cm-label">Gamification</span><span class="cm-val">Faible</span></div>
+        <div class="cm-row"><span class="cm-label">Contenu</span><span class="cm-val">~6 000 Q</span></div>
+        <div class="cm-row"><span class="cm-label">Simulations</span><span class="cm-val">Oui</span></div>
+        <div class="cm-row"><span class="cm-label">App mobile</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">Engagement</span><span class="cm-val">Moyen</span></div>
+        <div class="cm-row"><span class="cm-label">Dashboard prof</span><span class="cm-val">Oui</span></div>
+        <div class="cm-row"><span class="cm-label">Prix</span><span class="cm-val">10–25€/an</span></div>
+      </div>
+      <div class="comp-mobile-card">
+        <h4 style="color:var(--t2)">PrepMyFuture</h4>
+        <div class="cm-row"><span class="cm-label">Gamification</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">Contenu</span><span class="cm-val">~3 000 Q</span></div>
+        <div class="cm-row"><span class="cm-label">Simulations</span><span class="cm-val">7 blancs</span></div>
+        <div class="cm-row"><span class="cm-label">App mobile</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">Engagement</span><span class="cm-val">Faible</span></div>
+        <div class="cm-row"><span class="cm-label">Dashboard prof</span><span class="cm-val">Oui</span></div>
+        <div class="cm-row"><span class="cm-label">Prix</span><span class="cm-val">10–20€/an</span></div>
+      </div>
+      <div class="comp-mobile-card">
+        <h4 style="color:var(--t2)">7Speaking</h4>
+        <div class="cm-row"><span class="cm-label">Gamification</span><span class="cm-val">Faible</span></div>
+        <div class="cm-row"><span class="cm-label">Contenu</span><span class="cm-val">Module</span></div>
+        <div class="cm-row"><span class="cm-label">Simulations</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">App mobile</span><span class="cm-val">Non</span></div>
+        <div class="cm-row"><span class="cm-label">Engagement</span><span class="cm-val">Moyen</span></div>
+        <div class="cm-row"><span class="cm-label">Dashboard prof</span><span class="cm-val">Oui</span></div>
+        <div class="cm-row"><span class="cm-label">Prix</span><span class="cm-val">20–40€/an</span></div>
+      </div>
+    </div>
+
+    <p style="font-size:10px;color:var(--t3);margin-top:10px;text-align:center">* 8 modules en accès libre. Accès complet via votre école ou Arena Premium (bientôt).</p>
+  </div>
+</section>
+
+<!-- Boss Test -->
+<section class="section boss-section v3-boss" style="position:relative">
+  <div class="v3-boss-art" aria-hidden="true"><img src="assets/dragon.jpg" alt="" loading="lazy"></div>
+  <div style="max-width:700px;margin:0 auto;text-align:center;position:relative" class="v3-reveal">
+    <div class="v3-ico-tile v3-ico-xl"><svg class="ico"><use href="#i-castle"/></svg></div>
+    <h2 class="section-title">The <span class="v3-gold">Final Arena</span></h2>
+    <div class="ornament"><span>◆</span></div>
+    <div class="v3-boss-stats">
+      <div><b>202</b><span>questions</span></div>
+      <div><b>120</b><span>minutes</span></div>
+      <div><b>7</b><span>parties</span></div>
+      <div><b>/990</b><span>scoring</span></div>
+    </div>
+    <p style="font-size:13px;line-height:1.7;color:var(--t2);margin-bottom:32px">
+      Complète les 3 Mock Tests pour déverrouiller le Boss Test final. Cooldown de 24h entre chaque tentative. Pas de raccourci.
+    </p>
+    <a href="https://app.verse-arena.fr" target="_blank" class="cta-main"><svg class="ico ico-btn" aria-hidden="true"><use href="#i-swords"/></svg>Relever le défi</a>
+  </div>
+</section>
+
+<!-- Pricing -->
+<!-- Pricing CTAs : deep link vers l'app (?upgrade=pass3m / ?upgrade=monthly) qui auto-route vers UpgradeScreen post-onboarding. Validé 2026-05-14. -->
+<section id="pricing" class="section v3-pricing" style="border-top:1px solid var(--bdr);position:relative">
+  <div style="max-width:1140px;margin:0 auto;position:relative">
+    <div style="text-align:center;margin-bottom:56px" class="v3-reveal">
+      <div class="section-label">Tarifs</div>
+      <h2 class="section-title">Choisis ta <span style="color:var(--gold)">formule</span></h2>
+      <div class="ornament"><span>◆</span></div>
+      <p style="font-size:14px;color:var(--t2);max-width:520px;margin:14px auto 0;line-height:1.7">
+        Commence gratuitement. Passe Premium quand tu sens que ça vaut le coup — pas avant.
+      </p>
+    </div>
+
+    <div class="pricing-grid v3-price-grid">
+
+      <!-- Free -->
+      <div class="pricing-card v3-price v3-reveal">
+        <div class="v3-price-name">Free</div>
+        <div class="v3-price-amt"><span class="n">0€</span></div>
+        <div class="v3-price-sub">Permanent · sans carte bancaire</div>
+        <ul class="v3-price-list">
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>10 modules de base</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Daily Quest, Drill, Cards</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Word Tavern, Strategy Quiz</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Achievements, classements</li>
+          <li class="off"><svg class="ico v3-ck"><use href="#i-lock"/></svg>Mock Tests, Boss, Endless verrouillés</li>
+        </ul>
+        <a href="https://app.verse-arena.fr" target="_blank" class="cta-ghost v3-price-cta">Commencer gratuitement</a>
+      </div>
+
+      <!-- Pass 3m (featured) -->
+      <div class="pricing-card pricing-featured v3-price v3-price-feat v3-reveal" style="transition-delay:.1s">
+        <div class="v3-ribbon"><svg class="ico"><use href="#i-star"/></svg>Le plus choisi</div>
+        <div class="v3-price-name gold">TOEIC Pass 3 mois</div>
+        <div class="v3-price-amt"><span class="n v3-gold">22,99€</span><span class="u">une fois</span></div>
+        <div class="v3-price-sub it">Moins cher qu'un manuel papier</div>
+        <ul class="v3-price-list">
+          <li class="strong"><svg class="ico v3-ck"><use href="#i-check"/></svg><strong>Tous les modules débloqués pendant 90 jours</strong></li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Mock Tests 1, 2, 3 + Boss Test</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Endless Arena (TOEIC random)</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Tous les mini-jeux G&amp;V</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Pas de reconduction automatique</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Email de courtoisie 7j avant échéance</li>
+        </ul>
+        <a href="https://app.verse-arena.fr/?upgrade=pass3m" target="_blank" class="cta-main v3-price-cta">Acheter le Pass</a>
+      </div>
+
+      <!-- Mensuel -->
+      <div class="pricing-card v3-price v3-reveal" style="transition-delay:.2s">
+        <div class="v3-price-name">Premium Mensuel</div>
+        <div class="v3-price-amt"><span class="n">9,99€</span><span class="u">/ mois</span></div>
+        <div class="v3-price-sub">Idéal si tu hésites encore</div>
+        <ul class="v3-price-list">
+          <li class="strong"><svg class="ico v3-ck"><use href="#i-check"/></svg><strong>Tous les modules débloqués</strong></li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Mock Tests, Boss, Endless</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Tous les mini-jeux G&amp;V</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Résiliable en 1 clic à tout moment</li>
+          <li><svg class="ico v3-ck"><use href="#i-check"/></svg>Reconduction tacite mensuelle</li>
+        </ul>
+        <a href="https://app.verse-arena.fr/?upgrade=monthly" target="_blank" class="cta-ghost v3-price-cta">S'abonner</a>
+      </div>
+
+    </div>
+
+    <p style="text-align:center;font-size:11px;color:var(--t3);margin-top:32px;line-height:1.7;max-width:680px;margin-left:auto;margin-right:auto">
+      Renonciation au délai de rétractation requise au checkout (case à cocher dédiée) · Paiement sécurisé Stripe · Données conformes RGPD<br>
+      <a href="/legal/cgv.html" style="color:var(--t2)">CGV</a> · <a href="/legal/confidentialite.html" style="color:var(--t2)">Politique de confidentialité</a>
+    </p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="section" style="background:rgba(180,140,80,.012)">
+  <div style="max-width:780px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:40px">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Les questions <span style="color:var(--gold)">légitimes</span></h2>
+      <div class="ornament"><span>◆</span></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Quelle est la différence entre le Pass 3 mois et l'abonnement Mensuel ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Le <strong>Pass 3 mois</strong> est un paiement unique de 22,99€ qui débloque tout pendant 90 jours, sans reconduction. À l'échéance, ton accès Premium est désactivé automatiquement — pas de surprise sur ta carte. L'<strong>abonnement Mensuel</strong> à 9,99€/mois se reconduit tacitement chaque mois et tu peux le résilier en 1 clic depuis ton profil. Si tu sais que tu vas bosser à fond pendant 2-3 mois pour passer ton TOEIC, le Pass est mathématiquement plus rentable (22,99€ vs 30€ sur 3 mois).</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Puis-je résilier à tout moment ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Oui pour le Mensuel : 1 clic depuis ton profil (ou via le portail Stripe), et l'accès reste actif jusqu'à la fin de la période payée — pas de remboursement au prorata. Le Pass 3m n'a pas de mécanisme de résiliation puisqu'il n'y a pas de reconduction : il s'éteint tout seul à l'échéance.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Qu'est-ce que la "renonciation au droit de rétractation" ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">La loi française prévoit 14 jours pour se rétracter sur un achat en ligne. Mais comme Verse Arena te donne accès aux contenus <strong>immédiatement</strong> après paiement, tu dois explicitement accepter de renoncer à ce délai (case à cocher dédiée au checkout). C'est la loi (art. L.221-28 13° Code conso). Si tu ne coches pas, tu peux te rétracter dans les 14j et obtenir un remboursement intégral.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">L'application fonctionne-t-elle sur mobile ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Oui — c'est une PWA (Progressive Web App) optimisée mobile-first. Tu peux l'installer sur ton écran d'accueil iOS/Android comme une vraie app, et certaines fonctionnalités (notifications push, retour haptique) sont natives. Tu peux aussi t'entraîner sur ordinateur — ta progression se synchronise entre les appareils si tu te connectes avec ton email.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Combien de temps faut-il pour préparer son TOEIC sur la plateforme ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">La majorité des étudiants atteignent leur score cible en <strong>2 à 4 mois</strong> à raison de 15-20 min par jour (Daily Quest + 1 module). C'est précisément pour cette durée d'usage typique que le Pass 3 mois a été pensé. Pour les sprints intensifs (1 mois avant l'épreuve), l'abonnement Mensuel suffit largement.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Mes données personnelles sont-elles protégées ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Oui. Conformité RGPD complète : aucun cookie publicitaire, aucun traqueur, données stockées chez Supabase (UE/US). Les données bancaires ne transitent jamais par Verse Arena — Stripe les gère directement (standard PCI-DSS). Tu peux exporter ou supprimer ton compte à tout moment depuis ton profil. Détails : <a href="/legal/confidentialite.html" style="color:var(--gold)">Politique de confidentialité</a>.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Que se passe-t-il à la fin de mon Pass / abonnement ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Tu repasses automatiquement en formule Free. Ta progression, tes scores, tes achievements, ton avatar et tes flashcards <strong>restent intacts</strong> — rien n'est effacé. Tu peux te réabonner ou racheter un Pass à tout moment et tout reprendre où tu l'avais laissé.</p>
+      </details>
+
+      <details style="background:rgba(180,140,80,.04);border:1px solid rgba(180,140,80,.1);border-radius:12px;padding:18px 22px;cursor:pointer">
+        <summary style="font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:var(--t1);list-style:none;display:flex;justify-content:space-between;align-items:center">Et en cas de litige ?<span style="color:var(--gold);font-size:18px;font-weight:400">+</span></summary>
+        <p style="font-size:14px;color:var(--t2);line-height:1.7;margin-top:12px">Contact direct par email d'abord (<a href="mailto:leixa.formation@gmail.com" style="color:var(--gold)">leixa.formation@gmail.com</a>), réponse sous 5 jours ouvrés. Si pas de solution amiable, tu peux saisir gratuitement notre médiateur de la consommation agréé CECMC (<a href="/legal/mediation.html" style="color:var(--gold)">détails</a>).</p>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta v3-final" style="padding:100px 40px 80px;text-align:center;border-top:1px solid var(--bdr);position:relative;overflow:hidden">
+  <div class="v3-final-glow" aria-hidden="true"></div>
+  <div style="position:relative;max-width:900px;margin:0 auto" class="v3-reveal">
+    <img src="/logo-mark.svg" alt="" width="56" height="56" style="margin:0 auto 18px;filter:drop-shadow(0 0 22px rgba(212,148,58,.55))">
+    <h2 class="section-title">Ton prochain score TOEIC<br><span class="v3-gold">commence ici.</span></h2>
+    <div class="ornament"><span>◆</span></div>
+    <p style="font-size:15px;color:var(--t2);margin:10px auto 32px;max-width:420px;line-height:1.7">
+      Crée ton compte en 30 secondes. Pas de carte bancaire. Pas d'email. Juste ton prénom et c'est parti.
+    </p>
+    <div class="v3-final-row">
+      <a href="https://app.verse-arena.fr" target="_blank" class="cta-main v3-cta-big" style="font-size:15px;padding:18px 40px"><svg class="ico ico-btn" aria-hidden="true"><use href="#i-swords"/></svg>Entrer dans l'arène</a>
+      <div class="v3-qr" aria-label="QR code vers l'application">
+        <div class="v3-qr-frame"><img src="assets/qr-app.svg" alt="QR code app.verse-arena.fr" width="104" height="104"></div>
+        <div class="v3-qr-txt"><strong>Sur ordinateur&nbsp;?</strong><span>Scanne pour ouvrir l'appli sur ton téléphone.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="padding:60px 40px 32px;border-top:1px solid var(--bdr);background:linear-gradient(180deg,transparent,rgba(180,140,80,.02))">
+  <div class="footer-grid" style="max-width:1140px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:48px 40px;margin-bottom:36px">
+
+    <!-- Brand column -->
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <img src="/logo-mark.svg" alt="" width="29" height="29" style="display:block">
+        <span style="font-family:'Cinzel',serif;font-weight:800;font-size:16px;background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent">VERSE ARENA</span>
+      </div>
+      <p style="font-size:13px;color:var(--t2);line-height:1.7;max-width:340px;margin-bottom:16px">
+        La plateforme gamifiée de préparation au TOEIC. Conçue par un formateur en exercice, testée par 120+ étudiants en école de commerce.
+      </p>
+      <p style="font-size:11px;color:var(--t3);line-height:1.6">
+        Créé par <strong style="color:var(--t2)">Jérémy LEIXA</strong> — Formateur en anglais.
+      </p>
+    </div>
+
+    <!-- Product column -->
+    <div>
+      <div style="font-family:'Cinzel',serif;font-weight:700;font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px">Produit</div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
+        <li><a href="#features" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Fonctionnalités</a></li>
+        <li><a href="#pricing" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Tarifs</a></li>
+        <li><a href="#faq" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">FAQ</a></li>
+        <li><a href="/blog/" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Blog</a></li>
+        <li><a href="https://app.verse-arena.fr" target="_blank" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Commencer ↗</a></li>
+      </ul>
+    </div>
+
+    <!-- Legal column -->
+    <div>
+      <div style="font-family:'Cinzel',serif;font-weight:700;font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px">Légal</div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
+        <li><a href="/legal/cgv.html" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">CGV</a></li>
+        <li><a href="/legal/confidentialite.html" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Politique de confidentialité</a></li>
+        <li><a href="/legal/mediation.html" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Médiation conso</a></li>
+        <li><a href="/legal/mentions.html" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Mentions légales</a></li>
+        <li><a href="mailto:leixa.formation@gmail.com" style="font-size:13px;color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:500;transition:color .2s" onmouseover="this.style.color='#d4943a'" onmouseout="this.style.color='#8a7e6a'">Contact</a></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Bottom legal -->
+  <div style="max-width:1140px;margin:0 auto;padding-top:24px;border-top:1px solid var(--bdr)">
+    <p style="font-size:11px;color:var(--t3);text-align:center;line-height:1.7;margin-bottom:6px">
+      <strong>Jérémy LEIXA</strong> · SIRET 830 200 556 00025 · Code APE 85.59B · 33 route de la Daleure, 38590 Saint-Étienne-de-Saint-Geoirs<br>
+      TVA non applicable, art. 293 B du CGI · <a href="mailto:leixa.formation@gmail.com" style="color:var(--t2)">leixa.formation@gmail.com</a>
+    </p>
+    <p style="font-size:10px;color:rgba(90,80,64,.6);text-align:center;line-height:1.6;margin-top:10px">
+      © 2026 Verse Arena · TOEIC® est une marque déposée d'Educational Testing Service (ETS), non affiliée à Verse Arena.
+    </p>
+  </div>
+</footer>
+
+<!-- Écrans de l'appli (maquettes HTML, clonées par JS) -->
+<template id="v3-tpl-home">
+  <div class="v3-phone"><div class="v3-screen"><div class="v3-notch"></div><div class="v3-glare"></div>
+    <div class="v3-scr">
+      <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+        <div class="v3-lvl">12</div>
+        <div style="flex:1"><div style="font-size:14px;color:#8a7e6a">Welcome back</div><h2 style="font-size:26px">Maya</h2></div>
+        <div class="v3-pill">14-day streak</div>
+      </div>
+      <div style="margin:16px 0 6px;display:flex;justify-content:space-between;font-size:13px;color:#8a7e6a"><span>Level 12 · Squire</span><span>6,840 XP</span></div>
+      <div class="v3-xpbar"><div class="v3-xpfill"></div></div>
+      <div class="v3-card" style="margin:18px 0 14px;padding:16px;display:flex;align-items:center;gap:14px">
+        <div style="flex:1"><div style="font-size:12px;letter-spacing:.14em;color:#d4943a;font-weight:700">TOEIC ESTIMATE</div>
+        <div style="font-family:Cinzel,serif;font-weight:900;font-size:44px;color:#f0c850;line-height:1.1">745</div></div>
+        <div class="v3-pill">+55 this month</div>
+      </div>
+      <div class="v3-tile v3-card"><div class="v3-ic"><svg viewBox="0 0 24 24"><path d="M5 19L19 5M14 5h5v5M5 5l4 4"/></svg></div><div><b>Daily Challenge</b><small>10 questions · +120 XP</small></div></div>
+      <div class="v3-tile v3-card"><div class="v3-ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"/></svg></div><div><b>Part 5 Drill</b><small>Grammar &amp; vocabulary</small></div></div>
+      <div class="v3-tile v3-card"><div class="v3-ic"><svg viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></div><div><b>Speed Match</b><small>Beat the clock</small></div></div>
+      <div class="v3-tabbar"><div class="on"><i></i>Home</div><div><i></i>Train</div><div><i></i>Cards</div><div><i></i>Games</div><div><i></i>League</div></div>
+    </div></div></div>
+</template>
+
+<template id="v3-tpl-duel">
+  <div class="v3-phone"><div class="v3-screen"><div class="v3-notch"></div><div class="v3-glare"></div>
+    <div class="v3-scr">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px"><div class="v3-pill">Part 5 · Duel</div><div class="v3-pill">Combo x4</div></div>
+      <div class="v3-qtimer" style="margin:18px 0 22px"><i></i></div>
+      <div class="v3-card" style="padding:22px 20px;margin-bottom:18px">
+        <div style="font-size:12px;letter-spacing:.14em;color:#d4943a;font-weight:700;margin-bottom:10px">QUESTION 7 / 10</div>
+        <div style="font-size:22px;line-height:1.4;font-weight:500">The board has decided to <span style="display:inline-block;min-width:120px;border-bottom:2px solid #f0c850;text-align:center;color:#f0c850;font-weight:700">postpone</span> the merger until next quarter.</div>
+      </div>
+      <div class="v3-opt v3-card ok"><span>A</span>postpone</div>
+      <div class="v3-opt v3-card"><span>B</span>postponing</div>
+      <div class="v3-opt v3-card"><span>C</span>to postponed</div>
+      <div class="v3-opt v3-card"><span>D</span>postponement</div>
+      <div class="v3-tabbar"><div><i></i>Home</div><div class="on"><i></i>Train</div><div><i></i>Cards</div><div><i></i>Games</div><div><i></i>League</div></div>
+    </div></div></div>
+</template>
+
+<template id="v3-tpl-chest">
+  <div class="v3-phone"><div class="v3-screen"><div class="v3-notch"></div><div class="v3-glare"></div>
+    <div class="v3-scr" style="padding:0;background:#050302">
+      <img src="assets/chest.jpg" alt="" class="v3-chest-img">
+      <div class="v3-chest-glow"></div>
+      <div class="v3-rar">LEGENDARY CHEST</div>
+      <div class="v3-loot">
+        <div class="v3-card"><b>+250</b><small>XP</small></div><div class="v3-card"><b>Gold</b><small>Skin</small></div><div class="v3-card"><b>x3</b><small>Tokens</small></div>
+      </div>
+    </div></div></div>
+</template>
+
+<!-- Intro vidéo (modale) -->
+<dialog id="v3-video" class="v3-dialog" aria-label="Intro Verse Arena">
+  <button type="button" class="v3-close" id="v3-close" aria-label="Fermer">✕</button>
+  <video id="v3-video-el" controls playsinline preload="none" poster="assets/intro-poster.jpg" style="width:100%;display:block;border-radius:14px;background:#000">
+    <source src="assets/intro.mp4" type="video/mp4">
+  </video>
+</dialog>
+
+<!-- Barre CTA collante (mobile) -->
+<div class="v3-sticky" id="v3-sticky" aria-hidden="true">
+  <a href="https://app.verse-arena.fr" target="_blank" class="cta-main" tabindex="-1"><svg class="ico ico-btn" aria-hidden="true"><use href="#i-swords"/></svg>Entrer dans l'arène</a>
+</div>
+
+<!-- Scripts -->
+<script>
+// Nav background on scroll
+var nav = document.getElementById('nav');
+window.addEventListener('scroll', function() {
+  if (window.scrollY > 50) nav.classList.add('solid');
+  else nav.classList.remove('solid');
+}, { passive: true });
+
+// Animated counters
+var counters = document.querySelectorAll('[data-count]');
+var observed = new Set();
+var obs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting && !observed.has(e.target)) {
+      observed.add(e.target);
+      var target = parseInt(e.target.getAttribute('data-count'));
+      var suffix = target >= 100 ? '+' : '';
+      var start = 0, step = target / 100;
+      var id = setInterval(function() {
+        start += step;
+        if (start >= target) {
+          e.target.textContent = target.toLocaleString('fr-FR') + suffix;
+          clearInterval(id);
+        } else {
+          e.target.textContent = Math.floor(start).toLocaleString('fr-FR') + suffix;
+        }
+      }, 16);
+    }
+  });
+}, { threshold: 0.2 });
+counters.forEach(function(c) { obs.observe(c); });
+
+// Scroll-triggered fade-in for sections
+var faders = document.querySelectorAll('.card, .stat-card, .comp');
+var fadeObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'none';
+      fadeObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+faders.forEach(function(el, i) {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity .6s cubic-bezier(.23,1,.32,1) ' + (i % 6) * 0.07 + 's, transform .6s cubic-bezier(.23,1,.32,1) ' + (i % 6) * 0.07 + 's';
+  fadeObs.observe(el);
+});
+</script>
+<script>
+// ── v3 ──────────────────────────────────────────────
+// Écrans de l'appli : clone les <template> dans chaque .v3-ph
+document.querySelectorAll('.v3-ph[data-screen]').forEach(function (el) {
+  var t = document.getElementById('v3-tpl-' + el.getAttribute('data-screen'));
+  if (t) el.appendChild(t.content.cloneNode(true));
+});
+
+// Révélation au scroll
+var v3rev = document.querySelectorAll('.v3-reveal');
+if ('IntersectionObserver' in window) {
+  var v3o = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); v3o.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  v3rev.forEach(function (el) { v3o.observe(el); });
+} else { v3rev.forEach(function (el) { el.classList.add('in'); }); }
+
+// Vidéo d'intro en modale (ne charge le fichier qu'à l'ouverture)
+var v3dlg = document.getElementById('v3-video'), v3vid = document.getElementById('v3-video-el');
+document.getElementById('v3-play-btn').addEventListener('click', function () {
+  if (typeof v3dlg.showModal === 'function') { v3dlg.showModal(); v3vid.preload = 'auto'; var p = v3vid.play(); if (p && p.catch) p.catch(function (e) { console.warn('[v3] play blocked:', e && e.message); }); }
+  else { window.open('assets/intro.mp4', '_blank'); }
+});
+function v3closeVideo() { v3vid.pause(); if (v3dlg.open) v3dlg.close(); }
+document.getElementById('v3-close').addEventListener('click', v3closeVideo);
+v3dlg.addEventListener('click', function (e) { if (e.target === v3dlg) v3closeVideo(); });
+v3dlg.addEventListener('close', function () { v3vid.pause(); });
+
+// Barre CTA collante (mobile) : visible quand le hero est passé et tant que le CTA final n'est pas à l'écran
+var v3sticky = document.getElementById('v3-sticky'), v3hero = document.querySelector('.v3-hero'), v3fin = document.querySelector('.v3-final');
+var v3heroGone = false, v3finalIn = false;
+function v3sync() { v3sticky.classList.toggle('show', v3heroGone && !v3finalIn); }
+if ('IntersectionObserver' in window && v3hero && v3fin) {
+  new IntersectionObserver(function (es) { v3heroGone = !es[0].isIntersecting; v3sync(); }, { threshold: 0.05 }).observe(v3hero);
+  new IntersectionObserver(function (es) { v3finalIn = es[0].isIntersecting; v3sync(); }, { threshold: 0.1 }).observe(v3fin);
+}
+</script>
+</body>
+</html>

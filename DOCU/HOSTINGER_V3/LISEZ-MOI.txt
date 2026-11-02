@@ -1,0 +1,38 @@
+VERSE ARENA - MISE EN LIGNE DU NOUVEAU DESIGN (v3)
+==================================================
+
+Dans le gestionnaire de fichiers Hostinger, ouvre public_html (la racine de verse-arena.fr),
+puis glisse-depose le CONTENU de ce dossier en acceptant de remplacer les fichiers existants.
+(ou uploade HOSTINGER_V3_upload.zip a la racine et fais clic droit > Extraire)
+
+CE QUI EST ENVOYE
+-----------------
+public_html/
+  index.html                       (landing, remplace l'actuelle)
+  assets/                          (NOUVEAU dossier : dragon.jpg, chest.jpg, intro.mp4, intro-poster.jpg, qr-app.svg)
+  blog/
+    index.html                     (remplace)
+    comment-avoir-800-au-toeic.html, gamifier-toeic-sans-gadget.html, toeic-listening-strategies.html,
+    toeic-part-5-pieges-grammaire.html, toeic-reading-gestion-temps.html   (remplacent)
+    blog-v3.css, blog-v3.js, dragon.jpg                                    (NOUVEAUX)
+  legal/
+    cgv.html, confidentialite.html, mediation.html, mentions.html          (remplacent)
+    legal-v3.css, legal-v3.js                                              (NOUVEAUX)
+
+CE QUI N'EST PAS TOUCHE (reste tel quel sur Hostinger)
+------------------------------------------------------
+- /logo-mark.svg, /favicon.ico, /favicon.svg, /apple-touch-icon.png : deja en ligne, utilises par les pages.
+- Les images du blog, notamment gamifier-toeic-mentor.png et gamifier-toeic-battle-scan.png
+  (l'article "Gamifier" les reference ; elles ne sont pas dans ce dossier : ne les supprime pas).
+
+A VERIFIER APRES L'ENVOI (vide le cache du navigateur : Ctrl+F5)
+---------------------------------------------------------------
+1. verse-arena.fr : le hero s'affiche avec le dragon et les deux telephones ; le bouton Commencer est entier sur mobile.
+2. Bouton "Voir l'intro" : la video se lance.
+3. verse-arena.fr/blog/ puis un article : barre doree en haut, section "A lire ensuite" en bas.
+4. verse-arena.fr/legal/cgv.html : sommaire et titres dores.
+5. Les images de l'article "Gamifier" s'affichent toujours.
+
+RETOUR ARRIERE
+--------------
+Les anciennes versions sont dans le repo git (DOCU/HOSTINGER/) : recopier ces fichiers sur Hostinger.
